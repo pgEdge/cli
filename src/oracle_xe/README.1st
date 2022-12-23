@@ -1,0 +1,29 @@
+
+- download CentOS 7 minimal x86_64  ISO from https://www.centos.org/download
+
+- install in a VmWare Fusion VM (I use 8gb ram, 4 cores & 60 GB drive)
+
+- update vi yum
+   $ sudo yum update
+
+- disable SELINUX via editing /etc/selinux/config
+
+- stop & then disable firewalld
+    $ sudo systemctl stop firewalld
+    $ susdo systemctl disable firewalld
+
+- run the install & configure scripts
+   ./install-oracle_xe
+   ./configure-oracle-xe
+
+- add to bottom of your .bashrc and then source
+  export ORACLE_HOME=/opt/oracle/product/21c/dbhomeXE
+  export PATH=$ORACLE_HOME/bin:$PATH
+
+- connect via sqlplus locally
+
+     sqlplus system/password@localhost:1521/XEPDB1
+
+- run the following to open up ports 1521 & 5500 to listen externally
+
+   SQL> execute DBMS_XDB_CONFIG.SETLISTENERLOCALACCESS(false)

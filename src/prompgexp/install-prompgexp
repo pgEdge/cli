@@ -1,0 +1,63 @@
+#!/bin/bash
+cd "$(dirname "$0")"
+
+ver=$1
+
+url=https://github.com/prometheus-community/postgres_exporter/releases/download/v$ver/
+file=postgres_exporter-$ver
+
+if [ "$ver" == "" ]; then
+  echo "ERROR: missing version # on the command line"
+  exit 1
+fi
+
+echo " "  
+echo "######## Installing Prometheus PG Exporter v$ver ########"
+
+os=`uname -s`
+if [ "$os" == "Linux" ]; then
+  arch=`arch`
+  if [ "$arch" == "x86_64" ]; then
+    flavor=linux-amd64
+  elif [ "$arch" == "aarch64" ]; then
+    flavor=linux-arm64
+  else
+    echo "$arch is not presently support"
+  fi
+fi
+
+full_file=$file.$flavor.tar.gz
+
+rm -f $full_file*
+rm -f prompgexp
+
+echo " downloading $full_file from $url ..."
+wget -q $url/$full_file
+rc=$?
+if [ "$rc" != "0" ]; then
+  echo "ERROR: $ver not found or cannot download"
+  exit 1
+fi
+
+echo " extracting $full_file ... "
+tar -xf $full_file
+rc=$?
+if [ "$rc" != "0" ]; then
+  exit 1
+else
+  rm $full_file*
+fi
+
+echo " rename $file.$flavor/postgres_exporter to 'prompgexp'"
+mv $file.$flavor/postgres_exporter prompgexp
+rm -rf $file.$flavor
+
+logdir="data/logs/prompgexp"
+echo " log directory: $logdir"
+mkdir -p ../$logdir
+
+if [[ "$isSTART" == "True" ]]; then
+  cd ..
+  ./io start prompgexp
+fi
+

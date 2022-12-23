@@ -1,0 +1,3 @@
+set -x
+
+sudo systemctl stop  cassandra

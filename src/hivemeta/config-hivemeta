@@ -1,0 +1,17 @@
+#!/bin/bash
+cd "$(dirname "$0")"
+
+set -x
+
+hivemetaD=/usr/local/hive-metastore
+
+host=`hostname --fqdn`
+
+cp example-hive-site.xml hive-site.xml
+sed -i 's/localhost/$host/g' hive-site.xml
+sudo cp hive-site.xml $hivemetaD/conf/.
+rm hive-site.xml
+
+
+sudo cp postgres*.jar $hivemetaD/lib/.
+

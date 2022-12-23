@@ -1,0 +1,23 @@
+#!/bin/bash
+cd "$(dirname "$0")"
+
+#ver=$1
+ver=2.1.0
+
+libs=/usr/local/kafka/libs
+
+converter_jar=utils/converter/target/*.Final.jar
+sudo cp -v $converter_jar $libs/.
+
+serde_jar=serdes/serde-common/target/*.Final.jar
+sudo cp -v $serde_jar $libs/.
+
+avro_jar=serdes/avro-serde/target/*.Final.jar
+sudo cp -v $avro_jar $libs/.
+
+json_jar=serdes/jsonschema-serde/target/*.Final.jar
+sudo cp -v $json_jar $libs/.
+
+protobuf_jar=serdes/protobuf-serde/target/*.Final.jar
+sudo cp -v $protobuf_jar $libs/.
+

@@ -1,0 +1,9 @@
+set -x
+
+sudo systemctl stop zookeeper
+
+sudo rm -r /etc/systemd/system/zookeeper.service
+
+sudo rm -r /opt/zookeeper
+sudo rm -r /var/zookeeper
+

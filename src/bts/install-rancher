@@ -1,0 +1,27 @@
+#!/bin/bash
+cd "$(dirname "$0")"
+
+echo " "
+echo "## INSTALL RKE v$1 ############################################"
+
+ver=$1
+if [ "$ver" == "" ]; then
+  echo "ERROR: You must supply version number to be installed"
+  exit 1
+fi
+
+url=https://github.com/rancher/rke/releases/download/v$ver
+rke=rke_linux-amd64
+rm -rf rke*
+echo "Downloading $url/$rke"
+wget -q $url/$rke
+rc=$?
+if [ ! "$rc" == "0" ]; then
+  echo "ERROR: unable to download $url/$rke"
+  exit 1
+fi
+
+chmod 755 $rke
+sudo mv $rke /usr/local/bin/rke
+
+/usr/local/bin/rke --version

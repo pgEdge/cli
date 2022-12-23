@@ -1,0 +1,20 @@
+#!/bin/bash
+cd "$(dirname "$0")"
+
+ver="$1"
+
+pgeV=pg$ver
+
+if [ "$ver" == "" ]; then
+  echo "ERROR: version num parm required"
+  exit 1
+fi
+
+echo " "
+echo "## INSTALL PGE v$ver ############################################"
+
+cd ..
+
+./io install $pgeV --start 
+./io install citus-$pgeV : install spock-$pgeV : install prompgexp
+

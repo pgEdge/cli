@@ -1,0 +1,16 @@
+#!/bin/bash
+cd "$(dirname "$0")"
+
+set -x
+
+sudo rpm --import https://artifacts.elastic.co/GPG-KEY-elasticsearch
+sudo cp elasticsearch.repo /etc/yum.repos.d/.
+
+sudo yum install -y filebeat
+
+sudo cp filebeat.yml /etc/filebeat/.
+sudo cp system.yml /etc/filebeat/modules.d/.
+
+sudo systemctl enable filebeat
+sudo systemctl start filebeat
+

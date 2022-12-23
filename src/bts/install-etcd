@@ -1,0 +1,47 @@
+#!/bin/bash
+cd "$(dirname "$0")"
+
+echo " "
+echo "## INSTALL ETCD v$1 #########################################"
+
+ver=$1
+if [ "$ver" == "" ]; then
+  echo "ERROR: You must supply version number to be installed"
+  exit 1
+fi
+
+sudo systemctl stop etcd > /dev/null 2>&1
+
+url=https://github.com/etcd-io/etcd/releases/download/v$ver
+etc=etcd-v$ver-linux-amd64
+rm -rf $etc*
+wget -q $url/$etc.tar.gz
+rc=$?
+if [ "$rc" == "0" ]; then
+  tar xf $etc.tar.gz
+  sudo cp $etc/etcd    /usr/local/bin/.
+  sudo cp $etc/etcdctl /usr/local/bin/.
+  rm -rf $etc*
+else
+  echo "ERROR: unable to download $url/$etc.tar.gz"
+  exit 1
+fi
+
+sudo chmod +x /usr/local/bin/etcd
+
+etcd --version
+etcdctl version
+
+## Configure etcd ###########################
+sudo mkdir -p /var/lib/etcd/
+sudo mkdir -p /etc/etcd
+
+sudo groupadd --system etcd > /dev/null 2>&1
+sudo useradd -s /sbin/nologin --system -g etcd etcd  > /dev/null 2>&1
+
+sudo chown -R etcd:etcd /var/lib/etcd/
+
+sudo cp etcd.service /etc/systemd/system/.
+sudo systemctl daemon-reload
+sudo systemctl enable etcd
+sudo systemctl start  etcd

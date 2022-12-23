@@ -1,0 +1,2 @@
+set -x
+sudo /opt/mssql/bin/mssql-conf setup

@@ -1,0 +1,21 @@
+#!/bin/bash
+cd "$(dirname "$0")"
+
+echo " "
+echo "## INSTALL PYTHON3, PIP3 & PyPi Extensions ######################"
+source getPKMG.sh
+if [ "$PKMG" == "yum" ]; then
+  sudo yum -y install python3 python3-devel
+else
+  sudo apt install -y python3 python3-dev
+fi
+
+wget https://bootstrap.pypa.io/get-pip.py
+sudo python3 get-pip.py
+rm get-pip.py
+
+PIP3="pip3 install --user"
+$PIP3 psutil flask libcloud fire click paramiko jmespath
+$PIP3 psycopg2-binary
+$PIP3 awscli boto3
+$PIP3 python-openstackclient python-openstacksdk

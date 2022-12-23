@@ -1,0 +1,108 @@
+#!/bin/bash
+cd "$(dirname "$0")"
+
+ver=$1
+majorV=${ver:0:2}
+minorV=${ver:3:2}
+
+if [ "$ver" == "" ]; then
+  echo "ERROR: missing version # on the command line"
+  exit 1
+fi
+
+echo ""  
+echo "### Installing InstantClient v$ver ###"
+
+os=`uname -s`
+if [ $os == "Darwin" ]; then
+  os=mac
+  OS=macos
+  bashrc="~/.bash_profile"
+elif [ $os == "Linux" ]; then
+  os=linux
+  OS=linux
+  bashrc="~/.bashrc"
+  yum --version > /dev/null 2>&1
+  rc=$?
+  if [ "$rc" == "0" ]; then
+    flavor=el
+  else
+    flavor=debian
+  fi
+fi
+
+if [ "$flavor" == "el" ]; then
+  test_sudo="sudo env"
+else
+  test_sudo="sudo -v"
+fi
+
+echo test_sudo=$test_sudo
+$test_sudo > /dev/null 2>&1
+rc=$?
+if [ "$rc" != "0" ]; then
+  echo "ERROR: sudo priv's required"
+  exit 1
+fi
+
+echo "### Installing pre-req's ###"
+if [ "$flavor" == "el" ]; then
+  sudo yum install -y libaio zip wget
+else
+  sudo apt install -y libaio1 zip wget
+  test_sudo="sudo -v"
+fi
+
+url=https://download.oracle.com/otn_software/$os/instantclient/${majorV}${minorV}000
+
+IC=instantclient_"$majorV"_"$minorV"
+
+echo
+echo "### Downloading $IC ###"
+rm -f instantclient*.zip
+sfx=${majorV}.${minorV}.0.0.0dbru.zip
+wget --quiet $url/instantclient-basiclite-$OS.x64-$sfx
+rc=$?
+if [ "$rc" != "0" ]; then
+  echo "ERROR: $ver not found"
+  exit 1
+fi
+wget --quiet $url/instantclient-sdk-$OS.x64-$sfx
+wget --quiet $url/instantclient-sqlplus-$OS.x64-$sfx
+
+unzip="unzip -q"
+
+zip=*basic*.zip
+ls $zip  
+$unzip $zip
+
+zip=*sdk*.zip
+ls $zip  
+$unzip $zip
+
+zip=*sqlplus*.zip
+ls $zip  
+$unzip $zip
+
+sudo rm -rf /opt/$IC
+sudo mv $IC /opt/.
+
+rm instantclient*.zip
+
+cd /opt/$IC
+
+if [ $os == "linux" ]; then
+  ln -s libclntshcore.so.${ORACLE_MAJOR}.1 libclntshcore.so > /dev/null 2>&1
+else
+  ln -s libclntsh.dylib ~/lib/ > /dev/null 2>&1
+fi
+
+echo
+echo "## Add these lines to the bottom of your $bashrc"
+echo "export ORACLE_HOME=/opt/$IC"
+echo "export PATH=\$PATH:\$ORACLE_HOME"
+
+if [ $os == "linux" ]; then
+  echo "export LD_LIBRARY_PATH=\$ORACLE_HOME"
+fi
+

@@ -1,0 +1,9 @@
+
+if [ `uname` == "Darwin" ]; then
+  cmd="brew services start docker"
+else
+  cmd="sudo systemctl start docker"
+fi
+
+echo "$cmd"
+$cmd

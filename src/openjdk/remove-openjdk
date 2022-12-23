@@ -1,0 +1,27 @@
+
+ver=$1
+if [ "$ver" == "" ]; then
+  echo "ERROR: You must supply version number to be installed"
+  exit 1
+fi
+
+source getPKMG.sh
+
+if [[ "$PKGM" == "yum" ]]; then
+  set -x
+  sudo yum -y remove  java-$ver-openjdk-devel
+elif [[ "$PKGM" == "apt" ]]; then
+  set -x
+  sudo apt -y remove openjdk-$ver-jdk
+elif [[ "$PKGM" == "brew" ]]; then
+  export HOMEBREW_NO_ENV_HINTS=1
+  export HOMEBREW_NO_INSTALL_CLEANUP=1
+  set -x
+  brew remove  openjdk@$ver
+else
+  echo "platform not supported yet"
+  exit 1
+fi
+
+exit
+

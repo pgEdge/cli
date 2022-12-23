@@ -1,0 +1,15 @@
+xcode-select --install
+ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
+brew install python
+brew install wget
+brew install llvm
+brew install openssl
+brew install gpg
+
+opt=/usr/local/opt
+export PATH="$opt/llvm/bin:$opt/python/libexec/bin:$PATH"
+export LDFLAGS="-L$opt/llvm/lib -L$opt/openssl/lib"
+export CPPFLAGS="-I$opt/llvm/include -I$opt/openssl/include"
+export PKG_CONFIG_PATH="$opt/openssl/lib/pkgconfig"
+
+

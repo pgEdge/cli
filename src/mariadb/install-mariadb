@@ -1,0 +1,34 @@
+#!/bin/bash
+cd "$(dirname "$0")"
+
+echo " "
+echo "## INSTALL MARIADB ##############################################"
+source getPKMG.sh
+
+if [ "$PKMG" == "apt" ]; then
+  sudo apt update -y
+  sudo apt -y install software-properties-common
+  sudo apt-key adv --fetch-keys 'https://mariadb.org/mariadb_release_signing_key.asc'
+  sudo add-apt-repository 'deb [arch=amd64] http://mariadb.mirror.globo.tech/repo/10.6/ubuntu focal main'
+  sudo apt update -y
+  sudo apt install -y mariadb-server mariadb-client
+
+  exit
+fi
+
+sudo tee /etc/yum.repos.d/MariaDB.repo<<EOF
+[mariadb]
+name = MariaDB
+baseurl = http://yum.mariadb.org/10.6/centos$VER_OS-amd64
+gpgkey=https://yum.mariadb.org/RPM-GPG-KEY-MariaDB
+gpgcheck=1
+EOF
+
+sudo yum update -y
+sudo yum install -y MariaDB-server MariaDB-client MariaDB-devel
+
+./start-mariadb
+set -x
+mysql test -e "set sql_mode=oracle"
+
+exit

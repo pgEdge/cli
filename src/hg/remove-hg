@@ -1,0 +1,3 @@
+bigV=13
+
+sudo yum remove -y hg-pgsql$bigV

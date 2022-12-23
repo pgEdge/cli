@@ -1,0 +1,13 @@
+[Unit]
+Description=OmniDB server daemon
+After=network.target
+
+[Service]
+Type=forking
+ExecStart=/bin/bash -c "/opt/omnidb-server/omnidb-server -H 0.0.0.0 &"
+RemainAfterExit=yes
+User=root
+Group=root
+
+[Install]
+WantedBy=multi-user.target

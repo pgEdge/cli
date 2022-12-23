@@ -1,0 +1,10 @@
+
+
+echo "## Removing kubernetes (microk8s) ##"
+
+set -x
+
+sudo snap remove  microk8s
+
+sudo systemctl disable iscisd
+

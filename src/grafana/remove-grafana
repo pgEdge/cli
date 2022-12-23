@@ -1,0 +1,4 @@
+set -x
+
+sudo yum remove  grafana
+sudo rm /etc/yum.repos.d/grafana.repo

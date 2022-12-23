@@ -1,0 +1,3 @@
+echo "nginx stopping"
+
+sudo systemctl stop nginx

@@ -1,0 +1,7 @@
+sudo systemctl stop etcd
+sudo systemctl disable etcd
+
+sudo rm -rf /var/lib/etcd/
+sudo rm -rf /etc/etcd
+
+sudo rm -f /etc/systemd/system/etcd.service 

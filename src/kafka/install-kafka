@@ -1,0 +1,55 @@
+#!/bin/bash
+cd "$(dirname "$0")"
+
+if [ "$1" == "" ]; then
+  echo "ERROR: version num parm required"
+  exit 1
+fi
+
+echo " "
+echo "## INSTALL KAFKA v$1 ######################################"
+source getPKMG.sh
+
+kafkaV=$1
+kafkaD=kafka_2.13-$kafkaV
+kafkaF=$kafkaD.tgz
+#URL=https://mirrors.ocf.berkeley.edu/apache/kafka
+URL=https://dlcdn.apache.org/kafka
+
+rm -rf $kafkaF
+wget $URL/$kafkaV/$kafkaF
+tar xzf $kafkaF
+
+kdir=/usr/local/kafka
+if [ -d "$kdir" ]; then
+  ./remove-kafka
+fi
+sudo mv $kafkaD $kdir
+
+if [ "$PKMG" == "yum" ]; then
+  java_home=/usr/lib/jvm/jre-11-openjdk
+else
+  java_home=/usr/lib/jvm/java-11-openjdk-amd64
+fi
+cp kafka.service.orig kafka.service
+sed -i "s|java_home|$java_home|g" kafka.service
+
+set -x
+
+sudo cp kafka.service     /etc/systemd/system/.
+rm -rf $kafkaF
+
+## KRAFT mode (zookeeper-less)
+konfig_dir=/usr/local/kafka/config/kraft
+cp $konfig_dir/server.properties $konfig_dir/server1.properties
+
+my_uuid=`$kdir/bin/kafka-storage.sh random-uuid`
+$kdir/bin/kafka-storage.sh format -t $my_uuid -c $konfig_dir/server1.properties
+
+sudo systemctl daemon-reload
+sudo systemctl start kafka
+
+sleep 10
+##/usr/local/kafka/bin/kafka-topics.sh --create --zookeeper 0.0.0.0:2181 --topic my-connect-configs --replication-factor 1 --partitions 10
+/usr/local/kafka/bin/kafka-topics.sh --create --topic my-connect-configs --replication-factor 1 --partitions 10 --bootstrap-server localhost:9092
+

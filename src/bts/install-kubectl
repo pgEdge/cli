@@ -1,0 +1,17 @@
+#!/bin/bash
+cd "$(dirname "$0")"
+
+echo " "
+echo "## INSTALL KUBECTL ##############################################"
+
+url=https://storage.googleapis.com/kubernetes-release/release
+
+# download latest stable release
+rm -f kubctl
+curl -LO --progress-bar "$url/$(curl -s $url/stable.txt)/bin/linux/amd64/kubectl"
+
+chmod 755 kubectl
+
+sudo mv ./kubectl /usr/local/bin/kubectl
+
+/usr/local/bin/kubectl version --client

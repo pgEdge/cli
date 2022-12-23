@@ -1,0 +1,5 @@
+set -x
+
+rm -r data/logs/nodejs
+
+sudo rm -r /usr/local/bin/nodejs

@@ -1,0 +1,15 @@
+#!/bin/bash
+cd "$(dirname "$0")"
+
+VER=$1
+
+RPM=presto-server-rpm-$VER.rpm
+URL=https://repo1.maven.org/maven2/io/prestosql/presto-server-rpm/$VER
+
+rm -rf $RPM*
+
+wget $URL/$RPM
+
+sudo rpm -ivh $RPM
+
+rm -rf $RPM*

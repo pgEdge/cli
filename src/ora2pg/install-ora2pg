@@ -1,0 +1,127 @@
+#!/bin/bash
+cd "$(dirname "$0")"
+
+ver=$1
+
+echoCmd () {
+  echo ""
+  echo "# $1"
+  $1
+}
+
+echoComment () {
+  echo ""
+  echo "##### $1 #####"
+}
+
+fatalError () {
+  echo ""
+  echo "ERROR: $1"
+  echo ""
+  exit 1
+}
+
+if [ "$ver" == "" ]; then
+  fatalError "missing ora2pg version # on the command line"
+else
+  echoComment "Installing Ora2PG v$ver"
+fi
+
+
+os=`uname -s`
+if [ $os == "Darwin" ]; then
+  echoComment "OSX installtion using HomeBrew"
+  os=mac
+  OS=macos
+  bashrc="~/.bash_profile"
+  flavor=osx
+elif [ $os == "Linux" ]; then
+  os=linux
+  OS=linux
+  bashrc="~/.bashrc"
+  yum --version > /dev/null 2>&1
+  rc=$?
+  if [ "$rc" == "0" ]; then
+    echoComment "Enterprise Linux installation.."
+    flavor=el
+  else
+    echoComment "Debian/Ubuntu installation..."
+    flavor=debian
+  fi
+fi
+
+if [ "$flavor" == "el" ]; then
+  test_sudo="sudo"
+else
+  test_sudo="sudo -v"
+fi
+
+$test_sudo > /dev/null 2>&1
+rc=$?
+if [ "$rc" != "0" ]; then
+  echo "ERROR: sudo priv's required"
+  exit 1
+fi
+
+if [ "$ORACLE_HOME" == "" ]; then
+  fatalError "ORACLE_HOME must be set"
+else
+  echoComment "ORACLE_HOME found at $ORACLE_HOME"
+fi
+
+if [ ! -d "$ORACLE_HOME" ]; then
+  fatalError "ORACLE_HOME=$ORACLE_HOME is not a valid directory"
+fi
+
+if [ ! -d "$ORACLE_HOME/sdk" ]; then
+  fatalError "Oracle InstantClient SDK not found at $ORACLE_HOME/sdk"
+else
+  echoComment "Oracle InstantClient SDK found"
+fi
+
+file=v$ver.tar.gz
+dir=ora2pg-$ver
+rm -rf $file*
+rm -rf $dir*
+url=https://github.com/darold/ora2pg/archive/refs/tags/$file
+echoCmd "wget --quiet $url"
+rc=$?
+if [ "$rc" != "0" ]; then
+  fatalError "$dir not available"
+fi
+
+if [ "$flavor" == "el" ]; then
+  install="sudo yum install -y"
+  OS=el
+  libs="perl-CPAN perl-DBD-Pg perl-Test-NoWarnings perl-ExtUtils-MakeMaker"
+  echoCmd "$install perl $libs"
+  echoComment "Installing Development Tools"
+  sudo yum group install -y "Development Tools"
+elif [ "$flavor" == "debian" ]; then
+  install="sudo apt-get install -y"
+  OS=debian
+  libs="libdbd-pg-perl libtest-nowarnings-perl libextutils-makemaker-cpanfile-perl"
+  echoCmd "$install perl $libs"
+  echoCmd "sudo apt install -y build-essential"
+elif [ "$flavor" == "osx" ]; then
+  brew install perl
+else
+  fatalError "$os not supported"
+fi
+
+echoComment "Building DBD::Oracle from CPAN..."
+PERL_MM_USE_DEFAULT=1 perl -MCPAN -e "install DBD::Oracle"
+
+echoComment "Building Ora2PG from source..."
+tar -xf $file
+cd $dir
+echoCmd "perl Makefile.PL"
+echoCmd "make"
+echoCmd "sudo make install"
+
+echoComment "Goodbye!"
+cd .. 
+rm -rf $file
+rm -rf $dir
+
+exit 0

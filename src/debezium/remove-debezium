@@ -1,0 +1,4 @@
+sudo systemctl stop kafka-connect
+sudo systemctl disable kafka-connect
+
+sudo rm -r /usr/local/kafka/connect/debezium-connector*

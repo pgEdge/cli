@@ -1,0 +1,20 @@
+#!/bin/bash
+cd "$(dirname "$0")"
+
+echo " "
+echo "## REMOVE MARIADB ##############################################"
+source getPKMG.sh
+if [ "$PKMG" == "yum" ]; then
+  sudo yum remove -y MariaDB-server MariaDB-client MariaDB-devel
+  echo ""
+  echo "Deleted  data directory /var/lib/mysql"
+  sudo rm -rf /var/lib/mysql
+  exit
+fi
+
+######## APT ####################################################
+sudo apt autoremove -y mariadb-server mariadb-client
+sudo rm -rf /usr/share/mysql/
+sudo rm -rf /etc/mysql/
+sudo rm -rf /lib/systemd/system/mysql.service
+

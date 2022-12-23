@@ -1,0 +1,424 @@
+# vim: ts=4 sts=4 sw=4 et :
+#!/bin/bash
+#
+# chkconfig: 2345 85 15
+# description: Control PostgreSQL server process 
+#
+### BEGIN INIT INFO
+# Provides:          postgresql-__VER__
+# Required-Start: $remote_fs   
+# Required-Stop: $remote_fs    
+# Should-Start:  
+# Should-Stop:  
+# Default-Start:     2 3 4 5
+# Default-Stop:      0 1 6
+# Short-Description: PostgreSQL
+# Description: PostgreSQL Server       
+### END INIT INFO
+
+script="`readlink -f "${BASH_SOURCE[0]}"`"
+PREFIX="`dirname "$script"`"
+PREFIX="`dirname "$PREFIX"`"
+PREFIX="`dirname "$PREFIX"`"
+
+PGVERSION="__VER__"
+envPrefix="/etc/pgenv"
+
+test -d $envPrefix
+if [ "$?" -ne 0 ]
+then
+    mkdir -p $envPrefix
+fi
+
+# Get the ENV file based on the service name
+ENV="$envPrefix/`basename $0`.env"
+
+# Load the env file from the system
+test -f $ENV
+
+if [ "$?" -eq 0 ]
+then
+    . $ENV
+    printf "Using environment from: $ENV\n"
+    printf "\tPGDATA : $PGDATA\n"
+    printf "\tPGPORT : $PGPORT\n"
+fi
+
+if [ -z "$PGDATA" ]
+then
+    PGDATA=$PREFIX/data/pg$PGVERSION
+fi
+
+
+#Create non-existent postgres user and group
+createpguser()
+{
+    if ! getent group postgres > /dev/null 
+    then
+       /usr/sbin/groupadd postgres
+    fi
+
+    if getent passwd postgres > /dev/null 
+    then
+      POSTGRES_HOME=`su postgres -c "echo \$HOME"`
+      if [ ! -e $POSTGRES_HOME ]; 
+      then
+       /usr/sbin/usermod -d $PREFIX postgres
+      fi
+    else
+/usr/sbin/useradd -m -c "PostgreSQL" -d $PREFIX -g postgres postgres
+        #Required for OpenSuse platforms
+        /usr/sbin/usermod -p "*" postgres
+    fi
+}
+
+setStartup() 
+{
+  echo "Configuring PostgreSQL server startup scripts"
+  if type "/sbin/chkconfig" &> /dev/null ; then
+    /sbin/chkconfig --add postgresql-$PGVERSION 
+    if [ $? -ne 0 ]; then
+        echo "Unable to configure PostgreSQL server boot script"
+    fi
+  fi
+  if type "/usr/sbin/update-rc.d" &> /dev/null ; then
+    /usr/sbin/update-rc.d postgresql-$PGVERSION defaults 85 15
+    if [ $? -ne 0 ]; then
+        echo "Unable to configure PostgreSQL server boot script"
+    fi
+  fi
+}
+
+init()
+{
+    local datadir=$1
+    local port=$2
+
+    if [ -n "$datadir" ]
+    then
+        PGDATA="$datadir"
+    fi
+
+    if [ -n "$port" ]
+    then
+        PGPORT="$port"
+    else
+        PGPORT="5432"
+    fi
+
+    if [ -f "$PGDATA/postgresql.conf" ]
+    then
+        printf "$PGDATA already appears to be a postgres instance\n
+                Will not re-initialize\n"
+        exit 1
+    elif [ -f "$ENV" ]
+    then
+        printf "An instance already exists for this version\n"
+        exit 1
+    else
+        printf "Creating database with defaults in $PGDATA\n"
+
+
+cat <<ENVEOF > $ENV
+#!/bin/bash
+$LD_PRELOAD_VALUE
+export PGHOME=$PREFIX/pg$PGVERSION
+export PGDATA=$PGDATA
+export PATH=$PREFIX/pg$PGVERSION/bin:\$PATH
+export LD_LIBRARY_PATH=$PREFIX/pgPGVERSION/lib:\$LD_LIBRARY_PATH
+export PGUSER=postgres
+export PGDATABASE=postgres
+export PGPORT=$PGPORT
+ENVEOF
+
+cat <<ENVEOF > $PREFIX/pg$PGVERSION.env
+#!/bin/bash
+$LD_PRELOAD_VALUE
+export PGHOME=$PREFIX/pg$PGVERSION
+export PGDATA=$PGDATA
+export PATH=$PREFIX/pg$PGVERSION/bin:\$PATH
+export LD_LIBRARY_PATH=$PREFIX/pgPGVERSION/lib:\$LD_LIBRARY_PATH
+export PGUSER=postgres
+export PGDATABASE=postgres
+export PGPORT=$PGPORT
+ENVEOF
+
+        # Initialize instance with ident mode, no pw the port and autostart on
+        initCluster 1 "__NONE__" $PGPORT "y"
+    fi
+
+}
+initCluster()
+{
+  local DODEFAULT=$1
+  local PASSWORD=$2
+  local PORT=$3
+  local BOOT=$4
+
+  if [ ! -d $PGDATA ];
+  then
+    mkdir -p $PGDATA
+  fi
+  createpguser
+  chown postgres:postgres $PGDATA
+
+
+  if type "/usr/bin/chcon" &> /dev/null ; then
+    /usr/bin/chcon -t textrel_shlib_t $PREFIX/pg$PGVERSION/lib/libedit.so &> /dev/null 
+  fi
+
+  # Use password
+  cmd="echo 'no cmd'"
+  if [ "$DODEFAULT" -eq 0 ];
+  then
+      touch /tmp/initpass.$$
+      chmod 600 /tmp/initpass.$$
+      echo $PASSWORD > /tmp/initpass.$$
+      chown postgres:postgres /tmp/initpass.$$
+
+      cmd="LD_LIBRARY_PATH=$PREFIX/pg$PGVERSION/lib:$LD_LIBRARY_PATH $PREFIX/pg$PGVERSION/bin/initdb  -E utf8 -A md5 --pwfile /tmp/initpass.$$ -D $PGDATA -U postgres"
+
+
+  else # Use ident
+      cmd="LD_LIBRARY_PATH=$PREFIX/pg$PGVERSION/lib:$LD_LIBRARY_PATH $PREFIX/pg$PGVERSION/bin/initdb  -E utf8 -A ident -D $PGDATA -U postgres"
+  fi
+
+  su - postgres -c "$cmd"
+
+  rc=`echo $?`
+
+  if [ -f "/tmp/initpass.$$" ];
+  then
+      rm -f /tmp/initpass.$$
+  fi
+
+  if [ ! "$rc" == "0" ]; then
+    echo " "
+    echo "ERROR: Unable to Initialize Postgres DB (rc=$rc)"
+    exit 
+  fi
+  if [ ! -d $PGDATA/pg_log ];
+  then
+    mkdir $PGDATA/pg_log
+  fi
+  chown postgres:postgres $PGDATA/pg_log
+
+  #Do some search and replace on postgresql.conf
+  if [ -f $PGDATA/postgresql.conf ];
+  then
+    su - postgres -c "sed -e \"s@\#listen_addresses = 'localhost'@listen_addresses = '*'@g\" -e \"s@\#port = 5432@port = $PORT@g\" $PGDATA/postgresql.conf > /tmp/pgconf.$$"
+    mv /tmp/pgconf.$$ $PGDATA/postgresql.conf
+    chown postgres:postgres $PGDATA/postgresql.conf
+  fi
+
+  #Set up server startup via chkconfig (for Redhat like distros) and/or update-rc.d (for Ubuntu like distros)
+  if [ "$BOOT" == "y" -o "$BOOT" == "Y" ];
+  then
+    setStartup
+  fi
+  
+}
+start()
+{
+  if [ `id -un` != "postgres" -a `id -u` != "0" ] ;
+  then
+   echo "ERROR: Must be root or postgres to start PostgreSQL server."
+   exit 1
+  fi
+
+  #First time initialization
+  if [ ! -d $PGDATA -o ! -f $PGDATA/postgresql.conf ];
+  then
+    if [[ `id -u` != "0" ]]; then  
+    echo "ERROR: Must be a Superuser to configure PostgreSQL server."
+    exit 1
+    fi
+
+    echo "PostgreSQL $PGVERSION Configuration"
+    echo "---------------------------------"
+    echo "This will initialize PostgreSQL database cluster. The following"
+    echo "questions will determine the database server port, superuser password"
+    echo " and to start server on system boot. Press <ENTER> to accept defaults."
+    echo ""
+
+    local DONE=0
+    while [ $DONE -ne 1 ]; do
+      echo -n "Specify PostgreSQL server port [5432]: "
+      read  PGPORT
+      if [ x"$PGPORT" == x"" ];
+      then 
+        PGPORT=5432
+      fi
+      #Valid port is a numeric value between 1024-65535
+      echo $PGPORT | egrep '^[0-9]+$' >/dev/null 2>&1
+      if [ $? -eq 1 ];
+      then
+        echo "ERROR: Invalid port number. Valid range is 1024-65535"
+        continue
+      fi
+      if [ $PGPORT -lt 1024 -o $PGPORT -gt 65535 ];
+      then
+        echo "ERROR: Invalid port number. Valid range is 1024-65535"
+        continue
+      fi
+      DONE=1 
+    done
+
+    echo -n "Specify superuser password [password]: "
+    read -s PGPASSWORD
+    echo ""
+    echo -n "Do you want PostgreSQL server to be started on boot (y/n) [y]: "
+    read PGBOOT
+
+    #Assign default values
+    if [ x"$PGPASSWORD" == x"" ];
+    then 
+      PGPASSWORD=password
+    fi
+    if [ x"$PGBOOT" == x"" ];
+    then 
+      PGBOOT=y
+    fi
+    initCluster 0 $PGPASSWORD $PGPORT $PGBOOT
+
+    #Fix for psql dumb terminal issue
+    local LD_PRELOAD_VALUE=""
+    for libreadline in `find -L /lib64 -type f -name libreadline.\* 2> /dev/null`
+    do
+      LD_PRELOAD_VALUE="$libreadline:$LD_PRELOAD_VALUE"
+    done
+    if [ x"$LD_PRELOAD_VALUE" != x"" ];
+    then
+      LD_PRELOAD_VALUE="export LD_PRELOAD=$LD_PRELOAD_VALUE"
+    fi
+
+    #Dump environment values
+cat <<ENVEOF > $ENV
+#!/bin/bash
+$LD_PRELOAD_VALUE
+export PGHOME=$PREFIX/pg$PGVERSION
+export PGDATA=$PGDATA
+export PATH=$PREFIX/pg$PGVERSION/bin:\$PATH
+export LD_LIBRARY_PATH=$PREFIX/pgPGVERSION/lib:\$LD_LIBRARY_PATH
+export PGUSER=postgres
+export PGDATABASE=postgres
+export PGPORT=$PGPORT
+ENVEOF
+
+cat <<ENVEOF > $PREFIX/pg$PGVERSION.env 
+#!/bin/bash
+$LD_PRELOAD_VALUE
+export PGHOME=$PREFIX/pg$PGVERSION
+export PGDATA=$PGDATA
+export PATH=$PREFIX/pg$PGVERSION/bin:\$PATH
+export LD_LIBRARY_PATH=$PREFIX/pgPGVERSION/lib:\$LD_LIBRARY_PATH
+export PGUSER=postgres
+export PGDATABASE=postgres
+export PGPORT=$PGPORT
+ENVEOF
+  fi
+
+  echo "Starting PostgreSQL $PGVERSION: "
+  su - postgres -c "LD_LIBRARY_PATH=$PREFIX/pg$PGVERSION/lib:$LD_LIBRARY_PATH $PREFIX/pg$PGVERSION/bin/pg_ctl -w start -D $PGDATA -l \"$PGDATA/pg_log/startup.log\""
+	
+ if [ $? -eq 0 ];
+ then
+   echo "PostgreSQL $PGVERSION started successfully"
+   echo "To load this postgres into your environment, source the env file:"
+   echo ". $ENV"
+   exit 0
+ else
+  echo "The PostgreSQL server start seems to have some problems, please see logs for details."
+  exit 1
+ fi
+}
+
+stop()
+{
+  if [ `id -un` != "postgres" -a `id -u` != "0" ] ;
+  then
+   echo "ERROR: Must be root or postgres to stop PostgreSQL server."
+   exit 1
+  fi
+  if [ ! -f $PGDATA/postgresql.conf ]; then
+    echo "PostgreSQL server is not initialized."
+    exit 0
+  fi
+  echo "Stopping PostgreSQL $PGVERSION: "
+  su - postgres -c "LD_LIBRARY_PATH=$PREFIX/pg$PGVERSION/lib:$LD_LIBRARY_PATH $PREFIX/pg$PGVERSION/bin/pg_ctl stop -m fast -w -D $PGDATA"
+}
+
+reload()
+{
+  if [ `id -un` != "postgres" -a `id -u` != "0" ] ;
+  then
+   echo "ERROR: Must be root or postgres to reload PostgreSQL server."
+   exit 1
+  fi
+  if [ ! -f $PGDATA/postgresql.conf ]; then
+    echo "PostgreSQL server is not initialized."
+    exit 1
+  fi
+  echo "Reloading PostgreSQL $PGVERSION: "
+  su - postgres -c "LD_LIBRARY_PATH=$PREFIX/pg$PGVERSION/lib:$LD_LIBRARY_PATH $PREFIX/pg$PGVERSION/bin/pg_ctl reload -D $PGDATA"
+}
+
+restart() 
+{
+  if [ `id -un` != "postgres" -a `id -u` != "0" ] ;
+  then
+   echo "ERROR: Must be root or postgres to restart PostgreSQL server."
+   exit 1
+  fi
+  if [ ! -f $PGDATA/postgresql.conf ];
+  then
+    echo "PostgreSQL server is not initialized."
+    exit 1
+  fi
+  if [ -f "$PGDATA/postmaster.pid" ]; then
+    stop
+    sleep 3
+    start
+  else
+    start
+  fi
+}
+# Determine arguments passed to script
+case "$1" in
+  start)
+        start
+        ;;
+  stop)
+        stop
+        ;;
+  reload)
+        reload
+        ;;
+  force-reload)
+        reload
+        ;;
+  restart)
+        restart
+        ;;
+  init)
+        shift
+        init $1 $2
+        ;;
+  status)
+        if [ `id -un` != "postgres" -a `id -u` != "0" ] ;
+        then
+          echo "ERROR: Must be root or postgres to get PostgreSQL server status."
+          exit 1
+        fi
+        if [ ! -f $PGDATA/postgresql.conf ];
+        then
+          echo "PostgreSQL server is not initialized."
+          exit 1
+        fi
+        su - postgres -c "LD_LIBRARY_PATH=$PREFIX/pg$PGVERSION/lib:$LD_LIBRARY_PATH $PREFIX/pg$PGVERSION/bin/pg_ctl status -D $PGDATA"
+        ;;
+  *)
+        echo "Usage: $0 {start|stop|restart|reload|status}"
+        exit 1
+esac
+

@@ -1,0 +1,17 @@
+#!/bin/bash
+cd "$(dirname "$0")"
+
+ver="$1"
+
+if [ "$ver" == "" ]; then
+  echo "ERROR: version num parm required"
+  exit 1
+fi
+
+echo " "
+echo "## REMOVE  PGE v$1 ############################################"
+
+cd ..
+
+./io remove  pg14 
+

@@ -1,0 +1,34 @@
+
+
+set -x
+
+ver=$1
+
+if [ "$ver" == "" ]; then
+  echo "ERROR: You must supply version number to be installed"
+  exit 1
+fi
+
+url=https://github.com/keycloak/keycloak/releases/download/$ver
+kc=keycloak-$ver
+
+rm -rf $kc
+wget -q $url/$kc.zip
+rc=$?
+if [ "$rc" == "0" ]; then
+  unzip -q $kc.zip
+  rm $kc.zip
+  mv $kc keycloak
+else
+  echo "ERROR: unable to download $url/$dc"
+  exit 1
+fi
+
+exit
+
+sudo chmod +x /usr/local/bin/docker-compose
+
+if [ ! -f /usr/bin/docker-compose ]; then
+  sudo ln -s /usr/local/bin/docker-compose /usr/bin/docker-compose
+fi
+

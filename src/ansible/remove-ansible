@@ -1,0 +1,3 @@
+pip3 uninstall ansible -y
+
+sudo yum -y remove ansible

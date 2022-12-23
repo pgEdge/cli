@@ -1,0 +1,6 @@
+set -x
+sudo yum remove -y haproxy
+sudo rm -rf /etc/haproxy
+sudo rm -rf /var/lib/haproxy
+sudo rm -f /var/run/haproxy.pid
+sudo rm -f /var/log/haproxy.log

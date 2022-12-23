@@ -1,0 +1,11 @@
+now=`date`
+msg="stopping nodejs"
+echo $msg
+echo "$msg - $now" >> data/logs/nodejs/nodejs.log
+pid=`ps aux | grep nodejs/bin/node | awk '{print $2}'`
+if [ "$pid" > " " ]; then
+  echo "killing ($pid)"
+  kill -9 $pid > /dev/null 2>&1
+fi
+
+exit 0

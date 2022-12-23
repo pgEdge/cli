@@ -1,0 +1,14 @@
+#!/bin/bash
+cd "$(dirname "$0")"
+
+source env.sh "$2"
+
+if [ "$SVC_PG" == "" ]; then
+  exit 1
+else
+  cmd="sudo systemctl $1 $SVC_PG"
+fi
+
+echo $cmd
+$cmd
+exit 0

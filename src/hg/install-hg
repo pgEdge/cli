@@ -1,0 +1,37 @@
+
+set -x
+
+ver=13.4-1
+bigV=13
+plat=x86_64
+
+pfx=hg-pgsql$bigV
+sfx=rhel8.x86_64.rpm
+
+url=https://yum.highgo.ca/dists/rpms/$bigV/redhat/rhel-8-$plat
+
+client=$pfx-$ver.$sfx
+server=$pfx-server-$ver.$sfx
+libs=$pfx-libs-$ver.$sfx
+##devel=$pfx-devel-$ver.$sfx
+contrib=$pfx-contrib-$ver.$sfx
+plperl=$pfx-plperl-$ver.$sfx
+plpython3=$pfx-plpython3-$ver.$sfx
+##llvmjit=$pfx-llvmjit-$ver.$sfx
+docs=$pfx-docs-$ver.$sfx
+
+rm -vf $pfx*
+
+wget $url/$client
+wget $url/$server
+wget $url/$libs
+##wget $url/$devel
+wget $url/$contrib
+wget $url/$plperl
+wget $url/$plpython3
+##wget $url/$llvmjit
+wget $url/$docs
+
+sudo yum install -y $pfx*
+
+rm -f $pfx*

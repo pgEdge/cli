@@ -1,0 +1,26 @@
+ver=1.3.2
+
+source getPKMG.sh
+
+set -x
+
+if [ "$ARCH" == "aarch64" ]; then
+  plat=arm64
+else
+  plat=amd64
+fi
+
+url=https://releases.hashicorp.com/terraform/$ver
+file=terraform_${ver}_linux_${plat}.zip
+rm -f $file
+
+if [ "$OS" == "Linux" ]; then
+  wget $url/$file
+  unzip $file
+  rm $file
+  sudo mv terraform /usr/local/bin/.
+else
+  brew install terraform
+fi
+
+

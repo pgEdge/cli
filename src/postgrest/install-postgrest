@@ -1,0 +1,30 @@
+#!/bin/bash
+cd "$(dirname "$0")"
+
+port=5432
+echo " creating default file postgrest.conf:"
+cat << EOF > postgrest.conf
+db-uri = "postgres://postgres@localhost:$port/demo"
+db-schemas = "spock"
+db-anon-role = "postgres"
+EOF
+#cat postgrest.conf
+
+logdir="data/logs/postgrest"
+echo "  log directory: $logdir"
+mkdir -p ../$logdir
+
+##sudo yum remove nodejs -y
+##sudo dnf module reset nodejs -y
+
+##sudo dnf module install nodejs:18 -y
+##sudo npm install -g swagger-ui-dist
+##sudo npm install -g http-server
+
+##hostname=`hostname`
+##cp init-swagger-initializer.js swagger-initializer.js
+##sed -i "s/localhost/$hostname/" swagger-initializer.js
+##sudo cp swagger-initializer.js /usr/local/lib/node_modules/swagger-ui-dist/.
+
+cd ..
+./io start postgrest

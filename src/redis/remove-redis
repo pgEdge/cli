@@ -1,0 +1,15 @@
+#!/bin/bash
+cd "$(dirname "$0")"
+
+echo " "
+echo "## REMOVE REDIS ###########################################"
+source getPKMG.sh
+
+sudo systemctl stop  redis
+sudo systemctl disable redis
+
+if [ "$PKMG" == "yum" ]; then
+  sudo yum remove -y redis
+else
+  sudo apt remove -y redis-server
+fi

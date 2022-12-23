@@ -1,0 +1,6 @@
+
+for pid in $(ps aux | grep [a]picurio-registry-app | awk '{print $2}'); do
+    echo "apicurio stopping ($pid)"
+    kill -9 "$pid"
+done
+

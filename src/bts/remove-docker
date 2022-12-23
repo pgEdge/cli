@@ -1,0 +1,9 @@
+
+if [ `uname` == "Darwin" ]; then
+  brew remove docker 
+  rc=$?
+  exit $rc
+fi
+
+sudo yum remove -y docker-ce docker-ce-cli
+

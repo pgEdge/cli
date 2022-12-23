@@ -1,0 +1,2 @@
+./generate.sh
+./deploy.sh

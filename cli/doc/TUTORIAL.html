@@ -1,0 +1,141 @@
+<h1>Command Line Interface</h1>
+
+<h3>1.) Review the help file</h3>
+
+Get into the product home directory at the command line.
+Windows users don't prefix the <code>pgc</code> command with <code>./</code> as shown
+ in the below examples.
+<p>Now run the <code>help</code> command to see that things are as expected
+<pre>
+
+   <font size=+1>$ ./pgc help</font>
+
+      <b>Usage:</b> pgc command [component1 component2 ...]
+
+      <b>Available commands:</b>
+        <b>help</b>       - Show this help file
+        <b>info</b>       - Display OS or component information
+        <b>list</b>       - Display installed & available components 
+        <b>status</b>     - Display status of installed server components 
+        <b>start</b>      - Start server components
+        <b>stop</b>       - Stop server components
+        <b>enable</b>     - Enable a server component
+        <b>disable</b>    - Disable a server component from starting automatically
+        <b>update</b>     - Retrieve new list of available components
+        <b>upgrade</b>    - Upgrade installed components to newer (compatible) versions
+        <b>install</b>    - Install a component  
+
+</pre>
+
+
+<br>
+<h3>2.) Demonstrate the <code>pgc</code> command line environment.</h3>
+
+The <code>info</code> command lists information about the OS or a component
+<pre>
+   <font size=+1>$ ./pgc info</font>
+
+      <b>User & Host:</b> denisl  localhost  127.0.0.1
+      <b>         Os:</b> Mac OS X 10.11.2 x64
+      <b>   Hardware:</b> 16 GB, 8 x Intel Core i7-2820QM @ 2.30GHz
+
+
+   <font size=+1>$ ./pgc info pg10</font>
+
+      <b>  Project:</b> pg (http://postgresql.org)
+      <b>Component:</b> pg10  10.7 (linux64, osx64, win64)
+      <b>      Doc:</b> http://www.postgresql.org/docs/9.5/
+
+</pre>
+
+<p>The <code>list</code> command displays installed and available components.  It confirms
+that only the core<br> Postgres server component, in this case <code>pg10</code>, is installed
+and enabled by default.
+<pre>
+   <font size=+1>$ ./pgc list</font>
+
+        <b>Component     Version       Port    Status      
+        ------------  ------------  ------  ------------</b>
+        pg10          10.7          5432    Installed   
+        pgadmin4      4.6           8080    NotInstalled
+</pre>
+
+<br>
+The <code>status</code> command confirms whether server components are listening on
+their assigned ports.
+<pre>     
+   <font size=+1>$ ./pgc status</font>
+
+       pg10    stopped on port 5432
+</pre>
+
+<br>
+The <code>start</code> command will start up postgres
+<pre>     
+   <font size=+1>$ ./pgc start</font>
+
+       pg10 starting...
+</pre>
+
+<br>
+Running the <code>status</code> command displays information about installed server components.
+<pre>     
+   <font size=+1>$ ./pgc status</font>
+
+       pg10 running on port 5432
+</pre>
+
+Now lets use the <code>stop</code> command to shutdown the server components.
+<pre>     
+   <font size=+1>$ ./pgc stop</font>
+
+       pg10 stopping...
+</pre>
+
+<br>
+<h3>3.) Install additional components</h3>
+
+Use the <code>install</code> command to provision additional components such as <code>pgadmin4</code>.
+<pre>
+   <font size=+1>$ ./pgc install pgadmin4</font>
+
+        Get:2 pgadmin4-4.6
+          Unpacking pgadmin4-4.6.tar.bz2
+          pgadmin4 Installed
+
+
+   <font size=+1>$ ./pgc list</font>
+
+        Component     Version    Port    Status      
+        ------------  --------  ------  ------------
+        pg10            10.7     5432    Installed   
+        pgadmin4        4.6      8080    Installed
+
+</pre>
+
+We now run the status command to confirm that both the Postgres & pgAdmin4 servers are installed.
+<pre>
+   <font size=+1>$ ./pgc status</font>
+
+        pg10-10.7     (Stopped on port 5432)
+        pgadmin4-4.6  (Stopped on port 8080)
+</pre>
+
+<br>
+The <code>start</code> command starts up all servers that are enabled.
+<pre>
+   <font size=+1>$ ./pgc start</font>
+
+       pg10 starting...
+       pgadmin4 starting...
+</pre>
+
+<br>
+Running the <code>status</code> command displays information about installed server components.
+<pre>     
+   <font size=+1>$ ./pgc status</font>
+
+       pg10-10.7    (Running on port 5432)
+       pgadmin4-4.6 (Running on port 8080)
+</pre>
+

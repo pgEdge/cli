@@ -1,0 +1,13 @@
+!/bin/bash
+cd "$(dirname "$0")"
+
+echo " "
+echo "## REMOVE DOCKER ###############################################"
+source getPKMG.sh
+
+if [ "$PKMG" == "yum" ]; then
+  sudo yum remove -y docker-ce docker-ce-cli
+else
+  sudo apt install -y docker-ce docker-ce-cli containerd.io
+fi
+

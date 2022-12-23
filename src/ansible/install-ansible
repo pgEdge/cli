@@ -1,0 +1,14 @@
+#!/bin/bash
+cd "$(dirname "$0")"
+
+echo " "
+echo "## INSTALL ANSIBLE ###############################################"
+source getPKMG.sh
+if [ "$PKMG" == "yum" ]; then
+  sudo yum -y install ansible
+else
+  sudo apt -y install ansible
+fi
+
+
+

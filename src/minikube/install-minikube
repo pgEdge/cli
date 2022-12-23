@@ -1,0 +1,26 @@
+
+
+mkV=$1
+if [ "$mkV" == "" ]; then
+  echo "ERROR: mising paramater"
+  exit 1
+fi
+
+url=https://github.com/kubernetes/minikube/releases/download/v$mkV
+rpm=minikube-$mkV-0.x86_64.rpm
+rm -f $rpm
+
+wget $url/$rpm
+rc=$?
+if [ "$rc" == "0" ]; then
+  sudo yum remove -y minikube
+  sudo rpm -ivh $rpm
+else
+  echo "ERROR: could not locate '$rpm'"
+  exit 1
+fi
+
+rm -f $rpm
+
+exit $rc
+

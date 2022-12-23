@@ -1,0 +1,3 @@
+
+pip3 install --user  CLICK
+pip3 install --user apache-libcloud flask psutil fire --upgrade

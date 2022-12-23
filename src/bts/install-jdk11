@@ -1,0 +1,11 @@
+#!/bin/bash
+cd "$(dirname "$0")"
+
+echo " "
+echo "## INSTALL OPENJDK11, MAVEN & ANT ###############################"
+source getPKMG.sh
+if [ "$PKMG" == "yum" ]; then
+  sudo yum install -y java-11-openjdk-devel maven ant
+else
+  sudo apt install -y openjdk-11-jdk-headless maven ant
+fi

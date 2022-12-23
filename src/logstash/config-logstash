@@ -1,0 +1,7 @@
+#!/bin/bash
+cd "$(dirname "$0")"
+
+etcls=/etc/logstash
+sudo cp -p $etcls/logstash.yml logstash.yml.backup
+sudo cp logstash.yml $etcls/.
+

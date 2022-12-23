@@ -1,0 +1,15 @@
+{
+  "name": "sample-connector",
+  "config": {
+    "connector.class": "io.debezium.connector.postgresql.PostgresConnector",
+    "database.hostname": "localhost",
+    "plugin.name": "decoderbufs",
+    "database.port": "5432",
+    "database.user": "postgres",
+    "database.password": "password",
+    "database.dbname" : "postgres",
+    "database.server.name": "sample",
+    "table.whitelist": "public.*",
+    "provide.transaction.metadata": "true"
+  }
+}

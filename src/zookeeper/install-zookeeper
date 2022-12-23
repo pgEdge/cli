@@ -1,0 +1,54 @@
+#!/bin/bash
+cd "$(dirname "$0")"
+
+if [ "$1" == "" ]; then
+  echo "ERROR: version num parm required"
+  exit 1
+fi
+
+echo " "
+echo "## INSTALL ZOOKEEPER v$1 ######################################"
+source getPKMG.sh
+
+zookeeperV=$1
+
+id -u zk
+rc=$?
+if [ "$rc" == "1" ]; then
+  sudo useradd zk -m
+fi
+
+if [ "$PKMG" == "yum" ]; then
+  sudo yum install -y java-11-openjdk-devel
+  sudo usermod -a -G wheel zk
+else
+  sudo apt-get install -y openjdk-11-jdk
+  sudo usermod -a -G sudo zk
+fi
+
+sudo usermod --shell /bin/bash zk
+
+zookeeperD=apache-zookeeper-$zookeeperV-bin
+zookeeperF=$zookeeperD.tar.gz
+#URL=https://mirrors.ocf.berkeley.edu/apache/zookeeper
+URL=https://dlcdn.apache.org/zookeeper
+rm -rf $zookeeperF
+wget $URL/zookeeper-$zookeeperV/$zookeeperF
+tar xzf $zookeeperF
+
+zkDir=/opt/zookeeper
+sudo rm -rf $zkDir
+sudo mv $zookeeperD $zkDir
+sudo cp example.config $zkDir/conf/zoo.cfg
+sudo cp example-log4j.properties $zkDir/conf/log4j.properties
+sudo chown zk:zk -R $zkDir
+
+sudo cp example.service  /etc/systemd/system/zookeeper.service
+rm -f $zookeeperF
+
+sudo systemctl daemon-reload
+sudo mkdir -p /var/zookeeper
+sudo chown zk:zk -R /var/zookeeper
+
+sudo systemctl start zookeeper
+

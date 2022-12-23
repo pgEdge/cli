@@ -1,0 +1,8 @@
+set -x
+
+sudo yum remove -y logstash filebeat
+
+sudo rm -rf /etc/logstash
+sudo rm -rf /var/lib/logstash
+sudo rm -rf /var/log/logstash
+

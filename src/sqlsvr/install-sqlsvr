@@ -1,0 +1,35 @@
+#!/bin/bash
+cd "$(dirname "$0")"
+
+ubuV=20.04
+apt="sudo apt-get"
+
+url=https://packages.microsoft.com
+sa_passwd='password'
+product='developer'
+
+echo " "
+echo "## INSTALL SQLSVR FOR LINUX #####################################"
+source getPKMG.sh
+
+set -x
+
+$apt install -y curl wget
+
+wget -qO- $url/keys/microsoft.asc | sudo apt-key add -
+
+sudo add-apt-repository "$(wget -qO- $url/config/ubuntu/$ubuV/mssql-server-2019.list)"
+$apt update
+$apt install -y mssql-server
+
+sudo MSSQL_SA_PASSWORD=$sa_passwd  MSSQL_PID=$product \
+  /opt/mssql/bin/mssql-conf -n setup accept-eula
+
+sudo systemctl status mssql-server --no-pager
+
+curl $url/config/ubuntu/$ubuV/prod.list | sudo tee /etc/apt/sources.list.d/msprod.list
+$apt update
+sudo ACCEPT_EULA=y apt-get install -y mssql-tools
+
+exit 0
+

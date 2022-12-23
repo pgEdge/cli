@@ -1,0 +1,27 @@
+
+set -x
+
+sudo yum install python3 python3-devel gcc
+
+pip3 --version 2>&1
+rc=$?
+if [ ! "$rc" == "0" ]; then
+  cd ~
+  wget https://bootstrap.pypa.io/get-pip.py
+  sudo python3 get-pip.py
+  rm get-pip.py
+fi
+
+pip3 install --user --upgrade docker ansible psutil
+
+aws --version 2>&1
+rc=$?
+if [ ! "$rc" == "0" ]; then
+  pip3 install --user awscli
+  mkdir -p ~/.aws
+  cd ~/.aws
+  touch config
+  # vi config
+  chmod 600 config
+fi
+

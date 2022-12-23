@@ -1,0 +1,11 @@
+set -x
+
+sudo yum remove -y kibana
+sudo yum remove -y nginx
+
+sudo rm -rf /etc/nginx
+sudo rm -rf /etc/kibana
+sudo rm -rf /var/lib/kibana
+sudo rm -rf /var/log/kibana
+sudo rm -rf /var/lib/nginx
+sudo rm -rf /var/log/nginx 

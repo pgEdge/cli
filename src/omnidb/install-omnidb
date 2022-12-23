@@ -1,0 +1,56 @@
+#!/bin/bash
+cd "$(dirname "$0")"
+
+if [ "$1" == "" ]; then
+  echo "ERROR: version num parm required"
+  exit 1
+fi
+
+ver=$1
+svr=omnidb-server
+url=https://github.com/OmniDB/OmniDB/releases/download
+
+echo " "
+echo "## INSTALL OMNIDB v$ver ##########################################"
+source getPKMG.sh
+
+rm -rf omnidb-*
+rm -rf plugins
+rm -rf static
+
+set -x
+
+if [ "$PKMG" == "yum" ]; then
+  rpm=$(echo ${svr}-${ver}_linux_x86_64.rpm)
+  wget $url/$ver/$rpm
+  sudo rpm -ivh --force $rpm
+else
+  sudo apt install -y wget unzip
+  flags="--quiet --show-progress"
+
+  deb=$(echo ${svr}_${ver}-debian-amd64.deb)
+  wget $flags $url/$ver/$deb
+  sudo dpkg -i $PWD/$deb
+  rc=$?
+  if [ ! "$rc" == "0" ]; then
+    exit $rc
+  fi
+
+fi
+
+lgc=omnidb-pglogical
+zip=$(echo ${lgc}_1.1.0.zip)
+wget $url/$ver/$zip
+unzip $zip
+app_dir=/opt/omnidb-server/OmniDB_app/
+sudo cp -r plugins/ static/ $app_dir
+
+sudo cp omnidb.service /etc/systemd/system/.
+
+sudo systemctl daemon-reload
+sudo systemctl restart omnidb
+
+rm -rf omnidb-*
+rm -rf plugins
+rm -rf static
+

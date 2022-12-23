@@ -1,0 +1,35 @@
+cd "$(dirname "$(readlink -f "$0")")"
+
+pre_url=https://yum.oracle.com/repo/OracleLinux/OL7/latest/x86_64/getPackage
+pre_rpm=oracle-database-preinstall-21c-1.0-1.el7.x86_64.rpm
+
+url=https://download.oracle.com/otn-pub/otn_software/db-express/
+rpm=oracle-database-xe-21c-1.0-1.ol7.x86_64.rpm
+
+sudo yum install -y net-tools wget git
+sudo yum install -y bind-utils compat-libcap1 compat-libstdc++-33 ksh
+sudo yum install -y libaio-devel nfs-utils psmisc smartmontools sysstat 
+sudo yum install -y xorg-x11-utils xorg-x11-xauth
+sudo yum install -y glibc-devel libstdc++-devel zip unzip policycoreutils-python
+
+rm -f oracle-database*
+
+wget $pre_url/$pre_rpm
+rc=$?
+if [ ! "$rc" == "0" ]; then
+  echo "Goodbye!"
+  exit $rc
+fi
+sudo rpm -ivh $pre_rpm
+
+wget $url/$rpm
+rc=$?
+if [ ! "$rc" == "0" ]; then
+  echo "Goodbye!"
+  exit $rc
+fi
+
+sudo rpm -ivh oracle-database*.rpm
+
+##rm -f oracle-database*
+

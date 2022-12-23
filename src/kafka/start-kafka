@@ -1,0 +1,2 @@
+set -x
+sudo systemctl start kafka

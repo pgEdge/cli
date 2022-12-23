@@ -1,0 +1,9 @@
+
+export HIVE_HOME=/usr/local/hive-matastore
+export HADOOP_HOME=$HIVE_HOME/hadoop
+
+set -x
+
+$HIVE_HOME/bin/start-metastore
+
+

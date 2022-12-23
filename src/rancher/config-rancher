@@ -1,0 +1,15 @@
+#!/bin/bash
+cd "$(dirname "$0")"
+
+echo " "
+echo "## CONFIG RKE #############################################"
+
+yml=rancher-cluster.yml
+
+cp $yml.orig $yml
+
+src env.sh
+
+./rke up --config ./rancher-cluster.yml
+
+

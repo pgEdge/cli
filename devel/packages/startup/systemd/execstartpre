@@ -1,0 +1,47 @@
+#!/bin/sh
+# vim: syn=sh ts=4 sts=4 sw=4 et :
+
+doExit=0
+if [ -z "$PGDATA" ] 
+then
+    printf "PGDATA variable not set, exiting...\n"
+    doExit=1
+fi
+
+if [ -z "$PGHOME" ] 
+then
+    printf "PGHOME variable not set, exiting...\n"
+    doExit=1
+fi
+
+if [ -z "$OSUSER" ]
+then
+    printf "The OS user running postgres is not set, exiting...\n"
+    doExit=1
+fi
+
+if [ "$doExit" -eq 1 ]
+then
+    printf "ERROR, Exiting...\n"
+    exit 1
+fi
+
+test -f $PGDATA/postgresql.conf
+
+if [ "$?" -ne 0 ]
+then
+    printf "PostgreSQL not initialized in $PGDATA\n"
+    printf "Configuring now...\n"
+    $PGHOME/bin/initdb -E utf8 -A ident
+    cat <<EOF > /tmp/sedscript.sed
+s/^#listen_addresses = 'localhost'/listen_addresses='*'/g
+s/^#log_line_prefix = ''/log_line_prefix='%t [%p]: [%l-1] user=%u,db=%d,app=%a,client=%h '/g
+s/^#logging_collector = off/logging_collector = on/g
+s/^#log_filename =/log_filename =/g
+s/^#max_wal_senders = 0/max_wal_senders = 5/g
+s/^#wal_level = minimal/wal_level = hot_standby/g
+EOF
+    sed -i.bak -f /tmp/sedscript.sed $PGDATA/postgresql.conf
+fi
+
+

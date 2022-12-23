@@ -1,0 +1,18 @@
+#!/bin/bash
+cd "$(dirname "$0")"
+
+set -x
+
+sudo mkdir -p /usr/share/kibana/config
+sudo cp kibana.yml  /usr/share/kibana/config/kibana.yml
+
+sudo cp nginx-kibana.conf /etc/nginx/conf.d/kibana.conf
+SVRNAME=`hostname -f`
+sudo sed -i -e "s/SERVER_NAME/$SVRNAME/g" /etc/nginx/conf.d/kibana.conf
+
+## You will be prompted for the password for setting up kibana-user as $USER
+sudo htpasswd -c /etc/nginx/.kibana-user $USER
+
+## Testing the NGINX configuration
+sudo nginx -t
+

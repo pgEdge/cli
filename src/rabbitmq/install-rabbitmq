@@ -1,0 +1,13 @@
+
+set -x 
+
+sudo yum -y  install epel-release curl wget
+
+sudo yum -y update --nobest
+
+curl -s https://packagecloud.io/install/repositories/rabbitmq/rabbitmq-server/script.rpm.sh | sudo bash
+
+sudo yum makecache -y --disablerepo='*' --enablerepo='rabbitmq_rabbitmq-server'
+sudo yum -y install rabbitmq-server
+
+sudo systemctl enable --now rabbitmq-server

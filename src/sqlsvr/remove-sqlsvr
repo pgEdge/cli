@@ -1,0 +1,8 @@
+
+set -x
+
+sudo apt-get autoremove -y mssql-*
+
+sudo rm -f /etc/apt/sources.list.d/msprod*
+
+sudo rm -rf /var/opt/mssql

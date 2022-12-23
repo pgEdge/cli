@@ -1,0 +1,7 @@
+
+set -x
+
+sudo yum install -y epel-release
+sudo yum config-manager --set-enabled PowerTools
+
+sudo yum install R

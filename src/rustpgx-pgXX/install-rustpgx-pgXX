@@ -1,0 +1,7 @@
+sh -x
+
+sudo dnf install curl wget cmake gcc -y
+
+curl https://sh.rustup.rs -sSf | sh
+
+cat ~/.cargo/env >> ~/.bashrc

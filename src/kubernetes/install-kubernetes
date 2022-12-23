@@ -1,0 +1,29 @@
+
+channel="$1"
+if [ "$channel" == "" ]; then
+  echo "ERROR: You must specify microk8s channel"
+  exit 1
+fi
+
+echo "## Installing MicroK8s v$channel ##"
+
+set -x
+
+sudo apt install -y  open-iscsi
+sudo systemctl restart open-iscsi iscsid
+sudo systemctl enable open-iscsi iscsid
+sudo systemctl --no-pager -l status open-iscsi iscsid
+
+sudo snap install microk8s --classic --channel=$channel/stable
+rc=$?
+if [ ! "$rc" == "0" ]; then
+  echo "ERROR: microk8s installation error"
+  exit $rc
+fi
+
+sudo microk8s enable dns dashboard helm3 openebs ingress
+
+# sudo microks enable prometheus fluentd host-access
+
+sudo microk8s status --wait-ready
+

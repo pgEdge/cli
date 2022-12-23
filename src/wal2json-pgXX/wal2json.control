@@ -1,0 +1,4 @@
+comment = 'Output plugin for logical decoding into json'
+default_version = '2.3'
+module_pathname = '$libdir/wal2json'
+relocatable = true

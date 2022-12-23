@@ -1,0 +1,2 @@
+echo "nginx starting on port 443"
+sudo systemctl start nginx

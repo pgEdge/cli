@@ -1,0 +1,2 @@
+
+sudo yum -y install perl perl-ExtUtils-Embed

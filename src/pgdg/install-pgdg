@@ -1,0 +1,69 @@
+#!/bin/bash
+cd "$(dirname "$0")"
+
+
+installDEB () {
+  ver="$1"
+  if [ "$ver" == "" ]; then
+    pg="postgresql"
+  else
+    pg="postgresql-$ver"
+  fi
+
+  # Create the file repository configuration:
+  sudo sh -c 'echo "deb http://apt.postgresql.org/pub/repos/apt $VER_OS-pgdg main" > /etc/apt/sources.list.d/pgdg.list'
+
+  # Import the repository signing key:
+  wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo apt-key add -
+
+  # Update the package lists:
+  sudo apt-get update
+
+  # Install, Init & Start PGDG PostgreSQL
+  sudo apt-get -y install $pg
+}
+
+
+installRPM () {
+  ver=$1
+
+  # Install the repository RPM:
+  sudo yum install -y https://download.postgresql.org/pub/repos/yum/reporpms/EL-$VER_OS-x86_64/pgdg-redhat-repo-latest.noarch.rpm
+
+  if [ "$VER_OS" == "8" ]; then
+    # Disable the built-in PostgreSQL module:
+    sudo yum -qy module disable postgresql
+  fi
+
+  # Install PostgreSQL:
+  sudo yum install -y postgresql$ver-server
+
+  # Init & Start PGDG PostgreSQL
+  if [ "$ver" == "96" ]; then
+    dir="9.6"
+    setup="postgresql$ver-setup"
+  else
+    dir="$ver"
+    setup="postgresql-$ver-setup"
+  fi
+  sudo /usr/pgsql-$dir/bin/$setup initdb
+  sudo systemctl enable $SVC_PG
+  sudo systemctl start $SVC_PG
+}
+
+
+## MAINLINE ######################################################
+if [ "$1" == "" ]; then
+  echo "ERROR: You must specify the PostgreSQL version"
+  exit 1
+fi
+
+source env.sh "$1"
+
+echo "## INSTALL PGDG POSTGRESQL ######################################"
+echo "## PKMG=$PKMG, VER_OS=$VER_OS, VER_PG=$VER_PG, SVC_PG=$SVC_PG"
+if [ "$PKMG" == "yum" ]; then
+  installRPM "$VER_PG"
+else
+  installDEB "$VER_PG"
+fi

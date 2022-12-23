@@ -1,0 +1,19 @@
+#!/bin/bash
+cd "$(dirname "$0")"
+
+deb=$(echo ${svr}_linux_x86_64.deb)
+rpm=pgadmin4-redhat-repo-1-1.noarch.rpm
+url=https://ftp.postgresql.org/pub/pgadmin/pgadmin4
+
+echo " "
+echo "## INSTALL PGADMIN 4 #############################################"
+source getPKMG.sh
+
+if [ "$PKMG" == "yum" ]; then
+  sudo rpm -i --force $url/yum/$rpm
+  sudo yum install -y pgadmin4-web
+else
+  wget $url/$ver/$deb
+  sudo apt install -y $deb
+fi
+

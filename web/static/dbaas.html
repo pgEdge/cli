@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <title>OpenRDS: Robust Data Services</title>
+    <link href="payment-form.css" rel="stylesheet">
+<style>
+form {
+  /* Center the form on the page */
+  margin: 0 auto;
+  width: 875px;
+  /* Form outline */
+  padding: 1em;
+  border: 1px solid #CCC;
+  border-radius: 1em;
+}
+
+input:focus,
+textarea:focus {
+  /* Additional highlight for focused elements */
+  border-color: #000;
+}
+
+
+button {
+  /* This extra margin represent roughly the same space as the space
+     between the labels and their text fields */
+  margin-left: .5em;
+}
+</style>
+</head>
+
+<body><center>
+
+<img src=img/openrds-banner1.png />
+
+<form method="post">
+
+<section>
+
+  <fieldset><legend>Relational Database Management Systems</legend><center>
+
+       <table border=0 cellpadding=5  width=850><tr>
+
+         <td width=185><center>
+             <a href=https://postgresql.org><img src=img/postgresql.png width=45 height=45/></label><br>
+             <b>PostgreSQL</b></a><br><i>Most advanced open source database</i></center></td>
+
+         <td width=185><center>
+             <a href=https://oracle.com/database><img src=img/oracle.png width=45 height=45/></label><br>
+             <b>Oracle Database</b></a><br><i>Most popular proprietary database</i></center></td>
+
+         <td width=185><center>
+             <a href=https://microsoft.com><img src=img/sqlsvr.png width=45 height=45/></label><br>
+             <b>MS SQL Server</b></a><br><i>Microsoft&apos;s proprietary offering on Linux</i></center></td>
+
+         <td width=185><center>
+             <a href=https://www.percona.com/software/mysql-database><img src=img/mysql.png width=45 height=45/></label><br>
+             <b>MySQL (Percona)</b></a><br><i>Most popular open source database</i></center></td>
+      </tr></table>
+    </center>
+  </fieldset>
+
+  <p>
+  <center><table border=0 cellpadding=3  width=900><tr>
+    <td width=206>
+      <fieldset><legend> NoSQL </legend><center>
+        <a href=https://mongodb.com ><img src=img/mongodb.png width=45 height=45/><br>
+        <b>MongoDB</b></a><br><i>Distributed document datastore</i>
+      </fieldset>
+    </center></td>
+
+    <td width=206>
+      <fieldset><legend>Data Lakes</legend><center>
+        <a href=https://trino.io><img src=img/presto.png width=45 height=45/><br>
+        <b>PrestoSQL (Trino)</b></a><br><i>Distributed SQL queries for Big Data</i>
+      </fieldset>
+    </center></td>
+
+    <td width=206>
+      <fieldset><legend>Enterprise Search</legend><center>
+        <a href=https://elastic.co><img src=img/elastic-search.png width=45 height=45/><br>
+        <b>Elastic (ELK) Stack</b></a><br><i>Workplace, website & application search</i>
+      </fieldset>
+    </center></td>
+
+    <td width=206>
+      <fieldset><legend>Integration</legend><center>
+        <a href=https://debezium.io><img src=img/debezium.png width=45 height=45/><br>
+        <b>Debezium</b></a><br><i>Stream changes from your database</i>
+      </fieldset>
+    </center></td>
+
+  </tr></table></center>
+
+  <p>
+  <center><table border=0 cellpadding=0 width=900><tr>
+    <td width=206>
+      <fieldset><legend> Messaging </legend><center>
+        <a href=https://rabittmq.com><img src=img/rabbitmq.png width=45 height=45/><br>
+        <b>RabbitMQ w/ Celery</b></a><br><i>Most widely deployed message broker</i>
+      </center></fieldset>
+    </td>
+
+    <td width=206>
+      <fieldset><legend> Load Balancing </legend><center>
+        <a href=https://haproxy.org><img src=img/haproxy.png width=45 height=45/><br>
+        <b>HA Proxy</b></a><br><i>High Performance TCP/HTTP Load Balancer</i>
+      </center></fieldset>
+    </td>
+
+    <td width=206>
+      <fieldset><legend> Distributed Control </legend><center>
+        <table><tr>
+          <td width=100><center><font size=-1>
+            <a href=https://etcd.io><img src=img/etcd.png width=40 height=40/><br>
+            <b>etcd</b></a><br><i>Reliable key-value store</i>
+          </font></center></td>
+          <td width=100><center><font size=-1>
+            <a href=https://zookeeper.apache.org><img src=img/zookeeper.png width=40 height=40/><br>
+            <b>ZooKeeper</b></a><br><i>Reliable coordination</i>
+          </font></center></td>
+        </tr></table>
+      </center></fieldset>
+    </td>
+
+    <td width=206>
+      <fieldset><legend> Event Streaming</legend><center>
+        <a href=https://kafka.apache.org><img src=img/kafka.png width=45 height=45/><br>
+        <b>Kafka</b></a><br><i>A distributed streaming platform</i>
+      </center></fieldset>
+    </td>
+
+  </tr></table></center>
+
+  <br>&nbsp;
+  <fieldset><legend>SIZE <font size=-1>(easy to change whenever needed)</font></legend>
+   <table border=0 width=800><tr>
+    <td width=100><input type="radio" id="ds1" name="sz" value="m">
+       S<table border=0><tr><td width=10>&nbsp;</td><td><font size=-2>1 vCPU,<br>2 GB RAM,<br>$10/mo</font></td></tr></table>
+    </td>
+
+    <td width=100><input type="radio" id="ds1" name="sz" value="m">
+       M<table border=0><tr><td width=10>&nbsp;</td><td><font size=-2>1 vCPU,<br>4 GB RAM,<br>$20/mo</font></td></tr></table>
+    </td>
+
+    <td><input type="radio" id="ds1" name="sz" value="l">
+       L<table border=0><tr><td width=10>&nbsp;</td><td><font size=-2>2 vCPU,<br>8 GB RAM,<br>$40/mo</font></td></tr></table>
+    </td>
+
+    <td><input type="radio" id="ds1" name="sz" value="xl">
+       XL<table border=0><tr><td width=10>&nbsp;</td><td><font size=-2>4 vCPU,<br>16 GB RAM,<br>$80/mo</font></td></tr></table>
+    </td>
+
+    <td><input type="radio" id="ds1" name="sz" value="2xl">
+       2XL<table border=0><tr><td width=10>&nbsp;</td><td><font size=-2>8 vCPU,<br>32 GB RAM,<br>$160/mo</font></td></tr></table>
+    </td>
+
+    <td><input type="radio" id="ds1" name="sz" value="4xl">
+       4XL<table border=0><tr><td width=10>&nbsp;</td><td><font size=-2>16 vCPU,<br>64 GB RAM,<br>$320/mo</font></td></tr></table>
+    </td>
+
+    <td><input type="radio" id="ds1" name="sz" value="8xl">
+       8XL<table border=0><tr><td width=10>&nbsp;</td><td><font size=-2>32 vCPU,<br>128 GB RAM,<br>$640/mo</font></td></tr></table>
+    </td>
+
+    <td><input type="radio" id="ds1" name="sz" value="16xl">
+       16XL<table border=0><tr><td width=10>&nbsp;</td><td><font size=-2>64 vCPU,<br>256 GB RAM,<br>$1280/mo</font></td></tr></table>
+    </td>
+   </tr></table>
+  </fieldset>
+
+  <br>&nbsp;
+  <fieldset>
+  <legend>DATA LOCATION <font size=-1>(always secure & available)</font></legend>
+              <label for="card">
+                <span>Metro Region:</span>
+              </label>
+              <select id=metro name=metro>
+                <option value="us-east-ohio">US East (Ohio)</option>
+                <option value="us-east-nnj">US East (NYC)</option>
+                <option value="us-east-va">US East (Virginia)</option>
+              </select>
+            &nbsp;&nbsp;
+              <label for="card">
+                <span>Provider:</span>
+              </label>
+              <select id=provider name=provider>
+                <option value="openrds">OpenRDS</option>
+                <option value="amazon">Amazon</option>
+              </select>
+  </fieldset>
+
+  <section>
+    <p>
+    <center><button type="submit"><b><font size=+1>Get Started</font></b></button></center>
+  </section>
+
+</section>
+
+</form>
+
+</center></body>
+
+</html>
+

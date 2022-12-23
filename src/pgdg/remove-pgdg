@@ -1,0 +1,13 @@
+#!/bin/bash
+cd "$(dirname "$0")"
+
+source env.sh $1
+
+if [ "$PKMG" == "yum" ]; then
+  cmd="sudo yum remove -y postgresql$VER_PG-server"
+else
+  cmd="sudo apt autoremove -y postgresql-$VER_PG"
+fi
+
+echo $cmd
+$cmd

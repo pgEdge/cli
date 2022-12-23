@@ -1,0 +1,4 @@
+sudo systemctl stop rabbitmq-server
+sudo systemctl disable rabbitmq-server
+sudo yum -y remove rabbitmq-server
+

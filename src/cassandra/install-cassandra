@@ -1,0 +1,22 @@
+
+grep el8 /etc/os-release
+rc=$?
+if [ "$rc" == "0" ]; then
+  echo ''
+else
+  echo 'ERROR 1: we only support EL8 on AMD64'
+  exit 1
+fi
+
+
+if [ `arch` == 'aarch64' ]; then
+  echo 'ERROR 2: we only support EL8 on AMD64'
+  exit 1
+fi
+
+sudo cp cassandra.repo /etc/yum.repos.d/.
+
+sudo yum install cassandra
+
+sudo chkconfig cassandra on
+

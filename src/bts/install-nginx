@@ -1,0 +1,16 @@
+#!/bin/bash
+cd "$(dirname "$0")"
+
+echo " "
+echo "## INSTALL NGINX #################################################"
+source getPKMG.sh
+if [ "$PKMG" == "yum" ]; then
+  sudo yum install -y nginx httpd-tools
+else
+  sudo apt install -y nginx apache2-utils
+fi
+
+sudo systemctl enable nginx
+
+exit 0
+

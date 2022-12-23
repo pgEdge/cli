@@ -1,0 +1,57 @@
+#!/bin/bash
+cd "$(dirname "$0")"
+
+if [ "$1" == "" ]; then
+  echo "ERROR: version num parm required"
+  exit 1
+fi
+
+echo " "
+echo "## INSTALL DEBEZIUM v$1 ###########################"
+source getPKMG.sh
+
+dbzV=$1
+repo=https://repo1.maven.org/maven2/io/debezium
+connectD=/usr/local/kafka/connect
+sudo mkdir -p $connectD
+
+
+getConn () {
+  pDB=$1
+
+  dbzB=debezium-connector-$pDB
+  dbzF=$dbzB-$dbzV-plugin.tar.gz
+  echo "## installing $dbzF"
+
+  rm -rf $dbzB
+  rm -f  $dbzF*
+
+  connector=debezium-connector-$pDB/$dbzV/$dbzF
+  
+  wget -q $repo/$connector
+
+  tar -xf $dbzF
+  rm  $dbzF*
+
+  sudo cp -r $dbzB $connectD/.
+  rm -rf $dbzB
+
+  return
+}
+
+getConn postgres
+getConn oracle
+getConn sqlserver
+getConn mysql
+getConn mongodb
+
+echo ""
+echo "## Installing kafka-connect ##"
+
+set -x
+
+sudo cp kafka-connect.service          /etc/systemd/system/.
+sudo cp connect-distributed.properties /usr/local/kafka/config/.
+
+sudo systemctl daemon-reload
+sudo systemctl start kafka-connect

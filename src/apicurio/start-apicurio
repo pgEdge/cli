@@ -1,0 +1,6 @@
+#!/bin/bash
+cd "$(dirname "$0")"
+
+ar_jar=app/target/apicurio-registry-app-*.Final-runner.jar
+
+java -jar $ar_jar >> apicurio.log 2>&1 &

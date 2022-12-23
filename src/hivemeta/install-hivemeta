@@ -1,0 +1,38 @@
+#!/bin/bash
+cd "$(dirname "$0")"
+
+set -x
+
+hivemetaV=3.0.0
+hadoopV=3.2.1
+
+mirror=http://mirror.cc.columbia.edu/pub/software/apache
+installD=/usr/local
+
+hivemetaD=hive-metastore
+hivemetaF=hive-standalone-metastore-$hivemetaV-bin.tar.gz
+rm -f $hivemetaF*
+wget $mirror/hive/hive-standalone-metastore-$hivemetaV/$hivemetaF
+tar -xf $hivemetaF
+mv apache-hive-metastore-$hivemetaV-bin $hivemetaD
+sudo rm -rf /$installD/$hivemetaD
+sudo cp -r $hivemetaD $installD/.
+rm -rf $hivemetaD
+rm -f $hivemetaF
+
+hadoopD=hadoop-$hadoopV
+hadoopF=$hadoopD.tar.gz
+rm -f $hadoopF*
+wget $mirror/hadoop/core/hadoop-$hadoopV/$hadoopF
+rm -rf $hadoopD
+tar -xf $hadoopF
+mv $hadoopD hadoop
+sudo cp -r hadoop $installD/$hivemetaD/.
+rm -rf hadoop
+rm -f $hadoopF
+
+echo ""
+echo "Now you must run: './io config hivemeta' before starting"
+
+
+
