@@ -1017,7 +1017,7 @@ def fire_api(prog):
 
 
 def update_if_needed():
-  if os.getenv("ND_NO_AUTO_UPDATE") == "1":
+  if os.getenv("NC_NO_AUTO_UPDATE") == "1":
     return
 
   [last_update_utc, xx, yy ] = util.read_hosts("localhost")

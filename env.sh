@@ -1,6 +1,6 @@
 
 bundle=pgedge
-api=ndctl
+api=nc
 hubV=7.00
 
 P15=15.1-4

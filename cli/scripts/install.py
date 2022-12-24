@@ -1,6 +1,6 @@
-####################################################
+#####################################################
 #  Copyright 2022-2023 PGEDGE  All rights reserved. #
-####################################################
+#####################################################
 
 import sys, os
 
@@ -48,7 +48,7 @@ except Exception as e:
   print("ERROR: Unable to unpack \n" + str(e))
   sys.exit(1)
 
-cmd = "pgedge" + os.sep + "ndctl"
+cmd = "pgedge" + os.sep + "nc"
 os.system(cmd + " set GLOBAL REPO " + REPO)
 
 print("ndctl installed.\n")

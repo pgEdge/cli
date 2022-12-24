@@ -114,7 +114,7 @@ if [ -f ~/.bashrc ]; then
 else
   bf=~/.bash_profile
 fi
-grep ND $bf > /dev/null 2>&1
+grep NC $bf > /dev/null 2>&1
 rc=$?
 if [ ! "$rc" == "0" ]; then
   cat bash_profile >> $bf
