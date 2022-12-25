@@ -213,7 +213,7 @@ def replication_set_add_table(db, replication_set, table, cols=None, pg=None):
   sys.exit(0)
 
 
-def local_cluster_create(cluster_name, base_dir="cluster", num_nodes=3):
+def local_cluster_create(cluster_name, num_nodes=3, pg_v="pg15", base_dir="cluster"):
   cluster_dir = base_dir + os.sep + cluster_name
 
   if os.path.exists(cluster_dir):
@@ -227,9 +227,16 @@ def local_cluster_create(cluster_name, base_dir="cluster", num_nodes=3):
 
   for n in range(1, num_nodes+1):
     node_dir = cluster_dir + os.sep + "n" + str(n)
-    util.message("# creating node dir: " + node_dir)
+    util.message("\n\n" + \
+      "###############################################################\n" + \
+      "# creating node dir: " + node_dir)
     os.system("mkdir " + node_dir)
 
+    os.system("cp -r conf " + node_dir + "/.")
+    os.system("cp -r hub  " + node_dir + "/.")
+    os.system("cp nc "      + node_dir + "/.")
+
+    os.system(node_dir + "/nc install pg15 --start  -y")
 
 
 def local_cluster_destroy(cluster_name, base_dir="cluster"):
@@ -238,6 +245,7 @@ def local_cluster_destroy(cluster_name, base_dir="cluster"):
 
 def local_cluster_cmd(cluster_name, cmd, nodes="all"):
   pass
+
 
 if __name__ == '__main__':
   fire.Fire({
