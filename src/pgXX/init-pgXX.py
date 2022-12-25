@@ -160,6 +160,9 @@ util.set_column('logdir', pgver, pg_log)
 
 util.update_postgresql_conf(pgver, i_port, update_listen_addr=is_password)
 
+os.system("cp " + pgver + "/genSelfCert.sh " + pg_data + "/.")
+os.system(pg_data + "/genSelfCert.sh")
+
 if is_password:
   pg_pass_file = util.remember_pgpassword(pg_password, str(i_port))
 else:
