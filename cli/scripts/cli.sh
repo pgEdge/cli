@@ -14,7 +14,7 @@ my_home=`cd "$config_bin"; pwd`
 
 export MY_HOME="$my_home"
 export MY_LOGS="$my_home/logs/cli_log.out"
-export MY_CMD="io"
+export MY_CMD="nc"
 
 cd "$MY_HOME"
 
