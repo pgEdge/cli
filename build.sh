@@ -575,7 +575,10 @@ do
             outDir="$OPTARG"
             setupOutdir
             OS_TYPE="POSIX"
+
             cp $CLI/cli.sh ./$api
+            ln -s $api io
+
             if [ "$outDir" == "posix" ]; then
               OS="???"
               platx="posix"
