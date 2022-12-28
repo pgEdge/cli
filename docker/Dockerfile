@@ -1,6 +1,6 @@
 FROM rockylinux:8
 
-LABEL maintainer="OSCG-IO team"
+LABEL maintainer="NDCTL team"
 
 SHELL ["/bin/bash", "-c"]
 
@@ -11,14 +11,14 @@ RUN dnf update -y \
     && dnf clean all \
     && rm -rf /var/cache/yum
 
-RUN useradd oscg -U -m -d /opt/oscg \
-    && echo "%oscg ALL=(ALL)       NOPASSWD: ALL" >> /etc/sudoers
+RUN useradd pgedge -U -m -d /home/pgedge \
+    && echo "pgedge ALL=(ALL)       NOPASSWD: ALL" >> /etc/sudoers
 
-USER oscg
-WORKDIR /opt/oscg
+USER pgedge
+WORKDIR /home/pgedge
 
-RUN git clone https://github.com/oscg-io/io
-WORKDIR io
+RUN git clone https://github.com/pgedge/ndctl 
+WORKDIR ndctl
 RUN ./setupInitial.sh \
     && dnf clean all \
     && rm -rf /var/cache/yum
