@@ -14,6 +14,17 @@ except ImportError as e:
   util.exit_message("Missing 'psycopg2' module from pip", 1)
 
 
+def echo_cmd(cmd, sleep_secs=0):
+  util.message("# " + str(cmd))
+  rc = os.system(str(cmd))
+  if rc == 0:
+    if sleep_secs > 0:
+      os.system("sleep " + str(sleep_secs))
+    return(0)
+
+  return(1)
+
+
 def run_psyco_sql(pg_v, db, cmd, usr=None):
   if usr == None:
     usr = "postgres"
@@ -201,6 +212,7 @@ def get_replication_tables(db,schema=None,pg=None):
   run_psyco_sql(pg_v, db, sql)
   sys.exit(0)
 
+
 def replication_set_add_table(db, replication_set, table, cols=None, pg=None):
   pg_v = get_pg_v(pg)
 
@@ -213,7 +225,7 @@ def replication_set_add_table(db, replication_set, table, cols=None, pg=None):
   sys.exit(0)
 
 
-def local_cluster_create(cluster_name, num_nodes=3, pg_v="pg15", base_dir="cluster"):
+def local_cluster_create(cluster_name, port1=6432, num_nodes=3, pg_v="pg15", base_dir="cluster"):
   cluster_dir = base_dir + os.sep + cluster_name
 
   if os.path.exists(cluster_dir):
@@ -224,6 +236,11 @@ def local_cluster_create(cluster_name, num_nodes=3, pg_v="pg15", base_dir="clust
 
   if num_nodes < 1:
     util.exit_messages("num-nodes must be >= 1", 1)
+
+  for n in range(port1, port1 + num_nodes):
+    util.message("checking port " + str(n) + " availability")
+    if util.is_socket_busy(n):
+      util.exit_message("port not avaiable", 1)
 
   for n in range(1, num_nodes+1):
     node_dir = cluster_dir + os.sep + "n" + str(n)
@@ -240,11 +257,32 @@ def local_cluster_create(cluster_name, num_nodes=3, pg_v="pg15", base_dir="clust
 
 
 def local_cluster_destroy(cluster_name, base_dir="cluster"):
-  pass
+  cluster_dir = base_dir + "/" + str(cluster_name)
+  if not os.path.exists(cluster_dir):
+    util.exit_message("cluster not found: " + cluster_dir, 1)
+
+  local_cluster_cmd(cluster_name, "all", "stop", base_dir)
+
+  echo_cmd("rm -rf " + cluster_dir, 1)
 
 
-def local_cluster_cmd(cluster_name, cmd, nodes="all"):
-  pass
+def local_cluster_cmd(cluster_name, node, cmd, base_dir="cluster"):
+  cluster_dir = base_dir + "/" + str(cluster_name)
+
+  if node != "all":
+    rc = echo_cmd(cluster_dir + "/" + str(node) + "/nc " + str(cmd))
+    return(rc)
+
+  rc = 0
+  nd=1
+  node_dir = cluster_dir + "/n" + str(nd)
+
+  while os.path.exists(node_dir):
+    rc = echo_cmd(node_dir + "/nc " + str(cmd), 1)
+    nd = nd + 1
+    node_dir = cluster_dir + "/n" + str(nd)
+
+  return(rc)
 
 
 if __name__ == '__main__':
