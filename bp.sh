@@ -7,6 +7,11 @@ echo "########## Build POSIX Sandbox ##########"
 
 outp="out/posix"
 
+clusterDir=$outp/cluster
+if [ -d $clusterDir ]; then
+  $outp/$api spock local-cluster-destroy all --verbose
+fi
+
 if [ -d $outp ]; then
   echo "Removing current '$outp' directory..."
   $outp/$api stop
