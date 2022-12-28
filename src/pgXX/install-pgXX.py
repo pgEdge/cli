@@ -15,11 +15,13 @@ if isFIPS == "True":
   os.system("rm -v " + thisDir + "/lib/libssl*")
 
 if isSTART == "True":
-  util.message("Starting PG with default password")
+  util.message("Starting PG with: ")
   MY_CMD = os.getenv('MY_CMD')
   MY_HOME = os.getenv('MY_HOME')
   start_cmd = MY_HOME + os.sep + MY_CMD + " start " + pgver + " -y"
+  util.message(start_cmd)
   os.system(start_cmd)
+  sys.exit(0)
   
 if isAutoStart != "True":
   sys.exit(0)

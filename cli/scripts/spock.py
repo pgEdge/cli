@@ -225,7 +225,7 @@ def replication_set_add_table(db, replication_set, table, cols=None, pg=None):
   sys.exit(0)
 
 
-def local_cluster_create(cluster_name, port1=6432, num_nodes=3, pg_v="pg15", base_dir="cluster"):
+def local_cluster_create(cluster_name, num_nodes=2, port1=6432, pg_v="pg15", base_dir="cluster"):
   cluster_dir = base_dir + os.sep + cluster_name
 
   if os.path.exists(cluster_dir):
@@ -242,6 +242,7 @@ def local_cluster_create(cluster_name, port1=6432, num_nodes=3, pg_v="pg15", bas
     if util.is_socket_busy(n):
       util.exit_message("port not avaiable", 1)
 
+  nd_port = port1
   for n in range(1, num_nodes+1):
     node_dir = cluster_dir + os.sep + "n" + str(n)
     util.message("\n\n" + \
@@ -253,7 +254,12 @@ def local_cluster_create(cluster_name, port1=6432, num_nodes=3, pg_v="pg15", bas
     os.system("cp -r hub  " + node_dir + "/.")
     os.system("cp nc "      + node_dir + "/.")
 
-    os.system(node_dir + "/nc install pg15 --start  -y")
+    nc = (node_dir + "/nc ")
+    echo_cmd(nc + "install " + pg_v)
+    echo_cmd(nc + "init " + pg_v + " --port " + str(nd_port))
+    echo_cmd(nc + "start " + pg_v)
+
+    nd_port = nd_port + 1
 
 
 def local_cluster_destroy(cluster_name, base_dir="cluster"):
