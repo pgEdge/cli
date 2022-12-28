@@ -263,6 +263,24 @@ def local_cluster_create(cluster_name, num_nodes=2, port1=6432, pg_v="pg15", bas
 
 
 def local_cluster_destroy(cluster_name, base_dir="cluster"):
+  if not os.path.exists(base_dir):
+    util.exit_message("no cluster directory: " + str(base_dir), 1)
+
+  if cluster_name == "all":
+    kount = 0
+    for it in os.scandir(base_dir):
+      if it.is_dir():
+        kount = kount + 1
+        lc_destroy1(it.name, base_dir)
+    
+    if kount == 0:
+      util.exit_message("no cluster(s) to delete", 1)
+
+  else:
+    lc_destroy1(cluster_name, base_dir)
+
+
+def lc_destroy1(cluster_name, base_dir):
   cluster_dir = base_dir + "/" + str(cluster_name)
   if not os.path.exists(cluster_dir):
     util.exit_message("cluster not found: " + cluster_dir, 1)
