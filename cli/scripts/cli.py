@@ -1332,11 +1332,12 @@ try:
     if not pg_v.isnumeric():
       util.exit_message("'" + pg_v + "' must be a numeric value for an installed pg version", 1, isJSON)
 
-    pg_dir = "pg" + pg_v + "/bin/"
+    pg_dir = "pg" + pg_v
+    pg_bin = pg_dir + "/bin/"
     if not os.path.isdir(pg_dir):
       util.exit_message("postgres not found at: " + pg_dir, 1, isJSON)
 
-    cmd1 = pg_dir + cmd0
+    cmd1 = pg_bin + cmd0
     if not os.path.exists(cmd1):
       util.exit_message("'" + cmd1 +"' not a valid pgbin command", 1, isJSON)
 
@@ -1345,7 +1346,8 @@ try:
     if len(cmd_parms_arr) > 1:
       util.exit_message("command params must not contain an embeded semi-colon", 1, isJSON)
 
-    final_safe_cmd = cmd1 + " " + cmd_parms + " -U postgres"
+    port = util.get_comp_port(pg_dir)
+    final_safe_cmd = cmd1 + " " + cmd_parms + " --port=" + str(port)
     if isVERBOSE:
       print(final_safe_cmd)
 
