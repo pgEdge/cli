@@ -78,28 +78,28 @@ if util.is_admin() :
 
 ## PASSWD #############################################
 is_password=False
-pgpass_file = pg_home + os.sep + ".pgpass"
-if args.pwfile:
-  pgpass_file = args.pwfile
-  if not os.path.isfile(pgpass_file):
-    fatal_error("Error: Invalid --pwfile")
-
-if os.path.isfile(pgpass_file):
-  is_password=True
-  file = open(pgpass_file, 'r')
-  line = file.readline()
-  pg_password = line.rstrip()
-  file.close()
-else:
-  if not isSilent:
-    pg_password = util.get_superuser_passwd()
-    file = open(pgpass_file, 'w')
-    file.write(pg_password + '\n')
-    file.close()
-    is_password=True
-
-if is_password:
-  os.chmod(pgpass_file, 0o600)
+##pgpass_file = pg_home + os.sep + ".pgpass"
+##if args.pwfile:
+##  pgpass_file = args.pwfile
+##  if not os.path.isfile(pgpass_file):
+##    fatal_error("Error: Invalid --pwfile")
+##
+##if os.path.isfile(pgpass_file):
+##  is_password=True
+##  file = open(pgpass_file, 'r')
+##  line = file.readline()
+##  pg_password = line.rstrip()
+##  file.close()
+##else:
+##  if not isSilent:
+##    pg_password = util.get_superuser_passwd()
+##    file = open(pgpass_file, 'w')
+##    file.write(pg_password + '\n')
+##    file.close()
+##    is_password=True
+##
+##if is_password:
+##  os.chmod(pgpass_file, 0o600)
 
 ## LOGS ###############################################
 data_root_logs = os.path.join(data_root, "logs")
@@ -132,6 +132,8 @@ if args.options == "":
 else:
   init_options = args.options
 
+os_user = util.get_user()
+
 # Does the user want to assign a password ?
 if is_password:
   batcmd = initdb_cmd + ' -U postgres -A scram-sha-256 ' + init_options + \
@@ -139,7 +141,7 @@ if is_password:
            '--pwfile="' + pgpass_file + '" > "' + logfile + '" 2>&1'
 else:
   # If not, use -A ident (actually sets peer for local and ident for loopback)
-  batcmd = initdb_cmd + ' -U postgres -A ident ' + init_options + \
+  batcmd = initdb_cmd + ' -U ' + os_user + ' -A ident ' + init_options + \
            ' -D "' + pg_data + '" ' + \
            ' > "' + logfile + '" 2>&1'
 
@@ -168,7 +170,7 @@ if is_password:
 else:
   pg_pass_file=None
 
-util.write_pgenv_file(pg_home, pgver, pg_data, 'postgres', 'postgres', str(i_port), pg_pass_file)
+util.write_pgenv_file(pg_home, pgver, pg_data, os_user, 'postgres', str(i_port), pg_pass_file)
 
 if is_password:
   src_dir = pg_home + os.sep + "init" + os.sep
