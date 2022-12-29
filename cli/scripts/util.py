@@ -1,6 +1,6 @@
-####################################################
+#####################################################
 #  Copyright 2022-2023 PGEDGE  All rights reserved. #
-####################################################
+#####################################################
 
 from __future__ import print_function, division
 
@@ -243,11 +243,14 @@ def run_cmd (p_cmd, p_display=False):
 
 def run_sql_cmd(p_pg, p_sql, p_display=False):
   port = get_column("port", p_pg)
-  cmd = 'psql -U postgres -p ' + str(port) + ' -c "' + p_sql + '"'
+  cmd = 'psql -p ' + str(port) + ' -c "' + p_sql + '"'
 
   db = os.getenv("pgName", "")
   if db > "":
     cmd = cmd + "  " + str(db)
+  else:
+    cmd = cmd + " postgres"
+
 
   cmd = os.path.join(p_pg, "bin", cmd)
 

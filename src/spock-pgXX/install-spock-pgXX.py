@@ -1,6 +1,6 @@
  
 ####################################################################
-######          Copyright (c)  2021-2022 OSCG             ##########
+######          Copyright (c)  2022-2023 PGEDGE           ##########
 ####################################################################
 
 import util, datetime, os
@@ -23,14 +23,15 @@ day = datetime.datetime.now().strftime('%a')
 ##ip = util.get_1st_ip()
 ##port = util.get_comp_port("pgXX")
 ##util.remember_pgpassword(passwd, port, ip, "*", "replication")
-##sql="CREATE ROLE replication WITH SUPERUSER REPLICATION LOGIN ENCRYPTED PASSWORD '" + passwd + "'"
-##util.run_sql_cmd("pgXX", sql, False)
 
-datadir = util.get_column("datadir", "pgXX")
-os.system("cp " + datadir + "/pg_hba.conf " + datadir + "/pg_hba.conf.orig")
+sql="CREATE ROLE replication WITH SUPERUSER REPLICATION"
+util.run_sql_cmd("pgXX", sql, False)
 
-thisdir = os.path.dirname(os.path.realpath(__file__))
-os.system("cp " + thisdir + "/pg_hba.conf.replication " + datadir + "/pg_hba.conf")
+##datadir = util.get_column("datadir", "pgXX")
+##os.system("cp " + datadir + "/pg_hba.conf " + datadir + "/pg_hba.conf.orig")
+
+##thisdir = os.path.dirname(os.path.realpath(__file__))
+##os.system("cp " + thisdir + "/pg_hba.conf.replication " + datadir + "/pg_hba.conf")
 
 util.create_extension("pgXX", "spock", True)
 
