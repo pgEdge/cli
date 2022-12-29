@@ -45,7 +45,7 @@ if ((pgName > "") and (isYes == "True")):
    util.message("\n # waiting for DB to start...")
    time.sleep(4)
    cmd = os.path.join(pgver, 'bin', 'createdb')
-   cmd = cmd + " -U postgres -w -e -p " + str(port) + " " + str(pgName)
+   cmd = cmd + " -w -e -p " + str(port) + " " + str(pgName)
    util.message("\n # " + cmd)
 
    cmd = os.path.join(MY_HOME, cmd)
