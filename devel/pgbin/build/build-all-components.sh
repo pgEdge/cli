@@ -161,18 +161,19 @@ if [ "$1" == "timescaledb" ] || [ "$1" == "all" ]; then
 fi
 
 if [ "$1" == "spock" ] || [ "$1" == "all" ]; then
-  pgV=$2      
+  pgV=$2
   echo "# SPOCK_BUILD_DELTA_APPLY = $SPOCK_BUILD_DELTA_APPLY"
   if [ ! "$SPOCK_BUILD_DELTA_APPLY" == "true" ]; then
     build spock $spockFullV $pgV  spock
   else
+    ##set -x
     cd spock
     git checkout delta_apply || get checkout -b delta_apply origin/delta_apply
     rc=$?
     git pull
     cd ..
     if [ "$rc" == "0" ]; then
-      zip_f=spock-da.tar.gz
+      zip_f=spock-3.0da-$MMDD.tar.gz
       rm -f $zip_f
       tar czf $zip_f spock
     fi
@@ -181,8 +182,8 @@ if [ "$1" == "spock" ] || [ "$1" == "all" ]; then
     pgver="--with-pgver $3"
     src=$PWD/$zip_f
     echo ""
-    cmd="./build-component.sh --build-$1 $src $pgbin $pgver $copyBin $4"
-    ##echo "my cmd=$cmd"
+    cmd="./build-component.sh --build-$1 $src $pgbin $pgver $copyBin spock"
+    echo "my cmd=$cmd"
     $cmd
   fi
 fi

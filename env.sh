@@ -3,6 +3,9 @@ bundle=pgedge
 api=nc
 hubV=7.00
 
+spockV=3.0da-1229-1
+##spockV=3.0.12-1
+
 P15=15.1-4
 P14=14.6-1
 
@@ -32,7 +35,6 @@ ddlxV=0.17-1
 hypoV=1.3.1-1
 timescaleV=2.8.0-1
 logicalV=2.4.2-1
-spockV=3.0.12-1
 profV=4.2-1
 bulkloadV=3.1.19-1
 partmanV=4.7.1-1

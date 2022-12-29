@@ -1,8 +1,11 @@
 #!/bin/bash
 
+SPOCK_BUILD_DELTA_APPLY=true
+MMDD=`date +'%m%d'`
+
 spV=3.0.12
 if [ "$SPOCK_BUILD_DELTA_APPLY" == "true" ]; then
-  spV=3.0da
+  spV=3.0da-$MMDD
 fi
 spockFullV=$spV
 spockShortV=
