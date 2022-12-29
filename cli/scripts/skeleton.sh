@@ -19,17 +19,17 @@ function test15 {
   ./io install pg15; 
   ./io start pg15 -y -d demo;
 
+  ./io install spock-$pgV         -d demo
   ./io install multicorn2-$pgV    -d demo
   ./io install plprofiler-$pgV    -d demo
   ./io install pldebugger-$pgV    -d demo
 
   ./io install repack-$pgV        -d demo
   ./io install orafce-$pgV        -d demo
-  ./io install spock-$pgV        -d demo
-
-  ./io install bulkload-$pgV      -d demo
   ./io install partman-$pgV       -d demo
   ./io install cron-$pgV
+
+  #./io install bulkload-$pgV      -d demo
 
   #./io install plv8-$pgV          -d demo
 
