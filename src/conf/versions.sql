@@ -309,7 +309,7 @@ INSERT INTO versions VALUES ('timescaledb-pg14', '2.8.0-1',  'el8, arm', 0, '202
 INSERT INTO projects VALUES ('spock', 4, 0, 'hub', 1, 'https://github.com/pgedge/spock/tags',
   'spock', 1, 'spock.png', 'Logical & Multi-Master Replication', 'https://github.com/pgedge/spock/#spock');
 INSERT INTO releases VALUES ('spock-pg15', 4, 'spock', 'Spock', '', 'prod', '', 1, 'POSTGRES', '', '');
-INSERT INTO versions VALUES ('spock-pg15', '3.0da-1229-1', 'el8, arm', 1, '20221229', 'pg15', '', '');
+INSERT INTO versions VALUES ('spock-pg15', '3.0da-0101-1', 'el8, arm', 1, '20230101', 'pg15', '', '');
 INSERT INTO versions VALUES ('spock-pg15', '3.0.12-1',     'el8, arm', 0, '20221222', 'pg15', '', '');
 
 INSERT INTO projects VALUES ('pglogical', 4, 0, 'hub', 1, 'https://github.com/2ndQuadrant/pglogical/releases',
