@@ -24,7 +24,7 @@ if os.path.exists("pgedge"):
   print("ERROR: Cannot install over an existing 'pgedge' directory.")
   sys.exit(1)
 
-my_file="pgedge-" + VER + ".tar.bz2"
+my_file="pgedge-nc-" + VER + ".tar.bz2"
 f = REPO + "/" + my_file
 
 if not os.path.exists(my_file):
@@ -51,7 +51,7 @@ except Exception as e:
 cmd = "pgedge" + os.sep + "nc"
 os.system(cmd + " set GLOBAL REPO " + REPO)
 
-print("ndctl installed.\n")
+print("pgedge/nc (ndctl) installed.\n")
 
 sys.exit(0)
 

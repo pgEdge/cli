@@ -5,7 +5,8 @@ import util, meta
 try:
   import fire
 except ImportError as e:
-  util.exit_message("Missing 'fire' module from pip", 1)
+  util.message("WARNING: Missing 'fire' module from pip")
+  pass 
 
 
 def gen_self_cert():
