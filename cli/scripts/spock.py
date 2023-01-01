@@ -225,14 +225,12 @@ def replication_set_add_table(db, replication_set, table, cols=None, pg=None):
   sys.exit(0)
 
 
-def local_cluster_create(cluster_name, num_nodes=2, port1=6432, pg="15", base_dir="cluster"):
+def local_cluster_create(cluster_name, num_nodes=3, port1=6432, pg="15", base_dir="cluster"):
   cluster_dir = base_dir + os.sep + cluster_name
 
-  if os.path.exists(cluster_dir):
-    util.exit_message("cluster already exists: " + str(cluster_dir), 1)
-
-  util.message("# creating cluster dir: " + cluster_dir)
-  os.system("mkdir -p " + cluster_dir)
+  kount = meta.get_installed_count()
+  if kount > 0:
+    util.exit_message("No other components can be installed when using local_cluster_create()", 1)
 
   if num_nodes < 1:
     util.exit_messages("num-nodes must be >= 1", 1)
@@ -241,6 +239,12 @@ def local_cluster_create(cluster_name, num_nodes=2, port1=6432, pg="15", base_di
     util.message("checking port " + str(n) + " availability")
     if util.is_socket_busy(n):
       util.exit_message("port not avaiable", 1)
+
+  if os.path.exists(cluster_dir):
+    util.exit_message("cluster already exists: " + str(cluster_dir), 1)
+
+  util.message("# creating cluster dir: " + cluster_dir)
+  os.system("mkdir -p " + cluster_dir)
 
   pg_v = "pg" + str(pg)
 

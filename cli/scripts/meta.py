@@ -13,6 +13,18 @@ import datetime
 import mistune
 
 
+def get_installed_count():
+  data = []
+  sql = "SELECT count(*) FROM components WHERE component <> 'hub'"
+  try:
+    c = con.cursor()
+    c.execute(sql)
+    data = c.fetchone()
+    return(data[0])
+  except Exception as e:
+    fatal_error(e, sql, "get_installed_count")
+
+
 def get_installed_pg():
   data = []
   sql = "SELECT component FROM components WHERE component like 'pg1%'"
