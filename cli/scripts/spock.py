@@ -27,7 +27,7 @@ def echo_cmd(cmd, sleep_secs=0):
 
 def run_psyco_sql(pg_v, db, cmd, usr=None):
   if usr == None:
-    usr = "postgres"
+    usr = util.get_user()
 
   dbp = util.get_column("port", pg_v)
 
@@ -36,7 +36,8 @@ def run_psyco_sql(pg_v, db, cmd, usr=None):
     util.message(cmd, "info")
 
   try:
-    con = psycopg2.connect(dbname=db, user=usr, host="localhost", port=dbp)
+    ##con = psycopg2.connect(dbname=db, user=usr, host="localhost", port=dbp)
+    con = psycopg2.connect(dbname=db, port=dbp)
     cur = con.cursor(cursor_factory=RealDictCursor)
     cur.execute(cmd)
     con.commit()
@@ -75,9 +76,9 @@ def get_pg_v(pg):
   if not os.path.isdir(pg_v):
     util.exit_message(str(pg_v) + " not installed", 1)
 
-  rc = os.system(pg_v + "/bin/pg_isready > /dev/null 2>&1")
-  if rc != 0:
-    util.exit_message(pg_v + " not ready", 1) 
+  ##rc = os.system(pg_v + "/bin/pg_isready > /dev/null 2>&1")
+  ##if rc != 0:
+  ##  util.exit_message(pg_v + " not ready", 1) 
 
   return(pg_v)
 
@@ -103,7 +104,6 @@ def get_eq(parm, val, sufx):
   colon_equal = str(parm) + " := '" + str(val) + "'" + str(sufx)
 
   return(colon_equal)
-
 
 def create_node(node_name, dsn, db, pg=None):
   pg_v = get_pg_v(pg)
@@ -202,7 +202,7 @@ def get_pii_cols(db,schema=None,pg=None):
   run_psyco_sql(pg_v, db, sql)
   sys.exit(0)
 
-def get_replication_tables(db,schema=None,pg=None):
+def get_replication_tables(db, schema=None,pg=None):
   pg_v = get_pg_v(pg)
 
   if schema == None:
@@ -213,7 +213,7 @@ def get_replication_tables(db,schema=None,pg=None):
   sys.exit(0)
 
 
-def replication_set_add_table(db, replication_set, table, cols=None, pg=None):
+def replication_set_add_table(replication_set, table, db, cols=None, pg=None):
   pg_v = get_pg_v(pg)
 
   if cols == None:
@@ -250,7 +250,9 @@ def local_cluster_create(cluster_name, num_nodes=3, port1=6432, pg="15", base_di
 
   nd_port = port1
   for n in range(1, num_nodes+1):
-    node_dir = cluster_dir + os.sep + "n" + str(n)
+    node_nm = "n" + str(n)
+    node_dir = cluster_dir + os.sep + node_nm
+
     util.message("\n\n" + \
       "###############################################################\n" + \
       "# creating node dir: " + node_dir)
@@ -267,6 +269,20 @@ def local_cluster_create(cluster_name, num_nodes=3, port1=6432, pg="15", base_di
 
     pgbench_cmd = '"pgbench --initialize --scale=' + str(num_nodes) + ' postgres"'
     echo_cmd(nc + "pgbin " + str(pg) +  " " + pgbench_cmd)
+
+    rep_set='pgbench-rep-set'
+    db='postgres'
+
+    echo_cmd(nc + " spock create-node '" + node_nm + "' --dsn 'host=localhost user=replication' --db " + db)
+    
+    ##local_cluster_cmd(cluster_name, node_nm, cmd)
+
+    ##create_node(node_nm, 'host=localhost user=replication', db)
+    ##create_replication_set(rep_set, db)
+
+    ##replication_set_add_table(rep_set, 'pgbench_accounts', db)
+    ##replication_set_add_table(rep_set, 'pgbench_branches', db)
+    ##replication_set_add_table(rep_set, 'pgbench_tellers', db)
 
     nd_port = nd_port + 1
 
