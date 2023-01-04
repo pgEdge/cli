@@ -163,81 +163,11 @@ function updateSharedLibs {
 }
 
 
-function buildTSQLComponent {
-
-	componentName="pgtsql$pgTSQLShortV-pg$pgShortVersion-$pgTSQLFullV-$pgTSQLBuildV-$buildOS"
-    echo "#   compNm: $componentName"
-	mkdir -p "$baseDir/$workDir/logs"
-	cd "$baseDir/$workDir"
-	mkdir pgtsql && tar -xf $tsqlSource --strip-components=1 -C pgtsql
-	cd pgtsql
-
-	buildLocation="$baseDir/$workDir/build/$componentName"
-
-	prepComponentBuildDir $buildLocation
-
-
-	PATH=$buildLocation/bin:$PATH
-	USE_PGXS=1 make > $baseDir/$workDir/logs/pgtsql_make.log 2>&1
-	if [[ $? -eq 0 ]]; then
-		 USE_PGXS=1 make install > $baseDir/$workDir/logs/pgtsql_install.log 2>&1
-		if [[ $? -ne 0 ]]; then
-			echo "TSQL install failed, check logs for details."
-		fi
-	else
-		echo "TSQL Make failed, check logs for details."
-		return 1
-	fi
-
-	componentBundle=$componentName
-	cleanUpComponentDir $buildLocation
-	updateSharedLibs
-	packageComponent $componentBundle
-}
-
-
-function buildSetUserComponent {
-
-	componentName="setuser$setUserShortVersion-pg$pgShortVersion-$setUserFullVersion-$setUserBuildV-$buildOS"
-	mkdir -p "$baseDir/$workDir/logs"
-	cd "$baseDir/$workDir"
-	mkdir setuser && tar -xf $setUserSource --strip-components=1 -C setuser
-	cd setuser
-
-	buildLocation="$baseDir/$workDir/build/$componentName"
-
-	prepComponentBuildDir $buildLocation
-
-	PATH=$buildLocation/bin:$PATH
-	USE_PGXS=1 make > $baseDir/$workDir/logs/setuser_make.log 2>&1
-	if [[ $? -eq 0 ]]; then
-		 USE_PGXS=1 make install > $baseDir/$workDir/logs/setuser_install.log 2>&1
-		if [[ $? -ne 0 ]]; then
-			echo "SetUser install failed, check logs for details."
-		fi
-	else
-		echo "SetUser Make failed, check logs for details."
-		return 1
-	fi
-
-	componentBundle=$componentName
-	cleanUpComponentDir $buildLocation
-	updateSharedLibs
-	packageComponent $componentBundle
-}
-
 
 function configureComp {
     rc=0
 
     make="make"
-
-    if [ "$comp" == "odyssey" ]; then
-        echo "# configure odyssey..."
-        make="make local_build"
-        rc="0"
-
-    fi
 
     if [ "$comp" == "plv8" ]; then
         echo "# configure plv8..."
@@ -258,13 +188,6 @@ function configureComp {
 
     if [ "$comp" == "citus" ]; then
         echo "# configure citus..."
-        ./configure --prefix=$buildLocation >> $make_log 2>&1 
-        rc=$?
-    fi
-
-    if [ "$comp" == "pgtop" ]; then
-        echo "# configure pgtop..."
-        ./autogen.sh >> $make_log 2>&1
         ./configure --prefix=$buildLocation >> $make_log 2>&1 
         rc=$?
     fi
@@ -560,7 +483,7 @@ function buildTimeScaleDBComponent {
         packageComponent $componentBundle
 }
 
-TEMP=`getopt -l no-tar, copy-bin,no-copy-bin,with-pgver:,with-pgbin:,build-hypopg:,build-postgis:,build-bouncer:,build-pgtsql:,build-tdsfdw:,build-mongofdw:,build-mysqlfdw:,build-pgredis:,build-oraclefdw:,build-orafce:,build-audit:,build-set-user:,build-partman:,build-pldebugger:,build-plr:,build-pljava:,build-plv8:,build-plprofiler:,build-background:,build-bulkload:,build-backrest:,build-psqlodbc:,build-repack:,build-spock:,build-pglogical:,build-hintplan:,build-autofailover:,build-odyssey:,build-statkcache:,build-qualstats:,build-archivist:,build-waitsampling:,build-timescaledb:,build-cron:,build-multicorn2:,build-fixeddecimal:,build-anon,build-ddlx:,build-http:,build-pgtop:,build-proctab:,build-agent:,build-citus:,build-number: -- "$@"`
+TEMP=`getopt -l no-tar, copy-bin,no-copy-bin,with-pgver:,with-pgbin:,build-hypopg:,build-postgis:,build-bouncer:,build-tdsfdw:,build-mongofdw:,build-mysqlfdw:,build-oraclefdw:,build-orafce:,build-audit:,build-set-user:,build-partman:,build-pldebugger:,build-plr:,build-pljava:,build-plv8:,build-plprofiler:,build-bulkload:,build-backrest:,build-psqlodbc:,build-repack:,build-spock:,build-pglogical:,build-hintplan:,build-timescaledb:,build-cron:,build-multicorn2:,build-fixeddecimal:,build-anon,build-ddlx:,build-agent:,build-citus:,build-number: -- "$@"`
 
 if [ $? != 0 ] ; then
 	echo "Required parameters missing, Terminating..."
@@ -577,13 +500,11 @@ while true; do
     --target-dir ) targetDirPassed=true; targetDir=$2; shift; shift ;;
     --build-postgis ) buildPostGIS=true; Source=$2; shift; shift ;;
     --build-bouncer ) buildBouncer=true; Source=$2; shift; shift; ;;
-    --build-pgtsql ) buildTSQL=true; tsqlSource=$2; shift; shift ;;
     --build-tdsfdw ) buildTDSFDW=true; Source=$2; shift; shift ;;
     --build-mongofdw ) buildMongoFDW=true Source=$2; shift; shift ;;
     --build-wal2json ) buildWal2json=true Source=$2; shift; shift ;;
     --build-decoderbufs ) buildDecoderBufs=true Source=$2; shift; shift ;;
     --build-mysqlfdw ) buildMySQLFDW=true; Source=$2; shift; shift ;;
-    --build-pgredis ) buildPgRedis=true; Source=$2; shift; shift ;;
     --build-oraclefdw ) buildOracleFDW=true; Source=$2; shift; shift ;;
     --build-orafce ) buildOrafce=true; Source=$2; shift; shift ;;
     --build-fixeddecimal ) buildFD=true; Source=$2; shift; shift ;;
@@ -603,23 +524,15 @@ while true; do
     --build-pglogical ) buildPgLogical=true; Source=$2; shift; shift ;;
     --build-spock ) buildSpock=true; Source=$2; shift; shift ;;
     --build-hintplan ) buildHintPlan=true; Source=$2; shift; shift ;;
-    --build-odyssey ) buildOdyssey=true; Source=$2; shift; shift ;;
-    --build-autofailover ) buildAFO=true; Source=$2; shift; shift ;;
-    --build-archivist ) buildArchiv=true; Source=$2; shift; shift ;;
-    --build-qualstats ) buildQualStats=true; Source=$2; shift; shift ;;
-    --build-waitsampling ) buildWaitSampling=true; Source=$2; shift; shift ;;
-    --build-statkcache ) buildStatKcache=true; Source=$2; shift; shift ;;
     --build-timescaledb ) buildTimeScaleDB=true; timescaleDBSource=$2; shift; shift ;;
     --build-cron ) buildCron=true; Source=$2; shift; shift ;;
     --build-multicorn2 ) buildMulticorn2=true; Source=$2; shift; shift ;;
     --build-anon ) buildAnon=true; Source=$2; shift; shift ;;
     --build-ddlx ) buildDdlx=true; Source=$2; shift; shift ;;
-    --build-http ) buildHttp=true; Source=$2; shift; shift ;;
     --build-pgtop ) buildPgTop=true; Source=$2; shift; shift ;;
     --build-proctab ) buildProctab=true; Source=$2; shift; shift ;;
     --build-agent ) buildAgent=true; Source=$2; shift; shift ;;
     --build-citus ) buildCitus=true; Source=$2; shift; shift ;;
-    --build-background ) buildBackground=true; Source=$2; shift; shift ;;
     --copy-bin ) copyBin=true; shift; shift; ;;
     --no-copy-bin ) copyBin=false; shift; shift; ;;
     --no-tar ) copyBin=false; noTar=true; shift; shift; ;;
@@ -672,10 +585,6 @@ if [[ $buildMySQLFDW == "true" ]]; then
 	buildComp mysqlfdw "$mysqlfdwShortV" "$mysqlfdwFullV" "$mysqlfdwBuildV" "$Source"
 fi
 
-if [[ $buildPgRedis == "true" ]]; then
-	buildComp pgredis "$pgredisShortV" "$pgredisFullV" "$pgredisBuildV" "$Source"
-fi
-
 if [[ $buildPostGIS ==  "true" ]]; then
 	buildComp postgis "$postgisShortV" "$postgisFullV" "$postgisBuildV" "$Source"
 fi
@@ -719,80 +628,60 @@ fi
 if [[ $buildPlr == "true" ]]; then
 	buildPlRComponent
 fi
+
 if [[ $buildPlJava == "true" ]]; then
 	buildPlJavaComponent
 fi
+
 if [[ $buildPlV8 == "true" ]]; then
     buildComp plv8  "$plv8ShortV" "$plv8FullV" "$plv8BuildV" "$Source"
 fi
-if [[ $buildTSQL == "true" ]]; then
-	buildTSQLComponent
-fi
+
 if [[ $buildPlProfiler == "true" ]]; then
 	buildPlProfilerComponent
 fi
+
 if [[ $buildBulkLoad == "true" ]]; then
 	buildComp bulkload "$bulkloadShortV" "$bulkloadFullV" "$bulkloadBuildV" "$Source"
 fi
+
 if [[ $buildODBC == "true" ]]; then
 	buildComp psqlodbc "$odbcShortV" "$odbcFullV" "$odbcBuildV" "$Source"
 fi
+
 if [[ $buildBackrest == "true" ]]; then
 	buildComp backrest "$backrestShortV" "$backrestFullV" "$backrestBuildV" "$Source"
 fi
+
 if [[ $buildHintPlan == "true" ]]; then
 	buildComp hintplan "$hintplanShortV" "$hintplanFullV" "$hintplanBuildV" "$Source"
 fi
-if [[ $buildOdyssey == "true" ]]; then
-	buildComp odyssey "$odysseyShortV" "$odysseyFullV" "$odysseyBuildV" "$Source"
-fi
-if [[ $buildAFO == "true" ]]; then
-	buildComp autofailover "$afoShortV" "$afoFullV" "$afoBuildV" "$Source"
-fi
-if [[ $buildArchiv == "true" ]]; then
-	buildComp archivist "$archivShortV" "$archivFullV" "$archivBuildV" "$Source"
-fi
-if [[ $buildQualStats == "true" ]]; then
-	buildComp qualstats "$qstatShortV" "$qstatFullV" "$qstatBuildV" "$Source"
-fi
-if [[ $buildWaitSampling == "true" ]]; then
-	buildComp waitsampling "$waitsShortV" "$waitsFullV" "$waitsBuildV" "$Source"
-fi
-if [[ $buildStatKcache == "true" ]]; then
-	buildComp statkcache "$statkShortV" "$statkFullV" "$statkBuildV" "$Source"
-fi
+
 if [[ $buildTimeScaleDB == "true" ]]; then
 	buildTimeScaleDBComponent
 fi
+
 if [[ $buildBouncer == "true" ]]; then
 	buildComp bouncer "$bouncerShortV" "$bouncerFullV" "$bouncerBuildV" "$Source"
 fi
+
 if [[ $buildFD == "true" ]]; then
 	buildComp fixeddecimal "$fdShortV" "$fdFullV" "$fdBuildV" "$Source"
 fi
+
 if [[ $buildAnon == "true" ]]; then
 	buildComp anon "$anonShortV" "$anonFullV" "$anonBuildV" "$Source"
 fi
+
 if [[ $buildDdlx == "true" ]]; then
 	buildComp ddlx "$ddlxShortV" "$ddlxFullV" "$ddlxBuildV" "$Source"
-fi
-if [[ $buildHttp == "true" ]]; then
-	buildComp http "$httpShortV" "$httpFullV" "$httpBuildV" "$Source"
-fi
-if [[ $buildPgTop == "true" ]]; then
-	buildComp pgtop "$pgtopShortV" "$pgtopFullV" "$pgtopBuildV" "$Source"
-fi
-if [[ $buildProctab == "true" ]]; then
-	buildComp proctab "$proctabShortV" "$proctabFullV" "$proctabBuildV" "$Source"
 fi
 if [ "$buildAgent" == "true" ]; then
 	buildComp agent "$agentShortV" "$agentFullV" "$agentBuildV" "$Source"
 fi
+
 if [ "$buildCitus" == "true" ]; then
 	buildComp citus "$citusShortV" "$citusFullV" "$citusBuildV" "$Source"
-fi
-if [ "$buildBackground" == "true" ]; then
-	buildComp background "$bckgrndShortV" "$bckgrndFullV" "$bckgrndBuildV" "$Source"
 fi
 
 destDir=`date +%Y-%m-%d`

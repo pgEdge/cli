@@ -42,42 +42,12 @@ if [ "$1" == "plv8" ]; then
   build plv8 $plv8FullV $2 plv8
 fi
 
-if [ "$1" == "pgtsql" ]; then
-  build pgtsql $pgTSQLFullV $2 tsql
-fi
-
 if [ "$1" == "pgtop" ]; then
   build pgtop $pgtopFullV $2 pgtop
 fi
 
 if [ "$1" == "pldebugger" ]; then
   build pldebugger $debugFullV $2 pldebugger
-fi
-
-if [ "$1" == "archivist" ]; then
-  build archivist $archivFullV $2 archivist
-fi
-
-if [ "$1" == "statkcache" ]; then
-  build statkcache $statkFullV $2 statkcache
-fi
-
-if [ "$1" == "qualstats" ]; then
-  build qualstats $qstatFullV $2 qualstats
-fi
-
-if [ "$1" == "waitsampling" ]; then
-  build waitsampling $waitsFullV $2 waitsampling
-fi
-
-## PROD ##############################################
-
-if [ "$1" == "odyssey" ] || [ "$1" == "all" ]; then
-  build odyssey $odysseyFullV $2 odyssey
-fi
-
-if [ "$1" == "autofailover" ] || [ "$1" == "all" ]; then
-  build autofailover $afoFullV $2 autofailover
 fi
 
 if [ "$1" == "hintplan" ] || [ "$1" == "all" ]; then
@@ -198,14 +168,6 @@ fi
 
 if [ "$1" == "ddlx" ]; then
   build ddlx $ddlxFullV $2 ddlx
-fi
-
-if [ "$1" == "http" ]; then
-  build http $httpFullV $2 http
-fi
-
-if [ "$1" == "proctab" ]; then
-  build proctab $proctabFullV $2 proctab
 fi
 
 if [ "$1" == "bouncer" ]; then

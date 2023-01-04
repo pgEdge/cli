@@ -21,7 +21,7 @@ esfdwV=0.11.2
 bqfdwV=1.9
 
 w2jV=2.4-1
-citusV=11.1.4-1
+citusV=11.1.5-1
 
 oraclefdwV=2.5.0-1
 inclV=21.6

@@ -62,7 +62,7 @@ agentFullV=4.0.0
 agentShortV=
 agentBuildV=1
 
-citusFullV=11.1.4
+citusFullV=11.1.5
 citusShortV=
 citusBuildV=1
 
@@ -114,14 +114,6 @@ mysqlfdwFullV=2.8.0
 mysqlfdwShortV=
 mysqlfdwBuildV=1
 
-pgredisFullV=2.0
-pgredisShortV=
-pgredisBuildV=1
-
-hivefdwFullV=4.0
-hivefdwShortV=
-hivefdwBuildV=1
-
 mongofdwFullV=5.4.0
 mongofdwShortV=
 mongofdwBuildV=1
@@ -167,10 +159,6 @@ plRFullVersion=8.3.0.17
 plRShortVersion=83
 plRBuildV=1
 
-pgTSQLFullV=3.0
-pgTSQLShortV=
-pgTSQLBuildV=1
-
 bulkloadFullV=3.1.19
 bulkloadShortV=
 bulkloadBuildV=1
@@ -187,33 +175,9 @@ partmanFullV=4.7.1
 partmanShortV=
 partmanBuildV=1
 
-archivFullV=4.1.2
-archivShortV=
-archivBuildV=1
-
-statkFullV=2.2.0
-statkShortV=
-statkBuildV=1
-
-qstatFullV=2.0.3
-qstatShortV=
-qstatBuildV=1
-
-waitsFullV=1.1.3
-waitsShortV=
-waitsBuildV=1
-
 hintplanFullV=1.4.0
 hintplanShortV=
 hintplanBuildV=1
-
-afoFullV=1.6.4
-afoShortV=
-afoBuildV=1
-
-odysseyFullV=1.3
-odysseyShortV=
-odysseyBuildV=1
 
 timescaledbFullV=2.8.0
 timescaledbShortV=
