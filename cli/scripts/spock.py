@@ -262,27 +262,24 @@ def local_cluster_create(cluster_name, num_nodes=3, port1=6432, pg="15", base_di
     os.system("cp -r hub  " + node_dir + "/.")
     os.system("cp nc "      + node_dir + "/.")
 
+    db='postgres'
+
     nc = (node_dir + "/nc ")
     echo_cmd(nc + "install " + pg_v)
     echo_cmd(nc + "init " + pg_v + " --port " + str(nd_port))
     echo_cmd(nc + "start " + pg_v)
+    echo_cmd(nc + "install spock -d " + db)
 
     pgbench_cmd = '"pgbench --initialize --scale=' + str(num_nodes) + ' postgres"'
     echo_cmd(nc + "pgbin " + str(pg) +  " " + pgbench_cmd)
 
     rep_set='pgbench-rep-set'
-    db='postgres'
 
     echo_cmd(nc + " spock create-node '" + node_nm + "' --dsn 'host=localhost user=replication' --db " + db)
-    
-    ##local_cluster_cmd(cluster_name, node_nm, cmd)
-
-    ##create_node(node_nm, 'host=localhost user=replication', db)
-    ##create_replication_set(rep_set, db)
-
-    ##replication_set_add_table(rep_set, 'pgbench_accounts', db)
-    ##replication_set_add_table(rep_set, 'pgbench_branches', db)
-    ##replication_set_add_table(rep_set, 'pgbench_tellers', db)
+    echo_cmd(nc + " spock create-replication-set " + rep_set + " --db " + db)
+    echo_cmd(nc + " spock replication-set-add-table " + rep_set + " pgbench_accounts --db " + db)
+    echo_cmd(nc + " spock replication-set-add-table " + rep_set + " pgbench_branches --db " + db)
+    echo_cmd(nc + " spock replication-set-add-table " + rep_set + " pgbench_tellers  --db " + db)
 
     nd_port = nd_port + 1
 
