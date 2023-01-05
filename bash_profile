@@ -1,7 +1,7 @@
 # PGEDGE NDCTL for ~/.bash... ############################################################
-alias git-push="cd ~/dev/ndctl; git status; git add .; git commit -m wip; git push"
-alias bp="cd ~/dev/ndctl; . ./bp.sh"
-alias ver="vi ~/dev/ndctl/src/conf/versions.sql"
+alias git-push="cd ~/dev/nodectl; git status; git add .; git commit -m wip; git push"
+alias bp="cd ~/dev/nodectl; . ./bp.sh"
+alias ver="vi ~/dev/nodectl/src/conf/versions.sql"
 
 export REGION=us-east-2
 export BUCKET=s3://pgedge-download
@@ -10,7 +10,7 @@ export DEV=$HOME/dev
 export IN=$DEV/in
 export OUT=$DEV/out
 export HIST=$DEV/history
-export NC=$DEV/ndctl
+export NC=$DEV/nodectl
 export SRC=$IN/sources
 export BLD=/opt/pgbin-build/pgbin/bin
 
