@@ -16,7 +16,7 @@ if [ -d $outp ]; then
   echo "Removing current '$outp' directory..."
   $outp/$api stop
   sleep 2
-  $sudo rm -rf $outp
+  rm -rf $outp
 fi
 
 ./startHTTP.sh
