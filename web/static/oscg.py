@@ -86,8 +86,8 @@ def print_footer(pOptFile=""):
 <table class=table>
   <thead><td colspan=2>&nbsp;</rs></tr></thead>
   <tr>
-    <td>&copy; 2022 OSCG Partners.&nbsp;All rights reserved.</td>
-    <td>luss@oscg.io</td>
+    <td>&copy; 2023 pgEdge.&nbsp;All rights reserved.</td>
+    <td>support@pgedge.com</td>
   </tr>
 </table>
 
@@ -213,23 +213,17 @@ def print_multilevel_menu():
 		<li class="nav-item dropdown">
 			<a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">  Platform  </a>
 		    <ul class="dropdown-menu">
-			  <li><a class="dropdown-item" href="postgres-hyper.html">HyperscalePG</a></li>
-			  <li><a class="dropdown-item" href="postgres-core.html">Pure PostgreSQL&reg;</a></li>
-			  <li><a class="dropdown-item" href="postgres-extensions.html">Postgres Extensions</a></li>
-			  <li><a class="dropdown-item" href="postgres-apps.html">Postgres Applications</a></li>
-			  <li><a class="dropdown-item" href="postgres-devs.html">Postgres DevOps</a></li>
-			  <li><a class="dropdown-item" href="change-data-capture.html">Streaming & CDC</a></li>
-
-			  <li><a class="dropdown-item disabled" href="postgres-fdws.html">Postgres FDWs</a></li>
-			  <li><a class="dropdown-item disabled" href="sql-datastores.html">Other RDBMS</a></li>
-			  <li><a class="dropdown-item disabled" href="purpose-built.html">Purpose-Built Datastores</a></li>
+			  <li><a class="dropdown-item" href="postgres-pgedge.html">pgEdge Core Components</a></li>
+			  <li><a class="dropdown-item" href="postgres-core.html">PostgreSQL&reg; Core</a></li>
+			  <li><a class="dropdown-item" href="postgres-extensions.html">Extensions</a></li>
+			  <li><a class="dropdown-item" href="postgres-apps.html">Applications</a></li>
+			  <li><a class="dropdown-item" href="postgres-devs.html">For Developers</a></li>
+			  <li><a class="dropdown-item" href="postgres-fdws.html">Foreign Data Wrappers</a></li>
 		    </ul>
 		</li>
 		<li class="nav-item"><a class="nav-link" href="downloads.html">Usage & Downloads</a></li>
 		<li class="nav-item"><a class="nav-link" href="tutorial.html">Tutorial</a></li>
-		<li class="nav-item"><a class="nav-link" href="about.html">About Us</a></li>
 		<li class="nav-item"><a class="nav-link" href="contact_us.html">Contact Us</a></li>
-		<li class="nav-item"><a class="nav-link" href="services.html">Services</a></li>
 	</ul>
 
   </div> <!-- navbar-collapse.// -->

@@ -5,14 +5,14 @@ genPage () {
 }
 
 sqlite3 local.db < ../../src/conf/components.sql
-sqlite3 local.db < ../../src/conf/ver2.sql 
+sqlite3 local.db < ../../src/conf/versions.sql 
 
 rm html/*.html
 
 genPage index
 genPage contact_us
-genPage about
-genPage services
+#genPage about
+#genPage services
 genPage downloads
 genPage tutorial
 
