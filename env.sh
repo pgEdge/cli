@@ -88,13 +88,13 @@ if [[ $OS == "Linux" ]]; then
   sudo="sudo"
 elif [[ $OS == "Darwin" ]]; then
   outDir=m64
-  if [ `arch` == "arm64" ]; then
-    OS="osx-arm"
-  else
+  ##if [ `arch` == "arm64" ]; then
+  ##  OS="osx-arm"
+  ##else
     OS=osx;
-  fi
+  ##fi
   echo OS=$OS
-  sudo="sudo"
+  sudo=""
 elif [[ $OS = "MINGW64" ]]; then
   outDir=w64
   OS=win
