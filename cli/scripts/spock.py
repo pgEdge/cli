@@ -248,6 +248,7 @@ def local_cluster_create(cluster_name, num_nodes=3, port1=6432, pg="15", base_di
 
   pg_v = "pg" + str(pg)
 
+  repl_passwd="abc123"
   nd_port = port1
   for n in range(1, num_nodes+1):
     node_nm = "n" + str(n)
@@ -272,6 +273,9 @@ def local_cluster_create(cluster_name, num_nodes=3, port1=6432, pg="15", base_di
 
     pgbench_cmd = '"pgbench --initialize --scale=' + str(num_nodes) + ' postgres"'
     echo_cmd(nc + "pgbin " + str(pg) +  " " + pgbench_cmd)
+
+    #replusr_cmd = '"createuser with superuser replication password ' + repl_passwd"'
+    #echo_cmd(nc + "pgbin " + str(pg) +  " " + replusr_cmd)
 
     rep_set='pgbench-rep-set'
 
