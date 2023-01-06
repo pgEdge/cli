@@ -269,6 +269,9 @@ def info(p_json, p_home, p_repo, print_flag=True):
   glibcV = util.get_glibc_version()
 
   os_major_ver = ""
+  java_major_ver = ""
+  java_ver = ""
+
   if this_uname == "Darwin":
     mem_mb = util.get_mem_mb()
     system_memory_in_kbytes = mem_mb * 1024
@@ -295,6 +298,7 @@ def info(p_json, p_home, p_repo, print_flag=True):
       this_os = util.getoutput("cat /etc/lsb-release | grep DISTRIB_DESCRIPTION | cut -d= -f2 | tr -d '\"'")
     elif os.path.exists("/etc/os-release"):
       this_os = util.getoutput("cat /etc/os-release | grep PRETTY_NAME | cut -d= -f2 | tr -d '\"'")
+    [java_major_ver, java_ver] = util.get_java_ver()
   elif this_uname == "Windows":
     caption = check_output_wmic([wmic_path, "os", "get", "caption"])
     svcpack = check_output_wmic([wmic_path, "os", "get", "servicepackmajorversion"])
@@ -313,9 +317,9 @@ def info(p_json, p_home, p_repo, print_flag=True):
   cpu = cpu.replace("(TM)", "")
   cpu = cpu.replace(" CPU ", " ")
 
-  os = this_os.replace(" release ", " ")
-  os = os.replace(" (Final)", "")
-  os = os.replace(" (Core)", "")
+  os2 = this_os.replace(" release ", " ")
+  os2 = os2.replace(" (Final)", "")
+  os2 = os2.replace(" (Core)", "")
 
   ver = util.get_version()
   [last_update_utc, last_update_local, unique_id] = util.read_hosts('localhost')
@@ -326,10 +330,8 @@ def info(p_json, p_home, p_repo, print_flag=True):
 
   versions_sql = util.get_versions_sql()
   perl_ver = util.get_perl_ver()
-  [java_major_ver, java_ver] = util.get_java_ver()
 
   os_pkg_mgr = util.get_pkg_mgr()
-  jvm_location = util.get_jvm_location()
 
   if p_json:
     infoJsonArray = []
@@ -341,7 +343,7 @@ def info(p_json, p_home, p_repo, print_flag=True):
     infoJson['host_short'] = util.get_host_short()
     infoJson['host_long'] = util.get_host()
     infoJson['host_ip'] = util.get_host_ip()
-    infoJson['os'] = unicode(str(os),sys.getdefaultencoding(),errors='ignore').strip()
+    infoJson['os'] = unicode(str(os2),sys.getdefaultencoding(),errors='ignore').strip()
     infoJson['os_pkg_mgr'] = os_pkg_mgr
     infoJson['os_major_ver'] = os_major_ver
     infoJson['platform'] = unicode(str(plat),sys.getdefaultencoding(),errors='ignore').strip()
@@ -363,7 +365,6 @@ def info(p_json, p_home, p_repo, print_flag=True):
     infoJson['perl_ver'] = perl_ver
     infoJson['java_ver'] = java_ver
     infoJson['java_major_ver'] = java_major_ver
-    infoJson['jvm_location'] = jvm_location
     infoJson['glibc_ver'] = glibcV
     infoJsonArray.append(infoJson)
     if print_flag:
@@ -393,7 +394,7 @@ def info(p_json, p_home, p_repo, print_flag=True):
   print(style_start + ("#" * 70) + style_end)
   print(style_start + "#             NDCTL: " + style_end + "v" + ver + "  " + p_home)
   print(style_start + "#       User & Host: " + style_end + p_user + admin_display + "  " + host_display)
-  print(style_start + "#  Operating System: " + style_end + os.rstrip() + " " + glibc_v_display + "-" + os_arch)
+  print(style_start + "#  Operating System: " + style_end + os2.rstrip() + " " + glibc_v_display + "-" + os_arch)
   print(style_start + "#           Machine: " + style_end + mem + ", " + cores + " vCPU, " + cpu)
   print(style_start + "# Programming Langs: " + style_end + langs)
 

@@ -146,30 +146,6 @@ def get_arch():
   return arch
 
 
-def get_jvm_location(p_display=False):
-  [j_major, j_ver] = get_java_ver()
-  j_base = "/etc/alternatives/"
-  if get_arch() == "arm":
-    j_ext = "/lib/aarch64/server/libjvm.so"
-  else:
-    j_ext = "/lib/server/libjvm.so"
-
-  if j_major in ("6", "7", "8", "9"):
-    j_so_path = j_base + 'jre_1.' + j_major + '.0' + j_ext
-  else:
-    j_so_path = j_base + 'jre_' + j_major + j_ext
-
-  if p_display:
-    print("# jvm_location = " + j_so_path)
-
-  if os.path.isfile(j_so_path):
-    return(j_so_path)
-
-  if p_display:
-    print("#  ERROR: not found")
-
-  return ""
-
 
 def is_systemctl():
   rc = os.system('sudo systemctl status > /dev/null 2>&1')
@@ -179,22 +155,6 @@ def is_systemctl():
   print('systemctl not present')
   return (False)
 
-
-def set_jvm_link(p_pg_ver, p_display=True):
-  jvm_location = get_jvm_location()
-  if jvm_location == "":
-    return(False)
-
-  pg_location = os.path.join(MY_HOME, p_pg_ver, 'lib', 'libjvm.so')
-  cmd = 'ln -s ' + jvm_location + ' ' + pg_location
-  if p_display:
-    print("  " + cmd)
-
-  rc = os.system(cmd)
-  if rc == 0:
-    return(True)
-
-  return(False)
 
 
 def remove_symlinks(p_link_dir, p_target_dir):
