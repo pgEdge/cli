@@ -139,7 +139,7 @@ INSERT INTO versions VALUES ('pg14', '14.6-1', 'el8, arm', 0, '20221110','', '',
 INSERT INTO releases VALUES ('pg15', 5, 'pg', '', '', 'prod', 
   '<font size=-1 color=red><b>New in <a href=https://sql-info.de/postgresql/postgresql-15/articles-about-new-features-in-postgresql-15.html>2022!</a></b></font>',
   1, 'POSTGRES', '', '');
-INSERT INTO versions VALUES ('pg15', '15.1-4',  'el8, arm', 1, '20221221','', '', '');
+INSERT INTO versions VALUES ('pg15', '15.1-4',  'el8, arm, osx', 1, '20221221','', '', '');
 
 INSERT INTO projects VALUES ('debezium', 'strm', 10, 8083, '', 3, 'https://debezium.io/releases/1.9/',
   'Debezium', 0, 'debezium.png', 'Heterogeneous CDC', 'https://debezium.io');
@@ -323,8 +323,7 @@ INSERT INTO versions VALUES ('timescaledb-pg14', '2.8.0-1',  'el8, arm', 0, '202
 INSERT INTO projects VALUES ('spock', 'pge', 4, 0, 'hub', 1, 'https://github.com/pgedge/spock/tags',
   'spock', 1, 'spock.png', 'Logical & Multi-Master Replication', 'https://github.com/pgedge/spock/#spock');
 INSERT INTO releases VALUES ('spock-pg15', 4, 'spock', 'Spock', '', 'prod', '', 1, 'POSTGRES', '', '');
-INSERT INTO versions VALUES ('spock-pg15', '3.0da-0101-1', 'el8, arm', 1, '20230101', 'pg15', '', '');
-INSERT INTO versions VALUES ('spock-pg15', '3.0.12-1',     'el8, arm', 0, '20221222', 'pg15', '', '');
+INSERT INTO versions VALUES ('spock-pg15', '3.0da-0106-1', 'el8, arm, osx', 1, '20230106', 'pg15', '', '');
 
 INSERT INTO projects VALUES ('pglogical', 'ext', 4, 0, 'hub', 1, 'https://github.com/2ndQuadrant/pglogical/releases',
   'pglogical', 1, 'spock.png', 'Logical Replication', 'https://github.com/2ndQuadrant/pglogical');

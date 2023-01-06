@@ -178,11 +178,11 @@ def create_symlinks(p_link_dir, p_target_dir):
   return
 
 
-def io_system(p_sys_cmd, p_display=True):
+def cmd_system(p_sys_cmd, p_display=True):
   if p_sys_cmd.strip() == "":
     return 0
 
-  cmd = MY_HOME + os.sep + "io " + str(p_sys_cmd)
+  cmd = MY_HOME + os.sep + "nc " + str(p_sys_cmd)
 
   if p_display == True:
     print("\n## " + str(cmd))
@@ -1415,18 +1415,6 @@ def update_postgresql_conf(p_pgver, p_port, is_new=True,update_listen_addr=True)
              "\t\t\t\t# (change requires restart)"
       ns = ns + "\n" + pt
 
-    elif is_new and line.startswith("#ssl = "):
-      l_ssl = "ssl = on"
-      ns = ns + "\n" + l_ssl
-
-    elif is_new and line.startswith("#ssl_cert_file = "):
-      l_scf = "ssl_cert_file = '" + pg_data + "/server.crt'"
-      ns = ns + "\n" + l_scf
-
-    elif is_new and line.startswith("#ssl_key_file = "):
-      l_skf = "ssl_key_file = '" + pg_data + "/server.key'"
-      ns = ns + "\n" + l_skf
-
     elif is_new and line.startswith("#listen_addresses = 'localhost'") and update_listen_addr:
       # override default to match default for pg_hba.conf
       la = "listen_addresses = '*'" + \
@@ -1482,13 +1470,25 @@ def update_postgresql_conf(p_pgver, p_port, is_new=True,update_listen_addr=True)
     elif is_new and line.startswith("#wal_level"):
       ns = ns + "\n" + "wal_level = hot_standby"
 
-    elif is_new and line.startswith("password_encryption"):
-      ns = ns + "\n" + "password_encryption = scram-sha-256"
+    elif get_platform() == "Linux":
+      if is_new and line.startswith("#ssl = "):
+        l_ssl = "ssl = on"
+        ns = ns + "\n" + l_ssl
 
-    elif is_new and line.startswith("#unix_socket_directories"):
-      socket_dir = "/var/run/postgresql"
-      if os.path.isdir(socket_dir):
-        ns = ns + "\n" + "unix_socket_directories = '/tmp, " + socket_dir + "'"
+      elif is_new and line.startswith("#ssl_cert_file = "):
+        l_scf = "ssl_cert_file = '" + pg_data + "/server.crt'"
+        ns = ns + "\n" + l_scf
+
+      elif is_new and line.startswith("#ssl_key_file = "):
+        l_skf = "ssl_key_file = '" + pg_data + "/server.key'"
+        ns = ns + "\n" + l_skf
+      elif is_new and line.startswith("password_encryption"):
+        ns = ns + "\n" + "password_encryption = scram-sha-256"
+
+      elif is_new and line.startswith("#unix_socket_directories"):
+        socket_dir = "/var/run/postgresql"
+        if os.path.isdir(socket_dir):
+          ns = ns + "\n" + "unix_socket_directories = '/tmp, " + socket_dir + "'"
       
     else:
       if ns == "":

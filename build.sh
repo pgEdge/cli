@@ -446,18 +446,19 @@ initPG () {
   writeSettRow "GLOBAL" "AUTOSTART" "off"
 
 
-  if [ "$IVORY" == "True" ] || [ "$outPlat" == "osx" ]; then
+  if [ "$pgM" == "15" ] && [ "$outPlat" == "osx" ]; then
+    initC "spock-pg$pgM" "spock" "$spockV" "$outPlat" "postgres/spock" "" "" "nil"
     return
   fi
 
   if [ "$pgM" == "15" ] && [  "$isEL8" == "True" ]; then
+    initC "spock-pg$pgM" "spock" "$spockV" "$outPlat" "postgres/spock" "" "" "nil"
     initC "multicorn2-pg$pgM" "multicorn2" "$multicorn2V" "$outPlat" "postgres/multicorn2" "" "" "nil"
     initC "esfdw-pg$pgM" "esfdw" "$esfdwV" "$outPlat" "postgres/esfdw" "" "" "Y"
     initC "citus-pg$pgM" "citus" "$citusV" "$outPlat" "postgres/citus" "" "" "nil"
     if [ "$outPlat" == "arm" ]; then
       initC "postgis-pg$pgM" "postgis" "$postgisV" "$outPlat" "postgres/postgis" "" "" "nil"
     fi
-    initC "spock-pg$pgM" "spock" "$spockV" "$outPlat" "postgres/spock" "" "" "nil"
     initC "pglogical-pg$pgM" "pglogical" "$logicalV" "$outPlat" "postgres/logical" "" "" "nil"
     initC "anon-pg$pgM" "anon" "$anonV" "$outPlat" "postgres/anon" "" "" "nil"
     initC "plprofiler-pg$pgM" "plprofiler" "$profV" "$outPlat" "postgres/profiler" "" "" "nil"
