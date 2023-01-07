@@ -220,4 +220,4 @@ else
   exit 1
 fi
 
-cpuCores=`egrep -c 'processor([[:space:]]+):.*' /proc/cpuinfo`
+##cpuCores=`egrep -c 'processor([[:space:]]+):.*' /proc/cpuinfo`
