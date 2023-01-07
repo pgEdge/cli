@@ -30,7 +30,8 @@ function linuxCopySharedLibs {
   cp -Pv $lib/libreadline*    $shared_lib/.
   cp -Pv $lib/libk5crypto.so.*     $shared_lib/.
   cp -Pv $lib/libpam.so.*          $shared_lib/.
-  cp -Pv $lib/libpython3*          $shared_lib/.
+  cp -Pv $lib64/libpython3.so      $shared_lib/.
+  cp -Pv $lib64/libpython3.9*      $shared_lib/.
   cp -Pv $lib/libtinfo.so.*        $shared_lib/.
   cp -Pv $lib/libnss3*             $shared_lib/.
   cp -Pv $lib/libnspr4*            $shared_lib/.
