@@ -1,0 +1,13 @@
+#!/bin/bash
+cd "$(dirname "$0")"
+
+ver=15
+
+echo " "
+echo "## Remove pgEdge $ver ###########################################"
+
+cd ..
+
+./nc remove pg$ver
+./nc remove postgrest
+

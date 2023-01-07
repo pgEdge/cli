@@ -6,7 +6,7 @@ hubV=7.00
 spockV=3.0da-0106-1
 
 P15=15.1-4
-P14=14.6-1
+pgedgeV=15.1
 
 goV=1.19.3
 postgrestV=10.1.1

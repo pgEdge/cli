@@ -513,13 +513,13 @@ initPG () {
 
   fi
 
-  initC  "prompgexp"  "prompgexp"  "$prompgexpV"  ""  "prometheus/pg_exporter"  "" "" "Y"
-  initC  "golang" "golang" "$goV" "" "golang" "" "" "Y"
+  initC  "pgedge" "pgedge" "$pgedgeV" "" "postgres/pgedge" "" "" "nil"
   initC  "bouncer" "bouncer" "$bouncerV" "$outPlat" "postgres/bouncer" "" "" "nil"
+  initC  "golang" "golang" "$goV" "" "golang" "" "" "Y"
   initC  "backrest" "backrest" "$backrestV" "$outPlat" "postgres/backrest" "" "" "nil"
-  initC  "nginx" "nginx" "$nginxV" "" "nginx" "" "" "Y"
-
-  initC "nodejs"   "nodejs" "$nodejsV" "" "nodejs"           "" "" "Y"
+  ##initC "nginx" "nginx" "$nginxV" "" "nginx" "" "" "Y"
+  ##initC "prompgexp"  "prompgexp"  "$prompgexpV"  ""  "prometheus/pg_exporter"  "" "" "Y"
+  ##initC "nodejs"   "nodejs" "$nodejsV" "" "nodejs"           "" "" "Y"
   
   ##initC "instantclient" "instantclient" "$inclV" "" "oracle/instantclient" "" "" "Y"
   ##initC "golang" "golang" "$goV" "$outPlat" "golang" "" "" "Y"
