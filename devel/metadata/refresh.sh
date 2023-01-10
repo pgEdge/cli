@@ -1,7 +1,7 @@
 set -x 
 
-rm stelthy.db
-cat locations.sql | sqlite3 stelthy.db
-cat images.sql    | sqlite3 stelthy.db
+psql -f locations.sql
+psql -f images.sql
 
-sqlite3 stelthy.db < select.sql
+#psql -f select.sql
+
