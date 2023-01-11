@@ -10,4 +10,6 @@ cd ..
 
 ./nc remove pg$ver
 ./nc remove postgrest
+./nc remove backrest
+./nc remove bouncer
 

@@ -1211,11 +1211,23 @@ if "--svcs" in args and 'list' in args:
   os.environ['isSVCS'] = "True"
   args.remove("--svcs")
 
-#isFIPS = False
-#if "--fips" in args and 'install' in args:
-#  isFIPS = True
-#  os.environ['isFIPS'] = "True"
-#  args.remove("--fips")
+isFIPS = False
+if "--fips" in args and 'install' in args:
+  isFIPS = True
+  os.environ['isFIPS'] = "True"
+  args.remove("--fips")
+
+if "--with-postgrest" in args and 'install' in args:
+  os.environ['withPOSTGREST'] = "True"
+  args.remove("--with-postgrest")
+
+if "--with-backrest" in args and 'install' in args:
+  os.environ['withBACKREST'] = "True"
+  args.remove("--with-backrest")
+
+if "--with-bouncer" in args and 'install' in args:
+  os.environ['withBOUNCER'] = "True"
+  args.remove("--with-bouncer")
 
 isAUTOSTART = False
 if "--autostart" in args and 'install' in args:
