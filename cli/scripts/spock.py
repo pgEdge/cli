@@ -105,6 +105,16 @@ def get_eq(parm, val, sufx):
 
   return(colon_equal)
 
+
+def create_extension(db, pg=None):
+  pg_v = get_pg_v(pg)
+
+  sql = "CREATE EXTENSION SPOCK"
+
+  run_psyco_sql(pg_v, db, sql)
+  sys.exit(0)
+
+
 def create_node(node_name, dsn, db, pg=None):
   pg_v = get_pg_v(pg)
 
@@ -337,6 +347,7 @@ def local_cluster_cmd(cluster_name, node, cmd, base_dir="cluster"):
 
 if __name__ == '__main__':
   fire.Fire({
+      'create-extension': create_extension,
       'create-node': create_node,
       'create-replication-set': create_replication_set,
       'create-subscription': create_subscription,
