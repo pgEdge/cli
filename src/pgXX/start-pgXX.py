@@ -1,7 +1,7 @@
 from __future__ import print_function, division
  
 ####################################################################
-######          Copyright (c)  2020-2022 OSCG             ##########
+######          Copyright (c)  2022-2023 PGEDGE             ##########
 ####################################################################
 
 import os, sys, subprocess, json
