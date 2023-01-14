@@ -1,9 +1,9 @@
 #!/bin/bash
 
-SPOCK_BUILD_DELTA_APPLY=true
+SPOCK_BUILD_DELTA_APPLY=false
 MMDD=`date +'%m%d'`
 
-spV=3.0.12
+spV=3.0.14
 if [ "$SPOCK_BUILD_DELTA_APPLY" == "true" ]; then
   spV=3.0da-$MMDD
 fi
