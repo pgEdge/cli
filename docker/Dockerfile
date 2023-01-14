@@ -1,6 +1,6 @@
 FROM rockylinux:8
 
-LABEL maintainer="NDCTL team"
+LABEL maintainer="NODECTL team"
 
 SHELL ["/bin/bash", "-c"]
 
@@ -11,14 +11,14 @@ RUN dnf update -y \
     && dnf clean all \
     && rm -rf /var/cache/yum
 
-RUN useradd pgedge -U -m -d /home/pgedge \
-    && echo "pgedge ALL=(ALL)       NOPASSWD: ALL" >> /etc/sudoers
+RUN useradd build  -U -m -d /home/build  \
+    && echo "build  ALL=(ALL)       NOPASSWD: ALL" >> /etc/sudoers
 
-USER pgedge
-WORKDIR /home/pgedge
+USER build
+WORKDIR /home/build
 
-RUN git clone https://github.com/pgedge/ndctl 
-WORKDIR ndctl
+RUN git clone https://github.com/pgedge/nodectl 
+WORKDIR nodectl
 RUN ./setupInitial.sh \
     && dnf clean all \
     && rm -rf /var/cache/yum
