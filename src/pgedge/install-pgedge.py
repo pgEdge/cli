@@ -13,20 +13,26 @@ withBOUNCER   = str(os.getenv("withBOUNCER", "False"))
 def osSys(cmd):
   print('#')
   print('# ' + str(cmd))
-  os.system(cmd)
+  rc = os.system(cmd)
+  return(rc)
 
 
 ## MAINLINE #####################################################3
+rc = os.system("pip3 --version")
+if rc != 0:
+  print("\n# Trying to install 'pip3'")
+  osSys("wget https://bootstrap.pypa.io/get-pip.py")
+  osSys("sudo python3 get-pip.py --no-warn-script-location")
 
 try:
   import fire
 except ImportError as e:
-  osSys("pip3 install fire")
+  osSys("pip3 install fire --no-warn-script-location")
 
 try:
   import psycopg2
 except ImportError as e:
-  osSys("pip3 install psycopg2")
+  osSys("pip3 install psycopg2-binary --no-warn-script-location")
 
 print(" ")
 print("## Install PgEdge for " + pgeV + " #######################################")
