@@ -20,8 +20,8 @@ def sys_cli(p_cmd):
 
 @app.route('/', methods=['GET'])
 def home():
-    return '''<h1>NDCTL API</h1>
-<p>A development API over "ndctl" commands</p>'''
+    return '''<h1>NODECTL API</h1>
+<p>A development API over "nodectl" commands</p>'''
 
 
 @app.route('/info', methods=['GET'])

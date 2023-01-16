@@ -4,11 +4,11 @@
 
 import sys, os
 
-VER="7.00"
+VER="2.10"
 REPO=os.getenv("REPO", "https://pgedge-download.s3.amazonaws.com/REPO")
   
-if sys.version_info < (3, 9):
-  print("ERROR: Requires Python 3.9 or greater")
+if sys.version_info < (3, 6):
+  print("ERROR: Requires Python 3.6 or greater")
   sys.exit(1)
 
 from urllib import request as urllib2
@@ -51,7 +51,7 @@ except Exception as e:
 cmd = "pgedge" + os.sep + "nc"
 os.system(cmd + " set GLOBAL REPO " + REPO)
 
-print("pgedge/nc (ndctl) installed.\n")
+print("pgedge/nc (nodectl) installed.\n")
 
 sys.exit(0)
 
