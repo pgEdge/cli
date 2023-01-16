@@ -23,16 +23,18 @@ if rc != 0:
   print("\n# Trying to install 'pip3'")
   osSys("wget https://bootstrap.pypa.io/get-pip.py")
   osSys("sudo python3 get-pip.py --no-warn-script-location")
+  osSys("rm get-pip.py")
+  osSys("pip3 install click")
 
 try:
   import fire
 except ImportError as e:
-  osSys("pip3 install fire --no-warn-script-location")
+  osSys("pip3 install fire")
 
 try:
   import psycopg2
 except ImportError as e:
-  osSys("pip3 install psycopg2-binary --no-warn-script-location")
+  osSys("pip3 install psycopg2-binary")
 
 print(" ")
 print("## Install PgEdge for " + pgeV + " #######################################")
