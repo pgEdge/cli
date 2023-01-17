@@ -108,7 +108,7 @@ if args.svcname > '':
 if ((args.autostart is None) or (autostart == args.autostart)):
   sys.exit(0)
 
-systemsvc = 'postgresql' + pgver[2:4]
+systemsvc = 'pgedge' + pgver[2:4]
 if args.autostart == "off":
   startup.remove_linux(systemsvc, pgver)
 else:
@@ -119,7 +119,8 @@ else:
   cmd_reload = pg_ctl + ' reload -D ' + pgdata + ' -s'
   cmd_status = pg_ctl + ' status -D ' + pgdata
   cmd_log = '-l ' + pgdata + '/pgstartup.log'
-  svcuser = util.get_column('svcuser', pgver)
+  #svcuser = util.get_column('svcuser', pgver)
+  svcuser = util.get_user()
   startup.config_linux(pgver, systemsvc, svcuser, cmd_start, cmd_log, 
     cmd_stop, cmd_reload, cmd_status)
   util.set_column('svcname', pgver, systemsvc)

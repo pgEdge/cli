@@ -14,7 +14,11 @@ def osSys(cmd):
   print('#')
   print('# ' + str(cmd))
   rc = os.system(cmd)
-  return(rc)
+  if rc != 0:
+    print("FATAL ERROR running install-pgedge")
+    sys.exit(1)
+
+  return
 
 
 ## MAINLINE #####################################################3
@@ -45,7 +49,11 @@ if os.path.isdir(pgeV):
 else:
   osSys("./nc install " + pgeV)
 
+svcuser = util.get_user()
+osSys("./nc init pg15 --svcuser " + svcuser)
+osSys("./nc config pg15 --autostart=on")
 osSys("./nc start " + pgeV)
+
 osSys("./nc tune " + pgeV)
 
 db1 = os.getenv('pgName', '')

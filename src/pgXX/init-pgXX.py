@@ -74,7 +74,7 @@ curr_user = ""
 svcuser = args.svcuser
 if util.is_admin() :
   if svcuser == "":
-    svcuser="postgres"
+    svcuser = util.get_user()
 
 ## PASSWD #############################################
 is_password=False
