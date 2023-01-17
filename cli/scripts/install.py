@@ -21,8 +21,10 @@ if not IS_64BITS:
   sys.exit(1)
 
 if os.path.exists("pgedge"):
-  print("ERROR: Cannot install over an existing 'pgedge' directory.")
-  sys.exit(1)
+  dir = os.listdir("pgedge")
+  if len(dir) != 0:
+    print("ERROR: Cannot install over a non-empty 'pgedge' directory.")
+    sys.exit(1)
 
 my_file="pgedge-nc-" + VER + ".tar.bz2"
 f = REPO + "/" + my_file
