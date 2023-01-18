@@ -184,7 +184,7 @@ if update_install_date:
   util.update_installed_date(pgver)
 
 if util.is_admin() and util.is_systemctl():
-  systemsvc = 'postgresql' + pgver[2:4]
+  systemsvc = 'pgedge' + pgver[2:4]
   pg_ctl = os.path.join(MY_HOME, pgver, 'bin', 'pg_ctl')
   cmd_start  = pg_ctl + ' start  -D ' + pg_data + ' -s -w -t 300'
   cmd_stop   = pg_ctl + ' stop   -D ' + pg_data + ' -s -m fast'

@@ -13,4 +13,4 @@ autostart = util.get_column('autostart', pgver)
 if autostart != "on":
   sys.exit(0)
 
-startup.remove_linux("postgresql" + pgver[2:4], pgver)
+startup.remove_linux("pgedge" + pgver[2:4], pgver)

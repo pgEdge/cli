@@ -13,7 +13,7 @@ util.message(pgver + " reloading")
 
 autostart = util.get_column('autostart', pgver)
 if autostart == "on":
-  rc = startup.reload_linux("postgresql" + pgver[2:4])
+  rc = startup.reload_linux("pgedge" + pgver[2:4])
   sys.exit(rc)
 
 MY_HOME = os.getenv('MY_HOME', '')
