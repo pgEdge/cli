@@ -74,10 +74,10 @@ mode_list = ["start", "stop", "restart", "status", "list", "info", "update",
              "upgrade", "downgrade", "enable", "disable", "install", "tune",
              "remove", "reload", "activity", "help", "get", "set", "unset",
              "repolist", "repo-pkgs", "discover", "backrest", "change-pgconf",
-             "register", "top", "spock", "pgbin", "--autostart", 
+             "register", "top", "spock", "pgbin", "--autostart", "-U", "-P", "-d",
              "--relnotes", "--start", "--no-restart", "--no-preload",
              "--help", "--json", "--jsonp", "--test", "--extensions", "--svcs",
-             "--list", "--old", "--showduplicates", "-y", "-t", "-d"  ,
+             "--list", "--old", "--showduplicates", "-y", "-t",
              "--verbose", "-v", "--debug", "--debug2"]
 
 mode_list_advanced = ['kill', 'config', 'deplist', 'download', 'init', 'clean', 
@@ -106,6 +106,20 @@ ISJSON = os.environ.get("ISJSON", "False")
 ###################################################################
 ## Subroutines ####################################################
 ###################################################################
+
+def get_next_arg(p_arg):
+  i = 0
+  next_arg = ''
+  while i < len(args):
+    arg = args[i]
+    if arg == p_arg:
+      if i < (len(args) - 1):
+        next_arg = args[i + 1]
+        break
+    i += 1
+
+  return(next_arg)
+
 
 
 ## is there a dependency violation if component where removed ####
@@ -1163,6 +1177,21 @@ if "-y" in args:
   isYES = True
   args.remove("-y")
   os.environ['isYes'] = "True"
+
+if "-U" in args:
+  usr = get_next_arg("-U")
+  if usr > "":
+    args.remove("-U")
+    args.remove(usr)
+    os.environ['pgeUser'] = usr 
+
+if "-P" in args:
+  passwd = get_next_arg("-P")
+  if passwd > "":
+    args.remove("-P")
+    args.remove(passwd)
+    os.environ['pgePasswd'] = passwd
+
 
 isTIME = False
 if "-t" in args:

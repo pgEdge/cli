@@ -9,6 +9,13 @@ withPOSTGREST = str(os.getenv("withPOSTGREST", "False"))
 withBACKREST  = str(os.getenv("withBACKREST", "False"))
 withBOUNCER   = str(os.getenv("withBOUNCER", "False"))
 
+db1 = os.getenv('pgName', '')
+if db1 == "":
+  db1="postgres"
+
+usr = os.getenv('pgeUser', None)
+passwd = os.getenv('pgePasswd', None)
+  
 
 def osSys(cmd):
   print('#')
@@ -50,17 +57,21 @@ else:
   osSys("./nc install " + pgeV)
 
 svcuser = util.get_user()
+
 osSys("./nc init pg15 --svcuser " + svcuser)
 osSys("./nc config pg15 --autostart=on")
 osSys("./nc start " + pgeV)
 
+if usr and passwd:
+  cmd = "CREATE ROLE " + usr + " PASSWORD '" + passwd + "' SUPERUSER CREATEDB CREATEROLE INHERIT LOGIN"
+  osSys('./nc pgbin 15 "psql -c \\"' + cmd + '\\" postgres"') 
+
+  cmd = "createdb '" + db1 + "' --owner='" + usr + "'"
+  osSys('./nc pgbin 15 "' + cmd + '"')
+
 osSys("./nc tune " + pgeV)
 
-db1 = os.getenv('pgName', '')
-if db1 > '':
-  db1 = " -d " + db1
-
-osSys("./nc install spock" + db1)
+osSys("./nc install spock -d " + db1)
 
 if withPOSTGREST == "True":
   print(" ")
