@@ -1482,6 +1482,7 @@ def update_postgresql_conf(p_pgver, p_port, is_new=True,update_listen_addr=True)
       elif is_new and line.startswith("#ssl_key_file = "):
         l_skf = "ssl_key_file = '" + pg_data + "/server.key'"
         ns = ns + "\n" + l_skf
+
       elif is_new and line.startswith("password_encryption"):
         ns = ns + "\n" + "password_encryption = scram-sha-256"
 
@@ -1489,6 +1490,12 @@ def update_postgresql_conf(p_pgver, p_port, is_new=True,update_listen_addr=True)
         socket_dir = "/var/run/postgresql"
         if os.path.isdir(socket_dir):
           ns = ns + "\n" + "unix_socket_directories = '/tmp, " + socket_dir + "'"
+
+      else:
+        if ns == "":
+          ns = line
+        else:
+          ns = ns + "\n" + line
       
     else:
       if ns == "":

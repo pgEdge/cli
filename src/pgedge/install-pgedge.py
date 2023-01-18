@@ -58,7 +58,7 @@ else:
 
 svcuser = util.get_user()
 
-osSys("./nc init pg15 --svcuser " + svcuser)
+osSys("./nc init pg15 --svcuser=" + svcuser)
 osSys("./nc config pg15 --autostart=on")
 osSys("./nc start " + pgeV)
 
