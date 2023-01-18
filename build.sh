@@ -383,7 +383,7 @@ supplementalPG () {
   checkCmd "cp $pgXX/run-pgctl.py $newDir/"
   myReplace "pgXX" "$comp" "$newDir/run-pgctl.py"
 
-  checkCmd "cp $pgXX/pg_hba.conf.nix      $newDir/init/pg_hba.conf"
+  checkCmd "cp $pgXX/pg_hba.conf.nix  $newDir/"
 
   checkCmd "chmod 755 $newDir/bin/*"
   chmod 755 $newDir/lib/* 2>/dev/null
