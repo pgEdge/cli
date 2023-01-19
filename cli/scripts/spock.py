@@ -202,6 +202,7 @@ def wait_for_subscription_sync_complete(subscription_name, db, pg=None):
   run_psyco_sql(pg_v, db, sql)
   sys.exit(0)
 
+
 def get_pii_cols(db,schema=None,pg=None):
   pg_v = get_pg_v(pg)
 
@@ -345,8 +346,19 @@ def local_cluster_cmd(cluster_name, node, cmd, base_dir="cluster"):
   return(rc)
 
 
+def health_check(pg=None):
+  pg_v = get_pg_v(pg)
+
+  rc = os.system(os.getcwd() + "/" + pg_v + "/bin/pg_isready > /dev/null 2>&1")
+  if rc == 0:
+    util.exit_message("true", 0)
+
+  util.exit_message("false", 0)
+
+
 if __name__ == '__main__':
   fire.Fire({
+      'health-check':health_check,
       'create-extension': create_extension,
       'create-node': create_node,
       'create-replication-set': create_replication_set,

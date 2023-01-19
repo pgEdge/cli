@@ -4,7 +4,7 @@
 
 import sys, os
 
-VER="2.10"
+VER="2.11"
 REPO=os.getenv("REPO", "https://pgedge-download.s3.amazonaws.com/REPO")
   
 if sys.version_info < (3, 6):

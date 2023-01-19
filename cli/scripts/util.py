@@ -4,7 +4,7 @@
 
 from __future__ import print_function, division
 
-MY_VERSION = "2.10"
+MY_VERSION = "2.11"
 
 from subprocess import Popen, PIPE, STDOUT
 from datetime import datetime, timedelta
