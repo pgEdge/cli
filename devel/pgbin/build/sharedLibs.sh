@@ -12,7 +12,7 @@ function osxCopySharedLibs {
 
 
 function linuxCopySharedLibs {
-  lib=/usr/lib
+  lib=/lib64
 
   cp -Pv $lib/libcrypt*.so*   $shared_lib/.
   cp -Pv $lib/libbz2.so.*     $shared_lib/.
@@ -28,27 +28,28 @@ function linuxCopySharedLibs {
   cp -Pv $lib/libsasl2*       $shared_lib/.
   cp -Pv $lib/libevent*       $shared_lib/.
   cp -Pv $lib/libreadline*    $shared_lib/.
-  cp -Pv $lib/libk5crypto.so.*     $shared_lib/.
-  cp -Pv $lib/libpam.so.*          $shared_lib/.
-  cp -Pv $lib64/libpython3.so      $shared_lib/.
-  cp -Pv $lib64/libpython3.9*      $shared_lib/.
-  cp -Pv $lib/libtinfo.so.*        $shared_lib/.
-  cp -Pv $lib/libnss3*             $shared_lib/.
-  cp -Pv $lib/libnspr4*            $shared_lib/.
-  cp -Pv $lib/libnssutil3*         $shared_lib/.
-  cp -Pv $lib/libsmime*            $shared_lib/.
-  cp -Pv $lib/libplds4*            $shared_lib/.
-  cp -Pv $lib/libplc4*             $shared_lib/.
-  cp -Pv $lib/libpcre.so.*         $shared_lib/.
-  cp -Pv $lib/libfreebl3.so        $shared_lib/.
-  cp -Pv $lib/libcap*              $shared_lib/.
-  cp -Pv $lib/libaudit*            $shared_lib/.
-  cp -Pv $lib/libresolv-2*         $shared_lib/.
-  cp -Pv $lib/libresolv.so.2       $shared_lib/.
-  cp -Pv $lib/liblzma.so.*         $shared_lib/.
-  cp -Pv $lib/libcom_err.so.*      $shared_lib/.
-  cp -Pv $lib/libkeyutils.so.*     $shared_lib/.
-  cp -Pv $lib/libjson-c*           $shared_lib/.
+  cp -Pv $lib/libk5crypto.so.*   $shared_lib/.
+  cp -Pv $lib/libpam.so.*        $shared_lib/.
+  cp -Pv $lib/libpython3.so      $shared_lib/.
+  cp -Pv $lib/libpython3.9*      $shared_lib/.
+  cp -Pv $lib/libtinfo.so.*      $shared_lib/.
+  cp -Pv $lib/libnss3*           $shared_lib/.
+  cp -Pv $lib/libnspr4*          $shared_lib/.
+  cp -Pv $lib/libnssutil3*       $shared_lib/.
+  cp -Pv $lib/libsmime*          $shared_lib/.
+  cp -Pv $lib/libplds4*          $shared_lib/.
+  cp -Pv $lib/libplc4*           $shared_lib/.
+  cp -Pv $lib/libpcre.so.*       $shared_lib/.
+  cp -Pv $lib/libfreebl3.so      $shared_lib/.
+  cp -Pv $lib/libcap*            $shared_lib/.
+  cp -Pv $lib/libaudit*          $shared_lib/.
+  cp -Pv $lib/libresolv-2*       $shared_lib/.
+  cp -Pv $lib/libresolv.so.2     $shared_lib/.
+  cp -Pv $lib/liblzma.so.*       $shared_lib/.
+  cp -Pv $lib/libcom_err.so.*    $shared_lib/.
+  cp -Pv $lib/libkeyutils.so.*   $shared_lib/.
+  cp -Pv $lib/libjson-c*         $shared_lib/.
+  cp -Pv $lib/libsystemd.so.*    $shared_lib/.
 
   ##cp -Pv $lib/llvm5.0/lib/*.so*    $shared_lib/.
   cp -Pv $lib/libffi*.so*          $shared_lib/.
@@ -57,7 +58,7 @@ function linuxCopySharedLibs {
   ##cp -Pv $lib/libc++.so.*          $shared_lib/.
 
   # bouncer (small enough lib to include by default)
-  cp -Pv /lib/libcares*            $shared_lib/.
+  cp -Pv /$lib/libcares*            $shared_lib/.
 
   # oracle_fdw
   #oraclient=/opt/oracleinstantclient/instantclient_19_8
@@ -98,8 +99,6 @@ function linuxCopySharedLibs {
 ########################################################
 ##                MAINLINE                            ##
 ########################################################
-
-set -x
 
 shared_lib=/opt/pgbin-build/pgbin/shared/lib/
 mkdir -p $shared_lib

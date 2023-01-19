@@ -90,7 +90,7 @@ function checkPostgres {
 		if [[ "${pgSrcV/rc}" =~ ^15.* ]]; then
 			pgShortV="15"
 			bndlPrfx=pg15
-			pgOPT="--with-zstd --with-lz4"
+			pgOPT="--with-zstd --with-lz4 --with-systemd"
 		elif [[ "${pgSrcV/rc}" =~ ^14.* ]]; then
 			pgShortV="14"
 			bndlPrfx=pg14

@@ -50,7 +50,7 @@ if [ $uname == 'Linux' ]; then
         sudo $yum ncurses-compat-libs mysql-devel 
 	sudo $yum unixODBC-devel protobuf-c-devel libyaml-devel
       fi
-      sudo $yum mongo-c-driver-devel freetds-devel
+      sudo $yum mongo-c-driver-devel freetds-devel systemd-devel
       sudo $yum lz4-devel libzstd-devel krb5-devel
       sudo alternatives --config java
     else
