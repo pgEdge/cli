@@ -1166,7 +1166,7 @@ def retrieve_pgpassword(p_host="localhost", p_port="5432", p_db="*", p_user="pos
   return(None)
 
 
-def change_pgpassword(p_passwd, p_port="5432", p_host="localhost", p_db="*", p_user="postgres", p_ver="pg13"):
+def change_pgpassword(p_passwd, p_port="5432", p_host="localhost", p_db="*", p_user="postgres", p_ver="pg15"):
 
   ## try and login with the old password and set the new one
   rc = run_sql_cmd(p_ver, "ALTER role " + p_user + " PASSWORD '" + p_passwd + "'", False)
@@ -1179,7 +1179,7 @@ def change_pgpassword(p_passwd, p_port="5432", p_host="localhost", p_db="*", p_u
 
   
 
-def remember_pgpassword(p_passwd, p_port="5432", p_host="localhost", p_db="*", p_user="postgres", p_ver="pg13"):
+def remember_pgpassword(p_passwd, p_port="5432", p_host="localhost", p_db="*", p_user="postgres", p_ver="pg15"):
 
   pw_file = get_pgpass_file()
   if pw_file == None:

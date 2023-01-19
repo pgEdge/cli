@@ -1,6 +1,6 @@
 
 import util
-import os, sys
+import os, sys, random
 
 thisDir = os.path.dirname(os.path.realpath(__file__))
 
@@ -74,8 +74,14 @@ if usr and passwd:
   cmd = "createdb '" + db1 + "' --owner='" + usr + "'"
   osSys(ncb  + '"' + cmd + '"')
 
-  cmd = "CREATE ROLE replication WITH SUPERUSER REPLICATION NOLOGIN ENCRYPTED PASSWORD '" + passwd + "'"
+  ## deterministic shuffle of passwd
+  l = list(passwd)
+  random.Random(123).shuffle(l)
+  rpasswd = ''.join(l)
+
+  cmd = "CREATE ROLE replication WITH SUPERUSER REPLICATION NOLOGIN ENCRYPTED PASSWORD '" + rpasswd + "'"
   osSys(ncb +  '"psql -c \\"' + cmd + '\\" postgres"') 
+  util.remember_pgpassword(rpasswd, "*", "*", "*", "replication")
 
 osSys("./nc tune " + pgV)
 
