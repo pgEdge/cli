@@ -3,7 +3,11 @@ import util
 import os, sys
 
 thisDir = os.path.dirname(os.path.realpath(__file__))
-pgeV="pg15"
+
+pgN = os.getenv('pgN', '')
+if pgN == "":
+  pgN = "15"
+pgV = "pg" + pgN
 
 withPOSTGREST = str(os.getenv("withPOSTGREST", "False"))
 withBACKREST  = str(os.getenv("withBACKREST", "False"))
@@ -48,41 +52,45 @@ except ImportError as e:
   osSys("pip3 install psycopg2-binary")
 
 print(" ")
-print("## Install PgEdge for " + pgeV + " #######################################")
+print("## Install PgEdge for " + pgV + " #######################################")
 
-if os.path.isdir(pgeV):
+if os.path.isdir(pgV):
   print(" ")
-  print("# " + pgeV + " installation found.")
+  print("# " + pgV + " installation found.")
 else:
-  osSys("./nc install " + pgeV)
+  osSys("./nc install " + pgV)
 
 svcuser = util.get_user()
 
-osSys("./nc init pg15 --svcuser=" + svcuser)
-osSys("./nc config pg15 --autostart=on")
-osSys("./nc start " + pgeV)
+osSys("./nc init " + pgV + " --svcuser=" + svcuser)
+osSys("./nc config " + pgV + " --autostart=on")
+osSys("./nc start " + pgV)
 
 if usr and passwd:
+  ncb = './nc pgbin ' + pgN + ' '
   cmd = "CREATE ROLE " + usr + " PASSWORD '" + passwd + "' SUPERUSER CREATEDB CREATEROLE INHERIT LOGIN"
-  osSys('./nc pgbin 15 "psql -c \\"' + cmd + '\\" postgres"') 
+  osSys(ncb +  '"psql -c \\"' + cmd + '\\" postgres"') 
 
   cmd = "createdb '" + db1 + "' --owner='" + usr + "'"
-  osSys('./nc pgbin 15 "' + cmd + '"')
+  osSys(ncb  + '"' + cmd + '"')
 
-osSys("./nc tune " + pgeV)
+  cmd = "CREATE ROLE replication WITH SUPERUSER REPLICATION NOLOGIN ENCRYPTED PASSWORD '" + passwd + "'"
+  osSys(ncb +  '"psql -c \\"' + cmd + '\\" postgres"') 
+
+osSys("./nc tune " + pgV)
 
 osSys("./nc install spock -d " + db1)
 
 if withPOSTGREST == "True":
   print(" ")
-  osSys("./nc install postgrest" + db1)
+  osSys("./nc install postgrest")
 
 if withBACKREST == "True":
   print(" ")
-  osSys("./nc install backrest" + db1)
+  osSys("./nc install backrest")
 
 if withBOUNCER == "True":
   print(" ")
-  os.system("./nc install bouncer" + db1)
+  os.system("./nc install bouncer")
 
 

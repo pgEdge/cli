@@ -159,7 +159,9 @@ def is_systemctl():
 
 def remove_symlinks(p_link_dir, p_target_dir):
   cmd = 'ls  -l ' + p_link_dir + ' | grep "\->" | grep ' + p_target_dir + ' | cut -c50- | cut -d" " -f1'
+  print("DEBUG cmd: " + str(cmd))
   links = getoutput(cmd)
+  print("DEBUG links: " + str(links))
 
   for link in links.splitlines():
     lnk = str(link).strip()
@@ -1673,9 +1675,9 @@ def write_pgenv_file(p_pghome, p_pgver, p_pgdata, p_pguser, p_pgdatabase, p_pgpo
     return 1
 
   message (" ")
-  message ("to load this postgres into your environment, " + source + " the env file: ")
-  message ("    " + env_file)
-  message (" ")
+  ##message ("to load this postgres into your environment, " + source + " the env file: ")
+  ##message ("    " + env_file)
+  ##message (" ")
   return 0
 
 

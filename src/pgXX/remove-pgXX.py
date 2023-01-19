@@ -10,7 +10,5 @@ import util, startup
 pgver = "pgXX"
 
 autostart = util.get_column('autostart', pgver)
-if autostart != "on":
-  sys.exit(0)
-
-startup.remove_linux("pgedge" + pgver[2:4], pgver)
+if autostart == "on":
+  startup.remove_linux("pg" + pgver[2:4], pgver)

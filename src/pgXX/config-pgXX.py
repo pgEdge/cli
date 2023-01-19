@@ -108,7 +108,7 @@ if args.svcname > '':
 if ((args.autostart is None) or (autostart == args.autostart)):
   sys.exit(0)
 
-systemsvc = 'pgedge' + pgver[2:4]
+systemsvc = 'pg' + pgver[2:4]
 if args.autostart == "off":
   startup.remove_linux(systemsvc, pgver)
 else:
