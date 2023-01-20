@@ -62,7 +62,7 @@ def scrub_passwd(p_cmd):
       continue
 
     if fg:
-      new_s = new_s + " PASSWORD '???' "
+      new_s = new_s + " PASSWORD '???'"
       fg = False
     else:
       new_s = new_s + " " + i
@@ -1239,7 +1239,7 @@ def remember_pgpassword(p_passwd, p_port="5432", p_host="localhost", p_db="*", p
   if not get_platform() == "Windows":
     os.chmod(pw_file, 0o600)
 
-  message("Password securely remembered")
+  ##message("Password securely remembered")
 
   return pw_file
 
@@ -1530,7 +1530,8 @@ def update_postgresql_conf(p_pgver, p_port, is_new=True,update_listen_addr=True)
 
   put_pgconf(p_pgver, ns)
 
-  message ("\nUsing PostgreSQL Port " + str(p_port))
+  if str(p_port) != "5432":
+    message ("\nUsing PostgreSQL Port " + str(p_port))
 
   return
 

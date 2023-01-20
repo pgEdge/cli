@@ -110,7 +110,7 @@ if not os.path.isdir(pg_log):
   os.mkdir(pg_log)
 
 ## PERMISSIONS ########################################
-util.message("\nSetting secure directory permissions")
+##util.message("\nSetting secure directory permissions")
 if util.is_admin():
   chown_cmd = "chown " + svcuser + ":" + svcuser
   if not startup.user_exists(svcuser):
@@ -178,8 +178,6 @@ if is_password:
   src_dir = pg_home + os.sep + "init" + os.sep
   shutil.copy(src_dir + "pg_hba.conf", pg_data)
   os.remove(pgpass_file)
-
-util.message("Initialization Completed")
 
 if update_install_date:
   util.update_installed_date(pgver)

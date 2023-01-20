@@ -37,7 +37,7 @@ def osSys(cmd):
 
 
 ## MAINLINE #####################################################3
-rc = os.system("pip3 --version")
+rc = os.system("pip3 --version > /dev/null")
 if rc != 0:
   print("\n# Trying to install 'pip3'")
   osSys("wget https://bootstrap.pypa.io/get-pip.py")
@@ -55,9 +55,6 @@ try:
 except ImportError as e:
   osSys("pip3 install psycopg2-binary")
 
-print(" ")
-print("## Install PgEdge for " + pgV + " #######################################")
-
 if os.path.isdir(pgV):
   print(" ")
   print("# " + pgV + " installation found.")
@@ -73,7 +70,7 @@ osSys("./nc start " + pgV)
 if usr and passwd:
   ncb = './nc pgbin ' + pgN + ' '
   cmd = "CREATE ROLE " + usr + " PASSWORD '" + passwd + "' SUPERUSER CREATEDB CREATEROLE INHERIT LOGIN"
-  osSys(ncb +  '"psql -c \\"' + cmd + '\\" postgres"') 
+  osSys(ncb +  '"psql -c \\"' + cmd + '\\" postgres" > /dev/null') 
 
   cmd = "createdb '" + db1 + "' --owner='" + usr + "'"
   osSys(ncb  + '"' + cmd + '"')
@@ -84,7 +81,7 @@ if usr and passwd:
   rpasswd = ''.join(l)
 
   cmd = "CREATE ROLE replication WITH SUPERUSER REPLICATION NOLOGIN ENCRYPTED PASSWORD '" + rpasswd + "'"
-  osSys(ncb +  '"psql -c \\"' + cmd + '\\" postgres"') 
+  osSys(ncb +  '"psql -c \\"' + cmd + '\\" postgres" > /dev/null') 
   util.remember_pgpassword(rpasswd, "*", "*", "*", "replication")
 
 osSys("./nc tune " + pgV)
