@@ -22,8 +22,12 @@ passwd = os.getenv('pgePasswd', None)
   
 
 def osSys(cmd):
-  print('#')
-  print('# ' + str(cmd))
+  isSilent = os.getenv('isSilent', 'False')
+  if isSilent == "False":
+    s_cmd = util.scrub_passwd(cmd)
+    print('#')
+    print('# ' + str(s_cmd))
+
   rc = os.system(cmd)
   if rc != 0:
     print("FATAL ERROR running install-pgedge")

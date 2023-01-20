@@ -51,6 +51,25 @@ MY_HOME = os.getenv('MY_HOME', '..' + os.sep + '..')
 pid_file = os.path.join(MY_HOME, 'conf', 'cli.pid')
 
 
+def scrub_passwd(p_cmd):
+  ll = p_cmd.split()
+  fg = False
+  new_s = ""
+
+  for i in ll:
+    if (i == "PASSWORD") and (fg == False):
+      fg = True
+      continue
+
+    if fg:
+      new_s = new_s + " PASSWORD '???' "
+      fg = False
+    else:
+      new_s = new_s + " " + i
+
+  return(new_s)
+
+
 def get_glibc_version():
   if get_platform() != 'Linux':
     return ""

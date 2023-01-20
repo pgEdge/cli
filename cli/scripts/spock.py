@@ -12,10 +12,14 @@ try:
   from psycopg2.extras import RealDictCursor
 except ImportError as e:
   util.exit_message("Missing 'psycopg2' module from pip", 1)
-
+   
 
 def echo_cmd(cmd, sleep_secs=0):
-  util.message("# " + str(cmd))
+  isSilent = os.getenv('isSilent', 'False')
+  if isSilent == "False":
+    s_cmd = util.scrub_passwd(cmd)
+    util.message("# " + str(s_cmd))
+
   rc = os.system(str(cmd))
   if rc == 0:
     if sleep_secs > 0:
@@ -75,10 +79,6 @@ def get_pg_v(pg):
 
   if not os.path.isdir(pg_v):
     util.exit_message(str(pg_v) + " not installed", 1)
-
-  ##rc = os.system(pg_v + "/bin/pg_isready > /dev/null 2>&1")
-  ##if rc != 0:
-  ##  util.exit_message(pg_v + " not ready", 1) 
 
   return(pg_v)
 
