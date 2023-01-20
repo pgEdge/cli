@@ -3,7 +3,7 @@
 SPOCK_BUILD_DELTA_APPLY=false
 MMDD=`date +'%m%d'`
 
-spV=3.0.14
+spV=3.0.15
 if [ "$SPOCK_BUILD_DELTA_APPLY" == "true" ]; then
   spV=3.0da-$MMDD
 fi
@@ -94,7 +94,7 @@ cassFullV=3.1.5
 cassShortV=
 cassBuildV=1
 
-orafceFullV=4.0.1
+orafceFullV=4.1.0
 orafceShortV=
 orafceBuildV=1
 
@@ -171,7 +171,7 @@ repackFullV=1.4.8
 repackShortV=
 repackBuildV=1
 
-partmanFullV=4.7.1
+partmanFullV=4.7.2
 partmanShortV=
 partmanBuildV=1
 

@@ -228,7 +228,8 @@ INSERT INTO versions VALUES ('instantclient', '21.6', '', 0, '20220420', '', '',
 INSERT INTO projects VALUES ('orafce', 'ext', 4, 0, 'hub', 0, 'https://github.com/orafce/orafce/releases',
   'orafce', 1, 'larry.png', 'Ora Built-in Packages', 'https://github.com/orafce/orafce#orafce---oracles-compatibility-functions-and-packages');
 INSERT INTO releases VALUES ('orafce-pg15', 2, 'orafce', 'OraFCE', '', 'prod', '', 1, 'POSTGRES', '', '');
-INSERT INTO versions VALUES ('orafce-pg15', '4.0.1-1',   'arm, el8', 1, '20221119', 'pg15', '', '');
+INSERT INTO versions VALUES ('orafce-pg15', '4.1.0-1',   'arm, el8', 1, '20230107', 'pg15', '', '');
+INSERT INTO versions VALUES ('orafce-pg15', '4.0.1-1',   'arm, el8', 0, '20221119', 'pg15', '', '');
 
 INSERT INTO projects VALUES ('fixeddecimal', 'ext', 6, 0, 'hub', 0, 'https://github.com/pgsql-io/fixeddecimal/tags',
   'fixeddecimal', 1, 'fixeddecimal.png', 'Much faster than NUMERIC', 'https://github.com/pgsql-io/fixeddecimal');
@@ -324,7 +325,8 @@ INSERT INTO versions VALUES ('timescaledb-pg14', '2.8.0-1',  'el8, arm', 0, '202
 INSERT INTO projects VALUES ('spock', 'pge', 4, 0, 'hub', 1, 'https://github.com/pgedge/spock/tags',
   'spock', 1, 'spock.png', 'Logical & Multi-Master Replication', 'https://github.com/pgedge/spock/#spock');
 INSERT INTO releases VALUES ('spock-pg15', 4, 'spock', 'Spock', '', 'prod', '', 1, 'POSTGRES', '', '');
-INSERT INTO versions VALUES ('spock-pg15', '3.0.14-1', 'el8, arm', 1, '20230113', 'pg15', '', '');
+INSERT INTO versions VALUES ('spock-pg15', '3.0.15-1', 'el8, arm', 1, '20230120', 'pg15', '', '');
+INSERT INTO versions VALUES ('spock-pg15', '3.0.14-1', 'el8, arm', 0, '20230113', 'pg15', '', '');
 
 INSERT INTO projects VALUES ('pglogical', 'ext', 4, 0, 'hub', 1, 'https://github.com/2ndQuadrant/pglogical/releases',
   'pglogical', 1, 'spock.png', 'Logical Replication', 'https://github.com/2ndQuadrant/pglogical');
@@ -360,7 +362,8 @@ INSERT INTO versions VALUES ('repack-pg15', '1.4.8-1', 'arm, el8', 1, '20221019'
 INSERT INTO projects VALUES ('partman', 'ext', 4, 0, 'hub', 4, 'https://github.com/pgpartman/pg_partman/tags',
   'partman', 1, 'partman.png', 'Partition Management', 'https://github.com/pgpartman/pg_partman#pg-partition-manager');
 INSERT INTO releases VALUES ('partman-pg15', 6, 'partman', 'pgPartman',   '', 'prod', '', 1, 'POSTGRES', '', '');
-INSERT INTO versions VALUES ('partman-pg15', '4.7.1-1',  'arm, el8', 1, '20221013', 'pg15', '', '');
+INSERT INTO versions VALUES ('partman-pg15', '4.7.2-1',  'arm, el8', 1, '20221216', 'pg15', '', '');
+INSERT INTO versions VALUES ('partman-pg15', '4.7.1-1',  'arm, el8', 0, '20221013', 'pg15', '', '');
 
 INSERT INTO projects VALUES ('hypopg', 'ext', 4, 0, 'hub', 8, 'https://github.com/HypoPG/hypopg/releases',
   'hypopg', 1, 'whatif.png', 'Hypothetical Indexes', 'https://hypopg.readthedocs.io/en/latest/');

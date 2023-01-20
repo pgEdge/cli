@@ -3,7 +3,7 @@ bundle=pgedge
 api=nc
 hubV=2.11
 
-spockV=3.0.14-1
+spockV=3.0.15-1
 #spockV=3.0da-0106-1
 
 P15=15.1-4
@@ -25,7 +25,7 @@ citusV=11.1.5-1
 
 oraclefdwV=2.5.0-1
 inclV=21.6
-orafceV=4.0.1-1
+orafceV=4.1.0-1
 ora2pgV=23.1
 v8V=3.1.2-1
 
@@ -37,7 +37,7 @@ timescaleV=2.8.0-1
 logicalV=2.4.2-1
 profV=4.2-1
 bulkloadV=3.1.19-1
-partmanV=4.7.1-1
+partmanV=4.7.2-1
 repackV=1.4.8-1
 hintV=1.4.0-1
 
