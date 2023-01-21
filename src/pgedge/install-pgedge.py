@@ -25,13 +25,12 @@ def osSys(cmd):
   isSilent = os.getenv('isSilent', 'False')
   if isSilent == "False":
     s_cmd = util.scrub_passwd(cmd)
-    print('#')
-    print('# ' + str(s_cmd))
+    util.message('#')
+    util.message('# ' + str(s_cmd))
 
   rc = os.system(cmd)
   if rc != 0:
-    print("FATAL ERROR running install-pgedge")
-    sys.exit(1)
+    util.exit_message("FATAL ERROR running install-pgedge", 1)
 
   return
 
@@ -39,7 +38,7 @@ def osSys(cmd):
 ## MAINLINE #####################################################3
 rc = os.system("pip3 --version > /dev/null")
 if rc != 0:
-  print("\n# Trying to install 'pip3'")
+  util.message("\n# Trying to install 'pip3'")
   osSys("wget https://bootstrap.pypa.io/get-pip.py")
   osSys("sudo python3 get-pip.py --no-warn-script-location")
   osSys("rm get-pip.py")
@@ -55,19 +54,28 @@ try:
 except ImportError as e:
   osSys("pip3 install psycopg2-binary")
 
-if os.path.isdir(pgV):
-  print(" ")
-  print("# " + pgV + " installation found.")
-else:
-  osSys("./nc install " + pgV)
+osSys("./nc install " + pgV)
 
 svcuser = util.get_user()
+if os.path.isdir("/data"):
+  util.message("\n## /data directory found ###################")
+else:
+  util.message("\n## creating /data directory ################")
+  osSys("sudo mkdir /data")
+  osSys("chown " + svcuser + ":" + svcuser + " /data")
 
+util.message("\n## symlink local data directory to /data ###")
+osSys("mv data/* /data/.")
+osSys("rm -rf data")
+osSys("ln -s /data data")
+
+util.message("\n## init & then autostart postgres #########")
 osSys("./nc init " + pgV + " --svcuser=" + svcuser)
 osSys("./nc config " + pgV + " --autostart=on")
 osSys("./nc start " + pgV)
 
 if usr and passwd:
+  util.message("\n## creating roles & database ##############")
   ncb = './nc pgbin ' + pgN + ' '
   cmd = "CREATE ROLE " + usr + " PASSWORD '" + passwd + "' SUPERUSER CREATEDB CREATEROLE INHERIT LOGIN"
   osSys(ncb +  '"psql -c \\"' + cmd + '\\" postgres" > /dev/null') 
@@ -89,15 +97,15 @@ osSys("./nc tune " + pgV)
 osSys("./nc install spock -d " + db1)
 
 if withPOSTGREST == "True":
-  print(" ")
+  util.message("  ")
   osSys("./nc install postgrest")
 
 if withBACKREST == "True":
-  print(" ")
+  util.message("  ")
   osSys("./nc install backrest")
 
 if withBOUNCER == "True":
-  print(" ")
+  util.message("  ")
   os.system("./nc install bouncer")
 
 
