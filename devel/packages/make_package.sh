@@ -3,13 +3,13 @@
 #This script generates an RPM or DEB package.
 
 #Input: Directory containing appropriate pg binaries tar.gz.
-#Output: RPM in ~/pg_pgsqlio_build/RPMS/i386 or x86_64
-#        DEB in ~/pg_pgsqlio_build
+#Output: RPM in ~/pgedge_build/RPMS/x86_64
+#        DEB in ~/pgedge_build
 
 HELP_TEXT() {
     printf "\n"
     printf "  Required Flags:\n"
-    printf "      --major_version <9.6>\n"
+    printf "      --major_version <14>\n"
     printf "          Specify a PostgreSQL Major Version Number\n"
     printf "      --minor_version <1>\n"
     printf "          Specify a PostgreSQL Minor Version Number\n"
@@ -35,9 +35,9 @@ HELP_TEXT() {
     printf "\n"
 }
 # Default options
-MIRROR_URL="http://localhost:8000"
+MIRROR_URL="http://localhost:8000/"
 SOURCE_DIR="/tmp"
-PKG_NAME="postgresql"
+PKG_NAME="pgedge"
 while [ -n "$1" ] 
 do
     case "$1" in
@@ -150,7 +150,7 @@ fi
 
 PKG_NAME="$PKG_NAME${MAJOR_VERSION//[.]/}"
 PG_NAME="postgresql${MAJOR_VERSION//[.]/}"
-SANDBOX_NAME="pgsql-$MAJOR_VERSION.$MINOR_VERSION-$RELEASE-linux64.tar.bz2"
+SANDBOX_NAME="pgedge-$MAJOR_VERSION.$MINOR_VERSION-$RELEASE.tar.bz2"
 
 echo --------------------
 echo Locating Source File
@@ -214,19 +214,19 @@ fi
 DEBIAN_ARCH=x64
 
 #INSTALLATION_PATH="/opt/postgresql/pg`echo $MAJOR_VERSION | sed 's/\.//g'`"
-INSTALLATION_PATH="/opt/postgresql"
+INSTALLATION_PATH="/opt/pgedge"
 PGINSTALLATION_PATH="$INSTALLATION_PATH/pg`echo $MAJOR_VERSION | sed 's/\.//g'`"
-PG_LINUX_TAR="$SOURCE_DIR/bigsql-$MAJOR_VERSION.$MINOR_VERSION-$RELEASE-linux64.tar.bz2"
+PG_LINUX_TAR="$SOURCE_DIR/pgedge-$MAJOR_VERSION.$MINOR_VERSION-$RELEASE-linux64.tar.bz2"
 TMP_PREFIX="/tmp/PG_PGSQLIO_BUILD"
 TMP_ROOT="$TMP_PREFIX$INSTALLATION_PATH"
 TMP_INITD="$TMP_ROOT/pg`echo $MAJOR_VERSION | sed 's/\.//g'`/startup"
 INITD="postgresql-`echo $MAJOR_VERSION | sed 's/\.//g'`"
 PG_BUILD_DIR_NAME="pg_pgsqlio_build"
-PG_TRANSFORMED_TAR="/tmp/$PKG_NAME-$MAJOR_VERSION.$MINOR_VERSION-$RPM_RELEASE-$OS_PLATFORM-bigsql.tar.gz"
+PG_TRANSFORMED_TAR="/tmp/$PKG_NAME-$MAJOR_VERSION.$MINOR_VERSION-$RPM_RELEASE-$OS_PLATFORM-pgedge.tar.gz"
 ENVFILE_NAME="pg${MAJOR_VERSION//[.]/}.env"
 ENVFILE="$TMP_ROOT/$ENVFILE_NAME"
-DEBIAN_DIR="postgresql-$MAJOR_VERSION.$MINOR_VERSION-$RELEASE-$DEBIAN_ARCH-bigsql"
-RPMOSUSER="postgres"
+DEBIAN_DIR="pgedge-$MAJOR_VERSION.$MINOR_VERSION-$RELEASE-$DEBIAN_ARCH"
+RPMOSUSER="pgedge"
 ###################################################################
 
 function convertToPackageFriendly {
@@ -296,7 +296,7 @@ function createRPMSpec {
   fi
 
   echo "Creating spec file..."
-  SPEC_OUTPUT="$PG_BUILD_DIR_NAME/SPECS/$PKG_NAME-$MAJOR_VERSION.$MINOR_VERSION-$OS_PLATFORM-bigsql.spec"
+  SPEC_OUTPUT="$PG_BUILD_DIR_NAME/SPECS/$PKG_NAME-$MAJOR_VERSION.$MINOR_VERSION-$OS_PLATFORM-pgedge.spec"
 
   FILES=$(/bin/tar -tzf $PG_TRANSFORMED_TAR | /bin/grep -v '^.*/$' | sed 's/^/\//')
   DIRS=$(/bin/tar -tvzf $PG_TRANSFORMED_TAR | grep "^d" | awk '{ print $6 }' | sed 's/^/\//' | sort | uniq)
@@ -464,7 +464,7 @@ rpmbuild -ba ~/$SPEC_OUTPUT #--sign
 ###rpmbuild -ba --sign ~/$SPEC_OUTPUT 
 # /mnt/hgfs/pgrpm/rpmbuild_expect.exp "~/$SPEC_OUTPUT"
 printf "$MAJOR_VERSION :: $MINOR_VERSION :: $RELEASE\n"
-mv ~/$PG_BUILD_DIR_NAME/RPMS/$ARCH/$PKG_NAME-$MAJOR_VERSION.$MINOR_VERSION-$RPM_RELEASE.x86_64.rpm ~/$PG_BUILD_DIR_NAME/RPMS/$ARCH/postgresql-$MAJOR_VERSION.$MINOR_VERSION-$RELEASE-x64-bigsql.rpm
+mv ~/$PG_BUILD_DIR_NAME/RPMS/$ARCH/$PKG_NAME-$MAJOR_VERSION.$MINOR_VERSION-$RPM_RELEASE.x86_64.rpm ~/$PG_BUILD_DIR_NAME/RPMS/$ARCH/postgresql-$MAJOR_VERSION.$MINOR_VERSION-$RELEASE-x64-pgedge.rpm
 
 saveDir=/build/`date +'%Y-%m-%d'`
 test -d $saveDir
@@ -473,7 +473,7 @@ then
     mkdir $saveDir
 fi
 
-cp ~/$PG_BUILD_DIR_NAME/RPMS/$ARCH/postgresql-$MAJOR_VERSION.$MINOR_VERSION-$RELEASE-x64-bigsql.rpm $saveDir
+cp ~/$PG_BUILD_DIR_NAME/RPMS/$ARCH/postgresql-$MAJOR_VERSION.$MINOR_VERSION-$RELEASE-x64-pgedge.rpm $saveDir
 printf "Saved build to: $saveDir\n"
 printf "RPMBUild returned: $?\n\n\n"
 
@@ -649,6 +649,6 @@ then
     buildRPM
  fi
 else
- echo "/etc/issue not found. Please contact feedback@bigsql.org."
+ echo "/etc/issue not found. Please contact feedback@pgedge.org."
 fi
 exit 0
