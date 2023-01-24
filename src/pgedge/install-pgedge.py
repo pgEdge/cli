@@ -58,17 +58,18 @@ except ImportError as e:
 osSys("./nc install " + pgV)
 
 svcuser = util.get_user()
-if os.path.isdir("/data"):
-  util.message("\n## /data directory found ###################")
-else:
-  util.message("\n## creating /data directory ################")
-  osSys("sudo mkdir /data")
-  osSys("chown " + svcuser + ":" + svcuser + " /data")
 
-util.message("\n## symlink local data directory to /data ###")
-osSys("mv data/* /data/.")
-osSys("rm -rf data")
-osSys("ln -s /data data")
+##if os.path.isdir("/data"):
+##  util.message("\n## /data directory found ###################")
+##else:
+##  util.message("\n## creating /data directory ################")
+##  osSys("sudo mkdir /data")
+##  osSys("sudo chown " + svcuser + ":" + svcuser + " /data")
+##
+##util.message("\n## symlink local data directory to /data ###")
+##osSys("cp -r  data/* /data/.")
+##osSys("rm -rf data")
+##osSys("ln -s /data data")
 
 if isAutoStart == "True":
   util.message("\n## init & config autostart  ###############")

@@ -23,8 +23,9 @@ if isSTART == "True":
   os.system(start_cmd)
   sys.exit(0)
   
-if isAutoStart != "True":
-  sys.exit(0)
+##if isAutoStart != "True":
+##  sys.exit(0)
+sys.exit(0)
 
 #########################################################
 ## AutoStart 

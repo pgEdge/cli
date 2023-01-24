@@ -1262,7 +1262,6 @@ isAUTOSTART = False
 if "--autostart" in args and 'install' in args:
   isAUTOSTART = True
   os.environ['isAutoStart'] = "True"
-  os.environ['isYes'] = "True"
   args.remove("--autostart")
 
 isRELNOTES = False
