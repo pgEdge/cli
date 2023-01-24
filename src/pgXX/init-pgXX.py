@@ -160,7 +160,7 @@ util.set_column('datadir', pgver, pg_data)
 util.set_column('svcuser', pgver, svcuser)
 util.set_column('logdir', pgver, pg_log)
 
-util.update_postgresql_conf(pgver, i_port, update_listen_addr=is_password)
+util.update_postgresql_conf(pgver, i_port)
 
 if util.get_platform() == "Linux":
   os.system("cp " + pgver + "/genSelfCert.sh " + pg_data + "/.")

@@ -12,6 +12,7 @@ pgV = "pg" + pgN
 withPOSTGREST = str(os.getenv("withPOSTGREST", "False"))
 withBACKREST  = str(os.getenv("withBACKREST", "False"))
 withBOUNCER   = str(os.getenv("withBOUNCER", "False"))
+isAutoStart   = str(os.getenv("isAutoStart", "False"))
 
 db1 = os.getenv('pgName', '')
 if db1 == "":
@@ -42,7 +43,7 @@ if rc != 0:
   osSys("wget https://bootstrap.pypa.io/get-pip.py")
   osSys("sudo python3 get-pip.py --no-warn-script-location")
   osSys("rm get-pip.py")
-  osSys("pip3 install click")
+  os.system("pip3 install click")
 
 try:
   import fire
@@ -69,9 +70,11 @@ osSys("mv data/* /data/.")
 osSys("rm -rf data")
 osSys("ln -s /data data")
 
-util.message("\n## init & then autostart postgres #########")
-osSys("./nc init " + pgV + " --svcuser=" + svcuser)
-osSys("./nc config " + pgV + " --autostart=on")
+if isAutoStart == "True":
+  util.message("\n## init & config autostart  ###############")
+  osSys("./nc init " + pgV + " --svcuser=" + svcuser)
+  osSys("./nc config " + pgV + " --autostart=on")
+
 osSys("./nc start " + pgV)
 
 if usr and passwd:
