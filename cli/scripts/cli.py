@@ -75,7 +75,7 @@ mode_list = ["start", "stop", "restart", "status", "list", "info", "update",
              "remove", "reload", "activity", "help", "get", "set", "unset",
              "repolist", "repo-pkgs", "discover", "backrest", "change-pgconf",
              "register", "top", "spock", "pgbin", "--autostart", "-U", "-P", "-d",
-             "--relnotes", "--start", "--no-restart", "--no-preload",
+             "--rm-data", "--relnotes", "--start", "--no-restart", "--no-preload",
              "--help", "--json", "--jsonp", "--test", "--extensions", "--svcs",
              "--list", "--old", "--showduplicates", "-y", "-t",
              "--verbose", "-v", "--debug", "--debug2"]
@@ -1263,6 +1263,10 @@ if "--autostart" in args and 'install' in args:
   isAUTOSTART = True
   os.environ['isAutoStart'] = "True"
   args.remove("--autostart")
+
+if "--rm-data" in args and 'remove' in args:
+  os.environ['isRM_DATA'] = "True"
+  args.remove("--rm-data")
 
 isRELNOTES = False
 if "--relnotes" in args and ('info' in args or 'list' in args):
