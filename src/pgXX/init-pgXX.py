@@ -77,29 +77,29 @@ if util.is_admin() :
     svcuser = util.get_user()
 
 ## PASSWD #############################################
-is_password=False
-##pgpass_file = pg_home + os.sep + ".pgpass"
-##if args.pwfile:
-##  pgpass_file = args.pwfile
-##  if not os.path.isfile(pgpass_file):
-##    fatal_error("Error: Invalid --pwfile")
-##
-##if os.path.isfile(pgpass_file):
-##  is_password=True
-##  file = open(pgpass_file, 'r')
-##  line = file.readline()
-##  pg_password = line.rstrip()
-##  file.close()
-##else:
-##  if not isSilent:
-##    pg_password = util.get_superuser_passwd()
-##    file = open(pgpass_file, 'w')
-##    file.write(pg_password + '\n')
-##    file.close()
-##    is_password=True
-##
-##if is_password:
-##  os.chmod(pgpass_file, 0o600)
+is_password=True
+pgpass_file = pg_home + os.sep + ".pgpass"
+if args.pwfile:
+  pgpass_file = args.pwfile
+  if not os.path.isfile(pgpass_file):
+    fatal_error("Error: Invalid --pwfile")
+
+if os.path.isfile(pgpass_file):
+  is_password=True
+  file = open(pgpass_file, 'r')
+  line = file.readline()
+  pg_password = line.rstrip()
+  file.close()
+else:
+  if not isSilent:
+    pg_password = util.get_superuser_passwd()
+    file = open(pgpass_file, 'w')
+    file.write(pg_password + '\n')
+    file.close()
+    is_password=True
+
+if is_password:
+  os.chmod(pgpass_file, 0o600)
 
 ## LOGS ###############################################
 data_root_logs = os.path.join(data_root, "logs")
@@ -136,7 +136,7 @@ os_user = util.get_user()
 
 # Does the user want to assign a password ?
 if is_password:
-  batcmd = initdb_cmd + ' -U postgres -A scram-sha-256 ' + init_options + \
+  batcmd = initdb_cmd + ' -U ' + os_user + ' -A scram-sha-256 ' + init_options + \
            ' -D "' + pg_data + '" ' + \
            '--pwfile="' + pgpass_file + '" > "' + logfile + '" 2>&1'
 else:
@@ -145,12 +145,11 @@ else:
            ' -D "' + pg_data + '" ' + \
            ' > "' + logfile + '" 2>&1'
 
-if svcuser > "" and svcuser != curr_user:
-  batcmd = "sudo su - " + svcuser + " -c '" + batcmd + "'"
+##if svcuser > "" and svcuser != curr_user:
+##  batcmd = "sudo su - " + svcuser + " -c '" + batcmd + "'"
 
 util.message('  ' + batcmd)
 err = os.system(batcmd)
-
 
 if err:
   msg = "ERROR: Unable to Initialize PG. see logfile: " + logfile
@@ -168,7 +167,7 @@ if util.get_platform() == "Linux":
   os.system("cp " + pgver + "/pg_hba.conf.nix " + pg_data + "/pg_hba.conf")
 
 if is_password:
-  pg_pass_file = util.remember_pgpassword(pg_password, str(i_port))
+  pg_pass_file = util.remember_pgpassword(pg_password, str(i_port), p_user=os_user)
 else:
   pg_pass_file=None
 
@@ -176,7 +175,7 @@ util.write_pgenv_file(pg_home, pgver, pg_data, os_user, 'postgres', str(i_port),
 
 if is_password:
   src_dir = pg_home + os.sep + "init" + os.sep
-  shutil.copy(src_dir + "pg_hba.conf", pg_data)
+  ##shutil.copy(src_dir + "pg_hba.conf", pg_data)
   os.remove(pgpass_file)
 
 if update_install_date:
