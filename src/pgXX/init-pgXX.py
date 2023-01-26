@@ -91,7 +91,15 @@ if os.path.isfile(pgpass_file):
   pg_password = line.rstrip()
   file.close()
 else:
-  if not isSilent:
+  pgePasswd = os.getenv('pgePasswd', '')
+  if pgePasswd > '':
+    pg_password = util.shuffle_string(pgePasswd)
+    file = open(pgpass_file, 'w')
+    file.write(pg_password + '\n')
+    is_password=True
+    file.close()
+
+  elif not isSilent:
     pg_password = util.get_superuser_passwd()
     file = open(pgpass_file, 'w')
     file.write(pg_password + '\n')

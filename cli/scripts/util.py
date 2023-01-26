@@ -9,7 +9,7 @@ MY_VERSION = "2.12"
 from subprocess import Popen, PIPE, STDOUT
 from datetime import datetime, timedelta
 
-import os, sys, socket, platform, sqlite3, getpass, signal, hashlib, glob
+import os, sys, socket, platform, sqlite3, getpass, signal, hashlib, glob, random
 import json, uuid, logging, tempfile, shutil, filecmp, traceback, time, subprocess
 
 import api, meta
@@ -49,6 +49,14 @@ my_logger = logging.getLogger('cli_logger')
 MY_CMD = os.getenv('MY_CMD')
 MY_HOME = os.getenv('MY_HOME', '..' + os.sep + '..')
 pid_file = os.path.join(MY_HOME, 'conf', 'cli.pid')
+
+
+def shuffle_string(p_input):
+  # deterministic shuffle of a string
+  l = list(p_input)
+  random.Random(123).shuffle(l)
+  shuffled = ''.join(l)
+  return(shuffled)
 
 
 def scrub_passwd(p_cmd):

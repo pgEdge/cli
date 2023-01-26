@@ -87,14 +87,14 @@ if usr and passwd:
   cmd = "createdb '" + db1 + "' --owner='" + usr + "'"
   osSys(ncb  + '"' + cmd + '"')
 
-  ## deterministic shuffle of passwd
-  l = list(passwd)
-  random.Random(123).shuffle(l)
-  rpasswd = ''.join(l)
-
-  cmd = "CREATE ROLE replication WITH SUPERUSER REPLICATION NOLOGIN ENCRYPTED PASSWORD '" + rpasswd + "'"
-  osSys(ncb +  '"psql -c \\"' + cmd + '\\" postgres" > /dev/null') 
-  util.remember_pgpassword(rpasswd, "*", "*", "*", "replication")
+  #### deterministic shuffle of passwd
+  ##l = list(passwd)
+  ##random.Random(123).shuffle(l)
+  ##rpasswd = ''.join(l)
+  ##
+  ##cmd = "CREATE ROLE replication WITH SUPERUSER REPLICATION NOLOGIN ENCRYPTED PASSWORD '" + rpasswd + "'"
+  ##osSys(ncb +  '"psql -c \\"' + cmd + '\\" postgres" > /dev/null') 
+  ##util.remember_pgpassword(rpasswd, "*", "*", "*", "replication")
 
 osSys("./nc tune " + pgV)
 
