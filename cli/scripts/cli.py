@@ -1385,7 +1385,8 @@ try:
     if not os.path.exists(cmd1):
       util.exit_message("'" + cmd1 +"' not a valid pgbin command", 1, isJSON)
 
-    cmd_parms  = cmd_full.removeprefix(cmd0).removesuffix(';')
+    cmd_parms = util.remove_suffix(';', cmd_full)
+    cmd_parms = util.remove_prefix(cmd0, cmd_parms)
     cmd_parms_arr = cmd_parms.split(';')
     if len(cmd_parms_arr) > 1:
       util.exit_message("command params must not contain an embeded semi-colon", 1, isJSON)

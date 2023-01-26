@@ -125,7 +125,8 @@ INSERT INTO categories VALUES (9,  87, 'Management & Monitoring', 'Manage/Monito
 -- ## HUB ################################
 INSERT INTO projects VALUES ('hub', 'app', 0, 0, 'hub', 0, 'https://github.com/pgedge/nodectl','',0,'','','');
 INSERT INTO releases VALUES ('hub', 1, 'hub', '', '', 'hidden', '', 1, '', '', '');
-INSERT INTO versions VALUES ('hub', '2.12', '',  1, '20230125', '', '', '');
+INSERT INTO versions VALUES ('hub', '2.13', '',  1, '20230126', '', '', '');
+INSERT INTO versions VALUES ('hub', '2.12', '',  0, '20230125', '', '', '');
 INSERT INTO versions VALUES ('hub', '2.11', '',  0, '20230119', '', '', '');
 INSERT INTO versions VALUES ('hub', '2.10', '',  0, '20230116', '', '', '');
 

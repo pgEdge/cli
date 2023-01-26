@@ -4,7 +4,7 @@
 
 from __future__ import print_function, division
 
-MY_VERSION = "2.12"
+MY_VERSION = "2.13"
 
 from subprocess import Popen, PIPE, STDOUT
 from datetime import datetime, timedelta
@@ -49,6 +49,23 @@ my_logger = logging.getLogger('cli_logger')
 MY_CMD = os.getenv('MY_CMD')
 MY_HOME = os.getenv('MY_HOME', '..' + os.sep + '..')
 pid_file = os.path.join(MY_HOME, 'conf', 'cli.pid')
+
+
+def remove_prefix(p_prefix, p_str):
+  if p_str.find(p_prefix) == 0:
+    pref_len = len(p_prefix)
+    return p_str[pref_len:]
+
+  return(p_str)
+
+
+def remove_suffix(p_suffix, p_str):
+  suf_len = len(p_suffix)
+  suf_start = len(p_str) - suf_len
+  if p_str[suf_start:] == p_suffix:
+    return p_str[:suf_start]
+
+  return(p_str)
 
 
 def shuffle_string(p_input):
