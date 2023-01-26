@@ -175,7 +175,7 @@ if util.get_platform() == "Linux":
   os.system("cp " + pgver + "/pg_hba.conf.nix " + pg_data + "/pg_hba.conf")
 
 if is_password:
-  pg_pass_file = util.remember_pgpassword(pg_password, str(i_port), p_user=os_user)
+  pg_pass_file =  util.remember_pgpassword(pg_password, "*", "*", "*", os_user)
 else:
   pg_pass_file=None
 
@@ -183,7 +183,6 @@ util.write_pgenv_file(pg_home, pgver, pg_data, os_user, 'postgres', str(i_port),
 
 if is_password:
   src_dir = pg_home + os.sep + "init" + os.sep
-  ##shutil.copy(src_dir + "pg_hba.conf", pg_data)
   os.remove(pgpass_file)
 
 if update_install_date:
