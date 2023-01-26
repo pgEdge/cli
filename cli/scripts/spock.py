@@ -40,8 +40,8 @@ def run_psyco_sql(pg_v, db, cmd, usr=None):
     util.message(cmd, "info")
 
   try:
-    ##con = psycopg2.connect(dbname=db, user=usr, host="localhost", port=dbp)
-    con = psycopg2.connect(dbname=db, port=dbp)
+    con = psycopg2.connect(dbname=db, user=usr, host="localhost", port=dbp)
+    ##con = psycopg2.connect(dbname=db, port=dbp)
     cur = con.cursor(cursor_factory=RealDictCursor)
     cur.execute(cmd)
     con.commit()
