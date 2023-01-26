@@ -20,7 +20,13 @@ if db1 == "":
 
 usr = os.getenv('pgeUser', None)
 passwd = os.getenv('pgePasswd', None)
-  
+
+
+def error_exit(p_msg, p_rc=1):
+    util.message("ERROR: " + p_msg)
+    os.system("./nc remove pgedge")
+    sys.exit(p_rc)
+
 
 def osSys(cmd):
   isSilent = os.getenv('isSilent', 'False')
@@ -31,12 +37,27 @@ def osSys(cmd):
 
   rc = os.system(cmd)
   if rc != 0:
-    util.exit_message("FATAL ERROR running install-pgedge", 1)
+    error_exit("FATAL ERROR running install-pgedge", 1)
 
   return
 
 
 ## MAINLINE #####################################################3
+
+svcuser = util.get_user()
+
+if util.is_admin():
+  error_exit("You must install as non-root user with passwordless sudo privleges", 1)
+
+if util.is_socket_busy(5432):
+  error_exit("Postgres already running on port 5432", 1)
+
+data_dir = "data/" + pgV
+if os.path.exists(data_dir):
+  dir = os.listdir(data_dir)
+  if len(dir) != 0:
+    error_exit("The '" + data_dir + "' directory is not empty", 1)
+
 rc = os.system("pip3 --version > /dev/null")
 if rc != 0:
   util.message("\n# Trying to install 'pip3'")
@@ -57,7 +78,6 @@ except ImportError as e:
 
 osSys("./nc install " + pgV)
 
-svcuser = util.get_user()
 
 ##if os.path.isdir("/data"):
 ##  util.message("\n## /data directory found ###################")

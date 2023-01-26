@@ -396,7 +396,7 @@ INSERT INTO versions VALUES ('bouncer', '1.18.0-1', 'el8, arm', 1, '20221212', '
 INSERT INTO projects VALUES ('pgedge', 'pge', 0, 0, 'hub', 3, 'http://pgedge.org',
   'pgedge',  0, 'pgedge.png', 'Active/Active Global Postgres Clusters', 'http://pgedge.org');
 INSERT INTO releases VALUES ('pgedge', 1, 'pg',  'pgEdge', '', 'prod', '', 1, '', '', '');
-INSERT INTO versions VALUES ('pgedge', '15.1', '', 1, '20230307', '', '', '');
+INSERT INTO versions VALUES ('pgedge', '15.1', '', 1, '20230126', '', '', '');
 
 INSERT INTO projects VALUES ('backrest', 'pge', 4, 0, 'hub', 3, 'http://pgbackrest.org',
   'backrest',  0, 'backrest.png', 'Backup & Restore', 'http://pgbackrest.org');
