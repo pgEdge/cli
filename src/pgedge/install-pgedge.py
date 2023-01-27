@@ -70,14 +70,14 @@ def check_pre_reqs():
   osSys("pip3 install click --user", False)
   if rc == 0:
     ## need recent version of pip3 to install psycopg2-binary
-    osSys("pip3 install --upgrade pip --user", False)
+    osSys("sudo pip3 install --upgrade pip --no-warn-script-location --root-user-action=ignore", False)
   else:
     url="https://bootstrap.pypa.io/get-pip.py"
     if python_ver == "3.6":
       url="https://bootstrap.pypa.io/pip/3.6/get-pip.py"
     util.message("\n# Trying to install 'pip3'")
     osSys("curl -O " + url, False)
-    osSys("python3 get-pip.py --no-warn-script-location --user", False)
+    osSys("sudo /usr/bin/python3 get-pip.py --no-warn-script-location --root-user-action=ignore", False)
     osSys("rm get-pip.py", False)
 
   util.message("  Ensure FIRE pip3 module...")
