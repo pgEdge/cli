@@ -28,7 +28,7 @@ def error_exit(p_msg, p_rc=1):
     sys.exit(p_rc)
 
 
-def osSys(cmd):
+def osSys(cmd, fatal_exit=True):
   isSilent = os.getenv('isSilent', 'False')
   if isSilent == "False":
     s_cmd = util.scrub_passwd(cmd)
@@ -36,45 +36,67 @@ def osSys(cmd):
     util.message('# ' + str(s_cmd))
 
   rc = os.system(cmd)
-  if rc != 0:
+  if rc != 0 and fatal_exit:
     error_exit("FATAL ERROR running install-pgedge", 1)
 
   return
 
 
+def check_pre_reqs():
+  util.message("#### Checking for Pre Req's #########################")
+
+  util.message("  Verifying Python 3.6+...")
+  python_ver = util.get_python_version()
+  if python_ver < "3.6":
+    error_exit("Found python ver " + str(python_ver))
+
+  util.message("  Verifying non-root user for pg install...")
+  if util.is_admin():
+    error_exit("You must install as non-root user with passwordless sudo privleges")
+
+  util.message("  Verifying pg port 5432 availability...")
+  if util.is_socket_busy(5432):
+    error_exit("Postgres already running on port 5432")
+
+  data_dir = "data/" + pgV
+  util.message("  Verifying empty data directory '" + data_dir + "' ...")
+  if os.path.exists(data_dir):
+    dir = os.listdir(data_dir)
+    if len(dir) != 0:
+      error_exit("The '" + data_dir + "' directory is not empty")
+
+  util.message("  Ensure recent pip3...")
+  rc = os.system("pip3 --version > /dev/null")
+  osSys("pip3 install click --user", False)
+  if rc == 0:
+    ## need recent version of pip3 to install psycopg2-binary
+    osSys("pip3 install --upgrade pip --user", False)
+  else:
+    url="https://bootstrap.pypa.io/get-pip.py"
+    if python_ver == "3.6":
+      url="https://bootstrap.pypa.io/pip/3.6/get-pip.py"
+    util.message("\n# Trying to install 'pip3'")
+    osSys("curl -O " + url, False)
+    osSys("python3 get-pip.py --no-warn-script-location --user", False)
+    osSys("rm get-pip.py", False)
+
+  util.message("  Ensure FIRE pip3 module...")
+  try:
+    import fire
+  except ImportError as e:
+    osSys("pip3 install fire --user")
+
+  util.message("  Ensure PSYCOPG2-BINARY pip3 module...")
+  try:
+    import psycopg2
+  except ImportError as e:
+    osSys("pip3 install psycopg2-binary --user")
+
 ## MAINLINE #####################################################3
 
 svcuser = util.get_user()
 
-if util.is_admin():
-  error_exit("You must install as non-root user with passwordless sudo privleges", 1)
-
-if util.is_socket_busy(5432):
-  error_exit("Postgres already running on port 5432", 1)
-
-data_dir = "data/" + pgV
-if os.path.exists(data_dir):
-  dir = os.listdir(data_dir)
-  if len(dir) != 0:
-    error_exit("The '" + data_dir + "' directory is not empty", 1)
-
-rc = os.system("pip3 --version > /dev/null")
-if rc != 0:
-  util.message("\n# Trying to install 'pip3'")
-  osSys("wget https://bootstrap.pypa.io/get-pip.py")
-  osSys("sudo python3 get-pip.py --no-warn-script-location")
-  osSys("rm get-pip.py")
-  os.system("pip3 install click")
-
-try:
-  import fire
-except ImportError as e:
-  osSys("pip3 install fire")
-
-try:
-  import psycopg2
-except ImportError as e:
-  osSys("pip3 install psycopg2-binary")
+check_pre_reqs()
 
 osSys("./nc install " + pgV)
 

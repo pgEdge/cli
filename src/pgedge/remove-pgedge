@@ -9,7 +9,16 @@ echo "## Remove pgEdge $ver ###########################################"
 cd ..
 
 ./nc remove pg$ver
-./nc remove postgrest
-./nc remove backrest
-./nc remove bouncer
+
+if [ -d "postgrest" ]; then
+  ./nc remove postgrest
+fi
+
+if [ -d "backrest" ]; then
+  ./nc remove backrest
+fi
+
+if [ -d "bouncer" ]; then
+  ./nc remove bouncer
+fi 
 

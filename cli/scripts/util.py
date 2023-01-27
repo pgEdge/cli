@@ -51,6 +51,10 @@ MY_HOME = os.getenv('MY_HOME', '..' + os.sep + '..')
 pid_file = os.path.join(MY_HOME, 'conf', 'cli.pid')
 
 
+def get_python_version():
+  return(str(sys.version_info.major) + "." + str(sys.version_info.minor))
+
+
 def remove_prefix(p_prefix, p_str):
   if p_str.find(p_prefix) == 0:
     pref_len = len(p_prefix)
