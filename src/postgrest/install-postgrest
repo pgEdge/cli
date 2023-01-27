@@ -27,4 +27,4 @@ mkdir -p ../$logdir
 ##sudo cp swagger-initializer.js /usr/local/lib/node_modules/swagger-ui-dist/.
 
 cd ..
-./io start postgrest
+./nc start postgrest
