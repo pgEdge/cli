@@ -3,7 +3,7 @@ bundle=pgedge
 api=nc
 hubV=2.13
 
-spockV=3.0.15-1
+spockV=3.0.16-1
 #spockV=3.0da-0106-1
 
 P15=15.1-4
