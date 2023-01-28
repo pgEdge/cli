@@ -92,6 +92,14 @@ def check_pre_reqs():
   except ImportError as e:
     osSys("pip3 install psycopg2-binary --user")
 
+  util.message("  Ensure Native PSUTIL pip3 module ...")
+  try:
+    import psutil
+  except ImportError as e:
+    pkg_mgr = util.get_pkg_mgr()
+    osSys("sudo " + pkg_mgr + " install python3-psutil")
+
+
 ## MAINLINE #####################################################3
 
 svcuser = util.get_user()

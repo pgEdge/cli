@@ -1,6 +1,6 @@
 
-import sys, os, json
-import util, meta
+import sys, os, json, subprocess, psutil
+import util, meta, api
 
 try:
   import fire
@@ -12,7 +12,7 @@ try:
   from psycopg2.extras import RealDictCursor
 except ImportError as e:
   util.exit_message("Missing 'psycopg2' module from pip", 1)
-   
+
 
 def echo_cmd(cmd, sleep_secs=0):
   isSilent = os.getenv('isSilent', 'False')
@@ -29,19 +29,29 @@ def echo_cmd(cmd, sleep_secs=0):
   return(1)
 
 
+def get_pg_connection(pg_v, db, usr):
+  dbp = util.get_column("port", pg_v)
+
+  try:
+    con = psycopg2.connect(dbname=db, user=usr, host="localhost", port=dbp)
+  except Exception as e:
+    lines = str(e).splitlines()
+    util.exit_message(str(lines[0]), 1)
+
+  return(con)
+
+
 def run_psyco_sql(pg_v, db, cmd, usr=None):
   if usr == None:
     usr = util.get_user()
-
-  dbp = util.get_column("port", pg_v)
 
   isVerbose = os.getenv('isVerbose', 'False')
   if isVerbose == 'True':
     util.message(cmd, "info")
 
+  con = get_pg_connection(pg_v, db, usr)
+
   try:
-    con = psycopg2.connect(dbname=db, user=usr, host="localhost", port=dbp)
-    ##con = psycopg2.connect(dbname=db, port=dbp)
     cur = con.cursor(cursor_factory=RealDictCursor)
     cur.execute(cmd)
     con.commit()
@@ -349,16 +359,65 @@ def local_cluster_cmd(cluster_name, node, cmd, base_dir="cluster"):
 def health_check(pg=None):
   pg_v = get_pg_v(pg)
 
-  rc = os.system(os.getcwd() + "/" + pg_v + "/bin/pg_isready > /dev/null 2>&1")
-  if rc == 0:
-    util.exit_message("true", 0)
+  if is_pg_ready(pg_v):
+    util.exit_message("True", 0)
 
   util.exit_message("false", 0)
+
+ 
+def is_pg_ready(pg_v):
+  rc = os.system(os.getcwd() + "/" + pg_v + "/bin/pg_isready > /dev/null 2>&1")
+  if rc == 0:
+    return(True)
+
+  return(False)
+
+
+def metrics_check(db, pg=None):
+  pg_v = get_pg_v(pg)
+  usr = util.get_user()
+  rc = is_pg_ready(pg_v)
+
+  load1, load5, load15 = psutil.getloadavg()
+  cpu_pct = (load1/os.cpu_count()) * 100
+
+  mtrc_dict = {"pg_isready": rc, "cpu_pct": cpu_pct, "load_avg": [load1, load5, load15]}
+  if rc == False:
+    return(json.dumps(mtrc_dict, indent=2))
+
+  con = get_pg_connection(pg_v, db, usr)
+
+  try:
+    cur = con.cursor()
+
+    cur.execute("SELECT count(*) as resolutions FROM spock.resolutions")
+    data = cur.fetchone()
+    rsltns = data[0]
+    mtrc_dict.update({"resolutions": rsltns})
+    print(json.dumps(mtrc_dict, indent=2))
+
+    cur.close()
+  except Exception as e:
+    print(e)
+    sys.exit(1)
+
+  sys.exit(0)
+  sql_slots = \
+   "SELECT slot_name, to_char(pg_wal_lsn_diff(pg_current_wal_insert_lsn(), confirmed_flush_lsn), \n" + \
+   "       '999G999G999G999G999') as confirmed_flush_replication_lag, reply_time, \n" + \
+   "       now() - reply_time AS reply_replication_lag \n" + \
+   "  FROM pg_replication_slots R \n" + \
+   "LEFT OUTER JOIN pg_stat_replication S ON R.slot_name = S.application_name \n" + \
+   "ORDER BY 1"
+
+  run_psyco_sql(pg_v, db, sql_slots)
+  sys.exit(0)
 
 
 if __name__ == '__main__':
   fire.Fire({
       'health-check':health_check,
+      'metrics-check':metrics_check,
       'create-extension': create_extension,
       'create-node': create_node,
       'create-replication-set': create_replication_set,
