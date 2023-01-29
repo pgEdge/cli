@@ -45,6 +45,14 @@ def osSys(cmd, fatal_exit=True):
 def check_pre_reqs():
   util.message("#### Checking for Pre Req's #########################")
 
+  util.message("  Verifying Linux...")
+  if util.get_platform() != "Linux":
+    error_exit("OS must be Linux")
+
+  util.message("  Verifying Linux supported version...")
+  if util.get_glibc_version() < "2.28":
+    error_exit("Linux has unsupported (old) version of glibc")
+
   util.message("  Verifying Python 3.6+...")
   python_ver = util.get_python_version()
   if python_ver < "3.6":
@@ -84,20 +92,20 @@ def check_pre_reqs():
   try:
     import fire
   except ImportError as e:
-    osSys("pip3 install fire --user")
+    osSys("pip3 install fire --user", False)
 
   util.message("  Ensure PSYCOPG2-BINARY pip3 module...")
   try:
     import psycopg2
   except ImportError as e:
-    osSys("pip3 install psycopg2-binary --user")
+    osSys("pip3 install psycopg2-binary --user", False)
 
   util.message("  Ensure Native PSUTIL pip3 module ...")
   try:
     import psutil
   except ImportError as e:
     pkg_mgr = util.get_pkg_mgr()
-    osSys("sudo " + pkg_mgr + " install python3-psutil")
+    osSys("sudo " + pkg_mgr + " install python3-psutil", False)
 
 
 ## MAINLINE #####################################################3
