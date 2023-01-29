@@ -1,13 +1,12 @@
-# README for IO #
 
-IO is an API for management of a Postgres eco-system of components
+NodeCtl (nc) is an API for management of a Postgres eco-system of components
 
 ## Usage ##
 ```
-io command [component] [options]
+nc command [component] [options]
 ```
 
-## Informational Commands ##
+## Informational Commands ################################################
 ```
   help      - Display help file
   info      - Display OS or component information
@@ -15,7 +14,7 @@ io command [component] [options]
   list      - Display available/installed components 
 ```
 
-## Service Control Commands ##
+## Service Control Commands ##############################################
 ```
   start     - Start server components
   stop      - Stop server components
@@ -27,11 +26,25 @@ io command [component] [options]
   init      - Initialize a component
 ```
 
-## Software Install & Update Commands ##
+## Software Install & Update Commands ####################################
 ```
   update    - Retrieve new lists of components
   upgrade   - Perform an upgrade of a component
   install   - Install (or re-install) a component  
   remove    - Un-install component   
-  clean     - Delete downloaded component files
+  clean     - Delete downloaded component files from local cache
 ```
+
+## Options ##############################################################
+```
+  --autostart
+  --start
+  --silent
+  --verbose or -v
+  --rm-data (remove the data directory after un-installing server)
+  -y  (accept default parameter (such as auto generated password)
+  -U  superuser
+  -P  superuser password (only used during install-pgedge)
+  -d  database
+```
+
