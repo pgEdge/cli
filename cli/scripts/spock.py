@@ -1,5 +1,5 @@
 
-import sys, os, json, subprocess, psutil
+import sys, os, json
 import util, meta, api
 
 try:
@@ -374,6 +374,11 @@ def is_pg_ready(pg_v):
 
 
 def metrics_check(db, pg=None):
+  try:
+    import psutil
+  except ImportError as e:
+    util.exit_message("Missing 'psutil' module from pip", 1)
+
   pg_v = get_pg_v(pg)
   usr = util.get_user()
   rc = is_pg_ready(pg_v)

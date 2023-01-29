@@ -43,7 +43,7 @@ def osSys(cmd, fatal_exit=True):
 
 
 def check_pre_reqs():
-  util.message("#### Checking for Pre Req's #########################")
+  util.message("#### Checking for Pre-Req's #########################")
 
   util.message("  Verifying Linux...")
   if util.get_platform() != "Linux":
@@ -73,6 +73,32 @@ def check_pre_reqs():
     if len(dir) != 0:
       error_exit("The '" + data_dir + "' directory is not empty")
 
+  if usr:
+    util.message("  Verifying -U usr & -P passwd...")
+    usr_l = usr.lower()
+    if usr_l == "pgedge":
+      error_exit("The user defined supersuser may not be called 'pgedge'")
+
+    if usr_l == util.get_user():
+      error_exit("The user-defined superuser may not be the same as the OS user")
+
+    usr_len = len(usr_l)
+    if (usr_len < 1) or (usr_len > 64):
+      error_exit("The user-defined superuser must be >=1 and <= 64 in length")
+
+    if passwd:
+      pwd_len = len(passwd)
+      if (pwd_len < 8) or (pwd_len > 128):
+        error_exit("The password must be >= 8 and <= 128 in length")
+
+      for pwd_char in passwd:
+        pwd_c = pwd_char.strip()
+        if pwd_c in (",", "'", '"', "@", ""):
+          error_exit("The password must not contain {',', \"'\", \", @, or a space")
+
+    else:
+      error_exit("Must specify a -P passwd when specifying a -U usr")
+
   util.message("  Ensure recent pip3...")
   rc = os.system("pip3 --version > /dev/null")
   osSys("pip3 install click --user", False)
@@ -100,7 +126,7 @@ def check_pre_reqs():
   except ImportError as e:
     osSys("pip3 install psycopg2-binary --user", False)
 
-  util.message("  Ensure Native PSUTIL pip3 module ...")
+  util.message("  Ensure Native PSUTIL pip3 module...")
   try:
     import psutil
   except ImportError as e:

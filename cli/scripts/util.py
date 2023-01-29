@@ -761,7 +761,7 @@ def get_anonymous_info():
 
 
 ## abruptly terminate with a codified message
-def exit_message(p_msg, p_rc, p_isJSON=None):
+def exit_message(p_msg, p_rc=1, p_isJSON=None):
 
   if p_isJSON == None:
     isJSON = os.getenv("isJson", "False")
