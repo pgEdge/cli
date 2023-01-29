@@ -1,8 +1,6 @@
-####################################################
+#####################################################
 #  Copyright 2022-2023 PGEDGE  All rights reserved. #
-####################################################
-
-from __future__ import print_function, division
+#####################################################
 
 import sys, os, sqlite3, json
 from semantic_version import Version

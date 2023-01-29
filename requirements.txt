@@ -1,2 +1,3 @@
 fire
 psycopg2-binary
+psutil

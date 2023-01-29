@@ -2,8 +2,6 @@
 #  Copyright 2022-2023 PGEDGE  All rights reserved. #
 #####################################################
 
-from __future__ import print_function, division
-
 import sys
 if sys.version_info < (3, 6):
   print("Currently we run on Python 3.6+")

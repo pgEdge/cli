@@ -1,22 +1,15 @@
-####################################################
+#####################################################
 #  Copyright 2022-2023 PGEDGE  All rights reserved. #
-####################################################
-
-from __future__ import print_function, division
+#####################################################
 
 import os, sys, re, json, datetime, logging
 import util, meta, api
 
-try:
-    # For Python 3.0 and later
-    from urllib import request as urllib2
-except ImportError:
-    # Fall back to Python 2's urllib2
-    import urllib2
+from urllib import request as urllib2
 
 PGDG_REPO_LIST="json-pgdg-repo-list"
 
-YUM_LIST = ['el7', 'el8']
+YUM_LIST = ['el8', 'el9']
 APT_LIST = ['trusty', 'xenial', 'bionic']
 
 my_logger = logging.getLogger('cli_logger')

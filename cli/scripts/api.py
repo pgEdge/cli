@@ -1,16 +1,12 @@
-####################################################
+#####################################################
 #  Copyright 2022-2023 PGEDGE  All rights reserved. #
-####################################################
-
-from __future__ import print_function, division
+#####################################################
 
 import json, os, platform, subprocess, sys, time
 from datetime import datetime, timedelta
 from operator import itemgetter
 
-isPy3 = False
-if sys.version_info >= (3, 0):
-    isPy3 = True
+isPy3 = True
 
 try:
     from colorama import init

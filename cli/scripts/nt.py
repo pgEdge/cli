@@ -2,12 +2,7 @@
 #  Copyright 2022-2023 PGEDGE  All rights reserved. #
 ####################################################
 
-from __future__ import print_function, division
-
 import sys, os
-if sys.version_info <= (2, 6):
-  print("Currently we run best on Python 3.6+")
-  sys.exit(1)
 
 IS_64BITS = sys.maxsize > 2**32
 if not IS_64BITS:

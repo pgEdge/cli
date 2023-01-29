@@ -1,18 +1,10 @@
-####################################################
+#####################################################
 #  Copyright 2022-2023 PGEDGE  All rights reserved. #
-####################################################
+#####################################################
 
-from __future__ import print_function, division
-
-## Include libraries ###############################################
-import os
-import sys
-import sqlite3
-import platform
-
+import os, sys, sqlite3, platform
 import util
 
-## Set Global variables ############################################
 rc = 0
 
 

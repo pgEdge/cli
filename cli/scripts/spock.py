@@ -385,8 +385,13 @@ def metrics_check(db, pg=None):
 
   load1, load5, load15 = psutil.getloadavg()
   cpu_pct = round((load1/os.cpu_count()) * 100, 1)
+  disk = psutil.disk_io_counters(perdisk=False)
+  read_mb = round((disk.read_bytes / 1024 / 1024), 1)
+  write_mb = round((disk.write_bytes / 1024 / 1024), 1)
 
-  mtrc_dict = {"pg_isready": rc, "cpu_pct": cpu_pct, "load_avg": [load1, load5, load15]}
+
+  mtrc_dict = {"pg_isready": rc, "cpu_pct": cpu_pct, \
+               "load_avg": [load1, load5, load15], "disk_read_mb": read_mb, "disk_write_mb": write_mb}
   if rc == False:
     return(json.dumps(mtrc_dict, indent=2))
 
