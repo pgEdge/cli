@@ -379,7 +379,7 @@ def metrics_check(db, pg=None):
   rc = is_pg_ready(pg_v)
 
   load1, load5, load15 = psutil.getloadavg()
-  cpu_pct = (load1/os.cpu_count()) * 100
+  cpu_pct = round((load1/os.cpu_count()) * 100, 1)
 
   mtrc_dict = {"pg_isready": rc, "cpu_pct": cpu_pct, "load_avg": [load1, load5, load15]}
   if rc == False:
@@ -389,26 +389,31 @@ def metrics_check(db, pg=None):
 
   try:
     cur = con.cursor()
-
     cur.execute("SELECT count(*) as resolutions FROM spock.resolutions")
     data = cur.fetchone()
     rsltns = data[0]
+    cur.close()
     mtrc_dict.update({"resolutions": rsltns})
+
+    cur = con.cursor()
+    sql_slots = \
+      "SELECT slot_name, to_char(pg_wal_lsn_diff(pg_current_wal_insert_lsn(), confirmed_flush_lsn), \n" + \
+      "       '999G999G999G999G999') as confirmed_flush_replication_lag, reply_time, \n" + \
+      "       now() - reply_time AS reply_replication_lag \n" + \
+      "  FROM pg_replication_slots R \n" + \
+      "LEFT OUTER JOIN pg_stat_replication S ON R.slot_name = S.application_name \n" + \
+      "ORDER BY 1"
+    cur.execute(sql_slots)
+    data = cur.fetchall()
+    cur.close()
+    mtrc_dict.update({"slots": data})
     print(json.dumps(mtrc_dict, indent=2))
 
-    cur.close()
   except Exception as e:
     print(e)
     sys.exit(1)
 
   sys.exit(0)
-  sql_slots = \
-   "SELECT slot_name, to_char(pg_wal_lsn_diff(pg_current_wal_insert_lsn(), confirmed_flush_lsn), \n" + \
-   "       '999G999G999G999G999') as confirmed_flush_replication_lag, reply_time, \n" + \
-   "       now() - reply_time AS reply_replication_lag \n" + \
-   "  FROM pg_replication_slots R \n" + \
-   "LEFT OUTER JOIN pg_stat_replication S ON R.slot_name = S.application_name \n" + \
-   "ORDER BY 1"
 
   run_psyco_sql(pg_v, db, sql_slots)
   sys.exit(0)
