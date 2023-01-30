@@ -131,7 +131,10 @@ def check_pre_reqs():
     import psutil
   except ImportError as e:
     pkg_mgr = util.get_pkg_mgr()
-    osSys("sudo " + pkg_mgr + " install python3-psutil", False)
+    pkg = "python3-psutil"
+    if (python_ver == "3.9") and (os.path.exists("/usr/bin/python3.9")):
+      pkg = "python39-psutil"
+    osSys("sudo " + pkg_mgr + " install -y " + pkg, False)
 
 
 ## MAINLINE #####################################################3
