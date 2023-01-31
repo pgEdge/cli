@@ -1,5 +1,5 @@
 
-import sys, os, json
+import sys, os, json, subprocess
 import util, meta, api
 
 try:
@@ -12,6 +12,13 @@ try:
   from psycopg2.extras import RealDictCursor
 except ImportError as e:
   util.exit_message("Missing 'psycopg2' module from pip", 1)
+
+
+def json_dumps(p_input):
+  if os.getenv("isJson", "") == "True":
+    return(json.dumps(p_input))
+
+  return(json.dumps(p_input, indent=2))
 
 
 def echo_cmd(cmd, sleep_secs=0):
@@ -56,7 +63,7 @@ def run_psyco_sql(pg_v, db, cmd, usr=None):
     cur.execute(cmd)
     con.commit()
 
-    print(json.dumps(cur.fetchall(), indent=2))
+    print(json_dumps(cur.fetchall()))
 
     try:
       cur.close()
@@ -385,19 +392,47 @@ def metrics_check(db, pg=None):
 
   load1, load5, load15 = psutil.getloadavg()
   cpu_pct = round((load1/os.cpu_count()) * 100, 1)
+
   disk = psutil.disk_io_counters(perdisk=False)
-  read_mb = round((disk.read_bytes / 1024 / 1024), 1)
-  write_mb = round((disk.write_bytes / 1024 / 1024), 1)
+  disk_read_mb = round((disk.read_bytes / 1024 / 1024), 1)
+  disk_write_mb = round((disk.write_bytes / 1024 / 1024), 1)
 
-
-  mtrc_dict = {"pg_isready": rc, "cpu_pct": cpu_pct, \
-               "load_avg": [load1, load5, load15], "disk_read_mb": read_mb, "disk_write_mb": write_mb}
-  if rc == False:
-    return(json.dumps(mtrc_dict, indent=2))
-
-  con = get_pg_connection(pg_v, db, usr)
+  disk_mount_pt = ""
+  disk_size = ""
+  disk_used = ""
+  disk_avail = ""
+  disk_used_pct = ""
 
   try:
+    dfh = str(subprocess.check_output("df -h | grep '/data$'", shell=True)).split()
+    if len(dfh) >= 5:
+      disk_mount_pt = "/data"
+      disk_size = str(dfh[1])
+      disk_used  = str(dfh[2])
+      disk_avail = str(dfh[3])
+      disk_used_pct = float(util.remove_suffix("%", str(dfh[4])))
+  except Exception as e:
+    try:
+      dfh = str(subprocess.check_output("df -h | grep '/$'", shell=True)).split()
+      if len(dfh) >= 5:
+        disk_mount_pt = "/"
+        disk_size = str(dfh[1])
+        disk_used  = str(dfh[2])
+        disk_avail = str(dfh[3])
+        disk_used_pct = float(util.remove_suffix("%", str(dfh[4])))
+    except Exception as e:
+      pass
+
+  mtrc_dict = {"pg_isready": rc, "cpu_pct": cpu_pct, "load_avg": [load1, load5, load15], \
+               "disk": {"read_mb": disk_read_mb, "write_mb": disk_write_mb, "size": disk_size,\
+                        "used": disk_used, "available": disk_avail, "used_pct": disk_used_pct, \
+                        "mount_point": disk_mount_pt} \
+              }
+  if rc == False:
+    return(json_dumps(mtrc_dict))
+
+  try:
+    con = get_pg_connection(pg_v, db, usr)
     cur = con.cursor()
     cur.execute("SELECT count(*) as resolutions FROM spock.resolutions")
     data = cur.fetchone()
@@ -417,16 +452,11 @@ def metrics_check(db, pg=None):
     data = cur.fetchall()
     cur.close()
     mtrc_dict.update({"slots": data})
-    print(json.dumps(mtrc_dict, indent=2))
 
   except Exception as e:
-    print(e)
-    sys.exit(1)
+    pass
 
-  sys.exit(0)
-
-  run_psyco_sql(pg_v, db, sql_slots)
-  sys.exit(0)
+  return(json_dumps(mtrc_dict))
 
 
 if __name__ == '__main__':
