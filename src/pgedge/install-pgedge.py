@@ -100,19 +100,22 @@ def check_pre_reqs():
       error_exit("Must specify a -P passwd when specifying a -U usr")
 
   util.message("  Ensure recent pip3...")
-  rc = os.system("pip3 --version > /dev/null")
+  rc = os.system("pip3 --version >/dev/null 2>&1")
   osSys("pip3 install click --user", False)
   if rc == 0:
     ## need recent version of pip3 to install psycopg2-binary
-    osSys("sudo pip3 install --upgrade pip --no-warn-script-location --root-user-action=ignore", False)
+    osSys("pip3 install --upgrade pip --user", False)
+    ##osSys("sudo /usr/bin/pip3 install --upgrade pip --no-warn-script-location --root-user-action=ignore", False)
   else:
     url="https://bootstrap.pypa.io/get-pip.py"
     if python_ver == "3.6":
       url="https://bootstrap.pypa.io/pip/3.6/get-pip.py"
     util.message("\n# Trying to install 'pip3'")
+    osSys("rm -f get-pip.py", False)
     osSys("curl -O " + url, False)
-    osSys("sudo /usr/bin/python3 get-pip.py --no-warn-script-location --root-user-action=ignore", False)
-    osSys("rm get-pip.py", False)
+    osSys("python3 get-pip.py --user", False)
+    ##osSys("sudo /usr/bin/python3 get-pip.py --no-warn-script-location --root-user-action=ignore", False)
+    osSys("rm -f get-pip.py", False)
 
   util.message("  Ensure FIRE pip3 module...")
   try:
@@ -145,13 +148,9 @@ check_pre_reqs()
 
 osSys("./nc install " + pgV)
 
-util.message("\n## checking for empty & writable /data directory ###################")
 if util.is_empty_writable_dir("/data") == 0:
-  util.message("## symlink local (empty) data directory to /data ###")
-  osSys("rm -rf data")
-  osSys("ln -s /data data")
-else:
-  util.message("not found")
+  util.message("## symlink empty local data directory to empty /data ###")
+  osSys("rm -rf data; ln -s /data data")
 
 if isAutoStart == "True":
   util.message("\n## init & config autostart  ###############")
