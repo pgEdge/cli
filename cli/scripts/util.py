@@ -49,6 +49,29 @@ MY_HOME = os.getenv('MY_HOME', '..' + os.sep + '..')
 pid_file = os.path.join(MY_HOME, 'conf', 'cli.pid')
 
 
+def is_empty_writable_dir(p_dir):
+  if not os.path.isdir(p_dir):
+    ## directory does not exist
+    return(1)
+
+  if os.listdir(p_dir):
+    ## directory is not empty
+    return(2)
+
+  test_file = p_dir + "/test_file.txt"
+  try:
+     with open(test_file, 'w') as file:
+       file.write('hello!')
+       file.close()
+  except Exception as e:
+    ## directory is not writeable
+    return(3)
+  os.system("rm -f " + test_file)
+
+  ## directory is empty & writeable
+  return(0)
+
+
 def get_python_version():
   return(str(sys.version_info.major) + "." + str(sys.version_info.minor))
 

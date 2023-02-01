@@ -126,13 +126,13 @@ def check_pre_reqs():
   except ImportError as e:
     osSys("pip3 install psycopg2-binary --user", False)
 
-  util.message("  Ensure Native PSUTIL pip3 module...")
+  util.message("  Ensure PSUTIL pip3 module...")
   try:
     import psutil
   except ImportError as e:
     pkg_mgr = util.get_pkg_mgr()
     pkg = "python3-psutil"
-    if (python_ver == "3.9") and (os.path.exists("/usr/bin/python3.9") and (pkg_mgr == "yum"):
+    if (python_ver == "3.9") and (os.path.exists("/usr/bin/python3.9")) and (pkg_mgr == "yum"):
       pkg = "python39-psutil"
     osSys("sudo " + pkg_mgr + " install -y " + pkg, False)
 
@@ -145,18 +145,13 @@ check_pre_reqs()
 
 osSys("./nc install " + pgV)
 
-
-##if os.path.isdir("/data"):
-##  util.message("\n## /data directory found ###################")
-##else:
-##  util.message("\n## creating /data directory ################")
-##  osSys("sudo mkdir /data")
-##  osSys("sudo chown " + svcuser + ":" + svcuser + " /data")
-##
-##util.message("\n## symlink local data directory to /data ###")
-##osSys("cp -r  data/* /data/.")
-##osSys("rm -rf data")
-##osSys("ln -s /data data")
+util.message("\n## checking for empty & writable /data directory ###################")
+if util.is_empty_writable_dir("/data") == 0:
+  util.message("## symlink local (empty) data directory to /data ###")
+  osSys("rm -rf data")
+  osSys("ln -s /data data")
+else:
+  util.message("not found")
 
 if isAutoStart == "True":
   util.message("\n## init & config autostart  ###############")
