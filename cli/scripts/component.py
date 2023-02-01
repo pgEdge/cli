@@ -34,6 +34,11 @@ def start_comp(p_comp, p_homedir, p_start_cmd):
   port = util.get_comp_port(p_comp)
   print(p_comp + " starting on port " + port)
 
+  autostart = util.get_column("autostart", p_comp)
+  if autostart == "on":
+    os.system("sudo systemctl start " + p_comp)
+    return(0)
+
   os.chdir(p_homedir)
 
   datadir = util.get_column("datadir", p_comp)
@@ -45,6 +50,12 @@ def start_comp(p_comp, p_homedir, p_start_cmd):
 
 
 def stop_comp(p_comp):
+
+  autostart = util.get_column("autostart", p_comp)
+  if autostart == "on":
+    os.system("sudo systemctl stop " + p_comp)
+    return(0)
+
   pidfile = util.get_column("pidfile", p_comp)
   if os.path.isfile(pidfile):
     print(p_comp + " stopping")

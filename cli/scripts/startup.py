@@ -35,6 +35,38 @@ def useradd_linux(p_user):
   return(0)
 
 
+#def config_systemd_svc(p_description, p_systemsvc, p_svc_user, p_start, p_stop, p_reload):
+#
+#  systemsvc = p_systemsvc + ".service"
+#  sys_svc_file = os.path.join(util.get_systemd_dir(), systemsvc)
+#  unit_file = tempfile.mktemp(".service")
+#
+#  fh = open(unit_file, "w")
+#  fh.write("[Unit]\n")
+#  fh.write("Description=" + p_description + "\n")
+#  fh.write("After=syslog.target\n")
+#  fh.write("After=network.target\n")
+#  fh.write("\n")
+#  fh.write("[Service]\n")
+#  fh.write("Type=forking\n")
+#  fh.write("User=" + p_svc_user + "\n")
+#  fh.write("ExecStart="  + p_start  + "\n")
+#  if p_stop != "":
+#    fh.write("ExecStop="   + p_stop   + "\n")
+#  if p_reload != "":
+#    fh.write("ExecReload=" + p_reload + "\n")
+#  fh.write("TimeoutSec=300\n")
+#  fh.write("\n")
+#  fh.write("[Install]\n")
+#  fh.write("WantedBy=multi-user.target\n")
+#  fh.close()
+#
+#  util.run_sudo("mv " + unit_file + " " + sys_svc_file)
+#  util.run_sudo("systemctl daemon-reload")
+#  util.run_sudo("systemctl enable " + systemsvc)
+#  util.run_sudo("systemctl start  " + systemsvc)
+
+
 def config_linux(p_comp, p_systemsvc, p_svc_user, p_start, p_start_log,
                    p_stop, p_reload, p_status="", is_pg=True, p_env=None):
 
@@ -77,7 +109,6 @@ def config_linux(p_comp, p_systemsvc, p_svc_user, p_start, p_start_log,
   fh.close()
 
   util.run_sudo("mv " + unit_file + " " + sys_svc_file)
-
   return(util.run_sudo("systemctl enable " + p_systemsvc))
 
 
