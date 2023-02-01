@@ -212,7 +212,7 @@ function configureComp {
     if [ "$comp" == "bouncer" ]; then
         echo "# configure bouncer..."
         opt="--prefix=$buildLocation --disable-rpath --with-cares --with-pam"
-        opt="$opt --with-libevent=$sharedLibs/../ --with-openssl=$sharedLibs/../"
+        opt="$opt --with-libevent=$sharedLibs/../ --with-openssl=$sharedLibs/../ --with-systemd"
         echo "#    $opt"
         ./configure $opt LDFLAGS="$LDFLAGS -Wl,-rpath,$sharedLibs/lib" > $make_log 2>&1
         rc=$?
