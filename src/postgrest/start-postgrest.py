@@ -1,6 +1,9 @@
 
-import os
+import os, sys
 import util
+
+os.system("sudo systemctl start postgrest")
+sys.exit(0)
 
 logdir = os.getcwd() + "/data/logs/postgrest"
 

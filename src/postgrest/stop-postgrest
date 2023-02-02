@@ -1,3 +1,6 @@
+sudo systemctl stop postgrest
+exit 0
+
 now=`date`
 
 pid=`ps aux | grep [p]ostgrest.conf | awk '{print $2}'`
