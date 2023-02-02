@@ -2,48 +2,48 @@
 
 function test14 {
   pgV=pg14
-  ./io install pg14; 
-  ./io start pg14 -y -d demo;
+  ./nc install pg14; 
+  ./nc start pg14 -y -d demo;
 
-  ## Citus must be installed first before any other extension
-  ./io install citus-$pgV
-
-  ./io install audit-$pgV         -d demo
-  ./io install hintplan-$pgV      -d demo
-  ./io install timescaledb-$pgV   -d demo
+  ./nc install audit-$pgV         -d demo
+  ./nc install timescaledb-$pgV   -d demo
 }
 
 
 function test15 {
   pgV=pg15
-  ./io install pg15; 
-  ./io start pg15 -y -d demo;
+  ./nc install pg15; 
+  ./nc start pg15 -y -d demo;
 
-  ./io install spock-$pgV         -d demo
-  ./io install multicorn2-$pgV    -d demo
-  ./io install plprofiler-$pgV    -d demo
-  ./io install pldebugger-$pgV    -d demo
+  ./nc install plprofiler-$pgV
+  ./nc install spock-$pgV         -d demo
+  ./nc install pldebugger-$pgV    -d demo
 
-  ./io install repack-$pgV        -d demo
-  ./io install orafce-$pgV        -d demo
-  ./io install partman-$pgV       -d demo
-  ./io install cron-$pgV
+  ./nc install repack-$pgV        -d demo
+  ./nc install orafce-$pgV        -d demo
+  ./nc install partman-$pgV       -d demo
+  ./nc install cron-$pgV
 
-  #./io install bulkload-$pgV      -d demo
+  #./nc install bulkload-$pgV      -d demo
 
-  #./io install plv8-$pgV          -d demo
+  #./nc install plv8-$pgV          -d demo
 
   if [ `arch` == "aarch64" ]; then
-    ./io install postgis-$pgV      -d demo
+    ./nc install postgis-$pgV      -d demo
   #else
-  #  ./io install mysqlfdw-$pgV     -d demo
-  #  ./io install mongofdw-$pgV     -d demo
-  #  ./io install oraclefdw-$pgV    -d demo
-  #  ./io install esfdw-$pgV        -d demo
+  #  ./nc install mysqlfdw-$pgV     -d demo
+  #  ./nc install mongofdw-$pgV     -d demo
+  #  ./nc install oraclefdw-$pgV    -d demo
+  #  ./nc install esfdw-$pgV        -d demo
+
+  ./nc install multicorn2-$pgV    -d demo
+  ./nc install hintplan-$pgV      -d demo
+  #./nc install citus-$pgV         -d demo
+
   fi
 
-  #./io install decoderbufs-$pgV   -d demo
-  #./io install hypopg-$pgV        -d demo
+  #./nc install decoderbufs-$pgV   -d demo
+  #./nc install hypopg-$pgV        -d demo
 }
 
 
