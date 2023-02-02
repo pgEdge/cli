@@ -294,8 +294,8 @@ INSERT INTO versions VALUES ('audit-pg15', '1.7.0-1', 'arm, el8', 1, '20221013',
 
 INSERT INTO projects VALUES ('hintplan', 'ext', 6, 0, 'hub', 0, 'https://github.com/ossc-db/pg_hint_plan/tags',
   'hintplan', 1, 'hintplan.png', 'Execution Plan Hints', 'https://github.com/ossc-db/pg_hint_plan');
-INSERT INTO releases VALUES ('hintplan-pg14', 10, 'hintplan', 'pgHintPlan', '', 'prod', '', 1, 'POSTGRES', '', '');
-INSERT INTO versions VALUES ('hintplan-pg14', '1.4.0-1', 'arm, el8', 1, '20220118', 'pg14', '', 'https://github.com/pghintplan/pghintplan/releases/tag/1.6.0');
+INSERT INTO releases VALUES ('hintplan-pg15', 10, 'hintplan', 'pgHintPlan', '', 'prod', '', 1, 'POSTGRES', '', '');
+INSERT INTO versions VALUES ('hintplan-pg15', '1.5.0-1', 'arm, el8', 1, '20230128', 'pg15', '', 'https://github.com/pghintplan/pghintplan/releases/tag/1.5.0');
 
 INSERT INTO projects VALUES ('anon', 'ext', 4, 0, 'ddlx', 1, 'https://gitlab.com/dalibo/postgresql_anonymizer/-/tags',
   'anon', 1, 'anon.png', 'Anonymization & Masking', 'https://gitlab.com/dalibo/postgresql_anonymizer/blob/master/README.md');
@@ -401,7 +401,8 @@ INSERT INTO versions VALUES ('pgedge', '15.1', '', 1, '20230126', '', '', '');
 INSERT INTO projects VALUES ('backrest', 'pge', 4, 0, 'hub', 3, 'http://pgbackrest.org',
   'backrest',  0, 'backrest.png', 'Backup & Restore', 'http://pgbackrest.org');
 INSERT INTO releases VALUES ('backrest', 2, 'backrest',  'pgBackRest', '', 'prod', '', 1, '', '', '');
-INSERT INTO versions VALUES ('backrest', '2.43-1', 'el8, arm', 1, '20221128', '', '', '');
+INSERT INTO versions VALUES ('backrest', '2.44-1', 'el8, arm', 1, '20230129', '', '', '');
+INSERT INTO versions VALUES ('backrest', '2.43-1', 'el8, arm', 0, '20221128', '', '', '');
 
 INSERT INTO projects VALUES ('patroni', 'app', 11, 0, 'haproxy', 4, 'https://github.com/zalando/patroni/releases',
   'patroni', 0, 'patroni.png', 'HA Template', 'https://github.com/zalando/patroni');

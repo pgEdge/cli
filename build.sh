@@ -469,6 +469,7 @@ initPG () {
     initC "repack-pg$pgM" "repack" "$repackV" "$outPlat" "postgres/repack" "" "" "nil"
     initC "postgrest" "postgrest" "$postgrestV"  "$outPlat"  "postgres/postgrest"  "" "" "nil"
     initC "cron-pg$pgM" "cron" "$cronV" "$outPlat" "postgres/cron" "" "" "nil"
+    initC "hintplan-pg$pgM" "hintplan" "$hintV" "$outPlat" "postgres/hintplan" "" "" "nil"
 
     if [ "$outPlat" == "el8" ]; then
       initC "tdsfdw-pg$pgM" "tdsfdw" "$tdsfdwV" "$outPlat" "postgres/tdsfdw" "" "" "nil"

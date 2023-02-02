@@ -14,7 +14,7 @@ postgrestV=10.1.1
 prompgexpV=0.11.1
 nodejsV=18.12.1
 bckgrndV=1.1-1
-backrestV=2.43-1
+backrestV=2.44-1
 
 multicorn2V=2.4-1
 esfdwV=0.11.2
@@ -39,7 +39,7 @@ profV=4.2-1
 bulkloadV=3.1.19-1
 partmanV=4.7.2-1
 repackV=1.4.8-1
-hintV=1.4.0-1
+hintV=1.5.0-1
 
 bouncerV=1.18.0-1
 nginxV=1-1

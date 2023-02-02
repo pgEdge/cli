@@ -38,7 +38,7 @@ odbcFullV=13.01
 odbcShortV=
 odbcBuildV=1
 
-backrestFullV=2.43
+backrestFullV=2.44
 backrestShortV=
 backrestBuildV=1
 
@@ -175,7 +175,7 @@ partmanFullV=4.7.2
 partmanShortV=
 partmanBuildV=1
 
-hintplanFullV=1.4.0
+hintplanFullV=1.5.0
 hintplanShortV=
 hintplanBuildV=1
 
