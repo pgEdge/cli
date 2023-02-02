@@ -135,7 +135,10 @@ def check_pre_reqs():
     pkg = "python3-psutil"
     if (p3_minor_ver == 9) and (pkg_mgr == "yum"):
       pkg = "python39-psutil"
-    osSys("sudo " + pkg_mgr + " install -y " + pkg, False)
+    if pkg_mgr == "apt":
+      osSys("sudo DEBIAN_FRONTEND=noninteractive apt install -y " + pkg, False)
+    else:
+      osSys("sudo " + pkg_mgr + " install -y " + pkg, False)
 
 
 ## MAINLINE #####################################################3
