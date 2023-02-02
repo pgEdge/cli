@@ -126,7 +126,8 @@ function updateSharedLibs {
         if [[ -d $buildLocation/bin ]]; then
           cd $buildLocation/bin
           for file in `ls -d *` ; do
-            chrpath -r "\${ORIGIN}/../lib" "$file" >> $libPathLog 2>&1
+            #chrpath -r "\${ORIGIN}/../lib" "$file" >> $libPathLog 2>&1
+            chrpath -r "\${ORIGIN}/../../pg15/lib" "$file" >> $libPathLog 2>&1
       	  done
         fi
 
@@ -211,10 +212,13 @@ function configureComp {
 
     if [ "$comp" == "bouncer" ]; then
         echo "# configure bouncer..."
-        opt="--prefix=$buildLocation --disable-rpath --with-cares --with-pam"
-        opt="$opt --with-libevent=$sharedLibs/../ --with-openssl=$sharedLibs/../ --with-systemd"
+        #opt="--prefix=$buildLocation --disable-rpath --with-cares --with-pam"
+        #opt="--prefix=$buildLocation --with-cares --with-pam"
+        #opt="$opt --with-libevent=$sharedLibs/../ --with-openssl=$sharedLibs/../ --with-systemd"
+        #opt="--prefix=$buildLocation --disable-rpath --with-cares --with-pam --with-libevent --with-openssl --with-systemd"
+        opt="--prefix=$buildLocation --with-cares --with-pam --with-openssl --with-systemd"
         echo "#    $opt"
-        ./configure $opt LDFLAGS="$LDFLAGS -Wl,-rpath,$sharedLibs/lib" > $make_log 2>&1
+        ./configure $opt LDFLAGS="$LDFLAGS -Wl,-rpath,$sharedLibs -L$sharedLibs" > $make_log 2>&1
         rc=$?
     fi
 
