@@ -54,9 +54,9 @@ def check_pre_reqs():
     error_exit("Linux has unsupported (old) version of glibc")
 
   util.message("  Verifying Python 3.6+...")
-  python_ver = util.get_python_version()
-  if python_ver < 3.6:
-    error_exit("Found python ver " + str(python_ver))
+  p3_minor_ver = util.get_python_minor_version()
+  if p3_minor_ver < 6:
+    error_exit("Python Version must be greater than 3.6")
 
   util.message("  Verifying non-root user for pg install...")
   if util.is_admin():
@@ -105,16 +105,14 @@ def check_pre_reqs():
   if rc == 0:
     ## need recent version of pip3 to install psycopg2-binary
     osSys("pip3 install --upgrade pip --user", False)
-    ##osSys("sudo /usr/bin/pip3 install --upgrade pip --no-warn-script-location --root-user-action=ignore", False)
   else:
     url="https://bootstrap.pypa.io/get-pip.py"
-    if python_ver == 3.6:
+    if p3_minor_ver == 6:
       url="https://bootstrap.pypa.io/pip/3.6/get-pip.py"
     util.message("\n# Trying to install 'pip3'")
     osSys("rm -f get-pip.py", False)
     osSys("curl -O " + url, False)
     osSys("python3 get-pip.py --user", False)
-    ##osSys("sudo /usr/bin/python3 get-pip.py --no-warn-script-location --root-user-action=ignore", False)
     osSys("rm -f get-pip.py", False)
 
   util.message("  Ensure FIRE pip3 module...")
@@ -135,7 +133,7 @@ def check_pre_reqs():
   except ImportError as e:
     pkg_mgr = util.get_pkg_mgr()
     pkg = "python3-psutil"
-    if (python_ver == 3.9) and (os.path.exists("/usr/bin/python3.9")) and (pkg_mgr == "yum"):
+    if (p3_minor_ver == 9) and (pkg_mgr == "yum"):
       pkg = "python39-psutil"
     osSys("sudo " + pkg_mgr + " install -y " + pkg, False)
 

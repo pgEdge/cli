@@ -72,8 +72,8 @@ def is_empty_writable_dir(p_dir):
   return(0)
 
 
-def get_python_version():
-  return(float(str(sys.version_info.major) + "." + str(sys.version_info.minor)))
+def get_python_minor_version():
+  return(sys.version_info.minor)
 
 
 def remove_prefix(p_prefix, p_str):
