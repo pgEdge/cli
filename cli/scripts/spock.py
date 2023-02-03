@@ -3,10 +3,9 @@ import sys, os, json, subprocess
 import util, meta, api, fire
 
 try:
-  import psycopg2
-  from psycopg2.extras import RealDictCursor
+  import psycopg
 except ImportError as e:
-  util.exit_message("Missing 'psycopg2' module from pip", 1)
+  util.exit_message("Missing 'psycopg' module from pip", 1)
 
 
 def json_dumps(p_input):
@@ -35,7 +34,7 @@ def get_pg_connection(pg_v, db, usr):
   dbp = util.get_column("port", pg_v)
 
   try:
-    con = psycopg2.connect(dbname=db, user=usr, host="localhost", port=dbp)
+    con = psycopg.connect(dbname=db, user=usr, host="localhost", port=dbp)
   except Exception as e:
     lines = str(e).splitlines()
     util.exit_message(str(lines[0]), 1)
@@ -54,7 +53,7 @@ def run_psyco_sql(pg_v, db, cmd, usr=None):
   con = get_pg_connection(pg_v, db, usr)
 
   try:
-    cur = con.cursor(cursor_factory=RealDictCursor)
+    cur = con.cursor(row_factory=psycopg.rows.dict_row)
     cur.execute(cmd)
     con.commit()
 

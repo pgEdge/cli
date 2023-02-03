@@ -15,6 +15,6 @@ if autostart == "on":
 
 isRM_DATA = os.getenv('isRM_DATA', 'False')
 if isRM_DATA == "True":
-  util.message("Removing 'data' directory at your request")
+  util.message("Removing 'data/*' directories at your request")
   os.system("sudo rm -r data/*")
 

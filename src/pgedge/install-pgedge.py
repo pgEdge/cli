@@ -103,7 +103,7 @@ def check_pre_reqs():
   rc = os.system("pip3 --version >/dev/null 2>&1")
   osSys("pip3 install click --user", False)
   if rc == 0:
-    ## need recent version of pip3 to install psycopg2-binary
+    ## need recent version of pip3 to install psycopg
     osSys("pip3 install --upgrade pip --user", False)
   else:
     url="https://bootstrap.pypa.io/get-pip.py"
@@ -121,13 +121,13 @@ def check_pre_reqs():
   except ImportError as e:
     osSys("pip3 install fire --user", False)
 
-  util.message("  Ensure PSYCOPG2-BINARY pip3 module...")
+  util.message("  Ensure PSYCOPG pip3 module...")
   try:
-    import psycopg2
+    import psycopg
   except ImportError as e:
-    osSys("pip3 install psycopg2-binary --user", False)
+    osSys("pip3 install psycopg --user", False)
 
-  util.message("  Ensure PSUTIL pip3 module...")
+  util.message("  Ensure PSUTIL native pip3 module...")
   try:
     import psutil
   except ImportError as e:
