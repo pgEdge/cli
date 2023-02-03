@@ -137,7 +137,7 @@ def top(display=True, isJson=False):
   my_pid = os.getpid()
   if not isJson:
     print("")
-    print(style_start + "  PID " + "USER".ljust(uname_len) + "   %CPU %MEM      TIME+ COMMAND" + style_end)
+    print(style_start + "    PID " + "USER".ljust(uname_len) + "   %CPU %MEM      TIME+ COMMAND" + style_end)
 
   jsonList = []
   for pp in processes:
@@ -173,7 +173,7 @@ def top(display=True, isJson=False):
         jsonList.append(pp)
     else:
  
-      print( str(pp['pid']).rjust(5) + " " + \
+      print( str(pp['pid']).rjust(7) + " " + \
             username.ljust(uname_len) + " " + \
             str(pp['cpu_percent']).rjust(6) + " " + \
             str(round(pp['memory_percent'],1)).rjust(4) + " " + \
