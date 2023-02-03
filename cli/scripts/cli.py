@@ -641,9 +641,9 @@ def unpack_comp(p_app, p_old_ver, p_new_ver):
       my_logger.info(msg)
       if p_app in ('hub'):
         if util.get_platform() == "Windows":
-          copy2(os.path.join(MY_HOME, "io.bat"), backup_target_dir)
+          copy2(os.path.join(MY_HOME, MY_CMD + ".bat"), backup_target_dir)
         else:
-          copy2(os.path.join(MY_HOME, "io"), backup_target_dir)
+          copy2(os.path.join(MY_HOME, MY_CMD), backup_target_dir)
         os.rename(new_comp_dir, "hub_new")
         ## run the update_hub script in the _new directory
         upd_hub_cmd = sys.executable + " hub_new" + os.sep + "hub" + os.sep + "scripts" + os.sep + "update_hub.py "
