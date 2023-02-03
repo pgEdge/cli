@@ -1,11 +1,6 @@
 
 import sys, os, json, subprocess
-import util, meta, api
-
-try:
-  import fire
-except ImportError as e:
-  util.exit_message("Missing 'fire' module from pip", 1)
+import util, meta, api, fire
 
 try:
   import psycopg2
@@ -460,8 +455,7 @@ def metrics_check(db, pg=None):
 
 
 if __name__ == '__main__':
-  fire.Fire({
-      'health-check':health_check,
+  fire.Fire({'health-check':health_check,
       'metrics-check':metrics_check,
       'create-extension': create_extension,
       'create-node': create_node,
