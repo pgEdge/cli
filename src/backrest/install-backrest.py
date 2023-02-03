@@ -1,6 +1,6 @@
 
 import util
-import os, sys, random, subprocess
+import os, sys, random, subprocess, time
 
 thisDir = os.path.dirname(os.path.realpath(__file__))
 
@@ -9,6 +9,13 @@ def osSys(p_input, p_display=True):
     util.message("# " + p_input)
   rc = os.system(p_input)
   return(rc)
+
+#### MAINLINE #####################################
+
+if os.path.isdir("/var/lib/pgbackrest"):
+  util.message("ERROR: '/var/lib/pgbackrest' directory already exists")
+  osSys("./nc remove backrest")
+  sys.exit(1)
 
 
 pgV="pg15"
@@ -27,6 +34,7 @@ osSys("sudo cp bin/pgbackrest  /usr/bin/.")
 osSys("sudo chmod 755 /usr/bin/pgbackrest")
 osSys("sudo mkdir -p -m 770 /var/log/pgbackrest")
 
+util.message("\n## creating '/etc/pgbackrest/pgbackrest.conf' ########")
 osSys("sudo chown " + usrUsr + " /var/log/pgbackrest")
 osSys("sudo mkdir -p /etc/pgbackrest")
 osSys("sudo mkdir -p /etc/pgbackrest/conf.d")
@@ -53,9 +61,14 @@ sCipher = bCipher.decode('ascii')
 util.replace("repo1-cipher-pass=xx", "repo1-cipher-pass=" + sCipher, conf_file, True)
 osSys("cp " + conf_file + "  /etc/pgbackrest/.")
 
+stanza = "--stanza=" + pgV + " "
 util.message("\n## Modify 'postgresql.conf' #########################")
-aCmd = "pgbackrest --stanza=" + pgV + " archive-push %p"
+aCmd = "pgbackrest " + stanza + " archive-push %p"
 util.change_pgconf_keyval(pgV, "archive_command", aCmd, p_replace=True)
 util.change_pgconf_keyval(pgV, "archive_mode", "on", p_replace=True)
 
+osSys("../nc restart " + pgV)
+time.sleep(3)
 
+osSys("pgbackrest stanza-create " + stanza)
+osSys("pgbackrest check " + stanza)
