@@ -2,7 +2,7 @@
 #  Copyright 2022-2023 PGEDGE  All rights reserved. #
 #####################################################
 
-MY_VERSION = "2.16"
+MY_VERSION = "2.17"
 
 from subprocess import Popen, PIPE, STDOUT
 from datetime import datetime, timedelta
@@ -1500,7 +1500,8 @@ def update_postgresql_conf(p_pgver, p_port, is_new=True,update_listen_addr=True)
       ns = ns + "\n" + "log_directory = '" + log_directory + "'"
 
     elif is_new and line.startswith("#log_filename"):
-      ns = ns + "\n" + "log_filename = 'postgresql-%a.log'"
+      ##ns = ns + "\n" + "log_filename = 'postgresql-%a.log'"
+      ns = ns + "\n" + "log_filename = 'postgresql.log'"
 
     elif is_new and line.startswith("#log_line_prefix"):
       ns = ns + "\n" + "log_line_prefix =  '%t [%p]: [%l-1] user=%u,db=%d,app=%a,client=%h '"
