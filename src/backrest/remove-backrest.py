@@ -11,6 +11,9 @@ autostart = util.get_column('autostart', 'backrest')
 if autostart == "on":
   startup.remove_linux(backrest)
 
+os.system("sudo rm -f /usr/bin/pgbackrest")
+
+
 isRM_DATA = os.getenv('isRM_DATA', 'False')
 if isRM_DATA == "True":
   br_dir = "/var/lib/pgbackrest"

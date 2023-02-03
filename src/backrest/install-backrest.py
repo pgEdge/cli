@@ -27,11 +27,15 @@ os.chdir(thisDir)
 osUsr = util.get_user()
 usrUsr = osUsr + ":" + osUsr
 
+## cleanup cruft
 osSys("rm -r lib", False)
 osSys("rm -r share", False)
 
-osSys("sudo cp bin/pgbackrest  /usr/bin/.")
+util.message("\n## creating /usr/bin/pgbackrest link #################")
+osSys("sudo rm -f /usr/bin/pgbackrest")
+osSys("sudo ln -s " + thisDir + "/bin/pgbackrest /usr/bin/pgbackrest")
 osSys("sudo chmod 755 /usr/bin/pgbackrest")
+
 osSys("sudo mkdir -p -m 770 /var/log/pgbackrest")
 
 util.message("\n## creating '/etc/pgbackrest/pgbackrest.conf' ########")
