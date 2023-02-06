@@ -15,6 +15,7 @@ prompgexpV=0.11.1
 nodejsV=18.12.1
 bckgrndV=1.1-1
 backrestV=2.44-1
+csvdiffV=1.4.0
 
 multicorn2V=2.4-1
 esfdwV=0.11.2
