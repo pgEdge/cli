@@ -90,7 +90,12 @@ function checkPostgres {
 		if [[ "${pgSrcV/rc}" =~ ^15.* ]]; then
 			pgShortV="15"
 			bndlPrfx=pg15
-			pgOPT="--with-zstd --with-lz4 --with-systemd"
+			if [ "$OS" == "osx" ]; then
+				pgOPT=""
+			else
+				pgOPT="--with-zstd --with-lz4"
+			fi
+                        
 		elif [[ "${pgSrcV/rc}" =~ ^14.* ]]; then
 			pgShortV="14"
 			bndlPrfx=pg14
@@ -207,7 +212,7 @@ function buildPostgres {
 	echo "# buildLocation = $buildLocation"
 	arch=`arch`
 
-	conf="--disable-rpath $pgOPT --with-libxslt --with-libxml"
+	conf="--disable-rpath $pgOPT"
 	if [[ $OS == "osx" ]] || [[ $OS == "osx-arm" ]]; then
 		conf="$conf --without-python --without-perl"
 		##hb=/opt/homebrew/opt
@@ -223,8 +228,8 @@ function buildPostgres {
 		##conf="$conf --with-uuid=ossp --with-gssapi --with-ldap --with-pam"
 	else
                 export LLVM_CONFIG=/usr/bin/llvm-config-64
-		conf="$conf "
-		conf="$conf --with-uuid=ossp --with-gssapi --with-ldap --with-pam --with-llvm --with-openssl "
+		conf="$conf  --with-libxslt --with-libxml"
+		conf="$conf --with-uuid=ossp --with-gssapi --with-ldap --with-pam --with-llvm --with-openssl --with-systemd"
 		if [ $OS == "amd" ]; then
 			conf="$conf --with-python PYTHON=/usr/bin/python3"
 		else

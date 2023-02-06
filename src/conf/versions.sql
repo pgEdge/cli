@@ -399,7 +399,7 @@ INSERT INTO versions VALUES ('pgedge', '15.1', '', 1, '20230126', '', '', '');
 INSERT INTO projects VALUES ('csvdiff', 'pge', 4, 0, 'hub', 3, 'https://github.com/luss/csvdiff/tags',
   'csvdiff',  0, 'csvdiff.png', 'csvdiff', 'https://github.com/luss/csvdiff');
 INSERT INTO releases VALUES ('csvdiff', 2, 'csvdiff',  'CSV Diff', '', 'test', '', 1, '', '', '');
-INSERT INTO versions VALUES ('csvdiff', '1.4.0', 'el8, arm', 1, '20230206', '', '', '');
+INSERT INTO versions VALUES ('csvdiff', '1.4.0', 'el8, arm, osx', 1, '20230206', '', '', '');
 
 INSERT INTO projects VALUES ('backrest', 'pge', 4, 0, 'hub', 3, 'http://pgbackrest.org',
   'backrest',  0, 'backrest.png', 'Backup & Restore', 'http://pgbackrest.org');

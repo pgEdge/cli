@@ -1553,15 +1553,15 @@ def update_postgresql_conf(p_pgver, p_port, is_new=True,update_listen_addr=True)
     elif is_new and line.startswith("#wal_level"):
       ns = ns + "\n" + "wal_level = hot_standby"
 
-    elif is_new and line.startswith("#ssl = "):
+    elif is_new and line.startswith("#ssl = ") and (get_platform == "Linux"):
       l_ssl = "ssl = on"
       ns = ns + "\n" + l_ssl
 
-    elif is_new and line.startswith("#ssl_cert_file = "):
+    elif is_new and line.startswith("#ssl_cert_file = ") and (get_platform == "Linux"):
       l_scf = "ssl_cert_file = '" + pg_data + "/server.crt'"
       ns = ns + "\n" + l_scf
 
-    elif is_new and line.startswith("#ssl_key_file = "):
+    elif is_new and line.startswith("#ssl_key_file = ")  and (get_platform == "Linux"):
       l_skf = "ssl_key_file = '" + pg_data + "/server.key'"
       ns = ns + "\n" + l_skf
 

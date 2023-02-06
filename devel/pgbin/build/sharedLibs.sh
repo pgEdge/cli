@@ -1,12 +1,9 @@
 
 
 function osxCopySharedLibs {
-  lib=/usr/lib
-  cp $lib/libxml2.2.dylib          $shared_lib/.
-
-  loc=/usr/local/opt
-  cp $loc/lz4/lib/liblz4.1.dylib   $shared_lib/.
-  cp $loc/zstd/lib/libzstd.1.dylib $shared_lib/.
+  lib=/opt/homebrew/lib
+  cp -Pv $lib/liblz4*.dylib   $shared_lib/.
+  cp -Pv $lib/libzstd*.dylib $shared_lib/.
 }
 
 

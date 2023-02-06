@@ -58,16 +58,12 @@ elif [ "$majorV" == "15" ]; then
   pgBuildV=$pg15BuildV
 
   cd spock
-  git checkout delta_apply || get checkout -b delta_apply origin/delta_apply
-  rc=$?
-  if [ "$rc" == "0" ]; then
-    git pull
-    diff1=$PWD/pg15-log_old_value.diff
-    if [ -f "$diff1" ]; then
-      export DIFF1="$diff1"
-    fi
+  git pull
+  diff1=$PWD/pg15-log_old_value.diff
+  if [ -f "$diff1" ]; then
+    export DIFF1="$diff1"
   else
-    echo "# FATAL ERROR: cant find spock apply_delta branch"
+    echo "FATAL ERROR: Missing $diff1"
     exit 1
   fi
   cd ..

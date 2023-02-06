@@ -447,7 +447,8 @@ initPG () {
 
 
   if [ "$pgM" == "15" ] && [ "$outPlat" == "osx" ]; then
-    initC "spock-pg$pgM" "spock" "$spockV" "$outPlat" "postgres/spock" "" "" "nil"
+    initC  "csvdiff" "csvdiff" "$csvdiffV" "$outPlat" "csvdiff" "" "" "nil"
+    #initC "spock-pg$pgM" "spock" "$spockV" "$outPlat" "postgres/spock" "" "" "nil"
     return
   fi
 
