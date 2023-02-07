@@ -15,8 +15,6 @@ util.change_pgconf_keyval("pgXX", "track_commit_timestamp", "on", True)
 
 util.change_pgconf_keyval("pgXX", "log_destination", "stderr, csvlog")
 
-util.change_pgconf_keyval("pgXX", "pglogical.conflict_resolution", "last_update_wins", True)
-
 day = datetime.datetime.now().strftime('%a')
 logdir = util.get_column("logdir", "pgXX")
 
