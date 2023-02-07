@@ -45,29 +45,29 @@ def osSys(cmd, fatal_exit=True):
 def check_pre_reqs():
   util.message("#### Checking for Pre-Req's #########################")
 
-  util.message("  Verifying Linux...")
+  util.message("  Verifying Linux")
   if util.get_platform() != "Linux":
     error_exit("OS must be Linux")
 
-  util.message("  Verifying Linux supported version...")
+  util.message("  Verifying Linux supported glibc version")
   if util.get_glibc_version() < "2.28":
     error_exit("Linux has unsupported (old) version of glibc")
 
-  util.message("  Verifying Python 3.6+...")
+  util.message("  Verifying Python 3.6+")
   p3_minor_ver = util.get_python_minor_version()
   if p3_minor_ver < 6:
     error_exit("Python Version must be greater than 3.6")
 
-  util.message("  Verifying non-root user for pg install...")
+  util.message("  Verifying non-root user for pg install")
   if util.is_admin():
     error_exit("You must install as non-root user with passwordless sudo privleges")
 
-  util.message("  Verifying pg port 5432 availability...")
+  util.message("  Verifying port 5432 availability")
   if util.is_socket_busy(5432):
     error_exit("Postgres already running on port 5432")
 
   data_dir = "data/" + pgV
-  util.message("  Verifying empty data directory '" + data_dir + "' ...")
+  util.message("  Verifying empty data directory '" + data_dir + "'")
   if os.path.exists(data_dir):
     dir = os.listdir(data_dir)
     if len(dir) != 0:
@@ -99,12 +99,11 @@ def check_pre_reqs():
     else:
       error_exit("Must specify a -P passwd when specifying a -U usr")
 
-  util.message("  Ensure recent pip3...")
+  util.message("  Ensure recent pip3")
   rc = os.system("pip3 --version >/dev/null 2>&1")
-  osSys("pip3 install click --user", False)
+  os.system("pip3 install click --user >/dev/null 2>&1")
   if rc == 0:
-    ## need recent version of pip3 to install psycopg
-    osSys("pip3 install --upgrade pip --user", False)
+    os.system("pip3 install --upgrade pip --user >/dev/null 2>&1")
   else:
     url="https://bootstrap.pypa.io/get-pip.py"
     if p3_minor_ver == 6:
@@ -115,19 +114,19 @@ def check_pre_reqs():
     osSys("python3 get-pip.py --user", False)
     osSys("rm -f get-pip.py", False)
 
-  util.message("  Ensure FIRE pip3 module...")
+  util.message("  Ensure FIRE pip3 module")
   try:
     import fire
   except ImportError as e:
     osSys("pip3 install fire --user", False)
 
-  util.message("  Ensure PSYCOPG pip3 module...")
+  util.message("  Ensure PSYCOPG pip3 module")
   try:
     import psycopg
   except ImportError as e:
     osSys("pip3 install psycopg --user", False)
 
-  util.message("  Ensure PSUTIL native pip3 module...")
+  util.message("  Ensure PSUTIL pip3 module")
   try:
     import psutil
   except ImportError as e:
@@ -161,22 +160,12 @@ if isAutoStart == "True":
 osSys("./nc start " + pgV)
 
 if usr and passwd:
-  util.message("\n## creating roles & database ##############")
   ncb = './nc pgbin ' + pgN + ' '
   cmd = "CREATE ROLE " + usr + " PASSWORD '" + passwd + "' SUPERUSER CREATEDB CREATEROLE INHERIT LOGIN"
   osSys(ncb +  '"psql -c \\"' + cmd + '\\" postgres" > /dev/null') 
 
   cmd = "createdb '" + db1 + "' --owner='" + usr + "'"
   osSys(ncb  + '"' + cmd + '"')
-
-  #### deterministic shuffle of passwd
-  ##l = list(passwd)
-  ##random.Random(123).shuffle(l)
-  ##rpasswd = ''.join(l)
-  ##
-  ##cmd = "CREATE ROLE replication WITH SUPERUSER REPLICATION NOLOGIN ENCRYPTED PASSWORD '" + rpasswd + "'"
-  ##osSys(ncb +  '"psql -c \\"' + cmd + '\\" postgres" > /dev/null') 
-  ##util.remember_pgpassword(rpasswd, "*", "*", "*", "replication")
 
 osSys("./nc tune " + pgV)
 
