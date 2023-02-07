@@ -11,19 +11,19 @@ spockFullV=$spV
 spockShortV=
 spockBuildV=1
 
-pg15V=15.1
-pg15BuildV=4
+pg15V=15.2
+pg15BuildV=1
 
-pg14V=14.6
+pg14V=14.7
 pg14BuildV=1
 
-pg13V=13.9
+pg13V=13.10
 pg13BuildV=1
 
-pg12V=12.13
+pg12V=12.14
 pg12BuildV=1
 
-pg11V=11.18
+pg11V=11.19
 pg11BuildV=1
 
 decoderbufsFullV=1.7.0
@@ -188,7 +188,7 @@ cronShortV=
 cronBuildV=1
 
 isEL8=no
-grep el8 /etc/os-release > /dev/null
+grep el8 /etc/os-release > /dev/null 2>&1
 rc=$?
 if [ "$rc" == "0" ]; then
   isEL8=yes

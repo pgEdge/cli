@@ -452,6 +452,11 @@ initPG () {
     return
   fi
 
+  if [ "$outPlat" == "osx" ]; then
+    return
+  fi
+
+
   if [ "$pgM" == "15" ] && [  "$isEL8" == "True" ]; then
     initC "spock-pg$pgM" "spock" "$spockV" "$outPlat" "postgres/spock" "" "" "nil"
     initC "multicorn2-pg$pgM" "multicorn2" "$multicorn2V" "$outPlat" "postgres/multicorn2" "" "" "nil"

@@ -191,18 +191,20 @@ function buildPostgres {
 	echo "# buildPOSTGRES"	
 	cd $baseDir/$workDir/$pgSrcDir
 
-	if [ ! -f "$DIFF1" ]; then
-		echo "# DIFF1 not found : $DIFF1"
-		exit 1
-	else
-		echo "# Applying $DIFF1"
-		patch -p1 -i $DIFF1
-		rc=$?
-		if [ "$rc" == "0" ]; then
-			echo "# patch succesfully applied"
-		else
-			echo "# FATAL ERROR: applying patch"
+	if [ "$pgShortV" == "15" ]; then
+		if [ ! -f "$DIFF1" ]; then
+			echo "# DIFF1 not found : $DIFF1"
 			exit 1
+		else
+			echo "# Applying $DIFF1"
+			patch -p1 -i $DIFF1
+			rc=$?
+			if [ "$rc" == "0" ]; then
+				echo "# patch succesfully applied"
+			else
+				echo "# FATAL ERROR: applying patch"
+				exit 1
+			fi
 		fi
 	fi
 

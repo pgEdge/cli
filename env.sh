@@ -6,8 +6,10 @@ hubV=2.19
 spockV=3.0.16-1
 #spockV=3.0da-0106-1
 
-P15=15.1-4
-pgedgeV=15.1
+P15=15.2-1
+pgedgeV=15.2
+
+P14=14.7-1
 
 goV=1.19.3
 postgrestV=10.1.1
@@ -90,12 +92,7 @@ if [[ $OS == "Linux" ]]; then
   sudo="sudo"
 elif [[ $OS == "Darwin" ]]; then
   outDir=m64
-  ##if [ `arch` == "arm64" ]; then
-  ##  OS="osx-arm"
-  ##else
-    OS=osx;
-  ##fi
-  echo OS=$OS
+  OS=osx;
   sudo=""
 elif [[ $OS = "MINGW64" ]]; then
   outDir=w64
