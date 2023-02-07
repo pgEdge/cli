@@ -332,7 +332,9 @@ INSERT INTO versions VALUES ('spock-pg15', '3.0.14-1', 'el8, arm', 0, '20230113'
 
 INSERT INTO projects VALUES ('pglogical', 'ext', 4, 0, 'hub', 1, 'https://github.com/2ndQuadrant/pglogical/releases',
   'pglogical', 1, 'spock.png', 'Logical Replication', 'https://github.com/2ndQuadrant/pglogical');
+INSERT INTO releases VALUES ('pglogical-pg14', 4, 'pglogical', 'pgLogical', '', 'prod', '', 1, 'POSTGRES', '', '');
 INSERT INTO releases VALUES ('pglogical-pg15', 4, 'pglogical', 'pgLogical', '', 'prod', '', 1, 'POSTGRES', '', '');
+INSERT INTO versions VALUES ('pglogical-pg14', '2.4.2-1',  'arm, el8', 1, '20221021', 'pg14', '', 'https://github.com/2ndQuadrant/pglogical/releases/tag/REL2_4_2');
 INSERT INTO versions VALUES ('pglogical-pg15', '2.4.2-1',  'arm, el8', 1, '20221021', 'pg15', '', 'https://github.com/2ndQuadrant/pglogical/releases/tag/REL2_4_2');
 
 INSERT INTO projects VALUES ('postgis', 'ext', 4, 1, 'hub', 3, 'http://postgis.net/source',
@@ -370,7 +372,7 @@ INSERT INTO versions VALUES ('partman-pg15', '4.7.1-1',  'arm, el8', 0, '2022101
 INSERT INTO projects VALUES ('hypopg', 'ext', 4, 0, 'hub', 8, 'https://github.com/HypoPG/hypopg/releases',
   'hypopg', 1, 'whatif.png', 'Hypothetical Indexes', 'https://hypopg.readthedocs.io/en/latest/');
 INSERT INTO releases VALUES ('hypopg-pg14', 99, 'hypopg', 'HypoPG', '', 'prod','',  1, 'POSTGRES', '', '');
-INSERT INTO versions VALUES ('hypopg-pg14', '1.3.1-1',  'arm, el8', 1, '20210622', 'pg14', '', '');
+INSERT INTO versions VALUES ('hypopg-pg14', '1.3.1-1',  'arm, el8', 0, '20210622', 'pg14', '', '');
 
 INSERT INTO projects VALUES ('badger', 'app', 4, 0, 'hub', 6, 'https://github.com/darold/pgbadger/releases',
   'badger', 0, 'badger.png', 'Performance Reporting', 'https://pgbadger.darold.net');
