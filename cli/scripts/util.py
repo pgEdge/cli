@@ -662,11 +662,12 @@ def is_systemd():
          or (os.path.isfile('/bin/systemctl') and os.access('/bin/systemctl', os.X_OK)))
 
 
-## run as SUDO (if not already) ###############################
+## run as SUDO ################################################
 def run_sudo(p_cmd, p_display=True, p_isJSON=False):
-  cmd = p_cmd
-  if os.getenv("SUDO_USER", "") == "":
-    cmd = "sudo " + cmd
+  if p_cmd.startswith("sudo "):
+    cmd = p_cmd
+  else:
+    cmd = "sudo " + p_cmd
 
   rc = run_sh_cmd(cmd, p_display, p_isJSON)
 
