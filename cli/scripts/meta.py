@@ -438,12 +438,14 @@ def get_list(p_isOLD, p_isExtensions, p_isJSON, p_isTEST, p_showLATEST, p_comp=N
   else:
     exclude_comp = " AND v.component NOT IN (SELECT component FROM components)"
 
-  if not p_isTEST:
+  if p_isTEST:
+    exclude_comp = exclude_comp + " AND r.stage in ('test', 'prod')"
+  else:
     exclude_comp = exclude_comp + " AND r.stage = 'prod'"
 
   parent_comp_condition = ""
   installed_category_conditions = " AND p.category > 0 "
-  available_category_conditions = " AND p.is_extension = 0"
+  available_category_conditions = " AND p.category > 0 AND p.is_extension = 0"
   ext_component = ""
 
   extra_extensions = "('')"

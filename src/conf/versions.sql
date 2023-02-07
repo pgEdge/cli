@@ -194,11 +194,11 @@ INSERT INTO versions VALUES ('mongofdw-pg14', '5.4.0-1', 'el8', 0, '20220519', '
 INSERT INTO projects VALUES ('mysqlfdw', 'fdw', 5, 0, 'hub', 0, 'https://github.com/EnterpriseDB/mysql_fdw/tags', 
   'mysqlfdw', 1, 'mysql.png', 'MySQL & MariaDB from PG', 'https://github.com/EnterpriseDb/mysql_fdw');
 INSERT INTO releases VALUES ('mysqlfdw-pg14',  4, 'mysqlfdw', 'MySQL FDW',  '', 'test', '', 1, 'POSTGRES', '', '');
-INSERT INTO versions VALUES ('mysqlfdw-pg14', '2.8.0-1', 'el8, arm', 1, '20220516', 'pg14', '', '');
+INSERT INTO versions VALUES ('mysqlfdw-pg14', '2.8.0-1', 'el8, arm', 0, '20220516', 'pg14', '', '');
 
 INSERT INTO projects VALUES ('tdsfdw', 'fdw', 5, 0, 'hub', 0, 'https://github.com/tds-fdw/tds_fdw/tags',
   'tdsfdw', 1, 'tds.png', 'SQL Svr & Sybase from PG', 'https://github.com/tds-fdw/tds_fdw/#tds-foreign-data-wrapper');
-INSERT INTO releases VALUES ('tdsfdw-pg15', 4, 'tdsfdw', 'TDS FDW', '', 'prod', '', 1, 'POSTGRES', '', '');
+INSERT INTO releases VALUES ('tdsfdw-pg15', 4, 'tdsfdw', 'TDS FDW', '', 'test', '', 1, 'POSTGRES', '', '');
 INSERT INTO versions VALUES ('tdsfdw-pg15', '2.0.3-1', 'el8', 1, '20221022', 'pg15', '', 'https://github.com/tds-fdw/tds_fdw/releases/tag/v2.0.3');
 
 INSERT INTO projects VALUES ('bqfdw', 'fdw', 5, 0, 'multicorn2', 1, 'https://pypi.org/project/bigquery-fdw/#history',
@@ -277,7 +277,7 @@ INSERT INTO projects VALUES ('postgrest', 'pge', 4, 3000, 'hub', 0, 'https://git
 INSERT INTO releases VALUES ('postgrest', 9, 'postgrest', 'PostgREST', '', 'test', '', 1, 'MIT', '', '');
 INSERT INTO versions VALUES ('postgrest', '10.1.1', 'arm, el8', 1, '20221121', '', '', 'https://postgrest.org');
 
-INSERT INTO projects VALUES ('prompgexp', 'app', 4, 9187, 'golang', 0, 'https://github.com/prometheus-community/postgres_exporter/tags',
+INSERT INTO projects VALUES ('prompgexp', 'pge', 4, 9187, 'golang', 0, 'https://github.com/prometheus-community/postgres_exporter/tags',
   'prompgexp', 0, 'prometheus.png', 'Prometheus PG Exporter', 'https://github.com/prometheus-community/postgres_exporter');
 INSERT INTO releases VALUES ('prompgexp', 9, 'prompgexp', 'Prometheus PG Exporter', '', 'test', '', 1, 'Apache', '', '');
 INSERT INTO versions VALUES ('prompgexp', '0.11.1', '', 0, '20220720', '', '', 'https://github.com/prometheus-community/postgres_exporter');
@@ -351,7 +351,7 @@ INSERT INTO versions VALUES ('omnidb', '3.0.6', '', 0, '20220509', '', '', '');
 INSERT INTO projects VALUES ('pgadmin', 'app', 3, 80, '', 1, 'https://www.pgadmin.org/news/',
   'pgadmin', 0, 'pgadmin.png', 'PostgreSQL Tools', 'https://pgadmin.org');
 INSERT INTO releases VALUES ('pgadmin', 2, 'pgadmin', 'pgAdmin 4', '', 'test', '', 1, '', '', '');
-INSERT INTO versions VALUES ('pgadmin', '6.9', '', 1, '20220512', '', '', '');
+INSERT INTO versions VALUES ('pgadmin', '6.9', '', 0, '20220512', '', '', '');
 
 INSERT INTO projects VALUES ('bulkload', 'ext', 4, 0, 'hub', 5, 'https://github.com/ossc-db/pg_bulkload/releases',
   'bulkload', 1, 'bulkload.png', 'High Speed Data Loading', 'https://github.com/ossc-db/pg_bulkload');
@@ -377,13 +377,12 @@ INSERT INTO versions VALUES ('hypopg-pg14', '1.3.1-1',  'arm, el8', 0, '20210622
 INSERT INTO projects VALUES ('badger', 'app', 4, 0, 'hub', 6, 'https://github.com/darold/pgbadger/releases',
   'badger', 0, 'badger.png', 'Performance Reporting', 'https://pgbadger.darold.net');
 INSERT INTO releases VALUES ('badger', 101, 'badger','pgBadger','', 'test', '', 1, 'POSTGRES', '', '');
-INSERT INTO versions VALUES ('badger', '11.8', '', 1, '20220408', '', '', '');
+INSERT INTO versions VALUES ('badger', '11.8', '', 0, '20220408', '', '', '');
 
 INSERT INTO projects VALUES ('pool2', 'ext', 4, 0, 'hub', 3, 'http://github.com/pgpool/pgpool2/tags',
   'pool2',  0, 'pgpool2.png', 'QueryCache', 'http://pgpool.net');
 INSERT INTO releases VALUES ('pool2', 1, 'pool2',  'pgPool2', '', 'test', '', 1, 'BSD', '', '');
-INSERT INTO versions VALUES ('pool2', '4.4.0', 'el8, arm', 1, '20221206', '', '', '');
-INSERT INTO versions VALUES ('pool2', '4.3.1', 'el8, arm', 0, '20220216', '', '', '');
+INSERT INTO versions VALUES ('pool2', '4.4.0', 'el8, arm', 0, '20221206', '', '', '');
 
 INSERT INTO projects VALUES ('nginx', 'app', 4, 443, 'hub', 3, 'http://nginx.org',
   'nginx',  0, 'pg-nginx.png', 'HTTPS & Reverse Proxy Server', 'http://nginx.org');
@@ -396,11 +395,17 @@ INSERT INTO releases VALUES ('bouncer', 2, 'bouncer',  'pgBouncer', '', 'test', 
 INSERT INTO versions VALUES ('bouncer', '1.18.0-1', 'el8, arm', 1, '20221212', '', '', '');
 
 INSERT INTO projects VALUES ('pgedge', 'pge', 0, 0, 'hub', 3, 'http://pgedge.org',
-  'pgedge',  0, 'pgedge.png', 'Active/Active Global Postgres Clusters', 'http://pgedge.org');
-INSERT INTO releases VALUES ('pgedge', 1, 'pg',  'pgEdge', '', 'test', '', 1, '', '', '');
-INSERT INTO versions VALUES ('pgedge', '15.1', '', 1, '20230126', '', '', '');
+  'pgedge',  0, 'pgedge.png', 'Multi-Active Global Postgres Clusters', 'http://pgedge.com');
+INSERT INTO releases VALUES ('pgedge', 1, 'pgedge',  'pgEdge', '', 'test', '', 1, '', '', '');
+INSERT INTO versions VALUES ('pgedge', '15.2', '', 1, '20230209', '', '', '');
+INSERT INTO versions VALUES ('pgedge', '15.1', '', 0, '20230126', '', '', '');
 
-INSERT INTO projects VALUES ('csvdiff', 'pge', 4, 0, 'hub', 3, 'https://github.com/luss/csvdiff/tags',
+INSERT INTO projects VALUES ('pgdiff', 'pge', 4, 0, 'csvdiff', 3, 'https://github.com/pgedge/pgdiff/tags',
+  'pgdiff',  0, 'pgdiff.png', 'pgdiff', 'https://github.com/pgedge/pgdiff');
+INSERT INTO releases VALUES ('pgdiff', 2, 'pgdiff',  'PG Diff', '', 'test', '', 1, '', '', '');
+INSERT INTO versions VALUES ('pgdiff', '1.4.0', '', 1, '20230206', '', '', '');
+
+INSERT INTO projects VALUES ('csvdiff', 'pge', 0, 0, 'hub', 3, 'https://github.com/luss/csvdiff/tags',
   'csvdiff',  0, 'csvdiff.png', 'csvdiff', 'https://github.com/luss/csvdiff');
 INSERT INTO releases VALUES ('csvdiff', 2, 'csvdiff',  'CSV Diff', '', 'test', '', 1, '', '', '');
 INSERT INTO versions VALUES ('csvdiff', '1.4.0', 'el8, arm, osx', 1, '20230206', '', '', '');
@@ -413,7 +418,7 @@ INSERT INTO versions VALUES ('backrest', '2.44-1', 'el8, arm', 1, '20230129', ''
 INSERT INTO projects VALUES ('patroni', 'app', 11, 0, 'haproxy', 4, 'https://github.com/zalando/patroni/releases',
   'patroni', 0, 'patroni.png', 'HA Template', 'https://github.com/zalando/patroni');
 INSERT INTO releases VALUES ('patroni', 1, 'patroni', 'Patroni', '', 'test', '', 1, 'POSTGRES', '', '');
-INSERT INTO versions VALUES ('patroni', '2.1.1', '', 1, '20210819', '', 'UBU20 PYTHON3', 'https://github.com/zalando/patroni/releases/tag/v2.1.1');
+INSERT INTO versions VALUES ('patroni', '2.1.1', '', 0, '20210819', '', 'UBU20 PYTHON3', 'https://github.com/zalando/patroni/releases/tag/v2.1.1');
 
 INSERT INTO projects VALUES ('ddlx', 'ext',     4, 0, 'hub', 0, 'https://github.com/lacanoid/pgddl/releases', 'ddlx',  1, 'ddlx.png', 'DDL Extractor', 'https://github.com/lacanoid/pgddl#ddl-extractor-functions--for-postgresql');
 INSERT INTO releases VALUES ('ddlx-pg13', 2, 'ddlx', 'DDLeXtact', '', 'prod','',  0, 'POSTGRES', '', '');
