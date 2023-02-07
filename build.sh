@@ -448,7 +448,6 @@ initPG () {
 
   if [ "$pgM" == "15" ] && [ "$outPlat" == "osx" ]; then
     initC  "csvdiff" "csvdiff" "$csvdiffV" "$outPlat" "csvdiff" "" "" "nil"
-    #initC "spock-pg$pgM" "spock" "$spockV" "$outPlat" "postgres/spock" "" "" "nil"
     return
   fi
 
@@ -510,20 +509,13 @@ initPG () {
     #initC "esfdw-pg$pgM" "esfdw" "$esfdwV" "$outPlat" "postgres/esfdw" "" "" "Y"
     #initC "anon-pg$pgM" "anon" "$anonV" "$outPlat" "postgres/anon" "" "" "nil"
 
-    #if [ "$outPlat" == "el8" ]; then
-      #initC "plv8-pg$pgM" "plv8" "$v8V" "$outPlat" "postgres/plv8" "" "" "nil"
-
-      #initC "oraclefdw-pg$pgM" "oraclefdw" "$oraclefdwV" "$outPlat" "postgres/oraclefdw" "" "" "nil"
-      #initC "mongofdw-pg$pgM" "mongofdw" "$mongofdwV" "$outPlat" "postgres/mongofdw" "" "" "nil"
-
-    #fi
-
   fi
 
   initC  "pgedge" "pgedge" "$pgedgeV" "" "postgres/pgedge" "" "" "nil"
   initC  "bouncer" "bouncer" "$bouncerV" "$outPlat" "postgres/bouncer" "" "" "nil"
   initC  "backrest" "backrest" "$backrestV" "$outPlat" "postgres/backrest" "" "" "nil"
   initC  "csvdiff" "csvdiff" "$csvdiffV" "$outPlat" "csvdiff" "" "" "nil"
+  initC  "pgdiff" "pgdiff" "$pgdiffV" "" "postgres/pgdiff" "" "" "nil"
   ##initC  "golang" "golang" "$goV" "" "golang" "" "" "Y"
   ##initC "nginx" "nginx" "$nginxV" "" "nginx" "" "" "Y"
   ##initC "prompgexp"  "prompgexp"  "$prompgexpV"  ""  "prometheus/pg_exporter"  "" "" "Y"
