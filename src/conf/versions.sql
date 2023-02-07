@@ -189,7 +189,7 @@ INSERT INTO versions VALUES ('decoderbufs-pg14', '1.7.0-1', 'arm, el8', 0, '2021
 INSERT INTO projects VALUES ('mongofdw', 'fdw', 5, 0, 'hub', 0, 'https://github.com/EnterpriseDB/mongo_fdw/tags', 
   'mongofdw', 1, 'mongodb.png', 'MongoDB from PG', 'https://github.com/EnterpriseDB/mongo_fdw#mongo_fdw');
 INSERT INTO releases VALUES ('mongofdw-pg14',  3, 'mongofdw', 'MongoFDW', '', 'prod', '', 1, 'AGPLv3', '', '');
-INSERT INTO versions VALUES ('mongofdw-pg14', '5.4.0-1', 'el8', 1, '20220519', 'pg14', '', '');
+INSERT INTO versions VALUES ('mongofdw-pg14', '5.4.0-1', 'el8', 0, '20220519', 'pg14', '', '');
 
 INSERT INTO projects VALUES ('mysqlfdw', 'fdw', 5, 0, 'hub', 0, 'https://github.com/EnterpriseDB/mysql_fdw/tags', 
   'mysqlfdw', 1, 'mysql.png', 'MySQL & MariaDB from PG', 'https://github.com/EnterpriseDb/mysql_fdw');
@@ -240,7 +240,7 @@ INSERT INTO versions VALUES ('fixeddecimal-pg14', '1.1.0-1',  'amd', 0, '2020111
 INSERT INTO projects VALUES ('plv8', 'dev', 3, 0, 'hub', 0, 'https://github.com/plv8/plv8/tags',
   'plv8',   1, 'v8.png', 'Javascript Stored Procedures', 'https://github.com/plv8/plv8');
 INSERT INTO releases VALUES ('plv8-pg14', 4, 'plv8', 'PL/V8', '', 'prod', '', 1, 'POSTGRES', '', '');
-INSERT INTO versions VALUES ('plv8-pg14', '3.1.2-1', 'el8', 1, '20200721', 'pg14', '', '');
+INSERT INTO versions VALUES ('plv8-pg14', '3.1.2-1', 'el8', 0, '20200721', 'pg14', '', '');
 
 INSERT INTO projects VALUES ('plpython', 'dev', 3, 0, 'hub', 0, 'https://www.postgresql.org/docs/13/plpython.html',
   'plpython', 1, 'python.png', 'Python3 Stored Procedures', 'https://www.postgresql.org/docs/13/plpython.html');
