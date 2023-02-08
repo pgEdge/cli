@@ -434,6 +434,7 @@ def metrics_check(db, pg=None):
     cur.close()
     mtrc_dict.update({"resolutions": rsltns})
 
+    mtrc_dict.update({"slots": []})    
     cur = con.cursor()
     sql_slots = \
       "SELECT slot_name, to_char(pg_wal_lsn_diff(pg_current_wal_insert_lsn(), confirmed_flush_lsn), \n" + \
@@ -443,9 +444,9 @@ def metrics_check(db, pg=None):
       "LEFT OUTER JOIN pg_stat_replication S ON R.slot_name = S.application_name \n" + \
       "ORDER BY 1"
     cur.execute(sql_slots)
-    data = cur.fetchall()
+    for row in cur:
+      mtrc_dict["slots"].append({"slotName":row[0],"flushReplicationLag":row[1],"replyTime":str(row[2]),"replicationLag":str(row[3])})
     cur.close()
-    mtrc_dict.update({"slots": data})
 
   except Exception as e:
     pass
