@@ -448,6 +448,7 @@ initPG () {
 
   if [ "$pgM" == "15" ] && [ "$outPlat" == "osx" ]; then
     initC  "csvdiff" "csvdiff" "$csvdiffV" "$outPlat" "csvdiff" "" "" "nil"
+    initC  "pgdiff" "pgdiff" "$pgdiffV" "" "postgres/pgdiff" "" "" "nil"
     return
   fi
 

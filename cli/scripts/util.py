@@ -1480,20 +1480,24 @@ def update_postgresql_conf(p_pgver, p_port, is_new=True,update_listen_addr=True)
   s = get_pgconf(p_pgver)
   ns = ""
   lines = s.split('\n')
+  pkg_mgr = get_pkg_mgr()
   for line in lines:
-    if line.startswith("archive_mode") or line.startswith("#archive_mode"):
+    if pkg_mgr == "deb" and (line.startswith("#dynamic_shared_memory_type") or line.startswith("dynamic_shared_memory_type")):
+      ns = ns + "\ndynamic_shared_memory_type = mmap"
+      
+    elif line.startswith("#archive_mode") or line.startswith("archive_mode"):
       ns = ns + "\narchive_mode = 'on'"
 
-    elif line.startswith("archive_command") or line.startswith("#archive_command"):
+    elif line.startswith("#archive_command") or line.startswith("archive_command"):
       ns = ns + "\narchive_command = '/bin/true'"
 
-    elif line.startswith("checkpoint_timeout") or line.startswith("#checkpoint_timeout"):
+    elif line.startswith("#checkpoint_timeout") or line.startswith("checkpoint_timeout"):
       ns = ns + "\ncheckpoint_timeout = 15min"
 
-    elif line.startswith("checkpoint_completion_target") or line.startswith("#checkpoint_completion_target"):
+    elif line.startswith("#checkpoint_completion_target") or line.startswith("checkpoint_completion_target"):
       ns = ns + "\ncheckpoint_completion_target = 0.9"
 
-    elif line.startswith("port") or line.startswith("#port"):
+    elif line.startswith("#port") or line.startswith("port"):
       pt = "port = " + str(p_port) + \
              "\t\t\t\t# (change requires restart)"
       ns = ns + "\n" + pt
