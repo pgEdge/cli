@@ -9,10 +9,11 @@ isAutoStart = str(os.getenv("isAutoStart", "False"))
 isFIPS = str(os.getenv("isFIPS", "False"))
 isSTART = str(os.getenv("isSTART", "False"))
 
-if isFIPS == "True":
-  util.message("Configuring for FIPS")
-  os.system("rm -v " + thisDir + "/lib/libcrypt*")
-  os.system("rm -v " + thisDir + "/lib/libssl*")
+rc = os.system ("grep el8 /etc/os-release > /dev/null 2>&1")
+if isFIPS == "True" or rc == 0:
+  util.message(" Configuring for FIPS")
+  os.system("rm " + thisDir + "/lib/libcrypt*")
+  os.system("rm " + thisDir + "/lib/libssl*")
 
 if isSTART == "True":
   util.message("Starting PG with: ")
