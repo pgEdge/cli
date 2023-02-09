@@ -1482,7 +1482,7 @@ def update_postgresql_conf(p_pgver, p_port, is_new=True,update_listen_addr=True)
   lines = s.split('\n')
   pkg_mgr = get_pkg_mgr()
   for line in lines:
-    if pkg_mgr == "deb" and (line.startswith("#dynamic_shared_memory_type") or line.startswith("dynamic_shared_memory_type")):
+    if pkg_mgr == "apt" and (line.startswith("#dynamic_shared_memory_type") or line.startswith("dynamic_shared_memory_type")):
       ns = ns + "\ndynamic_shared_memory_type = mmap"
       
     elif line.startswith("#archive_mode") or line.startswith("archive_mode"):
