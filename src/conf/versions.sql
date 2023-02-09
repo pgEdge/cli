@@ -338,11 +338,11 @@ INSERT INTO releases VALUES ('timescaledb-pg14',  2, 'timescaledb', 'TimescaleDB
 INSERT INTO versions VALUES ('timescaledb-pg14', '2.8.0-1',  'el8, arm', 0, '20220831', 'pg14', '', 'https://github.com/timescale/timescaledb/releases/tag/2.8.0');
 
 INSERT INTO projects VALUES ('spock', 'pge', 4, 0, 'hub', 1, 'https://github.com/pgedge/spock/tags',
-  'spock', 1, 'spock.png', 'Logical & Multi-Master Replication', 'https://github.com/pgedge/spock/#spock');
-INSERT INTO releases VALUES ('spock-pg15', 4, 'spock', 'Spock', '', 'prod', '', 1, 'POSTGRES', '', '');
-INSERT INTO versions VALUES ('spock-pg15', '3.0.16-1', 'el8, arm', 1, '20230127', 'pg15', '', '');
+  'spock', 1, 'spock.png', 'Logical & Multi-Active Replication', 'https://github.com/pgedge/spock/#spock');
+INSERT INTO releases VALUES ('spock-pg15', 4, 'spock', 'Spock', '', 'test', '', 1, 'POSTGRES', '', '');
+INSERT INTO versions VALUES ('spock-pg15', '3.0.17-1', 'el8, arm', 1, '20230209', 'pg15', '', '');
+INSERT INTO versions VALUES ('spock-pg15', '3.0.16-1', 'el8, arm', 0, '20230127', 'pg15', '', '');
 INSERT INTO versions VALUES ('spock-pg15', '3.0.15-1', 'el8, arm', 0, '20230120', 'pg15', '', '');
-INSERT INTO versions VALUES ('spock-pg15', '3.0.14-1', 'el8, arm', 0, '20230113', 'pg15', '', '');
 
 INSERT INTO projects VALUES ('pglogical', 'ext', 4, 0, 'hub', 1, 'https://github.com/2ndQuadrant/pglogical/releases',
   'pglogical', 1, 'spock.png', 'Logical Replication', 'https://github.com/2ndQuadrant/pglogical');
