@@ -108,6 +108,10 @@ function checkPostgres {
 			pgShortV="12"
 			bndlPrfx=pg12
 			pgOPT=""
+		elif [[ "${pgSrcV/rc}" =~ ^11.* ]]; then
+			pgShortV="11"
+			bndlPrfx=pg11
+			pgOPT=""
 		else
 			echo "ERROR: Could not determine Postgres Version for '$pgSrcV'"
 			exit 1

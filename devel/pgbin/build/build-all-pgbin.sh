@@ -50,7 +50,16 @@ function runPgBin {
 majorV="$1"
 optional="$2"
 
-if [ "$majorV" == "14" ]; then
+if [ "$majorV" == "11" ]; then
+  pgV=$pg11V
+  pgBuildV=$pg11BuildV
+elif [ "$majorV" == "12" ]; then
+  pgV=$pg12V
+  pgBuildV=$pg12BuildV
+elif [ "$majorV" == "13" ]; then
+  pgV=$pg13V
+  pgBuildV=$pg13BuildV
+elif [ "$majorV" == "14" ]; then
   pgV=$pg14V
   pgBuildV=$pg14BuildV
 elif [ "$majorV" == "15" ]; then
