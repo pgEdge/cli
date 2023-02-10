@@ -72,7 +72,7 @@ mode_list = ["start", "stop", "restart", "status", "list", "info", "update",
              "upgrade", "downgrade", "enable", "disable", "install", "tune",
              "remove", "reload", "activity", "help", "get", "set", "unset",
              "repolist", "repo-pkgs", "discover", "backrest", "change-pgconf",
-             "register", "top", "spock", "pgbin", "--autostart", "-U", "-P", "-d",
+             "register", "top", "spock", "pgbin", "--autostart", "-U", "-P", "-d", "-p",
              "--rm-data", "--relnotes", "--start", "--no-restart", "--no-preload",
              "--help", "--json", "--jsonp", "--test", "--extensions", "--svcs",
              "--list", "--old", "--showduplicates", "-y", "-t",
@@ -1189,6 +1189,13 @@ if "-P" in args:
     args.remove("-P")
     args.remove(passwd)
     os.environ['pgePasswd'] = passwd
+
+if "-p" in args:
+  port  = get_next_arg("-p")
+  if port > "":
+    args.remove("-p")
+    args.remove(port)
+    os.environ['pgePort'] = port
 
 
 isTIME = False

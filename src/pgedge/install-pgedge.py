@@ -14,13 +14,6 @@ withBACKREST  = str(os.getenv("withBACKREST", "False"))
 withBOUNCER   = str(os.getenv("withBOUNCER", "False"))
 isAutoStart   = str(os.getenv("isAutoStart", "False"))
 
-db1 = os.getenv('pgName', '')
-if db1 == "":
-  db1="postgres"
-
-usr = os.getenv('pgeUser', None)
-passwd = os.getenv('pgePasswd', None)
-
 
 def error_exit(p_msg, p_rc=1):
     util.message("ERROR: " + p_msg)
@@ -62,9 +55,9 @@ def check_pre_reqs():
   if util.is_admin():
     error_exit("You must install as non-root user with passwordless sudo privleges")
 
-  util.message("  Verifying port 5432 availability")
-  if util.is_socket_busy(5432):
-    error_exit("Postgres already running on port 5432")
+  util.message("  Verifying port " + str(prt) + " availability")
+  if util.is_socket_busy(prt):
+    error_exit("Port " + str(prt) + " is busy")
 
   data_dir = "data/" + pgV
   util.message("  Verifying empty data directory '" + data_dir + "'")
@@ -137,6 +130,18 @@ def check_pre_reqs():
 
 svcuser = util.get_user()
 
+db1 = os.getenv('pgName', '')
+if db1 == "":
+  db1="postgres"
+
+usr = os.getenv('pgeUser', None)
+passwd = os.getenv('pgePasswd', None)
+prt = 0
+try:
+  prt = int(os.getenv('pgePort', '5432'))
+except Exception as e:
+  error_exit("Port " + os.getenv('pgePort') + " is not an integer")
+
 check_pre_reqs()
 
 osSys("./nc install " + pgV)
@@ -144,6 +149,8 @@ osSys("./nc install " + pgV)
 if util.is_empty_writable_dir("/data") == 0:
   util.message("## symlink empty local data directory to empty /data ###")
   osSys("rm -rf data; ln -s /data data")
+
+osSys("./nc init " + pgV + " --port=" + str(prt))
 
 if isAutoStart == "True":
   util.message("\n## init & config autostart  ###############")
