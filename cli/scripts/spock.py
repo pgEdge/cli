@@ -251,7 +251,7 @@ def replication_set_add_table(replication_set, table, db, cols=None, pg=None):
   sys.exit(0)
 
 
-def local_cluster_create(cluster_name, num_nodes=3, port1=6432, pg="15", base_dir="cluster"):
+def local_cluster_create(cluster_name, num_nodes, User="lcusr", Passwd="lcpasswd", db="lcdb", port1=6432, pg="15", base_dir="cluster"):
   cluster_dir = base_dir + os.sep + cluster_name
 
   kount = meta.get_installed_count()
@@ -274,7 +274,6 @@ def local_cluster_create(cluster_name, num_nodes=3, port1=6432, pg="15", base_di
 
   pg_v = "pg" + str(pg)
 
-  repl_passwd="abc123"
   nd_port = port1
   for n in range(1, num_nodes+1):
     node_nm = "n" + str(n)
@@ -289,19 +288,14 @@ def local_cluster_create(cluster_name, num_nodes=3, port1=6432, pg="15", base_di
     os.system("cp -r hub  " + node_dir + "/.")
     os.system("cp nc "      + node_dir + "/.")
 
-    db='postgres'
 
     nc = (node_dir + "/nc ")
-    echo_cmd(nc + "install " + pg_v)
-    echo_cmd(nc + "init " + pg_v + " --port " + str(nd_port))
-    echo_cmd(nc + "start " + pg_v)
-    echo_cmd(nc + "install spock -d " + db)
+    rc = echo_cmd(nc + "install pgedge -U " + str(User) + " -P " + str(Passwd) + " -d " + str(db))
+    if rc != 0:
+      sys.exit(rc)
 
     pgbench_cmd = '"pgbench --initialize --scale=' + str(num_nodes) + ' postgres"'
     echo_cmd(nc + "pgbin " + str(pg) +  " " + pgbench_cmd)
-
-    #replusr_cmd = '"createuser with superuser replication password ' + repl_passwd"'
-    #echo_cmd(nc + "pgbin " + str(pg) +  " " + replusr_cmd)
 
     rep_set='pgbench-rep-set'
 
