@@ -125,7 +125,7 @@ INSERT INTO categories VALUES (9,  87, 'Management & Monitoring', 'Manage/Monito
 -- ## HUB ################################
 INSERT INTO projects VALUES ('hub', 'app', 0, 0, 'hub', 0, 'https://github.com/pgedge/nodectl','',0,'','','');
 INSERT INTO releases VALUES ('hub', 1, 'hub', '', '', 'hidden', '', 1, '', '', '');
-INSERT INTO versions VALUES ('hub', '2.20', '',  1, '20230309', '', '', '');
+INSERT INTO versions VALUES ('hub', '2.21', '',  1, '20230309', '', '', '');
 INSERT INTO versions VALUES ('hub', '2.19', '',  0, '20230308', '', '', '');
 
 -- ##
@@ -141,7 +141,7 @@ INSERT INTO releases VALUES ('pg12', 3, 'pg', 'PostgreSQL', '', 'prod',
 INSERT INTO versions VALUES ('pg12', '12.14-1', 'el8', 1, '20230209', '', '', '');
 
 INSERT INTO releases VALUES ('pg13', 2, 'pg', '', '', 'prod',
-  '<font size=-1>New in <a href=https://www.postgresql.org/docs/13/release-13.html>2020</a></font>',
+  '<font size=-1>New in <a href=https://www.postgresql.org/docs/13/release-13.html>2.21</a></font>',
   1, 'POSTGRES', '', '');
 INSERT INTO versions VALUES ('pg13', '13.10-1', 'el8', 1, '20230209','', '', '');
 
@@ -166,7 +166,7 @@ INSERT INTO projects VALUES ('olr', 'strm', 10, 8083, '', 3, 'https://github.com
   'OLR', 0, 'olr.png', 'Oracle Binary Log Replicator', 'https://www.bersler.com/openlogreplicator');
 INSERT INTO releases VALUES ('olr', 3, 'olr', 'OLR', '', 'test', '', 1, 'GPL', '', '');
 INSERT INTO versions VALUES ('olr', '0.9.41-beta',   '', 0, '20220328', '', '', '');
-INSERT INTO versions VALUES ('olr', '0.9.40-beta',   '', 0, '20220204', '', '', '');
+INSERT INTO versions VALUES ('olr', '0.9.40-beta',   '', 0, '2022.214', '', '', '');
 
 INSERT INTO projects VALUES ('kafka', 'strm', 10, 9092, '', 2, 'https://kafka.apache.org/downloads',
   'Kafka', 0, 'kafka.png', 'Streaming Platform', 'https://kafka.apache.org');
@@ -249,27 +249,27 @@ INSERT INTO versions VALUES ('orafce-pg15', '4.0.1-1',   'arm, el8', 0, '2022111
 INSERT INTO projects VALUES ('fixeddecimal', 'ext', 6, 0, 'hub', 0, 'https://github.com/pgsql-io/fixeddecimal/tags',
   'fixeddecimal', 1, 'fixeddecimal.png', 'Much faster than NUMERIC', 'https://github.com/pgsql-io/fixeddecimal');
 INSERT INTO releases VALUES ('fixeddecimal-pg14', 90, 'fixeddecimal', 'FixedDecimal', '', 'prod', '', 1, 'POSTGRES', '', '');
-INSERT INTO versions VALUES ('fixeddecimal-pg14', '1.1.0-1',  'amd', 0, '20201119', 'pg14', '', '');
+INSERT INTO versions VALUES ('fixeddecimal-pg14', '1.1.0-1',  'amd', 0, '2.211119', 'pg14', '', '');
 
 INSERT INTO projects VALUES ('plv8', 'dev', 3, 0, 'hub', 0, 'https://github.com/plv8/plv8/tags',
   'plv8',   1, 'v8.png', 'Javascript Stored Procedures', 'https://github.com/plv8/plv8');
 INSERT INTO releases VALUES ('plv8-pg14', 4, 'plv8', 'PL/V8', '', 'prod', '', 1, 'POSTGRES', '', '');
-INSERT INTO versions VALUES ('plv8-pg14', '3.1.2-1', 'el8', 0, '20200721', 'pg14', '', '');
+INSERT INTO versions VALUES ('plv8-pg14', '3.1.2-1', 'el8', 0, '2.210721', 'pg14', '', '');
 
 INSERT INTO projects VALUES ('plpython', 'dev', 3, 0, 'hub', 0, 'https://www.postgresql.org/docs/13/plpython.html',
   'plpython', 1, 'python.png', 'Python3 Stored Procedures', 'https://www.postgresql.org/docs/13/plpython.html');
 INSERT INTO releases VALUES ('plpython3', 5, 'plpython', 'PL/Python','', 'included', '', 1, 'POSTGRES', '', '');
-INSERT INTO versions VALUES ('plpython3', '15', 'arm, el8', 1, '20200213', 'pg15', '', '');
+INSERT INTO versions VALUES ('plpython3', '15', 'arm, el8', 1, '2.210213', 'pg15', '', '');
 
 INSERT INTO projects VALUES ('plperl', 'dev', 3, 0, 'hub', 0, 'https://www.postgresql.org/docs/13/plperl.html',
 	'plperl', 1, 'perl.png', 'Perl Stored Procedures', 'https://www.postgresql.org/docs/13/plperl.html');
 INSERT INTO releases VALUES ('plperl', 6, 'plperl', 'PL/Perl','', 'included', '', 1, 'POSTGRES', '', '');
-INSERT INTO versions VALUES ('plperl', '15', 'arm, el8', 1, '20200213', 'pg15', '', '');
+INSERT INTO versions VALUES ('plperl', '15', 'arm, el8', 1, '2.210213', 'pg15', '', '');
 
 INSERT INTO projects VALUES ('pljava', 'dev', 3, 0, 'hub', 0, 'https://github.com/tada/pljava/releases', 
   'pljava', 1, 'pljava.png', 'Java Stored Procedures', 'https://github.com/tada/pljava');
 INSERT INTO releases VALUES ('pljava-pg13', 7, 'pljava', 'PL/Java', '', 'test', '', 1, 'POSTGRES', '', '');
-INSERT INTO versions VALUES ('pljava-pg13', '1.6.2-1',  'amd',  1, '20201127', 'pg13', '', '');
+INSERT INTO versions VALUES ('pljava-pg13', '1.6.2-1',  'amd',  1, '2.211127', 'pg13', '', '');
 
 INSERT INTO projects VALUES ('pldebugger', 'dev', 3, 0, 'hub', 0, 'https://github.com/EnterpriseDB/pldebugger/tags',
   'pldebugger', 1, 'debugger.png', 'Stored Procedure Debugger', 'https://github.com/EnterpriseDB/pldebugger');
@@ -396,7 +396,7 @@ INSERT INTO versions VALUES ('badger', '11.8', '', 0, '20220408', '', '', '');
 INSERT INTO projects VALUES ('pool2', 'ext', 4, 0, 'hub', 3, 'http://github.com/pgpool/pgpool2/tags',
   'pool2',  0, 'pgpool2.png', 'QueryCache', 'http://pgpool.net');
 INSERT INTO releases VALUES ('pool2', 1, 'pool2',  'pgPool2', '', 'test', '', 1, 'BSD', '', '');
-INSERT INTO versions VALUES ('pool2', '4.4.0', 'el8, arm', 0, '20221206', '', '', '');
+INSERT INTO versions VALUES ('pool2', '4.4.0', 'el8, arm', 0, '2022.216', '', '', '');
 
 INSERT INTO projects VALUES ('nginx', 'app', 4, 443, 'hub', 3, 'http://nginx.org',
   'nginx',  0, 'pg-nginx.png', 'HTTPS & Reverse Proxy Server', 'http://nginx.org');
@@ -436,7 +436,7 @@ INSERT INTO versions VALUES ('patroni', '2.1.1', '', 0, '20210819', '', 'UBU20 P
 
 INSERT INTO projects VALUES ('ddlx', 'ext',     4, 0, 'hub', 0, 'https://github.com/lacanoid/pgddl/releases', 'ddlx',  1, 'ddlx.png', 'DDL Extractor', 'https://github.com/lacanoid/pgddl#ddl-extractor-functions--for-postgresql');
 INSERT INTO releases VALUES ('ddlx-pg13', 2, 'ddlx', 'DDLeXtact', '', 'prod','',  0, 'POSTGRES', '', '');
-INSERT INTO versions VALUES ('ddlx-pg13', '0.17-1', 'amd', 1, '20200911', 'pg13', '', '');
+INSERT INTO versions VALUES ('ddlx-pg13', '0.17-1', 'amd', 1, '2.210911', 'pg13', '', '');
 
 INSERT INTO projects VALUES ('multicorn2', 'ext', 4, 0, 'hub', 0, 'https://github.com/pgsql-io/multicorn2/tags',
   'multicorn2', 1, 'multicorn.png', 'Python FDW Library', 'http://multicorn2.org');
