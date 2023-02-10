@@ -120,11 +120,11 @@ def check_pre_reqs():
   except ImportError as e:
     osSys("pip3 install fire --user", False)
 
-  util.message("  Ensure PSYCOPG pip3 module")
+  util.message("  Ensure PSYCOPG-BINARY pip3 module")
   try:
     import psycopg
   except ImportError as e:
-    osSys("pip3 install psycopg --user", False)
+    osSys("pip3 install psycopg-binary --user", False)
 
   util.message("  Ensure PSUTIL pip3 module")
   try:
