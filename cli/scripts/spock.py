@@ -37,7 +37,9 @@ def get_pg_connection(pg_v, db, usr):
     con = psycopg.connect(dbname=db, user=usr, host="localhost", port=dbp)
   except Exception as e:
     lines = str(e).splitlines()
-    util.exit_message(str(lines[0]), 1)
+    for line in lines:
+      util.message(line, "error")
+    sys.exit(1)
 
   return(con)
 
@@ -67,7 +69,9 @@ def run_psyco_sql(pg_v, db, cmd, usr=None):
 
   except Exception as e:
     lines = str(e).splitlines()
-    util.exit_message(str(lines[0]), 1)
+    for line in lines:
+      util.message(line, "error")
+    sys.exit(1)
 
 
 def get_pg_v(pg):
