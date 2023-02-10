@@ -118,26 +118,19 @@ def check_pre_reqs():
   try:
     import fire
   except ImportError as e:
-    osSys("pip3 install fire --user", False)
+    osSys("pip3 install fire --user --upgrade", False)
 
   util.message("  Ensure PSYCOPG-BINARY pip3 module")
   try:
     import psycopg
   except ImportError as e:
-    osSys("pip3 install psycopg-binary --user", False)
+    osSys("pip3 install psycopg-binary --user --upgrade", False)
 
   util.message("  Ensure PSUTIL pip3 module")
   try:
     import psutil
   except ImportError as e:
-    pkg_mgr = util.get_pkg_mgr()
-    pkg = "python3-psutil"
-    if (p3_minor_ver == 9) and (pkg_mgr == "yum"):
-      pkg = "python39-psutil"
-    if pkg_mgr == "apt":
-      osSys("sudo DEBIAN_FRONTEND=noninteractive apt install -y " + pkg, False)
-    else:
-      osSys("sudo " + pkg_mgr + " install -y " + pkg, False)
+    osSys("pip3 install psutil --user --upgrade", False)
 
 
 ## MAINLINE #####################################################3

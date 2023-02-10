@@ -1,2 +1,3 @@
-psycopg
+fire
+psycopg-binary
 psutil
