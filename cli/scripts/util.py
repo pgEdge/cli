@@ -1,5 +1,5 @@
 #####################################################
-#  Copyright 2022.2123 PGEDGE  All rights reserved. #
+#  Copyright 2022-2023 PGEDGE  All rights reserved. #
 #####################################################
 
 MY_VERSION = "2.21"
@@ -7,8 +7,9 @@ MY_VERSION = "2.21"
 from subprocess import Popen, PIPE, STDOUT
 from datetime import datetime, timedelta
 
-import os, sys, socket, platform, sqlite3, getpass, signal, hashlib, glob, random
-import json, uuid, logging, tempfile, shutil, filecmp, traceback, time, subprocess
+import os, sys, socket, platform, sqlite3, getpass, signal
+import hashlib, glob, random, json, uuid, logging, tempfile
+import shutil, filecmp, traceback, time, subprocess, getpass
 
 import api, meta
 
@@ -2279,42 +2280,11 @@ def set_lang_path():
 # return the OS user name
 ####################################################################################
 def get_user():
-  if get_platform() == "Windows":
-    my_logger.debug2("Windows user detection")
-    return (os.getenv('USERNAME'))
-
-  my_logger.debug2("Unix user detection")
-  os_user = os.getenv("SUDO_USER","")
-  my_logger.debug2("SUDO_USER: '%s'", os_user)
-  if os_user == "":
-    os_user = os.getenv("USER")
-    my_logger.debug2("USER: '%s'", os_user)
-
-  if os_user is None or os_user == "":
-    os_user = "root"
-
-  my_logger.debug("Detected username: %s", os_user)
-
-  return (os_user)
+  return(getpass.getuser())
 
 
 def get_unix_user_home():
-  home = os.getenv('HOME', '')
-  if home > '':
-    return home
-  username = get_user()
-  if username is None:
-    my_logger.debug("Cannot determine username")
-  home = None
-  with open('/etc/passwd') as f:
-    for line in f:
-      luser = line.split(":")[0]
-      lhome = line.split(":")[5]
-      if luser == username:
-        home = lhome
-
-  my_logger.debug("Detected HomeDirectory: %s", home)
-  return home
+  return(os.path.expanduser("~"))
 
 
 def get_host():

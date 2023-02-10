@@ -1,5 +1,5 @@
 #####################################################
-#  Copyright 2022.2123 PGEDGE  All rights reserved. #
+#  Copyright 2022-2123 PGEDGE  All rights reserved. #
 #####################################################
 
 import sys, os
