@@ -254,6 +254,16 @@ def replication_set_add_table(replication_set, table, db, cols=None, pg=None):
 def local_cluster_create(cluster_name, num_nodes, User="lcusr", Passwd="lcpasswd", db="lcdb", port1=6432, pg="15", base_dir="cluster"):
   cluster_dir = base_dir + os.sep + cluster_name
 
+  try:
+    num_nodes = int(num_nodes)
+  except Exception as e:
+    util.exit_message("num_nodes parameter is not an integer", 1)
+
+  try:
+    port1 = int(port1)
+  except Exception as e:
+    util.exit_message("port1 parameter is not an integer", 1)
+
   kount = meta.get_installed_count()
   if kount > 0:
     util.exit_message("No other components can be installed when using local_cluster_create()", 1)
@@ -290,11 +300,12 @@ def local_cluster_create(cluster_name, num_nodes, User="lcusr", Passwd="lcpasswd
 
 
     nc = (node_dir + "/nc ")
-    rc = echo_cmd(nc + "install pgedge -U " + str(User) + " -P " + str(Passwd) + " -d " + str(db))
+    parms =  " -U " + str(User) + " -P " + str(Passwd) + " -d " + str(db) + " -p " + str(nd_port)
+    rc = echo_cmd(nc + "install pgedge" + parms)
     if rc != 0:
       sys.exit(rc)
 
-    pgbench_cmd = '"pgbench --initialize --scale=' + str(num_nodes) + ' postgres"'
+    pgbench_cmd = '"pgbench --initialize --scale=' + str(num_nodes) + ' ' + str(db) + '"'
     echo_cmd(nc + "pgbin " + str(pg) +  " " + pgbench_cmd)
 
     rep_set='pgbench-rep-set'
