@@ -104,17 +104,19 @@ def shuffle_string(p_input):
 
 def scrub_passwd(p_cmd):
   ll = p_cmd.split()
-  fg = False
+  flag = False
   new_s = ""
+  key_wd = ""
 
   for i in ll:
-    if (i == "PASSWORD") and (fg == False):
-      fg = True
+    if ((i == "PASSWORD") or (i == "-P")) and (flag == False):
+      flag = True
+      key_wd = str(i)
       continue
 
-    if fg:
-      new_s = new_s + " PASSWORD '???'"
-      fg = False
+    if flag:
+      new_s = new_s + " " + key_wd + " '???'"
+      flag = False
     else:
       new_s = new_s + " " + i
 
