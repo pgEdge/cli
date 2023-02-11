@@ -239,6 +239,52 @@ def get_replication_tables(db, schema=None,pg=None):
   sys.exit(0)
 
 
+def get_table_list(table, db):
+  w_schema = None
+  w_table = None
+
+  l_tbl = table.split(".")
+  if len(l_tbl) > 2:
+    util.exit_message("Invalid table wildcard", 1)
+
+  if len(l_tbl) == 2:
+    w_schema = str(l_tbl[0])
+    w_table = str(l_tbl[1])
+  elif len(l_tbl) == 1:
+    w_table = str(l_tbl[0])
+
+  sql = "SELECT table_schema || '.' || table_name as schema_table \n" + \
+        "  FROM information_schema.tables\n" + \
+        " WHERE TABLE_TYPE = 'BASE TABLE'" 
+
+  if w_schema:
+    sql = sql + "\n   AND table_schema = '" + w_schema + "'"
+
+  sql = sql + "\n   AND table_name LIKE '" + w_table.replace("*", "%") + "'"
+
+  print(sql)
+
+  con = get_pg_connection("pg15", db, util.get_user())
+
+  try:
+    cur = con.cursor(row_factory=psycopg.rows.dict_row)
+    cur.execute(sql)
+
+    print(json_dumps(cur.fetchall()))
+
+    try:
+      cur.close()
+      con.close()
+    except Exception as e:
+      pass
+
+  except Exception as e:
+    lines = str(e).splitlines()
+    for line in lines:
+      util.message(line, "error")
+    sys.exit(1)
+
+
 def replication_set_add_table(replication_set, table, db, cols=None, pg=None):
   pg_v = get_pg_v(pg)
 
@@ -481,5 +527,6 @@ if __name__ == '__main__':
       'local-cluster-create':local_cluster_create,
       'local-cluster-destroy':local_cluster_destroy,
       'local-cluster-cmd':local_cluster_cmd,
+      'get-table-list':get_table_list,
   })
 
