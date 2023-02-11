@@ -36,10 +36,7 @@ def get_pg_connection(pg_v, db, usr):
   try:
     con = psycopg.connect(dbname=db, user=usr, host="localhost", port=dbp)
   except Exception as e:
-    lines = str(e).splitlines()
-    for line in lines:
-      util.message(line, "error")
-    sys.exit(1)
+    util.exit_exception(e)
 
   return(con)
 
@@ -68,10 +65,7 @@ def run_psyco_sql(pg_v, db, cmd, usr=None):
       pass
 
   except Exception as e:
-    lines = str(e).splitlines()
-    for line in lines:
-      util.message(line, "error")
-    sys.exit(1)
+    util.exit_exception(e)
 
 
 def get_pg_v(pg):
@@ -239,7 +233,7 @@ def get_replication_tables(db, schema=None,pg=None):
   sys.exit(0)
 
 
-def get_table_list(table, db):
+def get_table_list(table, db, pg_v):
   w_schema = None
   w_table = None
 
@@ -261,16 +255,15 @@ def get_table_list(table, db):
     sql = sql + "\n   AND table_schema = '" + w_schema + "'"
 
   sql = sql + "\n   AND table_name LIKE '" + w_table.replace("*", "%") + "'"
+  print("DEBUG: " + sql)
 
-  print(sql)
-
-  con = get_pg_connection("pg15", db, util.get_user())
+  con = get_pg_connection(pg_v, db, util.get_user())
 
   try:
-    cur = con.cursor(row_factory=psycopg.rows.dict_row)
+    cur = con.cursor()
     cur.execute(sql)
 
-    print(json_dumps(cur.fetchall()))
+    ret = cur.fetchall()
 
     try:
       cur.close()
@@ -279,21 +272,29 @@ def get_table_list(table, db):
       pass
 
   except Exception as e:
-    lines = str(e).splitlines()
-    for line in lines:
-      util.message(line, "error")
-    sys.exit(1)
+    util.exit_exception(e)
+
+  print("DEBUG ret = " + str(ret))
+
+  if len(ret) > 0:
+    return(ret)
+
+  return([table])
 
 
 def replication_set_add_table(replication_set, table, db, cols=None, pg=None):
   pg_v = get_pg_v(pg)
 
-  if cols == None:
-    sql="SELECT spock.replication_set_add_table('" + replication_set + "','" + table + "')"
-  else:
-    sql="SELECT spock.replication_set_add_table('" + replication_set + "','" + table + "','" + cols +"')"
+  tbls = get_table_list(table, db, pg_v)
+  print("DEBUG: tbls = " + str(tbls))
+  for tbl in tbls:
+    if cols == None:
+      sql="SELECT spock.replication_set_add_table('" + replication_set + "','" + str(tbl[0]) + "')"
+    else:
+      sql="SELECT spock.replication_set_add_table('" + replication_set + "','" + str(tbl[0]) + "','" + cols +"')"
 
-  run_psyco_sql(pg_v, db, sql)
+    run_psyco_sql(pg_v, db, sql)
+
   sys.exit(0)
 
 

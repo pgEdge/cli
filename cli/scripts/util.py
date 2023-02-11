@@ -50,6 +50,13 @@ MY_HOME = os.getenv('MY_HOME', '..' + os.sep + '..')
 pid_file = os.path.join(MY_HOME, 'conf', 'cli.pid')
 
 
+def exit_exception(e):
+  lines = str(e).splitlines()
+  for line in lines:
+     message(line, "error")
+  sys.exit(1)
+
+
 def is_empty_writable_dir(p_dir):
   if not os.path.isdir(p_dir):
     ## directory does not exist
