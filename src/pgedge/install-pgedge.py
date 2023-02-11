@@ -10,9 +10,9 @@ if pgN == "":
 pgV = "pg" + pgN
 
 withPOSTGREST = str(os.getenv("withPOSTGREST", "False"))
-withBACKREST  = str(os.getenv("withBACKREST", "False"))
-withBOUNCER   = str(os.getenv("withBOUNCER", "False"))
-isAutoStart   = str(os.getenv("isAutoStart", "False"))
+withBACKREST  = str(os.getenv("withBACKREST",  "False"))
+withBOUNCER   = str(os.getenv("withBOUNCER",   "False"))
+isAutoStart   = str(os.getenv("isAutoStart",   "False"))
 
 
 def error_exit(p_msg, p_rc=1):
@@ -37,14 +37,21 @@ def osSys(cmd, fatal_exit=True):
 
 def check_pre_reqs():
   util.message("#### Checking for Pre-Req's #########################")
+  platf = util.get_platform()
 
-  util.message("  Verifying Linux")
-  if util.get_platform() != "Linux":
-    error_exit("OS must be Linux")
+  util.message("  Verifying POSIX")
+  if platf != "Linux" and platf != "Darwin":
+    error_exit("OS must be POSIX")
 
-  util.message("  Verifying Linux supported glibc version")
-  if util.get_glibc_version() < "2.28":
-    error_exit("Linux has unsupported (old) version of glibc")
+  if platf == "Linux":
+    util.message("  Verifying Linux supported glibc version")
+    if util.get_glibc_version() < "2.28":
+      error_exit("Linux has unsupported (old) version of glibc")
+
+  if platf == "Darwin":
+    util.message("  Verifying Autostart")
+    if isAutoStart == "True":
+      error_exit("Autostart is NOT supported on macOS")
 
   util.message("  Verifying Python 3.6+")
   p3_minor_ver = util.get_python_minor_version()

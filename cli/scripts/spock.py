@@ -1,5 +1,5 @@
 
-import sys, os, json, subprocess
+import sys, os, json, subprocess, time
 import util, meta, api, fire
 
 try:
@@ -441,7 +441,14 @@ def metrics_check(db, pg=None):
   rc = is_pg_ready(pg_v)
 
   load1, load5, load15 = psutil.getloadavg()
-  cpu_pct = round((load1/os.cpu_count()) * 100, 1)
+
+  cpu_pct_lst = psutil.cpu_times_percent(interval=.3, percpu=False)
+  cpu_pct = round(cpu_pct_lst.user + cpu_pct_lst.system, 1)
+  if cpu_pct < 0.05:
+    #test again after a little rest
+    time.sleep(1)
+    cpu_pct_lst = psutil.cpu_times_percent(interval=.3, percpu=False)
+    cpu_pct = round(cpu_pct_lst.user + cpu_pct_lst.system, 1)
 
   disk = psutil.disk_io_counters(perdisk=False)
   disk_read_mb = round((disk.read_bytes / 1024 / 1024), 1)
