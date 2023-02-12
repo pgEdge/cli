@@ -8,8 +8,10 @@ except ImportError as e:
   util.exit_message("Missing 'psycopg' module from pip", 1)
 
 
-def create(cluster_name, num_nodes, User="lcusr", Passwd="lcpasswd", db="lcdb", port1=6432, pg="15", base_dir="cluster"):
-"""A simple calculator class."""
+def create(cluster_name, num_nodes, User="lcusr", Passwd="lcpasswd", 
+           db="lcdb", port1=6432, pg="15", base_dir="cluster"):
+  """Create a local cluster that runs N instances of pgEdge each running PG on a different port."""
+
   cluster_dir = base_dir + os.sep + cluster_name
 
   try:
@@ -24,10 +26,12 @@ def create(cluster_name, num_nodes, User="lcusr", Passwd="lcpasswd", db="lcdb", 
 
   kount = meta.get_installed_count()
   if kount > 0:
-    util.exit_message("No other components can be installed when using local_cluster_create()", 1)
+    util.exit_message("No other components can be installed when using 'local-cluster create'", 1)
 
   if num_nodes < 1:
     util.exit_messages("num-nodes must be >= 1", 1)
+
+  usr = util.get_user()
 
   for n in range(port1, port1 + num_nodes):
     util.message("checking port " + str(n) + " availability")
@@ -65,7 +69,8 @@ def create(cluster_name, num_nodes, User="lcusr", Passwd="lcpasswd", db="lcdb", 
     pgbench_cmd = '"pgbench --initialize --scale=' + str(num_nodes) + ' ' + str(db) + '"'
     util.echo_cmd(nc + "pgbin " + str(pg) +  " " + pgbench_cmd)
 
-    rep_set='pgbench-rep-set'
+    rep_set = 'pgbench-rep-set'
+    dsn = "'host=localhost user=" + usr + "'"
 
     util.echo_cmd(nc + " spock create-node '" + node_nm + "' --dsn 'host=localhost user=replication' --db " + db)
     util.echo_cmd(nc + " spock create-replication-set " + rep_set + " --db " + db)
@@ -75,6 +80,8 @@ def create(cluster_name, num_nodes, User="lcusr", Passwd="lcpasswd", db="lcdb", 
 
 
 def destroy(cluster_name, base_dir="cluster"):
+  """Stop each node of a local-cluster and then delete all of it."""
+
   if not os.path.exists(base_dir):
     util.exit_message("no cluster directory: " + str(base_dir), 1)
 
@@ -94,8 +101,6 @@ def destroy(cluster_name, base_dir="cluster"):
 
 def lc_destroy1(cluster_name, base_dir):
   cluster_dir = base_dir + "/" + str(cluster_name)
-  if not os.path.exists(cluster_dir):
-    util.exit_message("cluster not found: " + cluster_dir, 1)
 
   command(cluster_name, "all", "stop", base_dir)
 
@@ -103,7 +108,12 @@ def lc_destroy1(cluster_name, base_dir):
 
 
 def command(cluster_name, node, cmd, base_dir="cluster"):
+  """Run './nc' commands on one or 'all' nodes."""
+
   cluster_dir = base_dir + "/" + str(cluster_name)
+
+  if not os.path.exists(cluster_dir):
+    util.exit_message("cluster not found: " + cluster_dir, 1)
 
   if node != "all":
     rc = util.echo_cmd(cluster_dir + "/" + str(node) + "/nc " + str(cmd))
