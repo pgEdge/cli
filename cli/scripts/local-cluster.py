@@ -9,6 +9,7 @@ except ImportError as e:
 
 
 def create(cluster_name, num_nodes, User="lcusr", Passwd="lcpasswd", db="lcdb", port1=6432, pg="15", base_dir="cluster"):
+"""A simple calculator class."""
   cluster_dir = base_dir + os.sep + cluster_name
 
   try:
