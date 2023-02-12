@@ -50,6 +50,21 @@ MY_HOME = os.getenv('MY_HOME', '..' + os.sep + '..')
 pid_file = os.path.join(MY_HOME, 'conf', 'cli.pid')
 
 
+def echo_cmd(cmd, sleep_secs=0):
+  isSilent = os.getenv('isSilent', 'False')
+  if isSilent == "False":
+    s_cmd = scrub_passwd(cmd)
+    message("# " + str(s_cmd))
+
+  rc = os.system(str(cmd))
+  if rc == 0:
+    if sleep_secs > 0:
+      os.system("sleep " + str(sleep_secs))
+    return(0)
+
+  return(1)
+
+
 def exit_exception(e):
   lines = str(e).splitlines()
   for line in lines:

@@ -9,7 +9,7 @@ outp="out/posix"
 
 clusterDir=$outp/cluster
 if [ -d $clusterDir ]; then
-  $outp/$api spock local-cluster-destroy all --verbose
+  $outp/$api local-cluster destroy all --verbose
 fi
 
 if [ -d $outp ]; then

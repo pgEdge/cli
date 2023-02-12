@@ -72,16 +72,18 @@ mode_list = ["start", "stop", "restart", "status", "list", "info", "update",
              "upgrade", "downgrade", "enable", "disable", "install", "tune",
              "remove", "reload", "activity", "help", "get", "set", "unset",
              "repolist", "repo-pkgs", "discover", "backrest", "change-pgconf",
-             "register", "top", "spock", "pgbin", "--autostart", "-U", "-P", "-d", "-p",
-             "--rm-data", "--relnotes", "--start", "--no-restart", "--no-preload",
+             "register", "top", "spock", "local-cluster", "pgbin", "--autostart", 
+             "-U", "-P", "-d", "-p", "--rm-data", 
+             "--relnotes", "--start", "--no-restart", "--no-preload",
              "--help", "--json", "--jsonp", "--test", "--extensions", "--svcs",
              "--list", "--old", "--showduplicates", "-y", "-t",
              "--verbose", "-v", "--debug", "--debug2"]
 
 mode_list_advanced = ['kill', 'config', 'deplist', 'download', 'init', 'clean', 
-                      'useradd', 'spock', 'pgbin']
+                      'useradd', 'spock', 'pgbin', 'local-cluster']
 
-ignore_comp_list = [ "get", "set", "unset", "register", "repolist", "spock", "pgbin",
+ignore_comp_list = [ "get", "set", "unset", "register", "repolist",
+                     "spock", "pgbin", "local-cluster",
                      "repo-pkgs", "discover", "useradd", "backrest", "change-pgconf"]
 
 no_log_commands = ['status', 'info', 'list', 'activity', 'top', 'register', 'cancel', 'get']
@@ -1404,6 +1406,19 @@ try:
     ## cannot use subprocess.Popen() because it won't allow us to use ./pg_pass
 
     rc = os.system(final_safe_cmd)
+    if rc == 0:
+      sys.exit(0)
+
+    sys.exit(1)
+
+
+  ## LOCAL-CLUSTER ###############################################################
+  if p_mode == 'local-cluster':
+    cmd = 'python3 hub/scripts/local-cluster.py'
+    for n in range(2, len(args)):
+        parm = args[n]
+        cmd = cmd + ' "' + parm + '"'
+    rc = os.system(cmd)
     if rc == 0:
       sys.exit(0)
 

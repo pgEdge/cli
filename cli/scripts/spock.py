@@ -15,21 +15,6 @@ def json_dumps(p_input):
   return(json.dumps(p_input, indent=2))
 
 
-def echo_cmd(cmd, sleep_secs=0):
-  isSilent = os.getenv('isSilent', 'False')
-  if isSilent == "False":
-    s_cmd = util.scrub_passwd(cmd)
-    util.message("# " + str(s_cmd))
-
-  rc = os.system(str(cmd))
-  if rc == 0:
-    if sleep_secs > 0:
-      os.system("sleep " + str(sleep_secs))
-    return(0)
-
-  return(1)
-
-
 def get_pg_connection(pg_v, db, usr):
   dbp = util.get_column("port", pg_v)
 
@@ -255,7 +240,6 @@ def get_table_list(table, db, pg_v):
     sql = sql + "\n   AND table_schema = '" + w_schema + "'"
 
   sql = sql + "\n   AND table_name LIKE '" + w_table.replace("*", "%") + "'"
-  print("DEBUG: " + sql)
 
   con = get_pg_connection(pg_v, db, util.get_user())
 
@@ -274,8 +258,6 @@ def get_table_list(table, db, pg_v):
   except Exception as e:
     util.exit_exception(e)
 
-  print("DEBUG ret = " + str(ret))
-
   if len(ret) > 0:
     return(ret)
 
@@ -286,7 +268,7 @@ def replication_set_add_table(replication_set, table, db, cols=None, pg=None):
   pg_v = get_pg_v(pg)
 
   tbls = get_table_list(table, db, pg_v)
-  print("DEBUG: tbls = " + str(tbls))
+  
   for tbl in tbls:
     if cols == None:
       sql="SELECT spock.replication_set_add_table('" + replication_set + "','" + str(tbl[0]) + "')"
@@ -296,122 +278,6 @@ def replication_set_add_table(replication_set, table, db, cols=None, pg=None):
     run_psyco_sql(pg_v, db, sql)
 
   sys.exit(0)
-
-
-def local_cluster_create(cluster_name, num_nodes, User="lcusr", Passwd="lcpasswd", db="lcdb", port1=6432, pg="15", base_dir="cluster"):
-  cluster_dir = base_dir + os.sep + cluster_name
-
-  try:
-    num_nodes = int(num_nodes)
-  except Exception as e:
-    util.exit_message("num_nodes parameter is not an integer", 1)
-
-  try:
-    port1 = int(port1)
-  except Exception as e:
-    util.exit_message("port1 parameter is not an integer", 1)
-
-  kount = meta.get_installed_count()
-  if kount > 0:
-    util.exit_message("No other components can be installed when using local_cluster_create()", 1)
-
-  if num_nodes < 1:
-    util.exit_messages("num-nodes must be >= 1", 1)
-
-  for n in range(port1, port1 + num_nodes):
-    util.message("checking port " + str(n) + " availability")
-    if util.is_socket_busy(n):
-      util.exit_message("port not avaiable", 1)
-
-  if os.path.exists(cluster_dir):
-    util.exit_message("cluster already exists: " + str(cluster_dir), 1)
-
-  util.message("# creating cluster dir: " + cluster_dir)
-  os.system("mkdir -p " + cluster_dir)
-
-  pg_v = "pg" + str(pg)
-
-  nd_port = port1
-  for n in range(1, num_nodes+1):
-    node_nm = "n" + str(n)
-    node_dir = cluster_dir + os.sep + node_nm
-
-    util.message("\n\n" + \
-      "###############################################################\n" + \
-      "# creating node dir: " + node_dir)
-    os.system("mkdir " + node_dir)
-
-    os.system("cp -r conf " + node_dir + "/.")
-    os.system("cp -r hub  " + node_dir + "/.")
-    os.system("cp nc "      + node_dir + "/.")
-
-
-    nc = (node_dir + "/nc ")
-    parms =  " -U " + str(User) + " -P " + str(Passwd) + " -d " + str(db) + " -p " + str(nd_port)
-    rc = echo_cmd(nc + "install pgedge" + parms)
-    if rc != 0:
-      sys.exit(rc)
-
-    pgbench_cmd = '"pgbench --initialize --scale=' + str(num_nodes) + ' ' + str(db) + '"'
-    echo_cmd(nc + "pgbin " + str(pg) +  " " + pgbench_cmd)
-
-    rep_set='pgbench-rep-set'
-
-    echo_cmd(nc + " spock create-node '" + node_nm + "' --dsn 'host=localhost user=replication' --db " + db)
-    echo_cmd(nc + " spock create-replication-set " + rep_set + " --db " + db)
-    echo_cmd(nc + " spock replication-set-add-table " + rep_set + " pgbench_accounts --db " + db)
-    echo_cmd(nc + " spock replication-set-add-table " + rep_set + " pgbench_branches --db " + db)
-    echo_cmd(nc + " spock replication-set-add-table " + rep_set + " pgbench_tellers  --db " + db)
-
-    nd_port = nd_port + 1
-
-
-def local_cluster_destroy(cluster_name, base_dir="cluster"):
-  if not os.path.exists(base_dir):
-    util.exit_message("no cluster directory: " + str(base_dir), 1)
-
-  if cluster_name == "all":
-    kount = 0
-    for it in os.scandir(base_dir):
-      if it.is_dir():
-        kount = kount + 1
-        lc_destroy1(it.name, base_dir)
-    
-    if kount == 0:
-      util.exit_message("no cluster(s) to delete", 1)
-
-  else:
-    lc_destroy1(cluster_name, base_dir)
-
-
-def lc_destroy1(cluster_name, base_dir):
-  cluster_dir = base_dir + "/" + str(cluster_name)
-  if not os.path.exists(cluster_dir):
-    util.exit_message("cluster not found: " + cluster_dir, 1)
-
-  local_cluster_cmd(cluster_name, "all", "stop", base_dir)
-
-  echo_cmd("rm -rf " + cluster_dir, 1)
-
-
-def local_cluster_cmd(cluster_name, node, cmd, base_dir="cluster"):
-  cluster_dir = base_dir + "/" + str(cluster_name)
-
-  if node != "all":
-    rc = echo_cmd(cluster_dir + "/" + str(node) + "/nc " + str(cmd))
-    return(rc)
-
-  rc = 0
-  nd=1
-  node_dir = cluster_dir + "/n" + str(nd)
-
-  while os.path.exists(node_dir):
-    rc = echo_cmd(node_dir + "/nc " + str(cmd), 1)
-    nd = nd + 1
-    node_dir = cluster_dir + "/n" + str(nd)
-
-  return(rc)
-
 
 def health_check(pg=None):
   pg_v = get_pg_v(pg)
@@ -528,13 +394,8 @@ if __name__ == '__main__':
       'show-subscription-table': show_subscription_table,
       'alter-subscription-add-replication-set': alter_subscription_add_replication_set,
       'wait-for-subscription-sync-complete': wait_for_subscription_sync_complete,
-      'change-pg-pwd': change_pg_pwd,
       'get-pii-columns': get_pii_cols,
       'get-replication-tables': get_replication_tables,
       'replication-set-add-table':replication_set_add_table,
-      'local-cluster-create':local_cluster_create,
-      'local-cluster-destroy':local_cluster_destroy,
-      'local-cluster-cmd':local_cluster_cmd,
-      'get-table-list':get_table_list,
   })
 
