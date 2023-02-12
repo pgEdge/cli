@@ -19,7 +19,7 @@ def get_pg_connection(pg_v, db, usr):
   dbp = util.get_column("port", pg_v)
 
   try:
-    con = psycopg.connect(dbname=db, user=usr, host="localhost", port=dbp)
+    con = psycopg.connect(dbname=db, user=usr, host="localhost", port=dbp, autocommit=False)
   except Exception as e:
     util.exit_exception(e)
 
@@ -274,21 +274,36 @@ def get_table_list(table, db, pg_v):
 
 
 def replication_set_add_table(replication_set, table, db, cols=None, pg=None):
-  """Add a table to a replication set."""
+  """Add a one or more tables to a replication set.  You may specify a wilcard such as 'public.pgbench*'"""
 
   pg_v = get_pg_v(pg)
 
   tbls = get_table_list(table, db, pg_v)
-  
+
+  con = get_pg_connection(pg_v, db, util.get_user())
+
   for tbl in tbls:
-    if cols == None:
-      sql="SELECT spock.replication_set_add_table('" + replication_set + "','" + str(tbl[0]) + "')"
+    tab = str(tbl[0])
+
+    sql="SELECT spock.replication_set_add_table('" + replication_set + "','" + tab + "'"
+    if cols:
+      sql = sql + " ,'" + cols +"')"
     else:
-      sql="SELECT spock.replication_set_add_table('" + replication_set + "','" + str(tbl[0]) + "','" + cols +"')"
+      sql = sql + ")"
 
-    run_psyco_sql(pg_v, db, sql)
+    util.message(f"### adding table {tab} to replication set {replication_set}")
 
+    try:
+      con.transaction()
+      cur = con.cursor()
+      cur.execute(sql)
+      con.commit()
+    except Exception as e:
+      util.print_exception(e)
+      con.rollback()
+    
   sys.exit(0)
+
 
 def health_check(pg=None):
   """Check if the PG instance is accepting connections."""
@@ -407,7 +422,7 @@ if __name__ == '__main__':
       'show-subscription-table': show_subscription_table,
       'alter-subscription-add-replication-set': alter_subscription_add_replication_set,
       'wait-for-subscription-sync-complete': wait_for_subscription_sync_complete,
-      'get-pii-columns': get_pii_cols,
+      ##'get-pii-columns': get_pii_cols,
       'health-check':health_check,
       'metrics-check':metrics_check,
   })

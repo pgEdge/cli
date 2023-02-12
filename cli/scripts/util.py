@@ -65,10 +65,18 @@ def echo_cmd(cmd, sleep_secs=0):
   return(1)
 
 
-def exit_exception(e):
+def print_exception(e):
   lines = str(e).splitlines()
   for line in lines:
-     message(line, "error")
+     if line.startswith("HINT:"):
+       pass
+     else:
+       message(line, "error")
+  print("")
+
+
+def exit_exception(e):
+  print_exception(e)
   sys.exit(1)
 
 
