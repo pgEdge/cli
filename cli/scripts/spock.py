@@ -100,16 +100,9 @@ def get_eq(parm, val, sufx):
   return(colon_equal)
 
 
-def create_extension(db, pg=None):
-  pg_v = get_pg_v(pg)
-
-  sql = "CREATE EXTENSION SPOCK"
-
-  run_psyco_sql(pg_v, db, sql)
-  sys.exit(0)
-
-
 def create_node(node_name, dsn, db, pg=None):
+  """Create a spock node."""
+
   pg_v = get_pg_v(pg)
 
   sql = "SELECT spock.create_node(" + \
@@ -122,6 +115,8 @@ def create_node(node_name, dsn, db, pg=None):
 
 def create_replication_set(set_name, db, replicate_insert=True, replicate_update=True, 
                            replicate_delete=True, replicate_truncate=True, pg=None):
+  """Define a replication set."""
+
   pg_v = get_pg_v(pg)
 
   sql = "SELECT spock.create_replication_set(" + \
@@ -138,6 +133,8 @@ def create_replication_set(set_name, db, replicate_insert=True, replicate_update
 def create_subscription(subscription_name, provider_dsn, db, replication_sets="{default,default_insert_only,ddl_sql}",
                         synchronize_structure=False, synchronize_data=False, 
                         forward_origins='{}', apply_delay=0, pg=None):
+  """Create a subscription."""
+
   pg_v = get_pg_v(pg)
 
   sql = "SELECT spock.create_subscription(" + \
@@ -154,6 +151,8 @@ def create_subscription(subscription_name, provider_dsn, db, replication_sets="{
 
 
 def show_subscription_status(subscription_name, db, pg=None):
+  """Display the status of the subcription."""
+
   pg_v = get_pg_v(pg)
 
   sql = "SELECT spock.show_subscription_status(" 
@@ -166,6 +165,8 @@ def show_subscription_status(subscription_name, db, pg=None):
 
 
 def show_subscription_table(subscription_name, relation, db, pg=None):
+  """ ???????? """
+
   pg_v = get_pg_v(pg)
 
   sql = "SELECT spock.show_subscription_status(" + \
@@ -177,6 +178,8 @@ def show_subscription_table(subscription_name, relation, db, pg=None):
 
 
 def alter_subscription_add_replication_set(subscription_name, replication_set, db, pg=None):
+  """Modify a subscription and add a replication set to it."""
+
   pg_v = get_pg_v(pg)
 
   sql = "SELECT spock.alter_subscription_add_replication_set(" + \
@@ -188,6 +191,8 @@ def alter_subscription_add_replication_set(subscription_name, replication_set, d
 
 
 def wait_for_subscription_sync_complete(subscription_name, db, pg=None):
+  """Pause until the subscription is synchronized."""
+
   pg_v = get_pg_v(pg)
 
   sql = "SELECT spock.wait_for_subscription_sync_complete(" + \
@@ -198,6 +203,9 @@ def wait_for_subscription_sync_complete(subscription_name, db, pg=None):
 
 
 def get_pii_cols(db,schema=None,pg=None):
+  """Retrieve the columns that you have identified as PII 
+     (these will be excluded from replicating to other servers)."""
+
   pg_v = get_pg_v(pg)
 
   if schema == None:
@@ -208,6 +216,7 @@ def get_pii_cols(db,schema=None,pg=None):
   sys.exit(0)
 
 def get_replication_tables(db, schema=None,pg=None):
+  """Show the replication tables."""
   pg_v = get_pg_v(pg)
 
   if schema == None:
@@ -265,6 +274,8 @@ def get_table_list(table, db, pg_v):
 
 
 def replication_set_add_table(replication_set, table, db, cols=None, pg=None):
+  """Add a table to a replication set."""
+
   pg_v = get_pg_v(pg)
 
   tbls = get_table_list(table, db, pg_v)
@@ -280,6 +291,7 @@ def replication_set_add_table(replication_set, table, db, cols=None, pg=None):
   sys.exit(0)
 
 def health_check(pg=None):
+  """Check if the PG instance is accepting connections."""
   pg_v = get_pg_v(pg)
 
   if is_pg_ready(pg_v):
@@ -297,6 +309,7 @@ def is_pg_ready(pg_v):
 
 
 def metrics_check(db, pg=None):
+  """Retrieve OS & DB metrics."""
   try:
     import psutil
   except ImportError as e:
@@ -384,18 +397,18 @@ def metrics_check(db, pg=None):
 
 
 if __name__ == '__main__':
-  fire.Fire({'health-check':health_check,
-      'metrics-check':metrics_check,
-      'create-extension': create_extension,
+  fire.Fire({
       'create-node': create_node,
       'create-replication-set': create_replication_set,
+      'replication-set-add-table':replication_set_add_table,
+      'get-replication-tables': get_replication_tables,
       'create-subscription': create_subscription,
       'show-subscription-status': show_subscription_status,
       'show-subscription-table': show_subscription_table,
       'alter-subscription-add-replication-set': alter_subscription_add_replication_set,
       'wait-for-subscription-sync-complete': wait_for_subscription_sync_complete,
       'get-pii-columns': get_pii_cols,
-      'get-replication-tables': get_replication_tables,
-      'replication-set-add-table':replication_set_add_table,
+      'health-check':health_check,
+      'metrics-check':metrics_check,
   })
 
