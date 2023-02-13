@@ -39,42 +39,42 @@ def check_pre_reqs():
   util.message("#### Checking for Pre-Req's #########################")
   platf = util.get_platform()
 
-  util.message("  Verifying POSIX")
+  util.message("  Verify Linux or macOS")
   if platf != "Linux" and platf != "Darwin":
-    error_exit("OS must be POSIX")
+    error_exit("OS must be Linux or macOS")
 
   if platf == "Linux":
-    util.message("  Verifying Linux supported glibc version")
+    util.message("  Verify Linux has supported glibc version")
     if util.get_glibc_version() < "2.28":
       error_exit("Linux has unsupported (old) version of glibc")
 
   if platf == "Darwin":
-    util.message("  Verifying Autostart")
+    util.message("  Verify autostart not set for macOS")
     if isAutoStart == "True":
-      error_exit("Autostart is NOT supported on macOS")
+      error_exit("autostart NOT supported on macOS")
 
-  util.message("  Verifying Python 3.6+")
+  util.message("  Verify python3 is 3.6+")
   p3_minor_ver = util.get_python_minor_version()
   if p3_minor_ver < 6:
-    error_exit("Python Version must be greater than 3.6")
+    error_exit("Python version must be greater than 3.6")
 
-  util.message("  Verifying non-root user for pg install")
+  util.message("  Verify non-root user for pg install")
   if util.is_admin():
     error_exit("You must install as non-root user with passwordless sudo privleges")
 
-  util.message("  Verifying port " + str(prt) + " availability")
+  util.message("  Verify port " + str(prt) + " availability")
   if util.is_socket_busy(prt):
     error_exit("Port " + str(prt) + " is busy")
 
   data_dir = "data/" + pgV
-  util.message("  Verifying empty data directory '" + data_dir + "'")
+  util.message("  Verify empty data directory '" + data_dir + "'")
   if os.path.exists(data_dir):
     dir = os.listdir(data_dir)
     if len(dir) != 0:
       error_exit("The '" + data_dir + "' directory is not empty")
 
   if usr:
-    util.message("  Verifying -U usr & -P passwd...")
+    util.message("  Verify -U usr & -P passwd...")
     usr_l = usr.lower()
     if usr_l == "pgedge":
       error_exit("The user defined supersuser may not be called 'pgedge'")
