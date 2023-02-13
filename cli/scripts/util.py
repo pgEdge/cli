@@ -1436,7 +1436,10 @@ def assemble_line_val(p_old_line, p_new_tokens, p_val=""):
   if not token_in_list:
     new_val = append_val(new_val, p_val, key)
 
-  new_line = key + " = '" + new_val + "'"
+  if new_val.isnumeric():
+    new_line = key + " = " + new_val
+  else:
+    new_line = key + " = '" + new_val + "'"
   return(new_line)
 
 
@@ -1477,9 +1480,7 @@ def change_pgconf_keyval(p_pgver, p_key, p_val, p_replace=False):
   for line in lines:
     if line.startswith(p_key) or line.startswith("#" + p_key):
       boolFoundLine = True
-
       old_line = line
-      print("  old: " + old_line)
 
       if p_replace:
         old_line = p_key + " = ''"
@@ -1495,10 +1496,13 @@ def change_pgconf_keyval(p_pgver, p_key, p_val, p_replace=False):
         ns = ns + "\n" + line
 
   if not boolFoundLine:
-    new_line = p_key + " = '" + p_val + "'"
+    if p_val.isnumeric():
+      new_line = p_key + " = " + str(p_val) 
+    else:
+      new_line = p_key + " = '" + str(p_val) + "'"
     ns = ns + "\n" + new_line + "\n"
 
-  print("  new: " + new_line + " \n")
+  print("  new: " + new_line)
 
   put_pgconf(p_pgver, ns)
 
@@ -1549,8 +1553,7 @@ def update_postgresql_conf(p_pgver, p_port, is_new=True,update_listen_addr=True)
       ns = ns + "\n" + "log_directory = '" + log_directory + "'"
 
     elif is_new and line.startswith("#log_filename"):
-      ##ns = ns + "\n" + "log_filename = 'postgresql-%a.log'"
-      ns = ns + "\n" + "log_filename = 'postgresql.log'"
+      ns = ns + "\n" + "log_filename = 'postgresql-%a.log'"
 
     elif is_new and line.startswith("#log_line_prefix"):
       ns = ns + "\n" + "log_line_prefix =  '%t [%p]: [%l-1] user=%u,db=%d,app=%a,client=%h '"
@@ -1606,22 +1609,6 @@ def update_postgresql_conf(p_pgver, p_port, is_new=True,update_listen_addr=True)
     elif is_new and line.startswith("password_encryption"):
       ns = ns + "\n" + "password_encryption = scram-sha-256"
 
-    ##elif is_new and line.startswith("#unix_socket_directories"):
-    ##  socket_dir = "/var/run/postgresql"
-    ##  if not os.path.isdir(socket_dir):
-    ##    try:
-    ##      os.system("sudo mkdir -p " + socket_dir)
-    ##      os.system("sudo chmod 777 " + socket_dir)
-    ##    except Exception as e:
-    ##      socket_dir = ""
-    ##      continue
-    ##
-    ##  if socket_dir > "":
-    ##    ns = ns + "\n" + "unix_socket_directories = '/tmp, " + socket_dir + "'"
-    ##  else:
-    ##    ns = ns + "\n" + "unix_socket_directories = '/tmp'"
-
-
     else:
       if ns == "":
         ns = line
@@ -1660,6 +1647,14 @@ def get_mem_mb():
   return(mem_mb)
 
 
+def str_mem(in_mb):
+  if in_mb < 2000:
+    return(str(in_mb) + "MB")
+
+  in_gb = round((in_mb / 1024))
+  return(str(in_gb) + "GB")
+
+
 def tune_postgresql_conf(p_pgver):
   message("Tuning 'postgresql.conf' parms for '" + p_pgver + "':")
   mem_mb = get_mem_mb()
@@ -1669,27 +1664,39 @@ def tune_postgresql_conf(p_pgver):
   lines = s.split('\n')
   for line in lines:
     if line.startswith("shared_buffers") or line.startswith("#shared_buffers"):
-      message("  old: " + line)
       shared_buf_mb = int(mem_mb / 4)
-      shared_buf = "shared_buffers = " + str(shared_buf_mb) + "MB"
-      message("  new: " + shared_buf + "\n")
+      shared_buf = "shared_buffers = " + str_mem(shared_buf_mb)
+      message("  new: " + shared_buf)
       ns = ns + "\n" + shared_buf
 
     elif line.startswith("maintenance_work_mem") or line.startswith("#maintenance_work_mem"):
-      message("  old: " + line)
       maint_mb = int(mem_mb / 10)
       if maint_mb > 4096:
         maint_mb = 4096
-      maint_buf = "maintenance_work_mem = " + str(maint_mb) + "MB"
-      message("  new: " + maint_buf + "\n")
+      maint_buf = "maintenance_work_mem = " + str_mem(maint_mb)
+      message("  new: " + maint_buf)
       ns = ns + "\n" + maint_buf
 
     elif line.startswith("effective_cache_size") or line.startswith("#effective_cache_size"):
-      message("  old: " + line)
       cache_mb = int(mem_mb / 2)
-      cache_size = "effective_cache_size = " + str(cache_mb) + "MB"
-      message("  new: " + cache_size + "\n")
+      cache_size = "effective_cache_size = " + str_mem(cache_mb)
+      message("  new: " + cache_size)
       ns = ns + "\n" + cache_size
+
+    elif line.startswith("#wal_log_hints"):
+      newb= "wal_log_hints = on"
+      message("  new: " + newb)
+      ns = ns + "\n" + newb
+
+    elif line.startswith("#shared_preload_libraries"):
+      newb = "shared_preload_libraries = 'pg_stat_statements'"
+      message("  new: " + newb)
+      ns = ns + "\n" + newb
+
+    elif line.startswith("#log_min_duration_statement"):
+      newb = "log_min_duration_statement = 1000"
+      message("  new: " + newb)
+      ns = ns + "\n" + newb
 
     else:
       if ns == "":
