@@ -1663,7 +1663,7 @@ def tune_postgresql_conf(p_pgver):
   lines = s.split('\n')
   for line in lines:
     if line.startswith("shared_buffers") or line.startswith("#shared_buffers"):
-      shared_buf_mb = int(mem_mb / 4)
+      shared_buf_mb = int(mem_mb * .25)
       shared_buf = "shared_buffers = " + str_mem(shared_buf_mb)
       message("  new: " + shared_buf)
       ns = ns + "\n" + shared_buf
@@ -1677,7 +1677,7 @@ def tune_postgresql_conf(p_pgver):
       ns = ns + "\n" + maint_buf
 
     elif line.startswith("effective_cache_size") or line.startswith("#effective_cache_size"):
-      cache_mb = int(mem_mb / 2)
+      cache_mb = int(mem_mb * .75)
       cache_size = "effective_cache_size = " + str_mem(cache_mb)
       message("  new: " + cache_size)
       ns = ns + "\n" + cache_size
