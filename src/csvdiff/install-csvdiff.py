@@ -3,13 +3,13 @@ import util
 import os
 
 thisDir = os.path.dirname(os.path.realpath(__file__))
-ub = "/usr/bin/csvdiff"
+if util.get_os() == "Linux":
+  ub = "/usr/bin"
+else:
+  ub = "/usr/local/bin"
 
-util.message("\n## creating " + ub + " link #################")
-
-os.system("sudo rm -f " + ub)
-cmd = "sudo ln -s " + thisDir + "/csvdiff " + ub
-print(f"DEBUG: {cmd}")
+cmd = "sudo cp -f " + thisDir + "/csvdiff " + ub + "/."
+util.message("\n# " + cmd)
 os.system(cmd)
-os.system("sudo chmod 755 " + ub)
+os.system("sudo chmod 755 " + ub + "/csvdiff")
 
