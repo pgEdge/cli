@@ -303,7 +303,11 @@ def info(p_json, p_home, p_repo, print_flag=True):
     else:
       this_os = caption + ", SP " + svcpack
 
-  round_mem = util.pretty_rounder(float(system_memory_in_gb), 1)
+  if system_memory_in_gb > 0.6:
+    round_mem = round(system_memory_in_gb)
+  else:
+    round_mem = round(system_memory_in_gb, 1)
+
   mem = str(round_mem) + " GB"
 
   cores = str(system_cpu_cores)
