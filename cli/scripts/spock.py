@@ -291,7 +291,7 @@ def replication_set_add_table(replication_set, table, db, cols=None, pg=None):
     else:
       sql = sql + ")"
 
-    util.message(f"### adding table {tab} to replication set {replication_set}")
+    util.message(f"Adding table {tab} to replication set {replication_set}.")
 
     try:
       con.transaction()

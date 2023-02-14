@@ -72,7 +72,6 @@ def print_exception(e):
        pass
      else:
        message(line, "error")
-  print("")
 
 
 def exit_exception(e):
