@@ -8,6 +8,8 @@ ub = "/usr/bin/csvdiff"
 util.message("\n## creating " + ub + " link #################")
 
 os.system("sudo rm -f " + ub)
-os.system("sudo ln -s " + thisDir + "/csvdiff " + ub)
+cmd = "sudo ln -s " + thisDir + "/csvdiff " + ub
+print(f"DEBUG: {cmd}")
+os.system(cmd)
 os.system("sudo chmod 755 " + ub)
 
