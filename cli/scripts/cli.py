@@ -71,8 +71,8 @@ dep9 = util.get_depend()
 mode_list = ["start", "stop", "restart", "status", "list", "info", "update",
              "upgrade", "downgrade", "enable", "disable", "install", "tune",
              "remove", "reload", "activity", "help", "get", "set", "unset",
-             "repolist", "repo-pkgs", "discover", "backrest", "change-pgconf",
-             "register", "top", "spock", "local-cluster", "pgbin", "--autostart", 
+             "backrest", "change-pgconf",
+             "top", "spock", "local-cluster", "pgbin", "--autostart", 
              "-U", "-P", "-d", "-p", "--rm-data", "system", "updmgr",
              "--relnotes", "--start", "--no-restart", "--no-preload",
              "--help", "--json", "--jsonp", "--test", "--extensions", "--svcs",
@@ -82,11 +82,11 @@ mode_list = ["start", "stop", "restart", "status", "list", "info", "update",
 mode_list_advanced = ['kill', 'config', 'deplist', 'download', 'init', 'clean', 
                       'useradd', 'spock', 'pgbin', 'local-cluster', 'system', 'updmgr']
 
-ignore_comp_list = [ "get", "set", "unset", "register", "repolist",
+ignore_comp_list = [ "get", "set", "unset",
                      "spock", "pgbin", "local-cluster", "system", "updmgr",
-                     "repo-pkgs", "discover", "useradd", "backrest", "change-pgconf"]
+                     "useradd", "backrest", "change-pgconf"]
 
-no_log_commands = ['status', 'info', 'list', 'activity', 'top', 'register', 'cancel', 'get']
+no_log_commands = ['status', 'info', 'list', 'top', 'cancel', 'get']
 
 lock_commands = ["install", "remove", "update", "upgrade", "downgrade"]
 
@@ -1430,64 +1430,6 @@ try:
     fire_away(p_mode, args)
 
 
-  ## DISCOVER ####################################################################
-  if p_mode == "discover":
-    vList = ["15", "14", "13", "12", "11", "10" ]
-    if len(args) == 2:
-      verList =  vList
-    elif len(args) == 3:
-      verList = [args[2]]
-    else:
-      util.exit_message("try:  ./" + MY_CMD + " discover [ " + str(vList) + " ]", 1, isJSON)
-
-    pgdg_comps = []
-    for v in verList:
-      if not isJSON:
-        isSILENT=True
-        if isVERBOSE:
-          isSILENT=False
-      rc = repo.discover(v, isSILENT, isJSON, isYES)
-      comp = "pgdg" + v.replace(".", "")
-      if rc in (0,4):
-        pgdg_comps.append({'version': v, 'comp': comp})
-        if rc == 0:
-          pid_fd = open(pid_file, 'w')
-          pid_fd.write(str(os.getpid()))
-          pid_fd.close()
-          msg = "Installing controller for existing {0} instance.".format(comp)
-          if not isJSON:
-            print (msg)
-          install_comp(comp, p_re_install=True)
-
-
-    if isJSON:
-      if len(pgdg_comps)==0:
-        isYES=False
-      print (json.dumps([{'dicovered_pgdgs' : pgdg_comps, 'state' : 'complete', 'installed' : isYES}]))
-    else:
-      print ("")
-
-    exit_cleanly(0)
-
-
-  ## REPO-PKGS ####################################################################
-  if p_mode == "repo-pkgs":
-    repo.validate_os(isJSON)
-    if len(args) == 4:
-      if args[3] == "list":
-        exit_cleanly(repo.list_packages(args[2], isSHOWDUPS, isJSON, isTEST))
-
-    if len(args) >= 5:
-      if args[3] == "install":
-        exit_cleanly(repo.install_packages(args[2], args[4:], isJSON))
-
-      if args[3] == "remove":
-        exit_cleanly(repo.remove_packages(args[2], args[4:], isJSON))
-
-    error_msg = "try: ./" + MY_CMD + " repo-pkgs <repo-id> list\n" + \
-                "            ./" + MY_CMD + " repo-pkgs <repo-id> [install | remove] <pkg-list>"
-    util.exit_message(error_msg, 1, isJSON)
-
 
   ## DIRLIST #####################################################################
   if p_mode == "dirlist":
@@ -1495,48 +1437,6 @@ try:
       exit_cleanly(util.dirlist(isJSON, args[2]))
     else:
       util.exit_message("DIRLIST takes one argument", 1, isJSON)
-
-
-  ## REPOLIST ####################################################################
-  if p_mode == "repolist":
-    if len(args) == 2:
-      repo.list(isJSON)
-      exit_cleanly(0)
-    else:
-      util.exit_message("REPOLIST takes no arguments", 1, isJSON)
-
-
-  ## REGISTER ###################################################################
-  if (p_mode in ('register')):
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--cred_name')
-    parser.add_argument('--update')
-    known_args, unknown_args = parser.parse_known_args(args)
-    args = unknown_args
-
-    mode_types = "REPO"
-    bad_reg_msg = "try: " + MY_CMD +  " " + p_mode + " [" + mode_types + \
-        "] [id my_home [name] [group]]"
-
-    try:
-      reg = str(args[2]).upper()
-      if reg not in ('REPO'):
-        print("ERROR: first parm must be HOST")
-        util.exit_message(bad_reg_msg, 1, isJSON)
-    except IndexError as e:
-      print("ERROR: first parm must be HOST")
-      util.exit_message(bad_reg_msg, 1, isJSON)
-
-    args_len = len(args)
-
-    if reg == "REPO":
-      if args_len != 4:
-        print("ERROR: The '" + p_mode + " REPO' command takes one parameter")
-        exit_cleanly(1)
-      else:
-        exit_cleanly(repo.process_cmd(p_mode, args[3], isJSON))
-
-    exit_cleanly(rc)
 
 
   ## CANCEL (delete the pid file) #############################################################
