@@ -1,5 +1,5 @@
 
-NodeCtl (nc) is an API for management of a Postgres eco-system of components
+NodeCtl (nc) is a CLI for management of a Postgres eco-system of components
 
 ## Usage ##
 ```

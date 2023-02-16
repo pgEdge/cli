@@ -73,17 +73,17 @@ mode_list = ["start", "stop", "restart", "status", "list", "info", "update",
              "remove", "reload", "activity", "help", "get", "set", "unset",
              "repolist", "repo-pkgs", "discover", "backrest", "change-pgconf",
              "register", "top", "spock", "local-cluster", "pgbin", "--autostart", 
-             "-U", "-P", "-d", "-p", "--rm-data", 
+             "-U", "-P", "-d", "-p", "--rm-data", "system", "updmgr",
              "--relnotes", "--start", "--no-restart", "--no-preload",
              "--help", "--json", "--jsonp", "--test", "--extensions", "--svcs",
              "--list", "--old", "--showduplicates", "-y", "-t",
              "--verbose", "-v", "--debug", "--debug2"]
 
 mode_list_advanced = ['kill', 'config', 'deplist', 'download', 'init', 'clean', 
-                      'useradd', 'spock', 'pgbin', 'local-cluster']
+                      'useradd', 'spock', 'pgbin', 'local-cluster', 'system', 'updmgr']
 
 ignore_comp_list = [ "get", "set", "unset", "register", "repolist",
-                     "spock", "pgbin", "local-cluster",
+                     "spock", "pgbin", "local-cluster", "system", "updmgr",
                      "repo-pkgs", "discover", "useradd", "backrest", "change-pgconf"]
 
 no_log_commands = ['status', 'info', 'list', 'activity', 'top', 'register', 'cancel', 'get']
@@ -106,6 +106,19 @@ ISJSON = os.environ.get("ISJSON", "False")
 ###################################################################
 ## Subroutines ####################################################
 ###################################################################
+
+def fire_away(p_mode, p_args):
+  cmd = "python3 hub/scripts/" + p_mode + ".py"
+
+  for n in range(2, len(p_args)):
+    parm = p_args[n]
+    cmd = cmd + ' "' + parm + '"'
+  rc = os.system(cmd)
+  if rc == 0:
+    sys.exit(0)
+
+  sys.exit(1)
+
 
 def get_next_arg(p_arg):
   i = 0
@@ -1412,30 +1425,9 @@ try:
     sys.exit(1)
 
 
-  ## LOCAL-CLUSTER ###############################################################
-  if p_mode == 'local-cluster':
-    cmd = 'python3 hub/scripts/local-cluster.py'
-    for n in range(2, len(args)):
-        parm = args[n]
-        cmd = cmd + ' "' + parm + '"'
-    rc = os.system(cmd)
-    if rc == 0:
-      sys.exit(0)
-
-    sys.exit(1)
-
-
-  ## SPOCK #######################################################################
-  if p_mode == 'spock':
-    cmd = 'python3 hub/scripts/spock.py'
-    for n in range(2, len(args)):
-        parm = args[n]
-        cmd = cmd + ' "' + parm + '"'
-    rc = os.system(cmd)
-    if rc == 0:
-      sys.exit(0)
-
-    sys.exit(1)
+  ## SYSTEM, LOCAL-CLUSTER, SPOCK, UPDMGR ########################################
+  if p_mode in ('system', 'local-cluster', 'spock', 'updmgr'):
+    fire_away(p_mode, args)
 
 
   ## DISCOVER ####################################################################
