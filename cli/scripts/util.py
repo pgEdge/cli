@@ -233,19 +233,15 @@ def get_java_ver(pDisplay=False):
 def get_arch():
   arch=""
   this_uname = str(platform.system())[0:7]
-  if ((this_uname == "MINGW64") or (this_uname == "Windows")):
-    arch = os.getenv('PROCESSOR_ARCHITECTURE', '')
-  else:
-    arch = getoutput("uname -m")
-    arch = arch.replace("x86_64", "amd")
-    arch = arch.replace("AMD64", "amd")
-    arch = arch.replace("aarch64", "arm")
+  arch = getoutput("uname -m")
+  arch = arch.replace("x86_64", "amd")
+  arch = arch.replace("AMD64", "amd")
+  arch = arch.replace("aarch64", "arm")
 
   if arch == "amd" and is_el8():
     arch = "el8"
 
   return arch
-
 
 
 def is_systemctl():
@@ -732,16 +728,6 @@ def get_systemd_dir():
 
 
 def get_service_status(p_svcname):
-  if get_platform() == "Windows":
-      import win32serviceutil, win32service
-      try:
-          svc_status = win32serviceutil.QueryServiceStatus(p_svcname)
-          if svc_status[1]==win32service.SERVICE_RUNNING:
-              return "Running"
-          elif svc_status[1]==win32service.SERVICE_STOPPED:
-              return "Stopped"
-      except Exception as e:
-          return "?"
 
   if get_platform() == "Linux":
     if is_systemd():
@@ -1139,44 +1125,24 @@ def is_password_less_ssh():
 
 
 def read_env_file(component):
-  if str(platform.system()) == "Windows":
-    from subprocess import check_output
-    script = os.path.join(MY_HOME, component, component+'-env.bat')
-    if os.path.isfile(script):
-      try:
-        vars = check_output([script, '&&', 'set'], shell=True)
-        for var in vars.splitlines():
-          k, _, v = map(str.strip, var.strip().partition('='))
-          if k.startswith('?'):
-            continue
-          os.environ[k] = v
-      except Exception as e:
-        my_logger.error(traceback.format_exc())
-        pass
-  else:
-    script = os.path.join(MY_HOME, component, component+'.env')
-    if os.path.isfile(script):
-        try:
-          pipe1 = Popen(". %s; env" % script, stdout=PIPE, shell=True, executable="/bin/bash")
-          output = str(pipe1.communicate()[0].strip())
-          lines = output.split("\n")
-          env = dict((line.split("=", 1) for line in lines))
-          for e in env:
-            os.environ[e] = env[e]
-        except Exception as e:
-          my_logger.error(traceback.format_exc())
-          pass
+  script = os.path.join(MY_HOME, component, component+'.env')
+  if os.path.isfile(script):
+    try:
+      pipe1 = Popen(". %s; env" % script, stdout=PIPE, shell=True, executable="/bin/bash")
+      output = str(pipe1.communicate()[0].strip())
+      lines = output.split("\n")
+      env = dict((line.split("=", 1) for line in lines))
+      for e in env:
+        os.environ[e] = env[e]
+    except Exception as e:
+      my_logger.error(traceback.format_exc())
+      pass
 
   return
 
 
 def get_pgpass_file():
-  if get_platform() == "Windows":
-    pw_dir = os.getenv("APPDATA") + "\postgresql"
-    if not os.path.isdir(pw_dir):
-      os.mkdir(pw_dir)
-    pw_file = pw_dir + "\pgpass.conf"
-  elif get_platform == "Darwin":
+  if get_platform == "Darwin":
     home = os.getenv("HOME")
     pw_file = home + "/.pgpass"
   else:
@@ -1319,10 +1285,9 @@ def remember_pgpassword(p_passwd, p_port="5432", p_host="localhost", p_db="*", p
 
   file.close()
 
-  if not get_platform() == "Windows":
-    os.chmod(pw_file, 0o600)
+  os.chmod(pw_file, 0o600)
 
-  ##message("Password securely remembered")
+  message("Password securely remembered")
 
   return pw_file
 
@@ -1768,21 +1733,14 @@ def get_superuser_passwd(p_user="Superuser"):
 
 def write_pgenv_file(p_pghome, p_pgver, p_pgdata, p_pguser, p_pgdatabase, p_pgport, p_pgpassfile):
   pg_bin_path = os.path.join(p_pghome, "bin")
-  if get_platform() == "Windows":
-    export = "set "
-    source = "run"
-    newpath = export + "PATH=" + pg_bin_path + ";%PATH%"
-    env_file = p_pghome + os.sep + p_pgver + "-env.bat"
-  else:
-    export = "export "
-    source = "source"
-    newpath = export + "PATH=" + pg_bin_path + ":$PATH"
-    env_file = p_pghome + os.sep + p_pgver + ".env"
+
+  export = "export "
+  source = "source"
+  newpath = export + "PATH=" + pg_bin_path + ":$PATH"
+  env_file = p_pghome + os.sep + p_pgver + ".env"
 
   try:
     file = open(env_file, 'w')
-    if get_platform() == "Windows":
-      file.write('@echo off\n')
     file.write(export + 'PGHOME=' + p_pghome + '\n')
     file.write(export + 'PGDATA=' + p_pgdata + '\n')
     file.write(newpath + '\n')
@@ -1861,10 +1819,7 @@ def get_avail_port(p_prompt, p_def_port, p_comp="", p_interactive=False, isJSON=
 
 
 def delete_dir(p_dir):
-  if (get_platform() == "Windows"):
-    cmd = 'RMDIR "' + p_dir + '" /s /q'
-  else:
-    cmd = 'rm -rf "' + p_dir + '"'
+  cmd = 'rm -rf "' + p_dir + '"'
   rc = system(cmd)
   return rc
 
@@ -2144,10 +2099,7 @@ def get_pid(name):
 def kill_pid(pid):
   if (pid < 1):
     return
-  if (get_platform() == "Windows"):
-    os.kill(pid, 2)
-  else:
-    os.kill(pid, signal.SIGKILL)
+  os.kill(pid, signal.SIGKILL)
   return
 
 # Terminate a process tree with the PID
@@ -2165,7 +2117,7 @@ def is_pid_running(p_pid):
 
 
 ####################################################################################
-# return the OS platform (Linux, Windows or Darwin)
+# return the OS platform (Linux, Darwin)
 ####################################################################################
 def get_platform():
   return str(platform.system())
@@ -2195,9 +2147,6 @@ def get_os():
     ##  return("osx-arm")
     ##else:
     return ("osx")
-
-  if platform.system() == "Windows":
-    return ("win")
 
   if platform.system() != "Linux":
     return ("xxx")
@@ -2244,9 +2193,6 @@ def get_pkg_mgr():
 ####################################################################################
 def has_admin_rights():
   status = True
-  if get_platform() == "Windows":
-    from win32com.shell import shell
-    status = shell.IsUserAnAdmin()
   return status
 
 
@@ -2257,10 +2203,7 @@ def get_default_pf():
   if get_platform() == "Darwin":
     return "osx"
 
-  if get_platform() == "Windows":
-    return "win"
-
-  return "amd"
+  return "el8"
 
 
 ####################################################################################
@@ -2327,9 +2270,7 @@ def get_unix_user_home():
 
 def get_host():
   host = ""
-  if get_platform() == "Windows":
-    host = "127.0.0.1"
-  elif get_platform() == "Linux":
+  if get_platform() == "Linux":
     host = get_linux_hostname()
   else:
     try:
@@ -2352,10 +2293,7 @@ def get_host_ip():
 
 
 def make_uri(in_name):
-  if get_platform() != "Windows":
-    return (in_name)
-  else:
-    return('///' + in_name.replace("\\", "/"))
+  return('///' + in_name.replace("\\", "/"))
 
 
 def launch_daemon(arglist, p_logfile_name):
@@ -2594,58 +2532,12 @@ def is_writable(path):
 
 ## is running with Admin/Root priv's #########################################
 def is_admin():
-  rc = 0
-  if get_platform() == "Windows":
-    try:
-      import subprocess
-      result = subprocess.Popen("net session", stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
-      std_out, std_err = result.communicate()
-      rc = result.returncode
-      if rc != 0:
-        my_logger.error(std_err)
-    except Exception as e:
-      my_logger.error(str(e))
-      rc = e.errno
-  else:
-    rc = getoutput("id -u")
+  rc = getoutput("id -u")
 
   if str(rc) == "0":
     return(True)
   else:
     return(False)
-
-
-## run command escalated as Windows Administrator ############################
-def runas_win_admin(p_cmd, p_wait=True):
-    if os.name != 'nt':
-        raise RuntimeError("This function is only implemented on Windows.")
-
-    import win32con, win32event, win32process
-    from win32com.shell.shell import ShellExecuteEx
-    from win32com.shell import shellcon
-
-    list_cmd = p_cmd.split()
-
-    cmd = '"%s"' % (list_cmd[0],)
-    params = " ".join(['"%s"' % (x,) for x in list_cmd[1:]])
-    cmdDir = ''
-    showCmd = win32con.SW_SHOWNORMAL
-    lpVerb = 'runas'  # causes UAC elevation prompt.
-
-    procInfo = ShellExecuteEx(nShow=showCmd,
-                              fMask=shellcon.SEE_MASK_NOCLOSEPROCESS,
-                              lpVerb=lpVerb,
-                              lpFile=cmd,
-                              lpParameters=params)
-
-    if p_wait:
-        procHandle = procInfo['hProcess']
-        obj = win32event.WaitForSingleObject(procHandle, win32event.INFINITE)
-        rc = win32process.GetExitCodeProcess(procHandle)
-    else:
-        rc = None
-
-    return rc
 
 
 def is_protected(p_comp, p_platform):
@@ -2774,10 +2666,7 @@ def get_comp_pidfile(p_comp):
 def is_socket_busy(p_port, p_comp=''):
 
   if p_comp > '':
-    if get_platform() == "Windows":
-      is_ready_file = "pg_isready.exe"
-    else:
-      is_ready_file = "pg_isready"
+    is_ready_file = "pg_isready"
     isready = os.path.join(os.getcwd(), p_comp, 'bin', is_ready_file)
     if os.path.isfile(isready):
       rc = system(isready + ' -q -p ' + str(p_port))
@@ -3052,62 +2941,6 @@ def check_running_version(ver, running_version):
     except Exception as e:
         return ver.startswith(running_version)
     return True
-
-
-# create a short link in windows start menu and taskbar
-def create_short_link_windows(short_link, target_link, link_desc=None,
-                              parent_folder="PostgreSQL",
-                              add_to_taskbar=False, logged_user_only=False):
-  cmd_file = tempfile.mktemp(".ps1")
-  fh = open(cmd_file, "w")
-  fh.write('$objShell = New-Object -ComObject ("WScript.Shell")' + '\n')
-  shortlink_dir = os.path.join(os.getenv("programdata"), "Microsoft",
-                               "Windows", "Start Menu", "Programs",
-                               parent_folder)
-  if logged_user_only:
-    shortlink_dir = os.path.join(os.getenv("appdata"), "Microsoft",
-                                 "Windows", "Start Menu", "Programs",
-                                 parent_folder)
-
-  if not os.path.exists(shortlink_dir):
-    os.mkdir(shortlink_dir)
-
-  shortlink_file = os.path.join(shortlink_dir, short_link)
-  fh.write('$objShortCut = $objShell.CreateShortcut("{0}")'.format(shortlink_file) + '\n')
-  fh.write('$objShortCut.TargetPath="{0}"'.format(target_link) + '\n')
-
-  if link_desc:
-    fh.write('$objShortCut.Description="{0}"'.format(link_desc) + '\n')
-
-  fh.write('$objShortCut.Save()' + '\n')
-
-  # add to taskbar
-  if add_to_taskbar:
-    fh.write('$Shell = New-Object -ComObject Shell.Application' + '\n')
-    fh.write('$FilePath = "{0}"'.format(target_link) + '\n')
-    fh.write('$NameSpace = $Shell.NameSpace((Split-Path $FilePath))' + '\n')
-    fh.write('$File = $NameSpace.ParseName((Split-Path $FilePath -Leaf))' + '\n')
-    fh.write('$verb = $File.Verbs() | ? {$_.Name -eq "Pin to Tas&kbar"}' + '\n')
-    fh.write('if ($verb) {$verb.DoIt()}' + '\n')
-
-  fh.close()
-
-  powershell_path = os.path.join(os.getenv("SYSTEMROOT"),
-                                 "System32", "WindowsPowerShell",
-                                 "v1.0", "powershell.exe")
-  command_to_run = "{0} -ExecutionPolicy ByPass -NoProfile {1}".format(powershell_path, cmd_file)
-  system(command_to_run, is_admin=True)
-
-
-# delete the shortlinks
-def delete_shortlink_windows(short_link, parent_folder="PostgreSQL"):
-    parent_path = os.path.join(os.getenv("programdata"), "Microsoft",
-                               "Windows", "Start Menu", "Programs",
-                               parent_folder)
-    shortlink_path = os.path.join(parent_path, short_link)
-    delete_file(shortlink_path)
-    if not os.listdir(parent_path):
-        delete_dir(parent_path)
 
 
 # Add the application to launchpad in OSX

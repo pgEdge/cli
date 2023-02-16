@@ -120,14 +120,11 @@ def top(display=True, isJson=False):
   uptime = datetime.now() - datetime.fromtimestamp(psutil.boot_time())
   str_uptime = str(uptime).split('.')[0]
   line = ""
-  if util.get_platform() == "Windows":
-    uname_len = 13
-  else:
-    uname_len = 8
-    av1, av2, av3 = os.getloadavg()
-    str_loadavg = "%.2f %.2f %.2f  " % (av1, av2, av3)
-    line = style_start + "Load average: " + style_end + str_loadavg
-    jsonDict['load_avg']  = str(str_loadavg)
+  uname_len = 8
+  av1, av2, av3 = os.getloadavg()
+  str_loadavg = "%.2f %.2f %.2f  " % (av1, av2, av3)
+  line = style_start + "Load average: " + style_end + str_loadavg
+  jsonDict['load_avg']  = str(str_loadavg)
   line = line + style_start + "Uptime:" + style_end + " " + str_uptime
   jsonDict['uptime']  = str(str_uptime)
   if not isJson:
@@ -156,15 +153,7 @@ def top(display=True, isJson=False):
     ctime_ms = str(ctime.microseconds)[:2].ljust(2, str(0))
     ctime = "{0}:{1}.{2}".format(ctime_mm, ctime_ss, ctime_ms)
 
-    if util.get_platform() == "Windows":
-      username = str(pp['username'])
-      # shorten username by eliminating stuff before the backslash
-      slash_pos = username.find('\\')
-      if slash_pos > 0:
-        username = username[(slash_pos + 1):]
-      username = username[:uname_len]
-    else:
-      username = pp['username'][:uname_len]
+    username = pp['username'][:uname_len]
     if isJson:
         pp['username'] = username
         pp['ctime'] = ctime
@@ -247,18 +236,7 @@ def info(p_json, p_home, p_repo, print_flag=True):
   this_uname = str(platform.system())[0:7]
   host_ip = util.get_host_ip()
   wmic_path = os.getenv("SYSTEMROOT", "") + os.sep + "System32" + os.sep + "wbem" + os.sep + "wmic"
-  if ((this_uname == "MINGW64") or (this_uname == "Windows")):
-    import psutil
-    host_display = os.getenv('LOGONSERVER','') + '\\' + os.getenv('COMPUTERNAME')
-    system_cpu_cores = os.getenv('NUMBER_OF_PROCESSORS','1')
-    cpu_model = check_output_wmic([wmic_path, "cpu", "get", "name"])
-    ## system_memory_in_gb ######################################
-    m = psutil.virtual_memory().total
-    mem_bytes = int(m)
-    system_memory_in_kbytes = mem_bytes / 1024.0
-    system_memory_in_gb = str(mem_bytes / (1024.0**3))
-  else:
-    host_display = util.get_host_short()
+  host_display = util.get_host_short()
 
   ## Check the OS & Resources ########################################
   plat = util.get_os()
@@ -295,13 +273,6 @@ def info(p_json, p_home, p_repo, print_flag=True):
     elif os.path.exists("/etc/os-release"):
       this_os = util.getoutput("cat /etc/os-release | grep PRETTY_NAME | cut -d= -f2 | tr -d '\"'")
     [java_major_ver, java_ver] = util.get_java_ver()
-  elif this_uname == "Windows":
-    caption = check_output_wmic([wmic_path, "os", "get", "caption"])
-    svcpack = check_output_wmic([wmic_path, "os", "get", "servicepackmajorversion"])
-    if svcpack == "0":
-      this_os = caption
-    else:
-      this_os = caption + ", SP " + svcpack
 
   if system_memory_in_gb > 0.6:
     round_mem = round(system_memory_in_gb)
@@ -433,9 +404,6 @@ def info_component(p_comp_dict, p_kount):
 
     if p_comp_dict['autostart'] == "on":
         print(style_start + "   autostart: " + style_end + p_comp_dict['autostart'])
-
-    if p_comp_dict['svcname'] > "" and util.get_platform() == "Windows":
-        print(style_start + "     svcname: " + style_end + p_comp_dict['svcname'])
 
     if p_comp_dict['svcuser'] > "" and util.get_platform() == "Linux":
         print(style_start + "     svcuser: " + style_end + p_comp_dict['svcuser'])

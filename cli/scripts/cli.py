@@ -59,11 +59,6 @@ if util.get_value("GLOBAL", "PLATFORM", "") in ("", "posix", "windoze"):
 import clilog
 my_logger = logging.getLogger('cli_logger')
 
-if not util.is_admin() and util.get_platform() == "Windows":
-  if meta.is_any_autostart():
-    print("You must run as administrator/root when there are any AUTOSTART components.")
-    exit()
-
 ansi_escape = re.compile(r'\x1b[^m]*m')
 
 dep9 = util.get_depend()
@@ -185,11 +180,7 @@ def run_script(componentName, scriptName, scriptParm):
   compState = util.get_comp_state(componentName)
   if compState == "Enabled" and os.path.isfile(scriptFile):
     run = cmd + ' ' + scriptFile + ' ' + scriptParm
-    if str(platform.system()) == "Windows" and ' ' in scriptFile:
-      run = '%s "%s" %s' % (cmd, scriptFile, scriptParm)
-      rc = subprocess.Popen(run).wait()
-    else:
-      rc = os.system(run)
+    rc = os.system(run)
 
   if rc != 0:
     print('Error running ' + scriptName)
@@ -503,12 +494,6 @@ def upgrade_component(p_comp):
 
   rc = unpack_comp(p_comp, present_version, update_version)
 
-  if util.is_postgres(p_comp) and util.get_platform() == "Windows":
-    print("Securing Windows directories...")
-    util.secure_win_dir(os.path.join(MY_HOME, p_comp), "True", util.get_user())
-    util.secure_win_dir(util.get_column("datadir", p_comp), "False", util.get_user())
-    util.secure_win_dir(util.get_column("logdir", p_comp), "False", util.get_user())
-
   os.environ[p_comp + '_present_version'] = present_version
   os.environ[p_comp + '_update_version'] = update_version
   if rc == 0:
@@ -655,10 +640,7 @@ def unpack_comp(p_app, p_old_ver, p_new_ver):
       msg = p_app + " upgrade staged for completion."
       my_logger.info(msg)
       if p_app in ('hub'):
-        if util.get_platform() == "Windows":
-          copy2(os.path.join(MY_HOME, MY_CMD + ".bat"), backup_target_dir)
-        else:
-          copy2(os.path.join(MY_HOME, MY_CMD), backup_target_dir)
+        copy2(os.path.join(MY_HOME, MY_CMD), backup_target_dir)
         os.rename(new_comp_dir, "hub_new")
         ## run the update_hub script in the _new directory
         upd_hub_cmd = sys.executable + " hub_new" + os.sep + "hub" + os.sep + "scripts" + os.sep + "update_hub.py "
@@ -1711,13 +1693,6 @@ try:
         msg = c + " is not installed."
         print(msg)
         continue
-      if util.get_platform() == "Windows" and c == "python2":
-        msg = c + " cannot be removed."
-        return_code = 1
-        if isJSON:
-          return_code = 0
-          msg = '[{"status":"error","msg":"' + msg + '"}]'
-        util.exit_message(msg, return_code)
 
       if is_depend_violation(c, p_comp_list):
         exit_cleanly(1)
