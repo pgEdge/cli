@@ -157,7 +157,8 @@ if util.is_empty_writable_dir("/data") == 0:
   util.message("## symlink empty local data directory to empty /data ###")
   osSys("rm -rf data; ln -s /data data")
 
-osSys("./nc init " + pgV + " --port=" + str(prt))
+if prt != 5432:
+  osSys("./nc init " + pgV + " --port=" + str(prt))
 
 if isAutoStart == "True":
   util.message("\n## init & config autostart  ###############")
