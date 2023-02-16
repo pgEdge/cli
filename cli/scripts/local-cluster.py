@@ -26,7 +26,7 @@ def create(cluster_name, num_nodes, User="lcusr", Passwd="lcpasswd",
 
   kount = meta.get_installed_count()
   if kount > 0:
-    util.exit_message("No other components can be installed when using 'local-cluster create'", 1)
+    util.message("WARNING: No other components should be installed when using 'local-cluster create'")
 
   if num_nodes < 1:
     util.exit_messages("num-nodes must be >= 1", 1)
