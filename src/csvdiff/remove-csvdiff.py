@@ -2,7 +2,7 @@
 ######          Copyright (c)  2022-2023 PGEDGE           ##########
 ####################################################################
 
-import os, sys
+import os
 
-os.system("sudo rm -f /usr/bin/csvdiff")
+os.system("sudo rm -v /usr/local/bin/csvdiff")
 
