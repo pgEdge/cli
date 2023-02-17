@@ -3,7 +3,7 @@
 SPOCK_BUILD_DELTA_APPLY=false
 MMDD=`date +'%m%d'`
 
-spV=3.0.17
+spV=3.0.18
 if [ "$SPOCK_BUILD_DELTA_APPLY" == "true" ]; then
   spV=3.0da-$MMDD
 fi

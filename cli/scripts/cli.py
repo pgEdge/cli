@@ -68,7 +68,7 @@ mode_list = ["start", "stop", "restart", "status", "list", "info", "update",
              "remove", "reload", "activity", "help", "get", "set", "unset",
              "backrest", "change-pgconf",
              "top", "spock", "local-cluster", "pgbin", "--autostart", 
-             "-U", "-P", "-d", "-p", "--rm-data", "system", "updmgr",
+             "-U", "-P", "-d", "-p", "--country", "--rm-data", "system", "updmgr",
              "--relnotes", "--start", "--no-restart", "--no-preload",
              "--help", "--json", "--jsonp", "--test", "--extensions", "--svcs",
              "--list", "--old", "--showduplicates", "-y", "-t",
@@ -1193,6 +1193,13 @@ if "-p" in args:
     args.remove("-p")
     args.remove(port)
     os.environ['pgePort'] = port
+
+if "--country" in args:
+  ctry = get_next_arg("--country")
+  if ctry > "":
+    args.remove("--country")
+    args.remove(ctry)
+    os.environ['pgeCountry'] = ctry
 
 
 isTIME = False

@@ -9,6 +9,8 @@ max_worker_procs = int(util.get_cpu_cores() * .75) + 6
 if max_worker_procs < 10:
   max_worker_procs = 10
 
+country = os.getenv('pgeCountry', '??')
+
 util.change_pgconf_keyval("pgXX", "wal_level", "logical", True)
 util.change_pgconf_keyval("pgXX", "max_worker_processes", str(max_worker_procs), True)
 util.change_pgconf_keyval("pgXX", "max_replication_slots", "16", True)
@@ -19,6 +21,7 @@ util.change_pgconf_keyval("pgXX", "track_commit_timestamp", "on", True)
 
 util.change_pgconf_keyval("pgXX", "spock.conflict_resolution", "last_update_wins", True)
 util.change_pgconf_keyval("pgXX", "spock.save_resolutions", "on", True)
+util.change_pgconf_keyval("pgXX", "spock.country", country, True)
 
 util.create_extension("pgXX", "spock", True)
 
