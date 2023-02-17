@@ -1,10 +1,10 @@
 #####################################################
-#  Copyright 2022-2123 PGEDGE  All rights reserved. #
+#  Copyright 2022-2023 PGEDGE  All rights reserved. #
 #####################################################
 
 import sys, os
 
-VER="2.21"
+VER="2.22"
 REPO=os.getenv("REPO", "https://pgedge-download.s3.amazonaws.com/REPO")
   
 if sys.version_info < (3, 6):
