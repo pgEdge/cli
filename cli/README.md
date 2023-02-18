@@ -43,6 +43,18 @@ status    - Display status of installed server components
 list      - Display available/installed components 
 ```
 
+## spock - Logical & Multi-Active Replication Subcommands
+```
+
+```
+
+## lc - Local Cluster Subcommands
+```
+create   - Create an n-node local cluster
+destroy  - Stop and then nuke a local cluster
+command  - Run an (nc) command on one or all nodes of the local cluster
+```
+
 ## Global Options
 ```
 --debug Turn on debug logging.
