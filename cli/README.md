@@ -6,10 +6,8 @@ manage your Postgres eco-system of components
 nc <command> <subcommand> [parameters] [options] 
 ```
 
-Use nc command help for information on a specific command. 
-Use nc help topics to view a list of available help topics.
-The synopsis for each command shows its parameters and their usage.
-Optional parameters are shown in square brackets.
+Use `nc` help topics to view a list of available help topics.
+The help for each subcommand shows its parameters and their usage.
 
 ## Commands
 ```
