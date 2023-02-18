@@ -1138,6 +1138,7 @@ if "--debug" in args:
   my_logger.info("Enabling DEBUG mode")
   logging.getLogger('cli_logger').setLevel(logging.DEBUG)
   my_logger.debug("DEBUG enabled")
+  os.environ['pgeDebug'] = "1"
 
 if "--debug2" in args:
   args.remove('--debug2')
@@ -1145,6 +1146,7 @@ if "--debug2" in args:
   logging.getLogger('cli_logger').setLevel(clilog.DEBUG2)
   my_logger.debug("DEBUG enabled")
   my_logger.debug2("DEBUG2 enabled")
+  os.environ['pgeDebug'] = "2"
 
 isTTY=True
 if "--no-tty" in args:

@@ -1,6 +1,6 @@
 
 import util
-import os, sys, random
+import os, sys, random, time
 
 thisDir = os.path.dirname(os.path.realpath(__file__))
 
@@ -13,11 +13,14 @@ withPOSTGREST = str(os.getenv("withPOSTGREST", "False"))
 withBACKREST  = str(os.getenv("withBACKREST",  "False"))
 withBOUNCER   = str(os.getenv("withBOUNCER",   "False"))
 isAutoStart   = str(os.getenv("isAutoStart",   "False"))
+isDebug       = str(os.getenv("pgeDebug",      "0"))
 
 
 def error_exit(p_msg, p_rc=1):
     util.message("ERROR: " + p_msg)
-    os.system("./nc remove pgedge")
+    if isDebug == "0":
+      os.system("./nc remove pgedge")
+
     sys.exit(p_rc)
 
 
@@ -38,6 +41,12 @@ def osSys(cmd, fatal_exit=True):
 def check_pre_reqs():
   util.message("#### Checking for Pre-Req's #########################")
   platf = util.get_platform()
+
+  util.message("  Ensure CLICK pip3 module")
+  try:
+    import click
+  except Exception as e:
+    error_exit("You must 'pip3 install click' before running this installer further")
 
   util.message("  Verify Linux or macOS")
   if platf != "Linux" and platf != "Darwin":
@@ -101,7 +110,6 @@ def check_pre_reqs():
 
   util.message("  Ensure recent pip3")
   rc = os.system("pip3 --version >/dev/null 2>&1")
-  os.system("pip3 install click --user >/dev/null 2>&1")
   if rc == 0:
     os.system("pip3 install --upgrade pip --user >/dev/null 2>&1")
   else:
@@ -167,6 +175,7 @@ else:
 osSys("./nc config " + pgV + " --port=" + str(prt))
 
 osSys("./nc start " + pgV)
+time.sleep(3)
 
 if usr and passwd:
   ncb = './nc pgbin ' + pgN + ' '
@@ -177,6 +186,7 @@ if usr and passwd:
   osSys(ncb  + '"' + cmd + '"')
 
 osSys("./nc tune " + pgV)
+time.sleep(3)
 
 osSys("./nc install spock -d " + db1)
 
