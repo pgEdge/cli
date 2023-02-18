@@ -72,7 +72,10 @@ def check_output_wmic (p_cmds):
 
 
 def top(display=True, isJson=False):
-  import psutil
+  try:
+    import psutil
+  except ImportError as e:
+    util.exit_message("Missing native 'pyton3[9]-psutil' module", 1)
 
   current_timestamp = int(time.mktime(datetime.utcnow().timetuple()))
   jsonDict = {}

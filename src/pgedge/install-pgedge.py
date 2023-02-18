@@ -134,11 +134,11 @@ def check_pre_reqs():
   except ImportError as e:
     osSys("pip3 install psycopg-binary --user --upgrade", False)
 
-  util.message("  Ensure PSUTIL pip3 module")
+  util.message("  Check PSUTIL module")
   try:
     import psutil
   except ImportError as e:
-    osSys("pip3 install psutil --user --upgrade", False)
+    util.message("  You need a native PSUTIL module to run 'metrics-check' or 'top'")
 
 
 ## MAINLINE #####################################################3

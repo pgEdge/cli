@@ -2102,19 +2102,6 @@ def kill_pid(pid):
   os.kill(pid, signal.SIGKILL)
   return
 
-# Terminate a process tree with the PID
-def kill_process_tree(pid):
-  import psutil
-  process = psutil.Process(pid)
-  for proc in process.children(recursive=True):
-    proc.kill()
-  process.kill()
-  return True
-
-def is_pid_running(p_pid):
-  import psutil
-  return psutil.pid_exists(int(p_pid))
-
 
 ####################################################################################
 # return the OS platform (Linux, Darwin)
