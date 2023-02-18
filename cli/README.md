@@ -1,17 +1,38 @@
+The pgEdge NodeCtl (nc) Command Line Interface is a unified tool to
+manage your Postgres eco-system of components
 
-NodeCtl (nc) is a CLI for management of a Postgres eco-system of components
+##Synopsis
+```
+nc [options] <command> <subcommand> [parameters]
+```
+
+Use nc command help for information on a specific command. 
+Use nc help topics to view a list of available help topics.
+The synopsis for each command shows its parameters and their usage.
+Optional parameters are shown in square brackets.
+
+##Global Options
+--debug Turn on debug logging.
+--json  Turn on JSON output.
+
+##Commands
+  svc           : Service controller
+  um            : UpdateManager
+  spock         : Spock configuration
+  lc            : LocalCluster support N - nodes on localhost
+  pgbin         : Execute pgbin commands
+  bckrst        : Backup & Restore commands
+
+
+
 
 ## Usage ##
 ```
-nc command [component] [options]
 ```
 
 ## Informational Commands ################################################
 ```
   help      - Display help file
-  info      - Display OS or component information
-  status    - Display status of installed server components
-  list      - Display available/installed components 
 ```
 
 ## Service Control Commands ##############################################
@@ -28,11 +49,14 @@ nc command [component] [options]
 
 ## Software Install & Update Commands ####################################
 ```
+  info      - Display OS or component information
   update    - Retrieve new lists of components
   upgrade   - Perform an upgrade of a component
   install   - Install (or re-install) a component  
   remove    - Un-install component   
   clean     - Delete downloaded component files from local cache
+  status    - Display status of installed server components
+  list      - Display available/installed components 
 ```
 
 ## Options ##############################################################
@@ -46,60 +70,4 @@ nc command [component] [options]
   -U  superuser
   -P  superuser password (only used during install-pgedge)
   -d  database
-```
-
-
-# LOCAL-CLUSTER
-
-## SYNOPSIS
-```
-  ./nc local-cluster COMMAND
-```
-
-## COMMANDS 
-```
-  COMMAND is one of the following **bold
-```
-
-### create
-```
-   Create a local cluster that runs N instances of pgEdge each running PG on a different port.
-```
-
-### destroy
-```
-   Stop each node of a local-cluster and then delete all of it.
-```
-
- ### command
-```   
-  Run './nc' commands on one or 'all' nodes.
-```
-
-# ================================================
-
-# LOCAL-CLUSTER CREATE
-
-## SYNOPSIS 
-```  
-  ./nc local-cluster create CLUSTER_NAME NUM_NODES
-```
-
-## DESCRIPTION 
-```  
-  Create a local cluster that runs N instances of pgEdge each running PG on a different port.
-```
-
-## POSITIONAL ARGUMENTS 
-```  
-  CLUSTER_NAME NUM_NODES
-```
-
-## FLAGS 
-```-U, --User=USER Default: 'lcusr' 
-   -P, --Passwd=PASSWD Default: 'lcpasswd' 
-   -d, --db=DB Default: 'lcdb' 
-   --port1=PORT1 Default: 6432 
-   --pg=PG Default: '15' 
-   -b, --base_dir=BASE_DIR Default: 'cluster'
 ```
