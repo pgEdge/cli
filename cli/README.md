@@ -45,20 +45,18 @@ list      - Display available/installed components
 
 ## spock - Logical & Multi-Active Replication Subcommands
 ```
-create-node              : Create a spock node
-create-replication-set   : Define a replication set
-create-subscriptiion     :  Create a subscription
-show_subscription_status : Display the status of the subcription
-
-show_subscription_table.               - ????????
-alter_subscription_add_replication_set - Modify a subscription and add a replication set to it
-wait_for_subscription_sync_complete    - Pause until the subscription is synchronized
-get_pii_cols              - Retrieve the columns that you have identified as PII
-get_replication_tables    - Show the replication tables
-replication-set-add-table - Add a one or more tables to a replication set.  You may specify a wilcard such as 'public.pgbench*'
-health-check              - Check if the PG instance is accepting connections
-metrics-check             - Retrieve OS & DB metrics
-
+create-node                            - Create a spock node
+create-replication-set                 - Define a replication set
+create-subscriptiion                   - Create a subscription
+show-subscription-status               - Display the status of the subcription
+show-subscription-table                - Display subscription table(s)
+alter-subscription-add-replication-set - Modify a subscription and add a replication set to it
+wait-for-subscription-sync-complete    - Pause until the subscription is synchronized
+get-pii-cols                           - Retrieve the columns that you have identified as PII
+get-replication-tables                 - Show the replication tables
+replication-set-add-table              - Add a one or more tables to a replication set
+health-check                           - Check if the PG instance is accepting connections
+metrics-check                          - Retrieve OS & DB metrics
 ```
 
 ## lc - Local Cluster Subcommands
