@@ -1,7 +1,7 @@
 The pgEdge NodeCtl (nc) Command Line Interface is a unified tool to
 manage your Postgres eco-system of components
 
-##Synopsis
+## Synopsis
 ```
 nc [options] <command> <subcommand> [parameters]
 ```
@@ -11,32 +11,22 @@ Use nc help topics to view a list of available help topics.
 The synopsis for each command shows its parameters and their usage.
 Optional parameters are shown in square brackets.
 
-##Global Options
+## Global Options
+```
 --debug Turn on debug logging.
 --json  Turn on JSON output.
-
-##Commands
-  svc           : Service controller
-  um            : UpdateManager
-  spock         : Spock configuration
-  lc            : LocalCluster support N - nodes on localhost
-  pgbin         : Execute pgbin commands
-  bckrst        : Backup & Restore commands
-
-
-
-
-## Usage ##
-```
 ```
 
-## Informational Commands ################################################
+## Commands
 ```
-  help      - Display help file
+  svc     - Service controller
+  um      - UpdateManager
+  spock   - Spock configuration
+  lc      - LocalCluster support N - nodes on localhost
 ```
 
-## Service Control Commands ##############################################
-```
+
+## SVC - Service Control Commands
   start     - Start server components
   stop      - Stop server components
   reload    - Reload server configuration files (without a restart)
