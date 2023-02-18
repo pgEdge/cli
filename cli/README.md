@@ -1,9 +1,9 @@
-The pgEdge NodeCtl (nc) Command Line Interface is a unified tool to
+The pgEdge NodeCtl (nc) CLI is a cross-platform tool to
 manage your Postgres eco-system of components
 
 ## Synopsis
 ```
-nc [options] <command> <subcommand> [parameters]
+nc <command> <subcommand> [parameters] [options] 
 ```
 
 Use nc command help for information on a specific command. 
@@ -66,7 +66,7 @@ destroy  - Stop and then nuke a local cluster
 command  - Run an (nc) command on one or all nodes of the local cluster
 ```
 
-## Global Options
+## Options
 ```
 --debug Turn on debug logging.
 --json  Turn on JSON output.
