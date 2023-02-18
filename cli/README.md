@@ -11,6 +11,8 @@ The help for each subcommand shows its parameters and their usage.
 
 ## Commands
 ```
+help      - Displays this high level help file
+info      - Display OS or component information
 svc       - Service controller
 um        - Update Manager
 spock     - Spock configuration
@@ -21,6 +23,7 @@ lc        - Localhost Cluster
 ```
 start     - Start server components
 stop      - Stop server components
+status    - Display status of installed server components
 reload    - Reload server configuration files (without a restart)
 restart   - Stop & then start server components
 enable    - Enable a component
@@ -31,14 +34,13 @@ init      - Initialize a component
 
 ## um - Update Manager Subcommands 
 ```
-info      - Display OS or component information
+list      - Display available/installed components 
 update    - Retrieve new lists of components
 install   - Install (or re-install) a component  
 remove    - Un-install component   upgrade   - Perform an upgrade of a component
 downgrade - Perform a downgrade of a component
 clean     - Delete downloaded component files from local cache
-status    - Display status of installed server components
-list      - Display available/installed components 
+
 ```
 
 ## spock - Logical & Multi-Active Replication Subcommands
