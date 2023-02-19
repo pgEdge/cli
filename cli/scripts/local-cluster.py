@@ -58,9 +58,9 @@ def create(cluster_name, num_nodes, User="lcusr", Passwd="lcpasswd",
 
     os.system("cp -r conf " + node_dir + "/.")
     os.system("cp -r hub  " + node_dir + "/.")
-    os.system("cp nc "      + node_dir + "/.")
+    os.system("cp nodectl " + node_dir + "/.")
 
-    nc = (node_dir + "/nc ")
+    nc = (node_dir + "/nodectl ")
     parms =  " -U " + str(User) + " -P " + str(Passwd) + " -d " + str(db) + " -p " + str(nd_port)
     rc = util.echo_cmd(nc + "install pgedge" + parms)
     if rc != 0:
@@ -108,7 +108,7 @@ def lc_destroy1(cluster_name, base_dir):
 
 
 def command(cluster_name, node, cmd, base_dir="cluster"):
-  """Run './nc' commands on one or 'all' nodes."""
+  """Run './nodectl' commands on one or 'all' nodes."""
 
   cluster_dir = base_dir + "/" + str(cluster_name)
 
@@ -116,7 +116,7 @@ def command(cluster_name, node, cmd, base_dir="cluster"):
     util.exit_message("cluster not found: " + cluster_dir, 1)
 
   if node != "all":
-    rc = util.echo_cmd(cluster_dir + "/" + str(node) + "/nc " + str(cmd))
+    rc = util.echo_cmd(cluster_dir + "/" + str(node) + "/nodectl " + str(cmd))
     return(rc)
 
   rc = 0
@@ -124,7 +124,7 @@ def command(cluster_name, node, cmd, base_dir="cluster"):
   node_dir = cluster_dir + "/n" + str(nd)
 
   while os.path.exists(node_dir):
-    rc = util.echo_cmd(node_dir + "/nc " + str(cmd), 1)
+    rc = util.echo_cmd(node_dir + "/nodectl " + str(cmd), 1)
     nd = nd + 1
     node_dir = cluster_dir + "/n" + str(nd)
 

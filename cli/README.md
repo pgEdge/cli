@@ -1,12 +1,12 @@
-The pgEdge NodeCtl (nc) CLI is a cross-platform tool to
-manage your Postgres eco-system of components
+The pgEdge NodeCtl CLI is a cross-platform tool to manage your PostgreSQL 
+eco-system of components
 
 ## Synopsis
 ```
-nc <command> <subcommand> [parameters] [options] 
+./nodectl <command> <subcommand> [parameters] [options] 
 ```
 
-Use `nc` help topics to view a list of available help topics.
+Use `nodectl` help topics to view a list of available help topics.
 The help for each subcommand shows its parameters and their usage.
 
 ## Commands
@@ -37,10 +37,10 @@ init      - Initialize a component
 list      - Display available/installed components 
 update    - Retrieve new lists of components
 install   - Install (or re-install) a component  
-remove    - Un-install component   upgrade   - Perform an upgrade of a component
+remove    - Un-install component
+upgrade   - Perform an upgrade of a component
 downgrade - Perform a downgrade of a component
 clean     - Delete downloaded component files from local cache
-
 ```
 
 ## spock - Logical & Multi-Active Replication Subcommands
@@ -50,12 +50,12 @@ create-replication-set                 - Define a replication set
 create-subscriptiion                   - Create a subscription
 show-subscription-status               - Display the status of the subcription
 show-subscription-table                - Display subscription table(s)
-alter-subscription-add-replication-set - Modify a subscription and add a replication set to it
-wait-for-subscription-sync-complete    - Pause until the subscription is synchronized
-get-pii-cols                           - Retrieve the columns that you have identified as PII
+alter-subscription-add-replication-set - Add replication set to a subscription
+wait-for-subscription-sync-complete    - Pause until subscription is synched
+get-pii-cols                           - Retrieve the columns identified as PII
 get-replication-tables                 - Show the replication tables
-replication-set-add-table              - Add a one or more tables to a replication set
-health-check                           - Check if the PG instance is accepting connections
+replication-set-add-table              - Add a table[s] to a replication set
+health-check                           - Check if PG is accepting connections
 metrics-check                          - Retrieve OS & DB metrics
 ```
 
@@ -63,7 +63,7 @@ metrics-check                          - Retrieve OS & DB metrics
 ```
 create   - Create an n-node local cluster
 destroy  - Stop and then nuke a local cluster
-command  - Run an (nc) command on one or all nodes of the local cluster
+command  - Run `nodectl` command on one or all nodes of the local cluster
 ```
 
 ## Options

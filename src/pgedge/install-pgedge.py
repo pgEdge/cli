@@ -3,6 +3,7 @@ import util
 import os, sys, random, time
 
 thisDir = os.path.dirname(os.path.realpath(__file__))
+nc = "./nodectl "
 
 pgN = os.getenv('pgN', '')
 if pgN == "":
@@ -19,7 +20,7 @@ isDebug       = str(os.getenv("pgeDebug",      "0"))
 def error_exit(p_msg, p_rc=1):
     util.message("ERROR: " + p_msg)
     if isDebug == "0":
-      os.system("./nc remove pgedge")
+      os.system(nc + "remove pgedge")
 
     sys.exit(p_rc)
 
@@ -159,7 +160,7 @@ except Exception as e:
 
 check_pre_reqs()
 
-osSys("./nc install " + pgV)
+osSys(nc + "install " + pgV)
 
 if util.is_empty_writable_dir("/data") == 0:
   util.message("## symlink empty local data directory to empty /data ###")
@@ -167,39 +168,39 @@ if util.is_empty_writable_dir("/data") == 0:
 
 if isAutoStart == "True":
   util.message("\n## init & config autostart  ###############")
-  osSys("./nc init " + pgV + " --svcuser=" + svcuser)
-  osSys("./nc config " + pgV + " --autostart=on")
+  osSys(nc + "init " + pgV + " --svcuser=" + svcuser)
+  osSys(nc + "config " + pgV + " --autostart=on")
 else:
-  osSys("./nc init " + pgV)
+  osSys(nc + "init " + pgV)
 
-osSys("./nc config " + pgV + " --port=" + str(prt))
+osSys(nc + "config " + pgV + " --port=" + str(prt))
 
-osSys("./nc start " + pgV)
+osSys(nc + "start " + pgV)
 time.sleep(3)
 
 if usr and passwd:
-  ncb = './nc pgbin ' + pgN + ' '
+  ncb = nc + 'pgbin ' + pgN + ' '
   cmd = "CREATE ROLE " + usr + " PASSWORD '" + passwd + "' SUPERUSER CREATEDB CREATEROLE INHERIT LOGIN"
   osSys(ncb +  '"psql -c \\"' + cmd + '\\" postgres" > /dev/null') 
 
   cmd = "createdb '" + db1 + "' --owner='" + usr + "'"
   osSys(ncb  + '"' + cmd + '"')
 
-osSys("./nc tune " + pgV)
+osSys(nc + "tune " + pgV)
 time.sleep(3)
 
-osSys("./nc install spock -d " + db1)
+osSys(nc + "install spock -d " + db1)
 
 if withPOSTGREST == "True":
   util.message("  ")
-  osSys("./nc install postgrest")
+  osSys(nc + "install postgrest")
 
 if withBACKREST == "True":
   util.message("  ")
-  osSys("./nc install backrest")
+  osSys(nc + "install backrest")
 
 if withBOUNCER == "True":
   util.message("  ")
-  os.system("./nc install bouncer")
+  os.system(nc + "install bouncer")
 
 

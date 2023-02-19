@@ -2,48 +2,48 @@
 
 function test14 {
   pgV=pg14
-  ./nc install pg14; 
-  ./nc start pg14 -y -d demo;
+  ./nodectl install pg14; 
+  ./nodectl start pg14 -y -d demo;
 
-  ./nc install audit-$pgV         -d demo
-  ./nc install timescaledb-$pgV   -d demo
+  ./nodectl install audit-$pgV         -d demo
+  ./nodectl install timescaledb-$pgV   -d demo
 }
 
 
 function test15 {
   pgV=pg15
-  ./nc install pg15; 
-  ./nc start pg15 -y -d demo;
+  ./nodectl install pg15; 
+  ./nodectl start pg15 -y -d demo;
 
-  ./nc install plprofiler-$pgV
-  ./nc install spock-$pgV         -d demo
-  ./nc install pldebugger-$pgV    -d demo
+  ./nodectl install plprofiler-$pgV
+  ./nodectl install spock-$pgV         -d demo
+  ./nodectl install pldebugger-$pgV    -d demo
 
-  ./nc install repack-$pgV        -d demo
-  ./nc install orafce-$pgV        -d demo
-  ./nc install partman-$pgV       -d demo
-  ./nc install cron-$pgV
+  ./nodectl install repack-$pgV        -d demo
+  ./nodectl install orafce-$pgV        -d demo
+  ./nodectl install partman-$pgV       -d demo
+  ./nodectl install cron-$pgV
 
-  #./nc install bulkload-$pgV      -d demo
+  #./nodectl install bulkload-$pgV      -d demo
 
-  #./nc install plv8-$pgV          -d demo
+  #./nodectl install plv8-$pgV          -d demo
 
   if [ `arch` == "aarch64" ]; then
-    ./nc install postgis-$pgV      -d demo
+    ./nodectl install postgis-$pgV      -d demo
   #else
-  #  ./nc install mysqlfdw-$pgV     -d demo
-  #  ./nc install mongofdw-$pgV     -d demo
-  #  ./nc install oraclefdw-$pgV    -d demo
-  #  ./nc install esfdw-$pgV        -d demo
+  #  ./nodectl install mysqlfdw-$pgV     -d demo
+  #  ./nodectl install mongofdw-$pgV     -d demo
+  #  ./nodectl install oraclefdw-$pgV    -d demo
+  #  ./nodectl install esfdw-$pgV        -d demo
 
-  ./nc install multicorn2-$pgV    -d demo
-  ./nc install hintplan-$pgV      -d demo
-  #./nc install citus-$pgV         -d demo
+  ./nodectl install multicorn2-$pgV    -d demo
+  ./nodectl install hintplan-$pgV      -d demo
+  #./nodectl install citus-$pgV         -d demo
 
   fi
 
-  #./nc install decoderbufs-$pgV   -d demo
-  #./nc install hypopg-$pgV        -d demo
+  #./nodectl install decoderbufs-$pgV   -d demo
+  #./nodectl install hypopg-$pgV        -d demo
 }
 
 

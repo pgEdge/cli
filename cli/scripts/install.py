@@ -26,7 +26,7 @@ if os.path.exists("pgedge"):
     print("ERROR: Cannot install over a non-empty 'pgedge' directory.")
     sys.exit(1)
 
-my_file="pgedge-nc-" + VER + ".tar.bz2"
+my_file="pgedge-nodectl-" + VER + ".tar.bz2"
 f = REPO + "/" + my_file
 
 if not os.path.exists(my_file):
@@ -50,10 +50,10 @@ except Exception as e:
   print("ERROR: Unable to unpack \n" + str(e))
   sys.exit(1)
 
-cmd = "pgedge" + os.sep + "nc"
+cmd = "pgedge" + os.sep + "nodectl"
 os.system(cmd + " set GLOBAL REPO " + REPO)
 
-print("pgedge/nc (nodectl) installed.\n")
+print("pgedge/nodectl installed.\n")
 
 sys.exit(0)
 

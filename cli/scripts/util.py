@@ -281,7 +281,7 @@ def cmd_system(p_sys_cmd, p_display=True):
   if p_sys_cmd.strip() == "":
     return 0
 
-  cmd = MY_HOME + os.sep + "nc " + str(p_sys_cmd)
+  cmd = MY_HOME + os.sep + "nodectl " + str(p_sys_cmd)
 
   if p_display == True:
     print("\n## " + str(cmd))

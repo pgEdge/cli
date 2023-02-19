@@ -1,12 +1,12 @@
 
 bundle=pgedge
-api=nc
+api=nodectl
 hubV=2.24
 
 spockV=3.0.18-1
 
 P15=15.2-1
-pgedgeV=15.2
+pgedgeV=15.2.1
 
 P14=14.7-1
 P13=13.10-1

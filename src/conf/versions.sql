@@ -411,8 +411,9 @@ INSERT INTO versions VALUES ('bouncer', '1.18.0-1', 'el8, arm', 1, '20221212', '
 INSERT INTO projects VALUES ('pgedge', 'pge', 0, 0, 'hub', 3, 'http://pgedge.org',
   'pgedge',  0, 'pgedge.png', 'Multi-Active Global Postgres Clusters', 'http://pgedge.com');
 INSERT INTO releases VALUES ('pgedge', 1, 'pgedge',  'pgEdge', '', 'test', '', 1, 'pgEdge Community', '', '');
-INSERT INTO versions VALUES ('pgedge', '15.2', '', 1, '20230209', '', '', '');
-INSERT INTO versions VALUES ('pgedge', '15.1', '', 0, '20230126', '', '', '');
+INSERT INTO versions VALUES ('pgedge', '15.2.1', '', 1, '20230220', '', '', '');
+INSERT INTO versions VALUES ('pgedge', '15.2',   '', 0, '20230209', '', '', '');
+INSERT INTO versions VALUES ('pgedge', '15.1',   '', 0, '20230126', '', '', '');
 
 INSERT INTO projects VALUES ('pgdiff', 'pge', 4, 0, 'csvdiff', 3, 'https://github.com/pgedge/pgdiff/tags',
   'pgdiff',  0, 'pgdiff.png', 'pgdiff', 'https://github.com/pgedge/pgdiff');
