@@ -2,7 +2,7 @@
 #  Copyright 2022-2023 PGEDGE  All rights reserved. #
 #####################################################
 
-MY_VERSION = "2.23"
+MY_VERSION = "2.24"
 
 from subprocess import Popen, PIPE, STDOUT
 from datetime import datetime, timedelta
@@ -2101,6 +2101,19 @@ def kill_pid(pid):
     return
   os.kill(pid, signal.SIGKILL)
   return
+
+# Terminate a process tree with the PID
+def kill_process_tree(pid):
+  import psutil
+  process = psutil.Process(pid)
+  for proc in process.children(recursive=True):
+    proc.kill()
+  process.kill()
+  return True
+
+def is_pid_running(p_pid):
+  import psutil
+  return psutil.pid_exists(int(p_pid))
 
 
 ####################################################################################
