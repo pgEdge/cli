@@ -68,17 +68,17 @@ mode_list = ["start", "stop", "restart", "status", "list", "info", "update",
              "remove", "reload", "activity", "help", "get", "set", "unset",
              "backrest", "change-pgconf",
              "top", "spock", "local-cluster", "pgbin", "--autostart", 
-             "-U", "-P", "-d", "-p", "--country", "--rm-data", "system", "updmgr",
+             "-U", "-P", "-d", "-p", "--country", "--rm-data", "svc", "um",
              "--relnotes", "--start", "--no-restart", "--no-preload",
              "--help", "--json", "--jsonp", "--test", "--extensions", "--svcs",
              "--list", "--old", "--showduplicates", "-y", "-t",
              "--verbose", "-v", "--debug", "--debug2"]
 
 mode_list_advanced = ['kill', 'config', 'deplist', 'download', 'init', 'clean', 
-                      'useradd', 'spock', 'pgbin', 'local-cluster', 'system', 'updmgr']
+                      'useradd', 'spock', 'pgbin', 'local-cluster', 'svc', 'um']
 
 ignore_comp_list = [ "get", "set", "unset",
-                     "spock", "pgbin", "local-cluster", "system", "updmgr",
+                     "spock", "pgbin", "local-cluster", "svc", "um",
                      "useradd", "backrest", "change-pgconf"]
 
 no_log_commands = ['status', 'info', 'list', 'top', 'cancel', 'get']
@@ -1416,8 +1416,8 @@ try:
     sys.exit(1)
 
 
-  ## SYSTEM, LOCAL-CLUSTER, SPOCK, UPDMGR ########################################
-  if p_mode in ('system', 'local-cluster', 'spock', 'updmgr'):
+  ## SVC, LOCAL-CLUSTER, SPOCK, UM ###############################################
+  if p_mode in ('svc', 'local-cluster', 'spock', 'um'):
     fire_away(p_mode, args)
 
 
