@@ -491,43 +491,97 @@ function copySharedLibs {
 	return
 }
 
+function updateSharedLibPathsForLinux {
+  libPathLog=$baseDir/$workDir/logs/libPath.log
+  echo "#   updateSharedLibPathsForLinux()"
+
+  cd $buildLocation/bin
+  echo "#     looping thru executables"
+  for file in `ls -d *` ; do
+	##echo "### $file"
+	chrpath -r "\${ORIGIN}/../lib" "$file" >> $libPathLog 2>&1
+  done
+
+  libSuffix="*so*"
+
+  cd $buildLocation/lib
+  echo "#     looping thru shared objects"
+  for file in `ls -d $libSuffix 2>/dev/null` ; do
+	##echo "### $file"
+	chrpath -r "\${ORIGIN}/../lib" "$file" >> $libPathLog 2>&1
+  done
+
+  echo "#     looping thru lib/postgresql "
+  if [[ -d "$buildLocation/lib/postgresql" ]]; then
+	cd $buildLocation/lib/postgresql
+	##echo "### $file"
+    for file in `ls -d $libSuffix 2>/dev/null` ; do
+      chrpath -r "\${ORIGIN}/../../lib" "$file" >> $libPathLog 2>&1
+    done
+  fi
+
+}
+
+function fixMacOSBinary {
+  binary="$1"
+  libPathPrefix="$2"
+  rpath="$3"
+  libPathLog="$4"
+
+  otool -L "$binary" |
+	awk '/^[[:space:]]+'"$libPathPrefix"'/ {print $1}' |
+	while read lib; do
+	  install_name_tool -change "$lib" '@rpath/'$(basename "$lib") "$binary" >> $libPathLog 2>&1
+	done
+
+  if otool -l "$binary" | grep -A3 RPATH | grep -q "$sharedLibs"; then
+	install_name_tool -rpath "$sharedLibs" "$rpath" "$binary" >> $libPathLog 2>&1
+  fi
+}
+
+function updateSharedLibPathsForMacOS {
+  libPathLog=$baseDir/$workDir/logs/libPath.log
+  escapedBaseDir="$(echo "$baseDir" | sed 's@/@\\/@g')"
+  echo "#   updateSharedLibPathsForMacOS()"
+
+  cd $buildLocation/bin
+  echo "#     looping thru executables"
+  for file in `ls -d *` ; do
+	##echo "### $file"
+	fixMacOSBinary "$file" "$escapedBaseDir" '@executable_path/../lib' "$libPathLog"
+  done
+
+  libSuffix="*.dylib*"
+  cd $buildLocation/lib
+  echo "#     looping thru shared objects"
+  for file in `ls -d $libSuffix 2>/dev/null` ; do
+	##echo "### $file"
+	fixMacOSBinary "$file" "$escapedBaseDir" '@loader_path/../lib' "$libPathLog"
+  done
+
+  libSuffix="*.so*"
+  echo "#     looping thru lib/postgresql"
+  if [[ -d "$buildLocation/lib/postgresql" ]]; then
+	cd $buildLocation/lib/postgresql
+	##echo "### $file"
+    for file in `ls -d $libSuffix 2>/dev/null` ; do
+	  fixMacOSBinary "$file" "$escapedBaseDir" '@loader_path/../../lib' "$libPathLog"
+    done
+  fi
+
+}
+
 
 function updateSharedLibPaths {
-	libPathLog=$baseDir/$workDir/logs/libPath.log
 	echo "#"
 	echo "# updateSharedLibPaths()"
 
-	cd $buildLocation/bin
-	echo "#   looping thru executables"
-	for file in `ls -d *` ; do
-		##echo "### $file"
-		chrpath -r "\${ORIGIN}/../lib" "$file" >> $libPathLog 2>&1
-	done
-
 	if [ `uname` == "Linux" ]; then
-		libSuffix="*so*"
+		updateSharedLibPathsForLinux
 	else
-		libSuffix="*dylib*"
+		updateSharedLibPathsForMacOS
 	fi
-
-	cd $buildLocation/lib
-	echo "#   looping thru shared objects"
-	for file in `ls -d $libSuffix 2>/dev/null` ; do
-		##echo "### $file"
-		chrpath -r "\${ORIGIN}/../lib" "$file" >> $libPathLog 2>&1 
-	done
-
-	echo "#   looping thru lib/postgresql "
-	if [[ -d "$buildLocation/lib/postgresql" ]]; then	
-		cd $buildLocation/lib/postgresql
-		##echo "### $file"
-        	for file in `ls -d $libSuffix 2>/dev/null` ; do
-                	chrpath -r "\${ORIGIN}/../../lib" "$file" >> $libPathLog 2>&1
-        	done
-	fi
-	
 }
-
 
 function createBundle {
 	echo "#"
