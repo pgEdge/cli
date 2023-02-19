@@ -10,13 +10,14 @@ PostgreSQL eco-system of components.
 
 ## Commands
 ```
-help      - Displays this high level help file
-info      - Display OS or component information
-svc       - Service controller
+service   - Service controller
 um        - Update Manager
 spock     - Spock configuration
 pgedge    - pgEdge Installation & Configuration
 lc        - Localhost Cluster
+
+help      - Displays this high level help file
+info      - Display OS or component information
 ```
 
 ## svc - Service Control Subcommands
@@ -75,8 +76,4 @@ command  - Run `nodectl` command on one or all nodes of the local cluster
 --silent
 --verbose or -v
 --rm-data (remove the data directory after un-installing server)
- -y  (accept default parameter (such as auto generated password)
- -U  superuser
- -P  superuser password (only used during install-pgedge)
- -d  database
 ```
