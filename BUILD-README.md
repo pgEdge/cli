@@ -1,4 +1,4 @@
-# PGEDGE NodeCtl (nc) Project
+# PGEDGE NodeCtl Project
 
 
 ## Create build environment on el8

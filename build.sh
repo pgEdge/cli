@@ -581,7 +581,7 @@ do
             OS_TYPE="POSIX"
 
             cp $CLI/cli.sh ./$api
-            ##ln -s $api io
+            ln -s $api nc
 
             if [ "$outDir" == "posix" ]; then
               OS="???"
