@@ -43,6 +43,11 @@ table_header_style = bcolors.BOLD + bcolors.BACKGROUND
 error_start = bcolors.FAIL
 
 
+def make_bold(p_input):
+  p_output = style_start + str(p_input) + style_end
+  return(p_output)
+
+
 def get_pip_ver():
   try:
     import pip

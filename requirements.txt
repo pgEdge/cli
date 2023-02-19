@@ -1,0 +1,4 @@
+psycopg-binary
+psutil
+fire
+click

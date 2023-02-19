@@ -943,11 +943,18 @@ def get_help_text():
   helpfile = os.path.dirname(os.path.realpath(__file__)) + "/../doc/" + helpf
   s  = util.read_file_string(helpfile)
 
-  ## filter out the awkward markdown lines
   lines = s.split('\n')
   new_s = ""
   for line in lines:
-    if line not in ["```", "#!"]:
+    if line in ["```", "#!"]:
+      ## skip it
+      pass
+
+    elif line.startswith("## "):
+      bold_line = api.make_bold(line)
+      new_s = new_s + bold_line + '\n'
+
+    else:
       new_s = new_s + line + '\n'
   return(new_s)
 
