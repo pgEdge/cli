@@ -891,45 +891,6 @@ def verify_comp(p_comp_ver_plat):
   return 1
 
 
-def get_relnotes(p_comp, p_ver=""):
-  comp_name = p_comp
-  parent_comp = get_parent_component(comp_name,0)
-  if parent_comp!="":
-      comp_name=p_comp.replace("-" + parent_comp,"")
-
-  file = "relnotes-" + comp_name + ".txt"
-  ver = ""
-  if is_postgres(comp_name):
-    if p_ver == "":
-      if p_comp == "pg12":
-        ver = "12"
-      elif p_comp == "pg11":
-        ver = "11"
-      elif p_comp == "pg10":
-        ver = "10"
-      elif p_comp == "pg96":
-        ver = "9.6.0"
-      else:
-        ver = "9.5.0"
-    else:
-      ## remove the "-n" suffix
-      ver = p_ver[:-2]
-    file = "relnotes-" + comp_name + "-" + ver + ".txt"
-  repo = get_value("GLOBAL", "REPO")
-  repo_file = repo + "/" + file
-  out_dir = MY_HOME + os.sep + "conf" + os.sep + "cache"
-
-  if http_is_file(repo_file) == 1:
-    return("not available")
-
-  if http_get_file(False, file, repo, out_dir, False, ""):
-    out_file = out_dir + os.sep + file
-    rel_notes_text = read_file_string(out_file)
-    final_txt = unicode(str(rel_notes_text),sys.getdefaultencoding(),errors='ignore').strip()
-    return final_txt
-
-  return ""
-
 def utc_to_local(dt):
   import time
   dt_obj=datetime.strptime(dt, "%Y-%m-%d %H:%M:%S")

@@ -946,16 +946,17 @@ def get_help_text():
   lines = s.split('\n')
   new_s = ""
   for line in lines:
-    if line in ["```", "#!"]:
-      ## skip it
-      pass
-
-    elif line.startswith("## "):
-      bold_line = api.make_bold(line)
-      new_s = new_s + bold_line + '\n'
-
-    else:
-      new_s = new_s + line + '\n'
+    new_s = new_s + api.format_help(line) + "\n"
+#    if line in ["```", "#!"]:
+#      ## skip it
+#      pass
+#
+#    elif line.startswith("## "):
+#      bold_line = api.make_bold(line)
+#      new_s = new_s + bold_line + '\n'
+#
+#    else:
+#      new_s = new_s + line + '\n'
   return(new_s)
 
 
@@ -1574,18 +1575,6 @@ try:
           compDict['svcuser'] = svcuser
           compDict['port'] = port
           compDict['autostart'] = autostart
-          if isRELNOTES:
-            rel_version = current_version
-            if (p_version != "" and p_version !="all"):
-              rel_version = p_version
-            rel_notes = str(util.get_relnotes(comp, rel_version))
-            compDict['relnotes'] = rel_notes
-            if isJSON:
-              markdown_text = unicode(rel_notes,sys.getdefaultencoding(),errors='ignore').strip()
-              html_text = mistune.markdown(markdown_text)
-              compDict['rel_notes'] = html_text
-          else:
-            compDict['relnotes'] = ""
           if is_installed == 1 and port > 0:
               is_running = check_comp(comp, port, 0, True)
               if is_running == "NotInitialized":
@@ -1624,8 +1613,7 @@ try:
 
   ## LIST ##################################################################################
   if (p_mode == 'list'):
-    meta.get_list(isSHOWDUPS, isEXTENSIONS, isJSON, isTEST, False, 
-                  p_comp=p_comp, p_relnotes=isRELNOTES)
+    meta.get_list(isSHOWDUPS, isEXTENSIONS, isJSON, isTEST, False, p_comp=p_comp)
 
 
   ## REMOVE ##################################################

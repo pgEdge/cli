@@ -429,7 +429,7 @@ def get_platform_specific_version(p_comp, p_ver):
 
 
 ## get list of installed & available components ###############################
-def get_list(p_isOLD, p_isExtensions, p_isJSON, p_isTEST, p_showLATEST, p_comp=None, p_relnotes=None, p_return=False):
+def get_list(p_isOLD, p_isExtensions, p_isJSON, p_isTEST, p_showLATEST, p_comp=None, p_return=False):
   # r_sup_plat = util.like_pf("r.sup_plat")
   r_sup_plat = "1 = 1"
 
@@ -644,15 +644,6 @@ def get_list(p_isOLD, p_isExtensions, p_isJSON, p_isTEST, p_showLATEST, p_comp=N
         version = util.getoutput(available_ver)
         if current_version == version:
           current_version = ""
-
-      if p_relnotes and p_isJSON:
-        rel_version=version
-        if current_version != "":
-          rel_version=current_version
-        rel_notes = str(util.get_relnotes(comp, rel_version))
-        markdown_text = unicode(rel_notes,sys.getdefaultencoding(),errors='ignore').strip()
-        html_text = mistune.markdown(markdown_text)
-        compDict['rel_notes'] = html_text
 
       compDict['category'] = category
       compDict['category_desc'] = category_desc

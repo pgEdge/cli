@@ -43,9 +43,28 @@ table_header_style = bcolors.BOLD + bcolors.BACKGROUND
 error_start = bcolors.FAIL
 
 
-def make_bold(p_input):
-  p_output = style_start + str(p_input) + style_end
-  return(p_output)
+def format_help(p_input):
+  inp = str(p_input)
+  indent = False
+  inp_lst = inp.split()
+  print(f"aa {len(inp_lst)}")
+  if len(inp_lst) >= 2:
+    print("xx {inp_lst[1]}")
+    if str(inp_lst[1]) == "-":
+      indent = True
+
+  p_1st = None
+  if inp_lst:
+    p_1st = str(inp_lst[0])
+
+  if p_1st in ("#", "##", "###"):
+    skip_len = len(p_1st) + 1
+    inp = inp[skip_len:]
+    inp = style_start + str(inp.upper()) + style_end
+  elif indent:
+    inp = "  " + inp
+
+  return(inp)
 
 
 def get_pip_ver():
@@ -448,10 +467,6 @@ def info_component(p_comp_dict, p_kount):
 
     print(style_start +   "   IsCurrent: " + style_end + str(p_comp_dict['is_current']) + \
           style_start +   "  IsInstalled: " + style_end + is_installed)
-
-    if p_comp_dict['relnotes']:
-        print (style_start + " Release Notes : " + style_end )
-        print (p_comp_dict['relnotes'] )
 
 
 def format_data_to_table(data,
