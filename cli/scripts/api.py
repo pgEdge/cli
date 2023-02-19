@@ -45,13 +45,7 @@ error_start = bcolors.FAIL
 
 def format_help(p_input):
   inp = str(p_input)
-  indent = False
   inp_lst = inp.split()
-  print(f"aa {len(inp_lst)}")
-  if len(inp_lst) >= 2:
-    print("xx {inp_lst[1]}")
-    if str(inp_lst[1]) == "-":
-      indent = True
 
   p_1st = None
   if inp_lst:
@@ -61,7 +55,9 @@ def format_help(p_input):
     skip_len = len(p_1st) + 1
     inp = inp[skip_len:]
     inp = style_start + str(inp.upper()) + style_end
-  elif indent:
+  elif inp == "```":
+    return(None)
+  else:
     inp = "  " + inp
 
   return(inp)

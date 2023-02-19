@@ -1,13 +1,12 @@
-The pgEdge NodeCtl CLI is a cross-platform tool to manage your PostgreSQL 
-eco-system of components
+
+## #### NODECTL CLI ######################################################
+The pgEdge NodeCtl CLI is a cross-platform tool to manage your 
+PostgreSQL eco-system of components.
 
 ## Synopsis
 ```
 ./nodectl <command> <subcommand> [parameters] [options] 
 ```
-
-Use `nodectl` help topics to view a list of available help topics.
-The help for each subcommand shows its parameters and their usage.
 
 ## Commands
 ```
@@ -16,6 +15,7 @@ info      - Display OS or component information
 svc       - Service controller
 um        - Update Manager
 spock     - Spock configuration
+pgedge    - pgEdge Installation & Configuration
 lc        - Localhost Cluster
 ```
 

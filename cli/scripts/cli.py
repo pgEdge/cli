@@ -946,17 +946,10 @@ def get_help_text():
   lines = s.split('\n')
   new_s = ""
   for line in lines:
-    new_s = new_s + api.format_help(line) + "\n"
-#    if line in ["```", "#!"]:
-#      ## skip it
-#      pass
-#
-#    elif line.startswith("## "):
-#      bold_line = api.make_bold(line)
-#      new_s = new_s + bold_line + '\n'
-#
-#    else:
-#      new_s = new_s + line + '\n'
+    fmtd_line = api.format_help(line)
+    if not fmtd_line == None:
+      new_s = new_s + api.format_help(line) + "\n"
+
   return(new_s)
 
 
