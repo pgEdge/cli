@@ -2,29 +2,58 @@
 import sys, os
 import fire
 
-#  list      - Display available/installed components 
-#  update    - Retrieve new lists of components
-#  upgrade   - Perform an upgrade of a component
-#  config    - Configure a component
-#  init      - Initialize a component
-#  clean     - Delete downloaded component files from local cache
 
-def install():
-#  install   - Install (or re-install) a component  
-  pass
+def run_cmd(p_cmd, p_comp=None):
+  nc_cmd = "./nodectl " + p_cmd
+  if p_comp:
+    nc_cmd = nc_cmd + " " + p_comp
+  rc = os.system(nc_cmd)
+  return(rc)
 
-def remove():
-#  remove    - Un-install component   
-  pass
 
-def tune():
-  pass
+def list():
+  """Display available/installed components"""
+
+  run_cmd('list')
+
+
+def update():
+  """Retrieve new list of components & update this software"""
+
+  run_cmd('update')
+
+
+def upgrade(component):
+  """Perform an upgrade  to a newer version of a component"""
+
+  run_cmd('upgrade', component)
+
+
+def config(component):
+  """Configure a component"""
+
+  run_cmd('config', component)
+
+
+def init(component):
+  """Initialize a component"""
+
+  run_cmd('init', component)
+
+
+def clean():
+  """Delete downloaded component files from local cache"""
+
+  run_cmd('clean')
 
 
 if __name__ == '__main__':
   fire.Fire({
-    'install':install,
-    'remove':remove,
-    'tune':tune,
+    'list':list,
+    'update':update,
+    'upgrade':upgrade,
+    'config':config,
+    'init':init,
+    'clean':clean,
   })
 
