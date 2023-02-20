@@ -1,7 +1,7 @@
 
-## #### NODECTL CLI ######################################################
-The pgEdge NodeCtl CLI is a cross-platform tool to manage your 
-PostgreSQL eco-system of components.
+# NODECTL
+NODECTL is the pgEdge Node Control Command Line Interface (CLI).  It is a cross-platform tool
+to manage your PostgreSQL eco-system of components.
 
 ## Synopsis
 ```
@@ -10,17 +10,18 @@ PostgreSQL eco-system of components.
 
 ## Commands
 ```
-service   - Service controller
+service   - Service control
 um        - Update Manager
-spock     - Spock configuration
-pgedge    - pgEdge Installation & Configuration
-lc        - Localhost Cluster
+
+pgedge    - pgEdge installation & configuration
+spock     - Logical & Multi-Active configuration
+lc        - Localhost Cluster setup
 
 help      - Displays this high level help file
 info      - Display OS or component information
 ```
 
-## svc - Service Control Subcommands
+## `service` - Service Control Subcommands
 ```
 start     - Start server components
 stop      - Stop server components
@@ -33,7 +34,7 @@ config    - Configure a component
 init      - Initialize a component
 ```
 
-## um - Update Manager Subcommands 
+## `um` - Update Manager Subcommands 
 ```
 list      - Display available/installed components 
 update    - Retrieve new lists of components
@@ -44,7 +45,15 @@ downgrade - Perform a downgrade of a component
 clean     - Delete downloaded component files from local cache
 ```
 
-## spock - Logical & Multi-Active Replication Subcommands
+## `pgedge` - Installation and configuration of a pgEdge node
+```
+pre-reqs  - Check and configure pre-reqs (for running `spock` commands)
+install   - Install a node
+tune      - Tune postgres for the node size
+remove    - Uninstall pgedge from this node
+```
+
+## `spock` - Logical & Multi-Active Replication Subcommands
 ```
 create-node                            - Create a spock node
 create-replication-set                 - Define a replication set
@@ -60,7 +69,7 @@ health-check                           - Check if PG is accepting connections
 metrics-check                          - Retrieve OS & DB metrics
 ```
 
-## lc - Local Cluster Subcommands
+## `lc` - Local Cluster Subcommands
 ```
 create   - Create an n-node local cluster
 destroy  - Stop and then nuke a local cluster
@@ -69,11 +78,8 @@ command  - Run `nodectl` command on one or all nodes of the local cluster
 
 ## Options
 ```
---debug Turn on debug logging.
---json  Turn on JSON output.
---autostart
---start
+--json    Turn on JSON output
+--debug   Turn on debug logging
 --silent
 --verbose or -v
---rm-data (remove the data directory after un-installing server)
 ```
