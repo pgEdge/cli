@@ -54,9 +54,12 @@ def format_help(p_input):
   if p_1st in ("#", "##", "###"):
     skip_len = len(p_1st) + 1
     inp = inp[skip_len:]
+    inp = inp.replace("`", "")
     inp = style_start + str(inp.upper()) + style_end
+
   elif inp == "```":
     return(None)
+
   else:
     inp = "  " + inp
 
