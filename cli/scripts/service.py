@@ -3,38 +3,54 @@ import sys, os
 import fire
 
 
-def start():
+def run_cmd(p_cmd, p_comp):
+  nc_cmd = "./nodectl " + p_cmd
+  if p_comp:
+    nc_cmd = nc_cmd + " " + p_comp
+  rc = os.system(nc_cmd)
+  return(rc)
+
+
+def start(component=None):
   """Start server components"""
-  pass
+
+  run_cmd('start', component)
 
 
-def stop():
+def stop(component=None):
   """Stop server components"""
-  pass
+
+  run_cmd('stop', component)
 
 
-def status():
+def status(component=None):
   """Display running status of installed server components"""
-  pass
+
+  run_cmd('status', component)
 
 
-def restart():
+def restart(component):
   """Stop & then start server components"""
-  pass
+
+  run_cmd('restart', component)
 
 
-def reload():
+def reload(component):
   """Reload server configuration files (without a restart)"""
 
+  run_cmd('reload', component)
 
-def enable():
+
+def enable(component):
   """Enable a component"""
-  pass
+
+  run_cmd('enable', component)
 
 
-def disable():
+def disable(component):
   """Disable a server component from starting automatically"""
-  pass
+
+  run_cmd('disable', component)
 
 
 if __name__ == '__main__':
