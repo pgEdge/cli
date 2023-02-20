@@ -68,7 +68,7 @@ mode_list = ["start", "stop", "restart", "status", "list", "info", "update",
              "remove", "reload", "help", "get", "set", "unset",
              "backrest", "change-pgconf",
              "top", "spock", "local-cluster", "pgbin", "--autostart", 
-             "-U", "-P", "-d", "-p", "--country", "--rm-data", "service", "um", "pgedge",
+             "service", "um", "pgedge",
              "--start", "--no-restart", "--no-preload",
              "--help", "--json", "--jsonp", "--test", "--extensions", "--svcs",
              "--list", "--old", "--showduplicates", "-y", "-t",
@@ -1167,33 +1167,33 @@ if "-y" in args:
   args.remove("-y")
   os.environ['isYes'] = "True"
 
-if "-U" in args:
-  usr = get_next_arg("-U")
-  if usr > "":
-    args.remove("-U")
-    args.remove(usr)
-    os.environ['pgeUser'] = usr 
-
-if "-P" in args:
-  passwd = get_next_arg("-P")
-  if passwd > "":
-    args.remove("-P")
-    args.remove(passwd)
-    os.environ['pgePasswd'] = passwd
-
-if "-p" in args:
-  port  = get_next_arg("-p")
-  if port > "":
-    args.remove("-p")
-    args.remove(port)
-    os.environ['pgePort'] = port
-
-if "--country" in args:
-  ctry = get_next_arg("--country")
-  if ctry > "":
-    args.remove("--country")
-    args.remove(ctry)
-    os.environ['pgeCountry'] = ctry
+#if "-U" in args:
+#  usr = get_next_arg("-U")
+#  if usr > "":
+#    args.remove("-U")
+#    args.remove(usr)
+#    os.environ['pgeUser'] = usr 
+#
+#if "-P" in args:
+#  passwd = get_next_arg("-P")
+#  if passwd > "":
+#    args.remove("-P")
+#    args.remove(passwd)
+#    os.environ['pgePasswd'] = passwd
+#
+#if "-p" in args:
+#  port  = get_next_arg("-p")
+#  if port > "":
+#    args.remove("-p")
+#    args.remove(port)
+#    os.environ['pgePort'] = port
+#
+#if "--country" in args:
+#  ctry = get_next_arg("--country")
+#  if ctry > "":
+#    args.remove("--country")
+#    args.remove(ctry)
+#    os.environ['pgeCountry'] = ctry
 
 
 isTIME = False
