@@ -53,6 +53,18 @@ def disable(component):
   run_cmd('disable', component)
 
 
+def config(component):
+  """Config a component"""
+
+  run_cmd('config', component)
+
+
+def init(component):
+  """Initialize a component"""
+
+  run_cmd('init', component)
+
+
 if __name__ == '__main__':
   fire.Fire({
     'start':start,
@@ -62,5 +74,7 @@ if __name__ == '__main__':
     'reload':reload,
     'enable':enable,
     'disable':disable,
+    'config':config,
+    'init':init,
   })
 

@@ -23,22 +23,28 @@ def update():
   run_cmd('update')
 
 
+def install(component):
+  """Install a component"""
+
+  run_cmd('install', component)
+
+
+def remove(component):
+  """Uninstall a component"""
+
+  run_cmd('remove', component)
+
+
 def upgrade(component):
   """Perform an upgrade  to a newer version of a component"""
 
   run_cmd('upgrade', component)
 
 
-def config(component):
-  """Configure a component"""
+def downgrade(component):
+  """Perform a downgrade to an older version of a component"""
 
-  run_cmd('config', component)
-
-
-def init(component):
-  """Initialize a component"""
-
-  run_cmd('init', component)
+  run_cmd('downgrade', component)
 
 
 def clean():
@@ -51,9 +57,9 @@ if __name__ == '__main__':
   fire.Fire({
     'list':list,
     'update':update,
+    'install':install,
+    'remove':remove,
     'upgrade':upgrade,
-    'config':config,
-    'init':init,
+    'downgrade':downgrade,
     'clean':clean,
   })
-
