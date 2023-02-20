@@ -158,11 +158,15 @@ if [ "$1" == "spock" ] || [ "$1" == "all" ]; then
   fi
 fi
 
-if [ "$1" == "pglogical" ] || [ "$1" == "all" ]; then
+if [ "$1" == "pool2" ]; then
+  build pool2 $pool2FullV $2 pool2
+fi
+
+if [ "$1" == "pglogical" ]; then
   build pglogical $pgLogicalFullV $2 logical
 fi
 
-if [ "$1" == "anon" ] || [ "$1" == "all" ]; then
+if [ "$1" == "anon" ]; then
   build anon $anonFullV $2 anon
 fi
 

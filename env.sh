@@ -27,11 +27,11 @@ esfdwV=0.11.2
 bqfdwV=1.9
 
 w2jV=2.4-1
-citusV=11.1.5-1
+citusV=11.2.0-1
 
 oraclefdwV=2.5.0-1
 inclV=21.6
-orafceV=4.1.0-1
+orafceV=4.1.1-1
 ora2pgV=23.1
 v8V=3.1.2-1
 
@@ -66,7 +66,7 @@ postgisV=3.3.2-1
 
 pljavaV=1.6.2-1
 debuggerV=1.5-1
-cronV=1.4.2-1
+cronV=1.5.1-1
 
 mysqlfdwV=2.8.0-1
 mongofdwV=5.4.0-1

@@ -46,7 +46,7 @@ bckgrndFullV=1.1
 bckgrndShortV=
 bckgrndBuildV=1
 
-pool2FullV=4.4.0
+pool2FullV=4.4.2
 pool2ShortV=
 pool2BuildV=1
 
@@ -62,7 +62,7 @@ agentFullV=4.0.0
 agentShortV=
 agentBuildV=1
 
-citusFullV=11.1.5
+citusFullV=11.2.0
 citusShortV=
 citusBuildV=1
 
@@ -94,7 +94,7 @@ cassFullV=3.1.5
 cassShortV=
 cassBuildV=1
 
-orafceFullV=4.1.0
+orafceFullV=4.1.1
 orafceShortV=
 orafceBuildV=1
 
@@ -183,7 +183,7 @@ timescaledbFullV=2.8.0
 timescaledbShortV=
 timescaledbBuildV=1
 
-cronFullV=1.4.2
+cronFullV=1.5.1
 cronShortV=
 cronBuildV=1
 
