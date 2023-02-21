@@ -67,17 +67,17 @@ mode_list = ["start", "stop", "restart", "status", "list", "info", "update",
              "upgrade", "downgrade", "enable", "disable", "install", "tune",
              "remove", "reload", "help", "get", "set", "unset",
              "backrest", "change-pgconf",
-             "top", "spock", "local-cluster", "pgbin", "--autostart", 
-             "service", "um", "pgedge",
+             "top", "spock", "cluster", "pgbin", "--autostart", 
+             "-U", "-P", "-d", "-p", "--country", "service", "um", "pgedge",
              "--start", "--no-restart", "--no-preload",
              "--help", "--json", "--jsonp", "--test", "--extensions", "--svcs",
              "--list", "--old", "--showduplicates", "-y", "-t",
              "--verbose", "-v", "--debug", "--debug2"]
 
 mode_list_advanced = ['kill', 'config', 'init', 'clean', 'useradd', 'spock', 
-                      'pgbin', 'local-cluster', 'service', 'um', 'pgedge']
+                      'pgbin', 'cluster', 'service', 'um', 'pgedge']
 
-ignore_comp_list = [ "get", "set", "unset", "spock", "pgbin", "local-cluster", 
+ignore_comp_list = [ "get", "set", "unset", "spock", "pgbin", "cluster", 
                      "service", "um", "pgedge", "useradd", "backrest", "change-pgconf"]
 
 no_log_commands = ['status', 'info', 'list', 'top', 'get']
@@ -1167,34 +1167,33 @@ if "-y" in args:
   args.remove("-y")
   os.environ['isYes'] = "True"
 
-#if "-U" in args:
-#  usr = get_next_arg("-U")
-#  if usr > "":
-#    args.remove("-U")
-#    args.remove(usr)
-#    os.environ['pgeUser'] = usr 
-#
-#if "-P" in args:
-#  passwd = get_next_arg("-P")
-#  if passwd > "":
-#    args.remove("-P")
-#    args.remove(passwd)
-#    os.environ['pgePasswd'] = passwd
-#
-#if "-p" in args:
-#  port  = get_next_arg("-p")
-#  if port > "":
-#    args.remove("-p")
-#    args.remove(port)
-#    os.environ['pgePort'] = port
-#
-#if "--country" in args:
-#  ctry = get_next_arg("--country")
-#  if ctry > "":
-#    args.remove("--country")
-#    args.remove(ctry)
-#    os.environ['pgeCountry'] = ctry
+if "-U" in args:
+  usr = get_next_arg("-U")
+  if usr > "":
+    args.remove("-U")
+    args.remove(usr)
+    os.environ['pgeUser'] = usr 
 
+if "-P" in args:
+  passwd = get_next_arg("-P")
+  if passwd > "":
+    args.remove("-P")
+    args.remove(passwd)
+    os.environ['pgePasswd'] = passwd
+
+if "-p" in args:
+  port  = get_next_arg("-p")
+  if port > "":
+    args.remove("-p")
+    args.remove(port)
+    os.environ['pgePort'] = port
+
+if "--country" in args:
+  ctry = get_next_arg("--country")
+  if ctry > "":
+    args.remove("--country")
+    args.remove(ctry)
+    os.environ['pgeCountry'] = ctry
 
 isTIME = False
 if "-t" in args:
@@ -1401,8 +1400,8 @@ try:
     sys.exit(1)
 
 
-  ## SERVICE, LOCAL-CLUSTER, SPOCK, UM, PGEDGE #######################################
-  if p_mode in ('service', 'local-cluster', 'spock', 'um', 'pgedge'):
+  ## SERVICE, CLUSTER, SPOCK, UM, PGEDGE #######################################
+  if p_mode in ('service', 'cluster', 'spock', 'um', 'pgedge'):
     fire_away(p_mode, args)
 
 

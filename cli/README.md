@@ -5,23 +5,23 @@ to manage your PostgreSQL eco-system of components.
 
 ## Synopsis
 ```
-./nodectl <command> <subcommand> [parameters] [options] 
+./nodectl <module> <command> [parameters] [options] 
 ```
 
-## Commands
+## Modules
 ```
 service   - Service control
 um        - Update Manager
 
 pgedge    - pgEdge installation & configuration
 spock     - Logical & Multi-Active configuration
-lc        - Localhost Cluster setup
+cluster   - Cluster setup & control 
 
 help      - Displays this high level help file
-info      - Display OS or component information
+info      - Display OS, machine & `nodectl` version info
 ```
 
-## `service` - Service Control Subcommands
+## `service` - Service control commands
 ```
 start     - Start server components
 stop      - Stop server components
@@ -34,7 +34,7 @@ config    - Configure a component
 init      - Initialize a component
 ```
 
-## `um` - Update Manager Subcommands 
+## `um` - Update Manager commands 
 ```
 list      - Display available/installed components 
 update    - Retrieve new lists of components
@@ -47,33 +47,34 @@ clean     - Delete downloaded component files from local cache
 
 ## `pgedge` - Installation and configuration of a pgEdge node
 ```
-pre-reqs  - Check and configure pre-reqs (for running `spock` commands)
+pre-reqs  - Check and configure pre-reqs (for running SPOCK commands)
 install   - Install a node
 tune      - Tune postgres for the node size
 remove    - Uninstall pgedge from this node
 ```
 
-## `spock` - Logical & Multi-Active Replication Subcommands
+## `spock` - Logical & Multi-Active Replication commands
 ```
-create-node                            - Create a spock node
-create-replication-set                 - Define a replication set
-create-subscriptiion                   - Create a subscription
-show-subscription-status               - Display the status of the subcription
-show-subscription-table                - Display subscription table(s)
-alter-subscription-add-replication-set - Add replication set to a subscription
-wait-for-subscription-sync-complete    - Pause until subscription is synched
-get-pii-cols                           - Retrieve the columns identified as PII
-get-replication-tables                 - Show the replication tables
-replication-set-add-table              - Add a table[s] to a replication set
-health-check                           - Check if PG is accepting connections
-metrics-check                          - Retrieve OS & DB metrics
+create-node          - Create a spock node
+create-rep-set       - Define a replication set
+create-sub           - Create a subscription
+add-rep-set-table    - Add a table[s] to a replication set
+add-rep-set-sub      - Add replication set to a subscription
+show-sub-status      - Display the status of the subcription
+show-sub-table       - Display subscription table(s)
+wait-for-sub-sync    - Pause until subscription is synched
+health-check         - Check if PG is accepting connections
+metrics-check        - Retrieve OS & DB metrics
 ```
 
-## `lc` - Local Cluster Subcommands
+## `cluster` - Cluster setup & control
 ```
-create   - Create an n-node local cluster
-destroy  - Stop and then nuke a local cluster
-command  - Run `nodectl` command on one or all nodes of the local cluster
+local     - Create an n-node local cluster
+destroy   - Stop and then nuke a cluster
+validate  - Validate a cluster configuration
+init      - Initialize cluster for SPOCK
+command   - Run `nodectl` command on one or all nodes of the cluster
+diff      - Compare table on different nodes
 ```
 
 ## Options

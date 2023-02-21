@@ -10,10 +10,11 @@ nc = "./nodectl "
 #  pgN = "15"
 #pgV = "pg" + pgN
 #
-#withPOSTGREST = str(os.getenv("withPOSTGREST", "False"))
-#withBACKREST  = str(os.getenv("withBACKREST",  "False"))
-#withBOUNCER   = str(os.getenv("withBOUNCER",   "False"))
-#isAutoStart   = str(os.getenv("isAutoStart",   "False"))
+
+withPOSTGREST = str(os.getenv("withPOSTGREST", "False"))
+withBACKREST  = str(os.getenv("withBACKREST",  "False"))
+withBOUNCER   = str(os.getenv("withBOUNCER",   "False"))
+isAutoStart   = str(os.getenv("isAutoStart",   "False"))
 
 isDebug       = str(os.getenv("pgeDebug",      "0"))
 
@@ -40,15 +41,47 @@ def osSys(cmd, fatal_exit=True):
   return
 
 
-def install(User=None, Password=None, database="postgres", country='??', port=5432, pgV="pg15",
+def install(User=None, Password=None, database=None, country=None, port=5432, pgV="pg15",
             autostart=True, with_bouncer=False, with_backrest=False, with_postgrest=False):
   """Install pgEdge components"""
 
-  #print(f"User={User}, Password={Password}, database={database}, country={country}, port={port}")
-  #print(f"autostart={autostart}, with_bouncer={with_bouncer}")
+  pgeUser = os.getenv('pgeUser', None)
+  if not User and pgeUser:
+    User = pgeUser
+  else:
+    User = str(User)
 
-  User = str(User)
-  Password = str(Password)
+  pgePasswd = os.getenv('pgePasswd', None)
+  if not Password and pgePasswd:
+    Password = pgePasswd
+  else:
+    Password = str(Password)
+
+  pgName = os.getenv('pgName', None)
+  if not database and pgName:
+    database = pgName
+
+  pgeCountry = os.getenv('pgeCountry', None)
+  if not country and pgeCountry:
+    country = pgeCountry
+  else
+    country = str(country)
+
+  try:
+    pgePort = int(os.getenv('pgePort', '5432'))
+  except Exception as e:
+    error_exit("Port " + os.getenv('pgePort') + " is not an integer")
+  if not port and pgePort != 5432:
+    port = pgePort
+
+  if util.get_platform() == "Darwin":
+    if isAutoStart == "True":
+      util.message("--autostart is ignored on macOS")
+      autostart = False
+
+  print(f"User={User}, Password={Password}, database={database}, country={country}, port={port}")
+  print(f"autostart={autostart}, with_bouncer={with_bouncer}")
+
   database = str(database)
   country = str(country)
   try:
@@ -91,8 +124,8 @@ def install(User=None, Password=None, database="postgres", country='??', port=54
 
   if Password:
     pwd_len = len(Password)
-    if (pwd_len < 8) or (pwd_len > 128):
-      error_exit("The password must be >= 8 and <= 128 in length")
+    if (pwd_len < 6) or (pwd_len > 128):
+      error_exit("The password must be >= 6 and <= 128 in length")
 
     for pwd_char in Password:
       pwd_c = pwd_char.strip()
@@ -170,11 +203,6 @@ def pre_reqs(port=5432):
     if util.get_glibc_version() < "2.28":
       error_exit("Linux has unsupported (older) version of glibc")
 
-  if platf == "Darwin":
-    util.message("  Verify autostart not set for macOS")
-    if isAutoStart == "True":
-      error_exit("autostart is NOT supported on macOS")
-
   util.message("  Verify Python 3.6+")
   p3_minor_ver = util.get_python_minor_version()
   if p3_minor_ver < 6:
@@ -194,7 +222,7 @@ def pre_reqs(port=5432):
   util.message("  Ensure recent pip3")
   rc = os.system("pip3 --version >/dev/null 2>&1")
   if rc == 0:
-    os.system("pip3 install --upgrade pip --user >/dev/null 2>&1")
+    os.system("pip3 install --upgrade pip --user")
   else:
     url="https://bootstrap.pypa.io/get-pip.py"
     if p3_minor_ver == 6:
@@ -205,11 +233,11 @@ def pre_reqs(port=5432):
     osSys("python3 get-pip.py --user", False)
     osSys("rm -f get-pip.py", False)
 
-  util.message("  Ensure FIRE pip3 module")
-  try:
-    import fire
-  except ImportError as e:
-    osSys("pip3 install fire --user --upgrade", False)
+  ##util.message("  Ensure FIRE pip3 module")
+  ##try:
+  ##  import fire
+  ##except ImportError as e:
+  ##  osSys("pip3 install fire --user --upgrade", False)
 
   util.message("  Ensure PSYCOPG-BINARY pip3 module")
   try:

@@ -1,15 +1,17 @@
-
+ 
 import sys, os
 import util, meta, fire
 
-try:
-  import psycopg
-except ImportError as e:
-  util.exit_message("Missing 'psycopg' module from pip", 1)
+#try:
+#  import psycopg
+#except ImportError as e:
+#  util.exit_message("Missing 'psycopg-binary' module from pip", 1)
+
+base_dir = "cluster"
 
 
-def create(cluster_name, num_nodes, User="lcusr", Passwd="lcpasswd", 
-           db="lcdb", port1=6432, pg="15", base_dir="cluster"):
+def local(cluster_name, num_nodes, User="lcusr", Passwd="lcpasswd", 
+           db="lcdb", port1=6432, pg="15"):
   """Create a local cluster that runs N instances of pgEdge each running PG on a different port."""
 
   cluster_dir = base_dir + os.sep + cluster_name
@@ -26,7 +28,7 @@ def create(cluster_name, num_nodes, User="lcusr", Passwd="lcpasswd",
 
   kount = meta.get_installed_count()
   if kount > 0:
-    util.message("WARNING: No other components should be installed when using 'local-cluster create'")
+    util.message("WARNING: No other components should be installed when using 'cluster local'")
 
   if num_nodes < 1:
     util.exit_messages("num-nodes must be >= 1", 1)
@@ -79,8 +81,18 @@ def create(cluster_name, num_nodes, User="lcusr", Passwd="lcpasswd",
     nd_port = nd_port + 1
 
 
-def destroy(cluster_name, base_dir="cluster"):
-  """Stop each node of a local-cluster and then delete all of it."""
+def validate(cluster_name):
+  """Validate a cluster configuration"""
+  util.exit_message("Coming Soon!")
+
+
+def init(cluster_name):
+  """Initialize cluster for Spock"""
+  util.exit_message("Coming Soon!")
+
+
+def destroy(cluster_name):
+  """Stop and then nuke a cluster"""
 
   if not os.path.exists(base_dir):
     util.exit_message("no cluster directory: " + str(base_dir), 1)
@@ -107,7 +119,7 @@ def lc_destroy1(cluster_name, base_dir):
   util.echo_cmd("rm -rf " + cluster_dir, 1)
 
 
-def command(cluster_name, node, cmd, base_dir="cluster"):
+def command(cluster_name, node, cmd):
   """Run './nodectl' commands on one or 'all' nodes."""
 
   cluster_dir = base_dir + "/" + str(cluster_name)
@@ -133,7 +145,9 @@ def command(cluster_name, node, cmd, base_dir="cluster"):
 
 if __name__ == '__main__':
   fire.Fire({
-    'create':create,
+    'local':local,
+    'validate':validate,
+    'init': init,
     'destroy':destroy,
     'command':command,
   })
