@@ -36,9 +36,12 @@ class bcolors:
     BOLD = '\033[1m'
     UNDERLINE = '\033[4m'
     BACKGROUND = '\033[42m'
+    ITALIC = '\033[3m'
 
-style_start = bcolors.BOLD
-style_end = bcolors.ENDC
+bold_start = bcolors.BOLD
+bold_end = bcolors.ENDC
+italic_start = bcolors.ITALIC
+italic_end = bcolors.ENDC
 table_header_style = bcolors.BOLD + bcolors.BACKGROUND
 error_start = bcolors.FAIL
 
@@ -55,13 +58,14 @@ def format_help(p_input):
     skip_len = len(p_1st) + 1
     inp = inp[skip_len:]
     inp = inp.replace("`", "")
-    inp = style_start + str(inp.upper()) + style_end
+    inp = bold_start + str(inp.upper()) + bold_end
 
   elif inp == "```":
     return(None)
 
   else:
-    inp = "  " + inp
+    inp = inp.replace(" # ", italic_start + " # ")
+    inp = "  " + inp + " " + italic_end
 
   return(inp)
 
@@ -149,9 +153,9 @@ def top(display=True, isJson=False):
   uname_len = 8
   av1, av2, av3 = os.getloadavg()
   str_loadavg = "%.2f %.2f %.2f  " % (av1, av2, av3)
-  line = style_start + "Load average: " + style_end + str_loadavg
+  line = bold_start + "Load average: " + bold_end + str_loadavg
   jsonDict['load_avg']  = str(str_loadavg)
-  line = line + style_start + "Uptime:" + style_end + " " + str_uptime
+  line = line + bold_start + "Uptime:" + bold_end + " " + str_uptime
   jsonDict['uptime']  = str(str_uptime)
   if not isJson:
     print(line)
@@ -160,7 +164,7 @@ def top(display=True, isJson=False):
   my_pid = os.getpid()
   if not isJson:
     print("")
-    print(style_start + "    PID " + "USER".ljust(uname_len) + "   %CPU %MEM      TIME+ COMMAND" + style_end)
+    print(bold_start + "    PID " + "USER".ljust(uname_len) + "   %CPU %MEM      TIME+ COMMAND" + bold_end)
 
   jsonList = []
   for pp in processes:
@@ -388,84 +392,84 @@ def info(p_json, p_home, p_repo, print_flag=True):
   else:
     glibc_v_display = ' glibc-' + glibcV + '-'
 
-  print(style_start + ("#" * 70) + style_end)
-  print(style_start + "#           NodeCtl: " + style_end + "v" + ver + "  " + p_home)
-  print(style_start + "#       User & Host: " + style_end + p_user + admin_display + "  " + host_display)
-  print(style_start + "#  Operating System: " + style_end + os2.rstrip() + " " + glibc_v_display + os_arch)
-  print(style_start + "#           Machine: " + style_end + mem + ", " + cores + " vCPU, " + cpu)
-  print(style_start + "# Programming Langs: " + style_end + langs)
+  print(bold_start + ("#" * 70) + bold_end)
+  print(bold_start + "#           NodeCtl: " + bold_end + "v" + ver + "  " + p_home)
+  print(bold_start + "#       User & Host: " + bold_end + p_user + admin_display + "  " + host_display)
+  print(bold_start + "#  Operating System: " + bold_end + os2.rstrip() + " " + glibc_v_display + os_arch)
+  print(bold_start + "#           Machine: " + bold_end + mem + ", " + cores + " vCPU, " + cpu)
+  print(bold_start + "# Programming Langs: " + bold_end + langs)
 
   default_repo = "https://pgedge-download.s3.amazonaws.com/REPO"
   if p_repo != default_repo:
-    print(style_start + "#          Repo URL: " + style_end + p_repo)
+    print(bold_start + "#          Repo URL: " + bold_end + p_repo)
 
   if versions_sql == "versions.sql":
     pass
   else:
-    print(style_start + "#      Versions SQL: " + style_end + versions_sql)
+    print(bold_start + "#      Versions SQL: " + bold_end + versions_sql)
 
   if not last_update_local:
     last_update_local="None"
 
-  print(style_start + "#       Last Update: " + style_end + str(last_update_local))
-  print(style_start + ("#" * 70) + style_end)
+  print(bold_start + "#       Last Update: " + bold_end + str(last_update_local))
+  print(bold_start + ("#" * 70) + bold_end)
 
 
 def info_component(p_comp_dict, p_kount):
     if p_kount > 1:
-        print(style_start + ("-" * 90) + style_end)
+        print(bold_start + ("-" * 90) + bold_end)
 
-    print(style_start + "     Project: " + style_end + p_comp_dict['project'] + " (" + p_comp_dict['project_url'] + ")" )
+    print(bold_start + "     Project: " + bold_end + p_comp_dict['project'] + " (" + p_comp_dict['project_url'] + ")" )
 
-    print(style_start + "   Component: " + style_end + p_comp_dict['component'] + " " + p_comp_dict['version'] + " (" + p_comp_dict['proj_description'] + ")")
+    print(bold_start + "   Component: " + bold_end + p_comp_dict['component'] + " " + p_comp_dict['version'] + " (" + p_comp_dict['proj_description'] + ")")
 
     if p_comp_dict['port'] > 1:
-        print(style_start + "        port: " + style_end + str(p_comp_dict['port']))
+        print(bold_start + "        port: " + bold_end + str(p_comp_dict['port']))
 
     if p_comp_dict['datadir'] > "":
-        print(style_start + "     datadir: " + style_end + p_comp_dict['datadir'])
+        print(bold_start + "     datadir: " + bold_end + p_comp_dict['datadir'])
 
     if p_comp_dict['logdir']  > "":
-        print(style_start + "      logdir: " + style_end + p_comp_dict['logdir'])
+        print(bold_start + "      logdir: " + bold_end + p_comp_dict['logdir'])
 
     if p_comp_dict['autostart'] == "on":
-        print(style_start + "   autostart: " + style_end + p_comp_dict['autostart'])
+        print(bold_start + "   autostart: " + bold_end + p_comp_dict['autostart'])
 
     if p_comp_dict['svcuser'] > "" and util.get_platform() == "Linux":
-        print(style_start + "     svcuser: " + style_end + p_comp_dict['svcuser'])
+        print(bold_start + "     svcuser: " + bold_end + p_comp_dict['svcuser'])
 
     if (('status' in p_comp_dict)  and ('up_time' in p_comp_dict)):
-        print(style_start + "      status: " + style_end + p_comp_dict['status'] + \
-              style_start + " for " + style_end + p_comp_dict['up_time'])
+        print(bold_start + "      status: " + bold_end + p_comp_dict['status'] + \
+              bold_start + " for " + bold_end + p_comp_dict['up_time'])
     else:
         if 'status' in p_comp_dict:
-            print(style_start + "      status: " + style_end + p_comp_dict['status'])
+            print(bold_start + "      status: " + bold_end + p_comp_dict['status'])
         if 'up_time' in p_comp_dict:
-            print(style_start + "    up since: " + style_end + p_comp_dict['up_time'])
+            print(bold_start + "    up since: " + bold_end + p_comp_dict['up_time'])
 
     if 'data_size' in p_comp_dict:
-        print(style_start + "   data size: " + style_end + p_comp_dict['data_size'])
+        print(bold_start + "   data size: " + bold_end + p_comp_dict['data_size'])
 
     if 'connections' in p_comp_dict:
-        print(style_start + " connections: " + style_end + p_comp_dict['connections'])
+        print(bold_start + " connections: " + bold_end + p_comp_dict['connections'])
 
-    print(style_start + "Release Date: " + style_end + p_comp_dict['release_date'] + \
-          style_start + "  Stage: " + style_end + p_comp_dict['stage'])
+    print(bold_start + "Release Date: " + bold_end + p_comp_dict['release_date'] + \
+          bold_start + "  Stage: " + bold_end + p_comp_dict['stage'])
 
     if p_comp_dict['platform'] > "":
-      print(style_start + "Supported On: " + style_end + "[" + p_comp_dict['platform'] + "]")
+      print(bold_start + "Supported On: " + bold_end + "[" + p_comp_dict['platform'] + "]")
 
     if p_comp_dict['pre_reqs'] > "":
-      print(style_start + "   Pre Req's: " + style_end + p_comp_dict['pre_reqs'])
+      print(bold_start + "   Pre Req's: " + bold_end + p_comp_dict['pre_reqs'])
 
-    print(style_start +   "     License: " + style_end + p_comp_dict['license'])
+    print(bold_start +   "     License: " + bold_end + p_comp_dict['license'])
 
     is_installed = str(p_comp_dict['is_installed'])
     if str(is_installed) == "0":
        is_installed = "NO"
 
-    print(style_start +   "   IsCurrent: " + style_end + str(p_comp_dict['is_current']) + \
-          style_start +   "  IsInstalled: " + style_end + is_installed)
+    print(bold_start +   "   IsCurrent: " + bold_end + str(p_comp_dict['is_current']) + \
+          bold_start +   "  IsInstalled: " + bold_end + is_installed)
 
 
 def format_data_to_table(data,
@@ -539,11 +543,11 @@ def format_data_to_table(data,
                     dataStr = table_header_style + dataStr
                 dataStr = dataStr + spaces
                 if s==key_length-1:
-                    dataStr = dataStr + style_end
+                    dataStr = dataStr + bold_end
                 s=s+1
             elif (error_key and error_msg_column):
                 if pair[0] in error_msg_column and element.get(error_key[0]) == error_key[1]:
-                  dataStr = error_start + dataStr + style_end
+                  dataStr = error_start + dataStr + bold_end
 
             data_to_format.append(pair[1])
             data_to_format.append(dataStr)

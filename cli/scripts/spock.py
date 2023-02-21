@@ -101,7 +101,7 @@ def get_eq(parm, val, sufx):
 
 
 def create_node(node_name, dsn, db, pg=None):
-  """Create a spock node."""
+  """Define a spock node."""
 
   pg_v = get_pg_v(pg)
 
@@ -113,7 +113,7 @@ def create_node(node_name, dsn, db, pg=None):
   sys.exit(0)
 
 
-def create_replication_set(set_name, db, replicate_insert=True, replicate_update=True, 
+def create_rep_set(set_name, db, replicate_insert=True, replicate_update=True, 
                            replicate_delete=True, replicate_truncate=True, pg=None):
   """Define a replication set."""
 
@@ -130,9 +130,9 @@ def create_replication_set(set_name, db, replicate_insert=True, replicate_update
   sys.exit(0)
 
 
-def create_subscription(subscription_name, provider_dsn, db, replication_sets="{default,default_insert_only,ddl_sql}",
-                        synchronize_structure=False, synchronize_data=False, 
-                        forward_origins='{}', apply_delay=0, pg=None):
+def create_sub(subscription_name, provider_dsn, db, replication_sets="{default,default_insert_only,ddl_sql}",
+               synchronize_structure=False, synchronize_data=False, 
+               forward_origins='{}', apply_delay=0, pg=None):
   """Create a subscription."""
 
   pg_v = get_pg_v(pg)
@@ -150,7 +150,7 @@ def create_subscription(subscription_name, provider_dsn, db, replication_sets="{
   sys.exit(0)
 
 
-def show_subscription_status(subscription_name, db, pg=None):
+def show_sub_status(subscription_name, db, pg=None):
   """Display the status of the subcription."""
 
   pg_v = get_pg_v(pg)
@@ -164,7 +164,7 @@ def show_subscription_status(subscription_name, db, pg=None):
   sys.exit(0)
 
 
-def show_subscription_table(subscription_name, relation, db, pg=None):
+def show_sub_table(subscription_name, relation, db, pg=None):
   """ ???????? """
 
   pg_v = get_pg_v(pg)
@@ -177,7 +177,7 @@ def show_subscription_table(subscription_name, relation, db, pg=None):
   sys.exit(0)
 
 
-def alter_subscription_add_replication_set(subscription_name, replication_set, db, pg=None):
+def add_rep_set_sub(subscription_name, replication_set, db, pg=None):
   """Modify a subscription and add a replication set to it."""
 
   pg_v = get_pg_v(pg)
@@ -190,7 +190,7 @@ def alter_subscription_add_replication_set(subscription_name, replication_set, d
   sys.exit(0)
 
 
-def wait_for_subscription_sync_complete(subscription_name, db, pg=None):
+def wait_for_sub_sync(subscription_name, db, pg=None):
   """Pause until the subscription is synchronized."""
 
   pg_v = get_pg_v(pg)
@@ -215,7 +215,7 @@ def get_pii_cols(db,schema=None,pg=None):
   run_psyco_sql(pg_v, db, sql)
   sys.exit(0)
 
-def get_replication_tables(db, schema=None,pg=None):
+def show_rep_tables(db, schema=None,pg=None):
   """Show the replication tables."""
   pg_v = get_pg_v(pg)
 
@@ -273,8 +273,8 @@ def get_table_list(table, db, pg_v):
   return([table])
 
 
-def replication_set_add_table(replication_set, table, db, cols=None, pg=None):
-  """Add a one or more tables to a replication set.  You may specify a wilcard such as 'public.pgbench*'"""
+def add_rep_set_table(replication_set, table, db, cols=None, pg=None):
+  """Add one or more tables to a replication set."""
 
   pg_v = get_pg_v(pg)
 
@@ -413,17 +413,16 @@ def metrics_check(db, pg=None):
 
 if __name__ == '__main__':
   fire.Fire({
-      'create-node': create_node,
-      'create-rep-set': create_replication_set,
-      'rep-set-add-table':replication_set_add_table,
-      'get-rep-tables': get_replication_tables,
-      'create-sub': create_subscription,
-      'show-sub-status': show_subscription_status,
-      'show-sub-table': show_subscription_table,
-      'alter-sub-add-rep-set': alter_subscription_add_replication_set,
-      'wait-for-sub-sync': wait_for_subscription_sync_complete,
-      ##'get-pii-columns': get_pii_cols,
-      'health-check':health_check,
-      'metrics-check':metrics_check,
+      'create-node':       create_node,
+      'create-rep-set':    create_rep_set,
+      'add-rep-set-table': add_rep_set_table,
+      'show-rep-tables':   show_rep_tables,
+      'create-sub':        create_sub,
+      'show-sub-status':   show_sub_status,
+      'show-sub-table':    show_sub_table,
+      'add-rep-set-sub':   add_rep_set_sub,
+      'wait-for-sub-sync': wait_for_sub_sync,
+      'health-check':      health_check,
+      'metrics-check':     metrics_check,
   })
 
