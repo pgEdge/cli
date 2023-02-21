@@ -100,6 +100,16 @@ def get_eq(parm, val, sufx):
   return(colon_equal)
 
 
+def tune(component="pg15"):
+  """Tune pgEdge components"""
+
+  if not os.path.isdir(component):
+    util.exit_message(f"{component} is not installed", 1)
+
+  rc = os.system("./nodectl tune " + component)
+  return(rc)
+
+
 def create_node(node_name, dsn, db, pg=None):
   """Define a spock node."""
 
@@ -113,7 +123,7 @@ def create_node(node_name, dsn, db, pg=None):
   sys.exit(0)
 
 
-def create_rep_set(set_name, db, replicate_insert=True, replicate_update=True, 
+def create_repset(set_name, db, replicate_insert=True, replicate_update=True, 
                            replicate_delete=True, replicate_truncate=True, pg=None):
   """Define a replication set."""
 
@@ -177,7 +187,7 @@ def show_sub_table(subscription_name, relation, db, pg=None):
   sys.exit(0)
 
 
-def add_rep_set_sub(subscription_name, replication_set, db, pg=None):
+def add_repset_sub(subscription_name, replication_set, db, pg=None):
   """Modify a subscription and add a replication set to it."""
 
   pg_v = get_pg_v(pg)
@@ -190,7 +200,7 @@ def add_rep_set_sub(subscription_name, replication_set, db, pg=None):
   sys.exit(0)
 
 
-def wait_for_sub_sync(subscription_name, db, pg=None):
+def wait_on_sub_sync(subscription_name, db, pg=None):
   """Pause until the subscription is synchronized."""
 
   pg_v = get_pg_v(pg)
@@ -273,7 +283,7 @@ def get_table_list(table, db, pg_v):
   return([table])
 
 
-def add_rep_set_table(replication_set, table, db, cols=None, pg=None):
+def add_repset_table(replication_set, table, db, cols=None, pg=None):
   """Add one or more tables to a replication set."""
 
   pg_v = get_pg_v(pg)
@@ -413,16 +423,17 @@ def metrics_check(db, pg=None):
 
 if __name__ == '__main__':
   fire.Fire({
-      'create-node':       create_node,
-      'create-rep-set':    create_rep_set,
-      'add-rep-set-table': add_rep_set_table,
-      'show-rep-tables':   show_rep_tables,
-      'create-sub':        create_sub,
-      'show-sub-status':   show_sub_status,
-      'show-sub-table':    show_sub_table,
-      'add-rep-set-sub':   add_rep_set_sub,
-      'wait-for-sub-sync': wait_for_sub_sync,
-      'health-check':      health_check,
-      'metrics-check':     metrics_check,
+      'create-node':      create_node,
+      'tune':             tune,
+      'create-repset':    create_repset,
+      'add-repset-table': add_repset_table,
+      'show-rep-tables':  show_rep_tables,
+      'create-sub':       create_sub,
+      'show-sub-status':  show_sub_status,
+      'show-sub-table':   show_sub_table,
+      'add-rep-set-sub':  add_rep_set_sub,
+      'wait-on-sub-sync': wait_on_sub_sync,
+      'health-check':     health_check,
+      'metrics-check':    metrics_check,
   })
 

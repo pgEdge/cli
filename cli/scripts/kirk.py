@@ -41,6 +41,10 @@ def osSys(cmd, fatal_exit=True):
   return
 
 
+def diff_tables(cluster_name, node1, node2, table_name):
+  """Efficient Diff of tables across cluster"""
+
+
 def install(User=None, Password=None, database=None, country=None, port=5432, pgV="pg15",
             autostart=True, with_bouncer=False, with_backrest=False, with_postgrest=False):
   """Install pgEdge components"""
@@ -64,7 +68,7 @@ def install(User=None, Password=None, database=None, country=None, port=5432, pg
   pgeCountry = os.getenv('pgeCountry', None)
   if not country and pgeCountry:
     country = pgeCountry
-  else
+  else:
     country = str(country)
 
   try:
@@ -172,15 +176,138 @@ def remove(rm_data=False):
   pass
 
 
-def tune(component="pg15"):
-  """Tune pgEdge components"""
+def create_local(cluster_name, num_nodes, User="lcusr", Passwd="lcpasswd", 
+           db="lcdb", port1=6432, pg="15"):
+  """Create a local cluster that runs N instances of pgEdge each running PG on a different port."""
 
-  if not os.path.isdir(component):
-    util.exit_message(f"{component} is not installed", 1)
+  cluster_dir = base_dir + os.sep + cluster_name
 
-  rc = os.system("./nodectl tune " + component)
+  try:
+    num_nodes = int(num_nodes)
+  except Exception as e:
+    util.exit_message("num_nodes parameter is not an integer", 1)
+
+  try:
+    port1 = int(port1)
+  except Exception as e:
+    util.exit_message("port1 parameter is not an integer", 1)
+
+  kount = meta.get_installed_count()
+  if kount > 0:
+    util.message("WARNING: No other components should be installed when using 'cluster local'")
+
+  if num_nodes < 1:
+    util.exit_messages("num-nodes must be >= 1", 1)
+
+  usr = util.get_user()
+
+  for n in range(port1, port1 + num_nodes):
+    util.message("checking port " + str(n) + " availability")
+    if util.is_socket_busy(n):
+      util.exit_message("port not avaiable", 1)
+
+  if os.path.exists(cluster_dir):
+    util.exit_message("cluster already exists: " + str(cluster_dir), 1)
+
+  util.message("# creating cluster dir: " + cluster_dir)
+  os.system("mkdir -p " + cluster_dir)
+
+  pg_v = "pg" + str(pg)
+
+  nd_port = port1
+  for n in range(1, num_nodes+1):
+    node_nm = "n" + str(n)
+    node_dir = cluster_dir + os.sep + node_nm
+
+    util.message("\n\n" + \
+      "###############################################################\n" + \
+      "# creating node dir: " + node_dir)
+    os.system("mkdir " + node_dir)
+
+    os.system("cp -r conf " + node_dir + "/.")
+    os.system("cp -r hub  " + node_dir + "/.")
+    os.system("cp nodectl " + node_dir + "/.")
+
+    nc = (node_dir + "/nodectl ")
+    parms =  " -U " + str(User) + " -P " + str(Passwd) + " -d " + str(db) + " -p " + str(nd_port)
+    rc = util.echo_cmd(nc + "install pgedge" + parms)
+    if rc != 0:
+      sys.exit(rc)
+
+    pgbench_cmd = '"pgbench --initialize --scale=' + str(num_nodes) + ' ' + str(db) + '"'
+    util.echo_cmd(nc + "pgbin " + str(pg) +  " " + pgbench_cmd)
+
+    rep_set = 'pgbench-rep-set'
+    dsn = "'host=localhost user=" + usr + "'"
+
+    util.echo_cmd(nc + " spock create-node '" + node_nm + "' --dsn 'host=localhost user=replication' --db " + db)
+    util.echo_cmd(nc + " spock create-replication-set " + rep_set + " --db " + db)
+    util.echo_cmd(nc + " spock replication-set-add-table " + rep_set + " public.pgbench* --db " + db)
+
+    nd_port = nd_port + 1
+
+
+def validate(cluster_name):
+  """Validate a cluster configuration"""
+  util.exit_message("Coming Soon!")
+
+
+def init(cluster_name):
+  """Initialize cluster for Spock"""
+  util.exit_message("Coming Soon!")
+
+
+def destroy(cluster_name):
+  """Stop and then nuke a cluster"""
+
+  if not os.path.exists(base_dir):
+    util.exit_message("no cluster directory: " + str(base_dir), 1)
+
+  if cluster_name == "all":
+    kount = 0
+    for it in os.scandir(base_dir):
+      if it.is_dir():
+        kount = kount + 1
+        lc_destroy1(it.name, base_dir)
+    
+    if kount == 0:
+      util.exit_message("no cluster(s) to delete", 1)
+
+  else:
+    lc_destroy1(cluster_name, base_dir)
+
+
+def lc_destroy1(cluster_name, base_dir):
+  cluster_dir = base_dir + "/" + str(cluster_name)
+
+  command(cluster_name, "all", "stop", base_dir)
+
+  util.echo_cmd("rm -rf " + cluster_dir, 1)
+
+
+def command(cluster_name, node, cmd):
+  """Run './nodectl' commands on one or 'all' nodes."""
+
+  cluster_dir = base_dir + "/" + str(cluster_name)
+
+  if not os.path.exists(cluster_dir):
+    util.exit_message("cluster not found: " + cluster_dir, 1)
+
+  if node != "all":
+    rc = util.echo_cmd(cluster_dir + "/" + str(node) + "/nodectl " + str(cmd))
+    return(rc)
+
+  rc = 0
+  nd=1
+  node_dir = cluster_dir + "/n" + str(nd)
+
+  while os.path.exists(node_dir):
+    rc = util.echo_cmd(node_dir + "/nodectl " + str(cmd), 1)
+    nd = nd + 1
+    node_dir = cluster_dir + "/n" + str(nd)
+
   return(rc)
-
+ 
 
 def pre_reqs(port=5432):
   """Check Pre Requisites for installing pgEdge"""
@@ -233,12 +360,6 @@ def pre_reqs(port=5432):
     osSys("python3 get-pip.py --user", False)
     osSys("rm -f get-pip.py", False)
 
-  ##util.message("  Ensure FIRE pip3 module")
-  ##try:
-  ##  import fire
-  ##except ImportError as e:
-  ##  osSys("pip3 install fire --user --upgrade", False)
-
   util.message("  Ensure PSYCOPG-BINARY pip3 module")
   try:
     import psycopg
@@ -254,9 +375,10 @@ def pre_reqs(port=5432):
 
 if __name__ == '__main__':
   fire.Fire({
-    'pre-reqs':pre_reqs,
-    'install':install,
-    'tune':tune,
-    'remove':remove,
+    'create-local':   create_local,
+    'destroy':        destroy,
+    'validate':       validate,
+    'init':           init,
+    'command':        command,
+    'diff-tables':    diff_tables,
   })
-

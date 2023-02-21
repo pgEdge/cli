@@ -68,17 +68,17 @@ mode_list = ["start", "stop", "restart", "status", "list", "info", "update",
              "remove", "reload", "help", "get", "set", "unset",
              "backrest", "change-pgconf",
              "top", "spock", "cluster", "pgbin", "--autostart", 
-             "-U", "-P", "-d", "-p", "--country", "service", "um", "pgedge",
+             "service", "um", "kirk",
              "--start", "--no-restart", "--no-preload",
              "--help", "--json", "--jsonp", "--test", "--extensions", "--svcs",
              "--list", "--old", "--showduplicates", "-y", "-t",
              "--verbose", "-v", "--debug", "--debug2"]
 
 mode_list_advanced = ['kill', 'config', 'init', 'clean', 'useradd', 'spock', 
-                      'pgbin', 'cluster', 'service', 'um', 'pgedge']
+                      'pgbin', 'cluster', 'service', 'um', 'kirk']
 
 ignore_comp_list = [ "get", "set", "unset", "spock", "pgbin", "cluster", 
-                     "service", "um", "pgedge", "useradd", "backrest", "change-pgconf"]
+                     "service", "um", "kirk", "useradd", "backrest", "change-pgconf"]
 
 no_log_commands = ['status', 'info', 'list', 'top', 'get']
 
@@ -1400,8 +1400,8 @@ try:
     sys.exit(1)
 
 
-  ## SERVICE, CLUSTER, SPOCK, UM, PGEDGE #######################################
-  if p_mode in ('service', 'cluster', 'spock', 'um', 'pgedge'):
+  ## SERVICE, CLUSTER, SPOCK, UM, KIRK  #######################################
+  if p_mode in ('service', 'spock', 'um', 'kirk'):
     fire_away(p_mode, args)
 
 
