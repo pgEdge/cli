@@ -1,15 +1,9 @@
 
-import util, fire
 import os, sys, random, time
+import util, fire, meta
 
-#thisDir = os.path.dirname(os.path.realpath(__file__))
 nc = "./nodectl "
-
-#pgN = os.getenv('pgN', '')
-#if pgN == "":
-#  pgN = "15"
-#pgV = "pg" + pgN
-#
+base_dir = "cluster"
 
 withPOSTGREST = str(os.getenv("withPOSTGREST", "False"))
 withBACKREST  = str(os.getenv("withBACKREST",  "False"))
@@ -237,12 +231,12 @@ def create_local(cluster_name, num_nodes, User="lcusr", Passwd="lcpasswd",
     pgbench_cmd = '"pgbench --initialize --scale=' + str(num_nodes) + ' ' + str(db) + '"'
     util.echo_cmd(nc + "pgbin " + str(pg) +  " " + pgbench_cmd)
 
-    rep_set = 'pgbench-rep-set'
+    rep_set = 'pgbench-repset'
     dsn = "'host=localhost user=" + usr + "'"
 
     util.echo_cmd(nc + " spock create-node '" + node_nm + "' --dsn 'host=localhost user=replication' --db " + db)
-    util.echo_cmd(nc + " spock create-replication-set " + rep_set + " --db " + db)
-    util.echo_cmd(nc + " spock replication-set-add-table " + rep_set + " public.pgbench* --db " + db)
+    util.echo_cmd(nc + " spock create-repset " + rep_set + " --db " + db)
+    util.echo_cmd(nc + " spock add-repset-table " + rep_set + " public.pgbench* --db " + db)
 
     nd_port = nd_port + 1
 

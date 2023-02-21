@@ -431,7 +431,7 @@ if __name__ == '__main__':
       'create-sub':       create_sub,
       'show-sub-status':  show_sub_status,
       'show-sub-table':   show_sub_table,
-      'add-rep-set-sub':  add_rep_set_sub,
+      'add-repset-sub':   add_repset_sub,
       'wait-on-sub-sync': wait_on_sub_sync,
       'health-check':     health_check,
       'metrics-check':    metrics_check,
