@@ -39,8 +39,9 @@ def diff_tables(cluster_name, node1, node2, table_name):
   """Efficient Diff of tables across cluster"""
 
 
-def install(User=None, Password=None, database=None, country=None, port=5432, pgV="pg15",
-            autostart=True, with_bouncer=False, with_backrest=False, with_postgrest=False):
+def install(User=None, Password=None, database=None, country=None, port=5432,
+            pgV="pg15", autostart=True, with_bouncer=False, 
+            with_backrest=False, with_postgrest=False):
   """Install pgEdge components"""
 
   pgeUser = os.getenv('pgeUser', None)
@@ -304,17 +305,11 @@ def command(cluster_name, node, cmd):
   return(rc)
  
 
-def pre_reqs(port=5432):
+def pre_reqs(port=5432, pgV="pg15"):
   """Check Pre Requisites for installing pgEdge"""
 
   util.message("#### Checking for Pre-Req's #########################")
   platf = util.get_platform()
-
-  util.message("  Ensure CLICK pip3 module")
-  try:
-    import click
-  except Exception as e:
-    error_exit("You must 'pip3 install click' before running this installer further")
 
   util.message("  Verify Linux or macOS")
   if platf != "Linux" and platf != "Darwin":
@@ -330,17 +325,6 @@ def pre_reqs(port=5432):
   if p3_minor_ver < 6:
     error_exit("Python version must be greater than 3.6")
 
-  util.message("  Verify non-root user")
-  if util.is_admin():
-    error_exit("You must install as non-root user with passwordless sudo privleges")
-
-  data_dir = "data/" + pgV
-  util.message("  Verify empty data directory '" + data_dir + "'")
-  if os.path.exists(data_dir):
-    dir = os.listdir(data_dir)
-    if len(dir) != 0:
-      error_exit("The '" + data_dir + "' directory is not empty")
-
   util.message("  Ensure recent pip3")
   rc = os.system("pip3 --version >/dev/null 2>&1")
   if rc == 0:
@@ -355,11 +339,29 @@ def pre_reqs(port=5432):
     osSys("python3 get-pip.py --user", False)
     osSys("rm -f get-pip.py", False)
 
+  util.message("  Ensure CLICK pip3 module")
+  try:
+    import click
+  except Exception as e:
+    error_exit("You must 'pip3 install click' before running Kirk or Spock")
+
+  util.message("  Verify non-root user")
+  if util.is_admin():
+    error_exit("You must install as non-root user with passwordless sudo privleges")
+
+  data_dir = "data/" + pgV
+  util.message("  Verify empty data directory '" + data_dir + "'")
+  if os.path.exists(data_dir):
+    dir = os.listdir(data_dir)
+    if len(dir) != 0:
+      error_exit("The '" + data_dir + "' directory is not empty")
+
   util.message("  Ensure PSYCOPG-BINARY pip3 module")
   try:
     import psycopg
   except ImportError as e:
     osSys("pip3 install psycopg-binary --user --upgrade", False)
+    osSys("pip3 install psycopg        --user --upgrade", False)
 
   util.message("  Check PSUTIL module")
   try:
@@ -376,4 +378,5 @@ if __name__ == '__main__':
     'init':           init,
     'command':        command,
     'diff-tables':    diff_tables,
+    'pre-reqs':       pre_reqs,
   })

@@ -51,6 +51,7 @@ metrics-check      # Retrieve OS & DB metrics
 
 ## `kirk` - Installation and configuration of a pgEdge SPOCK cluster
 ```
+pre-reqs           # Check/Install Pre-Reqs for running Kirk and Spock
 create-local       # Create an n-node local cluster
 destroy            # Stop and then nuke a cluster
 validate           # Validate a cluster configuration
