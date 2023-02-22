@@ -221,6 +221,7 @@ def create_local(cluster_name, num_nodes, User="lcusr", Passwd="lcpasswd",
     os.system("cp -r conf " + node_dir + "/.")
     os.system("cp -r hub  " + node_dir + "/.")
     os.system("cp nodectl " + node_dir + "/.")
+    os.system("cp nc      " + node_dir + "/.")
 
     nc = (node_dir + "/nodectl ")
     parms =  " -U " + str(User) + " -P " + str(Passwd) + " -d " + str(db) + " -p " + str(nd_port)
@@ -268,13 +269,13 @@ def destroy(cluster_name):
       util.exit_message("no cluster(s) to delete", 1)
 
   else:
-    lc_destroy1(cluster_name, base_dir)
+    lc_destroy1(cluster_name)
 
 
-def lc_destroy1(cluster_name, base_dir):
+def lc_destroy1(cluster_name):
   cluster_dir = base_dir + "/" + str(cluster_name)
 
-  command(cluster_name, "all", "stop", base_dir)
+  command(cluster_name, "all", "stop")
 
   util.echo_cmd("rm -rf " + cluster_dir, 1)
 
