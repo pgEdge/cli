@@ -1,7 +1,7 @@
 
 bundle=pgedge
 api=nodectl
-hubV=2.24
+hubV=2.25
 
 spockV=3.0.18-1
 
