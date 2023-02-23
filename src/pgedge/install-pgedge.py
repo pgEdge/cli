@@ -43,12 +43,6 @@ def check_pre_reqs():
   util.message("#### Checking for Pre-Req's #########################")
   platf = util.get_platform()
 
-  util.message("  Ensure CLICK pip3 module")
-  try:
-    import click
-  except Exception as e:
-    error_exit("You must 'pip3 install click' before running this installer further")
-
   util.message("  Verify Linux or macOS")
   if platf != "Linux" and platf != "Darwin":
     error_exit("OS must be Linux or macOS")
@@ -123,19 +117,13 @@ def check_pre_reqs():
     osSys("python3 get-pip.py --user", False)
     osSys("rm -f get-pip.py", False)
 
-  util.message("  Ensure FIRE pip3 module")
-  try:
-    import fire
-  except ImportError as e:
-    osSys("pip3 install fire --user --upgrade", False)
-
   util.message("  Ensure PSYCOPG-BINARY pip3 module")
   try:
     import psycopg
   except ImportError as e:
     osSys("pip3 install psycopg-binary --user --upgrade", False)
 
-  util.message("  Check PSUTIL module")
+  util.message("  Check for PSUTIL module")
   try:
     import psutil
   except ImportError as e:
