@@ -34,10 +34,10 @@ init               # Initialize a component
 
 ## `spock` - Logical and Multi-Active PostgreSQL node configuration
 ```
-install            # Install a node
+install            # Install Postgres and configure it with the SPOCK extension
 validate           # Validate Pre-Req's for running advanced commands
 tune               # Tune for this configuration
-create-node        # Create a spock node
+create-node        # Name this spock node
 create-repset      # Define a replication set
 create-sub         # Create a subscription
 add-table-repset   # Add table[s] to a replication set
@@ -51,12 +51,11 @@ metrics-check      # Retrieve OS & DB metrics
 
 ## `kirk` - Installation and configuration of a pgEdge SPOCK cluster
 ```
-pre-reqs           # Check/Install Pre-Reqs for running Kirk and Spock
-create-local       # Create an n-node local cluster
+create-local       # Create & initialize an n-node local cluster
 destroy            # Stop and then nuke a cluster
-validate           # Validate a cluster configuration
-init               # Initialize cluster for SPOCK
-command            # Run `nodectl` command on one or all nodes of the cluster
+validate           # Validate a remote cluster configuration
+init               # Initialize a remote cluster for SPOCK
+command            # Run `nodectl` command on one or all nodes of a cluster
 diff-tables        # Compare table on different nodes
 ```
 

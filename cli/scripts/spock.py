@@ -100,6 +100,65 @@ def get_eq(parm, val, sufx):
   return(colon_equal)
 
 
+def validate(port=5432, pgV="pg15"):
+  """Check Pre Requisites for using spock advanced commands"""
+  util.message("#### Checking for Pre-Req's #########################")
+  platf = util.get_platform()
+
+  util.message("  Verify Linux or macOS")
+  if platf != "Linux" and platf != "Darwin":
+    error_exit("OS must be Linux or macOS")
+
+  if platf == "Linux":
+    util.message("  Verify Linux supported glibc version")
+    if util.get_glibc_version() < "2.28":
+      error_exit("Linux has unsupported (older) version of glibc")
+
+  util.message("  Verify Python 3.6+")
+  p3_minor_ver = util.get_python_minor_version()
+  if p3_minor_ver < 6:
+    error_exit("Python version must be greater than 3.6")
+
+  util.message("  Ensure recent pip3")
+  rc = os.system("pip3 --version >/dev/null 2>&1")
+  if rc == 0:
+    os.system("pip3 install --upgrade pip --user")
+  else:
+    url="https://bootstrap.pypa.io/get-pip.py"
+    if p3_minor_ver == 6:
+      url="https://bootstrap.pypa.io/pip/3.6/get-pip.py"
+    util.message("\n# Trying to install 'pip3'")
+    osSys("rm -f get-pip.py", False)
+    osSys("curl -O " + url, False)
+    osSys("python3 get-pip.py --user", False)
+    osSys("rm -f get-pip.py", False)
+
+  util.message("  Verify non-root user")
+  if util.is_admin():
+    error_exit("You must install as non-root user with passwordless sudo privleges")
+
+  data_dir = "data/" + pgV
+  util.message("  Verify empty data directory '" + data_dir + "'")
+  if os.path.exists(data_dir):
+    dir = os.listdir(data_dir)
+    if len(dir) != 0:
+      error_exit("The '" + data_dir + "' directory is not empty")
+
+  util.message("  Ensure PSYCOPG-BINARY pip3 module")
+  try:
+    import psycopg
+  except ImportError as e:
+    osSys("pip3 install psycopg-binary --user --upgrade", False)
+    osSys("pip3 install psycopg        --user --upgrade", False)
+
+  util.message("  Check for PSUTIL module")
+  try:
+    import psutil
+  except ImportError as e:
+    util.message("  You need a native PSUTIL module to run 'metrics-check' or 'top'")
+
+
+
 def tune(component="pg15"):
   """Tune pgEdge components"""
 
@@ -423,6 +482,7 @@ def metrics_check(db, pg=None):
 
 if __name__ == '__main__':
   fire.Fire({
+      'validate':         validate,
       'create-node':      create_node,
       'tune':             tune,
       'create-repset':    create_repset,

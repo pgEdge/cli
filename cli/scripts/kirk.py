@@ -264,7 +264,7 @@ def destroy(cluster_name):
     for it in os.scandir(base_dir):
       if it.is_dir():
         kount = kount + 1
-        lc_destroy1(it.name, base_dir)
+        lc_destroy1(it.name)
     
     if kount == 0:
       util.exit_message("no cluster(s) to delete", 1)
@@ -305,71 +305,6 @@ def command(cluster_name, node, cmd):
   return(rc)
  
 
-def pre_reqs(port=5432, pgV="pg15"):
-  """Check Pre Requisites for installing pgEdge"""
-
-  util.message("#### Checking for Pre-Req's #########################")
-  platf = util.get_platform()
-
-  util.message("  Verify Linux or macOS")
-  if platf != "Linux" and platf != "Darwin":
-    error_exit("OS must be Linux or macOS")
-
-  if platf == "Linux":
-    util.message("  Verify Linux supported glibc version")
-    if util.get_glibc_version() < "2.28":
-      error_exit("Linux has unsupported (older) version of glibc")
-
-  util.message("  Verify Python 3.6+")
-  p3_minor_ver = util.get_python_minor_version()
-  if p3_minor_ver < 6:
-    error_exit("Python version must be greater than 3.6")
-
-  util.message("  Ensure recent pip3")
-  rc = os.system("pip3 --version >/dev/null 2>&1")
-  if rc == 0:
-    os.system("pip3 install --upgrade pip --user")
-  else:
-    url="https://bootstrap.pypa.io/get-pip.py"
-    if p3_minor_ver == 6:
-      url="https://bootstrap.pypa.io/pip/3.6/get-pip.py"
-    util.message("\n# Trying to install 'pip3'")
-    osSys("rm -f get-pip.py", False)
-    osSys("curl -O " + url, False)
-    osSys("python3 get-pip.py --user", False)
-    osSys("rm -f get-pip.py", False)
-
-  util.message("  Ensure CLICK pip3 module")
-  try:
-    import click
-  except Exception as e:
-    error_exit("You must 'pip3 install click' before running Kirk or Spock")
-
-  util.message("  Verify non-root user")
-  if util.is_admin():
-    error_exit("You must install as non-root user with passwordless sudo privleges")
-
-  data_dir = "data/" + pgV
-  util.message("  Verify empty data directory '" + data_dir + "'")
-  if os.path.exists(data_dir):
-    dir = os.listdir(data_dir)
-    if len(dir) != 0:
-      error_exit("The '" + data_dir + "' directory is not empty")
-
-  util.message("  Ensure PSYCOPG-BINARY pip3 module")
-  try:
-    import psycopg
-  except ImportError as e:
-    osSys("pip3 install psycopg-binary --user --upgrade", False)
-    osSys("pip3 install psycopg        --user --upgrade", False)
-
-  util.message("  Check PSUTIL module")
-  try:
-    import psutil
-  except ImportError as e:
-    util.message("  You need a native PSUTIL module to run 'metrics-check' or 'top'")
-
-
 if __name__ == '__main__':
   fire.Fire({
     'create-local':   create_local,
@@ -378,5 +313,4 @@ if __name__ == '__main__':
     'init':           init,
     'command':        command,
     'diff-tables':    diff_tables,
-    'pre-reqs':       pre_reqs,
   })
