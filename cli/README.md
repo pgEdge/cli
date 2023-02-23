@@ -56,7 +56,7 @@ destroy            # Stop and then nuke a cluster
 validate           # Validate a remote cluster configuration
 init               # Initialize a remote cluster for SPOCK
 command            # Run `nodectl` command on one or all nodes of a cluster
-diff-tables        # Compare table on different nodes
+diff-tables        # Compare table on different cluster nodes
 ```
 
 ## Options

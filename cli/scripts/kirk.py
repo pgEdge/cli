@@ -36,8 +36,20 @@ def osSys(cmd, fatal_exit=True):
 
 
 def diff_tables(cluster_name, node1, node2, table_name):
-  """Efficient Diff of tables across cluster"""
+  """Compare table on different cluster nodes"""
 
+  if not os.path.isdir("pgdiff"):
+    util.message("Installing the required 'pgdiff' component.")
+    os.system("./nodectl install pgdiff")
+
+  check_cluster_exists(cluster_name)
+
+  if node1 == node2:
+    util.exit_message("node1 must be different than node2")
+
+  check_node_exists(cluster_name, node1)
+  check_node_exists(cluster_name, node2)
+    
 
 def install(User=None, Password=None, database=None, country=None, port=5432,
             pgV="pg15", autostart=True, with_bouncer=False, 
@@ -281,13 +293,24 @@ def lc_destroy1(cluster_name):
   util.echo_cmd("rm -rf " + cluster_dir, 1)
 
 
-def command(cluster_name, node, cmd):
-  """Run './nodectl' commands on one or 'all' nodes."""
+def check_node_exists(cluster_name, node_name):
+  node_dir = base_dir + "/" + str(cluster_name) + "/" + str(node_name)
 
+  if not os.path.exists(node_dir):
+    util.exit_message("node not found: " + node_dir, 1)
+
+
+def check_cluster_exists(cluster_name):
   cluster_dir = base_dir + "/" + str(cluster_name)
 
   if not os.path.exists(cluster_dir):
     util.exit_message("cluster not found: " + cluster_dir, 1)
+
+
+def command(cluster_name, node, cmd):
+  """Run './nodectl' commands on one or 'all' nodes."""
+
+  check_cluster_exists(cluster_name)
 
   if node != "all":
     rc = util.echo_cmd(cluster_dir + "/" + str(node) + "/nodectl " + str(cmd))
