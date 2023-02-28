@@ -43,7 +43,7 @@ add-table-repset   # Add table[s] to a replication set
 add-repset-sub     # Add replication set to a subscription
 show-sub-status    # Display the status of the subcription
 show-sub-table     # Display subscription table(s)
-wait-for-sub-sync  # Pause until subscription is synched
+wait-on-sub-sync   # Pause until subscription is synched
 health-check       # Check if PG is accepting connections
 metrics-check      # Retrieve OS & DB metrics
 ```
@@ -62,6 +62,6 @@ diff-tables        # Compare table on different cluster nodes
 ```
 --json             # Turn on JSON output
 --debug            # Turn on debug logging
---silent           # less noisy
---verbose or -v    # more noisy
+--silent           # Less noisy
+--verbose or -v    # More noisy
 ```

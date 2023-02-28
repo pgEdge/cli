@@ -1,4 +1,3 @@
-
 import sys, os, json, subprocess, time
 import util, meta, api, fire
 
@@ -357,7 +356,7 @@ def get_table_list(table, db, pg_v):
   return([table])
 
 
-def add_repset_table(replication_set, table, db, cols=None, pg=None):
+def add_table_repset(replication_set, table, db, cols=None, pg=None):
   """Add one or more tables to a replication set."""
 
   pg_v = get_pg_v(pg)
@@ -622,14 +621,14 @@ if __name__ == '__main__':
   fire.Fire({
       'install':          install,
       'validate':         validate,
-      'create-node':      create_node,
       'tune':             tune,
+      'create-node':      create_node,
       'create-repset':    create_repset,
-      'add-repset-table': add_repset_table,
       'create-sub':       create_sub,
+      'add-table-repset': add_table_repset,
+      'add-repset-sub':   add_repset_sub,
       'show-sub-status':  show_sub_status,
       'show-sub-table':   show_sub_table,
-      'add-repset-sub':   add_repset_sub,
       'wait-on-sub-sync': wait_on_sub_sync,
       'health-check':     health_check,
       'metrics-check':    metrics_check,
