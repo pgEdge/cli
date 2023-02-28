@@ -1,4 +1,4 @@
-pgEdge Community License Agreement 1.0
+## pgEdge Community License Agreement 1.0
 
 Please note: this license is derived from the Confluent Community License 
 Agreement 1.0. None of the terms of the Confluent license have been materially 
@@ -15,7 +15,7 @@ AND WARRANT THAT YOU HAVE THE ACTUAL AUTHORITY TO AGREE TO THE TERMS AND
 CONDITIONS OF THIS AGREEMENT ON BEHALF OF SUCH ENTITY. “Licensee” means you,
 an individual, or the entity on whose behalf you are receiving the Software.
 
-1. LICENSE GRANT AND CONDITIONS.
+### 1. LICENSE GRANT AND CONDITIONS.
 
 1.1 License. Subject to the terms and conditions of this Agreement, pgEdge 
 hereby grants to Licensee a non-exclusive, royalty-free, worldwide, 
@@ -59,33 +59,33 @@ Software, however, each recipient to which Licensee provides the Software may
 exercise the Licenses so long as such recipient agrees to and abides by the 
 terms and conditions of this Agreement.
 
-2. TERM AND TERMINATION.
+### 2. TERM AND TERMINATION.
 This Agreement will continue unless and until earlier terminated as set forth 
 herein. If Licensee breaches any of its conditions or obligations under this 
 Agreement, this Agreement will terminate automatically and the License will 
 terminate automatically and permanently.
 
-3. INTELLECTUAL PROPERTY.
+## 3. INTELLECTUAL PROPERTY.
 As between the parties, pgEdge will retain all right, title, and interest in 
 the Software, and all intellectual property rights therein. pgEdge hereby 
 reserves all rights not expressly granted to Licensee in this Agreement. pgEdge 
 hereby reserves all rights in its trademarks and service marks, and no licenses 
 therein are granted in this Agreement.
 
-4. DISCLAIMER.
+## 4. DISCLAIMER.
 PGEDGE HEREBY DISCLAIMS ANY AND ALL WARRANTIES AND CONDITIONS, EXPRESS, 
 IMPLIED, STATUTORY, OR OTHERWISE, AND SPECIFICALLY DISCLAIMS ANY WARRANTY OF 
 MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE, WITH RESPECT TO THE 
 SOFTWARE.
 
-5. LIMITATION OF LIABILITY.
+## 5. LIMITATION OF LIABILITY.
 PGEDGE WILL NOT BE LIABLE FOR ANY DAMAGES OF ANY KIND, INCLUDING BUT NOT 
 LIMITED TO, LOST PROFITS OR ANY CONSEQUENTIAL, SPECIAL, INCIDENTAL, INDIRECT, 
 OR DIRECT DAMAGES, HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, ARISING OUT 
 OF THIS AGREEMENT. THE FOREGOING SHALL APPLY TO THE EXTENT PERMITTED BY 
 APPLICABLE LAW.
 
-6. GENERAL.
+## 6. GENERAL.
 
 6.1  Governing Law. This Agreement will be governed by and interpreted in 
 accordance with the laws of the state of Virginia, without reference to its 
