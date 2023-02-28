@@ -18,7 +18,7 @@ def list():
 
 
 def update():
-  """Retrieve new list of components & update this software"""
+  """Update nodectl with a new list of available components"""
 
   run_cmd('update')
 
@@ -60,6 +60,6 @@ if __name__ == '__main__':
     'install':install,
     'remove':remove,
     'upgrade':upgrade,
-    'downgrade':downgrade,
+    ## 'downgrade':downgrade,
     'clean':clean,
   })
