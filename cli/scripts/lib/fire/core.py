@@ -237,8 +237,8 @@ def _IsHelpShortcut(component_trace, remaining_args):
   if show_help:
     component_trace.show_help = True
     command = '{cmd} -- --help'.format(cmd=component_trace.GetCommand())
-    print('INFO: Showing help with the command {cmd}.\n'.format(
-        cmd=pipes.quote(command)), file=sys.stderr)
+    #print('INFO: Showing help with the command {cmd}.\n'.format(
+    #    cmd=pipes.quote(command)), file=sys.stderr)
   return show_help
 
 

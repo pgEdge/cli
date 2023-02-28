@@ -81,8 +81,17 @@ def HelpText(component, trace=None, verbose=False):
   else:
     args_and_flags_sections = []
     notes_sections = []
+
   usage_details_sections = _UsageDetailsSections(component,
                                                  actions_grouped_by_kind)
+
+
+  if usage_details_sections:
+    print("\nCOMMANDS")
+    usg_list = str(usage_details_sections[0][1]).split("\n")
+    for usg in usg_list:
+      print("    " + usg)
+    ##print(str(usage_details_sections[0][1]))
 
   sections = (
       [name_section, synopsis_section, description_section]
@@ -90,6 +99,7 @@ def HelpText(component, trace=None, verbose=False):
       + usage_details_sections
       + notes_sections
   )
+
   return '\n\n'.join(
       _CreateOutputSection(*section)
       for section in sections if section is not None
@@ -114,6 +124,7 @@ def _NameSection(component, info, trace=None, verbose=False):
     text = current_command + ' - ' + summary
   else:
     text = current_command
+  print("\nNAME\n    " + text)
   return ('NAME', text)
 
 
@@ -142,6 +153,9 @@ def _SynopsisSection(component, actions_grouped_by_kind, spec, metadata,
       current_command=current_command,
       continuation=continuation)
 
+  txt = text.replace("spock.py", "./nodectl spock")
+  print("\nSYNOPSIS\n    " + txt)
+
   return ('SYNOPSIS', text)
 
 
@@ -168,6 +182,7 @@ def _DescriptionSection(component, info):
   # Fall back to summary if description is not available.
   text = description or summary or None
   if text:
+    print("\nDESCRIPTION\n    " + text)
     return ('DESCRIPTION', text)
   else:
     return None
@@ -221,6 +236,12 @@ def _ArgsAndFlagsSections(info, spec, metadata):
     title = 'POSITIONAL ARGUMENTS' if accepts_positional_args else 'ARGUMENTS'
     arguments_section = (title, '\n'.join(arg_items).rstrip('\n'))
     args_and_flags_sections.append(arguments_section)
+
+    print("\nPOSITIONAL ARGUMENTS")
+    args_lst = arguments_section[1].split("\n")
+    for arg in args_lst:
+      print("    " + arg)
+
     if args_with_no_defaults and accepts_positional_args:
       notes_sections.append(
           ('NOTES', 'You can also use flags syntax for POSITIONAL ARGUMENTS')
@@ -289,6 +310,11 @@ def _ArgsAndFlagsSections(info, spec, metadata):
   if flag_items:
     flags_section = ('FLAGS', '\n'.join(flag_items))
     args_and_flags_sections.append(flags_section)
+
+    print("\nFLAGS")
+    flags_lst = flags_section[1].split("\n")
+    for flag in flags_lst:
+      print("    " + flag)
 
   return args_and_flags_sections, notes_sections
 
