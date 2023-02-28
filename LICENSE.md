@@ -42,7 +42,7 @@ Software, and Licensee must provide the notice below with each copy.
 
   "This software is made available by pgEdge, Inc., under the terms of the pgEdge 
    Community License Agreement, Version 1.0 located at 
-   https://www.pgEdge.com/pgEdge-community-license. BY INSTALLING, DOWNLOADING, 
+   www.pgEdge.com/pgEdge-community-license. BY INSTALLING, DOWNLOADING, 
    ACCESSING, USING OR DISTRIBUTING ANY OF THE SOFTWARE, YOU AGREE TO THE TERMS OF 
    SUCH LICENSE AGREEMENT."
 
@@ -66,16 +66,16 @@ Agreement, this Agreement will terminate automatically and the License will
 terminate automatically and permanently.
 
 ### 3. INTELLECTUAL PROPERTY.
-As between the parties, pgEdge will retain all right, title, and interest in 
-the Software, and all intellectual property rights therein. pgEdge hereby 
-reserves all rights not expressly granted to Licensee in this Agreement. pgEdge 
-hereby reserves all rights in its trademarks and service marks, and no licenses 
+As between the parties, pgEdge will retain all right, title, and interest in
+the Software, and all intellectual property rights therein. pgEdge hereby
+reserves all rights not expressly granted to Licensee in this Agreement. pgEdge
+hereby reserves all rights in its trademarks and service marks, and no licenses
 therein are granted in this Agreement.
 
 ### 4. DISCLAIMER.
-PGEDGE HEREBY DISCLAIMS ANY AND ALL WARRANTIES AND CONDITIONS, EXPRESS, 
-IMPLIED, STATUTORY, OR OTHERWISE, AND SPECIFICALLY DISCLAIMS ANY WARRANTY OF 
-MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE, WITH RESPECT TO THE 
+PGEDGE HEREBY DISCLAIMS ANY AND ALL WARRANTIES AND CONDITIONS, EXPRESS,
+IMPLIED, STATUTORY, OR OTHERWISE, AND SPECIFICALLY DISCLAIMS ANY WARRANTY OF
+MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE, WITH RESPECT TO THE
 SOFTWARE.
 
 ### 5. LIMITATION OF LIABILITY.
