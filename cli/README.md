@@ -1,7 +1,7 @@
 # NODECTL
-NODECTL is the pgEdge Node Control Command Line Interface (CLI).  It is a 
-cross-platform tool to manage your PostgreSQL eco-system of components.
-The modules are `um`, `service`, `spock`, `kirk` & `info`
+NODECTL is the pgEdge Command Line Interface (CLI).  It is a cross-platform 
+tool to manage your PostgreSQL eco-system of components.  The modules are 
+`um`, `service`, `spock`, `cluster`
 
 ## Synopsis
 ```
@@ -33,7 +33,7 @@ init               # Initialize a component
 
 ## `spock` - Logical and Multi-Active PostgreSQL node configuration
 ```
-install            # Install Postgres and configure it with the SPOCK extension
+install            # Install Postgres and configure with the SPOCK extension
 validate           # Validate Pre-Req's for running advanced commands
 tune               # Tune for this configuration
 create-node        # Name this spock node
@@ -48,7 +48,7 @@ health-check       # Check if PG is accepting connections
 metrics-check      # Retrieve OS & DB metrics
 ```
 
-## `kirk` - Installation and configuration of a pgEdge SPOCK cluster
+## `cluster` - Installation and configuration of a pgEdge SPOCK cluster
 ```
 create-local       # Create local cluster of N pgEdge nodes on different ports
 destroy            # Stop and then nuke a cluster

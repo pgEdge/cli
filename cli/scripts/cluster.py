@@ -1,18 +1,34 @@
- 
-import sys, os
-import util, meta, fire
 
-#try:
-#  import psycopg
-#except ImportError as e:
-#  util.exit_message("Missing 'psycopg-binary' module from pip", 1)
+import os, sys, random, time
+import util, fire, meta
 
 base_dir = "cluster"
 
 
-def local(cluster_name, num_nodes, User="lcusr", Passwd="lcpasswd", 
+def diff_tables(cluster_name, node1, node2, table_name):
+  """Compare table on different cluster nodes"""
+
+  if not os.path.isdir("pgdiff"):
+    util.message("Installing the required 'pgdiff' component.")
+    os.system("./nodectl install pgdiff")
+
+  check_cluster_exists(cluster_name)
+
+  if node1 == node2:
+    util.exit_message("node1 must be different than node2")
+
+  check_node_exists(cluster_name, node1)
+  check_node_exists(cluster_name, node2)
+    
+
+def remove(rm_data=False):
+  """Remove pgEdge components"""
+  pass
+
+
+def create_local(cluster_name, num_nodes, User="lcusr", Passwd="lcpasswd", 
            db="lcdb", port1=6432, pg="15"):
-  """Create a local cluster that runs N instances of pgEdge each running PG on a different port."""
+  """Create local cluster of N pgEdge nodes on different ports."""
 
   cluster_dir = base_dir + os.sep + cluster_name
 
@@ -61,6 +77,7 @@ def local(cluster_name, num_nodes, User="lcusr", Passwd="lcpasswd",
     os.system("cp -r conf " + node_dir + "/.")
     os.system("cp -r hub  " + node_dir + "/.")
     os.system("cp nodectl " + node_dir + "/.")
+    os.system("cp nc      " + node_dir + "/.")
 
     nc = (node_dir + "/nodectl ")
     parms =  " -U " + str(User) + " -P " + str(Passwd) + " -d " + str(db) + " -p " + str(nd_port)
@@ -71,12 +88,12 @@ def local(cluster_name, num_nodes, User="lcusr", Passwd="lcpasswd",
     pgbench_cmd = '"pgbench --initialize --scale=' + str(num_nodes) + ' ' + str(db) + '"'
     util.echo_cmd(nc + "pgbin " + str(pg) +  " " + pgbench_cmd)
 
-    rep_set = 'pgbench-rep-set'
+    rep_set = 'pgbench-repset'
     dsn = "'host=localhost user=" + usr + "'"
 
     util.echo_cmd(nc + " spock create-node '" + node_nm + "' --dsn 'host=localhost user=replication' --db " + db)
-    util.echo_cmd(nc + " spock create-replication-set " + rep_set + " --db " + db)
-    util.echo_cmd(nc + " spock replication-set-add-table " + rep_set + " public.pgbench* --db " + db)
+    util.echo_cmd(nc + " spock create-repset " + rep_set + " --db " + db)
+    util.echo_cmd(nc + " spock add-repset-table " + rep_set + " public.pgbench* --db " + db)
 
     nd_port = nd_port + 1
 
@@ -102,30 +119,43 @@ def destroy(cluster_name):
     for it in os.scandir(base_dir):
       if it.is_dir():
         kount = kount + 1
-        lc_destroy1(it.name, base_dir)
+        lc_destroy1(it.name)
     
     if kount == 0:
       util.exit_message("no cluster(s) to delete", 1)
 
   else:
-    lc_destroy1(cluster_name, base_dir)
+    lc_destroy1(cluster_name)
 
 
-def lc_destroy1(cluster_name, base_dir):
+def lc_destroy1(cluster_name):
   cluster_dir = base_dir + "/" + str(cluster_name)
 
-  command(cluster_name, "all", "stop", base_dir)
+  command(cluster_name, "all", "stop")
 
   util.echo_cmd("rm -rf " + cluster_dir, 1)
+
+
+def check_node_exists(cluster_name, node_name):
+  node_dir = base_dir + "/" + str(cluster_name) + "/" + str(node_name)
+
+  if not os.path.exists(node_dir):
+    util.exit_message("node not found: " + node_dir, 1)
+
+
+def check_cluster_exists(cluster_name):
+  cluster_dir = base_dir + "/" + str(cluster_name)
+
+  if not os.path.exists(cluster_dir):
+    util.exit_message("cluster not found: " + cluster_dir, 1)
 
 
 def command(cluster_name, node, cmd):
   """Run './nodectl' commands on one or 'all' nodes."""
 
-  cluster_dir = base_dir + "/" + str(cluster_name)
+  check_cluster_exists(cluster_name)
 
-  if not os.path.exists(cluster_dir):
-    util.exit_message("cluster not found: " + cluster_dir, 1)
+  cluster_dir = base_dir + "/" + str(cluster_name)
 
   if node != "all":
     rc = util.echo_cmd(cluster_dir + "/" + str(node) + "/nodectl " + str(cmd))
@@ -141,14 +171,14 @@ def command(cluster_name, node, cmd):
     node_dir = cluster_dir + "/n" + str(nd)
 
   return(rc)
-
+ 
 
 if __name__ == '__main__':
   fire.Fire({
-    'local':local,
-    'validate':validate,
-    'init': init,
-    'destroy':destroy,
-    'command':command,
+    'create-local':   create_local,
+    'destroy':        destroy,
+    'validate':       validate,
+    'init':           init,
+    'command':        command,
+    'diff-tables':    diff_tables,
   })
-

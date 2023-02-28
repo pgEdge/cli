@@ -38,7 +38,9 @@ MY_CMD =  os.getenv('MY_CMD')
 sys.path.append(os.path.join(os.path.dirname(__file__), 'lib'))
 
 this_platform_system = str(platform.system())
-platform_lib_path = os.path.join(os.path.dirname(__file__), 'lib', this_platform_system)
+platform_lib_path = os.path.join(
+  os.path.dirname(__file__), 'lib', this_platform_system)
+
 if os.path.exists(platform_lib_path):
   if platform_lib_path not in sys.path:
     sys.path.append(platform_lib_path)
@@ -66,19 +68,18 @@ dep9 = util.get_depend()
 mode_list = ["start", "stop", "restart", "status", "list", "info", "update",
              "upgrade", "downgrade", "enable", "disable", "install", "tune",
              "remove", "reload", "help", "get", "set", "unset",
-             "backrest", "change-pgconf",
-             "top", "spock", "cluster", "pgbin", "--autostart", 
-             "service", "um", "kirk",
+             "backrest", "change-pgconf", "top", "spock", "pgbin", 
+             "--autostart", "service", "um", "cluster",
              "--start", "--no-restart", "--no-preload",
              "--help", "--json", "--jsonp", "--test", "--extensions", "--svcs",
              "--list", "--old", "--showduplicates", "-y", "-t",
              "--verbose", "-v", "--debug", "--debug2"]
 
 mode_list_advanced = ['kill', 'config', 'init', 'clean', 'useradd', 'spock', 
-                      'pgbin', 'cluster', 'service', 'um', 'kirk']
+                      'pgbin', 'cluster', 'service', 'um']
 
 ignore_comp_list = [ "get", "set", "unset", "spock", "pgbin", "cluster", 
-                     "service", "um", "kirk", "useradd", "backrest", "change-pgconf"]
+                     "service", "um", "useradd", "backrest", "change-pgconf"]
 
 no_log_commands = ['status', 'info', 'list', 'top', 'get']
 
@@ -159,7 +160,7 @@ def is_depend_violation(p_comp, p_remove_list):
   return True
 
 
-## run external scripts #########################
+## run external scripts #######################################
 def run_script(componentName, scriptName, scriptParm):
   if componentName not in installed_comp_list:
     return
@@ -395,7 +396,7 @@ def install_comp(p_app, p_ver=0, p_rver=None, p_re_install=False):
     return 1
 
 
-## Downgrade Component ######################################################
+## Downgrade Component ####################################################
 def downgrade_component(p_comp):
   present_version = meta.get_version(p_comp)
   present_state   = util.get_comp_state(p_comp)
@@ -404,7 +405,7 @@ def downgrade_component(p_comp):
   return 1
 
 
-## Upgrade Component ######################################################
+## Upgrade Component #####################################################
 def upgrade_component(p_comp):
   present_version = meta.get_version(p_comp)
   if not present_version:
@@ -455,11 +456,13 @@ def upgrade_component(p_comp):
   if p_comp == "hub":
     msg = "updating from v" + present_version + "  to  v" + update_version
   else:
-    msg = "upgrading " + p_comp + " from (" + present_version + ") to (" + update_version + ")"
+    msg = "upgrading " + p_comp + " from (" + present_version + \
+      ") to (" + update_version + ")"
 
   my_logger.info(msg)
   if isJSON:
-    print('[{"state":"update","status":"start","component":"' + p_comp + '","msg":"'+msg+'"}]')
+    print('[{"state":"update","status":"start","component":"' + p_comp + \
+       '","msg":"'+msg+'"}]')
   else:
     if not isSILENT:
       print(msg)
@@ -477,7 +480,8 @@ def upgrade_component(p_comp):
       d_comp_server_port     = util.get_comp_port(d_comp)
       d_comp_server_running = False
       if d_comp_server_port > "1":
-        d_comp_server_running = util.is_socket_busy(int(d_comp_server_port), p_comp)
+        d_comp_server_running = util.is_socket_busy(
+              int(d_comp_server_port), p_comp)
       if d_comp_server_running:
         my_logger.info("Stopping the " + d_comp + " to upgrade the " + p_comp)
         run_script(d_comp, "stop-" + d_comp, "stop")
@@ -1400,12 +1404,12 @@ try:
     sys.exit(1)
 
 
-  ## SERVICE, CLUSTER, SPOCK, UM, KIRK  #######################################
-  if p_mode in ('service', 'spock', 'um', 'kirk'):
+  ## SERVICE, CLUSTER, SPOCK, UM  ############################################
+  if p_mode in ('service', 'spock', 'um', 'cluster'):
     fire_away(p_mode, args)
 
 
-  ## TOP ######################################################################################
+  ## TOP #####################################################################
   if p_mode == 'top':
     try:
       api.top(display=False)
@@ -1421,7 +1425,7 @@ try:
     exit_cleanly(0)
 
 
-  ## INFO ######################################################################################
+  ## INFO ####################################################################
   if (p_mode == 'info'):
     if(p_comp=="all" and info_arg==0):
       api.info(isJSON, MY_HOME, REPO)
@@ -1603,7 +1607,7 @@ try:
     exit_cleanly(0)
 
 
-  ## LIST ##################################################################################
+  ## LIST #########################################################
   if (p_mode == 'list'):
     meta.get_list(isSHOWDUPS, isEXTENSIONS, isJSON, isTEST, False, p_comp=p_comp)
 
