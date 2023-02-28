@@ -50,7 +50,8 @@ SECTION_INDENTATION = 4
 SUBSECTION_INDENTATION = 4
 
 ENDC = '\033[0m'
-BOLD_START = '\033[1m'
+BOLD = '\033[1m'
+ITALIC = '\033[3m'
 
 
 def print_me(p_input):
@@ -94,10 +95,24 @@ def HelpText(component, trace=None, verbose=False):
 
 
   if usage_details_sections:
-    print_me("\n" + BOLD_START + "COMMANDS" + ENDC)
+    print_me("\n" + BOLD + "COMMANDS" + ENDC)
     usg_list = str(usage_details_sections[0][1]).split("\n")
+    ln = ""
+    kount = 0
     for usg in usg_list:
-      print_me("    " + usg)
+      if usg.strip() == "":
+        if ln > "":
+          print_me(ln)
+        kount = 0
+        ln = ""
+      else:
+        kount = kount + 1
+        if kount == 1:
+          ln = ln + "    " + usg
+        else:
+          ln = ln + ' '*(25 - len(ln)) + ITALIC + "# " + usg.strip() + ENDC
+
+    print_me(ln)
 
   sections = (
       [name_section, synopsis_section, description_section]
@@ -131,7 +146,7 @@ def _NameSection(component, info, trace=None, verbose=False):
   else:
     text = current_command
 
-  ##print_me("\n" + BOLD_START + "NAME" + ENDC + "\n    " + text)
+  ##print_me("\n" + BOLD + "NAME" + ENDC + "\n    " + text)
   return ('NAME', text)
 
 
@@ -163,8 +178,9 @@ def _SynopsisSection(component, actions_grouped_by_kind, spec, metadata,
   txt = text.replace("spock.py", "./nodectl spock")
   txt = txt.replace("um.py", "./nodectl um")
   txt = txt.replace("service.py", "./nodectl service")
+  txt = txt.replace("kirk.py", "./nodectl kirk")
   
-  print_me("\n" + BOLD_START + "SYNOPSIS" + ENDC + "\n    " + txt)
+  print_me("\n" + BOLD + "SYNOPSIS" + ENDC + "\n    " + txt)
 
   return ('SYNOPSIS', text)
 
@@ -192,7 +208,7 @@ def _DescriptionSection(component, info):
   # Fall back to summary if description is not available.
   text = description or summary or None
   if text:
-    print_me("\n" + BOLD_START + "DESCRIPTION" + ENDC + "\n    " + text)
+    print_me("\n" + BOLD + "DESCRIPTION" + ENDC + "\n    " + text)
     return ('DESCRIPTION', text)
   else:
     return None
@@ -247,7 +263,7 @@ def _ArgsAndFlagsSections(info, spec, metadata):
     arguments_section = (title, '\n'.join(arg_items).rstrip('\n'))
     args_and_flags_sections.append(arguments_section)
 
-    print_me("\n" + BOLD_START + "POSITIONAL ARGUMENTS" + ENDC)
+    print_me("\n" + BOLD + "POSITIONAL ARGUMENTS" + ENDC)
     args_lst = arguments_section[1].split("\n")
     for arg in args_lst:
       print_me("    " + arg)
@@ -321,7 +337,7 @@ def _ArgsAndFlagsSections(info, spec, metadata):
     flags_section = ('FLAGS', '\n'.join(flag_items))
     args_and_flags_sections.append(flags_section)
 
-    print_me("\n" + BOLD_START + "FLAGS" + ENDC)
+    print_me("\n" + BOLD + "FLAGS" + ENDC)
     flags_lst = flags_section[1].split("\n")
     for flag in flags_lst:
       print_me("    " + flag)
