@@ -1747,7 +1747,7 @@ try:
         "        " + rel_date + " as rel_date, r.stage, c.description, c.category\n" + \
         "   FROM versions v, releases r, projects p, categories c \n" + \
         "  WHERE v.component = r.component AND r.project = p.project \n" + \
-        "    AND p.category = c.category \n" + \
+        "    AND p.category = c.category AND p.category > 0 \n" + \
         "    AND is_current = 1 \n" + \
         "    AND " + days_since_release + " <= 31 \n" + \
         "    AND " + util.like_pf("platform") + " \n" + \
@@ -1757,7 +1757,7 @@ try:
         "        " + rel_date + " as rel_date, r.stage, c.description, c.category \n" + \
                 "   FROM versions v, releases r, projects p, categories c \n" + \
         "  WHERE v.component = r.component  AND r.project = p.project \n" + \
-        "    AND p.category = c.category \n" + \
+        "    AND p.category = c.category AND p.category > 0 \n" + \
         "    AND is_current = 1 \n" + \
         "    AND " + days_since_release + " <= 31 \n" + \
         "    AND " + util.like_pf("platform") + " \n" + \
