@@ -528,11 +528,8 @@ def install(User=None, Password=None, database=None, country=None, port=5432,
   if not database and pgName:
     database = pgName
 
-  pgeCountry = os.getenv('pgeCountry', None)
-  if not country and pgeCountry:
-    country = pgeCountry
-  else:
-    country = str(country)
+  if country:
+    os.environ["pgeCountry"] =  str(country)
 
   try:
     pgePort = int(os.getenv('pgePort', '5432'))
@@ -542,12 +539,11 @@ def install(User=None, Password=None, database=None, country=None, port=5432,
     port = pgePort
 
   if util.get_platform() == "Darwin":
-    if isAutoStart == "True":
-      util.message("--autostart is ignored on macOS")
-      autostart = False
+    ## not supporting autostart mode on osx yet
+    autostart = False
 
-  print(f"User={User}, Password={Password}, database={database}, country={country}, port={port}")
-  print(f"autostart={autostart}, with_bouncer={with_bouncer}")
+  ##print(f"User={User}, Password={Password}, database={database}, country={country}, port={port}")
+  ##print(f"autostart={autostart}, with_bouncer={with_bouncer}")
 
   database = str(database)
   country = str(country)
