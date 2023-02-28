@@ -28,7 +28,7 @@ def remove(rm_data=False):
 
 def create_local(cluster_name, num_nodes, User="lcusr", Passwd="lcpasswd", 
            db="lcdb", port1=6432, pg="15"):
-  """Create a local cluster that runs N instances of pgEdge each running PG on a different port."""
+  """Create local cluster of N pgEdge nodes on different ports."""
 
   cluster_dir = base_dir + os.sep + cluster_name
 

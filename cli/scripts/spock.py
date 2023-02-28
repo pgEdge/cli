@@ -261,7 +261,7 @@ def show_sub_status(subscription_name, db, pg=None):
 
 
 def show_sub_table(subscription_name, relation, db, pg=None):
-  """ ???????? """
+  """Show the the subscriptions."""
 
   pg_v = get_pg_v(pg)
 
@@ -310,18 +310,6 @@ def get_pii_cols(db,schema=None,pg=None):
 
   run_psyco_sql(pg_v, db, sql)
   sys.exit(0)
-
-def show_rep_tables(db, schema=None,pg=None):
-  """Show the replication tables."""
-  pg_v = get_pg_v(pg)
-
-  if schema == None:
-    schema="public"
-  sql = "SELECT col.table_name, ARRAY_AGG(col.column_name) FROM information_schema.columns col LEFT OUTER JOIN spock.pii on col.table_name=pii.pii_table and col.column_name=pii.pii_column WHERE pii.pii_column IS NULL and table_schema='" + schema + "' GROUP BY 1 ORDER BY 1;"
-
-  run_psyco_sql(pg_v, db, sql)
-  sys.exit(0)
-
 
 def get_table_list(table, db, pg_v):
   w_schema = None
@@ -638,7 +626,6 @@ if __name__ == '__main__':
       'tune':             tune,
       'create-repset':    create_repset,
       'add-repset-table': add_repset_table,
-      'show-rep-tables':  show_rep_tables,
       'create-sub':       create_sub,
       'show-sub-status':  show_sub_status,
       'show-sub-table':   show_sub_table,

@@ -50,7 +50,7 @@ metrics-check      # Retrieve OS & DB metrics
 
 ## `kirk` - Installation and configuration of a pgEdge SPOCK cluster
 ```
-create-local       # Create & initialize an n-node local cluster
+create-local       # Create local cluster of N pgEdge nodes on different ports
 destroy            # Stop and then nuke a cluster
 validate           # Validate a remote cluster configuration
 init               # Initialize a remote cluster for SPOCK
