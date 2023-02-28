@@ -49,6 +49,13 @@ LINE_LENGTH = 80
 SECTION_INDENTATION = 4
 SUBSECTION_INDENTATION = 4
 
+ENDC = '\033[0m'
+BOLD_START = '\033[1m'
+
+
+def print_me(p_input):
+  print(p_input)
+
 
 def HelpText(component, trace=None, verbose=False):
   """Gets the help string for the current component, suitable for a help screen.
@@ -87,11 +94,10 @@ def HelpText(component, trace=None, verbose=False):
 
 
   if usage_details_sections:
-    print("\nCOMMANDS")
+    print_me("\n" + BOLD_START + "COMMANDS" + ENDC)
     usg_list = str(usage_details_sections[0][1]).split("\n")
     for usg in usg_list:
-      print("    " + usg)
-    ##print(str(usage_details_sections[0][1]))
+      print_me("    " + usg)
 
   sections = (
       [name_section, synopsis_section, description_section]
@@ -124,7 +130,8 @@ def _NameSection(component, info, trace=None, verbose=False):
     text = current_command + ' - ' + summary
   else:
     text = current_command
-  print("\nNAME\n    " + text)
+
+  ##print_me("\n" + BOLD_START + "NAME" + ENDC + "\n    " + text)
   return ('NAME', text)
 
 
@@ -154,7 +161,10 @@ def _SynopsisSection(component, actions_grouped_by_kind, spec, metadata,
       continuation=continuation)
 
   txt = text.replace("spock.py", "./nodectl spock")
-  print("\nSYNOPSIS\n    " + txt)
+  txt = txt.replace("um.py", "./nodectl um")
+  txt = txt.replace("service.py", "./nodectl service")
+  
+  print_me("\n" + BOLD_START + "SYNOPSIS" + ENDC + "\n    " + txt)
 
   return ('SYNOPSIS', text)
 
@@ -182,7 +192,7 @@ def _DescriptionSection(component, info):
   # Fall back to summary if description is not available.
   text = description or summary or None
   if text:
-    print("\nDESCRIPTION\n    " + text)
+    print_me("\n" + BOLD_START + "DESCRIPTION" + ENDC + "\n    " + text)
     return ('DESCRIPTION', text)
   else:
     return None
@@ -237,10 +247,10 @@ def _ArgsAndFlagsSections(info, spec, metadata):
     arguments_section = (title, '\n'.join(arg_items).rstrip('\n'))
     args_and_flags_sections.append(arguments_section)
 
-    print("\nPOSITIONAL ARGUMENTS")
+    print_me("\n" + BOLD_START + "POSITIONAL ARGUMENTS" + ENDC)
     args_lst = arguments_section[1].split("\n")
     for arg in args_lst:
-      print("    " + arg)
+      print_me("    " + arg)
 
     if args_with_no_defaults and accepts_positional_args:
       notes_sections.append(
@@ -311,10 +321,10 @@ def _ArgsAndFlagsSections(info, spec, metadata):
     flags_section = ('FLAGS', '\n'.join(flag_items))
     args_and_flags_sections.append(flags_section)
 
-    print("\nFLAGS")
+    print_me("\n" + BOLD_START + "FLAGS" + ENDC)
     flags_lst = flags_section[1].split("\n")
     for flag in flags_lst:
-      print("    " + flag)
+      print_me("    " + flag)
 
   return args_and_flags_sections, notes_sections
 
