@@ -155,6 +155,8 @@ def command(cluster_name, node, cmd):
 
   check_cluster_exists(cluster_name)
 
+  cluster_dir = base_dir + "/" + str(cluster_name)
+
   if node != "all":
     rc = util.echo_cmd(cluster_dir + "/" + str(node) + "/nodectl " + str(cmd))
     return(rc)
