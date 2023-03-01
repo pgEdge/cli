@@ -1,10 +1,11 @@
 
 ## set -x
 
-v12=12.13
-v13=13.9
-v14=14.6
-v15=15.1
+v11=11.19
+v12=12.14
+v13=13.10
+v14=14.7
+v15=15.2
 
 UNAME=`uname`
 
@@ -99,7 +100,10 @@ makeInstall () {
 ## MAINLINE ##############################
 
 options=""
-if [ "$1" == "12" ]; then
+if [ "$1" == "11" ]; then
+  options=""
+  downBuild $v11
+elif [ "$1" == "12" ]; then
   options=""
   downBuild $v12
 elif [ "$1" == "13" ]; then
@@ -112,7 +116,7 @@ elif [ "$1" == "15" ]; then
   options="--with-zstd --with-lz4"
   downBuild $v15
 else
-  echo "ERROR: Incorrect PG version.  Must be between 12 and 15"
+  echo "ERROR: Incorrect PG version.  Must be between 11 and 15"
   exit 1
 fi
  
