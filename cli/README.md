@@ -3,7 +3,7 @@ NODECTL is the pgEdge Command Line Interface (CLI).  It is a cross-platform
 tool to manage your PostgreSQL eco-system of components.  The modules are 
 `um`, `service`, `spock`, `cluster`.
 
-We are licensed under the [pgEdge Community License v1.0](PGEDGE-COMMUNITY-LICENSE.md)
+We are licensed under the [pgEdge Community License 1.0](PGEDGE-COMMUNITY-LICENSE.md)
 
 ## Synopsis
 ```
@@ -45,7 +45,7 @@ add-table-repset   # Add table[s] to a replication set
 add-repset-sub     # Add replication set to a subscription
 show-sub-status    # Display the status of the subcription
 show-sub-table     # Display subscription table(s)
-wait-on-sub-sync   # Pause until subscription is synched
+wait-for-sub-sync  # Pause until subscription is synched
 health-check       # Check if PG is accepting connections
 metrics-check      # Retrieve OS & DB metrics
 ```

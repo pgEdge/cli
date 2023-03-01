@@ -285,7 +285,7 @@ def add_repset_sub(subscription_name, replication_set, db, pg=None):
   sys.exit(0)
 
 
-def wait_on_sub_sync(subscription_name, db, pg=None):
+def wait_for_sub_sync(subscription_name, db, pg=None):
   """Pause until the subscription is synchronized."""
 
   pg_v = get_pg_v(pg)
@@ -629,7 +629,7 @@ if __name__ == '__main__':
       'add-repset-sub':   add_repset_sub,
       'show-sub-status':  show_sub_status,
       'show-sub-table':   show_sub_table,
-      'wait-on-sub-sync': wait_on_sub_sync,
+      'wait-for-sub-sync': wait_for_sub_sync,
       'health-check':     health_check,
       'metrics-check':    metrics_check,
   })
