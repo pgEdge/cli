@@ -447,10 +447,11 @@ initPG () {
 
 
   if [ "$pgM" == "15" ] && [ "$outPlat" == "osx" ]; then
-    initC  "pgedge"       "pgedge"  "$pgedgeV"  ""         "postgres/pgedge" "" "" "nil"
-    initC  "csvdiff"      "csvdiff" "$csvdiffV" "$outPlat" "csvdiff"         "" "" "nil"
-    initC  "pgdiff"       "pgdiff"  "$pgdiffV"  ""         "postgres/pgdiff" "" "" "nil"
-    initC  "spock-pg$pgM" "spock"   "$spockV"   "$outPlat" "postgres/spock"  "" "" "nil"
+    initC  "pgedge"       "pgedge"  "$pgedgeV"     ""         "postgres/pgedge" "" "" "nil"
+    initC  "csvdiff"      "csvdiff" "$csvdiffV"    "$outPlat" "csvdiff"         "" "" "nil"
+    initC  "pgdiff"       "pgdiff"  "$pgdiffV"     ""         "postgres/pgdiff" "" "" "nil"
+    initC  "postgrest" "postgrest"  "$postgrestV"  "$outPlat" "postgres/postgrest"  "" "" "nil"
+    initC  "spock-pg$pgM" "spock"   "$spockV"      "$outPlat" "postgres/spock"  "" "" "nil"
     return
   fi
 
