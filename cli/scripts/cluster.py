@@ -93,7 +93,7 @@ def create_local(cluster_name, num_nodes, User="lcusr", Passwd="lcpasswd",
 
     util.echo_cmd(nc + " spock create-node '" + node_nm + "' --dsn 'host=localhost user=replication' --db " + db)
     util.echo_cmd(nc + " spock create-repset " + rep_set + " --db " + db)
-    util.echo_cmd(nc + " spock add-table-repset " + rep_set + " public.pgbench* --db " + db)
+    util.echo_cmd(nc + " spock repset-add-table " + rep_set + " public.pgbench* --db " + db)
 
     nd_port = nd_port + 1
 

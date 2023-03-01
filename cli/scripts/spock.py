@@ -272,7 +272,7 @@ def show_sub_table(subscription_name, relation, db, pg=None):
   sys.exit(0)
 
 
-def add_repset_sub(subscription_name, replication_set, db, pg=None):
+def sub_add_repset(subscription_name, replication_set, db, pg=None):
   """Modify a subscription and add a replication set to it."""
 
   pg_v = get_pg_v(pg)
@@ -356,8 +356,8 @@ def get_table_list(table, db, pg_v):
   return([table])
 
 
-def add_table_repset(replication_set, table, db, cols=None, pg=None):
-  """Add one or more tables to a replication set."""
+def repset_add_table(replication_set, table, db, cols=None, pg=None):
+  """Add a table to a replication set."""
 
   pg_v = get_pg_v(pg)
 
@@ -625,8 +625,8 @@ if __name__ == '__main__':
       'create-node':      create_node,
       'create-repset':    create_repset,
       'create-sub':       create_sub,
-      'add-table-repset': add_table_repset,
-      'add-repset-sub':   add_repset_sub,
+      'repset-add-table': repset_add_table,
+      'sub-add-repset':   sub_add_repset,
       'show-sub-status':  show_sub_status,
       'show-sub-table':   show_sub_table,
       'wait-for-sub-sync': wait_for_sub_sync,
