@@ -35,7 +35,7 @@ from __future__ import print_function
 
 import collections
 import itertools
-import sys
+import sys, os
 
 from fire import completion
 from fire import custom_descriptions
@@ -52,6 +52,8 @@ SUBSECTION_INDENTATION = 4
 ENDC = '\033[0m'
 BOLD = '\033[1m'
 ITALIC = '\033[3m'
+MD_DIR = os.getenv("pgeMdDir", None)
+MD_FILE = ""
 
 
 def print_me(p_input):
@@ -153,6 +155,8 @@ def _NameSection(component, info, trace=None, verbose=False):
 def _SynopsisSection(component, actions_grouped_by_kind, spec, metadata,
                      trace=None):
   """The "Synopsis" section of the help string."""
+  global MD_FILE
+
   current_command = _GetCurrentCommand(trace=trace, include_separators=True)
 
   possible_actions = _GetPossibleActions(actions_grouped_by_kind)
@@ -175,10 +179,35 @@ def _SynopsisSection(component, actions_grouped_by_kind, spec, metadata,
       current_command=current_command,
       continuation=continuation)
 
-  txt = text.replace("spock.py", "./nodectl spock")
-  txt = txt.replace("um.py", "./nodectl um")
-  txt = txt.replace("service.py", "./nodectl service")
-  txt = txt.replace("kirk.py", "./nodectl kirk")
+  cc_lst = current_command.split()
+  sfx = ""
+  if len(cc_lst) == 2:
+    sfx = str(cc_lst[1])
+  txt = text
+
+  prfx = "nodectl"
+  if "spock.py" in txt:
+    txt = txt.replace("spock.py", "./nodectl spock")
+    prfx = "nodectl-spock"
+
+  elif "um.py" in txt:
+    txt = txt.replace("um.py", "./nodectl um")
+    prfx = "nodectl-um"
+
+  elif "service.py" in txt:
+    txt = txt.replace("service.py", "./nodectl service")
+    prfx = "nodectl-service"
+
+  elif "cluster.py" in txt:
+    txt = txt.replace("cluster.py", "./nodectl cluster")
+    prfx = "nodectl-cluster"
+
+  if sfx > "":
+    MD_FILE = prfx + "-" + sfx + ".md"
+  else:
+    MD_FILE = prfx + ".md"
+
+  print("DEBUG: MD_FILE = " + MD_FILE)
   
   print_me("\n" + BOLD + "SYNOPSIS" + ENDC + "\n    " + txt)
 
