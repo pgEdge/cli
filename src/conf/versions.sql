@@ -125,7 +125,7 @@ INSERT INTO categories VALUES (9,  87, 'Management & Monitoring', 'Manage/Monito
 -- ## HUB ################################
 INSERT INTO projects VALUES ('hub', 'app', 0, 0, 'hub', 0, 'https://github.com/pgedge/nodectl','',0,'','','');
 INSERT INTO releases VALUES ('hub', 1, 'hub', '', '', 'hidden', '', 1, '', '', '');
-INSERT INTO versions VALUES ('hub', '23.03-3', '',  1, '20230301', '', '', '');
+INSERT INTO versions VALUES ('hub', '23.03-3', '',  1, '20230302', '', '', '');
 INSERT INTO versions VALUES ('hub', '23.03-2', '',  0, '20230225', '', '', '');
 
 -- ##
@@ -289,8 +289,8 @@ INSERT INTO versions VALUES ('golang', '1.19.3', '', 0, '20221101', '', '', '');
 INSERT INTO projects VALUES ('postgrest', 'pge', 4, 3000, 'hub', 0, 'https://github.com/postgrest/postgrest/tags',
   'postgrest', 0, 'postgrest.png', 'a RESTful API', 'https://postgrest.org');
 INSERT INTO releases VALUES ('postgrest', 9, 'postgrest', 'PostgREST', '', 'prod', '', 1, 'MIT', '', '');
-INSERT INTO versions VALUES ('postgrest', '10.2.0-1', 'osx, el8, arm', 1, '20230301', '', '', 'https://postgrest.org');
-INSERT INTO versions VALUES ('postgrest', '10.1.1', 'el8, arm',      0, '20221121', '', '', 'https://postgrest.org');
+INSERT INTO versions VALUES ('postgrest', '10.2.0-1', 'el8, arm', 1, '20230302', '', '', 'https://postgrest.org');
+INSERT INTO versions VALUES ('postgrest', '10.1.1',   'el8, arm', 0, '20221121', '', '', 'https://postgrest.org');
 
 INSERT INTO projects VALUES ('prompgexp', 'pge', 4, 9187, 'golang', 0, 'https://github.com/prometheus-community/postgres_exporter/tags',
   'prompgexp', 0, 'prometheus.png', 'Prometheus PG Exporter', 'https://github.com/prometheus-community/postgres_exporter');
