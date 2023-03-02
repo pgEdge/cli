@@ -1,11 +1,22 @@
 #!/bin/bash
 cd "$(dirname "$0")"
 
-port=5432
+if [ "$pgePort" == "" ]; then
+  port=5432
+else
+  port=$pgePort
+fi
+
+if [ "$pgName" == "" ]; then
+  db=postgres
+else
+  db=$pgName
+fi
+
 echo " creating default file postgrest.conf:"
 cat << EOF > postgrest.conf
-db-uri = "postgres://localhost:$port/postgres"
-db-schemas = "$USER"
+db-uri = "postgres://localhost:$port/$db"
+db-schemas = "public"
 EOF
 #cat postgrest.conf
 
