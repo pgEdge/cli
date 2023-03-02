@@ -615,6 +615,22 @@ def install(User=None, Password=None, database=None, country=None, port=5432,
   time.sleep(3)
 
   osSys(nc + "install spock -d " + database)
+  time.sleep(2)
+
+  if os.getenv("withPOSTGREST", "False") == "True":
+    with_postgrest = True
+  if with_postgrest == True:
+    osSys(nc + "install postgrest")
+
+  if os.getenv("withBOUNCER", "False") == "True":
+    with_bouncer = True
+  if with_bouncer  == True:
+    osSys(nc + "install bouncer")
+
+  if os.getenv("withBACKREST", "False") == "True":
+    with_backrest = True
+  if with_backrest == True:
+    osSys(nc + "install backrest")
 
 
 if __name__ == '__main__':
