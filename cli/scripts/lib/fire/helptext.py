@@ -207,7 +207,7 @@ def _SynopsisSection(component, actions_grouped_by_kind, spec, metadata,
   else:
     MD_FILE = prfx + ".md"
 
-  print("DEBUG: MD_FILE = " + MD_FILE)
+  ##print("DEBUG: MD_FILE = " + MD_FILE)
   
   print_me("\n" + BOLD + "SYNOPSIS" + ENDC + "\n    " + txt)
 

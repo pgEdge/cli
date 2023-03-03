@@ -3,7 +3,6 @@ NODECTL is the pgEdge Command Line Interface (CLI).  It is a cross-platform
 tool to manage your PostgreSQL eco-system of components.  The modules are 
 `um`, `service`, `spock`, `cluster`.
 
-
 We are licensed under the pgEdge Community License 1.0
 
 ## Synopsis
@@ -26,18 +25,18 @@ clean              # Delete downloaded component files from local cache
 start              # Start server components
 stop               # Stop server components
 status             # Display status of installed server components
-reload             # Reload server configuration files (without a restart)
+reload             # Reload server config files (without a restart)
 restart            # Stop & then start server components
-enable             # Enable a component
-disable            # Disable server component from starting automatically
+enable             # Enable a server component
+disable            # Disable component from starting automatically
 config             # Configure a component
 init               # Initialize a component
 ```
 
 ## `spock` - Logical and Multi-Active PostgreSQL node configuration
 ```
-install            # Install Postgres and configure with the SPOCK extension
-validate           # Validate Pre-Req's for running advanced commands
+install            # Install PG and configure with SPOCK extension
+validate           # Check pre-req's for advanced commands
 tune               # Tune for this configuration
 create-node        # Name this spock node
 create-repset      # Define a replication set
@@ -46,9 +45,9 @@ repset-add-table   # Add table to a replication set
 sub-add-repset     # Add replication set to a subscription
 show-sub-status    # Display the status of the subcription
 show-sub-table     # Display subscription table(s)
-wait-for-sub-sync  # Pause until subscription is synched
+wait-for-sub-sync  # Pause until subscription is synch'ed
 health-check       # Check if PG is accepting connections
-metrics-check      # Retrieve OS & DB metrics
+metrics-check      # Retrieve advanced DB & OS metrics
 ```
 
 ## `cluster` - Installation and configuration of a pgEdge SPOCK cluster
