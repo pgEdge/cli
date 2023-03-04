@@ -487,7 +487,7 @@ function buildTimeScaleDBComponent {
         packageComponent $componentBundle
 }
 
-TEMP=`getopt -l no-tar, copy-bin,no-copy-bin,with-pgver:,with-pgbin:,build-hypopg:,build-postgis:,build-bouncer:,build-tdsfdw:,build-mongofdw:,build-mysqlfdw:,build-oraclefdw:,build-orafce:,build-audit:,build-set-user:,build-partman:,build-pldebugger:,build-plr:,build-pljava:,build-plv8:,build-plprofiler:,build-bulkload:,build-backrest:,build-psqlodbc:,build-repack:,build-spock:,build-pool2:,build-pglogical:,build-hintplan:,build-timescaledb:,build-cron:,build-multicorn2:,build-fixeddecimal:,build-anon,build-ddlx:,build-agent:,build-citus:,build-number: -- "$@"`
+TEMP=`getopt -l no-tar, copy-bin,no-copy-bin,with-pgver:,with-pgbin:,build-curl:,build-hypopg:,build-postgis:,build-bouncer:,build-tdsfdw:,build-mongofdw:,build-mysqlfdw:,build-oraclefdw:,build-orafce:,build-audit:,build-set-user:,build-partman:,build-pldebugger:,build-plr:,build-pljava:,build-plv8:,build-plprofiler:,build-bulkload:,build-backrest:,build-psqlodbc:,build-repack:,build-spock:,build-pool2:,build-pglogical:,build-hintplan:,build-timescaledb:,build-cron:,build-multicorn2:,build-fixeddecimal:,build-anon,build-ddlx:,build-agent:,build-citus:,build-number: -- "$@"`
 
 if [ $? != 0 ] ; then
 	echo "Required parameters missing, Terminating..."
@@ -515,6 +515,7 @@ while true; do
     --build-audit ) buildAudit=true; Source=$2; shift; shift ;;
     --build-set-user ) buildSetUser=true; setUserSource=$2; shift; shift ;;
     --build-hypopg ) buildHypopg=true; Source=$2; shift; shift ;;
+    --build-curl ) buildCurl=true; Source=$2; shift; shift ;;
     --build-pldebugger ) buildPLDebugger=true; Source=$2; shift; shift ;;
     --build-partman ) buildPartman=true; Source=$2; shift; shift ;;
     --build-plr ) buildPlr=true; plrSource=$2; shift; shift ;;
@@ -602,6 +603,9 @@ if [[ $buildAudit == "true" ]]; then
 fi
 if [[ $buildSetUser == "true" ]]; then
 	buildSetUserComponent
+fi
+if [ "$buildCurl" == "true" ]; then
+	buildComp curl "$curlShortV" "$curlFullV" "$curlBuildV" "$Source"
 fi
 if [ "$buildHypopg" == "true" ]; then
 	buildComp hypopg "$hypopgShortV" "$hypopgFullV" "$hypopgBuildV" "$Source"

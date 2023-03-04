@@ -118,6 +118,10 @@ if [ "$1" == "fixeddecimal" ] || [ "$1" == "all" ]; then
   build fixeddecimal $fdFullV $2 fixeddecimal
 fi
 
+if [ "$1" == "curl" ] || [ "$1" == "all" ]; then
+  build curl $curlFullV $2 curl
+fi
+
 if [ "$1" == "hypopg" ] || [ "$1" == "all" ]; then
   build hypopg $hypopgFullV $2 hypopg
 fi

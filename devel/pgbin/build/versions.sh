@@ -34,6 +34,10 @@ wal2jsonFullV=2.4
 wal2jsonShortV=
 wal2jsonBuildV=1
 
+curlFullV=1.0.27
+curlShortV=
+curlBuildV=1
+
 odbcFullV=13.01
 odbcShortV=
 odbcBuildV=1
