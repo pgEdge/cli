@@ -194,6 +194,7 @@ initDir () {
   copy-pgXX "orafce"
   copy-pgXX "fixeddecimal"
   copy-pgXX "spock"
+  copy-pgXX "curl"
   copy-pgXX "pglogical"
   copy-pgXX "anon"
   copy-pgXX "plprofiler"
@@ -451,6 +452,7 @@ initPG () {
     initC  "csvdiff"      "csvdiff" "$csvdiffV"    "$outPlat" "csvdiff"         "" "" "nil"
     initC  "pgdiff"       "pgdiff"  "$pgdiffV"     ""         "postgres/pgdiff" "" "" "nil"
     initC  "postgrest" "postgrest"  "$postgrestV"  "$outPlat" "postgres/postgrest"  "" "" "nil"
+    initC  "curl"         "curl"    "$curlV"       "$outPlat" "postgres/curl"   "" "" "nil"
     initC  "spock-pg$pgM" "spock"   "$spockV"      "$outPlat" "postgres/spock"  "" "" "nil"
     return
   fi
@@ -477,6 +479,7 @@ initPG () {
     initC "audit-pg$pgM" "audit" "$audit15V" "$outPlat" "postgres/audit" "" "" "nil"
     initC "repack-pg$pgM" "repack" "$repackV" "$outPlat" "postgres/repack" "" "" "nil"
     initC "postgrest" "postgrest" "$postgrestV"  "$outPlat"  "postgres/postgrest"  "" "" "nil"
+    initC  "curl"         "curl"    "$curlV"       "$outPlat" "postgres/curl"   "" "" "nil"
     initC "cron-pg$pgM" "cron" "$cronV" "$outPlat" "postgres/cron" "" "" "nil"
     initC "hintplan-pg$pgM" "hintplan" "$hintV" "$outPlat" "postgres/hintplan" "" "" "nil"
 

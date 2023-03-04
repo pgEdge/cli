@@ -21,6 +21,7 @@ bckgrndV=1.1-1
 backrestV=2.44-1
 csvdiffV=1.4.0
 pgdiffV=1.1
+curlV=1.0.27-1
 
 multicorn2V=2.4-1
 esfdwV=0.11.2
