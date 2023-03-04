@@ -53,11 +53,46 @@ ENDC = '\033[0m'
 BOLD = '\033[1m'
 ITALIC = '\033[3m'
 MD_DIR = os.getenv("pgeMdDir", None)
+if MD_DIR:
+  os.system("mkdir -p " + str(MD_DIR))
 MD_FILE = ""
 
 
-def print_me(p_input):
+def print_hdr(p_input, p_txt):
+  print("\n" + BOLD + str(p_input) + ENDC)
+  if p_txt:
+    print("    " + str(p_txt))
+
+  if MD_DIR:
+    file = MD_DIR + "/" + MD_FILE
+    if p_input == "SYNOPSIS":
+      os.system("rm -f " + file)
+    else:
+      os.system("echo ' ' >> " + file)
+
+    cmd="echo '## " + str(p_input) + "' >> " + file
+    os.system(cmd)
+
+    if p_txt:
+      os.system('echo "    ' + str(p_txt) + '" >> ' + file)
+
+
+def print_usg(p_input):
+  usg = p_input
+  if MD_DIR:
+    usg = usg.replace(ITALIC, "_")
+    usg = usg.replace(ENDC, "_")
+
+  print_dtl(usg)
+
+
+def print_dtl(p_input):
   print(p_input)
+
+  if MD_DIR:
+    file = MD_DIR + "/" + MD_FILE
+    cmd="echo '" + str(p_input) + "' >> " + file
+    os.system(cmd)
 
 
 def HelpText(component, trace=None, verbose=False):
@@ -97,14 +132,14 @@ def HelpText(component, trace=None, verbose=False):
 
 
   if usage_details_sections:
-    print_me("\n" + BOLD + "COMMANDS" + ENDC)
+    print_hdr("COMMANDS", None)
     usg_list = str(usage_details_sections[0][1]).split("\n")
     ln = ""
     kount = 0
     for usg in usg_list:
       if usg.strip() == "":
         if ln > "":
-          print_me(ln)
+          print_usg(ln)
         kount = 0
         ln = ""
       else:
@@ -114,7 +149,7 @@ def HelpText(component, trace=None, verbose=False):
         else:
           ln = ln + ' '*(25 - len(ln)) + ITALIC + "# " + usg.strip() + ENDC
 
-    print_me(ln)
+    print_usg(ln)
 
   sections = (
       [name_section, synopsis_section, description_section]
@@ -207,9 +242,9 @@ def _SynopsisSection(component, actions_grouped_by_kind, spec, metadata,
   else:
     MD_FILE = prfx + ".md"
 
-  ##print("DEBUG: MD_FILE = " + MD_FILE)
+  print("DEBUG: MD_FILE = " + MD_FILE)
   
-  print_me("\n" + BOLD + "SYNOPSIS" + ENDC + "\n    " + txt)
+  print_hdr("SYNOPSIS", txt)
 
   return ('SYNOPSIS', text)
 
@@ -237,7 +272,7 @@ def _DescriptionSection(component, info):
   # Fall back to summary if description is not available.
   text = description or summary or None
   if text:
-    print_me("\n" + BOLD + "DESCRIPTION" + ENDC + "\n    " + text)
+    print_hdr("DESCRIPTION", text)
     return ('DESCRIPTION', text)
   else:
     return None
@@ -292,10 +327,10 @@ def _ArgsAndFlagsSections(info, spec, metadata):
     arguments_section = (title, '\n'.join(arg_items).rstrip('\n'))
     args_and_flags_sections.append(arguments_section)
 
-    print_me("\n" + BOLD + "POSITIONAL ARGUMENTS" + ENDC)
+    print_hdr("POSITIONAL ARGUMENTS", None)
     args_lst = arguments_section[1].split("\n")
     for arg in args_lst:
-      print_me("    " + arg)
+      print_dtl("    " + arg)
 
     if args_with_no_defaults and accepts_positional_args:
       notes_sections.append(
@@ -366,10 +401,10 @@ def _ArgsAndFlagsSections(info, spec, metadata):
     flags_section = ('FLAGS', '\n'.join(flag_items))
     args_and_flags_sections.append(flags_section)
 
-    print_me("\n" + BOLD + "FLAGS" + ENDC)
+    print_hdr("FLAGS", None)
     flags_lst = flags_section[1].split("\n")
     for flag in flags_lst:
-      print_me("    " + flag)
+      print_dtl("    " + flag)
 
   return args_and_flags_sections, notes_sections
 
