@@ -5,5 +5,5 @@
 
 import util
 
-util.remove_pgconf_keyval("pgXX", "shared_preload_libraries", "plugin_debugger")
+util.remove_pgconf_keyval("pgXX", "shared_preload_libraries", "pg_curl")
 

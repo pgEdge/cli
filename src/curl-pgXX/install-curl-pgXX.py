@@ -1,9 +1,9 @@
  
 ####################################################################
-######          Copyright (c)  2022-2023 PGEDGE           ##########
+######          Copyright (c)  2022-2023 PGEDGE            #########
 ####################################################################
 
 import util
 
-util.remove_pgconf_keyval("pgXX", "shared_preload_libraries", "plugin_debugger")
+util.create_extension("pgXX", "pg_curl", True, "")
 
