@@ -127,7 +127,7 @@ def get_eq(parm, val, sufx):
 
 
 def validate(port=5432, pgV="pg15"):
-  """Check Pre Requisites for using spock advanced commands"""
+  """Check pre-req's for advanced commands."""
   util.message("#### Checking for Pre-Req's #########################")
   platf = util.get_platform()
 
@@ -273,7 +273,7 @@ def show_sub_table(subscription_name, relation, db, pg=None):
 
 
 def sub_add_repset(subscription_name, replication_set, db, pg=None):
-  """Modify a subscription and add a replication set to it."""
+  """Add a replication set to a subscription."""
 
   pg_v = get_pg_v(pg)
 
@@ -389,7 +389,7 @@ def repset_add_table(replication_set, table, db, cols=None, pg=None):
 
 
 def health_check(pg=None):
-  """Check if the PG instance is accepting connections."""
+  """Check if PG instance is accepting connections."""
   pg_v = get_pg_v(pg)
 
   if is_pg_ready(pg_v):
@@ -407,7 +407,7 @@ def is_pg_ready(pg_v):
 
 
 def metrics_check(db, pg=None):
-  """Retrieve OS & DB metrics."""
+  """Retrieve advanced DB & OS metrics."""
   try:
     import psutil
   except ImportError as e:
@@ -497,7 +497,7 @@ def metrics_check(db, pg=None):
 def install(User=None, Password=None, database=None, country=None, port=5432,
             pgV="pg15", autostart=True, with_bouncer=False, 
             with_backrest=False, with_postgrest=False):
-  """Install pgEdge components"""
+  """Install pgEdge components."""
 
   pgeUser = os.getenv('pgeUser', None)
   if not User and pgeUser:
