@@ -314,11 +314,15 @@ INSERT INTO releases VALUES ('citus-pg15',  0, 'citus', 'Citus', '', 'test', '',
 INSERT INTO versions VALUES ('citus-pg15', '11.2.0-1', 'el8, arm', 0, '20230206', 'pg15', '', 'https://github.com/citusdata/citus/releases/tag/v11.2.0');
 INSERT INTO versions VALUES ('citus-pg15', '11.1.5-1', 'el8, arm', 0, '20221212', 'pg15', '', 'https://github.com/citusdata/citus/releases/tag/v11.1.5');
 
+INSERT INTO projects VALUES ('curl', 'ext', 4, 0, 'hub',0, 'https://github.com/pg_curl/pg_curl/releases',
+  'curl', 1, 'curl.png', 'Background Job Scheduler', 'https://github.com/pg_curl/pg_curl');
+INSERT INTO releases VALUES ('curl-pg15', 10, 'curl', 'pgCron', '', 'prod', '', 1, 'POSTGRES', '', '');
+INSERT INTO versions VALUES ('curl-pg15', '1.0.27-1', 'osx, el8, arm', 1, '20230215', 'pg15', '', '');
+
 INSERT INTO projects VALUES ('cron', 'ext', 4, 0, 'hub',0, 'https://github.com/citusdata/pg_cron/releases',
   'cron', 1, 'cron.png', 'Background Job Scheduler', 'https://github.com/citusdata/pg_cron');
 INSERT INTO releases VALUES ('cron-pg15', 10, 'cron', 'pgCron', '', 'prod', '', 1, 'POSTGRES', '', '');
 INSERT INTO versions VALUES ('cron-pg15', '1.5.1-1', 'el8, arm', 1, '20230215', 'pg15', '', '');
-INSERT INTO versions VALUES ('cron-pg15', '1.4.2-1', 'el8, arm', 0, '20220714', 'pg15', '', '');
 
 INSERT INTO projects VALUES ('background', 'ext', 4, 0, 'hub',0, 'https://github.com/oscg-io/background/tags',
   'background', 1, 'background.png', 'Background Worker', 'https://github.com/oscg-io/background');
