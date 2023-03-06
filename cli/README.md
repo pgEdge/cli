@@ -9,11 +9,11 @@ We are licensed under the pgEdge Community License 1.0
     ./nodectl <module> <command> [parameters] [options] 
 
 ## um - Update Manager commands
-[**list**](doc/um-list.md) - Display available/installed components \
-[**update**](doc/um-update.md)  - Retrieve new list of components & update nodectl \
-[**install**](doc/um-install.md) - Install a component (eg pg15, spock, postgis, etc) \
-[**remove**](doc/um-remove.md) - Un-install component \
-[**upgrade**](doc/um-upgrade.md) - Perform an upgrade of a component \
+[**list**](doc/um-list.md) - Display available/installed components<br>
+[**update**](doc/um-update.md)  - Retrieve new list of components & update nodectl<br>
+[**install**](doc/um-install.md) - Install a component (eg pg15, spock, postgis, etc)<br>
+[**remove**](doc/um-remove.md) - Un-install component<br>
+[**upgrade**](doc/um-upgrade.md) - Perform an upgrade of a component<br>
 [**clean**](doc/um-clean.md) - Delete downloaded component files from local cache
 
 
