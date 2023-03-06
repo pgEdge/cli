@@ -6,12 +6,13 @@ tool to manage your PostgreSQL eco-system of components.  The modules are
 We are licensed under the pgEdge Community License 1.0
 
 ## Synopsis
-<pre>
-./nodectl <module> <command> [parameters] [options] 
-</pre>
+* ./nodectl <module> <command> [parameters] [options] 
+
 
 ## `um` - Update Manager commands 
-<pre>
+[**list**](doc/um-list.md) - *Display available/installed components* \
+[**update**]()             - *Retrieve new list of components & update nodectl* \
+  
 <a href=doc/um-list.md>list</a>               # Display available/installed components 
 <a href=doc/um-update.md>update</a>             # Retrieve new list of components & update nodectl
 <a href=doc/um-install.md>install</a>            # Install a component (eg pg15, spock, postgis, etc)
