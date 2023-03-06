@@ -52,7 +52,7 @@ We are licensed under the pgEdge Community License 1.0
 
 ## `cluster` - Installation and configuration of a pgEdge SPOCK cluster
 <pre>
-<a href=doc/cluster-.md>create-local</a>       # Create local cluster of N pgEdge nodes on different ports
+<a href=doc/cluster-create-local.md>create-local</a>       # Create local cluster of N pgEdge nodes on different ports
 <a href=doc/cluster-destroy.md>destroy</a>            # Stop and then nuke a cluster
 <a href=doc/cluster-validate.md>validate</a>           # Validate a remote cluster configuration
 <a href=doc/cluster-init.md>init</a>               # Initialize a remote cluster for SPOCK
