@@ -1,3 +1,4 @@
+export pgeMdDir=$NC/cli/doc
 nc=../../out/posix/nc
 
 $nc um --help
@@ -42,4 +43,4 @@ $nc cluster init            --help
 $nc cluster command         --help
 $nc cluster diff-tables     --help
 
-
+unset pgeMdDir
