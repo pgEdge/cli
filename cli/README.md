@@ -11,21 +11,22 @@ We are licensed under the pgEdge Community License 1.0
 ## um - Update Manager commands
 [**list**](doc/um-list.md) - Display available/installed components \
 [**update**](doc/um-update.md)  - Retrieve new list of components & update nodectl \
-[**install**](doc/um-install.md) - Install a component (eg pg15, spock, postgis, etc) \ 
+[**install**](doc/um-install.md) - Install a component (eg pg15, spock, postgis, etc) \
 [**remove**](doc/um-remove.md) - Un-install component \
 [**upgrade**](doc/um-upgrade.md) - Perform an upgrade of a component \
-[**clean**](doc/um-clean.md) - Delete downloaded component files from local cache \
+[**clean**](doc/um-clean.md) - Delete downloaded component files from local cache
+
 
 ## service - Service control commands
-<a href=doc/service-start.md>start</a>              # Start server components
-<a href=doc/service-stop.md>stop</a>               # Stop server components
-<a href=doc/service-status.md>status</a>             # Display status of installed server components
-<a href=doc/service-reload.md>reload</a>             # Reload server config files (without a restart)
-<a href=doc/service-restart.md>restart</a>            # Stop & then start server components
-<a href=doc/service-enable.md>enable</a>             # Enable a server component
-<a href=doc/service-disable.md>disable</a>            # Disable component from starting automatically
-<a href=doc/service-config-.md>config</a>             # Configure a component
-<a href=doc/service-init.md>init</a>               # Initialize a component
+[**start**](service-start.md)                 - Start server components \
+[**stop**](doc/service-stop.md)               - Stop server components \
+[**status**](doc/service-status.md)           - Display status of installed server components \
+[**reload**](doc/service-reload.md)           - Reload server config files (without a restart) \
+[**restart**](doc/service-restart.md)         - Stop & then start server components \
+[**enable**](doc/service-enable.md)           - Enable a server component \
+[**disable**](doc/service-disable.md)         - Disable component from starting automatically \
+[**config**](doc/service-config-.md)          - Configure a component \
+[**init**](doc/service-init.md)               - Initialize a component
 
 ## spock - Logical and Multi-Active PostgreSQL node configuration
 <a href=doc/spock-install.md>install</a>            # Install PG and configure with SPOCK extension
