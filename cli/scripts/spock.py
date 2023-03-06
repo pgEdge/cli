@@ -127,7 +127,7 @@ def get_eq(parm, val, sufx):
 
 
 def validate(port=5432, pgV="pg15"):
-  """Check pre-req's for advanced commands."""
+  """Check pre-reqs for advanced commands."""
   util.message("#### Checking for Pre-Req's #########################")
   platf = util.get_platform()
 

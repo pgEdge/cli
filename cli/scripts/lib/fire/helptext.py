@@ -52,6 +52,7 @@ SUBSECTION_INDENTATION = 4
 ENDC = '\033[0m'
 BOLD = '\033[1m'
 ITALIC = '\033[3m'
+UNDERSCORE = '\033[4m'
 MD_DIR = os.getenv("pgeMdDir", None)
 if MD_DIR:
   os.system("mkdir -p " + str(MD_DIR))
@@ -74,16 +75,22 @@ def print_hdr(p_input, p_txt):
     os.system(cmd)
 
     if p_txt:
-      os.system('echo "    ' + str(p_txt) + '" >> ' + file)
+      os.system('echo "    ' + scrub_ctrl(p_txt) + '" >> ' + file)
+
+
+def scrub_ctrl(p_input):
+  txt = str(p_input).replace(BOLD, "")
+  txt = txt.replace(ITALIC, "")
+  txt = txt.replace(UNDERSCORE, "")
+  txt = txt.replace(ENDC, "")
+  return(txt)
 
 
 def print_usg(p_input):
-  usg = p_input
   if MD_DIR:
-    usg = usg.replace(ITALIC, "_")
-    usg = usg.replace(ENDC, "_")
-
-  print_dtl(usg)
+    print_dtl(scrub_ctrl(p_input))
+  else:
+    print_dtl(p_input)
 
 
 def print_dtl(p_input):
@@ -91,7 +98,7 @@ def print_dtl(p_input):
 
   if MD_DIR:
     file = MD_DIR + "/" + MD_FILE
-    cmd="echo '" + str(p_input) + "' >> " + file
+    cmd="echo '" + scrub_ctrl(p_input) + "' >> " + file
     os.system(cmd)
 
 
