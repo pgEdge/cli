@@ -230,19 +230,19 @@ def _SynopsisSection(component, actions_grouped_by_kind, spec, metadata,
   prfx = "nodectl"
   if "spock.py" in txt:
     txt = txt.replace("spock.py", "./nodectl spock")
-    prfx = "nodectl-spock"
+    prfx = "spock"
 
   elif "um.py" in txt:
     txt = txt.replace("um.py", "./nodectl um")
-    prfx = "nodectl-um"
+    prfx = "um"
 
   elif "service.py" in txt:
     txt = txt.replace("service.py", "./nodectl service")
-    prfx = "nodectl-service"
+    prfx = "service"
 
   elif "cluster.py" in txt:
     txt = txt.replace("cluster.py", "./nodectl cluster")
-    prfx = "nodectl-cluster"
+    prfx = "cluster"
 
   if sfx > "":
     MD_FILE = prfx + "-" + sfx + ".md"
