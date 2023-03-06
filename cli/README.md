@@ -1,4 +1,4 @@
-# NODECTL
+# PGEDGE NODECTL CLI
 NODECTL is the pgEdge Command Line Interface (CLI).  It is a cross-platform 
 tool to manage your PostgreSQL eco-system of components.  The modules are 
 UM, SERVICE, SPOCK, and CLUSTER.
@@ -29,27 +29,27 @@ We are licensed under the pgEdge Community License 1.0
 [**init**](doc/service-init.md)               - Initialize a component<br>
 
 ## spock - Logical and Multi-Active PostgreSQL node configuration
-<a href=doc/spock-install.md>install</a>            # Install PG and configure with SPOCK extension<br>
-<a href=doc/spock-validate.md>validate</a>           # Check pre-req's for advanced commands<br>
-<a href=doc/spock-tune.md>tune</a>               # Tune for this configuration<br>
-<a href=doc/spock-create-node.md>create-node</a>        # Name this spock node<br>
-<a href=doc/spock-create-repset.md>create-repset</a>      # Define a replication set<br>
-<a href=doc/spock-create-sub.md>create-sub</a>         # Create a subscription<br>
-<a href=doc/spock-repset-add-table.md>repset-add-table</a>   # Add table to a replication set<br>
-<a href=doc/spock-sub-add-repset.md>sub-add-repset</a>     # Add replication set to a subscription<br>
-<a href=doc/spock-show-sub-status.md>show-sub-status</a>    # Display the status of the subcription<br>
-<a href=doc/spock-show-sub-table.md>show-sub-table</a>     # Display subscription table(s)<br>
-<a href=doc/spock-wait-for-sub-sync.md>wait-for-sub-sync</a>  # Pause until subscription is synched<br>
-<a href=doc/spock-health-check.md>health-check</a>       # Check if PG is accepting connections<br>
-<a href=doc/spock-metrics-check.md>metrics-check</a>      # Retrieve advanced DB & OS metrics<br>
+[**install**](doc/spock-install.md)             - Install PG and configure with SPOCK extension<br>
+[**validate**](doc/spock-validate.md)           - Check pre-req's for advanced commands<br>
+[**tune**](doc/spock-tune.md)                   - Tune for this configuration<br>
+[**create-node**](doc/spock-create-node.md)     - Name this spock node<br>
+[**create-repset**](doc/spock-create-repset.md) - Define a replication set<br>
+[**create-sub**](doc/spock-create-sub.md)       - Create a subscription<br>
+[**repset-add-table**](doc/spock-repset-add-table.md)  - Add table to a replication set<br>
+[**sub-add-respset**](doc/spock-sub-add-repset.md)     - Add replication set to a subscription<br>
+[**show-sub-status**](spock-show-sub-status.md)        - Display the status of the subcription<br>
+[**show-sub-table**](doc/spock-show-sub-table.md)      - Display subscription table(s)<br>
+[**spock-wait-for-sub-sync**](doc/spock-wait-for-sub-sync.md)  - Pause until subscription is synched<br>
+[**health-check**](doc/spock-health-check.md)          - Check if PG is accepting connections<br>
+[**metrics-check**](doc/spock-metrics-check.md)        - Retrieve advanced DB & OS metrics<br>
 
 ## cluster - Installation and configuration of a pgEdge SPOCK cluster
-<a href=doc/cluster-create-local.md>create-local</a>       # Create local cluster of N pgEdge nodes on different ports<br>
-<a href=doc/cluster-destroy.md>destroy</a>            # Stop and then nuke a cluster<br>
-<a href=doc/cluster-validate.md>validate</a>           # Validate a remote cluster configuration<br>
-<a href=doc/cluster-init.md>init</a>               # Initialize a remote cluster for SPOCK<br>
-<a href=doc/cluster-command.md>command</a>            # Run `nodectl` command on one or all nodes of a cluster<br>
-<a href=doc/cluster-diff-tables.md>diff-tables</a>        # Compare table on different cluster nodes<br>
+[**create-local**](doc/cluster-create-local.md)   - Create local cluster of N pgEdge nodes on different ports<br>
+[**destroy**](doc/cluster-destroy.md)             - Stop and then nuke a cluster<br>
+[**validate**](doc/cluster-validate.md)           - Validate a remote cluster configuration<br>
+[**init**](doc/cluster-init.md)                   - Initialize a remote cluster for SPOCK<br>
+[**command**](doc/cluster-command.md)             - Run `nodectl` command on one or all nodes of a cluster<br>
+[**diff-tables**](doc/cluster-diff-tables.md)     - Compare table on different cluster nodes<br>
 
 ## Options
     --json             # Turn on JSON output
