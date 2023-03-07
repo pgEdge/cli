@@ -25,10 +25,10 @@ On Debian based systems, we'll make sure the native packages are installed:<br><
 apt install -y python3 python3-devel python3-psutil
 </pre>
 
-On both EL8+ & Debian based systems, we'll make sure the latest `pip2` is installed and
-then install these dependencies as follows:<br><br>
+On both EL8+ & Debian based systems, we'll make sure the latest `pip3` is installed and
+then install psycopg3 as follows:<br><br>
 <pre>
-pip3 install psycopg==3.1.8 psycopg-binary==3.1.8 --user
+pip3 install psycopg psycopg-binary --user
 </pre>
 
 ## Installation
