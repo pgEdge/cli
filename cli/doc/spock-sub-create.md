@@ -1,5 +1,5 @@
 ## SYNOPSIS
-    ./nodectl spock create-sub SUBSCRIPTION_NAME PROVIDER_DSN DB <flags>
+    ./nodectl spock sub-create SUBSCRIPTION_NAME PROVIDER_DSN DB <flags>
  
 ## DESCRIPTION
     Create a subscription.

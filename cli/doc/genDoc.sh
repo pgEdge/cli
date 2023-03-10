@@ -24,14 +24,14 @@ $nc spock --help
 $nc spock install           --help
 $nc spock validate          --help
 $nc spock tune              --help
-$nc spock create-node       --help
-$nc spock create-repset     --help
-$nc spock create-sub        --help
+$nc spock node-create       --help
+$nc spock repset-create     --help
 $nc spock repset-add-table  --help
+$nc spock sub-create        --help
 $nc spock sub-add-repset    --help
-$nc spock show-sub-status   --help
-$nc spock show-sub-table    --help
-$nc spock wait-for-sub-sync --help
+$nc spock sub-show-status   --help
+$nc spock sub-show-table    --help
+$nc spock sub-wait-for-sync --help
 $nc spock health-check      --help
 $nc spock metrics-check     --help
 

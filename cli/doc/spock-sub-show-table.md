@@ -1,11 +1,12 @@
 ## SYNOPSIS
-    ./nodectl spock show-sub-status SUBSCRIPTION_NAME DB <flags>
+    ./nodectl spock sub-show-table SUBSCRIPTION_NAME RELATION DB <flags>
  
 ## DESCRIPTION
-    Display the status of the subcription.
+    Show the the subscriptions.
  
 ## POSITIONAL ARGUMENTS
     SUBSCRIPTION_NAME
+    RELATION
     DB
  
 ## FLAGS

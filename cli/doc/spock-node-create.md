@@ -1,5 +1,5 @@
 ## SYNOPSIS
-    ./nodectl spock create-node NODE_NAME DSN DB <flags>
+    ./nodectl spock node-create NODE_NAME DSN DB <flags>
  
 ## DESCRIPTION
     Define a spock node.

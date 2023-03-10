@@ -1,5 +1,5 @@
 ## SYNOPSIS
-    ./nodectl spock wait-for-sub-sync SUBSCRIPTION_NAME DB <flags>
+    ./nodectl spock sub-wait-for-sync SUBSCRIPTION_NAME DB <flags>
  
 ## DESCRIPTION
     Pause until the subscription is synchronized.
