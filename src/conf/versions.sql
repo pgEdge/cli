@@ -125,7 +125,8 @@ INSERT INTO categories VALUES (9,  87, 'Management & Monitoring', 'Manage/Monito
 -- ## HUB ################################
 INSERT INTO projects VALUES ('hub', 'app', 0, 0, 'hub', 0, 'https://github.com/pgedge/nodectl','',0,'','','');
 INSERT INTO releases VALUES ('hub', 1, 'hub', '', '', 'hidden', '', 1, '', '', '');
-INSERT INTO versions VALUES ('hub', '23.102', '',  1, '20230304', '', '', '');
+INSERT INTO versions VALUES ('hub', '23.103', '',  1, '20230310', '', '', '');
+INSERT INTO versions VALUES ('hub', '23.102', '',  0, '20230304', '', '', '');
 INSERT INTO versions VALUES ('hub', '23.101', '',  0, '20230303', '', '', '');
 INSERT INTO versions VALUES ('hub', '23.100', '',  0, '20230303', '', '', '');
 
@@ -337,7 +338,8 @@ INSERT INTO versions VALUES ('timescaledb-pg14', '2.8.0-1',  'el8, arm', 0, '202
 INSERT INTO projects VALUES ('spock', 'pge', 4, 0, 'hub', 1, 'https://github.com/pgedge/spock/tags',
   'spock', 1, 'spock.png', 'Logical & Multi-Active Replication', 'https://github.com/pgedge/spock/#spock');
 INSERT INTO releases VALUES ('spock-pg15', 4, 'spock', 'Spock', '', 'test', '', 1, 'pgEdge Community', '', '');
-INSERT INTO versions VALUES ('spock-pg15', '3.0.19-1', 'el8, arm, osx', 1, '20230301', 'pg15', '', '');
+INSERT INTO versions VALUES ('spock-pg15', '3.0.20-1', 'el8, arm, osx', 1, '20230310', 'pg15', '', '');
+INSERT INTO versions VALUES ('spock-pg15', '3.0.19-1', 'el8, arm, osx', 0, '20230301', 'pg15', '', '');
 INSERT INTO versions VALUES ('spock-pg15', '3.0.18-1', 'el8, arm, osx', 0, '20230217', 'pg15', '', '');
 
 INSERT INTO projects VALUES ('pglogical', 'ext', 4, 0, 'hub', 1, 'https://github.com/2ndQuadrant/pglogical/releases',
