@@ -195,12 +195,12 @@ def tune(component="pg15"):
   return(rc)
 
 
-def create_node(node_name, dsn, db, pg=None):
+def node_create(node_name, dsn, db, pg=None):
   """Define a spock node."""
 
   pg_v = get_pg_v(pg)
 
-  sql = "SELECT spock.create_node(" + \
+  sql = "SELECT spock.node_create(" + \
            get_eq("node_name", node_name, ", ") + \
            get_eq("dsn",       dsn,       ")")
 
@@ -208,13 +208,13 @@ def create_node(node_name, dsn, db, pg=None):
   sys.exit(0)
 
 
-def create_repset(set_name, db, replicate_insert=True, replicate_update=True, 
+def repset_create(set_name, db, replicate_insert=True, replicate_update=True, 
                            replicate_delete=True, replicate_truncate=True, pg=None):
   """Define a replication set."""
 
   pg_v = get_pg_v(pg)
 
-  sql = "SELECT spock.create_replication_set(" + \
+  sql = "SELECT spock.repset_create(" + \
            get_eq("set_name", set_name, ", ") + \
            get_eq("replicate_insert",   replicate_insert,   ", ") + \
            get_eq("replicate_update",   replicate_update,   ", ") + \
@@ -225,14 +225,14 @@ def create_repset(set_name, db, replicate_insert=True, replicate_update=True,
   sys.exit(0)
 
 
-def create_sub(subscription_name, provider_dsn, db, replication_sets="{default,default_insert_only,ddl_sql}",
+def sub_create(subscription_name, provider_dsn, db, replication_sets="{default,default_insert_only,ddl_sql}",
                synchronize_structure=False, synchronize_data=False, 
                forward_origins='{}', apply_delay=0, pg=None):
   """Create a subscription."""
 
   pg_v = get_pg_v(pg)
 
-  sql = "SELECT spock.create_subscription(" + \
+  sql = "SELECT spock.sub_create(" + \
            get_eq("subscription_name",     subscription_name,     ", ") + \
            get_eq("provider_dsn",          provider_dsn,          ", ") + \
            get_eq("replication_sets",      replication_sets,      ", ") + \
@@ -245,12 +245,12 @@ def create_sub(subscription_name, provider_dsn, db, replication_sets="{default,d
   sys.exit(0)
 
 
-def show_sub_status(subscription_name, db, pg=None):
+def sub_show_status(subscription_name, db, pg=None):
   """Display the status of the subcription."""
 
   pg_v = get_pg_v(pg)
 
-  sql = "SELECT spock.show_subscription_status(" 
+  sql = "SELECT spock.sub_show_status(" 
   if subscription_name != "*":
     get_eq("subscription_name", subscription_name, "")
   sql = sql + ")"
@@ -259,12 +259,12 @@ def show_sub_status(subscription_name, db, pg=None):
   sys.exit(0)
 
 
-def show_sub_table(subscription_name, relation, db, pg=None):
+def sub_show_table(subscription_name, relation, db, pg=None):
   """Show the the subscriptions."""
 
   pg_v = get_pg_v(pg)
 
-  sql = "SELECT spock.show_subscription_status(" + \
+  sql = "SELECT spock.sub_show_table(" + \
            get_eq("subscription_name", subscription_name, ", ") + \
            "relation := '" + relation + "'::regclass)"
 
@@ -277,7 +277,7 @@ def sub_add_repset(subscription_name, replication_set, db, pg=None):
 
   pg_v = get_pg_v(pg)
 
-  sql = "SELECT spock.alter_subscription_add_replication_set(" + \
+  sql = "SELECT spock.sub_add_repset(" + \
            get_eq("subscription_name", subscription_name, ", ") + \
            get_eq("replication_set",   replication_set,   ")")
 
@@ -285,12 +285,12 @@ def sub_add_repset(subscription_name, replication_set, db, pg=None):
   sys.exit(0)
 
 
-def wait_for_sub_sync(subscription_name, db, pg=None):
+def sub_wait_for_sync(subscription_name, db, pg=None):
   """Pause until the subscription is synchronized."""
 
   pg_v = get_pg_v(pg)
 
-  sql = "SELECT spock.wait_for_subscription_sync_complete(" + \
+  sql = "SELECT spock.sub_wait_for_sync(" + \
            get_eq("subscription_name", subscription_name, ")")
 
   run_psyco_sql(pg_v, db, sql)
@@ -368,7 +368,7 @@ def repset_add_table(replication_set, table, db, cols=None, pg=None):
   for tbl in tbls:
     tab = str(tbl[0])
 
-    sql="SELECT spock.replication_set_add_table('" + replication_set + "','" + tab + "'"
+    sql="SELECT spock.repset_add_table('" + replication_set + "','" + tab + "'"
     if cols:
       sql = sql + " ,'" + cols +"')"
     else:
@@ -635,17 +635,17 @@ def install(User=None, Password=None, database=None, country=None, port=5432,
 
 if __name__ == '__main__':
   fire.Fire({
-      'install':          install,
-      'validate':         validate,
-      'tune':             tune,
-      'create-node':      create_node,
-      'create-repset':    create_repset,
-      'create-sub':       create_sub,
-      'repset-add-table': repset_add_table,
-      'sub-add-repset':   sub_add_repset,
-      'show-sub-status':  show_sub_status,
-      'show-sub-table':   show_sub_table,
-      'wait-for-sub-sync': wait_for_sub_sync,
-      'health-check':     health_check,
-      'metrics-check':    metrics_check,
+      'install':           install,
+      'validate':          validate,
+      'tune':              tune,
+      'node-create':       node_create,
+      'repset-create':     repset_create,
+      'repset-add-table':  repset_add_table,
+      'sub-create':        sub_create,
+      'sub-add-repset':    sub_add_repset,
+      'sub-show-status':   sub_show_status,
+      'sub-show-table':    sub_show_table,
+      'sub-wait-for-sync': sub_wait_for_sync,
+      'health-check':      health_check,
+      'metrics-check':     metrics_check,
   })
