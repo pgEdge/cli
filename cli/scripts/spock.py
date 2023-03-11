@@ -195,6 +195,16 @@ def tune(component="pg15"):
   return(rc)
 
 
+def node_add_interface():
+  """Coming Soon!"""
+  util.exit_message("Not implemented yet.")
+
+
+def node_drop_interface():
+  """Coming Soon!"""
+  util.exit_message("Not implemented yet.")
+
+
 def node_create(node_name, dsn, db, pg=None):
   """Define a spock node."""
 
@@ -225,6 +235,39 @@ def repset_create(set_name, db, replicate_insert=True, replicate_update=True,
   sys.exit(0)
 
 
+def repset_alter():
+  """Coming Soon!"""
+  util.exit_message("Not implemented yet.")
+
+
+def repset_alter_seq():
+  """Coming Soon!"""
+  util.exit_message("Not implemented yet.")
+
+
+def repset_drop():
+  """Coming Soon!"""
+  util.exit_message("Not implemented yet.")
+
+
+def repset_add_seq():
+  """Coming Soon!"""
+  util.exit_message("Not implemented yet.")
+  #pglogical.replication_set_add_sequence
+
+
+def repset_add_all_seqs():
+  """Coming Soon!"""
+  util.exit_message("Not implemented yet.")
+  #pglogical.replication_set_add_all_sequences
+
+
+def repset_remove_seq():
+  """Coming Soon!"""
+  util.exit_message("Not implemented yet.")
+  #pglogical.replication_set_remove_sequence
+
+
 def sub_create(subscription_name, provider_dsn, db, replication_sets="{default,default_insert_only,ddl_sql}",
                synchronize_structure=False, synchronize_data=False, 
                forward_origins='{}', apply_delay=0, pg=None):
@@ -243,6 +286,36 @@ def sub_create(subscription_name, provider_dsn, db, replication_sets="{default,d
 
   run_psyco_sql(pg_v, db, sql)
   sys.exit(0)
+
+
+def sub_drop():
+  """Coming Soon!"""
+  util.exit_message("Not implemented yet.")
+
+
+def sub_enable():
+  """Coming Soon!"""
+  util.exit_message("Not implemented yet.")
+
+
+def sub_disable():
+  """Coming Soon!"""
+  util.exit_message("Not implemented yet.")
+
+
+def sub_alter_interface():
+  """Coming Soon!"""
+  util.exit_message("Not implemented yet.")
+
+
+def sub_enable_interface():
+  """Coming Soon!"""
+  util.exit_message("Not implemented yet.")
+
+
+def sub_disable_interface():
+  """Coming Soon!"""
+  util.exit_message("Not implemented yet.")
 
 
 def sub_show_status(subscription_name, db, pg=None):
@@ -272,6 +345,16 @@ def sub_show_table(subscription_name, relation, db, pg=None):
   sys.exit(0)
 
 
+def sub_synch():
+  """Coming Soon!"""
+  util.exit_message("Not implemented yet.")
+
+
+def sub_resynch_table():
+  """Coming Soon!"""
+  util.exit_message("Not implemented yet.")
+
+
 def sub_add_repset(subscription_name, replication_set, db, pg=None):
   """Add a replication set to a subscription."""
 
@@ -283,6 +366,21 @@ def sub_add_repset(subscription_name, replication_set, db, pg=None):
 
   run_psyco_sql(pg_v, db, sql)
   sys.exit(0)
+
+
+def sub_remove_repset():
+  """Coming Soon!"""
+  util.exit_message("Not implemented yet.")
+
+
+def table_wait_for_sync():
+  """Coming Soon!"""
+  util.exit_message("Not implemented yet.")
+
+
+def sub_sync():
+  """Coming Soon!"""
+  util.exit_message("Not implemented yet.")
 
 
 def sub_wait_for_sync(subscription_name, db, pg=None):
@@ -386,6 +484,11 @@ def repset_add_table(replication_set, table, db, cols=None, pg=None):
       con.rollback()
     
   sys.exit(0)
+
+
+def repset_remove_table():
+  """Coming Soon!"""
+  util.exit_message("Not implemented yet.")
 
 
 def health_check(pg=None):
@@ -635,17 +738,48 @@ def install(User=None, Password=None, database=None, country=None, port=5432,
 
 if __name__ == '__main__':
   fire.Fire({
-      'install':           install,
-      'validate':          validate,
-      'tune':              tune,
-      'node-create':       node_create,
-      'repset-create':     repset_create,
-      'repset-add-table':  repset_add_table,
-      'sub-create':        sub_create,
-      'sub-add-repset':    sub_add_repset,
-      'sub-show-status':   sub_show_status,
-      'sub-show-table':    sub_show_table,
-      'sub-wait-for-sync': sub_wait_for_sync,
-      'health-check':      health_check,
-      'metrics-check':     metrics_check,
+      'install':             install,
+      'validate':            validate,
+      'tune':                tune,
+      'node-create':         node_create,
+      'node-add-interface':  node_add_interface,
+      'node-drop-interface': node_drop_interface,
+      'repset-create':       repset_create,
+      'repset-alter':        repset_alter,
+      'repset-drop':         repset_drop,
+      'repset-add-table':    repset_add_table,
+      'repset-add-seq':      repset_add_seq,
+      'repset-remove-seq':   repset_remove_seq,
+      'repset-alter-seq':    repset_alter_seq,
+      'sub-create':          sub_create,
+      'sub-drop':            sub_drop,
+      'sub-alter-interface': sub_alter_interface,
+      'sub-enable':          sub_enable,
+      'sub-disable':         sub_disable,
+      'sub-add-repset':      sub_add_repset,
+      'sub-remove-repset':   sub_remove_repset,
+      'sub-show-status':     sub_show_status,
+      'sub-show-table':      sub_show_table,
+      'sub-sync':            sub_synch,
+      'sub-resynch-table':   sub_resynch_table,
+      'sub-wait-for-sync':   sub_wait_for_sync,
+      'table-wait-for-sync': table_wait_for_sync,
+      'health-check':        health_check,
+      'metrics-check':       metrics_check,
   })
+
+
+#pglogical.replication_set_add_all_tables
+#spock.repset_add_all_tables
+ 
+#pglogical.replication_set_add_sequence
+#spock.repset_add_seq
+
+#pglogical.replication_set_add_all_sequences
+#spock.repset_add_all_seqs
+
+#pglogical.replication_set_remove_sequence
+#spock.repset_remove_seq
+ 
+#pglogical.synchronize_sequence
+#spock.seq_synch
