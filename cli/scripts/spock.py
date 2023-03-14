@@ -186,7 +186,7 @@ def validate(port=5432, pgV="pg15"):
 
 
 def tune(component="pg15"):
-  """Tune pgEdge components"""
+  """Tune pgEdge components."""
 
   if not os.path.isdir(component):
     util.exit_message(f"{component} is not installed", 1)
@@ -196,17 +196,17 @@ def tune(component="pg15"):
 
 
 def node_add_interface():
-  """Coming Soon!"""
+  """Add a new node interafce."""
   util.exit_message("Not implemented yet.")
 
 
 def node_drop_interface():
-  """Coming Soon!"""
+  """Delete a node interface."""
   util.exit_message("Not implemented yet.")
 
 
 def node_create(node_name, dsn, db, pg=None):
-  """Define a spock node."""
+  """Define a node for spock."""
 
   pg_v = get_pg_v(pg)
 
@@ -236,34 +236,34 @@ def repset_create(set_name, db, replicate_insert=True, replicate_update=True,
 
 
 def repset_alter():
-  """Coming Soon!"""
+  """Modify a replication set."""
   util.exit_message("Not implemented yet.")
 
 
 def repset_alter_seq():
-  """Coming Soon!"""
+  """Change a replication set sequence."""
   util.exit_message("Not implemented yet.")
 
 
 def repset_drop():
-  """Coming Soon!"""
+  """Remove a replication set."""
   util.exit_message("Not implemented yet.")
 
 
 def repset_add_seq():
-  """Coming Soon!"""
+  """Add a sequence to a replication set."""
   util.exit_message("Not implemented yet.")
   #pglogical.replication_set_add_sequence
 
 
 def repset_add_all_seqs():
-  """Coming Soon!"""
+  """Add sequences to a replication set."""
   util.exit_message("Not implemented yet.")
   #pglogical.replication_set_add_all_sequences
 
 
 def repset_remove_seq():
-  """Coming Soon!"""
+  """Remove a sequence from a replication set."""
   util.exit_message("Not implemented yet.")
   #pglogical.replication_set_remove_sequence
 
@@ -289,32 +289,32 @@ def sub_create(subscription_name, provider_dsn, db, replication_sets="{default,d
 
 
 def sub_drop():
-  """Coming Soon!"""
+  """Delete a subscription."""
   util.exit_message("Not implemented yet.")
 
 
 def sub_enable():
-  """Coming Soon!"""
+  """Make a subscription live."""
   util.exit_message("Not implemented yet.")
 
 
 def sub_disable():
-  """Coming Soon!"""
+  """Put a subscription on hold."""
   util.exit_message("Not implemented yet.")
 
 
 def sub_alter_interface():
-  """Coming Soon!"""
+  """Modify an interface to a subscription."""
   util.exit_message("Not implemented yet.")
 
 
 def sub_enable_interface():
-  """Coming Soon!"""
+  """Make an interface live."""
   util.exit_message("Not implemented yet.")
 
 
 def sub_disable_interface():
-  """Coming Soon!"""
+  """Put an interface on the back burner."""
   util.exit_message("Not implemented yet.")
 
 
@@ -333,7 +333,7 @@ def sub_show_status(subscription_name, db, pg=None):
 
 
 def sub_show_table(subscription_name, relation, db, pg=None):
-  """Show the the subscriptions."""
+  """Show subscription tables."""
 
   pg_v = get_pg_v(pg)
 
@@ -346,12 +346,12 @@ def sub_show_table(subscription_name, relation, db, pg=None):
 
 
 def sub_synch():
-  """Coming Soon!"""
+  """Synchronize a subscription."""
   util.exit_message("Not implemented yet.")
 
 
 def sub_resynch_table():
-  """Coming Soon!"""
+  """Resynchronize a table."""
   util.exit_message("Not implemented yet.")
 
 
@@ -369,17 +369,17 @@ def sub_add_repset(subscription_name, replication_set, db, pg=None):
 
 
 def sub_remove_repset():
-  """Coming Soon!"""
+  """Drop a replication set from a subscription."""
   util.exit_message("Not implemented yet.")
 
 
 def table_wait_for_sync():
-  """Coming Soon!"""
+  """Pause until a table finishes synchronizing."""
   util.exit_message("Not implemented yet.")
 
 
 def sub_sync():
-  """Coming Soon!"""
+  """Pause until a subscription is synchronized."""
   util.exit_message("Not implemented yet.")
 
 
@@ -396,8 +396,7 @@ def sub_wait_for_sync(subscription_name, db, pg=None):
 
 
 def get_pii_cols(db,schema=None,pg=None):
-  """Retrieve the columns that you have identified as PII 
-     (these will be excluded from replicating to other servers)."""
+  """Retrieve the columns that you have identified as PII"""
 
   pg_v = get_pg_v(pg)
 
