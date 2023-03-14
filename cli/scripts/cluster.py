@@ -1,5 +1,5 @@
 
-import os, sys, random, time
+import os, sys, random, time, json
 import util, fire, meta
 
 base_dir = "cluster"
@@ -100,6 +100,52 @@ def create_local(cluster_name, num_nodes, User="lcusr", Passwd="lcpasswd",
 
 def validate(cluster_name):
   """Validate a cluster configuration"""
+  cady = """
+{
+  "cluster":"cady",
+  "dbname":"demo",
+  "conntype":"ssh",
+  "user":"pgedge",
+  "cert":"pub.key",
+  "nodes":[
+    {"nodename":"n1",
+     "ip":"10.3.1.5"},
+    {"nodename":"n2",
+     "ip":"10.2.1.5"}
+  ]
+}
+"""
+
+  cd = json.loads(cady)
+  try:
+    #print(cd["cluster"])
+    #for nd in cd["nodes"]:
+    #  print(cd["nodename"])
+    #  print(cd["ip"])
+    #  print("")
+
+    print(json.dumps(cd, indent=2))
+    print("")
+
+    luss = {}
+    luss["cluster"] = "luss"
+    luss["dbname"] = "db1"
+    luss["conntype"] = "local"
+    luss["kount"] = 2
+
+    nd = {"nodename": "n1", "home":"/home/denisl/pgedge/cluster/luss/n1"}
+    luss["nodes"] = []
+    luss["nodes"].append(nd)
+    nd = {"nodename": "n3", "home":"/home/denisl/pgedge/cluster/luss/n3"}
+    luss["nodes"].append(nd)
+
+    print(json.dumps(luss, indent=2))
+    print("")
+
+  except Exception as e:
+    print(str(e))
+    sys.exit(1)
+
   util.exit_message("Coming Soon!")
 
 
