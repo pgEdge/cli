@@ -50,6 +50,14 @@ downBuild () {
   echoCmd "rm postgresql-$1.tar.gz"
 
   echoCmd "cd $1"
+
+  if [ "$pgV" == "15" ]; then
+    echoCmd "cd contrib"
+    echoCmd "git clone https://github.com/pgedge/spock"
+    echoCmd "cd .."
+    echoCmd "patch -p1 -i contrib/spock/pg15-log_old_value.diff"
+  fi
+
   makeInstall
   echoCmd "cd .."
 }
@@ -100,6 +108,7 @@ makeInstall () {
 ## MAINLINE ##############################
 
 options=""
+pgV=$1
 if [ "$1" == "11" ]; then
   options=""
   downBuild $v11
