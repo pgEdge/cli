@@ -4,3 +4,4 @@ DROP TABLE IF EXISTS dependencies;
 DROP TABLE IF EXISTS projects;
 DROP TABLE IF EXISTS categories;
 DROP TABLE IF EXISTS stages;
+DROP TABLE IF EXISTS locations;

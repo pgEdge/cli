@@ -37,9 +37,3 @@ CREATE TABLE components (
   svcuser            TEXT
 );
 
-
-DROP TABLE IF EXISTS volumes;
-DROP TABLE IF EXISTS nodes;
-DROP TABLE IF EXISTS clouds;
-DROP TABLE IF EXISTS keys;
-DROP TABLE IF EXISTS clusters;
