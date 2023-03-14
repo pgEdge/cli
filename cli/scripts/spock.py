@@ -218,6 +218,44 @@ def node_create(node_name, dsn, db, pg=None):
   sys.exit(0)
 
 
+def node_drop(node_name, db, pg=None):
+  """Remove a spock node."""
+  util.exit_message("Not implemented yet.")
+
+
+def node_alter_location(node_name, location, db, pg=None):
+  """Set location details for spock node."""
+
+  pg_v = get_pg_v(pg)
+
+  [location_nm, country, state, lattitude, longitude] = util.get_location_dtls(location)
+
+  sql = """
+UPDATE spock.node
+   SET location_nm = ?, country = ?, state = ?, lattitude = ?, longitude = ?
+ WHERE location = ?
+"""
+
+  con = get_pg_connection(pg_v, db, util.get_user())
+
+  rc = 0
+  try:
+    con.transaction()
+    cur.execute(sql, [location_nm, country, state, lattitude, longitude])
+    con.commit()
+  except Exception as e:
+    util.print_exception(e)
+    con.rollback()
+    rc = 1
+
+  sys.exit(rc)
+
+
+def node_show_table():
+  """Display node table."""
+  util.exit_message("Not implemented yet.")
+
+
 def repset_create(set_name, db, replicate_insert=True, replicate_update=True, 
                            replicate_delete=True, replicate_truncate=True, pg=None):
   """Define a replication set."""
@@ -596,7 +634,7 @@ def metrics_check(db, pg=None):
   return(json_dumps(mtrc_dict))
 
 
-def install(User=None, Password=None, database=None, country=None, port=5432,
+def install(User=None, Password=None, database=None, location=None, port=5432,
             pgV="pg15", autostart=True, with_bouncer=False, 
             with_backrest=False, with_postgrest=False):
   """Install pgEdge components."""
@@ -617,8 +655,8 @@ def install(User=None, Password=None, database=None, country=None, port=5432,
   if not database and pgName:
     database = pgName
 
-  if country:
-    os.environ["pgeCountry"] =  str(country)
+  if location:
+    os.environ["pgeLocation"] =  str(location)
 
   try:
     pgePort = int(os.getenv('pgePort', '5432'))
@@ -631,11 +669,10 @@ def install(User=None, Password=None, database=None, country=None, port=5432,
     ## not supporting autostart mode on osx yet
     autostart = False
 
-  ##print(f"User={User}, Password={Password}, database={database}, country={country}, port={port}")
+  ##print(f"User={User}, Password={Password}, database={database}, location={location}, port={port}")
   ##print(f"autostart={autostart}, with_bouncer={with_bouncer}")
 
   database = str(database)
-  country = str(country)
   try:
     port = int(port)
   except Exception as e:
@@ -741,6 +778,9 @@ if __name__ == '__main__':
       'validate':            validate,
       'tune':                tune,
       'node-create':         node_create,
+      'node-drop':           node_drop,
+      'node-alter-location': node_alter_location,
+      'node-show-table':     node_show_table,
       'node-add-interface':  node_add_interface,
       'node-drop-interface': node_drop_interface,
       'repset-create':       repset_create,

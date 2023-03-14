@@ -91,7 +91,7 @@ def create_local(cluster_name, num_nodes, User="lcusr", Passwd="lcpasswd",
     rep_set = 'pgbench-repset'
     dsn = "'host=localhost user=" + usr + "'"
 
-    util.echo_cmd(nc + " spock node-create '" + node_nm + "' --dsn 'host=localhost user=replication' --db " + db)
+    util.echo_cmd(nc + " spock node-create '" + node_nm + "' --dsn 'host=localhost' --db " + db)
     util.echo_cmd(nc + " spock repset-create " + rep_set + " --db " + db)
     util.echo_cmd(nc + " spock repset-add-table " + rep_set + " public.pgbench* --db " + db)
 

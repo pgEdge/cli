@@ -1192,12 +1192,12 @@ if "-p" in args:
     args.remove(port)
     os.environ['pgePort'] = port
 
-if "--country" in args:
-  ctry = get_next_arg("--country")
-  if ctry > "":
-    args.remove("--country")
-    args.remove(ctry)
-    os.environ['pgeCountry'] = ctry
+if "--location" in args:
+  loct = get_next_arg("--location")
+  if loct > "":
+    args.remove("--location")
+    args.remove(loct)
+    os.environ['pgeLocation'] = loct
 
 isTIME = False
 if "-t" in args:

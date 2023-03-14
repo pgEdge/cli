@@ -1103,7 +1103,7 @@ def read_env_file(component):
 
 
 def get_pgpass_file():
-  if get_platform == "Darwin":
+  if get_platform() == "Darwin":
     home = os.getenv("HOME")
     pw_file = home + "/.pgpass"
   else:
@@ -1519,19 +1519,19 @@ def update_postgresql_conf(p_pgver, p_port, is_new=True,update_listen_addr=True)
     elif is_new and line.startswith("#wal_level"):
       ns = ns + "\n" + "wal_level = hot_standby"
 
-    elif is_new and line.startswith("#ssl = ") and (get_platform == "Linux"):
+    elif is_new and line.startswith("#ssl = ") and (get_platform() == "Linux"):
       l_ssl = "ssl = on"
       ns = ns + "\n" + l_ssl
 
-    elif is_new and line.startswith("#ssl_cert_file = ") and (get_platform == "Linux"):
+    elif is_new and line.startswith("#ssl_cert_file = ") and (get_platform() == "Linux"):
       l_scf = "ssl_cert_file = '" + pg_data + "/server.crt'"
       ns = ns + "\n" + l_scf
 
-    elif is_new and line.startswith("#ssl_key_file = ")  and (get_platform == "Linux"):
+    elif is_new and line.startswith("#ssl_key_file = ")  and (get_platform() == "Linux"):
       l_skf = "ssl_key_file = '" + pg_data + "/server.key'"
       ns = ns + "\n" + l_skf
 
-    elif is_new and line.startswith("password_encryption"):
+    elif is_new and line.startswith("#password_encryption = "):
       ns = ns + "\n" + "password_encryption = scram-sha-256"
 
     else:
