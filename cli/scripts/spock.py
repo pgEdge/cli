@@ -251,9 +251,17 @@ UPDATE spock.node
   sys.exit(rc)
 
 
-def node_show_table():
+def node_list(db, pg=None):
   """Display node table."""
-  util.exit_message("Not implemented yet.")
+
+  pg_v = get_pg_v(pg)
+
+  sql = """
+SELECT node_id, node_name FROM spock.node ORDER BY node_name
+"""
+
+  run_psyco_sql(pg_v, db, sql)
+  sys.exit(0)
 
 
 def repset_create(set_name, db, replicate_insert=True, replicate_update=True, 
@@ -780,7 +788,7 @@ if __name__ == '__main__':
       'node-create':         node_create,
       'node-drop':           node_drop,
       'node-alter-location': node_alter_location,
-      'node-show-table':     node_show_table,
+      'node-list':           node_list,
       'node-add-interface':  node_add_interface,
       'node-drop-interface': node_drop_interface,
       'repset-create':       repset_create,
@@ -811,14 +819,8 @@ if __name__ == '__main__':
 #pglogical.replication_set_add_all_tables
 #spock.repset_add_all_tables
  
-#pglogical.replication_set_add_sequence
-#spock.repset_add_seq
-
 #pglogical.replication_set_add_all_sequences
 #spock.repset_add_all_seqs
 
-#pglogical.replication_set_remove_sequence
-#spock.repset_remove_seq
- 
 #pglogical.synchronize_sequence
 #spock.seq_synch
