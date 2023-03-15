@@ -9,7 +9,7 @@ if [ "$SPOCK_BUILD_DELTA_APPLY" == "true" ]; then
 fi
 spockFullV=$spV
 spockShortV=
-spockBuildV=2
+spockBuildV=1
 
 pg15V=15.2
 pg15BuildV=1
