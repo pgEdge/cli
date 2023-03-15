@@ -24,3 +24,5 @@ export JAVA_HOME=/etc/alternatives/jre_11_openjdk
 
 export PATH=/usr/local/bin:$JAVA_HOME/bin:$PATH
 
+source ~/.cargo/env
+

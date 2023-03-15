@@ -42,19 +42,20 @@ if [ $uname == 'Linux' ]; then
         cmake libxml2-devel 
       sudo $yum libedit-devel 
       sudo $yum *ossp-uuid*
-      if [ "$PLATFORM" == "el8" ]; then
-        sudo $yum python2 python2-devel
-        cd /usr/bin
-        sudo ln -fs python2 python
-        sudo $yum openjpeg2-devel libyaml libyaml-devel
-        sudo $yum ncurses-compat-libs mysql-devel 
-	sudo $yum unixODBC-devel protobuf-c-devel libyaml-devel
-      fi
+      sudo $yum python2 python2-devel
+      cd /usr/bin
+      sudo ln -fs python2 python
+      sudo $yum openjpeg2-devel libyaml libyaml-devel
+      sudo $yum ncurses-compat-libs mysql-devel 
+      sudo $yum unixODBC-devel protobuf-c-devel libyaml-devel
       sudo $yum mongo-c-driver-devel freetds-devel systemd-devel
       sudo $yum lz4-devel libzstd-devel krb5-devel
+
+      curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+
       sudo alternatives --config java
     else
-      echo "## ONNLY el8 support"
+      echo "## ONLY el8 support"
       exit 1
     fi
   fi
