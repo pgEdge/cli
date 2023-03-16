@@ -454,6 +454,7 @@ initPG () {
     initC  "postgrest" "postgrest"  "$postgrestV"  "$outPlat" "postgres/postgrest"  "" "" "nil"
     initC  "curl-pg$pgM"  "curl"    "$curlV"       "$outPlat" "postgres/curl"   "" "" "nil"
     initC  "spock-pg$pgM" "spock"   "$spockV"      "$outPlat" "postgres/spock"  "" "" "nil"
+    initC  "cat"             "cat"  "$catV"        "$outPlat" "postgres/cat"    "" "" "nil"
     return
   fi
 
@@ -463,6 +464,7 @@ initPG () {
 
 
   if [ "$pgM" == "15" ] && [  "$isEL8" == "True" ]; then
+    initC  "cat"             "cat"  "$catV"        "$outPlat" "postgres/cat"    "" "" "nil"
     initC "spock-pg$pgM" "spock" "$spockV" "$outPlat" "postgres/spock" "" "" "nil"
     initC "multicorn2-pg$pgM" "multicorn2" "$multicorn2V" "$outPlat" "postgres/multicorn2" "" "" "nil"
     initC "esfdw-pg$pgM" "esfdw" "$esfdwV" "$outPlat" "postgres/esfdw" "" "" "Y"
