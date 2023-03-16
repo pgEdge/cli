@@ -1522,6 +1522,7 @@ def update_postgresql_conf(p_pgver, p_port, is_new=True,update_listen_addr=True)
     elif is_new and line.startswith("#ssl = ") and (get_platform() == "Linux"):
       l_ssl = "ssl = on"
       ns = ns + "\n" + l_ssl
+      message(l_ssl)
 
     elif is_new and line.startswith("#ssl_cert_file = ") and (get_platform() == "Linux"):
       l_scf = "ssl_cert_file = '" + pg_data + "/server.crt'"

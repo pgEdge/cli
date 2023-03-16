@@ -643,7 +643,7 @@ def metrics_check(db, pg=None):
 
 
 def install(User=None, Password=None, database=None, location=None, port=5432,
-            pgV="pg15", autostart=True, with_bouncer=False, 
+            pgV="pg15", autostart=True, with_cat=False, with_bouncer=False, 
             with_backrest=False, with_postgrest=False):
   """Install pgEdge components."""
 
@@ -768,6 +768,11 @@ def install(User=None, Password=None, database=None, location=None, port=5432,
     with_postgrest = True
   if with_postgrest == True:
     osSys(nc + "install postgrest")
+
+  if os.getenv("withCAT", "False") == "True":
+    with_cat = True
+  if with_cat  == True:
+    osSys(nc + "install cat")
 
   if os.getenv("withBOUNCER", "False") == "True":
     with_bouncer = True

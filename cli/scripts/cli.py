@@ -1264,6 +1264,10 @@ if "--with-bouncer" in args and 'install' in args:
   os.environ['withBOUNCER'] = "True"
   args.remove("--with-bouncer")
 
+if "--with-cat" in args and 'install' in args:
+  os.environ['withCAT'] = "True"
+  args.remove("--with-cat")
+
 isAUTOSTART = False
 if "--autostart" in args and 'install' in args:
   isAUTOSTART = True
