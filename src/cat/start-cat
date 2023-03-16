@@ -1,12 +1,14 @@
 #!/bin/bash
 cd "$(dirname "$0")"
 
-now=`date --iso-8601=ns`
+set -x
+
+date '+%Y-%m-%d_%H:%M:%S'
 
 echo "" >> pgcat.log
 echo "pgcat starting"
 
-pkill --echo pgcat | tee -a pgcat.log
+killall -q pgcat | tee -a pgcat.log
 
 echo "$now - starting pgcat" >> pgcat.log
 
