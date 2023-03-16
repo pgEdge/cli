@@ -1,3 +1,23 @@
-mkdir -p /etc/pgcat
-sudo cp pgcat /usr/bin/.
-sudo cp pgcat.toml /etc/pgcat/.
+#!/bin/bash
+cd "$(dirname "$0")"
+
+set -x
+
+cp pgcat.toml.template pgcat.toml
+
+if [ "$pgePasswd" == "" ]; then
+  passwd=`head -1 ~/.pgpass | cut -d':' -f 5`
+else
+  passwd="$pgePasswd"
+fi
+
+if [ "$pgeName" == "" ]; then
+  db=postgres
+else
+  db="$pgeName"
+fi
+
+sed -i -e "s/USR/$USER/g"      pgcat.toml
+sed -i -e "s/DB/$db/g"         pgcat.toml
+sed -i -e "s/PASSWD/$passwd/g" pgcat.toml
+

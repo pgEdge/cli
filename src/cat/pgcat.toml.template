@@ -12,8 +12,8 @@ ban_time = 60 # seconds
 autoreload = false
 # tls_certificate = "server.cert"
 # tls_private_key = "server.key"
-admin_username = "denisl"
-admin_password = "password"
+admin_username = "USR"
+admin_password = "PASSWD"
 
 [pools.postgres]
 pool_mode = "transaction"
@@ -23,8 +23,8 @@ primary_reads_enabled = true
 sharding_function = "pg_bigint_hash"
 
 [pools.postgres.users.0]
-username = "denisl"
-password = "password"
+username = "USR"
+password = "PASSWD"
 pool_size = 9
 statement_timeout = 0
 
@@ -32,5 +32,5 @@ statement_timeout = 0
 servers = [
     [ "127.0.0.1", 5432, "primary" ]
 ]
-database = "postgres"
+database = "DB"
 
