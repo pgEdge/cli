@@ -423,7 +423,7 @@ INSERT INTO projects VALUES ('csvdiff', 'pge', 0, 0, 'hub', 3, 'https://github.c
 INSERT INTO releases VALUES ('csvdiff', 2, 'csvdiff',  'CSV Diff', '', 'test', '', 1, '', '', '');
 INSERT INTO versions VALUES ('csvdiff', '1.4.0', 'el8, arm, osx', 1, '20230206', '', '', '');
 
-INSERT INTO projects VALUES ('cat', 'pge', 4, 0, 'hub', 3, 'https://github.com/levkk/pgcat/tags',
+INSERT INTO projects VALUES ('cat', 'pge', 4, 6432, 'hub', 3, 'https://github.com/levkk/pgcat/tags',
   'cat',  0, 'cat.png', 'Connection Pooler', 'https://github.com/levkk/pgcat');
 INSERT INTO releases VALUES ('cat', 2, 'cat',  'pgCat', '', 'test', '', 1, 'MIT', '', '');
 INSERT INTO versions VALUES ('cat', '0.3.0', 'osx, el8, arm', 1, '20230316', '', '', '');
