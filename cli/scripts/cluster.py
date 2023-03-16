@@ -1,8 +1,47 @@
 
 import os, sys, random, time, json
-import util, fire, meta
+import util, fire, meta, paramiko, socket
 
 base_dir = "cluster"
+
+
+def load_json(cluster_name):
+  try:
+    with open("conf/" + cluster_name + ".json") as f:
+      parsed_json = json.load(f)
+  except Exception as e:
+    util.exit_message("Unable to load JSON file", 1)
+  db=parsed_json["dbname"]
+  user=parsed_json["user"]
+  cert=parsed_json["cert"]
+  return db, user, cert, parsed_json["nodes"]
+
+
+def runNC(node, nc_cmd, db, user, cert):
+  if not (os.path.exists(cert)):
+    exit_message("Unable to locate cert file", 1)
+
+  ## Set up ssh connection
+  pk = paramiko.RSAKey.from_private_key_file(cert)
+  client = paramiko.SSHClient()
+  client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+
+  nc_message=[]
+  for n in node:
+    cmd=n["path"] + "nc " + nc_cmd
+    # Execute Command
+    try:
+      client.connect(hostname=n["ip"], username=user, pkey=pk, timeout=3)
+      stdin, stdout, stderr = client.exec_command(cmd)
+      output =  stdout.read()
+      ##print(output.decode('utf-8'), end="\n")
+      client.close()
+      nc_message.append(n["nodename"] + ": \n"  + output.decode('utf-8'))
+    except (paramiko.BadHostKeyException, paramiko.AuthenticationException,
+        paramiko.SSHException, socket.error) as e:
+        nc_message.append(n["nodename"] + ": \n SSH is not working correctly " + repr(e))
+
+  return nc_message
 
 
 def diff_tables(cluster_name, node1, node2, table_name):
@@ -100,53 +139,15 @@ def create_local(cluster_name, num_nodes, User="lcusr", Passwd="lcpasswd",
 
 def validate(cluster_name):
   """Validate a cluster configuration"""
-  cady = """
-{
-  "cluster":"cady",
-  "dbname":"demo",
-  "conntype":"ssh",
-  "user":"pgedge",
-  "cert":"pub.key",
-  "nodes":[
-    {"nodename":"n1",
-     "ip":"10.3.1.5"},
-    {"nodename":"n2",
-     "ip":"10.2.1.5"}
-  ]
-}
-"""
-
-  cd = json.loads(cady)
-  try:
-    #print(cd["cluster"])
-    #for nd in cd["nodes"]:
-    #  print(cd["nodename"])
-    #  print(cd["ip"])
-    #  print("")
-
-    print(json.dumps(cd, indent=2))
-    print("")
-
-    luss = {}
-    luss["cluster"] = "luss"
-    luss["dbname"] = "db1"
-    luss["conntype"] = "local"
-    luss["kount"] = 2
-
-    nd = {"nodename": "n1", "home":"/home/denisl/pgedge/cluster/luss/n1"}
-    luss["nodes"] = []
-    luss["nodes"].append(nd)
-    nd = {"nodename": "n3", "home":"/home/denisl/pgedge/cluster/luss/n3"}
-    luss["nodes"].append(nd)
-
-    print(json.dumps(luss, indent=2))
-    print("")
-
-  except Exception as e:
-    print(str(e))
-    sys.exit(1)
-
-  util.exit_message("Coming Soon!")
+  db, user, cert, nodes = load_json(cluster_name)
+  message = runNC(nodes, "info", db, user, cert)
+  if len(message) == len(nodes):
+    for n in message:
+      if "NodeCtl" not in n:
+          util.exit_message("Validation of the cluster failed for " + n[:2], 1)
+  else:
+    util.exit_message("Validation of the cluster failed", 1)
+  return cluster_name + " Cluster Validated Sucessfully!"
 
 
 def init(cluster_name):
