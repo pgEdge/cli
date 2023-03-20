@@ -5,9 +5,35 @@ import util, fire, meta, paramiko, socket
 base_dir = "cluster"
 
 
-def load_json(cluster_name):
+def create_json(cluster_name, db, num_nodes, port1):
+  cluster_dir = base_dir + os.sep + cluster_name
+  text_file = open(cluster_dir + os.sep + cluster_name + ".json", "w")
+  cluster_json = {}
+  cluster_json["cluster"] = cluster_name
+  cluster_json["dbname"] = db
+  cluster_json["conntype"] = "local"
+  cluster_json["user"] = ""
+  cluster_json["cert"] = ""
+  cluster_json["nodes"] = []
+  for n in range(1, num_nodes+1):
+    node_json={}
+    node_json["nodename"]="n"+str(n)
+    node_json["ip"]="localhost"
+    node_json["port"]=port1
+    node_json["path"]=cluster_name + os.sep + "n" + str(n)
+    cluster_json["nodes"].append(node_json)
+    port1=port1+1
   try:
-    with open("conf/" + cluster_name + ".json") as f:
+    text_file.write(json.dumps(cluster_json, indent=2))
+    text_file.close()
+  except: 
+     util.exit_message("Unable to create JSON file", 1)
+
+
+def load_json(cluster_name):
+  cluster_dir = base_dir + os.sep + cluster_name
+  try:
+    with open(cluster_dir + os.sep  + cluster_name + ".json") as f:
       parsed_json = json.load(f)
   except Exception as e:
     util.exit_message("Unable to load JSON file", 1)
@@ -135,6 +161,7 @@ def create_local(cluster_name, num_nodes, User="lcusr", Passwd="lcpasswd",
     util.echo_cmd(nc + " spock repset-add-table " + rep_set + " public.pgbench* --db " + db)
 
     nd_port = nd_port + 1
+  create_json(cluster_name, db, num_nodes, port1)
 
 
 def validate(cluster_name):
