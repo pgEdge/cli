@@ -1268,6 +1268,10 @@ if "--with-cat" in args and 'install' in args:
   os.environ['withCAT'] = "True"
   args.remove("--with-cat")
 
+if "--with-patroni" in args and 'install' in args:
+  os.environ['withPATRONI'] = "True"
+  args.remove("--with-patroni")
+
 isAUTOSTART = False
 if "--autostart" in args and 'install' in args:
   isAUTOSTART = True

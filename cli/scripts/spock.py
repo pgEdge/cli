@@ -29,7 +29,7 @@ def osSys(cmd, fatal_exit=True):
 
   rc = os.system(cmd)
   if rc != 0 and fatal_exit:
-    error_exit("FATAL ERROR running install-pgedge", 1)
+    error_exit("FATAL ERROR running SPOCK", 1)
 
   return
 
@@ -643,7 +643,7 @@ def metrics_check(db, pg=None):
 
 
 def install(User=None, Password=None, database=None, location=None, port=5432,
-            pgV="pg15", autostart=True, with_cat=False, with_bouncer=False, 
+            pgV="pg15", autostart=True, with_patroni=True, with_cat=False, with_bouncer=False, 
             with_backrest=False, with_postgrest=False):
   """Install pgEdge components."""
 
@@ -767,7 +767,12 @@ def install(User=None, Password=None, database=None, location=None, port=5432,
   if os.getenv("withPOSTGREST", "False") == "True":
     with_postgrest = True
   if with_postgrest == True:
-    osSys(nc + "install postgrest")
+    osSys(nc + "install postgrest", fatal_exit=False)
+
+  if os.getenv("withPATRONI", "False") == "True":
+    with_patroni = True
+  if with_patroni == True:
+    osSys(nc + "install patroni", fatal_exit=False)
 
   if os.getenv("withCAT", "False") == "True":
     with_cat = True
@@ -777,12 +782,12 @@ def install(User=None, Password=None, database=None, location=None, port=5432,
   if os.getenv("withBOUNCER", "False") == "True":
     with_bouncer = True
   if with_bouncer  == True:
-    osSys(nc + "install bouncer")
+    osSys(nc + "install bouncer", fatal_exit=False)
 
   if os.getenv("withBACKREST", "False") == "True":
     with_backrest = True
   if with_backrest == True:
-    osSys(nc + "install backrest")
+    osSys(nc + "install backrest", fatal_exit=False)
 
 
 if __name__ == '__main__':
