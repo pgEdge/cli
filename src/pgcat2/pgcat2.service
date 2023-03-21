@@ -1,0 +1,14 @@
+[Unit]
+Description=REST API for PostgreSQL
+After=network.target
+
+[Service]
+Type=simple
+User=USER 
+ExecStart=RST_DIR/postgrest  RST_DIR/postgrest.conf
+ExecReload=/bin/kill -HUP $MAINPID
+KillSignal=SIGINT
+#LimitNOFILE=1024
+
+[Install]
+WantedBy=multi-user.target

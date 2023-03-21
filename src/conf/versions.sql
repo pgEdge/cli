@@ -126,7 +126,7 @@ INSERT INTO categories VALUES (9,  87, 'Management & Monitoring', 'Manage/Monito
 -- ## HUB ################################
 INSERT INTO projects VALUES ('hub', 'app', 0, 0, 'hub', 0, 'https://github.com/pgedge/nodectl','',0,'','','');
 INSERT INTO releases VALUES ('hub', 1, 'hub', '', '', 'hidden', '', 1, '', '', '');
-INSERT INTO versions VALUES ('hub', '23.104', '',  1, '20230313', '', '', '');
+INSERT INTO versions VALUES ('hub', '23.104', '',  1, '20230318', '', '', '');
 INSERT INTO versions VALUES ('hub', '23.103', '',  0, '20230310', '', '', '');
 INSERT INTO versions VALUES ('hub', '23.102', '',  0, '20230304', '', '', '');
 
@@ -338,7 +338,7 @@ INSERT INTO versions VALUES ('timescaledb-pg14', '2.8.0-1',  'el8, arm', 0, '202
 INSERT INTO projects VALUES ('spock', 'pge', 4, 0, 'hub', 1, 'https://github.com/pgedge/spock/tags',
   'spock', 1, 'spock.png', 'Logical & Multi-Active Replication', 'https://github.com/pgedge/spock/#spock');
 INSERT INTO releases VALUES ('spock-pg15', 4, 'spock', 'Spock', '', 'prod', '', 1, 'pgEdge Community', '', '');
-INSERT INTO versions VALUES ('spock-pg15', '3.0.22-1', 'el8, arm, osx', 1, '20230314', 'pg15', '', '');
+INSERT INTO versions VALUES ('spock-pg15', '3.0.22-1', 'el8, arm, osx', 1, '20230318', 'pg15', '', '');
 INSERT INTO versions VALUES ('spock-pg15', '3.0.21-1', 'el8, arm, osx', 0, '20230310', 'pg15', '', '');
 INSERT INTO versions VALUES ('spock-pg15', '3.0.19-1', 'el8, arm, osx', 0, '20230301', 'pg15', '', '');
 
@@ -423,10 +423,10 @@ INSERT INTO projects VALUES ('csvdiff', 'pge', 0, 0, 'hub', 3, 'https://github.c
 INSERT INTO releases VALUES ('csvdiff', 2, 'csvdiff',  'CSV Diff', '', 'test', '', 1, '', '', '');
 INSERT INTO versions VALUES ('csvdiff', '1.4.0', 'el8, arm, osx', 1, '20230206', '', '', '');
 
-INSERT INTO projects VALUES ('cat', 'pge', 4, 6432, 'hub', 3, 'https://github.com/levkk/pgcat/tags',
-  'cat',  0, 'cat.png', 'Connection Pooler', 'https://github.com/levkk/pgcat');
-INSERT INTO releases VALUES ('cat', 2, 'cat',  'pgCat', '', 'test', '', 1, 'MIT', '', '');
-INSERT INTO versions VALUES ('cat', '0.3.0', 'osx, el8, arm', 1, '20230316', '', '', '');
+INSERT INTO projects VALUES ('pgcat2', 'pge', 4, 6432, 'hub', 3, 'https://github.com/pgedge/pgcat2/tags',
+  'cat',  0, 'pgcat2.png', 'Connection Pooler', 'https://github.com/pgedge/pgcat2');
+INSERT INTO releases VALUES ('pgcat2', 2, 'pgcat2',  'pgCat2', '', 'test', '', 1, 'MIT', '', '');
+INSERT INTO versions VALUES ('pgcat2', '0.3.0', 'osx, el8, arm', 1, '20230318', '', '', '');
 
 INSERT INTO projects VALUES ('backrest', 'pge', 4, 0, 'hub', 3, 'http://pgbackrest.org',
   'backrest',  0, 'backrest.png', 'Backup & Restore', 'http://pgbackrest.org');
