@@ -1,16 +1,53 @@
 #!/bin/bash
 cd "$(dirname "$0")"
 
-echo " "
-echo "## INSTALL PATRONI ##############################################"
+LOCAL_BIN=$HOME/.local/bin
+PATRONI_CONF=/usr/patroni/conf
+PGDATA=$MY_HOME/data/pg15
+
+etcdMV=3.2.21
+etcdmv=2
+etcd_url=https://cbs.centos.org/kojifiles/packages/etcd/$etcdMV/$etcdmv.el8/`arch`
+etcd_rpm=etcd-$etcdMV-$etcdmv.el8.`arch`.rpm
+
 source getPKMG.sh
 
-## DEB #########################################################
-sudo apt update -y
-sudo apt install -y etcd haproxy
+if [ ! "$PLATFORM" == "el8" ]; then
+  echo "ERROR: platform $PLATFORM is not supported ( only el8 is supported)"
+  exit 1
+fi
 
-sudo pip3 install -r requirements.txt
-sudo pip3 install psycopg2-binary
-python3 setup.py build
-sudo python3 setup.py install
+set -x
+
+echo ""
+echo "## Install HA Proxy..."
+sudo yum install -y haproxy wget
+
+
+echo ""
+echo "## Installing etcd3..."
+rm -f etcd*.rpm*
+wget $etcd_url/$etcd_rpm
+sudo rpm -ivh $etcd_rpm
+
+echo ""
+echo "## Upgrading pip3 to latest"
+pip3 install --upgrade pip
+
+echo ""
+echo "## Installing Patroni & it's dependencies..."
+pip3 install psycopg psycopg-binary patroni[etcd] --user
+sudo cp $LOCAL_BIN/patroni /usr/local/bin/.
+
+echo ""
+if [ -f $PGDATA/server.key ]; then
+  echo "## Copying Certs for Patroni..."
+  sudo mkdir -p $PATRONI_CONF
+  sudo cp $PGDATA/server.* $PATRONI_CONF/.
+else
+  echo "## No pg15 instance to configure for patroni"
+  exit 0
+fi
+
+exit 0
 

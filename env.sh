@@ -74,7 +74,7 @@ mysqlfdwV=2.8.0-1
 mongofdwV=5.4.0-1
 tdsfdwV=2.0.3-1
 badgerV=11.6
-patroniV=2.1.1
+patroniV=3.0
 
 HUB="$PWD"
 SRC="$HUB/src"

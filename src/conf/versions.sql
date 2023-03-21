@@ -435,8 +435,8 @@ INSERT INTO versions VALUES ('backrest', '2.44-1', 'el8, arm', 1, '20230129', ''
 
 INSERT INTO projects VALUES ('patroni', 'app', 11, 0, 'haproxy', 4, 'https://github.com/zalando/patroni/releases',
   'patroni', 0, 'patroni.png', 'HA Template', 'https://github.com/zalando/patroni');
-INSERT INTO releases VALUES ('patroni', 1, 'patroni', 'Patroni', '', 'test', '', 1, 'POSTGRES', '', '');
-INSERT INTO versions VALUES ('patroni', '2.1.1', '', 0, '20210819', '', '', 'https://github.com/zalando/patroni/releases/tag/v2.1.1');
+INSERT INTO releases VALUES ('patroni', 1, 'patroni', 'Patroni 3.0.1', '', 'test', '', 1, 'POSTGRES', '', '');
+INSERT INTO versions VALUES ('patroni', '3.0', '', 1, '20230320', '', '', 'https://github.com/zalando/patroni/releases/tag/v3.0.1');
 
 INSERT INTO projects VALUES ('ddlx', 'ext',     4, 0, 'hub', 0, 'https://github.com/lacanoid/pgddl/releases', 'ddlx',  1, 'ddlx.png', 'DDL Extractor', 'https://github.com/lacanoid/pgddl#ddl-extractor-functions--for-postgresql');
 INSERT INTO releases VALUES ('ddlx-pg13', 2, 'ddlx', 'DDLeXtact', '', 'prod','',  0, 'POSTGRES', '', '');

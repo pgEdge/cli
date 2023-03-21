@@ -525,13 +525,12 @@ initPG () {
   initC  "backrest" "backrest" "$backrestV" "$outPlat" "postgres/backrest" "" "" "nil"
   initC  "csvdiff" "csvdiff" "$csvdiffV" "$outPlat" "csvdiff" "" "" "nil"
   initC  "pgdiff" "pgdiff" "$pgdiffV" "" "postgres/pgdiff" "" "" "nil"
-  ##initC  "golang" "golang" "$goV" "" "golang" "" "" "Y"
+  initC  "patroni"   "patroni"   "$patroniV" "" "postgres/patroni" "" "" "nil"
   ##initC "nginx" "nginx" "$nginxV" "" "nginx" "" "" "Y"
   ##initC "prompgexp"  "prompgexp"  "$prompgexpV"  ""  "prometheus/pg_exporter"  "" "" "Y"
   ##initC "nodejs"   "nodejs" "$nodejsV" "" "nodejs"           "" "" "Y"
   
   ##initC "instantclient" "instantclient" "$inclV" "" "oracle/instantclient" "" "" "Y"
-  ##initC "golang" "golang" "$goV" "$outPlat" "golang" "" "" "Y"
   ##initC "kafka"     "kafka"     "$kfkV"   "" "kafka"            "" "" "Y"
   ##initC "apicurio"  "apicurio"  "$apicV"  "" "apicurio"         "" "" "nil"
   ##initC "debezium"  "debezium"  "$dbzV"   "" "debezium"         "" "" "Y"
@@ -539,7 +538,6 @@ initPG () {
   ##initC "omnidb"    "omnidb"    "$omniV"  "" "postgres/omnidb"  "" "" "Y"
 
   ##initC "ora2pg"    "ora2pg"    "$ora2pgV" "" "postgres/ora2pg" "" "" "Y"
-  ##initC "patroni"   "patroni"   "$patroniV" "" "postgres/patroni" "" "" "nil"
 
   return
 
