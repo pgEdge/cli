@@ -183,6 +183,12 @@ def validate(port=5432, pgV="pg15"):
   except ImportError as e:
     util.message("  You need a native PSUTIL module to run 'metrics-check' or 'top'")
 
+  util.message("  Check for PARAMIKO module")
+  try:
+    import paramiko
+  except ImportError as e:
+    util.message("  You need PARAMIKO module to run 'cluster' comands on a remote cluster")
+
 
 
 def tune(component="pg15"):
