@@ -2,7 +2,7 @@
 #  Copyright 2022-2023 PGEDGE  All rights reserved. #
 #####################################################
 
-MY_VERSION = "23.106"
+MY_VERSION = "23.107"
 
 from subprocess import Popen, PIPE, STDOUT
 from datetime import datetime, timedelta
@@ -1715,6 +1715,9 @@ def write_pgenv_file(p_pghome, p_pgver, p_pgdata, p_pguser, p_pgdatabase, p_pgpo
     file.write('if [ -f /usr/lib64/perl5/CORE/libperl.so ]; then \n')
     file.write('    export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/lib64/perl5/CORE \n')
     file.write('fi \n')
+    if os.path.exists("/etc/lsb-release"):
+      ## ubuntu xterm incompatible with el8 xterm key mappings
+      file.write("export TERM=vt100\n")
     file.close()
     os.chmod(env_file, 0o755)
   except IOError as e:
