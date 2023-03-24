@@ -399,9 +399,7 @@ def info(p_json, p_home, p_repo, print_flag=True):
   print(bold_start + "#           Machine: " + bold_end + mem + ", " + cores + " vCPU, " + cpu)
   print(bold_start + "# Programming Langs: " + bold_end + langs)
 
-  default_repo = "https://pgedge-download.s3.amazonaws.com/REPO"
-  if p_repo != default_repo:
-    print(bold_start + "#          Repo URL: " + bold_end + p_repo)
+  print(bold_start + "#          Repo URL: " + bold_end + p_repo)
 
   if versions_sql == "versions.sql":
     pass

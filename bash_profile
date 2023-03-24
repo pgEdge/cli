@@ -4,7 +4,7 @@ alias bp="cd ~/dev/nodectl; . ./bp.sh"
 alias ver="vi ~/dev/nodectl/src/conf/versions.sql"
 
 export REGION=us-east-2
-export BUCKET=s3://pgedge-download
+export BUCKET=s3://pgedge-upstream
 
 export DEV=$HOME/dev
 export IN=$DEV/in

@@ -4,8 +4,8 @@
 
 import sys, os
 
-VER="23.105"
-REPO=os.getenv("REPO", "https://pgedge-download.s3.amazonaws.com/REPO")
+VER="23.106"
+REPO=os.getenv("REPO", "https://pgedge-upstream.s3.amazonaws.com/REPO")
   
 if sys.version_info < (3, 6):
   print("ERROR: Requires Python 3.6 or greater")
