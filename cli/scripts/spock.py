@@ -649,7 +649,7 @@ def metrics_check(db, pg=None):
 
 
 def install(User=None, Password=None, database=None, location=None, port=5432,
-            pgV="pg15", autostart=True, with_patroni=True, with_cat=False, with_bouncer=False, 
+            pgV="pg15", autostart=True, with_patroni=False, with_cat=False, with_bouncer=False, 
             with_backrest=False, with_postgrest=False):
   """Install pgEdge components."""
 
