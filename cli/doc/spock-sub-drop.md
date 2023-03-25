@@ -1,12 +1,11 @@
 ## SYNOPSIS
-    ./nodectl spock sub-show-table SUBSCRIPTION_NAME RELATION DB <flags>
+    ./nodectl spock sub-drop SUBSCRIPTION_NAME DB <flags>
  
 ## DESCRIPTION
-    Show subscription tables.
+    Delete a subscription.
  
 ## POSITIONAL ARGUMENTS
     SUBSCRIPTION_NAME
-    RELATION
     DB
  
 ## FLAGS

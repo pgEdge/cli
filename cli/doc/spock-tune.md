@@ -2,7 +2,7 @@
     ./nodectl spock tune <flags>
  
 ## DESCRIPTION
-    Tune pgEdge components
+    Tune pgEdge components.
  
 ## FLAGS
     -c, --component=COMPONENT

@@ -25,9 +25,12 @@ $nc spock install           --help
 $nc spock validate          --help
 $nc spock tune              --help
 $nc spock node-create       --help
+$nc spock node-drop         --help
 $nc spock repset-create     --help
+$nc spock repset-drop       --help
 $nc spock repset-add-table  --help
 $nc spock sub-create        --help
+$nc spock sub-drop          --help
 $nc spock sub-add-repset    --help
 $nc spock sub-show-status   --help
 $nc spock sub-show-table    --help

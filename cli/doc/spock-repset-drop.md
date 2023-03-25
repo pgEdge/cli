@@ -1,12 +1,11 @@
 ## SYNOPSIS
-    ./nodectl spock node-create NODE_NAME DSN DB <flags>
+    ./nodectl spock repset-drop SET_NAME DB <flags>
  
 ## DESCRIPTION
-    Define a node for spock.
+    Remove a replication set.
  
 ## POSITIONAL ARGUMENTS
-    NODE_NAME
-    DSN
+    SET_NAME
     DB
  
 ## FLAGS

@@ -1,12 +1,11 @@
 ## SYNOPSIS
-    ./nodectl spock node-create NODE_NAME DSN DB <flags>
+    ./nodectl spock node-drop NODE_NAME DB <flags>
  
 ## DESCRIPTION
-    Define a node for spock.
+    Remove a spock node.
  
 ## POSITIONAL ARGUMENTS
     NODE_NAME
-    DSN
     DB
  
 ## FLAGS

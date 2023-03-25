@@ -14,7 +14,7 @@
     -d, --database=DATABASE
         Type: Optional[]
         Default: None
-    -c, --country=COUNTRY
+    -l, --location=LOCATION
         Type: Optional[]
         Default: None
     --port=PORT
@@ -23,6 +23,10 @@
         Default: pg15
     -a, --autostart=AUTOSTART
         Default: True
+    --with_patroni=WITH_PATRONI
+        Default: False
+    --with_cat=WITH_CAT
+        Default: False
     --with_bouncer=WITH_BOUNCER
         Default: False
     --with_backrest=WITH_BACKREST
