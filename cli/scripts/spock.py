@@ -213,20 +213,20 @@ def node_drop_interface():
 
 def node_create(node_name, dsn, db, pg=None):
   """Define a node for spock."""
-
   pg_v = get_pg_v(pg)
-
   sql = "SELECT spock.node_create(" + \
            get_eq("node_name", node_name, ", ") + \
            get_eq("dsn",       dsn,       ")")
-
   run_psyco_sql(pg_v, db, sql)
   sys.exit(0)
 
 
 def node_drop(node_name, db, pg=None):
   """Remove a spock node."""
-  util.exit_message("Not implemented yet.")
+  pg_v = get_pg_v(pg)
+  sql = "SELECT spock.node_drop(" + get_eq("node_name", node_name, ")")
+  run_psyco_sql(pg_v, db, sql)
+  sys.exit(0)
 
 
 def node_alter_location(node_name, location, db, pg=None):
@@ -259,13 +259,10 @@ UPDATE spock.node
 
 def node_list(db, pg=None):
   """Display node table."""
-
   pg_v = get_pg_v(pg)
-
   sql = """
 SELECT node_id, node_name FROM spock.node ORDER BY node_name
 """
-
   run_psyco_sql(pg_v, db, sql)
   sys.exit(0)
 
@@ -273,16 +270,13 @@ SELECT node_id, node_name FROM spock.node ORDER BY node_name
 def repset_create(set_name, db, replicate_insert=True, replicate_update=True, 
                            replicate_delete=True, replicate_truncate=True, pg=None):
   """Define a replication set."""
-
   pg_v = get_pg_v(pg)
-
   sql = "SELECT spock.repset_create(" + \
            get_eq("set_name", set_name, ", ") + \
            get_eq("replicate_insert",   replicate_insert,   ", ") + \
            get_eq("replicate_update",   replicate_update,   ", ") + \
            get_eq("replicate_delete",   replicate_delete,   ", ") + \
            get_eq("replicate_truncate", replicate_truncate, ")")
-
   run_psyco_sql(pg_v, db, sql)
   sys.exit(0)
 
@@ -297,9 +291,12 @@ def repset_alter_seq():
   util.exit_message("Not implemented yet.")
 
 
-def repset_drop():
+def repset_drop(set_name, db, pg=None):
   """Remove a replication set."""
-  util.exit_message("Not implemented yet.")
+  pg_v = get_pg_v(pg)
+  sql = "SELECT spock.repset_drop(" + get_eq("set_name", set_name, ")")
+  run_psyco_sql(pg_v, db, sql)
+  sys.exit(0)
 
 
 def repset_add_seq():
@@ -324,9 +321,7 @@ def sub_create(subscription_name, provider_dsn, db, replication_sets="{default,d
                synchronize_structure=False, synchronize_data=False, 
                forward_origins='{}', apply_delay=0, pg=None):
   """Create a subscription."""
-
   pg_v = get_pg_v(pg)
-
   sql = "SELECT spock.sub_create(" + \
            get_eq("subscription_name",     subscription_name,     ", ") + \
            get_eq("provider_dsn",          provider_dsn,          ", ") + \
@@ -335,14 +330,16 @@ def sub_create(subscription_name, provider_dsn, db, replication_sets="{default,d
            get_eq("synchronize_data",      synchronize_data,      ", ") + \
            get_eq("forward_origins",       forward_origins,       ", ") + \
            get_eq("apply_delay",           apply_delay,           ")")
-
   run_psyco_sql(pg_v, db, sql)
   sys.exit(0)
 
 
-def sub_drop():
+def sub_drop(subscription_name, db, pg=None):
   """Delete a subscription."""
-  util.exit_message("Not implemented yet.")
+  pg_v = get_pg_v(pg)
+  sql = "SELECT spock.sub_drop(" + get_eq("subscription_name", subscription_name, ")")
+  run_psyco_sql(pg_v, db, sql)
+  sys.exit(0)
 
 
 def sub_enable():
