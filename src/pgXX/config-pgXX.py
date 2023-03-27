@@ -114,9 +114,9 @@ if args.autostart == "off":
 else:
   pg_ctl = os.path.join(MY_HOME, pgver, 'bin', 'pg_ctl') 
   pgdata = util.get_column('datadir', pgver)
-  cmd_start  = pg_ctl + ' start  -D ' + pgdata + ' -s -w -t 300'
-  cmd_stop   = pg_ctl + ' stop   -D ' + pgdata + ' -s -m fast'
-  cmd_reload = pg_ctl + ' reload -D ' + pgdata + ' -s'
+  cmd_start  = pg_ctl + ' start  -D ' + pgdata + ' -w -t 300'
+  cmd_stop   = pg_ctl + ' stop   -D ' + pgdata + ' -m fast'
+  cmd_reload = pg_ctl + ' reload -D ' + pgdata 
   cmd_status = pg_ctl + ' status -D ' + pgdata
   cmd_log = '-l ' + pgdata + '/pgstartup.log'
   #svcuser = util.get_column('svcuser', pgver)

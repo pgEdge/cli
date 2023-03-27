@@ -191,9 +191,9 @@ if update_install_date:
 if util.is_admin() and util.is_systemctl():
   systemsvc = 'pg' + pgver[2:4]
   pg_ctl = os.path.join(MY_HOME, pgver, 'bin', 'pg_ctl')
-  cmd_start  = pg_ctl + ' start  -D ' + pg_data + ' -s -w -t 300'
-  cmd_stop   = pg_ctl + ' stop   -D ' + pg_data + ' -s -m fast'
-  cmd_reload = pg_ctl + ' reload -D ' + pg_data + ' -s'
+  cmd_start  = pg_ctl + ' start  -D ' + pg_data + ' -w -t 300'
+  cmd_stop   = pg_ctl + ' stop   -D ' + pg_data + ' -m fast'
+  cmd_reload = pg_ctl + ' reload -D ' + pg_data
   cmd_status = pg_ctl + ' status -D ' + pg_data
   cmd_log = '-l ' + pg_data + '/pgstartup.log'
   startup.config_linux(pgver, systemsvc, svcuser,
