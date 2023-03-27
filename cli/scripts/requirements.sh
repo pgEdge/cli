@@ -37,7 +37,7 @@ isEL () {
   ELx=EL$1
 
  
-  grep "VERSION_ID=\"$1\"" /etc/os-release > /dev/null 2>&1
+  grep "VERSION_ID=\"$1" /etc/os-release > /dev/null 2>&1
   rc=$?
   if [ "$rc" == "0" ]; then
     echoX "#       $ELx - OK"
