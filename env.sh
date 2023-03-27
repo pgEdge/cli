@@ -19,7 +19,7 @@ postgrestV=10.2.0-1
 prompgexpV=0.11.1
 nodejsV=18.12.1
 bckgrndV=1.1-1
-backrestV=2.44-1
+backrestV=2.45-1
 csvdiffV=1.4.0
 pgdiffV=1.1
 curlV=1.0.27-1
@@ -33,7 +33,7 @@ citusV=11.2.0-1
 
 oraclefdwV=2.5.0-1
 inclV=21.6
-orafceV=4.1.1-1
+orafceV=4.2.2-1
 ora2pgV=23.1
 v8V=3.1.2-1
 

@@ -42,7 +42,7 @@ odbcFullV=13.01
 odbcShortV=
 odbcBuildV=1
 
-backrestFullV=2.44
+backrestFullV=2.45
 backrestShortV=
 backrestBuildV=1
 
@@ -98,7 +98,7 @@ cassFullV=3.1.5
 cassShortV=
 cassBuildV=1
 
-orafceFullV=4.1.1
+orafceFullV=4.2.2
 orafceShortV=
 orafceBuildV=1
 

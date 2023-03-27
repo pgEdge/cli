@@ -246,7 +246,8 @@ INSERT INTO versions VALUES ('instantclient', '21.6', '', 0, '20220420', '', '',
 INSERT INTO projects VALUES ('orafce', 'ext', 4, 0, 'hub', 0, 'https://github.com/orafce/orafce/releases',
   'orafce', 1, 'larry.png', 'Ora Built-in Packages', 'https://github.com/orafce/orafce#orafce---oracles-compatibility-functions-and-packages');
 INSERT INTO releases VALUES ('orafce-pg15', 2, 'orafce', 'OraFCE', '', 'prod', '', 1, 'POSTGRES', '', '');
-INSERT INTO versions VALUES ('orafce-pg15', '4.1.1-1',   'arm, el8', 1, '20230127', 'pg15', '', '');
+INSERT INTO versions VALUES ('orafce-pg15', '4.2.2-1',   'arm, el8', 1, '20230314', 'pg15', '', '');
+INSERT INTO versions VALUES ('orafce-pg15', '4.1.1-1',   'arm, el8', 0, '20230127', 'pg15', '', '');
 INSERT INTO versions VALUES ('orafce-pg15', '4.1.0-1',   'arm, el8', 0, '20230107', 'pg15', '', '');
 
 INSERT INTO projects VALUES ('fixeddecimal', 'ext', 6, 0, 'hub', 0, 'https://github.com/pgsql-io/fixeddecimal/tags',
@@ -395,7 +396,8 @@ INSERT INTO versions VALUES ('pgcat2', '0.3.0', 'osx, el8, arm', 1, '20230318', 
 INSERT INTO projects VALUES ('backrest', 'pge', 4, 0, 'hub', 3, 'http://pgbackrest.org',
   'backrest',  0, 'backrest.png', 'Backup & Restore', 'http://pgbackrest.org');
 INSERT INTO releases VALUES ('backrest', 2, 'backrest',  'pgBackRest', '', 'test', '', 1, 'MIT', '', '');
-INSERT INTO versions VALUES ('backrest', '2.44-1', 'el8, arm', 1, '20230129', '', 'EL8', '');
+INSERT INTO versions VALUES ('backrest', '2.45-1', 'el8, arm', 1, '20230321', '', 'EL8', '');
+INSERT INTO versions VALUES ('backrest', '2.44-1', 'el8, arm', 0, '20230129', '', 'EL8', '');
 
 INSERT INTO projects VALUES ('patroni', 'app', 11, 0, 'haproxy', 4, 'https://github.com/zalando/patroni/releases',
   'patroni', 0, 'patroni.png', 'HA Template', 'https://github.com/zalando/patroni');
