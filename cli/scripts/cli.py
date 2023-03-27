@@ -1699,8 +1699,13 @@ try:
       if isExt:
         parent = util.get_parent_component(c,0)
       if status==1 and (c in p_comp_list or p_comp_list[0]=="all") :
-        ## already installed
-        pass
+        if isExt:
+          ## just run the CREATE EXTENSION sql command without reboot or change preloads
+          os.environ["isPreload"] = "False"
+          util.create_extension(parent, c, False)
+        else:
+          ## already installed
+          pass
       elif status!=1:
         installed_comp_list.append(c)
         isExt = meta.is_extension(c)
