@@ -79,7 +79,10 @@ def run_psyco_sql(pg_v, db, cmd, usr=None):
       pass
 
   except Exception as e:
-    util.exit_exception(e)
+    if "already exists" in str(e):
+      util.exit_message("already exists", 0)
+    else:
+      util.exit_exception(e)
 
 
 def get_pg_v(pg):
