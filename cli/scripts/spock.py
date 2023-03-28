@@ -81,6 +81,8 @@ def run_psyco_sql(pg_v, db, cmd, usr=None):
   except Exception as e:
     if "already exists" in str(e):
       util.exit_message("already exists", 0)
+    elif "already subscribes" in str(e):
+      util.exit_message("already subscribes", 0)
     else:
       util.exit_exception(e)
 
