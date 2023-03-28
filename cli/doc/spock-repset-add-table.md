@@ -2,7 +2,7 @@
     ./nodectl spock repset-add-table REPLICATION_SET TABLE DB <flags>
  
 ## DESCRIPTION
-    Add a table to a replication set.
+    Add table(s) to replication set.
  
 ## POSITIONAL ARGUMENTS
     REPLICATION_SET

@@ -29,9 +29,13 @@ $nc spock node-drop         --help
 $nc spock repset-create     --help
 $nc spock repset-drop       --help
 $nc spock repset-add-table  --help
+$nc spock repset-remove-table --help
 $nc spock sub-create        --help
 $nc spock sub-drop          --help
+$nc spock sub-enable        --help
+$nc spock sub-disable       --help
 $nc spock sub-add-repset    --help
+$nc spock sub-remove-repset --help
 $nc spock sub-show-status   --help
 $nc spock sub-show-table    --help
 $nc spock sub-wait-for-sync --help

@@ -345,14 +345,24 @@ def sub_drop(subscription_name, db, pg=None):
   sys.exit(0)
 
 
-def sub_enable():
+def sub_enable(subscription_name, db, immediate=False, pg=None):
   """Make a subscription live."""
-  util.exit_message("Not implemented yet.")
+  pg_v = get_pg_v(pg)
+  sql = "SELECT spock.sub_enable(" + \
+           get_eq("subscription_name", subscription_name, ", ") + \
+           get_eq("immediate",         immediate,         ")")
+  run_psyco_sql(pg_v, db, sql)
+  sys.exit(0)
 
 
-def sub_disable():
-  """Put a subscription on hold."""
-  util.exit_message("Not implemented yet.")
+def sub_disable(subscription_name, db, immediate=False, pg=None):
+  """Put a subscription on hold and disconnect from provider."""
+  pg_v = get_pg_v(pg)
+  sql = "SELECT spock.sub_disable(" + \
+           get_eq("subscription_name", subscription_name, ", ") + \
+           get_eq("immediate",         immediate,         ")")
+  run_psyco_sql(pg_v, db, sql)
+  sys.exit(0)
 
 
 def sub_alter_interface():
@@ -420,9 +430,15 @@ def sub_add_repset(subscription_name, replication_set, db, pg=None):
   sys.exit(0)
 
 
-def sub_remove_repset():
+def sub_remove_repset(subscription_name, replication_set, db, pg=None):
   """Drop a replication set from a subscription."""
-  util.exit_message("Not implemented yet.")
+
+  pg_v = get_pg_v(pg)
+  sql = "SELECT spock.sub_remove_repset(" + \
+           get_eq("subscription_name", subscription_name, ", ") + \
+           get_eq("replication_set",   replication_set,   ")")
+  run_psyco_sql(pg_v, db, sql)
+  sys.exit(0)
 
 
 def table_wait_for_sync():
@@ -458,6 +474,7 @@ def get_pii_cols(db,schema=None,pg=None):
 
   run_psyco_sql(pg_v, db, sql)
   sys.exit(0)
+
 
 def get_table_list(table, db, pg_v):
   w_schema = None
@@ -506,7 +523,7 @@ def get_table_list(table, db, pg_v):
 
 
 def repset_add_table(replication_set, table, db, cols=None, pg=None):
-  """Add a table to a replication set."""
+  """Add table(s) to replication set."""
 
   pg_v = get_pg_v(pg)
 
@@ -537,9 +554,14 @@ def repset_add_table(replication_set, table, db, cols=None, pg=None):
   sys.exit(0)
 
 
-def repset_remove_table():
-  """Coming Soon!"""
-  util.exit_message("Not implemented yet.")
+def repset_remove_table(replication_set, table, db, pg=None):
+  """Remove table from replication set."""
+  pg_v = get_pg_v(pg)
+  sql = "SELECT spock.repset_remove_table(" + \
+           get_eq("replication_set",   replication_set,   ", ") + \
+           get_eq("relation",          table,             ")")
+  run_psyco_sql(pg_v, db, sql)
+  sys.exit(0)
 
 
 def health_check(pg=None):
@@ -811,6 +833,7 @@ if __name__ == '__main__':
       'repset-alter':        repset_alter,
       'repset-drop':         repset_drop,
       'repset-add-table':    repset_add_table,
+      'repset-remove-table': repset_remove_table,
       'repset-add-seq':      repset_add_seq,
       'repset-remove-seq':   repset_remove_seq,
       'repset-alter-seq':    repset_alter_seq,

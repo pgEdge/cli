@@ -15,7 +15,8 @@
      repset-create       # Define a replication set.
      repset-alter        # Modify a replication set.
      repset-drop         # Remove a replication set.
-     repset-add-table    # Add a table to a replication set.
+     repset-add-table    # Add table(s) to replication set.
+     repset-remove-table # Remove table from replication set.
      repset-add-seq      # Add a sequence to a replication set.
      repset-remove-seq   # Remove a sequence from a replication set.
      repset-alter-seq    # Change a replication set sequence.
@@ -23,7 +24,7 @@
      sub-drop            # Delete a subscription.
      sub-alter-interface # Modify an interface to a subscription.
      sub-enable          # Make a subscription live.
-     sub-disable         # Put a subscription on hold.
+     sub-disable         # Put a subscription on hold and disconnect from provider.
      sub-add-repset      # Add a replication set to a subscription.
      sub-remove-repset   # Drop a replication set from a subscription.
      sub-show-status     # Display the status of the subcription.
