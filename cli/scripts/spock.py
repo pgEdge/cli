@@ -5,6 +5,9 @@ nc = "./nodectl "
 
 isAutoStart   = str(os.getenv("isAutoStart",   "False"))
 isDebug       = str(os.getenv("pgeDebug",      "0"))
+  
+## force use of PGPASSWORD from ~/.pgpass
+os.environ["PGPASSWORD"] = ""
 
 try:
   import psycopg
@@ -43,9 +46,6 @@ def json_dumps(p_input):
 
 def get_pg_connection(pg_v, db, usr):
   dbp = util.get_column("port", pg_v)
-  
-  ## force use of PGPASSWORD from ~/.pgpass
-  os.environ["PGPASSWORD"] = ""
 
   try:
     con = psycopg.connect(dbname=db, user=usr, host="localhost", port=dbp, autocommit=False)
