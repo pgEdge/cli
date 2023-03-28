@@ -2,7 +2,7 @@
 #  Copyright 2022-2023 PGEDGE  All rights reserved. #
 #####################################################
 
-MY_VERSION = "23.108"
+MY_VERSION = "23.109"
 
 from subprocess import Popen, PIPE, STDOUT
 from datetime import datetime, timedelta
@@ -2632,7 +2632,7 @@ def is_socket_busy(p_port, p_comp=''):
     is_ready_file = "pg_isready"
     isready = os.path.join(os.getcwd(), p_comp, 'bin', is_ready_file)
     if os.path.isfile(isready):
-      rc = system(isready + ' -q -p ' + str(p_port))
+      rc = system(isready + ' -d postgres -q -p ' + str(p_port))
       if rc == 0:
         return True
 

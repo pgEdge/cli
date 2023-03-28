@@ -580,7 +580,7 @@ def health_check(pg=None):
 
  
 def is_pg_ready(pg_v):
-  rc = os.system(os.getcwd() + "/" + pg_v + "/bin/pg_isready > /dev/null 2>&1")
+  rc = os.system(os.getcwd() + "/" + pg_v + "/bin/pg_isready -d postgres > /dev/null 2>&1")
   if rc == 0:
     return(True)
 
