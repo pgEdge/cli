@@ -81,7 +81,7 @@ mode_list_advanced = ['kill', 'config', 'init', 'clean', 'useradd', 'spock',
 ignore_comp_list = [ "get", "set", "unset", "spock", "pgbin", "cluster", 
                      "service", "um", "useradd", "backrest", "change-pgconf"]
 
-no_log_commands = ['status', 'info', 'list', 'top', 'get']
+no_log_commands = ['status', 'info', 'list', 'top', 'get', 'metrics-check']
 
 lock_commands = ["install", "remove", "update", "upgrade", "downgrade"]
 
@@ -1300,6 +1300,8 @@ arg = 1
 p_mode = args[1]
 
 if (p_mode in no_log_commands) and (isJSON == True):
+  pass
+elif p_mode in ('service', 'spock', 'um', 'cluster') and (len(args) > 2) and (args[2] in no_log_commands):
   pass
 else:
   my_logger.command(MY_CMD + " %s", full_cmd_line)
