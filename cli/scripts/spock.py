@@ -799,6 +799,9 @@ def install(User=None, Password=None, database=None, location=None, port=5432,
   osSys(nc + "install spock -d " + database, 2)
   osSys(nc + "install readonly", 2)
 
+  util.change_pgconf_keyval(pgV, "cron.database_name", database, True)
+  osSys(nc + "install cron -d " + database, 2)
+
   if os.getenv("withPOSTGREST", "False") == "True":
     with_postgrest = True
   if with_postgrest == True:
