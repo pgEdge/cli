@@ -1,59 +1,70 @@
-# PGEDGE NODECTL CLI
+# pgEdge NodeCtl : Command Line Interface
 NODECTL is the pgEdge Command Line Interface (CLI).  It is a cross-platform 
 tool to manage your PostgreSQL eco-system of components.  The modules are 
-UM, SERVICE, SPOCK, and CLUSTER.
-
-We are licensed under the pgEdge Community License 1.0
+`um`, `service`, `spock`, and `cluster`.  We are licensed under the 
+pgEdge Community License 1.0
 
 ## Synopsis
     ./nodectl <module> <command> [parameters] [options] 
 
-## um - Update Manager commands
-**list** - Display available/installed components<br>
-**update**  - Retrieve new list of components & update nodectl<br>
-**install** - Install a component (eg pg15, spock, postgis, etc)<br>
-**remove** - Un-install component<br>
-**upgrade** - Perform an upgrade of a component<br>
-**clean** - Delete downloaded component files from local cache<br>
+## `um` Update Manager commands
+```
+list                Display available/installed components
+update              Retrieve new list of latest components & update nodectl
+install             Install a component (eg pg15, spock, postgis)
+remove              Un-install component
+upgrade             Perform an upgrade of a component
+clean               Delete downloaded component files from local cache
+```
 
+## `service` Service control commands
+```
+start              Start server components
+stop               Stop server components
+status             Display status of installed server components
+reload             Reload server config files (without a restart)
+restart            Stop & then start server components
+enable             Enable a server component
+disable            Disable component from starting automatically
+config             Configure a component
+init               Initialize a component
+```
 
-## service - Service control commands
-[**start**](service-start.md)                 - Start server components<br>
-[**stop**](cli/doc/service-stop.md)               - Stop server components<br>
-[**status**](cli/doc/service-status.md)           - Display status of installed server components<br>
-[**reload**](cli/doc/service-reload.md)           - Reload server config files (without a restart)<br>
-[**restart**](doc/service-restart.md)         - Stop & then start server components<br>
-[**enable**](doc/service-enable.md)           - Enable a server component<br>
-[**disable**](doc/service-disable.md)         - Disable component from starting automatically<br>
-[**config**](doc/service-config-.md)          - Configure a component<br>
-[**init**](doc/service-init.md)               - Initialize a component<br>
+## `spock` Logical and Multi-Active PostgreSQL node configuration
+```
+install            Install PG and configure with SPOCK extension
+validate           Check pre-req's for advanced commands
+tune               Tune for this configuration
+node-create        Name this spock node
+node-drop.         Remove node row
+repset-create      Define a replication set
+repset-drop        Remove replication set
+sub-create         Create a subscription
+sub-drop           Remove subscription
+repset-add-table   Add table to a replication set
+sub-add-respset    Add replication set to a subscription
+sub-show-status    Display the status of the subcription
+sub-show-table     Display subscription table(s)
+sub-wait-for-sync  Pause until subscription is synched
+health-check       Check if PG is accepting connections
+metrics-check      Retrieve advanced DB & OS metrics
+```
 
-## spock - Logical and Multi-Active PostgreSQL node configuration
-[**install**](doc/spock-install.md)             - Install PG and configure with SPOCK extension<br>
-[**validate**](doc/spock-validate.md)           - Check pre-req's for advanced commands<br>
-[**tune**](doc/spock-tune.md)                   - Tune for this configuration<br>
-[**node-create**](doc/spock-node-create.md)     - Name this spock node<br>
-[**repset-create**](doc/spock-repset-create.md) - Define a replication set<br>
-[**sub-create**](doc/spock-sub-create.md)       - Create a subscription<br>
-[**repset-add-table**](doc/spock-repset-add-table.md)  - Add table to a replication set<br>
-[**sub-add-respset**](doc/spock-sub-add-repset.md)     - Add replication set to a subscription<br>
-[**sub-show-status**](spock-sub-show-status.md)        - Display the status of the subcription<br>
-[**sub-show-table**](doc/spock-sub-show-table.md)      - Display subscription table(s)<br>
-[**spock-sub-wait-for-sync**](doc/spock-sub-wait-for-sync.md)  - Pause until subscription is synched<br>
-[**health-check**](doc/spock-health-check.md)          - Check if PG is accepting connections<br>
-[**metrics-check**](doc/spock-metrics-check.md)        - Retrieve advanced DB & OS metrics<br>
-
-## cluster - Installation and configuration of a pgEdge SPOCK cluster
-[**create-local**](doc/cluster-create-local.md)   - Create local cluster of N pgEdge nodes on different ports<br>
-[**destroy**](doc/cluster-destroy.md)             - Stop and then nuke a cluster<br>
-[**validate**](doc/cluster-validate.md)           - Validate a remote cluster configuration<br>
-[**init**](doc/cluster-init.md)                   - Initialize a remote cluster for SPOCK<br>
-[**command**](doc/cluster-command.md)             - Run `nodectl` command on one or all nodes of a cluster<br>
-[**diff-tables**](doc/cluster-diff-tables.md)     - Compare table on different cluster nodes<br>
+## `cluster` Installation and configuration of a SPOCK cluster
+```
+create-local      Create local cluster of N pgEdge nodes on different ports
+destroy           Stop and then nuke a cluster
+validate          Validate a remote cluster configuration
+init              Initialize a remote cluster for SPOCK
+command           Run nodectl command on one or all nodes of a cluster
+diff-tables       Compare table on different cluster nodes
+```
 
 ## Options
-    --json             # Turn on JSON output
-    --debug            # Turn on debug logging
-    --silent           # Less noisy
-    --verbose or -v    # More noisy
+```
+--json           Turn on JSON output
+--debug          Turn on debug logging
+--silent         Less noisy
+--verbose or -v  More noisy
+```
 
