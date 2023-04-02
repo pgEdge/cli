@@ -487,7 +487,7 @@ function buildTimeScaleDBComponent {
         packageComponent $componentBundle
 }
 
-TEMP=`getopt -l no-tar, copy-bin,no-copy-bin,with-pgver:,with-pgbin:,build-curl:,build-hypopg:,build-postgis:,build-bouncer:,build-tdsfdw:,build-mongofdw:,build-mysqlfdw:,build-oraclefdw:,build-orafce:,build-audit:,build-set-user:,build-partman:,build-pldebugger:,build-plr:,build-pljava:,build-plv8:,build-plprofiler:,build-bulkload:,build-backrest:,build-psqlodbc:,build-repack:,build-spock:,build-pool2:,build-pglogical:,build-hintplan:,build-timescaledb:,build-cron:,build-multicorn2:,build-fixeddecimal:,build-anon,build-ddlx:,build-agent:,build-citus:,build-number: -- "$@"`
+TEMP=`getopt -l no-tar, copy-bin,no-copy-bin,with-pgver:,with-pgbin:,build-curl:,build-hypopg:,build-postgis:,build-bouncer:,build-tdsfdw:,build-mongofdw:,build-mysqlfdw:,build-oraclefdw:,build-orafce:,build-audit:,build-set-user:,build-partman:,build-pldebugger:,build-plr:,build-pljava:,build-plv8:,build-plprofiler:,build-bulkload:,build-backrest:,build-psqlodbc:,build-repack:,build-spock:,build-pool2:,build-pglogical:,build-hintplan:,build-timescaledb:,build-readonly:,build-cron:,build-multicorn2:,build-fixeddecimal:,build-anon,build-ddlx:,build-agent:,build-citus:,build-number: -- "$@"`
 
 if [ $? != 0 ] ; then
 	echo "Required parameters missing, Terminating..."
@@ -531,6 +531,7 @@ while true; do
     --build-pool2 ) buildPool2=true; Source=$2; shift; shift ;;
     --build-hintplan ) buildHintPlan=true; Source=$2; shift; shift ;;
     --build-timescaledb ) buildTimeScaleDB=true; timescaleDBSource=$2; shift; shift ;;
+    --build-readonly ) buildReadOnly=true; Source=$2; shift; shift ;;
     --build-cron ) buildCron=true; Source=$2; shift; shift ;;
     --build-multicorn2 ) buildMulticorn2=true; Source=$2; shift; shift ;;
     --build-anon ) buildAnon=true; Source=$2; shift; shift ;;
@@ -609,6 +610,9 @@ if [ "$buildCurl" == "true" ]; then
 fi
 if [ "$buildHypopg" == "true" ]; then
 	buildComp hypopg "$hypopgShortV" "$hypopgFullV" "$hypopgBuildV" "$Source"
+fi
+if [ "$buildReadOnly" == "true" ]; then
+	buildComp readonly  "$readonlyShortV" "$readonlyFullV" "$readonlyBuildV" "$Source"
 fi
 if [ "$buildCron" == "true" ]; then
 	buildComp cron  "$cronShortV" "$cronFullV" "$cronBuildV" "$Source"

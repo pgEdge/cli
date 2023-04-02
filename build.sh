@@ -212,6 +212,7 @@ initDir () {
   copy-pgXX "oraclefdw"  
   copy-pgXX "tdsfdw"  
   copy-pgXX "cron"
+  copy-pgXX "readonly"
   copy-pgXX "citus"
   copy-pgXX "multicorn2"
   copy-pgXX "esfdw"
@@ -456,6 +457,7 @@ initPG () {
     initC  "spock-pg$pgM" "spock"   "$spockV"      "$outPlat" "postgres/spock"  "" "" "nil"
     initC  "pgcat2"       "pgcat2"  "$catV"        "$outPlat" "postgres/pgcat2" "" "" "nil"
     initC  "patroni"   "patroni"   "$patroniV" "" "postgres/patroni" "" "" "nil"
+    initC  "readonly-pg$pgM" "readonly" "$readonlyV" "$outPlat" "postgres/readonly" "" "" "nil"
     return
   fi
 
@@ -484,6 +486,7 @@ initPG () {
     initC "postgrest" "postgrest" "$postgrestV"  "$outPlat"  "postgres/postgrest"  "" "" "nil"
     initC  "curl-pg$pgM"  "curl"    "$curlV"       "$outPlat" "postgres/curl"   "" "" "nil"
     initC "cron-pg$pgM" "cron" "$cronV" "$outPlat" "postgres/cron" "" "" "nil"
+    initC "readonly-pg$pgM" "readonly" "$readonlyV" "$outPlat" "postgres/readonly" "" "" "nil"
     initC "hintplan-pg$pgM" "hintplan" "$hintV" "$outPlat" "postgres/hintplan" "" "" "nil"
 
     if [ "$outPlat" == "el8" ]; then

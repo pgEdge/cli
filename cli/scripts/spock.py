@@ -23,7 +23,7 @@ def error_exit(p_msg, p_rc=1):
     sys.exit(p_rc)
 
 
-def osSys(cmd, fatal_exit=True):
+def osSys(cmd, sleepy=0, fatal_exit=True):
   isSilent = os.getenv('isSilent', 'False')
   if isSilent == "False":
     s_cmd = util.scrub_passwd(cmd)
@@ -33,6 +33,9 @@ def osSys(cmd, fatal_exit=True):
   rc = os.system(cmd)
   if rc != 0 and fatal_exit:
     error_exit("FATAL ERROR running SPOCK", 1)
+
+  if sleepy > 0:
+    time.sleep(sleepy)
 
   return
 
@@ -791,11 +794,10 @@ def install(User=None, Password=None, database=None, location=None, port=5432,
     cmd = "createdb '" + database + "' --owner='" + User + "'"
     osSys(ncb  + '"' + cmd + '"')
 
-  osSys(nc + "tune " + pgV)
-  time.sleep(3)
+  osSys(nc + "tune " + pgV, 3)
 
-  osSys(nc + "install spock -d " + database)
-  time.sleep(2)
+  osSys(nc + "install spock -d " + database, 2)
+  osSys(nc + "install readonly", 2)
 
   if os.getenv("withPOSTGREST", "False") == "True":
     with_postgrest = True

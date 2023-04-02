@@ -50,15 +50,15 @@ if [ "$1" == "pldebugger" ]; then
   build pldebugger $debugFullV $2 pldebugger
 fi
 
-if [ "$1" == "hintplan" ] || [ "$1" == "all" ]; then
+if [ "$1" == "hintplan" ]; then
   build hintplan $hintplanFullV $2 hintplan
 fi
 
-if [ "$1" == "decoderbufs" ]  || [ "$1" == "all" ]; then
+if [ "$1" == "decoderbufs" ]; then
   build decoderbufs $decoderbufsFullV $2 decoderbufs
 fi
 
-if [ "$1" == "wal2json" ]  || [ "$1" == "all" ]; then
+if [ "$1" == "wal2json" ]; then
   build wal2json $wal2jsonFullV $2 wal2json
 fi
 
@@ -82,27 +82,31 @@ if [ "$1" == "multicorn2" ]; then
   build multicorn2 $multicorn2FullV $2 multicorn2 
 fi
 
-if [ "$1" == "cron" ] || [ "$1" == "all" ]; then
+if [ "$1" == "readonly" ]; then
+  build readonly $readonlyFullV $2 readonly
+fi
+
+if [ "$1" == "cron" ]; then
   build cron $cronFullV $2 cron
 fi
 
-if [ "$1" == "repack" ] || [ "$1" == "all" ]; then
+if [ "$1" == "repack" ]; then
   build repack $repackFullV $2 repack
 fi
 
-if [ "$1" == "partman" ] || [ "$1" == "all" ]; then
+if [ "$1" == "partman" ]; then
   build partman $partmanFullV $2 partman
 fi
 
-if [ "$1" == "bulkload" ] || [ "$1" == "all" ]; then
+if [ "$1" == "bulkload" ]; then
   build bulkload $bulkloadFullV $2 bulkload
 fi
 
-if [ "$1" == "postgis" ] || [ "$1" == "all" ]; then
+if [ "$1" == "postgis" ]; then
   build postgis $postgisFullV $2 postgis  
 fi
 
-if [ "$1" == "audit" ] || [ "$1" == "all" ]; then
+if [ "$1" == "audit" ]; then
   if [ "$pgV" == "15" ]; then
     build audit $auditFull15V $2 audit    
   elif [ "$pgV" == "14" ]; then
@@ -110,19 +114,19 @@ if [ "$1" == "audit" ] || [ "$1" == "all" ]; then
   fi
 fi
 
-if [ "$1" == "orafce" ] || [ "$1" == "all" ]; then
+if [ "$1" == "orafce" ]; then
   build orafce $orafceFullV $2 orafce
 fi
 
-if [ "$1" == "fixeddecimal" ] || [ "$1" == "all" ]; then
+if [ "$1" == "fixeddecimal" ]; then
   build fixeddecimal $fdFullV $2 fixeddecimal
 fi
 
-if [ "$1" == "curl" ] || [ "$1" == "all" ]; then
+if [ "$1" == "curl" ]; then
   build curl $curlFullV $2 curl
 fi
 
-if [ "$1" == "hypopg" ] || [ "$1" == "all" ]; then
+if [ "$1" == "hypopg" ]; then
   build hypopg $hypopgFullV $2 hypopg
 fi
 
@@ -130,11 +134,11 @@ if [ "$1" == "plprofiler" ]; then
   build plprofiler $plProfilerFullVersion $2 profiler
 fi
 
-if [ "$1" == "timescaledb" ] || [ "$1" == "all" ]; then
+if [ "$1" == "timescaledb" ]; then
   build timescaledb $timescaledbFullV $2 timescale
 fi
 
-if [ "$1" == "spock" ] || [ "$1" == "all" ]; then
+if [ "$1" == "spock" ]; then
   pgV=$2
   echo "# SPOCK_BUILD_DELTA_APPLY = $SPOCK_BUILD_DELTA_APPLY"
   if [ ! "$SPOCK_BUILD_DELTA_APPLY" == "true" ]; then

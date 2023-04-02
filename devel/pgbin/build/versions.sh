@@ -26,6 +26,10 @@ pg12BuildV=1
 pg11V=11.19
 pg11BuildV=1
 
+readonlyFullV=1.1.0
+readonlyShortV=
+readonlyBuildV=1
+
 decoderbufsFullV=1.7.0
 decoderbufsShortV=
 decoderbufsBuildV=1

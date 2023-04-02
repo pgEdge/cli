@@ -126,7 +126,7 @@ INSERT INTO categories VALUES (9,  87, 'Management & Monitoring', 'Manage/Monito
 -- ## HUB ################################
 INSERT INTO projects VALUES ('hub', 'app', 0, 0, 'hub', 0, 'https://github.com/pgedge/nodectl','',0,'','','');
 INSERT INTO releases VALUES ('hub', 1, 'hub', '', '', 'hidden', '', 1, '', '', '');
-INSERT INTO versions VALUES ('hub', '23.109', '',  1, '20230331', '', '', '');
+INSERT INTO versions VALUES ('hub', '23.109', '',  1, '20230402', '', '', '');
 INSERT INTO versions VALUES ('hub', '23.108', '',  0, '20230328', '', '', '');
 INSERT INTO versions VALUES ('hub', '23.107', '',  0, '20230328', '', '', '');
 INSERT INTO versions VALUES ('hub', '23.106', '',  0, '20230324', '', '', '');
@@ -295,8 +295,13 @@ INSERT INTO projects VALUES ('hintplan', 'ext', 6, 0, 'hub', 0, 'https://github.
 INSERT INTO releases VALUES ('hintplan-pg15', 10, 'hintplan', 'pgHintPlan', '', 'prod', '', 1, 'POSTGRES', '', '');
 INSERT INTO versions VALUES ('hintplan-pg15', '1.5.0-1', 'arm, el8', 1, '20230128', 'pg15', '', 'https://github.com/pghintplan/pghintplan/releases/tag/1.5.0');
 
+INSERT INTO projects VALUES ('readonly', 'ext', 4, 0, 'hub',0, 'https://github.com/pgedge/readonly/tags',
+  'readonly', 1, 'readonly.png', 'Support READ-ONLY Databases', 'https://github.com/pgedge/readonly');
+INSERT INTO releases VALUES ('readonly-pg15', 10, 'readonly', 'pgReadOnly', '', 'prod', '', 1, 'POSTGRES', '', '');
+INSERT INTO versions VALUES ('readonly-pg15', '1.1.0-1', 'osx, el8, arm', 1, '20230402', 'pg15', '', '');
+
 INSERT INTO projects VALUES ('curl', 'ext', 4, 0, 'hub',0, 'https://github.com/pg_curl/pg_curl/releases',
-  'curl', 1, 'curl.png', 'Background Job Scheduler', 'https://github.com/pg_curl/pg_curl');
+  'curl', 1, 'curl.png', 'Invoke JSON Services', 'https://github.com/pg_curl/pg_curl');
 INSERT INTO releases VALUES ('curl-pg15', 10, 'curl', 'pgCron', '', 'prod', '', 1, 'POSTGRES', '', '');
 INSERT INTO versions VALUES ('curl-pg15', '1.0.27-1', 'osx, el8, arm', 1, '20230215', 'pg15', '', '');
 

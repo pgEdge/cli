@@ -18,11 +18,11 @@ goV=1.19.3
 postgrestV=10.2.0-1
 prompgexpV=0.11.1
 nodejsV=18.12.1
-bckgrndV=1.1-1
 backrestV=2.45-1
 csvdiffV=1.4.0
 pgdiffV=1.1
 curlV=1.0.27-1
+readonlyV=1.1.0-1
 
 multicorn2V=2.4-1
 esfdwV=0.11.2
