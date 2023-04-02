@@ -308,7 +308,7 @@ INSERT INTO versions VALUES ('curl-pg15', '1.0.27-1', 'osx, el8, arm', 1, '20230
 INSERT INTO projects VALUES ('cron', 'ext', 4, 0, 'hub',0, 'https://github.com/citusdata/pg_cron/releases',
   'cron', 1, 'cron.png', 'Background Job Scheduler', 'https://github.com/citusdata/pg_cron');
 INSERT INTO releases VALUES ('cron-pg15', 10, 'cron', 'pgCron', '', 'prod', '', 1, 'POSTGRES', '', '');
-INSERT INTO versions VALUES ('cron-pg15', '1.5.1-1', 'el8, arm', 1, '20230215', 'pg15', '', '');
+INSERT INTO versions VALUES ('cron-pg15', '1.5.1-1', 'osx, el8, arm', 1, '20230215', 'pg15', '', '');
 
 INSERT INTO projects VALUES ('background', 'ext', 4, 0, 'hub',0, 'https://github.com/oscg-io/background/tags',
   'background', 1, 'background.png', 'Background Worker', 'https://github.com/oscg-io/background');

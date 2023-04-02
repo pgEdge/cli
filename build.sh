@@ -449,15 +449,16 @@ initPG () {
 
 
   if [ "$pgM" == "15" ] && [ "$outPlat" == "osx" ]; then
-    initC  "pgedge"       "pgedge"  "$pgedgeV"     ""         "postgres/pgedge" "" "" "nil"
-    initC  "csvdiff"      "csvdiff" "$csvdiffV"    "$outPlat" "csvdiff"         "" "" "nil"
-    initC  "pgdiff"       "pgdiff"  "$pgdiffV"     ""         "postgres/pgdiff" "" "" "nil"
-    initC  "postgrest" "postgrest"  "$postgrestV"  "$outPlat" "postgres/postgrest"  "" "" "nil"
-    initC  "curl-pg$pgM"  "curl"    "$curlV"       "$outPlat" "postgres/curl"   "" "" "nil"
-    initC  "spock-pg$pgM" "spock"   "$spockV"      "$outPlat" "postgres/spock"  "" "" "nil"
-    initC  "pgcat2"       "pgcat2"  "$catV"        "$outPlat" "postgres/pgcat2" "" "" "nil"
-    initC  "patroni"   "patroni"   "$patroniV" "" "postgres/patroni" "" "" "nil"
-    initC  "readonly-pg$pgM" "readonly" "$readonlyV" "$outPlat" "postgres/readonly" "" "" "nil"
+    initC  "pgedge"       "pgedge"    "$pgedgeV"     ""         "postgres/pgedge"    "" "" "nil"
+    initC  "csvdiff"      "csvdiff"   "$csvdiffV"    "$outPlat" "csvdiff"            "" "" "nil"
+    initC  "pgdiff"       "pgdiff"    "$pgdiffV"     ""         "postgres/pgdiff"    "" "" "nil"
+    initC  "postgrest"    "postgrest" "$postgrestV"  "$outPlat" "postgres/postgrest" "" "" "nil"
+    initC  "readonly-pg$pgM" "readonly" "$readonlyV" "$outPlat" "postgres/readonly"  "" "" "nil"
+    initC  "curl-pg$pgM"  "curl"    "$curlV"         "$outPlat" "postgres/curl"      "" "" "nil"
+    initC  "spock-pg$pgM" "spock"   "$spockV"        "$outPlat" "postgres/spock"     "" "" "nil"
+    initC  "cron-pg$pgM"  "cron"    "$cronV"         "$outPlat" "postgres/cron"      "" "" "nil"
+    initC  "pgcat2"       "pgcat2"  "$catV"          "$outPlat" "postgres/pgcat2"    "" "" "nil"
+    initC  "patroni"      "patroni" "$patroniV"      ""         "postgres/patroni"   "" "" "nil"
     return
   fi
 
