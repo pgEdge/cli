@@ -29,7 +29,6 @@ import re
 import io
 import errno
 import traceback
-import argparse
 
 MY_HOME = os.getenv('MY_HOME')
 MY_CMD =  os.getenv('MY_CMD')

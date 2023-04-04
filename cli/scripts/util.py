@@ -41,7 +41,6 @@ if os.path.exists(platform_lib_path):
   if platform_lib_path not in sys.path:
     sys.path.append(platform_lib_path)
 
-import semver
 import clilog
 
 my_logger = logging.getLogger('cli_logger')
@@ -2892,21 +2891,6 @@ def restore_conf_ext_files(src, dst, ignore=None):
     diff = filecmp.dircmp(src, dst)
     extension_files_list = recursively_copy_old_files(diff, ignore=ignore)
   return True
-
-
-def check_running_version(ver, running_version):
-    try:
-
-        version = semver.parse(ver)
-        installed_version = semver.parse(running_version)
-        for k in ["major", "minor", "patch"]:
-            if installed_version[k] == version[k]:
-                continue
-            else:
-                return False
-    except Exception as e:
-        return ver.startswith(running_version)
-    return True
 
 
 # Add the application to launchpad in OSX
