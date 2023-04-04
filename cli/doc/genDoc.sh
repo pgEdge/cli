@@ -41,6 +41,7 @@ $nc spock sub-show-table    --help
 $nc spock sub-wait-for-sync --help
 $nc spock health-check      --help
 $nc spock metrics-check     --help
+$nc spock set-readonly      --help
 
 $nc cluster --help
 $nc cluster create-local    --help

@@ -35,3 +35,4 @@
      table-wait-for-sync # Pause until a table finishes synchronizing.
      health-check        # Check if PG instance is accepting connections.
      metrics-check       # Retrieve advanced DB & OS metrics.
+     set-readonly        # Set or Unset the local cluster to read-only.

@@ -1424,7 +1424,7 @@ def change_pgconf_keyval(p_pgver, p_key, p_val, p_replace=False):
       new_line = p_key + " = '" + str(p_val) + "'"
     ns = ns + "\n" + new_line + "\n"
 
-  print("  new: " + new_line)
+  message("  new: " + new_line)
 
   put_pgconf(p_pgver, ns)
 

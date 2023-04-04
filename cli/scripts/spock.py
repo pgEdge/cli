@@ -471,6 +471,31 @@ def sub_wait_for_sync(subscription_name, db, pg=None):
   sys.exit(0)
 
 
+def set_readonly(readonly="off", pg=None):
+  """Set or Unset the local cluster to read-only."""
+
+  if readonly not in ('on', 'off'):
+    util.exit_message("  readonly flag must be 'off' or 'on'")
+
+  pg_v = get_pg_v(pg)
+
+  try:
+    con = get_pg_connection(pg_v, "postgres",  util.get_user())
+    cur = con.cursor(row_factory=psycopg.rows.dict_row)
+
+    util.change_pgconf_keyval(pg_v, "default_transaction_read_only", readonly, True)
+
+    util.message("reloading postgresql.conf")
+    cur.execute("SELECT pg_reload_conf()")
+    cur.close()
+    con.close()
+
+  except Exception as e:
+    util.exit_exception(e)
+
+  sys.exit(0)
+
+
 def get_pii_cols(db,schema=None,pg=None):
   """Retrieve the columns that you have identified as PII"""
 
@@ -641,7 +666,18 @@ def metrics_check(db, pg=None):
     except Exception as e:
       pass
 
-  mtrc_dict = {"pg_isready": rc, "cpu_pct": cpu_pct, "load_avg": [load1, load5, load15], \
+  try:
+    con = get_pg_connection(pg_v, db, usr)
+    cur = con.cursor()
+    cur.execute("SELECT setting FROM pg_settings WHERE name = 'default_transaction_read_only'")
+    data = cur.fetchone()
+    readonly = str(data[0])
+    cur.close()
+  except Exception as e:
+    util.exit_exception(e)
+
+  mtrc_dict = {"pg_isready": rc, "readonly": readonly, "cpu_pct": cpu_pct, \
+               "load_avg": [load1, load5, load15], \
                "disk": {"read_mb": disk_read_mb, "write_mb": disk_write_mb, "size": disk_size,\
                         "used": disk_used, "available": disk_avail, "used_pct": disk_used_pct, \
                         "mount_point": disk_mount_pt} \
@@ -650,7 +686,6 @@ def metrics_check(db, pg=None):
     return(json_dumps(mtrc_dict))
 
   try:
-    con = get_pg_connection(pg_v, db, usr)
     cur = con.cursor()
     cur.execute("SELECT count(*) as resolutions FROM spock.resolutions")
     data = cur.fetchone()
@@ -859,6 +894,7 @@ if __name__ == '__main__':
       'table-wait-for-sync': table_wait_for_sync,
       'health-check':        health_check,
       'metrics-check':       metrics_check,
+      'set-readonly':        set_readonly,
   })
 
 
