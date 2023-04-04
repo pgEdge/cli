@@ -684,18 +684,25 @@ def install(User=None, Password=None, database=None, location=None, port=5432,
   """Install pgEdge components."""
 
   pgeUser = os.getenv('pgeUser', None)
+  pgePasswd = os.getenv('pgePasswd', None)
+  pgName = os.getenv('pgName', None)
+
+  if (User or pgeUser) and (Password or pgePasswd) and (database or pgName):
+    pass
+  else:
+    error_exit("The User, Password & database (-U -P -d) must all be specified")
+
+
   if not User and pgeUser:
     User = pgeUser
   else:
     User = str(User)
 
-  pgePasswd = os.getenv('pgePasswd', None)
   if not Password and pgePasswd:
     Password = pgePasswd
   else:
     Password = str(Password)
 
-  pgName = os.getenv('pgName', None)
   if not database and pgName:
     database = pgName
 
@@ -713,9 +720,6 @@ def install(User=None, Password=None, database=None, location=None, port=5432,
     ## not supporting autostart mode on osx yet
     autostart = False
 
-  ##print(f"User={User}, Password={Password}, database={database}, location={location}, port={port}")
-  ##print(f"autostart={autostart}, with_bouncer={with_bouncer}")
-
   database = str(database)
   try:
     port = int(port)
@@ -730,13 +734,6 @@ def install(User=None, Password=None, database=None, location=None, port=5432,
     pgN = int(pgV[2:])
   except Exception as e:
     error_exit("pgV parm must end with a two digit integer")
-
-  if User == None and Password == None:
-    pass
-  elif User and Password:
-    pass
-  else:
-    error_exit("The User and Password must be specified as a pair")
 
   if User:
     util.message("  Verify -U user & -P password...")
