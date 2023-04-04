@@ -118,12 +118,6 @@ class Version(object):
 
         self.partial = partial
 
-        # Cached precedence keys
-        # _cmp_precedence_key is used for semver-precedence comparison
-        self._cmp_precedence_key = self._build_precedence_key(with_build=False)
-        # _sort_precedence_key is used for self.precedence_key, esp. for sorted(...)
-        self._sort_precedence_key = self._build_precedence_key(with_build=True)
-
     @classmethod
     def _coerce(cls, value, allow_none=False):
         if value is None and allow_none:
@@ -296,8 +290,7 @@ class Version(object):
 
     @classmethod
     def parse(cls, version_string, partial=False, coerce=False):
-        """Parse a version string into a tuple of components:
-           (major, minor, patch, prerelease, build).
+        """Parse a version string into a Version() object.
 
         Args:
             version_string (str), the version string to parse
@@ -414,15 +407,11 @@ class Version(object):
         # at least a field being `None`.
         return hash((self.major, self.minor, self.patch, self.prerelease, self.build))
 
-    def _build_precedence_key(self, with_build=False):
-        """Build a precedence key.
-
-        The "build" component should only be used when sorting an iterable
-        of versions.
-        """
+    @property
+    def precedence_key(self):
         if self.prerelease:
             prerelease_key = tuple(
-                NumericIdentifier(part) if part.isdigit() else AlphaIdentifier(part)
+                NumericIdentifier(part) if re.match(r'^[0-9]+$', part) else AlphaIdentifier(part)
                 for part in self.prerelease
             )
         else:
@@ -430,30 +419,12 @@ class Version(object):
                 MaxIdentifier(),
             )
 
-        if not with_build:
-            return (
-                self.major,
-                self.minor,
-                self.patch,
-                prerelease_key,
-            )
-
-        build_key = tuple(
-            NumericIdentifier(part) if part.isdigit() else AlphaIdentifier(part)
-            for part in self.build or ()
-        )
-
         return (
             self.major,
             self.minor,
             self.patch,
             prerelease_key,
-            build_key,
         )
-
-    @property
-    def precedence_key(self):
-        return self._sort_precedence_key
 
     def __cmp__(self, other):
         if not isinstance(other, self.__class__):
@@ -486,22 +457,22 @@ class Version(object):
     def __lt__(self, other):
         if not isinstance(other, self.__class__):
             return NotImplemented
-        return self._cmp_precedence_key < other._cmp_precedence_key
+        return self.precedence_key < other.precedence_key
 
     def __le__(self, other):
         if not isinstance(other, self.__class__):
             return NotImplemented
-        return self._cmp_precedence_key <= other._cmp_precedence_key
+        return self.precedence_key <= other.precedence_key
 
     def __gt__(self, other):
         if not isinstance(other, self.__class__):
             return NotImplemented
-        return self._cmp_precedence_key > other._cmp_precedence_key
+        return self.precedence_key > other.precedence_key
 
     def __ge__(self, other):
         if not isinstance(other, self.__class__):
             return NotImplemented
-        return self._cmp_precedence_key >= other._cmp_precedence_key
+        return self.precedence_key >= other.precedence_key
 
 
 class SpecItem(object):
@@ -1152,7 +1123,7 @@ class SimpleSpec(BaseSpec):
                 elif minor is None:
                     return Range(Range.OP_GTE, target) & Range(Range.OP_LT, target.next_major())
                 elif patch is None:
-                    return Range(Range.OP_GTE, target) & Range(Range.OP_LT, target.next_minor())
+                    return Range(Range.OP_GTE, target) & Range(Range.OP_LT, target.next_patch())
                 elif build == '':
                     return Range(Range.OP_EQ, target, build_policy=Range.BUILD_STRICT)
                 else:
