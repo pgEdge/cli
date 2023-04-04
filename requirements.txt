@@ -1,4 +1,4 @@
+psycopg
 psycopg-binary
 psutil
-fire
-click
+paramiko
