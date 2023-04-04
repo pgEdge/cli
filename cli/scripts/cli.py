@@ -48,7 +48,6 @@ import util, api, update_hub, startup, meta, repo, component
 import logging
 import logging.handlers
 from semantic_version import Version
-import mistune
 
 if not util.is_writable(os.path.join(os.getenv('MY_HOME'), 'conf')):
   print("You must run as administrator/root.")

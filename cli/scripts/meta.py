@@ -8,7 +8,6 @@ from pprint import pprint
 
 import api, util
 import datetime
-import mistune
 
 
 def get_installed_count():
@@ -569,7 +568,7 @@ def get_list(p_isOLD, p_isExtensions, p_isJSON, p_isTEST, p_showLATEST, p_comp=N
       is_update_available = 0
       cv = Version.coerce(current_version)
       iv = Version.coerce(version)
-      if cv>iv:
+      if cv > iv:
         is_update_available = 1
 
       if is_update_available==0:
