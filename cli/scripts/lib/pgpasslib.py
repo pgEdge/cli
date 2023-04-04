@@ -1,3 +1,7 @@
+####################################################################
+########       Copyright (c) 2022-2023 pgEdge            ###########
+####################################################################
+
 """:py:meth:`pgpasslib.getpass` will attempt to return the password for the
 specified host, port, database name, and username from the PostgreSQL Password
 file.

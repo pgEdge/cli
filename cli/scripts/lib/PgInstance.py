@@ -1,15 +1,12 @@
 ####################################################################
-########       Copyright (c) 2016-2018 BigSQL            ###########
+########       Copyright (c) 2022-2023 pgEdge            ###########
 ####################################################################
 
 import pgpasslib
 
-extra_args = {'timeout': 20}
-try:
-    import psycopg2 as pgclient
-    extra_args={'connect_timeout':20}
-except ImportError as e:
-    import pg8000 as pgclient
+import psycopg as pgclient
+extra_args={'connect_timeout':20}
+
 
 class PgInstance(object):
     """
