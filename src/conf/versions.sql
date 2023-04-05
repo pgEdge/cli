@@ -397,7 +397,8 @@ INSERT INTO versions VALUES ('csvdiff', '1.4.0', 'el8, arm, osx', 1, '20230206',
 INSERT INTO projects VALUES ('pgcat2', 'pge', 4, 6432, 'hub', 3, 'https://github.com/pgedge/pgcat2/tags',
   'cat',  0, 'pgcat2.png', 'Connection Pooler', 'https://github.com/pgedge/pgcat2');
 INSERT INTO releases VALUES ('pgcat2', 2, 'pgcat2',  'pgCat2', '', 'test', '', 1, 'MIT', '', '');
-INSERT INTO versions VALUES ('pgcat2', '0.3.0', 'osx, el8, arm', 1, '20230318', '', '', '');
+INSERT INTO versions VALUES ('pgcat2', '1.0.0', 'osx, el8, arm', 1, '20230405', '', '', '');
+INSERT INTO versions VALUES ('pgcat2', '0.3.0', 'osx, el8, arm', 0, '20230318', '', '', '');
 
 INSERT INTO projects VALUES ('backrest', 'pge', 4, 0, 'hub', 3, 'http://pgbackrest.org',
   'backrest',  0, 'backrest.png', 'Backup & Restore', 'http://pgbackrest.org');

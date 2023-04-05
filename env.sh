@@ -4,7 +4,7 @@ api=nodectl
 hubV=23.110
 
 spockV=3.0.22-1
-catV=0.3.0
+catV=1.0.0
 
 P15=15.2-1
 pgedgeV=15.2.1
