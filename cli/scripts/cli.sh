@@ -34,6 +34,11 @@ fi
 declare -a array
 array[0]="$MY_HOME/hub/scripts"
 array[1]="$MY_HOME/hub/scripts/lib"
+if [ `uname` == "Linux" ]; then
+  array[3]="$MY_HOME/hub/scripts/lib/linux"
+elif [ `uname` == "Darwin" ]; then
+  array[3]="$MY_HOME/hub/scripts/lib/darwin"
+fi
 
 export PYTHONPATH=$(printf "%s:${PYTHONPATH}" ${array[@]})
 
