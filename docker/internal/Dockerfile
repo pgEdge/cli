@@ -1,6 +1,6 @@
 FROM rockylinux:8
 
-LABEL maintainer="NODECTL team"
+LABEL maintainer="pgEdge NODECTL team"
 
 SHELL ["/bin/bash", "-c"]
 
