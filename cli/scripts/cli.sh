@@ -35,9 +35,14 @@ declare -a array
 array[0]="$MY_HOME/hub/scripts"
 array[1]="$MY_HOME/hub/scripts/lib"
 if [ `uname` == "Linux" ]; then
-  array[3]="$MY_HOME/hub/scripts/lib/linux"
+  array[2]="$MY_HOME/hub/scripts/lib/linux"
+  if [ -d "/etc/redhat-release" ]; then
+    array[3]="$MY_HOME/hub/scripts/lib/linux/el"
+  else
+    array[3]="$MY_HOME/hub/scripts/lib/linux/deb"
+  fi
 elif [ `uname` == "Darwin" ]; then
-  array[3]="$MY_HOME/hub/scripts/lib/darwin"
+  array[2]="$MY_HOME/hub/scripts/lib/darwin"
 fi
 
 export PYTHONPATH=$(printf "%s:${PYTHONPATH}" ${array[@]})
