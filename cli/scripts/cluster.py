@@ -92,7 +92,7 @@ def remove(rm_data=False):
 
 
 def create_local(cluster_name, num_nodes, User="lcusr", Passwd="lcpasswd", 
-           db="lcdb", port1=6432, pg="15"):
+           db="lcdb", port1=6432, pg="15", app=None):
   """Create local cluster of N pgEdge nodes on different ports."""
 
   cluster_dir = base_dir + os.sep + cluster_name
@@ -150,18 +150,23 @@ def create_local(cluster_name, num_nodes, User="lcusr", Passwd="lcpasswd",
     if rc != 0:
       sys.exit(rc)
 
-    pgbench_cmd = '"pgbench --initialize --scale=' + str(num_nodes) + ' ' + str(db) + '"'
-    util.echo_cmd(nc + "pgbin " + str(pg) +  " " + pgbench_cmd)
-
-    rep_set = 'pgbench-repset'
-    dsn = "'host=localhost user=" + usr + "'"
-
-    util.echo_cmd(nc + " spock node-create '" + node_nm + "' --dsn 'host=localhost' --db " + db)
-    util.echo_cmd(nc + " spock repset-create " + rep_set + " --db " + db)
-    util.echo_cmd(nc + " spock repset-add-table " + rep_set + " public.pgbench* --db " + db)
+    if app == "pgbench":
+      install_pgbench(node_nm, nc, num_nodes, db, pg, usr)
 
     nd_port = nd_port + 1
   create_json(cluster_name, db, num_nodes, port1)
+
+
+def install_pgbench(node_nm, nc, num_nodes, db, pg, usr):
+      pgbench_cmd = '"pgbench --initialize --scale=' + str(num_nodes) + ' ' + str(db) + '"'
+      util.echo_cmd(nc + "pgbin " + str(pg) +  " " + pgbench_cmd)
+
+      rep_set = 'pgbench-repset'
+      dsn = "'host=localhost user=" + usr + "'"
+
+      util.echo_cmd(nc + " spock node-create '" + node_nm + "' --dsn 'host=localhost' --db " + db)
+      util.echo_cmd(nc + " spock repset-create " + rep_set + " --db " + db)
+      util.echo_cmd(nc + " spock repset-add-table " + rep_set + " public.pgbench* --db " + db)
 
 
 def validate(cluster_name):
