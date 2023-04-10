@@ -620,7 +620,7 @@ def metrics_check(db, pg=None):
   try:
     import psutil
   except ImportError as e:
-    util.exit_message("Missing native 'pyton3[9]-psutil' module", 1)
+    util.exit_message("Missing or bad psutil module", 1)
 
   pg_v = get_pg_v(pg)
   usr = util.get_user()

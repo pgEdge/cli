@@ -1,6 +1,6 @@
 
 import os, sys, random, time, json
-import util, fire, meta, paramiko, socket
+import util, fire, meta, socket
 
 base_dir = "cluster"
 
@@ -44,6 +44,8 @@ def load_json(cluster_name):
 
 
 def runNC(node, nc_cmd, db, user, cert):
+  import paramiko
+
   if not (os.path.exists(cert)):
     exit_message("Unable to locate cert file", 1)
 
