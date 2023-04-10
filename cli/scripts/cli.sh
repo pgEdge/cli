@@ -35,25 +35,28 @@ declare -a array
 array[0]="$MY_HOME/hub/scripts"
 array[1]="$MY_HOME/hub/scripts/lib"
 if [ `uname` == "Linux" ]; then
-  array[2]="$MY_HOME/hub/scripts/lib/linux"
   if [ -f "/etc/redhat-release" ]; then
-    array[3]="$MY_HOME/hub/scripts/lib/linux/el"
+    if [ `arch` == "aarch64" ]; then
+      array[2]="$MY_HOME/hub/scripts/lib/linux/arm/el8"
+    else
+      array[2]="$MY_HOME/hub/scripts/lib/linux/amd/el8"
+    fi
   else
-    if [ -f "/etc/os-release" ]; then
+    if [ -f "/etc/os-release" ] && [ `arch` == "x86_64" ]; then
       grep "20.04" /etc/os-release > /dev/null 2>&1
       rc=$?
       if [ $rc == "0" ]; then
-        array[3]="$MY_HOME/hub/scripts/lib/linux/deb/ubu20"
+        array[2]="$MY_HOME/hub/scripts/lib/linux/amd/ubu20"
       else
         grep "22.04" /etc/os-release > /dev/null 2>&1
         rc=$?
         if [ $rc == "0" ]; then
-          array[3]="$MY_HOME/hub/scripts/lib/linux/deb/ubu22"
+          array[2]="$MY_HOME/hub/scripts/lib/linux/amd/ubu22"
         else
           grep "11" /etc/os-release > /dev/null 2>&1
           rc=$?
           if [ $rc == "0" ]; then
-            array[3]="$MY_HOME/hub/scripts/lib/linux/deb/deb11"
+            array[2]="$MY_HOME/hub/scripts/lib/linux/amd/deb11"
           fi
         fi
       fi

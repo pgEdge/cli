@@ -1,4 +1,4 @@
-psycopg
-psycopg-binary
-psutil
-paramiko
+psycopg==3.1.8
+psycopg-binary==3.1.8
+psutil==5.9.4
+paramiko==3.1.0
