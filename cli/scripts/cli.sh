@@ -39,11 +39,24 @@ if [ `uname` == "Linux" ]; then
   if [ -f "/etc/redhat-release" ]; then
     array[3]="$MY_HOME/hub/scripts/lib/linux/el"
   else
-    if [ -f "/etc/osb-release" ]; then
-      array[3]="$MY_HOME/hub/scripts/lib/linux/deb/ubu22"
-    else
-      echo "ERROR: Unsupported Linux version"
-      exit 1
+    if [ -f "/etc/os-release" ]; then
+      grep "20.04" /etc/os-release > /dev/null 2>&1
+      rc=$?
+      if [ $rc == "0" ]; then
+        array[3]="$MY_HOME/hub/scripts/lib/linux/deb/ubu20"
+      else
+        grep "22.04" /etc/os-release > /dev/null 2>&1
+        rc=$?
+        if [ $rc == "0" ]; then
+          array[3]="$MY_HOME/hub/scripts/lib/linux/deb/ubu22"
+        else
+          grep "11" /etc/os-release > /dev/null 2>&1
+          rc=$?
+          if [ $rc == "0" ]; then
+            array[3]="$MY_HOME/hub/scripts/lib/linux/deb/deb11"
+          fi
+        fi
+      fi
     fi
   fi
 elif [ `uname` == "Darwin" ]; then
