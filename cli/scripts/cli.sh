@@ -67,6 +67,12 @@ elif [ `uname` == "Darwin" ]; then
 fi
 
 export PYTHONPATH=$(printf "%s:${PYTHONPATH}" ${array[@]})
+for var in "$@"
+do
+  if [ "$var" == "-v" ]; then
+    echo "PYTHONPATH=$PYTHONPATH"
+  fi
+done
 
 pyver=`python3 --version > /dev/null 2>&1`
 rc=$?   
