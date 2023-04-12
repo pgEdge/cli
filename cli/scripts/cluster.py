@@ -10,14 +10,16 @@ import util, fire, meta, pgbench
 base_dir = "cluster"
 
 
-def create_json(cluster_name, db, num_nodes, port1):
+def create_json(cluster_name, db, num_nodes, usr, pg, port1):
   cluster_dir = base_dir + os.sep + cluster_name
   text_file = open(cluster_dir + os.sep + cluster_name + ".json", "w")
   cluster_json = {}
   cluster_json["cluster"] = cluster_name
   cluster_json["dbname"] = db
   cluster_json["conntype"] = "local"
-  cluster_json["user"] = ""
+  cluster_json["user"] = usr
+  cluster_json["pg"] = pg
+  cluster_json["count"] = num_nodes
   cluster_json["cert"] = ""
   cluster_json["nodes"] = []
   for n in range(1, num_nodes+1):
@@ -37,22 +39,25 @@ def create_json(cluster_name, db, num_nodes, port1):
 
 def load_json(cluster_name):
   cluster_dir = base_dir + os.sep + cluster_name
+
   try:
     with open(cluster_dir + os.sep  + cluster_name + ".json") as f:
       parsed_json = json.load(f)
   except Exception as e:
     util.exit_message("Unable to load JSON file", 1)
   db=parsed_json["dbname"]
+  pg=parsed_json["pg"]
+  count=parsed_json["count"]
   user=parsed_json["user"]
   cert=parsed_json["cert"]
-  return db, user, cert, parsed_json["nodes"]
+  return db, pg, count, user, cert, parsed_json["nodes"]
 
 
 def runNC(node, nc_cmd, db, user, cert):
   import paramiko
 
   if not (os.path.exists(cert)):
-    exit_message("Unable to locate cert file", 1)
+    util.exit_message("Unable to locate cert file", 1)
 
   ## Set up ssh connection
   pk = paramiko.RSAKey.from_private_key_file(cert)
@@ -162,12 +167,12 @@ def create_local(cluster_name, num_nodes, User="lcusr", Passwd="lcpasswd",
 
     nd_port = nd_port + 1
 
-  create_json(cluster_name, db, num_nodes, port1)
+  create_json(cluster_name, db, num_nodes, usr, pg, port1)
 
 
 def validate(cluster_name):
   """Validate a cluster configuration"""
-  db, user, cert, nodes = load_json(cluster_name)
+  db, pg, count, user, cert, nodes = load_json(cluster_name)
   message = runNC(nodes, "info", db, user, cert)
   if len(message) == len(nodes):
     for n in message:
@@ -246,6 +251,21 @@ def command(cluster_name, node, cmd):
     node_dir = cluster_dir + "/n" + str(nd)
 
   return(rc)
+
+
+def app_install(cluster_name, app_name):
+  """Install test application [ pgbench | spockbench | bmsql ]"""   
+
+  if app_name ==  "pgbench":
+    pgbench.setup_cluster(cluster_name)
+  else:
+    util.exit_message("Invalid application name.")
+
+
+def app_remove(cluster_name, app_name):
+  """Remove test application from cluster"""
+
+  util.exit_message("Coming Soon", 1)
  
 
 if __name__ == '__main__':
@@ -256,4 +276,6 @@ if __name__ == '__main__':
     'init':           init,
     'command':        command,
     'diff-tables':    diff_tables,
+    'app-install':    app_install,
+    'app-remove':     app_remove
   })
