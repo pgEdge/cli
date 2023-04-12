@@ -305,7 +305,7 @@ def repset_list_tables(schema, db, pg=None):
   sql =  "SELECT * FROM spock.tables"
   if (schema != "*"):
       sql = sql + " WHERE nspname='" + schema + "'"
-  sql = sql + ";"
+  sql = sql + " ORDER BY set_name, nspname, relname;"
 
   run_psyco_sql(pg_v, db, sql)
   sys.exit(0)
