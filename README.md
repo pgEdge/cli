@@ -43,7 +43,7 @@ repset-add-table    Add table(s) to a replication set
 repset-remove-table Remove table from replication set
 sub-create          Create a subscription
 sub-drop            Remove subscription
-sub-add-respset     Add replication set to a subscription
+sub-add-repset     Add replication set to a subscription
 sub-show-status     Display the status of the subcription
 sub-show-table      Display subscription table(s)
 sub-wait-for-sync   Pause until subscription is synched
