@@ -294,6 +294,18 @@ def repset_remove_seq():
   #pglogical.replication_set_remove_sequence
 
 
+def repset_list_tables(schema, db, pg=None):
+  pg_v = get_pg_v(pg)
+
+  sql =  "SELECT * FROM spock.tables"
+  if (schema != "*"):
+      sql = sql + " WHERE nspname='" + schema + "'"
+  sql = sql + ";"
+
+  run_psyco_sql(pg_v, db, sql)
+  sys.exit(0)
+
+
 def sub_create(subscription_name, provider_dsn, db, replication_sets="{default,default_insert_only,ddl_sql}",
                synchronize_structure=False, synchronize_data=False, 
                forward_origins='{}', apply_delay=0, pg=None):
@@ -361,7 +373,7 @@ def sub_show_status(subscription_name, db, pg=None):
 
   sql = "SELECT spock.sub_show_status(" 
   if subscription_name != "*":
-    get_eq("subscription_name", subscription_name, "")
+    sql = sql + get_eq("subscription_name", subscription_name, "")
   sql = sql + ")"
 
   run_psyco_sql(pg_v, db, sql)
@@ -845,6 +857,7 @@ if __name__ == '__main__':
       'repset-add-seq':      repset_add_seq,
       'repset-remove-seq':   repset_remove_seq,
       'repset-alter-seq':    repset_alter_seq,
+      'repset-list-tables':  repset_list_tables,
       'sub-create':          sub_create,
       'sub-drop':            sub_drop,
       'sub-alter-interface': sub_alter_interface,
