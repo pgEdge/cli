@@ -2,8 +2,10 @@
 #  Copyright 2022-2023 PGEDGE  All rights reserved. #
 #####################################################
 
-import os, sys, random, time, json
-import util, fire, meta, socket
+import os, sys, random, time, json, socket
+import util, fire, meta, pgbench 
+
+
 
 base_dir = "cluster"
 
@@ -156,22 +158,11 @@ def create_local(cluster_name, num_nodes, User="lcusr", Passwd="lcpasswd",
       sys.exit(rc)
 
     if app == "pgbench":
-      install_pgbench(node_nm, nc, num_nodes, db, pg, usr)
+      pgbench.setup_node(node_nm, nc, num_nodes, db, pg, usr)
 
     nd_port = nd_port + 1
+
   create_json(cluster_name, db, num_nodes, port1)
-
-
-def install_pgbench(node_nm, nc, num_nodes, db, pg, usr):
-      pgbench_cmd = '"pgbench --initialize --scale=' + str(num_nodes) + ' ' + str(db) + '"'
-      util.echo_cmd(nc + "pgbin " + str(pg) +  " " + pgbench_cmd)
-
-      rep_set = 'pgbench-repset'
-      dsn = "'host=localhost user=" + usr + "'"
-
-      util.echo_cmd(nc + " spock node-create '" + node_nm + "' --dsn 'host=localhost' --db " + db)
-      util.echo_cmd(nc + " spock repset-create " + rep_set + " --db " + db)
-      util.echo_cmd(nc + " spock repset-add-table " + rep_set + " public.pgbench* --db " + db)
 
 
 def validate(cluster_name):
