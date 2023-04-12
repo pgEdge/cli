@@ -17,16 +17,22 @@ def setup_node(node_nm, nc, num_nodes, db, pg, usr):
   util.echo_cmd(nc + " spock repset-create " + rep_set + " --db " + db)
   util.echo_cmd(nc + " spock repset-add-table " + rep_set + " public.pgbench* --db " + db)
 
+  log_old_val("pgbench_accounts", "abalance", "true", nc, db, pg)
+  log_old_val("pgbench_branches", "bbalance", "true", nc, db, pg)
+  log_old_val("pgbench_tellers",  "tbalance", "true", nc, db, pg)
+
+
+def log_old_val(tbl, col, val, nc, db, pg):
+    cmd = "ALTER TABLE " + tbl + " ALTER COLUMN " + col + " SET (LOG_OLD_VALUE=" + val + ")"
+    util.echo_cmd(nc + "pgbin " + str(pg) +  " " +  '"psql -c \\"' + cmd + '\\" ' + db + '"')
+
 
 def setup_cluster(cluster_name):
   util.message("# loading cluster definition")
   db, pg, count, usr, cert, nodes = cluster.load_json(cluster_name)
-  print(f"DEBUG: {cluster_name} db={db} pg={pg} usr={usr}")
 
   for nd in nodes:
     nodename = nd["nodename"]
     nc = "cluster/" + nd["path"] + "/nodectl "
-    print(f"nodename={nodename}, nc='{nc}'")
-    print(nd)
     setup_node(nodename, nc, count, db, pg, usr)
 
