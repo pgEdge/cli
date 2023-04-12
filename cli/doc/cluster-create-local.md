@@ -19,3 +19,6 @@
         Default: 6432
     --pg=PG
         Default: 15
+    -a, --app=APP
+        Type: Optional[]
+        Default: None
