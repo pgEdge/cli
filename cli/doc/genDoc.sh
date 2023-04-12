@@ -30,6 +30,7 @@ $nc spock repset-create     --help
 $nc spock repset-drop       --help
 $nc spock repset-add-table  --help
 $nc spock repset-remove-table --help
+$nc spock repset-list-tables  --help
 $nc spock sub-create        --help
 $nc spock sub-drop          --help
 $nc spock sub-enable        --help

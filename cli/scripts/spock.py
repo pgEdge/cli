@@ -295,6 +295,7 @@ def repset_remove_seq():
 
 
 def repset_list_tables(schema, db, pg=None):
+  """List tables in replication sets."""
   pg_v = get_pg_v(pg)
 
   sql =  "SELECT * FROM spock.tables"
@@ -306,7 +307,8 @@ def repset_list_tables(schema, db, pg=None):
   sys.exit(0)
 
 
-def sub_create(subscription_name, provider_dsn, db, replication_sets="{default,default_insert_only,ddl_sql}",
+def sub_create(subscription_name, provider_dsn, db, 
+               replication_sets="{default,default_insert_only,ddl_sql}",
                synchronize_structure=False, synchronize_data=False, 
                forward_origins='{}', apply_delay=0, pg=None):
   """Create a subscription."""

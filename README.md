@@ -1,4 +1,5 @@
 # pgEdge NodeCtl : Command Line Interface
+
 NODECTL is the pgEdge Command Line Interface (CLI).  It is a cross-platform 
 tool to manage your PostgreSQL eco-system of components.  The modules are 
 `um`, `service`, `spock`, and `cluster`.  We are licensed under the 
@@ -41,6 +42,7 @@ repset-create       Define a replication set
 repset-drop         Remove replication set
 repset-add-table    Add table(s) to a replication set
 repset-remove-table Remove table from replication set
+repset-list-tables  List tables in replication sets
 sub-create          Create a subscription
 sub-drop            Remove subscription
 sub-add-respset     Add replication set to a subscription

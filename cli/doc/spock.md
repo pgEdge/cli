@@ -20,6 +20,7 @@
      repset-add-seq      # Add a sequence to a replication set.
      repset-remove-seq   # Remove a sequence from a replication set.
      repset-alter-seq    # Change a replication set sequence.
+     repset-list-tables  # List tables in replication sets.
      sub-create          # Create a subscription.
      sub-drop            # Delete a subscription.
      sub-alter-interface # Modify an interface to a subscription.
