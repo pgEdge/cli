@@ -1,3 +1,6 @@
+#####################################################
+#  Copyright 2022-2023 PGEDGE  All rights reserved. #
+#####################################################
 
 import os, sys, random, time, json
 import util, fire, meta, socket

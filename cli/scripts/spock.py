@@ -1,3 +1,7 @@
+#####################################################
+#  Copyright 2022-2023 PGEDGE  All rights reserved. #
+#####################################################
+
 import sys, os, json, subprocess, time
 import util, meta, api, fire
 
