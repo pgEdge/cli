@@ -27,12 +27,25 @@ def log_old_val(tbl, col, val, nc, db, pg):
     util.echo_cmd(nc + "pgbin " + str(pg) +  " " +  '"psql -c \\"' + cmd + '\\" ' + db + '"')
 
 
+def wire_nodes(node_nm, nc, num_nodes, db, pg, usr):
+  print(f"DEBUG: pgbench.setup_node({node_nm}, {nc}, {num_nodes}, {db}, {pg}, {usr})")
+
+
 def setup_cluster(cluster_name):
   util.message("# loading cluster definition")
   db, pg, count, usr, cert, nodes = cluster.load_json(cluster_name)
 
+  ## setup individual nodes
   for nd in nodes:
     nodename = nd["nodename"]
     nc = "cluster/" + nd["path"] + "/nodectl "
     setup_node(nodename, nc, count, db, pg, usr)
+
+  ## wire nodes together
+  for nd in nodes:
+    nodename = nd["nodename"]
+    nc = "cluster/" + nd["path"] + "/nodectl "
+    wire_nodes(nodename, nc, count, db, pg, usr)
+
+    
 
