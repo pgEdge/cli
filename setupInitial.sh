@@ -50,6 +50,7 @@ if [ $uname == 'Linux' ]; then
       sudo $yum unixODBC-devel protobuf-c-devel libyaml-devel
       sudo $yum mongo-c-driver-devel freetds-devel systemd-devel
       sudo $yum lz4-devel libzstd-devel krb5-devel
+      sudo $yum gcc-toolset-9-gcc gcc-toolset-9-gcc-c++
 
       curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
 
