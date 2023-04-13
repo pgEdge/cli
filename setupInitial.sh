@@ -42,15 +42,17 @@ if [ $uname == 'Linux' ]; then
         cmake libxml2-devel 
       sudo $yum libedit-devel 
       sudo $yum *ossp-uuid*
-      sudo $yum python2 python2-devel
-      cd /usr/bin
-      sudo ln -fs python2 python
+      #sudo $yum python2 python2-devel
+      #cd /usr/bin
+      #sudo ln -fs python2 python
       sudo $yum openjpeg2-devel libyaml libyaml-devel
       sudo $yum ncurses-compat-libs mysql-devel 
       sudo $yum unixODBC-devel protobuf-c-devel libyaml-devel
       sudo $yum mongo-c-driver-devel freetds-devel systemd-devel
       sudo $yum lz4-devel libzstd-devel krb5-devel
-      sudo $yum gcc-toolset-9-gcc gcc-toolset-9-gcc-c++
+      sudo yum remove -y gcc
+      sudo $yum gcc-toolset-11
+      sudo $yum install clang
 
       curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
 

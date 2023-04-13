@@ -90,14 +90,16 @@ makeInstall () {
     exit 1
   fi
 
+  source /opt/rh/gcc-toolset-11/enable
   gcc_ver=`gcc --version | head -1 | awk '{print $3}'`
   arch=`arch`
-  if [ "$arch" == "aarch64" ] && [ "$gcc_ver" == "10.2.0" ]; then
+  if [ "$arch" == "aarch64" ]; then
+     echo "Large-System Extensions enabled for ARM 64"
      export CFLAGS="$CFLAGS -moutline-atomics"
   fi
   echo "# gcc_ver = $gcc_ver,  arch = $arch, CFLAGS = $CFLAGS"
+  sleep 4
 
-  sleep 1
   cmd="make -j4"
   echoCmd "$cmd"
   sleep 1

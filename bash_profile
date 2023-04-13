@@ -25,9 +25,6 @@ export JAVA_HOME=/etc/alternatives/jre_11_openjdk
 export PATH=/usr/local/bin:$JAVA_HOME/bin:$PATH
 
 PLATFORM=`cat /etc/os-release | grep PLATFORM_ID | cut -d: -f2 | tr -d '\"'`
-if [ "$PLATFORM" == "el8" ]; then
-  source /opt/rh/gcc-toolset-9/enable
-fi
 
 source ~/.cargo/env
 

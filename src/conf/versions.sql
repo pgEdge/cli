@@ -126,7 +126,7 @@ INSERT INTO categories VALUES (9,  87, 'Management & Monitoring', 'Manage/Monito
 -- ## HUB ################################
 INSERT INTO projects VALUES ('hub', 'app', 0, 0, 'hub', 0, 'https://github.com/pgedge/nodectl','',0,'','','');
 INSERT INTO releases VALUES ('hub', 1, 'hub', '', '', 'hidden', '', 1, '', '', '');
-INSERT INTO versions VALUES ('hub', '23.110', '',  1, '20230414', '', '', '');
+INSERT INTO versions VALUES ('hub', '23.110', '',  1, '20230417', '', '', '');
 INSERT INTO versions VALUES ('hub', '23.109', '',  0, '20230404', '', '', '');
 INSERT INTO versions VALUES ('hub', '23.108', '',  0, '20230328', '', '', '');
 INSERT INTO versions VALUES ('hub', '23.107', '',  0, '20230328', '', '', '');
@@ -158,7 +158,8 @@ INSERT INTO versions VALUES ('pg14', '14.6-1', 'el8, arm',      0, '20221110',''
 INSERT INTO releases VALUES ('pg15', 2, 'pg', '', '', 'prod', 
   '<font size=-1 color=red><b>New in <a href=https://sql-info.de/postgresql/postgresql-15/articles-about-new-features-in-postgresql-15.html>2022!</a></b></font>',
   1, 'POSTGRES', '', '');
-INSERT INTO versions VALUES ('pg15', '15.2-1',  'el8, arm, osx', 1, '20230209','', '', '');
+INSERT INTO versions VALUES ('pg15', '15.2-2',  'el8, arm, osx', 1, '20230417','', '', '');
+INSERT INTO versions VALUES ('pg15', '15.2-1',  'el8, arm, osx', 0, '20230209','', '', '');
 INSERT INTO versions VALUES ('pg15', '15.1-4',  'el8, arm, osx', 0, '20230106','', '', '');
 
 INSERT INTO projects VALUES ('debezium', 'strm', 10, 8083, '', 3, 'https://debezium.io/releases/1.9/',
@@ -319,8 +320,8 @@ INSERT INTO versions VALUES ('background-pg14', '1.1-1', 'el8, arm', 0, '2022080
 INSERT INTO projects VALUES ('spock', 'pge', 4, 0, 'hub', 1, 'https://github.com/pgedge/spock/tags',
   'spock', 1, 'spock.png', 'Logical & Multi-Active Replication', 'https://github.com/pgedge/spock/#spock');
 INSERT INTO releases VALUES ('spock-pg15', 4, 'spock', 'Spock', '', 'prod', '', 1, 'pgEdge Community', '', '');
-INSERT INTO versions VALUES ('spock-pg15', '3.0.23-1', 'el8, arm',      1, '20230412', 'pg15', '', '');
-INSERT INTO versions VALUES ('spock-pg15', '3.0.22-1', 'osx',           1, '20230318', 'pg15', '', '');
+INSERT INTO versions VALUES ('spock-pg15', '3.0.23-1', 'el8, arm, osx', 1, '20230417', 'pg15', '', '');
+INSERT INTO versions VALUES ('spock-pg15', '3.0.22-1', 'el8, arm, osx', 0, '20230318', 'pg15', '', '');
 INSERT INTO versions VALUES ('spock-pg15', '3.0.21-1', 'el8, arm, osx', 0, '20230310', 'pg15', '', '');
 
 INSERT INTO projects VALUES ('pglogical', 'ext', 4, 0, 'hub', 1, 'https://github.com/2ndQuadrant/pglogical/releases',
