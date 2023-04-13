@@ -11,10 +11,12 @@
 
 ### 4.) Modify the ./setupInitial.sh file to correct the user information at the top of the file
 
-### 5.) run ./setupInitial.sh to configure OS environment
+### 5.) Run ./setupInitial.sh to configure OS environment
 
-### 6.) configure your ~/.aws/config credentials
+### 6.) Configure your ~/.aws/config credentials
 
-### 7.) run ./setupBLD-IN.sh to pull in the IN directory from S3
+### 7.) Source your bash profile with the command: source ~/.bash_profile (or source ~/bashrc)
 
-### 8.) (Only if you are building C binaries): Setup Src builds for PGBIN from devel/pgbin/build
+### 8.) run ./setupBLD-IN.sh to pull in the IN directory from S3
+
+### 9.) (Only if you are building C binaries): Setup Src builds for PGBIN from devel/pgbin/build
