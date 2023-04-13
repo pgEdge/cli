@@ -4,9 +4,7 @@
 
 import util, cluster
 
-def setup_node(node_nm, nc, num_nodes, db, pg, usr):
-  print(f"DEBUG: pgbench.setup_node({node_nm}, {nc}, {num_nodes}, {db}, {pg}, {usr})")
-
+def install_node(node_nm, nc, num_nodes, db, pg, usr):
   pgbench_cmd = '"pgbench --initialize --scale=' + str(num_nodes) + ' ' + str(db) + '"'
   util.echo_cmd(nc + "pgbin " + str(pg) +  " " + pgbench_cmd)
 
@@ -28,10 +26,11 @@ def log_old_val(tbl, col, val, nc, db, pg):
 
 
 def wire_nodes(node_nm, nc, num_nodes, db, pg, usr):
-  print(f"DEBUG: pgbench.setup_node({node_nm}, {nc}, {num_nodes}, {db}, {pg}, {usr})")
+  print(f"DEBUG: pgbench.wire_nodes({node_nm}, {nc}, {num_nodes}, {db}, {pg}, {usr})")
+  util.exit_message("Not implemented yet!!")
 
 
-def setup_cluster(cluster_name):
+def install(cluster_name):
   util.message("# loading cluster definition")
   db, pg, count, usr, cert, nodes = cluster.load_json(cluster_name)
 
@@ -47,5 +46,13 @@ def setup_cluster(cluster_name):
     nc = "cluster/" + nd["path"] + "/nodectl "
     wire_nodes(nodename, nc, count, db, pg, usr)
 
-    
+
+def remove_node(cluster_name, node):
+  pass
+
+
+def remove(cluster_name):
+  for nd in nodes:
+    print(nd["nodename"] + "Goodbye!!"
+
 

@@ -162,12 +162,13 @@ def create_local(cluster_name, num_nodes, User="lcusr", Passwd="lcpasswd",
     if rc != 0:
       sys.exit(rc)
 
-    if app == "pgbench":
-      pgbench.setup_node(node_nm, nc, num_nodes, db, pg, usr)
 
     nd_port = nd_port + 1
 
   create_json(cluster_name, db, num_nodes, usr, pg, port1)
+
+  if app == "pgbench":
+    pgbench.install(cluster_name)
 
 
 def validate(cluster_name):
@@ -257,15 +258,17 @@ def app_install(cluster_name, app_name):
   """Install test application [ pgbench | spockbench | bmsql ]"""   
 
   if app_name ==  "pgbench":
-    pgbench.setup_cluster(cluster_name)
+    pgbench.install(cluster_name)
   else:
     util.exit_message("Invalid application name.")
 
 
 def app_remove(cluster_name, app_name):
   """Remove test application from cluster"""
-
-  util.exit_message("Coming Soon", 1)
+  if app_name ==  "pgbench":
+    pgbench.remove(cluster_name)
+  else:
+    util.exit_message("Invalid application name.")
  
 
 if __name__ == '__main__':
