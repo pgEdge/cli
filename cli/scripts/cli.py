@@ -66,7 +66,7 @@ dep9 = util.get_depend()
 mode_list = ["start", "stop", "restart", "status", "list", "info", "update",
              "upgrade", "downgrade", "enable", "disable", "install", "tune",
              "remove", "reload", "help", "get", "set", "unset",
-             "backrest", "change-pgconf", "top", "spock", "pgbin", 
+             "backrest", "change-pgconf", "top", "spock", "pgbin", "psql",
              "--autostart", "service", "um", "cluster",
              "--start", "--no-restart", "--no-preload",
              "--help", "--json", "--jsonp", "--test", "--extensions", "--svcs",
@@ -74,9 +74,9 @@ mode_list = ["start", "stop", "restart", "status", "list", "info", "update",
              "--verbose", "-v", "--debug", "--debug2"]
 
 mode_list_advanced = ['kill', 'config', 'init', 'clean', 'useradd', 'spock', 
-                      'pgbin', 'cluster', 'service', 'um']
+                      'pgbin', 'psql', 'cluster', 'service', 'um']
 
-ignore_comp_list = [ "get", "set", "unset", "spock", "pgbin", "cluster", 
+ignore_comp_list = [ "get", "set", "unset", "spock", "pgbin", "psql", "cluster", 
                      "service", "um", "useradd", "backrest", "change-pgconf"]
 
 no_log_commands = ['status', 'info', 'list', 'top', 'get', 'metrics-check']
@@ -1371,6 +1371,11 @@ try:
   if p_mode != "update":
     update_if_needed()
 
+
+  ## PSQL #######################################################################
+  if p_mode == 'psql':
+    print(len(args))
+    util.exit_message("not yet")
 
   ## PGBIN #######################################################################
   if p_mode == 'pgbin':
