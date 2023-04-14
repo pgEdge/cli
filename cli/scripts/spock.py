@@ -182,14 +182,25 @@ def tune(component="pg15"):
   return(rc)
 
 
-def node_add_interface():
-  """Add a new node interafce."""
-  util.exit_message("Not implemented yet.")
+def node_add_interface(node_name, interface_name, dsn):
+  """Add a new node interface."""
+  pg_v = get_pg_v(pg)
+  sql = "SELECT spock.node_add_interface(" + \
+           get_eq("node_name", node_name, ", ") + \
+           get_eq("interface_name", interface_name, ", ") + \
+           get_eq("dsn", dsn, ")")
+  run_psyco_sql(pg_v, db, sql)
+  sys.exit(0)
 
 
-def node_drop_interface():
+def node_drop_interface(node_name, interface_name):
   """Delete a node interface."""
-  util.exit_message("Not implemented yet.")
+  pg_v = get_pg_v(pg)
+  sql = "SELECT spock.node_drop_interface(" + \
+           get_eq("node_name", node_name, ", ") + \
+           get_eq("interface_name", interface_name, ")")
+  run_psyco_sql(pg_v, db, sql)
+  sys.exit(0)
 
 
 def node_create(node_name, dsn, db, pg=None):
@@ -262,9 +273,18 @@ def repset_create(set_name, db, replicate_insert=True, replicate_update=True,
   sys.exit(0)
 
 
-def repset_alter():
+def repset_alter(set_name, replicate_insert=NULL, replicate_update=NULL, 
+                 replicate_delete=NULL, replicate_truncate=NULL):
   """Modify a replication set."""
-  util.exit_message("Not implemented yet.")
+  pg_v = get_pg_v(pg)
+  sql = "SELECT spock.repset_alter(" + \
+           get_eq("set_name", set_name, ", ") + \
+           get_eq("replicate_insert",   replicate_insert,   ", ") + \
+           get_eq("replicate_update",   replicate_update,   ", ") + \
+           get_eq("replicate_delete",   replicate_delete,   ", ") + \
+           get_eq("replicate_truncate", replicate_truncate, ")")
+  run_psyco_sql(pg_v, db, sql)
+  sys.exit(0)
 
 
 def repset_alter_seq():
@@ -280,22 +300,36 @@ def repset_drop(set_name, db, pg=None):
   sys.exit(0)
 
 
-def repset_add_seq():
+def repset_add_seq(set_name, relation, synchronize_data=false):
   """Add a sequence to a replication set."""
-  util.exit_message("Not implemented yet.")
-  #pglogical.replication_set_add_sequence
+  pg_v = get_pg_v(pg)
+  sql = "SELECT spock.repset_add_seq(" + \
+           get_eq("set_name", set_name, ", ") + \
+           get_eq("relation", relation, ", ") + \
+           get_eq("synchronize_data", synchronize_data, ")")
+  run_psyco_sql(pg_v, db, sql)
+  sys.exit(0)
 
 
-def repset_add_all_seqs():
+def repset_add_all_seqs(set_name, schema_names, synchronize_data=false):
   """Add sequences to a replication set."""
-  util.exit_message("Not implemented yet.")
-  #pglogical.replication_set_add_all_sequences
+  pg_v = get_pg_v(pg)
+  sql = "SELECT spock.repset_add_all_seqs(" + \
+           get_eq("set_name", set_name, ", ") + \
+           get_eq("schemas", schema_names, ", ") + \
+           get_eq("synchronize_data", synchronize_data, ")")
+  run_psyco_sql(pg_v, db, sql)
+  sys.exit(0)
 
 
-def repset_remove_seq():
+def repset_remove_seq(set_name, relation):
   """Remove a sequence from a replication set."""
-  util.exit_message("Not implemented yet.")
-  #pglogical.replication_set_remove_sequence
+  pg_v = get_pg_v(pg)
+  sql = "SELECT spock.repset_remove_seq(" + \
+           get_eq("set_name", set_name, ", ") + \
+           get_eq("relation", relation, ")")
+  run_psyco_sql(pg_v, db, sql)
+  sys.exit(0)
 
 
 def repset_list_tables(schema, db, pg=None):
@@ -357,9 +391,14 @@ def sub_disable(subscription_name, db, immediate=False, pg=None):
   sys.exit(0)
 
 
-def sub_alter_interface():
+def sub_alter_interface(subscription_name, interface_name):
   """Modify an interface to a subscription."""
-  util.exit_message("Not implemented yet.")
+  pg_v = get_pg_v(pg)
+  sql = "SELECT spock.sub_disable(" + \
+           get_eq("subscription_name", subscription_name, ", ") + \
+           get_eq("interface_name", interface_name, ")")
+  run_psyco_sql(pg_v, db, sql)
+  sys.exit(0)
 
 
 def sub_enable_interface():
@@ -404,6 +443,17 @@ def sub_synch():
   util.exit_message("Not implemented yet.")
 
 
+def sub_resync_table(subscription_name, relation, truncate=true):
+  """Resynchronize a table."""
+  pg_v = get_pg_v(pg)
+  sql = "SELECT spock.sub_resync_table(" + \
+           get_eq("subscription_name", subscription_name, ", ") + \
+           get_eq("relation", relation, ", ") + \
+           get_eq("truncate", truncate, ")")
+  run_psyco_sql(pg_v, db, sql)
+  sys.exit(0)
+
+
 def sub_resynch_table():
   """Resynchronize a table."""
   util.exit_message("Not implemented yet.")
@@ -433,9 +483,13 @@ def sub_remove_repset(subscription_name, replication_set, db, pg=None):
   sys.exit(0)
 
 
-def table_wait_for_sync():
+def table_wait_for_sync(subscription_name, relation regclass):
   """Pause until a table finishes synchronizing."""
-  util.exit_message("Not implemented yet.")
+  sql = "SELECT spock.table_wait_for_sync(" + \
+           get_eq("subscription_name", subscription_name, ", ") + \
+           get_eq("replation",   relation,   ")")
+  run_psyco_sql(pg_v, db, sql)
+  sys.exit(0)
 
 
 def sub_sync():
