@@ -21,13 +21,16 @@ if [ $uname == 'Linux' ]; then
   fi
 
   if [ "$YUM" == "n" ]; then
+    PLATFORM=deb
+    echo "## $PLATFORM ##"
     sudo apt install wget curl git python3 openjdk-11-jdk-headless
-  fi
-
-  if [ "$YUM" == "y" ]; then
+    echo "## ONLY el8 supported for building binaries ###"
+  else
     PLATFORM=`cat /etc/os-release | grep PLATFORM_ID | cut -d: -f2 | tr -d '\"'`
-    if [ "$PLATFORM" == "el8" ]; then
-      echo "## $PLATFORM ##"
+    echo "## $PLATFORM ##"
+    if [ ! "$PLATFORM" == "el8" ]; then
+      echo "## ONLY el8 supported for building binaries ###"
+    else
       yum="dnf -y install"
       sudo $yum epel-release
       sudo dnf config-manager --set-enabled powertools
@@ -58,8 +61,7 @@ if [ $uname == 'Linux' ]; then
 
       sudo alternatives --config java
     else
-      echo "## ONLY el8 support"
-      exit 1
+      echo "## ONLY el8 supported for building binaries ###"
     fi
   fi
 
@@ -112,7 +114,7 @@ if [ ! "$rc" == "0" ]; then
   chmod 600 config
 fi
 
-cd ~/dev/ndctl
+cd ~/dev/nodectl
 if [ -f ~/.bashrc ]; then
   bf=~/.bashrc
 else
