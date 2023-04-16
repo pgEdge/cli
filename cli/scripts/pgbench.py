@@ -4,12 +4,12 @@
 
 import util, cluster
 
-def install_node(node_nm, nc, num_nodes, db, pg, usr):
+def setup_node(node_nm, nc, num_nodes, db, pg, usr):
   pgbench_cmd = '"pgbench --initialize --scale=' + str(num_nodes) + ' ' + str(db) + '"'
   util.echo_cmd(nc + "pgbin " + str(pg) +  " " + pgbench_cmd)
 
   rep_set = 'pgbench-repset'
-  dsn = "'host=localhost user=" + usr + "'"
+  dsn = "'host=" + util.get_1st_ip() + " user=" + usr + "'"
 
   util.echo_cmd(nc + " spock node-create '" + node_nm + "' --dsn 'host=localhost' --db " + db)
   util.echo_cmd(nc + " spock repset-create " + rep_set + " --db " + db)
@@ -25,27 +25,30 @@ def log_old_val(tbl, col, val, nc, db, pg):
     util.echo_cmd(nc + "pgbin " + str(pg) +  " " +  '"psql -c \\"' + cmd + '\\" ' + db + '"')
 
 
-def wire_nodes(node_nm, nc, num_nodes, db, pg, usr):
-  print(f"DEBUG: pgbench.wire_nodes({node_nm}, {nc}, {num_nodes}, {db}, {pg}, {usr})")
-  util.exit_message("Not implemented yet!!")
-
-
 def install(cluster_name):
-  util.message("# loading cluster definition")
+  util.message("\n# loading cluster definition ######")
   db, pg, count, usr, cert, nodes = cluster.load_json(cluster_name)
 
-  ## setup individual nodes
+  util.message("\n# setup indivisual nodes ##########")
   for nd in nodes:
     nodename = nd["nodename"]
     nc = "cluster/" + nd["path"] + "/nodectl "
     setup_node(nodename, nc, count, db, pg, usr)
 
-  ## wire nodes together
-  for nd in nodes:
-    nodename = nd["nodename"]
-    nc = "cluster/" + nd["path"] + "/nodectl "
-    wire_nodes(nodename, nc, count, db, pg, usr)
+  util.message("\n# wire nodes together #############")
+  for pub in nodes:
+    pub_ip_port = "host=" + str(pub["ip"]) + " port=" + str(pub["port"])
+    nc = "cluster/" + pub["path"] + "/nodectl "
 
+    for sub in nodes:
+      sub_ip_port = "host=" + str(sub["ip"]) + " port=" + str(sub["port"])
+
+      if pub_ip_port != sub_ip_port:
+        sub_name = "sub_" + sub["nodename"] + "_" + pub["nodename"] + " "
+        provider_dsn = "'" + pub_ip_port + " user=" + usr + " dbname=" + db + "' "
+
+        util.echo_cmd(nc + " spock sub-create " + sub_name + provider_dsn + \
+           db + " --pg=" + pg)
 
 def remove_node(cluster_name, node):
   pass

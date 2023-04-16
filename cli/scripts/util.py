@@ -49,6 +49,22 @@ MY_HOME = os.getenv('MY_HOME', '..' + os.sep + '..')
 pid_file = os.path.join(MY_HOME, 'conf', 'cli.pid')
 
 
+def is_verbose():
+  isVerbose = os.getenv('isVerbose', 'False')
+  if isVerbose == 'True':
+    return(True)
+  else:
+    return(False)
+
+
+def debug_lvl():
+  lvl = str(os.getenv("pgeDebug", "0"))
+  if lvl.isnumeric():
+    return(int(lvl))
+  else:
+    return(0)
+
+
 def echo_cmd(cmd, sleep_secs=0):
   isSilent = os.getenv('isSilent', 'False')
   if isSilent == "False":
@@ -826,6 +842,9 @@ def message(p_msg, p_state="info", p_isJSON=None):
   if p_state.lower() == "error":
     my_logger.error(p_msg)
     prefix = "ERROR: "
+  elif p_state.lower() == "debug":
+    my_logger.debug(p_msg)
+    prefix = "DEBUG: "
   else:
     my_logger.info(p_msg)
     prefix = ""
