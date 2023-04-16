@@ -9,14 +9,12 @@
 
 ### 3.) cd into ~/dev/nodectl
 
-### 4.) Modify the ./setupInitial.sh file to correct the user information at the top of the file
+### 4.) Run ./setupInitial.sh to configure OS environment (on EL8 it will configure you for building binaries)
 
-### 5.) Run ./setupInitial.sh to configure OS environment
+### 5.) Configure your ~/.aws/config credentials for access to s3://pgedge-upstream
 
-### 6.) Configure your ~/.aws/config credentials
+### 6.) Source your bash profile with the command: source ~/.bashrc (or source ~/.bash_profile)
 
-### 7.) Source your bash profile with the command: source ~/.bash_profile (or source ~/bashrc)
+### 7.) run ./setupBLD-IN.sh to pull in the IN directory from S3
 
-### 8.) run ./setupBLD-IN.sh to pull in the IN directory from S3
-
-### 9.) (Only if you are building C binaries): Setup Src builds for PGBIN from devel/pgbin/build
+### 8.) (Only if you are building C binaries on EL8): Setup Src builds for PGBIN from devel/pgbin/build

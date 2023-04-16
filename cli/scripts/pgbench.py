@@ -53,6 +53,6 @@ def remove_node(cluster_name, node):
 
 def remove(cluster_name):
   for nd in nodes:
-    print(nd["nodename"] + "Goodbye!!"
+    print(nd["nodename"] + "Goodbye!!")
 
 

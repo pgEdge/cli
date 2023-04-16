@@ -569,15 +569,19 @@ setupOutdir () {
 ###############################    MAINLINE   #########################################
 osName=`uname`
 verSQL="versions.sql"
+isEL8="False"
+
 grep el8 /etc/os-release > /dev/null 2>&1
 rc=$?
 if [ "$rc" == "0" ]; then
   isEL8="True"
-else
-  isEL8="False"
 fi
-##echo "isEL8=$isEL8"
 
+grep el9 /etc/os-release > /dev/null 2>&1
+rc=$?
+if [ "$rc" == "0" ]; then
+  isEL8="True"
+fi
 
 ## process command line paramaters #######
 while getopts "c:X:N:Ep:Rh" opt

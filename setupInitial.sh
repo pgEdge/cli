@@ -1,12 +1,4 @@
 
-EMAIL="denis@lussier.io"
-NAME="denis lussier"
-git config --global user.email "$EMAIL"
-git config --global user.name "$NAME"
-git config --global push.default simple
-git config --global credential.helper store
-git config --global pull.rebase false
-
 uname=`uname`
 uname=${uname:0:7}
 
@@ -23,31 +15,30 @@ if [ $uname == 'Linux' ]; then
   if [ "$YUM" == "n" ]; then
     PLATFORM=deb
     echo "## $PLATFORM ##"
-    sudo apt install wget curl git python3 openjdk-11-jdk-headless
+    sudo apt install git net-tools wget curl zip git python3 openjdk-11-jdk-headless bzip2
     echo "## ONLY el8 supported for building binaries ###"
   else
+    yum="dnf -y install"
     PLATFORM=`cat /etc/os-release | grep PLATFORM_ID | cut -d: -f2 | tr -d '\"'`
     echo "## $PLATFORM ##"
+    sudo $yum git net-tools wget curl zip sqlite bzip2
     if [ ! "$PLATFORM" == "el8" ]; then
+      echo " "
       echo "## ONLY el8 supported for building binaries ###"
     else
-      yum="dnf -y install"
       sudo $yum epel-release
       sudo dnf config-manager --set-enabled powertools
-      sudo $yum wget python39 python39-devel
+      sudo $yum python39 python39-devel
       sudo $yum java-11-openjdk-devel maven
       sudo dnf -y groupinstall 'development tools'
       sudo $yum zlib-devel bzip2-devel \
         openssl-devel libxslt-devel libevent-devel c-ares-devel \
-        perl-ExtUtils-Embed sqlite-devel \
+        perl-ExtUtils-Embed \
         pam-devel openldap-devel boost-devel 
       sudo $yum curl-devel chrpath clang-devel llvm-devel \
         cmake libxml2-devel 
       sudo $yum libedit-devel 
       sudo $yum *ossp-uuid*
-      #sudo $yum python2 python2-devel
-      #cd /usr/bin
-      #sudo ln -fs python2 python
       sudo $yum openjpeg2-devel libyaml libyaml-devel
       sudo $yum ncurses-compat-libs mysql-devel 
       sudo $yum unixODBC-devel protobuf-c-devel libyaml-devel
@@ -60,8 +51,6 @@ if [ $uname == 'Linux' ]; then
       curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
 
       sudo alternatives --config java
-    else
-      echo "## ONLY el8 supported for building binaries ###"
     fi
   fi
 
@@ -102,11 +91,10 @@ if [ ! "$rc" == "0" ]; then
   rm get-pip.py
 fi
 
-
 aws --version > /dev/null 2>&1 
 rc=$?
 if [ ! "$rc" == "0" ]; then
-  sudo pip3 install awscli
+  pip3 install awscli
   mkdir -p ~/.aws
   cd ~/.aws
   touch config
@@ -120,6 +108,8 @@ if [ -f ~/.bashrc ]; then
 else
   bf=~/.bash_profile
 fi
+
+## don't append if already there
 grep NC $bf > /dev/null 2>&1
 rc=$?
 if [ ! "$rc" == "0" ]; then

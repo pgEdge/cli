@@ -1,5 +1,4 @@
-# PGEDGE NDCTL for ~/.bash... ############################################################
-alias git-push="cd ~/dev/nodectl; git status; git add .; git commit -m wip; git push"
+# PGEDGE NODECTL for ~/.bash... ############################################################
 alias bp="cd ~/dev/nodectl; . ./bp.sh"
 alias ver="vi ~/dev/nodectl/src/conf/versions.sql"
 
@@ -25,6 +24,4 @@ export JAVA_HOME=/etc/alternatives/jre_11_openjdk
 export PATH=/usr/local/bin:$JAVA_HOME/bin:$PATH
 
 PLATFORM=`cat /etc/os-release | grep PLATFORM_ID | cut -d: -f2 | tr -d '\"'`
-
-source ~/.cargo/env
 
