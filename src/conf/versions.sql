@@ -355,8 +355,8 @@ INSERT INTO versions VALUES ('repack-pg15', '1.4.8-1', 'arm, el8', 1, '20221019'
 INSERT INTO projects VALUES ('partman', 'ext', 4, 0, 'hub', 4, 'https://github.com/pgpartman/pg_partman/tags',
   'partman', 1, 'partman.png', 'Partition Management', 'https://github.com/pgpartman/pg_partman#pg-partition-manager');
 INSERT INTO releases VALUES ('partman-pg15', 6, 'partman', 'pgPartman',   '', 'prod', '', 1, 'POSTGRES', '', '');
-INSERT INTO versions VALUES ('partman-pg15', '4.7.2-1',  'arm, el8', 1, '20221216', 'pg15', '', '');
-INSERT INTO versions VALUES ('partman-pg15', '4.7.1-1',  'arm, el8', 0, '20221013', 'pg15', '', '');
+INSERT INTO versions VALUES ('partman-pg15', '4.7.3-1',  'arm, el8', 1, '20220417', 'pg15', '', '');
+INSERT INTO versions VALUES ('partman-pg15', '4.7.2-1',  'arm, el8', 0, '20221216', 'pg15', '', '');
 
 INSERT INTO projects VALUES ('hypopg', 'ext', 4, 0, 'hub', 8, 'https://github.com/HypoPG/hypopg/releases',
   'hypopg', 1, 'whatif.png', 'Hypothetical Indexes', 'https://hypopg.readthedocs.io/en/latest/');
