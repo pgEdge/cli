@@ -64,24 +64,24 @@ downBuild () {
 
 
 makeInstall () {
-  brew --version > /dev/null 2>&1
-  rc=$?
-  if [ "$UNAME" = "Darwin" ] && [ ! "$rc" == "0" ]; then
-    echo "ERROR: Darwin requires BREW"
-    exit 1
-  fi
+  ##brew --version > /dev/null 2>&1
+  ##rc=$?
+  ##if [ "$UNAME" = "Darwin" ] && [ ! "$rc" == "0" ]; then
+  ##  echo "ERROR: Darwin requires BREW"
+  ##  exit 1
+  ##fi
 
   if [ "$UNAME" = "Darwin" ]; then
-    export LLVM_CONFIG="/opt/homebrew/opt/llvm/bin/llvm-config"
-    export LDFLAGS="-L/opt/homebrew/opt/openssl@3/lib"
-    export CPPFLAGS="-I/opt/homebrew/opt/openssl@3/include"
-    export PKG_CONFIG_PATH="/opt/homebrew/opt/openssl@3/lib/pkgconfig"
+    ##export LLVM_CONFIG="/opt/homebrew/opt/llvm/bin/llvm-config"
+    ##export LDFLAGS="-L/opt/homebrew/opt/openssl@3/lib"
+    ##export CPPFLAGS="-I/opt/homebrew/opt/openssl@3/include"
+    ##export PKG_CONFIG_PATH="/opt/homebrew/opt/openssl@3/lib/pkgconfig"
+    options=""
   else
     export LLVM_CONFIG=/usr/bin/llvm-config-64
+    options="$options --with-openssl --with-llvm --with-gssapi --with-libxml --with-libxslt"
   fi
 
-  options="$options --with-openssl --with-llvm --with-gssapi --with-libxml --with-libxslt"
-  ##options="--host=x86_64-w64-mingw32 --without-zlib"
   cmd="./configure --prefix=$PWD $options"
   echo "# $cmd"
   $cmd > config.log
@@ -90,15 +90,17 @@ makeInstall () {
     exit 1
   fi
 
-  source /opt/rh/gcc-toolset-11/enable
-  gcc_ver=`gcc --version | head -1 | awk '{print $3}'`
-  arch=`arch`
-  if [ "$arch" == "aarch64" ]; then
-     echo "Large-System Extensions enabled for ARM 64"
-     export CFLAGS="$CFLAGS -moutline-atomics"
+  if [ `uname` == "Linux" ]; then
+    source /opt/rh/gcc-toolset-11/enable
+    gcc_ver=`gcc --version | head -1 | awk '{print $3}'`
+    arch=`arch`
+    if [ "$arch" == "aarch64" ]; then
+       echo "Large-System Extensions enabled for ARM 64"
+       export CFLAGS="$CFLAGS -moutline-atomics"
+    fi
+    echo "# gcc_ver = $gcc_ver,  arch = $arch, CFLAGS = $CFLAGS"
+    sleep 4
   fi
-  echo "# gcc_ver = $gcc_ver,  arch = $arch, CFLAGS = $CFLAGS"
-  sleep 4
 
   cmd="make -j4"
   echoCmd "$cmd"
