@@ -182,7 +182,7 @@ def tune(component="pg15"):
   return(rc)
 
 
-def node_add_interface(node_name, interface_name, dsn):
+def node_add_interface(node_name, interface_name, dsn, db, pg=None):
   """Add a new node interface."""
   pg_v = get_pg_v(pg)
   sql = "SELECT spock.node_add_interface(" + \
@@ -193,7 +193,7 @@ def node_add_interface(node_name, interface_name, dsn):
   sys.exit(0)
 
 
-def node_drop_interface(node_name, interface_name):
+def node_drop_interface(node_name, interface_name, db, pg=None):
   """Delete a node interface."""
   pg_v = get_pg_v(pg)
   sql = "SELECT spock.node_drop_interface(" + \
@@ -274,7 +274,7 @@ def repset_create(set_name, db, replicate_insert=True, replicate_update=True,
 
 
 def repset_alter(set_name, replicate_insert=NULL, replicate_update=NULL, 
-                 replicate_delete=NULL, replicate_truncate=NULL):
+                 replicate_delete=NULL, replicate_truncate=NULL, db, pg=None):
   """Modify a replication set."""
   pg_v = get_pg_v(pg)
   sql = "SELECT spock.repset_alter(" + \
@@ -300,7 +300,7 @@ def repset_drop(set_name, db, pg=None):
   sys.exit(0)
 
 
-def repset_add_seq(set_name, relation, synchronize_data=false):
+def repset_add_seq(set_name, relation, synchronize_data=false, db, pg=None):
   """Add a sequence to a replication set."""
   pg_v = get_pg_v(pg)
   sql = "SELECT spock.repset_add_seq(" + \
@@ -311,7 +311,7 @@ def repset_add_seq(set_name, relation, synchronize_data=false):
   sys.exit(0)
 
 
-def repset_add_all_seqs(set_name, schema_names, synchronize_data=false):
+def repset_add_all_seqs(set_name, schema_names, synchronize_data=false, db, pg=None):
   """Add sequences to a replication set."""
   pg_v = get_pg_v(pg)
   sql = "SELECT spock.repset_add_all_seqs(" + \
@@ -322,7 +322,7 @@ def repset_add_all_seqs(set_name, schema_names, synchronize_data=false):
   sys.exit(0)
 
 
-def repset_remove_seq(set_name, relation):
+def repset_remove_seq(set_name, relation, db, pg=None):
   """Remove a sequence from a replication set."""
   pg_v = get_pg_v(pg)
   sql = "SELECT spock.repset_remove_seq(" + \
@@ -391,7 +391,7 @@ def sub_disable(subscription_name, db, immediate=False, pg=None):
   sys.exit(0)
 
 
-def sub_alter_interface(subscription_name, interface_name):
+def sub_alter_interface(subscription_name, interface_name, db, pg=None):
   """Modify an interface to a subscription."""
   pg_v = get_pg_v(pg)
   sql = "SELECT spock.sub_disable(" + \
@@ -443,7 +443,7 @@ def sub_synch():
   util.exit_message("Not implemented yet.")
 
 
-def sub_resync_table(subscription_name, relation, truncate=true):
+def sub_resync_table(subscription_name, relation, truncate=true, db, pg=None):
   """Resynchronize a table."""
   pg_v = get_pg_v(pg)
   sql = "SELECT spock.sub_resync_table(" + \
@@ -452,11 +452,6 @@ def sub_resync_table(subscription_name, relation, truncate=true):
            get_eq("truncate", truncate, ")")
   run_psyco_sql(pg_v, db, sql)
   sys.exit(0)
-
-
-def sub_resynch_table():
-  """Resynchronize a table."""
-  util.exit_message("Not implemented yet.")
 
 
 def sub_add_repset(subscription_name, replication_set, db, pg=None):
@@ -483,7 +478,7 @@ def sub_remove_repset(subscription_name, replication_set, db, pg=None):
   sys.exit(0)
 
 
-def table_wait_for_sync(subscription_name, relation regclass):
+def table_wait_for_sync(subscription_name, relation regclass, db, pg=None):
   """Pause until a table finishes synchronizing."""
   sql = "SELECT spock.table_wait_for_sync(" + \
            get_eq("subscription_name", subscription_name, ", ") + \
