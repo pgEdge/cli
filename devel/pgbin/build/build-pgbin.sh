@@ -246,12 +246,14 @@ function buildPostgres {
 		fi
 	fi
 
-	source /opt/rh/gcc-toolset-11/enable
-	gcc_ver=`gcc --version | head -1 | awk '{print $3}'`
-	if [ "$arch" == "aarch64" ]; then
-		echo "Large-System Extensions (LSE) on ARM64"
-		export CFLAGS="$CFLAGS -moutline-atomics"
-	fi
+    if [ `uname` == "Linux" ]; then
+		source /opt/rh/gcc-toolset-11/enable
+		gcc_ver=`gcc --version | head -1 | awk '{print $3}'`
+		if [ "$arch" == "aarch64" ]; then
+			echo "Large-System Extensions (LSE) on ARM64"
+			export CFLAGS="$CFLAGS -moutline-atomics"
+		fi
+    fi
 	gcc --version
 	echo "#  @`date`  $conf"
 	configCmnd="./configure --prefix=$buildLocation $conf" 

@@ -187,9 +187,9 @@ def get_random_password(p_length=12):
   return(''.join(passwd))
 
 def get_1st_ip():
-  ips = getoutput("hostname --all-ip-addresses")
-  ipl = ips.split()
-  return(ipl[0])
+  hostname = socket.gethostname()   
+  ip = socket.gethostbyname(hostname)
+  return(ip)
 
 
 def run_backrest(p_cmd):

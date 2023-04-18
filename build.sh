@@ -457,8 +457,8 @@ initPG () {
     initC  "curl-pg$pgM"  "curl"    "$curlV"         "$outPlat" "postgres/curl"      "" "" "nil"
     initC  "spock-pg$pgM" "spock"   "$spockV"        "$outPlat" "postgres/spock"     "" "" "nil"
     initC  "cron-pg$pgM"  "cron"    "$cronV"         "$outPlat" "postgres/cron"      "" "" "nil"
-    initC  "pgcat2"       "pgcat2"  "$catV"          "$outPlat" "postgres/pgcat2"    "" "" "nil"
-    initC  "patroni"      "patroni" "$patroniV"      ""         "postgres/patroni"   "" "" "nil"
+    ##initC  "pgcat2"       "pgcat2"  "$catV"          "$outPlat" "postgres/pgcat2"    "" "" "nil"
+    ##initC  "patroni"      "patroni" "$patroniV"      ""         "postgres/patroni"   "" "" "nil"
     return
   fi
 
