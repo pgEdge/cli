@@ -71,7 +71,7 @@ mode_list = ["start", "stop", "restart", "status", "list", "info", "update",
              "--start", "--no-restart", "--no-preload",
              "--help", "--json", "--jsonp", "--test", "--extensions", "--svcs",
              "--list", "--old", "--showduplicates", "-y", "-t",
-             "--verbose", "-v", "--debug", "--debug2"]
+             "--verbose", "--country", "-v", "--debug", "--debug2"]
 
 mode_list_advanced = ['kill', 'config', 'init', 'clean', 'useradd', 'spock', 
                       'pgbin', 'psql', 'cluster', 'service', 'um']
@@ -1152,6 +1152,11 @@ p_home=""
 p_user=""
 p_passwd=""
 p_host_name=""
+
+if ("--country" in args):
+  skip_me = get_next_arg("--country")
+  args.remove("--country")
+  args.remove(skip_me)
 
 isVERBOSE = False
 if ("--verbose" in args):
