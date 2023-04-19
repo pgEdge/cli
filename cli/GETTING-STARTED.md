@@ -7,16 +7,16 @@ Two software components from pgEdge will be used in this guide. First, we’ll i
 You’ll need root permissions on these systems in order to install any OS packages needed as prerequisites.
 
 ## Prerequisites
-- Enterprise Linux (EL) 8+, Ubuntu 20.04+, Debian 10+, OSX M1/M2
+- Enterprise Linux (EL) 8/9, Ubuntu 20.04/22.04, Debian 11, OSX M1/M2
 - A non-root user with `sudo` privileges
 - `systemctl` available
 - `Python 3.8+`& an updated `pip3` to install packages as per below
 - Two servers (vm's are fine) networked with traffic on port 5432 allowed
 - SSH access into the servers
 
-On EL8 systems, upgrade to Python 3.9 as follows:
+On EL8 systems, upgrade to Python 3.9 (from default Python 3.6) as follows:
 <pre>
-sudo yum remove python3; sudo yum install python39 python39-devel
+sudo yum install python39 python39-devel; sudo yum remove python3
 </pre>
 
 Get the latest 23.x version of PIP3 installed:
@@ -27,7 +27,7 @@ python3 get-pip.py
 
 On Ubuntu you'll want to add ~/.local/bin to your path so latest PIP3 will be picked up.
 
-Use PIP3 to install cross-platform binaries as follows:
+Use PIP3 to install CLI dependencies as follows:
 <pre>
 pip3 install psycopg psycopg-binary psutil paramiko --user
 </pre>
