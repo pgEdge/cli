@@ -9,7 +9,6 @@ You’ll need root permissions on these systems in order to install any OS packa
 ## Prerequisites
 - Enterprise Linux (EL) 8/9, Ubuntu 20.04/22.04, Debian 11, OSX M1/M2
 - A non-root user with `sudo` privileges
-- `systemctl` available
 - `Python 3.8+`
 - Two servers (vm's are fine) networked with traffic on port 5432 allowed
 - SSH access into the servers
@@ -22,10 +21,10 @@ sudo yum install python39 python39-devel; sudo yum remove python3
 ## Installation
 In any directory owned by your user, use the following command to install `nodectl`:
 <pre>
-python3 -c "$(curl -fsSL https://pgedge-upstream.s3.amazonaws.com/REPO/install.py)"
+python3 -c "$(curl -fsSL https://pgedge-download.s3.amazonaws.com/REPO/install.py)"
 </pre>
 
-cd into the `pgedge` directory created and install the ***pgEdge Platform*** with the `nc` command. Specify a superuser name, password, and a database name. Note that the names cannot be pgEdge and cannot be any postgreSQL reserved words. For the examples given in this documentation, I will be using a database named demo.
+cd into the `pgedge` directory created and install the ***pgEdge Platform*** with the `nodectl` command. Specify a superuser name, password, and a database name. Note that the names cannot be pgEdge and cannot be any postgreSQL reserved words. For the examples given in this documentation, I will be using a database named demo.
 <pre>
 ./nodectl install pgedge -U superuser-name -P superuser-password -d database-name
 </pre>
@@ -39,7 +38,7 @@ For this demo I will be using the following command:
 If you encounter an error running this command, you may need to update your SELINUX mode to permissive, reboot, and retry the operation.
 
 ## Configuration 
-Using nodectl on each node, create the spock components needed for replication. First you will create a spock node by providing the name of the node, network address, and database name. You will provide the IP address of each node and the name of the pgedge user which has been created for replication, not the super user you created. Next you will make replication sets by providing the replication set name and the database name. For both the node name (n1) and the replication set name (demo_replication_set), these can be whatever you want but you will have to reference them in future commands.
+Using `nodectl` on each node, create the spock components needed for replication. First you will create a spock node by providing the name of the node, network address, and database name. You will provide the IP address of each node and the name of the pgedge user which has been created for replication, not the super user you created. Next you will make replication sets by providing the replication set name and the database name. For both the node name (n1) and the replication set name (demo_replication_set), these can be whatever you want but you will have to reference them in future commands.
 
 Node `n1` (IP address 10.1.2.5):
 <pre>
