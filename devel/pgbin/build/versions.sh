@@ -102,7 +102,7 @@ cassFullV=3.1.5
 cassShortV=
 cassBuildV=1
 
-orafceFullV=4.2.2
+orafceFullV=4.2.5
 orafceShortV=
 orafceBuildV=1
 
@@ -191,7 +191,7 @@ timescaledbFullV=2.8.0
 timescaledbShortV=
 timescaledbBuildV=1
 
-cronFullV=1.5.1
+cronFullV=1.5.2
 cronShortV=
 cronBuildV=1
 

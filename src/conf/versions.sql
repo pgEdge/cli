@@ -249,9 +249,8 @@ INSERT INTO versions VALUES ('instantclient', '21.6', '', 0, '20220420', '', '',
 INSERT INTO projects VALUES ('orafce', 'ext', 4, 0, 'hub', 0, 'https://github.com/orafce/orafce/releases',
   'orafce', 1, 'larry.png', 'Ora Built-in Packages', 'https://github.com/orafce/orafce#orafce---oracles-compatibility-functions-and-packages');
 INSERT INTO releases VALUES ('orafce-pg15', 2, 'orafce', 'OraFCE', '', 'prod', '', 1, 'POSTGRES', '', '');
-INSERT INTO versions VALUES ('orafce-pg15', '4.2.2-1',   'arm, el8', 1, '20230314', 'pg15', '', '');
-INSERT INTO versions VALUES ('orafce-pg15', '4.1.1-1',   'arm, el8', 0, '20230127', 'pg15', '', '');
-INSERT INTO versions VALUES ('orafce-pg15', '4.1.0-1',   'arm, el8', 0, '20230107', 'pg15', '', '');
+INSERT INTO versions VALUES ('orafce-pg15', '4.2.5-1',   'arm, el8', 1, '20230422', 'pg15', '', '');
+INSERT INTO versions VALUES ('orafce-pg15', '4.2.2-1',   'arm, el8', 0, '20230314', 'pg15', '', '');
 
 INSERT INTO projects VALUES ('fixeddecimal', 'ext', 6, 0, 'hub', 0, 'https://github.com/pgsql-io/fixeddecimal/tags',
   'fixeddecimal', 1, 'fixeddecimal.png', 'Much faster than NUMERIC', 'https://github.com/pgsql-io/fixeddecimal');
@@ -311,7 +310,8 @@ INSERT INTO versions VALUES ('curl-pg15', '1.0.27-1', 'osx, el8, arm', 1, '20230
 INSERT INTO projects VALUES ('cron', 'ext', 4, 0, 'hub',0, 'https://github.com/citusdata/pg_cron/releases',
   'cron', 1, 'cron.png', 'Background Job Scheduler', 'https://github.com/citusdata/pg_cron');
 INSERT INTO releases VALUES ('cron-pg15', 10, 'cron', 'pgCron', '', 'prod', '', 1, 'POSTGRES', '', '');
-INSERT INTO versions VALUES ('cron-pg15', '1.5.1-1', 'osx, el8, arm', 1, '20230215', 'pg15', '', '');
+INSERT INTO versions VALUES ('cron-pg15', '1.5.2-1', 'el8, arm', 1, '20230422', 'pg15', '', '');
+INSERT INTO versions VALUES ('cron-pg15', '1.5.1-1', 'el8, arm', 0, '20230215', 'pg15', '', '');
 
 INSERT INTO projects VALUES ('background', 'ext', 4, 0, 'hub',0, 'https://github.com/oscg-io/background/tags',
   'background', 1, 'background.png', 'Background Worker', 'https://github.com/oscg-io/background');
