@@ -2,7 +2,7 @@
     ./nodectl spock set-readonly <flags>
  
 ## DESCRIPTION
-    Set or Unset the local cluster to read-only.
+    Turn PG read-only mode 'on' or 'off'
  
 ## FLAGS
     -r, --readonly=READONLY

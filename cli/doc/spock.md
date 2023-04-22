@@ -3,8 +3,6 @@
  
 ## COMMANDS
     COMMAND is one of the following:
-     install             # Install pgEdge components.
-     validate            # Check pre-reqs for advanced commands.
      tune                # Tune pgEdge components.
      node-create         # Define a node for spock.
      node-drop           # Remove a spock node.
@@ -36,4 +34,4 @@
      table-wait-for-sync # Pause until a table finishes synchronizing.
      health-check        # Check if PG instance is accepting connections.
      metrics-check       # Retrieve advanced DB & OS metrics.
-     set-readonly        # Set or Unset the local cluster to read-only.
+     set-readonly        # Turn PG read-only mode on or off

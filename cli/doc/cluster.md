@@ -9,3 +9,5 @@
      init                # Initialize cluster for Spock
      command             # Run ./nodectl commands on one or all nodes.
      diff-tables         # Compare table on different cluster nodes
+     app-install         # Install test application [ pgbench | spockbench | bmsql ]
+     app-remove          # Remove test application from cluster
