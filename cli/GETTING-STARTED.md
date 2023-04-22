@@ -10,26 +10,13 @@ You’ll need root permissions on these systems in order to install any OS packa
 - Enterprise Linux (EL) 8/9, Ubuntu 20.04/22.04, Debian 11, OSX M1/M2
 - A non-root user with `sudo` privileges
 - `systemctl` available
-- `Python 3.8+`& an updated `pip3` to install packages as per below
+- `Python 3.8+`
 - Two servers (vm's are fine) networked with traffic on port 5432 allowed
 - SSH access into the servers
 
 On EL8 systems, upgrade to Python 3.9 (from default Python 3.6) as follows:
 <pre>
 sudo yum install python39 python39-devel; sudo yum remove python3
-</pre>
-
-Get the latest 23.x version of PIP3 installed:
-<pre>
-curl -O  https://bootstrap.pypa.io/get-pip.py
-python3 get-pip.py
-</pre>
-
-On Ubuntu you'll want to add ~/.local/bin to your path so latest PIP3 will be picked up.
-
-Use PIP3 to install CLI dependencies as follows:
-<pre>
-pip3 install psycopg psycopg-binary psutil paramiko --user
 </pre>
 
 ## Installation
@@ -40,12 +27,12 @@ python3 -c "$(curl -fsSL https://pgedge-upstream.s3.amazonaws.com/REPO/install.p
 
 cd into the `pgedge` directory created and install the ***pgEdge Platform*** with the `nc` command. Specify a superuser name, password, and a database name. Note that the names cannot be pgEdge and cannot be any postgreSQL reserved words. For the examples given in this documentation, I will be using a database named demo.
 <pre>
-./nodectl spock install -U superuser-name -P superuser-password -d database-name
+./nodectl install pgedge -U superuser-name -P superuser-password -d database-name
 </pre>
 
 For this demo I will be using the following command:
 <pre>
-./nodectl spock install -U admin -P mypassword1 -d demo
+./nodectl install pgedge -U admin -P mypassword1 -d demo
 </pre>
 
 
