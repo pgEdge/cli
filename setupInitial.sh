@@ -16,19 +16,22 @@ if [ $uname == 'Linux' ]; then
     PLATFORM=deb
     echo "## $PLATFORM ##"
     sudo apt install git net-tools wget curl zip git python3 openjdk-11-jdk-headless bzip2
-    echo "## ONLY el8 supported for building binaries ###"
+    echo "## ONLY el8/9 supported for building binaries ###"
   else
     yum="dnf -y install"
     PLATFORM=`cat /etc/os-release | grep PLATFORM_ID | cut -d: -f2 | tr -d '\"'`
     echo "## $PLATFORM ##"
     sudo $yum git net-tools wget curl zip sqlite bzip2
-    if [ ! "$PLATFORM" == "el8" ]; then
+    if [ ! "$PLATFORM" == "el8" ] && [ ! "$PLATFORM" == "el9" ]; then
       echo " "
-      echo "## ONLY el8 supported for building binaries ###"
+      echo "## ONLY el8 & el9 are supported for building binaries ###"
     else
       sudo $yum epel-release
-      sudo dnf config-manager --set-enabled powertools
-      sudo $yum python39 python39-devel
+      if [ "$PLATFORM" == "el8" ]; then
+        sudo dnf config-manager --set-enabled powertools
+      else
+        sudo dnf config-manager --set-enabled crb
+      fi
       sudo $yum java-11-openjdk-devel maven
       sudo dnf -y groupinstall 'development tools'
       sudo $yum zlib-devel bzip2-devel \
@@ -44,9 +47,13 @@ if [ $uname == 'Linux' ]; then
       sudo $yum unixODBC-devel protobuf-c-devel libyaml-devel
       sudo $yum mongo-c-driver-devel freetds-devel systemd-devel
       sudo $yum lz4-devel libzstd-devel krb5-devel
-      sudo yum remove -y gcc
-      sudo $yum gcc-toolset-11
-      sudo $yum install clang
+      if [ "$PLATFORM" == "el8" ]; then
+        sudo yum remove -y gcc
+        sudo $yum gcc-toolset-11
+        sudo $yum python39 python39-devel
+	sudo yum remove python3
+      fi 
+      sudo $yum clang
 
       curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
 
@@ -82,14 +89,10 @@ mkdir -p in
 mkdir -p out
 mkdir -p history
 
-pip3 --version > /dev/null 2>&1
-rc=$?
-if [ ! "$rc" == "0" ]; then
-  cd ~
-  wget https://bootstrap.pypa.io/get-pip.py
-  python3 get-pip.py
-  rm get-pip.py
-fi
+cd ~
+wget https://bootstrap.pypa.io/get-pip.py
+python3 get-pip.py
+rm get-pip.py
 
 aws --version > /dev/null 2>&1 
 rc=$?
