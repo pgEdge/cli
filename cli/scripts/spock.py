@@ -462,7 +462,7 @@ def sub_wait_for_sync(subscription_name, db, pg=None):
 
 
 def set_readonly(readonly="off", pg=None):
-  """Set or Unset the local cluster to read-only."""
+  """Turn PG read-only mode 'on' or 'off'"""
 
   if readonly not in ('on', 'off'):
     util.exit_message("  readonly flag must be 'off' or 'on'")
@@ -853,8 +853,6 @@ def install(User=None, Password=None, database=None, location=None, port=5432,
 
 if __name__ == '__main__':
   fire.Fire({
-      'install':             install,
-      'validate':            validate,
       'tune':                tune,
       'node-create':         node_create,
       'node-drop':           node_drop,
