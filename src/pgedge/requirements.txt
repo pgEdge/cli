@@ -1,3 +1,0 @@
-fire
-psycopg-binary
-psutil

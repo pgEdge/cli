@@ -57,10 +57,10 @@ def check_pre_reqs():
     if isAutoStart == "True":
       error_exit("autostart is NOT supported on macOS")
 
-  util.message("  Verify Python 3.6+")
+  util.message("  Verify Python 3.8+")
   p3_minor_ver = util.get_python_minor_version()
-  if p3_minor_ver < 6:
-    error_exit("Python version must be greater than 3.6")
+  if p3_minor_ver < 8:
+    error_exit("Python version must be greater than 3.8")
 
   util.message("  Verify non-root user")
   if util.is_admin():
@@ -102,32 +102,6 @@ def check_pre_reqs():
 
     else:
       error_exit("Must specify a -P passwd when specifying a -U usr")
-
-  util.message("  Ensure recent pip3")
-  rc = os.system("pip3 --version >/dev/null 2>&1")
-  if rc == 0:
-    os.system("pip3 install --upgrade pip --user >/dev/null 2>&1")
-  else:
-    url="https://bootstrap.pypa.io/get-pip.py"
-    if p3_minor_ver == 6:
-      url="https://bootstrap.pypa.io/pip/3.6/get-pip.py"
-    util.message("\n# Trying to install 'pip3'")
-    osSys("rm -f get-pip.py", False)
-    osSys("curl -O " + url, False)
-    osSys("python3 get-pip.py --user", False)
-    osSys("rm -f get-pip.py", False)
-
-  util.message("  Ensure PSYCOPG-BINARY pip3 module")
-  try:
-    import psycopg
-  except ImportError as e:
-    osSys("pip3 install psycopg-binary --user --upgrade", False)
-
-  util.message("  Check for PSUTIL module")
-  try:
-    import psutil
-  except ImportError as e:
-    util.message("  You need a native PSUTIL module to run 'metrics-check' or 'top'")
 
 
 ## MAINLINE #####################################################3
