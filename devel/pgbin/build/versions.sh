@@ -202,26 +202,37 @@ if [ "$rc" == "0" ]; then
   isEL8=yes
 fi
 
+isEL9=no
+grep el9 /etc/os-release > /dev/null 2>&1
+rc=$?
+if [ "$rc" == "0" ]; then
+  isEL9=yes
+fi
+
 ARCH=`arch`
 OS=`uname -s`
 OS=${OS:0:7}
 if [[ "$OS" == "Linux" ]]; then
+  CORES=`egrep -c 'processor([[:space:]]+):.*' /proc/cpuinfo`
   if [[ "$ARCH" == "aarch64" ]]; then
     OS=arm
+    if [[ "$isEL9" == "yes" ]]; then
+      OS=arm9
+    fi
   else
     if [[ "$isEL8" == "yes" ]]; then
       OS=el8
+    elif [[ "$isEL9" == "yes" ]]; then
+      OS=el9
     else
       OS=amd
     fi
   fi
 elif [[ "$OS" == "Darwin" ]]; then
-    OS="osx"
-elif [[ $OS == "MINGW64" ]]; then
-    OS=win
+  CORES = `/usr/sbin/sysctl hw.physicalcpu | awk '{print $2}'`
+  OS="osx"
 else
   echo "Think again. :-)"
   exit 1
 fi
 
-##cpuCores=`egrep -c 'processor([[:space:]]+):.*' /proc/cpuinfo`

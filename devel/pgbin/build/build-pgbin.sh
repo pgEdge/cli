@@ -3,7 +3,6 @@
 
 source versions.sh
 
-CORES=4
 archiveDir="/opt/builds/"
 baseDir="`pwd`/.."
 workDir=`date +%Y%m%d_%H%M`
@@ -247,7 +246,10 @@ function buildPostgres {
 	fi
 
     if [ `uname` == "Linux" ]; then
-		source /opt/rh/gcc-toolset-11/enable
+		ts11=/opt/rh/gcc-toolset-11/enable
+		if [ -f $ts11 ]; then
+			source $ts11
+		fi
 		gcc_ver=`gcc --version | head -1 | awk '{print $3}'`
 		if [ "$arch" == "aarch64" ]; then
 			echo "Large-System Extensions (LSE) on ARM64"

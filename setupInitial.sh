@@ -52,6 +52,9 @@ if [ $uname == 'Linux' ]; then
         sudo $yum gcc-toolset-11
         sudo $yum python39 python39-devel
 	sudo yum remove python3
+      else
+	sudo $yum python3-devel
+        sudo yum remove python3-pip
       fi 
       sudo $yum clang
 
