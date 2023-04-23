@@ -8,6 +8,7 @@ import util, meta, api, fire
 nc = "./nodectl "
 
 isAutoStart   = str(os.getenv("isAutoStart",   "False"))
+isDebug       = str(os.getenv("pgeDebug",      "0"))
   
 ## force use of PGPASSWORD from ~/.pgpass
 os.environ["PGPASSWORD"] = ""
@@ -20,7 +21,7 @@ except ImportError as e:
 
 def error_exit(p_msg, p_rc=1):
     util.message("ERROR: " + p_msg)
-    if util.debug_lvl() == 0:
+    if isDebug == "0":
       os.system(nc + "remove pgedge")
 
     sys.exit(p_rc)
@@ -53,11 +54,8 @@ def json_dumps(p_input):
 def get_pg_connection(pg_v, db, usr):
   dbp = util.get_column("port", pg_v)
 
-  if util.debug_lvl() > 0:
-    util.message(f"get_pg_connection(): dbname={db}, user={usr}, port={dbp}", "debug")
-
   try:
-    con = psycopg.connect(dbname=db, user=usr, host="127.0.0.1", port=dbp, autocommit=False)
+    con = psycopg.connect(dbname=db, user=usr, host="localhost", port=dbp, autocommit=False)
   except Exception as e:
     util.exit_exception(e)
 
@@ -68,15 +66,11 @@ def run_psyco_sql(pg_v, db, cmd, usr=None):
   if usr == None:
     usr = util.get_user()
 
-  if util.is_verbose():
+  isVerbose = os.getenv('isVerbose', 'False')
+  if isVerbose == 'True':
     util.message(cmd, "info")
 
-  if util.debug_lvl() > 0:
-    util.message(cmd, "debug")
-
   con = get_pg_connection(pg_v, db, usr)
-  if util.debug_lvl() > 0:
-    util.message("run_psyco_sql(): " + str(con), "debug")
 
   try:
     cur = con.cursor(row_factory=psycopg.rows.dict_row)
@@ -188,14 +182,25 @@ def tune(component="pg15"):
   return(rc)
 
 
-def node_add_interface():
-  """Add a new node interafce."""
-  util.exit_message("Not implemented yet.")
+def node_add_interface(node_name, interface_name, dsn, db, pg=None):
+  """Add a new node interface."""
+  pg_v = get_pg_v(pg)
+  sql = "SELECT spock.node_add_interface(" + \
+           get_eq("node_name", node_name, ", ") + \
+           get_eq("interface_name", interface_name, ", ") + \
+           get_eq("dsn", dsn, ")")
+  run_psyco_sql(pg_v, db, sql)
+  sys.exit(0)
 
 
-def node_drop_interface():
+def node_drop_interface(node_name, interface_name, db, pg=None):
   """Delete a node interface."""
-  util.exit_message("Not implemented yet.")
+  pg_v = get_pg_v(pg)
+  sql = "SELECT spock.node_drop_interface(" + \
+           get_eq("node_name", node_name, ", ") + \
+           get_eq("interface_name", interface_name, ")")
+  run_psyco_sql(pg_v, db, sql)
+  sys.exit(0)
 
 
 def node_create(node_name, dsn, db, pg=None):
@@ -268,9 +273,18 @@ def repset_create(set_name, db, replicate_insert=True, replicate_update=True,
   sys.exit(0)
 
 
-def repset_alter():
+def repset_alter(set_name, replicate_insert=NULL, replicate_update=NULL, 
+                 replicate_delete=NULL, replicate_truncate=NULL, db, pg=None):
   """Modify a replication set."""
-  util.exit_message("Not implemented yet.")
+  pg_v = get_pg_v(pg)
+  sql = "SELECT spock.repset_alter(" + \
+           get_eq("set_name", set_name, ", ") + \
+           get_eq("replicate_insert",   replicate_insert,   ", ") + \
+           get_eq("replicate_update",   replicate_update,   ", ") + \
+           get_eq("replicate_delete",   replicate_delete,   ", ") + \
+           get_eq("replicate_truncate", replicate_truncate, ")")
+  run_psyco_sql(pg_v, db, sql)
+  sys.exit(0)
 
 
 def repset_alter_seq():
@@ -286,22 +300,36 @@ def repset_drop(set_name, db, pg=None):
   sys.exit(0)
 
 
-def repset_add_seq():
+def repset_add_seq(set_name, relation, synchronize_data=false, db, pg=None):
   """Add a sequence to a replication set."""
-  util.exit_message("Not implemented yet.")
-  #pglogical.replication_set_add_sequence
+  pg_v = get_pg_v(pg)
+  sql = "SELECT spock.repset_add_seq(" + \
+           get_eq("set_name", set_name, ", ") + \
+           get_eq("relation", relation, ", ") + \
+           get_eq("synchronize_data", synchronize_data, ")")
+  run_psyco_sql(pg_v, db, sql)
+  sys.exit(0)
 
 
-def repset_add_all_seqs():
+def repset_add_all_seqs(set_name, schema_names, synchronize_data=false, db, pg=None):
   """Add sequences to a replication set."""
-  util.exit_message("Not implemented yet.")
-  #pglogical.replication_set_add_all_sequences
+  pg_v = get_pg_v(pg)
+  sql = "SELECT spock.repset_add_all_seqs(" + \
+           get_eq("set_name", set_name, ", ") + \
+           get_eq("schemas", schema_names, ", ") + \
+           get_eq("synchronize_data", synchronize_data, ")")
+  run_psyco_sql(pg_v, db, sql)
+  sys.exit(0)
 
 
-def repset_remove_seq():
+def repset_remove_seq(set_name, relation, db, pg=None):
   """Remove a sequence from a replication set."""
-  util.exit_message("Not implemented yet.")
-  #pglogical.replication_set_remove_sequence
+  pg_v = get_pg_v(pg)
+  sql = "SELECT spock.repset_remove_seq(" + \
+           get_eq("set_name", set_name, ", ") + \
+           get_eq("relation", relation, ")")
+  run_psyco_sql(pg_v, db, sql)
+  sys.exit(0)
 
 
 def repset_list_tables(schema, db, pg=None):
@@ -363,9 +391,14 @@ def sub_disable(subscription_name, db, immediate=False, pg=None):
   sys.exit(0)
 
 
-def sub_alter_interface():
+def sub_alter_interface(subscription_name, interface_name, db, pg=None):
   """Modify an interface to a subscription."""
-  util.exit_message("Not implemented yet.")
+  pg_v = get_pg_v(pg)
+  sql = "SELECT spock.sub_disable(" + \
+           get_eq("subscription_name", subscription_name, ", ") + \
+           get_eq("interface_name", interface_name, ")")
+  run_psyco_sql(pg_v, db, sql)
+  sys.exit(0)
 
 
 def sub_enable_interface():
@@ -410,9 +443,15 @@ def sub_synch():
   util.exit_message("Not implemented yet.")
 
 
-def sub_resynch_table():
+def sub_resync_table(subscription_name, relation, truncate=true, db, pg=None):
   """Resynchronize a table."""
-  util.exit_message("Not implemented yet.")
+  pg_v = get_pg_v(pg)
+  sql = "SELECT spock.sub_resync_table(" + \
+           get_eq("subscription_name", subscription_name, ", ") + \
+           get_eq("relation", relation, ", ") + \
+           get_eq("truncate", truncate, ")")
+  run_psyco_sql(pg_v, db, sql)
+  sys.exit(0)
 
 
 def sub_add_repset(subscription_name, replication_set, db, pg=None):
@@ -439,9 +478,13 @@ def sub_remove_repset(subscription_name, replication_set, db, pg=None):
   sys.exit(0)
 
 
-def table_wait_for_sync():
+def table_wait_for_sync(subscription_name, relation regclass, db, pg=None):
   """Pause until a table finishes synchronizing."""
-  util.exit_message("Not implemented yet.")
+  sql = "SELECT spock.table_wait_for_sync(" + \
+           get_eq("subscription_name", subscription_name, ", ") + \
+           get_eq("relation",   relation,   ")")
+  run_psyco_sql(pg_v, db, sql)
+  sys.exit(0)
 
 
 def sub_sync():
@@ -462,7 +505,7 @@ def sub_wait_for_sync(subscription_name, db, pg=None):
 
 
 def set_readonly(readonly="off", pg=None):
-  """Turn PG read-only mode 'on' or 'off'."""
+  """Set or Unset the local cluster to read-only."""
 
   if readonly not in ('on', 'off'):
     util.exit_message("  readonly flag must be 'off' or 'on'")
@@ -821,9 +864,8 @@ def install(User=None, Password=None, database=None, location=None, port=5432,
   osSys(nc + "install spock -d " + database, 2)
   ##osSys(nc + "install readonly", 2)
 
-  if util.get_platform() == "Linux":
-    util.change_pgconf_keyval(pgV, "cron.database_name", database, True)
-    osSys(nc + "install cron -d " + database, 2)
+  util.change_pgconf_keyval(pgV, "cron.database_name", database, True)
+  osSys(nc + "install cron -d " + database, 2)
 
   if os.getenv("withPOSTGREST", "False") == "True":
     with_postgrest = True
@@ -853,6 +895,8 @@ def install(User=None, Password=None, database=None, location=None, port=5432,
 
 if __name__ == '__main__':
   fire.Fire({
+      'install':             install,
+      'validate':            validate,
       'tune':                tune,
       'node-create':         node_create,
       'node-drop':           node_drop,
