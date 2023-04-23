@@ -471,11 +471,11 @@ initPG () {
   fi
 
 
-  if [ "$pgM" == "15" ] && [ [ "$isEL8" == "True" ] || [ "$isEL9" == "True" ] ]; then
-    initC  "pgcat2"  "pgcat2"  "$catV"  "$outPlat" "postgres/pgcat2" "" "" "nil"
+  if [ "$pgM" == "15" ] && [ "$isEL" == "True" ]; then
+    ##initC  "pgcat2"  "pgcat2"  "$catV"  "$outPlat" "postgres/pgcat2" "" "" "nil"
     initC "spock-pg$pgM" "spock" "$spockV" "$outPlat" "postgres/spock" "" "" "nil"
-    initC "multicorn2-pg$pgM" "multicorn2" "$multicorn2V" "$outPlat" "postgres/multicorn2" "" "" "nil"
-    initC "esfdw-pg$pgM" "esfdw" "$esfdwV" "$outPlat" "postgres/esfdw" "" "" "Y"
+    ##initC "multicorn2-pg$pgM" "multicorn2" "$multicorn2V" "$outPlat" "postgres/multicorn2" "" "" "nil"
+    ##initC "esfdw-pg$pgM" "esfdw" "$esfdwV" "$outPlat" "postgres/esfdw" "" "" "Y"
     initC "citus-pg$pgM" "citus" "$citusV" "$outPlat" "postgres/citus" "" "" "nil"
     if [ "$outPlat" == "arm" ]; then
       initC "postgis-pg$pgM" "postgis" "$postgisV" "$outPlat" "postgres/postgis" "" "" "nil"
@@ -487,17 +487,17 @@ initPG () {
     initC "partman-pg$pgM" "partman" "$partmanV" "$outPlat" "postgres/partman" "" "" "nil"
     initC "orafce-pg$pgM" "orafce" "$orafceV" "$outPlat" "postgres/orafce" "" "" "nil"
     initC "audit-pg$pgM" "audit" "$audit15V" "$outPlat" "postgres/audit" "" "" "nil"
-    initC "repack-pg$pgM" "repack" "$repackV" "$outPlat" "postgres/repack" "" "" "nil"
-    initC "postgrest" "postgrest" "$postgrestV"  "$outPlat"  "postgres/postgrest"  "" "" "nil"
+    ##initC "repack-pg$pgM" "repack" "$repackV" "$outPlat" "postgres/repack" "" "" "nil"
+    ##initC "postgrest" "postgrest" "$postgrestV"  "$outPlat"  "postgres/postgrest"  "" "" "nil"
     initC  "curl-pg$pgM"  "curl"    "$curlV"       "$outPlat" "postgres/curl"   "" "" "nil"
     initC "cron-pg$pgM" "cron" "$cronV" "$outPlat" "postgres/cron" "" "" "nil"
     initC "readonly-pg$pgM" "readonly" "$readonlyV" "$outPlat" "postgres/readonly" "" "" "nil"
     initC "hintplan-pg$pgM" "hintplan" "$hintV" "$outPlat" "postgres/hintplan" "" "" "nil"
 
-    if [ "$outPlat" == "el8" ]; then
-      initC "tdsfdw-pg$pgM" "tdsfdw" "$tdsfdwV" "$outPlat" "postgres/tdsfdw" "" "" "nil"
-      initC "oraclefdw-pg$pgM" "oraclefdw" "$oraclefdwV" "$outPlat" "postgres/oraclefdw" "" "" "nil"
-    fi
+    ##if [ "$outPlat" == "el8" ]; then
+    ##  initC "tdsfdw-pg$pgM" "tdsfdw" "$tdsfdwV" "$outPlat" "postgres/tdsfdw" "" "" "nil"
+    ##  initC "oraclefdw-pg$pgM" "oraclefdw" "$oraclefdwV" "$outPlat" "postgres/oraclefdw" "" "" "nil"
+    ##fi
   fi
 
   if [ "$pgM" == "14" ] && [  "$isEL8" == "True" ]; then
@@ -532,7 +532,7 @@ initPG () {
   initC  "pgedge" "pgedge" "$pgedgeV" "" "postgres/pgedge" "" "" "nil"
   initC  "bouncer" "bouncer" "$bouncerV" "$outPlat" "postgres/bouncer" "" "" "nil"
   initC  "backrest" "backrest" "$backrestV" "$outPlat" "postgres/backrest" "" "" "nil"
-  initC  "csvdiff" "csvdiff" "$csvdiffV" "$outPlat" "csvdiff" "" "" "nil"
+  ##initC  "csvdiff" "csvdiff" "$csvdiffV" "$outPlat" "csvdiff" "" "" "nil"
   initC  "pgdiff" "pgdiff" "$pgdiffV" "" "postgres/pgdiff" "" "" "nil"
   initC  "patroni"   "patroni"   "$patroniV" "" "postgres/patroni" "" "" "nil"
   ##initC "nginx" "nginx" "$nginxV" "" "nginx" "" "" "Y"
@@ -575,17 +575,20 @@ osName=`uname`
 verSQL="versions.sql"
 isEL8="False"
 isEL9="False"
+isEL="False"
 
 grep el8 /etc/os-release > /dev/null 2>&1
 rc=$?
 if [ "$rc" == "0" ]; then
   isEL8="True"
+  isEL="True"
 fi
 
 grep el9 /etc/os-release > /dev/null 2>&1
 rc=$?
 if [ "$rc" == "0" ]; then
   isEL9="True"
+  isEL="True"
 fi
 
 ## process command line paramaters #######

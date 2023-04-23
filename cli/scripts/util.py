@@ -246,17 +246,13 @@ def get_java_ver(pDisplay=False):
 
 
 def get_arch():
-  arch=""
-  this_uname = str(platform.system())[0:7]
-  arch = getoutput("uname -m")
-  arch = arch.replace("x86_64", "amd")
-  arch = arch.replace("AMD64", "amd")
-  arch = arch.replace("aarch64", "arm")
-
-  if arch == "amd":
-    return get_el_v()
-
-  return arch
+  ##arch=""
+  ##this_uname = str(platform.system())[0:7]
+  ##arch = getoutput("uname -m")
+  ##arch = arch.replace("x86_64", "amd")
+  ##arch = arch.replace("AMD64", "amd")
+  ##arch = arch.replace("aarch64", "arm")
+  return get_el_ver()
 
 
 def is_systemctl():
@@ -2109,15 +2105,22 @@ def get_platform():
 
 def get_el_ver():
   if platform.system() != "Linux":
-    return "el0"
+    return "osx"
 
   glibc_v = get_glibc_version()
-  if glibc_v <  "2.28":
-    return "amd"
-  elif glibc_v >= "2.34":
-    return "el9"
+  arch = getoutput("uname -m")
+  if arch == "aarch64":
+    if glibc_v >= "2.34":
+      return "arm9"
+    else:
+      return "arm"
   else:
-    return "el8"
+    if glibc_v <  "2.28":
+      return "amd"
+    elif glibc_v >= "2.34":
+      return "el9"
+    else:
+      return "el8"
 
 
 def is_el8():
@@ -2158,11 +2161,11 @@ def get_os():
       rel_file = "/etc/os-release"
 
     if rel_file > "" and os.path.exists(rel_file):
-      cpuinfo = read_file_string("/proc/cpuinfo")
-      if "CPU architecture" in cpuinfo:
-        return "arm"
-      else:
-        return get_el_v()
+      ##cpuinfo = read_file_string("/proc/cpuinfo")
+      ##if "CPU architecture" in cpuinfo:
+      ##  return "arm"
+      ##else:
+        return get_el_ver()
       
   except Exception as e:
     pass
