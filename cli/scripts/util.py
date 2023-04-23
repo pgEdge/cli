@@ -253,8 +253,8 @@ def get_arch():
   arch = arch.replace("AMD64", "amd")
   arch = arch.replace("aarch64", "arm")
 
-  if arch == "amd" and is_el8():
-    arch = "el8"
+  if arch == "amd":
+    return get_el_v()
 
   return arch
 
@@ -2107,16 +2107,26 @@ def is_pid_running(p_pid):
 def get_platform():
   return str(platform.system())
 
+def get_el_ver():
+  if platform.system() != "Linux":
+    return "el0"
+
+  glibc_v = get_glibc_version()
+  if glibc_v <  "2.28":
+    return "amd"
+  elif glibc_v >= "2.34":
+    return "el9"
+  else:
+    return "el8"
+
 
 def is_el8():
   if platform.system() != "Linux":
     return False
 
-  #rc = os.system ("grep el8 /etc/os-release > /dev/null")
-  #if rc == 0:
-  #  return True
+  glibc_v = get_glibc_version()
 
-  if get_glibc_version() >= "2.28":
+  if get_glibc_version() < "2.34":
     return True
 
   return False
@@ -2128,9 +2138,6 @@ def is_el8():
 def get_os():
   if platform.system() == "Darwin":
     arch = getoutput('arch')
-    ##if arch == "arm64":
-    ##  return("osx-arm")
-    ##else:
     return ("osx")
 
   if platform.system() != "Linux":
@@ -2155,10 +2162,7 @@ def get_os():
       if "CPU architecture" in cpuinfo:
         return "arm"
       else:
-        if is_el8():
-          return "el8"
-        else:
-          return "amd"
+        return get_el_v()
       
   except Exception as e:
     pass

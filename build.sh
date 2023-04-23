@@ -425,11 +425,15 @@ initPG () {
 
   if [ "$outDir" == "a64" ]; then
     outPlat="arm"
+    if [ "$isEL9" == "True" ]; then
+      outPlat="arm9"
+    fi
   elif [ "$outDir" == "m64" ]; then
     outPlat="osx"
   else
-    if [ "$isEL8" == "True" ]; then
-      outPlat="el8"
+    outPlat="el8"
+    if [ "$isEL9" == "True" ]; then
+      outPlat="el9"
     else
       outPlat="amd"
     fi
@@ -456,7 +460,7 @@ initPG () {
     initC  "readonly-pg$pgM" "readonly" "$readonlyV" "$outPlat" "postgres/readonly"  "" "" "nil"
     initC  "curl-pg$pgM"  "curl"    "$curlV"         "$outPlat" "postgres/curl"      "" "" "nil"
     initC  "spock-pg$pgM" "spock"   "$spockV"        "$outPlat" "postgres/spock"     "" "" "nil"
-    initC  "cron-pg$pgM"  "cron"    "$cronV"         "$outPlat" "postgres/cron"      "" "" "nil"
+    ##initC  "cron-pg$pgM"  "cron"    "$cronV"         "$outPlat" "postgres/cron"      "" "" "nil"
     ##initC  "pgcat2"       "pgcat2"  "$catV"          "$outPlat" "postgres/pgcat2"    "" "" "nil"
     ##initC  "patroni"      "patroni" "$patroniV"      ""         "postgres/patroni"   "" "" "nil"
     return
@@ -467,7 +471,7 @@ initPG () {
   fi
 
 
-  if [ "$pgM" == "15" ] && [  "$isEL8" == "True" ]; then
+  if [ "$pgM" == "15" ] && [ [ "$isEL8" == "True" ] || [ "$isEL9" == "True" ] ]; then
     initC  "pgcat2"  "pgcat2"  "$catV"  "$outPlat" "postgres/pgcat2" "" "" "nil"
     initC "spock-pg$pgM" "spock" "$spockV" "$outPlat" "postgres/spock" "" "" "nil"
     initC "multicorn2-pg$pgM" "multicorn2" "$multicorn2V" "$outPlat" "postgres/multicorn2" "" "" "nil"
@@ -570,6 +574,7 @@ setupOutdir () {
 osName=`uname`
 verSQL="versions.sql"
 isEL8="False"
+isEL9="False"
 
 grep el8 /etc/os-release > /dev/null 2>&1
 rc=$?
@@ -580,7 +585,7 @@ fi
 grep el9 /etc/os-release > /dev/null 2>&1
 rc=$?
 if [ "$rc" == "0" ]; then
-  isEL8="True"
+  isEL9="True"
 fi
 
 ## process command line paramaters #######

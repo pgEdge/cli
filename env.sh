@@ -99,10 +99,6 @@ elif [[ $OS == "Darwin" ]]; then
   outDir=m64
   OS=osx;
   sudo=""
-elif [[ $OS = "MINGW64" ]]; then
-  outDir=w64
-  OS=win
-  sudo=""
 else
   echo "ERROR: '$OS' is not supported"
   return

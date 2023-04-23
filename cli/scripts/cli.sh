@@ -36,10 +36,11 @@ array[0]="$MY_HOME/hub/scripts"
 array[1]="$MY_HOME/hub/scripts/lib"
 if [ `uname` == "Linux" ]; then
   if [ -f "/etc/redhat-release" ]; then
+    PLATFORM=`cat /etc/os-release | grep PLATFORM_ID | cut -d: -f2 | tr -d '\"'`
     if [ `arch` == "aarch64" ]; then
-      array[2]="$MY_HOME/hub/scripts/lib/linux/arm/el8"
+      array[2]="$MY_HOME/hub/scripts/lib/linux/arm/$PLATFORM"
     else
-      array[2]="$MY_HOME/hub/scripts/lib/linux/amd/el8"
+      array[2]="$MY_HOME/hub/scripts/lib/linux/amd/$PLATFORM"
     fi
   else
     if [ -f "/etc/os-release" ] && [ `arch` == "x86_64" ]; then
