@@ -172,8 +172,8 @@ function configureComp {
 
     if [ "$comp" == "plv8" ]; then
         echo "# configure plv8..."
-        echo "# enabling gcc-toolset-11 "
-        source /opt/rh/gcc-toolset-11/enable
+        ##echo "# enabling gcc-toolset-11 "
+        ##source /opt/rh/gcc-toolset-11/enable
         echo "# overlaying debian specific make file with el8 adjustments"
         cp $DEVEL/pgbin/build/el8-only/plv8/Makefile.linux_el8  Makefiles/Makefile.linux
         make="make static"
@@ -189,7 +189,7 @@ function configureComp {
 
     if [ "$comp" == "citus" ]; then
         echo "# configure citus..."
-        ./configure --prefix=$buildLocation >> $make_log 2>&1 
+        ./configure --enable-debug  --prefix=$buildLocation >> $make_log 2>&1 
         rc=$?
     fi
 
@@ -197,7 +197,7 @@ function configureComp {
         echo "# configure backrest..."
         export LD_LIBRARY_PATH=$buildLocation/lib
         cd src
-        ./configure --prefix=$buildLocation LDFLAGS="$LDFLAGS -Wl,-rpath,$sharedLibs" >> $make_log 2>&1 
+        ./configure --enable-debug --prefix=$buildLocation LDFLAGS="$LDFLAGS -Wl,-rpath,$sharedLibs" >> $make_log 2>&1 
         rc=$?
     fi
 
@@ -212,21 +212,9 @@ function configureComp {
 
     if [ "$comp" == "bouncer" ]; then
         echo "# configure bouncer..."
-        #opt="--prefix=$buildLocation --disable-rpath --with-cares --with-pam"
-        #opt="--prefix=$buildLocation --with-cares --with-pam"
-        #opt="$opt --with-libevent=$sharedLibs/../ --with-openssl=$sharedLibs/../ --with-systemd"
-        #opt="--prefix=$buildLocation --disable-rpath --with-cares --with-pam --with-libevent --with-openssl --with-systemd"
-        opt="--prefix=$buildLocation --with-cares --with-pam --with-openssl --with-systemd"
+        opt="--prefix=$buildLocation --enable-debug --with-cares --with-pam --with-openssl --with-systemd"
         echo "#    $opt"
         ./configure $opt LDFLAGS="$LDFLAGS -Wl,-rpath,$sharedLibs -L$sharedLibs" > $make_log 2>&1
-        rc=$?
-    fi
-
-    if [ "$comp" == "agent" ]; then
-        echo "# configure agent..."
-        config="ccmake -DCMAKE_INSTALL_PREFIX=$buildLocation --config cfg ."
-        echo "#   $config"
-        $config > $make_log 2>&1
         rc=$?
     fi
 
@@ -234,7 +222,7 @@ function configureComp {
         echo "# configure postgis..."
 	export PKG_CONFIG_PATH=/usr/local/lib/pkgconfig
         ##./configure --without-protobuf LDFLAGS="$LDFLAGS -Wl,-rpath,$sharedLibs" > $make_log 2>&1
-        ./configure LDFLAGS="$LDFLAGS -Wl,-rpath,$sharedLibs" > $make_log 2>&1
+        ./configure --enable-debug LDFLAGS="$LDFLAGS -Wl,-rpath,$sharedLibs" > $make_log 2>&1
         rc=$?
     fi
 

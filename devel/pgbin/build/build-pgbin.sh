@@ -218,31 +218,18 @@ function buildPostgres {
 	arch=`arch`
 
 	conf="--disable-rpath $pgOPT"
-	if [[ $OS == "osx" ]] || [[ $OS == "osx-arm" ]]; then
+	if [ $OS == "osx" ]; then
 		conf="$conf --without-python --without-perl"
-		##hb=/opt/homebrew/opt
-		##export LLVM_CONFIG=$hb/llvm/bin/llvm-config
-                ##echo "# LLVM_CONFIG=$LLVM_CONFIG"
-		##export LDFLAGS="-L$hb/openssl@3/lib"
-		##export CPPFLAGS="-I$hb/openssl@3/include"
-		##export PKG_CONFIG_PATH="$hb/openssl@3/lib/pkgconfig"
  
-	elif [[ $OS == "win" ]]; then
-		conf="--disable-rpath $pgOPT --host=x86_64-w64-mingw32 --without-zlib --with-llvm"
-		##conf="$conf --with-python PYTHON=/usr/bin/python3"
-		##conf="$conf --with-uuid=ossp --with-gssapi --with-ldap --with-pam"
 	else
-                export LLVM_CONFIG=/usr/bin/llvm-config-64
-		conf="$conf  --with-libxslt --with-libxml"
+		export LLVM_CONFIG=/usr/bin/llvm-config-64
+		conf="$conf  --with-libxslt --with-libxml --enable-debug"
 		conf="$conf --with-uuid=ossp --with-gssapi --with-ldap --with-pam --with-llvm --with-openssl --with-systemd"
 		if [ $OS == "amd" ]; then
 			conf="$conf --with-python PYTHON=/usr/bin/python3"
 		else
 			conf="$conf --with-python PYTHON=/usr/bin/python3.9"
 		fi
-		##if [ ! "$arch" == "aarch64" ]; then
-		##	conf="$conf --with-perl"
-		##fi
 	fi
 
     if [ `uname` == "Linux" ]; then
