@@ -482,7 +482,7 @@ def table_wait_for_sync(subscription_name, relation regclass, db, pg=None):
   """Pause until a table finishes synchronizing."""
   sql = "SELECT spock.table_wait_for_sync(" + \
            get_eq("subscription_name", subscription_name, ", ") + \
-           get_eq("replation",   relation,   ")")
+           get_eq("relation",   relation,   ")")
   run_psyco_sql(pg_v, db, sql)
   sys.exit(0)
 
