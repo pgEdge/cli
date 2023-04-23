@@ -240,9 +240,9 @@ function buildPostgres {
 		else
 			conf="$conf --with-python PYTHON=/usr/bin/python3.9"
 		fi
-		if [ ! "$arch" == "aarch64" ]; then
-			conf="$conf --with-perl"
-		fi
+		##if [ ! "$arch" == "aarch64" ]; then
+		##	conf="$conf --with-perl"
+		##fi
 	fi
 
     if [ `uname` == "Linux" ]; then
