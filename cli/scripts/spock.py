@@ -895,8 +895,6 @@ def install(User=None, Password=None, database=None, location=None, port=5432,
 
 if __name__ == '__main__':
   fire.Fire({
-      'install':             install,
-      'validate':            validate,
       'tune':                tune,
       'node-create':         node_create,
       'node-drop':           node_drop,
