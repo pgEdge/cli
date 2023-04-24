@@ -222,7 +222,7 @@ if [[ "$OS" == "Linux" ]]; then
     fi
   fi
 elif [[ "$OS" == "Darwin" ]]; then
-  CORES = `/usr/sbin/sysctl hw.physicalcpu | awk '{print $2}'`
+  CORES=`/usr/sbin/sysctl hw.physicalcpu | awk '{print $2}'`
   OS="osx"
 else
   echo "Think again. :-)"
