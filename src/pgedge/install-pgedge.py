@@ -92,8 +92,8 @@ def check_pre_reqs():
 
     if passwd:
       pwd_len = len(passwd)
-      if (pwd_len < 8) or (pwd_len > 128):
-        error_exit("The password must be >= 8 and <= 128 in length")
+      if (pwd_len < 6) or (pwd_len > 128):
+        error_exit("The password must be >= 6 and <= 128 in length")
 
       for pwd_char in passwd:
         pwd_c = pwd_char.strip()
