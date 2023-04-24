@@ -1,0 +1,7 @@
+STEPS TO EXECUTE (pgedge password is 'asdf')
+
+su - pgedge
+python3 -c "$(curl -fsSL https://pgedge-upstream.s3.amazonaws.com/REPO/install.py)"
+cd pgedge; ./nodectl spock install -U user -P passwd -d mydb
+
+
