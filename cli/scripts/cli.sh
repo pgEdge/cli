@@ -80,13 +80,8 @@ rc=$?
 if [ $rc == 0 ];then
   export PYTHON=python3
 else
-  pyver=`python --version > /dev/null 2>&1`
-  rc=$?   
-  if [ $rc == 0 ];then
-    export PYTHON=python
-  else
-    export PYTHON=python2
-  fi
+  echo "ERROR: missing python3"
+  exit 1
 fi
 
 $PYTHON -u "$MY_HOME/hub/scripts/cli.py" "$@"
