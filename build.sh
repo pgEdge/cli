@@ -431,8 +431,9 @@ initPG () {
   elif [ "$outDir" == "m64" ]; then
     outPlat="osx"
   else
-    outPlat="el8"
-    if [ "$isEL9" == "True" ]; then
+    if [ "$isEL8" == "True" ]; then
+      outPlat="el8"
+    elif [ "$isEL9" == "True" ]; then
       outPlat="el9"
     else
       outPlat="amd"

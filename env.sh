@@ -6,7 +6,7 @@ hubV=23.111
 spockV=3.0.23-1
 catV=1.0.0
 
-P15=15.2-2
+P15=15.2-3
 pgedgeV=15-2
 
 P14=14.7-1
@@ -105,3 +105,4 @@ else
 fi
 
 plat=$OS
+echo "# plat from env.sh = $plat"
