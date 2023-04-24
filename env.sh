@@ -105,4 +105,3 @@ else
 fi
 
 plat=$OS
-echo "# plat from env.sh = $plat"
