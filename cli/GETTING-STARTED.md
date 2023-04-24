@@ -1,22 +1,17 @@
 # pgEdge Platform - Getting Started Guide
 
-In this guide we will step through setting up pgEdge Platform. We’ll focus for now on setting this up on Rocky Linux 8, however very similar steps are used on Debian based systems or on MacOS. Our goal in this guide is to create a multi-active pgEdge cluster and then use pgbench to create some representative tables and read/write activity on the cluster.
+In this guide we will step through setting up pgEdge Platform. Our goal in this guide is to create a multi-active pgEdge cluster and then use pgbench to create some representative tables and read/write activity on the cluster.
 
 Two software components from pgEdge will be used in this guide. First, we’ll install `nodectl` which is used to configure Postgres and install additional extensions. Second is `Spock`, the Postgres extension providing *logical, multi-active replication*.
 
 You’ll need root permissions on these systems in order to install any OS packages needed as prerequisites.
 
 ## Prerequisites
-- Enterprise Linux (EL) 8/9, Ubuntu 20.04/22.04, Debian 11, OSX M1/M2
+- RHEL/CentOS/Rocky Linux 9, Ubuntu 22.04, Debian 11
 - A non-root user with `sudo` privileges
-- `Python 3.8+`
+- `Python 3.9+`
 - Two servers (vm's are fine) networked with traffic on port 5432 allowed
 - SSH access into the servers
-
-On EL8 systems, upgrade to Python 3.9 (from default Python 3.6) as follows:
-<pre>
-sudo yum install python39 python39-devel; sudo yum remove python3
-</pre>
 
 ## Installation
 In any directory owned by your user, use the following command to install `nodectl`:
