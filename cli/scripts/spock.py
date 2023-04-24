@@ -505,7 +505,7 @@ def sub_wait_for_sync(subscription_name, db, pg=None):
 
 
 def set_readonly(readonly="off", pg=None):
-  """Set or Unset the local cluster to read-only."""
+  """Turn PG read-only mode 'on' or 'off'."""
 
   if readonly not in ('on', 'off'):
     util.exit_message("  readonly flag must be 'off' or 'on'")
