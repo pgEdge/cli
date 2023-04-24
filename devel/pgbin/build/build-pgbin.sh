@@ -223,26 +223,18 @@ function buildPostgres {
  
 	else
 		export LLVM_CONFIG=/usr/bin/llvm-config-64
-		conf="$conf  --with-libxslt --with-libxml --enable-debug"
+		conf="$conf  --with-libxslt --with-libxml"
 		conf="$conf --with-uuid=ossp --with-gssapi --with-ldap --with-pam --with-llvm --with-openssl --with-systemd"
 		if [ $OS == "amd" ]; then
 			conf="$conf --with-python PYTHON=/usr/bin/python3"
 		else
 			conf="$conf --with-python PYTHON=/usr/bin/python3.9"
 		fi
+		if [ $OS == "arm9" ] || [ $OS == "el9" ]; then
+			conf="$conf --enable-debug"
+		fi
 	fi
 
-    if [ `uname` == "Linux" ]; then
-		ts11=/opt/rh/gcc-toolset-11/enable
-		if [ -f $ts11 ]; then
-			source $ts11
-		fi
-		gcc_ver=`gcc --version | head -1 | awk '{print $3}'`
-		if [ "$arch" == "aarch64" ]; then
-			echo "Large-System Extensions (LSE) on ARM64"
-			export CFLAGS="$CFLAGS -moutline-atomics"
-		fi
-    fi
 	gcc --version
 	echo "#  @`date`  $conf"
 	configCmnd="./configure --prefix=$buildLocation $conf" 
