@@ -42,9 +42,28 @@ array[1]="$MY_HOME/hub/scripts/lib"
 if [ `uname` == "Linux" ]; then
   if [ -f "/etc/redhat-release" ]; then
     array[2]="$MY_HOME/hub/scripts/lib/linux/$plat/el8"
-  elif [ -f "/etc/os-release" ]; then
-    array[2]="$MY_HOME/hub/scripts/lib/linux/$plat/ubu20"
+  else
+    if [ -f "/etc/os-release" ]; then
+      grep "20.04" /etc/os-release > /dev/null 2>&1
+      rc=$?
+      if [ $rc == "0" ]; then
+        array[2]="$MY_HOME/hub/scripts/lib/linux/$plat/ubu20"
+      else
+        grep "22.04" /etc/os-release > /dev/null 2>&1
+        rc=$?
+        if [ $rc == "0" ]; then
+          array[2]="$MY_HOME/hub/scripts/lib/linux/$plat/ubu22"
+        else
+          grep "11" /etc/os-release > /dev/null 2>&1
+          rc=$?
+          if [ $rc == "0" ]; then
+            array[2]="$MY_HOME/hub/scripts/lib/linux/$plat/deb11"
+          fi
+        fi
+      fi
+    fi
   fi
+
 elif [ `uname` == "Darwin" ]; then
   array[2]="$MY_HOME/hub/scripts/lib/darwin"
 fi
