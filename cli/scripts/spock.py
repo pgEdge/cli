@@ -279,8 +279,8 @@ def repset_create(set_name, db, replicate_insert=True, replicate_update=True,
   sys.exit(0)
 
 
-def repset_alter(set_name, replicate_insert=NULL, replicate_update=NULL, 
-                 replicate_delete=NULL, replicate_truncate=NULL, db, pg=None):
+def repset_alter(set_name, db, replicate_insert=True, replicate_update=True, 
+                 replicate_delete=True, replicate_truncate=True, pg=None):
   """Modify a replication set."""
   pg_v = get_pg_v(pg)
   sql = "SELECT spock.repset_alter(" + \
@@ -306,7 +306,7 @@ def repset_drop(set_name, db, pg=None):
   sys.exit(0)
 
 
-def repset_add_seq(set_name, relation, synchronize_data=false, db, pg=None):
+def repset_add_seq(set_name, db, relation, synchronize_data=False, pg=None):
   """Add a sequence to a replication set."""
   pg_v = get_pg_v(pg)
   sql = "SELECT spock.repset_add_seq(" + \
@@ -317,7 +317,7 @@ def repset_add_seq(set_name, relation, synchronize_data=false, db, pg=None):
   sys.exit(0)
 
 
-def repset_add_all_seqs(set_name, schema_names, synchronize_data=false, db, pg=None):
+def repset_add_all_seqs(set_name, db, schema_names, synchronize_data=False, pg=None):
   """Add sequences to a replication set."""
   pg_v = get_pg_v(pg)
   sql = "SELECT spock.repset_add_all_seqs(" + \
@@ -449,7 +449,7 @@ def sub_synch():
   util.exit_message("Not implemented yet.")
 
 
-def sub_resync_table(subscription_name, relation, truncate=true, db, pg=None):
+def sub_resync_table(subscription_name, relation, db, truncate=False, pg=None):
   """Resynchronize a table."""
   pg_v = get_pg_v(pg)
   sql = "SELECT spock.sub_resync_table(" + \
@@ -484,7 +484,7 @@ def sub_remove_repset(subscription_name, replication_set, db, pg=None):
   sys.exit(0)
 
 
-def table_wait_for_sync(subscription_name, relation regclass, db, pg=None):
+def table_wait_for_sync(subscription_name, relation, db, pg=None):
   """Pause until a table finishes synchronizing."""
   sql = "SELECT spock.table_wait_for_sync(" + \
            get_eq("subscription_name", subscription_name, ", ") + \
@@ -928,7 +928,7 @@ if __name__ == '__main__':
       'sub-show-status':     sub_show_status,
       'sub-show-table':      sub_show_table,
       'sub-sync':            sub_synch,
-      'sub-resynch-table':   sub_resynch_table,
+      'sub-resync-table':    sub_resync_table,
       'sub-wait-for-sync':   sub_wait_for_sync,
       'table-wait-for-sync': table_wait_for_sync,
       'health-check':        health_check,
