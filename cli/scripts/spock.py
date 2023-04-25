@@ -8,7 +8,6 @@ import util, meta, api, fire
 nc = "./nodectl "
 
 isAutoStart   = str(os.getenv("isAutoStart",   "False"))
-isDebug       = str(os.getenv("pgeDebug",      "0"))
   
 ## force use of PGPASSWORD from ~/.pgpass
 os.environ["PGPASSWORD"] = ""
@@ -21,7 +20,7 @@ except ImportError as e:
 
 def error_exit(p_msg, p_rc=1):
     util.message("ERROR: " + p_msg)
-    if isDebug == "0":
+    if util.debug_lvl() == 0:
       os.system(nc + "remove pgedge")
 
     sys.exit(p_rc)
@@ -54,8 +53,11 @@ def json_dumps(p_input):
 def get_pg_connection(pg_v, db, usr):
   dbp = util.get_column("port", pg_v)
 
+  if util.debug_lvl() > 0:
+    util.message(f"get_pg_connection(): dbname={db}, user={usr}, port={dbp}", "debug")
+
   try:
-    con = psycopg.connect(dbname=db, user=usr, host="localhost", port=dbp, autocommit=False)
+    con = psycopg.connect(dbname=db, user=usr, host="127.0.0.1", port=dbp, autocommit=False)
   except Exception as e:
     util.exit_exception(e)
 
@@ -66,11 +68,15 @@ def run_psyco_sql(pg_v, db, cmd, usr=None):
   if usr == None:
     usr = util.get_user()
 
-  isVerbose = os.getenv('isVerbose', 'False')
-  if isVerbose == 'True':
+  if util.is_verbose():
     util.message(cmd, "info")
 
+  if util.debug_lvl() > 0:
+    util.message(cmd, "debug")
+
   con = get_pg_connection(pg_v, db, usr)
+  if util.debug_lvl() > 0:
+    util.message("run_psyco_sql(): " + str(con), "debug")
 
   try:
     cur = con.cursor(row_factory=psycopg.rows.dict_row)
