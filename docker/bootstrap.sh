@@ -8,7 +8,6 @@ if [ "`id -u`" = "0" ]; then
       mkdir -p /opt/pgedge
       chown -R pgedge /opt/pgedge
 
-
       mkdir ~pgedge/.ssh
       cd ~pgedge/.ssh
       ssh-keyscan localhost >>~pgedge/.ssh/known_hosts 2>/dev/null
@@ -25,7 +24,6 @@ if [ "`id -u`" = "0" ]; then
       else
          echo "********** SSH-keyscan nothing for this node to do *******"
       fi
-
    fi
 
    # and then rerun this script as pgedge
@@ -34,19 +32,17 @@ if [ "`id -u`" = "0" ]; then
 fi
 
 #------ from here down we are user pgedge....
-#exit
 echo "****** Phase 2 running as pgedge"
 
-export LD_LIBRARY_PATH=/opt/pgedge/pgedge/pg15/lib/:/lib/x86_64-linux-gnu/
+##export LD_LIBRARY_PATH=/opt/pgedge/pgedge/pg15/lib/:/lib/x86_64-linux-gnu/
 
 cd /opt/pgedge/
-python3 -c "$(curl -fsSL https://pgedge-upstream.s3.amazonaws.com/REPO/install.py)"
+python3 -c "$(curl -fsSL https://pgedge-download.s3.amazonaws.com/REPO/install.py)"
 cd /opt/pgedge/pgedge
-./nodectl spock install -U dbuser -P dbpassword -d demo
-#^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-#  Here is where things go wrong, it gives:
-#  ## Initializing pg15 #######################
-#/opt/pgedge/pgedge/pg15/bin/pg_isready: error while loading shared libraries: liblber-2.4.so.2: cannot open shared object file: No such file or directory
+./nodectl install pgedge -U dbuser -P dbpassword -d demo
+
+
+## Initializing pg15 #######################
 
 if [ "$HOSTNAME" = "pgedge0" ]; then
   source pg15/pg15.env
@@ -90,8 +86,6 @@ else
 fi
 
 psql -c "SELECT * FROM spock.node;"
-
-
 
 
 # go forth and prosper.
