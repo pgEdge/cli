@@ -231,7 +231,7 @@ def check_cluster_exists(cluster_name):
     util.exit_message("cluster not found: " + cluster_dir, 1)
 
 
-def command(cluster_name, node, cmd):
+def command(cluster_name, node, cmd, args=None):
   """Run './nodectl' commands on one or 'all' nodes."""
 
   check_cluster_exists(cluster_name)
@@ -239,7 +239,10 @@ def command(cluster_name, node, cmd):
   cluster_dir = base_dir + "/" + str(cluster_name)
 
   if node != "all":
-    rc = util.echo_cmd(cluster_dir + "/" + str(node) + "/nodectl " + str(cmd))
+    full_cmd = cluster_dir + "/" + str(node) + "/nodectl " + str(cmd)
+    if args != None:
+        full_cmd = full_cmd + " " + str(args)
+    rc = util.echo_cmd(full_cmd)
     return(rc)
 
   rc = 0
@@ -247,7 +250,10 @@ def command(cluster_name, node, cmd):
   node_dir = cluster_dir + "/n" + str(nd)
 
   while os.path.exists(node_dir):
-    rc = util.echo_cmd(node_dir + "/nodectl " + str(cmd), 1)
+    full_cmd = node_dir + "/nodectl " + str(cmd)
+    if args != None:
+        full_cmd = full_cmd + " " + str(args)
+    rc = util.echo_cmd(full_cmd, 1)
     nd = nd + 1
     node_dir = cluster_dir + "/n" + str(nd)
 
