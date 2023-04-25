@@ -31,42 +31,26 @@ if [ -d "$hub_new" ];then
   echo "$log_time [INFO] : hub upgrade completed" >> $MY_LOGS
 fi
 
+plat=amd
+if [ `arch` == "aarch64" ]; then
+  plat=arm
+fi
+
 declare -a array
 array[0]="$MY_HOME/hub/scripts"
 array[1]="$MY_HOME/hub/scripts/lib"
 if [ `uname` == "Linux" ]; then
   if [ -f "/etc/redhat-release" ]; then
-    if [ `arch` == "aarch64" ]; then
-      array[2]="$MY_HOME/hub/scripts/lib/linux/arm/el8"
-    else
-      array[2]="$MY_HOME/hub/scripts/lib/linux/amd/el8"
-    fi
-  else
-    if [ -f "/etc/os-release" ] && [ `arch` == "x86_64" ]; then
-      grep "20.04" /etc/os-release > /dev/null 2>&1
-      rc=$?
-      if [ $rc == "0" ]; then
-        array[2]="$MY_HOME/hub/scripts/lib/linux/amd/ubu20"
-      else
-        grep "22.04" /etc/os-release > /dev/null 2>&1
-        rc=$?
-        if [ $rc == "0" ]; then
-          array[2]="$MY_HOME/hub/scripts/lib/linux/amd/ubu22"
-        else
-          grep "11" /etc/os-release > /dev/null 2>&1
-          rc=$?
-          if [ $rc == "0" ]; then
-            array[2]="$MY_HOME/hub/scripts/lib/linux/amd/deb11"
-          fi
-        fi
-      fi
-    fi
+    array[2]="$MY_HOME/hub/scripts/lib/linux/$plat/el8"
+  elif [ -f "/etc/os-release" ]; then
+    array[2]="$MY_HOME/hub/scripts/lib/linux/$plat/ubu20"
   fi
 elif [ `uname` == "Darwin" ]; then
   array[2]="$MY_HOME/hub/scripts/lib/darwin"
 fi
 
 export PYTHONPATH=$(printf "%s:${PYTHONPATH}" ${array[@]})
+#echo PYTHONPATH=$PYTHONPATH
 for var in "$@"
 do
   if [ "$var" == "-v" ]; then
@@ -75,7 +59,7 @@ do
 done
 
 pyver=`python3 --version > /dev/null 2>&1`
-rc=$?   
+rc=$?
 if [ $rc == 0 ];then
   export PYTHON=python3
 else
