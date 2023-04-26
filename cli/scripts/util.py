@@ -2107,6 +2107,10 @@ def get_el_ver():
   if platform.system() != "Linux":
     return "osx"
 
+  elv = os.getenv("ELV", None)
+  if elv:
+    return(str(elv))
+
   glibc_v = get_glibc_version()
   arch = getoutput("uname -m")
   if arch == "aarch64":
