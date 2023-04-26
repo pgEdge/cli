@@ -1,5 +1,9 @@
 # copy-to-s3
 
+if [ "$1" == "" ]; then
+  echo "The outDir parameter must be specified"
+  exit 1
+fi
 
 outDir=$HIST/$1
 echo $outDir
