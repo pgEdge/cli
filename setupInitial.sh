@@ -48,8 +48,6 @@ if [ $uname == 'Linux' ]; then
       sudo $yum mongo-c-driver-devel freetds-devel systemd-devel
       sudo $yum lz4-devel libzstd-devel krb5-devel
       if [ "$PLATFORM" == "el8" ]; then
-        sudo yum remove -y gcc
-        sudo $yum gcc-toolset-11
         sudo $yum python39 python39-devel
 	sudo yum remove python3
       else
