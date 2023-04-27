@@ -180,16 +180,6 @@ INSERT INTO projects VALUES ('kafka', 'strm', 10, 9092, '', 2, 'https://kafka.ap
 INSERT INTO releases VALUES ('kafka', 0, 'kafka', 'Apache Kafka', '', 'test', '', 1, 'Apache', '', '');
 INSERT INTO versions VALUES ('kafka', '3.2.0', '', 0, '20220517', '', '', 'https://downloads.apache.org/kafka/3.2.0/RELEASE_NOTES.html');
 
-INSERT INTO projects VALUES ('redis', 'nosql', 2, 6379, 'hub', 2, 'https://github.com/redis/redis/tags',
-  'Redis', 0, 'redis.png', 'In-Memory DataStore', 'https://redis.io');
-INSERT INTO releases VALUES ('redis', 6, 'redis', 'Redis 6.2.6', '', 'test', '', 1, 'BSD', '', '');
-INSERT INTO versions VALUES ('redis', '6.2', '', 0, '20211004', '', '', '');
-
-INSERT INTO projects VALUES ('memcached', 'nosql',  2, 6379, 'hub', 2, 'http://memcached.org/downloads',
-  'Memcached', 0, 'memcached.png', 'In-Memory Cache', 'http://memcached.org');
-INSERT INTO releases VALUES ('memcached', 3, 'memcached', 'Memached 1.6.12', '', 'test', '', 1, 'BSD', '', '');
-INSERT INTO versions VALUES ('memcached', '1.6', '', 0, '20210928', '', '', '');
-
 INSERT INTO projects VALUES ('apicurio', 'strm', 10, 8080, 'hub', 1, 'https://github.com/apicurio/apicurio-registry/releases',
   'apicurio', 0, 'apicurio.png', 'Schema Registry', 'https://www.apicur.io/registry/');
 INSERT INTO releases VALUES ('apicurio', 3, 'apicurio', 'Apicurio', '', 'test', '', 1, 'Apache', '', '');
@@ -314,11 +304,6 @@ INSERT INTO projects VALUES ('cron', 'ext', 4, 0, 'hub',0, 'https://github.com/c
 INSERT INTO releases VALUES ('cron-pg15', 10, 'cron', 'pgCron', '', 'prod', '', 1, 'POSTGRES', '', '');
 INSERT INTO versions VALUES ('cron-pg15', '1.5.2-1', 'el8, el9, arm, arm9', 1, '20230422', 'pg15', '', '');
 INSERT INTO versions VALUES ('cron-pg15', '1.5.1-1', 'el8, arm', 0, '20230215', 'pg15', '', '');
-
-INSERT INTO projects VALUES ('background', 'ext', 4, 0, 'hub',0, 'https://github.com/oscg-io/background/tags',
-  'background', 1, 'background.png', 'Background Worker', 'https://github.com/oscg-io/background');
-INSERT INTO releases VALUES ('background-pg14', 10, 'background', 'Background', '', 'prod', '', 1, 'POSTGRES', '', '');
-INSERT INTO versions VALUES ('background-pg14', '1.1-1', 'el8, arm', 0, '20220804', 'pg14', '', '');
 
 INSERT INTO projects VALUES ('spock', 'pge', 4, 0, 'hub', 1, 'https://github.com/pgedge/spock/tags',
   'spock', 1, 'spock.png', 'Logical & Multi-Active Replication', 'https://github.com/pgedge/spock/#spock');
