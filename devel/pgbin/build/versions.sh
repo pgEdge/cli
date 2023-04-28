@@ -5,7 +5,7 @@ spockShortV=
 spockBuildV=1
 
 pg15V=15.2
-pg15BuildV=4
+pg15BuildV=5
 
 pg14V=14.7
 pg14BuildV=1

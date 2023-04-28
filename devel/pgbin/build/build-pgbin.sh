@@ -224,14 +224,12 @@ function buildPostgres {
 	else
 		export LLVM_CONFIG=/usr/bin/llvm-config-64
 		conf="$conf  --with-libxslt --with-libxml"
-		conf="$conf --with-uuid=ossp --with-gssapi --with-ldap --with-pam --with-llvm --with-openssl --with-systemd"
+		conf="$conf --with-uuid=ossp --with-gssapi --with-ldap --with-pam --enable-debug"
+    conf="$conf --with-llvm --with-openssl --with-systemd --enable-tap-tests"
 		if [ $OS == "amd" ]; then
 			conf="$conf --with-python PYTHON=/usr/bin/python3"
 		else
 			conf="$conf --with-python PYTHON=/usr/bin/python3.9"
-		fi
-		if [ $OS == "arm9" ] || [ $OS == "el9" ]; then
-			conf="$conf --enable-debug"
 		fi
 	fi
 
