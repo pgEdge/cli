@@ -159,7 +159,8 @@ INSERT INTO versions VALUES ('pg14', '14.6-1', 'el8, arm',      0, '20221110',''
 INSERT INTO releases VALUES ('pg15', 2, 'pg', '', '', 'prod', 
   '<font size=-1 color=red><b>New in <a href=https://sql-info.de/postgresql/postgresql-15/articles-about-new-features-in-postgresql-15.html>2022!</a></b></font>',
   1, 'POSTGRES', '', '');
-INSERT INTO versions VALUES ('pg15', '15.2-4',  'el8, el9, arm, arm9, osx', 1, '20230426','', '', '');
+INSERT INTO versions VALUES ('pg15', '15.2-5',  'el8, el9, arm, arm9, osx', 1, '20230430','', '', '');
+INSERT INTO versions VALUES ('pg15', '15.2-4',  'el8, el9, arm, arm9, osx', 0, '20230426','', '', '');
 INSERT INTO versions VALUES ('pg15', '15.2-3',  'el8, el9, arm, arm9, osx', 0, '20230424','', '', '');
 INSERT INTO versions VALUES ('pg15', '15.2-2',  'el8, arm, osx', 0, '20230418','', '', '');
 INSERT INTO versions VALUES ('pg15', '15.2-1',  'el8, arm, osx', 0, '20230209','', '', '');
