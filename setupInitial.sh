@@ -22,7 +22,7 @@ if [ $uname == 'Linux' ]; then
     PLATFORM=`cat /etc/os-release | grep PLATFORM_ID | cut -d: -f2 | tr -d '\"'`
     echo "## $PLATFORM ##"
     sudo $yum git net-tools wget curl zip sqlite bzip2
-    sudo yum install cpan
+    sudo $yum cpan
     sudo cpan FindBin
     sudo cpan IPC::Run
     if [ ! "$PLATFORM" == "el8" ] && [ ! "$PLATFORM" == "el9" ]; then
