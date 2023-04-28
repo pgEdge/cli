@@ -1,15 +1,16 @@
 # pgEdge Platform - Getting Started Guide
 
-In this guide we will step through setting up pgEdge Platform. Our goal in this guide is to create a multi-active pgEdge cluster and then use pgbench to create some representative tables and read/write activity on the cluster.
+In this guide we will step through setting up pgEdge Platform. Our goal in this guide is to create a multi-master (multi-active) pgEdge 
+cluster and then use pgbench to create some representative tables and read/write activity on the cluster.
 
-Two software components from pgEdge will be used in this guide. First, we’ll install `nodectl` which is used to configure Postgres and install additional extensions. Second is `Spock`, the Postgres extension providing *logical, multi-active replication*.
+Two software components from pgEdge will be used in this guide. First, we’ll install the `nodectl` Command Line Interface (CLI) which is 
+used to configure Postgres and install additional extensions. Second is `Spock`, the Postgres extension providing *logical, multi-master replication*.
 
-You’ll need root permissions on these systems in order to install any OS packages needed as prerequisites.
+You’ll need root permissions on these systems in order to autostart.
 
 ## Prerequisites
-- RHEL/CentOS/Rocky Linux 9, Ubuntu 22.04, Debian 11
+- RHEL/CentOS/Rocky Linux 9 or Ubuntu 22.04
 - A non-root user with `sudo` privileges
-- `Python 3.9+`
 - Two servers (vm's are fine) networked with traffic on port 5432 allowed
 - SSH access into the servers
 
@@ -19,8 +20,13 @@ In any directory owned by your user, use the following command to install `nodec
 python3 -c "$(curl -fsSL https://pgedge-download.s3.amazonaws.com/REPO/install.py)"
 </pre>
 
-cd into the `pgedge` directory created and install the ***pgEdge Platform*** with the `nodectl` command. Specify a superuser name, password, and a database name. Note that the names cannot be pgEdge and cannot be any postgreSQL reserved words. For the examples given in this documentation, I will be using a database named demo.
+cd into the `pgedge` directory created and install the ***pgEdge Platform*** with the `nodectl` command. 
+Specify a superuser name, password, and a database name. 
+Note that the names cannot be pgEdge and cannot be any postgreSQL reserved words. 
+For the examples given in this documentation, I will be using a database named demo.
+
 <pre>
+cd pgedge
 ./nodectl install pgedge -U superuser-name -P superuser-password -d database-name
 </pre>
 
@@ -129,6 +135,7 @@ demo=# SELECT sub_id, sub_name, sub_slot_name, sub_replication_sets  FROM spock.
  3293941396 | sub_n1n2 | spk_demo_n2_sub_n1n2 | {default,default_insert_only,ddl_sql,demo_replication_set}
 (1 row)
 </pre>
+
 ## Test Replication
 Run an update on `n1` to see the update on `n2`.
 
