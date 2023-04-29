@@ -6,3 +6,4 @@ sudo yum-config-manager --add-repo $url/docker-ce.repo
 
 sudo $install docker-ce docker-ce-cli containerd.io
 sudo $install docker-compose-plugin
+sudo usermod -aG docker $(whoami)
