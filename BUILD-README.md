@@ -7,13 +7,14 @@
 
 ### 2.) Clone the nodectl repo into ~/dev
 
-### 3.) cd into ~/dev/nodectl
+### 3.) cd into ~/dev/nodectl/devel/setup
 
-### 4.) Run ./setupInitial.sh to configure OS environment (on EL8 it will configure you for building binaries)
+### 4.) Run ./setupInitial.sh to configure OS environment 
+          (on EL8/9 it will configure for building binaries)
 
-### 5.) Configure your ~/.aws/config credentials for access to s3://pgedge-upstream
+### 5.) Configure your ~/.aws/config credentials for access to s3://pgedge-upstream/IN
 
-### 6.) Source your bash profile with the command: source ~/.bashrc (or source ~/.bash_profile)
+### 6.) Source your bash profile with the command: source ~/.bashrc
 
 ### 7.) run ./setupBLD-IN.sh to pull in the IN directory from S3
 
