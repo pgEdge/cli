@@ -20,7 +20,7 @@ printUsageMessage () {
   echo "#-------------------------------------------------------------------#"
   echo "#                Copyright (c) 2022-2023 PGEDGE                     #"
   echo "#-------------------------------------------------------------------#"
-  echo "# -p $P15 $P14 $P13 $P12 $P11"
+  echo "# -p $P16 $P15 $P14 $P13 $P12 $P11"
   echo "# -b hub-$hubV"
   echo "#-------------------------------------------------------------------#"
 }
@@ -403,7 +403,6 @@ initC () {
 
 
 initPG () {
-  IVORY=False
   if [ "$pgM" == "11" ]; then
     pgV=$P11
   elif [ "$pgM" == "12" ]; then
@@ -414,10 +413,8 @@ initPG () {
     pgV=$P14
   elif [ "$pgM" == "15" ]; then
     pgV=$P15
-  elif [ "$pgM" == "i14" ]; then
-    pgV=$I14
-    IVORY=True
-    pgM=14
+  elif [ "$pgM" == "16" ]; then
+    pgV=$P16
   else
     echo "ERROR: Invalid PG version '$pgM'"
     exit 1
@@ -440,11 +437,7 @@ initPG () {
     fi
   fi
 
-  if [ "$IVORY" == "True" ]; then
-    pgComp="ivory$pgM"
-  else
-    pgComp="pg$pgM"
-  fi
+  pgComp="pg$pgM"
   initDir "$pgComp" "pg" "$pgV" "$outPlat" "postgres/$pgComp" "Enabled" "5432" "nil"
   supplementalPG "$pgComp"
   zipDir "$pgComp" "$pgV" "$outPlat" "Enabled"

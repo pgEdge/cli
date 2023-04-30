@@ -4,6 +4,9 @@ spockFullV=3.0.23
 spockShortV=
 spockBuildV=1
 
+pg16V=16dev2
+pg16BuildV=2
+
 pg15V=15.2
 pg15BuildV=5
 

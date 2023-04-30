@@ -76,7 +76,9 @@ elif [ "$majorV" == "15" ]; then
     exit 1
   fi
   cd ..
-
+elif [ "$majorV" == "16" ]; then
+  pgV=$pg16V
+  pgBuildV=$pg16BuildV
 fi
 
 if [ "$majorV" == "all" ]; then

@@ -6,6 +6,7 @@ hubV=23.115
 spockV=3.0.23-1
 catV=1.0.0
 
+P16=16devel-2
 P15=15.2-5
 pgedgeV=15-2
 
