@@ -22,8 +22,8 @@ copyBin="$3"
 if [ "$copyBin" == "" ]; then
   copyBin="--no-copy-bin"
 fi
-if [[ "$pgV" < "11" ]] || [[ "$pgV" > "15" ]]; then
-  echo  "ERROR: second parm must be 11 thru 15"
+if [[ "$pgV" < "11" ]] || [[ "$pgV" > "16" ]]; then
+  echo  "ERROR: second parm must be 11 thru 16"
   exit 1
 fi
 
@@ -139,7 +139,11 @@ if [ "$1" == "timescaledb" ]; then
 fi
 
 if [ "$1" == "spock" ]; then
-  build spock $spockFullV $2  spock
+  if [ "$pgV" == "16" ]; then
+    build spock $spockFull31V $2  spock
+  elif [ "$pgV" == "15" ]; then
+    build spock $spockFull30V $2  spock
+  fi
 fi
 
 if [ "$1" == "pool2" ]; then

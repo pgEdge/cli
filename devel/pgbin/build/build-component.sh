@@ -26,7 +26,9 @@ function getPGVersion {
 	fi
 	pgFullVersion=`$pgBin/bin/pg_config --version | awk '{print $2}'`
 
-        if [[ "${pgFullVersion/rc}" =~ 15.* ]]; then
+        if [[ "${pgFullVersion/rc}" =~ 16d* ]]; then
+                pgShortVersion="16"
+        elif [[ "${pgFullVersion/rc}" =~ 15.* ]]; then
                 pgShortVersion="15"
         elif [[ "${pgFullVersion/rc}" =~ 14.* ]]; then
                 pgShortVersion="14"
@@ -612,7 +614,11 @@ if [[ $buildRepack == "true" ]]; then
 	buildComp repack  "$repackShortV" "$repackFullV" "$repackBuildV" "$Source"
 fi
 if [[ $buildSpock == "true" ]]; then
-	buildComp spock  "$spockShortV" "$spockFullV" "$spockBuildV" "$Source"
+	if [ "$pgShortVersion" == "16" ]; then
+		buildComp spock  "$spockShortV" "$spockFull31V" "$spockBuildV" "$Source"
+	elif [ "$pgShortVersion" == "15" ]; then
+		buildComp spock  "$spockShortV" "$spockFull30V" "$spockBuildV" "$Source"
+	fi
 fi
 if [[ $buildPool2 == "true" ]]; then
 	buildComp pool2  "$pool2ShortV" "$pool2FullV" "$pool2BuildV" "$Source"

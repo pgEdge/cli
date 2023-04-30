@@ -1,6 +1,7 @@
 #!/bin/bash
 
-spockFullV=3.0.23
+spockFull30V=3.0.23
+spockFull31V=3.1dev2
 spockShortV=
 spockBuildV=1
 
@@ -147,7 +148,6 @@ ddlxShortV=
 ddlxBuildV=1
 
 auditFull15V=1.7.0
-auditFull14V=1.6.2
 auditShortV=
 auditBuildV=1
 
