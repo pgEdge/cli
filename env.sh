@@ -57,8 +57,9 @@ nginxV=1-1
 #apicV=2.2.0
 #decbufsV=1.7.0-1
 
-#zooV=3.7.0
+zookV=3.7.1
 #kfkV=3.1.0
+patroniV=3.0
 
 ##adminV=5.5
 ##omniV=2.17.0
@@ -71,11 +72,10 @@ pljavaV=1.6.2-1
 debuggerV=1.5-1
 cronV=1.5.2-1
 
-mysqlfdwV=2.8.0-1
-mongofdwV=5.4.0-1
-tdsfdwV=2.0.3-1
-badgerV=11.6
-patroniV=3.0
+#mysqlfdwV=2.8.0-1
+#mongofdwV=5.4.0-1
+#tdsfdwV=2.0.3-1
+#badgerV=11.6
 
 HUB="$PWD"
 SRC="$HUB/src"

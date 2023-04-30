@@ -12,7 +12,7 @@ source getPKMG.sh
 
 zookeeperV=$1
 
-id -u zk
+id -u zk > /dev/null 2>&1
 rc=$?
 if [ "$rc" == "1" ]; then
   sudo useradd zk -m
@@ -26,7 +26,7 @@ else
   sudo usermod -a -G sudo zk
 fi
 
-sudo usermod --shell /bin/bash zk
+sudo usermod --shell /bin/bash zk > /dev/null 2>&1
 
 zookeeperD=apache-zookeeper-$zookeeperV-bin
 zookeeperF=$zookeeperD.tar.gz

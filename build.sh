@@ -529,6 +529,7 @@ initPG () {
   ##initC  "csvdiff" "csvdiff" "$csvdiffV" "$outPlat" "csvdiff" "" "" "nil"
   initC  "pgdiff" "pgdiff" "$pgdiffV" "" "postgres/pgdiff" "" "" "nil"
   initC  "patroni"   "patroni"   "$patroniV" "" "postgres/patroni" "" "" "nil"
+  initC  "zookeeper" "zookeeper"     "$zookV"   "" "apache/zookeeper"            "" "" "Y"
   ##initC "nginx" "nginx" "$nginxV" "" "nginx" "" "" "Y"
   ##initC "prompgexp"  "prompgexp"  "$prompgexpV"  ""  "prometheus/pg_exporter"  "" "" "Y"
   ##initC "nodejs"   "nodejs" "$nodejsV" "" "nodejs"           "" "" "Y"

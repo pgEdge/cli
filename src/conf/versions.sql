@@ -194,10 +194,10 @@ INSERT INTO versions VALUES ('apicurio', '2.2.3', '',  0, '20220414', '', '', ''
 INSERT INTO versions VALUES ('apicurio', '2.2.2', '',  0, '20220328', '', '', '');
 
 INSERT INTO projects VALUES ('zookeeper', 'nosql', 10, 2181, 'hub', 1, 'https://zookeeper.apache.org/releases.html#releasenotes',
-  'zookeeper', 0, 'zookeeper.png', 'Distributed Key-Store for HA', 'https://zookeeper.apache.org');
+  'zookeeper', 0, 'zookeeper.png', 'HA Distributed Key-Store', 'https://zookeeper.apache.org');
 INSERT INTO releases VALUES ('zookeeper', 3, 'zookeeper', 'Zookeeper', '', 'test', '', 1, 'Apache', '', '');
-INSERT INTO versions VALUES ('zookeeper', '3.7.0', '',  0, '20210327', '', '',
-  'https://zookeeper.apache.org/doc/r3.7.0/releasenotes.html');
+INSERT INTO versions VALUES ('zookeeper', '3.7.1', '',  0, '20220512', '', '',
+  'https://zookeeper.apache.org/doc/r3.7.1/releasenotes.html');
 
 INSERT INTO projects VALUES ('decoderbufs', 'strm', 10, 0, 'hub', 0, 'https://github.com/debezium/postgres-decoderbufs', 
   'decoderbufs', 1, 'protobuf.png', 'Logical decoding via ProtoBuf', 'https://github.com/debezium/postgres-decoderbufs');
@@ -397,13 +397,13 @@ INSERT INTO versions VALUES ('pgcat2', '0.3.0', 'osx, el8, arm', 0, '20230318', 
 INSERT INTO projects VALUES ('backrest', 'pge', 4, 0, 'hub', 3, 'http://pgbackrest.org',
   'backrest',  0, 'backrest.png', 'Backup & Restore', 'http://pgbackrest.org');
 INSERT INTO releases VALUES ('backrest', 2, 'backrest',  'pgBackRest', '', 'test', '', 1, 'MIT', '', '');
-INSERT INTO versions VALUES ('backrest', '2.45-1', 'el8, arm', 1, '20230321', '', 'EL8', '');
+INSERT INTO versions VALUES ('backrest', '2.45-1', 'el8, arm', 1, '20230321', '', 'EL', '');
 INSERT INTO versions VALUES ('backrest', '2.44-1', 'el8, arm', 0, '20230129', '', 'EL8', '');
 
 INSERT INTO projects VALUES ('patroni', 'app', 11, 0, 'haproxy', 4, 'https://github.com/zalando/patroni/releases',
   'patroni', 0, 'patroni.png', 'HA Template', 'https://github.com/zalando/patroni');
-INSERT INTO releases VALUES ('patroni', 1, 'patroni', 'Patroni 3.0.1', '', 'test', '', 1, 'POSTGRES', '', '');
-INSERT INTO versions VALUES ('patroni', '3.0', '', 1, '20230320', '', 'EL8', 'https://github.com/zalando/patroni/releases/tag/v3.0.1');
+INSERT INTO releases VALUES ('patroni', 1, 'patroni', 'Patroni 3.0.2', '', 'test', '', 1, 'POSTGRES', '', '');
+INSERT INTO versions VALUES ('patroni', '3.0', '', 1, '20230320', '', 'EL', 'https://github.com/zalando/patroni/releases/tag/v3.0.2');
 
 INSERT INTO projects VALUES ('ddlx', 'ext',     4, 0, 'hub', 0, 'https://github.com/lacanoid/pgddl/releases', 'ddlx',  1, 'ddlx.png', 'DDL Extractor', 'https://github.com/lacanoid/pgddl#ddl-extractor-functions--for-postgresql');
 INSERT INTO releases VALUES ('ddlx-pg13', 2, 'ddlx', 'DDLeXtact', '', 'prod','',  0, 'POSTGRES', '', '');

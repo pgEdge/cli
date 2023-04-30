@@ -5,15 +5,10 @@ LOCAL_BIN=$HOME/.local/bin
 PATRONI_CONF=/usr/patroni/conf
 PGDATA=$MY_HOME/data/pg15
 
-etcdMV=3.2.21
-etcdmv=2
-etcd_url=https://cbs.centos.org/kojifiles/packages/etcd/$etcdMV/$etcdmv.el8/`arch`
-etcd_rpm=etcd-$etcdMV-$etcdmv.el8.`arch`.rpm
-
 source getPKMG.sh
 
-if [ ! "$PLATFORM" == "el8" ]; then
-  echo "ERROR: platform $PLATFORM is not supported ( only el8 is supported)"
+if [ ! "$PLATFORM" == "el8" ] && [ ! "$PLATFORM" == "el9" ] ; then
+  echo "ERROR: platform $PLATFORM is not supported ( only el8/9 is supported)"
   exit 1
 fi
 
@@ -22,13 +17,6 @@ set -x
 echo ""
 echo "## Install HA Proxy..."
 sudo yum install -y haproxy wget
-
-
-echo ""
-echo "## Installing etcd3..."
-rm -f etcd*.rpm*
-wget $etcd_url/$etcd_rpm
-sudo rpm -ivh $etcd_rpm
 
 echo ""
 echo "## Upgrading pip3 to latest"
