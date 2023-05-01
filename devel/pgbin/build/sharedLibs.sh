@@ -40,8 +40,8 @@ function linuxCopySharedLibs {
   cp -Pv $lib/libfreebl3.so      $shared_lib/.
   cp -Pv $lib/libcap*            $shared_lib/.
   cp -Pv $lib/libaudit*          $shared_lib/.
-  cp -Pv $lib/libresolv*         $shared_lib/.
-  cp -Pv $lib/libicu*            $shared_lib/.
+  cp -Pv $lib/libresolv.so.2     $shared_lib/.
+  cp -Pv $lib/libicudata.so.67   $shared_lib/.
   cp -Pv $lib/libeconf*          $shared_lib/.
   cp -Pv $lib/liblzma.so.*       $shared_lib/.
   cp -Pv $lib/libcom_err.so.*    $shared_lib/.
