@@ -314,7 +314,9 @@ INSERT INTO versions VALUES ('cron-pg15', '1.5.1-1', 'el8, arm', 0, '20230215', 
 INSERT INTO projects VALUES ('spock', 'pge', 4, 0, 'hub', 1, 'https://github.com/pgedge/spock/tags',
   'spock', 1, 'spock.png', 'Logical & Multi-Active Replication', 'https://github.com/pgedge/spock/#spock');
 INSERT INTO releases VALUES ('spock-pg15', 4, 'spock', 'Spock', '', 'prod', '', 1, 'pgEdge Community', '', '');
-INSERT INTO versions VALUES ('spock-pg15', '3.0.23-1', 'el8, el9, arm, arm9, osx', 1, '20230418', 'pg15', '', '');
+INSERT INTO releases VALUES ('spock-pg16', 4, 'spock', 'Spock', '', 'prod', '', 1, 'pgEdge Community', '', '');
+INSERT INTO versions VALUES ('spock-pg16', '3.1dev3-1', 'el9, arm9', 1, '20230501', 'pg16', '', '');
+INSERT INTO versions VALUES ('spock-pg15', '3.0.23-1', 'el8, el9, arm, arm9, osx', 0, '20230418', 'pg15', '', '');
 INSERT INTO versions VALUES ('spock-pg15', '3.0.22-1', 'el8, arm, osx', 0, '20230318', 'pg15', '', '');
 INSERT INTO versions VALUES ('spock-pg15', '3.0.21-1', 'el8, arm, osx', 0, '20230310', 'pg15', '', '');
 

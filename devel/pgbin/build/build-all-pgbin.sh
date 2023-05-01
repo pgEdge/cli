@@ -62,6 +62,7 @@ elif [ "$majorV" == "13" ]; then
 elif [ "$majorV" == "14" ]; then
   pgV=$pg14V
   pgBuildV=$pg14BuildV
+
 elif [ "$majorV" == "15" ]; then
   pgV=$pg15V
   pgBuildV=$pg15BuildV
@@ -77,6 +78,7 @@ elif [ "$majorV" == "15" ]; then
     exit 1
   fi
   cd ..
+
 elif [ "$majorV" == "16" ]; then
   pgV=$pg16V
   pgBuildV=$pg16BuildV
@@ -94,11 +96,6 @@ elif [ "$majorV" == "16" ]; then
   cd ..
 fi
 
-if [ "$majorV" == "all" ]; then
-  runPgBin "$binBld" "$pgSrc-$pg14V.tar.gz" "$pg14BuildV"
-  runPgBin "$binBld" "$pgSrc-$pg15V.tar.gz" "$pg15BuildV"
-else
-  runPgBin "$binBld" "$pgSrc-$pgV.tar.gz" "$pgBuildV"
-fi
+runPgBin "$binBld" "$pgSrc-$pgV.tar.gz" "$pgBuildV"
 
 exit 0
