@@ -6,6 +6,7 @@ v12=12.14
 v13=13.10
 v14=14.7
 v15=15.2
+v16=16dev2
 
 UNAME=`uname`
 
@@ -33,12 +34,27 @@ checkCmd () {
   fi
 }
 
+patchFromSpock () {
+  branch=$1
+  patch=$2
+
+  echoCmd "cd contrib"
+  echoCmd "git clone https://github.com/pgedge/spock"
+  echoCmd "cd spock"
+  echoCmd "git checkout $branch"
+  echoCmd "cd ../.."
+  echoCmd "patch -p1 -i contrib/spock/$patch"
+
+  sleep 10
+}
+
 
 downBuild () {
   echo " "
   echo "##################### PostgreSQL $1 ###########################"
   echoCmd "rm -rf *$1*"
-  echoCmd "wget https://ftp.postgresql.org/pub/source/v$1/postgresql-$1.tar.gz"
+  ##echoCmd "wget https://ftp.postgresql.org/pub/source/v$1/postgresql-$1.tar.gz"
+  cp $IN/sources/postgresql-$1.tar.gz .
   
   if [ ! -d src ]; then
     mkdir src
@@ -52,10 +68,9 @@ downBuild () {
   echoCmd "cd $1"
 
   if [ "$pgV" == "15" ]; then
-    echoCmd "cd contrib"
-    echoCmd "git clone https://github.com/pgedge/spock"
-    echoCmd "cd .."
-    echoCmd "patch -p1 -i contrib/spock/pg15-log_old_value.diff"
+    patchFromSpock REL3_0_STABLE       pg15-log_old_value.diff
+  elif [ "$pgV" == "16" ]; then
+    patchFromSpock pg_16_compatibility pg16-log_old_value.diff
   fi
 
   makeInstall
@@ -91,18 +106,13 @@ makeInstall () {
   fi
 
   if [ `uname` == "Linux" ]; then
-    source /opt/rh/gcc-toolset-11/enable
     gcc_ver=`gcc --version | head -1 | awk '{print $3}'`
     arch=`arch`
-    if [ "$arch" == "aarch64" ]; then
-       echo "Large-System Extensions enabled for ARM 64"
-       export CFLAGS="$CFLAGS -moutline-atomics"
-    fi
     echo "# gcc_ver = $gcc_ver,  arch = $arch, CFLAGS = $CFLAGS"
-    sleep 4
+    sleep 2
   fi
 
-  cmd="make -j4"
+  cmd="make -j8"
   echoCmd "$cmd"
   sleep 1
   echoCmd "make install"
@@ -126,10 +136,13 @@ elif [ "$1" == "14" ]; then
   options=""
   downBuild $v14
 elif [ "$1" == "15" ]; then
-  options="--with-zstd --with-lz4"
+  options="--with-zstd --with-lz4 --with-icu"
   downBuild $v15
+elif [ "$1" == "16" ]; then
+  options="--with-zstd --with-lz4 --with-icu"
+  downBuild $v16
 else
-  echo "ERROR: Incorrect PG version.  Must be between 11 and 15"
+  echo "ERROR: Incorrect PG version.  Must be between 11 and 16"
   exit 1
 fi
  
