@@ -1,7 +1,7 @@
 #!/bin/bash
 
 spockFull30V=3.0.23
-spockFull31V=3.1dev2
+spockFull31V=3.1dev3
 spockShortV=
 spockBuildV=1
 

@@ -203,7 +203,7 @@ function buildPostgres {
 	echo "# buildPOSTGRES"	
 	cd $baseDir/$workDir/$pgSrcDir
 
-	if [ "$pgShortV" == "15" ]; then
+	if [ "$pgShortV" == "15" ] || [ "$pgShortV" == "16" ]; then
 		if [ ! -f "$DIFF1" ]; then
 			echo "# DIFF1 not found : $DIFF1"
 			exit 1

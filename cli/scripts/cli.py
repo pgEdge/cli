@@ -642,7 +642,11 @@ def unpack_comp(p_app, p_old_ver, p_new_ver):
         my_logger.info("renaming the existing folder %s" % p_app)
         os.rename(p_app, p_app+"_old")
         my_logger.info("copying the new files to folder %s" % p_app)
-        copytree(os.path.join(MY_HOME, new_comp_dir, p_app), os.path.join(MY_HOME, p_app))
+
+        ##copytree not working well on Linux, use OS specific command instead"
+        ##copytree(os.path.join(MY_HOME, new_comp_dir, p_app), os.path.join(MY_HOME, p_app))
+        os.system("cp -r " + os.path.join(MY_HOME, new_comp_dir, p_app) + "  " + os.path.join(MY_HOME, p_app))
+
         my_logger.info("Restoring the conf and extension files if any")
         util.restore_conf_ext_files(os.path.join(MY_HOME, p_app+"_old"), os.path.join(MY_HOME, p_app))
         my_logger.info(p_app + " upgrade completed.")
