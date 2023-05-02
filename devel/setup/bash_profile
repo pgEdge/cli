@@ -5,6 +5,9 @@ alias ver="vi ~/dev/nodectl/src/conf/versions.sql"
 export REGION=us-east-2
 export BUCKET=s3://pgedge-upstream
 
+export t1=rocky@172.31.26.115
+export k1=~/keys/oscg-partners-new-key.pem
+
 export DEV=$HOME/dev
 export IN=$DEV/in
 export OUT=$DEV/out
