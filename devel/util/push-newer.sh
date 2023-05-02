@@ -1,3 +1,6 @@
+#!/bin/bash
+cd "$(dirname "$0")"
+
 
 if [ $# != 2 ]; then
   echo "invalid parms, must be two"

@@ -1,3 +1,6 @@
+#!/bin/bash
+cd "$(dirname "$0")"
+
 oldOutFile=$1
 newOutDir=$2
 

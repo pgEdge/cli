@@ -1,3 +1,6 @@
+#!/bin/bash
+cd "$(dirname "$0")"
+
 # copy-to-s3
 
 if [ "$1" == "" ]; then

@@ -1,3 +1,6 @@
+#!/bin/bash
+cd "$(dirname "$0")"
+
 outD=out-20220209
 
 rm -rf history/$outD
