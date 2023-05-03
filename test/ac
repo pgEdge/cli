@@ -1,0 +1,5 @@
+
+node=$1
+cmd="$2"
+
+ansible $node -m command -a "$2"
