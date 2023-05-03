@@ -1,6 +1,16 @@
+#!/bin/bash
+cd "$(dirname "$0")"
 
 uname=`uname`
 uname=${uname:0:7}
+hostname=`hostname`
+short_hostname=${hostname:0:4}
+
+echo " "
+echo "########## 1-setupInitial.sh ##################"
+echo "start: BY `whoami`  ON  `date`  FROM  `pwd`"
+echo " full hostname = $hostname"
+echo "short hostname = $short_hostname"
 
 if [ $uname == 'Linux' ]; then
   owner_group="$USER:$USER"
@@ -25,17 +35,25 @@ if [ $uname == 'Linux' ]; then
     sudo $yum cpan
     sudo cpan FindBin
     sudo cpan IPC::Run
+    sudo $yum epel-release
+
+    sudo $yum java-11-openjdk-devel maven
+    sudo alternatives --config java
+
+    if [ "$short_hostname" == "test" ]; then
+      echo "Goodbye TEST Setup!"
+      exit 0
+    fi
+
     if [ ! "$PLATFORM" == "el8" ] && [ ! "$PLATFORM" == "el9" ]; then
       echo " "
       echo "## ONLY el8 & el9 are supported for building binaries ###"
     else
-      sudo $yum epel-release
       if [ "$PLATFORM" == "el8" ]; then
         sudo dnf config-manager --set-enabled powertools
       else
         sudo dnf config-manager --set-enabled crb
       fi
-      sudo $yum java-11-openjdk-devel maven
       sudo dnf -y groupinstall 'development tools'
       sudo $yum zlib-devel bzip2-devel \
         openssl-devel libxslt-devel libevent-devel c-ares-devel \
@@ -60,8 +78,6 @@ if [ $uname == 'Linux' ]; then
       sudo $yum clang
 
       curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
-
-      sudo alternatives --config java
     fi
   fi
 
