@@ -52,6 +52,6 @@ $nc cluster command         --help
 $nc ace --help
 $nc ace diff-tables         --help
 $nc ace diff-schemas        --help
-$nc ace diff-spock-config   --help
+$nc ace diff-spock          --help
 
 unset pgeMdDir

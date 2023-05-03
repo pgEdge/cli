@@ -9,7 +9,6 @@ Installation and configuration of a pgEdge SPOCK cluster
 [**validate**](doc/cluster-validate.md)           - Validate a remote cluster configuration<br>
 [**init**](doc/cluster-init.md)                   - Initialize a remote cluster for SPOCK<br>
 [**command**](doc/cluster-command.md)             - Run `nodectl` command on one or all nodes of a cluster<br>
-[**diff-tables**](doc/cluster-diff-tables.md)     - Compare table on different cluster nodes<br>
 
 ## Options
     --json             # Turn on JSON output

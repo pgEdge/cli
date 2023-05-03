@@ -13,7 +13,7 @@ def diff_schemas():
   pass
 
 
-def diff_spock_config():
+def diff_spock():
   """Compare spock setup on different cluster nodes"""
   pass
 
@@ -36,7 +36,7 @@ def diff_tables(cluster_name, node1, node2, table_name):
 
 if __name__ == '__main__':
   fire.Fire({
-    'diff-tables':       diff_tables,
-    'diff-schemas':      diff_schemas,
-    'diff-spock-config': diff_spock_config
+    'diff-tables':    diff_tables,
+    'diff-schemas':   diff_schemas,
+    'diff-spock':     diff_spock
   })
