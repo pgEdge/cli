@@ -49,6 +49,20 @@ MY_HOME = os.getenv('MY_HOME', '..' + os.sep + '..')
 pid_file = os.path.join(MY_HOME, 'conf', 'cli.pid')
 
 
+def check_node_exists(cluster_name, node_name, base_dir="cluster"):
+  node_dir = base_dir + "/" + str(cluster_name) + "/" + str(node_name)
+
+  if not os.path.exists(node_dir):
+    util.exit_message("node not found: " + node_dir, 1)
+
+
+def check_cluster_exists(cluster_name, base_dir="cluster"):
+  cluster_dir = base_dir + "/" + str(cluster_name)
+
+  if not os.path.exists(cluster_dir):
+    util.exit_message("cluster not found: " + cluster_dir, 1)
+
+
 def is_verbose():
   isVerbose = os.getenv('isVerbose', 'False')
   if isVerbose == 'True':

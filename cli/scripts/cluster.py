@@ -82,22 +82,6 @@ def runNC(node, nc_cmd, db, user, cert):
   return nc_message
 
 
-def diff_tables(cluster_name, node1, node2, table_name):
-  """Compare table on different cluster nodes"""
-
-  if not os.path.isdir("pgdiff"):
-    util.message("Installing the required 'pgdiff' component.")
-    os.system("./nodectl install pgdiff")
-
-  check_cluster_exists(cluster_name)
-
-  if node1 == node2:
-    util.exit_message("node1 must be different than node2")
-
-  check_node_exists(cluster_name, node1)
-  check_node_exists(cluster_name, node2)
-    
-
 def remove(rm_data=False):
   """Remove pgEdge components"""
   pass
@@ -217,24 +201,10 @@ def lc_destroy1(cluster_name):
   util.echo_cmd("rm -rf " + cluster_dir, 1)
 
 
-def check_node_exists(cluster_name, node_name):
-  node_dir = base_dir + "/" + str(cluster_name) + "/" + str(node_name)
-
-  if not os.path.exists(node_dir):
-    util.exit_message("node not found: " + node_dir, 1)
-
-
-def check_cluster_exists(cluster_name):
-  cluster_dir = base_dir + "/" + str(cluster_name)
-
-  if not os.path.exists(cluster_dir):
-    util.exit_message("cluster not found: " + cluster_dir, 1)
-
-
 def command(cluster_name, node, cmd, args=None):
   """Run './nodectl' commands on one or 'all' nodes."""
 
-  check_cluster_exists(cluster_name)
+  util.check_cluster_exists(cluster_name)
 
   cluster_dir = base_dir + "/" + str(cluster_name)
 
@@ -284,7 +254,6 @@ if __name__ == '__main__':
     'validate':       validate,
     'init':           init,
     'command':        command,
-    'diff-tables':    diff_tables,
     'app-install':    app_install,
     'app-remove':     app_remove
   })
