@@ -2,15 +2,19 @@
 #  Copyright 2022-2023 PGEDGE  All rights reserved. #
 #####################################################
 
+"""ACE is the place of the Anti Chaos Engine"""
+
 import os, sys, random, time, json, socket
 import util, fire, meta, pgbench 
 
 
 def diff_schemas():
+  """Compare schema on different cluster nodes"""
   pass
 
 
 def diff_spock_config():
+  """Compare spock setup on different cluster nodes"""
   pass
 
 

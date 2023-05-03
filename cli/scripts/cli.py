@@ -65,23 +65,28 @@ dep9 = util.get_depend()
 
 mode_list = ["start", "stop", "restart", "status", "list", "info", "update",
              "upgrade", "downgrade", "enable", "disable", "install", "tune",
-             "remove", "reload", "help", "get", "set", "unset",
-             "backrest", "change-pgconf", "top", "spock", "pgbin", "psql",
-             "--autostart", "service", "um", "cluster",
+             "remove", "reload", "help", "get", "set", "unset", "backrest",
+             "backrest", "change-pgconf", "top", "pgbin", "psql", "--autostart", 
+             "service", "um", "spock", "cluster", "ace",
              "--start", "--no-restart", "--no-preload",
              "--help", "--json", "--jsonp", "--test", "--extensions", "--svcs",
              "--list", "--old", "--showduplicates", "-y", "-t",
              "--verbose", "--country", "-v", "--debug", "--debug2"]
 
-mode_list_advanced = ['kill', 'config', 'init', 'clean', 'useradd', 'spock', 
-                      'pgbin', 'psql', 'cluster', 'service', 'um']
+fire_mode_list = ["service", "um", "spock", "cluster", "ace"]
 
-ignore_comp_list = [ "get", "set", "unset", "spock", "pgbin", "psql", "cluster", 
-                     "service", "um", "useradd", "backrest", "change-pgconf"]
+mode_list_advanced = ['kill', 'config', 'init', 'clean', 'useradd', 'spock', 
+                      'pgbin', 'psql', 'cluster', 'ace', 'service', 'um', 
+                      'advanced']
+
+ignore_comp_list = [ "get", "set", "unset", "spock", "pgbin", "psql", 
+                     "cluster", "service", "um", "useradd", "backrest", 
+                     "ace", "change-pgconf"]
 
 no_log_commands = ['status', 'info', 'list', 'top', 'get', 'metrics-check']
 
-lock_commands = ["install", "remove", "update", "upgrade", "downgrade"]
+lock_commands = ["install", "remove", "update", "upgrade", "downgrade",
+                 "spock", "cluster", "ace", "backrest", "um", "service"]
 
 my_depend = []
 installed_comp_list = []
@@ -1314,7 +1319,7 @@ else:
   my_logger.command(MY_CMD + " %s", full_cmd_line)
 
 if not is_valid_mode(p_mode):
-  util.exit_message("Invalid option or command", 1, isJSON)
+  util.exit_message("Invalid option or command '" + p_mode + "'", 1, isJSON)
 
 if p_mode in lock_commands:
   if cli_lock():
@@ -1426,8 +1431,8 @@ try:
     sys.exit(1)
 
 
-  ## SERVICE, CLUSTER, SPOCK, UM  ############################################
-  if p_mode in ('service', 'spock', 'um', 'cluster'):
+  ## FIRE AWAY ###############################################################
+  if p_mode in fire_mode_list:
     fire_away(p_mode, args)
 
 
