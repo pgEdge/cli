@@ -77,7 +77,7 @@ This also adds pgbench and psql to your PATH. When using either command, you wil
 psql demo
 </pre>
 
-Initialize with the pgBench command, psql into the postgreSQL database:
+On each node, initialize a postgreSQL database with the pgBench command. This will result in all nodes containing the same schema and data:
 <pre>
 pgbench -i demo
 </pre>
@@ -89,23 +89,10 @@ ALTER TABLE pgbench_branches ALTER COLUMN bbalance SET (LOG_OLD_VALUE=true);
 ALTER TABLE pgbench_tellers ALTER COLUMN tbalance SET (LOG_OLD_VALUE=true);
 </pre>
 
-Dump and restore the database on to node 2 so that you are left with two databases with the same schema and data.<br> 
 
-`n1`:
+Run the following on both nodes to add these tables to the replication set. The fourth table, pgbench_history, will not be added because it does not have a primary key.
 <pre>
-pg_dump -v -d demo > dump-1.sql
-</pre>
-
-Copy file to `n2`, and run on `n2`:
-<pre>
-psql demo -f dump-1.sql
-</pre>
-
-Run the following on both nodes to add these tables to the replication set. The fourth table, pgbench_history, cannot be added because it does not have a primary key.
-<pre>
-./nodectl spock repset-add-table demo_replication_set pgbench_branches demo
-./nodectl spock repset-add-table demo_replication_set pgbench_tellers demo
-./nodectl spock repset-add-table demo_replication_set pgbench_accounts demo
+./nodectl spock repset-add-table demo_replication_set pgbench_* demo
 </pre>
 
 Finish the set up by adding the replication sets to the subscriptions you had created.<br>
