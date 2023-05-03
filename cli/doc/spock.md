@@ -8,7 +8,7 @@
      node-drop           # Remove a spock node.
      node-alter-location # Set location details for spock node.
      node-list           # Display node table.
-     node-add-interface  # Add a new node interafce.
+     node-add-interface  # Add a new node interface.
      node-drop-interface # Delete a node interface.
      repset-create       # Define a replication set.
      repset-alter        # Modify a replication set.
@@ -29,9 +29,9 @@
      sub-show-status     # Display the status of the subcription.
      sub-show-table      # Show subscription tables.
      sub-sync            # Synchronize a subscription.
-     sub-resynch-table   # Resynchronize a table.
+     sub-resync-table    # Resynchronize a table.
      sub-wait-for-sync   # Pause until the subscription is synchronized.
      table-wait-for-sync # Pause until a table finishes synchronizing.
      health-check        # Check if PG instance is accepting connections.
      metrics-check       # Retrieve advanced DB & OS metrics.
-     set-readonly        # Turn PG read-only mode on or off
+     set-readonly        # Turn PG read-only mode on or off.

@@ -48,6 +48,10 @@ $nc cluster destroy         --help
 $nc cluster validate        --help
 $nc cluster init            --help
 $nc cluster command         --help
-$nc cluster diff-tables     --help
+
+$nc ace --help
+$nc ace diff-tables         --help
+$nc ace diff-schemas        --help
+$nc ace diff-spock-config   --help
 
 unset pgeMdDir
