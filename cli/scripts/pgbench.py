@@ -50,6 +50,10 @@ def install(cluster_name):
         util.echo_cmd(nc + " spock sub-create " + sub_name + provider_dsn + \
            db + " --pg=" + pg)
 
+        util.echo_cmd(nc + " spock sub-add-repset " + sub_name + " pgbench-repset " + \
+           db + " --pg=" + pg)
+
+
 def remove_node(cluster_name, node):
   pass
 
@@ -57,5 +61,4 @@ def remove_node(cluster_name, node):
 def remove(cluster_name):
   for nd in nodes:
     print(nd["nodename"] + "Goodbye!!")
-
 
