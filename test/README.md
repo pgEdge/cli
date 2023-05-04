@@ -1,5 +1,5 @@
 
-## /etc/ansible/inventory #################################
+## /etc/ansible/hosts #####################################
 
 [build]
 el9  ansible_host=172.31.45.16
@@ -7,7 +7,13 @@ arm9 ansible_host=172.31.2.45
 arm8 ansible_host=172.31.38.180
 el8  ansible_host=172.31.35.192
 
-[build:vars]
+[test]
+t9a  ansible_host=172.31.25.101
+t9   ansible_host=172.31.26.42
+t22a ansible_host=172.31.18.9
+t22  ansible_host=172.31.17.199
+
+[all:vars]
 ansible_ssh_user=rocky
 ansible_ssh_private_key_file=/home/rocky/keys/oscg-partners-new-key.pem
 
