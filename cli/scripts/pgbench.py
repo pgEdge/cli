@@ -44,8 +44,8 @@ def install(cluster_name):
       sub_ip_port = "host=" + str(sub["ip"]) + " port=" + str(sub["port"])
 
       if pub_ip_port != sub_ip_port:
-        sub_name = "sub_" + sub["nodename"] + "_" + pub["nodename"] + " "
-        provider_dsn = "'" + pub_ip_port + " user=" + usr + " dbname=" + db + "' "
+        sub_name = "sub_" + pub["nodename"] + sub["nodename"] + " "
+        provider_dsn = "'" + sub_ip_port + " user=" + usr + " dbname=" + db + "' "
 
         util.echo_cmd(nc + " spock sub-create " + sub_name + provider_dsn + \
            db + " --pg=" + pg)
