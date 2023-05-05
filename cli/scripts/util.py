@@ -1565,8 +1565,11 @@ def update_postgresql_conf(p_pgver, p_port, is_new=True,update_listen_addr=True)
     elif is_new and line.startswith("#password_encryption = "):
       ns = ns + "\n" + "password_encryption = scram-sha-256"
 
-    elif is_new and line.startswith("#unix_socket_directories = "):
-      ns = ns + "\n" + "unix_socket_directories = '/tmp'"
+    ##elif is_new and line.startswith("#unix_socket_directories = "):
+    ##  ns = ns + "\n" + "unix_socket_directories = '/tmp'"
+    ##
+    ##elif is_new and line.startswith("#unix_socket_permissions = "):
+    ##  ns = ns + "\n" + "unix_socket_permissions = 0777"
 
     else:
       if ns == "":
