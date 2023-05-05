@@ -232,8 +232,3 @@ else
   exit 1
 fi
 
-if [ ! "$ARCH" == "aarch64" ]; then
-  ## Intel processors are hyperthreaded
-  CORES=$(($CORES * 2))
-fi
-
