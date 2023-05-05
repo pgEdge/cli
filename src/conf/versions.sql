@@ -126,12 +126,11 @@ INSERT INTO categories VALUES (9,  87, 'Management & Monitoring', 'Manage/Monito
 -- ## HUB ################################
 INSERT INTO projects VALUES ('hub', 'app', 0, 0, 'hub', 0, 'https://github.com/pgedge/nodectl','',0,'','','');
 INSERT INTO releases VALUES ('hub', 1, 'hub', '', '', 'hidden', '', 1, '', '', '');
-INSERT INTO versions VALUES ('hub', '23.115', '',  1, '20230430', '', '', '');
+INSERT INTO versions VALUES ('hub', '23.115', '',  1, '20230505', '', '', '');
 INSERT INTO versions VALUES ('hub', '23.114', '',  0, '20230427', '', '', '');
 INSERT INTO versions VALUES ('hub', '23.112', '',  0, '20230426', '', '', '');
 INSERT INTO versions VALUES ('hub', '23.111', '',  0, '20230424', '', '', '');
 INSERT INTO versions VALUES ('hub', '23.110', '',  0, '20230418', '', '', '');
-INSERT INTO versions VALUES ('hub', '23.109', '',  0, '20230404', '', '', '');
 
 -- ##
 INSERT INTO projects VALUES ('pg', 'pge', 1, 5432, 'hub', 1, 'https://github.com/postgres/postgres/tags',
@@ -159,7 +158,7 @@ INSERT INTO versions VALUES ('pg14', '14.6-1', 'el8, arm',      0, '20221110',''
 INSERT INTO releases VALUES ('pg15', 2, 'pg', '', '', 'prod', 
   '<font size=-1>New in <a href=https://www.postgresql.org/docs/15/release-15.html>2022!</a></font>',
   1, 'POSTGRES', '', '');
-INSERT INTO versions VALUES ('pg15', '15.2-5',  'el8, el9, arm, arm9, osx', 1, '20230430','', '', '');
+INSERT INTO versions VALUES ('pg15', '15.2-5',  'el8, el9, arm, arm9, osx', 1, '20230505','', '', '');
 INSERT INTO versions VALUES ('pg15', '15.2-4',  'el8, el9, arm, arm9, osx', 0, '20230426','', '', '');
 INSERT INTO versions VALUES ('pg15', '15.2-3',  'el8, el9, arm, arm9, osx', 0, '20230424','', '', '');
 INSERT INTO versions VALUES ('pg15', '15.2-2',  'el8, arm, osx', 0, '20230418','', '', '');

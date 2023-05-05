@@ -451,7 +451,7 @@ initPG () {
     initC  "pgedge"       "pgedge"    "$pgedgeV"     ""         "postgres/pgedge"    "" "" "nil"
     initC  "csvdiff"      "csvdiff"   "$csvdiffV"    "$outPlat" "csvdiff"            "" "" "nil"
     initC  "pgdiff"       "pgdiff"    "$pgdiffV"     ""         "postgres/pgdiff"    "" "" "nil"
-    initC  "postgrest"    "postgrest" "$postgrestV"  "$outPlat" "postgres/postgrest" "" "" "nil"
+    #initC  "postgrest"    "postgrest" "$postgrestV"  "$outPlat" "postgres/postgrest" "" "" "nil"
     initC  "readonly-pg$pgM" "readonly" "$readonlyV" "$outPlat" "postgres/readonly"  "" "" "nil"
     initC  "curl-pg$pgM"  "curl"    "$curlV"         "$outPlat" "postgres/curl"      "" "" "nil"
     initC  "spock-pg$pgM" "spock"   "$spock30V"        "$outPlat" "postgres/spock"     "" "" "nil"

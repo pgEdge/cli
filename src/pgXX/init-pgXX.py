@@ -172,7 +172,8 @@ util.update_postgresql_conf(pgver, i_port)
 if util.get_platform() == "Linux":
   os.system("cp " + pgver + "/genSelfCert.sh " + pg_data + "/.")
   os.system(pg_data + "/genSelfCert.sh")
-  os.system("cp " + pgver + "/pg_hba.conf.nix " + pg_data + "/pg_hba.conf")
+
+os.system("cp " + pgver + "/pg_hba.conf.nix " + pg_data + "/pg_hba.conf")
 
 if is_password:
   pg_pass_file =  util.remember_pgpassword(pg_password, "*", "*", "*", os_user)
