@@ -169,7 +169,7 @@ INSERT INTO versions VALUES ('pg15', '15.1-4',  'el8, arm, osx', 0, '20230106','
 INSERT INTO releases VALUES ('pg16', 2, 'pg', '', '', 'test', 
   '<font size=-1>New in <a href=https://www.postgresql.org/docs/16/release-16.html>2023!</a></font>',
   1, 'POSTGRES', '', '');
-INSERT INTO versions VALUES ('pg16', '16devel-2',  'el9', 1, '20230430','', '', '');
+INSERT INTO versions VALUES ('pg16', '16devel-3',  'el9', 1, '20230505','', '', '');
 
 INSERT INTO projects VALUES ('debezium', 'strm', 10, 8083, '', 3, 'https://debezium.io/releases/1.9/',
   'Debezium', 0, 'debezium.png', 'Heterogeneous CDC', 'https://debezium.io');

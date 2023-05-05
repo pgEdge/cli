@@ -287,10 +287,8 @@ function buildPostgres {
 	oldPath=$PATH
 	PATH="$PATH:$buildLocation/bin"
 
-	if [ "$IVORY" == "True" ]; then
-		echo "# skipping make docs"
-		return
-	fi
+	echo "# skipping make docs"
+	return
 
 	cd $baseDir/$workDir/$pgSrcDir/doc
 	echo "#  @`date`  make docs"

@@ -53,7 +53,7 @@ def install(cluster_name):
 
       if pub_ip_port != sub_ip_port:
         sub_name = "sub_" + pub["nodename"] + sub["nodename"] + " "
-        provider_dsn = "'" + sub_ip_port + " user=" + usr + " dbname=" + db + "' "
+        provider_dsn = "'" + sub_ip_port + " user=" + usr + " database=" + db + "' "
 
         util.echo_cmd(spk + "sub-create " + sub_name + provider_dsn + db_pg)
         util.echo_cmd(spk + "sub-add-repset " + sub_name + " pgbench-repset " + db_pg)

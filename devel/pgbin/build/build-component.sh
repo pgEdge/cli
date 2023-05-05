@@ -86,9 +86,9 @@ function cleanUpComponentDir {
 		rm -rf bin
 	fi
 
-	if [ "$copyBin" == "false" ]; then
-		ls -lR
-	fi
+	##if [ "$copyBin" == "false" ]; then
+	##	ls -lR
+	##fi
 }
 
 

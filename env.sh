@@ -7,7 +7,7 @@ spock30V=3.0.23-1
 spock31V=3.1dev3-1
 catV=1.0.0
 
-P16=16devel-2
+P16=16devel-3
 P15=15.2-5
 pgedgeV=15-2
 
