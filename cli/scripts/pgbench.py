@@ -4,14 +4,14 @@
 
 import util, cluster
 
-def setup_node(node_nm, nc, num_nodes, db, pg, usr):
+def setup_node(node_nm, port, nc, num_nodes, db, pg, usr):
   pgbench_cmd = '"pgbench --initialize --scale=' + str(num_nodes) + ' ' + str(db) + '"'
   util.echo_cmd(nc + "pgbin " + str(pg) +  " " + pgbench_cmd)
 
   rep_set = 'pgbench-repset'
-  dsn = "'host=" + util.get_1st_ip() + " user=" + usr + "'"
+  dsn = "'host=" + util.get_1st_ip() + " port=" + str(port) + " user=" + usr + "'"
 
-  util.echo_cmd(nc + " spock node-create '" + node_nm + "' --dsn 'host=localhost' --db " + db)
+  util.echo_cmd(nc + " spock node-create " + node_nm + " --dsn " + dsn + " --db " + db)
   util.echo_cmd(nc + " spock repset-create " + rep_set + " --db " + db)
   util.echo_cmd(nc + " spock repset-add-table " + rep_set + " public.pgbench* --db " + db)
 
@@ -32,8 +32,9 @@ def install(cluster_name):
   util.message("\n# setup indivisual nodes ##########")
   for nd in nodes:
     nodename = nd["nodename"]
+    port = nd["port"]
     nc = "cluster/" + nd["path"] + "/nodectl "
-    setup_node(nodename, nc, count, db, pg, usr)
+    setup_node(nodename, port, nc, count, db, pg, usr)
 
   util.message("\n# wire nodes together #############")
   for pub in nodes:
