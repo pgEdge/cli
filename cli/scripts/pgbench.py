@@ -10,10 +10,10 @@ def setup_node(node_nm, port, nc, num_nodes, db, pg, usr):
   pgbench_cmd = '"pgbench --initialize --scale=' + str(num_nodes) + ' ' + str(db) + '"'
   util.echo_cmd(pgb + str(pg) +  " " + pgbench_cmd)
 
-  rep_set = 'pgbench-repset'
-  dsn = "'host=" + util.get_1st_ip() + " port=" + str(port) + " user=" + usr + "'"
-
+  dsn = "'host=127.0.0.1 port=" + str(port) + " dbname=" + db + "'"
   util.echo_cmd(spk + "node-create " + node_nm + " --dsn " + dsn + " --db " + db)
+
+  rep_set = 'pgbench-repset'
   util.echo_cmd(spk + "repset-create " + rep_set + " --db " + db)
   util.echo_cmd(spk + "repset-add-table " + rep_set + " public.pgbench* --db " + db)
 
@@ -53,7 +53,7 @@ def install(cluster_name):
 
       if pub_ip_port != sub_ip_port:
         sub_name = "sub_" + pub["nodename"] + sub["nodename"] + " "
-        provider_dsn = "'" + sub_ip_port + " user=" + usr + " database=" + db + "' "
+        provider_dsn = "'" + sub_ip_port + " user=" + usr + " dbname=" + db + "' "
 
         util.echo_cmd(spk + "sub-create " + sub_name + provider_dsn + db_pg)
         util.echo_cmd(spk + "sub-add-repset " + sub_name + " pgbench-repset " + db_pg)

@@ -25,7 +25,8 @@ def create_json(cluster_name, db, num_nodes, usr, pg, port1):
   for n in range(1, num_nodes+1):
     node_json={}
     node_json["nodename"] = "n"+str(n)
-    node_json["ip"] = util.get_1st_ip()
+    ##node_json["ip"] = util.get_1st_ip()
+    node_json["ip"] = "127.0.0.1"
     node_json["port"] = port1
     node_json["path"] = cluster_name + os.sep + "n" + str(n)
     cluster_json["nodes"].append(node_json)
