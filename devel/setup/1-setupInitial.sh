@@ -114,16 +114,11 @@ cd ~
 wget https://bootstrap.pypa.io/get-pip.py
 python3 get-pip.py
 rm get-pip.py
-
-aws --version > /dev/null 2>&1 
-rc=$?
-if [ ! "$rc" == "0" ]; then
-  pip3 install awscli
-  mkdir -p ~/.aws
-  cd ~/.aws
-  touch config
-  chmod 600 config
-fi
+pip3 install awscli
+mkdir -p ~/.aws
+cd ~/.aws
+touch config
+chmod 600 config
 
 if [ -f ~/.bashrc ]; then
   bf=~/.bashrc
