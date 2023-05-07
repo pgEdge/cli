@@ -25,6 +25,7 @@ csvdiffV=1.4.0
 pgdiffV=1.1
 curlV=1.0.27-1
 readonlyV=1.1.0-1
+foslotsV=1a-1
 
 multicorn2V=2.4-1
 esfdwV=0.11.2

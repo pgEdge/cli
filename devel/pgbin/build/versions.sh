@@ -23,6 +23,10 @@ pg12BuildV=1
 pg11V=11.19
 pg11BuildV=1
 
+foslotsFullV=1a
+foslotsShortV=
+foslotsBuildV=1
+
 readonlyFullV=1.1.0
 readonlyShortV=
 readonlyBuildV=1

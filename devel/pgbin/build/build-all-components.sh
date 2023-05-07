@@ -88,6 +88,10 @@ if [ "$1" == "readonly" ]; then
   build readonly $readonlyFullV $2 readonly
 fi
 
+if [ "$1" == "foslots" ]; then
+  build foslots $foslotsFullV $2 foslots
+fi
+
 if [ "$1" == "cron" ]; then
   build cron $cronFullV $2 cron
 fi

@@ -327,36 +327,6 @@ function buildComp {
 }
 
 
-function buildPlRComponent {
-
-	componentName="plr$plRShortVersion-pg$pgShortVersion-$plRFullVersion-$plRBuildV-$buildOS"
-	mkdir -p "$baseDir/$workDir/logs"
-	cd "$baseDir/$workDir"
-	mkdir plr && tar -xf $plrSource --strip-components=1 -C plr
-	cd plr
-
-	buildLocation="$baseDir/$workDir/build/$componentName"
-
-	prepComponentBuildDir $buildLocation
-	export R_HOME=/opt/pgbin-build/pgbin/shared/linux_64/R323/lib64/R
-	PATH=$buildLocation/bin:$PATH
-	USE_PGXS=1 make > $baseDir/$workDir/logs/plr_make.log 2>&1
-	if [[ $? -eq 0 ]]; then
-		 USE_PGXS=1 make install > $baseDir/$workDir/logs/plr_install.log 2>&1
-		if [[ $? -ne 0 ]]; then
-			echo "MySQL FDW install failed, check logs for details."
-		fi
-	else
-		echo "MySQL FDW Make failed, check logs for details."
-		return 1
-	fi
-
-	componentBundle=$componentName
-	cleanUpComponentDir $buildLocation
-	updateSharedLibs
-	packageComponent $componentBundle
-}
-
 function buildPlJavaComponent {
 	echo "# buildPlJavaComponent()"
 	componentName="pljava$pljavaShortV-pg$pgShortVersion-$pljavaFullV-$pljavaBuildV-$buildOS"
@@ -477,7 +447,7 @@ function buildTimeScaleDBComponent {
         packageComponent $componentBundle
 }
 
-TEMP=`getopt -l no-tar, copy-bin,no-copy-bin,with-pgver:,with-pgbin:,build-curl:,build-hypopg:,build-postgis:,build-bouncer:,build-tdsfdw:,build-mongofdw:,build-mysqlfdw:,build-oraclefdw:,build-orafce:,build-audit:,build-set-user:,build-partman:,build-pldebugger:,build-plr:,build-pljava:,build-plv8:,build-plprofiler:,build-bulkload:,build-backrest:,build-psqlodbc:,build-repack:,build-spock:,build-pool2:,build-pglogical:,build-hintplan:,build-timescaledb:,build-readonly:,build-cron:,build-multicorn2:,build-fixeddecimal:,build-anon,build-ddlx:,build-agent:,build-citus:,build-number: -- "$@"`
+TEMP=`getopt -l no-tar, copy-bin,no-copy-bin,with-pgver:,with-pgbin:,build-curl:,build-hypopg:,build-postgis:,build-bouncer:,build-tdsfdw:,build-mongofdw:,build-mysqlfdw:,build-oraclefdw:,build-orafce:,build-audit:,build-partman:,build-pldebugger:,build-pljava:,build-plv8:,build-plprofiler:,build-bulkload:,build-backrest:,build-psqlodbc:,build-repack:,build-spock:,build-pool2:,build-pglogical:,build-hintplan:,build-timescaledb:,build-foslots:,build-readonly:,build-cron:,build-multicorn2:,build-anon,build-ddlx:,build-agent:,build-citus: -- "$@"`
 
 if [ $? != 0 ] ; then
 	echo "Required parameters missing, Terminating..."
@@ -496,19 +466,16 @@ while true; do
     --build-bouncer ) buildBouncer=true; Source=$2; shift; shift; ;;
     --build-tdsfdw ) buildTDSFDW=true; Source=$2; shift; shift ;;
     --build-mongofdw ) buildMongoFDW=true Source=$2; shift; shift ;;
-    --build-wal2json ) buildWal2json=true Source=$2; shift; shift ;;
     --build-decoderbufs ) buildDecoderBufs=true Source=$2; shift; shift ;;
     --build-mysqlfdw ) buildMySQLFDW=true; Source=$2; shift; shift ;;
     --build-oraclefdw ) buildOracleFDW=true; Source=$2; shift; shift ;;
     --build-orafce ) buildOrafce=true; Source=$2; shift; shift ;;
     --build-fixeddecimal ) buildFD=true; Source=$2; shift; shift ;;
     --build-audit ) buildAudit=true; Source=$2; shift; shift ;;
-    --build-set-user ) buildSetUser=true; setUserSource=$2; shift; shift ;;
     --build-hypopg ) buildHypopg=true; Source=$2; shift; shift ;;
     --build-curl ) buildCurl=true; Source=$2; shift; shift ;;
     --build-pldebugger ) buildPLDebugger=true; Source=$2; shift; shift ;;
     --build-partman ) buildPartman=true; Source=$2; shift; shift ;;
-    --build-plr ) buildPlr=true; plrSource=$2; shift; shift ;;
     --build-plv8 ) buildPlV8=true; Source=$2; shift; shift ;;
     --build-pljava ) buildPlJava=true; Source=$2; shift; shift ;;
     --build-plprofiler ) buildPlProfiler=true; plProfilerSource=$2; shift; shift ;;
@@ -522,12 +489,11 @@ while true; do
     --build-hintplan ) buildHintPlan=true; Source=$2; shift; shift ;;
     --build-timescaledb ) buildTimeScaleDB=true; timescaleDBSource=$2; shift; shift ;;
     --build-readonly ) buildReadOnly=true; Source=$2; shift; shift ;;
+    --build-foslots ) buildFoSlots=true; Source=$2; shift; shift ;;
     --build-cron ) buildCron=true; Source=$2; shift; shift ;;
     --build-multicorn2 ) buildMulticorn2=true; Source=$2; shift; shift ;;
     --build-anon ) buildAnon=true; Source=$2; shift; shift ;;
     --build-ddlx ) buildDdlx=true; Source=$2; shift; shift ;;
-    --build-pgtop ) buildPgTop=true; Source=$2; shift; shift ;;
-    --build-proctab ) buildProctab=true; Source=$2; shift; shift ;;
     --build-agent ) buildAgent=true; Source=$2; shift; shift ;;
     --build-citus ) buildCitus=true; Source=$2; shift; shift ;;
     --copy-bin ) copyBin=true; shift; shift; ;;
@@ -592,9 +558,6 @@ if [[ $buildAudit == "true" ]]; then
 		buildComp audit "$auditShortV" "$auditFull14V" "$auditBuildV" "$Source"
 	fi
 fi
-if [[ $buildSetUser == "true" ]]; then
-	buildSetUserComponent
-fi
 if [ "$buildCurl" == "true" ]; then
 	buildComp curl "$curlShortV" "$curlFullV" "$curlBuildV" "$Source"
 fi
@@ -603,6 +566,9 @@ if [ "$buildHypopg" == "true" ]; then
 fi
 if [ "$buildReadOnly" == "true" ]; then
 	buildComp readonly  "$readonlyShortV" "$readonlyFullV" "$readonlyBuildV" "$Source"
+fi
+if [ "$buildFoSlots" == "true" ]; then
+	buildComp foslots  "$foslotsShortV" "$foslotsFullV" "$foslotsBuildV" "$Source"
 fi
 if [ "$buildCron" == "true" ]; then
 	buildComp cron  "$cronShortV" "$cronFullV" "$cronBuildV" "$Source"
@@ -633,10 +599,6 @@ fi
 
 if [[ $buildPartman == "true" ]]; then
 	buildComp partman "$partmanShortV" "$partmanFullV" "$partmanBuildV" "$Source"
-fi
-
-if [[ $buildPlr == "true" ]]; then
-	buildPlRComponent
 fi
 
 if [[ $buildPlJava == "true" ]]; then
@@ -673,10 +635,6 @@ fi
 
 if [[ $buildBouncer == "true" ]]; then
 	buildComp bouncer "$bouncerShortV" "$bouncerFullV" "$bouncerBuildV" "$Source"
-fi
-
-if [[ $buildFD == "true" ]]; then
-	buildComp fixeddecimal "$fdShortV" "$fdFullV" "$fdBuildV" "$Source"
 fi
 
 if [[ $buildAnon == "true" ]]; then

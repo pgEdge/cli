@@ -214,6 +214,7 @@ initDir () {
   copy-pgXX "tdsfdw"  
   copy-pgXX "cron"
   copy-pgXX "readonly"
+  copy-pgXX "foslots"
   copy-pgXX "citus"
   copy-pgXX "multicorn2"
   copy-pgXX "esfdw"
@@ -491,6 +492,10 @@ initPG () {
     initC "cron-pg$pgM" "cron" "$cronV" "$outPlat" "postgres/cron" "" "" "nil"
     initC "readonly-pg$pgM" "readonly" "$readonlyV" "$outPlat" "postgres/readonly" "" "" "nil"
     initC "hintplan-pg$pgM" "hintplan" "$hintV" "$outPlat" "postgres/hintplan" "" "" "nil"
+
+    if [ "$isEL9" == "True" ]; then
+      initC "foslots-pg$pgM" "foslots" "$foslotsV" "$outPlat" "postgres/foslots" "" "" "nil"
+    fi
 
     ##if [ "$outPlat" == "el8" ]; then
     ##  initC "tdsfdw-pg$pgM" "tdsfdw" "$tdsfdwV" "$outPlat" "postgres/tdsfdw" "" "" "nil"
