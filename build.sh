@@ -466,8 +466,9 @@ initPG () {
     return
   fi
 
-  if [ "$pgM" == "16" ] && [ "$isEL" == "True" ]; then
+  if [ "$pgM" == "16" ] && [ "$isEL9" == "True" ]; then
     initC "spock-pg$pgM" "spock" "$spock31V" "$outPlat" "postgres/spock" "" "" "nil"
+    initC "foslots-pg$pgM" "foslots" "$foslotsV" "$outPlat" "postgres/foslots" "" "" "nil"
   fi
 
   if [ "$pgM" == "15" ] && [ "$isEL" == "True" ]; then

@@ -168,7 +168,7 @@ INSERT INTO versions VALUES ('pg15', '15.1-4',  'el8, arm, osx', 0, '20230106','
 INSERT INTO releases VALUES ('pg16', 2, 'pg', '', '', 'test', 
   '<font size=-1>New in <a href=https://www.postgresql.org/docs/16/release-16.html>2023!</a></font>',
   1, 'POSTGRES', '', '');
-INSERT INTO versions VALUES ('pg16', '16devel-3',  'el9', 1, '20230511','', '', '');
+INSERT INTO versions VALUES ('pg16', '16devel-3',  'el9, arm9', 1, '20230511','', '', '');
 
 INSERT INTO projects VALUES ('debezium', 'strm', 10, 8083, '', 3, 'https://debezium.io/releases/1.9/',
   'Debezium', 0, 'debezium.png', 'Heterogeneous CDC', 'https://debezium.io');
@@ -301,8 +301,10 @@ INSERT INTO versions VALUES ('readonly-pg15', '1.1.0-1', 'osx, el8, arm', 1, '20
 
 INSERT INTO projects VALUES ('foslots', 'ext', 4, 0, 'hub',0, 'https://github.com/pgedge/foslots/tags',
   'foslots', 1, 'foslots.png', 'Failover Slots', 'https://github.com/pgedge/foslots');
-INSERT INTO releases VALUES ('foslots-pg15', 10, 'foslots', 'pgFailoverSlots', '', 'test', '', 1, 'POSTGRES', '', '');
+INSERT INTO releases VALUES ('foslots-pg15', 10, 'foslots', 'pgFailoverSlots', '', 'prod', '', 1, 'POSTGRES', '', '');
+INSERT INTO releases VALUES ('foslots-pg16', 10, 'foslots', 'pgFailoverSlots', '', 'prod', '', 1, 'POSTGRES', '', '');
 INSERT INTO versions VALUES ('foslots-pg15', '1a-1', 'el9, arm9', 1, '20230511', 'pg15', '', '');
+INSERT INTO versions VALUES ('foslots-pg16', '1a-1', 'el9, arm9', 1, '20230511', 'pg16', '', '');
 
 INSERT INTO projects VALUES ('curl', 'ext', 4, 0, 'hub',0, 'https://github.com/pg_curl/pg_curl/releases',
   'curl', 1, 'curl.png', 'Invoke JSON Services', 'https://github.com/pg_curl/pg_curl');
@@ -329,13 +331,12 @@ INSERT INTO projects VALUES ('pglogical', 'ext', 4, 0, 'hub', 1, 'https://github
 INSERT INTO releases VALUES ('pglogical-pg14', 4, 'pglogical', 'pgLogical', '', 'prod', '', 1, 'POSTGRES', '', '');
 INSERT INTO releases VALUES ('pglogical-pg15', 4, 'pglogical', 'pgLogical', '', 'prod', '', 1, 'POSTGRES', '', '');
 INSERT INTO versions VALUES ('pglogical-pg14', '2.4.2-1',  'arm, el8', 0, '20221021', 'pg14', '', 'https://github.com/2ndQuadrant/pglogical/releases/tag/REL2_4_2');
-INSERT INTO versions VALUES ('pglogical-pg15', '2.4.2-1',  'arm, el8', 0, '20221021', 'pg15', '', 'https://github.com/2ndQuadrant/pglogical/releases/tag/REL2_4_2');
+INSERT INTO versions VALUES ('pglogical-pg15', '2.4.2-1',  'arm9, el9', 0, '20221021', 'pg15', '', 'https://github.com/2ndQuadrant/pglogical/releases/tag/REL2_4_2');
 
 INSERT INTO projects VALUES ('postgis', 'ext', 4, 1, 'hub', 3, 'http://postgis.net/source',
   'postgis', 1, 'postgis.png', 'Spatial Extensions', 'http://postgis.net');
 INSERT INTO releases VALUES ('postgis-pg15', 3, 'postgis', 'PostGIS', '', 'prod', '', 1, 'GPLv2', '', '');
-INSERT INTO versions VALUES ('postgis-pg15', '3.3.2-1', 'arm', 1, '20221112', 'pg15', '', 'https://git.osgeo.org/gitea/postgis/postgis/raw/tag/3.3.2/NEWS');
-INSERT INTO versions VALUES ('postgis-pg15', '3.3.1-1', 'arm', 0, '20220909', 'pg15', '', 'https://git.osgeo.org/gitea/postgis/postgis/raw/tag/3.3.1/NEWS');
+INSERT INTO versions VALUES ('postgis-pg15', '3.3.2-1', 'arm9', 1, '20221112', 'pg15', '', 'https://git.osgeo.org/gitea/postgis/postgis/raw/tag/3.3.2/NEWS');
 
 INSERT INTO projects VALUES ('pgadmin', 'app', 3, 80, '', 1, 'https://www.pgadmin.org/news/',
   'pgadmin', 0, 'pgadmin.png', 'PostgreSQL Tools', 'https://pgadmin.org');
@@ -355,8 +356,7 @@ INSERT INTO versions VALUES ('repack-pg15', '1.4.8-1', 'arm, el8', 1, '20221019'
 INSERT INTO projects VALUES ('partman', 'ext', 4, 0, 'hub', 4, 'https://github.com/pgpartman/pg_partman/tags',
   'partman', 1, 'partman.png', 'Partition Management', 'https://github.com/pgpartman/pg_partman#pg-partition-manager');
 INSERT INTO releases VALUES ('partman-pg15', 6, 'partman', 'pgPartman',   '', 'prod', '', 1, 'POSTGRES', '', '');
-INSERT INTO versions VALUES ('partman-pg15', '4.7.3-1',  'arm, el8', 1, '20220418', 'pg15', '', '');
-INSERT INTO versions VALUES ('partman-pg15', '4.7.2-1',  'arm, el8', 0, '20221216', 'pg15', '', '');
+INSERT INTO versions VALUES ('partman-pg15', '4.7.3-1',  'arm9, el9', 1, '20220418', 'pg15', '', '');
 
 INSERT INTO projects VALUES ('hypopg', 'ext', 4, 0, 'hub', 8, 'https://github.com/HypoPG/hypopg/releases',
   'hypopg', 1, 'whatif.png', 'Hypothetical Indexes', 'https://hypopg.readthedocs.io/en/latest/');
@@ -397,14 +397,12 @@ INSERT INTO versions VALUES ('csvdiff', '1.4.0', 'el8, arm, osx', 1, '20230206',
 INSERT INTO projects VALUES ('pgcat2', 'pge', 4, 6432, 'hub', 3, 'https://github.com/pgedge/pgcat2/tags',
   'cat',  0, 'pgcat2.png', 'Connection Pooler', 'https://github.com/pgedge/pgcat2');
 INSERT INTO releases VALUES ('pgcat2', 2, 'pgcat2',  'pgCat2', '', 'test', '', 1, 'MIT', '', '');
-INSERT INTO versions VALUES ('pgcat2', '1.0.0', 'osx, el8, arm', 1, '20230405', '', '', '');
-INSERT INTO versions VALUES ('pgcat2', '0.3.0', 'osx, el8, arm', 0, '20230318', '', '', '');
+INSERT INTO versions VALUES ('pgcat2', '1.0.0', 'el9, arm9', 1, '20230405', '', '', '');
 
 INSERT INTO projects VALUES ('backrest', 'pge', 4, 0, 'hub', 3, 'http://pgbackrest.org',
   'backrest',  0, 'backrest.png', 'Backup & Restore', 'http://pgbackrest.org');
 INSERT INTO releases VALUES ('backrest', 2, 'backrest',  'pgBackRest', '', 'test', '', 1, 'MIT', '', '');
-INSERT INTO versions VALUES ('backrest', '2.45-1', 'el8, arm', 1, '20230321', '', 'EL', '');
-INSERT INTO versions VALUES ('backrest', '2.44-1', 'el8, arm', 0, '20230129', '', 'EL8', '');
+INSERT INTO versions VALUES ('backrest', '2.45-1', 'el9, arm9', 1, '20230321', '', 'EL', '');
 
 INSERT INTO projects VALUES ('patroni', 'app', 11, 0, 'haproxy', 4, 'https://github.com/zalando/patroni/releases',
   'patroni', 0, 'patroni.png', 'HA Template', 'https://github.com/zalando/patroni');

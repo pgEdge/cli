@@ -19,18 +19,17 @@ function test15 {
   ./nodectl install spock-$pgV         -d demo
   ./nodectl install pldebugger-$pgV    -d demo
 
-  ./nodectl install repack-$pgV        -d demo
   ./nodectl install orafce-$pgV        -d demo
   ./nodectl install partman-$pgV       -d demo
   ./nodectl install cron-$pgV
 
   #./nodectl install bulkload-$pgV      -d demo
-
   #./nodectl install plv8-$pgV          -d demo
+  #./nodectl install repack-$pgV        -d demo
 
   if [ `arch` == "aarch64" ]; then
     ./nodectl install postgis-$pgV      -d demo
-  #else
+  else
   #  ./nodectl install mysqlfdw-$pgV     -d demo
   #  ./nodectl install mongofdw-$pgV     -d demo
   #  ./nodectl install oraclefdw-$pgV    -d demo
