@@ -552,22 +552,20 @@ setupOutdir () {
 ###############################    MAINLINE   #########################################
 osName=`uname`
 verSQL="versions.sql"
-isEL8="False"
-isEL9="False"
-isEL="False"
 
-grep el8 /etc/os-release > /dev/null 2>&1
-rc=$?
-if [ "$rc" == "0" ]; then
+PLATFORM=`cat /etc/os-release | grep PLATFORM_ID | cut -d: -f2 | tr -d '\"'`
+if [ "$PLATFORM" == "el8" ]; then
+  isEL="True"
   isEL8="True"
+  isEL9="False"
+elif [ "$PLATFORM" == "el9" ] || [ "$PLATFORM" == "al2023" ]; then
   isEL="True"
-fi
-
-grep el9 /etc/os-release > /dev/null 2>&1
-rc=$?
-if [ "$rc" == "0" ]; then
+  isEL8="False"
   isEL9="True"
-  isEL="True"
+else
+  isEL8="False"
+  isEL9="False"
+  isEL="False"
 fi
 
 ## process command line paramaters #######

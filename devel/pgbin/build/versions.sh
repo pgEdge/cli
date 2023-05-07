@@ -195,18 +195,19 @@ cronFullV=1.5.2
 cronShortV=
 cronBuildV=1
 
-isEL8=no
-grep el8 /etc/os-release > /dev/null 2>&1
-rc=$?
-if [ "$rc" == "0" ]; then
+PLATFORM=`cat /etc/os-release | grep PLATFORM_ID | cut -d: -f2 | tr -d '\"'`
+if [ "$PLATFORM" == "el8" ]; then
+  isEL=yes
   isEL8=yes
-fi
-
-isEL9=no
-grep el9 /etc/os-release > /dev/null 2>&1
-rc=$?
-if [ "$rc" == "0" ]; then
+  isEL9=no
+elif [ "$PLATFORM" == "el9" ] || [ "$PLATFORM" == "al2023" ]; then
+  isEL=yes
+  isEL8=no
   isEL9=yes
+else
+  isEL=no
+  isEL8=no
+  isEL9=no
 fi
 
 ARCH=`arch`
