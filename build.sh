@@ -194,7 +194,8 @@ initDir () {
 
   copy-pgXX "orafce"
   copy-pgXX "fixeddecimal"
-  copy-pgXX "spock"
+  copy-pgXX "spock30"
+  copy-pgXX "spock31"
   copy-pgXX "curl"
   copy-pgXX "pglogical"
   copy-pgXX "anon"
@@ -455,7 +456,7 @@ initPG () {
     #initC  "postgrest"    "postgrest" "$postgrestV"  "$outPlat" "postgres/postgrest" "" "" "nil"
     initC  "readonly-pg$pgM" "readonly" "$readonlyV" "$outPlat" "postgres/readonly"  "" "" "nil"
     initC  "curl-pg$pgM"  "curl"    "$curlV"         "$outPlat" "postgres/curl"      "" "" "nil"
-    initC  "spock-pg$pgM" "spock"   "$spock30V"        "$outPlat" "postgres/spock"     "" "" "nil"
+    initC  "spock31-pg$pgM" "spock31"   "$spock31V"        "$outPlat" "postgres/spock31"     "" "" "nil"
     ##initC  "cron-pg$pgM"  "cron"    "$cronV"         "$outPlat" "postgres/cron"      "" "" "nil"
     ##initC  "pgcat2"       "pgcat2"  "$catV"          "$outPlat" "postgres/pgcat2"    "" "" "nil"
     ##initC  "patroni"      "patroni" "$patroniV"      ""         "postgres/patroni"   "" "" "nil"
@@ -467,35 +468,36 @@ initPG () {
   fi
 
   if [ "$pgM" == "16" ] && [ "$isEL9" == "True" ]; then
-    initC "spock-pg$pgM" "spock" "$spock31V" "$outPlat" "postgres/spock" "" "" "nil"
+    initC  "spock31-pg$pgM" "spock31"   "$spock31V"        "$outPlat" "postgres/spock31"     "" "" "nil"
     initC "foslots-pg$pgM" "foslots" "$foslotsV" "$outPlat" "postgres/foslots" "" "" "nil"
   fi
 
   if [ "$pgM" == "15" ] && [ "$isEL" == "True" ]; then
     ##initC  "pgcat2"  "pgcat2"  "$catV"  "$outPlat" "postgres/pgcat2" "" "" "nil"
-    initC "spock-pg$pgM" "spock" "$spock30V" "$outPlat" "postgres/spock" "" "" "nil"
+    initC  "spock30-pg$pgM" "spock30"   "$spock30V"        "$outPlat" "postgres/spock30"     "" "" "nil"
+    initC  "spock31-pg$pgM" "spock31"   "$spock31V"        "$outPlat" "postgres/spock31"     "" "" "nil"
     ##initC "multicorn2-pg$pgM" "multicorn2" "$multicorn2V" "$outPlat" "postgres/multicorn2" "" "" "nil"
     ##initC "esfdw-pg$pgM" "esfdw" "$esfdwV" "$outPlat" "postgres/esfdw" "" "" "Y"
-    initC "citus-pg$pgM" "citus" "$citusV" "$outPlat" "postgres/citus" "" "" "nil"
-    if [ "$outPlat" == "arm" ]; then
-      initC "postgis-pg$pgM" "postgis" "$postgisV" "$outPlat" "postgres/postgis" "" "" "nil"
-    fi
-    initC "pglogical-pg$pgM" "pglogical" "$logicalV" "$outPlat" "postgres/logical" "" "" "nil"
-    initC "anon-pg$pgM" "anon" "$anonV" "$outPlat" "postgres/anon" "" "" "nil"
-    initC "plprofiler-pg$pgM" "plprofiler" "$profV" "$outPlat" "postgres/profiler" "" "" "nil"
-    initC "pldebugger-pg$pgM" "pldebugger" "$debuggerV" "$outPlat" "postgres/pldebugger" "" "" "nil"
-    initC "partman-pg$pgM" "partman" "$partmanV" "$outPlat" "postgres/partman" "" "" "nil"
-    initC "orafce-pg$pgM" "orafce" "$orafceV" "$outPlat" "postgres/orafce" "" "" "nil"
-    initC "audit-pg$pgM" "audit" "$audit15V" "$outPlat" "postgres/audit" "" "" "nil"
     ##initC "repack-pg$pgM" "repack" "$repackV" "$outPlat" "postgres/repack" "" "" "nil"
     ##initC "postgrest" "postgrest" "$postgrestV"  "$outPlat"  "postgres/postgrest"  "" "" "nil"
-    initC  "curl-pg$pgM"  "curl"    "$curlV"       "$outPlat" "postgres/curl"   "" "" "nil"
-    initC "cron-pg$pgM" "cron" "$cronV" "$outPlat" "postgres/cron" "" "" "nil"
-    initC "readonly-pg$pgM" "readonly" "$readonlyV" "$outPlat" "postgres/readonly" "" "" "nil"
-    initC "hintplan-pg$pgM" "hintplan" "$hintV" "$outPlat" "postgres/hintplan" "" "" "nil"
 
     if [ "$isEL9" == "True" ]; then
       initC "foslots-pg$pgM" "foslots" "$foslotsV" "$outPlat" "postgres/foslots" "" "" "nil"
+      initC "citus-pg$pgM" "citus" "$citusV" "$outPlat" "postgres/citus" "" "" "nil"
+      if [ "$outPlat" == "arm" ]; then
+        initC "postgis-pg$pgM" "postgis" "$postgisV" "$outPlat" "postgres/postgis" "" "" "nil"
+      fi
+      initC "pglogical-pg$pgM" "pglogical" "$logicalV" "$outPlat" "postgres/logical" "" "" "nil"
+      initC "anon-pg$pgM" "anon" "$anonV" "$outPlat" "postgres/anon" "" "" "nil"
+      initC "plprofiler-pg$pgM" "plprofiler" "$profV" "$outPlat" "postgres/profiler" "" "" "nil"
+      initC "pldebugger-pg$pgM" "pldebugger" "$debuggerV" "$outPlat" "postgres/pldebugger" "" "" "nil"
+      initC "partman-pg$pgM" "partman" "$partmanV" "$outPlat" "postgres/partman" "" "" "nil"
+      initC "orafce-pg$pgM" "orafce" "$orafceV" "$outPlat" "postgres/orafce" "" "" "nil"
+      initC "audit-pg$pgM" "audit" "$audit15V" "$outPlat" "postgres/audit" "" "" "nil"
+      initC "curl-pg$pgM"  "curl"    "$curlV"       "$outPlat" "postgres/curl"   "" "" "nil"
+      initC "cron-pg$pgM" "cron" "$cronV" "$outPlat" "postgres/cron" "" "" "nil"
+      initC "readonly-pg$pgM" "readonly" "$readonlyV" "$outPlat" "postgres/readonly" "" "" "nil"
+      initC "hintplan-pg$pgM" "hintplan" "$hintV" "$outPlat" "postgres/hintplan" "" "" "nil"
     fi
 
     ##if [ "$outPlat" == "el8" ]; then

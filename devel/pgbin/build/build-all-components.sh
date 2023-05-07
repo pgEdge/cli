@@ -144,12 +144,12 @@ if [ "$1" == "timescaledb" ]; then
   build timescaledb $timescaledbFullV $2 timescale
 fi
 
-if [ "$1" == "spock" ]; then
-  if [ "$pgV" == "16" ]; then
-    build spock $spockFull31V $2  spock
-  elif [ "$pgV" == "15" ]; then
-    build spock $spockFull30V $2  spock
-  fi
+if [ "$1" == "spock30" ]; then
+  build spock30 $spockFull30V $2  spock30
+fi
+
+if [ "$1" == "spock31" ]; then
+  build spock31 $spockFull31V $2  spock31
 fi
 
 if [ "$1" == "pool2" ]; then

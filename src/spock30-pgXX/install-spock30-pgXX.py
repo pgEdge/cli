@@ -22,4 +22,3 @@ util.change_pgconf_keyval("pgXX", "spock.save_resolutions", "on", True)
 
 util.create_extension("pgXX", "spock", True)
 
-
