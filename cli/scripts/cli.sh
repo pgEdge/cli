@@ -40,7 +40,7 @@ declare -a array
 array[0]="$MY_HOME/hub/scripts"
 array[1]="$MY_HOME/hub/scripts/lib"
 if [ `uname` == "Linux" ]; then
-  if [ -f "/etc/redhat-release" ]; then
+  if [ -f "/etc/redhat-release" ] || [ -f "/etc/amazon-linux-release" ]; then
     array[2]="$MY_HOME/hub/scripts/lib/linux/$plat/el8"
   else
     if [ -f "/etc/os-release" ]; then
@@ -53,12 +53,6 @@ if [ `uname` == "Linux" ]; then
         rc=$?
         if [ $rc == "0" ]; then
           array[2]="$MY_HOME/hub/scripts/lib/linux/$plat/ubu22"
-        else
-          grep "11" /etc/os-release > /dev/null 2>&1
-          rc=$?
-          if [ $rc == "0" ]; then
-            array[2]="$MY_HOME/hub/scripts/lib/linux/$plat/deb11"
-          fi
         fi
       fi
     fi
