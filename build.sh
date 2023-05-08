@@ -449,8 +449,9 @@ initPG () {
   writeSettRow "GLOBAL" "AUTOSTART" "off"
 
 
+  initC  "pgedge"       "pgedge"    "$pgedgeV"     ""         "postgres/pgedge"    "" "" "Y"
+
   if [ "$pgM" == "15" ] && [ "$outPlat" == "osx" ]; then
-    initC  "pgedge"       "pgedge"    "$pgedgeV"     ""         "postgres/pgedge"    "" "" "nil"
     initC  "csvdiff"      "csvdiff"   "$csvdiffV"    "$outPlat" "csvdiff"            "" "" "nil"
     initC  "pgdiff"       "pgdiff"    "$pgdiffV"     ""         "postgres/pgdiff"    "" "" "nil"
     #initC  "postgrest"    "postgrest" "$postgrestV"  "$outPlat" "postgres/postgrest" "" "" "nil"
@@ -510,7 +511,6 @@ initPG () {
     initC "pglogical-pg$pgM" "pglogical" "$logicalV" "$outPlat" "postgres/logical" "" "" "nil"
   fi
 
-  initC  "pgedge" "pgedge" "$pgedgeV" "" "postgres/pgedge" "" "" "nil"
   initC  "bouncer" "bouncer" "$bouncerV" "$outPlat" "postgres/bouncer" "" "" "nil"
   initC  "backrest" "backrest" "$backrestV" "$outPlat" "postgres/backrest" "" "" "nil"
   ##initC  "csvdiff" "csvdiff" "$csvdiffV" "$outPlat" "csvdiff" "" "" "nil"

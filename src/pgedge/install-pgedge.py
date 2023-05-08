@@ -151,7 +151,7 @@ if usr and passwd:
 osSys(nc + "tune " + pgV)
 time.sleep(3)
 
-osSys(nc + "install spock -d " + db1)
+osSys(nc + "install spock31 -d " + db1)
 
 if withPOSTGREST == "True":
   util.message("  ")
