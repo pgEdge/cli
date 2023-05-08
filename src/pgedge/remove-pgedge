@@ -1,14 +1,12 @@
 #!/bin/bash
 cd "$(dirname "$0")"
 
-ver=15
-
 echo " "
-echo "## Remove pgedge $ver ###########################################"
+echo "## Remove pgedge $pgN ###########################################"
 
 cd ..
 
-./nc remove pg$ver
+./nc remove pg$pgN
 
 if [ -d "postgrest" ]; then
   ./nc remove postgrest

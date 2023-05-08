@@ -67,7 +67,7 @@ mode_list = ["start", "stop", "restart", "status", "list", "info", "update",
              "upgrade", "downgrade", "enable", "disable", "install", "tune",
              "remove", "reload", "help", "get", "set", "unset", "backrest",
              "backrest", "change-pgconf", "top", "pgbin", "psql", "--autostart", 
-             "service", "um", "spock", "cluster", "ace",
+             "service", "um", "spock", "cluster", "ace", "--pg",
              "--start", "--no-restart", "--no-preload",
              "--help", "--json", "--jsonp", "--test", "--extensions", "--svcs",
              "--list", "--old", "--showduplicates", "-y", "-t",
@@ -1182,6 +1182,15 @@ if "-y" in args:
   isYES = True
   args.remove("-y")
   os.environ['isYes'] = "True"
+
+if "--pg" in args:
+  pgn = str(get_next_arg("--pg"))
+  if pgn >= "15" and pgn <= "16":
+    os.environ['pgN'] = pgn 
+    args.remove("--pg")
+    args.remove(pgn)
+  else:
+    util.exit_message(f"invalid --pg parm {pgn}", 1)
 
 if "-U" in args:
   usr = get_next_arg("-U")

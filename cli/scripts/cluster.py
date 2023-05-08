@@ -89,7 +89,7 @@ def remove(rm_data=False):
 
 
 def create_local(cluster_name, num_nodes, User="lcusr", Passwd="lcpasswd", 
-           db="lcdb", port1=6432, pg="15", app=None):
+           db="lcdb", port1=6432, pg=None, app=None):
   """Create local cluster of N pgEdge nodes on different ports."""
 
   cluster_dir = base_dir + os.sep + cluster_name
@@ -124,6 +124,11 @@ def create_local(cluster_name, num_nodes, User="lcusr", Passwd="lcpasswd",
   util.message("# creating cluster dir: " + cluster_dir)
   os.system("mkdir -p " + cluster_dir)
 
+  if pg == None:
+    pg = os.getenv("pgN", None)
+    if pg == None:
+      pg = "15"
+
   pg_v = "pg" + str(pg)
 
   nd_port = port1
@@ -142,7 +147,8 @@ def create_local(cluster_name, num_nodes, User="lcusr", Passwd="lcpasswd",
     os.system("cp nc      " + node_dir + "/.")
 
     nc = (node_dir + "/nodectl ")
-    parms =  " -U " + str(User) + " -P " + str(Passwd) + " -d " + str(db) + " -p " + str(nd_port)
+    parms =  " -U " + str(User) + " -P " + str(Passwd) + " -d " + str(db) + \
+             " -p " + str(nd_port) + " --pg " + str(pg)
     rc = util.echo_cmd(nc + "install pgedge" + parms)
     if rc != 0:
       sys.exit(rc)
