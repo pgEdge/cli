@@ -475,7 +475,7 @@ initPG () {
 
   if [ "$pgM" == "15" ] && [ "$isEL" == "True" ]; then
     ##initC  "pgcat2"  "pgcat2"  "$catV"  "$outPlat" "postgres/pgcat2" "" "" "nil"
-    initC  "spock30-pg$pgM" "spock30"   "$spock30V"        "$outPlat" "postgres/spock30"     "" "" "nil"
+    ##initC  "spock30-pg$pgM" "spock30"   "$spock30V"        "$outPlat" "postgres/spock30"     "" "" "nil"
     initC  "spock31-pg$pgM" "spock31"   "$spock31V"        "$outPlat" "postgres/spock31"     "" "" "nil"
     ##initC "multicorn2-pg$pgM" "multicorn2" "$multicorn2V" "$outPlat" "postgres/multicorn2" "" "" "nil"
     ##initC "esfdw-pg$pgM" "esfdw" "$esfdwV" "$outPlat" "postgres/esfdw" "" "" "Y"
