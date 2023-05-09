@@ -447,7 +447,7 @@ function buildTimeScaleDBComponent {
         packageComponent $componentBundle
 }
 
-TEMP=`getopt -l no-tar, copy-bin,no-copy-bin,with-pgver:,with-pgbin:,build-curl:,build-hypopg:,build-postgis:,build-bouncer:,build-tdsfdw:,build-mongofdw:,build-mysqlfdw:,build-oraclefdw:,build-orafce:,build-audit:,build-partman:,build-pldebugger:,build-pljava:,build-plv8:,build-plprofiler:,build-bulkload:,build-backrest:,build-psqlodbc:,build-repack:,build-spock30:,build-spock31:,build-pool2:,build-pglogical:,build-hintplan:,build-timescaledb:,build-foslots:,build-readonly:,build-cron:,build-multicorn2:,build-anon,build-ddlx:,build-agent:,build-citus: -- "$@"`
+TEMP=`getopt -l no-tar, copy-bin,no-copy-bin,with-pgver:,with-pgbin:,build-curl:,build-hypopg:,build-postgis:,build-bouncer:,build-tdsfdw:,build-mongofdw:,build-mysqlfdw:,build-oraclefdw:,build-orafce:,build-audit:,build-partman:,build-pldebugger:,build-pljava:,build-plv8:,build-plprofiler:,build-bulkload:,build-backrest:,build-psqlodbc:,build-repack:,build-spock31:,build-pool2:,build-pglogical:,build-hintplan:,build-timescaledb:,build-foslots:,build-readonly:,build-cron:,build-multicorn2:,build-anon,build-ddlx:,build-agent:,build-citus: -- "$@"`
 
 if [ $? != 0 ] ; then
 	echo "Required parameters missing, Terminating..."
@@ -484,7 +484,6 @@ while true; do
     --build-backrest ) buildBackrest=true; Source=$2; shift; shift ;;
     --build-repack ) buildRepack=true; Source=$2; shift; shift ;;
     --build-pglogical ) buildPgLogical=true; Source=$2; shift; shift ;;
-    --build-spock30 ) buildSpock30=true; Source=$2; shift; shift ;;
     --build-spock31 ) buildSpock31=true; Source=$2; shift; shift ;;
     --build-pool2 ) buildPool2=true; Source=$2; shift; shift ;;
     --build-hintplan ) buildHintPlan=true; Source=$2; shift; shift ;;
@@ -579,9 +578,6 @@ if [ "$buildMulticorn2" == "true" ]; then
 fi
 if [[ $buildRepack == "true" ]]; then
 	buildComp repack  "$repackShortV" "$repackFullV" "$repackBuildV" "$Source"
-fi
-if [[ $buildSpock30 == "true" ]]; then
-	buildComp spock30  "" "$spockFull30V" "$spockBuild30V" "$Source"
 fi
 if [[ $buildSpock31 == "true" ]]; then
 	buildComp spock31  "" "$spockFull31V" "$spockBuild31V" "$Source"

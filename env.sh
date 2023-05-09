@@ -3,8 +3,7 @@ bundle=pgedge
 api=nodectl
 hubV=23.115
 
-spock30V=3.0.23-1
-spock31V=3.1dev3-1
+spock31V=3.1.1-1
 catV=1.0.0
 
 pgedgeV=2-1

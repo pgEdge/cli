@@ -1,9 +1,6 @@
 #!/bin/bash
 
-spockFull30V=3.0.23
-spockBuild30V=1
-
-spockFull31V=3.1dev3
+spockFull31V=3.1.1
 spockBuild31V=1
 
 pg16V=16dev3
