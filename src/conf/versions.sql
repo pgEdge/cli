@@ -297,7 +297,7 @@ INSERT INTO versions VALUES ('hintplan-pg15', '1.5.0-1', 'arm, el8', 1, '2023012
 INSERT INTO projects VALUES ('readonly', 'ext', 4, 0, 'hub',0, 'https://github.com/pgedge/readonly/tags',
   'readonly', 1, 'readonly.png', 'Support READ-ONLY Databases', 'https://github.com/pgedge/readonly');
 INSERT INTO releases VALUES ('readonly-pg15', 10, 'readonly', 'pgReadOnly', '', 'prod', '', 1, 'POSTGRES', '', '');
-INSERT INTO versions VALUES ('readonly-pg15', '1.1.0-1', 'el8, arm', 1, '20230402', 'pg15', '', '');
+INSERT INTO versions VALUES ('readonly-pg15', '1.1.0-1', 'el9, arm9', 1, '20230402', 'pg15', '', '');
 
 INSERT INTO projects VALUES ('foslots', 'ext', 4, 0, 'hub',0, 'https://github.com/pgedge/foslots/tags',
   'foslots', 1, 'foslots.png', 'Failover Slots', 'https://github.com/pgedge/foslots');
@@ -309,7 +309,7 @@ INSERT INTO versions VALUES ('foslots-pg16', '1a-1', 'el9, arm9', 1, '20230511',
 INSERT INTO projects VALUES ('curl', 'ext', 4, 0, 'hub',0, 'https://github.com/pg_curl/pg_curl/releases',
   'curl', 1, 'curl.png', 'Invoke JSON Services', 'https://github.com/pg_curl/pg_curl');
 INSERT INTO releases VALUES ('curl-pg15', 10, 'curl', 'pgCron', '', 'prod', '', 1, 'POSTGRES', '', '');
-INSERT INTO versions VALUES ('curl-pg15', '1.0.27-1', 'el8, arm', 1, '20230215', 'pg15', '', '');
+INSERT INTO versions VALUES ('curl-pg15', '1.0.27-1', 'el9, arm9', 1, '20230215', 'pg15', '', '');
 
 INSERT INTO projects VALUES ('cron', 'ext', 4, 0, 'hub',0, 'https://github.com/citusdata/pg_cron/releases',
   'cron', 1, 'cron.png', 'Background Job Scheduler', 'https://github.com/citusdata/pg_cron');
@@ -320,9 +320,9 @@ INSERT INTO versions VALUES ('cron-pg15', '1.5.1-1', 'el8, arm', 0, '20230215', 
 INSERT INTO projects VALUES ('spock', 'pge', 4, 0, 'hub', 1, 'https://github.com/pgedge/spock/tags',
   'spock', 1, 'spock.png', 'Logical & Multi-Active Replication', 'https://github.com/pgedge/spock/#spock');
 INSERT INTO releases VALUES ('spock30-pg15', 4, 'spock', 'Spock', '', 'prod', '', 1, 'pgEdge Community', '', '');
-INSERT INTO versions VALUES ('spock30-pg15', '3.0.23-1', 'el8, el9, arm, arm9', 1, '20230418', 'pg15', '', '');
+INSERT INTO versions VALUES ('spock30-pg15', '3.0.23-1', 'el8, el9, arm, arm9', 0, '20230418', 'pg15', '', '');
 
-INSERT INTO releases VALUES ('spock31-pg15', 4, 'spock', 'Spock', '', 'test', '', 1, 'pgEdge Community', '', '');
+INSERT INTO releases VALUES ('spock31-pg15', 4, 'spock', 'Spock', '', 'prod', '', 1, 'pgEdge Community', '', '');
 INSERT INTO releases VALUES ('spock31-pg16', 4, 'spock', 'Spock', '', 'test', '', 1, 'pgEdge Community', '', '');
 INSERT INTO versions VALUES ('spock31-pg15', '3.1dev3-1', 'el9, arm9', 1, '20230511', 'pg15', '', '');
 INSERT INTO versions VALUES ('spock31-pg16', '3.1dev3-1', 'el9, arm9', 1, '20230511', 'pg16', '', '');
