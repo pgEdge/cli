@@ -9,19 +9,19 @@ spockBuild31V=1
 pg16V=16dev3
 pg16BuildV=3
 
-pg15V=15.2
-pg15BuildV=5
+pg15V=15.3
+pg15BuildV=1
 
-pg14V=14.7
+pg14V=14.8
 pg14BuildV=1
 
-pg13V=13.10
+pg13V=13.11
 pg13BuildV=1
 
-pg12V=12.14
+pg12V=12.15
 pg12BuildV=1
 
-pg11V=11.19
+pg11V=11.20
 pg11BuildV=1
 
 foslotsFullV=1a

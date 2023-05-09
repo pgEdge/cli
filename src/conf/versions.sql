@@ -138,32 +138,32 @@ INSERT INTO projects VALUES ('pg', 'pge', 1, 5432, 'hub', 1, 'https://github.com
 
 INSERT INTO releases VALUES ('pg11', 4, 'pg', 'PostgreSQL', '', 'prod',
   '<font size=-1>New in <a href=https://www.postgresql.org/docs/11/release-11.html>2018</a></font>', 1, 'POSTGRES', '', '');
-INSERT INTO versions VALUES ('pg11', '11.19-1', 'el8', 1, '20230209', '', '', '');
+INSERT INTO versions VALUES ('pg11', '11.20-1', 'el8', 1, '20230511', '', '', '');
+INSERT INTO versions VALUES ('pg11', '11.19-1', 'el8', 0, '20230209', '', '', '');
 
 INSERT INTO releases VALUES ('pg12', 3, 'pg', 'PostgreSQL', '', 'prod',
   '<font size=-1>New in <a href=https://www.postgresql.org/docs/12/release-12.html>2019</a></font>', 1, 'POSTGRES', '', '');
-INSERT INTO versions VALUES ('pg12', '12.14-1', 'el8', 1, '20230209', '', '', '');
+INSERT INTO versions VALUES ('pg12', '12.15-1', 'el8', 1, '20230511', '', '', '');
+INSERT INTO versions VALUES ('pg12', '12.14-1', 'el8', 0, '20230209', '', '', '');
 
 INSERT INTO releases VALUES ('pg13', 2, 'pg', '', '', 'prod',
   '<font size=-1>New in <a href=https://www.postgresql.org/docs/13/release-13.html>2.21</a></font>',
   1, 'POSTGRES', '', '');
-INSERT INTO versions VALUES ('pg13', '13.10-1', 'el8', 1, '20230209','', '', '');
+INSERT INTO versions VALUES ('pg13', '13.11-1', 'el8', 1, '20230511','', '', '');
+INSERT INTO versions VALUES ('pg13', '13.10-1', 'el8', 0, '20230209','', '', '');
 
 INSERT INTO releases VALUES ('pg14', 1, 'pg', '', '', 'prod', 
   '<font size=-1>New in <a href=https://www.postgresql.org/docs/14/release-14.html>2021</a></font>',
   1, 'POSTGRES', '', '');
-INSERT INTO versions VALUES ('pg14', '14.7-1', 'el8, arm', 1, '20230209','', '', '');
-INSERT INTO versions VALUES ('pg14', '14.6-1', 'el8, arm',      0, '20221110','', '', '');
+INSERT INTO versions VALUES ('pg14', '14.8-1', 'el8', 1, '20230511','', '', '');
+INSERT INTO versions VALUES ('pg14', '14.7-1', 'el8', 0, '20230209','', '', '');
 
 INSERT INTO releases VALUES ('pg15', 2, 'pg', '', '', 'prod', 
   '<font size=-1>New in <a href=https://www.postgresql.org/docs/15/release-15.html>2022!</a></font>',
   1, 'POSTGRES', '', '');
-INSERT INTO versions VALUES ('pg15', '15.2-5',  'el8, el9, arm, arm9, osx', 1, '20230511','', '', '');
-INSERT INTO versions VALUES ('pg15', '15.2-4',  'el8, el9, arm, arm9, osx', 0, '20230426','', '', '');
-INSERT INTO versions VALUES ('pg15', '15.2-3',  'el8, el9, arm, arm9, osx', 0, '20230424','', '', '');
-INSERT INTO versions VALUES ('pg15', '15.2-2',  'el8, arm, osx', 0, '20230418','', '', '');
-INSERT INTO versions VALUES ('pg15', '15.2-1',  'el8, arm, osx', 0, '20230209','', '', '');
-INSERT INTO versions VALUES ('pg15', '15.1-4',  'el8, arm, osx', 0, '20230106','', '', '');
+INSERT INTO versions VALUES ('pg15', '15.3-1',  'el8, el9, arm, arm9', 1, '20230511','', '', '');
+INSERT INTO versions VALUES ('pg15', '15.2-4',  'el8, el9, arm, arm9', 0, '20230426','', '', '');
+INSERT INTO versions VALUES ('pg15', '15.2-1',  'el8, arm', 0, '20230209','', '', '');
 
 INSERT INTO releases VALUES ('pg16', 2, 'pg', '', '', 'test', 
   '<font size=-1>New in <a href=https://www.postgresql.org/docs/16/release-16.html>2023!</a></font>',
@@ -297,7 +297,7 @@ INSERT INTO versions VALUES ('hintplan-pg15', '1.5.0-1', 'arm, el8', 1, '2023012
 INSERT INTO projects VALUES ('readonly', 'ext', 4, 0, 'hub',0, 'https://github.com/pgedge/readonly/tags',
   'readonly', 1, 'readonly.png', 'Support READ-ONLY Databases', 'https://github.com/pgedge/readonly');
 INSERT INTO releases VALUES ('readonly-pg15', 10, 'readonly', 'pgReadOnly', '', 'prod', '', 1, 'POSTGRES', '', '');
-INSERT INTO versions VALUES ('readonly-pg15', '1.1.0-1', 'osx, el8, arm', 1, '20230402', 'pg15', '', '');
+INSERT INTO versions VALUES ('readonly-pg15', '1.1.0-1', 'el8, arm', 1, '20230402', 'pg15', '', '');
 
 INSERT INTO projects VALUES ('foslots', 'ext', 4, 0, 'hub',0, 'https://github.com/pgedge/foslots/tags',
   'foslots', 1, 'foslots.png', 'Failover Slots', 'https://github.com/pgedge/foslots');
@@ -309,7 +309,7 @@ INSERT INTO versions VALUES ('foslots-pg16', '1a-1', 'el9, arm9', 1, '20230511',
 INSERT INTO projects VALUES ('curl', 'ext', 4, 0, 'hub',0, 'https://github.com/pg_curl/pg_curl/releases',
   'curl', 1, 'curl.png', 'Invoke JSON Services', 'https://github.com/pg_curl/pg_curl');
 INSERT INTO releases VALUES ('curl-pg15', 10, 'curl', 'pgCron', '', 'prod', '', 1, 'POSTGRES', '', '');
-INSERT INTO versions VALUES ('curl-pg15', '1.0.27-1', 'osx, el8, arm', 1, '20230215', 'pg15', '', '');
+INSERT INTO versions VALUES ('curl-pg15', '1.0.27-1', 'el8, arm', 1, '20230215', 'pg15', '', '');
 
 INSERT INTO projects VALUES ('cron', 'ext', 4, 0, 'hub',0, 'https://github.com/citusdata/pg_cron/releases',
   'cron', 1, 'cron.png', 'Background Job Scheduler', 'https://github.com/citusdata/pg_cron');
@@ -320,11 +320,11 @@ INSERT INTO versions VALUES ('cron-pg15', '1.5.1-1', 'el8, arm', 0, '20230215', 
 INSERT INTO projects VALUES ('spock', 'pge', 4, 0, 'hub', 1, 'https://github.com/pgedge/spock/tags',
   'spock', 1, 'spock.png', 'Logical & Multi-Active Replication', 'https://github.com/pgedge/spock/#spock');
 INSERT INTO releases VALUES ('spock30-pg15', 4, 'spock', 'Spock', '', 'prod', '', 1, 'pgEdge Community', '', '');
-INSERT INTO versions VALUES ('spock30-pg15', '3.0.23-1', 'el8, el9, arm, arm9, osx', 0, '20230418', 'pg15', '', '');
+INSERT INTO versions VALUES ('spock30-pg15', '3.0.23-1', 'el8, el9, arm, arm9', 1, '20230418', 'pg15', '', '');
 
 INSERT INTO releases VALUES ('spock31-pg15', 4, 'spock', 'Spock', '', 'test', '', 1, 'pgEdge Community', '', '');
 INSERT INTO releases VALUES ('spock31-pg16', 4, 'spock', 'Spock', '', 'test', '', 1, 'pgEdge Community', '', '');
-INSERT INTO versions VALUES ('spock31-pg15', '3.1dev3-1', 'el8, arm8, el9, arm9', 1, '20230511', 'pg15', '', '');
+INSERT INTO versions VALUES ('spock31-pg15', '3.1dev3-1', 'el9, arm9', 1, '20230511', 'pg15', '', '');
 INSERT INTO versions VALUES ('spock31-pg16', '3.1dev3-1', 'el9, arm9', 1, '20230511', 'pg16', '', '');
 
 INSERT INTO projects VALUES ('pglogical', 'ext', 4, 0, 'hub', 1, 'https://github.com/2ndQuadrant/pglogical/releases',
@@ -392,7 +392,7 @@ INSERT INTO versions VALUES ('pgdiff', '1.1', '', 0, '20230215', '', '', '');
 INSERT INTO projects VALUES ('csvdiff', 'pge', 0, 0, 'hub', 3, 'https://github.com/luss/csvdiff/tags',
   'csvdiff',  0, 'csvdiff.png', 'csvdiff', 'https://github.com/luss/csvdiff');
 INSERT INTO releases VALUES ('csvdiff', 2, 'csvdiff',  'CSV Diff', '', 'test', '', 1, '', '', '');
-INSERT INTO versions VALUES ('csvdiff', '1.4.0', 'el8, arm, osx', 1, '20230206', '', '', '');
+INSERT INTO versions VALUES ('csvdiff', '1.4.0', 'el8, arm', 1, '20230206', '', '', '');
 
 INSERT INTO projects VALUES ('pgcat2', 'pge', 4, 6432, 'hub', 3, 'https://github.com/pgedge/pgcat2/tags',
   'cat',  0, 'pgcat2.png', 'Connection Pooler', 'https://github.com/pgedge/pgcat2');
