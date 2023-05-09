@@ -1,3 +1,10 @@
 #!/bin/bash
 
-./nc stop pg$pgN
+if [ -d "pg16" ]; then
+  ./nc stop pg16
+fi
+
+if [ -d "pg15" ]; then
+  ./nc stop pg15
+fi
+

@@ -2,11 +2,17 @@
 cd "$(dirname "$0")"
 
 echo " "
-echo "## Remove pgedge $pgN ###########################################"
+echo "## Remove pgedge ################################################"
 
 cd ..
 
-./nc remove pg$pgN
+if [ -d "pg16" ]; then
+  ./nc remove pg16
+fi
+
+if [ -d "pg15" ]; then
+  ./nc remove pg15
+fi
 
 if [ -d "postgrest" ]; then
   ./nc remove postgrest
