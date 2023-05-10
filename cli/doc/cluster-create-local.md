@@ -18,7 +18,8 @@
     --port1=PORT1
         Default: 6432
     --pg=PG
-        Default: 15
+        Type: Optional[]
+        Default: None
     -a, --app=APP
         Type: Optional[]
         Default: None
