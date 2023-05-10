@@ -1,12 +1,12 @@
 # pgEdge Platform - Getting Started Guide
 
-In this guide we will step through setting up pgEdge Platform. Our goal in this guide is to create a multi-master (multi-active) pgEdge 
-cluster and then use pgbench to create some representative tables and read/write activity on the cluster.
+In this guide we will step through setting up pgEdge Platform. Our example will create a two-node multi-master (multi-active) pgEdge 
+cluster, and then use pgbench to create some representative tables and read/write activity on the cluster.
 
 Two software components from pgEdge will be used in this guide. First, we’ll install the `nodectl` Command Line Interface (CLI) which is 
-used to configure Postgres and install additional extensions. Second is `Spock`, the Postgres extension providing *logical, multi-master replication*.
+used to install and configure PostgreSQL (Postgres) and install additional extensions. Second is `Spock`, the Postgres extension that provides logical, multi-master (multi-active)replication.
 
-You’ll need root permissions on these systems in order to autostart.
+Before running the commands in this tutorial, you should disable SELinux and ensure that a firewall doesn't obstruct access between your nodes. You’ll also need an operating system user with `root` access; this can be an OS user with sudo access to root, configured to support passwordless sudo.
 
 ## Prerequisites
 - RHEL/CentOS/Rocky Linux 9 or Ubuntu 22.04
@@ -15,31 +15,32 @@ You’ll need root permissions on these systems in order to autostart.
 - SSH access into the servers
 
 ## Installation
-In any directory owned by your user, use the following command to install `nodectl`:
+In any directory owned by your user, invoke the following command to create the pgedge directory and install `nodectl`:
 <pre>
 python3 -c "$(curl -fsSL https://pgedge-download.s3.amazonaws.com/REPO/install.py)"
 </pre>
 
-cd into the `pgedge` directory created and install the ***pgEdge Platform*** with the `nodectl` command. 
-Specify a superuser name, password, and a database name. 
-Note that the names cannot be pgEdge and cannot be any postgreSQL reserved words. 
-For the examples given in this documentation, I will be using a database named demo.
+cd into the `pgedge` directory and install the ***pgEdge Platform*** with the `nodectl install pgedge` command. 
+Specify a name for the database superuser name, password, and a database name. 
+Note that the name cannot be the name of an OS superuser, pgEdge, or any of the Postgres reserved words. 
 
 <pre>
 cd pgedge
 ./nodectl install pgedge -U superuser-name -P superuser-password -d database-name
 </pre>
 
-For this demo I will be using the following command:
+For the examples that follow, I'll invoke the `nodectl install pgedge` command with options that install Postgres with database named `demo`, owned by a database superuser named `admin`, with a password of `mypassword1` . Use the following command to create those database objects:
+
 <pre>
 ./nodectl install pgedge -U admin -P mypassword1 -d demo
 </pre>
 
-
-If you encounter an error running this command, you may need to update your SELINUX mode to permissive, reboot, and retry the operation.
+If you encounter an error running this command, you may need to update your SELINUX mode to `permissive` or `disabled`, reboot, and retry the operation.
 
 ## Configuration 
-Using `nodectl` on each node, create the spock components needed for replication. First you will create a spock node by providing the name of the node, network address, and database name. You will provide the IP address of each node and the name of the pgedge user which has been created for replication, not the super user you created. Next you will make replication sets by providing the replication set name and the database name. For both the node name (n1) and the replication set name (demo_replication_set), these can be whatever you want but you will have to reference them in future commands.
+Using `nodectl` on each node, create the spock components needed for replication. First you will create a spock node by providing a name for the node and a connection string that includes the network address, the name of an OS user with root privileges (in our example, `pgedge`), and the database name (`demo`). The connection string is also followed by the database name.
+
+Next you will create a replication set by providing the replication set name and the database name. The node name (n1) and the replication set name (demo_replication_set) can be set to any valid value you choose, but you will have to reference them in future commands.
 
 Node `n1` (IP address 10.1.2.5):
 <pre>
@@ -53,60 +54,66 @@ Node `n2` (IP address 10.2.2.5):
 ./nodectl spock repset-create demo_replication_set demo
 </pre>
 
-Next, use nodectl to create the subscriptions. For these commands you will provide the subscription name, the network address for the node this one is subscribing to, and the database name.
+Next, use nodectl to create the subscriptions. For these commands you will provide a unique subscription name for each node, followed by a connection string that specifies the network address for the other node in the subscription (the node that the current node is subscribing to), the port that will handle database connections for the set, the name of the replication set owner, and the database name. Again, the command is followed by the name of the database.
 
-Node `n1`:
+On node `n1`:
 <pre>
 ./nodectl spock sub-create sub_n1n2 'host=10.2.2.5 port=5432 user=pgedge dbname=demo' demo
 </pre>
 
-Node `n2`:
+On node `n2`:
 <pre>
 ./nodectl spock sub-create sub_n2n1 'host=10.1.2.5 port=5432 user=pgedge dbname=demo' demo
 </pre>
 
-At this point, you will have a two node cluster with cross subscriptions on `n1` to `n2` and `n2` to `n1`. For replication to begin, you will need to add tables to the replication sets and then add those replications to the subscriptions. For this demo, I will be using pgBench to set up a very simple four table database.
+## Creating tables and customizing replication rules
 
-You can source the postgres environment variables and connect to your database with:
+At this point, you will have a two node cluster with cross subscriptions that connect `n1` to `n2` and `n2` to `n1`. For replication to begin, you will need to add tables to the replication sets, and then add those replication sets to the subscriptions. To simplify performing the commands that follow, you may want to open a second terminal window so you can have windows open for both operating system access/pgbench and psql. When you open pgbench or psql, specify your database name after the utility name.
+
+On each node, source the Postgres environment variables to simplify using database tools with the following command:
 <pre>
 source pg15/pg15.env
 </pre>
 
-This also adds pgbench and psql to your PATH. When using either command, you will still need to specify your database name, for example:
+This adds the Postgres pgbench and psql utilities to your OS PATH. 
+
+For this example, I will be using pgbench to set up a very simple four-table database. On each node of your replication set, initialize a PostgreSQL database with the pgbench command. This will result in all nodes containing the same schema and data:
+<pre>
+pgbench -i demo
+</pre>
+
+Then, connect to each node with the psql client:
+
 <pre>
 psql demo
 </pre>
 
-On each node, initialize a postgreSQL database with the pgBench command. This will result in all nodes containing the same schema and data:
-<pre>
-pgbench -i demo
-</pre>
- 
-Once connected to the database, alter the numeric columns to have `LOG_OLD_VALUE` equal to true.  This will make these numeric fields Conflict-Free Delta-Apply columns.
+Once connected, alter the numeric columns, setting `LOG_OLD_VALUE` equal to `true`.  This will make these numeric fields conflict-free delta-apply columns, ensuring that the value replicated is the delta of the committed changes (the old value plus or minus any new value) to a given record:
+
 <pre>
 ALTER TABLE pgbench_accounts ALTER COLUMN abalance SET (LOG_OLD_VALUE=true);
 ALTER TABLE pgbench_branches ALTER COLUMN bbalance SET (LOG_OLD_VALUE=true);
 ALTER TABLE pgbench_tellers ALTER COLUMN tbalance SET (LOG_OLD_VALUE=true);
 </pre>
 
-
-Run the following on both nodes to add these tables to the replication set. The fourth table, pgbench_history, will not be added because it does not have a primary key.
+ Then, on the OS command line for each node, run the following command on both nodes to add these tables to the replication set. The fourth table, pgbench_history, will not be added because it does not have a primary key.
 <pre>
-./nodectl spock repset-add-table demo_replication_set pgbench_* demo
+./nodectl spock repset-add-table demo_replication_set 'pgbench_*' demo
 </pre>
 
-Finish the set up by adding the replication sets to the subscriptions you had created.<br>
-`n1`:
+On the OS command line, finish the set up by adding the replication sets to the subscriptions you had created.<br>
+
+On node `n1`:
 <pre>
 ./nodectl spock sub-add-repset sub_n1n2 demo_replication_set demo
 </pre>
 
-`n2`:
+On node `n2`:
 <pre>
 ./nodectl spock sub-add-repset sub_n2n1 demo_replication_set demo
 </pre>
 
-Check the configuration with the following sql statements
+On the psql command line, check the configuration with the following SQL statements:
 <pre>
 demo=# SELECT * FROM spock.node;
 node_id | node_name
@@ -123,10 +130,10 @@ demo=# SELECT sub_id, sub_name, sub_slot_name, sub_replication_sets  FROM spock.
 (1 row)
 </pre>
 
-## Test Replication
-Run an update on `n1` to see the update on `n2`.
+## Testing Replication
+Now, if you update a row on `n1`, you should see the update to the same row on `n2`.
 
-`n1`:
+On `n1`:
 <pre>
 demo=# SELECT * FROM pgbench_tellers WHERE tid = 1;
  tid | bid | tbalance | filler
@@ -149,12 +156,12 @@ demo=# SELECT * FROM pgbench_tellers WHERE tid = 1;
 (1 row)
 </pre>
 
-Run the following command on both nodes at the same time to run pgBench for one minute. 
+You can also use pgbench to exercise replication; run the following command on both nodes at the same time to run pgbench for one minute. 
 <pre>
 pgbench -R 100 -T 60 -n demo
 </pre>
 
-Check the results on both nodes and see that the sum of the tbalance columns match on both pgbench_tellers tables. Without the Conflict-Free Delta-Apply columns, each conflict would have resulted in accepting the first in, potentially leading to sums that do not match between nodes.
+When you check the results on both nodes, you'll see that the sum of the tbalance columns match on both pgbench_tellers tables. Without the conflict-free delta-apply columns, each conflict would have resulted in accepting the first in, potentially leading to sums that do not match between nodes.
  
 `n1`:
 <pre>
