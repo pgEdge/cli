@@ -452,8 +452,6 @@ initPG () {
   initC  "pgedge"       "pgedge"    "$pgedgeV"     ""         "postgres/pgedge"    "" "" "Y"
 
   if [ "$pgM" == "15" ] && [ "$outPlat" == "osx" ]; then
-    initC  "csvdiff"      "csvdiff"   "$csvdiffV"    "$outPlat" "csvdiff"            "" "" "nil"
-    initC  "pgdiff"       "pgdiff"    "$pgdiffV"     ""         "postgres/pgdiff"    "" "" "nil"
     #initC  "postgrest"    "postgrest" "$postgrestV"  "$outPlat" "postgres/postgrest" "" "" "nil"
     initC  "readonly-pg$pgM" "readonly" "$readonlyV" "$outPlat" "postgres/readonly"  "" "" "nil"
     initC  "curl-pg$pgM"  "curl"    "$curlV"         "$outPlat" "postgres/curl"      "" "" "nil"
@@ -475,7 +473,6 @@ initPG () {
 
   if [ "$pgM" == "15" ] && [ "$isEL" == "True" ]; then
     ##initC  "pgcat2"  "pgcat2"  "$catV"  "$outPlat" "postgres/pgcat2" "" "" "nil"
-    ##initC  "spock30-pg$pgM" "spock30"   "$spock30V"        "$outPlat" "postgres/spock30"     "" "" "nil"
     initC  "spock31-pg$pgM" "spock31"   "$spock31V"        "$outPlat" "postgres/spock31"     "" "" "nil"
     ##initC "multicorn2-pg$pgM" "multicorn2" "$multicorn2V" "$outPlat" "postgres/multicorn2" "" "" "nil"
     ##initC "esfdw-pg$pgM" "esfdw" "$esfdwV" "$outPlat" "postgres/esfdw" "" "" "Y"
@@ -511,12 +508,13 @@ initPG () {
     initC "pglogical-pg$pgM" "pglogical" "$logicalV" "$outPlat" "postgres/logical" "" "" "nil"
   fi
 
-  initC  "bouncer" "bouncer" "$bouncerV" "$outPlat" "postgres/bouncer" "" "" "nil"
-  initC  "backrest" "backrest" "$backrestV" "$outPlat" "postgres/backrest" "" "" "nil"
-  ##initC  "csvdiff" "csvdiff" "$csvdiffV" "$outPlat" "csvdiff" "" "" "nil"
-  initC  "pgdiff" "pgdiff" "$pgdiffV" "" "postgres/pgdiff" "" "" "nil"
-  initC  "patroni"   "patroni"   "$patroniV" "" "postgres/patroni" "" "" "nil"
-  initC  "zookeeper" "zookeeper"     "$zookV"   "" "apache/zookeeper"            "" "" "Y"
+  if [  "$isEL9" == "True" ]; then
+    initC  "bouncer" "bouncer" "$bouncerV" "$outPlat" "postgres/bouncer" "" "" "nil"
+    initC  "backrest" "backrest" "$backrestV" "$outPlat" "postgres/backrest" "" "" "nil"
+    initC  "csvdiff" "csvdiff" "$csvdiffV" "$outPlat" "csvdiff" "" "" "nil"
+    initC  "patroni"   "patroni"   "$patroniV" "" "postgres/patroni" "" "" "nil"
+    initC  "zookeeper" "zookeeper"     "$zookV"   "" "apache/zookeeper"            "" "" "Y"
+  fi
   ##initC "nginx" "nginx" "$nginxV" "" "nginx" "" "" "Y"
   ##initC "prompgexp"  "prompgexp"  "$prompgexpV"  ""  "prometheus/pg_exporter"  "" "" "Y"
   ##initC "nodejs"   "nodejs" "$nodejsV" "" "nodejs"           "" "" "Y"

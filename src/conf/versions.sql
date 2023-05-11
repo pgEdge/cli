@@ -382,15 +382,10 @@ INSERT INTO projects VALUES ('pgedge', 'pge', 0, 0, 'hub', 3, 'http://pgedge.org
 INSERT INTO releases VALUES ('pgedge', 1, 'pgedge',  'pgEdge', '', 'test', '', 1, 'pgEdge Community', '', '');
 INSERT INTO versions VALUES ('pgedge', '2-1',   '', 1, '20230511', '', '', '');
 
-INSERT INTO projects VALUES ('pgdiff', 'pge', 4, 0, 'csvdiff', 3, 'https://github.com/pgedge/pgdiff/tags',
-  'pgdiff',  0, 'pgdiff.png', 'pgdiff', 'https://github.com/pgedge/pgdiff');
-INSERT INTO releases VALUES ('pgdiff', 2, 'pgdiff',  'PG Diff', '', 'test', '', 1, 'pgEdge Community', '', '');
-INSERT INTO versions VALUES ('pgdiff', '1.1', '', 0, '20230215', '', '', '');
-
 INSERT INTO projects VALUES ('csvdiff', 'pge', 0, 0, 'hub', 3, 'https://github.com/luss/csvdiff/tags',
   'csvdiff',  0, 'csvdiff.png', 'csvdiff', 'https://github.com/luss/csvdiff');
 INSERT INTO releases VALUES ('csvdiff', 2, 'csvdiff',  'CSV Diff', '', 'test', '', 1, '', '', '');
-INSERT INTO versions VALUES ('csvdiff', '1.4.0', 'el8, arm', 1, '20230206', '', '', '');
+INSERT INTO versions VALUES ('csvdiff', '1.4.0', 'el9, arm9', 1, '20230511', '', '', '');
 
 INSERT INTO projects VALUES ('pgcat2', 'pge', 4, 6432, 'hub', 3, 'https://github.com/pgedge/pgcat2/tags',
   'cat',  0, 'pgcat2.png', 'Connection Pooler', 'https://github.com/pgedge/pgcat2');
