@@ -27,7 +27,7 @@ def write_tbl_csv(p_con, p_prfx, p_schm, p_tbl, p_cols, p_key, p_base_dir=None):
 
     copy_sql = "COPY (" + sql + ") TO STDOUT WITH DELIMITER ',' CSV HEADER;"
 
-    print("\n### COPY table " + p_tbl + " to " + out_file + " #############")
+    util.message("\n## COPY table " + p_tbl + " to " + out_file + " #############")
 
     with open(out_file, "wb") as f:
       with cur.copy(copy_sql) as copy:
@@ -37,7 +37,7 @@ def write_tbl_csv(p_con, p_prfx, p_schm, p_tbl, p_cols, p_key, p_base_dir=None):
     with open(out_file, 'r') as fp:
       lines = len(fp.readlines())
 
-    print(" detail rows = " + str(format(lines - 1, "n")))
+    util.message(" detail rows = " + str(format(lines - 1, "n")))
   except Exception as e:
     util.exit_message("Error in write_tbl_csv():\n" + str(e), 1)
 
@@ -115,13 +115,13 @@ def diff_tables(cluster_name, node1, node2, table_name):
     util.message("Installing the required 'csvdiff' component.")
     os.system("./nodectl install csvdiff")
 
-  util.message(f"Validating Cluster {cluster_name} exists")
+  util.message(f"## Validating Cluster {cluster_name} exists")
   util.check_cluster_exists(cluster_name)
 
   if node1 == node2:
     util.exit_message("node1 must be different than node2")
 
-  util.message(f"Validating nodes {node1} & {node2} exist")
+  util.message(f"## Validating nodes {node1} & {node2} exist\n")
   util.check_node_exists(cluster_name, node1)
   util.check_node_exists(cluster_name, node2)
 
@@ -130,20 +130,20 @@ def diff_tables(cluster_name, node1, node2, table_name):
     util.exit_message("TableName must be of form 'schema.table_name'")
   l_schema = nm_lst[0]
   l_table = nm_lst[1]
-  print(f"schema={l_schema}, table={l_table}")
+  util.message(f"## schema={l_schema}, table={l_table}")
 
   db, pg, count, usr, cert, nodes = cluster.load_json(cluster_name)
-  util.message(f"db={db}, user={usr}")
+  util.message(f"## db={db}, user={usr}\n")
   con1 = None
   con2 = None
   try:
     for nd in nodes:
       if nd["nodename"] == node1:
-        util.message("Getting Conection to Node1 - " + nd["ip"] + ":" + str(nd["port"]))
+        util.message("## Getting Conection to Node1 - " + nd["ip"] + ":" + str(nd["port"]))
         con1 = psycopg.connect(dbname=db, user=usr, host=nd["ip"], port=nd["port"])
 
       if nd["nodename"] == node2:
-        util.message("Getting Conection to Node2 - " + nd["ip"] + ":" + str(nd["port"]))
+        util.message("## Getting Conection to Node2 - " + nd["ip"] + ":" + str(nd["port"]) + "\n")
         con2 = psycopg.connect(dbname=db, user=usr, host=nd["ip"], port=nd["port"])
 
   except Exception as e:
@@ -152,26 +152,26 @@ def diff_tables(cluster_name, node1, node2, table_name):
   c1_cols = get_cols(con1, l_schema, l_table)
   c1_key = get_key(con1, l_schema, l_table)
   if c1_cols and c1_key:
-    print(f"con1 tbl_cols = {c1_cols}   tbl_key = {c1_key}")
+    util.message(f"## con1 cols={c1_cols}  key={c1_key}")
   else:
     util.exit_message("Table w/ Primary Key not in con1")
 
   c2_cols = get_cols(con2, l_schema, l_table)
   c2_key = get_key(con2, l_schema, l_table)
   if c2_cols and c2_key:
-    print(f"con2 tbl_cols = {c2_cols}   tbl_key = {c2_key}")
+    util.message(f"## con2 cols={c2_cols}  key={c2_key}")
   else:
     util.exit_message("Table w/ Primary Key not in con2")
 
   if (c1_cols != c2_cols) or (c1_key != c2_key):
-    exit_message("Tables don't match in con1 & con2")
+    util.exit_message("Tables don't match in con1 & con2")
 
   csv1 = write_tbl_csv(con1, "con1", l_schema, l_table, c1_cols, c1_key, l_dir)
 
   csv2 = write_tbl_csv(con2, "con2", l_schema, l_table, c2_cols, c2_key, l_dir)
 
   cmd = "csvdiff -o json " + csv1 + "  " + csv2
-  print("\n### Running # " + cmd + "\n")
+  util.message("\n## Running # " + cmd + "\n")
   diff_s = subprocess.check_output(cmd, shell=True)
   diff_j = json.loads(diff_s)
 
@@ -179,7 +179,7 @@ def diff_tables(cluster_name, node1, node2, table_name):
     print(json.dumps(diff_j, indent=2))
     rc = 1
   else:
-    util.message("TABLES ARE IDENTICAL!!")
+    util.message("TABLES ARE SAME!!")
     rc = 0
 
   return(rc)
