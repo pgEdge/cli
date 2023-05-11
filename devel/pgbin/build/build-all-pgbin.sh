@@ -68,7 +68,7 @@ elif [ "$majorV" == "15" ]; then
   pgBuildV=$pg15BuildV
 
   cd spock
-  git checkout REL3_0_STABLE
+  git checkout REL3_1_STABLE
   git pull
   diff1=$PWD/pg15-log_old_value.diff
   if [ -f "$diff1" ]; then
@@ -84,7 +84,7 @@ elif [ "$majorV" == "16" ]; then
   pgBuildV=$pg16BuildV
 
   cd spock
-  git checkout pg_16_compatibility
+  git checkout REL3_1_STABLE
   git pull
   diff1=$PWD/pg16-log_old_value.diff
   if [ -f "$diff1" ]; then
