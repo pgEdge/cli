@@ -786,14 +786,10 @@ def delete_service_win(svcName):
 
 ## is this component PostgreSQL ##################################
 def is_postgres(p_comp):
-  pgXX = ['pg10', 'pg11', 'pg12', 'pg13', 'pg14', 'pg15', 'pg16']
+  pgXX = ['pg11', 'pg12', 'pg13', 'pg14', 'pg15', 'pg16', 'pg17']
   if p_comp in pgXX:
     return True
                 
-  pgdgXX = ['pgdg95', 'pgdg96', 'pgdg10', 'pgdg11', 'pgdg12']
-  if p_comp in pgdgXX:
-    return True
-
   return False
 
 
