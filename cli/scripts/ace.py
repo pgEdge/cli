@@ -25,11 +25,13 @@ def diff_tables(cluster_name, node1, node2, table_name):
     util.message("Installing the required 'pgdiff' component.")
     os.system("./nodectl install pgdiff")
 
+  util.message(f"Validating Cluster {cluster_name} exists")
   util.check_cluster_exists(cluster_name)
 
   if node1 == node2:
     util.exit_message("node1 must be different than node2")
 
+  util.message(f"Validating nodes {node1} & {node2} exist")
   util.check_node_exists(cluster_name, node1)
   util.check_node_exists(cluster_name, node2)
     
