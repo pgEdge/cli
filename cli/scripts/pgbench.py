@@ -34,14 +34,14 @@ def log_old_val(tbl, col, val, nc, db, pg):
 def install(cluster_name):
   util.message("\n# loading cluster definition ######")
   db, pg, count, usr, cert, nodes = cluster.load_json(cluster_name)
-  db_pg = " " + db + " --pg=" + pg
+  db_pg = " " + str(db) + " --pg=" + str(pg)
 
   util.message("\n# setup individual nodes ##########")
   for nd in nodes:
     nodename = nd["nodename"]
     port = nd["port"]
     nc = "cluster/" + nd["path"] + "/nodectl "
-    setup_node(nodename, port, nc, count, db, pg, usr)
+    setup_node(nodename, port, nc, count, db, str(pg), usr)
 
   util.message("\n# wire nodes together #############")
   for pub in nodes:
