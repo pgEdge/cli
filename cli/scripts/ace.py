@@ -5,7 +5,7 @@
 """ACE is the place of the Anti Chaos Engine"""
 
 import os, sys, random, time, json, socket
-import util, fire, meta, pgbench 
+import util, fire, meta, pgbench, cluster
 
 
 def diff_schemas():
@@ -34,7 +34,24 @@ def diff_tables(cluster_name, node1, node2, table_name):
   util.message(f"Validating nodes {node1} & {node2} exist")
   util.check_node_exists(cluster_name, node1)
   util.check_node_exists(cluster_name, node2)
-    
+
+  db, pg, count, usr, cert, nodes = cluster.load_json(cluster_name)
+  ##print(f"DEBUG: db = {db}, user={usr}, nodes = {nodes}")
+  node1_con = ""
+  node2_con = ""
+  for nd in nodes:
+    if nd["nodename"] == node1:
+      prt = nd["port"]
+      adr = nd["ip"]
+      node1_con = f"db={db}, port={prt}, host={adr}, user={usr}"
+      print(f"DEBUG: node1_con: '{node1_con}'")
+
+    if nd["nodename"] == node2:
+      prt = nd["port"]
+      adr = nd["ip"]
+      node2_con = f"db={db}, port={prt}, host={adr}, user={usr}"
+      print(f"DEBUG: node2_con: '{node2_con}'")
+
 
 if __name__ == '__main__':
   fire.Fire({
