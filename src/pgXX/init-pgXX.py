@@ -134,9 +134,13 @@ logfile = os.path.join(pg_log, "install.log")
 util.message('\nInitializing Postgres DB with:')
 initdb_cmd = os.path.join(pg_home, 'bin', 'initdb')
 
-# default to utf8 across platforms
 if args.options == "":
-  init_options = '-E UTF8 --no-locale'
+  init_options = "-E UTF8"
+  if pgver >= "pg15":
+    init_options = init_options + " --data-checksums"
+  else:
+    init_options = init_options + " --no-locale"
+    
 else:
   init_options = args.options
 
