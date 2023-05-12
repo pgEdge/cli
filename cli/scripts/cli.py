@@ -1397,8 +1397,19 @@ try:
 
   ## PSQL #######################################################################
   if p_mode == 'psql':
-    print(len(args))
-    util.exit_message("not yet")
+    if len(args) != 4:
+      util.exit_message('only two args allowed, try: psql "sql command" database')
+
+    sql_cmd = str(args[2])
+    db = str(args[3])
+    print(f"sql_cmd={sql_cmd}, db={db}")
+    cmd = "./nc pgbin 15 'psql -c \"" + sql_cmd + "\" " + db + "'"
+    print(f"cmd={cmd}")
+    rc = os.system(cmd)
+    if rc == 0:
+      sys.exit(0)
+    else:
+      sys.exit(1)
 
   ## PGBIN #######################################################################
   if p_mode == 'pgbin':
