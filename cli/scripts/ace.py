@@ -4,7 +4,7 @@
 
 """ACE is the place of the Anti Chaos Engine"""
 
-import os, sys, random, time, json, socket, subprocess
+import os, sys, random, time, json, socket, subprocess, re
 import util, fire, meta, pgbench, cluster
 
 l_dir = "/tmp"
@@ -84,8 +84,13 @@ def run_psyco_sql(pg_v, db, cmd, ip, usr=None):
 def prCyan(skk): print("\033[96m {}\033[00m" .format(skk))
 def prRed(skk): print("\033[91m {}\033[00m" .format(skk))
 
+
 def get_csv_file_name(p_prfx, p_schm, p_tbl, p_base_dir="/tmp"):
   return(p_base_dir + os.sep + p_prfx + "-" + p_schm + "-" + p_tbl + ".csv")
+
+
+def get_dump_file_name(p_prfx, p_schm, p_base_dir="/tmp"):
+  return(p_base_dir + os.sep + p_prfx + "-" + p_schm + ".sql")
 
 
 def write_tbl_csv(p_con, p_prfx, p_schm, p_tbl, p_cols, p_key, p_base_dir=None):
@@ -116,6 +121,36 @@ def write_tbl_csv(p_con, p_prfx, p_schm, p_tbl, p_cols, p_key, p_base_dir=None):
 
   return(out_file)
 
+
+def write_pg_dump(p_ip, p_db, p_prfx, p_schm, p_base_dir="/tmp"):
+  out_file = get_dump_file_name(p_prfx, p_schm, p_base_dir)
+  try:
+    cmd = "pg_dump -s -n " + p_schm + " -h " + p_ip + " -d " +  p_db + " > " + out_file
+    os.system(cmd)
+  except Exception as e:
+      util.exit_exception(e)
+  return(out_file)
+
+
+def fix_schema(diff_file, sql1, sql2):
+  newtable=False
+  with open(diff_file) as diff_list:
+    for i in diff_list.readlines():
+      if re.search("\,", i):
+        linenum=i.split(",")[0]
+      elif re.search(r"^< CREATE.", i):
+        newtable=True
+        print(i.replace("<",""))
+      elif re.search(r"^< ALTER.", i):
+        print(i.replace("<",""))
+      elif newtable == True:
+         print(i.replace("<",""))
+         if re.search(r".;$", i):
+           newtable=False
+      else:
+        continue
+  return(1)
+      
 
 def get_cols(p_con, p_schema, p_table):
   sql = """
@@ -171,9 +206,38 @@ SELECT C.COLUMN_NAME
   return(','.join(key_lst))
 
 
-def diff_schemas():
+def diff_schemas(cluster_name, node1, node2, schema_name):
   """Compare schema on different cluster nodes"""
-  pass
+  if not os.path.isfile("/usr/local/bin/csvdiff"):
+    util.message("Installing the required 'csvdiff' component.")
+    os.system("./nodectl install csvdiff")
+
+  util.message(f"## Validating Cluster {cluster_name} exists")
+  util.check_cluster_exists(cluster_name)
+
+  if node1 == node2:
+    util.exit_message("node1 must be different than node2")
+    
+  l_schema = schema_name
+
+  db, pg, count, usr, cert, nodes = cluster.load_json(cluster_name)
+  util.message(f"## db={db}, user={usr}\n")
+  for nd in nodes:
+    if nd["nodename"] == node1:
+      sql1 = write_pg_dump(nd["ip"], db, "con1", l_schema)
+    if nd["nodename"] == node2:
+      sql2 = write_pg_dump(nd["ip"], db, "con2", l_schema)
+
+  cmd = "diff " + sql1 + "  " + sql2 + " > /tmp/diff.txt"
+  util.message("\n## Running # " + cmd + "\n")
+  rc = os.system(cmd)
+  if rc == 0:
+    util.message("TABLES ARE SAME!!")
+    return(rc)
+  else:
+    util.message("TABLES ARE NOT THE SAME!!") 
+    rc = fix_schema("/tmp/diff.txt", sql1, sql2)
+  return(rc)
 
 
 def diff_spock(cluster_name, node1, node2, pg=None):
