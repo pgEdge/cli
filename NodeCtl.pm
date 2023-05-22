@@ -16,7 +16,7 @@ our (@all_nodes);
 
 our @EXPORT = qw(
     get_new_nc
-    get_info_item
+    get_info_item_pg15
     get_home_dir
     get_data_dir
     path
@@ -75,7 +75,11 @@ sub get_info_item_pg15
 {
     my ($self, $item) = @_;
 
-    my $out = decode_json(`./pgedge/nc --json info pg15`);
+    my $home_dir = $self->get_home_dir();
+
+    my $cmd = $self->get_home_dir() . "/nc --json info pg15";
+    my $raw = `$cmd`;
+    my $out = decode_json(`$cmd`);
     
     return $out->[0]->{$item};
 }
@@ -90,7 +94,8 @@ sub get_home_dir
 {
     my ($self) = @_;
 
-    my $out = decode_json(`./pgedge/nc --json info`);
+    my $raw = `./nc --json info`;
+    my $out = decode_json(`./nc --json info`);
     
     return $out->[0]->{"home"};
 }
@@ -104,7 +109,7 @@ sub get_data_dir
 {
     my ($self) = @_;
 
-    return $self->get_info_item("datadir");
+    return $self->get_info_item_pg15("datadir");
 }
 
 
