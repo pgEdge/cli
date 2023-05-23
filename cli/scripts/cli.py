@@ -1404,7 +1404,13 @@ try:
     sql_cmd = str(args[3])
     db = str(args[4])
 
-    cmd = "./nc pgbin " + pg_v + " 'psql -c \"" + sql_cmd + "\" " + db + "'"
+    if sql_cmd == "-i":
+      ## leave us at the interactive psql prompt
+      sql_cmd = ""
+    else:
+      sql_cmd = "-c \"" + sql_cmd + "\" "
+
+    cmd = "./nc pgbin " + pg_v + " 'psql " + sql_cmd +  db + "'"
 
     if isVERBOSE:
       print(f"pg_v={pg_v}, sql_cmd={sql_cmd}, db={db}")
