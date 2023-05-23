@@ -1,12 +1,12 @@
 
 ## set -x
 
-v11=11.19
-v12=12.14
-v13=13.10
-v14=14.7
-v15=15.2
-v16=16dev3
+v11=11.20
+v12=12.15
+v13=13.11
+v14=14.8
+v15=15.3
+v16=16beta1
 
 UNAME=`uname`
 
@@ -53,8 +53,7 @@ downBuild () {
   echo " "
   echo "##################### PostgreSQL $1 ###########################"
   echoCmd "rm -rf *$1*"
-  ##echoCmd "wget https://ftp.postgresql.org/pub/source/v$1/postgresql-$1.tar.gz"
-  cp $IN/sources/postgresql-$1.tar.gz .
+  echoCmd "cp $IN/sources/postgresql-$1.tar.gz ."
   
   if [ ! -d src ]; then
     mkdir src
@@ -68,9 +67,9 @@ downBuild () {
   echoCmd "cd $1"
 
   if [ "$pgV" == "15" ]; then
-    patchFromSpock REL3_0_STABLE       pg15-log_old_value.diff
+    patchFromSpock REL3_1_STABLE pg15-log_old_value.diff
   elif [ "$pgV" == "16" ]; then
-    patchFromSpock pg_16_compatibility pg16-log_old_value.diff
+    patchFromSpock REL3_1_STABLE pg16-log_old_value.diff
   fi
 
   makeInstall

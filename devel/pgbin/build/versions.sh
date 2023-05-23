@@ -1,10 +1,10 @@
 #!/bin/bash
 
-spockFull31V=3.1.1
+spockFull31V=3.1.2
 spockBuild31V=1
 
-pg16V=16dev3
-pg16BuildV=3
+pg16V=16beta1
+pg16BuildV=1
 
 pg15V=15.3
 pg15BuildV=1

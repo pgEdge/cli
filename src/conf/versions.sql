@@ -164,12 +164,11 @@ INSERT INTO releases VALUES ('pg15', 2, 'pg', '', '', 'prod',
   1, 'POSTGRES', '', '');
 INSERT INTO versions VALUES ('pg15', '15.3-1',  'el8, el9, arm, arm9', 1, '20230511','', '', '');
 INSERT INTO versions VALUES ('pg15', '15.2-4',  'el8, el9, arm, arm9', 0, '20230426','', '', '');
-INSERT INTO versions VALUES ('pg15', '15.2-1',  'el8, arm', 0, '20230209','', '', '');
 
 INSERT INTO releases VALUES ('pg16', 2, 'pg', '', '', 'test', 
   '<font size=-1>New in <a href=https://www.postgresql.org/docs/16/release-16.html>2023!</a></font>',
   1, 'POSTGRES', '', '');
-INSERT INTO versions VALUES ('pg16', '16devel-3',  'el9, arm9', 1, '20230511','', '', '');
+INSERT INTO versions VALUES ('pg16', '16beta1-1',  'el9, arm9', 1, '20230525','', '', '');
 
 INSERT INTO projects VALUES ('debezium', 'strm', 10, 8083, '', 3, 'https://debezium.io/releases/1.9/',
   'Debezium', 0, 'debezium.png', 'Heterogeneous CDC', 'https://debezium.io');
@@ -322,8 +321,9 @@ INSERT INTO projects VALUES ('spock', 'pge', 4, 0, 'hub', 1, 'https://github.com
   'spock', 1, 'spock.png', 'Logical & Multi-Active Replication', 'https://github.com/pgedge/spock/#spock');
 INSERT INTO releases VALUES ('spock31-pg15', 4, 'spock', 'Spock', '', 'prod', '', 1, 'pgEdge Community', '', '');
 INSERT INTO releases VALUES ('spock31-pg16', 4, 'spock', 'Spock', '', 'prod', '', 1, 'pgEdge Community', '', '');
-INSERT INTO versions VALUES ('spock31-pg15', '3.1.1-1', 'el9, arm9', 1, '20230511', 'pg15', '', '');
-INSERT INTO versions VALUES ('spock31-pg16', '3.1.1-1', 'el9, arm9', 1, '20230511', 'pg16', '', '');
+INSERT INTO versions VALUES ('spock31-pg15', '3.1.1-1', 'el8, el9, arm, arm9', 1, '20230511', 'pg15', '', '');
+INSERT INTO versions VALUES ('spock31-pg16', '3.1.2-1', 'el9, arm9', 1, '20230525', 'pg16', '', '');
+INSERT INTO versions VALUES ('spock31-pg16', '3.1.1-1', 'el9, arm9', 0, '20230511', 'pg16', '', '');
 
 INSERT INTO projects VALUES ('pglogical', 'ext', 4, 0, 'hub', 1, 'https://github.com/2ndQuadrant/pglogical/releases',
   'pglogical', 1, 'spock.png', 'Logical Replication', 'https://github.com/2ndQuadrant/pglogical');
