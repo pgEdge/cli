@@ -1397,14 +1397,19 @@ try:
 
   ## PSQL #######################################################################
   if p_mode == 'psql':
-    if len(args) != 4:
-      util.exit_message('only two args allowed, try: psql "sql command" database')
+    if len(args) != 5:
+      util.exit_message('Three args required, try: psql 15 "sql command" database')
 
-    sql_cmd = str(args[2])
-    db = str(args[3])
-    print(f"sql_cmd={sql_cmd}, db={db}")
-    cmd = "./nc pgbin 15 'psql -c \"" + sql_cmd + "\" " + db + "'"
-    print(f"cmd={cmd}")
+    pg_v = str(args[2])
+    sql_cmd = str(args[3])
+    db = str(args[4])
+
+    cmd = "./nc pgbin " + pg_v + " 'psql -c \"" + sql_cmd + "\" " + db + "'"
+
+    if isVERBOSE:
+      print(f"pg_v={pg_v}, sql_cmd={sql_cmd}, db={db}")
+      print(f"cmd={cmd}")
+
     rc = os.system(cmd)
     if rc == 0:
       sys.exit(0)
@@ -1427,7 +1432,7 @@ try:
     pg_dir = "pg" + pg_v
     pg_bin = pg_dir + "/bin/"
     if not os.path.isdir(pg_dir):
-      util.exit_message("postgres not found at: " + pg_dir, 1, isJSON)
+      util.exit_message(f"postgres directory '{pg_dir}' not found", 1)
 
     cmd1 = pg_bin + cmd0
     if not os.path.exists(cmd1):
