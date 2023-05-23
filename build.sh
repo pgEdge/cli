@@ -193,40 +193,40 @@ initDir () {
   fi
 
   copy-pgXX "orafce"
-  copy-pgXX "fixeddecimal"
-  copy-pgXX "spock30"
   copy-pgXX "spock31"
   copy-pgXX "curl"
   copy-pgXX "pglogical"
   copy-pgXX "anon"
   copy-pgXX "plprofiler"
   copy-pgXX "pldebugger"
-  copy-pgXX "hypopg"
   copy-pgXX "partman"
   copy-pgXX "repack"
   copy-pgXX "bulkload"
   copy-pgXX "audit"   
   copy-pgXX "postgis"   
-  copy-pgXX "mysqlfdw"  
-  copy-pgXX "apicurio"
+  ##copy-pgXX "mysqlfdw"  
+  ##copy-pgXX "apicurio"
   copy-pgXX "mongofdw"  
   copy-pgXX "decoderbufs"  
-  copy-pgXX "oraclefdw"  
-  copy-pgXX "tdsfdw"  
+  ##copy-pgXX "oraclefdw"  
+  ##copy-pgXX "tdsfdw"  
   copy-pgXX "cron"
   copy-pgXX "readonly"
   copy-pgXX "foslots"
   copy-pgXX "citus"
-  copy-pgXX "multicorn2"
-  copy-pgXX "esfdw"
-  copy-pgXX "bqfdw"
-  copy-pgXX "pljava"
+  ##copy-pgXX "multicorn2"
+  ##copy-pgXX "esfdw"
+  ##copy-pgXX "bqfdw"
+  ##copy-pgXX "pljava"
   copy-pgXX "plv8"
   copy-pgXX "hintplan"
-  copy-pgXX "nginx"
+  ##copy-pgXX "nginx"
+  copy-pgXX "timescaledb"
 
   ## ARCHIVED #########
-  ##copy-pgXX "timescaledb"
+  ##copy-pgXX "fixeddecimal"
+  ##copy-pgXX "spock30"
+  ##copy-pgXX "hypopg"
   ##copy-pgXX "cassandrafdw"
   ##copy-pgXX "hivefdw"
   ##copy-pgXX "pgtsql"
@@ -451,29 +451,26 @@ initPG () {
 
   initC  "pgedge"       "pgedge"    "$pgedgeV"     ""         "postgres/pgedge"    "" "" "Y"
 
-  if [ "$pgM" == "15" ] && [ "$outPlat" == "osx" ]; then
-    #initC  "postgrest"    "postgrest" "$postgrestV"  "$outPlat" "postgres/postgrest" "" "" "nil"
-    initC  "readonly-pg$pgM" "readonly" "$readonlyV" "$outPlat" "postgres/readonly"  "" "" "nil"
-    initC  "curl-pg$pgM"  "curl"    "$curlV"         "$outPlat" "postgres/curl"      "" "" "nil"
-    initC  "spock31-pg$pgM" "spock31"   "$spock31V"        "$outPlat" "postgres/spock31"     "" "" "nil"
-    ##initC  "cron-pg$pgM"  "cron"    "$cronV"         "$outPlat" "postgres/cron"      "" "" "nil"
-    ##initC  "pgcat2"       "pgcat2"  "$catV"          "$outPlat" "postgres/pgcat2"    "" "" "nil"
-    ##initC  "patroni"      "patroni" "$patroniV"      ""         "postgres/patroni"   "" "" "nil"
-    return
-  fi
+  ##if [ "$pgM" == "15" ] && [ "$outPlat" == "osx" ]; then
+  ##  initC  "readonly-pg$pgM" "readonly" "$readonlyV" "$outPlat" "postgres/readonly"  "" "" "nil"
+  ##  initC  "curl-pg$pgM"  "curl"    "$curlV"         "$outPlat" "postgres/curl"      "" "" "nil"
+  ##  initC  "spock31-pg$pgM" "spock31"   "$spock31V"        "$outPlat" "postgres/spock31"     "" "" "nil"
+  ##  return
+  ##fi
 
   if [ "$outPlat" == "osx" ]; then
     return
   fi
 
   if [ "$pgM" == "16" ] && [ "$isEL9" == "True" ]; then
-    initC  "spock31-pg$pgM" "spock31"   "$spock31V"        "$outPlat" "postgres/spock31"     "" "" "nil"
-    initC "foslots-pg$pgM" "foslots" "$foslotsV" "$outPlat" "postgres/foslots" "" "" "nil"
+    initC  "spock31-pg$pgM" "spock31"   "$spock31V"   "$outPlat" "postgres/spock31"     "" "" "nil"
+    initC  "foslots-pg$pgM" "foslots"   "$foslotsV"   "$outPlat" "postgres/foslots" "" "" "nil"
   fi
 
   if [ "$pgM" == "15" ] && [ "$isEL" == "True" ]; then
+    #initC  "spock31-pg$pgM" "spock31"   "$spock31V"        "$outPlat" "postgres/spock31"     "" "" "nil"
+
     ##initC  "pgcat2"  "pgcat2"  "$catV"  "$outPlat" "postgres/pgcat2" "" "" "nil"
-    initC  "spock31-pg$pgM" "spock31"   "$spock31V"        "$outPlat" "postgres/spock31"     "" "" "nil"
     ##initC "multicorn2-pg$pgM" "multicorn2" "$multicorn2V" "$outPlat" "postgres/multicorn2" "" "" "nil"
     ##initC "esfdw-pg$pgM" "esfdw" "$esfdwV" "$outPlat" "postgres/esfdw" "" "" "Y"
     ##initC "repack-pg$pgM" "repack" "$repackV" "$outPlat" "postgres/repack" "" "" "nil"
@@ -481,6 +478,7 @@ initPG () {
 
     if [ "$isEL9" == "True" ]; then
       initC "foslots-pg$pgM" "foslots" "$foslotsV" "$outPlat" "postgres/foslots" "" "" "nil"
+      initC "timescaledb-pg$pgM" "timescaledb" "$timescaleV" "$outPlat" "postgres/timescale" "" "" "nil"
       initC "citus-pg$pgM" "citus" "$citusV" "$outPlat" "postgres/citus" "" "" "nil"
       if [ "$outPlat" == "arm" ]; then
         initC "postgis-pg$pgM" "postgis" "$postgisV" "$outPlat" "postgres/postgis" "" "" "nil"

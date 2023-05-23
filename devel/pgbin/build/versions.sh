@@ -45,7 +45,7 @@ odbcFullV=13.01
 odbcShortV=
 odbcBuildV=1
 
-backrestFullV=2.45
+backrestFullV=2.46
 backrestShortV=
 backrestBuildV=1
 
@@ -185,7 +185,7 @@ hintplanFullV=1.5.0
 hintplanShortV=
 hintplanBuildV=1
 
-timescaledbFullV=2.8.0
+timescaledbFullV=2.11.0
 timescaledbShortV=
 timescaledbBuildV=1
 

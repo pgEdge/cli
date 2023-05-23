@@ -306,6 +306,11 @@ INSERT INTO releases VALUES ('foslots-pg16', 10, 'foslots', 'pgFailoverSlots', '
 INSERT INTO versions VALUES ('foslots-pg15', '1a-1', 'el9, arm9', 1, '20230511', 'pg15', '', '');
 INSERT INTO versions VALUES ('foslots-pg16', '1a-1', 'el9, arm9', 1, '20230511', 'pg16', '', '');
 
+INSERT INTO projects VALUES ('timescaledb', 'ext', 4, 0, 'hub',0, 'https://github.com/timescale/timescaledb/releases',
+  'timescaledb', 1, 'timescaledb.png', 'Timeseries Extension', 'https://github.com/timescaledb/timescaledb');
+INSERT INTO releases VALUES ('timescaledb-pg15', 10, 'timescaledb', 'TimescaleDB', '', 'prod', '', 1, 'POSTGRES', '', '');
+INSERT INTO versions VALUES ('timescaledb-pg15', '2.11.0-1', 'el9, arm9', 1, '20230525', 'pg15', '', '');
+
 INSERT INTO projects VALUES ('curl', 'ext', 4, 0, 'hub',0, 'https://github.com/pg_curl/pg_curl/releases',
   'curl', 1, 'curl.png', 'Invoke JSON Services', 'https://github.com/pg_curl/pg_curl');
 INSERT INTO releases VALUES ('curl-pg15', 10, 'curl', 'pgCron', '', 'prod', '', 1, 'POSTGRES', '', '');
@@ -395,7 +400,8 @@ INSERT INTO versions VALUES ('pgcat2', '1.0.0', 'el9, arm9', 1, '20230405', '', 
 INSERT INTO projects VALUES ('backrest', 'pge', 4, 0, 'hub', 3, 'http://pgbackrest.org',
   'backrest',  0, 'backrest.png', 'Backup & Restore', 'http://pgbackrest.org');
 INSERT INTO releases VALUES ('backrest', 2, 'backrest',  'pgBackRest', '', 'test', '', 1, 'MIT', '', '');
-INSERT INTO versions VALUES ('backrest', '2.45-1', 'el9, arm9', 1, '20230321', '', 'EL', '');
+INSERT INTO versions VALUES ('backrest', '2.46-1', 'el9, arm9', 1, '20230521', '', 'EL', '');
+INSERT INTO versions VALUES ('backrest', '2.45-1', 'el9, arm9', 0, '20230321', '', 'EL', '');
 
 INSERT INTO projects VALUES ('patroni', 'app', 11, 0, 'haproxy', 4, 'https://github.com/zalando/patroni/releases',
   'patroni', 0, 'patroni.png', 'HA Template', 'https://github.com/zalando/patroni');
