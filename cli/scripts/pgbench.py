@@ -23,7 +23,8 @@ def setup_node(node_nm, port, nc, num_nodes, db, pg, usr):
 
 
 def psql_cmd(cmd, nc, db, pg):
-    util.echo_cmd(nc + "pgbin " + str(pg) +  " " +  '"psql -c \\"' + cmd + '\\" ' + db + '"')
+    ##util.echo_cmd(nc + "pgbin " + str(pg) +  " " +  '"psql -c \\"' + cmd + '\\" ' + db + '"')
+    util.echo_cmd(nc + "psql " + str(pg) + " \"" + cmd + "\" " + db)
 
 
 def log_old_val(tbl, col, val, nc, db, pg):
@@ -61,7 +62,7 @@ def install(cluster_name):
 
 def remove(cluster_name):
   db, pg, count, usr, cert, nodes = cluster.load_json(cluster_name)
-  db_pg = " " + db + " --pg=" + pg
+  db_pg = " " + str(db) + " --pg=" + str(pg)
 
   for pub in nodes:
     pub_ip_port = "host=" + str(pub["ip"]) + " port=" + str(pub["port"])
