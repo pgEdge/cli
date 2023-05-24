@@ -132,26 +132,6 @@ def write_pg_dump(p_ip, p_db, p_prfx, p_schm, p_base_dir="/tmp"):
   return(out_file)
 
 
-def fix_schema(diff_file, sql1, sql2):
-  newtable=False
-  with open(diff_file) as diff_list:
-    for i in diff_list.readlines():
-      if re.search("\,", i):
-        linenum=i.split(",")[0]
-      elif re.search(r"^< CREATE.", i):
-        newtable=True
-        print(i.replace("<",""))
-      elif re.search(r"^< ALTER.", i):
-        print(i.replace("<",""))
-      elif newtable == True:
-         print(i.replace("<",""))
-         if re.search(r".;$", i):
-           newtable=False
-      else:
-        continue
-  return(1)
-      
-
 def get_cols(p_con, p_schema, p_table):
   sql = """
 SELECT ordinal_position, column_name
@@ -232,12 +212,11 @@ def diff_schemas(cluster_name, node1, node2, schema_name):
   util.message("\n## Running # " + cmd + "\n")
   rc = os.system(cmd)
   if rc == 0:
-    util.message("TABLES ARE SAME!!")
+    util.message("SCHEMAS ARE SAME!!")
     return(rc)
   else:
-    util.message("TABLES ARE NOT THE SAME!!") 
-    rc = fix_schema("/tmp/diff.txt", sql1, sql2)
-  return(rc)
+    util.message("SCHEMAS ARE NOT THE SAME!!")
+    return(1)
 
 
 def diff_spock(cluster_name, node1, node2, pg=None):
