@@ -94,7 +94,7 @@ def create_global(cluster_name, locations, User, Passwd, db, cloud="aws", size="
 
 def create_local(cluster_name, num_nodes, pg=None, app=None, port1=6432, 
                  User="lcusr", Passwd="lcpasswd", db="lcdb"):
-  """Create a locahost cluster of N pgEdge nodes on different ports."""
+  """Create a localhost test cluster of N pgEdge nodes on different ports."""
 
   cluster_dir = base_dir + os.sep + cluster_name
 

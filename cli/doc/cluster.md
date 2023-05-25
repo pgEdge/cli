@@ -3,7 +3,8 @@
  
 ## COMMANDS
     COMMAND is one of the following:
-     create-local        # Create local cluster of N pgEdge nodes on different ports.
+     create-local        # Create a locahost cluster of N pgEdge nodes on different ports.
+     create-global       # Provision a secure cluster in the Cloud using your own account.
      destroy             # Stop and then nuke a cluster
      validate            # Validate a cluster configuration
      init                # Initialize cluster for Spock
