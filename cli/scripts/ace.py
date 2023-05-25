@@ -219,7 +219,7 @@ def diff_schemas(cluster_name, node1, node2, schema_name):
     return(1)
 
 
-def diff_spock(cluster_name, node1, node2, pg=None):
+def diff_spock(cluster_name, node1, node2):
   """Compare spock setup on different cluster nodes"""
   util.check_cluster_exists(cluster_name)
 
