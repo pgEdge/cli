@@ -83,13 +83,18 @@ def runNC(node, nc_cmd, db, user, cert):
 
 
 def remove(rm_data=False):
-  """Remove pgEdge components"""
   pass
+
+
+def create_global(cluster_name, locations, User, Passwd, db, cloud="aws", size="Medium", pg="16", app=None, port=5432):
+  """Provision a secure cluster in the Cloud using your own account."""
+
+  util.exit_message("Coming Soon!!", 0)
 
 
 def create_local(cluster_name, num_nodes, pg=None, app=None, port1=6432, 
                  User="lcusr", Passwd="lcpasswd", db="lcdb"):
-  """Create local cluster of N pgEdge nodes on different ports."""
+  """Create a locahost cluster of N pgEdge nodes on different ports."""
 
   cluster_dir = base_dir + os.sep + cluster_name
 
@@ -256,6 +261,7 @@ def app_remove(cluster_name, app_name):
 if __name__ == '__main__':
   fire.Fire({
     'create-local':   create_local,
+    'create-global':  create_global,
     'destroy':        destroy,
     'validate':       validate,
     'init':           init,
