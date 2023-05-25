@@ -126,7 +126,8 @@ INSERT INTO categories VALUES (9,  87, 'Management & Monitoring', 'Manage/Monito
 -- ## HUB ################################
 INSERT INTO projects VALUES ('hub', 'app', 0, 0, 'hub', 0, 'https://github.com/pgedge/nodectl','',0,'','','');
 INSERT INTO releases VALUES ('hub', 1, 'hub', '', '', 'hidden', '', 1, '', '', '');
-INSERT INTO versions VALUES ('hub', '23.116', '',  1, '20230511', '', '', '');
+INSERT INTO versions VALUES ('hub', '23.117', '',  1, '20230601', '', '', '');
+INSERT INTO versions VALUES ('hub', '23.116', '',  0, '20230524', '', '', '');
 INSERT INTO versions VALUES ('hub', '23.115', '',  0, '20230511', '', '', '');
 INSERT INTO versions VALUES ('hub', '23.114', '',  0, '20230427', '', '', '');
 INSERT INTO versions VALUES ('hub', '23.112', '',  0, '20230426', '', '', '');
@@ -309,7 +310,7 @@ INSERT INTO versions VALUES ('foslots-pg16', '1a-1', 'el9, arm9', 1, '20230511',
 INSERT INTO projects VALUES ('timescaledb', 'ext', 4, 0, 'hub',0, 'https://github.com/timescale/timescaledb/releases',
   'timescaledb', 1, 'timescaledb.png', 'Timeseries Extension', 'https://github.com/timescaledb/timescaledb');
 INSERT INTO releases VALUES ('timescaledb-pg15', 10, 'timescaledb', 'TimescaleDB', '', 'prod', '', 1, 'POSTGRES', '', '');
-INSERT INTO versions VALUES ('timescaledb-pg15', '2.11.0-1', 'el9, arm9', 1, '20230525', 'pg15', '', '');
+INSERT INTO versions VALUES ('timescaledb-pg15', '2.11.0-1', 'el9, arm9', 1, '20230524', 'pg15', '', '');
 
 INSERT INTO projects VALUES ('curl', 'ext', 4, 0, 'hub',0, 'https://github.com/pg_curl/pg_curl/releases',
   'curl', 1, 'curl.png', 'Invoke JSON Services', 'https://github.com/pg_curl/pg_curl');
@@ -327,7 +328,7 @@ INSERT INTO projects VALUES ('spock', 'pge', 4, 0, 'hub', 1, 'https://github.com
 INSERT INTO releases VALUES ('spock31-pg15', 4, 'spock', 'Spock', '', 'prod', '', 1, 'pgEdge Community', '', '');
 INSERT INTO releases VALUES ('spock31-pg16', 4, 'spock', 'Spock', '', 'prod', '', 1, 'pgEdge Community', '', '');
 INSERT INTO versions VALUES ('spock31-pg15', '3.1.1-1', 'el8, el9, arm, arm9', 1, '20230511', 'pg15', '', '');
-INSERT INTO versions VALUES ('spock31-pg16', '3.1.2-1', 'el9, arm9', 1, '20230525', 'pg16', '', '');
+INSERT INTO versions VALUES ('spock31-pg16', '3.1.2-1', 'el9, arm9', 1, '20230524', 'pg16', '', '');
 INSERT INTO versions VALUES ('spock31-pg16', '3.1.1-1', 'el9, arm9', 0, '20230511', 'pg16', '', '');
 
 INSERT INTO projects VALUES ('pglogical', 'ext', 4, 0, 'hub', 1, 'https://github.com/2ndQuadrant/pglogical/releases',
@@ -400,7 +401,7 @@ INSERT INTO versions VALUES ('pgcat2', '1.0.0', 'el9, arm9', 1, '20230405', '', 
 INSERT INTO projects VALUES ('backrest', 'pge', 4, 0, 'hub', 3, 'http://pgbackrest.org',
   'backrest',  0, 'backrest.png', 'Backup & Restore', 'http://pgbackrest.org');
 INSERT INTO releases VALUES ('backrest', 2, 'backrest',  'pgBackRest', '', 'test', '', 1, 'MIT', '', '');
-INSERT INTO versions VALUES ('backrest', '2.46-1', 'el9, arm9', 1, '20230521', '', 'EL', '');
+INSERT INTO versions VALUES ('backrest', '2.46-1', 'el9, arm9', 1, '20230524', '', 'EL', '');
 INSERT INTO versions VALUES ('backrest', '2.45-1', 'el9, arm9', 0, '20230321', '', 'EL', '');
 
 INSERT INTO projects VALUES ('patroni', 'app', 11, 0, 'haproxy', 4, 'https://github.com/zalando/patroni/releases',
