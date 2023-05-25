@@ -69,7 +69,8 @@ set-readonly         Turn PG read-only mode 'on' or 'off'
 
 ## `cluster` Installation and configuration of a SPOCK cluster
 ```
-create-local        Create local cluster of N pgEdge nodes on different ports
+create-local        Create a localhost test cluster of N pgEdge nodes on different ports
+create-global       Provision a secure cluster in the Cloud using your own account
 destroy             Stop and then nuke a cluster
 validate            Validate a remote cluster configuration
 init                Initialize a remote cluster for SPOCK
