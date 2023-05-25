@@ -5,8 +5,6 @@
 import os, sys, random, time, json, socket
 import util, fire, meta, pgbench 
 
-
-
 base_dir = "cluster"
 
 
