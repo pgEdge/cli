@@ -1,21 +1,20 @@
 # pgEdge Platform - Getting Started Guide
 
-In this guide we will step through setting up pgEdge Platform. Our example will create a two-node multi-master (multi-active) pgEdge 
-cluster, and then use pgbench to create some representative tables and read/write activity on the cluster.
+In this guide we will step through setting up pgEdge Platform. Our example will create a two-node multi-master pgEdge cluster, and then use pgbench to create some representative tables and read/write activity on the cluster.
 
-Two software components from pgEdge will be used in this guide. First, we’ll install the `nodectl` Command Line Interface (CLI) which is 
-used to install and configure PostgreSQL (Postgres) and install additional extensions. Second is `Spock`, the Postgres extension that provides logical, multi-master (multi-active)replication.
+Two software components from pgEdge will be used in this guide. First, we’ll install the [nodectl](https://github.com/pgedge/nodectl) Command Line Interface (CLI) which is 
+used to install and configure PostgreSQL (Postgres) and install additional extensions. Second is [spock](https://github.com/pgedge/spock), the Postgres extension that provides logical, asynchronous, multi-master replication.
 
-Before running the commands in this tutorial, you should disable SELinux and ensure that a firewall doesn't obstruct access between your nodes. You’ll also need an operating system user with `root` access; this can be an OS user with sudo access to root, configured to support passwordless sudo.
+Before running the commands ensure that a firewall doesn't obstruct access between your nodes. You’ll also need an operating system user with with passwordless sudo access.
 
 ## Prerequisites
-- RHEL/CentOS/Rocky Linux 9 or Ubuntu 22.04
-- A non-root user with `sudo` privileges
+- EL9 (RHEL/CentOS/Rocky), AmazonLinux-2023, or Ubuntu-22.04
+- A non-root user with passwordless `sudo` privileges
 - Two servers (vm's are fine) networked with traffic on port 5432 allowed
-- SSH access into the servers
+- Passwordless SSH access into both servers via the non-root user above
 
 ## Installation
-In any directory owned by your user, invoke the following command to create the pgedge directory and install `nodectl`:
+In any directory owned by your non-root user, invoke the following command to create the pgedge directory and install `nodectl`:
 <pre>
 python3 -c "$(curl -fsSL https://pgedge-download.s3.amazonaws.com/REPO/install.py)"
 </pre>
@@ -35,7 +34,7 @@ For the examples that follow, I'll invoke the `nodectl install pgedge` command w
 ./nodectl install pgedge -U admin -P mypassword1 -d demo
 </pre>
 
-If you encounter an error running this command, you may need to update your SELINUX mode to `permissive` or `disabled`, reboot, and retry the operation.
+If you encounter a permissions error on EL9 running this command, you may need to update your SELINUX mode to `permissive` or `disabled`, reboot, and retry the operation.
 
 ## Configuration 
 Using `nodectl` on each node, create the spock components needed for replication. First you will create a spock node by providing a name for the node and a connection string that includes the network address, the name of an OS user with root privileges (in our example, `pgedge`), and the database name (`demo`). The connection string is also followed by the database name.
