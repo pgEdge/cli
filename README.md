@@ -2,7 +2,7 @@
 
 NODECTL is the pgEdge Command Line Interface (CLI).  It is a cross-platform 
 tool to manage your PostgreSQL eco-system of components.  The modules are 
-`um`, `service`, `spock`, and `cluster`.  We are licensed under the 
+`um`, `service`, `spock`, `cluster`, and `ace`.  We are licensed under the 
 pgEdge Community License 1.0
 
 ## Synopsis
@@ -69,12 +69,19 @@ set-readonly         Turn PG read-only mode 'on' or 'off'
 
 ## `cluster` Installation and configuration of a SPOCK cluster
 ```
-create-local        Create local cluster of N pgEdge nodes on different ports
+create-local        Create a localhost test cluster of N pgEdge nodes on different ports
+create-global       Provision a secure cluster in the Cloud using your own account
 destroy             Stop and then nuke a cluster
 validate            Validate a remote cluster configuration
 init                Initialize a remote cluster for SPOCK
 command             Run nodectl command on one or all nodes of a cluster
-diff-tables         Compare table on different cluster nodes
+```
+
+## `ace` Anti Chaos Engine
+```
+diff-tables
+diff-schemas
+diff-spock
 ```
 
 ## Options
@@ -84,4 +91,3 @@ diff-tables         Compare table on different cluster nodes
 --silent         Less noisy
 --verbose or -v  More noisy
 ```
-
