@@ -25,6 +25,24 @@ our @EXPORT = qw(
     );
 
 ################################################################################
+# execute
+#
+#  Executes a command at the shell prompt.
+#
+#  NOTE: This will return the output from a given command.
+#
+
+sub execute
+{
+    my ($self, $cmd) = @_;
+
+    my $raw = `$cmd`;
+    
+    return ($raw, ${^CHILD_ERROR_NATIVE});
+}
+
+    
+################################################################################
 # get_new_nc
 #
 #  This function will create and return a new NodeCtl object.
