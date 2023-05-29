@@ -480,9 +480,7 @@ initPG () {
       initC "foslots-pg$pgM" "foslots" "$foslotsV" "$outPlat" "postgres/foslots" "" "" "nil"
       initC "timescaledb-pg$pgM" "timescaledb" "$timescaleV" "$outPlat" "postgres/timescale" "" "" "nil"
       initC "citus-pg$pgM" "citus" "$citusV" "$outPlat" "postgres/citus" "" "" "nil"
-      if [ "$outPlat" == "arm" ]; then
-        initC "postgis-pg$pgM" "postgis" "$postgisV" "$outPlat" "postgres/postgis" "" "" "nil"
-      fi
+      initC "postgis-pg$pgM" "postgis" "$postgisV" "$outPlat" "postgres/postgis" "" "" "nil"
       initC "pglogical-pg$pgM" "pglogical" "$logicalV" "$outPlat" "postgres/logical" "" "" "nil"
       initC "anon-pg$pgM" "anon" "$anonV" "$outPlat" "postgres/anon" "" "" "nil"
       initC "plprofiler-pg$pgM" "plprofiler" "$profV" "$outPlat" "postgres/profiler" "" "" "nil"

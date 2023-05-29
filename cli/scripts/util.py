@@ -477,7 +477,7 @@ def restart_postgres(p_pg):
 def create_extension(p_pg, p_ext, p_reboot=False, p_extension="", p_cascade=False):
   isPreload = os.getenv('isPreload')
 
-  p_ext = p_ext.split("-")[0]
+  ##p_ext = p_ext.split("-")[0]
 
   if p_ext > " " and isPreload == "True":
     rc = change_pgconf_keyval(p_pg, "shared_preload_libraries", p_ext)

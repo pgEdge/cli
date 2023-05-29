@@ -77,6 +77,9 @@ if [ $uname == 'Linux' ]; then
         sudo yum remove python3-pip
       fi 
       sudo $yum clang
+      if [ "$PLATFORM" == "el9" ]; then
+        sudo $yum geos-devel proj-devel gdal
+      fi
 
       curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
     fi

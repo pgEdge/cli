@@ -223,8 +223,7 @@ function configureComp {
     if [ "$comp" == "postgis" ]; then
         echo "# configure postgis..."
 	export PKG_CONFIG_PATH=/usr/local/lib/pkgconfig
-        ##./configure --without-protobuf LDFLAGS="$LDFLAGS -Wl,-rpath,$sharedLibs" > $make_log 2>&1
-        ./configure --enable-debug LDFLAGS="$LDFLAGS -Wl,-rpath,$sharedLibs" > $make_log 2>&1
+        ./configure --without-raster --enable-debug LDFLAGS="$LDFLAGS -Wl,-rpath,$sharedLibs" > $make_log 2>&1
         rc=$?
     fi
 
