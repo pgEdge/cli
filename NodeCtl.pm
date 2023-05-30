@@ -38,11 +38,29 @@ sub execute
 
     my $raw = `$cmd`;
     
+        diag("inside execute, cmd = $cmd, raw = $raw");
+    # return ("hello", 42);
     return ($raw, ${^CHILD_ERROR_NATIVE});
 }
 
     
 ################################################################################
+#exec_psql
+#
+#Invokes a psql command at the shell prompt.
+#
+#
+sub exec_psql
+{
+    my ($self, $db_name, $cmd) = @_;
+
+    my $result = `psql -h 127.0.0.1 -d $db_name -c '$cmd'`;
+
+       return $result;
+
+}
+
+#################################################################################
 # get_new_nc
 #
 #  This function will create and return a new NodeCtl object.
