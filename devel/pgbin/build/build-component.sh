@@ -162,6 +162,10 @@ function updateSharedLibs {
           cp -Pv $lib64/libgeos*.so*  $shared_lib/.
           cp -Pv $lib64/libgdal*.so*  $shared_lib/.
           cp -Pv $lib64/libproj*.so*  $shared_lib/.
+          cp -Pv $lib64/libtiff*.so*  $shared_lib/.
+          cp -Pv $lib64/libwebp.so*  $shared_lib/.
+          cp -Pv $lib64/libjbig.so*  $shared_lib/.
+          cp -Pv $lib64/libjpeg.so*  $shared_lib/.
         fi
 }
 
