@@ -7,8 +7,8 @@ PGDATA=$MY_HOME/data/pg15
 
 source getPKMG.sh
 
-if [ ! "$PLATFORM" == "el8" ] && [ ! "$PLATFORM" == "el9" ] ; then
-  echo "ERROR: platform $PLATFORM is not supported ( only el8/9 is supported)"
+if [ ! "$PLATFORM" == "el9" ] ; then
+  echo "ERROR: platform $PLATFORM is not supported ( only el9 is supported)"
   exit 1
 fi
 
@@ -24,7 +24,7 @@ pip3 install --upgrade pip
 
 echo ""
 echo "## Installing Patroni & it's dependencies..."
-pip3 install psycopg psycopg-binary patroni[etcd] --user
+pip3 install psycopg psycopg-binary patroni[etcd3] --user
 sudo cp $LOCAL_BIN/patroni /usr/local/bin/.
 
 echo ""
