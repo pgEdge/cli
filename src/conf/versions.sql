@@ -267,17 +267,17 @@ INSERT INTO versions VALUES ('pljava-pg13', '1.6.2-1',  'amd',  1, '20211127', '
 INSERT INTO projects VALUES ('pldebugger', 'dev', 3, 0, 'hub', 0, 'https://github.com/EnterpriseDB/pldebugger/tags',
   'pldebugger', 1, 'debugger.png', 'Stored Procedure Debugger', 'https://github.com/EnterpriseDB/pldebugger');
 INSERT INTO releases VALUES ('pldebugger-pg15', 2, 'pldebugger', 'PL/Debugger', '', 'prod', '', 1, 'POSTGRES', '', '');
-INSERT INTO versions VALUES ('pldebugger-pg15', '1.5-1',  'arm, el8',  1, '20220720', 'pg15', '', '');
+INSERT INTO versions VALUES ('pldebugger-pg15', '1.5-1',  'arm9, el9',  1, '20220720', 'pg15', '', '');
 
 INSERT INTO projects VALUES ('plprofiler', 'dev', 3, 0, 'hub', 7, 'https://github.com/bigsql/plprofiler/tags',
   'plprofiler', 1, 'plprofiler.png', 'Stored Procedure Profiler', 'https://github.com/bigsql/plprofiler#plprofiler');
-INSERT INTO releases VALUES ('plprofiler-pg15', 0, 'plprofiler',    'PL/Profiler',  '', 'prod', '', 1, 'POSTGRES', '', '');
-INSERT INTO versions VALUES ('plprofiler-pg15', '4.2-1', 'arm, el8', 1, '20221003', 'pg15', '', '');
+INSERT INTO releases VALUES ('plprofiler-pg15', 0, 'plprofiler',    'PL/Profiler',  '', 'test', '', 1, 'POSTGRES', '', '');
+INSERT INTO versions VALUES ('plprofiler-pg15', '4.2-1', 'arm9, el9', 1, '20221003', 'pg15', '', '');
 
 INSERT INTO projects VALUES ('postgrest', 'pge', 4, 3000, 'hub', 0, 'https://github.com/postgrest/postgrest/tags',
   'postgrest', 0, 'postgrest.png', 'a RESTful API', 'https://postgrest.org');
 INSERT INTO releases VALUES ('postgrest', 9, 'postgrest', 'PostgREST', '', 'test', '', 1, 'MIT', '', '');
-INSERT INTO versions VALUES ('postgrest', '10.2.0-1', 'el8, arm', 1, '20230302', '', '', 'https://postgrest.org');
+INSERT INTO versions VALUES ('postgrest', '10.2.0-1', 'el9, arm9', 1, '20230302', '', '', 'https://postgrest.org');
 
 INSERT INTO projects VALUES ('prompgexp', 'pge', 4, 9187, 'golang', 0, 'https://github.com/prometheus-community/postgres_exporter/tags',
   'prompgexp', 0, 'prometheus.png', 'Prometheus PG Exporter', 'https://github.com/prometheus-community/postgres_exporter');
@@ -287,7 +287,7 @@ INSERT INTO versions VALUES ('prompgexp', '0.11.1', '', 0, '20220720', '', '', '
 INSERT INTO projects VALUES ('audit', 'ext', 4, 0, 'hub', 0, 'https://github.com/pgaudit/pgaudit/releases',
   'audit', 1, 'audit.png', 'Audit Logging', 'https://github.com/pgaudit/pgaudit');
 INSERT INTO releases VALUES ('audit-pg15', 10, 'audit', 'pgAudit', '', 'prod', '', 1, 'POSTGRES', '', '');
-INSERT INTO versions VALUES ('audit-pg15', '1.7.0-1', 'arm, el8', 1, '20221013', 'pg15', '', 'https://github.com/pgaudit/pgaudit/releases/tag/1.7.0');
+INSERT INTO versions VALUES ('audit-pg15', '1.7.0-1', 'arm9, el9', 1, '20221013', 'pg15', '', 'https://github.com/pgaudit/pgaudit/releases/tag/1.7.0');
 
 INSERT INTO projects VALUES ('hintplan', 'ext', 6, 0, 'hub', 0, 'https://github.com/ossc-db/pg_hint_plan/tags',
   'hintplan', 1, 'hintplan.png', 'Execution Plan Hints', 'https://github.com/ossc-db/pg_hint_plan');
@@ -301,8 +301,8 @@ INSERT INTO versions VALUES ('readonly-pg15', '1.1.0-1', 'el9, arm9', 1, '202304
 
 INSERT INTO projects VALUES ('foslots', 'ext', 4, 0, 'hub',0, 'https://github.com/pgedge/foslots/tags',
   'foslots', 1, 'foslots.png', 'Failover Slots', 'https://github.com/pgedge/foslots');
-INSERT INTO releases VALUES ('foslots-pg15', 10, 'foslots', 'pgFailoverSlots', '', 'prod', '', 1, 'POSTGRES', '', '');
-INSERT INTO releases VALUES ('foslots-pg16', 10, 'foslots', 'pgFailoverSlots', '', 'prod', '', 1, 'POSTGRES', '', '');
+INSERT INTO releases VALUES ('foslots-pg15', 10, 'foslots', 'pgFailoverSlots', '', 'test', '', 1, 'POSTGRES', '', '');
+INSERT INTO releases VALUES ('foslots-pg16', 10, 'foslots', 'pgFailoverSlots', '', 'test', '', 1, 'POSTGRES', '', '');
 INSERT INTO versions VALUES ('foslots-pg15', '1a-1', 'el9, arm9', 1, '20230511', 'pg15', '', '');
 INSERT INTO versions VALUES ('foslots-pg16', '1a-1', 'el9, arm9', 1, '20230511', 'pg16', '', '');
 
