@@ -247,8 +247,7 @@ INSERT INTO versions VALUES ('instantclient', '21.6', '', 0, '20220420', '', '',
 INSERT INTO projects VALUES ('orafce', 'ext', 4, 0, 'hub', 0, 'https://github.com/orafce/orafce/releases',
   'orafce', 1, 'larry.png', 'Ora Built-in Packages', 'https://github.com/orafce/orafce#orafce---oracles-compatibility-functions-and-packages');
 INSERT INTO releases VALUES ('orafce-pg15', 2, 'orafce', 'OraFCE', '', 'prod', '', 1, 'POSTGRES', '', '');
-INSERT INTO versions VALUES ('orafce-pg15', '4.2.5-1',   'arm, el8', 1, '20230422', 'pg15', '', '');
-INSERT INTO versions VALUES ('orafce-pg15', '4.2.2-1',   'arm, el8', 0, '20230314', 'pg15', '', '');
+INSERT INTO versions VALUES ('orafce-pg15', '4.2.5-1',   'arm9, el9', 1, '20230422', 'pg15', '', '');
 
 INSERT INTO projects VALUES ('fixeddecimal', 'ext', 6, 0, 'hub', 0, 'https://github.com/pgsql-io/fixeddecimal/tags',
   'fixeddecimal', 1, 'fixeddecimal.png', 'Much faster than NUMERIC', 'https://github.com/pgsql-io/fixeddecimal');
@@ -293,7 +292,7 @@ INSERT INTO versions VALUES ('audit-pg15', '1.7.0-1', 'arm, el8', 1, '20221013',
 INSERT INTO projects VALUES ('hintplan', 'ext', 6, 0, 'hub', 0, 'https://github.com/ossc-db/pg_hint_plan/tags',
   'hintplan', 1, 'hintplan.png', 'Execution Plan Hints', 'https://github.com/ossc-db/pg_hint_plan');
 INSERT INTO releases VALUES ('hintplan-pg15', 10, 'hintplan', 'pgHintPlan', '', 'prod', '', 1, 'POSTGRES', '', '');
-INSERT INTO versions VALUES ('hintplan-pg15', '1.5.0-1', 'arm, el8', 1, '20230128', 'pg15', '', 'https://github.com/pghintplan/pghintplan/releases/tag/1.5.0');
+INSERT INTO versions VALUES ('hintplan-pg15', '1.5.0-1', 'arm9, el9', 1, '20230128', 'pg15', '', 'https://github.com/pghintplan/pghintplan/releases/tag/1.5.0');
 
 INSERT INTO projects VALUES ('readonly', 'ext', 4, 0, 'hub',0, 'https://github.com/pgedge/readonly/tags',
   'readonly', 1, 'readonly.png', 'Support READ-ONLY Databases', 'https://github.com/pgedge/readonly');
@@ -320,8 +319,7 @@ INSERT INTO versions VALUES ('curl-pg15', '1.0.27-1', 'el9, arm9', 1, '20230215'
 INSERT INTO projects VALUES ('cron', 'ext', 4, 0, 'hub',0, 'https://github.com/citusdata/pg_cron/releases',
   'cron', 1, 'cron.png', 'Background Job Scheduler', 'https://github.com/citusdata/pg_cron');
 INSERT INTO releases VALUES ('cron-pg15', 10, 'cron', 'pgCron', '', 'prod', '', 1, 'POSTGRES', '', '');
-INSERT INTO versions VALUES ('cron-pg15', '1.5.2-1', 'el8, el9, arm, arm9', 1, '20230422', 'pg15', '', '');
-INSERT INTO versions VALUES ('cron-pg15', '1.5.1-1', 'el8, arm', 0, '20230215', 'pg15', '', '');
+INSERT INTO versions VALUES ('cron-pg15', '1.5.2-1', 'el9, arm9', 1, '20230422', 'pg15', '', '');
 
 INSERT INTO projects VALUES ('spock', 'pge', 4, 0, 'hub', 1, 'https://github.com/pgedge/spock/tags',
   'spock', 1, 'spock.png', 'Logical & Multi-Active Replication', 'https://github.com/pgedge/spock/#spock');
@@ -381,7 +379,7 @@ INSERT INTO versions VALUES ('pool2', '4.4.0', 'el8, arm', 0, '2022.216', '', ''
 INSERT INTO projects VALUES ('bouncer', 'pge', 4, 5433, 'hub', 3, 'http://pgbouncer.org',
   'bouncer',  0, 'pg-bouncer.png', 'Connection Pooler', 'http://pgbouncer.org');
 INSERT INTO releases VALUES ('bouncer', 2, 'bouncer',  'pgBouncer', '', 'test', '', 1, 'ISC', '', '');
-INSERT INTO versions VALUES ('bouncer', '1.18.0-1', 'el8, arm', 1, '20221212', '', 'EL8', '');
+INSERT INTO versions VALUES ('bouncer', '1.18.0-1', 'el9, arm9', 1, '20221212', '', 'EL8', '');
 
 INSERT INTO projects VALUES ('pgedge', 'pge', 0, 0, 'hub', 3, 'http://pgedge.org',
   'pgedge',  0, 'pgedge.png', 'Multi-Active Global Postgres Clusters', 'http://pgedge.com');
