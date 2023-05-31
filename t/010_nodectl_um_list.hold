@@ -1,0 +1,34 @@
+#
+#
+# This test returns a list of installed components.
+#
+#
+
+use strict;
+use warnings;
+
+use File::Which;
+use PostgreSQL::Test::Cluster;
+use PostgreSQL::Test::Utils;
+use Test::More tests => 1;
+use NodeCtl;
+use Try::Tiny;
+
+chdir("./pgedge");
+
+my $nc = NodeCtl::get_new_nc("/tmp/nodectl_dir");
+my ($result, $code) = $nc->execute("./nodectl um list");
+
+diag("code = $code");
+diag("nodectl um list returned " . $result);
+
+if ($result != 0)
+{
+    ok(0, "test succeeded");
+}
+else
+{
+    ok(1, "test failed");
+}
+
+done_testing();
