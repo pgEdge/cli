@@ -118,7 +118,7 @@ def create_local(cluster_name, num_nodes, pg=None, app=None, port1=6432,
   for n in range(port1, port1 + num_nodes):
     util.message("checking port " + str(n) + " availability")
     if util.is_socket_busy(n):
-      util.exit_message("port not avaiable", 1)
+      util.exit_message("port not available", 1)
 
   if os.path.exists(cluster_dir):
     util.exit_message("cluster already exists: " + str(cluster_dir), 1)
@@ -174,7 +174,7 @@ def validate(cluster_name):
           util.exit_message("Validation of the cluster failed for " + n[:2], 1)
   else:
     util.exit_message("Validation of the cluster failed", 1)
-  return cluster_name + " Cluster Validated Sucessfully!"
+  return cluster_name + " Cluster Validated Successfully!"
 
 
 def init(cluster_name):

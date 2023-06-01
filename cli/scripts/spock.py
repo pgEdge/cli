@@ -168,7 +168,7 @@ def validate(port=5432, pgV="pg15"):
 
   util.message("  Verify non-root user")
   if util.is_admin():
-    error_exit("You must install as non-root user with passwordless sudo privleges")
+    error_exit("You must install as non-root user with passwordless sudo privileges")
 
   data_dir = "data/" + pgV
   util.message("  Verify empty data directory '" + data_dir + "'")

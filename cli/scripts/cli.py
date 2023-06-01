@@ -404,7 +404,7 @@ def downgrade_component(p_comp):
   present_version = meta.get_version(p_comp)
   present_state   = util.get_comp_state(p_comp)
   server_port     = util.get_comp_port(p_comp)
-  print ("Dowgrade " + p_comp + " v" + present_version)
+  print ("Downgrade " + p_comp + " v" + present_version)
   return 1
 
 
@@ -606,7 +606,7 @@ def unpack_comp(p_app, p_old_ver, p_new_ver):
       os.remove(manifest_file_path)
       my_logger.info("creating new manifest file : " + manifest_file_name)
       util.create_manifest(p_app, parent, upgrade=True)
-      my_logger.info("copying new extension filess : " + manifest_file_name)
+      my_logger.info("copying new extension files : " + manifest_file_name)
       util.copy_extension_files(p_app, parent, upgrade=True)
     except Exception as e:
       error_msg = "Error while upgrading the " + p_app + " : " + str(e)
@@ -1448,7 +1448,7 @@ try:
     cmd_parms = util.remove_prefix(cmd0, cmd_parms)
     cmd_parms_arr = cmd_parms.split(';')
     if len(cmd_parms_arr) > 1:
-      util.exit_message("command params must not contain an embeded semi-colon", 1, isJSON)
+      util.exit_message("command params must not contain an embedded semi-colon", 1, isJSON)
 
     port = util.get_comp_port(pg_dir)
     final_safe_cmd = cmd1 + " " + cmd_parms + " --port=" + str(port)
