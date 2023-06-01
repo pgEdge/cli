@@ -85,7 +85,7 @@ def remove(rm_data=False):
 
 
 def create_global(cluster_name, locations, User, Passwd, db, cloud="aws", size="Medium", pg="16", app=None, port=5432):
-  """Provision a secure cluster in the Cloud using your own account."""
+  """Coming Soon!  Provision a secure global cluster in the Cloud using your own account."""
 
   util.exit_message("Coming Soon!!", 0)
 
