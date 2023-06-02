@@ -1,28 +1,28 @@
 version: '3'
 
 services:
-  pgedge-node-0:
-    hostname: pgedge0
+  pgedge-n1:
+    hostname: n1
     image: test/pgedge
     environment:
-      - NODE=pgedge0
+      - NODE=n1
     ports:
       - '15432:5432'
     volumes:
-      - 'pgedge0:/data'
+      - 'n1:/data'
 
-  pgedge-node-1:
-    hostname: pgedge1
+  pgedge-n2:
+    hostname: n2
     image: test/pgedge
     environment:
-      - NODE=pgedge1
+      - NODE=n2
     ports:
-      - '25432:5432'
+      - '15433:5432'
     volumes:
-      - 'pgedge1:/data'
+      - 'n2:/data'
 
 volumes:
-  pgedge0:
+  n1:
     driver: local
-  pgedge1:
+  n2:
     driver: local

@@ -44,7 +44,7 @@ cd /opt/pgedge/pgedge
 
 ## Initializing pg15 #######################
 
-if [ "$HOSTNAME" = "pgedge0" ]; then
+if [ "$HOSTNAME" = "n1" ]; then
   source pg15/pg15.env
   ./nodectl spock node-create n1 "host-`hostname -I` user=pgedge dbname=demo" demo
   ./nodectl spock repset-create demo_replication_set demo
@@ -53,7 +53,7 @@ if [ "$HOSTNAME" = "pgedge0" ]; then
   ./nodectl spock sub-create sub_n1n2 "host=$PGEDGE1 port=5432 user=pgedge dbname=demo" demo
 
 
-elif [ "$HOSTNAME" = "pgedge1" ]; then
+elif [ "$HOSTNAME" = "n2" ]; then
   source pg15/pg15.env
   ./nodectl spock node-create n2 "host-`hostname -I` user=pgedge dbname=demo" demo
   ./nodectl spock repset-create demo_replication_set demo
@@ -75,9 +75,9 @@ psql -d demo  -c "alter table foobar add primary key (val1); "
 # set it up to be replicated
 ./nodectl spock repset-add-table demo_replication_set foobar demo
 
-if [ "$HOSTNAME" = "pgedge0" ]; then
+if [ "$HOSTNAME" = "n1" ]; then
    ./nodectl spock sub-add-repset sub_n1n2 demo_replication_set demo
-elif [ "$HOSTNAME" = "pgedge1" ]; then
+elif [ "$HOSTNAME" = "n2" ]; then
    # wait 5 seconds to let pgedge0 complete first
    sleep 5
    ./nodectl spock sub-add-repset sub_n2n1 demo_replication_set demo

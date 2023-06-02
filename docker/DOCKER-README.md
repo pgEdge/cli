@@ -1,7 +1,7 @@
-Initial prototype to run pgEdge in a docker container
+Run pgEdge in a docker container
 ==
 
-Working to try and get a test environment of pgEdge running in two Docker containers, controlled by docker-compose.
+Test environment of pgEdge running in two Docker containers, controlled by docker-compose.
 
 Intention of how this should run:
 ---
@@ -38,10 +38,4 @@ The ENTRYPOINT of the docker container is set to 'forever.sh', so that by
 pressing CTL-D you don't accidentally stop the container. It also means that
 when you run in docker-compose, once the initialization is all done, it will
 pause (for a day) for testing.
-
-Different flavours of Linux:
-============================
-* Dockerfile.debian
-* Dockerfile.rockylinux
-
 
