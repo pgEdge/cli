@@ -113,6 +113,10 @@ oraclefdwFullV=2.5.0
 oraclefdwShortV=
 oraclefdwBuildV=1
 
+logfdwFullV=1.4
+logfdwShortV=
+logfdwBuildV=1
+
 tdsfdwFullV=2.0.3
 tdsfdwShortV=
 tdsfdwBuildV=1
