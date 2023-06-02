@@ -44,7 +44,8 @@ $nc spock set-readonly      --help
 
 $nc cluster --help
 $nc cluster create-local    --help
-$nc cluster create-global   --help
+$nc cluster create-remote   --help
+$nc cluster create-cloud    --help
 $nc cluster destroy         --help
 $nc cluster validate        --help
 $nc cluster init            --help

@@ -84,10 +84,15 @@ def remove(rm_data=False):
   pass
 
 
-def create_global(cluster_name, locations, User, Passwd, db, cloud="aws", size="Medium", pg="16", app=None, port=5432):
+def create_cloud(cluster_name, locations, User, Passwd, db, cloud="aws", size="Medium", pg="16", app=None, port=5432):
   """Coming Soon!  Provision a secure global cluster in the Cloud using your own account."""
 
   util.exit_message("Coming Soon!!", 0)
+
+
+def create_remote(cluster_name, num_nodes, pg=None, app=None, port1=6432, 
+                 User="lcusr", Passwd="lcpasswd", db="lcdb"):
+  """Comiing Soon! Create a remote SSH cluster from a cluster json definition file."""
 
 
 def create_local(cluster_name, num_nodes, pg=None, app=None, port1=6432, 
@@ -178,12 +183,12 @@ def validate(cluster_name):
 
 
 def init(cluster_name):
-  """Initialize cluster for Spock"""
+  """Initialize cluster for Spock."""
   util.exit_message("Coming Soon!")
 
 
 def destroy(cluster_name):
-  """Stop and then nuke a cluster"""
+  """Stop and then nuke a cluster."""
 
   if not os.path.exists(base_dir):
     util.exit_message("no cluster directory: " + str(base_dir), 1)
@@ -240,7 +245,7 @@ def command(cluster_name, node, cmd, args=None):
 
 
 def app_install(cluster_name, app_name):
-  """Install test application [ pgbench | spockbench | bmsql ]"""   
+  """Install test application [ pgbench | spockbench | bmsql ]."""   
 
   if app_name ==  "pgbench":
     pgbench.install(cluster_name)
@@ -249,7 +254,7 @@ def app_install(cluster_name, app_name):
 
 
 def app_remove(cluster_name, app_name):
-  """Remove test application from cluster"""
+  """Remove test application from cluster."""
   if app_name ==  "pgbench":
     pgbench.remove(cluster_name)
   else:
@@ -259,7 +264,8 @@ def app_remove(cluster_name, app_name):
 if __name__ == '__main__':
   fire.Fire({
     'create-local':   create_local,
-    'create-global':  create_global,
+    'create-remote':  create_remote,
+    'create-cloud':   create_cloud,
     'destroy':        destroy,
     'validate':       validate,
     'init':           init,

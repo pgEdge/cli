@@ -1,8 +1,8 @@
 ## SYNOPSIS
-    ./nodectl cluster create-local CLUSTER_NAME NUM_NODES <flags>
+    ./nodectl cluster create-remote CLUSTER_NAME NUM_NODES <flags>
  
 ## DESCRIPTION
-    Create a localhost test cluster of N pgEdge nodes on different ports.
+    Comiing Soon! Create a remote SSH cluster from a cluster json definition file.
  
 ## POSITIONAL ARGUMENTS
     CLUSTER_NAME

@@ -1,8 +1,8 @@
 ## SYNOPSIS
-    ./nodectl cluster create-global CLUSTER_NAME LOCATIONS USER PASSWD DB <flags>
+    ./nodectl cluster create-cloud CLUSTER_NAME LOCATIONS USER PASSWD DB <flags>
  
 ## DESCRIPTION
-    Provision a secure cluster in the Cloud using your own account.
+    Coming Soon!  Provision a secure global cluster in the Cloud using your own account.
  
 ## POSITIONAL ARGUMENTS
     CLUSTER_NAME
