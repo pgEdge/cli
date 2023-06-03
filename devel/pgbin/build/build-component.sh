@@ -450,7 +450,7 @@ function buildTimeScaleDBComponent {
         packageComponent $componentBundle
 }
 
-TEMP=`getopt -l no-tar, copy-bin,no-copy-bin,with-pgver:,with-pgbin:,build-curl:,build-hypopg:,build-postgis:,build-bouncer:,build-tdsfdw:,build-mongofdw:,build-mysqlfdw:,build-oraclefdw:,build-orafce:,build-audit:,build-partman:,build-pldebugger:,build-pljava:,build-plv8:,build-plprofiler:,build-bulkload:,build-backrest:,build-psqlodbc:,build-repack:,build-spock31:,build-pool2:,build-pglogical:,build-hintplan:,build-timescaledb:,build-foslots:,build-readonly:,build-cron:,build-multicorn2:,build-anon,build-ddlx:,build-agent:,build-citus: -- "$@"`
+TEMP=`getopt -l no-tar, copy-bin,no-copy-bin,with-pgver:,with-pgbin:,build-curl:,build-hypopg:,build-postgis:,build-bouncer:,build-logfdw:,build-tdsfdw:,build-mongofdw:,build-mysqlfdw:,build-oraclefdw:,build-orafce:,build-audit:,build-partman:,build-pldebugger:,build-pljava:,build-plv8:,build-plprofiler:,build-bulkload:,build-backrest:,build-psqlodbc:,build-repack:,build-spock31:,build-pool2:,build-pglogical:,build-hintplan:,build-timescaledb:,build-foslots:,build-readonly:,build-cron:,build-multicorn2:,build-anon,build-ddlx:,build-agent:,build-citus: -- "$@"`
 
 if [ $? != 0 ] ; then
 	echo "Required parameters missing, Terminating..."
@@ -467,6 +467,7 @@ while true; do
     --target-dir ) targetDirPassed=true; targetDir=$2; shift; shift ;;
     --build-postgis ) buildPostGIS=true; Source=$2; shift; shift ;;
     --build-bouncer ) buildBouncer=true; Source=$2; shift; shift; ;;
+    --build-logfdw ) buildLOGFDW=true; Source=$2; shift; shift ;;
     --build-tdsfdw ) buildTDSFDW=true; Source=$2; shift; shift ;;
     --build-mongofdw ) buildMongoFDW=true Source=$2; shift; shift ;;
     --build-decoderbufs ) buildDecoderBufs=true Source=$2; shift; shift ;;
@@ -532,6 +533,10 @@ fi
 
 if [[ $buildWal2json == "true" ]]; then
 	buildComp wal2json "$wal2jsonShortV" "$wal2jsonFullV" "$wal2jsonBuildV" "$Source"
+fi
+
+if [[ $buildLOGFDW == "true" ]]; then
+	buildComp logfdw "$logfdwShortV" "$logfdwFullV" "$logfdwBuildV" "$Source"
 fi
 
 if [[ $buildTDSFDW == "true" ]]; then

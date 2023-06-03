@@ -176,6 +176,10 @@ if [ "$1" == "oraclefdw" ]; then
   build oraclefdw $oraclefdwFullV $2 oraclefdw
 fi
 
+if [ "$1" == "logfdw" ]; then
+  build logfdw $logfdwFullV $2 logfdw
+fi
+
 if [ "$1" == "tdsfdw" ]; then
   build tdsfdw $tdsfdwFullV $2 tdsfdw
 fi
