@@ -45,18 +45,60 @@ sub execute
 
     
 ################################################################################
-#exec_psql
+# exec_command
 #
-#Invokes a psql command at the shell prompt.
+# Invokes a command at the shell prompt.
 #
+# This function invokes a shell command and returns a result and buffer info. The 
+# function expects an argument ($cmd) that contains connection information and the
+# command it will invoke.
 #
-sub exec_psql
-{
-    my ($self, $db_name, $cmd) = @_;
+# The result of the command is returned in the following variables: $success, $error_message,
+# $full_buf, $stdout_buf, $stderr_buf.
+#
+# You can use code similar to the following to call exec_command:
+#
+#     my $nc = NodeCtl::get_new_nc("");
+#     my $cmd = "psql -h 127.0.0.1 -d postgres -c 'CREATE DATABASE database_name'";
+#     my ($success, $error_message, $full_buf, $stdout_buf, $stderr_buf)= $nc->exec_command($cmd);
+# 
+# If you need to quote a string-identifier, use \":
+#     "psql -h 127.0.0.1 -d postgres -c 'CREATE ROLE \"Foo\"'";
+# Leave simple identifiers unquoted:
+#     "psql -h 127.0.0.1 -d postgres -c 'CREATE ROLE foo'";
+#
+# You may find this page helpful:
+#    https://www.postgresql.org/docs/current/sql-syntax-lexical.html#SQL-SYNTAX-IDENTIFIERS
+#
+# $success and $error_message may be undefined values. You can check as follows:
+#
+#    if ($success)
+#    {
+#        diag("success is TRUE\n");
+#    }
+#    else
+#    {
+#        diag("success is FALSE\n");
+#    }
+# 
+#    if (defined($error_message))
+#    {
+#        diag("error message = $error_message\n");
+#    }
+#    else
+#    {
+#        diag("no error reported\n");
+#    }#
+#
 
-    my $result = `psql -h 127.0.0.1 -d $db_name -c '$cmd'`;
+sub exec_command
+{   
 
-       return $result;
+    my ($self, $cmd) = @_;
+    
+    my ( $success, $error_message, $full_buf, $stdout_buf, $stderr_buf ) = IPC::Cmd::run( command => $cmd, verbose => 0 );
+   
+    return ($success, $error_message, $full_buf, $stdout_buf, $stderr_buf);
 
 }
 
