@@ -49,7 +49,7 @@ sub execute
 #
 # Invokes a command at the shell prompt.
 #
-# This function invokes a shell command and returns a result and buffer info. The 
+# This function invokes a command and returns a result and buffer info. The 
 # function expects an argument ($cmd) that contains connection information and the
 # command it will invoke.
 #
