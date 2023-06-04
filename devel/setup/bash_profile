@@ -5,9 +5,6 @@ alias ver="vi ~/dev/nodectl/src/conf/versions.sql"
 export REGION=us-east-2
 export BUCKET=s3://pgedge-upstream
 
-export t1=rocky@172.31.26.115
-export k1=~/keys/oscg-partners-new-key.pem
-
 export DEV=$HOME/dev
 export IN=$DEV/in
 export OUT=$DEV/out
@@ -22,9 +19,8 @@ export PG=$DEVEL/pg
 export CLI=$NC/cli/scripts
 export REPO=http://localhost:8000
 
-##export JAVA_HOME=/etc/alternatives/jre_11_openjdk
-##export PATH=/usr/local/bin:$JAVA_HOME/bin:$PATH
-export PATH=/usr/local/bin:$PATH
+
+export JAVA_HOME=/etc/alternatives/jre_17_openjdk
+export PATH=/usr/local/bin:$JAVA_HOME/bin:/opt/apache-maven-3.9.2/bin:$PATH
 
 PLATFORM=`cat /etc/os-release | grep PLATFORM_ID | cut -d: -f2 | tr -d '\"'`
-

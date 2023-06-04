@@ -5,6 +5,7 @@
   - add back support for timescaledb
   - add back support for postgis
   - fix several error message typos (thank u Susan)
+  - switch from using JDK11 to JDK17 & apache-maven-3.9.2
 
 
 ## scheduled for 23.117 by ~2023-06-10
