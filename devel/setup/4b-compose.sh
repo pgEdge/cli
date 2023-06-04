@@ -1,10 +1,7 @@
 
-ver=2.18.1
+set -x
 
-if [ "$ver" == "" ]; then
-  echo "ERROR: You must supply version number to be installed"
-  exit 1
-fi
+ver=2.18.1
 
 url=https://github.com/docker/compose/releases/download/v$ver
 dc=docker-compose-$(uname -s)-$(arch)
