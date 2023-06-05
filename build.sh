@@ -447,8 +447,9 @@ initPG () {
 
   if [ "$pgM" == "16" ] && [ "$isEL9" == "True" ]; then
     initC  "spock31-pg$pgM" "spock31"   "$spock31V"   "$outPlat" "postgres/spock31" "" "" "nil"
-    initC  "foslots-pg$pgM" "foslots"   "$foslotsV"   "$outPlat" "postgres/foslots" "" "" "nil"
     initC  "hypopg-pg$pgM"  "hypopg"    "$hypoV"      "$outPlat" "postgres/hypopg"  "" "" "nil"
+    initC  "pljava-pg$pgM"  "pljava"    "$pljavaV"    "$outPlat" "postgres/pljava"  "" "" "nil"
+    initC  "foslots-pg$pgM" "foslots"   "$foslotsV"   "$outPlat" "postgres/foslots" "" "" "nil"
   fi
 
   if [ "$pgM" == "15" ] && [ "$isEL" == "True" ]; then
