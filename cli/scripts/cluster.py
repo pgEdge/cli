@@ -147,32 +147,60 @@ def create_local(cluster_name, num_nodes, pg=None, app=None, port1=6432,
   pg_v = "pg" + str(pg)
 
   nd_port = port1
-  for n in range(1, num_nodes+1):
-    node_nm = "n" + str(n)
-    node_dir = os.getcwd() + os.sep + cluster_dir + os.sep + node_nm
+
+  ssh_install_pgedge(cluster_name, Passwd, port1)
+
+  #for n in range(1, num_nodes+1):
+  #  node_nm = "n" + str(n)
+  #  node_dir = os.getcwd() + os.sep + cluster_dir + os.sep + node_nm
+#
+  #  util.message("\n\n" + \
+  #    "###############################################################\n" + \
+  #    "# creating node dir: " + node_dir)
+  #  util.echo_cmd("mkdir " + node_dir, host="localhost")
+#
+  #  remote_dir = "localhost:" + node_dir
+  #  util.echo_cmd("scp -pqr conf " + remote_dir + "/.")
+  #  util.echo_cmd("scp -pqr hub  " + remote_dir + "/.")
+  #  util.echo_cmd("scp -pq  nodectl " + remote_dir + "/.")
+  #  util.echo_cmd("scp -pq  nc      " + remote_dir + "/.")
+#
+  #  nc = (node_dir + "/nodectl ")
+  #  parms =  " -U " + str(User) + " -P " + str(Passwd) + " -d " + str(db) + \
+  #           " -p " + str(nd_port) + " --pg " + str(pg)
+  #  rc = util.echo_cmd(nc + "install pgedge" + parms, host="localhost")
+  #  if rc != 0:
+  #    sys.exit(rc)
+#
+  #  nd_port = nd_port + 1
+
+  if app == "pgbench":
+    pgbench.install(cluster_name)
+
+
+def ssh_install_pgedge(cluster_name, passwd, port1):
+  db, pg, count, usr, cert, nodes = load_json(cluster_name)
+  for n in nodes:
+    node_nm = n["nodename"]
+    node_dir = n["path"]
+    node_ip = n["ip"]
+    node_port = n["port"]
 
     util.message("\n\n" + \
       "###############################################################\n" + \
       "# creating node dir: " + node_dir)
-    util.echo_cmd("mkdir " + node_dir, host="localhost")
+    util.echo_cmd("mkdir " + node_dir, host=node_ip)
 
-    remote_dir = "localhost:" + node_dir
+    remote_dir = node_ip + ":" + node_dir
     util.echo_cmd("scp -pqr conf " + remote_dir + "/.")
     util.echo_cmd("scp -pqr hub  " + remote_dir + "/.")
     util.echo_cmd("scp -pq  nodectl " + remote_dir + "/.")
     util.echo_cmd("scp -pq  nc      " + remote_dir + "/.")
 
     nc = (node_dir + "/nodectl ")
-    parms =  " -U " + str(User) + " -P " + str(Passwd) + " -d " + str(db) + \
-             " -p " + str(nd_port) + " --pg " + str(pg)
-    rc = util.echo_cmd(nc + "install pgedge" + parms, host="localhost")
-    if rc != 0:
-      sys.exit(rc)
-
-    nd_port = nd_port + 1
-
-  if app == "pgbench":
-    pgbench.install(cluster_name)
+    parms =  " -U " + str(usr) + " -P " + str(passwd) + " -d " + str(db) + \
+             " -p " + str(node_port) + " --pg " + str(pg)
+    rc = util.echo_cmd(nc + "install pgedge" + parms, host=node_ip)
 
 
 def validate(cluster_name):
