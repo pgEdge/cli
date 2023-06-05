@@ -15,7 +15,7 @@ use Test::More tests => 1;
 use Try::Tiny;
 
 my $nc = NodeCtl::get_new_nc("");
-my $cmd = "psql -h 127.0.0.1 -d postgres -c \'CREATE ROLE foo'";
+my $cmd = qq(psql -h 127.0.0.1 -d postgres -c "CREATE ROLE moo LOGIN PASSWORD 'password'");
 my ($success, $error_message, $full_buf, $stdout_buf, $stderr_buf)= $nc->exec_command($cmd);
 diag ("$success");
 diag ("$error_message");

@@ -64,6 +64,8 @@ sub execute
 # 
 # If you need to quote a string-identifier, use \":
 #     "psql -h 127.0.0.1 -d postgres -c 'CREATE ROLE \"Foo\"'";
+# You can also use qq and parenthesis:
+#     qq(psql -h 127.0.0.1 -d postgres -c "CREATE ROLE moo LOGIN PASSWORD 'password'");
 # Leave simple identifiers unquoted:
 #     "psql -h 127.0.0.1 -d postgres -c 'CREATE ROLE foo'";
 #
