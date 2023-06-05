@@ -33,23 +33,20 @@ if [ $uname == 'Linux' ]; then
     yum="dnf --skip-broken -y install"
     PLATFORM=`cat /etc/os-release | grep PLATFORM_ID | cut -d: -f2 | tr -d '\"'`
     echo "## $PLATFORM ##"
-    sudo $yum git net-tools wget curl zip sqlite bzip2
+    sudo $yum git net-tools wget curl zip sqlite bzip2 which
     sudo $yum cpan
     sudo cpan FindBin
     sudo cpan IPC::Run
     sudo $yum epel-release
-
-    sudo $yum java-17-devel maven
-    sudo alternatives --config java
 
     if [ "$short_hostname" == "test" ]; then
       echo "Goodbye TEST Setup!"
       exit 0
     fi
 
-    if [ ! "$PLATFORM" == "el8" ] && [ ! "$PLATFORM" == "el9" ] && [ ! "$PLATFORM" == "al2023" ]; then
+    if [ ! "$PLATFORM" == "el8" ] && [ ! "$PLATFORM" == "el9" ]; then
       echo " "
-      echo "## ONLY el8, el9 & al2023 are supported for building binaries ###"
+      echo "## ONLY el8 & el9 are supported for building binaries ###"
     else
       if [ "$PLATFORM" == "el8" ]; then
         sudo dnf config-manager --set-enabled powertools
