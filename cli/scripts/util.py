@@ -79,7 +79,10 @@ def debug_lvl():
     return(0)
 
 
-def echo_cmd(cmd, sleep_secs=0):
+def echo_cmd(cmd, sleep_secs=0, host=None):
+  if host:
+    cmd = "ssh " + host + " '" + str(cmd) + "'"
+
   isSilent = os.getenv('isSilent', 'False')
   if isSilent == "False":
     s_cmd = scrub_passwd(cmd)
@@ -1102,7 +1105,7 @@ def is_password_less_ssh():
   cmd = "ssh -o 'PreferredAuthentications=publickey' localhost 'echo' >/dev/null 2>&1"
   rc = system(cmd)
   if rc:
-    print("Error trying to do password-less SSH to localhost.")
+    util.message("Error trying to do passwordless SSH to localhost.")
     return False
   return True
 

@@ -3,7 +3,7 @@
 #####################################################
 
 import os, sys, random, time, json, socket
-import util, fire, meta, pgbench 
+import util, fire, meta, pgbench
 
 base_dir = "cluster"
 
@@ -99,6 +99,12 @@ def create_local(cluster_name, num_nodes, pg=None, app=None, port1=6432,
                  User="lcusr", Passwd="lcpasswd", db="lcdb"):
   """Create a localhost test cluster of N pgEdge nodes on different ports."""
 
+  util.message("# Verifying passwordless ssh...")
+  if util.is_password_less_ssh():
+    util.message("  passwordless ssh working")
+  else:
+    util.exit_message("  passwordless ssh not configured properly", 1)
+
   cluster_dir = base_dir + os.sep + cluster_name
 
   try:
@@ -141,25 +147,25 @@ def create_local(cluster_name, num_nodes, pg=None, app=None, port1=6432,
   nd_port = port1
   for n in range(1, num_nodes+1):
     node_nm = "n" + str(n)
-    node_dir = cluster_dir + os.sep + node_nm
+    node_dir = os.getcwd() + os.sep + cluster_dir + os.sep + node_nm
 
     util.message("\n\n" + \
       "###############################################################\n" + \
       "# creating node dir: " + node_dir)
-    os.system("mkdir " + node_dir)
+    util.echo_cmd("mkdir " + node_dir, host="localhost")
 
-    os.system("cp -r conf " + node_dir + "/.")
-    os.system("cp -r hub  " + node_dir + "/.")
-    os.system("cp nodectl " + node_dir + "/.")
-    os.system("cp nc      " + node_dir + "/.")
+    remote_dir = "localhost:" + node_dir
+    util.echo_cmd("scp -pqr conf " + remote_dir + "/.")
+    util.echo_cmd("scp -pqr hub  " + remote_dir + "/.")
+    util.echo_cmd("scp -pq  nodectl " + remote_dir + "/.")
+    util.echo_cmd("scp -pq  nc      " + remote_dir + "/.")
 
     nc = (node_dir + "/nodectl ")
     parms =  " -U " + str(User) + " -P " + str(Passwd) + " -d " + str(db) + \
              " -p " + str(nd_port) + " --pg " + str(pg)
-    rc = util.echo_cmd(nc + "install pgedge" + parms)
+    rc = util.echo_cmd(nc + "install pgedge" + parms, host="localhost")
     if rc != 0:
       sys.exit(rc)
-
 
     nd_port = nd_port + 1
 
