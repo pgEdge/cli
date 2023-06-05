@@ -22,4 +22,4 @@ export REPO=http://localhost:8000
 export JAVA_HOME=/etc/alternatives/jre_17_openjdk
 export PATH=/usr/local/bin:$JAVA_HOME/bin:/opt/apache-maven-3.9.2/bin:$PATH
 
-PLATFORM=`cat /etc/os-release | grep PLATFORM_ID | cut -d: -f2 | tr -d '\"'`
+export PLATFORM=`cat /etc/os-release | grep PLATFORM_ID | cut -d: -f2 | tr -d '\"'`
