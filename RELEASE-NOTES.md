@@ -3,14 +3,15 @@
 
 ## done so far for 23.117 by 2023-06-05:
   - these release notes
-  - add back support for timescaledb-pg15
-  - add back support for postgis-pg15
+  - add support for hypopg-pg15 & -pg16
+  - add support for timescaledb-pg15
+  - add support for postgis-pg15
   - fix several error message typos (thank u Susan)
   - switch from using JDK11 to JDK17/apache-maven-3.9.2
 
 
 ## scheduled for 23.117 by ~2023-06-12
-  - add back support for pljava-pg15 (cannot find libjvm17  setting from util.get_jvm_location)
+  - add support for pljava-pg15 (cannot find libjvm17  setting from util.get_jvm_location)
   - get latest pgcat2 & postgrest and make work for arm9 and el9
   - make `cluster create-local` use passwordless ssh on localhost
   - make `cluster create-remote` work with same logic as `create-local`

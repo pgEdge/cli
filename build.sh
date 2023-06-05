@@ -222,24 +222,14 @@ initDir () {
   copy-pgXX "hintplan"
   ##copy-pgXX "nginx"
   copy-pgXX "timescaledb"
+  copy-pgXX "hypopg"
 
   ## ARCHIVED #########
   ##copy-pgXX "fixeddecimal"
   ##copy-pgXX "spock30"
-  ##copy-pgXX "hypopg"
   ##copy-pgXX "cassandrafdw"
   ##copy-pgXX "hivefdw"
-  ##copy-pgXX "pgtsql"
-  ##copy-pgXX "proctab"
-  ##copy-pgXX "pgredis"  
-  ##copy-pgXX "kubernetes" 
   ##copy-pgXX "wal2json"  
-  ##copy-pgXX "autofailover"
-  ##copy-pgXX "wa"
-  ##copy-pgXX "archivist"
-  ##copy-pgXX "qualstats"
-  ##copy-pgXX "statkcache"
-  ##copy-pgXX "waitsampling"
 
   if [ -f $myNewDir/LICENSE.TXT ]; then
     mv $myNewDir/LICENSE.TXT $myNewDir/$pComponent-LICENSE.TXT
@@ -456,8 +446,9 @@ initPG () {
   fi
 
   if [ "$pgM" == "16" ] && [ "$isEL9" == "True" ]; then
-    initC  "spock31-pg$pgM" "spock31"   "$spock31V"   "$outPlat" "postgres/spock31"     "" "" "nil"
+    initC  "spock31-pg$pgM" "spock31"   "$spock31V"   "$outPlat" "postgres/spock31" "" "" "nil"
     initC  "foslots-pg$pgM" "foslots"   "$foslotsV"   "$outPlat" "postgres/foslots" "" "" "nil"
+    initC  "hypopg-pg$pgM"  "hypopg"    "$hypoV"      "$outPlat" "postgres/hypopg"  "" "" "nil"
   fi
 
   if [ "$pgM" == "15" ] && [ "$isEL" == "True" ]; then
@@ -466,6 +457,7 @@ initPG () {
     if [ "$isEL9" == "True" ]; then
       #initC "postgrest" "postgrest" "$postgrestV"  "$outPlat"  "postgres/postgrest"  "" "" "nil"
       #initC  "pgcat2"  "pgcat2"  "$catV"  "$outPlat" "postgres/pgcat2" "" "" "nil"
+      initC  "hypopg-pg$pgM"  "hypopg"    "$hypoV"      "$outPlat" "postgres/hypopg"  "" "" "nil"
       initC "pljava-pg$pgM"  "pljava"  "$pljavaV"  "$outPlat" "postgres/pljava"  "" "" "nil"
       initC "foslots-pg$pgM" "foslots" "$foslotsV" "$outPlat" "postgres/foslots" "" "" "nil"
       initC "timescaledb-pg$pgM" "timescaledb" "$timescaleV" "$outPlat" "postgres/timescale" "" "" "nil"

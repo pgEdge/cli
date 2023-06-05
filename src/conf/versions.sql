@@ -126,7 +126,7 @@ INSERT INTO categories VALUES (9,  87, 'Management & Monitoring', 'Manage/Monito
 -- ## HUB ################################
 INSERT INTO projects VALUES ('hub', 'app', 0, 0, 'hub', 0, 'https://github.com/pgedge/nodectl','',0,'','','');
 INSERT INTO releases VALUES ('hub', 1, 'hub', '', '', 'hidden', '', 1, '', '', '');
-INSERT INTO versions VALUES ('hub', '23.117', '',  1, '20230601', '', '', '');
+INSERT INTO versions VALUES ('hub', '23.117', '',  1, '20230612', '', '', '');
 INSERT INTO versions VALUES ('hub', '23.116', '',  0, '20230524', '', '', '');
 INSERT INTO versions VALUES ('hub', '23.115', '',  0, '20230511', '', '', '');
 INSERT INTO versions VALUES ('hub', '23.114', '',  0, '20230427', '', '', '');
@@ -262,7 +262,7 @@ INSERT INTO versions VALUES ('plv8-pg14', '3.1.2-1', 'el8', 0, '2.210721', 'pg14
 INSERT INTO projects VALUES ('pljava', 'dev', 3, 0, 'hub', 0, 'https://github.com/tada/pljava/releases', 
   'pljava', 1, 'pljava.png', 'Java Stored Procedures', 'https://github.com/tada/pljava');
 INSERT INTO releases VALUES ('pljava-pg15', 7, 'pljava', 'PL/Java', '', 'test', '', 1, 'POSTGRES', '', '');
-INSERT INTO versions VALUES ('pljava-pg15', '1.6.4-1',  'arm9, el9',  1, '20230601', 'pg15', '', '');
+INSERT INTO versions VALUES ('pljava-pg15', '1.6.4-1',  'arm9, el9',  1, '20230612', 'pg15', '', '');
 
 INSERT INTO projects VALUES ('pldebugger', 'dev', 3, 0, 'hub', 0, 'https://github.com/EnterpriseDB/pldebugger/tags',
   'pldebugger', 1, 'debugger.png', 'Stored Procedure Debugger', 'https://github.com/EnterpriseDB/pldebugger');
@@ -339,7 +339,7 @@ INSERT INTO versions VALUES ('pglogical-pg15', '2.4.2-1',  'arm9, el9', 0, '2022
 INSERT INTO projects VALUES ('postgis', 'ext', 4, 1, 'hub', 3, 'http://postgis.net/source',
   'postgis', 1, 'postgis.png', 'Spatial Extensions', 'http://postgis.net');
 INSERT INTO releases VALUES ('postgis-pg15', 3, 'postgis', 'PostGIS', '', 'prod', '', 1, 'GPLv2', '', '');
-INSERT INTO versions VALUES ('postgis-pg15', '3.3.2-1', 'el9, arm9', 1, '20230601', 'pg15', '', 'https://git.osgeo.org/gitea/postgis/postgis/raw/tag/3.3.2/NEWS');
+INSERT INTO versions VALUES ('postgis-pg15', '3.3.2-1', 'el9, arm9', 1, '20230612', 'pg15', '', 'https://git.osgeo.org/gitea/postgis/postgis/raw/tag/3.3.2/NEWS');
 
 INSERT INTO projects VALUES ('pgadmin', 'app', 3, 80, '', 1, 'https://www.pgadmin.org/news/',
   'pgadmin', 0, 'pgadmin.png', 'PostgreSQL Tools', 'https://pgadmin.org');
@@ -363,8 +363,10 @@ INSERT INTO versions VALUES ('partman-pg15', '4.7.3-1',  'arm9, el9', 1, '202204
 
 INSERT INTO projects VALUES ('hypopg', 'ext', 4, 0, 'hub', 8, 'https://github.com/HypoPG/hypopg/releases',
   'hypopg', 1, 'whatif.png', 'Hypothetical Indexes', 'https://hypopg.readthedocs.io/en/latest/');
-INSERT INTO releases VALUES ('hypopg-pg14', 99, 'hypopg', 'HypoPG', '', 'prod','',  1, 'POSTGRES', '', '');
-INSERT INTO versions VALUES ('hypopg-pg14', '1.3.1-1',  'arm, el8', 0, '20210622', 'pg14', '', '');
+INSERT INTO releases VALUES ('hypopg-pg15', 99, 'hypopg', 'HypoPG', '', 'prod','',  1, 'POSTGRES', '', '');
+INSERT INTO releases VALUES ('hypopg-pg16', 99, 'hypopg', 'HypoPG', '', 'prod','',  1, 'POSTGRES', '', '');
+INSERT INTO versions VALUES ('hypopg-pg15', '1.4.0-1',  'arm9, el9', 1, '20230612', 'pg15', '', '');
+INSERT INTO versions VALUES ('hypopg-pg16', '1.4.0-1',  'arm9, el9', 1, '20230612', 'pg16', '', '');
 
 INSERT INTO projects VALUES ('badger', 'app', 4, 0, 'hub', 6, 'https://github.com/darold/pgbadger/releases',
   'badger', 0, 'badger.png', 'Performance Reporting', 'https://pgbadger.darold.net');

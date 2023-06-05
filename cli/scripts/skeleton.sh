@@ -2,10 +2,11 @@
 
 function test16 {
   pgV=pg16
-  ./nodectl install pg14; 
-  ./nodectl start pg14 -y -d demo;
+  ./nodectl install pg16; 
+  ./nodectl start pg16 -y -d demo;
 
-  ./nodectl install spock-$pgV         -d demo
+  ./nodectl install spock31-$pgV     -d demo
+  ./nodectl install hypopg-$pgV      -d demo
 }
 
 
@@ -15,6 +16,7 @@ function test15 {
   ./nodectl start pg15 -y -d demo;
 
   ./nodectl install spock31-$pgV       -d demo
+  ./nodectl install hypopg-$pgV        -d demo
 
   ./nodectl install orafce-$pgV        -d demo
   ./nodectl install partman-$pgV       -d demo
