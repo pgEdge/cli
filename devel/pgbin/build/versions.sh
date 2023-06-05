@@ -161,7 +161,7 @@ setUserFullVersion=1.6.2
 setUserShortVersion=
 setUserBuildV=1
 
-pljavaFullV=1.6.2
+pljavaFullV=1.6.4
 pljavaShortV=
 pljavaBuildV=1
 

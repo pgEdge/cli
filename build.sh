@@ -217,7 +217,7 @@ initDir () {
   ##copy-pgXX "multicorn2"
   ##copy-pgXX "esfdw"
   ##copy-pgXX "bqfdw"
-  ##copy-pgXX "pljava"
+  copy-pgXX "pljava"
   copy-pgXX "plv8"
   copy-pgXX "hintplan"
   ##copy-pgXX "nginx"
@@ -466,6 +466,7 @@ initPG () {
     if [ "$isEL9" == "True" ]; then
       #initC "postgrest" "postgrest" "$postgrestV"  "$outPlat"  "postgres/postgrest"  "" "" "nil"
       #initC  "pgcat2"  "pgcat2"  "$catV"  "$outPlat" "postgres/pgcat2" "" "" "nil"
+      initC "pljava-pg$pgM"  "pljava"  "$pljavaV"  "$outPlat" "postgres/pljava"  "" "" "nil"
       initC "foslots-pg$pgM" "foslots" "$foslotsV" "$outPlat" "postgres/foslots" "" "" "nil"
       initC "timescaledb-pg$pgM" "timescaledb" "$timescaleV" "$outPlat" "postgres/timescale" "" "" "nil"
       initC "citus-pg$pgM" "citus" "$citusV" "$outPlat" "postgres/citus" "" "" "nil"

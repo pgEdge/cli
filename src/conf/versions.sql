@@ -261,8 +261,8 @@ INSERT INTO versions VALUES ('plv8-pg14', '3.1.2-1', 'el8', 0, '2.210721', 'pg14
 
 INSERT INTO projects VALUES ('pljava', 'dev', 3, 0, 'hub', 0, 'https://github.com/tada/pljava/releases', 
   'pljava', 1, 'pljava.png', 'Java Stored Procedures', 'https://github.com/tada/pljava');
-INSERT INTO releases VALUES ('pljava-pg13', 7, 'pljava', 'PL/Java', '', 'test', '', 1, 'POSTGRES', '', '');
-INSERT INTO versions VALUES ('pljava-pg13', '1.6.2-1',  'amd',  1, '20211127', 'pg13', '', '');
+INSERT INTO releases VALUES ('pljava-pg15', 7, 'pljava', 'PL/Java', '', 'test', '', 1, 'POSTGRES', '', '');
+INSERT INTO versions VALUES ('pljava-pg15', '1.6.4-1',  'arm9, el9',  1, '20230601', 'pg15', '', '');
 
 INSERT INTO projects VALUES ('pldebugger', 'dev', 3, 0, 'hub', 0, 'https://github.com/EnterpriseDB/pldebugger/tags',
   'pldebugger', 1, 'debugger.png', 'Stored Procedure Debugger', 'https://github.com/EnterpriseDB/pldebugger');
