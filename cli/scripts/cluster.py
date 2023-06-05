@@ -25,7 +25,7 @@ def create_json(cluster_name, db, num_nodes, usr, pg, port1):
     node_json["nodename"] = "n"+str(n)
     node_json["ip"] = "127.0.0.1"
     node_json["port"] = port1
-    node_json["path"] = cluster_name + os.sep + "n" + str(n)
+    node_json["path"] = os.getcwd() + os.sep + "cluster" + os.sep + cluster_name + os.sep + "n" + str(n)
     cluster_json["nodes"].append(node_json)
     port1=port1+1
   try:
@@ -142,6 +142,8 @@ def create_local(cluster_name, num_nodes, pg=None, app=None, port1=6432,
     if pg == None:
       pg = "15"
 
+  create_json(cluster_name, db, num_nodes, usr, pg, port1)
+
   pg_v = "pg" + str(pg)
 
   nd_port = port1
@@ -168,8 +170,6 @@ def create_local(cluster_name, num_nodes, pg=None, app=None, port1=6432,
       sys.exit(rc)
 
     nd_port = nd_port + 1
-
-  create_json(cluster_name, db, num_nodes, usr, pg, port1)
 
   if app == "pgbench":
     pgbench.install(cluster_name)
