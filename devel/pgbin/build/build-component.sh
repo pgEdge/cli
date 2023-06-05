@@ -341,7 +341,7 @@ function buildPlJavaComponent {
 	cd pljava
 	buildLocation="$baseDir/$workDir/build/$componentName"
 	prepComponentBuildDir $buildLocation
-	PATH=/opt/pgbin-build/pgbin/shared/maven/bin:$buildLocation/bin:$PATH
+	PATH=$buildLocation/bin:$PATH
 	log=$baseDir/$workDir/logs/pljava_make.log
 	echo "#      Make Log = $log"
 	mvn clean install >> $log 2>&1

@@ -10,7 +10,7 @@
 
 
 ## scheduled for 23.117 by ~2023-06-12
-  - add back support for pljava-pg15
+  - add back support for pljava-pg15 (cannot find libjvm17  setting from util.get_jvm_location)
   - get latest pgcat2 & postgrest and make work for arm9 and el9
   - make `cluster create-local` use passwordless ssh on localhost
   - make `cluster create-remote` work with same logic as `create-local`
