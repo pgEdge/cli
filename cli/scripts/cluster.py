@@ -8,17 +8,20 @@ import util, fire, meta, pgbench
 base_dir = "cluster"
 
 
-def create_json(cluster_name, db, num_nodes, usr, pg, port1):
+def create_local_json(cluster_name, db, num_nodes, usr, passwd, pg, port1):
   cluster_dir = base_dir + os.sep + cluster_name
   text_file = open(cluster_dir + os.sep + cluster_name + ".json", "w")
   cluster_json = {}
   cluster_json["cluster"] = cluster_name
-  cluster_json["dbname"] = db
-  cluster_json["conntype"] = "local"
-  cluster_json["user"] = usr
-  cluster_json["pg"] = pg
+  cluster_json["create_ts"] = "2023-06-01 00:00:00.000 GMT"
+  cluster_json["db_name"] = db
+  cluster_json["db_user"] = db
+  cluster_json["db_init_passwd"] = passwd
+  cluster_json["conn_type"] = "local"
+  cluster_json["os_user"] = usr
+  cluster_json["ssh_key"] = ""
+  cluster_json["pg_ver"] = pg
   cluster_json["count"] = num_nodes
-  cluster_json["cert"] = ""
   cluster_json["nodes"] = []
   for n in range(1, num_nodes+1):
     node_json={}
@@ -42,13 +45,13 @@ def load_json(cluster_name):
     with open(cluster_dir + os.sep  + cluster_name + ".json") as f:
       parsed_json = json.load(f)
   except Exception as e:
-    util.exit_message("Unable to load JSON file", 1)
-  db=parsed_json["dbname"]
-  pg=parsed_json["pg"]
+    util.exit_message("Unable to load JSON cluster def file", 1)
+  db_name=parsed_json["db_name"]
+  pg=parsed_json["pg_ver"]
   count=parsed_json["count"]
-  user=parsed_json["user"]
-  cert=parsed_json["cert"]
-  return db, pg, count, user, cert, parsed_json["nodes"]
+  db_user=parsed_json["db_user"]
+  cert=parsed_json["ssh_key"]
+  return db_name, pg, count, db_user, cert, parsed_json["nodes"]
 
 
 def runNC(node, nc_cmd, db, user, cert):
@@ -99,9 +102,9 @@ def create_local(cluster_name, num_nodes, pg=None, app=None, port1=6432,
                  User="lcusr", Passwd="lcpasswd", db="lcdb"):
   """Create a localhost test cluster of N pgEdge nodes on different ports."""
 
-  util.message("# Verifying passwordless ssh...")
+  util.message("# verifying passwordless ssh...")
   if util.is_password_less_ssh():
-    util.message("  passwordless ssh working")
+    pass
   else:
     util.exit_message("  passwordless ssh not configured properly", 1)
 
@@ -127,7 +130,7 @@ def create_local(cluster_name, num_nodes, pg=None, app=None, port1=6432,
   usr = util.get_user()
 
   for n in range(port1, port1 + num_nodes):
-    util.message("checking port " + str(n) + " availability")
+    util.message("# checking port " + str(n) + " availability")
     if util.is_socket_busy(n):
       util.exit_message("port not available", 1)
 
@@ -142,65 +145,42 @@ def create_local(cluster_name, num_nodes, pg=None, app=None, port1=6432,
     if pg == None:
       pg = "15"
 
-  create_json(cluster_name, db, num_nodes, usr, pg, port1)
+  create_local_json(cluster_name, db, num_nodes, User, Passwd, pg, port1)
 
   pg_v = "pg" + str(pg)
 
   nd_port = port1
 
-  ssh_install_pgedge(cluster_name, Passwd, port1)
-
-  #for n in range(1, num_nodes+1):
-  #  node_nm = "n" + str(n)
-  #  node_dir = os.getcwd() + os.sep + cluster_dir + os.sep + node_nm
-#
-  #  util.message("\n\n" + \
-  #    "###############################################################\n" + \
-  #    "# creating node dir: " + node_dir)
-  #  util.echo_cmd("mkdir " + node_dir, host="localhost")
-#
-  #  remote_dir = "localhost:" + node_dir
-  #  util.echo_cmd("scp -pqr conf " + remote_dir + "/.")
-  #  util.echo_cmd("scp -pqr hub  " + remote_dir + "/.")
-  #  util.echo_cmd("scp -pq  nodectl " + remote_dir + "/.")
-  #  util.echo_cmd("scp -pq  nc      " + remote_dir + "/.")
-#
-  #  nc = (node_dir + "/nodectl ")
-  #  parms =  " -U " + str(User) + " -P " + str(Passwd) + " -d " + str(db) + \
-  #           " -p " + str(nd_port) + " --pg " + str(pg)
-  #  rc = util.echo_cmd(nc + "install pgedge" + parms, host="localhost")
-  #  if rc != 0:
-  #    sys.exit(rc)
-#
-  #  nd_port = nd_port + 1
+  ssh_install_pgedge(cluster_name, Passwd)
 
   if app == "pgbench":
     pgbench.install(cluster_name)
 
 
-def ssh_install_pgedge(cluster_name, passwd, port1):
-  db, pg, count, usr, cert, nodes = load_json(cluster_name)
+def ssh_install_pgedge(cluster_name, passwd):
+  db, pg, count, db_user, cert, nodes = load_json(cluster_name)
+  util.message("#")
+  util.message(f"# ssh_install_pgedge: cluster={cluster_name}, db={db}, pg={pg} db_user={db_user}, count={count}")
   for n in nodes:
-    node_nm = n["nodename"]
-    node_dir = n["path"]
-    node_ip = n["ip"]
-    node_port = n["port"]
+    ndnm = n["nodename"]
+    ndpath = n["path"]
+    ndip = n["ip"]
+    ndport = n["port"]
+    util.message(f"#   node={ndnm}, host={ndip}, port={ndport}, path={ndpath}")
 
-    util.message("\n\n" + \
-      "###############################################################\n" + \
-      "# creating node dir: " + node_dir)
-    util.echo_cmd("mkdir " + node_dir, host=node_ip)
+    util.echo_cmd("mkdir " + ndpath, host=ndip)
 
-    remote_dir = node_ip + ":" + node_dir
-    util.echo_cmd("scp -pqr conf " + remote_dir + "/.")
-    util.echo_cmd("scp -pqr hub  " + remote_dir + "/.")
-    util.echo_cmd("scp -pq  nodectl " + remote_dir + "/.")
-    util.echo_cmd("scp -pq  nc      " + remote_dir + "/.")
+    remote = ndip + ":" + ndpath
+    util.echo_cmd("scp -pqr conf " + remote + "/.")
+    util.echo_cmd("scp -pqr hub  " + remote + "/.")
+    util.echo_cmd("scp -pq  nodectl " + remote + "/.")
+    util.echo_cmd("scp -pq  nc      " + remote + "/.")
 
-    nc = (node_dir + "/nodectl ")
-    parms =  " -U " + str(usr) + " -P " + str(passwd) + " -d " + str(db) + \
-             " -p " + str(node_port) + " --pg " + str(pg)
-    rc = util.echo_cmd(nc + "install pgedge" + parms, host=node_ip)
+    nc = (ndpath + "/nodectl ")
+    parms =  " -U " + str(db_user) + " -P " + str(passwd) + " -d " + str(db) + \
+             " -p " + str(ndport) + " --pg " + str(pg)
+    rc = util.echo_cmd(nc + " install pgedge" + parms, host=ndip)
+    util.message("#")
 
 
 def validate(cluster_name):

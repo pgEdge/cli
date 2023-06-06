@@ -86,7 +86,7 @@ def echo_cmd(cmd, sleep_secs=0, host=None):
   isSilent = os.getenv('isSilent', 'False')
   if isSilent == "False":
     s_cmd = scrub_passwd(cmd)
-    message("# " + str(s_cmd))
+    message("#  " + str(s_cmd))
 
   rc = os.system(str(cmd))
   if rc == 0:
@@ -2812,7 +2812,7 @@ def copy_extension_files(ext_comp, parent_comp, upgrade=None):
 
 #Check and delete the files mentioned in the manifest file
 def delete_extension_files(manifest_file,upgrade=None):
-    my_logger.info("checking for extension files.")
+    my_logger.info("# checking for extension files.")
     try:
         with open(manifest_file) as data_file:
             data = json.load(data_file)
