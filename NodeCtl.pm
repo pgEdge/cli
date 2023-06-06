@@ -202,6 +202,25 @@ sub path
 }
 
 ################################################################################
+# get_bin_dir
+#
+# Returns the path to the bin directory; the bin directory location is returned in the 
+# full_buf and stdout variables. 
+#
+
+sub get_bin_dir
+{
+
+    my ($self) = @_;
+
+    my ( $success, $error_message, $full_buf, $stdout_buf, $stderr_buf ) = IPC::Cmd::run( command => 'pg_config --bindir', verbose => 0 );
+
+    return ($success, $error_message, $full_buf, $stdout_buf, $stderr_buf);
+
+}
+
+#################################################################################
+#
 # findExecutable
 #
 #  Given the name of an executable, returns the pathname of that executable as
