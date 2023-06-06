@@ -87,7 +87,7 @@ def remove(rm_data=False):
   pass
 
 
-def create_cloud(cluster_name, locations, User, Passwd, db, cloud="aws", size="Medium", pg="16", app=None, port=5432):
+def create_secure(cluster_name, locations, User, Passwd, db, cloud="aws", size="Medium", pg="16", app=None, port=5432):
   """Coming Soon!  Provision a secure global cluster in the Cloud using your own account."""
 
   util.exit_message("Coming Soon!!", 0)
@@ -95,7 +95,7 @@ def create_cloud(cluster_name, locations, User, Passwd, db, cloud="aws", size="M
 
 def create_remote(cluster_name, num_nodes, pg=None, app=None, port1=6432, 
                  User="lcusr", Passwd="lcpasswd", db="lcdb"):
-  """Comiing Soon! Create a remote SSH cluster from a cluster json definition file."""
+  """Comiing Soon! Create a cluster from json definition file of existing nodes."""
 
 
 def create_local(cluster_name, num_nodes, pg=None, app=None, port1=6432, 
@@ -279,7 +279,7 @@ if __name__ == '__main__':
   fire.Fire({
     'create-local':   create_local,
     'create-remote':  create_remote,
-    'create-cloud':   create_cloud,
+    'create-secure':  create_secure,
     'destroy':        destroy,
     'validate':       validate,
     'init':           init,

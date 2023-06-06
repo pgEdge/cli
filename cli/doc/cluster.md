@@ -4,8 +4,8 @@
 ## COMMANDS
     COMMAND is one of the following:
      create-local        # Create a localhost test cluster of N pgEdge nodes on different ports.
-     create-remote       # Comiing Soon! Create a remote SSH cluster from a cluster json definition file.
-     create-cloud        # Coming Soon!  Provision a secure global cluster in the Cloud using your own account.
+     create-remote       # Comiing Soon! Create a cluster from json definition file of existing nodes.
+     create-secure       # Coming Soon!  Provision a secure global cluster in the Cloud using your own account.
      destroy             # Stop and then nuke a cluster.
      validate            # Validate a cluster configuration
      init                # Initialize cluster for Spock.

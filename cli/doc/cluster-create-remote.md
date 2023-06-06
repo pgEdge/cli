@@ -2,7 +2,7 @@
     ./nodectl cluster create-remote CLUSTER_NAME NUM_NODES <flags>
  
 ## DESCRIPTION
-    Comiing Soon! Create a remote SSH cluster from a cluster json definition file.
+    Comiing Soon! Create a cluster from json definition file of existing nodes.
  
 ## POSITIONAL ARGUMENTS
     CLUSTER_NAME
