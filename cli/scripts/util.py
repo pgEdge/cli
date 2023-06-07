@@ -1105,7 +1105,6 @@ def is_password_less_ssh():
   cmd = "ssh -o 'PreferredAuthentications=publickey' localhost 'echo' >/dev/null 2>&1"
   rc = system(cmd)
   if rc:
-    util.message("Error trying to do passwordless SSH to localhost.")
     return False
   return True
 

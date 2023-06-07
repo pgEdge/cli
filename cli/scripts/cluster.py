@@ -106,7 +106,7 @@ def create_local(cluster_name, num_nodes, pg=None, app=None, port1=6432,
   if util.is_password_less_ssh():
     pass
   else:
-    util.exit_message("  passwordless ssh not configured properly", 1)
+    util.exit_message("try https://blog.pgedge.org/index.php/2023/04/07/passwordless-ssh-to-localhost/", 1)
 
   cluster_dir = base_dir + os.sep + cluster_name
 
