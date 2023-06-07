@@ -3,7 +3,10 @@ version: '3'
 services:
   pgedge-n1:
     hostname: n1
-    image: test/pgedge
+    image: nginx:alpine
+    build:
+      context: "."
+      dockerfile: Dockerfile.el9
     environment:
       - NODE=n1
     ports:
@@ -13,7 +16,10 @@ services:
 
   pgedge-n2:
     hostname: n2
-    image: test/pgedge
+    image: nginx:alpine
+    build:
+      context: "."
+      dockerfile: Dockerfile.el9
     environment:
       - NODE=n2
     ports:
