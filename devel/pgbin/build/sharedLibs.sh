@@ -49,7 +49,7 @@ function linuxCopySharedLibs {
   cp -Pv $lib/libjson-c*         $shared_lib/.
   cp -Pv $lib/libsystemd.so.*    $shared_lib/.
 
-  ##cp -Pv $lib/llvm5.0/lib/*.so*    $shared_lib/.
+  cp -Pv $lib/libLLVM*.so*         $shared_lib/.
   cp -Pv $lib/libffi*.so*          $shared_lib/.
 
   # plv8
