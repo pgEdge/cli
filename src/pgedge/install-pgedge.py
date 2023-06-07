@@ -7,12 +7,10 @@ nc = "./nodectl "
 
 pgN = os.getenv('pgN', '')
 if pgN == "":
-  pgN = "15"
+  pgN = "16"
 pgV = "pg" + pgN
 
 withPOSTGREST = str(os.getenv("withPOSTGREST", "False"))
-withBACKREST  = str(os.getenv("withBACKREST",  "False"))
-withBOUNCER   = str(os.getenv("withBOUNCER",   "False"))
 isAutoStart   = str(os.getenv("isAutoStart",   "False"))
 isDebug       = str(os.getenv("pgeDebug",      "0"))
 
@@ -43,24 +41,19 @@ def check_pre_reqs():
   util.message("#### Checking for Pre-Req's #########################")
   platf = util.get_platform()
 
-  util.message("  Verify Linux or macOS")
-  if platf != "Linux" and platf != "Darwin":
-    error_exit("OS must be Linux or macOS")
+  util.message("  Verify Linux")
+  if platf != "Linux":
+    error_exit("OS must be Linux")
 
   if platf == "Linux":
     util.message("  Verify Linux supported glibc version")
     if util.get_glibc_version() < "2.28":
       error_exit("Linux has unsupported (older) version of glibc")
 
-  if platf == "Darwin":
-    util.message("  Verify autostart not set for macOS")
-    if isAutoStart == "True":
-      error_exit("autostart is NOT supported on macOS")
-
-  util.message("  Verify Python 3.8+")
+  util.message("  Verify Python 3.9+")
   p3_minor_ver = util.get_python_minor_version()
-  if p3_minor_ver < 8:
-    error_exit("Python version must be greater than 3.8")
+  if p3_minor_ver < 9:
+    error_exit("Python version must be greater than 3.9")
 
   util.message("  Verify non-root user")
   if util.is_admin():
@@ -156,13 +149,4 @@ osSys(nc + "install spock31-" + pgV + " -d " + db1)
 if withPOSTGREST == "True":
   util.message("  ")
   osSys(nc + "install postgrest")
-
-if withBACKREST == "True":
-  util.message("  ")
-  osSys(nc + "install backrest")
-
-if withBOUNCER == "True":
-  util.message("  ")
-  os.system(nc + "install bouncer")
-
 
