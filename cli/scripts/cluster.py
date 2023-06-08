@@ -50,8 +50,10 @@ def load_json(cluster_name):
   pg=parsed_json["pg_ver"]
   count=parsed_json["count"]
   db_user=parsed_json["db_user"]
+  db_passwd=parsed_json["db_init_passwd"]
+  os_user=parsed_json["os_user"]
   cert=parsed_json["ssh_key"]
-  return db_name, pg, count, db_user, cert, parsed_json["nodes"]
+  return db_name, pg, count, db_user, db_passwd, os_user, cert, parsed_json["nodes"]
 
 
 def runNC(node, nc_cmd, db, user, cert):
@@ -125,14 +127,14 @@ def create_local(cluster_name, num_nodes, pg=None, app=None, port1=6432,
     util.message("WARNING: No other components should be installed when using 'cluster local'")
 
   if num_nodes < 1:
-    util.exit_messages("num-nodes must be >= 1", 1)
+    util.exit_message("num-nodes must be >= 1", 1)
 
   usr = util.get_user()
 
-  ##for n in range(port1, port1 + num_nodes):
-  ##  util.message("# checking port " + str(n) + " availability...")
-  ##  if not util.is_socket_busy(n):
-  ##    break
+  for n in range(port1, port1 + num_nodes):
+    util.message("# checking port " + str(n) + " availability...")
+    if not util.is_socket_busy(n):
+      break
 
   if os.path.exists(cluster_dir):
     util.exit_message("cluster already exists: " + str(cluster_dir), 1)
@@ -158,7 +160,7 @@ def create_local(cluster_name, num_nodes, pg=None, app=None, port1=6432,
 
 
 def ssh_install_pgedge(cluster_name, passwd):
-  db, pg, count, db_user, cert, nodes = load_json(cluster_name)
+  db, pg, count, db_user, db_passwd, os_user, cert, nodes = load_json(cluster_name)
   util.message("#")
   util.message(f"# ssh_install_pgedge: cluster={cluster_name}, db={db}, pg={pg} db_user={db_user}, count={count}")
   for n in nodes:
@@ -185,7 +187,7 @@ def ssh_install_pgedge(cluster_name, passwd):
 
 def validate(cluster_name):
   """Validate a cluster configuration"""
-  db, pg, count, user, cert, nodes = load_json(cluster_name)
+  db, pg, count, user, db_passwd, os_user, cert, nodes = load_json(cluster_name)
   message = runNC(nodes, "info", db, user, cert)
   if len(message) == len(nodes):
     for n in message:
