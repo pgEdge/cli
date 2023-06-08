@@ -126,7 +126,8 @@ INSERT INTO categories VALUES (9,  87, 'Management & Monitoring', 'Manage/Monito
 -- ## HUB ################################
 INSERT INTO projects VALUES ('hub', 'app', 0, 0, 'hub', 0, 'https://github.com/pgedge/nodectl','',0,'','','');
 INSERT INTO releases VALUES ('hub', 1, 'hub', '', '', 'hidden', '', 1, '', '', '');
-INSERT INTO versions VALUES ('hub', '23.117', '',  1, '20230612', '', '', '');
+INSERT INTO versions VALUES ('hub', '23.118', '',  1, '20230622', '', '', '');
+INSERT INTO versions VALUES ('hub', '23.117', '',  0, '20230608', '', '', '');
 INSERT INTO versions VALUES ('hub', '23.116', '',  0, '20230524', '', '', '');
 INSERT INTO versions VALUES ('hub', '23.115', '',  0, '20230511', '', '', '');
 INSERT INTO versions VALUES ('hub', '23.114', '',  0, '20230427', '', '', '');
@@ -163,14 +164,14 @@ INSERT INTO versions VALUES ('pg14', '14.7-1', 'el8', 0, '20230209','', '', '');
 INSERT INTO releases VALUES ('pg15', 2, 'pg', '', '', 'prod', 
   '<font size=-1>New in <a href=https://www.postgresql.org/docs/15/release-15.html>2022!</a></font>',
   1, 'POSTGRES', '', '');
-INSERT INTO versions VALUES ('pg15', '15.3-2',  'el9, arm9',           1, '20230607','', '', '');
+INSERT INTO versions VALUES ('pg15', '15.3-2',  'el9, arm9',           1, '20230608','', '', '');
 INSERT INTO versions VALUES ('pg15', '15.3-1',  'el8, el9, arm, arm9', 0, '20230511','', '', '');
 INSERT INTO versions VALUES ('pg15', '15.2-4',  'el8, el9, arm, arm9', 0, '20230426','', '', '');
 
 INSERT INTO releases VALUES ('pg16', 2, 'pg', '', '', 'test', 
   '<font size=-1>New in <a href=https://www.postgresql.org/docs/16/release-16.html>2023!</a></font>',
   1, 'POSTGRES', '', '');
-INSERT INTO versions VALUES ('pg16', '16beta1-2',  'el9, arm9', 1, '20230607','', '', '');
+INSERT INTO versions VALUES ('pg16', '16beta1-2',  'el9, arm9', 1, '20230608','', '', '');
 INSERT INTO versions VALUES ('pg16', '16beta1-1',  'el9, arm9', 0, '20230525','', '', '');
 
 INSERT INTO projects VALUES ('debezium', 'strm', 10, 8083, '', 3, 'https://debezium.io/releases/1.9/',
@@ -265,8 +266,8 @@ INSERT INTO projects VALUES ('pljava', 'dev', 3, 0, 'hub', 0, 'https://github.co
   'pljava', 1, 'pljava.png', 'Java Stored Procedures', 'https://github.com/tada/pljava');
 INSERT INTO releases VALUES ('pljava-pg15', 7, 'pljava', 'PL/Java', '', 'test', '', 1, 'POSTGRES', '', '');
 INSERT INTO releases VALUES ('pljava-pg16', 7, 'pljava', 'PL/Java', '', 'test', '', 1, 'POSTGRES', '', '');
-INSERT INTO versions VALUES ('pljava-pg15', '1.6.4-1',  'arm9, el9',  1, '20230612', 'pg15', '', '');
-INSERT INTO versions VALUES ('pljava-pg16', '1.6.4-1',  'arm9, el9',  1, '20230612', 'pg16', '', '');
+INSERT INTO versions VALUES ('pljava-pg15', '1.6.4-1',  'arm9, el9',  1, '20230608', 'pg15', '', '');
+INSERT INTO versions VALUES ('pljava-pg16', '1.6.4-1',  'arm9, el9',  1, '20230608', 'pg16', '', '');
 
 INSERT INTO projects VALUES ('pldebugger', 'dev', 3, 0, 'hub', 0, 'https://github.com/EnterpriseDB/pldebugger/tags',
   'pldebugger', 1, 'debugger.png', 'Stored Procedure Debugger', 'https://github.com/EnterpriseDB/pldebugger');
@@ -343,7 +344,7 @@ INSERT INTO versions VALUES ('pglogical-pg15', '2.4.2-1',  'arm9, el9', 0, '2022
 INSERT INTO projects VALUES ('postgis', 'ext', 4, 1, 'hub', 3, 'http://postgis.net/source',
   'postgis', 1, 'postgis.png', 'Spatial Extensions', 'http://postgis.net');
 INSERT INTO releases VALUES ('postgis-pg15', 3, 'postgis', 'PostGIS', '', 'prod', '', 1, 'GPLv2', '', '');
-INSERT INTO versions VALUES ('postgis-pg15', '3.3.2-1', 'el9, arm9', 1, '20230612', 'pg15', '', 'https://git.osgeo.org/gitea/postgis/postgis/raw/tag/3.3.2/NEWS');
+INSERT INTO versions VALUES ('postgis-pg15', '3.3.2-1', 'el9, arm9', 1, '20230608', 'pg15', '', 'https://git.osgeo.org/gitea/postgis/postgis/raw/tag/3.3.2/NEWS');
 
 INSERT INTO projects VALUES ('pgadmin', 'app', 3, 80, '', 1, 'https://www.pgadmin.org/news/',
   'pgadmin', 0, 'pgadmin.png', 'PostgreSQL Tools', 'https://pgadmin.org');
@@ -369,8 +370,8 @@ INSERT INTO projects VALUES ('hypopg', 'ext', 4, 0, 'hub', 8, 'https://github.co
   'hypopg', 1, 'whatif.png', 'Hypothetical Indexes', 'https://hypopg.readthedocs.io/en/latest/');
 INSERT INTO releases VALUES ('hypopg-pg15', 99, 'hypopg', 'HypoPG', '', 'prod','',  1, 'POSTGRES', '', '');
 INSERT INTO releases VALUES ('hypopg-pg16', 99, 'hypopg', 'HypoPG', '', 'prod','',  1, 'POSTGRES', '', '');
-INSERT INTO versions VALUES ('hypopg-pg15', '1.4.0-1',  'arm9, el9', 1, '20230612', 'pg15', '', '');
-INSERT INTO versions VALUES ('hypopg-pg16', '1.4.0-1',  'arm9, el9', 1, '20230612', 'pg16', '', '');
+INSERT INTO versions VALUES ('hypopg-pg15', '1.4.0-1',  'arm9, el9', 1, '20230608', 'pg15', '', '');
+INSERT INTO versions VALUES ('hypopg-pg16', '1.4.0-1',  'arm9, el9', 1, '20230608', 'pg16', '', '');
 
 INSERT INTO projects VALUES ('badger', 'app', 4, 0, 'hub', 6, 'https://github.com/darold/pgbadger/releases',
   'badger', 0, 'badger.png', 'Performance Reporting', 'https://pgbadger.darold.net');

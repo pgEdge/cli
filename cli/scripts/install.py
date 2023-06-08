@@ -4,11 +4,11 @@
 
 import sys, os
 
-VER="23.117"
+VER="23.118"
 REPO=os.getenv("REPO", "https://pgedge-download.s3.amazonaws.com/REPO")
   
-if sys.version_info < (3, 8):
-  print("ERROR: Requires Python 3.8 or greater")
+if sys.version_info < (3, 9):
+  print("ERROR: Requires Python 3.9 or greater")
   sys.exit(1)
 
 from urllib import request as urllib2
