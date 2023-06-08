@@ -16,6 +16,8 @@ import api, meta
 ONE_DAY = 86400
 ONE_WEEK = ONE_DAY * 7
 
+bad_os_warn = False
+
 isPy3 = False
 PIP = "pip"
 PYTHON = "python"
@@ -260,16 +262,6 @@ def get_java_ver(pDisplay=False):
     java_ver = ''
 
   return([java_major_ver, java_ver])
-
-
-def get_arch():
-  ##arch=""
-  ##this_uname = str(platform.system())[0:7]
-  ##arch = getoutput("uname -m")
-  ##arch = arch.replace("x86_64", "amd")
-  ##arch = arch.replace("AMD64", "amd")
-  ##arch = arch.replace("aarch64", "arm")
-  return get_el_ver()
 
 
 def is_systemctl():
@@ -2121,12 +2113,19 @@ def is_pid_running(p_pid):
 def get_platform():
   return str(platform.system())
 
+
+def get_arch():
+  return get_el_ver()
+
+
 def get_el_ver():
   if platform.system() != "Linux":
+    warn_bad_os("osx")
     return "osx"
 
   elv = os.getenv("ELV", None)
   if elv:
+    warn_bad_os(str(elv))
     return(str(elv))
 
   glibc_v = get_glibc_version()
@@ -2135,14 +2134,24 @@ def get_el_ver():
     if glibc_v >= "2.34":
       return "arm9"
     else:
+      warn_bad_os("arm")
       return "arm"
   else:
-    if glibc_v <  "2.28":
-      return "amd"
-    elif glibc_v >= "2.34":
+    if glibc_v >= "2.34":
       return "el9"
     else:
+      warn_bad_os("el8")
       return "el8"
+
+
+def warn_bad_os(el_ver):
+  global bad_os_warn
+
+  if bad_os_warn:
+    return()
+  else:
+    bad_os_warn = True
+    message("\n# WARNING!!  Bad OS version.  Must be EL9 or Ubuntu 22.04+")
 
 
 def is_el8():
