@@ -90,7 +90,7 @@ def echo_cmd(cmd, sleep_secs=0, host=None):
 
   rc = os.system(str(cmd))
   if rc == 0:
-    if sleep_secs > 0:
+    if int(sleep_secs) > 0:
       os.system("sleep " + str(sleep_secs))
     return(0)
 
