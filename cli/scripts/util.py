@@ -83,7 +83,8 @@ def debug_lvl():
 
 def echo_cmd(cmd, sleep_secs=0, host=None):
   if host:
-    cmd = "ssh " + host + " '" + str(cmd) + "'"
+    cmd = cmd.replace('"', '\\"')
+    cmd = 'ssh -t ' + host + ' "' + str(cmd) + '"'
 
   isSilent = os.getenv('isSilent', 'False')
   if isSilent == "False":
