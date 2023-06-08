@@ -17,9 +17,9 @@ if [ "`id -u`" = "0" ]; then
       chown -R pgedge ~pgedge/.ssh
       chmod -R go-rwx ~pgedge/.ssh
       # scan the OTHER node in the cluster.
-      if [ "$HOSTNAME" = "pgedge0" ]; then
+      if [ "$HOSTNAME" = "n1" ]; then
          ssh-keyscan pgedge1 >>~pgedge/.ssh/known_hosts 2>/dev/null
-      elif [ "$HOSTNAME" = "pgedge1" ]; then
+      elif [ "$HOSTNAME" = "n2" ]; then
          ssh-keyscan pgedge0 >>~pgedge/.ssh/known_hosts 2>/dev/null
       else
          echo "********** SSH-keyscan nothing for this node to do *******"
@@ -44,20 +44,22 @@ cd /opt/pgedge/pgedge
 
 ## Initializing pg15 #######################
 
+echo "ADDING NEW LOGGING HERE"
+
 if [ "$HOSTNAME" = "n1" ]; then
   source pg15/pg15.env
-  ./nodectl spock node-create n1 "host-`hostname -I` user=pgedge dbname=demo" demo
+  ./nodectl spock node-create n1 "host=`hostname -I` user=pgedge dbname=demo" demo
   ./nodectl spock repset-create demo_replication_set demo
-  PGEDGE1=`host pgedge1 |awk '{print $NF}'`
+  PGEDGE1=`host n2 | awk '{print $NF}'`
   echo "Setup to go from `hostname -I` to $PGEDGE1"
   ./nodectl spock sub-create sub_n1n2 "host=$PGEDGE1 port=5432 user=pgedge dbname=demo" demo
 
 
 elif [ "$HOSTNAME" = "n2" ]; then
   source pg15/pg15.env
-  ./nodectl spock node-create n2 "host-`hostname -I` user=pgedge dbname=demo" demo
+  ./nodectl spock node-create n2 "host=`hostname -I` user=pgedge dbname=demo" demo
   ./nodectl spock repset-create demo_replication_set demo
-  PGEDGE0=`host pgedge0 |awk '{print $NF}'`
+  PGEDGE0=`host n1 | awk '{print $NF}'`
   echo "Setup to go from `hostname -I` to $PGEDGE0"
   ./nodectl spock sub-create sub_n2n1 "host=$PGEDGE0 port=5432 user=pgedge dbname=demo" demo
 
@@ -85,7 +87,7 @@ else
    echo "******** nodectl spock: nothing to do ******"
 fi
 
-psql -c "SELECT * FROM spock.node;"
+psql demo -c "SELECT * FROM spock.node;"
 
 
 # go forth and prosper.
