@@ -38,6 +38,8 @@ def osSys(cmd, fatal_exit=True):
 
 
 def check_pre_reqs():
+  global prt
+
   util.message("#### Checking for Pre-Req's #########################")
   platf = util.get_platform()
 
@@ -59,9 +61,11 @@ def check_pre_reqs():
   if util.is_admin():
     error_exit("You must install as non-root user with passwordless sudo privleges")
 
-  util.message("  Verify port " + str(prt) + " availability")
-  if util.is_socket_busy(prt):
-    error_exit("Port " + str(prt) + " is busy")
+  util.message(f"  Verify port {prt} availability")
+  while util.is_socket_busy(prt):
+    prt = prt + 1
+    util.message(f"  Verify port {prt} availability")
+  util.message(f"  Using port {prt}")
 
   data_dir = "data/" + pgV
   util.message("  Verify empty data directory '" + data_dir + "'")

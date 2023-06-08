@@ -14,6 +14,7 @@
 
 ## done far for 23.117  2023-06-08:
   - fix broken LLVM support in pg15.3-2 & pg16beta1-2
+  - improve support for docker-compose
   - these release notes
   - add support for hypopg-pg15/16
   - add support for timescaledb-pg15
