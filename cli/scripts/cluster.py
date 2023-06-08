@@ -2,7 +2,7 @@
 #  Copyright 2022-2023 PGEDGE  All rights reserved. #
 #####################################################
 
-import os, sys, random, time, json, socket
+import os, sys, random, json, socket, datetime
 import util, fire, meta, pgbench
 
 base_dir = "cluster"
@@ -13,11 +13,10 @@ def create_local_json(cluster_name, db, num_nodes, usr, passwd, pg, port1):
   text_file = open(cluster_dir + os.sep + cluster_name + ".json", "w")
   cluster_json = {}
   cluster_json["cluster"] = cluster_name
-  cluster_json["create_ts"] = "2023-06-01 00:00:00.000 GMT"
+  cluster_json["create_dt"] = datetime.date.today().isoformat()
   cluster_json["db_name"] = db
   cluster_json["db_user"] = db
   cluster_json["db_init_passwd"] = passwd
-  cluster_json["conn_type"] = "local"
   cluster_json["os_user"] = usr
   cluster_json["ssh_key"] = ""
   cluster_json["pg_ver"] = pg

@@ -18,3 +18,29 @@ Installation and configuration of a pgEdge SPOCK cluster
     --silent           # Less noisy
     --verbose or -v    # More noisy
 
+## Example cluster.json file
+{
+  "cluster": "cl1",
+  "create_dt": "2023-06-08",
+  "db_name": "lcdb",
+  "db_user": "lcdb",
+  "db_init_passwd": "lcpasswd",
+  "os_user": "pgedge",
+  "ssh_key": "/home/me/key/abc123.key",
+  "pg_ver": "15",
+  "count": 2,
+  "nodes": [
+    {
+      "nodename": "n1",
+      "ip": "10.0.0.1",
+      "port": 5432,
+      "path": "/opt/pgedge"
+    },
+    {
+      "nodename": "n2",
+      "ip": "10.0.0.2",
+      "port": 5432,
+      "path": "/opt/pgedge"
+    }
+  ]
+
