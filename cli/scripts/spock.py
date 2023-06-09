@@ -141,9 +141,11 @@ def change_pg_pwd(pwd_file, db="*", user="postgres", host="localhost", pg=None )
   sys.exit(rc)
 
 
-def get_eq(parm, val, sufx):
-  colon_equal = str(parm) + " := '" + str(val) + "'" + str(sufx)
-
+def get_eq(parm, val, sufx, set=False):
+  if set==False:
+    colon_equal = str(parm) + " := '" + str(val) + "'" + str(sufx)
+  else:
+    colon_equal = str(parm) + " := '{" + str(val) + "}'" + str(sufx)
   return(colon_equal)
 
 
@@ -352,18 +354,18 @@ def repset_list_tables(schema, db, pg=None):
 
 
 def sub_create(subscription_name, provider_dsn, db, 
-               replication_sets="{default,default_insert_only,ddl_sql}",
+               replication_sets='default,default_insert_only,ddl_sql',
                synchronize_structure=False, synchronize_data=False, 
-               forward_origins='{}', apply_delay=0, pg=None):
+               forward_origins='', apply_delay=0, pg=None):
   """Create a subscription."""
   pg_v = get_pg_v(pg)
   sql = "SELECT spock.sub_create(" + \
            get_eq("subscription_name",     subscription_name,     ", ") + \
            get_eq("provider_dsn",          provider_dsn,          ", ") + \
-           get_eq("replication_sets",      replication_sets,      ", ") + \
+           get_eq("replication_sets",      replication_sets,      ", ", True) + \
            get_eq("synchronize_structure", synchronize_structure, ", ") + \
            get_eq("synchronize_data",      synchronize_data,      ", ") + \
-           get_eq("forward_origins",       forward_origins,       ", ") + \
+           get_eq("forward_origins",       forward_origins,       ", ", True) + \
            get_eq("apply_delay",           apply_delay,           ")")
   run_psyco_sql(pg_v, db, sql)
   sys.exit(0)
