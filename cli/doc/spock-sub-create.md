@@ -16,7 +16,7 @@
     --synchronize_data=SYNCHRONIZE_DATA
         Default: False
     -f, --forward_origins=FORWARD_ORIGINS
-        Default: {}
+        Default: 
     -a, --apply_delay=APPLY_DELAY
         Default: 0
     -p, --pg=PG

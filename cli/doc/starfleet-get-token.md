@@ -1,0 +1,6 @@
+## SYNOPSIS
+    ./nodectl starfleet get-token CLIENT_ID CLIENT_SECRET
+ 
+## POSITIONAL ARGUMENTS
+    CLIENT_ID
+    CLIENT_SECRET

@@ -264,7 +264,7 @@ def app_remove(cluster_name, app_name):
 if __name__ == '__main__':
   fire.Fire({
     'create-local':   create_local,
-    'init-remote':    init-remote,
+    'init-remote':    init_remote,
     'destroy':        destroy,
     'validate':       validate,
     'command':        command,
