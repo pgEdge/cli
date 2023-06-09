@@ -84,19 +84,9 @@ def runNC(node, nc_cmd, db, user, cert):
   return nc_message
 
 
-def remove(rm_data=False):
-  pass
-
-
-def create_secure(cluster_name, locations, User, Passwd, db, cloud="aws", size="Medium", pg="16", app=None, port=5432):
-  """Coming Soon!  Provision a secure global cluster in the Cloud using your own account."""
-
-  util.exit_message("Coming Soon!!", 0)
-
-
-def create_remote(cluster_name, num_nodes, pg=None, app=None, port1=6432, 
+def init_remote(cluster_name, num_nodes, pg=None, app=None, port1=6432, 
                  User="lcusr", Passwd="lcpasswd", db="lcdb"):
-  """Comiing Soon! Create a cluster from json definition file of existing nodes."""
+  """Coming Soon! Initialize a test cluster from json definition file of existing nodes."""
 
 
 def create_local(cluster_name, num_nodes, pg=None, app=None, port1=6432, 
@@ -197,11 +187,6 @@ def validate(cluster_name):
   return cluster_name + " Cluster Validated Successfully!"
 
 
-def init(cluster_name):
-  """Initialize cluster for Spock."""
-  util.exit_message("Coming Soon!")
-
-
 def destroy(cluster_name):
   """Stop and then nuke a cluster."""
 
@@ -279,11 +264,9 @@ def app_remove(cluster_name, app_name):
 if __name__ == '__main__':
   fire.Fire({
     'create-local':   create_local,
-    'create-remote':  create_remote,
-    'create-secure':  create_secure,
+    'init-remote':    init-remote,
     'destroy':        destroy,
     'validate':       validate,
-    'init':           init,
     'command':        command,
     'app-install':    app_install,
     'app-remove':     app_remove
