@@ -248,6 +248,10 @@ def _SynopsisSection(component, actions_grouped_by_kind, spec, metadata,
     txt = txt.replace("ace.py", "./nodectl cluster")
     prfx = "ace"
 
+  elif "starfleet.py" in txt:
+    txt = txt.replace("starfleet.py", "./nodectl starfleet")
+    prfx = "starfleet"
+
   if sfx > "":
     MD_FILE = prfx + "-" + sfx + ".md"
   else:

@@ -1,8 +1,8 @@
 ## SYNOPSIS
-    ./nodectl cluster create-remote CLUSTER_NAME NUM_NODES <flags>
+    ./nodectl cluster init-remote CLUSTER_NAME NUM_NODES <flags>
  
 ## DESCRIPTION
-    Comiing Soon! Create a cluster from json definition file of existing nodes.
+    Coming Soon! Initialize a test cluster from json definition file of existing nodes.
  
 ## POSITIONAL ARGUMENTS
     CLUSTER_NAME
