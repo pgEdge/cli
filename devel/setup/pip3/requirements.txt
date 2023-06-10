@@ -1,0 +1,5 @@
+patroni[etcd3]
+paramiko
+psutil
+psycopg
+psycopg-binary

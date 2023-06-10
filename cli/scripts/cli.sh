@@ -31,36 +31,9 @@ if [ -d "$hub_new" ];then
   echo "$log_time [INFO] : hub upgrade completed" >> $MY_LOGS
 fi
 
-plat=amd
-if [ `arch` == "aarch64" ]; then
-  plat=arm
-fi
-
 declare -a array
 array[0]="$MY_HOME/hub/scripts"
 array[1]="$MY_HOME/hub/scripts/lib"
-if [ `uname` == "Linux" ]; then
-  if [ -f "/etc/redhat-release" ] || [ -f "/etc/amazon-linux-release" ]; then
-    array[2]="$MY_HOME/hub/scripts/lib/linux/$plat/el8"
-  else
-    if [ -f "/etc/os-release" ]; then
-      grep "20.04" /etc/os-release > /dev/null 2>&1
-      rc=$?
-      if [ $rc == "0" ]; then
-        array[2]="$MY_HOME/hub/scripts/lib/linux/$plat/ubu20"
-      else
-        grep "22.04" /etc/os-release > /dev/null 2>&1
-        rc=$?
-        if [ $rc == "0" ]; then
-          array[2]="$MY_HOME/hub/scripts/lib/linux/$plat/ubu22"
-        fi
-      fi
-    fi
-  fi
-
-elif [ `uname` == "Darwin" ]; then
-  array[2]="$MY_HOME/hub/scripts/lib/darwin"
-fi
 
 export PYTHONPATH=$(printf "%s:${PYTHONPATH}" ${array[@]})
 #echo PYTHONPATH=$PYTHONPATH
