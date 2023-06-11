@@ -1,4 +1,6 @@
 
+source 0-env.sh 
+
 rm -f get-pip.py
 wget https://bootstrap.pypa.io/get-pip.py
 python3 get-pip.py
