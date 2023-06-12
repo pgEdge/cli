@@ -9,7 +9,7 @@ hostname=`hostname`
 short_hostname=${hostname:0:4}
 
 echo " "
-echo "########## 2a-DEV-TOOLS.sh ##################"
+echo "########## 2a-tools.sh ######################"
 echo "start: BY `whoami`  ON  `date`  FROM  `pwd`"
 echo " full hostname = $hostname"
 echo "short hostname = $short_hostname"

@@ -9,13 +9,9 @@
 
 ### 3.) cd into ~/dev/nodectl/devel/setup
 
-### 4.) Run ./2a-initial.sh to configure OS environment 
-          (On el9 it will configure for building binaries.)
+### 4.) Configure your ~/.aws/config credentials for access to s3://pgedge-upstream/IN
 
-### 5.) Configure your ~/.aws/config credentials for access to s3://pgedge-upstream/IN
+### 5.) Run 1-env.sh to run 1a thru 1e to configure for NodeCtl devel
 
-### 6.) Source your bash profile with the command: source ~/.bashrc
+### 6.) Run 2-dev.sh to run 2a & 2b for pgbin devel
 
-### 7.) run ./2b-BLD-IN.sh to pull in the IN directory from S3
-
-### 8.) (Only if you are building C binaries): Setup Src builds for PGBIN from devel/pgbin/build

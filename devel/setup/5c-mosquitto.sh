@@ -1,4 +1,2 @@
 
-source 0-env.sh
-
-$snap install mosquitto
+sudo snap install mosquitto

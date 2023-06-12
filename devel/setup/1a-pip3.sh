@@ -1,5 +1,5 @@
 
-source 0-env.sh 
+set -x
 
 rm -f get-pip.py
 wget https://bootstrap.pypa.io/get-pip.py

@@ -1,5 +1,5 @@
 
-source 0-env.sh
+yum="sudo dnf -y"
 
 $yum install epel-release
 

@@ -1,7 +1,7 @@
 
-source 0-env.sh
+sudo dnf install -y python3-psutil
 
-$yum install python3-psutil
+pip3i="pip3 install --user"
 
 $pip3i patroni[etcd3]
 $pip3i paramiko
