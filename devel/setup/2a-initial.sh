@@ -9,7 +9,7 @@ hostname=`hostname`
 short_hostname=${hostname:0:4}
 
 echo " "
-echo "########## 1-setupInitial.sh ##################"
+echo "########## 2a-initial.sh ##################"
 echo "start: BY `whoami`  ON  `date`  FROM  `pwd`"
 echo " full hostname = $hostname"
 echo "short hostname = $short_hostname"
@@ -111,28 +111,11 @@ mkdir -p out
 mkdir -p history
 
 cd ~
-wget https://bootstrap.pypa.io/get-pip.py
-python3 get-pip.py
-rm get-pip.py
 pip3 install awscli
 mkdir -p ~/.aws
 cd ~/.aws
 touch config
 chmod 600 config
-
-if [ -f ~/.bashrc ]; then
-  bf=~/.bashrc
-else
-  bf=~/.bash_profile
-fi
-
-## don't append if already there
-cd $this_dir
-grep NC $bf > /dev/null 2>&1
-rc=$?
-if [ ! "$rc" == "0" ]; then
-  cat bash_profile >> $bf
-fi
 
 echo ""
 echo "Goodbye!"
