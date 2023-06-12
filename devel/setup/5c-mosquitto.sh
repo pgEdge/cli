@@ -1,2 +1,0 @@
-
-sudo snap install mosquitto
