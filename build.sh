@@ -212,7 +212,7 @@ initDir () {
   ##copy-pgXX "tdsfdw"  
   copy-pgXX "cron"
   copy-pgXX "readonly"
-  copy-pgXX "foslots"
+  ##copy-pgXX "foslots"
   copy-pgXX "citus"
   ##copy-pgXX "multicorn2"
   ##copy-pgXX "esfdw"
@@ -449,7 +449,6 @@ initPG () {
     initC  "spock31-pg$pgM" "spock31"   "$spock31V"   "$outPlat" "postgres/spock31" "" "" "nil"
     initC  "hypopg-pg$pgM"  "hypopg"    "$hypoV"      "$outPlat" "postgres/hypopg"  "" "" "nil"
     initC  "pljava-pg$pgM"  "pljava"    "$pljavaV"    "$outPlat" "postgres/pljava"  "" "" "nil"
-    initC  "foslots-pg$pgM" "foslots"   "$foslotsV"   "$outPlat" "postgres/foslots" "" "" "nil"
   fi
 
   if [ "$pgM" == "15" ] && [ "$isEL" == "True" ]; then
@@ -458,9 +457,8 @@ initPG () {
     if [ "$isEL9" == "True" ]; then
       #initC "postgrest" "postgrest" "$postgrestV"  "$outPlat"  "postgres/postgrest"  "" "" "nil"
       #initC  "pgcat2"  "pgcat2"  "$catV"  "$outPlat" "postgres/pgcat2" "" "" "nil"
-      initC  "hypopg-pg$pgM"  "hypopg"    "$hypoV"      "$outPlat" "postgres/hypopg"  "" "" "nil"
+      initC "hypopg-pg$pgM"  "hypopg"    "$hypoV"      "$outPlat" "postgres/hypopg"  "" "" "nil"
       initC "pljava-pg$pgM"  "pljava"  "$pljavaV"  "$outPlat" "postgres/pljava"  "" "" "nil"
-      initC "foslots-pg$pgM" "foslots" "$foslotsV" "$outPlat" "postgres/foslots" "" "" "nil"
       initC "timescaledb-pg$pgM" "timescaledb" "$timescaleV" "$outPlat" "postgres/timescale" "" "" "nil"
       initC "citus-pg$pgM" "citus" "$citusV" "$outPlat" "postgres/citus" "" "" "nil"
       initC "postgis-pg$pgM" "postgis" "$postgisV" "$outPlat" "postgres/postgis" "" "" "nil"

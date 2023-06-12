@@ -304,13 +304,6 @@ INSERT INTO projects VALUES ('readonly', 'ext', 4, 0, 'hub',0, 'https://github.c
 INSERT INTO releases VALUES ('readonly-pg15', 10, 'readonly', 'pgReadOnly', '', 'prod', '', 1, 'POSTGRES', '', '');
 INSERT INTO versions VALUES ('readonly-pg15', '1.1.0-1', 'el9, arm9', 1, '20230402', 'pg15', '', '');
 
-INSERT INTO projects VALUES ('foslots', 'ext', 4, 0, 'hub',0, 'https://github.com/pgedge/foslots/tags',
-  'foslots', 1, 'foslots.png', 'Failover Slots', 'https://github.com/pgedge/foslots');
-INSERT INTO releases VALUES ('foslots-pg15', 10, 'foslots', 'pgFailoverSlots', '', 'test', '', 1, 'POSTGRES', '', '');
-INSERT INTO releases VALUES ('foslots-pg16', 10, 'foslots', 'pgFailoverSlots', '', 'test', '', 1, 'POSTGRES', '', '');
-INSERT INTO versions VALUES ('foslots-pg15', '1a-1', 'el9, arm9', 1, '20230511', 'pg15', '', '');
-INSERT INTO versions VALUES ('foslots-pg16', '1a-1', 'el9, arm9', 1, '20230511', 'pg16', '', '');
-
 INSERT INTO projects VALUES ('timescaledb', 'ext', 4, 0, 'hub',0, 'https://github.com/timescale/timescaledb/releases',
   'timescaledb', 1, 'timescaledb.png', 'Timeseries Extension', 'https://github.com/timescaledb/timescaledb');
 INSERT INTO releases VALUES ('timescaledb-pg15', 10, 'timescaledb', 'TimescaleDB', '', 'prod', '', 1, 'POSTGRES', '', '');
