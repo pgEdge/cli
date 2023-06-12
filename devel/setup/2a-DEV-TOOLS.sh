@@ -9,7 +9,7 @@ hostname=`hostname`
 short_hostname=${hostname:0:4}
 
 echo " "
-echo "########## 2a-initial.sh ##################"
+echo "########## 2a-DEV-TOOLS.sh ##################"
 echo "start: BY `whoami`  ON  `date`  FROM  `pwd`"
 echo " full hostname = $hostname"
 echo "short hostname = $short_hostname"
@@ -104,18 +104,8 @@ sudo mkdir -p /opt/pgbin-build/pgbin/bin
 sudo chown -R $owner_group /opt/pgbin-build
 sudo mkdir -p /opt/pgcomponent
 sudo chown $owner_group /opt/pgcomponent
-mkdir -p ~/dev
-cd ~/dev
-mkdir -p in
 mkdir -p out
 mkdir -p history
-
-cd ~
-pip3 install awscli
-mkdir -p ~/.aws
-cd ~/.aws
-touch config
-chmod 600 config
 
 echo ""
 echo "Goodbye!"
