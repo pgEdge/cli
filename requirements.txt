@@ -2,6 +2,8 @@ paramiko
 psycopg
 psycopg-binary
 paho-mqtt
+psutil
+
 urllib3>=1.19.1,!=1.21
 PyYAML
 kazoo>=1.3.1
