@@ -234,10 +234,10 @@ def diff_schemas(cluster_name, node1, node2, schema_name):
   util.message("\n## Running # " + cmd + "\n")
   rc = os.system(cmd)
   if rc == 0:
-    util.message("TABLES ARE SAME!!")
+    util.message("SCHEMAS ARE THE SAME!!")
     return(rc)
   else:
-    util.message("TABLES ARE NOT THE SAME!!") 
+    util.message("SCHEMAS ARE NOT THE SAME!!") 
     util.message("") 
     rc = fix_schema("/tmp/diff.txt", sql1, sql2)
   return(rc)
