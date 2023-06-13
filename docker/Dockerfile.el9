@@ -9,5 +9,4 @@ COPY pgedgekey.zip /home/pgedge/
 COPY fake-systemctl /usr/local/bin/systemctl
 COPY bootstrap.sh /usr/local/bin/
 COPY forever.sh /usr/local/bin/
-COPY notes.txt /
 ENTRYPOINT /usr/local/bin/forever.sh

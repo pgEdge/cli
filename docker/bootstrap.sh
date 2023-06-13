@@ -34,20 +34,16 @@ fi
 #------ from here down we are user pgedge....
 echo "****** Phase 2 running as pgedge"
 
-##export LD_LIBRARY_PATH=/opt/pgedge/pgedge/pg15/lib/:/lib/x86_64-linux-gnu/
-
 cd /opt/pgedge/
 python3 -c "$(curl -fsSL https://pgedge-download.s3.amazonaws.com/REPO/install.py)"
 cd /opt/pgedge/pgedge
 ./nodectl install pgedge -U dbuser -P dbpassword -d demo
 
 
-## Initializing pg15 #######################
-
-echo "ADDING NEW LOGGING HERE"
+## Initializing pg16 #######################
 
 if [ "$HOSTNAME" = "n1" ]; then
-  source pg15/pg15.env
+  source pg16/pg16.env
   ./nodectl spock node-create n1 "host=`hostname -I` user=pgedge dbname=demo" demo
   ./nodectl spock repset-create demo_replication_set demo
   PGEDGE1=`host n2 | awk '{print $NF}'`
@@ -56,7 +52,7 @@ if [ "$HOSTNAME" = "n1" ]; then
 
 
 elif [ "$HOSTNAME" = "n2" ]; then
-  source pg15/pg15.env
+  source pg16/pg16.env
   ./nodectl spock node-create n2 "host=`hostname -I` user=pgedge dbname=demo" demo
   ./nodectl spock repset-create demo_replication_set demo
   PGEDGE0=`host n1 | awk '{print $NF}'`
