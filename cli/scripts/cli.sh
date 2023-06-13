@@ -63,8 +63,9 @@ if [ `uname` == "Linux" ]; then
   fi
 fi
 
-export PYTHONPATH=$(printf "%s:${PYTHONPATH}" ${array[@]})
-echo PYTHONPATH=$PYTHONPATH
+##export PYTHONPATH=$(printf "%s:${PYTHONPATH}" ${array[@]})
+export PYTHONPATH=$(printf "%s:" ${array[@]})
+##echo PYTHONPATH=$PYTHONPATH
 for var in "$@"
 do
   if [ "$var" == "-v" ]; then
