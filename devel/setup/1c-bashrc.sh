@@ -5,12 +5,12 @@ else
   bf=~/.bash_profile
 fi
 
-## don't append if already there
 grep NC $bf > /dev/null 2>&1
 rc=$?
-if [ ! "$rc" == "0" ]; then
+if [ "$rc" == "0" ]; then
+  echo "Your $bf appears to already be configured for NodeCtl"
+else
   cat bash_profile >> $bf
-  echo "# loading new bash_profile"
-  source $bf
+  echo "# run \"source $bf\" to load revised profile without re-booting"
 fi
 

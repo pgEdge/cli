@@ -1,5 +1,2 @@
-
-set -x
-
-pip3 install --user -r $NC/requirements.txt
+pip3 install --user --break-system-packages -r ../../requirements.txt
 
