@@ -1,4 +1,3 @@
-set -x 
 
 if [ "$BLD" == "" ]; then
   echo ERROR: Invalid Environment
@@ -10,5 +9,6 @@ rc=$?
 if [ "$rc" != "0" ]; then
   exit 1
 fi
-cp -p $NC/devel/pgbin/build/*.sh .
+
+cp -pv $NC/devel/pgbin/build/*.sh .
 
