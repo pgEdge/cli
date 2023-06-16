@@ -1,7 +1,11 @@
 
-py3V-`python3 --version`
+py3V=`python3 --version`
 rc=$?
-if [ "$rc" 
+if [ ! "$rc" == "0" ]; then
+  echo "Missing Python39+"
+  exit 1
+fi
+
 pipV=`pip3 --version`
 echo "pipV = $pipV"
 
