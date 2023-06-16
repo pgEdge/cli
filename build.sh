@@ -439,9 +439,6 @@ initPG () {
   writeSettRow "GLOBAL" "STAGE" "prod"
   writeSettRow "GLOBAL" "AUTOSTART" "off"
 
-
-  initC  "pgedge"       "pgedge"    "$pgedgeV"     ""         "postgres/pgedge"    "" "" "Y"
-
   if [ "$outPlat" == "osx" ]; then
     return
   fi
@@ -480,6 +477,7 @@ initPG () {
 
   if [  "$isEL9" == "True" ]; then
     #initC  "bouncer" "bouncer" "$bouncerV" "$outPlat" "postgres/bouncer" "" "" "nil"
+    initC  "pgedge"       "pgedge"    "$pgedgeV"     ""         "postgres/pgedge"    "" "" "Y"
     initC  "backrest" "backrest" "$backrestV" "$outPlat" "postgres/backrest" "" "" "nil"
     #initC  "csvdiff" "csvdiff" "$csvdiffV" "$outPlat" "csvdiff" "" "" "nil"
     initC  "patroni"   "patroni"   "$patroniV" "" "postgres/patroni" "" "" "nil"
