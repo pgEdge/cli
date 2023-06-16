@@ -2152,7 +2152,7 @@ def warn_bad_os(el_ver):
     return()
   else:
     bad_os_warn = True
-    message("\n# WARNING!!  Bad OS version.  Must be EL9 or Ubuntu 22.04+")
+    message("# WARNING! Upgrade to EL9+ or Ubuntu 22+ for using extensions.")
 
 
 def is_el8():
