@@ -402,10 +402,10 @@ INSERT INTO releases VALUES ('backrest', 2, 'backrest',  'pgBackRest', '', 'test
 INSERT INTO versions VALUES ('backrest', '2.46-1', 'el9, arm9', 1, '20230524', '', 'EL', '');
 INSERT INTO versions VALUES ('backrest', '2.45-1', 'el9, arm9', 0, '20230321', '', 'EL', '');
 
-INSERT INTO projects VALUES ('patroni', 'app', 11, 0, 'haproxy', 4, 'https://github.com/zalando/patroni/releases',
-  'patroni', 0, 'patroni.png', 'HA Template', 'https://github.com/zalando/patroni');
-INSERT INTO releases VALUES ('patroni', 1, 'patroni', 'Patroni 3.0.2', '', 'test', '', 1, 'POSTGRES', '', '');
-INSERT INTO versions VALUES ('patroni', '3.0', '', 1, '20230320', '', 'EL', 'https://github.com/zalando/patroni/releases/tag/v3.0.2');
+INSERT INTO projects VALUES ('patron4', 'app', 11, 0, 'haproxy', 4, 'https://github.com/pgedge/patron4/tags',
+  'patron4', 0, 'patron4.png', 'HA', 'https://github.com/pgedge/patron4');
+INSERT INTO releases VALUES ('patron4', 1, 'patron4', 'Patron4 4.0.2', '', 'test', '', 1, 'POSTGRES', '', '');
+INSERT INTO versions VALUES ('patron4', '4.0.2', '', 1, '20230622', '', 'EL9', '');
 
 INSERT INTO projects VALUES ('ddlx', 'ext',     4, 0, 'hub', 0, 'https://github.com/lacanoid/pgddl/releases', 'ddlx',  1, 'ddlx.png', 'DDL Extractor', 'https://github.com/lacanoid/pgddl#ddl-extractor-functions--for-postgresql');
 INSERT INTO releases VALUES ('ddlx-pg13', 2, 'ddlx', 'DDLeXtact', '', 'prod','',  0, 'POSTGRES', '', '');

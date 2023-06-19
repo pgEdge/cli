@@ -1,6 +1,8 @@
 
 ## Determine the Package Manager (PKMG) & OS Major Version (VER_OS)
 
+set -x
+
 export OS=`uname`
 
 if [[ "$OS" == "Darwin" ]]; then
