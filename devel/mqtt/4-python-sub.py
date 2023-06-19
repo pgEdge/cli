@@ -6,6 +6,7 @@ A full life-cycle Python MQTT NodeCtl Prototype
 import logging
 import signal
 import sys
+import os
 import json
 from time import sleep
 import paho.mqtt.client as mqtt
@@ -22,6 +23,16 @@ CLIENT_ID = "NodeCtlClient"
 TOPIC = "nodectl"
 client = None  # MQTT client instance. See init_mqtt()
 led = None     # PWMLED Instance. See init_led()
+
+
+
+def run_nodectl_command(cmd):
+    nc = "../../out/posix/nodectl "
+
+    sh_cmd = nc + str(cmd) + " --json"
+
+    print(f"# run_nodectl_command() {sh_cmd}")
+    os.system(sh_cmd)
 
 
 """
@@ -64,9 +75,10 @@ def on_message(client, userdata, msg):
 
     if msg.topic == TOPIC:
         print(str(msg.payload)) 
+        payload = msg.payload
+        run_nodectl_command(payload.decode("utf-8"))
     else:
         logger.error("Unhandled message topic {} with payload " + str(msg.topic, msg.payload))
-
 
 
 def signal_handler(sig, frame):
