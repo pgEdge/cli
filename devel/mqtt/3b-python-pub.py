@@ -1,19 +1,24 @@
 #!/usr/bin/env python3
 
-import sys
+import sys, os
 import paho.mqtt.client as mqtt
+from dotenv.main import load_dotenv
 
 msg = "INFO"
 if len(sys.argv) == 2:
   msg = sys.argv[1]
+
+load_dotenv("./env.sh")
  
-BROKER_HOST = "localhost"
-BROKER_PORT = 1883
-CLIENT_ID = "DenisLussier"
-TOPIC = "nodectl"
+BROKER_HOST = os.getenv("BROKER_HOST")
+BROKER_PORT = int(os.getenv("BROKER_PORT")) 
+CLIENT_ID = os.getenv("CLIENT_ID")
+TOPIC = os.getenv("TOPIC")
 
-client = mqtt.Client(CLIENT_ID)
+mqtt_client = mqtt.Client(CLIENT_ID)
 
-client.connect(host=BROKER_HOST, port=BROKER_PORT)
+print(f"# mqtt_client.connect(host={BROKER_HOST}, port={BROKER_PORT})")
+mqtt_client.connect(host=BROKER_HOST, port=BROKER_PORT)
 
-client.publish(TOPIC, msg)
+print(f"# mqtt_client.publish({TOPIC}, '{msg}')")
+mqtt_client.publish(TOPIC, msg)

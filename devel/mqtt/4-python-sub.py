@@ -9,20 +9,23 @@ import sys
 import os
 import json
 from time import sleep
+
 import paho.mqtt.client as mqtt
+from dotenv.main import load_dotenv
+
+load_dotenv("./env.sh")
+ 
+# Global Variables
+BROKER_HOST = os.getenv("BROKER_HOST")
+BROKER_PORT = int(os.getenv("BROKER_PORT")) 
+CLIENT_ID = os.getenv("CLIENT_ID")
+TOPIC = os.getenv("TOPIC")
+client = None  # MQTT client instance. See init_mqtt()
 
 # Initialize Logging
 logging.basicConfig(level=logging.WARNING)  # Global logging configuration
 logger = logging.getLogger("main")  # Logger for this module
 logger.setLevel(logging.INFO) # Debugging for this file.
-
-# Global Variables
-BROKER_HOST = "localhost"
-BROKER_PORT = 1883
-CLIENT_ID = "NodeCtlClient"
-TOPIC = "nodectl"
-client = None  # MQTT client instance. See init_mqtt()
-led = None     # PWMLED Instance. See init_led()
 
 
 
@@ -88,7 +91,6 @@ def signal_handler(sig, frame):
     logger.info("You pressed Control + C. Shutting down, please wait...")
 
     client.disconnect() # Graceful disconnection.
-    ##led.off()
     sys.exit(0)
 
 
