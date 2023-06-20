@@ -18,20 +18,10 @@ ONE_WEEK = ONE_DAY * 7
 
 bad_os_warn = False
 
-isPy3 = False
-PIP = "pip"
-PYTHON = "python"
-if sys.version_info >= (3,):
-  isPy3 = True
-  PIP = "pip3"
-  PYTHON = "python3"
-
-try:
-  # For Python 3.0 and later
-  from urllib import request as urllib2
-except ImportError:
-  # Fall back to Python 2's urllib2
-  import urllib2
+isPy3 = True
+PIP = "pip3"
+PYTHON = "python3"
+from urllib import request as urllib2
 
 scripts_lib_path = os.path.join(os.path.dirname(__file__), 'lib')
 if scripts_lib_path not in sys.path:
