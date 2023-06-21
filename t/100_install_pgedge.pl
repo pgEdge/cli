@@ -22,7 +22,7 @@ use JSON;
 # First, we use nodectl to install pgEdge; this installs Postgres and creates the admin user and demo database.
 # 
 
-my $cmd = qq(./nodectl install pgedge -U admin -P password -d demo);
+my $cmd = qq(./nodectl install pgedge --pg 16 -U admin -P password -d demo);
 print("cmd = $cmd\n");
 my ($success, $error_message, $full_buf, $stdout_buf, $stderr_buf)= IPC::Cmd::run(command => $cmd, verbose => 0);
 
