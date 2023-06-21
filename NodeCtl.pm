@@ -143,6 +143,28 @@ sub new
 }
 
 ################################################################################
+# get_info_item_pg16
+#
+#  Returns the value of the given $item found in the
+#  output from "nc info pg16".
+#
+#  NOTE: this function must be called from a $nc object, for example:
+#            my $result = $nc->get_info_item_pg16();
+
+sub get_info_item_pg16
+{
+    my ($self, $item) = @_;
+
+    my $home_dir = $self->get_home_dir();
+
+    my $cmd = $self->get_home_dir() . "/nc --json info pg16";
+    my $raw = `$cmd`;
+    my $out = decode_json(`$cmd`);
+    
+    return $out->[0]->{$item};
+}
+
+################################################################################
 # get_info_item_pg15
 #
 #  Returns the value of the given $item found in the
@@ -160,7 +182,7 @@ sub get_info_item_pg15
     my $cmd = $self->get_home_dir() . "/nc --json info pg15";
     my $raw = `$cmd`;
     my $out = decode_json(`$cmd`);
-    
+
     return $out->[0]->{$item};
 }
 
