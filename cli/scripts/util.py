@@ -2355,6 +2355,16 @@ def http_headers():
   return(headers)
 
 
+def get_url(url):
+  import urllib.request
+
+  req = urllib.request.Request(url)
+  with urllib.request.urlopen(req) as response:
+     the_page = response.read()
+
+  return(the_page.decode("utf-8").replace("\n",""))
+
+
 ## retrieve a remote file via http #################################################
 def http_get_file(p_json, p_file_name, p_url, p_out_dir, p_display_status, p_msg, component_name=None):
   file_exists = False

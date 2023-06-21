@@ -255,7 +255,21 @@ def status (p_json, p_comp, p_ver, p_state, p_port, p_kount):
 
 
 def info(p_json, p_home, p_repo, print_flag=True):
-  import os
+  id_doc = util.get_url("http://169.254.169.254/latest/dynamic/instance-identity/document")
+  region = ""
+  az = ""
+  instance_id = ""
+  flavor = ""
+  private_ip = ""
+  try:
+    id_j = json.loads(id_doc)
+    region      = id_j["region"]
+    az          = id_j["availabilityZone"]
+    instance_id = id_j["instanceId"]
+    flavor      = id_j["instanceType"]
+    private_ip  = id_j["privateIp"]
+  except Exception as e:
+    pass
 
   p_user = util.get_user()
   p_is_admin = util.is_admin()
@@ -264,7 +278,10 @@ def info(p_json, p_home, p_repo, print_flag=True):
 
   this_os = ""
   this_uname = str(platform.system())[0:7]
-  host_ip = util.get_host_ip()
+  if private_ip > "":
+    host_ip = private_ip
+  else:
+    host_ip = util.get_host_ip()
   wmic_path = os.getenv("SYSTEMROOT", "") + os.sep + "System32" + os.sep + "wbem" + os.sep + "wmic"
   host_display = util.get_host_short()
 
@@ -343,7 +360,7 @@ def info(p_json, p_home, p_repo, print_flag=True):
     infoJson['host'] = host_display
     infoJson['host_short'] = util.get_host_short()
     infoJson['host_long'] = util.get_host()
-    infoJson['host_ip'] = util.get_host_ip()
+    infoJson['host_ip'] = host_ip
     infoJson['os'] = unicode(str(os2),sys.getdefaultencoding(),errors='ignore').strip()
     infoJson['os_pkg_mgr'] = os_pkg_mgr
     infoJson['os_major_ver'] = os_major_ver
@@ -367,6 +384,11 @@ def info(p_json, p_home, p_repo, print_flag=True):
     infoJson['java_ver'] = java_ver
     infoJson['java_major_ver'] = java_major_ver
     infoJson['glibc_ver'] = glibcV
+    infoJson['region'] = region
+    infoJson['az'] = az
+    infoJson['instance_id'] = instance_id
+    infoJson['flavor'] = flavor
+    infoJson['private_ip'] = private_ip
     infoJsonArray.append(infoJson)
     if print_flag:
       print(json.dumps(infoJsonArray, sort_keys=True, indent=2))
@@ -392,11 +414,19 @@ def info(p_json, p_home, p_repo, print_flag=True):
   else:
     glibc_v_display = ' glibc-' + glibcV + '-'
 
+  flavor_loct = ""
+  if flavor > "":
+    flavor_loct = flavor + "  " + region + "  " + az
+
   print(bold_start + ("#" * 70) + bold_end)
   print(bold_start + "#           NodeCtl: " + bold_end + "v" + ver + "  " + p_home)
   print(bold_start + "#       User & Host: " + bold_end + p_user + admin_display + "  " + host_display)
   print(bold_start + "#  Operating System: " + bold_end + os2.rstrip() + " " + glibc_v_display + os_arch)
   print(bold_start + "#           Machine: " + bold_end + mem + ", " + cores + " vCPU, " + cpu)
+  if instance_id > "":
+    print(bold_start + "#       Instance Id: " + bold_end + instance_id)
+  if flavor_loct > "":
+    print(bold_start + "# Flavor & Location: " + bold_end + flavor_loct)
   print(bold_start + "# Programming Langs: " + bold_end + langs)
 
   print(bold_start + "#          Repo URL: " + bold_end + p_repo)

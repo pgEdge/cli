@@ -4,7 +4,8 @@
   - improve ssh support for 'cluster create-local'
   - add devel/setup support for zookeeper & patroni
   - stub out starfleet support
-  - add bad-os-warning when not EL9+ or Ubuntu 22.04+
+  - add warning when not EL9+ or Ubuntu 22.04+
+  - add cloud metadata to INFO command (region, az, instance_id, account_id, flavor)
 
 
 ## scheduled for 23.118++
