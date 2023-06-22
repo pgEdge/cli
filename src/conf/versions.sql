@@ -130,10 +130,6 @@ INSERT INTO versions VALUES ('hub', '23.118', '',  1, '20230622', '', '', '');
 INSERT INTO versions VALUES ('hub', '23.117', '',  0, '20230608', '', '', '');
 INSERT INTO versions VALUES ('hub', '23.116', '',  0, '20230524', '', '', '');
 INSERT INTO versions VALUES ('hub', '23.115', '',  0, '20230511', '', '', '');
-INSERT INTO versions VALUES ('hub', '23.114', '',  0, '20230427', '', '', '');
-INSERT INTO versions VALUES ('hub', '23.112', '',  0, '20230426', '', '', '');
-INSERT INTO versions VALUES ('hub', '23.111', '',  0, '20230424', '', '', '');
-INSERT INTO versions VALUES ('hub', '23.110', '',  0, '20230418', '', '', '');
 
 -- ##
 INSERT INTO projects VALUES ('pg', 'pge', 1, 5432, 'hub', 1, 'https://github.com/postgres/postgres/tags',
@@ -323,8 +319,9 @@ INSERT INTO projects VALUES ('spock', 'pge', 4, 0, 'hub', 1, 'https://github.com
   'spock', 1, 'spock.png', 'Logical & Multi-Active Replication', 'https://github.com/pgedge/spock/#spock');
 INSERT INTO releases VALUES ('spock31-pg15', 4, 'spock', 'Spock', '', 'prod', '', 1, 'pgEdge Community', '', '');
 INSERT INTO releases VALUES ('spock31-pg16', 4, 'spock', 'Spock', '', 'prod', '', 1, 'pgEdge Community', '', '');
-INSERT INTO versions VALUES ('spock31-pg15', '3.1.1-1', 'el8, el9, arm, arm9', 1, '20230511', 'pg15', '', '');
-INSERT INTO versions VALUES ('spock31-pg16', '3.1.2-1', 'el9, arm9', 1, '20230524', 'pg16', '', '');
+INSERT INTO versions VALUES ('spock31-pg15', '3.1.3-1', 'el9, arm9', 1, '20230622', 'pg15', '', '');
+INSERT INTO versions VALUES ('spock31-pg16', '3.1.3-1', 'el9, arm9', 1, '20230622', 'pg16', '', '');
+INSERT INTO versions VALUES ('spock31-pg16', '3.1.2-1', 'el9, arm9', 0, '20230524', 'pg16', '', '');
 INSERT INTO versions VALUES ('spock31-pg16', '3.1.1-1', 'el9, arm9', 0, '20230511', 'pg16', '', '');
 
 INSERT INTO projects VALUES ('pglogical', 'ext', 4, 0, 'hub', 1, 'https://github.com/2ndQuadrant/pglogical/releases',
@@ -405,7 +402,7 @@ INSERT INTO versions VALUES ('backrest', '2.45-1', 'el9, arm9', 0, '20230321', '
 INSERT INTO projects VALUES ('patron4', 'app', 11, 0, 'haproxy', 4, 'https://github.com/pgedge/patron4/tags',
   'patron4', 0, 'patron4.png', 'HA', 'https://github.com/pgedge/patron4');
 INSERT INTO releases VALUES ('patron4', 1, 'patron4', 'Patron4 4.0.2', '', 'test', '', 1, 'POSTGRES', '', '');
-INSERT INTO versions VALUES ('patron4', '4.0.2', '', 1, '20230622', '', 'EL9', '');
+INSERT INTO versions VALUES ('patron4', '4.0.2', '', 0, '20230622', '', 'EL9', '');
 
 INSERT INTO projects VALUES ('ddlx', 'ext',     4, 0, 'hub', 0, 'https://github.com/lacanoid/pgddl/releases', 'ddlx',  1, 'ddlx.png', 'DDL Extractor', 'https://github.com/lacanoid/pgddl#ddl-extractor-functions--for-postgresql');
 INSERT INTO releases VALUES ('ddlx-pg13', 2, 'ddlx', 'DDLeXtact', '', 'prod','',  0, 'POSTGRES', '', '');
