@@ -67,7 +67,7 @@ patroniV=3.0
 
 audit14V=1.6.2-1
 audit15V=1.7.0-1
-postgisV=3.3.2-1
+postgisV=3.3.3-1
 
 pljavaV=1.6.4-1
 debuggerV=1.5-1

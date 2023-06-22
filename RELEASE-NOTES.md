@@ -1,14 +1,9 @@
 # pgedge/nodectl - Release Notes
 
-## Completed so far in 23.118 as of 2023-06-09
-  - improve ssh support for 'cluster create-local'
-  - add devel/setup support for zookeeper & patroni
-  - stub out starfleet support
-  - add warning when not EL9+ or Ubuntu 22.04+
-  - add cloud metadata to INFO command (region, az, instance_id, account_id, flavor)
+## done so far for 23.119 as of 2023-0622
+  - bump postgis to v3.3.3
 
-
-## scheduled for 23.118++
+## scheduled for 23.119++
   - add support for pljava-pg15 & -pg16 (cannot find libjvm17  setting from util.get_jvm_location)
   - get latest pgcat2 & postgrest and make work for arm9 and el9
   - make `cluster create-remote` work with same logic as `create-local`
@@ -16,8 +11,14 @@
   - add test support for pgcat & fs (failover-slots)
   - add devel/setup support for confluent/kafka
 
-
 ########################################################
+## done for 23.118 2023-06-22
+  - improve ssh support for 'cluster create-local'
+  - add devel/setup support for zookeeper & patroni
+  - stub out starfleet support
+  - add warning when not EL9+ or Ubuntu 22.04+
+  - add cloud metadata to INFO command (region, az, instance_id, account_id, flavor)
+  - new version of spock 3.1.3 supporting double update bug fix and other.
 
 ## done for 23.117  2023-06-08:
   - fix broken LLVM support in pg15.3-2 & pg16beta1-2

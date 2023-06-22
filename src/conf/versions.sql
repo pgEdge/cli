@@ -335,7 +335,8 @@ INSERT INTO versions VALUES ('pglogical-pg15', '2.4.2-1',  'arm9, el9', 0, '2022
 INSERT INTO projects VALUES ('postgis', 'ext', 4, 1, 'hub', 3, 'http://postgis.net/source',
   'postgis', 1, 'postgis.png', 'Spatial Extensions', 'http://postgis.net');
 INSERT INTO releases VALUES ('postgis-pg15', 3, 'postgis', 'PostGIS', '', 'prod', '', 1, 'GPLv2', '', '');
-INSERT INTO versions VALUES ('postgis-pg15', '3.3.2-1', 'el9, arm9', 1, '20230608', 'pg15', '', 'https://git.osgeo.org/gitea/postgis/postgis/raw/tag/3.3.2/NEWS');
+INSERT INTO versions VALUES ('postgis-pg15', '3.3.3-1', 'el9, arm9', 1, '20230706', 'pg15', '', 'https://git.osgeo.org/gitea/postgis/postgis/raw/tag/3.3.3/NEWS');
+INSERT INTO versions VALUES ('postgis-pg15', '3.3.2-1', 'el9, arm9', 0, '20230608', 'pg15', '', 'https://git.osgeo.org/gitea/postgis/postgis/raw/tag/3.3.2/NEWS');
 
 INSERT INTO projects VALUES ('pgadmin', 'app', 3, 80, '', 1, 'https://www.pgadmin.org/news/',
   'pgadmin', 0, 'pgadmin.png', 'PostgreSQL Tools', 'https://pgadmin.org');
