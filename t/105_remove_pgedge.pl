@@ -15,6 +15,12 @@ use JSON;
 use NodeCtl;
 
 #
+# Move into the pgedge directory.
+#
+
+chdir("./pgedge");
+
+#
 # Get the location of the data directory and home directory before removing pgEdge; store them in $datadir and $home.
 #
 

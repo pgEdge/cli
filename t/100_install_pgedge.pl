@@ -1,4 +1,3 @@
-#
 # This test case runs the command:
 # ./nodectl install pgedge -U admin -P password -d demo
 # The command does not add an entry to the ~/.pgpass file, so we do that in this case as well, to simplify
@@ -18,6 +17,23 @@ use IPC::Cmd qw(run);
 use Try::Tiny;
 use JSON;
 
+
+#
+# Download the latest source code.
+#
+
+my $cmd5 = qq(curl -fsSL https://pgedge-download.s3.amazonaws.com/REPO/install.py > install.py);
+my $result5 = system($cmd5);
+
+#
+# Run the install.py script to create the pgedge subdirectory; navigate into the directory.
+#
+
+my $cmd6 = qq(python ./install.py);
+my $result6 = system($cmd6);
+
+chdir("./pgedge");
+
 #
 # First, we use nodectl to install pgEdge; this installs Postgres and creates the admin user and demo database.
 # 
@@ -33,7 +49,6 @@ my ($success, $error_message, $full_buf, $stdout_buf, $stderr_buf)= IPC::Cmd::ru
 # you invoke this file with the perl command - if you invoke it with prove(), the output is suppressed.
 #
 
-print("success = $success\n");
 print("stdout_buf = @$stdout_buf\n");
 
 #
