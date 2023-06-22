@@ -1,6 +1,6 @@
 #!/bin/bash
 
-spockFull31V=3.1.2
+spockFull31V=3.1.3
 spockBuild31V=1
 
 pg16V=16beta1
