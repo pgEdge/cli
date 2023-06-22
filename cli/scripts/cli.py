@@ -1325,7 +1325,7 @@ if (p_mode in no_log_commands) and (isJSON == True):
 elif p_mode in ('service', 'spock', 'um', 'cluster') and (len(args) > 2) and (args[2] in no_log_commands):
   pass
 else:
-  my_logger.command(MY_CMD + " %s", full_cmd_line)
+  my_logger.command(MY_CMD + " %s", util.scrub_passwd(full_cmd_line))
 
 if not is_valid_mode(p_mode):
   util.exit_message("Invalid option or command '" + p_mode + "'", 1, isJSON)

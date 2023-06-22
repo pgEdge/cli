@@ -2,6 +2,7 @@
 
 ## done so far for 23.119 as of 2023-0622
   - bump postgis to v3.3.3
+  - scrub passwd from logs
 
 ## scheduled for 23.119++
   - add support for pljava-pg15 & -pg16 (cannot find libjvm17  setting from util.get_jvm_location)
