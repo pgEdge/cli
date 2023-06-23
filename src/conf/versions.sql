@@ -329,7 +329,7 @@ INSERT INTO versions VALUES ('spock31-pg16', '3.1.1-1', 'el9, arm9', 0, '2023051
 INSERT INTO projects VALUES ('pglogical', 'ext', 4, 0, 'hub', 1, 'https://github.com/2ndQuadrant/pglogical/releases',
   'pglogical', 1, 'spock.png', 'Logical Replication', 'https://github.com/2ndQuadrant/pglogical');
 INSERT INTO releases VALUES ('pglogical-pg15', 4, 'pglogical', 'pgLogical', '', 'test', '', 1, 'POSTGRES', '', '');
-INSERT INTO versions VALUES ('pglogical-pg15', '2.4.3-1',  'arm9, el9', 0, '20230701', 'pg15', '', 'https://github.com/2ndQuadrant/pglogical/releases/tag/REL2_4_3');
+INSERT INTO versions VALUES ('pglogical-pg15', '2.4.3-1',  'arm9, el9', 1, '20230701', 'pg15', '', 'https://github.com/2ndQuadrant/pglogical/releases/tag/REL2_4_3');
 
 INSERT INTO projects VALUES ('postgis', 'ext', 4, 1, 'hub', 3, 'http://postgis.net/source',
   'postgis', 1, 'postgis.png', 'Spatial Extensions', 'http://postgis.net');
