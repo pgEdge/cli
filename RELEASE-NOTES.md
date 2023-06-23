@@ -1,10 +1,6 @@
 # pgedge/nodectl - Release Notes
 
-## done so far for 23.119 as of 2023-0622
-  - bump postgis to v3.3.3
-  - scrub passwd from logs
-
-## scheduled for 23.119++
+## scheduled for 23.120++
   - add support for pljava-pg15 & -pg16 (cannot find libjvm17  setting from util.get_jvm_location)
   - get latest pgcat2 & postgrest and make work for arm9 and el9
   - make `cluster create-remote` work with same logic as `create-local`
@@ -13,6 +9,11 @@
   - add devel/setup support for confluent/kafka
 
 ########################################################
+## done for 23.119 as of 2023-0623
+  - bump postgis to v3.3.3
+  - scrub passwd from logs
+  - fix a hanging regression when NOT in an EC2 kind of VM
+
 ## done for 23.118 2023-06-22
   - improve ssh support for 'cluster create-local'
   - add devel/setup support for zookeeper & patroni
@@ -41,10 +42,4 @@
 
 ## done for 23.115 on 2023-05-15
   - add support for pg16-dev3
-
-
-
-
-
-
 

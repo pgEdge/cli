@@ -2358,9 +2358,12 @@ def http_headers():
 def get_url(url):
   import urllib.request
 
-  req = urllib.request.Request(url)
-  with urllib.request.urlopen(req) as response:
-     the_page = response.read()
+  try:
+    req = urllib.request.Request(url)
+    with urllib.request.urlopen(req, timeout=0.05) as response:
+      the_page = response.read()
+  except Exception as e:
+    return("")
 
   return(the_page.decode("utf-8").replace("\n",""))
 
