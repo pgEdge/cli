@@ -1,12 +1,14 @@
 # pgedge/nodectl - Release Notes
 
+## done so far for 23.120 as of Jun23
+  - bump pglogical to 2.4.3 (for testing only)
+  - improve INFO layout whilst showing the unique-id
+
 ## scheduled for 23.120++
   - add support for pljava-pg15 & -pg16 (cannot find libjvm17  setting from util.get_jvm_location)
   - get latest pgcat2 & postgrest and make work for arm9 and el9
   - make `cluster create-remote` work with same logic as `create-local`
-  - add test support for kafka, & patroni
-  - add test support for pgcat & fs (failover-slots)
-  - add devel/setup support for confluent/kafka
+  - add test support for patron4, etcd, haproxy
 
 ########################################################
 ## done for 23.119 as of 2023-0623
