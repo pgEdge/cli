@@ -126,7 +126,7 @@ INSERT INTO categories VALUES (9,  87, 'Management & Monitoring', 'Manage/Monito
 -- ## HUB ################################
 INSERT INTO projects VALUES ('hub', 'app', 0, 0, 'hub', 0, 'https://github.com/pgedge/nodectl','',0,'','','');
 INSERT INTO releases VALUES ('hub', 1, 'hub', '', '', 'hidden', '', 1, '', '', '');
-INSERT INTO versions VALUES ('hub', '23.119', '',  1, '20230706', '', '', '');
+INSERT INTO versions VALUES ('hub', '23.119', '',  1, '20230623', '', '', '');
 INSERT INTO versions VALUES ('hub', '23.118', '',  0, '20230622', '', '', '');
 INSERT INTO versions VALUES ('hub', '23.117', '',  0, '20230608', '', '', '');
 INSERT INTO versions VALUES ('hub', '23.116', '',  0, '20230524', '', '', '');
@@ -335,7 +335,7 @@ INSERT INTO versions VALUES ('pglogical-pg15', '2.4.2-1',  'arm9, el9', 0, '2022
 INSERT INTO projects VALUES ('postgis', 'ext', 4, 1, 'hub', 3, 'http://postgis.net/source',
   'postgis', 1, 'postgis.png', 'Spatial Extensions', 'http://postgis.net');
 INSERT INTO releases VALUES ('postgis-pg15', 3, 'postgis', 'PostGIS', '', 'prod', '', 1, 'GPLv2', '', '');
-INSERT INTO versions VALUES ('postgis-pg15', '3.3.3-1', 'el9, arm9', 1, '20230706', 'pg15', '', 'https://git.osgeo.org/gitea/postgis/postgis/raw/tag/3.3.3/NEWS');
+INSERT INTO versions VALUES ('postgis-pg15', '3.3.3-1', 'el9, arm9', 1, '20230623', 'pg15', '', 'https://git.osgeo.org/gitea/postgis/postgis/raw/tag/3.3.3/NEWS');
 INSERT INTO versions VALUES ('postgis-pg15', '3.3.2-1', 'el9, arm9', 0, '20230608', 'pg15', '', 'https://git.osgeo.org/gitea/postgis/postgis/raw/tag/3.3.2/NEWS');
 
 INSERT INTO projects VALUES ('pgadmin', 'app', 3, 80, '', 1, 'https://www.pgadmin.org/news/',
@@ -393,7 +393,7 @@ INSERT INTO versions VALUES ('csvdiff', '1.4.0', 'el9, arm9', 1, '20230511', '',
 INSERT INTO projects VALUES ('ncd', 'pge', 4, 0, 'hub', 3, 'https://github.com/pgedge/nodectl-mqtt/tags',
   'cat',  0, 'ncd.png', 'nodectl-mqtt', 'https://github.com/pgedge/nodectl-mqtt');
 INSERT INTO releases VALUES ('ncd', 2, 'ncd',  'nodectl-mqtt', '', 'test', '', 1, 'pgEdge Community', '', '');
-INSERT INTO versions VALUES ('ncd', '1.0', '', 1, '20230706', '', '', '');
+INSERT INTO versions VALUES ('ncd', '1.0', '', 0, '20230623', '', '', '');
 
 INSERT INTO projects VALUES ('pgcat2', 'pge', 4, 6432, 'hub', 3, 'https://github.com/pgedge/pgcat2/tags',
   'cat',  0, 'pgcat2.png', 'Connection Pooler', 'https://github.com/pgedge/pgcat2');
