@@ -481,16 +481,13 @@ initPG () {
     #initC  "csvdiff" "csvdiff" "$csvdiffV" "$outPlat" "csvdiff" "" "" "nil"
     initC  "patroni"   "patroni"   "$patroniV" "" "postgres/patroni" "" "" "nil"
   fi
-  ##initC "nginx" "nginx" "$nginxV" "" "nginx" "" "" "Y"
   ##initC "prompgexp"  "prompgexp"  "$prompgexpV"  ""  "prometheus/pg_exporter"  "" "" "Y"
-  ##initC "nodejs"   "nodejs" "$nodejsV" "" "nodejs"           "" "" "Y"
   
   ##initC "instantclient" "instantclient" "$inclV" "" "oracle/instantclient" "" "" "Y"
   ##initC "kafka"     "kafka"     "$kfkV"   "" "kafka"            "" "" "Y"
   ##initC "apicurio"  "apicurio"  "$apicV"  "" "apicurio"         "" "" "nil"
   ##initC "debezium"  "debezium"  "$dbzV"   "" "debezium"         "" "" "Y"
   ##initC "pgadmin"   "pgadmin"   "$adminV" "" "postgres/pgadmin" "" "" "Y"
-  ##initC "omnidb"    "omnidb"    "$omniV"  "" "postgres/omnidb"  "" "" "Y"
 
   ##initC "ora2pg"    "ora2pg"    "$ora2pgV" "" "postgres/ora2pg" "" "" "Y"
 
