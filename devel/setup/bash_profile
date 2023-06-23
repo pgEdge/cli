@@ -12,6 +12,7 @@ export HIST=$DEV/history
 export NC=$DEV/nodectl
 export SRC=$IN/sources
 export BLD=/opt/pgbin-build/pgbin/bin
+export NCD=$DEV/nodectl-mqtt
 
 export NC_NO_AUTO_UPDATE=1
 export DEVEL=$NC/devel
