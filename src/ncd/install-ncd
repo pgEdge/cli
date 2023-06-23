@@ -1,0 +1,8 @@
+#!/bin/bash
+cd "$(dirname "$0")"
+
+if [ "$isAutoStart" == "True" ]; then
+  cd ..
+  ./nc start ncd
+fi
+

@@ -475,12 +475,11 @@ initPG () {
   fi
 
   if [  "$isEL9" == "True" ]; then
-    #initC  "bouncer" "bouncer" "$bouncerV" "$outPlat" "postgres/bouncer" "" "" "nil"
+    initC  "ncd"          "ncd"       "$ncdV"        ""         "nodectl-mqtt"       "" "" "nil"
     initC  "pgedge"       "pgedge"    "$pgedgeV"     ""         "postgres/pgedge"    "" "" "Y"
     initC  "backrest" "backrest" "$backrestV" "$outPlat" "postgres/backrest" "" "" "nil"
     #initC  "csvdiff" "csvdiff" "$csvdiffV" "$outPlat" "csvdiff" "" "" "nil"
     initC  "patroni"   "patroni"   "$patroniV" "" "postgres/patroni" "" "" "nil"
-    #initC  "zookeeper" "zookeeper"     "$zookV"   "" "apache/zookeeper"            "" "" "Y"
   fi
   ##initC "nginx" "nginx" "$nginxV" "" "nginx" "" "" "Y"
   ##initC "prompgexp"  "prompgexp"  "$prompgexpV"  ""  "prometheus/pg_exporter"  "" "" "Y"
