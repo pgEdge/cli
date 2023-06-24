@@ -255,21 +255,8 @@ def status (p_json, p_comp, p_ver, p_state, p_port, p_kount):
 
 
 def info(p_json, p_home, p_repo, print_flag=True):
-  id_doc = util.get_url("http://169.254.169.254/latest/dynamic/instance-identity/document")
-  region = ""
-  az = ""
-  instance_id = ""
-  flavor = ""
-  private_ip = ""
-  try:
-    id_j = json.loads(id_doc)
-    region      = id_j["region"]
-    az          = id_j["availabilityZone"]
-    instance_id = id_j["instanceId"]
-    flavor      = id_j["instanceType"]
-    private_ip  = id_j["privateIp"]
-  except Exception as e:
-    pass
+
+  cloud_name, cloud_platform, instance_id, flavor, region, az, private_ip = util.get_cloud_info()
 
   p_user = util.get_user()
   p_is_admin = util.is_admin()
@@ -414,32 +401,24 @@ def info(p_json, p_home, p_repo, print_flag=True):
   else:
     glibc_v_display = ' glibc-' + glibcV + '-'
 
-  flavor_loct = ""
-  if flavor > "":
-    flavor_loct = flavor + "  " + region + "  " + az
-
   print(bold_start + ("#" * 70) + bold_end)
-  print(bold_start + "#           NodeCtl: " + bold_end + "v" + ver + "  " + p_home)
-  print(bold_start + "#       User & Host: " + bold_end + p_user + admin_display + "  " + host_display)
-  print(bold_start + "#  Operating System: " + bold_end + os2.rstrip() + " " + glibc_v_display + os_arch)
-  print(bold_start + "#           Machine: " + bold_end + mem + ", " + cores + " vCPU, " + cpu)
+  print(bold_start + "#     NodeCtl: " + bold_end + "v" + ver + "  " + p_home)
+  print(bold_start + "# User & Host: " + bold_end + p_user + \
+    admin_display + "  " + host_display + "  " + host_ip)
+  print(bold_start + "#          OS: " + bold_end + os2.rstrip() + " " + glibc_v_display + os_arch)
+  print(bold_start + "#     Machine: " + bold_end + mem + ", " + cores + " vCPU, " + cpu)
   if instance_id > "":
-    print(bold_start + "#       Instance Id: " + bold_end + instance_id)
-  if flavor_loct > "":
-    print(bold_start + "# Flavor & Location: " + bold_end + flavor_loct)
-  print(bold_start + "# Programming Langs: " + bold_end + langs)
+    print(bold_start + "#  Cloud Info: " + bold_end +\
+      f"{cloud_name}  {cloud_platform}  {instance_id}  {flavor}  {az}")
 
-  print(bold_start + "#          Repo URL: " + bold_end + p_repo)
+  print(bold_start + "#       Langs: " + bold_end + langs)
 
-  if versions_sql == "versions.sql":
-    pass
-  else:
-    print(bold_start + "#      Versions SQL: " + bold_end + versions_sql)
+  print(bold_start + "#    Repo URL: " + bold_end + p_repo)
 
   if not last_update_local:
     last_update_local="None"
 
-  print(bold_start + "#       Last Update: " + bold_end + str(last_update_local))
+  print(bold_start + "# Last Update: " + bold_end + str(last_update_local))
   print(bold_start + ("#" * 70) + bold_end)
 
 

@@ -41,6 +41,53 @@ MY_HOME = os.getenv('MY_HOME', '..' + os.sep + '..')
 pid_file = os.path.join(MY_HOME, 'conf', 'cli.pid')
 
 
+def get_cloud_info():
+  try:
+    ciq = subprocess.run(['cloud-init', 'query', '--all'], 
+      check=True, capture_output=True, text=True).stdout
+    ciq_j = json.loads(ciq)
+
+  except Exception as e:
+    return("", "", "", "", "", "", "")
+
+  try:
+    cloud_name = ciq_j["v1"]["cloud-name"]
+  except Exception as e:
+    cloud_name = ""
+
+  try:
+    platform = ciq_j["v1"]["platform"]
+  except Exception as e:
+    platform = ""
+
+  try:
+    region = ciq_j["v1"]["region"]
+  except Exception as e:
+    region = ""
+
+  try:
+    availability_zone = ciq_j["v1"]["availability-zone"]
+  except Exception as e:
+    availability_zone = ""
+
+  try:
+    instance_id  = ciq_j["v1"]["instance-id"]
+  except Exception as e:
+    instance_id = ""
+
+  try:
+    instance_type  = ciq_j["ds"]["meta-data"]["instance-type"]
+  except Exception as e:
+    instance_type = ""
+
+  try:
+    local_ipv4  = ciq_j["ds"]["meta-data"]["local-ipv4"]
+  except Exception as e:
+    local_ipv4 = ""
+
+  return(cloud_name, platform, instance_id, instance_type, region, availability_zone, local_ipv4)
+
+
 def check_node_exists(cluster_name, node_name, base_dir="cluster"):
   node_dir = base_dir + "/" + str(cluster_name) + "/" + str(node_name)
 
