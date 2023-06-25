@@ -50,8 +50,10 @@ except Exception as e:
   print("ERROR: Unable to unpack \n" + str(e))
   sys.exit(1)
 
-cmd = "pgedge" + os.sep + "nodectl"
-os.system(cmd + " set GLOBAL REPO " + REPO)
+cmd = "pgedge" + os.sep + "nodectl "
+os.system(cmd + "set GLOBAL REPO " + REPO)
+os.system(cmd + "update --silent")
+os.system(cmd + "info")
 
 print("pgedge/nodectl installed.\n")
 

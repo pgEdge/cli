@@ -2,7 +2,8 @@
 
 ## done so far for 23.120 as of Jun23
   - bump pglogical to 2.4.3 (for testing only)
-  - improve INFO layout whilst showing the unique-id
+  - improve 'info' layout whilst showing cloud-init query (if available)
+  - improve install.py with an 'update --silent' & 'info' command at end
 
 ## scheduled for 23.120++
   - add support for pljava-pg15 & -pg16 (cannot find libjvm17  setting from util.get_jvm_location)
