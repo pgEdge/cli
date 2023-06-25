@@ -1864,7 +1864,7 @@ try:
           kount = kount + 1
           jsonList.append(compDict)
 
-      if not isJSON:
+      if not isJSON and not isSILENT:
         if kount >= 1:
           print("--- New components & extensions released in the last 30 days ---")
           headers = ['Category', 'Component', 'Version', 'ReleaseDt', 'Status']
@@ -1884,8 +1884,9 @@ try:
       if isJSON:
         print('[{"status":"completed","has_updates":'+ str(hasUpdates) + '}]')
       else:
-        print("---------- Components available to install or update ------------")
-        meta.get_list(isSHOWDUPS, isEXTENSIONS, isJSON, isTEST, False, p_comp=p_comp)
+        if not isSILENT:
+          print("---------- Components available to install or update ------------")
+          meta.get_list(isSHOWDUPS, isEXTENSIONS, isJSON, isTEST, False, p_comp=p_comp)
     except Exception as e:
       fatal_sql_error(e, sql, "UPDATE in mainline")
 
