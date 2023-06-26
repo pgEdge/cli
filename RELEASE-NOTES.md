@@ -12,7 +12,8 @@
   - add test support for patron4, etcd, haproxy
 
 ########################################################
-## done for 23.119 as of 2023-0623
+## done for 23.119 as of 2023-06-23
+  - fix spock bug resulting from multiple updates in same transaction.
   - bump postgis to v3.3.3
   - scrub passwd from logs
   - fix a hanging regression when NOT in an EC2 kind of VM
