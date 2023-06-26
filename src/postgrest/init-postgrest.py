@@ -15,6 +15,11 @@ sysd_dir = util.get_systemd_dir()
 os.system("sudo cp " + svc_file + "  " + sysd_dir + os.sep + ".")
 os.system("sudo systemctl daemon-reload")
 os.system("sudo systemctl enable postgrest")
+
+print("Starting Postgrest service")
 os.system("sudo systemctl start  postgrest")
 util.set_column("autostart", comp, "on")
 util.set_column("svcname", comp, comp)
+
+os.sleep(3)
+os.system("sudo systemctl status postgrest"

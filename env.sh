@@ -17,7 +17,7 @@ P12=12.15-1
 P11=11.20-1
 
 goV=1.19.3
-postgrestV=10.0.2-1
+postgrestV=11.1.0-1
 prompgexpV=0.11.1
 nodejsV=18.12.1
 backrestV=2.46-1
