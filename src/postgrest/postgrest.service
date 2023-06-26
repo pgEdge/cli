@@ -5,7 +5,7 @@ After=network.target
 [Service]
 Type=simple
 User=USER 
-ExecStart=RST_DIR/postgrest  RST_DIR/postgrest.conf
+ExecStart=/usr/local/bin/postgrest  RST_DIR/postgrest.conf
 ExecReload=/bin/kill -HUP $MAINPID
 KillSignal=SIGINT
 #LimitNOFILE=1024
