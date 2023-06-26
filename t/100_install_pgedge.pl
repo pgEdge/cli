@@ -17,20 +17,9 @@ use IPC::Cmd qw(run);
 use Try::Tiny;
 use JSON;
 
-
 #
-# Download the latest source code.
+# Make sure you're in the pgedge directory.
 #
-
-my $cmd5 = qq(curl -fsSL https://pgedge-download.s3.amazonaws.com/REPO/install.py > install.py);
-my $result5 = system($cmd5);
-
-#
-# Run the install.py script to create the pgedge subdirectory; navigate into the directory.
-#
-
-my $cmd6 = qq(python ./install.py);
-my $result6 = system($cmd6);
 
 chdir("./pgedge");
 
@@ -39,7 +28,7 @@ chdir("./pgedge");
 # 
 
 my $cmd = qq(./nodectl install pgedge --pg 16 -U admin -P password -d demo);
-print("cmd = $cmd\n");
+diag("cmd = $cmd\n");
 my ($success, $error_message, $full_buf, $stdout_buf, $stderr_buf)= IPC::Cmd::run(command => $cmd, verbose => 0);
 
 #
@@ -49,7 +38,7 @@ my ($success, $error_message, $full_buf, $stdout_buf, $stderr_buf)= IPC::Cmd::ru
 # you invoke this file with the perl command - if you invoke it with prove(), the output is suppressed.
 #
 
-print("stdout_buf = @$stdout_buf\n");
+diag("stdout_buf = @$stdout_buf\n");
 
 #
 # Then, we retrieve the port number from nodectl in json form... this is to catch cases where more than one copy of 
@@ -60,34 +49,42 @@ my $out = decode_json(`./nc --json info pg16`);
 
 my $port = $out->[0]->{"port"};
 
-print("the Port number is = {$port}\n");
+diag("the Port number is = {$port}\n");
 
 #
 # Then, we add an entry to the ~/.pgpass file for the admin user so we can connect with psql.
 #
 
 my $cmd3 = qq(echo "*:*:*:admin:password" >> ~/.pgpass);
-
 my($success3, $error_message3, $full_buf3, $stdout_buf3, $stderr_buf3)= IPC::Cmd::run(command => $cmd3, verbose => 0);
 
 diag("We'll need to authenticate with the admin user, so we're adding the password to the .pgpass file = {@$stderr_buf3}\n");
 
 #
+# Connect with psql, and confirm that I'm in the correct database.
+#
+
+my $cmd4 = qq(psql -t -h 127.0.0.1 -p $port -U admin -d demo -c "select * from current_database()");
+diag("cmd4 = $cmd4\n");
+my($success4, $error_message4, $full_buf4, $stdout_buf4, $stderr_buf4)= IPC::Cmd::run(command => $cmd4, verbose => 0);
+
+diag("success4 = $success4\n");
+diag("stdout_buf4 = @$stdout_buf4\n");
+
+#
 # Then, we use the port number from the previous section to connect to psql and test for the existence of the spock extension.
 #
 
-my $cmd4 = qq(psql -t -h 127.0.0.1 -p $port -U admin -d demo -c "SELECT installed_version FROM pg_available_extensions WHERE name='spock'");
+my $cmd5 = qq(psql -t -h 127.0.0.1 -p $port -U admin -d demo -c "SELECT installed_version FROM pg_available_extensions WHERE name='spock'");
+diag("cmd5 = $cmd5\n");
+my($success5, $error_message5, $full_buf5, $stdout_buf5, $stderr_buf5)= IPC::Cmd::run(command => $cmd5, verbose => 0);
 
-my($success4, $error_message4, $full_buf4, $stdout_buf4, $stderr_buf4)= IPC::Cmd::run(command => $cmd4, verbose => 0);
+diag("success5 = $success5\n");
+diag("stdout_buf5 = @$stdout_buf5\n");
 
+my $version = $success5;
 
-#print("success4 = $success4\n");
-#print("full_buf4 = @$full_buf4\n");
-print("stdout_buf4 = @$stdout_buf4\n");
-
-#my $version = @$stdout_buf4;
-
-if (defined($success))
+if (defined($version))
 {
     ok(1);
 }
@@ -95,6 +92,5 @@ else
 {
     ok(0);
 }
-
 
 done_testing();
