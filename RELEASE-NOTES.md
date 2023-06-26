@@ -1,6 +1,6 @@
-# pgedge/nodectl - Release Notes
+# pgEdge Platform Release Notes #############
 
-## done so far for 23.120 as of Jun23
+## work in process so far for 23.120 as of Jun26
   - bump pglogical to 2.4.3 (for testing only)
   - improve 'info' layout whilst showing cloud-init query (if available)
   - improve install.py with an 'update --silent' & 'info' command at end
