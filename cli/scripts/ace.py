@@ -93,7 +93,9 @@ def get_dump_file_name(p_prfx, p_schm, p_base_dir="/tmp"):
   return(p_base_dir + os.sep + p_prfx + "-" + p_schm + ".sql")
 
 
-def write_tbl_csv(p_con, p_prfx, p_schm, p_tbl, p_cols, p_key, p_base_dir=None):
+def write_tbl_csv(p_con, p_prfx, p_schm, p_tbl, p_cols, p_key, p_base_dir=None, p_checksums=False):
+ ## print(f"DEBUG write_tble_csv({p_schm}, {p_tbl}, {p_cols}, {p_key}, {p_checksums})")
+
   try:
     out_file = get_csv_file_name(p_prfx, p_schm, p_tbl, p_base_dir)
 
@@ -115,7 +117,12 @@ def write_tbl_csv(p_con, p_prfx, p_schm, p_tbl, p_cols, p_key, p_base_dir=None):
     with open(out_file, 'r') as fp:
       lines = len(fp.readlines())
 
-    util.message(" detail rows = " + str(format(lines - 1, "n")))
+    size_b = os.path.getsize(out_file)
+    size_m = round((size_b/1000/1000), 1)
+
+    util.message(" rows = " + str(format(lines - 1, "n")) + \
+                 ", size = " + str(size_m) + "M" + \
+                 ", use_checksums = " + str(p_checksums))
   except Exception as e:
     util.exit_message("Error in write_tbl_csv():\n" + str(e), 1)
 
@@ -222,7 +229,7 @@ def diff_schemas(cluster_name, node1, node2, schema_name):
     
   l_schema = schema_name
 
-  db, pg, count, usr, cert, nodes = cluster.load_json(cluster_name)
+  db, pg, count, usr, passwd, os_user, cert, nodes = cluster.load_json(cluster_name)
   util.message(f"## db={db}, user={usr}\n")
   for nd in nodes:
     if nd["nodename"] == node1:
@@ -250,7 +257,7 @@ def diff_spock(cluster_name, node1, node2):
   if node1 == node2:
     util.exit_message("node1 must be different than node2")
 
-  db, pg, count, usr, cert, cluster_nodes = cluster.load_json(cluster_name)
+  db, pg, count, usr, passwd, os_usr, cert, cluster_nodes = cluster.load_json(cluster_name)
   compare_spock=[]
   pg_v = get_pg_v(pg)
   print("\n")
@@ -327,7 +334,7 @@ def diff_spock(cluster_name, node1, node2):
   return(compare_spock)
 
 
-def diff_tables(cluster_name, node1, node2, table_name):
+def diff_tables(cluster_name, node1, node2, table_name, use_checksums=False):
   """Compare table on different cluster nodes"""
 
   if not os.path.isfile("/usr/local/bin/csvdiff"):
@@ -351,7 +358,7 @@ def diff_tables(cluster_name, node1, node2, table_name):
   l_table = nm_lst[1]
   util.message(f"## schema={l_schema}, table={l_table}")
 
-  db, pg, count, usr, cert, nodes = cluster.load_json(cluster_name)
+  db, pg, count, usr, passwd, os_usr, cert, nodes = cluster.load_json(cluster_name)
   util.message(f"## db={db}, user={usr}\n")
   con1 = None
   con2 = None
@@ -359,14 +366,14 @@ def diff_tables(cluster_name, node1, node2, table_name):
     for nd in nodes:
       if nd["nodename"] == node1:
         util.message("## Getting Conection to Node1 - " + nd["ip"] + ":" + str(nd["port"]))
-        con1 = psycopg.connect(dbname=db, user=usr, host=nd["ip"], port=nd["port"])
+        con1 = psycopg.connect(dbname=db, user=usr, password=passwd, host=nd["ip"], port=nd["port"])
 
       if nd["nodename"] == node2:
         util.message("## Getting Conection to Node2 - " + nd["ip"] + ":" + str(nd["port"]) + "\n")
-        con2 = psycopg.connect(dbname=db, user=usr, host=nd["ip"], port=nd["port"])
+        con2 = psycopg.connect(dbname=db, user=usr, password=passwd, host=nd["ip"], port=nd["port"])
 
   except Exception as e:
-    util.exit_message("Error in diff_tbls():\n" + str(e), 1)
+    util.exit_message("Error in diff_tbls() Getting Connections:\n" + str(e), 1)
 
   c1_cols = get_cols(con1, l_schema, l_table)
   c1_key = get_key(con1, l_schema, l_table)
@@ -385,9 +392,11 @@ def diff_tables(cluster_name, node1, node2, table_name):
   if (c1_cols != c2_cols) or (c1_key != c2_key):
     util.exit_message("Tables don't match in con1 & con2")
 
-  csv1 = write_tbl_csv(con1, "con1", l_schema, l_table, c1_cols, c1_key, l_dir)
+  csv1 = write_tbl_csv(con1, "con1", l_schema, l_table, c1_cols, c1_key, 
+                       l_dir, use_checksums)
 
-  csv2 = write_tbl_csv(con2, "con2", l_schema, l_table, c2_cols, c2_key, l_dir)
+  csv2 = write_tbl_csv(con2, "con2", l_schema, l_table, c2_cols, c2_key,
+                       l_dir, use_checksums)
 
   cmd = "csvdiff -o json " + csv1 + "  " + csv2
   util.message("\n## Running # " + cmd + "\n")
