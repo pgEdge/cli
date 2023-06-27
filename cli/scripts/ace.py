@@ -94,16 +94,21 @@ def get_dump_file_name(p_prfx, p_schm, p_base_dir="/tmp"):
 
 
 def write_tbl_csv(p_con, p_prfx, p_schm, p_tbl, p_cols, p_key, p_base_dir=None, p_checksums=False):
- ## print(f"DEBUG write_tble_csv({p_schm}, {p_tbl}, {p_cols}, {p_key}, {p_checksums})")
 
   try:
     out_file = get_csv_file_name(p_prfx, p_schm, p_tbl, p_base_dir)
 
     cur = p_con.cursor()
 
-    sql = "SELECT " + p_cols + " " + \
-          "  FROM " + p_schm + "." + p_tbl + " " + \
-          "ORDER BY " + p_key
+    if p_checksums:
+      sql = f"SELECT {p_key}, spock.md5_agg() WITHIN GROUP " + \
+            f" (ORDER BY ({p_cols})) FROM {p_schm}.{p_tbl} GROUP BY {p_key}"
+    else:
+      sql = "SELECT " + p_cols + " " + \
+            "  FROM " + p_schm + "." + p_tbl + " " + \
+            "ORDER BY " + p_key
+
+    print(f"sql={sql}")
 
     copy_sql = "COPY (" + sql + ") TO STDOUT WITH DELIMITER ',' CSV HEADER;"
 
@@ -120,9 +125,9 @@ def write_tbl_csv(p_con, p_prfx, p_schm, p_tbl, p_cols, p_key, p_base_dir=None, 
     size_b = os.path.getsize(out_file)
     size_m = round((size_b/1000/1000), 1)
 
-    util.message(" rows = " + str(format(lines - 1, "n")) + \
-                 ", size = " + str(size_m) + "M" + \
-                 ", use_checksums = " + str(p_checksums))
+    util.message("  " + str(f'{(lines - 1):,}') +  " rows  " + \
+                 str(size_m) + " MiB" + \
+                 "  use_checksums=" + str(p_checksums))
   except Exception as e:
     util.exit_message("Error in write_tbl_csv():\n" + str(e), 1)
 
