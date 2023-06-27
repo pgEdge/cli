@@ -1281,10 +1281,6 @@ if "--with-backrest" in args and 'install' in args:
   os.environ['withBACKREST'] = "True"
   args.remove("--with-backrest")
 
-if "--with-bouncer" in args and 'install' in args:
-  os.environ['withBOUNCER'] = "True"
-  args.remove("--with-bouncer")
-
 if "--with-cat" in args and 'install' in args:
   os.environ['withCAT'] = "True"
   args.remove("--with-cat")

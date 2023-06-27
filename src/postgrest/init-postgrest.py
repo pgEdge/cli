@@ -22,4 +22,4 @@ util.set_column("autostart", comp, "on")
 util.set_column("svcname", comp, comp)
 
 time.sleep(3)
-os.system("sudo systemctl status postgrest")
+os.system("sudo systemctl status postgrest --lines 25 --full --no-pager")
