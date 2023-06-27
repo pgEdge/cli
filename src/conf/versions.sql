@@ -281,7 +281,6 @@ INSERT INTO projects VALUES ('postgrest', 'pge', 4, 3000, 'hub', 0, 'https://git
   'postgrest', 0, 'postgrest.png', 'a RESTful API', 'https://postgrest.org');
 INSERT INTO releases VALUES ('postgrest', 9, 'postgrest', 'PostgREST', '', 'test', '', 1, 'MIT', '', '');
 INSERT INTO versions VALUES ('postgrest', '11.1.0-1', 'el9, arm9', 1, '20230701', '', '', 'https://postgrest.org');
-INSERT INTO versions VALUES ('postgrest', '10.2.0-1', 'el9, arm9', 0, '20230302', '', '', 'https://postgrest.org');
 
 INSERT INTO projects VALUES ('prompgexp', 'pge', 4, 9187, 'golang', 0, 'https://github.com/prometheus-community/postgres_exporter/tags',
   'prompgexp', 0, 'prometheus.png', 'Prometheus PG Exporter', 'https://github.com/prometheus-community/postgres_exporter');
@@ -398,7 +397,7 @@ INSERT INTO versions VALUES ('ncd', '1.0', '', 0, '20230623', '', '', '');
 INSERT INTO projects VALUES ('pgcat2', 'pge', 4, 6432, 'hub', 3, 'https://github.com/pgedge/pgcat2/tags',
   'cat',  0, 'pgcat2.png', 'Connection Pooler', 'https://github.com/pgedge/pgcat2');
 INSERT INTO releases VALUES ('pgcat2', 2, 'pgcat2',  'pgCat2', '', 'test', '', 1, 'MIT', '', '');
-INSERT INTO versions VALUES ('pgcat2', '1.0.0', 'el9, arm9', 1, '20230405', '', '', '');
+INSERT INTO versions VALUES ('pgcat2', '1.0.0', 'el9, arm9', 1, '20230701', '', '', '');
 
 INSERT INTO projects VALUES ('backrest', 'pge', 4, 0, 'hub', 3, 'http://pgbackrest.org',
   'backrest',  0, 'backrest.png', 'Backup & Restore', 'http://pgbackrest.org');

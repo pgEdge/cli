@@ -1,14 +1,13 @@
 [Unit]
-Description=REST API for PostgreSQL
+Description=Coonnection Pooling & Routing
 After=network.target
 
 [Service]
 Type=simple
 User=USER 
-ExecStart=RST_DIR/postgrest  RST_DIR/postgrest.conf
+ExecStart=/usr/local/bin/pgcat  -d CAT_DIR/pgcat.toml
 ExecReload=/bin/kill -HUP $MAINPID
 KillSignal=SIGINT
-#LimitNOFILE=1024
 
 [Install]
 WantedBy=multi-user.target

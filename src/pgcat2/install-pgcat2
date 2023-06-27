@@ -3,6 +3,8 @@ cd "$(dirname "$0")"
 
 ##set -x
 
+this_dir=`pwd`
+
 cp pgcat.toml.template pgcat.toml
 
 if [ "$pgeUser" == "" ]; then
@@ -26,6 +28,8 @@ fi
 sed -i -e "s/USR/$usr/g"       pgcat.toml
 sed -i -e "s/PASSWD/$passwd/g" pgcat.toml
 sed -i -e "s/DB/$db/g"         pgcat.toml
+
+sed -i -e "s/CAT_DIR/$this_dir" pgcat.service
 
 if [ "$isAutoStart" == "True" ]; then
   cd ..

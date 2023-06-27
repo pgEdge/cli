@@ -453,7 +453,7 @@ initPG () {
     if [ "$isEL9" == "True" ]; then
       initC  "spock31-pg$pgM" "spock31"   "$spock31V"        "$outPlat" "postgres/spock31"     "" "" "nil"
       initC "postgrest" "postgrest" "$postgrestV"  "$outPlat"  "postgres/postgrest"  "" "" "nil"
-      #initC  "pgcat2"  "pgcat2"  "$catV"  "$outPlat" "postgres/pgcat2" "" "" "nil"
+      initC  "pgcat2"  "pgcat2"  "$catV"  "$outPlat" "postgres/pgcat2" "" "" "nil"
       initC "hypopg-pg$pgM"  "hypopg"    "$hypoV"      "$outPlat" "postgres/hypopg"  "" "" "nil"
       initC "pljava-pg$pgM"  "pljava"  "$pljavaV"  "$outPlat" "postgres/pljava"  "" "" "nil"
       initC "timescaledb-pg$pgM" "timescaledb" "$timescaleV" "$outPlat" "postgres/timescale" "" "" "nil"
