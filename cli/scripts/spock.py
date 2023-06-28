@@ -100,32 +100,8 @@ def run_psyco_sql(pg_v, db, cmd, usr=None):
       util.exit_exception(e)
 
 
-def get_pg_v(pg):
-  pg_v = str(pg)
-
-  if pg_v.isdigit():
-    pg_v = "pg" + str(pg_v)
-
-  if pg_v == "None":
-    k = 0
-    pg_s = meta.get_installed_pg()
-
-    for p in pg_s:
-      k = k + 1
-
-    if k == 1:
-      pg_v = str(p[0])
-    else:
-      util.exit_message("must be one PG installed", 1)
-
-  if not os.path.isdir(pg_v):
-    util.exit_message(str(pg_v) + " not installed", 1)
-
-  return(pg_v)
-
-
 def change_pg_pwd(pwd_file, db="*", user="postgres", host="localhost", pg=None ):
-  pg_v = get_pg_v(pg)
+  pg_v = util.get_pg_v(pg)
   dbp = util.get_column("port", pg_v)
 
   if os.path.isfile(pwd_file):
@@ -192,7 +168,7 @@ def tune(component="pg15"):
 
 def node_add_interface(node_name, interface_name, dsn, db, pg=None):
   """Add a new node interface."""
-  pg_v = get_pg_v(pg)
+  pg_v = util.get_pg_v(pg)
   sql = "SELECT spock.node_add_interface(" + \
            get_eq("node_name", node_name, ", ") + \
            get_eq("interface_name", interface_name, ", ") + \
@@ -203,7 +179,7 @@ def node_add_interface(node_name, interface_name, dsn, db, pg=None):
 
 def node_drop_interface(node_name, interface_name, db, pg=None):
   """Delete a node interface."""
-  pg_v = get_pg_v(pg)
+  pg_v = util.get_pg_v(pg)
   sql = "SELECT spock.node_drop_interface(" + \
            get_eq("node_name", node_name, ", ") + \
            get_eq("interface_name", interface_name, ")")
@@ -213,7 +189,7 @@ def node_drop_interface(node_name, interface_name, db, pg=None):
 
 def node_create(node_name, dsn, db, pg=None):
   """Define a node for spock."""
-  pg_v = get_pg_v(pg)
+  pg_v = util.get_pg_v(pg)
   sql = "SELECT spock.node_create(" + \
            get_eq("node_name", node_name, ", ") + \
            get_eq("dsn",       dsn,       ")")
@@ -223,7 +199,7 @@ def node_create(node_name, dsn, db, pg=None):
 
 def node_drop(node_name, db, pg=None):
   """Remove a spock node."""
-  pg_v = get_pg_v(pg)
+  pg_v = util.get_pg_v(pg)
   sql = "SELECT spock.node_drop(" + get_eq("node_name", node_name, ")")
   run_psyco_sql(pg_v, db, sql)
   sys.exit(0)
@@ -232,7 +208,7 @@ def node_drop(node_name, db, pg=None):
 def node_alter_location(node_name, location, db, pg=None):
   """Set location details for spock node."""
 
-  pg_v = get_pg_v(pg)
+  pg_v = util.get_pg_v(pg)
 
   [location_nm, country, state, lattitude, longitude] = util.get_location_dtls(location)
 
@@ -259,7 +235,7 @@ UPDATE spock.node
 
 def node_list(db, pg=None):
   """Display node table."""
-  pg_v = get_pg_v(pg)
+  pg_v = util.get_pg_v(pg)
   sql = """
 SELECT node_id, node_name FROM spock.node ORDER BY node_name
 """
@@ -270,7 +246,7 @@ SELECT node_id, node_name FROM spock.node ORDER BY node_name
 def repset_create(set_name, db, replicate_insert=True, replicate_update=True, 
                            replicate_delete=True, replicate_truncate=True, pg=None):
   """Define a replication set."""
-  pg_v = get_pg_v(pg)
+  pg_v = util.get_pg_v(pg)
   sql = "SELECT spock.repset_create(" + \
            get_eq("set_name", set_name, ", ") + \
            get_eq("replicate_insert",   replicate_insert,   ", ") + \
@@ -284,7 +260,7 @@ def repset_create(set_name, db, replicate_insert=True, replicate_update=True,
 def repset_alter(set_name, db, replicate_insert=True, replicate_update=True, 
                  replicate_delete=True, replicate_truncate=True, pg=None):
   """Modify a replication set."""
-  pg_v = get_pg_v(pg)
+  pg_v = util.get_pg_v(pg)
   sql = "SELECT spock.repset_alter(" + \
            get_eq("set_name", set_name, ", ") + \
            get_eq("replicate_insert",   replicate_insert,   ", ") + \
@@ -302,7 +278,7 @@ def repset_alter_seq():
 
 def repset_drop(set_name, db, pg=None):
   """Remove a replication set."""
-  pg_v = get_pg_v(pg)
+  pg_v = util.get_pg_v(pg)
   sql = "SELECT spock.repset_drop(" + get_eq("set_name", set_name, ")")
   run_psyco_sql(pg_v, db, sql)
   sys.exit(0)
@@ -310,7 +286,7 @@ def repset_drop(set_name, db, pg=None):
 
 def repset_add_seq(set_name, db, relation, synchronize_data=False, pg=None):
   """Add a sequence to a replication set."""
-  pg_v = get_pg_v(pg)
+  pg_v = util.get_pg_v(pg)
   sql = "SELECT spock.repset_add_seq(" + \
            get_eq("set_name", set_name, ", ") + \
            get_eq("relation", relation, ", ") + \
@@ -321,7 +297,7 @@ def repset_add_seq(set_name, db, relation, synchronize_data=False, pg=None):
 
 def repset_add_all_seqs(set_name, db, schema_names, synchronize_data=False, pg=None):
   """Add sequences to a replication set."""
-  pg_v = get_pg_v(pg)
+  pg_v = util.get_pg_v(pg)
   sql = "SELECT spock.repset_add_all_seqs(" + \
            get_eq("set_name", set_name, ", ") + \
            get_eq("schemas", schema_names, ", ") + \
@@ -332,7 +308,7 @@ def repset_add_all_seqs(set_name, db, schema_names, synchronize_data=False, pg=N
 
 def repset_remove_seq(set_name, relation, db, pg=None):
   """Remove a sequence from a replication set."""
-  pg_v = get_pg_v(pg)
+  pg_v = util.get_pg_v(pg)
   sql = "SELECT spock.repset_remove_seq(" + \
            get_eq("set_name", set_name, ", ") + \
            get_eq("relation", relation, ")")
@@ -342,7 +318,7 @@ def repset_remove_seq(set_name, relation, db, pg=None):
 
 def repset_list_tables(schema, db, pg=None):
   """List tables in replication sets."""
-  pg_v = get_pg_v(pg)
+  pg_v = util.get_pg_v(pg)
 
   sql =  "SELECT * FROM spock.tables"
   if (schema != "*"):
@@ -358,7 +334,7 @@ def sub_create(subscription_name, provider_dsn, db,
                synchronize_structure=False, synchronize_data=False, 
                forward_origins='', apply_delay=0, pg=None):
   """Create a subscription."""
-  pg_v = get_pg_v(pg)
+  pg_v = util.get_pg_v(pg)
   sql = "SELECT spock.sub_create(" + \
            get_eq("subscription_name",     subscription_name,     ", ") + \
            get_eq("provider_dsn",          provider_dsn,          ", ") + \
@@ -373,7 +349,7 @@ def sub_create(subscription_name, provider_dsn, db,
 
 def sub_drop(subscription_name, db, pg=None):
   """Delete a subscription."""
-  pg_v = get_pg_v(pg)
+  pg_v = util.get_pg_v(pg)
   sql = "SELECT spock.sub_drop(" + get_eq("subscription_name", subscription_name, ")")
   run_psyco_sql(pg_v, db, sql)
   sys.exit(0)
@@ -381,7 +357,7 @@ def sub_drop(subscription_name, db, pg=None):
 
 def sub_enable(subscription_name, db, immediate=False, pg=None):
   """Make a subscription live."""
-  pg_v = get_pg_v(pg)
+  pg_v = util.get_pg_v(pg)
   sql = "SELECT spock.sub_enable(" + \
            get_eq("subscription_name", subscription_name, ", ") + \
            get_eq("immediate",         immediate,         ")")
@@ -391,7 +367,7 @@ def sub_enable(subscription_name, db, immediate=False, pg=None):
 
 def sub_disable(subscription_name, db, immediate=False, pg=None):
   """Put a subscription on hold and disconnect from provider."""
-  pg_v = get_pg_v(pg)
+  pg_v = util.get_pg_v(pg)
   sql = "SELECT spock.sub_disable(" + \
            get_eq("subscription_name", subscription_name, ", ") + \
            get_eq("immediate",         immediate,         ")")
@@ -401,7 +377,7 @@ def sub_disable(subscription_name, db, immediate=False, pg=None):
 
 def sub_alter_interface(subscription_name, interface_name, db, pg=None):
   """Modify an interface to a subscription."""
-  pg_v = get_pg_v(pg)
+  pg_v = util.get_pg_v(pg)
   sql = "SELECT spock.sub_disable(" + \
            get_eq("subscription_name", subscription_name, ", ") + \
            get_eq("interface_name", interface_name, ")")
@@ -422,7 +398,7 @@ def sub_disable_interface():
 def sub_show_status(subscription_name, db, pg=None):
   """Display the status of the subcription."""
 
-  pg_v = get_pg_v(pg)
+  pg_v = util.get_pg_v(pg)
 
   sql = "SELECT spock.sub_show_status(" 
   if subscription_name != "*":
@@ -436,7 +412,7 @@ def sub_show_status(subscription_name, db, pg=None):
 def sub_show_table(subscription_name, relation, db, pg=None):
   """Show subscription tables."""
 
-  pg_v = get_pg_v(pg)
+  pg_v = util.get_pg_v(pg)
 
   sql = "SELECT spock.sub_show_table(" + \
            get_eq("subscription_name", subscription_name, ", ") + \
@@ -453,7 +429,7 @@ def sub_synch():
 
 def sub_resync_table(subscription_name, relation, db, truncate=False, pg=None):
   """Resynchronize a table."""
-  pg_v = get_pg_v(pg)
+  pg_v = util.get_pg_v(pg)
   sql = "SELECT spock.sub_resync_table(" + \
            get_eq("subscription_name", subscription_name, ", ") + \
            get_eq("relation", relation, ", ") + \
@@ -465,7 +441,7 @@ def sub_resync_table(subscription_name, relation, db, truncate=False, pg=None):
 def sub_add_repset(subscription_name, replication_set, db, pg=None):
   """Add a replication set to a subscription."""
 
-  pg_v = get_pg_v(pg)
+  pg_v = util.get_pg_v(pg)
 
   sql = "SELECT spock.sub_add_repset(" + \
            get_eq("subscription_name", subscription_name, ", ") + \
@@ -478,7 +454,7 @@ def sub_add_repset(subscription_name, replication_set, db, pg=None):
 def sub_remove_repset(subscription_name, replication_set, db, pg=None):
   """Drop a replication set from a subscription."""
 
-  pg_v = get_pg_v(pg)
+  pg_v = util.get_pg_v(pg)
   sql = "SELECT spock.sub_remove_repset(" + \
            get_eq("subscription_name", subscription_name, ", ") + \
            get_eq("replication_set",   replication_set,   ")")
@@ -503,7 +479,7 @@ def sub_sync():
 def sub_wait_for_sync(subscription_name, db, pg=None):
   """Pause until the subscription is synchronized."""
 
-  pg_v = get_pg_v(pg)
+  pg_v = util.get_pg_v(pg)
 
   sql = "SELECT spock.sub_wait_for_sync(" + \
            get_eq("subscription_name", subscription_name, ")")
@@ -518,7 +494,7 @@ def set_readonly(readonly="off", pg=None):
   if readonly not in ('on', 'off'):
     util.exit_message("  readonly flag must be 'off' or 'on'")
 
-  pg_v = get_pg_v(pg)
+  pg_v = util.get_pg_v(pg)
 
   try:
     con = get_pg_connection(pg_v, "postgres",  util.get_user())
@@ -540,7 +516,7 @@ def set_readonly(readonly="off", pg=None):
 def get_pii_cols(db,schema=None,pg=None):
   """Retrieve the columns that you have identified as PII"""
 
-  pg_v = get_pg_v(pg)
+  pg_v = util.get_pg_v(pg)
 
   if schema == None:
     schema="public"
@@ -599,7 +575,7 @@ def get_table_list(table, db, pg_v):
 def repset_add_table(replication_set, table, db, cols=None, pg=None):
   """Add table(s) to replication set."""
 
-  pg_v = get_pg_v(pg)
+  pg_v = util.get_pg_v(pg)
 
   tbls = get_table_list(table, db, pg_v)
 
@@ -630,7 +606,7 @@ def repset_add_table(replication_set, table, db, cols=None, pg=None):
 
 def repset_remove_table(replication_set, table, db, pg=None):
   """Remove table from replication set."""
-  pg_v = get_pg_v(pg)
+  pg_v = util.get_pg_v(pg)
   sql = "SELECT spock.repset_remove_table(" + \
            get_eq("replication_set",   replication_set,   ", ") + \
            get_eq("relation",          table,             ")")
@@ -640,7 +616,7 @@ def repset_remove_table(replication_set, table, db, pg=None):
 
 def health_check(pg=None):
   """Check if PG instance is accepting connections."""
-  pg_v = get_pg_v(pg)
+  pg_v = util.get_pg_v(pg)
 
   if is_pg_ready(pg_v):
     util.exit_message("True", 0)
@@ -663,7 +639,7 @@ def metrics_check(db, pg=None):
   except ImportError as e:
     util.exit_message("Missing or bad psutil module", 1)
 
-  pg_v = get_pg_v(pg)
+  pg_v = util.get_pg_v(pg)
   usr = util.get_user()
   rc = is_pg_ready(pg_v)
 

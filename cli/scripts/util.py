@@ -41,6 +41,30 @@ MY_HOME = os.getenv('MY_HOME', '..' + os.sep + '..')
 pid_file = os.path.join(MY_HOME, 'conf', 'cli.pid')
 
 
+def get_pg_v(pg):
+  pg_v = str(pg)
+
+  if pg_v.isdigit():
+    pg_v = "pg" + str(pg_v)
+
+  if pg_v == "None":
+    k = 0
+    pg_s = meta.get_installed_pg()
+
+    for p in pg_s:
+      k = k + 1
+
+    if k == 1:
+      pg_v = str(p[0])
+    else:
+      exit_message("must be one PG installed", 1)
+
+  if not os.path.isdir(pg_v):
+    exit_message(str(pg_v) + " not installed", 1)
+
+  return(pg_v)
+
+
 def get_cloud_info():
   try:
     ciq = subprocess.run(['cloud-init', 'query', '--all'], 
