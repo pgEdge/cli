@@ -1,15 +1,19 @@
 # pgEdge Platform Release Notes #############
 
-## work in process so far for 23.120 as of Jun26
+## to do's for 23.121++
+  - add support for pljava-pg15 & -pg16 (cannot find libjvm17  setting from util.get_jvm_location)
+  - make `cluster create-remote` work with same logic as `create-local`
+  - add test support for patron4, etcd, haproxy
+
+########################################################
+## done for 23.120 as of 2023-06-29
+  - bump pg16beta1 to pg16beta2
+  - improve ACE diff-tables to optionally use checksums
+  - get latest pgcat2 & postgrest and make work for arm9 and el9
   - bump pglogical to 2.4.3 (for testing only)
   - improve 'info' layout whilst showing cloud-init query (if available)
   - improve install.py with an 'update --silent' & 'info' command at end
 
-## scheduled for 23.120++
-  - add support for pljava-pg15 & -pg16 (cannot find libjvm17  setting from util.get_jvm_location)
-  - get latest pgcat2 & postgrest and make work for arm9 and el9
-  - make `cluster create-remote` work with same logic as `create-local`
-  - add test support for patron4, etcd, haproxy
 
 ########################################################
 ## done for 23.119 as of 2023-06-23
