@@ -8,8 +8,9 @@
 ########################################################
 ## done for 23.120 as of 2023-06-29
   - bump pg16beta1 to pg16beta2
-  - improve ACE diff-tables to optionally use checksums
-  - get latest pgcat2 & postgrest and make work for arm9 and el9
+  - improve `ACE diff-tables` to optionally use checksums
+  - basic v1.0 of nodectl-mqtt avaialble in dev\test mode
+  - get latest pgcat2 & postgrest and make work for arm9 and el9 in dev\test
   - bump pglogical to 2.4.3 (for testing only)
   - improve 'info' layout whilst showing cloud-init query (if available)
   - improve install.py with an 'update --silent' & 'info' command at end
