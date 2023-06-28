@@ -4,10 +4,11 @@
 
 import util, cluster
 
-def setup_node(node_nm, port, nc, num_nodes, db, pg, host):
+def setup_node(node_nm, port, nc, num_nodes, db, pg, host, factor):
   pgb = nc + " pgbin "
   spk = nc + " spock "
-  pgbench_cmd = '"pgbench --initialize --scale=' + str(num_nodes) + ' ' + str(db) + '"'
+  scale = int(num_nodes) * int(factor)
+  pgbench_cmd = '"pgbench --initialize --scale=' + str(scale) + ' ' + str(db) + '"'
   util.echo_cmd(pgb + str(pg) +  " " + pgbench_cmd, host=host)
 
   dsn = "'host=127.0.0.1 port=" + str(port) + " dbname=" + db + "'"
@@ -31,7 +32,7 @@ def log_old_val(tbl, col, val, nc, db, pg):
     psql_cmd(cmd, nc, db, pg)
 
 
-def install(cluster_name):
+def install(cluster_name, factor=1):
   util.message("\n# loading cluster definition ######")
   db, pg, count, db_user, db_passwd, os_user, cert, nodes = cluster.load_json(cluster_name)
   db_pg = " " + str(db) + " --pg=" + str(pg)
@@ -42,7 +43,7 @@ def install(cluster_name):
     port = nd["port"]
     host = nd["ip"]
     nc = nd["path"] + "/nodectl "
-    setup_node(nodename, port, nc, count, db, str(pg), host)
+    setup_node(nodename, port, nc, count, db, str(pg), host, factor)
 
   util.message("\n# wire nodes together #############")
   for pub in nodes:

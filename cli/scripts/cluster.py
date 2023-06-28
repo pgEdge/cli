@@ -244,11 +244,11 @@ def command(cluster_name, node, cmd, args=None):
   return(rc)
 
 
-def app_install(cluster_name, app_name):
+def app_install(cluster_name, app_name, factor=1):
   """Install test application [ pgbench | spockbench | bmsql ]."""   
 
   if app_name ==  "pgbench":
-    pgbench.install(cluster_name)
+    pgbench.install(cluster_name, factor)
   else:
     util.exit_message("Invalid application name.")
 

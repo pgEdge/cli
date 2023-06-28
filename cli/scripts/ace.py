@@ -6,6 +6,7 @@
 
 import os, sys, random, time, json, socket, subprocess, re
 import util, fire, meta, pgbench, cluster
+from datetime import datetime
 
 l_dir = "/tmp"
 
@@ -13,30 +14,6 @@ try:
   import psycopg
 except ImportError as e:
   util.exit_message("Missing 'psycopg' module from pip", 1)
-
-
-def get_pg_v(pg):
-  pg_v = str(pg)
-
-  if pg_v.isdigit():
-    pg_v = "pg" + str(pg_v)
-
-  if pg_v == "None":
-    k = 0
-    pg_s = meta.get_installed_pg()
-
-    for p in pg_s:
-      k = k + 1
-
-    if k == 1:
-      pg_v = str(p[0])
-    else:
-      util.exit_message("must be one PG installed", 1)
-
-  if not os.path.isdir(pg_v):
-    util.exit_message(str(pg_v) + " not installed", 1)
-
-  return(pg_v)
 
 
 def get_pg_connection(pg_v, db, ip, usr):
@@ -93,7 +70,8 @@ def get_dump_file_name(p_prfx, p_schm, p_base_dir="/tmp"):
   return(p_base_dir + os.sep + p_prfx + "-" + p_schm + ".sql")
 
 
-def write_tbl_csv(p_con, p_prfx, p_schm, p_tbl, p_cols, p_key, p_base_dir=None, p_checksums=False):
+def write_tbl_csv(p_con, p_prfx, p_schm, p_tbl, p_cols, p_key, 
+                  p_checksums, p_blocksize, p_base_dir=None):
 
   try:
     out_file = get_csv_file_name(p_prfx, p_schm, p_tbl, p_base_dir)
@@ -108,11 +86,10 @@ def write_tbl_csv(p_con, p_prfx, p_schm, p_tbl, p_cols, p_key, p_base_dir=None, 
             "  FROM " + p_schm + "." + p_tbl + " " + \
             "ORDER BY " + p_key
 
-    print(f"sql={sql}")
-
     copy_sql = "COPY (" + sql + ") TO STDOUT WITH DELIMITER ',' CSV HEADER;"
 
     util.message("\n## COPY table " + p_tbl + " to " + out_file + " #############")
+    print(f"DEBUG sql={sql}")
 
     with open(out_file, "wb") as f:
       with cur.copy(copy_sql) as copy:
@@ -125,9 +102,10 @@ def write_tbl_csv(p_con, p_prfx, p_schm, p_tbl, p_cols, p_key, p_base_dir=None, 
     size_b = os.path.getsize(out_file)
     size_m = round((size_b/1000/1000), 1)
 
-    util.message("  " + str(f'{(lines - 1):,}') +  " rows  " + \
-                 str(size_m) + " MiB" + \
-                 "  use_checksums=" + str(p_checksums))
+    util.message("### " + str(f'{(lines - 1):,}') +  \
+                 " rows  " + str(size_m) + " MiB " + \
+                 " use_checksums=" + str(p_checksums) + " " + \
+                 " block_size=" + str(p_blocksize))
   except Exception as e:
     util.exit_message("Error in write_tbl_csv():\n" + str(e), 1)
 
@@ -264,7 +242,7 @@ def diff_spock(cluster_name, node1, node2):
 
   db, pg, count, usr, passwd, os_usr, cert, cluster_nodes = cluster.load_json(cluster_name)
   compare_spock=[]
-  pg_v = get_pg_v(pg)
+  pg_v = util.get_pg_v(pg)
   print("\n")
 
   for cluster_node in cluster_nodes:
@@ -339,7 +317,7 @@ def diff_spock(cluster_name, node1, node2):
   return(compare_spock)
 
 
-def diff_tables(cluster_name, node1, node2, table_name, use_checksums=False):
+def diff_tables(cluster_name, node1, node2, table_name, use_checksums=False, block_size=2):
   """Compare table on different cluster nodes"""
 
   if not os.path.isfile("/usr/local/bin/csvdiff"):
@@ -351,10 +329,6 @@ def diff_tables(cluster_name, node1, node2, table_name, use_checksums=False):
 
   if node1 == node2:
     util.exit_message("node1 must be different than node2")
-
-  ##util.message(f"## Validating nodes {node1} & {node2} exist\n")
-  ##util.check_node_exists(cluster_name, node1)
-  ##util.check_node_exists(cluster_name, node2)
 
   nm_lst = table_name.split(".")
   if len(nm_lst) != 2:
@@ -397,11 +371,18 @@ def diff_tables(cluster_name, node1, node2, table_name, use_checksums=False):
   if (c1_cols != c2_cols) or (c1_key != c2_key):
     util.exit_message("Tables don't match in con1 & con2")
 
+  start_time = datetime.now()
+  util.message(f"\n## start_time = {start_time} #################")
+
   csv1 = write_tbl_csv(con1, "con1", l_schema, l_table, c1_cols, c1_key, 
-                       l_dir, use_checksums)
+                       use_checksums, block_size, l_dir)
 
   csv2 = write_tbl_csv(con2, "con2", l_schema, l_table, c2_cols, c2_key,
-                       l_dir, use_checksums)
+                       use_checksums, block_size, l_dir)
+
+  run_time = datetime.now() - start_time
+  util.message(f"\n## run_time = {run_time} ##############################")
+
 
   cmd = "csvdiff -o json " + csv1 + "  " + csv2
   util.message("\n## Running # " + cmd + "\n")
