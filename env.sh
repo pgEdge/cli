@@ -23,7 +23,7 @@ nodejsV=18.12.1
 backrestV=2.46-1
 csvdiffV=1.4.0
 pgdiffV=1.1
-curlV=1.0.27-1
+curlV=2.1.1-1
 readonlyV=1.1.0-1
 foslotsV=1a-1
 
@@ -36,7 +36,7 @@ citusV=11.2.0-1
 
 oraclefdwV=2.5.0-1
 inclV=21.6
-orafceV=4.2.5-1
+orafceV=4.3.0-1
 ora2pgV=23.1
 v8V=3.1.2-1
 

@@ -37,7 +37,7 @@ wal2jsonFullV=2.4
 wal2jsonShortV=
 wal2jsonBuildV=1
 
-curlFullV=1.0.27
+curlFullV=2.1.1
 curlShortV=
 curlBuildV=1
 
@@ -101,7 +101,7 @@ cassFullV=3.1.5
 cassShortV=
 cassBuildV=1
 
-orafceFullV=4.2.5
+orafceFullV=4.3.0
 orafceShortV=
 orafceBuildV=1
 

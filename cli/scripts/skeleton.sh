@@ -5,8 +5,10 @@ function test16 {
   ./nodectl install pg16; 
   ./nodectl start pg16 -y -d demo;
 
-  ./nodectl install spock31-$pgV     -d demo
-  ./nodectl install hypopg-$pgV      -d demo
+  ./nodectl install spock31-$pgV       -d demo
+  ./nodectl install hypopg-$pgV        -d demo
+  ./nodectl install orafce-$pgV        -d demo
+  ./nodectl install curl-$pgV          -d demo
 }
 
 
@@ -19,6 +21,7 @@ function test15 {
   ./nodectl install hypopg-$pgV        -d demo
 
   ./nodectl install orafce-$pgV        -d demo
+  ./nodectl install curl-$pgV          -d demo
   ./nodectl install partman-$pgV       -d demo
   ./nodectl install cron-$pgV
   ./nodectl install postgis-$pgV       -d demo
