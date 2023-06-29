@@ -2,7 +2,7 @@
 #  Copyright 2022-2023 PGEDGE  All rights reserved. #
 #####################################################
 
-MY_VERSION = "23.120"
+MY_VERSION = "23.121"
 
 from subprocess import Popen, PIPE, STDOUT
 from datetime import datetime, timedelta
