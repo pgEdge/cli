@@ -100,11 +100,11 @@ def write_tbl_csv(p_con, p_prfx, p_schm, p_tbl, p_cols, p_key,
       lines = len(fp.readlines())
 
     size_b = os.path.getsize(out_file)
-    size_m = round((size_b/1000/1000), 1)
+    size_m = round((size_b/1000000.0), 6)
 
     util.message("### " + str(f'{(lines - 1):,}') +  \
                  " rows  " + str(size_m) + " MiB " + \
-                 " use_checksums=" + str(p_checksums) + " " + \
+                 " checksum_use=" + str(p_checksums) + " " + \
                  " block_rows=" + str(p_blockrows))
   except Exception as e:
     util.exit_message("Error in write_tbl_csv():\n" + str(e), 1)
@@ -352,7 +352,7 @@ def diff_tables(cluster_name, table_name, checksum_use=False, block_rows=2):
   except Exception as e:
     util.exit_message("Error in diff_tbls() Getting Connections:\n" + str(e), 1)
 
-  util.message(f"\n## Validating tables are comparable")
+  util.message(f"\n## Validating table {table_name} is comparable across nodes")
   c1_cols = get_cols(con1, l_schema, l_table)
   c1_key = get_key(con1, l_schema, l_table)
   if c1_cols and c1_key:
