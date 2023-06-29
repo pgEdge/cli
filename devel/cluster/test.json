@@ -1,0 +1,25 @@
+{
+  "cluster": "test",
+  "create_dt": "1970-01-01",
+  "db_name": "db1",
+  "db_user": "admin",
+  "db_init_passwd": "insecure",
+  "os_user": "denisl",
+  "ssh_key": "",
+  "pg_ver": "15",
+  "count": 2,
+  "nodes": [
+    {
+      "nodename": "n1",
+      "ip": "t1",
+      "port": 6432,
+      "path": "/home/denisl/test_clusters/test/n1"
+    },
+    {
+      "nodename": "n2",
+      "ip": "t2",
+      "port": 6433,
+      "path": "/home/denisl/test_clusters/test/n2"
+    }
+  ]
+}
