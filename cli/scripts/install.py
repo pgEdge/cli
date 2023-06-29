@@ -6,10 +6,13 @@ import sys, os
 
 VER="23.121"
 REPO=os.getenv("REPO", "https://pgedge-download.s3.amazonaws.com/REPO")
-  
-if sys.version_info < (3, 9):
-  print("ERROR: Requires Python 3.9 or greater")
+
+if sys.version_info < (3, 6):
+  print("ERROR: Requires Python 3.6 or greater")
   sys.exit(1)
+
+if sys.version_info < (3, 9):
+  print("WARNING: Advanced pgEdge functionality requires Python 3.9+")
 
 from urllib import request as urllib2
 

@@ -3,7 +3,16 @@
 ## to do's for 23.121++
   - add support for pljava-pg15 & -pg16 (cannot find libjvm17  setting from util.get_jvm_location)
   - make `cluster create-remote` work with same logic as `create-local`
-  - add test support for patron4, etcd, haproxy
+  - add test support for patroni, etcd, haproxy
+  - get to codeComplete for 'cluster remote-init'
+  - improve efficiency of 'ace diff-tables' to handle massive tables
+
+########################################################
+## done for 23.121 as of 2023-06-30
+  - fix regression to allow core PG functionality to use Python 3.6+ (not require Python 3.9+)
+  - improve 'ace diff-tables' error handling and re-factor for going fwd
+  - make 1st and 2nd passes at 'cluster remote-init'
+
 
 ########################################################
 ## done for 23.120 as of 2023-06-29
@@ -23,7 +32,7 @@
   - scrub passwd from logs
   - fix a hanging regression when NOT in an EC2 kind of VM
 
-## done for 23.118 2023-06-22
+## done for 23.118 as of 2023-06-22
   - improve ssh support for 'cluster create-local'
   - add devel/setup support for zookeeper & patroni
   - stub out starfleet support
@@ -31,7 +40,7 @@
   - add cloud metadata to INFO command (region, az, instance_id, account_id, flavor)
   - new version of spock 3.1.3 supporting double update bug fix and other.
 
-## done for 23.117  2023-06-08:
+## done for 23.117 as of 2023-06-08:
   - fix broken LLVM support in pg15.3-2 & pg16beta1-2
   - default `install pgedge` to pg16
   - improve support for docker-compose
@@ -44,11 +53,11 @@
   - wip `cluster create-local` use passwordless ssh on localhost
 
 
-## done for 23.116 on 2023-05-20
+## done for 23.116 as of 2023-05-20
   - `cluster create-local`
   - add support for pg16 beta1
 
 
-## done for 23.115 on 2023-05-15
+## done for 23.115 as of 2023-05-15
   - add support for pg16-dev3
 
