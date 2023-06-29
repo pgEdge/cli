@@ -317,8 +317,24 @@ def diff_spock(cluster_name, node1, node2):
   return(compare_spock)
 
 
-def diff_tables(cluster_name, table_name, checksum_use=False, block_rows=2):
-  """Compare table on different cluster nodes"""
+def diff_tables(cluster_name, table_name, checksum_use=False, block_rows=1):
+  """Efficiently compare tables across cluster using optional checksums and blocking."""
+
+  bad_br = True
+  try:
+    b_r = int(block_rows)
+    if b_r >= 10:
+      bad_br = False
+  except:
+    pass
+  if bad_br:
+    util.exit_message(f"block_rows parm '{block_rows}' must be integer >= 10")
+
+  if str(checksum_use) == "True" or str(checksum_use) == "False":
+    pass
+  else:
+    util.exit_message(f"checksum_use parm '{checksum_use}' must be 'True' or 'False'")
+
 
   if not os.path.isfile("/usr/local/bin/csvdiff"):
     util.message("Installing the required 'csvdiff' component.")
