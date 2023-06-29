@@ -38,21 +38,7 @@ def create_local_json(cluster_name, db, num_nodes, usr, passwd, pg, port1):
 
 
 def load_json(cluster_name):
-  cluster_dir = base_dir + os.sep + cluster_name
-  cluster_file = cluster_dir + os.sep + cluster_name + ".json"
-
-  if not os.path.isdir(cluster_dir):
-    util.exit_message(f"Cluster directory '{cluster_dir}' not found")
-
-  if not os.path.isfile(cluster_file):
-    util.exit_message(f"Cluster file '{cluster_file}' not found")
-  
-
-  try:
-    with open(cluster_file) as f:
-      parsed_json = json.load(f)
-  except Exception as e:
-    util.exit_message(f"Unable to load cluster def file '{cluster_file}\n{e}")
+  parsed_json = get_cluster_json(cluster_name)
 
   db_name=parsed_json["db_name"]
   pg=parsed_json["pg_ver"]
@@ -93,11 +79,47 @@ def runNC(node, nc_cmd, db, user, cert):
   return nc_message
 
 
+def get_cluster_json(cluster_name):
+  cluster_dir = base_dir + os.sep + cluster_name
+  cluster_file = cluster_dir + os.sep + cluster_name + ".json"
+
+  if not os.path.isdir(cluster_dir):
+    util.exit_message(f"Cluster directory '{cluster_dir}' not found")
+
+  if not os.path.isfile(cluster_file):
+    util.exit_message(f"Cluster file '{cluster_file}' not found")
+
+  parsed_json = None
+  try:
+    with open(cluster_file) as f:
+      parsed_json = json.load(f)
+  except Exception as e:
+    util.exit_message(f"Unable to load cluster def file '{cluster_file}\n{e}")
+
+  return(parsed_json)
+
+
+
 def init_remote(cluster_name, app=None):
   """Initialize a test cluster from json definition file of existing nodes."""
 
   util.message(f"## Loading cluster '{cluster_name}' json definition file")
-  db, pg, count, db_user, db_passwd, os_user, cert, nodes = load_json(cluster_name)
+  cj = get_cluster_json(cluster_name)
+
+  util.message(f"\n## Checking node count")
+  try:
+    kount = cj["count"]
+    nodes = cj["nodes"]
+    if len(nodes) != kount:
+      util.exit_message(f"Invalid node count '{kount}' versus actual nodes '{len(nodes)}'")
+  except Exception as e:
+    util.exit_message(f"error parsing config file\n{str(e)}")
+  util.message(f"### Node count = {kount}")
+
+  util.message(f"\n## Checking ssh'ing to each node")
+
+
+  ## db, pg, count, db_user, db_passwd, os_user, cert, nodes = load_json(cluster_name)
 
   
 
