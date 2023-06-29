@@ -71,7 +71,7 @@ def get_dump_file_name(p_prfx, p_schm, p_base_dir="/tmp"):
 
 
 def write_tbl_csv(p_con, p_prfx, p_schm, p_tbl, p_cols, p_key, 
-                  p_checksums, p_blocksize, p_base_dir=None):
+                  p_checksums, p_blockrows, p_base_dir=None):
 
   try:
     out_file = get_csv_file_name(p_prfx, p_schm, p_tbl, p_base_dir)
@@ -89,7 +89,7 @@ def write_tbl_csv(p_con, p_prfx, p_schm, p_tbl, p_cols, p_key,
     copy_sql = "COPY (" + sql + ") TO STDOUT WITH DELIMITER ',' CSV HEADER;"
 
     util.message("\n## COPY table " + p_tbl + " to " + out_file + " #############")
-    print(f"DEBUG sql={sql}")
+    ##print(f"DEBUG sql={sql}")
 
     with open(out_file, "wb") as f:
       with cur.copy(copy_sql) as copy:
@@ -105,7 +105,7 @@ def write_tbl_csv(p_con, p_prfx, p_schm, p_tbl, p_cols, p_key,
     util.message("### " + str(f'{(lines - 1):,}') +  \
                  " rows  " + str(size_m) + " MiB " + \
                  " use_checksums=" + str(p_checksums) + " " + \
-                 " block_size=" + str(p_blocksize))
+                 " block_rows=" + str(p_blockrows))
   except Exception as e:
     util.exit_message("Error in write_tbl_csv():\n" + str(e), 1)
 
@@ -204,7 +204,7 @@ def diff_schemas(cluster_name, node1, node2, schema_name):
     util.message("Installing the required 'csvdiff' component.")
     os.system("./nodectl install csvdiff")
 
-  util.message(f"## Validating Cluster {cluster_name} exists")
+  util.message(f"## Validating cluster {cluster_name} exists")
   util.check_cluster_exists(cluster_name)
 
   if node1 == node2:
@@ -317,56 +317,61 @@ def diff_spock(cluster_name, node1, node2):
   return(compare_spock)
 
 
-def diff_tables(cluster_name, node1, node2, table_name, use_checksums=False, block_size=2):
+def diff_tables(cluster_name, table_name, checksum_use=False, block_rows=2):
   """Compare table on different cluster nodes"""
 
   if not os.path.isfile("/usr/local/bin/csvdiff"):
     util.message("Installing the required 'csvdiff' component.")
     os.system("./nodectl install csvdiff")
 
-  util.message(f"## Validating Cluster {cluster_name} exists")
+  util.message(f"\n## Validating cluster {cluster_name} exists")
   util.check_cluster_exists(cluster_name)
-
-  if node1 == node2:
-    util.exit_message("node1 must be different than node2")
 
   nm_lst = table_name.split(".")
   if len(nm_lst) != 2:
-    util.exit_message("TableName must be of form 'schema.table_name'")
+    util.exit_message(f"TableName {table_name} must be of form 'schema.table_name'")
   l_schema = nm_lst[0]
   l_table = nm_lst[1]
-  util.message(f"## schema={l_schema}, table={l_table}")
 
   db, pg, count, usr, passwd, os_usr, cert, nodes = cluster.load_json(cluster_name)
-  util.message(f"## db={db}, user={usr}\n")
   con1 = None
   con2 = None
+  util.message(f"\n## Validating connections to each node in cluster")
   try:
+    n = 0
     for nd in nodes:
-      if nd["nodename"] == node1:
-        util.message("## Getting Conection to Node1 - " + nd["ip"] + ":" + str(nd["port"]))
+      n = n + 1
+      if n == 1:
+        util.message(f'### Getting Conection to Node1 ({nd["nodename"]}) - {usr}@{nd["ip"]}:{nd["port"]}/{db}')
         con1 = psycopg.connect(dbname=db, user=usr, password=passwd, host=nd["ip"], port=nd["port"])
-
-      if nd["nodename"] == node2:
-        util.message("## Getting Conection to Node2 - " + nd["ip"] + ":" + str(nd["port"]) + "\n")
+      elif n == 2:
+        util.message(f'### Getting Conection to Node2 ({nd["nodename"]}) - {usr}@{nd["ip"]}:{nd["port"]}/{db}')
         con2 = psycopg.connect(dbname=db, user=usr, password=passwd, host=nd["ip"], port=nd["port"])
-
+      else:
+        util.message(f"### WARNING!! Node {n} ignored.  Only supports first two nodes for the moment.")
   except Exception as e:
     util.exit_message("Error in diff_tbls() Getting Connections:\n" + str(e), 1)
 
+  util.message(f"\n## Validating tables are comparable")
   c1_cols = get_cols(con1, l_schema, l_table)
   c1_key = get_key(con1, l_schema, l_table)
   if c1_cols and c1_key:
     util.message(f"## con1 cols={c1_cols}  key={c1_key}")
   else:
-    util.exit_message("Table w/ Primary Key not in con1")
+    if not c1_cols:
+      util.exit_message(f"Invalid table name '{table_name}'")
+    else:
+      util.exit_message(f"No primary key found for '{table_name}'")
 
   c2_cols = get_cols(con2, l_schema, l_table)
   c2_key = get_key(con2, l_schema, l_table)
   if c2_cols and c2_key:
     util.message(f"## con2 cols={c2_cols}  key={c2_key}")
   else:
-    util.exit_message("Table w/ Primary Key not in con2")
+    if not c2_cols:
+      util.exit_message(f"Invalid table name '{table_name}'")
+    else:
+      util.exit_message(f"No primary key found for '{table_name}'")
 
   if (c1_cols != c2_cols) or (c1_key != c2_key):
     util.exit_message("Tables don't match in con1 & con2")
@@ -375,10 +380,10 @@ def diff_tables(cluster_name, node1, node2, table_name, use_checksums=False, blo
   util.message(f"\n## start_time = {start_time} #################")
 
   csv1 = write_tbl_csv(con1, "con1", l_schema, l_table, c1_cols, c1_key, 
-                       use_checksums, block_size, l_dir)
+                       checksum_use, block_rows, l_dir)
 
   csv2 = write_tbl_csv(con2, "con2", l_schema, l_table, c2_cols, c2_key,
-                       use_checksums, block_size, l_dir)
+                       checksum_use, block_rows, l_dir)
 
   run_time = datetime.now() - start_time
   util.message(f"\n## run_time = {run_time} ##############################")
