@@ -24,18 +24,8 @@ pgOPT=""
 sourceTarPassed=0
 archiveLocationPassed=0
 buildVersionPassed=0
+
 buildODBC=0
-if [ "$IVORY" = "True" ]; then
-  buildBouncer=0
-  buildBackrest=0
-  buildPool2=0
-else
-  ##buildBouncer=1
-  buildBouncer=0
-  buildBackrest=0
-  ##buildPool2=1
-  buildPool2=0
-fi
 
 scriptName=`basename $0`
 
@@ -129,47 +119,6 @@ function checkPostgres {
 }
 
 
-function checkPool2 {
-	cd $baseDir
-	mkdir -p $workDir
-
-	cd $baseDir/$workDir
-
-	pool2SourceDir=`dirname $(tar -tf $pool2Tar | grep INSTALL)`
-
-	tar -xf $pool2Tar
-
-	return 0
-}
-
-
-function checkBackrest {
-	cd $baseDir
-	mkdir -p $workDir
-
-	cd $baseDir/$workDir
-
-	backrestSourceDir=`dirname $(tar -tf $backrestTar | grep Makefile.in)`
-
-	tar -xf $backrestTar
-
-	return 0
-}
-
-
-function checkBouncer {
-	cd $baseDir
-	mkdir -p $workDir
-
-	cd $baseDir/$workDir
-	
-	pgBouncerSourceDir=`dirname $(tar -tf $pgBouncerTar | grep AUTHORS)`
-	
-	tar -xzf $pgBouncerTar
-
-	return 0
-}
-
 
 function checkODBC {
     cd $baseDir
@@ -180,20 +129,6 @@ function checkODBC {
     odbcSourceDir=`dirname $(tar -tf $odbcSourceTar | grep "odbcapi.c")`
 
     tar -xzf $odbcSourceTar
-
-    return 0
-}
-
-
-function checkAgent {
-    cd $baseDir
-    mkdir -p $workDir
-
-    cd $baseDir/$workDir
-
-    agentSourceDir=`dirname $(tar -tf $agentSourceTar | grep "pgAgent.cpp")`
-
-    tar -xzf $agentSourceTar
 
     return 0
 }
@@ -227,19 +162,15 @@ function buildPostgres {
 	arch=`arch`
 
 	conf="--disable-rpath $pgOPT"
-	if [ $OS == "osx" ]; then
+	echo "OS=$OS"
+	if [ $OS == "osx" ] || [ $OS == "el8" ]; then
 		conf="$conf --without-python --without-perl"
- 
 	else
 		##export LLVM_CONFIG=/usr/bin/llvm-config-64
 		conf="$conf  --with-libxslt --with-libxml"
 		conf="$conf --with-uuid=ossp --with-gssapi --with-ldap --with-pam --enable-debug"
-    conf="$conf --with-llvm LLVM_CONFIG=/usr/bin/llvm-config-64 --with-openssl --with-systemd --enable-tap-tests"
-		if [ $OS == "amd" ]; then
-			conf="$conf --with-python PYTHON=/usr/bin/python3"
-		else
-			conf="$conf --with-python PYTHON=/usr/bin/python3.9"
-		fi
+		conf="$conf --with-llvm LLVM_CONFIG=/usr/bin/llvm-config-64 --with-openssl --with-systemd --enable-tap-tests"
+		conf="$conf --with-python PYTHON=/usr/bin/python3.9"
 	fi
 
 	gcc --version
@@ -302,132 +233,6 @@ function buildPostgres {
 		echo "Make failed for docs ...."
 		return 1
 	fi
-}
-
-
-function buildAgent {
-    echo "# buildAgent()"
-    cd $baseDir/$workDir/$agentSourceDir
-
-    configCmd="cmake -DCMAKE_INSTALL_PREFIX=$buildLocation --config cfg ."
-    echo "#  configCmd = $configCmd"
-	log=$baseDir/$workDir/logs/pgagent_build.log
-    echo "#        log = $log"
-    $configCmd    > $log 2>&1
-    echo "# make"
-    make         >> $log 2>&1
-    echo "# make install"
-    make install >> $log 2>&1
-}
-
-
-function buildPool2 {
-	echo "# buildPool2()"
-	cd $baseDir/$workDir/$pool2SourceDir
-	
-	echo "#  @`date`  configure" 
-
-	opt="--prefix=$buildLocation --disable-rpath"
-
-	log=$baseDir/$workDir/logs/pool2_configure.log
-
-        autoreconf -f -i > $log 2>&1
-
-	./configure $opt LDFLAGS="$LDFLAGS -Wl,-rpath,$sharedLibs" > $log 2>&1
-	if [[ $? -ne 0 ]]; then
-		echo "Failed: cat $log"
-		return 1
-	fi
-
-	echo "#  @`date`  make -j $CORES"
-	log=$baseDir/$workDir/logs/pool2_make.log
-	make -j $CORES > $log 2>&1
-	if [[ $? -ne 0 ]]; then
-		echo "Failed: cat $log"
-		return 1
-	fi
-
-	echo "#  @`date`  make install"
-	log=$baseDir/$workDir/logs/pool2_install.log
-	make install > $log 2>&1
-	if [[ $? -ne 0 ]]; then
-		echo "Failed: cat $log"
-		return 1
-	fi
-
-	return 0
-}
-
-
-
-function buildBouncer {
-	echo "# buildBouncer()"
-	cd $baseDir/$workDir/$pgBouncerSourceDir
-	
-	echo "#  @`date`  configure" 
-
-	opt="--prefix=$buildLocation --disable-rpath"
-	opt="$opt --with-libevent=$sharedLibs/../ --with-openssl=$sharedLibs/../"
-
-	log=$baseDir/$workDir/logs/pgbouncer_configure.log
-
-	./configure $opt LDFLAGS="$LDFLAGS -Wl,-rpath,$sharedLibs" > $log 2>&1
-	if [[ $? -ne 0 ]]; then
-		echo "Failed: check $log"
-		return 1
-	fi
-
-	echo "#  @`date`  make -j $CORES"
-	log=$baseDir/$workDir/logs/pgbouncer_make.log
-	make -j $CORES > $log 2>&1
-	if [[ $? -ne 0 ]]; then
-		echo "Failed: check $log"
-		return 1
-	fi
-
-	echo "#  @`date`  make install"
-	log=$baseDir/$workDir/logs/pgbouncer_install.log
-	make install > $log 2>&1
-	if [[ $? -ne 0 ]]; then
-		echo "Failed: check $log"
-		return 1
-	fi
-
-	return 0
-}
-
-
-function buildBackrest {
-	echo "# buildBackrest()"
-	cd $baseDir/$workDir/$backrestSourceDir
-	
-	export LD_LIBRARY_PATH=$buildLocation/lib
-
-	echo "#  @`date`  configure" 
-	log="$baseDir/$workDir/logs/backrest_configure.log"
-	./configure --prefix=$buildLocation > $log 2>&1
-	if [[ $? -ne 0 ]]; then
-		echo "FATAL ERROR: check $log"
-		return 1
-	fi
-
-	echo "#  @`date`  make -j $CORES"
-	log="$baseDir/$workDir/logs/backrest_make.log"
-	make -j $CORES > $log 2>&1
-	if [[ $? -ne 0 ]]; then
-		echo "FATAL ERROR: check $log"
-		return 1
-	fi
-
-	echo "#  @`date`  make install"
-	log="$baseDir/$workDir/logs/backrest_install.log"
-	make install > $log 2>&1
-	if [[ $? -ne 0 ]]; then
-		echo "FATAL ERROR: check $log"
-		return 1
-	fi
-
-	unset LD_LIBRARY_PATH
 }
 
 
@@ -666,7 +471,7 @@ fi
 echo "### $scriptName ###"
 
 optional=""
-while getopts "t:a:b:k:p:o:g:n:hc" opt; do
+while getopts "t:a:o:n:hc" opt; do
 	case $opt in
 		t)
 			if [[ $OPTARG = -* ]]; then
@@ -684,38 +489,6 @@ while getopts "t:a:b:k:p:o:g:n:hc" opt; do
 			archiveDir=$OPTARG
 			archiveLocationPassed=1
 			echo "# -a $archiveDir"
-		;;
-		b) 	if [[ $OPTARG = -* ]]; then
-				((OPTIND--))
-				continue
-			fi
-			pgBouncerTar=$OPTARG
-			buildBouncer=1
-			echo "# -b $pgBouncerTar"
-		;;
-		g) 	if [[ $OPTARG = -* ]]; then
-				((OPTIND--))
-				continue
-			fi
-			agentSourceTar=$OPTARG
-			buildAgent=1
-			echo "# -g $agentSourceTar"
-		;;
-		k) 	if [[ $OPTARG = -* ]]; then
-				((OPTIND--))
-				continue
-			fi
-			backrestTar=$OPTARG
-			buildBackrest=1
-			echo "# -k $backrestTar"
-		;;
-		p) 	if [[ $OPTARG = -* ]]; then
-				((OPTIND--))
-				continue
-			fi
-			pool2Tar=$OPTARG
-			buildPool2=1
-			echo "# -p $pool2Tar"
 		;;
 		o) 	if [[ OPTARG = -* ]]; then
 				((OPTIND--))
@@ -748,22 +521,6 @@ isPassed "$sourceTarPassed" "Postgres source tarball (-t)"
 
 checkCmd "checkPostgres"
 checkCmd "buildPostgres"
-
-if [ "$buildPool2" == "1" ]; then
-  buildApp "checkPool2" "buildPool2"
-fi
-
-if [ "$buildBouncer" == "1" ]; then
-  buildApp "checkBouncer" "buildBouncer"
-fi
-
-if [ "$buildBackrest" == "1" ]; then
-  buildApp "checkBackrest" "buildBackrest"
-fi
-
-if [ "$buildAgent" == "1" ]; then
-  buildApp "checkAgent" "buildAgent"
-fi
 
 if [ "$buildODBC" == "1" ]; then
   buildApp "checkODBC" "buildODBC"

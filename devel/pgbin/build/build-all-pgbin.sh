@@ -18,17 +18,8 @@ function runPgBin {
   if [ "$IVORY" = "True" ]; then
     cmd="./build-pgbin.sh -a $pOutDir -t $pPgSrc -n $pBldV"
   else
-    #bncrSrc=$SRC/bouncer-$bouncerFullV.tar.gz
-    #odbcSrc=$SRC/psqlodbc-$odbcV.tar.gz
-    #bkrstSrc=$SRC/backrest-$backrestFullV.tar.gz
-    #pool2Src=$SRC/pool2-$pool2FullV.tar.gz
-    #agentSrc=$SRC/agent-$agentV.tar.gz
     echo "majorV = $majorV"
-    #if [[ "$majorV" > "13" ]]; then
-    #  cmd="./build-pgbin.sh -a $pOutDir -t $pPgSrc -n $pBldV -b $bncrSrc -p $pool2Src"
-    #else
-      cmd="./build-pgbin.sh -a $pOutDir -t $pPgSrc -n $pBldV"
-    #fi
+    cmd="./build-pgbin.sh -a $pOutDir -t $pPgSrc -n $pBldV"
   fi
 
   cmd="$cmd $optional"

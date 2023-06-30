@@ -65,10 +65,6 @@ multicorn2FullV=2.4
 multicorn2ShortV=
 multicorn2BuildV=1
 
-agentFullV=4.0.0
-agentShortV=
-agentBuildV=1
-
 citusFullV=11.2.0
 citusShortV=
 citusBuildV=1

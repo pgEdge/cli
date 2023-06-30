@@ -253,9 +253,7 @@ function buildComp {
         src="$5"
         ##echo "#         src: $src"
 
-        if [ "$comp" == "bouncer" ] || [ "$comp" == "agent" ] || 
-           [ "$comp" == "backrest" ] || [ "$comp" == "psqlodbc" ] ||
-           [ "$comp" == "odyssey" ]; then
+        if [ "backrest" ] || [ "$comp" == "psqlodbc" ]; then
             componentName="$comp$shortV-$fullV-$buildV-$buildOS"
         else
             componentName="$comp$shortV-pg$pgShortVersion-$fullV-$buildV-$buildOS"
@@ -294,9 +292,6 @@ function buildComp {
             sudo mkdir -p /usr/local/lib64/python3.9/site-packages
             make_install="sudo env "PATH=$PATH" make install"
             export PYTHON_OVERRIDE=python3.9
-        fi
-        if [ "$comp" == "odyssey" ]; then
-            make_install="sudo make install"
         fi
 
         echo "# $make ..."
@@ -450,7 +445,7 @@ function buildTimeScaleDBComponent {
         packageComponent $componentBundle
 }
 
-TEMP=`getopt -l no-tar, copy-bin,no-copy-bin,with-pgver:,with-pgbin:,build-curl:,build-hypopg:,build-postgis:,build-bouncer:,build-logfdw:,build-tdsfdw:,build-mongofdw:,build-mysqlfdw:,build-oraclefdw:,build-orafce:,build-audit:,build-partman:,build-pldebugger:,build-pljava:,build-plv8:,build-plprofiler:,build-bulkload:,build-backrest:,build-psqlodbc:,build-repack:,build-spock31:,build-pool2:,build-pglogical:,build-hintplan:,build-timescaledb:,build-foslots:,build-readonly:,build-cron:,build-multicorn2:,build-anon,build-ddlx:,build-agent:,build-citus: -- "$@"`
+TEMP=`getopt -l no-tar, copy-bin,no-copy-bin,with-pgver:,with-pgbin:,build-curl:,build-hypopg:,build-postgis:,build-bouncer:,build-logfdw:,build-tdsfdw:,build-mongofdw:,build-mysqlfdw:,build-oraclefdw:,build-orafce:,build-audit:,build-partman:,build-pldebugger:,build-pljava:,build-plv8:,build-plprofiler:,build-bulkload:,build-backrest:,build-psqlodbc:,build-repack:,build-spock31:,build-pool2:,build-pglogical:,build-hintplan:,build-timescaledb:,build-foslots:,build-readonly:,build-cron:,build-multicorn2:,build-anon,build-ddlx:,build-citus: -- "$@"`
 
 if [ $? != 0 ] ; then
 	echo "Required parameters missing, Terminating..."
@@ -498,7 +493,6 @@ while true; do
     --build-multicorn2 ) buildMulticorn2=true; Source=$2; shift; shift ;;
     --build-anon ) buildAnon=true; Source=$2; shift; shift ;;
     --build-ddlx ) buildDdlx=true; Source=$2; shift; shift ;;
-    --build-agent ) buildAgent=true; Source=$2; shift; shift ;;
     --build-citus ) buildCitus=true; Source=$2; shift; shift ;;
     --copy-bin ) copyBin=true; shift; shift; ;;
     --no-copy-bin ) copyBin=false; shift; shift; ;;
@@ -647,9 +641,6 @@ fi
 
 if [[ $buildDdlx == "true" ]]; then
 	buildComp ddlx "$ddlxShortV" "$ddlxFullV" "$ddlxBuildV" "$Source"
-fi
-if [ "$buildAgent" == "true" ]; then
-	buildComp agent "$agentShortV" "$agentFullV" "$agentBuildV" "$Source"
 fi
 
 if [ "$buildCitus" == "true" ]; then
