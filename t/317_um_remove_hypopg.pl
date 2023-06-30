@@ -1,5 +1,5 @@
-# This test case runs the command:
-# ./nc list
+# This test case removes hypopg with the command:
+# ./nc um remove hypopg-pg16
 #
 
 use strict;
@@ -14,18 +14,17 @@ use Try::Tiny;
 use JSON;
 
 #
-# Move into the pgedge directory
+# Move into the pgedge directory.
+#
+ chdir("./pgedge");
+
+#
+# In this stanza, we'll remove hypopg with the command: ./nc um remove hypopg-pg16
 #
 
-chdir ("./pgedge");
-
-#
-# We are exercising the ./nc list command; a successful run returns 1.
-# 
-
-my $cmd = qq(./nc list);
+my $cmd = qq(./nc um remove hypopg-pg16);
 print("cmd = $cmd\n");
-my ($success, $error_message, $full_buf, $stdout_buf, $stderr_buf)= IPC::Cmd::run(command => $cmd, verbose => 0);
+my($success, $error_message, $full_buf, $stdout_buf, $stderr_buf)= IPC::Cmd::run(command => $cmd, verbose => 0);
 
 print("success = $success\n");
 print("error_message = $error_message\n");
@@ -43,3 +42,4 @@ else
 {
     exit(1);
 }
+

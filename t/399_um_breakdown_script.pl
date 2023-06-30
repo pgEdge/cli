@@ -7,33 +7,43 @@ use strict;
 use warnings;
 
 use File::Which;
-use PostgreSQL::Test::Cluster;
-use PostgreSQL::Test::Utils;
-use Test::More tests => 1;
+use NodeCtl;
 use IPC::Cmd qw(run);
 use Try::Tiny;
 use JSON;
-use NodeCtl;
+
+#
+# Move into the pgedge directory.
+#
+# chdir("./pgedge");
 
 #
 # Get the location of the data directory and home directory before removing pgEdge; store them in $datadir and $home.
 #
 
 my $nc = NodeCtl::get_new_nc("/tmp/nodectl_dir");
-diag("get_new_nc returned");
+print("get_new_nc returned");
 my $datadir = $nc->get_info_item_pg16("datadir");
-diag("get_info_item_pg16 returned");
+print("get_info_item_pg16 returned");
 my $home = $nc->get_home_dir();
 
-diag("datadir = $datadir\n");
-diag("home = $home\n");
+print("datadir = $datadir\n");
+print("home = $home\n");
+
+#
+# Move into the pgedge directory.
+#
+ chdir("./pgedge");
+
+
+
 
 #
 # Then, use nodectl to remove the Postgres installation.
 #
 
 my $cmd = qq(./nodectl remove pgedge);
-diag("cmd = $cmd\n");
+print("cmd = $cmd\n");
 my ($success, $error_message, $full_buf, $stdout_buf, $stderr_buf)= IPC::Cmd::run(command => $cmd, verbose => 0);
 
 #
@@ -49,16 +59,14 @@ my $result = system("rm -rf $home");
 #
 
 my $cmd1 = qq(sudo rm ~/.pgpass);
-#diag("cmd1 = $cmd1");
+#print("cmd1 = $cmd1");
 my ($success1, $error_message1, $full_buf1, $stdout_buf1, $stderr_buf1)= IPC::Cmd::run(command => $cmd1, verbose => 0);
 
 if (defined($success))
 {
-    ok(1);
+    exit(0);
 }
 else
 {
-    ok(0);
+    exit(1);
 }
-
-done_testing();

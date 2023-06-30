@@ -1,4 +1,5 @@
 # This test case cleans up after the test: 100_install_pgedge.pl.  
+# The test exercises: ./nodectl remove pgedge
 # We remove the PG installation, the pgedge directory, and the  ~/.pgpass file.
 #
 
@@ -15,28 +16,24 @@ use JSON;
 use NodeCtl;
 
 #
-# Move into the pgedge directory.
-#
-
-chdir("./pgedge");
-
-#
 # Get the location of the data directory and home directory before removing pgEdge; store them in $datadir and $home.
 #
 
 my $nc = NodeCtl::get_new_nc("/tmp/nodectl_dir");
+diag("get_new_nc returned");
 my $datadir = $nc->get_info_item_pg16("datadir");
+diag("get_info_item_pg16 returned");
 my $home = $nc->get_home_dir();
 
-#diag("datadir = $datadir\n");
-#diag("home = $home\n");
+diag("datadir = $datadir\n");
+diag("home = $home\n");
 
 #
 # Then, use nodectl to remove the Postgres installation.
 #
 
 my $cmd = qq(./nodectl remove pgedge);
-#diag("cmd = $cmd\n");
+diag("cmd = $cmd\n");
 my ($success, $error_message, $full_buf, $stdout_buf, $stderr_buf)= IPC::Cmd::run(command => $cmd, verbose => 0);
 
 #

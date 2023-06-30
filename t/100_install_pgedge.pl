@@ -1,6 +1,6 @@
 # This test case runs the command:
-# ./nodectl install pgedge -U admin -P password -d demo
-# The command does not add an entry to the ~/.pgpass file, so we do that in this case as well, to simplify
+# ./nodectl install pgedge --pg 16 -U admin -P password -d demo
+# FIXME - The command does not add an entry to the ~/.pgpass file, so we do that in this case as well, to simplify
 # authentication with psql.
 # We also query ./nodectl --json info pg16 to find the port number of the running instance in case there is more than 
 # one running - the test will use the returned port to log in to psql and confirm that spock has been installed.
@@ -17,9 +17,8 @@ use IPC::Cmd qw(run);
 use Try::Tiny;
 use JSON;
 
-#
-# Make sure you're in the pgedge directory.
-#
+
+# Make sure you are in the pgedge directory until we have flexible paths.
 
 chdir("./pgedge");
 
@@ -37,7 +36,7 @@ my ($success, $error_message, $full_buf, $stdout_buf, $stderr_buf)= IPC::Cmd::ru
 # stdout_buf prints the output from the session onscreen (useful for debugging issues with other modules) if 
 # you invoke this file with the perl command - if you invoke it with prove(), the output is suppressed.
 #
-
+diag("error_message = $error_message");
 diag("stdout_buf = @$stdout_buf\n");
 
 #
