@@ -12,7 +12,7 @@ if sys.version_info < (3, 6):
   sys.exit(1)
 
 if sys.version_info < (3, 9):
-  print("WARNING: Advanced pgEdge functionality requires Python 3.9+")
+  print("WARNING: Advanced functionality requires Python 3.9+")
 
 from urllib import request as urllib2
 
