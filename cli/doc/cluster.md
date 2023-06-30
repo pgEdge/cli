@@ -4,7 +4,7 @@
 ## COMMANDS
     COMMAND is one of the following:
      create-local        # Create a localhost test cluster of N pgEdge nodes on different ports.
-     init-remote         # Coming Soon! Initialize a test cluster from json definition file of existing nodes.
+     init-remote         # Initialize a test cluster from json definition file of existing nodes.
      destroy             # Stop and then nuke a cluster.
      validate            # Validate a cluster configuration
      command             # Run ./nodectl commands on one or all nodes.

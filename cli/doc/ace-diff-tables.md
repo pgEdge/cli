@@ -1,17 +1,15 @@
 ## SYNOPSIS
-    ./nodectl cluster diff-tables CLUSTER_NAME NODE1 NODE2 TABLE_NAME <flags>
+    ./nodectl cluster diff-tables CLUSTER_NAME TABLE_NAME <flags>
  
 ## DESCRIPTION
-    Compare table on different cluster nodes
+    Efficiently compare tables across cluster using optional checksums and blocking.
  
 ## POSITIONAL ARGUMENTS
     CLUSTER_NAME
-    NODE1
-    NODE2
     TABLE_NAME
  
 ## FLAGS
-    -u, --use_checksums=USE_CHECKSUMS
+    -c, --checksum_use=CHECKSUM_USE
         Default: False
-    -b, --block_size=BLOCK_SIZE
-        Default: 2
+    -b, --block_rows=BLOCK_ROWS
+        Default: 1
