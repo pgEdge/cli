@@ -1,0 +1,4 @@
+apscheduler
+sqlalchemy
+psycopg
+psycopg-binary
