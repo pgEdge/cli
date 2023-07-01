@@ -1,5 +1,5 @@
 # PGEDGE NODECTL UPDATE MANAGER
-Update Manager is similar in function to YUM, APT & BREW.  It is consistent across cross-platform & also works in sandbox mode.
+Update Manager is similar in function to YUM & APT.  It is consistent across platforms & also works in sandbox mode.
 
 ## Synopsis
     ./nodectl um <command> [parameters] [options] 

@@ -1,10 +1,10 @@
 # PGEDGE NODECTL SERVICE CONTROLLER
-Service control commands.  Functionality is similar to SYSTEMCTL & BREW SERVICE, except it's cross-platform and works in sandbox mode.
+Service control commands function similar to SYSTEMCTL, except they are cross-platform and work in sandbox mode.
 
 ## Synopsis
     ./nodectl service <command> [parameters] [options] 
 
-[**start**](doc/service-start.md)                 - Start server components<br>
+[**start**](doc/service-start.md)             - Start server components<br>
 [**stop**](doc/service-stop.md)               - Stop server components<br>
 [**status**](doc/service-status.md)           - Display status of installed server components<br>
 [**reload**](doc/service-reload.md)           - Reload server config files (without a restart)<br>
@@ -16,7 +16,3 @@ Service control commands.  Functionality is similar to SYSTEMCTL & BREW SERVICE,
 
 ## Options
     --json             # Turn on JSON output
-    --debug            # Turn on debug logging
-    --silent           # Less noisy
-    --verbose or -v    # More noisy
-
