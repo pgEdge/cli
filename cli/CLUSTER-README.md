@@ -20,6 +20,7 @@ Installation and configuration of a pgEdge SPOCK cluster
     --verbose or -v    # More noisy
 
 ## Example cluster.json file
+```
 {
   "cluster": "cl1",
   "create_dt": "2023-06-08",
@@ -44,4 +45,5 @@ Installation and configuration of a pgEdge SPOCK cluster
       "path": "~/pgedge"
     }
   ]
-
+}
+```
