@@ -53,11 +53,12 @@ def load_json(cluster_name):
 def runNC(node, nc_cmd, db, user, cert):
   import paramiko
 
-  if not (os.path.exists(cert)):
-    util.exit_message("Unable to locate cert file", 1)
-
   ## Set up ssh connection
-  pk = paramiko.RSAKey.from_private_key_file(cert)
+  pk=None
+  if cert and cert > "":
+    if not (os.path.exists(cert)):
+      util.exit_message("Unable to locate cert file", 1)
+    pk = paramiko.RSAKey.from_private_key_file(cert)
   client = paramiko.SSHClient()
   client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
 
@@ -66,10 +67,13 @@ def runNC(node, nc_cmd, db, user, cert):
     cmd=n["path"] + "nc " + nc_cmd
     # Execute Command
     try:
-      client.connect(hostname=n["ip"], username=user, pkey=pk, timeout=3)
+      if pk:
+        client.connect(hostname=n["ip"], username=user, pkey=pk, timeout=3)
+      else:
+        client.connect(hostname=n["ip"], username=user, timeout=3)
       stdin, stdout, stderr = client.exec_command(cmd)
       output =  stdout.read()
-      ##print(output.decode('utf-8'), end="\n")
+      #print(output.decode('utf-8'), end="\n")
       client.close()
       nc_message.append(n["nodename"] + ": \n"  + output.decode('utf-8'))
     except (paramiko.BadHostKeyException, paramiko.AuthenticationException,
@@ -99,6 +103,20 @@ def get_cluster_json(cluster_name):
   return(parsed_json)
 
 
+def reset_remote(cluster_name):
+  """Reset a test cluster from json definition file of existing nodes."""
+  db, pg, count, user, db_passwd, os_user, key, nodes = load_json(cluster_name)
+
+  util.message("\n## Ensure that PG is stopped.")
+  for nd in nodes:
+     cmd = nd["path"] + "/nodectl stop"
+     util.echo_cmd(cmd, host=nd["ip"], usr=os_user, key=key)
+
+  util.message(f"\n## Ensure that pgEdge root directory is gone")
+  for nd in nodes:
+     cmd = "rm -rf " + nd["path"]
+     util.echo_cmd(cmd, host=nd["ip"], usr=os_user, key=key)
+
 
 def init_remote(cluster_name, app=None):
   """Initialize a test cluster from json definition file of existing nodes."""
@@ -117,11 +135,20 @@ def init_remote(cluster_name, app=None):
   util.message(f"### Node count = {kount}")
 
   util.message(f"\n## Checking ssh'ing to each node")
+  for nd in cj["nodes"]:
+    rc = util.echo_cmd(usr=cj["os_user"], host=nd["ip"], key=cj["ssh_key"], cmd="hostname")
+    if rc == 0:
+      print("OK")
+    else:
+      util.exit_message("cannot ssh to node")
+
+  ssh_install_pgedge(cluster_name, cj["db_init_passwd"])
 
 
-  ## db, pg, count, db_user, db_passwd, os_user, cert, nodes = load_json(cluster_name)
-
-  
+def create_secure(cluster_name, locations="", pg=None, app=None, 
+                 User="lcusr", Passwd="lcpasswd", db="lcdb"):
+  """Coming Soon! Create a secure pgEdge cluster of N nodes."""
+  util.exit_message("Coming Soon!")
 
 
 def create_local(cluster_name, num_nodes, pg=None, app=None, port1=6432, 
@@ -184,7 +211,7 @@ def create_local(cluster_name, num_nodes, pg=None, app=None, port1=6432,
 
 
 def ssh_install_pgedge(cluster_name, passwd):
-  db, pg, count, db_user, db_passwd, os_user, cert, nodes = load_json(cluster_name)
+  db, pg, count, db_user, db_passwd, os_user, ssh_key, nodes = load_json(cluster_name)
   util.message("#")
   util.message(f"# ssh_install_pgedge: cluster={cluster_name}, db={db}, pg={pg} db_user={db_user}, count={count}")
   for n in nodes:
@@ -194,18 +221,13 @@ def ssh_install_pgedge(cluster_name, passwd):
     ndport = n["port"]
     util.message(f"#   node={ndnm}, host={ndip}, port={ndport}, path={ndpath}")
 
-    util.echo_cmd("mkdir " + ndpath, host=ndip)
-
-    remote = ndip + ":" + ndpath
-    util.echo_cmd("scp -pqr conf " + remote + "/.")
-    util.echo_cmd("scp -pqr hub  " + remote + "/.")
-    util.echo_cmd("scp -pq  nodectl " + remote + "/.")
-    util.echo_cmd("scp -pq  nc      " + remote + "/.")
-
+    cmd = "python3 -c \"\$(curl -fsSL https://pgedge-download.s3.amazonaws.com/REPO/install.py)\""
+    util.echo_cmd(cmd=cmd, host=n["ip"], usr=os_user, key=ssh_key)
+    
     nc = (ndpath + "/nodectl ")
     parms =  " -U " + str(db_user) + " -P " + str(passwd) + " -d " + str(db) + \
              " -p " + str(ndport) + " --pg " + str(pg)
-    rc = util.echo_cmd(nc + " install pgedge" + parms, host=ndip)
+    rc = util.echo_cmd(nc + " install pgedge" + parms, host=n["ip"], usr=os_user, key=ssh_key)
     util.message("#")
 
 
@@ -222,7 +244,7 @@ def validate(cluster_name):
   return cluster_name + " Cluster Validated Successfully!"
 
 
-def destroy(cluster_name):
+def destroy_local(cluster_name):
   """Stop and then nuke a cluster."""
 
   if not os.path.exists(base_dir):
@@ -298,9 +320,11 @@ def app_remove(cluster_name, app_name):
 
 if __name__ == '__main__':
   fire.Fire({
+    'create-secure':  create_secure,
     'create-local':   create_local,
+    'destroy-local':  destroy_local,
     'init-remote':    init_remote,
-    'destroy':        destroy,
+    'reset-remote':   reset_remote,
     'validate':       validate,
     'command':        command,
     'app-install':    app_install,

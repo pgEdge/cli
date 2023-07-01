@@ -142,10 +142,20 @@ def debug_lvl():
     return(0)
 
 
-def echo_cmd(cmd, sleep_secs=0, host=None):
-  if host:
+def echo_cmd(cmd, sleep_secs=0, host="", usr="", key=""):
+
+  if host > "":
+    ssh_cmd = "ssh -o StrictHostKeyChecking=no -q -t "
+    if usr > "":
+      ssh_cmd = ssh_cmd + str(usr) + "@"
+
+    ssh_cmd = ssh_cmd + str(host) + " "
+
+    if key > "":
+      ssh_cmd = ssh_cmd + "-i " + str(key) + " "
+
     cmd = cmd.replace('"', '\\"')
-    cmd = 'ssh -t ' + host + ' "' + str(cmd) + '"'
+    cmd = ssh_cmd + ' "' + str(cmd) + '"'
 
   isSilent = os.getenv('isSilent', 'False')
   if isSilent == "False":

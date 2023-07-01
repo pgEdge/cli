@@ -11,15 +11,15 @@
   "nodes": [
     {
       "nodename": "n1",
-      "ip": "t1",
+      "ip": "192.168.1.227",
       "port": 6432,
-      "path": "/home/denisl/test_clusters/test/n1"
+      "path": "~/pgedge"
     },
     {
       "nodename": "n2",
-      "ip": "t2",
+      "ip": "192.168.1.222",
       "port": 6433,
-      "path": "/home/denisl/test_clusters/test/n2"
+      "path": "~/pgedge"
     }
   ]
 }
