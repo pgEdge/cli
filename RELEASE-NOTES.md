@@ -2,26 +2,30 @@
 
 ## to do's for 23.122 and beyond
   - add support for pljava-pg15 & -pg16 (cannot find libjvm17  setting from util.get_jvm_location)
-  - make `cluster create-remote` work with same logic as `create-local`
   - improve test support for patroni, etcd, haproxy
-  - get to codeComplete for 'cluster remote-init'
-  - improve efficiency of 'ace diff-tables' to handle massive tables
+  - improve efficiency of `ace diff-tables` to handle massive tables
+
+## done so far for 23.122 as of 2023-07-0?
+  - get to codeComplete for `cluster remote-init`
+  - get to codeComplete for `cluster remote-reset`
+  - improve flexibility of `cluster.runNC()` to handle passwordless ssh without certificates
+  - improve `cluster.echo_cmd()` to handle remote ssh when os_user &/or a certficate is presented
 
 ## done for 23.121 as of 2023-06-30
   - fix regression to allow core PG functionality to use Python 3.6+ (not require Python 3.9+)
-  - improve 'ace diff-tables' error handling and re-factor for going fwd
-  - make 1st and 2nd passes at 'cluster remote-init'
+  - improve `ace diff-tables` error handling and re-factor for going fwd
+  - make 1st and 2nd passes at `cluster remote-init`
   - bump orafce to v4.3.0
   - bump curl to v2.1.1
 
 ## done for 23.120 as of 2023-06-29
   - bump pg16beta1 to pg16beta2
-  - improve `ACE diff-tables` to optionally use checksums
+  - improve `ace diff-tables` to optionally use checksums
   - basic v1.0 of nodectl-mqtt avaialble in dev\test mode
   - get latest pgcat2 & postgrest and make work for arm9 and el9 in dev\test
   - bump pglogical to v2.4.3 (for testing only)
-  - improve 'info' layout whilst showing cloud-init query (if available)
-  - improve install.py with an 'update --silent' & 'info' command at end
+  - improve `info` layout whilst showing `cloud-init query` (if available)
+  - improve `install.py` with an `update --silent` & `info` command at end
 
 ## done for 23.119 as of 2023-06-23
   - fix spock bug resulting from multiple updates in same transaction.
@@ -30,7 +34,7 @@
   - fix a hanging regression when NOT in an EC2 kind of VM
 
 ## done for 23.118 as of 2023-06-22
-  - improve ssh support for 'cluster create-local'
+  - improve ssh support for `cluster create-local`
   - add devel/setup support for zookeeper & patroni
   - stub out starfleet support
   - add warning when not EL9+ or Ubuntu 22.04+
