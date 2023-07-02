@@ -65,7 +65,7 @@ def install(cluster_name, factor=1):
 
       if pub_ip_port != sub_ip_port:
         sub_name = "sub_" + pub["nodename"] + sub["nodename"] + " "
-        provider_dsn = "'" + sub_ip_port + " user=" + db_user + " dbname=" + db + "' "
+        provider_dsn = "'" + sub_ip_port + " user=" + os_user + " dbname=" + db + "' "
 
         util.echo_cmd(spk + "sub-create " + sub_name + provider_dsn + db_pg, 
                         host=host, usr=os_user, key=ssh_key)
