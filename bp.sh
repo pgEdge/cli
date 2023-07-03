@@ -9,7 +9,7 @@ outp="out/posix"
 
 clusterDir=$outp/cluster
 if [ -d $clusterDir ]; then
-  $outp/$api cluster destroy all
+  $outp/$api cluster destroy-local all
 fi
 
 if [ -d $outp ]; then

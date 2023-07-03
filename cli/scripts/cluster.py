@@ -13,11 +13,12 @@ def create_local_json(cluster_name, db, num_nodes, usr, passwd, pg, port1):
   text_file = open(cluster_dir + os.sep + cluster_name + ".json", "w")
   cluster_json = {}
   cluster_json["cluster"] = cluster_name
+  cluster_json["is_localhost"] = "True"
   cluster_json["create_dt"] = datetime.date.today().isoformat()
   cluster_json["db_name"] = db
-  cluster_json["db_user"] = db
+  cluster_json["db_user"] = usr
   cluster_json["db_init_passwd"] = passwd
-  cluster_json["os_user"] = usr
+  cluster_json["os_user"] = util.get_user()
   cluster_json["ssh_key"] = ""
   cluster_json["pg_ver"] = pg
   cluster_json["count"] = num_nodes
@@ -46,8 +47,8 @@ def load_json(cluster_name):
   db_user=parsed_json["db_user"]
   db_passwd=parsed_json["db_init_passwd"]
   os_user=parsed_json["os_user"]
-  cert=parsed_json["ssh_key"]
-  return db_name, pg, count, db_user, db_passwd, os_user, cert, parsed_json["nodes"]
+  ssh_key=parsed_json["ssh_key"]
+  return db_name, pg, count, db_user, db_passwd, os_user, ssh_key, parsed_json["nodes"]
 
 
 def runNC(node, nc_cmd, db, user, cert):
@@ -159,7 +160,7 @@ def create_local(cluster_name, num_nodes, pg=None, app=None, port1=6432,
   if util.is_password_less_ssh():
     pass
   else:
-    util.exit_message("try https://blog.pgedge.org/index.php/2023/04/07/passwordless-ssh-to-localhost/", 1)
+    util.exit_message("passwordless ssh not configured on localhost", 1)
 
   cluster_dir = base_dir + os.sep + cluster_name
 
@@ -221,10 +222,11 @@ def ssh_install_pgedge(cluster_name, passwd):
     ndport = n["port"]
     util.message(f"#   node={ndnm}, host={ndip}, port={ndport}, path={ndpath}")
 
-    cmd = "python3 -c \"\$(curl -fsSL https://pgedge-download.s3.amazonaws.com/REPO/install.py)\""
-    util.echo_cmd(cmd=cmd, host=n["ip"], usr=os_user, key=ssh_key)
+    cmd1 = f"mkdir -p {ndpath}; cd {ndpath}; unset REPO; "
+    cmd2 = "python3 -c \"\$(curl -fsSL https://pgedge-download.s3.amazonaws.com/REPO/install.py)\""
+    util.echo_cmd(cmd1 + cmd2, host=n["ip"], usr=os_user, key=ssh_key)
     
-    nc = (ndpath + "/nodectl ")
+    nc = (ndpath + "/pgedge/nodectl ")
     parms =  " -U " + str(db_user) + " -P " + str(passwd) + " -d " + str(db) + \
              " -p " + str(ndport) + " --pg " + str(pg)
     rc = util.echo_cmd(nc + " install pgedge" + parms, host=n["ip"], usr=os_user, key=ssh_key)
@@ -280,7 +282,7 @@ def command(cluster_name, node, cmd, args=None):
   cluster_dir = base_dir + "/" + str(cluster_name)
 
   if node != "all":
-    full_cmd = cluster_dir + "/" + str(node) + "/nodectl " + str(cmd)
+    full_cmd = cluster_dir + "/" + str(node) + "/pgedge/nodectl " + str(cmd)
     if args != None:
         full_cmd = full_cmd + " " + str(args)
     rc = util.echo_cmd(full_cmd)
@@ -291,7 +293,7 @@ def command(cluster_name, node, cmd, args=None):
   node_dir = cluster_dir + "/n" + str(nd)
 
   while os.path.exists(node_dir):
-    full_cmd = node_dir + "/nodectl " + str(cmd)
+    full_cmd = node_dir + "/pgedge/nodectl " + str(cmd)
     if args != None:
         full_cmd = full_cmd + " " + str(args)
     rc = util.echo_cmd(full_cmd, 1)
