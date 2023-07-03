@@ -247,7 +247,7 @@ def validate(cluster_name):
 
 
 def destroy_local(cluster_name):
-  """Stop and then nuke a cluster."""
+  """Stop and then nuke a localhost cluster."""
 
   if not os.path.exists(base_dir):
     util.exit_message("no cluster directory: " + str(base_dir), 1)
@@ -269,9 +269,18 @@ def destroy_local(cluster_name):
 def lc_destroy1(cluster_name):
   cluster_dir = base_dir + "/" + str(cluster_name)
 
-  command(cluster_name, "all", "stop")
+  cfg = get_cluster_json(cluster_name)
 
-  util.echo_cmd("rm -rf " + cluster_dir, 1)
+  try:
+    is_localhost = cfg["is_localhost"]
+  except Exception as e:
+    is_localhost = "False"
+
+  if is_localhost == "True":
+    command(cluster_name, "all", "stop")
+    util.echo_cmd("rm -rf " + cluster_dir)
+  else:
+    util.message(f"Cluster '{cluster_name}' is not a localhost cluster")
 
 
 def command(cluster_name, node, cmd, args=None):

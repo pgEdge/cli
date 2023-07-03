@@ -1,9 +1,10 @@
 {
   "cluster": "test",
+  "is_localhost": "False",
   "create_dt": "1970-01-01",
   "db_name": "db1",
   "db_user": "admin",
-  "db_init_passwd": "insecure",
+  "db_init_passwd": "inSecure123!",
   "os_user": "denisl",
   "ssh_key": "",
   "pg_ver": "15",
@@ -13,13 +14,13 @@
       "nodename": "n1",
       "ip": "192.168.1.227",
       "port": 6432,
-      "path": "~/pgedge"
+      "path": "~"
     },
     {
       "nodename": "n2",
       "ip": "192.168.1.222",
       "port": 6433,
-      "path": "~/pgedge"
+      "path": "~"
     }
   ]
 }
