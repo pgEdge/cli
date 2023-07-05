@@ -734,18 +734,12 @@ def metrics_check(db, pg=None):
     cur.close()
     mtrc_dict.update({"resolutions": rsltns})
 
-    mtrc_dict.update({"slots": []})    
+    mtrc_dict.update({"slots": []})
     cur = con.cursor()
-    sql_slots = \
-      "SELECT slot_name, to_char(pg_wal_lsn_diff(pg_current_wal_insert_lsn(), confirmed_flush_lsn), \n" + \
-      "       '999G999G999G999G999') as confirmed_flush_replication_lag, reply_time, \n" + \
-      "       now() - reply_time AS reply_replication_lag \n" + \
-      "  FROM pg_replication_slots R \n" + \
-      "LEFT OUTER JOIN pg_stat_replication S ON R.slot_name = S.application_name \n" + \
-      "ORDER BY 1"
+    sql_slots = "SELECT * FROM spock.lag_tracker ORDER BY 1"
     cur.execute(sql_slots)
     for row in cur:
-      mtrc_dict["slots"].append({"slotName":row[0],"flushReplicationLag":row[1],"replyTime":str(row[2]),"replicationLag":str(row[3])})
+      mtrc_dict["slots"].append({"slotName":row[0],"commit_lsn":str(row[1]),"commit_timestamp":str(row[2]),"replication_lag":str(row[3]), "replication_lag_bytes":str(row[4])})
     cur.close()
 
   except Exception as e:

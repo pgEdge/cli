@@ -3,7 +3,6 @@ version: '3'
 services:
   pgedge-n1:
     hostname: n1
-    image: rockylinux:9
     build:
       context: "."
       dockerfile: Dockerfile.el9
@@ -16,7 +15,6 @@ services:
 
   pgedge-n2:
     hostname: n2
-    image: rockylinux:9
     build:
       context: "."
       dockerfile: Dockerfile.el9
