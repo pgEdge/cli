@@ -1,4 +1,4 @@
-# This test case cleans up after the test: 300_setup_script.pl 
+# This test case cleans up after the test: 300_setup_script.pl.  
 # The test exercises: ./nodectl remove pgedge
 # We remove the PG installation, the pgedge directory, and the  ~/.pgpass file.
 #
@@ -7,36 +7,30 @@ use strict;
 use warnings;
 
 use File::Which;
-use NodeCtl;
+use File::Path;
 use IPC::Cmd qw(run);
 use Try::Tiny;
 use JSON;
 
 #
-# Move into the pgedge directory.
+# Move into the pgedge directory
 #
-# chdir("./pgedge");
+chdir ("./pgedge");
 
 #
 # Get the location of the data directory and home directory before removing pgEdge; store them in $datadir and $home.
 #
 
-my $nc = NodeCtl::get_new_nc("/tmp/nodectl_dir");
-print("get_new_nc returned");
-my $datadir = $nc->get_info_item_pg16("datadir");
-print("get_info_item_pg16 returned");
-my $home = $nc->get_home_dir();
+my $out = decode_json(`./nc --json info`);
+my $home = $out->[0]->{"home"};
+print("the home directory is = {$home}\n");
+
+my $out1 = decode_json(`./nc --json info pg16`);
+my $datadir = $out1->[0]->{"datadir"};
+print("the data directory is = {$datadir}\n");
 
 print("datadir = $datadir\n");
 print("home = $home\n");
-
-#
-# Move into the pgedge directory.
-#
- chdir("./pgedge");
-
-
-
 
 #
 # Then, use nodectl to remove the Postgres installation.
@@ -45,6 +39,16 @@ print("home = $home\n");
 my $cmd = qq(./nodectl remove pgedge);
 print("cmd = $cmd\n");
 my ($success, $error_message, $full_buf, $stdout_buf, $stderr_buf)= IPC::Cmd::run(command => $cmd, verbose => 0);
+
+#
+# Diagnostic print statements
+#
+
+print("success = $success\n");
+# print("error_message = $error_message\n");
+print("full_buf = @$full_buf\n");
+print("stdout_buf = @$stdout_buf\n");
+print("stderr_buf = @$stderr_buf\n");
 
 #
 # Then, remove the data directory and the contents of the pgedge directory; then the pgedge directory is deleted.
@@ -59,7 +63,7 @@ my $result = system("rm -rf $home");
 #
 
 my $cmd1 = qq(sudo rm ~/.pgpass);
-#print("cmd1 = $cmd1");
+print("cmd1 = $cmd1");
 my ($success1, $error_message1, $full_buf1, $stdout_buf1, $stderr_buf1)= IPC::Cmd::run(command => $cmd1, verbose => 0);
 
 if (defined($success))

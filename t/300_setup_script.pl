@@ -10,9 +10,6 @@ use strict;
 use warnings;
 
 use File::Which;
-#use PostgreSQL::Test::Cluster;
-#use PostgreSQL::Test::Utils;
-#use Test::More tests => 1;
 use IPC::Cmd qw(run);
 use Try::Tiny;
 use JSON;
@@ -61,30 +58,38 @@ my($success3, $error_message3, $full_buf3, $stdout_buf3, $stderr_buf3)= IPC::Cmd
 print("We'll need to authenticate with the admin user, so we're adding the password to the .pgpass file = {@$stderr_buf3}\n");
 
 #
+# We need to get the location of the home directory so we can run psql; store it in $homedir.
+#
+
+my $out2 = decode_json(`./nc --json info`);
+my $homedir = $out2->[0]->{"home"};
+print("the home directory is = {$homedir}\n");
+
+#
 # Connect with psql, and confirm that I'm in the correct database.
 #
 
-my $cmd4 = qq(psql -t -h 127.0.0.1 -p $port -U admin -d demo -c "select * from current_database()");
-print("cmd4 = $cmd4\n");
-my($success4, $error_message4, $full_buf4, $stdout_buf4, $stderr_buf4)= IPC::Cmd::run(command => $cmd4, verbose => 0);
+my $cmd5 = qq($homedir/pg16/bin/psql -t -h 127.0.0.1 -p $port -U admin -d demo -c "select * from current_database()");
+print("cmd5 = $cmd5\n");
+my($success5, $error_message5, $full_buf5, $stdout_buf5, $stderr_buf5)= IPC::Cmd::run(command => $cmd5, verbose => 0);
 
-print("success4 = $success4\n");
-print("stdout_buf4 = @$stdout_buf4\n");
+print("success5 = $success5\n");
+print("full_buf5 = @$full_buf5\n");
+print("stdout_buf5 = @$stdout_buf5\n");
 
 #
 # Then, we use the port number from the previous section to connect to psql and test for the existence of the spock extension.
 #
 
-my $cmd5 = qq(psql -t -h 127.0.0.1 -p $port -U admin -d demo -c "SELECT installed_version FROM pg_available_extensions WHERE name='spock'");
-print("cmd5 = $cmd5\n");
-my($success5, $error_message5, $full_buf5, $stdout_buf5, $stderr_buf5)= IPC::Cmd::run(command => $cmd5, verbose => 0);
+my $cmd6 = qq($homedir/pg16/bin/psql -t -h 127.0.0.1 -p $port -U admin -d demo -c "SELECT installed_version FROM pg_available_extensions WHERE name='spock'");
+print("cmd6 = $cmd6\n");
+my($success6, $error_message6, $full_buf6, $stdout_buf6, $stderr_buf6)= IPC::Cmd::run(command => $cmd6, verbose => 0);
 
-print("success5 = $success5\n");
-print("stdout_buf5 = @$stdout_buf5\n");
+print("success6 = $success6\n");
+print("full_buf6 = @$full_buf6\n");
+print("stdout_buf6 = @$stdout_buf6\n");
 
-my $value = $success5;
-
-if (defined($value))
+if (defined($success6))
 {
     exit(0);
 }

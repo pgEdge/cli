@@ -75,4 +75,3 @@ else
     exit(1);
 }    
     
-done_testing();
