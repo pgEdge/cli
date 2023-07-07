@@ -36,7 +36,7 @@ We are licensed under the pgEdge Community License v1.0
 [**create-repset**](doc/spock-create-repset.md) - Define a replication set<br>
 [**create-sub**](doc/spock-create-sub.md)       - Create a subscription<br>
 [**repset-add-table**](doc/spock-repset-add-table.md)  - Add table to a replication set<br>
-[**sub-add-respset**](doc/spock-sub-add-repset.md)     - Add replication set to a subscription<br>
+[**sub-add-repset**](doc/spock-sub-add-repset.md)     - Add replication set to a subscription<br>
 [**show-sub-status**](spock-show-sub-status.md)        - Display the status of the subcription<br>
 [**show-sub-table**](doc/spock-show-sub-table.md)      - Display subscription table(s)<br>
 [**spock-wait-for-sub-sync**](doc/spock-wait-for-sub-sync.md)  - Pause until subscription is synched<br>

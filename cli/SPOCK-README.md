@@ -18,7 +18,7 @@ Logical and Multi-Active PostgreSQL node configuration
 [**sub-enable**](doc/spock-sub-enable.md)       - Enable a subscription<br>
 [**sub-disable**](doc/spock-sub-disable.md)       - Disable a subscription<br>
 [**sub-drop**](doc/spock-sub-drop.md)       - Remove a subscription<br>
-[**sub-add-respset**](doc/spock-sub-add-repset.md)     - Add replication set to a subscription<br>
+[**sub-add-repset**](doc/spock-sub-add-repset.md)     - Add replication set to a subscription<br>
 [**sub-show-status**](doc/spock-sub-show-status.md)        - Display the status of the subcription<br>
 [**sub-show-table**](doc/spock-sub-show-table.md)      - Display subscription table(s)<br>
 [**spock-sub-wait-for-sync**](doc/spock-sub-wait-for-sync.md)  - Pause until subscription is synchronized<br>
