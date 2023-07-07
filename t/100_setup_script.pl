@@ -80,14 +80,12 @@ my($success5, $error_message5, $full_buf5, $stdout_buf5, $stderr_buf5)= IPC::Cmd
 print("success5 = $success5\n");
 print("stdout_buf5 = @$stdout_buf5\n");
 
-my $value = $success5;
-
-if (defined($value))
+if (defined($success5))
 {
-    exit(1);
+    exit(0);
 }
 else
 {
-    exit(0);
+    exit(1);
 }
 
