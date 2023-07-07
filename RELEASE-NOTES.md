@@ -1,15 +1,23 @@
 # pgEdge Platform Release Notes #############
 
-## to do's for 23.122 and beyond
+## to do's for 23.132 and beyond
   - add support for pljava-pg15 & -pg16 (cannot find libjvm17  setting from util.get_jvm_location)
   - improve test support for patroni, etcd, haproxy
-  - improve efficiency of `ace diff-tables` to handle massive tables
+  - improve efficiency of `ace diff-tables` to handle massive tables w blocks of checksums
+  - verify `cluster.echo_cmd()` handles remote ssh when ssh_key is present
+  - install platform specific `nodectl-lib` and support running  on el9-amd, el9-arm, ubu22-amd & osx-amd/arm
 
-## done so far for 23.122 as of 2023-07-0?
+## done for 23.122 as of 2023-07-07
+  - ensure 'cluster create-local':
+       defaults to pg16, but allows for --pg=15 override
+       allows for -U, -P and -d overrides from command line
+  - fix race-condition in docker compose code
+  - ensure 'cluster remote-init' and 'cluster create-local' commands and working in parity 
+      & with shared codebase
   - get to codeComplete for `cluster remote-init`
   - get to codeComplete for `cluster remote-reset`
   - improve flexibility of `cluster.runNC()` to handle passwordless ssh without certificates
-  - improve `cluster.echo_cmd()` to handle remote ssh when os_user &/or a certficate is presented
+  - improve `cluster.echo_cmd()` to handle remote ssh when os_user is presented
 
 ## done for 23.121 as of 2023-06-30
   - fix regression to allow core PG functionality to use Python 3.6+ (not require Python 3.9+)

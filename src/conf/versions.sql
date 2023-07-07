@@ -126,7 +126,7 @@ INSERT INTO categories VALUES (9,  87, 'Management & Monitoring', 'Manage/Monito
 -- ## HUB ################################
 INSERT INTO projects VALUES ('hub', 'app', 0, 0, 'hub', 0, 'https://github.com/pgedge/nodectl','',0,'','','');
 INSERT INTO releases VALUES ('hub', 1, 'hub', '', '', 'hidden', '', 1, '', '', '');
-INSERT INTO versions VALUES ('hub', '23.122', '',  1, '20230708', '', '', '');
+INSERT INTO versions VALUES ('hub', '23.122', '',  1, '20230707', '', '', '');
 INSERT INTO versions VALUES ('hub', '23.121', '',  0, '20230630', '', '', '');
 INSERT INTO versions VALUES ('hub', '23.120', '',  0, '20230629', '', '', '');
 INSERT INTO versions VALUES ('hub', '23.119', '',  0, '20230623', '', '', '');
@@ -250,8 +250,8 @@ INSERT INTO projects VALUES ('orafce', 'ext', 4, 0, 'hub', 0, 'https://github.co
   'orafce', 1, 'larry.png', 'Ora Built-in Packages', 'https://github.com/orafce/orafce#orafce---oracles-compatibility-functions-and-packages');
 INSERT INTO releases VALUES ('orafce-pg15', 2, 'orafce', 'OraFCE', '', 'prod', '', 1, 'POSTGRES', '', '');
 INSERT INTO releases VALUES ('orafce-pg16', 2, 'orafce', 'OraFCE', '', 'prod', '', 1, 'POSTGRES', '', '');
-INSERT INTO versions VALUES ('orafce-pg15', '4.3.0-1',   'arm9, el9', 1, '20230701', 'pg15', '', '');
-INSERT INTO versions VALUES ('orafce-pg16', '4.3.0-1',   'arm9, el9', 1, '20230701', 'pg16', '', '');
+INSERT INTO versions VALUES ('orafce-pg15', '4.3.0-1',   'arm9, el9', 1, '20230707', 'pg15', '', '');
+INSERT INTO versions VALUES ('orafce-pg16', '4.3.0-1',   'arm9, el9', 1, '20230707', 'pg16', '', '');
 INSERT INTO versions VALUES ('orafce-pg15', '4.2.5-1',   'arm9, el9', 0, '20230422', 'pg15', '', '');
 
 INSERT INTO projects VALUES ('fixeddecimal', 'ext', 6, 0, 'hub', 0, 'https://github.com/pgsql-io/fixeddecimal/tags',
@@ -315,8 +315,8 @@ INSERT INTO projects VALUES ('curl', 'ext', 4, 0, 'hub',0, 'https://github.com/p
   'curl', 1, 'curl.png', 'Invoke JSON Services', 'https://github.com/pg_curl/pg_curl');
 INSERT INTO releases VALUES ('curl-pg15', 10, 'curl', 'pgCron', '', 'prod', '', 1, 'POSTGRES', '', '');
 INSERT INTO releases VALUES ('curl-pg16', 10, 'curl', 'pgCron', '', 'prod', '', 1, 'POSTGRES', '', '');
-INSERT INTO versions VALUES ('curl-pg15', '2.1.1-1',  'el9, arm9', 1, '20230701', 'pg15', '', '');
-INSERT INTO versions VALUES ('curl-pg16', '2.1.1-1',  'el9, arm9', 1, '20230701', 'pg16', '', '');
+INSERT INTO versions VALUES ('curl-pg15', '2.1.1-1',  'el9, arm9', 1, '20230707', 'pg15', '', '');
+INSERT INTO versions VALUES ('curl-pg16', '2.1.1-1',  'el9, arm9', 1, '20230707', 'pg16', '', '');
 INSERT INTO versions VALUES ('curl-pg15', '1.0.27-1', 'el9, arm9', 0, '20230215', 'pg15', '', '');
 
 INSERT INTO projects VALUES ('cron', 'ext', 4, 0, 'hub',0, 'https://github.com/citusdata/pg_cron/releases',

@@ -152,7 +152,7 @@ def create_secure(cluster_name, locations="", pg=None, app=None,
   util.exit_message("Coming Soon!")
 
 
-def create_local(cluster_name, num_nodes, pg=None, app=None, port1=6432, 
+def create_local(cluster_name, num_nodes, pg="16", app=None, port1=6432, 
                  User="lcusr", Passwd="lcpasswd", db="lcdb"):
   """Create a localhost test cluster of N pgEdge nodes on different ports."""
 
@@ -194,10 +194,10 @@ def create_local(cluster_name, num_nodes, pg=None, app=None, port1=6432,
   util.message("# creating cluster dir: " + os.getcwd() + os.sep + cluster_dir)
   os.system("mkdir -p " + cluster_dir)
 
-  if pg == None:
-    pg = os.getenv("pgN", None)
-    if pg == None:
-      pg = "15"
+  pg = os.getenv("pgN", pg)
+  db = os.getenv('pgName', db)
+  User = os.getenv('pgeUser', User)
+  Passwd = os.getenv('pgePasswd', Passwd)
 
   create_local_json(cluster_name, db, num_nodes, User, Passwd, pg, port1)
 
