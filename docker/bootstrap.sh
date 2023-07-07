@@ -47,6 +47,7 @@ if [ "$HOSTNAME" = "n1" ]; then
   ./nodectl spock node-create n1 "host=`hostname -I` user=pgedge dbname=demo" demo
   ./nodectl spock repset-create demo_replication_set demo
   PGEDGE1=`host n2 | awk '{print $NF}'`
+  sleep 15
   echo "Setup to go from `hostname -I` to $PGEDGE1"
   ./nodectl spock sub-create sub_n1n2 "host=$PGEDGE1 port=5432 user=pgedge dbname=demo" demo
 
@@ -56,15 +57,13 @@ elif [ "$HOSTNAME" = "n2" ]; then
   ./nodectl spock node-create n2 "host=`hostname -I` user=pgedge dbname=demo" demo
   ./nodectl spock repset-create demo_replication_set demo
   PGEDGE0=`host n1 | awk '{print $NF}'`
+  sleep 15
   echo "Setup to go from `hostname -I` to $PGEDGE0"
   ./nodectl spock sub-create sub_n2n1 "host=$PGEDGE0 port=5432 user=pgedge dbname=demo" demo
 
 else
   echo "************nodectl: nothing for this node to do *******"
 fi
-
-# give some time to settle.
-sleep 5
 
 # create the same table on both nodes
 psql -d demo  -c "create table foobar(val1 bigint, val2 varchar(10)); "
@@ -76,8 +75,6 @@ psql -d demo  -c "alter table foobar add primary key (val1); "
 if [ "$HOSTNAME" = "n1" ]; then
    ./nodectl spock sub-add-repset sub_n1n2 demo_replication_set demo
 elif [ "$HOSTNAME" = "n2" ]; then
-   # wait 5 seconds to let pgedge0 complete first
-   sleep 5
    ./nodectl spock sub-add-repset sub_n2n1 demo_replication_set demo
 else
    echo "******** nodectl spock: nothing to do ******"
