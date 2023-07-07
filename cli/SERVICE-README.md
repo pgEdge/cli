@@ -11,8 +11,8 @@ Service control commands function similar to SYSTEMCTL, except they are cross-pl
 [**restart**](doc/service-restart.md)         - Stop & then start server components<br>
 [**enable**](doc/service-enable.md)           - Enable a server component<br>
 [**disable**](doc/service-disable.md)         - Disable component from starting automatically<br>
-[**config**](doc/service-config.md)           - Configure a component<br>
-[**init**](doc/service-init.md)               - Initialize a component<br>
+[**config**](doc/service-config.md)           - Expert only internal command for configuring a service (such as pg15)<br>
+[**init**](doc/service-init.md)               - Expert only internal command for initializing a service (such as pg15)<br>
 
 ## Options
     --json             # Turn on JSON output

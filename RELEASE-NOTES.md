@@ -8,6 +8,7 @@
   - install platform specific `nodectl-lib` and support running  on el9-amd, el9-arm, ubu22-amd & osx-amd/arm
 
 ## done for 23.122 as of 2023-07-07
+  - document 'service init' & 'service config' commands as internal use only
   - ensure 'cluster create-local':
        defaults to pg16, but allows for --pg=15 override
        allows for -U, -P and -d overrides from command line
