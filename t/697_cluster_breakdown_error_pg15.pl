@@ -31,7 +31,7 @@ print("home = $home\n");
 # Then, use nodectl to remove the Postgres installation.
 #
 
-my $cmd = qq(./nodectl cluster destroy demo);
+my $cmd = qq(./nodectl cluster destroy);
 print("cmd = $cmd\n");
 my ($success, $error_message, $full_buf, $stdout_buf, $stderr_buf)= IPC::Cmd::run(command => $cmd, verbose => 0);
 
@@ -40,22 +40,22 @@ my ($success, $error_message, $full_buf, $stdout_buf, $stderr_buf)= IPC::Cmd::ru
 #
 
 print("success = $success\n");
+# print("error_message = $error_message\n");
 print("full_buf = @$full_buf\n");
 print("stdout_buf = @$stdout_buf\n");
 print("stderr_buf = @$stderr_buf\n");
 
 #
-# Then, remove the data directory and the contents of the pgedge directory; then the pgedge directory is deleted.
+print("If the word ERROR is in @$stderr_buf, the test succeeded\n");
 #
 
-my $result = system("rm -rf $home");
+my $substring = "ERROR";
+if (index($stdout_buf, $substring) == -1)
 
-if (defined($success))
 {
-    exit(0);
+  exit(0);
 }
 else
 {
-    exit(1);
-}    
-    
+ exit(1);
+}

@@ -10,9 +10,6 @@ use strict;
 use warnings;
 
 use File::Which;
-#use PostgreSQL::Test::Cluster;
-#use PostgreSQL::Test::Utils;
-#use Test::More tests => 1;
 use IPC::Cmd qw(run);
 use Try::Tiny;
 use JSON;
@@ -30,14 +27,9 @@ my $cmd = qq(./nodectl install pgedge --pg 16 -U admin -P password -d demo);
 print("cmd = $cmd\n");
 my ($success, $error_message, $full_buf, $stdout_buf, $stderr_buf)= IPC::Cmd::run(command => $cmd, verbose => 0);
 
-#
-# Success is a boolean value; 0 means true, any other value is false. 
-#
-# stdout_buf prints the output from the session onscreen (useful for debugging issues with other modules) if 
-# you invoke this file with the perl command - if you invoke it with prove(), the output is suppressed.
-#
-# print("error_message = $error_message");
+print("full_buf = @$full_buf\n");
 print("stdout_buf = @$stdout_buf\n");
+print("stderr_buf = @$stderr_buf\n");
 
 #
 # Then, we retrieve the port number from nodectl in json form... this is to catch cases where more than one copy of 
@@ -45,10 +37,9 @@ print("stdout_buf = @$stdout_buf\n");
 #
 my $json = `./nc --json info pg16`;
 print("my json = $json");
+
 my $out = decode_json($json);
-
 my $port = $out->[0]->{"port"};
-
 print("The port number is = {$port}\n");
 
 #
@@ -82,9 +73,7 @@ my($success5, $error_message5, $full_buf5, $stdout_buf5, $stderr_buf5)= IPC::Cmd
 print("success5 = $success5\n");
 print("stdout_buf5 = @$stdout_buf5\n");
 
-my $value = $success5;
-
-if (defined($value))
+if (defined($success5))
 {
     exit(0);
 }
