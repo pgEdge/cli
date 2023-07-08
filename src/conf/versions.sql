@@ -126,7 +126,7 @@ INSERT INTO categories VALUES (9,  87, 'Management & Monitoring', 'Manage/Monito
 -- ## HUB ################################
 INSERT INTO projects VALUES ('hub', 'app', 0, 0, 'hub', 0, 'https://github.com/pgedge/nodectl','',0,'','','');
 INSERT INTO releases VALUES ('hub', 1, 'hub', '', '', 'hidden', '', 1, '', '', '');
-INSERT INTO versions VALUES ('hub', '23.122', '',  1, '20230710', '', '', '');
+INSERT INTO versions VALUES ('hub', '23.122', '',  1, '20230708', '', '', '');
 INSERT INTO versions VALUES ('hub', '23.121', '',  0, '20230630', '', '', '');
 INSERT INTO versions VALUES ('hub', '23.120', '',  0, '20230629', '', '', '');
 INSERT INTO versions VALUES ('hub', '23.119', '',  0, '20230623', '', '', '');
@@ -325,11 +325,13 @@ INSERT INTO releases VALUES ('cron-pg15', 10, 'cron', 'pgCron', '', 'prod', '', 
 INSERT INTO versions VALUES ('cron-pg15', '1.5.2-1', 'el9, arm9', 1, '20230422', 'pg15', '', '');
 
 INSERT INTO projects VALUES ('spock', 'pge', 4, 0, 'hub', 1, 'https://github.com/pgedge/spock/tags',
-  'spock', 1, 'spock.png', 'Logical & Multi-Active Replication', 'https://github.com/pgedge/spock/#spock');
+  'spock', 1, 'spock.png', 'Logical & Multi-Master Replication', 'https://github.com/pgedge/spock/#spock');
 INSERT INTO releases VALUES ('spock31-pg15', 4, 'spock', 'Spock', '', 'prod', '', 1, 'pgEdge Community', '', '');
 INSERT INTO releases VALUES ('spock31-pg16', 4, 'spock', 'Spock', '', 'prod', '', 1, 'pgEdge Community', '', '');
-INSERT INTO versions VALUES ('spock31-pg15', '3.1.3-1', 'el9, arm9', 1, '20230622', 'pg15', '', '');
-INSERT INTO versions VALUES ('spock31-pg16', '3.1.3-1', 'el9, arm9', 1, '20230622', 'pg16', '', '');
+INSERT INTO versions VALUES ('spock31-pg15', '3.1.4-1', 'el9, arm9', 1, '20230708', 'pg15', '', '');
+INSERT INTO versions VALUES ('spock31-pg16', '3.1.4-1', 'el9, arm9', 1, '20230708', 'pg16', '', '');
+INSERT INTO versions VALUES ('spock31-pg15', '3.1.3-1', 'el9, arm9', 0, '20230622', 'pg15', '', '');
+INSERT INTO versions VALUES ('spock31-pg16', '3.1.3-1', 'el9, arm9', 0, '20230622', 'pg16', '', '');
 INSERT INTO versions VALUES ('spock31-pg16', '3.1.2-1', 'el9, arm9', 0, '20230524', 'pg16', '', '');
 INSERT INTO versions VALUES ('spock31-pg16', '3.1.1-1', 'el9, arm9', 0, '20230511', 'pg16', '', '');
 

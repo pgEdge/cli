@@ -26,7 +26,7 @@ function getPGVersion {
 	fi
 	pgFullVersion=`$pgBin/bin/pg_config --version | awk '{print $2}'`
 
-        if [[ "${pgFullVersion/rc}" =~ 16d* ]]; then
+        if [[ "${pgFullVersion/rc}" =~ 16b* ]]; then
                 pgShortVersion="16"
         elif [[ "${pgFullVersion/rc}" =~ 15.* ]]; then
                 pgShortVersion="15"
@@ -44,8 +44,6 @@ function getPGVersion {
                 pgShortVersion="`echo $pgFullVersion | awk -F '.' '{print $1$2}'`"
                 pgShortVersion="`echo ${pgShortVersion:0:2}`"
         fi
-
-	#pgShortVersion=`echo $pgFullVersion | awk -F '.' '{print$1$2}'`
 }
 
 
@@ -243,17 +241,17 @@ function configureComp {
 
 function buildComp {
         comp="$1"
-        ##echo "#        comp: $comp"
+        echo "#        comp: $comp"
         shortV="$2"
         ##echo "#      shortV: $shortV"
         fullV="$3"
-        ##echo "#       fullV: $fullV"
+        echo "#       fullV: $fullV"
         buildV="$4"
-        ##echo "#      buildV: $buildV"
+        echo "#      buildV: $buildV"
         src="$5"
-        ##echo "#         src: $src"
+        echo "#         src: $src"
 
-        if [ "backrest" ] || [ "$comp" == "psqlodbc" ]; then
+        if [ "$comp" == "backrest" ] || [ "$comp" == "psqlodbc" ]; then
             componentName="$comp$shortV-$fullV-$buildV-$buildOS"
         else
             componentName="$comp$shortV-pg$pgShortVersion-$fullV-$buildV-$buildOS"
