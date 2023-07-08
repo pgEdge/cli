@@ -10,8 +10,7 @@
  
 ## FLAGS
     --pg=PG
-        Type: Optional[]
-        Default: None
+        Default: 16
     -a, --app=APP
         Type: Optional[]
         Default: None
