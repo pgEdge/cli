@@ -32,7 +32,13 @@ t/315_um_install_hypopg.pl
 t/317_um_remove_hypopg.pl
 t/399_um_breakdown_script.pl
 
-t/020_nodectl_install_pgedge.pl
+#
+# Spock tests
+#
+
+#t/020_nodectl_install_pgedge.pl
+#t/400_spock_setup_script.pl
+
 
 #
 # Cluster tests 
@@ -55,6 +61,8 @@ t/699_cluster_breakdown_pg15.pl
 t/020_nodectl_install_pgedge.pl
 
 t/700_cluster_setup_script_v16.pl
+t/785_cluster_command.pl
+t/787_cluster_command_ERROR.pl
 t/799_cluster_breakdown_pg16.pl
 
 
