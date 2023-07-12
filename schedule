@@ -14,15 +14,14 @@ t/105_remove_pgedge.pl
 
 #
 t/020_nodectl_install_pgedge.pl
-
 t/200_service_setup_script.pl
 t/275_service_enable.pl
 t/277_service_enable_error.pl
 t/299_service_breakdown_script.pl
 
-#UM tests
+# UM tests
+# ============
 t/020_nodectl_install_pgedge.pl
-
 t/300_setup_script.pl
 t/305_um_list.pl
 t/306_nc_um_list.pl
@@ -30,19 +29,21 @@ t/307_nc_mu_list.pl
 t/310_um_update.pl
 t/315_um_install_hypopg.pl
 t/317_um_remove_hypopg.pl
+t/320_um_install_orafce.pl
+t/323_um_remove_orafce.pl
+t/325_um_install_curl.pl
+t/328_um_remove_curl.pl
 t/399_um_breakdown_script.pl
 
-#
 # Spock tests
-#
+# ===========
 
 #t/020_nodectl_install_pgedge.pl
 #t/400_spock_setup_script.pl
 
 
-#
 # Cluster tests 
-#
+
 # Version 15
 # =============
 t/020_nodectl_install_pgedge.pl
@@ -53,9 +54,7 @@ t/604_cluster_setup_nodecount_error.pl
 t/606_cluster_setup_name_missing_error.pl
 t/697_cluster_breakdown_error_pg15.pl
 t/699_cluster_breakdown_pg15.pl
-#
-#
-#
+
 # Version 16
 # =============
 t/020_nodectl_install_pgedge.pl
@@ -65,4 +64,9 @@ t/785_cluster_command.pl
 t/787_cluster_command_ERROR.pl
 t/799_cluster_breakdown_pg16.pl
 
+# Complex tests
+# ============ 
+t/020_nodectl_install_pgedge.pl
+t/900_getting_started_guide.pl
+t/999_gsg_breakdown.pl
 
