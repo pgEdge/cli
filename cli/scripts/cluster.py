@@ -110,7 +110,7 @@ def reset_remote(cluster_name):
 
   util.message("\n## Ensure that PG is stopped.")
   for nd in nodes:
-     cmd = nd["path"] + "/nodectl stop"
+     cmd = nd["path"] + "/nodectl stop 2> /dev/null"
      util.echo_cmd(cmd, host=nd["ip"], usr=os_user, key=key)
 
   util.message(f"\n## Ensure that pgEdge root directory is gone")
