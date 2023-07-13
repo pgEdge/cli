@@ -61,6 +61,9 @@ if [ `uname` == "Linux" ]; then
       fi
     fi
   fi
+elif [ `uname` == "Darwin" ]; then
+  ## universal binaries for x86_64 & arm64
+  array[2]="$MY_HOME/hub/scripts/lib/osx"
 fi
 
 ##export PYTHONPATH=$(printf "%s:${PYTHONPATH}" ${array[@]})
