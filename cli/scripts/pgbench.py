@@ -31,7 +31,7 @@ def setup_node(node_nm, port, nc, num_nodes, db, pg, host, factor, os_user, ssh_
 
 def psql_cmd(cmd, nc, db, pg, host, usr, key):
   util.echo_cmd(nc + "psql " + str(pg) + " \"" + cmd + "\" " + db,
-                  host, usr, key)
+                  host=host, usr=usr, key=key)
 
 
 def log_old_val(tbl, col, val, nc, db, pg, host, usr, key):
@@ -50,14 +50,14 @@ def install(cluster_name, factor=1):
     nodename = nd["nodename"]
     port = nd["port"]
     host = nd["ip"]
-    nc = nd["path"] + "/nodectl "
+    nc = nd["path"] + "/pgedge/nodectl "
     setup_node(nodename, port, nc, count, db, str(pg), host, factor,
                  os_user=os_user, ssh_key=ssh_key)
 
   util.message("\n# wire nodes together #############")
   for pub in nodes:
     pub_ip_port = "host=" + str(pub["ip"]) + " port=" + str(pub["port"])
-    spk = pub["path"] + "/nodectl spock "
+    spk = pub["path"] + "/pgedge/nodectl spock "
     host = pub["ip"]
 
     for sub in nodes:
@@ -79,7 +79,7 @@ def remove(cluster_name):
 
   for pub in nodes:
     pub_ip_port = "host=" + str(pub["ip"]) + " port=" + str(pub["port"])
-    spk = pub["path"] + "/nodectl spock "
+    spk = pub["path"] + "/pgedge/nodectl spock "
     host = pub["ip"]
 
     for sub in nodes:
@@ -92,7 +92,7 @@ def remove(cluster_name):
 
   for nd in nodes:
     host = nd["ip"]
-    nc =nd["path"] + "/nodectl "
+    nc =nd["path"] + "/pgedge/nodectl "
     spk = nc + "spock "
     util.echo_cmd(spk + "repset-drop pgbench-repset" + db_pg, 
                     host=host, usr=os_user, key=ssh_key)

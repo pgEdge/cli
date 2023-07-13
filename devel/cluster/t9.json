@@ -1,0 +1,26 @@
+{
+  "cluster": "t9",
+  "is_localhost": "False",
+  "create_dt": "1970-01-01",
+  "db_name": "db1",
+  "db_user": "admin",
+  "db_init_passwd": "inSecure123!",
+  "os_user": "rocky",
+  "ssh_key": "~/keys/dl-m2-air-key",
+  "pg_ver": "15",
+  "count": 2,
+  "nodes": [
+    {
+      "nodename": "t9e",
+      "ip": "3.86.87.78",
+      "port": 5432,
+      "path": "~/pgedge"
+    },
+    {
+      "nodename": "t9w",
+      "ip": "34.222.171.103",
+      "port": 5432,
+      "path": "~/pgedge"
+    }
+  ]
+}
