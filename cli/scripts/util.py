@@ -2192,8 +2192,8 @@ def get_arch():
 
 def get_el_ver():
   if platform.system() == "Darwin":
-    message("# WARNING! OSX is only used for client functionality such as CLUSTER & ACE commands.")
-   return "osx"
+    message("# WARNING! OSX is only for client functionality such as CLUSTER & ACE commands.")
+    return "osx"
 
   elv = os.getenv("ELV", None)
   if elv:

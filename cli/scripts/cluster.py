@@ -211,16 +211,20 @@ def create_local(cluster_name, num_nodes, pg="16", app=None, port1=6432,
     pgbench.install(cluster_name)
 
 
+def print_install_hdr(cluster_name, db, pg, db_user, count):
+  util.message("#")
+  util.message(f"######## ssh_install_pgedge: cluster={cluster_name}, db={db}, pg={pg} db_user={db_user}, count={count}")
+
+
 def ssh_install_pgedge(cluster_name, passwd):
   db, pg, count, db_user, db_passwd, os_user, ssh_key, nodes = load_json(cluster_name)
-  util.message("#")
-  util.message(f"# ssh_install_pgedge: cluster={cluster_name}, db={db}, pg={pg} db_user={db_user}, count={count}")
   for n in nodes:
+    print_install_hdr(cluster_name, db, pg, db_user, count)
     ndnm = n["nodename"]
     ndpath = n["path"]
     ndip = n["ip"]
     ndport = n["port"]
-    util.message(f"#   node={ndnm}, host={ndip}, port={ndport}, path={ndpath}")
+    util.message(f"########                     node={ndnm}, host={ndip}, port={ndport}, path={ndpath}\n")
 
     cmd1 = f"mkdir -p {ndpath}; cd {ndpath}; unset REPO; "
     cmd2 = "python3 -c \"\$(curl -fsSL https://pgedge-download.s3.amazonaws.com/REPO/install.py)\""
