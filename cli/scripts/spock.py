@@ -572,24 +572,26 @@ def get_table_list(table, db, pg_v):
   return([table])
 
 
-def repset_add_table(replication_set, table, db, cols=None, pg=None):
+def repset_add_table(replication_set, table, db, synchronize_data=False, columns=None, row_filter=None, include_partitions=True, pg=None):
   """Add table(s) to replication set."""
 
   pg_v = util.get_pg_v(pg)
-
   tbls = get_table_list(table, db, pg_v)
-
   con = get_pg_connection(pg_v, db, util.get_user())
 
   for tbl in tbls:
     tab = str(tbl[0])
-
-    sql="SELECT spock.repset_add_table('" + replication_set + "','" + tab + "'"
-    if cols:
-      sql = sql + " ,'" + cols +"')"
-    else:
-      sql = sql + ")"
-
+    sql="SELECT spock.repset_add_table(" + \
+          get_eq("set_name",            replication_set,   ", ") + \
+          get_eq("relation",            tab,               ", ") + \
+          get_eq("synchronize_data",    synchronize_data,  ", ")
+    print(len(tbls))
+    print(columns)
+    if columns!=None and len(tbls)==1:
+      sql=sql+get_eq("columns",   str(columns),      ", ",True)
+    if row_filter!=None and len(tbls)==1:
+      sql=sql+get_eq("row_filter",row_filter,        ", ")
+    sql=sql+get_eq("include_partitions",  include_partitions,") ")
     util.message(f"Adding table {tab} to replication set {replication_set}.")
 
     try:
@@ -608,8 +610,8 @@ def repset_remove_table(replication_set, table, db, pg=None):
   """Remove table from replication set."""
   pg_v = util.get_pg_v(pg)
   sql = "SELECT spock.repset_remove_table(" + \
-           get_eq("replication_set",   replication_set,   ", ") + \
-           get_eq("relation",          table,             ")")
+           get_eq("set_name",   replication_set,   ", ") + \
+           get_eq("relation",   table,             ")")
   run_psyco_sql(pg_v, db, sql)
   sys.exit(0)
 
