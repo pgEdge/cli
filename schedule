@@ -38,8 +38,11 @@ t/399_um_breakdown_script.pl
 # Spock tests
 # ===========
 
-#t/020_nodectl_install_pgedge.pl
-#t/400_spock_setup_script.pl
+t/020_nodectl_install_pgedge.pl
+t/404_spock_node_create_error.pl
+t/405_spock_node_create_error.pl
+t/406_spock_node_create_error.pl
+t/407_spock_error_breakdown_script.pl
 
 
 # Cluster tests 
