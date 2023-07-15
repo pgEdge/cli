@@ -31,33 +31,23 @@ if [ -d "$hub_new" ];then
   echo "$log_time [INFO] : hub upgrade completed" >> $MY_LOGS
 fi
 
-plat=amd
-if [ `arch` == "aarch64" ]; then
-  plat=arm
-fi
-
 declare -a array
 array[0]="$MY_HOME/hub/scripts"
 array[1]="$MY_HOME/hub/scripts/lib"
 
-plat=amd
-if [ `arch` == "aarch64" ]; then
-  plat=arm
-fi
-
 if [ `uname` == "Linux" ]; then
   if [ -f "/etc/redhat-release" ]; then
     if [ `arch` == "aarch64" ]; then
-      array[2]="$MY_HOME/hub/scripts/lib/linux/el9/arm"
+      array[2]="$MY_HOME/hub/scripts/lib/el9-arm"
     else
-      array[2]="$MY_HOME/hub/scripts/lib/linux/el9/amd"
+      array[2]="$MY_HOME/hub/scripts/lib/el9-amd"
     fi
   else
     if [ -f "/etc/os-release" ] && [ `arch` == "x86_64" ]; then
       grep "22.04" /etc/os-release > /dev/null 2>&1
       rc=$?
       if [ $rc == "0" ]; then
-        array[2]="$MY_HOME/hub/scripts/lib/linux/ubu22/amd"
+        array[2]="$MY_HOME/hub/scripts/lib/ubu22-amd"
       fi
     fi
   fi
@@ -66,7 +56,6 @@ elif [ `uname` == "Darwin" ]; then
   array[2]="$MY_HOME/hub/scripts/lib/osx"
 fi
 
-##export PYTHONPATH=$(printf "%s:${PYTHONPATH}" ${array[@]})
 export PYTHONPATH=$(printf "%s:" ${array[@]})
 ##echo PYTHONPATH=$PYTHONPATH
 for var in "$@"
