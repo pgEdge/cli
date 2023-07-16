@@ -46,9 +46,9 @@ def download_n_unpack(p_file, p_url, p_download_msg, p_del_download):
     sys.exit(1)
 
 
-#######################
+#############################################
 # MAINLINE
-#######################
+#############################################
 
 IS_64BITS = sys.maxsize > 2**32
 if not IS_64BITS:
@@ -62,37 +62,13 @@ if os.path.exists("pgedge"):
     sys.exit(1)
 
 my_file="pgedge-nodectl-" + VER + ".tar.bz2"
-
 download_n_unpack(my_file, REPO, "CLI " + VER + " ...", True)
+
 cmd = "pgedge" + os.sep + "nodectl "
 os.system(cmd + "set GLOBAL REPO " + REPO)
 os.system(cmd + "update --silent")
 os.system(cmd + "info")
-
-## figure out what python-libs file we need ##############
-if platform.system() == "Linux":
-  if platform.machine() == "aarch64":
-    machine = "arm"
-  else:
-    machine = "amd"
-
-  if os.path.isfile("/etc/redhat-release"):
-    plat = "el9"
-  else:
-    plat = "ubu22"
-
-  lib_file = f"linux-{plat}-{machine}"
-
-elif platform.system() == "Darwin":
-  lib_file = "osx-amd"
-
-else:
-  print("ERROR: platform.system() {platform.system()} not supported.")
-  sys.exit(1)
-
-lib_download = f"lib-{lib_file}.tar.bz2"
-print(f"\nDownloading supporting libs '{lib_download}' ...")
-##download_n_unpack(my_file, REPO, "CLI " + VER + " ...", False)
+os.system(cmd + "install nclibs")
 
 print("\npgedge/nodectl installed.\n")
 

@@ -30,6 +30,7 @@ cd $outp
 
 ./$api set GLOBAL REPO http://localhost:8000
 ./$api info
+./$api install nclibs
 
 if [ ! "$1" == "" ]; then
   ./$api install $comp

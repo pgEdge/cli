@@ -22,10 +22,10 @@ elif [ `uname` == "Darwin" ]; then
   platf=osx
 fi
 
-echo "platf=$platf"
+# echo "platf=$platf"
 if [ "$platf" == "unsupported" ]; then
-  echo "unsupported platform"
-  exit 1
+  echo "nclibs not available for platform"
+  exit 0
 fi
 
 repo=`../nc get GLOBAL REPO`
@@ -33,9 +33,7 @@ file=nclibs-$platf.tar.bz2
 
 rm -rf $file
 
-set -x 
-
-wget $repo/$file
+wget -q $repo/$file
 
 dir=../hub/scripts/lib
 
