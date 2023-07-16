@@ -43,10 +43,8 @@ mv $file $dir/.
 
 cd $dir
 
-rm -r $platf
+rm -rf $platf
 tar -xf $file
 
 rm $file
-
-exit 0
 
