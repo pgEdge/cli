@@ -393,6 +393,11 @@ INSERT INTO projects VALUES ('pgedge', 'pge', 0, 0, 'hub', 3, 'http://pgedge.org
 INSERT INTO releases VALUES ('pgedge', 1, 'pgedge',  'pgEdge', '', 'test', '', 1, 'pgEdge Community', '', '');
 INSERT INTO versions VALUES ('pgedge', '2-1',   '', 1, '20230511', '', '', '');
 
+INSERT INTO projects VALUES ('nclibs', 'pge', 0, 0, 'hub', 3, 'https://github.com/pgedge',
+  'nclibs',  0, 'nclibs.png', 'nclibs', 'https://github.com/pgedge');
+INSERT INTO releases VALUES ('nclibs', 2, 'nclibs',  'CSV Diff', '', 'test', '', 1, '', '', '');
+INSERT INTO versions VALUES ('nclibs', '1.0', '', 1, '20230715', '', '', '');
+
 INSERT INTO projects VALUES ('csvdiff', 'pge', 0, 0, 'hub', 3, 'https://github.com/luss/csvdiff/tags',
   'csvdiff',  0, 'csvdiff.png', 'csvdiff', 'https://github.com/luss/csvdiff');
 INSERT INTO releases VALUES ('csvdiff', 2, 'csvdiff',  'CSV Diff', '', 'test', '', 1, '', '', '');

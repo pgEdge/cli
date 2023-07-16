@@ -483,6 +483,8 @@ initPG () {
     #initC  "csvdiff" "csvdiff" "$csvdiffV" "$outPlat" "csvdiff" "" "" "nil"
     initC  "patroni"   "patroni"   "$patroniV" "" "postgres/patroni" "" "" "nil"
   fi
+
+  initC "nclibs"  "nclibs"  "1.0"  "" "nclibs"         "" "" "Y"
   ##initC "prompgexp"  "prompgexp"  "$prompgexpV"  ""  "prometheus/pg_exporter"  "" "" "Y"
   
   ##initC "instantclient" "instantclient" "$inclV" "" "oracle/instantclient" "" "" "Y"
