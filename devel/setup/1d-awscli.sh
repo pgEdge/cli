@@ -1,7 +1,7 @@
 
 cd ~
 
-flags="--user --break-system-packages --no-warn-script-location"
+flags="--user --no-warn-script-location"
 pip3 install $flags awscli
 mkdir -p ~/.aws
 cd ~/.aws

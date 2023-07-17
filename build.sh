@@ -430,17 +430,19 @@ initPG () {
     fi
   fi
 
-  pgComp="pg$pgM"
-  initDir "$pgComp" "pg" "$pgV" "$outPlat" "postgres/$pgComp" "Enabled" "5432" "nil"
-  supplementalPG "$pgComp"
-  zipDir "$pgComp" "$pgV" "$outPlat" "Enabled"
-
   writeSettRow "GLOBAL" "STAGE" "prod"
   writeSettRow "GLOBAL" "AUTOSTART" "off"
+
+  initC "nclibs"  "nclibs"  "1.0"  "" "nclibs"         "" "" "Y"
 
   if [ "$outPlat" == "osx" ]; then
     return
   fi
+
+  pgComp="pg$pgM"
+  initDir "$pgComp" "pg" "$pgV" "$outPlat" "postgres/$pgComp" "Enabled" "5432" "nil"
+  supplementalPG "$pgComp"
+  zipDir "$pgComp" "$pgV" "$outPlat" "Enabled"
 
   if [ "$pgM" == "16" ] && [ "$isEL9" == "True" ]; then
     initC  "spock31-pg$pgM" "spock31"   "$spock31V"   "$outPlat" "postgres/spock31" "" "" "nil"
@@ -484,7 +486,6 @@ initPG () {
     initC  "patroni"   "patroni"   "$patroniV" "" "postgres/patroni" "" "" "nil"
   fi
 
-  initC "nclibs"  "nclibs"  "1.0"  "" "nclibs"         "" "" "Y"
   ##initC "prompgexp"  "prompgexp"  "$prompgexpV"  ""  "prometheus/pg_exporter"  "" "" "Y"
   
   ##initC "instantclient" "instantclient" "$inclV" "" "oracle/instantclient" "" "" "Y"

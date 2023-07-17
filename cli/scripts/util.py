@@ -10,6 +10,7 @@ from datetime import datetime, timedelta
 import os, sys, socket, platform, sqlite3, getpass, signal
 import hashlib, glob, random, json, uuid, logging, tempfile
 import shutil, filecmp, traceback, time, subprocess, getpass
+import tarfile
 
 import api, meta
 
@@ -2411,6 +2412,37 @@ def delete_file(p_file_name):
   if (os.path.isfile(p_file_name)):
     os.remove(p_file_name)
   return
+
+
+def download_file(p_url, p_file):
+  if os.path.exists(p_file):
+    os.system("rm -f " + p_file)
+
+  message(f"Downloading {p_url}/{p_file}")
+  f = str(p_url) + "/" + p_file
+  try:
+    fu = urllib2.urlopen(f)
+    local_file = open(p_file, "wb")
+    local_file.write(fu.read())
+    local_file.close()
+  except Exception as e:
+    message("ERROR: Unable to download " + f + "\n" + str(e))
+    return(False)
+
+  return(True)
+
+
+def unpack_file(p_file):
+  message(f"Unpacking {p_file} ...")
+  try:
+    tar = tarfile.open(p_file)
+    tar.extractall(path=".")
+    tar.close()
+  except Exception as e:
+    message("ERROR: Unable to unpack \n" + str(e))
+    return(False)
+
+  return(True)
 
 
 def http_is_file(p_url):
