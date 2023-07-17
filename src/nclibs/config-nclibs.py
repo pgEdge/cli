@@ -6,6 +6,9 @@
 import platform, os, sys, subprocess, shutil
 import util
 
+thisDir = os.path.dirname(os.path.realpath(__file__))
+os.chdir(thisDir)
+
 arch = subprocess.check_output("arch")
 
 platf = "unsupported"
@@ -34,8 +37,11 @@ file = f"nclibs-{platf}.tar.bz2"
 
 if util.download_file(url, file):
   if util.unpack_file(file):
-    dir = "../hub/scripts/lib"
-    shutil.move(platf, dir)
+    dir = "../hub/scripts/lib/"
+    util.message(f"moving {platf} to {dir}")
+    os.system(f"rm -rf {dir}{platf}")
+    os.system(f"mv {platf} {dir}")
+    os.system(f"rm {file}")
     sys.exit(0)
 
 sys.exit(1)
