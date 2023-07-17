@@ -338,10 +338,10 @@ def sub_create(subscription_name, provider_dsn, db,
   sql = "SELECT spock.sub_create(" + \
            get_eq("subscription_name",     subscription_name,     ", ") + \
            get_eq("provider_dsn",          provider_dsn,          ", ") + \
-           get_eq("replication_sets",      replication_sets,      ", ", True) + \
+           get_eq("replication_sets",      ','.join(replication_sets) ,", ", True) + \
            get_eq("synchronize_structure", synchronize_structure, ", ") + \
            get_eq("synchronize_data",      synchronize_data,      ", ") + \
-           get_eq("forward_origins",       forward_origins,       ", ", True) + \
+           get_eq("forward_origins",       str(forward_origins), ", ", True) + \
            get_eq("apply_delay",           apply_delay,           ")")
   run_psyco_sql(pg_v, db, sql)
   sys.exit(0)
@@ -588,7 +588,7 @@ def repset_add_table(replication_set, table, db, synchronize_data=False, columns
     print(len(tbls))
     print(columns)
     if columns!=None and len(tbls)==1:
-      sql=sql+get_eq("columns",   str(columns),      ", ",True)
+      sql=sql+get_eq("columns",','.join(columns), ", ", True)
     if row_filter!=None and len(tbls)==1:
       sql=sql+get_eq("row_filter",row_filter,        ", ")
     sql=sql+get_eq("include_partitions",  include_partitions,") ")
