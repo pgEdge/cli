@@ -1,6 +1,6 @@
-# This test case cleans up after the test: 405_spock_node_create_error.pl  
+# This test case cleans up after the test series that starts with: 410_spock_repset_create_error.pl  
 # The test exercises: ./nodectl remove pgedge
-# We remove the PG installation, the pgedge directory, and the  ~/.pgpass file.
+# We remove the PG installation and the pgedge directory.
 #
 
 use strict;
@@ -12,15 +12,17 @@ use IPC::Cmd qw(run);
 use Try::Tiny;
 use JSON;
 
+print("I'm in test 414");
+
 #
 # Get the location of the data directory and home directory before removing pgEdge; store them in $datadir and $home.
 #
 
-my $out = decode_json(`./pgedge/nc --json info`);
+my $out = decode_json(`./pgedge/nodectl --json info`);
 my $home = $out->[0]->{"home"};
 print("the home directory is = {$home}\n");
 
-my $out1 = decode_json(`./pgedge/nc --json info pg16`);
+my $out1 = decode_json(`./pgedge/nodectl --json info pg16`);
 my $datadir = $out1->[0]->{"datadir"};
 print("the data directory is = {$datadir}\n");
 
@@ -31,7 +33,7 @@ print("home = $home\n");
 # Then, use nodectl to remove the Postgres installation.
 #
 
-my $cmd = qq(./pgedge nodectl remove pgedge);
+my $cmd = qq(./pgedge/nodectl remove pgedge);
 print("cmd = $cmd\n");
 my ($success, $error_message, $full_buf, $stdout_buf, $stderr_buf)= IPC::Cmd::run(command => $cmd, verbose => 0);
 
@@ -55,9 +57,9 @@ my $result = system("rm -rf $home");
 
 if (defined($success))
 {
-    exit(1);
+    exit(0);
 }
 else
 {
-    exit(0);
+    exit(1);
 }
