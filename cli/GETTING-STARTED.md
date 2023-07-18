@@ -8,7 +8,8 @@ used to install and configure PostgreSQL (Postgres) and install additional exten
 Before running the commands ensure that a firewall doesn't obstruct access between your nodes. You’ll also need an operating system user with with passwordless sudo access.
 
 ## Prerequisites
-- EL9 (RHEL/CentOS/Rocky), AmazonLinux-2023, or Ubuntu-22.04
+- EL9 (RHEL/CentOS/Rocky) or Ubuntu-22.04
+- Rocky Linux 9 recommend. For AWS users, easily find the [ami here](https://rockylinux.org/cloud-images/)
 - A non-root user with passwordless `sudo` privileges
 - Two servers (vm's are fine) networked with traffic on port 5432 allowed
 - Passwordless SSH access into both servers via the non-root user above
