@@ -28,6 +28,7 @@ if [ "$STARTSTOP" = "start" ]; then
      exit 1
   fi
   $SUDO $CMD
+  sleep 3
   exit
 fi
 
@@ -48,6 +49,7 @@ if [ "$STARTSTOP" = "reload" ]; then
      exit 1
   fi
   $SUDO $CMD
+  sleep 3
   exit
 fi
 
