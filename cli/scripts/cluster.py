@@ -226,8 +226,10 @@ def ssh_install_pgedge(cluster_name, passwd):
     ndport = n["port"]
     util.message(f"########                     node={ndnm}, host={ndip}, port={ndport}, path={ndpath}\n")
 
-    cmd1 = f"mkdir -p {ndpath}; cd {ndpath}; unset REPO; "
-    cmd2 = "python3 -c \"\$(curl -fsSL https://pgedge-download.s3.amazonaws.com/REPO/install.py)\""
+    REPO = util.get_value("GLOBAL", "REPO")
+    os.environ['REPO'] = REPO
+    cmd1 = f"mkdir -p {ndpath}; cd {ndpath}; "
+    cmd2 = f"python3 -c \"\$(curl -fsSL {REPO}/install.py)\""
     util.echo_cmd(cmd1 + cmd2, host=n["ip"], usr=os_user, key=ssh_key)
     
     nc = (ndpath + "/pgedge/nodectl ")
