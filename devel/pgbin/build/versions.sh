@@ -213,6 +213,9 @@ OS=`uname -s`
 OS=${OS:0:7}
 if [[ "$OS" == "Linux" ]]; then
   CORES=`egrep -c 'processor([[:space:]]+):.*' /proc/cpuinfo`
+  if [ "$CORES" -gt "24" ]; then
+    CORES=24
+  fi
   if [[ "$ARCH" == "aarch64" ]]; then
     OS=arm
     if [[ "$isEL9" == "yes" ]]; then
