@@ -714,7 +714,9 @@ def metrics_check(db, pg=None):
 
     mtrc_dict.update({"slots": []})
     cur = con.cursor()
-    sql_slots = "SELECT * FROM spock.lag_tracker ORDER BY 1"
+    sql_slots = "SELECT slot_name, commit_lsn, commit_timestamp, " + \
+      "replication_lag, replication_lag_bytes " + \
+      "FROM spock.lag_tracker ORDER BY slot_name"
     cur.execute(sql_slots)
     for row in cur:
       mtrc_dict["slots"].append({"slotName":row[0],"commit_lsn":str(row[1]),"commit_timestamp":str(row[2]),"replication_lag":str(row[3]), "replication_lag_bytes":str(row[4])})
