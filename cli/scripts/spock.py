@@ -338,10 +338,10 @@ def sub_create(subscription_name, provider_dsn, db,
   sql = "SELECT spock.sub_create(" + \
            get_eq("subscription_name",     subscription_name,     ", ") + \
            get_eq("provider_dsn",          provider_dsn,          ", ") + \
-           get_eq("replication_sets",      replication_sets,      ", ", True) + \
+           get_eq("replication_sets",      ','.join(replication_sets) ,", ", True) + \
            get_eq("synchronize_structure", synchronize_structure, ", ") + \
            get_eq("synchronize_data",      synchronize_data,      ", ") + \
-           get_eq("forward_origins",       forward_origins,       ", ", True) + \
+           get_eq("forward_origins",       str(forward_origins), ", ", True) + \
            get_eq("apply_delay",           apply_delay,           ")")
   run_psyco_sql(pg_v, db, sql)
   sys.exit(0)
@@ -572,24 +572,26 @@ def get_table_list(table, db, pg_v):
   return([table])
 
 
-def repset_add_table(replication_set, table, db, cols=None, pg=None):
+def repset_add_table(replication_set, table, db, synchronize_data=False, columns=None, row_filter=None, include_partitions=True, pg=None):
   """Add table(s) to replication set."""
 
   pg_v = util.get_pg_v(pg)
-
   tbls = get_table_list(table, db, pg_v)
-
   con = get_pg_connection(pg_v, db, util.get_user())
 
   for tbl in tbls:
     tab = str(tbl[0])
-
-    sql="SELECT spock.repset_add_table('" + replication_set + "','" + tab + "'"
-    if cols:
-      sql = sql + " ,'" + cols +"')"
-    else:
-      sql = sql + ")"
-
+    sql="SELECT spock.repset_add_table(" + \
+          get_eq("set_name",            replication_set,   ", ") + \
+          get_eq("relation",            tab,               ", ") + \
+          get_eq("synchronize_data",    synchronize_data,  ", ")
+    print(len(tbls))
+    print(columns)
+    if columns!=None and len(tbls)==1:
+      sql=sql+get_eq("columns",','.join(columns), ", ", True)
+    if row_filter!=None and len(tbls)==1:
+      sql=sql+get_eq("row_filter",row_filter,        ", ")
+    sql=sql+get_eq("include_partitions",  include_partitions,") ")
     util.message(f"Adding table {tab} to replication set {replication_set}.")
 
     try:
@@ -608,8 +610,8 @@ def repset_remove_table(replication_set, table, db, pg=None):
   """Remove table from replication set."""
   pg_v = util.get_pg_v(pg)
   sql = "SELECT spock.repset_remove_table(" + \
-           get_eq("replication_set",   replication_set,   ", ") + \
-           get_eq("relation",          table,             ")")
+           get_eq("set_name",   replication_set,   ", ") + \
+           get_eq("relation",   table,             ")")
   run_psyco_sql(pg_v, db, sql)
   sys.exit(0)
 
@@ -712,7 +714,9 @@ def metrics_check(db, pg=None):
 
     mtrc_dict.update({"slots": []})
     cur = con.cursor()
-    sql_slots = "SELECT * FROM spock.lag_tracker ORDER BY 1"
+    sql_slots = "SELECT slot_name, commit_lsn, commit_timestamp, " + \
+      "replication_lag, replication_lag_bytes " + \
+      "FROM spock.lag_tracker ORDER BY slot_name"
     cur.execute(sql_slots)
     for row in cur:
       mtrc_dict["slots"].append({"slotName":row[0],"commit_lsn":str(row[1]),"commit_timestamp":str(row[2]),"replication_lag":str(row[3]), "replication_lag_bytes":str(row[4])})
