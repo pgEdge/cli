@@ -4,10 +4,16 @@
   - add support for pljava-pg15 & -pg16 (cannot find libjvm17  setting from util.get_jvm_location)
   - improve test support for patroni, etcd, haproxy
   - improve efficiency of `ace diff-tables` to handle massive tables w blocks of checksums
-  - verify `cluster.echo_cmd()` handles remote ssh when ssh_key is present
-  - install platform specific `nodectl-lib` and support running  on el9-amd, el9-arm, ubu22-amd & osx-amd/arm
+  - fix upgrade to 23.12x to install or upgrade nclibs
 
-## done for 23.122 as of 2023-07-08
+
+## done so far for 23.123 as of 2023-07-19
+  - incremental improvements and fixes to spock.py (thank u cady)
+  - remove speculative doc support for Amazon Linux 2023 (adding it back is "coming soon")
+
+
+## done for 23.122 as of 2023-07-18
+  - install platform specific `nclibs` and support running  on el9-amd, el9-arm, ubu22-amd & osx-amd/arm
   - bump spock to 3.1.4 (bug fixes)
   - document 'service init' & 'service config' commands as internal use only
   - ensure 'cluster create-local':
@@ -20,6 +26,7 @@
   - get to codeComplete for `cluster remote-reset`
   - improve flexibility of `cluster.runNC()` to handle passwordless ssh without certificates
   - improve `cluster.echo_cmd()` to handle remote ssh when os_user is presented
+  - verify `cluster.echo_cmd()` handles remote ssh when ssh_key is present
 
 ## done for 23.121 as of 2023-06-30
   - fix regression to allow core PG functionality to use Python 3.6+ (not require Python 3.9+)
