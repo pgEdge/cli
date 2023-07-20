@@ -8,7 +8,6 @@
      destroy-local       # Stop and then nuke a localhost cluster.
      init-remote         # Initialize a test cluster from json definition file of existing nodes.
      reset-remote        # Reset a test cluster from json definition file of existing nodes.
-     validate            # Validate a cluster configuration
      command             # Run ./nodectl commands on one or all nodes.
-     app-install         # Install test application [ pgbench | spockbench | bmsql ].
+     app-install         # Install test application [ pgbench | northwind ].
      app-remove          # Remove test application from cluster.

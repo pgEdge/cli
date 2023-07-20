@@ -7,10 +7,8 @@ Installation and configuration of a pgEdge SPOCK cluster
 [**create-local**](doc/cluster-create-local.md)   - Create a localhost test cluster of N pgEdge nodes on different ports.<br>
 [**destroy-local**](doc/cluster-destroy-local.md) - Stop and then nuke a localhost cluster<br>
 [**init-remote**](doc/cluster-init-remote.md)     - Configure a test SSH cluster from a JSON cluster definition file.<br>
-[**init-remote**](doc/cluster-reset-remote.md)    - Reset a test SSH cluster.<br>
+[**reset-remote**](doc/cluster-reset-remote.md)    - Reset a test SSH cluster.<br>
 [**create-secure**](doc/cluster-create-secure.md) - Coming soon! Provision a secure global cluster in the Cloud using your own account.<br>
-[**validate**](doc/cluster-validate.md)           - Validate a remote cluster json config file you have manually setup<br>
-[**init**](doc/cluster-init.md)                   - Initialize a remote cluster for SPOCK<br>
 [**command**](doc/cluster-command.md)             - Run `nodectl` command on one or all nodes of a cluster<br>
 
 ## Options
@@ -36,13 +34,13 @@ Installation and configuration of a pgEdge SPOCK cluster
       "nodename": "n1",
       "ip": "10.0.0.1",
       "port": 5432,
-      "path": "~/pgedge"
+      "path": "~"
     },
     {
       "nodename": "n2",
       "ip": "10.0.0.2",
       "port": 5432,
-      "path": "~/pgedge"
+      "path": "~"
     }
   ]
 }

@@ -48,7 +48,6 @@ $nc cluster create-local    --help
 $nc cluster destroy-local   --help
 $nc cluster init-remote     --help
 $nc cluster reset-remote    --help
-$nc cluster validate        --help
 $nc cluster command         --help
 
 $nc ace --help
