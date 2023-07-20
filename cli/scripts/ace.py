@@ -212,7 +212,7 @@ def diff_schemas(cluster_name, node1, node2, schema_name):
     
   l_schema = schema_name
 
-  db, pg, count, usr, passwd, os_user, cert, nodes = cluster.load_json(cluster_name)
+  il, db, pg, count, usr, passwd, os_user, cert, nodes = cluster.load_json(cluster_name)
   util.message(f"## db={db}, user={usr}\n")
   for nd in nodes:
     if nd["nodename"] == node1:
@@ -240,7 +240,7 @@ def diff_spock(cluster_name, node1, node2):
   if node1 == node2:
     util.exit_message("node1 must be different than node2")
 
-  db, pg, count, usr, passwd, os_usr, cert, cluster_nodes = cluster.load_json(cluster_name)
+  il, db, pg, count, usr, passwd, os_usr, cert, cluster_nodes = cluster.load_json(cluster_name)
   compare_spock=[]
   pg_v = util.get_pg_v(pg)
   print("\n")
@@ -349,7 +349,7 @@ def diff_tables(cluster_name, table_name, checksum_use=False, block_rows=1):
   l_schema = nm_lst[0]
   l_table = nm_lst[1]
 
-  db, pg, count, usr, passwd, os_usr, cert, nodes = cluster.load_json(cluster_name)
+  il, db, pg, count, usr, passwd, os_usr, cert, nodes = cluster.load_json(cluster_name)
   con1 = None
   con2 = None
   util.message(f"\n## Validating connections to each node in cluster")

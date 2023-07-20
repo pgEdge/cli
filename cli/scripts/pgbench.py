@@ -42,7 +42,7 @@ def log_old_val(tbl, col, val, nc, db, pg, host, usr, key):
 
 def install(cluster_name, factor=1):
   util.message("\n# loading cluster definition ######")
-  db, pg, count, db_user, db_passwd, os_user, ssh_key, nodes = cluster.load_json(cluster_name)
+  il, db, pg, count, db_user, db_passwd, os_user, ssh_key, nodes = cluster.load_json(cluster_name)
   db_pg = " " + str(db) + " --pg=" + str(pg)
 
   util.message("\n# setup individual nodes ##########")
@@ -74,7 +74,7 @@ def install(cluster_name, factor=1):
 
 
 def remove(cluster_name):
-  db, pg, count, db_usr, db_passwd, os_user, ssh_key, nodes = cluster.load_json(cluster_name)
+  il, db, pg, count, db_usr, db_passwd, os_user, ssh_key, nodes = cluster.load_json(cluster_name)
   db_pg = " " + str(db) + " --pg=" + str(pg)
 
   for pub in nodes:

@@ -63,6 +63,7 @@ def create_local_json(cluster_name, db, num_nodes, usr, passwd, pg, port1):
 def load_json(cluster_name):
   parsed_json = get_cluster_json(cluster_name)
 
+  is_local = parsed_json["is_localhost"]
   db_name=parsed_json["db_name"]
   pg=parsed_json["pg_ver"]
   count=parsed_json["count"]
@@ -70,7 +71,7 @@ def load_json(cluster_name):
   db_passwd=parsed_json["db_init_passwd"]
   os_user=parsed_json["os_user"]
   ssh_key=parsed_json["ssh_key"]
-  return db_name, pg, count, db_user, db_passwd, os_user, ssh_key, parsed_json["nodes"]
+  return is_local, db_name, pg, count, db_user, db_passwd, os_user, ssh_key, parsed_json["nodes"]
 
 
 def get_cluster_json(cluster_name):
@@ -104,7 +105,7 @@ def get_cluster_json(cluster_name):
 
 def reset_remote(cluster_name):
   """Reset a test cluster from json definition file of existing nodes."""
-  db, pg, count, user, db_passwd, os_user, key, nodes = load_json(cluster_name)
+  il, db, pg, count, user, db_passwd, os_user, key, nodes = load_json(cluster_name)
 
   util.message("\n## Ensure that PG is stopped.")
   for nd in nodes:
@@ -215,7 +216,7 @@ def print_install_hdr(cluster_name, db, pg, db_user, count):
 
 
 def ssh_install_pgedge(cluster_name, passwd):
-  db, pg, count, db_user, db_passwd, os_user, ssh_key, nodes = load_json(cluster_name)
+  il, db, pg, count, db_user, db_passwd, os_user, ssh_key, nodes = load_json(cluster_name)
   for n in nodes:
     print_install_hdr(cluster_name, db, pg, db_user, count)
     ndnm = n["nodename"]
@@ -224,8 +225,13 @@ def ssh_install_pgedge(cluster_name, passwd):
     ndport = n["port"]
     util.message(f"########                     node={ndnm}, host={ndip}, port={ndport}, path={ndpath}\n")
 
-    REPO = util.get_value("GLOBAL", "REPO")
-    os.environ['REPO'] = REPO
+    if il == "True":
+      REPO = util.get_value("GLOBAL", "REPO")
+      os.environ['REPO'] = REPO
+    else:
+      os.environ['REPO'] = ""
+      REPO = "https://pgedge-download.s3.amazonaws.com/REPO"
+
     cmd1 = f"mkdir -p {ndpath}; cd {ndpath}; "
     cmd2 = f"python3 -c \"\$(curl -fsSL {REPO}/install.py)\""
     util.echo_cmd(cmd1 + cmd2, host=n["ip"], usr=os_user, key=ssh_key)
@@ -277,7 +283,7 @@ def lc_destroy1(cluster_name):
 def command(cluster_name, node, cmd, args=None):
   """Run './nodectl' commands on one or 'all' nodes."""
 
-  db, pg, count, db_user, db_passwd, os_user, ssh_key, nodes = load_json(cluster_name)
+  il, db, pg, count, db_user, db_passwd, os_user, ssh_key, nodes = load_json(cluster_name)
   rc = 0
   knt = 0
   for nd in nodes:

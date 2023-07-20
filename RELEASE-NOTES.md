@@ -1,18 +1,21 @@
 # pgEdge Platform Release Notes #############
 
-## to do's for 23.123 and beyond
+## to do's for 23.124 and beyond
   - add support for pljava-pg15 & -pg16 (cannot find libjvm17  setting from util.get_jvm_location)
   - improve test support for patroni, etcd, haproxy
   - improve efficiency of `ace diff-tables` to handle massive tables w blocks of checksums
   - fix upgrade to 23.12x to install or upgrade nclibs
   - add cluster.import_json_def
 
-
-## done so far for 23.123 as of 2023-07-19
+## done for 23.123 as of 2023-07-20
+  - fix race condition when initialiong cluster in Docker
+  - improvements to autostarting PG for Docker
   - incremental improvements and fixes to spock.py (thank u cady)
   - remove speculative doc support for Amazon Linux 2023 (adding it back is "coming soon")
-  - add northwind as a demo/test app (alongside pgbench)
-
+  - add 1st pass northwind as a demo/test app (alongside pgbench)
+  - remove runNC() & validate() from cluster.py
+  - improve cluster.command() to work with local and remote
+  - improve lag monitoring & expose via spock.metrics_check()
 
 ## done for 23.122 as of 2023-07-18
   - install platform specific `nclibs` and support running  on el9-amd, el9-arm, ubu22-amd & osx-amd/arm
