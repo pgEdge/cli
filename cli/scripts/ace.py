@@ -5,7 +5,7 @@
 """ACE is the place of the Anti Chaos Engine"""
 
 import os, sys, random, time, json, socket, subprocess, re
-import util, fire, meta, pgbench, cluster
+import util, fire, meta, cluster
 from datetime import datetime
 
 l_dir = "/tmp"

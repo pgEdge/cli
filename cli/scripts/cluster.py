@@ -3,9 +3,31 @@
 #####################################################
 
 import os, sys, random, json, socket, datetime
-import util, fire, meta, pgbench
+import util, fire, meta
+import pgbench, northwind
 
 base_dir = "cluster"
+
+
+def add_repset_tables(p_spk, p_repset, p_tbls, p_db, p_host, p_usr, p_key):
+  for tbl in p_tbls:
+    util.echo_cmd(p_spk + " repset-add-table " + p_repset + " " + p_tbl + " --db " + p_db,
+                  host=p_host, usr=p_usr, key=p_key)
+
+
+def drop_tables(p_tbls, p_nc, p_db, p_pg, p_host, p_usr, p_key):
+  for tbl in p_tbls:
+    psql_cmd("DROP TABLE " + tbl, p_nc, p_db, p_pg, host=p_host, usr=p_user, key=p_key)
+
+
+def log_old_vals(p_run_sums, p_nc, p_db, p_pg, p_host, p_usr, p_key):
+  for tbl_col in p_run_sums:
+    tbl_col_lst = tbl_col.split(".")
+    tbl = tbl_col_lst[0]
+    col = tbl_col_lst[1]
+
+    cmd = "ALTER TABLE " + tbl + " ALTER COLUMN " + col + " SET LOG_OLD_VALUE=true"
+    psql_cmd(cmd, p_nc, p_db, p_pg, p_host, p_usr, p_key)
 
 
 def create_local_json(cluster_name, db, num_nodes, usr, passwd, pg, port1):
@@ -102,6 +124,15 @@ def get_cluster_json(cluster_name):
     util.exit_message(f"Unable to load cluster def file '{cluster_file}\n{e}")
 
   return(parsed_json)
+
+
+##def import_remote_def(cluster_name, json_file_name):
+##  """Import a cluster defintion file so we can work with the pgEdge cluster"""
+##  if not os.path.exists(p_json_file):
+##    util.exit_error(f"file '{p_json_file}' not found"
+##
+##  os.system("mkdir -p ../cluster/{p_json
+
 
 
 def reset_remote(cluster_name):
@@ -319,10 +350,12 @@ def command(cluster_name, node, cmd, args=None):
 
 
 def app_install(cluster_name, app_name, factor=1):
-  """Install test application [ pgbench | spockbench | bmsql ]."""   
+  """Install test application [ pgbench | northwind ]."""   
 
   if app_name ==  "pgbench":
     pgbench.install(cluster_name, factor)
+  elif app_name == "northwind":
+    northwind.install(cluster_name, factor)
   else:
     util.exit_message("Invalid application name.")
 
@@ -331,6 +364,8 @@ def app_remove(cluster_name, app_name):
   """Remove test application from cluster."""
   if app_name ==  "pgbench":
     pgbench.remove(cluster_name)
+  elif app_name == "northwind":
+    northwind.remove(cluster_name)
   else:
     util.exit_message("Invalid application name.")
  

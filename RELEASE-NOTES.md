@@ -5,11 +5,13 @@
   - improve test support for patroni, etcd, haproxy
   - improve efficiency of `ace diff-tables` to handle massive tables w blocks of checksums
   - fix upgrade to 23.12x to install or upgrade nclibs
+  - add cluster.import_json_def
 
 
 ## done so far for 23.123 as of 2023-07-19
   - incremental improvements and fixes to spock.py (thank u cady)
   - remove speculative doc support for Amazon Linux 2023 (adding it back is "coming soon")
+  - add northwind as a demo/test app (alongside pgbench)
 
 
 ## done for 23.122 as of 2023-07-18
