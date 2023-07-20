@@ -126,13 +126,11 @@ INSERT INTO categories VALUES (9,  87, 'Management & Monitoring', 'Manage/Monito
 -- ## HUB ################################
 INSERT INTO projects VALUES ('hub', 'app', 0, 0, 'hub', 0, 'https://github.com/pgedge/nodectl','',0,'','','');
 INSERT INTO releases VALUES ('hub', 1, 'hub', '', '', 'hidden', '', 1, '', '', '');
-INSERT INTO versions VALUES ('hub', '23.123', '',  1, '20230720', '', '', '');
+INSERT INTO versions VALUES ('hub', '23.124', '',  1, '20230731', '', '', '');
+INSERT INTO versions VALUES ('hub', '23.123', '',  0, '20230720', '', '', '');
 INSERT INTO versions VALUES ('hub', '23.122', '',  0, '20230718', '', '', '');
 INSERT INTO versions VALUES ('hub', '23.121', '',  0, '20230630', '', '', '');
 INSERT INTO versions VALUES ('hub', '23.120', '',  0, '20230629', '', '', '');
-INSERT INTO versions VALUES ('hub', '23.119', '',  0, '20230623', '', '', '');
-INSERT INTO versions VALUES ('hub', '23.118', '',  0, '20230622', '', '', '');
-INSERT INTO versions VALUES ('hub', '23.117', '',  0, '20230608', '', '', '');
 
 -- ##
 INSERT INTO projects VALUES ('pg', 'pge', 1, 5432, 'hub', 1, 'https://github.com/postgres/postgres/tags',
