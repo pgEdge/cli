@@ -73,39 +73,6 @@ def load_json(cluster_name):
   return db_name, pg, count, db_user, db_passwd, os_user, ssh_key, parsed_json["nodes"]
 
 
-def runNC(node, nc_cmd, db, user, cert):
-  import paramiko
-
-  ## Set up ssh connection
-  pk=None
-  if cert and cert > "":
-    if not (os.path.exists(cert)):
-      util.exit_message("Unable to locate cert file", 1)
-    pk = paramiko.RSAKey.from_private_key_file(cert)
-  client = paramiko.SSHClient()
-  client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-
-  nc_message=[]
-  for n in node:
-    cmd=n["path"] + "nc " + nc_cmd
-    # Execute Command
-    try:
-      if pk:
-        client.connect(hostname=n["ip"], username=user, pkey=pk, timeout=3)
-      else:
-        client.connect(hostname=n["ip"], username=user, timeout=3)
-      stdin, stdout, stderr = client.exec_command(cmd)
-      output =  stdout.read()
-      #print(output.decode('utf-8'), end="\n")
-      client.close()
-      nc_message.append(n["nodename"] + ": \n"  + output.decode('utf-8'))
-    except (paramiko.BadHostKeyException, paramiko.AuthenticationException,
-        paramiko.SSHException, socket.error) as e:
-        nc_message.append(n["nodename"] + ": \n SSH is not working correctly " + repr(e))
-
-  return nc_message
-
-
 def get_cluster_json(cluster_name):
   cluster_dir = base_dir + os.sep + cluster_name
   cluster_file = cluster_dir + os.sep + cluster_name + ".json"
@@ -270,19 +237,6 @@ def ssh_install_pgedge(cluster_name, passwd):
     util.message("#")
 
 
-def validate(cluster_name):
-  """Validate a cluster configuration"""
-  db, pg, count, user, db_passwd, os_user, cert, nodes = load_json(cluster_name)
-  message = runNC(nodes, "info", db, user, cert)
-  if len(message) == len(nodes):
-    for n in message:
-      if "NodeCtl" not in n:
-          util.exit_message("Validation of the cluster failed for " + n[:2], 1)
-  else:
-    util.exit_message("Validation of the cluster failed", 1)
-  return cluster_name + " Cluster Validated Successfully!"
-
-
 def destroy_local(cluster_name):
   """Stop and then nuke a localhost cluster."""
 
@@ -323,28 +277,16 @@ def lc_destroy1(cluster_name):
 def command(cluster_name, node, cmd, args=None):
   """Run './nodectl' commands on one or 'all' nodes."""
 
-  util.check_cluster_exists(cluster_name)
-
-  cluster_dir = base_dir + "/" + str(cluster_name)
-
-  if node != "all":
-    full_cmd = cluster_dir + "/" + str(node) + "/pgedge/nodectl " + str(cmd)
-    if args != None:
-        full_cmd = full_cmd + " " + str(args)
-    rc = util.echo_cmd(full_cmd)
-    return(rc)
-
+  db, pg, count, db_user, db_passwd, os_user, ssh_key, nodes = load_json(cluster_name)
   rc = 0
-  nd=1
-  node_dir = cluster_dir + "/n" + str(nd)
+  knt = 0
+  for nd in nodes:
+     if node == "all" or node == nd["nodename"]:
+       knt = knt + 1
+       rc = util.echo_cmd(nd["path"] + "/pgedge/nodectl " + cmd, host=nd["ip"], usr=os_user, key=ssh_key) 
 
-  while os.path.exists(node_dir):
-    full_cmd = node_dir + "/pgedge/nodectl " + str(cmd)
-    if args != None:
-        full_cmd = full_cmd + " " + str(args)
-    rc = util.echo_cmd(full_cmd, 1)
-    nd = nd + 1
-    node_dir = cluster_dir + "/n" + str(nd)
+  if knt == 0:
+    util.message(f"# nothing to do") 
 
   return(rc)
 
@@ -377,7 +319,6 @@ if __name__ == '__main__':
     'destroy-local':  destroy_local,
     'init-remote':    init_remote,
     'reset-remote':   reset_remote,
-    'validate':       validate,
     'command':        command,
     'app-install':    app_install,
     'app-remove':     app_remove
