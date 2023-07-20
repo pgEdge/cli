@@ -330,7 +330,7 @@ def repset_list_tables(schema, db, pg=None):
 
 
 def sub_create(subscription_name, provider_dsn, db, 
-               replication_sets='default,default_insert_only,ddl_sql',
+               replication_sets=('default','default_insert_only','ddl_sql'),
                synchronize_structure=False, synchronize_data=False, 
                forward_origins='', apply_delay=0, pg=None):
   """Create a subscription."""
