@@ -1403,6 +1403,8 @@ try:
     if sql_cmd == "-i":
       ## leave us at the interactive psql prompt
       sql_cmd = ""
+    elif sql_cmd.startswith("-f "):
+      pass
     else:
       sql_cmd = "-c \"" + sql_cmd + "\" "
 

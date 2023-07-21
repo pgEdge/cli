@@ -11,13 +11,13 @@ base_dir = "cluster"
 
 def add_repset_tables(p_spk, p_repset, p_tbls, p_db, p_host, p_usr, p_key):
   for tbl in p_tbls:
-    util.echo_cmd(p_spk + " repset-add-table " + p_repset + " " + p_tbl + " --db " + p_db,
+    util.echo_cmd(p_spk + " repset-add-table " + p_repset + " " + tbl + " --db " + p_db,
                   host=p_host, usr=p_usr, key=p_key)
 
 
 def drop_tables(p_tbls, p_nc, p_db, p_pg, p_host, p_usr, p_key):
-  for tbl in p_tbls:
-    psql_cmd("DROP TABLE " + tbl, p_nc, p_db, p_pg, host=p_host, usr=p_user, key=p_key)
+  for tbl in reversed(p_tbls):
+    util.psql_cmd("DROP TABLE " + tbl, p_nc, p_db, p_pg, host=p_host, usr=p_usr, key=p_key)
 
 
 def log_old_vals(p_run_sums, p_nc, p_db, p_pg, p_host, p_usr, p_key):
@@ -26,8 +26,8 @@ def log_old_vals(p_run_sums, p_nc, p_db, p_pg, p_host, p_usr, p_key):
     tbl = tbl_col_lst[0]
     col = tbl_col_lst[1]
 
-    cmd = "ALTER TABLE " + tbl + " ALTER COLUMN " + col + " SET LOG_OLD_VALUE=true"
-    psql_cmd(cmd, p_nc, p_db, p_pg, p_host, p_usr, p_key)
+    cmd = "ALTER TABLE " + tbl + " ALTER COLUMN " + col + " SET (LOG_OLD_VALUE=true)"
+    util.psql_cmd(cmd, p_nc, p_db, p_pg, p_host, p_usr, p_key)
 
 
 def create_local_json(cluster_name, db, num_nodes, usr, passwd, pg, port1):

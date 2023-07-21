@@ -144,7 +144,6 @@ def debug_lvl():
 
 
 def echo_cmd(cmd, sleep_secs=0, host="", usr="", key=""):
-
   if host > "":
     ssh_cmd = "ssh -o StrictHostKeyChecking=no -q -t "
     if usr > "":
@@ -170,6 +169,9 @@ def echo_cmd(cmd, sleep_secs=0, host="", usr="", key=""):
     return(0)
 
   return(1)
+
+def psql_cmd(cmd, nc, db, pg, host, usr, key):
+  echo_cmd(nc + " psql " + str(pg) + " \"" + cmd + "\" " + db, host=host, usr=usr, key=key)
 
 
 def print_exception(e):

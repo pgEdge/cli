@@ -5,26 +5,25 @@
 # (The northwind database originates from microsoft : http://northwinddatabase.codeplex.com/license)
 # Microsoft Public License (Ms-PL)
 
-import util, cluster
+import util, cluster, os
 
-g_tables = ("employees", "region", "categories", "us_states", "territories", "suppliers",
-            "shippers", "products", "customers", "orders", "order_details",
-            "employee_territories", "customer_demographics", "customer_customer_demo") 
+g_tables = ("public.employees", "public.region", "public.categories", "public.us_states", "public.territories", "public.suppliers",
+            "public.shippers", "public.products", "public.customers", "public.orders", "public.order_details",
+            "public.employee_territories", "public.customer_demographics", "public.customer_customer_demo") 
 
 g_repset = "nw-repset"
 
 g_running_sums = ("products.units_in_stock", "products.units_on_order")
 
 
-def setup_node(node_nm, port, nc, num_nodes, db, pg, host, factor, os_user, ssh_key):
-  pgb = nc + " pgbin "
+def setup_node(node_nm, port, nc, num_nodes, my_home, db, pg, host, factor, os_user, ssh_key):
   spk = nc + " spock "
 
-  ########### T0DO ######################
-  scale = int(num_nodes) * int(factor)
-  pgbench_cmd = '"pgbench --initialize --scale=' + str(scale) + ' ' + str(db) + '"'
-  util.echo_cmd(pgb + str(pg) +  " " + pgbench_cmd, host=host, usr=os_user, key=ssh_key)
-  ########## END TODO ##################
+  cmd = "cd " + my_home + "/hub/scripts; tar -xvf northwind.sql.tar.gz"
+  util.echo_cmd(cmd, host=host, usr=os_user, key=ssh_key)
+
+  cmd = nc + " psql " + str(pg) + " -f " + my_home + os.sep + "hub/scripts/northwind.sql"
+  util.echo_cmd(cmd, host=host, usr=os_user, key=ssh_key)
 
   dsn = "'host=127.0.0.1 port=" + str(port) + " dbname=" + db + "'"
   util.echo_cmd(spk + "node-create " + node_nm + " --dsn " + dsn + " --db " + db,
@@ -33,14 +32,9 @@ def setup_node(node_nm, port, nc, num_nodes, db, pg, host, factor, os_user, ssh_
   util.echo_cmd(spk + "repset-create " + g_repset + " --db " + db,
                   host=host, usr=os_user, key=ssh_key)
 
-  cluster.add_repset_tables(spk, g_repset, p_tbls, db, host, os_usr, ssh_key)
+  cluster.add_repset_tables(spk, g_repset, g_tables, db, host, os_user, ssh_key)
 
   cluster.log_old_vals(g_running_sums, nc, db, pg, host, os_user, ssh_key)
-
-
-def psql_cmd(cmd, nc, db, pg, host, usr, key):
-  util.echo_cmd(nc + "psql " + str(pg) + " \"" + cmd + "\" " + db,
-                  host=host, usr=usr, key=key)
 
 
 def install(cluster_name, factor=1):
@@ -54,7 +48,8 @@ def install(cluster_name, factor=1):
     port = nd["port"]
     host = nd["ip"]
     nc = nd["path"] + "/pgedge/nodectl "
-    setup_node(nodename, port, nc, count, db, str(pg), host, factor,
+    my_home = nd["path"] + "/pgedge"
+    setup_node(nodename, port, nc, count, my_home, db, str(pg), host, factor,
                  os_user=os_user, ssh_key=ssh_key)
 
   util.message("\n# wire nodes together #############")
@@ -102,5 +97,5 @@ def remove(cluster_name):
     util.echo_cmd(spk + "node-drop " + nd["nodename"] + db_pg, 
                     host=host, usr=os_user, key=ssh_key)
 
-    cluster.drop_tables(tables, nc, db, pg, host, os_user, ssh_key)
+    cluster.drop_tables(g_tables, nc, db, pg, host, os_user, ssh_key)
 
