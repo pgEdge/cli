@@ -10,6 +10,7 @@
 ## done for 23.124 as of 2023-07-21
   - fix upgrade to 23.124 to re-install nclibs
   - fix regression on supprting ubu22-amd
+  - fix spock.metrics_check() slot name
   - add support for ubu22-arm
 
 ## done for 23.123 as of 2023-07-20
