@@ -20,7 +20,7 @@ if platform.system() == "Linux":
       platf = "el9-amd"
   else:
     f = "/etc/os-release"
-    if os.path.exists(f) and (arch == "x86_64"):
+    if os.path.exists(f):
       with open(f,'r') as text_file:
         text_data = text_file.read()
         if text_data.find("22.04"):
