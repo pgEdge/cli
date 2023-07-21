@@ -36,7 +36,7 @@ print("home = $home\n");
 # Then, use nodectl to remove the Postgres installation.
 #
 
-my $cmd = qq(./nodectl cluster destroy demo);
+my $cmd = qq(./nodectl cluster destroy-local demo);
 print("cmd = $cmd\n");
 my ($success, $error_message, $full_buf, $stdout_buf, $stderr_buf)= IPC::Cmd::run(command => $cmd, verbose => 0);
 
