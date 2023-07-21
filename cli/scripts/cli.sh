@@ -33,27 +33,32 @@ fi
 
 declare -a array
 array[0]="$MY_HOME/hub/scripts"
-array[1]="$MY_HOME/hub/scripts/lib"
+LIB="$MY_HOME/hub/scripts/lib"
+array[1]="$LIB"
 
 if [ `uname` == "Linux" ]; then
   if [ -f "/etc/redhat-release" ]; then
     if [ `arch` == "aarch64" ]; then
-      array[2]="$MY_HOME/hub/scripts/lib/el9-arm"
+      array[2]="$LIB/el9-arm"
     else
-      array[2]="$MY_HOME/hub/scripts/lib/el9-amd"
+      array[2]="$LIB/el9-amd"
     fi
   else
-    if [ -f "/etc/os-release" ] && [ `arch` == "x86_64" ]; then
+    if [ -f "/etc/os-release" ]; then
       grep "22.04" /etc/os-release > /dev/null 2>&1
       rc=$?
       if [ $rc == "0" ]; then
-        array[2]="$MY_HOME/hub/scripts/lib/ubu22-amd"
+        if [ `arch` == "aarch64" ]; then
+          array[2]="$LIB/ubu22-arm"
+        else
+          array[2]="$LIB/ubu22-amd"
+        fi
       fi
     fi
   fi
 elif [ `uname` == "Darwin" ]; then
   ## universal binaries for x86_64 & arm64
-  array[2]="$MY_HOME/hub/scripts/lib/osx"
+  array[2]="$LIB/osx"
 fi
 
 export PYTHONPATH=$(printf "%s:" ${array[@]})

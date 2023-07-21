@@ -5,6 +5,9 @@
 import os, sys, sqlite3, platform
 import util
 
+MY_HOME = os.getenv('MY_HOME', '')
+NC = MY_HOME + "/nodectl"
+
 rc = 0
 
 
@@ -24,12 +27,12 @@ def run_sql(cmd):
     rc = 1
 
 
-def update_3_3_0():
-  print("")
-  print("## Updating Metadata to 3.3.0 ##################")
-  ## update components table
-  run_sql("ALTER TABLE components ADD COLUMN pidfile TEXT")
-  return
+#def update_3_3_0():
+#  print("")
+#  print("## Updating Metadata to 3.3.0 ##################")
+#  ## update components table
+#  run_sql("ALTER TABLE components ADD COLUMN pidfile TEXT")
+#  return
 
 
 def mainline():
@@ -49,25 +52,12 @@ def mainline():
     print ("Nothing to do.")
     sys.exit(0)
 
-  if (p_from_ver < "3.2.1") and (p_to_ver >= "3.2.1"):
-    MY_HOME = os.getenv('MY_HOME', '')
-    try:
-      import shutil
-      src = os.path.join(os.path.dirname(__file__), "cli.sh")
-      dst = os.path.join(MY_HOME, "dpg")
-      shutil.copy(src, dst)
-    except Exception as e:
-      pass
+  if (p_from_ver < "23.124") and (p_to_ver >= "23.124"):
+    util.echo_cmd(NC + " remove nclibs")
+    util.echo_cmd(NC + " install nclibs")
 
-  if (p_from_ver < "3.2.9") and (p_to_ver >= "3.2.9"):
-    old_default_repo = "http://s3.amazonaws.com/pgcentral"
-    new_default_repo = "https://s3.amazonaws.com/pgcentral"
-    current_repo = util.get_value("GLOBAL", "REPO")
-    if current_repo == old_default_repo:
-      util.set_value("GLOBAL", "REPO", new_default_repo)
-
-  if (p_from_ver < "3.3.0") and (p_to_ver >= "3.3.0"):
-    update_3_3_0()
+  #if (p_from_ver < "3.3.0") and (p_to_ver >= "3.3.0"):
+  #  update_3_3_0()
 
   sys.exit(rc)
   return
@@ -76,12 +66,11 @@ def mainline():
 ###################################################################
 #  MAINLINE
 ###################################################################
-MY_HOME = os.getenv('MY_HOME', '')
 if MY_HOME == '':
   print ("ERROR: Missing MY_HOME envionment variable")
   sys.exit(1)
 
-## gotta have a sqlite database to update
+## gotta have a sqlite database to (possibly) update
 db_local = MY_HOME + os.sep + "conf" + os.sep + "db_local.db"
 cL = sqlite3.connect(db_local)
 

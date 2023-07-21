@@ -9,7 +9,7 @@ import util
 thisDir = os.path.dirname(os.path.realpath(__file__))
 os.chdir(thisDir)
 
-arch = subprocess.check_output("arch")
+arch = platform.machine()
 
 platf = "unsupported"
 if platform.system() == "Linux":
@@ -24,7 +24,10 @@ if platform.system() == "Linux":
       with open(f,'r') as text_file:
         text_data = text_file.read()
         if text_data.find("22.04"):
-          platf=ubu22-amd
+          if arch == "aarch64":
+            platf = "ubu22-arm"
+          else:
+            platf = "ubu22-amd"
 elif platform.system() == "Darwin":
   platf = "osx"
 
