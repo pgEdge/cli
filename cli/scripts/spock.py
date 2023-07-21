@@ -719,7 +719,7 @@ def metrics_check(db, pg=None):
       "FROM spock.lag_tracker ORDER BY slot_name"
     cur.execute(sql_slots)
     for row in cur:
-      mtrc_dict["slots"].append({"slotName":row[0],"commit_lsn":str(row[1]),"commit_timestamp":str(row[2]),"replication_lag":str(row[3]), "replication_lag_bytes":str(row[4])})
+      mtrc_dict["slots"].append({"slot_name":row[0],"commit_lsn":str(row[1]),"commit_timestamp":str(row[2]),"replication_lag":str(row[3]), "replication_lag_bytes":str(row[4])})
     cur.close()
 
   except Exception as e:
