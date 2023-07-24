@@ -68,10 +68,10 @@ if [ $uname == 'Linux' ]; then
       sudo $yum lz4-devel libzstd-devel krb5-devel
       if [ "$PLATFORM" == "el8" ]; then
         sudo $yum python39 python39-devel
-	sudo yum remove python3
+	sudo yum remove -y python3
       else
 	sudo $yum python3-devel
-        sudo yum remove python3-pip
+        sudo yum remove -y python3-pip
       fi 
       sudo $yum clang
       if [ "$PLATFORM" == "el9" ]; then
@@ -80,7 +80,7 @@ if [ $uname == 'Linux' ]; then
 
       curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
 
-      sudo yum install ghc
+      sudo yum install -y ghc
       curl -sSL https://get.haskellstack.org/ | sh
     fi
   fi
@@ -107,6 +107,8 @@ sudo mkdir -p /opt/pgbin-build/pgbin/bin
 sudo chown -R $owner_group /opt/pgbin-build
 sudo mkdir -p /opt/pgcomponent
 sudo chown $owner_group /opt/pgcomponent
+
+cd ~/dev
 mkdir -p out
 mkdir -p history
 
