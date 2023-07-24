@@ -443,7 +443,7 @@ function buildTimeScaleDBComponent {
         packageComponent $componentBundle
 }
 
-TEMP=`getopt -l no-tar, copy-bin,no-copy-bin,with-pgver:,with-pgbin:,build-curl:,build-hypopg:,build-postgis:,build-bouncer:,build-logfdw:,build-tdsfdw:,build-mongofdw:,build-mysqlfdw:,build-oraclefdw:,build-orafce:,build-audit:,build-partman:,build-pldebugger:,build-pljava:,build-plv8:,build-plprofiler:,build-bulkload:,build-backrest:,build-psqlodbc:,build-repack:,build-spock31:,build-pool2:,build-pglogical:,build-hintplan:,build-timescaledb:,build-foslots:,build-readonly:,build-cron:,build-multicorn2:,build-anon,build-ddlx:,build-citus: -- "$@"`
+TEMP=`getopt -l no-tar, copy-bin,no-copy-bin,with-pgver:,with-pgbin:,build-curl:,build-hypopg:,build-postgis:,build-bouncer:,build-logfdw:,build-tdsfdw:,build-mongofdw:,build-mysqlfdw:,build-oraclefdw:,build-orafce:,build-audit:,build-partman:,build-pldebugger:,build-pljava:,build-plv8:,build-plprofiler:,build-bulkload:,build-backrest:,build-psqlodbc:,build-repack:,build-spock31:,build-pool2:,build-pglogical:,build-hintplan:,build-timescaledb:,build-foslots:,build-readonly:,build-cron:,build-multicorn2:,build-anon,build-ddlx:,build-citus:,build-vector: -- "$@"`
 
 if [ $? != 0 ] ; then
 	echo "Required parameters missing, Terminating..."
@@ -492,6 +492,7 @@ while true; do
     --build-anon ) buildAnon=true; Source=$2; shift; shift ;;
     --build-ddlx ) buildDdlx=true; Source=$2; shift; shift ;;
     --build-citus ) buildCitus=true; Source=$2; shift; shift ;;
+    --build-vector ) buildVector=true; Source=$2; shift; shift ;;
     --copy-bin ) copyBin=true; shift; shift; ;;
     --no-copy-bin ) copyBin=false; shift; shift; ;;
     --no-tar ) copyBin=false; noTar=true; shift; shift; ;;
@@ -643,6 +644,10 @@ fi
 
 if [ "$buildCitus" == "true" ]; then
 	buildComp citus "$citusShortV" "$citusFullV" "$citusBuildV" "$Source"
+fi
+
+if [ "$buildVector" == "true" ]; then
+	buildComp vector "$vectorShortV" "$vectorFullV" "$vectorBuildV" "$Source"
 fi
 
 destDir=`date +%Y-%m-%d`

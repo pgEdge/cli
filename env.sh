@@ -33,6 +33,7 @@ bqfdwV=1.9
 
 w2jV=2.4-1
 citusV=11.2.0-1
+vectorV=0.4.4-1
 
 oraclefdwV=2.5.0-1
 inclV=21.6

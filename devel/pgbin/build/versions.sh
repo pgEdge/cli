@@ -69,6 +69,10 @@ citusFullV=11.2.0
 citusShortV=
 citusBuildV=1
 
+vectorFullV=0.4.4
+vectorShortV=
+vectorBuildV=1
+
 pgtopFullV=3.7.0
 pgtopShortV=
 pgtopBuildV=1

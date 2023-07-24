@@ -32,6 +32,10 @@ fi
 
 ## WIP ############################################
 
+if [ "$1" == "vector" ]; then
+  build vector $vectorFullV $2 vector
+fi
+
 if [ "$1" == "pljava" ]; then
   build pljava $pljavaFullV $2 pljava
 fi

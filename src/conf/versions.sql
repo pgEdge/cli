@@ -324,6 +324,13 @@ INSERT INTO projects VALUES ('cron', 'ext', 4, 0, 'hub',0, 'https://github.com/c
 INSERT INTO releases VALUES ('cron-pg15', 10, 'cron', 'pgCron', '', 'prod', '', 1, 'POSTGRES', '', '');
 INSERT INTO versions VALUES ('cron-pg15', '1.5.2-1', 'el9, arm9', 1, '20230422', 'pg15', '', '');
 
+INSERT INTO projects VALUES ('vector', 'pge', 4, 0, 'hub', 1, 'https://github.com/pgedge/vector/tags',
+  'vector', 1, 'vector.png', 'Vector & Embeddings', 'https://github.com/pgedge/vector/#vector');
+INSERT INTO releases VALUES ('vector-pg15', 4, 'vector', 'pgVector', '', 'prod', '', 1, 'pgEdge Community', '', '');
+INSERT INTO releases VALUES ('vector-pg16', 4, 'vector', 'pgVector', '', 'prod', '', 1, 'pgEdge Community', '', '');
+INSERT INTO versions VALUES ('vector-pg15', '0.4.4-1', 'el9, arm9', 1, '20230708', 'pg15', '', '');
+INSERT INTO versions VALUES ('vector-pg16', '0.4.4-1', 'el9, arm9', 1, '20230708', 'pg16', '', '');
+
 INSERT INTO projects VALUES ('spock', 'pge', 4, 0, 'hub', 1, 'https://github.com/pgedge/spock/tags',
   'spock', 1, 'spock.png', 'Logical & Multi-Master Replication', 'https://github.com/pgedge/spock/#spock');
 INSERT INTO releases VALUES ('spock31-pg15', 4, 'spock', 'Spock', '', 'prod', '', 1, 'pgEdge Community', '', '');

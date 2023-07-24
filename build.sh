@@ -214,6 +214,7 @@ initDir () {
   copy-pgXX "readonly"
   ##copy-pgXX "foslots"
   copy-pgXX "citus"
+  copy-pgXX "vector"
   ##copy-pgXX "multicorn2"
   ##copy-pgXX "esfdw"
   ##copy-pgXX "bqfdw"
@@ -450,6 +451,8 @@ initPG () {
     initC  "pljava-pg$pgM"  "pljava"    "$pljavaV"    "$outPlat" "postgres/pljava"  "" "" "nil"
     initC  "curl-pg$pgM"    "curl"      "$curlV"      "$outPlat" "postgres/curl"    "" "" "nil"
     initC  "orafce-pg$pgM"  "orafce"    "$orafceV"    "$outPlat" "postgres/orafce"  "" "" "nil"
+    initC  "vector-pg$pgM"  "vector"    "$vectorV"    "$outPlat" "postgres/vector"  "" "" "nil"
+
   fi
 
   if [ "$pgM" == "15" ] && [ "$isEL" == "True" ]; then
@@ -462,6 +465,7 @@ initPG () {
       initC "pljava-pg$pgM"  "pljava"  "$pljavaV"  "$outPlat" "postgres/pljava"  "" "" "nil"
       initC "timescaledb-pg$pgM" "timescaledb" "$timescaleV" "$outPlat" "postgres/timescale" "" "" "nil"
       initC "citus-pg$pgM" "citus" "$citusV" "$outPlat" "postgres/citus" "" "" "nil"
+      initC "vector-pg$pgM" "vector" "$vectorV" "$outPlat" "postgres/vector" "" "" "nil"
       initC "postgis-pg$pgM" "postgis" "$postgisV" "$outPlat" "postgres/postgis" "" "" "nil"
       initC "pglogical-pg$pgM" "pglogical" "$logicalV" "$outPlat" "postgres/logical" "" "" "nil"
       initC "anon-pg$pgM" "anon" "$anonV" "$outPlat" "postgres/anon" "" "" "nil"
