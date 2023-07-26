@@ -2,7 +2,7 @@
     ./nodectl cluster diff-tables CLUSTER_NAME TABLE_NAME <flags>
  
 ## DESCRIPTION
-    Efficiently compare tables across cluster using optional checksums and blocking.
+    Efficiently compare tables across cluster using optional checksums and blocks of rows.
  
 ## POSITIONAL ARGUMENTS
     CLUSTER_NAME
