@@ -1,14 +1,15 @@
 # pgEdge Platform Release Notes #############
 
-## to do's for 23.125 and beyond
+## to do's for 23.126 and beyond
   - add support for pljava-pg15 & -pg16 (cannot find libjvm17  setting from util.get_jvm_location)
   - improve test support for patroni, etcd, haproxy
   - improve efficiency of `ace diff-tables` to handle massive tables w blocks of checksums
   - add cluster.import_json_def
 
-## done for 23.125 as of 2023-07-26
+## done so far for 23.125 as of 2023-07-26
   - add **pgVector** as an extension
   - add support for northwind (just like pgbench) as a demo/test app
+  - begin adding support for cluster.import_json_def()
 
 ## done for 23.124 as of 2023-07-21
   - fix upgrade to 23.124 to re-install nclibs
