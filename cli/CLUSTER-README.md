@@ -2,7 +2,7 @@
 Installation and configuration of a pgEdge SPOCK cluster
 
 ## Synopsis
-    ./nodectl spock <command> [parameters] [options]   
+    ./nodectl cluster <command> [parameters] [options]   
 
 [**create-local**](doc/cluster-create-local.md)   - Create a localhost test cluster of N pgEdge nodes on different ports.<br>
 [**destroy-local**](doc/cluster-destroy-local.md) - Stop and then nuke a localhost cluster<br>
