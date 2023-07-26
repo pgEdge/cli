@@ -199,7 +199,7 @@ SELECT C.COLUMN_NAME
 
 
 def diff_schemas(cluster_name, node1, node2, schema_name):
-  """Compare schema on different cluster nodes"""
+  """Compare Postgres schemas on different cluster nodes"""
   if not os.path.isfile("/usr/local/bin/csvdiff"):
     util.message("Installing the required 'csvdiff' component.")
     os.system("./nodectl install csvdiff")
@@ -234,7 +234,7 @@ def diff_schemas(cluster_name, node1, node2, schema_name):
 
 
 def diff_spock(cluster_name, node1, node2):
-  """Compare spock setup on different cluster nodes"""
+  """Compare spock meta data setup on different cluster nodes"""
   util.check_cluster_exists(cluster_name)
 
   if node1 == node2:
@@ -318,7 +318,7 @@ def diff_spock(cluster_name, node1, node2):
 
 
 def diff_tables(cluster_name, table_name, checksum_use=False, block_rows=1):
-  """Efficiently compare tables across cluster using optional checksums and blocking."""
+  """Efficiently compare tables across cluster using optional checksums and blocks of rows."""
 
   bad_br = True
   try:
