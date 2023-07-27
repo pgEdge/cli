@@ -14,9 +14,9 @@ use JSON;
 
 # Our parameters are:
 
-my $username = "lcdb";
+my $username = "lcusr";
 my $password = "password";
-my $database = "demo";
+my $database = "lcdb";
 my $version = "pg16";
 my $spock = "3.1";
 
@@ -33,10 +33,6 @@ my $cmd = qq(./nodectl install pgedge $version -U $username -P $password -d $dat
 print("cmd = $cmd\n");
 my ($success, $error_message, $full_buf, $stdout_buf, $stderr_buf)= IPC::Cmd::run(command => $cmd, verbose => 0);
 
-#
-# stdout_buf prints the output from the session onscreen (useful for debugging issues with other modules) if 
-# you invoke this file with the perl command - if you invoke it with prove(), the output is suppressed.
-#
 print("cmd = $cmd\n");
 print("stdout_buf = @$stdout_buf\n");
 

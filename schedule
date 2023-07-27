@@ -9,6 +9,9 @@
 # The first script (020) creates the pgedge directory; call this script after each cleanup script:
 
 t/020_nodectl_install_pgedge.pl
+t/030_nodectl_init_pg.pl
+t/035_service_breakdown_script.pl
+t/020_nodectl_install_pgedge.pl
 t/100_setup_script.pl
 t/105_remove_pgedge.pl
 
