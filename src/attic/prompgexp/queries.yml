@@ -1,10 +1,18 @@
 pg_replication:
-  query: "SELECT CASE WHEN NOT pg_is_in_recovery() THEN 0 ELSE GREATEST (0, EXTRACT(EPOCH FROM (now() - pg_last_xact_replay_timestamp()))) END AS lag"
+  query: "SELECT replication_lag FROM spock.lag_tracker AS lag"
   master: true
   metrics:
     - lag:
         usage: "GAUGE"
         description: "Replication lag in seconds"
+
+pg_replication_bytes:
+  query: "SELECT replication_lag_bytes FROM spock.lag_tracker AS lag_bytes"
+  master: true
+  metrics:
+    - lag_bytes:
+        usage: "GAUGE"
+        description: "Replication lag in bytes"
 
 pg_spock_resolutions:
   query: "select count(*) from spock.resolutions as res_count"

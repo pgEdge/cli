@@ -67,17 +67,17 @@ mode_list = ["start", "stop", "restart", "status", "list", "info", "update",
              "upgrade", "downgrade", "enable", "disable", "install", "tune",
              "remove", "reload", "help", "get", "set", "unset", "backrest",
              "backrest", "change-pgconf", "top", "pgbin", "psql", "--autostart", 
-             "service", "um", "spock", "cluster", "ace", "starfleet", "--pg",
+             "service", "um", "spock", "cluster", "ace", "secure", "--pg",
              "--start", "--no-restart", "--no-preload",
              "--help", "--json", "--jsonp", "--test", "--extensions", "--svcs",
              "--list", "--old", "--showduplicates", "-y", "-t",
              "--verbose", "--country", "-v", "--debug", "--debug2"]
 
-fire_mode_list = ["service", "um", "spock", "cluster", "ace", "starfleet"]
+fire_mode_list = ["service", "um", "spock", "cluster", "ace", "secure"]
 
 mode_list_advanced = ['kill', 'config', 'init', 'clean', 'useradd', 'spock', 
                       'pgbin', 'psql', 'cluster', 'ace', 'service', 'um', 
-                      'advanced', 'starfleet']
+                      'advanced', 'secure']
 
 ignore_comp_list = [ "get", "set", "unset", "spock", "pgbin", "psql", 
                      "cluster", "service", "um", "starfleet", "useradd", "backrest", 
@@ -86,7 +86,7 @@ ignore_comp_list = [ "get", "set", "unset", "spock", "pgbin", "psql",
 no_log_commands = ['status', 'info', 'list', 'top', 'get', 'metrics-check']
 
 lock_commands = ["install", "remove", "update", "upgrade", "downgrade",
-                 "spock", "cluster", "ace", "starfleet", "backrest", "um", "service"]
+                 "spock", "cluster", "ace", "secure", "backrest", "um", "service"]
 
 my_depend = []
 installed_comp_list = []
