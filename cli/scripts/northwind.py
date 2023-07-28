@@ -19,10 +19,8 @@ g_running_sums = ("products.units_in_stock", "products.units_on_order")
 def setup_node(node_nm, port, nc, num_nodes, my_home, db, pg, host, factor, os_user, ssh_key):
   spk = nc + " spock "
 
-  cmd = "cd " + my_home + "/hub/scripts; tar -xvf northwind.sql.tar.gz"
-  util.echo_cmd(cmd, host=host, usr=os_user, key=ssh_key)
-
-  cmd = nc + " psql " + str(pg) + " -f " + my_home + os.sep + "hub/scripts/northwind.sql"
+  sql_file = my_home + os.sep + "hub/scripts/sql/northwind.sql"
+  cmd = nc + " psql " + str(pg) + " -f " + sql_file
   util.echo_cmd(cmd, host=host, usr=os_user, key=ssh_key)
 
   dsn = "'host=127.0.0.1 port=" + str(port) + " dbname=" + db + "'"
