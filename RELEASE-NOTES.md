@@ -4,15 +4,16 @@
   - add support for pljava-pg15 & -pg16 (cannot find libjvm17  setting from util.get_jvm_location)
   - improve test support for patroni, etcd, haproxy
   - improve efficiency of `ace diff-tables` to handle massive tables w blocks of checksums
-  - add cluster.import_json_def
+  - fix port numbers in cluster.create-local() (env & .json)
+  - add support for plv8-3.2beta1-pg15
 
 ## done so far for 23.125 as of 2023-07-28
-  - add support for plv8-3.2beta1-pg15
-  - add util.wait_pg_ready()
   - add pgvector-0.4.4 as an extension for pg15 & pg16
   - bump plprofiler to 4.2.2 and also support it for pg16
-  - add support for northwind (just like pgbench) as a demo/test app
-  - begin adding support for cluster.import_json_def()
+  - more adding support for northwind (just like pgbench) as a demo/test app
+  - begin adding support for cluster.import_remote_def()
+  - begin adding util.wait_pg_ready()
+  - begin adding support for pgbench_check
 
 ## done for 23.124 as of 2023-07-21
   - fix upgrade to 23.124 to re-install nclibs
