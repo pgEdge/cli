@@ -618,20 +618,12 @@ def health_check(pg=None):
   """Check if PG instance is accepting connections."""
   pg_v = util.get_pg_v(pg)
 
-  if is_pg_ready(pg_v):
+  if util.is_pg_ready(pg_v):
     util.exit_message("True", 0)
 
   util.exit_message("false", 0)
 
  
-def is_pg_ready(pg_v):
-  rc = os.system(os.getcwd() + "/" + pg_v + "/bin/pg_isready -d postgres > /dev/null 2>&1")
-  if rc == 0:
-    return(True)
-
-  return(False)
-
-
 def metrics_check(db, pg=None):
   """Retrieve advanced DB & OS metrics."""
   try:
@@ -641,7 +633,7 @@ def metrics_check(db, pg=None):
 
   pg_v = util.get_pg_v(pg)
   usr = util.get_user()
-  rc = is_pg_ready(pg_v)
+  rc = util.is_pg_ready(pg_v)
 
   load1, load5, load15 = psutil.getloadavg()
 

@@ -2824,6 +2824,27 @@ def is_socket_busy(p_port, p_comp=''):
     return False
 
 
+
+def is_pg_ready(pg_v):
+  rc = os.system(os.getcwd() + "/" + pg_v + "/bin/pg_isready -d postgres > /dev/null 2>&1")
+  if rc == 0:
+    return(True)
+
+  return(False)
+
+
+def wait_pg_ready(pg_v, max_tries=10):
+  for n in range(1, max_tries):
+    time.sleep(1)
+    if is_pg_ready(pg_v):
+      messsage(f"{pg_v} is ready {n}")
+      return(true)
+    else:
+      messsage(f"{pg_v} is not ready {n}")
+    
+  return(false)
+
+
 ## Get Component category ######################################################
 def get_comp_category(p_comp):
   try:
