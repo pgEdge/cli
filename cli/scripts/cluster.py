@@ -94,13 +94,13 @@ def get_cluster_json(cluster_name):
   return(parsed_json)
 
 
-##def import_remote_def(cluster_name, json_file_name):
-##  """Import a cluster defintion file so we can work with the pgEdge cluster"""
-##  if not os.path.exists(p_json_file):
-##    util.exit_error(f"file '{p_json_file}' not found"
-##
-##  os.system("mkdir -p ../cluster/{p_json
+def import_remote_def(cluster_name, json_file_name):
+  """Import a cluster definition file so we can work with it like a pgEdge cluster."""
 
+  if not os.path.exists(p_json_file):
+    util.exit_error(f"file '{p_json_file}' not found")
+
+  os.system(f"mkdir -p ../cluster/{p_json}")
 
 
 def reset_remote(cluster_name):
@@ -325,6 +325,7 @@ if __name__ == '__main__':
     'destroy-local':  destroy_local,
     'init-remote':    init_remote,
     'reset-remote':   reset_remote,
+    'import-remote-def': import_remote_def,
     'command':        command,
     'app-install':    app_install,
     'app-remove':     app_remove

@@ -43,12 +43,13 @@ $nc spock metrics-check     --help
 $nc spock set-readonly      --help
 
 $nc cluster --help
-$nc cluster create-secure   --help
-$nc cluster create-local    --help
-$nc cluster destroy-local   --help
-$nc cluster init-remote     --help
-$nc cluster reset-remote    --help
-$nc cluster command         --help
+$nc cluster create-secure     --help
+$nc cluster create-local      --help
+$nc cluster destroy-local     --help
+$nc cluster init-remote       --help
+$nc cluster reset-remote      --help
+$nc cluster import-remote-def --help
+$nc cluster command           --help
 
 $nc ace --help
 $nc ace diff-tables         --help
