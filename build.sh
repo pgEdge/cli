@@ -205,7 +205,6 @@ initDir () {
   copy-pgXX "audit"   
   copy-pgXX "postgis"   
   ##copy-pgXX "mysqlfdw"  
-  ##copy-pgXX "apicurio"
   copy-pgXX "mongofdw"  
   copy-pgXX "decoderbufs"  
   ##copy-pgXX "oraclefdw"  
@@ -221,15 +220,8 @@ initDir () {
   copy-pgXX "pljava"
   copy-pgXX "plv8"
   copy-pgXX "hintplan"
-  ##copy-pgXX "nginx"
   copy-pgXX "timescaledb"
   copy-pgXX "hypopg"
-
-  ## ARCHIVED #########
-  ##copy-pgXX "fixeddecimal"
-  ##copy-pgXX "cassandrafdw"
-  ##copy-pgXX "hivefdw"
-  ##copy-pgXX "wal2json"  
 
   if [ -f $myNewDir/LICENSE.TXT ]; then
     mv $myNewDir/LICENSE.TXT $myNewDir/$pComponent-LICENSE.TXT
@@ -489,16 +481,6 @@ initPG () {
     #initC  "csvdiff" "csvdiff" "$csvdiffV" "$outPlat" "csvdiff" "" "" "nil"
     initC  "patroni"   "patroni"   "$patroniV" "" "postgres/patroni" "" "" "nil"
   fi
-
-  ##initC "prompgexp"  "prompgexp"  "$prompgexpV"  ""  "prometheus/pg_exporter"  "" "" "Y"
-  
-  ##initC "instantclient" "instantclient" "$inclV" "" "oracle/instantclient" "" "" "Y"
-  ##initC "kafka"     "kafka"     "$kfkV"   "" "kafka"            "" "" "Y"
-  ##initC "apicurio"  "apicurio"  "$apicV"  "" "apicurio"         "" "" "nil"
-  ##initC "debezium"  "debezium"  "$dbzV"   "" "debezium"         "" "" "Y"
-  ##initC "pgadmin"   "pgadmin"   "$adminV" "" "postgres/pgadmin" "" "" "Y"
-
-  ##initC "ora2pg"    "ora2pg"    "$ora2pgV" "" "postgres/ora2pg" "" "" "Y"
 
   return
 

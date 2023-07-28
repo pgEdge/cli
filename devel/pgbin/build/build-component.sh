@@ -174,15 +174,6 @@ function configureComp {
 
     make="make"
 
-    if [ "$comp" == "plv8" ]; then
-        echo "# configure plv8..."
-        ##echo "# enabling gcc-toolset-11 "
-        ##source /opt/rh/gcc-toolset-11/enable
-        echo "# overlaying debian specific make file with el8 adjustments"
-        cp $DEVEL/pgbin/build/el8-only/plv8/Makefile.linux_el8  Makefiles/Makefile.linux
-        make="make static"
-    fi
-
     if [ "$comp" == "mongofdw" ]; then
         echo "# configure mongofdw..."
         export MONGOC_INSTALL_DIR=$buildLocation
@@ -524,10 +515,6 @@ if [[ $buildDecoderBufs == "true" ]]; then
 	buildComp decoderbufs "$decoderbufsShortV" "$decoderbufsFullV" "$decoderbufsBuildV" "$Source"
 fi
 
-if [[ $buildWal2json == "true" ]]; then
-	buildComp wal2json "$wal2jsonShortV" "$wal2jsonFullV" "$wal2jsonBuildV" "$Source"
-fi
-
 if [[ $buildLOGFDW == "true" ]]; then
 	buildComp logfdw "$logfdwShortV" "$logfdwFullV" "$logfdwBuildV" "$Source"
 fi
@@ -552,40 +539,45 @@ fi
 if [[ $buildPostGIS ==  "true" ]]; then
 	buildComp postgis "$postgisShortV" "$postgisFullV" "$postgisBuildV" "$Source"
 fi
+
 if [[ $buildAudit == "true" ]]; then
 	if [ "$pgShortVersion" == "15" ]; then
 		buildComp audit "$auditShortV" "$auditFull15V" "$auditBuildV" "$Source"
-	elif [ "$pgShortVersion" == "14" ]; then
-		buildComp audit "$auditShortV" "$auditFull14V" "$auditBuildV" "$Source"
 	fi
 fi
+
 if [ "$buildCurl" == "true" ]; then
 	buildComp curl "$curlShortV" "$curlFullV" "$curlBuildV" "$Source"
 fi
+
 if [ "$buildHypopg" == "true" ]; then
 	buildComp hypopg "$hypopgShortV" "$hypopgFullV" "$hypopgBuildV" "$Source"
 fi
+
 if [ "$buildReadOnly" == "true" ]; then
 	buildComp readonly  "$readonlyShortV" "$readonlyFullV" "$readonlyBuildV" "$Source"
 fi
+
 if [ "$buildFoSlots" == "true" ]; then
 	buildComp foslots  "$foslotsShortV" "$foslotsFullV" "$foslotsBuildV" "$Source"
 fi
+
 if [ "$buildCron" == "true" ]; then
 	buildComp cron  "$cronShortV" "$cronFullV" "$cronBuildV" "$Source"
 fi
+
 if [ "$buildMulticorn2" == "true" ]; then
 	buildComp multicorn2  "$multicorn2ShortV" "$multicorn2FullV" "$multicorn2BuildV" "$Source"
 fi
+
 if [[ $buildRepack == "true" ]]; then
 	buildComp repack  "$repackShortV" "$repackFullV" "$repackBuildV" "$Source"
 fi
+
 if [[ $buildSpock31 == "true" ]]; then
 	buildComp spock31  "" "$spockFull31V" "$spockBuild31V" "$Source"
 fi
-if [[ $buildPool2 == "true" ]]; then
-	buildComp pool2  "$pool2ShortV" "$pool2FullV" "$pool2BuildV" "$Source"
-fi
+
 if [[ $buildPgLogical == "true" ]]; then
 	buildComp pglogical  "$pgLogicalShortV" "$pgLogicalFullV" "$pgLogicalBuildV" "$Source"
 fi
@@ -603,7 +595,7 @@ if [[ $buildPlJava == "true" ]]; then
 fi
 
 if [[ $buildPlV8 == "true" ]]; then
-    buildComp plv8  "$plv8ShortV" "$plv8FullV" "$plv8BuildV" "$Source"
+	buildComp plv8  "$plv8ShortV" "$plv8FullV" "$plv8BuildV" "$Source"
 fi
 
 if [[ $buildPlProfiler == "true" ]]; then
@@ -628,10 +620,6 @@ fi
 
 if [[ $buildTimeScaleDB == "true" ]]; then
 	buildTimeScaleDBComponent
-fi
-
-if [[ $buildBouncer == "true" ]]; then
-	buildComp bouncer "$bouncerShortV" "$bouncerFullV" "$bouncerBuildV" "$Source"
 fi
 
 if [[ $buildAnon == "true" ]]; then

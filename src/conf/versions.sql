@@ -194,12 +194,6 @@ INSERT INTO releases VALUES ('apicurio', 3, 'apicurio', 'Apicurio', '', 'test', 
 INSERT INTO versions VALUES ('apicurio', '2.2.3', '',  0, '20220414', '', '', '');
 INSERT INTO versions VALUES ('apicurio', '2.2.2', '',  0, '20220328', '', '', '');
 
-INSERT INTO projects VALUES ('zookeeper', 'nosql', 10, 2181, 'hub', 1, 'https://zookeeper.apache.org/releases.html#releasenotes',
-  'zookeeper', 0, 'zookeeper.png', 'HA Distributed Key-Store', 'https://zookeeper.apache.org');
-INSERT INTO releases VALUES ('zookeeper', 3, 'zookeeper', 'Zookeeper', '', 'test', '', 1, 'Apache', '', '');
-INSERT INTO versions VALUES ('zookeeper', '3.7.1', '',  0, '20220512', '', '',
-  'https://zookeeper.apache.org/doc/r3.7.1/releasenotes.html');
-
 INSERT INTO projects VALUES ('decoderbufs', 'strm', 10, 0, 'hub', 0, 'https://github.com/debezium/postgres-decoderbufs', 
   'decoderbufs', 1, 'protobuf.png', 'Logical decoding via ProtoBuf', 'https://github.com/debezium/postgres-decoderbufs');
 INSERT INTO releases VALUES ('decoderbufs-pg14',  4, 'decoderbufs', 'DecoderBufs', '', 'test', '', 1, 'MIT', '', '');
@@ -252,11 +246,6 @@ INSERT INTO releases VALUES ('orafce-pg16', 2, 'orafce', 'OraFCE', '', 'prod', '
 INSERT INTO versions VALUES ('orafce-pg15', '4.3.0-1',   'arm9, el9', 1, '20230630', 'pg15', '', '');
 INSERT INTO versions VALUES ('orafce-pg16', '4.3.0-1',   'arm9, el9', 1, '20230630', 'pg16', '', '');
 INSERT INTO versions VALUES ('orafce-pg15', '4.2.5-1',   'arm9, el9', 0, '20230422', 'pg15', '', '');
-
-INSERT INTO projects VALUES ('fixeddecimal', 'ext', 6, 0, 'hub', 0, 'https://github.com/pgsql-io/fixeddecimal/tags',
-  'fixeddecimal', 1, 'fixeddecimal.png', 'Much faster than NUMERIC', 'https://github.com/pgsql-io/fixeddecimal');
-INSERT INTO releases VALUES ('fixeddecimal-pg14', 90, 'fixeddecimal', 'FixedDecimal', '', 'prod', '', 1, 'POSTGRES', '', '');
-INSERT INTO versions VALUES ('fixeddecimal-pg14', '1.1.0-1',  'amd', 0, '2.211119', 'pg14', '', '');
 
 INSERT INTO projects VALUES ('plv8', 'dev', 3, 0, 'hub', 0, 'https://github.com/plv8/plv8/tags',
   'plv8',   1, 'v8.png', 'Javascript Stored Procedures', 'https://github.com/plv8/plv8');

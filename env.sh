@@ -22,7 +22,6 @@ prompgexpV=0.11.1
 nodejsV=18.12.1
 backrestV=2.46-1
 csvdiffV=1.4.0
-pgdiffV=1.1
 curlV=2.1.1-1
 readonlyV=1.1.0-1
 foslotsV=1a-1
@@ -31,7 +30,6 @@ multicorn2V=2.4-1
 esfdwV=0.11.2
 bqfdwV=1.9
 
-w2jV=2.4-1
 citusV=11.2.0-1
 vectorV=0.4.4-1
 
@@ -41,7 +39,6 @@ orafceV=4.3.0-1
 ora2pgV=23.1
 v8V=3.1.2-1
 
-fdV=1.1.0-1
 anonV=1.1.0-1
 ddlxV=0.17-1
 hypoV=1.4.0-1
@@ -53,21 +50,8 @@ partmanV=4.7.3-1
 repackV=1.4.8-1
 hintV=1.5.0-1
 
-bouncerV=1.18.0-1
-nginxV=1-1
-
-#dbzV=1.8.1.Final
-#apicV=2.2.0
-#decbufsV=1.7.0-1
-
-zookV=3.7.1
-#kfkV=3.1.0
 patroniV=3.0
 
-##adminV=5.5
-##omniV=2.17.0
-
-audit14V=1.6.2-1
 audit15V=1.7.0-1
 postgisV=3.3.3-1
 

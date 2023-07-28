@@ -33,10 +33,6 @@ decoderbufsFullV=1.7.0
 decoderbufsShortV=
 decoderbufsBuildV=1
 
-wal2jsonFullV=2.4
-wal2jsonShortV=
-wal2jsonBuildV=1
-
 curlFullV=2.1.1
 curlShortV=
 curlBuildV=1
@@ -48,18 +44,6 @@ odbcBuildV=1
 backrestFullV=2.46
 backrestShortV=
 backrestBuildV=1
-
-bckgrndFullV=1.1
-bckgrndShortV=
-bckgrndBuildV=1
-
-pool2FullV=4.4.2
-pool2ShortV=
-pool2BuildV=1
-
-bouncerFullV=1.18.0
-bouncerShortV=
-bouncerBuildV=1
 
 multicorn2FullV=2.4
 multicorn2ShortV=
@@ -73,18 +57,6 @@ vectorFullV=0.4.4
 vectorShortV=
 vectorBuildV=1
 
-pgtopFullV=3.7.0
-pgtopShortV=
-pgtopBuildV=1
-
-proctabFullV=0.0.8.1
-proctabShortV=
-proctabBuildV=1
-
-httpFullV=1.3.1
-httpShortV=
-httpBuildV=1
-
 hypopgFullV=1.4.0
 hypopgShortV=
 hypopgBuildV=1
@@ -93,21 +65,9 @@ postgisFullV=3.3.3
 postgisShortV=
 postgisBuildV=1
 
-prestoFullV=0.229
-prestoShortV=
-prestoBuildV=1
-
-cassFullV=3.1.5
-cassShortV=
-cassBuildV=1
-
 orafceFullV=4.3.0
 orafceShortV=
 orafceBuildV=1
-
-fdFullV=1.1.0-1
-fdShortV=
-fdBuildV=1
 
 oraclefdwFullV=2.5.0
 oraclefdwShortV=
@@ -133,17 +93,13 @@ plProfilerFullVersion=4.2.2
 plProfilerShortVersion=
 plprofilerBuildV=1
 
-plv8FullV=3.1.2
+plv8FullV=3.2beta1
 plv8ShortV=
 plv8BuildV=1
 
 debugFullV=1.5
 debugShortV=
 debugBuildV=1
-
-fdFullV=1.1.0
-fdShortV=
-fdBuildV=1
 
 anonFullV=1.1.0
 anonShortV=
