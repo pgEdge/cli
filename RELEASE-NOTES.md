@@ -6,8 +6,9 @@
   - improve efficiency of `ace diff-tables` to handle massive tables w blocks of checksums
   - add cluster.import_json_def
 
-## done so far for 23.125 as of 2023-07-26
-  - add **pgVector** as an extension
+## done so far for 23.125 as of 2023-07-28
+  - add pgvector-0.4.4 as an extension for pg15 & pg16
+  - bump plprofiler to 4.2.2 and also support it for pg16
   - add support for northwind (just like pgbench) as a demo/test app
   - begin adding support for cluster.import_json_def()
 
