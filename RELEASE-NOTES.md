@@ -7,6 +7,8 @@
   - add cluster.import_json_def
 
 ## done so far for 23.125 as of 2023-07-28
+  - add support for plv8-3.2beta1-pg15
+  - add util.wait_pg_ready()
   - add pgvector-0.4.4 as an extension for pg15 & pg16
   - bump plprofiler to 4.2.2 and also support it for pg16
   - add support for northwind (just like pgbench) as a demo/test app
