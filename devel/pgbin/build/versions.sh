@@ -129,7 +129,7 @@ mongofdwFullV=5.4.0
 mongofdwShortV=
 mongofdwBuildV=1
 
-plProfilerFullVersion=4.2
+plProfilerFullVersion=4.2.2
 plProfilerShortVersion=
 plprofilerBuildV=1
 

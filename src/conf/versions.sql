@@ -1,4 +1,3 @@
-
 DROP VIEW  IF EXISTS v_grp_cats;
 DROP VIEW  IF EXISTS v_versions;
 
@@ -278,8 +277,11 @@ INSERT INTO versions VALUES ('pldebugger-pg15', '1.5-1',  'arm9, el9',  1, '2022
 
 INSERT INTO projects VALUES ('plprofiler', 'dev', 3, 0, 'hub', 7, 'https://github.com/bigsql/plprofiler/tags',
   'plprofiler', 1, 'plprofiler.png', 'Stored Procedure Profiler', 'https://github.com/bigsql/plprofiler#plprofiler');
-INSERT INTO releases VALUES ('plprofiler-pg15', 0, 'plprofiler',    'PL/Profiler',  '', 'test', '', 1, 'POSTGRES', '', '');
-INSERT INTO versions VALUES ('plprofiler-pg15', '4.2-1', 'arm9, el9', 1, '20221003', 'pg15', '', '');
+INSERT INTO releases VALUES ('plprofiler-pg15', 0, 'plprofiler',    'PL/Profiler',  '', 'prod', '', 1, 'POSTGRES', '', '');
+INSERT INTO releases VALUES ('plprofiler-pg16', 0, 'plprofiler',    'PL/Profiler',  '', 'prod', '', 1, 'POSTGRES', '', '');
+INSERT INTO versions VALUES ('plprofiler-pg15', '4.2.2-1', 'arm9, el9', 1, '20230801', 'pg15', '', '');
+INSERT INTO versions VALUES ('plprofiler-pg16', '4.2.2-1', 'arm9, el9', 1, '20230801', 'pg16', '', '');
+INSERT INTO versions VALUES ('plprofiler-pg15', '4.2-1', 'arm9, el9', 0, '20221003', 'pg15', '', '');
 
 INSERT INTO projects VALUES ('postgrest', 'pge', 4, 3000, 'hub', 0, 'https://github.com/postgrest/postgrest/tags',
   'postgrest', 0, 'postgrest.png', 'a RESTful API', 'https://postgrest.org');
