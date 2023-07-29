@@ -513,7 +513,7 @@ if [ "$PLATFORM" == "el8" ]; then
   isEL="True"
   isEL8="True"
   isEL9="False"
-elif [ "$PLATFORM" == "el9" ] || [ "$PLATFORM" == "al2023" ]; then
+elif [ "$PLATFORM" == "el9" ]; then
   isEL="True"
   isEL8="False"
   isEL9="True"

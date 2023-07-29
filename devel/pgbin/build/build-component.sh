@@ -271,11 +271,6 @@ function buildComp {
 
         configureComp
 
-        if [ "$comp" == "hivefdw" ]; then
-           buildLib=$buildLocation/lib
-           ln -s /etc/alternatives/jre_11/lib/server/libjvm.so $buildLib/libjvm.so
-        fi
-
         make_install="make install"
         if [ "$comp" == "multicorn2" ]; then
             sudo mkdir -p /usr/local/lib64/python3.9/site-packages
@@ -434,7 +429,7 @@ function buildTimeScaleDBComponent {
         packageComponent $componentBundle
 }
 
-TEMP=`getopt -l no-tar, copy-bin,no-copy-bin,with-pgver:,with-pgbin:,build-curl:,build-hypopg:,build-postgis:,build-bouncer:,build-logfdw:,build-tdsfdw:,build-mongofdw:,build-mysqlfdw:,build-oraclefdw:,build-orafce:,build-audit:,build-partman:,build-pldebugger:,build-pljava:,build-plv8:,build-plprofiler:,build-bulkload:,build-backrest:,build-psqlodbc:,build-repack:,build-spock31:,build-pool2:,build-pglogical:,build-hintplan:,build-timescaledb:,build-foslots:,build-readonly:,build-cron:,build-multicorn2:,build-anon,build-ddlx:,build-citus:,build-vector: -- "$@"`
+TEMP=`getopt -l no-tar, copy-bin,no-copy-bin,with-pgver:,with-pgbin:,build-curl:,build-hypopg:,build-postgis:,build-logfdw:,build-tdsfdw:,build-mongofdw:,build-mysqlfdw:,build-oraclefdw:,build-orafce:,build-audit:,build-partman:,build-pldebugger:,build-pljava:,build-plv8:,build-plprofiler:,build-bulkload:,build-backrest:,build-psqlodbc:,build-repack:,build-spock31:,build-pglogical:,build-hintplan:,build-timescaledb:,build-readonly:,build-cron:,build-multicorn2:,build-anon,build-ddlx:,build-citus:,build-vector: -- "$@"`
 
 if [ $? != 0 ] ; then
 	echo "Required parameters missing, Terminating..."
@@ -450,7 +445,6 @@ while true; do
     --with-pgbin ) pgBinPassed=true; pgBin=$2; shift; shift; ;;
     --target-dir ) targetDirPassed=true; targetDir=$2; shift; shift ;;
     --build-postgis ) buildPostGIS=true; Source=$2; shift; shift ;;
-    --build-bouncer ) buildBouncer=true; Source=$2; shift; shift; ;;
     --build-logfdw ) buildLOGFDW=true; Source=$2; shift; shift ;;
     --build-tdsfdw ) buildTDSFDW=true; Source=$2; shift; shift ;;
     --build-mongofdw ) buildMongoFDW=true Source=$2; shift; shift ;;
@@ -458,7 +452,6 @@ while true; do
     --build-mysqlfdw ) buildMySQLFDW=true; Source=$2; shift; shift ;;
     --build-oraclefdw ) buildOracleFDW=true; Source=$2; shift; shift ;;
     --build-orafce ) buildOrafce=true; Source=$2; shift; shift ;;
-    --build-fixeddecimal ) buildFD=true; Source=$2; shift; shift ;;
     --build-audit ) buildAudit=true; Source=$2; shift; shift ;;
     --build-hypopg ) buildHypopg=true; Source=$2; shift; shift ;;
     --build-curl ) buildCurl=true; Source=$2; shift; shift ;;
@@ -473,11 +466,9 @@ while true; do
     --build-repack ) buildRepack=true; Source=$2; shift; shift ;;
     --build-pglogical ) buildPgLogical=true; Source=$2; shift; shift ;;
     --build-spock31 ) buildSpock31=true; Source=$2; shift; shift ;;
-    --build-pool2 ) buildPool2=true; Source=$2; shift; shift ;;
     --build-hintplan ) buildHintPlan=true; Source=$2; shift; shift ;;
     --build-timescaledb ) buildTimeScaleDB=true; timescaleDBSource=$2; shift; shift ;;
     --build-readonly ) buildReadOnly=true; Source=$2; shift; shift ;;
-    --build-foslots ) buildFoSlots=true; Source=$2; shift; shift ;;
     --build-cron ) buildCron=true; Source=$2; shift; shift ;;
     --build-multicorn2 ) buildMulticorn2=true; Source=$2; shift; shift ;;
     --build-anon ) buildAnon=true; Source=$2; shift; shift ;;
@@ -556,10 +547,6 @@ fi
 
 if [ "$buildReadOnly" == "true" ]; then
 	buildComp readonly  "$readonlyShortV" "$readonlyFullV" "$readonlyBuildV" "$Source"
-fi
-
-if [ "$buildFoSlots" == "true" ]; then
-	buildComp foslots  "$foslotsShortV" "$foslotsFullV" "$foslotsBuildV" "$Source"
 fi
 
 if [ "$buildCron" == "true" ]; then

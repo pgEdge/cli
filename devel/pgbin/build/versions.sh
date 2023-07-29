@@ -21,10 +21,6 @@ pg12BuildV=1
 pg11V=11.20
 pg11BuildV=1
 
-foslotsFullV=1a
-foslotsShortV=
-foslotsBuildV=1
-
 readonlyFullV=1.1.0
 readonlyShortV=
 readonlyBuildV=1
@@ -113,17 +109,9 @@ auditFull15V=1.7.0
 auditShortV=
 auditBuildV=1
 
-setUserFullVersion=1.6.2
-setUserShortVersion=
-setUserBuildV=1
-
 pljavaFullV=1.6.4
 pljavaShortV=
 pljavaBuildV=1
-
-plRFullVersion=8.3.0.17
-plRShortVersion=83
-plRBuildV=1
 
 bulkloadFullV=3.1.19
 bulkloadShortV=
@@ -158,7 +146,7 @@ if [ "$PLATFORM" == "el8" ]; then
   isEL=yes
   isEL8=yes
   isEL9=no
-elif [ "$PLATFORM" == "el9" ] || [ "$PLATFORM" == "al2023" ]; then
+elif [ "$PLATFORM" == "el9" ]; then
   isEL=yes
   isEL8=no
   isEL9=yes
