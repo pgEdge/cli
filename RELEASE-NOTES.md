@@ -7,9 +7,10 @@
   - fix port numbers in cluster.create-local() (env & .json)
   - add support for plv8-3.2beta1-pg15
 
-## done so far for 23.125 as of 2023-07-28
+## done so far for 23.125 as of 2023-07-30
+  - bump postgis to v3.3.4
   - add pgvector-0.4.4 as an extension for pg15 & pg16
-  - bump plprofiler to 4.2.2 and also support it for pg16
+  - bump plprofiler to 4.2.2 and add support for pg16
   - more adding support for northwind (just like pgbench) as a demo/test app
   - begin adding support for cluster.import_remote_def()
   - begin adding util.wait_pg_ready()
