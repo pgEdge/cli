@@ -53,7 +53,7 @@ hintV=1.5.0-1
 patroniV=3.0
 
 audit15V=1.7.0-1
-postgisV=3.3.3-1
+postgisV=3.3.4-1
 
 pljavaV=1.6.4-1
 debuggerV=1.5-1
