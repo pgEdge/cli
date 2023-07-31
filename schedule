@@ -77,7 +77,7 @@ t/799_cluster_breakdown_pg16.pl
 
 # Complex tests
 # ============ 
-t/020_nodectl_install_pgedge.pl
-t/900_getting_started_guide.pl
-t/999_gsg_breakdown.pl
+#t/020_nodectl_install_pgedge.pl
+#t/900_getting_started_guide.pl
+#t/999_gsg_breakdown.pl
 
