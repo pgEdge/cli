@@ -26,7 +26,7 @@ my $spock = "3.1";
  chdir("./pgedge");
 
 #
-# First, we use nodectl to install pgEdge; this installs Postgres and creates the admin user and demo database.
+# First, we use nodectl to install pgEdge.
 # 
 
 my $cmd = qq(./nodectl install pgedge $version -U $username -P $password -d $database);
@@ -48,7 +48,7 @@ my $port = $out->[0]->{"port"};
 print("The port number is = {$port}\n");
 
 #
-# Then, we add an entry to the ~/.pgpass file for the admin user so we can connect with psql.
+# Then, we add an entry to the ~/.pgpass file for the user so we can connect with psql.
 #
 
 my $cmd3 = qq(echo "*:*:*:$username:password" >> ~/.pgpass);
