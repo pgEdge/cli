@@ -125,7 +125,7 @@ INSERT INTO categories VALUES (9,  87, 'Management & Monitoring', 'Manage/Monito
 -- ## HUB ################################
 INSERT INTO projects VALUES ('hub', 'app', 0, 0, 'hub', 0, 'https://github.com/pgedge/nodectl','',0,'','','');
 INSERT INTO releases VALUES ('hub', 1, 'hub', '', '', 'hidden', '', 1, '', '', '');
-INSERT INTO versions VALUES ('hub', '23.125', '',  1, '20230801', '', '', '');
+INSERT INTO versions VALUES ('hub', '23.125', '',  1, '20230731', '', '', '');
 INSERT INTO versions VALUES ('hub', '23.124', '',  0, '20230721', '', '', '');
 INSERT INTO versions VALUES ('hub', '23.123', '',  0, '20230720', '', '', '');
 INSERT INTO versions VALUES ('hub', '23.122', '',  0, '20230718', '', '', '');
@@ -268,8 +268,8 @@ INSERT INTO projects VALUES ('plprofiler', 'dev', 3, 0, 'hub', 7, 'https://githu
   'plprofiler', 1, 'plprofiler.png', 'Stored Procedure Profiler', 'https://github.com/bigsql/plprofiler#plprofiler');
 INSERT INTO releases VALUES ('plprofiler-pg15', 0, 'plprofiler',    'PL/Profiler',  '', 'prod', '', 1, 'POSTGRES', '', '');
 INSERT INTO releases VALUES ('plprofiler-pg16', 0, 'plprofiler',    'PL/Profiler',  '', 'prod', '', 1, 'POSTGRES', '', '');
-INSERT INTO versions VALUES ('plprofiler-pg15', '4.2.2-1', 'arm9, el9', 1, '20230801', 'pg15', '', '');
-INSERT INTO versions VALUES ('plprofiler-pg16', '4.2.2-1', 'arm9, el9', 1, '20230801', 'pg16', '', '');
+INSERT INTO versions VALUES ('plprofiler-pg15', '4.2.2-1', 'arm9, el9', 1, '20230731', 'pg15', '', '');
+INSERT INTO versions VALUES ('plprofiler-pg16', '4.2.2-1', 'arm9, el9', 1, '20230731', 'pg16', '', '');
 INSERT INTO versions VALUES ('plprofiler-pg15', '4.2-1', 'arm9, el9', 0, '20221003', 'pg15', '', '');
 
 INSERT INTO projects VALUES ('postgrest', 'pge', 4, 3000, 'hub', 0, 'https://github.com/postgrest/postgrest/tags',
@@ -319,8 +319,8 @@ INSERT INTO projects VALUES ('vector', 'pge', 4, 0, 'hub', 1, 'https://github.co
   'vector', 1, 'vector.png', 'Vector & Embeddings', 'https://github.com/pgedge/vector/#vector');
 INSERT INTO releases VALUES ('vector-pg15', 4, 'vector', 'pgVector', '', 'prod', '', 1, 'pgEdge Community', '', '');
 INSERT INTO releases VALUES ('vector-pg16', 4, 'vector', 'pgVector', '', 'prod', '', 1, 'pgEdge Community', '', '');
-INSERT INTO versions VALUES ('vector-pg15', '0.4.4-1', 'el9, arm9', 1, '20230708', 'pg15', '', '');
-INSERT INTO versions VALUES ('vector-pg16', '0.4.4-1', 'el9, arm9', 1, '20230708', 'pg16', '', '');
+INSERT INTO versions VALUES ('vector-pg15', '0.4.4-1', 'el9, arm9', 1, '20230731', 'pg15', '', '');
+INSERT INTO versions VALUES ('vector-pg16', '0.4.4-1', 'el9, arm9', 1, '20230731', 'pg16', '', '');
 
 INSERT INTO projects VALUES ('spock', 'pge', 4, 0, 'hub', 1, 'https://github.com/pgedge/spock/tags',
   'spock', 1, 'spock.png', 'Logical & Multi-Master Replication', 'https://github.com/pgedge/spock/#spock');
