@@ -30,11 +30,7 @@ my $cmd = qq(./nc um install hypopg-pg16);
 print("cmd = $cmd\n");
 my ($success, $error_message, $full_buf, $stdout_buf, $stderr_buf)= IPC::Cmd::run(command => $cmd, verbose => 0);
 
-#
-# Success is a boolean value; 0 means true, any other value is false. 
-#
 print("success = $success");
-print("error_message = $error_message");
 print("stdout_buf = @$stdout_buf\n");
 
 my $value = $success;
@@ -46,7 +42,7 @@ my $value = $success;
 my $json = `./nc --json info`;
 print("my json = $json");
 my $out = decode_json($json);
-my $homedir = $out->[0]->{"homedir"};
+my $homedir = $out->[0]->{"home"};
 
 print("The home directory is {$homedir}\n"); 
 
@@ -65,7 +61,7 @@ print("The port number is {$port}\n");
 # Then, we use the port number from the previous section to connect to psql and test for the existence of the extension.
 #
 
-my $cmd5 = qq($homedir/$version/bin/psql -t -h 127.0.0.1 -p $port -U username -d database -c "SELECT installed_version FROM pg_available_extensions WHERE name='hypopg'");
+my $cmd5 = qq($homedir/$version/bin/psql -t -h 127.0.0.1 -p $port -d $database -c "SELECT * FROM pg_available_extensions WHERE name='hypopg'");
 print("cmd5 = $cmd5\n");
 my($success5, $error_message5, $full_buf5, $stdout_buf5, $stderr_buf5)= IPC::Cmd::run(command => $cmd5, verbose => 0);
 
@@ -76,12 +72,11 @@ print("stdout_buf5 = @$stdout_buf5\n");
 # Test
 #
 
-print("success5 = $success5\n");
-print("stdout_buf5 = @$full_buf5\n");
-print("If there is a version in @$full_buf5 we've installed hypopg!\n");
+print("success = $success\n");
+print("If the word CREATE is in @$full_buf5 we've installed hypopg!\n");
 
-my $substring = "1";
-if(index($stdout_buf5, $substring) == -1)
+my $substring = "CREATE";
+if(index($stdout_buf, $substring) == -1)
 
 {
     exit(0);
