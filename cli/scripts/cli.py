@@ -80,7 +80,7 @@ mode_list_advanced = ['kill', 'config', 'init', 'clean', 'useradd', 'spock',
                       'advanced', 'secure']
 
 ignore_comp_list = [ "get", "set", "unset", "spock", "pgbin", "psql", 
-                     "cluster", "service", "um", "starfleet", "useradd", "backrest", 
+                     "cluster", "service", "um", "secure", "useradd", "backrest", 
                      "ace", "change-pgconf"]
 
 no_log_commands = ['status', 'info', 'list', 'top', 'get', 'metrics-check']

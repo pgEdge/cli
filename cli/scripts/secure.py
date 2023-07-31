@@ -42,12 +42,12 @@ def call_pgedgecli(cmd, profile):
 
 
 def get_pgedgecli(cmd, profile):
-  cluster_def={}
+  return_json={}
   if validate_profile(profile):
-    cluster_def=subprocess.check_output("~/go/bin/pgedge " + cmd  + " --profile=" + profile, shell=True)
+    return_json=subprocess.check_output("~/go/bin/pgedge " + cmd  + " --profile=" + profile, shell=True)
   else:
     util.exit_message(f"Profile needs to be registered")
-  return json.loads(cluster_def.decode('utf8'))
+  return json.loads(return_json.decode('utf8'))
     
 
 def register(client_id, client_secret, profile="pgedge"):
@@ -81,9 +81,10 @@ def list_cluster_nodes(cluster_id, profile="pgedge"):
 
 def import_cluster(cluster_id, profile="pgedge"):
   """Enable nodeCtl cluster commands on a pgEdge Cloud Cluster"""
-  cluster_def=get_pgedgecli("listcluster " + cluster_id, profile)
+  cluster_def=get_pgedgecli("listclusters " + cluster_id, profile)
   cluster_name=cluster_def[0]["name"]
   db=cluster_def[0]["database"]["name"]
+
   usr="pgedge"
   passwd=""
   pg=cluster_def[0]["database"]["pg_version"]
@@ -93,25 +94,15 @@ def import_cluster(cluster_id, profile="pgedge"):
   paths=[]
   ports=[]
   ips=[]
-  for node in cluster_def[0]["node_groups"]["aws"]:
+  node_def=get_pgedgecli("listclusternodes " + cluster_id, profile)
+  for node in node_def:
     n=n+1
-    nodes.append(node["nodes"][0]["display_name"])
+    nodes.append(node["name"])
     paths.append("/opt/pgedge")
     ports.append("5432")
-    ips.append(node["cidr"].split('/')[0])
-  for node in cluster_def[0]["node_groups"]["azure"]:
-    n=n+1
-    nodes.append(node["nodes"][0]["display_name"])
-    paths.append("/opt/pgedge")
-    ports.append("5432")
-    ips.append(node["cidr"].split('/')[0])
-  for node in cluster_def[0]["node_groups"]["google"]:
-    n=n+1
-    nodes.append(node["nodes"][0]["display_name"])
-    paths.append("/opt/pgedge")
-    ports.append("5432")
-    ips.append(node["cidr"].split('/')[0])
+    ips.append(node["public_ip_address"])
   cluster.create_remote_json(cluster_name, db, n, usr, passwd, pg, create_dt, nodes, paths, ports, ips)
+  return("Cluster info json file created")
 
 
 def push_metrics(cluster_name, target_info, client_id=None, client_secret=None):
