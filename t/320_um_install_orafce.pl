@@ -62,7 +62,7 @@ print("The port number is {$port}\n");
 # Then, we use the port number from the previous section to connect to psql and test for the existence of the extension.
 #
 
-my $cmd5 = qq($homedir/$version/bin/psql -t -h 127.0.0.1 -p $port -d $database -c "SELECT * FROM pg_available_extensions WHERE name='orafce-pg16'");
+my $cmd5 = qq($homedir/$version/bin/psql -t -h 127.0.0.1 -p $port -d $database -c "SELECT * FROM pg_available_extensions WHERE name='orafce'");
 print("cmd5 = $cmd5\n");
 my($success5, $error_message5, $full_buf5, $stdout_buf5, $stderr_buf5)= IPC::Cmd::run(command => $cmd5, verbose => 0);
 
