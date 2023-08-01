@@ -60,12 +60,13 @@ def create_local_json(cluster_name, db, num_nodes, usr, passwd, pg, port1):
      util.exit_message("Unable to create JSON file", 1)
 
 
-def create_remote_json(cluster_name, db, num_nodes, usr, passwd, pg, create_dt, nodes, paths, ports, ips):
+def create_remote_json(cluster_name, db, num_nodes, usr, passwd, pg, create_dt, id, nodes):
   cluster_dir = base_dir + os.sep + cluster_name
   os.system("mkdir -p " + cluster_dir)
   text_file = open(cluster_dir + os.sep + cluster_name + ".json", "w")
   cluster_json = {}
   cluster_json["cluster"] = cluster_name
+  cluster_json["id"] = id
   cluster_json["is_localhost"] = "False"
   cluster_json["create_dt"] = create_dt
   cluster_json["db_name"] = db
@@ -75,14 +76,7 @@ def create_remote_json(cluster_name, db, num_nodes, usr, passwd, pg, create_dt, 
   cluster_json["ssh_key"] = ""
   cluster_json["pg_ver"] = pg
   cluster_json["count"] = num_nodes
-  cluster_json["nodes"] = []
-  for n in range(0, num_nodes):
-    node_json={}
-    node_json["nodename"] = nodes[n]
-    node_json["ip"] = ips[n]
-    node_json["port"] = ports[n]
-    node_json["path"] = paths[n]
-    cluster_json["nodes"].append(node_json)
+  cluster_json["nodes"]=(nodes)
   try:
     text_file.write(json.dumps(cluster_json, indent=2))
     text_file.close()

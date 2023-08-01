@@ -13,9 +13,9 @@ def get_access_token(auth_json):
   access_token=None
   cred=json.dumps(auth_json).replace("{","").replace("}","")
   try:
-    os.system("~/go/bin/pgedge generateaccesstoken " + cred + " > " + cluster_dir + os.sep + "token.json") 
+    os.system(f"~/go/bin/pgedge generateaccesstoken {cred} > {cluster_dir}{os.sep}token.json") 
     parsed_json = None
-    with open(cluster_dir + os.sep + "token.json") as f:
+    with open(f"{cluster_dir}{os.sep}token.json") as f:
       parsed_json = json.load(f)
       access_token = parsed_json["access_token"]
   except:
@@ -26,7 +26,7 @@ def get_access_token(auth_json):
 def validate_profile(profile):
   pgede_dir = os.path.expanduser("~")
   found=False
-  with open(pgede_dir + os.sep + ".pgedge" + os.sep + "credentials.json") as f:
+  with open(f"{pgede_dir}{os.sep}.pgedge{os.sep}credentials.json") as f:
       parsed_json = json.load(f)
       for prof in parsed_json["profiles"]:
         if profile==prof:
@@ -35,27 +35,29 @@ def validate_profile(profile):
 
 
 def call_pgedgecli(cmd, profile):
+  ## Execute a pgEdgeCLI command
   if validate_profile(profile):
-    os.system("~/go/bin/pgedge " + cmd  + " --profile=" + profile)
+    os.system(f"~/go/bin/pgedge {cmd} --profile={profile}")
   else:
-    util.exit_message(f"Profile needs to be registered")
+    util.exit_message(f"You must log into this profile")
 
 
 def get_pgedgecli(cmd, profile):
+  ## Execute a pgEdgeCLI command and save output
   return_json={}
   if validate_profile(profile):
-    return_json=subprocess.check_output("~/go/bin/pgedge " + cmd  + " --profile=" + profile, shell=True)
+    return_json=subprocess.check_output(f"~/go/bin/pgedge {cmd} --profile={profile}", shell=True)
   else:
-    util.exit_message(f"Profile needs to be registered")
+    util.exit_message(f"You must log into this profile")
   return json.loads(return_json.decode('utf8'))
     
 
-def register(client_id, client_secret, profile="pgedge"):
-  """Register nodeCtl with a pgEdge Cloud Account"""
+def login(client_id, client_secret, profile="pgedge"):
+  """Login nodeCtl with a pgEdge Cloud Account"""
   try:
     ## Create Creds File
-    os.system("mkdir -p " + cluster_dir)
-    text_file = open(cluster_dir + os.sep + "creds.json", "w")
+    os.system(f"mkdir -p {cluster_dir}")
+    text_file = open(f"{cluster_dir}{os.sep}creds.json", "w")
     auth_json = {}
     auth_json["client_id"] = client_id
     auth_json["client_secret"] = client_secret
@@ -63,10 +65,10 @@ def register(client_id, client_secret, profile="pgedge"):
     ## Get Access Token
     access_token=get_access_token(auth_json)
     ## Register Auth profile
-    os.system("~/go/bin/pgedge auth add-profile " + profile + " " + access_token)  
+    os.system(f"~/go/bin/pgedge auth add-profile {profile} {access_token}")  
   except:
     util.exit_message(f"Unable to create creds file")
-  return "Registered with profile: " + profile
+  return f"Logged in with profile: {profile}"
 
 
 def list_clusters(profile="pgedge"):
@@ -76,33 +78,57 @@ def list_clusters(profile="pgedge"):
 
 def list_cluster_nodes(cluster_id, profile="pgedge"):
   """List all nodes in a pgEdge Cloud Account cluster"""
-  call_pgedgecli("listclusternodes " + cluster_id, profile)
+  call_pgedgecli(f"listclusternodes {cluster_id}", profile)
   
 
 def import_cluster(cluster_id, profile="pgedge"):
   """Enable nodeCtl cluster commands on a pgEdge Cloud Cluster"""
-  cluster_def=get_pgedgecli("listclusters " + cluster_id, profile)
-  cluster_name=cluster_def[0]["name"]
+  cluster_def=get_pgedgecli(f"listclusters {cluster_id}", profile)
+  cluster_name=cluster_def[0]["name"].lower()
+  id=cluster_def[0]["id"]
   db=cluster_def[0]["database"]["name"]
-
   usr="pgedge"
   passwd=""
   pg=cluster_def[0]["database"]["pg_version"]
   create_dt=cluster_def[0]["created_at"]
   n=0
   nodes=[]
-  paths=[]
-  ports=[]
-  ips=[]
-  node_def=get_pgedgecli("listclusternodes " + cluster_id, profile)
+  node_def=get_pgedgecli(f"listclusternodes {cluster_id}", profile)
   for node in node_def:
+    node_json={}
     n=n+1
-    nodes.append(node["name"])
-    paths.append("/opt/pgedge")
-    ports.append("5432")
-    ips.append(node["public_ip_address"])
-  cluster.create_remote_json(cluster_name, db, n, usr, passwd, pg, create_dt, nodes, paths, ports, ips)
+    node_json["name"]=node["name"]
+    node_json["id"]=node["id"]
+    node_json["path"]="/opt/pgedge"
+    node_json["port"]="5432"
+    node_json["ip"]=node["public_ip_address"]
+    nodes.append(node_json)
+  cluster.create_remote_json(cluster_name, db, n, usr, passwd, pg, create_dt, id, nodes)
   return("Cluster info json file created")
+
+
+def get_cluster_id(cluster_name):
+  """Return the cluster id based on a cluster display name"""
+  try:
+    with open(f"{cluster_dir}{os.sep}{cluster_name}{os.sep}{cluster_name}.json") as f:
+      parsed_json = json.load(f)
+      cluster_id=parsed_json["id"]
+  except:
+    util.exit_message(f"Cannot find cluster, you may need to import-cluster")
+  return cluster_id
+
+
+def get_node_id(cluster_name,node_name):
+  """Return the node id based on cluster and node display name"""
+  try:
+    with open(f"{cluster_dir}{os.sep}{cluster_name}{os.sep}{cluster_name}.json") as f:
+      parsed_json = json.load(f)
+      for n in parsed_json["nodes"]:
+        if n["name"]==node_name:
+          node_id=n["id"]
+  except:
+    util.exit_message(f"Cannot find node, you may need to import-cluster")
+  return node_id
 
 
 def push_metrics(cluster_name, target_info, client_id=None, client_secret=None):
@@ -117,15 +143,17 @@ def create_cluster(cluster_name, cluster_info, client_id=None, client_secret=Non
 
 def destroy_cluster(cluster_id, profile="pgedge"):
   """Delete a pgEdge Cloud Cluster"""
-  call_pgedgecli("deletecluster " + cluster_id, profile)
+  call_pgedgecli(f"deletecluster {cluster_id}", profile)
 
 
 if __name__ == '__main__':
   fire.Fire({
-    'register':           register,
+    'login':              login,
     'list-clusters':      list_clusters,
     'list-cluster-nodes': list_cluster_nodes,
     'import-cluster':     import_cluster,
+    'get-cluster-id':     get_cluster_id,
+    'get-node-id':        get_node_id,
     'push-metrics':       push_metrics,
     'create-cluster':     create_cluster,
     'destroy-cluster':    destroy_cluster
