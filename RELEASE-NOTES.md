@@ -11,6 +11,7 @@
   - improve devel/setup doc & completeness
   - add support for `./nc psql 99 -f`
   - drop unused from spock.py {validate(), tune() & install()}
+  - fix regression in spock.repset_add_tables() for wildcards
 
 
 ## done for 23.125 as of 2023-07-31
