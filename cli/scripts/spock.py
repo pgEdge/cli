@@ -539,9 +539,10 @@ def repset_add_table(replication_set, table, db, synchronize_data=False, columns
   con = get_pg_connection(pg_v, db, util.get_user())
 
   for tbl in tbls:
+    tab = str(tbl[0])
     sql="SELECT spock.repset_add_table(" + \
           get_eq("set_name",            replication_set,   ", ") + \
-          get_eq("relation",            tbl,               ", ") + \
+          get_eq("relation",            tab,               ", ") + \
           get_eq("synchronize_data",    synchronize_data,  ", ")
    
     if columns!=None and len(tbls)==1:
@@ -549,7 +550,7 @@ def repset_add_table(replication_set, table, db, synchronize_data=False, columns
     if row_filter!=None and len(tbls)==1:
       sql=sql+get_eq("row_filter",row_filter,        ", ")
     sql=sql+get_eq("include_partitions",  include_partitions,") ")
-    util.message(f"Adding table {tbl} to replication set {replication_set}.")
+    util.message(f"Adding table {tab} to replication set {replication_set}.")
 
     try:
       con.transaction()
