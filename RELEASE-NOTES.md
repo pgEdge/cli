@@ -10,6 +10,7 @@
 ## done for 23.126 as of 2023-08-01
   - improve devel/setup doc & completeness
   - add support for `./nc psql 99 -f`
+  - drop unused from spock.py {validate(), tune() & install()}
 
 
 ## done for 23.125 as of 2023-07-31

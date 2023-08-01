@@ -125,47 +125,6 @@ def get_eq(parm, val, sufx, set=False):
   return(colon_equal)
 
 
-def validate(port=5432, pgV="pg15"):
-  """Check pre-reqs for advanced commands."""
-  util.message("#### Checking for Pre-Req's #########################")
-  platf = util.get_platform()
-
-  util.message("  Verify Linux or macOS")
-  if platf != "Linux" and platf != "Darwin":
-    error_exit("OS must be Linux or macOS")
-
-  if platf == "Linux":
-    util.message("  Verify Linux supported glibc version")
-    if util.get_glibc_version() < "2.28":
-      error_exit("Linux has unsupported (older) version of glibc")
-
-  util.message("  Verify Python 3.6+")
-  p3_minor_ver = util.get_python_minor_version()
-  if p3_minor_ver < 6:
-    error_exit("Python version must be greater than 3.6")
-
-  util.message("  Verify non-root user")
-  if util.is_admin():
-    error_exit("You must install as non-root user with passwordless sudo privileges")
-
-  data_dir = "data/" + pgV
-  util.message("  Verify empty data directory '" + data_dir + "'")
-  if os.path.exists(data_dir):
-    dir = os.listdir(data_dir)
-    if len(dir) != 0:
-      error_exit("The '" + data_dir + "' directory is not empty")
-
-
-def tune(component="pg15"):
-  """Tune pgEdge components."""
-
-  if not os.path.isdir(component):
-    util.exit_message(f"{component} is not installed", 1)
-
-  rc = os.system("./nodectl tune " + component)
-  return(rc)
-
-
 def node_add_interface(node_name, interface_name, dsn, db, pg=None):
   """Add a new node interface."""
   pg_v = util.get_pg_v(pg)
@@ -422,7 +381,7 @@ def sub_show_table(subscription_name, relation, db, pg=None):
   sys.exit(0)
 
 
-def sub_synch():
+def sub_sync():
   """Synchronize a subscription."""
   util.exit_message("Not implemented yet.")
 
@@ -718,157 +677,8 @@ def metrics_check(db, pg=None):
   return(json_dumps(mtrc_dict))
 
 
-def install(User=None, Password=None, database=None, location=None, port=5432,
-            pgV="pg15", autostart=True, with_patroni=False, with_cat=False, with_bouncer=False, 
-            with_backrest=False, with_postgrest=False):
-  """Install pgEdge components."""
-
-  pgeUser = os.getenv('pgeUser', None)
-  pgePasswd = os.getenv('pgePasswd', None)
-  pgName = os.getenv('pgName', None)
-
-  if (User or pgeUser) and (Password or pgePasswd) and (database or pgName):
-    pass
-  else:
-    error_exit("The User, Password & database (-U -P -d) must all be specified")
-
-
-  if not User and pgeUser:
-    User = pgeUser
-  else:
-    User = str(User)
-
-  if not Password and pgePasswd:
-    Password = pgePasswd
-  else:
-    Password = str(Password)
-
-  if not database and pgName:
-    database = pgName
-
-  if location:
-    os.environ["pgeLocation"] =  str(location)
-
-  try:
-    pgePort = int(os.getenv('pgePort', '5432'))
-  except Exception as e:
-    error_exit("Port " + os.getenv('pgePort') + " is not an integer")
-  if not port and pgePort != 5432:
-    port = pgePort
-
-  if util.get_platform() == "Darwin":
-    ## not supporting autostart mode on osx yet
-    autostart = False
-
-  database = str(database)
-  try:
-    port = int(port)
-  except Exception as e:
-    error_exit("The port must be an integer")
-
-  pgV = str(pgV)
-  #print(f"pgN = {pgV[2:]} pg = {pgV[:2]}")
-  if pgV[:2] != "pg":
-    error_exit("pgV parm must start with 'pg'")
-  try:
-    pgN = int(pgV[2:])
-  except Exception as e:
-    error_exit("pgV parm must end with a two digit integer")
-
-  if User:
-    util.message("  Verify -U user & -P password...")
-
-    usr_l = User.lower()
-    if usr_l == "pgedge":
-      error_exit("The user defined supersuser may not be called 'pgedge'")
-
-    if usr_l == util.get_user():
-      error_exit("The user-defined superuser may not be the same as the OS user")
-
-    usr_len = len(usr_l)
-    if (usr_len < 2) or (usr_len > 64):
-      error_exit("The user-defined superuser must be >=1 and <= 64 in length")
-
-    if str(usr_l[0]).isnumeric():
-      error_exit("The user may not start with a numeric character")
-
-  if Password:
-    pwd_len = len(Password)
-    if (pwd_len < 6) or (pwd_len > 128):
-      error_exit("The password must be >= 6 and <= 128 in length")
-
-    for pwd_char in Password:
-      pwd_c = pwd_char.strip()
-      if pwd_c in (",", "'", '"', "@", ""):
-        error_exit("The password must not contain ',', \"'\", \", @, or a space")
-
-  if util.is_socket_busy(port):
-    error_exit("Port " + str(port) + " is busy")
-
-  osSys(nc + "install " + pgV)
-
-  if util.is_empty_writable_dir("/data") == 0:
-    util.message("## symlink empty local data directory to empty /data ###")
-    osSys("rm -rf data; ln -s /data data")
-
-  if autostart:
-    util.message("\n## init & config autostart  ###############")
-    osSys(nc + "init " + pgV + " --svcuser=" + util.get_user())
-    osSys(nc + "config " + pgV + " --autostart=on")
-  else:
-    osSys(nc + "init " + pgV)
-
-  osSys(nc + "config " + pgV + " --port=" + str(port))
-
-  osSys(nc + "start " + pgV)
-  time.sleep(3)
-
-  if User and Password:
-    ncb = nc + 'pgbin ' + str(pgN) + ' '
-    cmd = "CREATE ROLE " + User + " PASSWORD '" + Password + "' SUPERUSER CREATEDB CREATEROLE INHERIT LOGIN"
-    osSys(ncb +  '"psql -c \\"' + cmd + '\\" postgres" > /dev/null')
-
-    cmd = "createdb '" + database + "' --owner='" + User + "'"
-    osSys(ncb  + '"' + cmd + '"')
-
-  osSys(nc + "tune " + pgV, 3)
-
-  osSys(nc + "install spock -d " + database, 2)
-  ##osSys(nc + "install readonly", 2)
-
-  if util.get_platform() == "Linux":
-    util.change_pgconf_keyval(pgV, "cron.database_name", database, True)
-    osSys(nc + "install cron -d " + database, 2)
-
-  if os.getenv("withPOSTGREST", "False") == "True":
-    with_postgrest = True
-  if with_postgrest == True:
-    osSys(nc + "install postgrest", fatal_exit=False)
-
-  if os.getenv("withPATRONI", "False") == "True":
-    with_patroni = True
-  if with_patroni == True:
-    osSys(nc + "install patroni", fatal_exit=False)
-
-  if os.getenv("withCAT", "False") == "True":
-    with_cat = True
-  if with_cat  == True:
-    osSys(nc + "install cat")
-
-  if os.getenv("withBOUNCER", "False") == "True":
-    with_bouncer = True
-  if with_bouncer  == True:
-    osSys(nc + "install bouncer", fatal_exit=False)
-
-  if os.getenv("withBACKREST", "False") == "True":
-    with_backrest = True
-  if with_backrest == True:
-    osSys(nc + "install backrest", fatal_exit=False)
-
-
 if __name__ == '__main__':
   fire.Fire({
-      'tune':                tune,
       'node-create':         node_create,
       'node-drop':           node_drop,
       'node-alter-location': node_alter_location,
@@ -893,7 +703,7 @@ if __name__ == '__main__':
       'sub-remove-repset':   sub_remove_repset,
       'sub-show-status':     sub_show_status,
       'sub-show-table':      sub_show_table,
-      'sub-sync':            sub_synch,
+      'sub-sync':            sub_sync,
       'sub-resync-table':    sub_resync_table,
       'sub-wait-for-sync':   sub_wait_for_sync,
       'table-wait-for-sync': table_wait_for_sync,
