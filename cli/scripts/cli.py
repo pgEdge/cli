@@ -1392,21 +1392,28 @@ try:
 
 
   ## PSQL #######################################################################
+  psql_bad_msg = 'Three args required, try: psql 15 "sql command" database'
   if p_mode == 'psql':
-    if len(args) != 5:
-      util.exit_message('Three args required, try: psql 15 "sql command" database')
-
-    pg_v = str(args[2])
-    sql_cmd = str(args[3])
-    db = str(args[4])
+    if len(args) == 6:
+      pg_v   = str(args[2])
+      c_or_f = str(args[3])
+      sql_cmd = str(args[4])
+      db = str(args[5])
+    elif len(args) == 5:
+      pg_v = str(args[2])
+      c_or_f = "-c"
+      sql_cmd = str(args[3])
+      db = str(args[4])
+    else:
+      util.exit_message(psql_bad_msg)
 
     if sql_cmd == "-i":
       ## leave us at the interactive psql prompt
       sql_cmd = ""
-    elif sql_cmd.startswith("-f "):
-      pass
+    elif c_or_f in ("-f", "-c"):
+      sql_cmd = f"{c_or_f} \"" + sql_cmd + "\" "
     else:
-      sql_cmd = "-c \"" + sql_cmd + "\" "
+      util.exit_message(psql_bad_msg)
 
     cmd = "./nc pgbin " + pg_v + " 'psql " + sql_cmd +  db + "'"
 
