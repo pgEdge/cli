@@ -1,6 +1,6 @@
 
 if [ "$IN" == "" ]; then
-  echo "ERROR: Missing \$IN enviornment variable"
+  echo "ERROR: Missing \$IN environment variable"
   exit 1
 fi
 
@@ -21,5 +21,8 @@ cd $IN
 cp $NC/devel/util/in/pull-s3.sh .
 ./pull-s3.sh
 chmod 755 *.sh
+
+
+cp $IN/nclibs/*.bz2  $OUT/.
 
 

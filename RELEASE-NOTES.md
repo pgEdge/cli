@@ -7,6 +7,11 @@
   - fix port numbers in cluster.create-local() (env & .json)
   - add support for plv8-3.2beta1-pg15
 
+## done for 23.126 as of 2023-08-01
+  - improve devel/setup doc & completeness
+  - add support for `./nc psql 99 -f`
+
+
 ## done for 23.125 as of 2023-07-31
   - bump postgis to v3.3.4
   - add pgvector-0.4.4 as an extension for pg15 & pg16
