@@ -2,10 +2,14 @@
 
 ## to do's for 23.126 and beyond
   - add support for pljava-pg15 & -pg16 (cannot find libjvm17  setting from util.get_jvm_location)
+  - add support for plv8-3.2beta1-pg15
   - improve test support for patroni, etcd, haproxy
   - improve efficiency of `ace diff-tables` to handle massive tables w blocks of checksums
   - fix port numbers in cluster.create-local() (env & .json)
-  - add support for plv8-3.2beta1-pg15
+  - replicate ddl automagically to the spock.replicate_ddl commanf if ddl_entry_point = yes
+  - test json fields for replication
+  - ./nc secure init and nightly exports
+  - install pooling by default
 
 ## done for 23.126 as of 2023-08-01
   - improve devel/setup doc & completeness
