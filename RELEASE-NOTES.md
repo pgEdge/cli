@@ -1,21 +1,19 @@
 # pgEdge Platform Release Notes #############
 
-## to do's for 23.126 and beyond
+## to do's for 23.127 and beyond
   - add support for pljava-pg15 & -pg16 (cannot find libjvm17  setting from util.get_jvm_location)
   - add support for plv8-3.2beta1-pg15
-  - improve test support for patroni, etcd, haproxy
   - improve efficiency of `ace diff-tables` to handle massive tables w blocks of checksums
   - fix port numbers in cluster.create-local() (env & .json)
-  - replicate ddl automagically to the spock.replicate_ddl commanf if ddl_entry_point = yes
+  - replicate ddl automagically to the spock.replicate_ddl command if ddl_entry_point = 'on'
   - test json fields for replication
   - ./nc secure init and nightly exports
-  - install pooling by default
-  - fix install for backrest not to assume pg15
-  - fix install for pgcat2
-  - create a first pass for --with-patroni
+  - fix install for pgcat2 (throwing a sed error)
+  - create a first pass for --with-patroni (with etcd & haproxy)
   - validate proposed 'um install-pgedge()' --> 'secure install-pgedge()'
+  - confirm --app=northwind works fully
 
-## done for 23.126 as of 2023-08-01
+## done for 23.126 as of 2023-08-02
   - improve devel/setup doc & completeness
   - add support for `./nc psql 99 -f`
   - drop unused from spock.py {validate(), tune() & install()}
@@ -24,6 +22,7 @@
   - fix bug where `./nc tune` setting working_mem to 0 GB
   - 'install pgedge' now supports parms --with-patroni, --with-backrest & --with-cat
   - bump backrest from 2.46 to 2.47
+  - fix install/remove for backrest not to assume pg15
 
 
 ## done for 23.125 as of 2023-07-31

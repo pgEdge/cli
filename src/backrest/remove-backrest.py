@@ -5,7 +5,14 @@
 import os, sys
 import util, startup
 
-pgV="pg15"
+pgV = ""
+if os.path.isdir("pg15"):
+  pgV = "pg15"
+elif os.path.isdir("pg16"):
+  pgV = "pg16"
+
+if pgV == "":
+  util.exit_message("pg15+ not installed")
 
 autostart = util.get_column('autostart', 'backrest')
 if autostart == "on":

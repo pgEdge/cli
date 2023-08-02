@@ -17,11 +17,14 @@ if os.path.isdir("/var/lib/pgbackrest"):
   osSys("./nc remove backrest")
   sys.exit(1)
 
+pgV = ""
+if os.path.isdir("pg15"):
+  pgV = "pg15"
+elif os.path.isdir("pg16"):
+  pgV = "pg16"
 
-pgV="pg15"
-if not os.path.isdir(pgV):
-  util.message("/n## Installing " + pgV + " as a pre-req")
-  osSys("./nc install " + pgV + " --start")
+if pgV == "":
+  util.exit_message("pg15+ must be installed")
 
 os.chdir(thisDir)
 osUsr = util.get_user()
@@ -50,7 +53,7 @@ osSys("sudo mkdir -p /var/lib/pgbackrest")
 osSys("sudo chmod 750 /var/lib/pgbackrest")
 osSys("sudo chown " + usrUsr + " /var/lib/pgbackrest")
 
-dataDir= os.getenv("MY_HOME") + "/data/pg15"
+dataDir= os.getenv("MY_HOME") + "/data/" + pgV
 
 util.message("\n## creating '/etc/pgbackrest/pgbackrest.conf' ########")
 conf_file=thisDir + "/pgbackrest.conf"
