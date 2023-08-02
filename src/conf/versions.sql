@@ -125,7 +125,7 @@ INSERT INTO categories VALUES (9,  87, 'Management & Monitoring', 'Manage/Monito
 -- ## HUB ################################
 INSERT INTO projects VALUES ('hub', 'app', 0, 0, 'hub', 0, 'https://github.com/pgedge/nodectl','',0,'','','');
 INSERT INTO releases VALUES ('hub', 1, 'hub', '', '', 'hidden', '', 1, '', '', '');
-INSERT INTO versions VALUES ('hub', '23.126', '',  1, '20230803', '', '', '');
+INSERT INTO versions VALUES ('hub', '23.126', '',  1, '20230810', '', '', '');
 INSERT INTO versions VALUES ('hub', '23.125', '',  0, '20230731', '', '', '');
 INSERT INTO versions VALUES ('hub', '23.124', '',  0, '20230721', '', '', '');
 INSERT INTO versions VALUES ('hub', '23.123', '',  0, '20230720', '', '', '');
@@ -381,7 +381,8 @@ INSERT INTO versions VALUES ('badger', '11.8', '', 0, '20220408', '', '', '');
 INSERT INTO projects VALUES ('pgedge', 'pge', 0, 0, 'hub', 3, 'http://pgedge.org',
   'pgedge',  0, 'pgedge.png', 'Multi-Active Global Postgres Clusters', 'http://pgedge.com');
 INSERT INTO releases VALUES ('pgedge', 1, 'pgedge',  'pgEdge', '', 'test', '', 1, 'pgEdge Community', '', '');
-INSERT INTO versions VALUES ('pgedge', '2-1',   '', 1, '20230511', '', '', '');
+INSERT INTO versions VALUES ('pgedge', '2-2',   '', 1, '20230810', '', '', '');
+INSERT INTO versions VALUES ('pgedge', '2-1',   '', 0, '20230511', '', '', '');
 
 INSERT INTO projects VALUES ('nclibs', 'pge', 0, 0, 'hub', 3, 'https://github.com/pgedge',
   'nclibs',  0, 'nclibs.png', 'nclibs', 'https://github.com/pgedge');
@@ -412,7 +413,7 @@ INSERT INTO versions VALUES ('backrest', '2.45-1', 'el9, arm9', 0, '20230321', '
 INSERT INTO projects VALUES ('patron4', 'app', 11, 0, 'haproxy', 4, 'https://github.com/pgedge/patron4/tags',
   'patron4', 0, 'patron4.png', 'HA', 'https://github.com/pgedge/patron4');
 INSERT INTO releases VALUES ('patron4', 1, 'patron4', 'Patron4 4.0.2', '', 'test', '', 1, 'POSTGRES', '', '');
-INSERT INTO versions VALUES ('patron4', '4.0.2', '', 0, '20230622', '', 'EL9', '');
+INSERT INTO versions VALUES ('patron4', '4.0.2', '', 1, '20230622', '', 'EL9', '');
 
 INSERT INTO projects VALUES ('ddlx', 'ext',     4, 0, 'hub', 0, 'https://github.com/lacanoid/pgddl/releases', 'ddlx',  1, 'ddlx.png', 'DDL Extractor', 'https://github.com/lacanoid/pgddl#ddl-extractor-functions--for-postgresql');
 INSERT INTO releases VALUES ('ddlx-pg13', 2, 'ddlx', 'DDLeXtact', '', 'prod','',  0, 'POSTGRES', '', '');

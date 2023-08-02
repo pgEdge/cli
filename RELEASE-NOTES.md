@@ -10,6 +10,11 @@
   - test json fields for replication
   - ./nc secure init and nightly exports
   - install pooling by default
+  - fix install for backrest not to assume pg15
+  - bump backrest from 2.45 to 2.47
+  - fix install for pgcat2
+  - create a first pass for --with-patroni
+  - validate proposed 'um install-pgedge()' --> 'secure install-pgedge()'
 
 ## done for 23.126 as of 2023-08-01
   - improve devel/setup doc & completeness
@@ -18,6 +23,7 @@
   - fix regression in spock.repset_add_tables() for wildcards
   - soften bad_os warning
   - fix bug where `./nc tune` setting working_mem to 0 GB
+  - 'install pgedge' now supports parms --with-patroni, --with-backrest & --with-cat
 
 
 ## done for 23.125 as of 2023-07-31
