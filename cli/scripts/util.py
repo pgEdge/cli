@@ -1675,10 +1675,10 @@ def get_mem_mb():
 
 
 def str_mem(in_mb):
-  if in_mb < 501:
+  if in_mb < 2000:
     return(str(in_mb) + "MB")
 
-  in_gb = round((in_mb / 1024))
+  in_gb = round((in_mb / 1000))
   return(str(in_gb) + "GB")
 
 

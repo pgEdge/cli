@@ -17,6 +17,7 @@
   - drop unused from spock.py {validate(), tune() & install()}
   - fix regression in spock.repset_add_tables() for wildcards
   - soften bad_os warning
+  - fix bug where `./nc tune` setting working_mem to 0 GB
 
 
 ## done for 23.125 as of 2023-07-31
