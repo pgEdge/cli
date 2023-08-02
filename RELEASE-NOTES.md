@@ -12,6 +12,7 @@
   - add support for `./nc psql 99 -f`
   - drop unused from spock.py {validate(), tune() & install()}
   - fix regression in spock.repset_add_tables() for wildcards
+  - soften bad_os warning
 
 
 ## done for 23.125 as of 2023-07-31
