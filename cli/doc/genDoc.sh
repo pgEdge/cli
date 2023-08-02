@@ -21,7 +21,6 @@ $nc service config          --help
 $nc service init            --help
 
 $nc spock --help
-$nc spock tune              --help
 $nc spock node-create       --help
 $nc spock node-drop         --help
 $nc spock repset-create     --help

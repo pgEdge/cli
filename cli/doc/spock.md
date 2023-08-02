@@ -3,7 +3,6 @@
  
 ## COMMANDS
     COMMAND is one of the following:
-     tune                # Tune pgEdge components.
      node-create         # Define a node for spock.
      node-drop           # Remove a spock node.
      node-alter-location # Set location details for spock node.
@@ -28,7 +27,7 @@
      sub-remove-repset   # Drop a replication set from a subscription.
      sub-show-status     # Display the status of the subcription.
      sub-show-table      # Show subscription tables.
-     sub-sync            # Synchronize a subscription.
+     sub-sync            # Pause until a subscription is synchronized.
      sub-resync-table    # Resynchronize a table.
      sub-wait-for-sync   # Pause until the subscription is synchronized.
      table-wait-for-sync # Pause until a table finishes synchronizing.

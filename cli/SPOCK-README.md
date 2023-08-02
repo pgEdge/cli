@@ -1,12 +1,9 @@
 # PGEDGE NODECTL SPOCK 
-Logical and Multi-Active PostgreSQL node configuration
+Logical and Multi-Master PostgreSQL node configuration
 
 ## Synopsis
     ./nodectl spock <command> [parameters] [options] 
 
-[**install**](doc/spock-install.md)             - Install PG and configure with spock extension<br>
-[**validate**](doc/spock-validate.md)           - Check pre-req's for advanced commands<br>
-[**tune**](doc/spock-tune.md)                   - Tune for this configuration<br>
 [**node-create**](doc/spock-node-create.md)     - Name this spock node<br>
 [**node-drop**](doc/spock-node-drop.md)         - Drop this spock node from the cluster<br>
 [**repset-create**](doc/spock-repset-create.md) - Define a replication set<br>
