@@ -407,8 +407,8 @@ INSERT INTO versions VALUES ('pgcat2', '1.0.0', 'el9, arm9', 1, '20230629', '', 
 INSERT INTO projects VALUES ('backrest', 'pge', 4, 0, 'hub', 3, 'http://pgbackrest.org',
   'backrest',  0, 'backrest.png', 'Backup & Restore', 'http://pgbackrest.org');
 INSERT INTO releases VALUES ('backrest', 2, 'backrest',  'pgBackRest', '', 'test', '', 1, 'MIT', '', '');
-INSERT INTO versions VALUES ('backrest', '2.46-1', 'el9, arm9', 1, '20230524', '', 'EL', '');
-INSERT INTO versions VALUES ('backrest', '2.45-1', 'el9, arm9', 0, '20230321', '', 'EL', '');
+INSERT INTO versions VALUES ('backrest', '2.47-1', 'el9, arm9', 1, '20230810', '', 'EL', '');
+INSERT INTO versions VALUES ('backrest', '2.46-1', 'el9, arm9', 0, '20230524', '', 'EL', '');
 
 INSERT INTO projects VALUES ('patron4', 'app', 11, 0, 'haproxy', 4, 'https://github.com/pgedge/patron4/tags',
   'patron4', 0, 'patron4.png', 'HA', 'https://github.com/pgedge/patron4');
