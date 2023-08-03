@@ -10,7 +10,7 @@
   - ./nc secure init and nightly exports
   - fix install for pgcat2 (throwing a sed error)
   - create a first pass for --with-patroni (with etcd & haproxy)
-  - validate proposed 'um install-pgedge()' --> 'secure install-pgedge()'
+  - validate proposed 'um install-pgedge()' --> 'secure extend-pgedge()'
 
 
 ## done for 23.126 as of 2023-08-03

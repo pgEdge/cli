@@ -37,7 +37,7 @@ oraclefdwV=2.5.0-1
 inclV=21.6
 orafceV=4.3.0-1
 ora2pgV=23.1
-v8V=3.1.2-1
+v8V=3.2.0-1
 
 anonV=1.1.0-1
 ddlxV=0.17-1

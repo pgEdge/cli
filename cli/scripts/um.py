@@ -52,14 +52,15 @@ def clean():
 
   run_cmd('clean')
 
-def install_pgedge(User=None, Passwd=None, db=None, tenancy='Primary', leader='False', customer_id=None):
+
+def install_pgedge(User=None, Passwd=None, db=None, tenancy='Single', leader='False', customer_id=None):
     """
     './nc um install-pgedge' is a proposed wrapper for './nc install pgedge'
 
   Proposed wrapper for './nc install pgedge'
 
       New fields are:
-        tenancy:     defaults to 'Primary' and optionally can be set to 'Multi'
+        tenancy:     defaults to 'Single' and optionally can be set to 'Multi'
         leader:      defaults to 'False' and optionally can be set to 'True'
         customer_id: defaults to None and MUST BE VALID if provided
 
@@ -70,8 +71,8 @@ def install_pgedge(User=None, Passwd=None, db=None, tenancy='Primary', leader='F
           'leader' will overridden & be set to 'False'
 
         if leader == 'True':
-          'tenancy' must be 'Primary'
-          --pgcat & --patroni flags will be overridden & set to 'True'   
+          'tenancy' must be 'Single'
+          --pgcat & --patroni & --backrest flags will be overridden & set to 'True'   
     """
 
 
@@ -83,6 +84,5 @@ if __name__ == '__main__':
     'remove':remove,
     'upgrade':upgrade,
     'install-pgedge':install_pgedge,
-    ## 'downgrade':downgrade,
     'clean':clean,
   })

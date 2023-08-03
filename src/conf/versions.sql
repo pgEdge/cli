@@ -250,15 +250,15 @@ INSERT INTO versions VALUES ('orafce-pg15', '4.2.5-1',   'arm9, el9', 0, '202304
 
 INSERT INTO projects VALUES ('plv8', 'dev', 3, 0, 'hub', 0, 'https://github.com/plv8/plv8/tags',
   'plv8',   1, 'v8.png', 'Javascript Stored Procedures', 'https://github.com/plv8/plv8');
-INSERT INTO releases VALUES ('plv8-pg14', 4, 'plv8', 'PL/V8', '', 'prod', '', 1, 'POSTGRES', '', '');
-INSERT INTO versions VALUES ('plv8-pg14', '3.1.2-1', 'el8', 0, '2.210721', 'pg14', '', '');
+INSERT INTO releases VALUES ('plv8-pg15', 4, 'plv8', 'PL/V8', '', 'test', '', 1, 'POSTGRES', '', '');
+INSERT INTO versions VALUES ('plv8-pg15', '3.2.0-1', 'arm9, el9', 0, '20230803', 'pg15', '', '');
 
 INSERT INTO projects VALUES ('pljava', 'dev', 3, 0, 'hub', 0, 'https://github.com/tada/pljava/releases', 
   'pljava', 1, 'pljava.png', 'Java Stored Procedures', 'https://github.com/tada/pljava');
 INSERT INTO releases VALUES ('pljava-pg15', 7, 'pljava', 'PL/Java', '', 'test', '', 1, 'POSTGRES', '', '');
 INSERT INTO releases VALUES ('pljava-pg16', 7, 'pljava', 'PL/Java', '', 'test', '', 1, 'POSTGRES', '', '');
-INSERT INTO versions VALUES ('pljava-pg15', '1.6.4-1',  'arm9, el9',  1, '20230608', 'pg15', '', '');
-INSERT INTO versions VALUES ('pljava-pg16', '1.6.4-1',  'arm9, el9',  1, '20230608', 'pg16', '', '');
+INSERT INTO versions VALUES ('pljava-pg15', '1.6.4-1',  'arm9, el9',  0, '20230608', 'pg15', '', '');
+INSERT INTO versions VALUES ('pljava-pg16', '1.6.4-1',  'arm9, el9',  0, '20230608', 'pg16', '', '');
 
 INSERT INTO projects VALUES ('pldebugger', 'dev', 4, 0, 'hub', 0, 'https://github.com/EnterpriseDB/pldebugger/tags',
   'pldebugger', 1, 'debugger.png', 'Stored Procedure Debugger', 'https://github.com/EnterpriseDB/pldebugger');
