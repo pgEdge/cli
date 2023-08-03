@@ -2,7 +2,7 @@
 
 ## to do's for 23.127 and beyond
   - add support for pljava-pg15 & -pg16 (cannot find libjvm17  setting from util.get_jvm_location)
-  - add support for plv8-3.2beta1-pg15
+  - add support for plv8-3.2.0
   - improve efficiency of `ace diff-tables` to handle massive tables w blocks of checksums
   - fix port numbers in cluster.create-local() (env & .json)
   - replicate ddl automagically to the spock.replicate_ddl command if ddl_entry_point = 'on'
@@ -11,11 +11,12 @@
   - fix install for pgcat2 (throwing a sed error)
   - create a first pass for --with-patroni (with etcd & haproxy)
   - validate proposed 'um install-pgedge()' --> 'secure install-pgedge()'
-  - confirm --app=northwind works fully
 
-## done for 23.126 as of 2023-08-02
+
+## done for 23.126 as of 2023-08-03
   - improve devel/setup doc & completeness
   - add support for `./nc psql 99 -f`
+  - confirm 'cluster app-install northwind' works fully
   - drop unused from spock.py {validate(), tune() & install()}
   - fix regression in spock.repset_add_tables() for wildcards
   - soften bad_os warning
@@ -23,6 +24,7 @@
   - 'install pgedge' now supports parms --with-patroni, --with-backrest & --with-cat
   - bump backrest from 2.46 to 2.47
   - fix install/remove for backrest not to assume pg15
+  - bump plv8 to 3.2.0
 
 
 ## done for 23.125 as of 2023-07-31

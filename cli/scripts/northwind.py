@@ -20,7 +20,7 @@ def setup_node(node_nm, port, nc, num_nodes, my_home, db, pg, host, factor, os_u
   spk = nc + " spock "
 
   sql_file = my_home + os.sep + "hub/scripts/sql/northwind.sql"
-  cmd = nc + " psql " + str(pg) + " -f " + sql_file
+  cmd = nc + " psql " + str(pg) + " -f " + sql_file + " " + str(db)
   util.echo_cmd(cmd, host=host, usr=os_user, key=ssh_key)
 
   dsn = "'host=127.0.0.1 port=" + str(port) + " dbname=" + db + "'"
