@@ -1,6 +1,6 @@
 # pgEdge Platform Release Notes #############
 
-## to do's for 23.127 and beyond
+## to do's for 23.128 and beyond
   - add support for pljava-pg15 & -pg16 (cannot find libjvm17  setting from util.get_jvm_location)
   - add support for plv8-3.2.0
   - improve efficiency of `ace diff-tables` to handle massive tables w blocks of checksums
@@ -11,6 +11,10 @@
   - fix install for pgcat2 (throwing a sed error)
   - create a first pass for --with-patroni (with etcd & haproxy)
   - validate proposed 'um install-pgedge()' --> 'secure extend-pgedge()'
+
+
+## done so far for 23.127 as of 2023-08-4
+  - enhance northwind app to use schema 'northwind' rather than defaulting to 'public'
 
 
 ## done for 23.126 as of 2023-08-03

@@ -7,13 +7,11 @@
 
 import util, cluster, os
 
-g_tables = ("public.employees", "public.region", "public.categories", "public.us_states", "public.territories", "public.suppliers",
-            "public.shippers", "public.products", "public.customers", "public.orders", "public.order_details",
-            "public.employee_territories", "public.customer_demographics", "public.customer_customer_demo") 
+g_tables = "northwind.*"
 
 g_repset = "nw-repset"
 
-g_running_sums = ("products.units_in_stock", "products.units_on_order")
+g_running_sums = ("northwind.products.units_in_stock", "northwind.products.units_on_order")
 
 
 def setup_node(node_nm, port, nc, num_nodes, my_home, db, pg, host, factor, os_user, ssh_key):
@@ -30,7 +28,8 @@ def setup_node(node_nm, port, nc, num_nodes, my_home, db, pg, host, factor, os_u
   util.echo_cmd(spk + "repset-create " + g_repset + " --db " + db,
                   host=host, usr=os_user, key=ssh_key)
 
-  cluster.add_repset_tables(spk, g_repset, g_tables, db, host, os_user, ssh_key)
+  util.echo_cmd(spk + "repset-add-table " + g_repset + " " + g_tables + " --db " + db,
+                  host=host, usr=os_user, key=ssh_key)
 
   cluster.log_old_vals(g_running_sums, nc, db, pg, host, os_user, ssh_key)
 
@@ -95,5 +94,6 @@ def remove(cluster_name):
     util.echo_cmd(spk + "node-drop " + nd["nodename"] + db_pg, 
                     host=host, usr=os_user, key=ssh_key)
 
-    cluster.drop_tables(g_tables, nc, db, pg, host, os_user, ssh_key)
+    cmd = nc + " psql " + str(pg) + " -c \"DROP SCHEMA northwind CASCADE\" " + str(db)
+    util.echo_cmd(cmd, host=host, usr=os_user, key=ssh_key)
 
