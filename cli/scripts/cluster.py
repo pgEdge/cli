@@ -86,10 +86,19 @@ def get_cluster_json(cluster_name):
 def import_remote_def(cluster_name, json_file_name):
   """Import a cluster definition file so we can work with it like a pgEdge cluster."""
 
-  if not os.path.exists(p_json_file):
-    util.exit_error(f"file '{p_json_file}' not found")
+  try:
+    with open(json_file_name) as f:
+      j_clus = json.load(f)
+  except FileNotFoundError:
+    util.exit_message(f"file '{json_file_name}' not found")
+  except Exception as e:
+    util.exit_message(f"Unable to parse file '{json_file_name}' into json object.\n  {e.msg}")
 
-  os.system(f"mkdir -p ../cluster/{p_json}")
+  cluster_dir = f"cluster/{cluster_name}"
+
+  util.echo_cmd(f"mkdir -p {cluster_dir}")
+
+  util.echo_cmd(f"cp {json_file_name} {cluster_dir}/{cluster_name}.json")
 
 
 def reset_remote(cluster_name):

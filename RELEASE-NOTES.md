@@ -13,8 +13,9 @@
   - validate proposed 'um install-pgedge()' --> 'secure extend-pgedge()'
 
 
-## done so far for 23.127 as of 2023-08-4
+## done so far for 23.127 as of 2023-08-04
   - enhance northwind app to use schema 'northwind' rather than defaulting to 'public'
+  - the basic cluster.import_remote_def() now works
 
 
 ## done for 23.126 as of 2023-08-03
