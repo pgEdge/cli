@@ -170,17 +170,18 @@ def echo_cmd(cmd, sleep_secs=0, host="", usr="", key=""):
 
   return(1)
 
+
 def psql_cmd(cmd, nc, db, pg, host, usr, key):
   echo_cmd(nc + " psql " + str(pg) + " \"" + cmd + "\" " + db, host=host, usr=usr, key=key)
 
 
-def print_exception(e):
+def print_exception(e, msg_type="error"):
   lines = str(e).splitlines()
   for line in lines:
      if line.startswith("HINT:"):
        pass
      else:
-       message(line, "error")
+       message(line, msg_type)
 
 
 def exit_exception(e):
@@ -918,6 +919,9 @@ def message(p_msg, p_state="info", p_isJSON=None):
   if p_state.lower() == "error":
     my_logger.error(p_msg)
     prefix = "ERROR: "
+  elif p_state.lower() == "warning":
+    my_logger.warning(p_msg)
+    prefix = "WARNING: "
   elif p_state.lower() == "debug":
     my_logger.debug(p_msg)
     prefix = "DEBUG: "

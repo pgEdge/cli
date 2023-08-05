@@ -303,7 +303,7 @@ def app_install(cluster_name, app_name, factor=1):
   elif app_name == "northwind":
     northwind.install(cluster_name, factor)
   else:
-    util.exit_message("Invalid application name.")
+    util.exit_message(f"Invalid app_name '{app_name}'.")
 
 
 def app_remove(cluster_name, app_name):

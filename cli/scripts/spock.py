@@ -545,11 +545,13 @@ def repset_add_table(replication_set, table, db, synchronize_data=False, columns
           get_eq("relation",            tab,               ", ") + \
           get_eq("synchronize_data",    synchronize_data,  ", ")
    
-    if columns!=None and len(tbls)==1:
-      sql=sql+get_eq("columns",','.join(columns), ", ", True)
-    if row_filter!=None and len(tbls)==1:
-      sql=sql+get_eq("row_filter",row_filter,        ", ")
-    sql=sql+get_eq("include_partitions",  include_partitions,") ")
+    if columns != None and len(tbls) == 1:
+      sql = sql + get_eq("columns",','.join(columns), ", ", True)
+
+    if row_filter != None and len(tbls) == 1:
+      sql = sql + get_eq("row_filter",row_filter,        ", ")
+
+    sql = sql + get_eq("include_partitions",  include_partitions,") ")
     util.message(f"Adding table {tab} to replication set {replication_set}.")
 
     try:
@@ -558,7 +560,7 @@ def repset_add_table(replication_set, table, db, synchronize_data=False, columns
       cur.execute(sql)
       con.commit()
     except Exception as e:
-      util.print_exception(e)
+      util.print_exception(e, "warning")
       con.rollback()
     
   sys.exit(0)
