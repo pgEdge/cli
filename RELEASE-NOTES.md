@@ -7,15 +7,15 @@
   - fix port numbers in cluster.create-local() (env & .json)
   - replicate ddl automagically to the spock.replicate_ddl command if ddl_entry_point = 'on'
   - test json fields for replication
-  - fix install for pgcat2 (throwing a sed error)
   - validate proposed 'um install-pgedge()' --> 'secure extend-pgedge()'
 
 
-## done so far for 23.127 as of 2023-08-04
+## done so far for 23.127 as of 2023-08-07
   - enhance northwind app to use schema 'northwind' rather than defaulting to 'public'
   - the basic cluster.import_remote_def() now works
   - spock.repset_add_table() only throws WARNING when table cannot be added
   - create a good dev baseline for etcd & patroni installs
+  - create a good dev baseline for pgcat2 (throwing a sed error)
 
 
 ## done for 23.126 as of 2023-08-03
