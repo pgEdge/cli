@@ -3,7 +3,7 @@
 #####################################################
 
 import os, sys, random, json, socket, datetime
-import util, fire, meta, subprocess
+import util, fire, meta, subprocess, requests
 import pgbench, northwind, cluster
 
 cluster_dir = "cluster"
@@ -13,46 +13,52 @@ def get_access_token(auth_json):
   access_token=None
   cred=json.dumps(auth_json).replace("{","").replace("}","")
   try:
-    os.system(f"~/go/bin/pgedge generateaccesstoken {cred} > {cluster_dir}{os.sep}token.json") 
-    parsed_json = None
-    with open(f"{cluster_dir}{os.sep}token.json") as f:
-      parsed_json = json.load(f)
-      access_token = parsed_json["access_token"]
+    url = "https://api.pgedge.com/oauth/token"
+    response = requests.post(url, json=auth_json)
+    if str(response.status_code)=='200':
+      access_token = response.json()["access_token"]
+    else:
+      util.exit_message(f"Unable to get token")
+      exit
   except:
     util.exit_message(f"Unable to get token")
+    exit
   return access_token
 
 
-def validate_profile(profile):
-  pgede_dir = os.path.expanduser("~")
-  found=False
-  with open(f"{pgede_dir}{os.sep}.pgedge{os.sep}credentials.json") as f:
-      parsed_json = json.load(f)
-      for prof in parsed_json["profiles"]:
-        if profile==prof:
-          found=True
-  return found
+def get_pgedge(cmd):
+  ## Call Get to pgEdge CLI
+  with open(f"{cluster_dir}{os.sep}creds.json") as f:
+    parsed_json = json.load(f)
+    access=get_access_token(parsed_json)
+  url = "https://api.pgedge.com/" + cmd 
+  header={}
+  header["Authorization"]="Bearer " + access
+  response = requests.get(url, headers=header)
+  if str(response.status_code)=='200':
+    return response.json()
+  else:
+    util.exit_message(f"Unable to run {cmd}")
+    exit
 
 
-def call_pgedgecli(cmd, profile):
+def delete_pgedge(cmd):
   ## Execute a pgEdgeCLI command
-  if validate_profile(profile):
-    os.system(f"~/go/bin/pgedge {cmd} --profile={profile}")
+  with open(f"{cluster_dir}{os.sep}creds.json") as f:
+    parsed_json = json.load(f)
+    access=get_access_token(parsed_json)
+  url = "https://api.pgedge.com/" + cmd 
+  header={}
+  header["Authorization"]="Bearer " + access
+  response = requests.get(url, headers=header)
+  if str(response.status_code)=='200':
+    print(response.json())
   else:
-    util.exit_message(f"You must log into this profile")
-
-
-def get_pgedgecli(cmd, profile):
-  ## Execute a pgEdgeCLI command and save output
-  return_json={}
-  if validate_profile(profile):
-    return_json=subprocess.check_output(f"~/go/bin/pgedge {cmd} --profile={profile}", shell=True)
-  else:
-    util.exit_message(f"You must log into this profile")
-  return json.loads(return_json.decode('utf8'))
+    util.exit_message(f"Unable to run {cmd}")
+    exit
     
 
-def login(client_id, client_secret, profile="pgedge"):
+def login(client_id, client_secret):
   """Login nodeCtl with a pgEdge Cloud Account"""
   try:
     ## Create Creds File
@@ -64,36 +70,41 @@ def login(client_id, client_secret, profile="pgedge"):
     text_file.write(json.dumps(auth_json))
     ## Get Access Token
     access_token=get_access_token(auth_json)
-    ## Register Auth profile
-    os.system(f"~/go/bin/pgedge auth add-profile {profile} {access_token}")  
+    os.system(f"echo {access_token} > {cluster_dir}{os.sep}token.json") 
   except:
     util.exit_message(f"Unable to create creds file")
-  return f"Logged in with profile: {profile}"
+  print(f"Logged in to pgEdge Secure")
+  return 1
 
 
-def list_clusters(profile="pgedge"):
+def list_clusters():
   """List all clusters in a pgEdge Cloud Account"""
-  call_pgedgecli("listclusters", profile)
+  response=get_pgedge("clusters")
+  print(response)
+  return 1
 
 
-def list_cluster_nodes(cluster_id, profile="pgedge"):
+def list_cluster_nodes(cluster_id):
   """List all nodes in a pgEdge Cloud Account cluster"""
-  call_pgedgecli(f"listclusternodes {cluster_id}", profile)
+  response=get_pgedge(f"clusters/{cluster_id}/nodes")
+  print(response)
+  return 1
   
 
-def import_cluster(cluster_id, profile="pgedge"):
+def import_cluster(cluster_id):
   """Enable nodeCtl cluster commands on a pgEdge Cloud Cluster"""
-  cluster_def=get_pgedgecli(f"listclusters {cluster_id}", profile)
-  cluster_name=cluster_def[0]["name"].lower()
-  id=cluster_def[0]["id"]
-  db=cluster_def[0]["database"]["name"]
+  cluster_def=get_pgedge(f"clusters/{cluster_id}")
+  print(cluster_def)
+  cluster_name=cluster_def["name"].lower()
+  id=cluster_def["id"]
+  db=cluster_def["database"]["name"]
   usr="pgedge"
   passwd=""
-  pg=cluster_def[0]["database"]["pg_version"]
-  create_dt=cluster_def[0]["created_at"]
+  pg=cluster_def["database"]["pg_version"]
+  create_dt=cluster_def["created_at"]
   n=0
   nodes=[]
-  node_def=get_pgedgecli(f"listclusternodes {cluster_id}", profile)
+  node_def=get_pgedge(f"clusters/{cluster_id}/nodes")
   for node in node_def:
     node_json={}
     n=n+1
@@ -141,9 +152,9 @@ def create_cluster(cluster_name, cluster_info, client_id=None, client_secret=Non
   util.exit_message("Coming Soon!")
 
 
-def destroy_cluster(cluster_id, profile="pgedge"):
+def destroy_cluster(cluster_id):
   """Delete a pgEdge Cloud Cluster"""
-  call_pgedgecli(f"deletecluster {cluster_id}", profile)
+  delete_pgedge(f"deletecluster {cluster_id}")
 
 
 if __name__ == '__main__':
