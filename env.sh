@@ -16,15 +16,15 @@ P13=13.11-1
 P12=12.15-1
 P11=11.20-1
 
-goV=1.19.3
+##goV=1.19.3
 postgrestV=11.1.0-1
 prompgexpV=0.11.1
-nodejsV=18.12.1
+##nodejsV=18.12.1
 backrestV=2.47-1
 csvdiffV=1.4.0
 curlV=2.1.1-1
 readonlyV=1.1.0-1
-foslotsV=1a-1
+##foslotsV=1a-1
 
 multicorn2V=2.4-1
 esfdwV=0.11.2
@@ -50,7 +50,8 @@ partmanV=4.7.3-1
 repackV=1.4.8-1
 hintV=1.5.0-1
 
-patroniV=3.0
+patroniV=3.1.0.1
+etcdV=3.5.9
 
 audit15V=1.7.0-1
 postgisV=3.3.4-1

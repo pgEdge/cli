@@ -1,9 +1,16 @@
 #!/bin/bash
 cd "$(dirname "$0")"
 
-LOCAL_BIN=$HOME/.local/bin
 PATRONI_CONF=/usr/patroni/conf
-PGDATA=$MY_HOME/data/pg15
+
+if [ -d $MY_HOME/data/pg15 ]; then
+  PGDATA=$MY_HOME/data/pg15
+elif [ -d $MY_HOME/data/pg16 ]; then
+  PGDATA=$MY_HOME/data/pg16
+else
+  echo "ERROR: pg15 or pg16 must be installed and initialized"
+  exit 1
+fi
 
 source getPKMG.sh
 
@@ -12,20 +19,9 @@ if [ ! "$PLATFORM" == "el9" ] ; then
   exit 1
 fi
 
-set -x
-
 echo ""
-echo "## Install HA Proxy..."
+echo "## Install HA Proxy ..."
 sudo yum install -y haproxy wget
-
-echo ""
-echo "## Upgrading pip3 to latest"
-pip3 install --upgrade pip
-
-echo ""
-echo "## Installing Patroni & it's dependencies..."
-pip3 install psycopg psycopg-binary patroni[etcd3] --user
-sudo cp $LOCAL_BIN/patroni /usr/local/bin/.
 
 echo ""
 if [ -f $PGDATA/server.key ]; then
@@ -33,7 +29,7 @@ if [ -f $PGDATA/server.key ]; then
   sudo mkdir -p $PATRONI_CONF
   sudo cp $PGDATA/server.* $PATRONI_CONF/.
 else
-  echo "## No pg15 instance to configure for patroni"
+  echo "## No pg instance to configure for patroni"
   exit 0
 fi
 

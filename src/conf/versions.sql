@@ -382,7 +382,7 @@ INSERT INTO versions VALUES ('badger', '11.8', '', 0, '20220408', '', '', '');
 INSERT INTO projects VALUES ('pgedge', 'pge', 0, 0, 'hub', 3, 'http://pgedge.org',
   'pgedge',  0, 'pgedge.png', 'Multi-Active Global Postgres Clusters', 'http://pgedge.com');
 INSERT INTO releases VALUES ('pgedge', 1, 'pgedge',  'pgEdge', '', 'test', '', 1, 'pgEdge Community', '', '');
-INSERT INTO versions VALUES ('pgedge', '2-2',   '', 1, '20230810', '', '', '');
+INSERT INTO versions VALUES ('pgedge', '2-2',   '', 1, '20230803', '', '', '');
 INSERT INTO versions VALUES ('pgedge', '2-1',   '', 0, '20230511', '', '', '');
 
 INSERT INTO projects VALUES ('nclibs', 'pge', 0, 0, 'hub', 3, 'https://github.com/pgedge',
@@ -408,13 +408,18 @@ INSERT INTO versions VALUES ('pgcat2', '1.0.0', 'el9, arm9', 1, '20230629', '', 
 INSERT INTO projects VALUES ('backrest', 'pge', 4, 0, 'hub', 3, 'http://pgbackrest.org',
   'backrest',  0, 'backrest.png', 'Backup & Restore', 'http://pgbackrest.org');
 INSERT INTO releases VALUES ('backrest', 2, 'backrest',  'pgBackRest', '', 'test', '', 1, 'MIT', '', '');
-INSERT INTO versions VALUES ('backrest', '2.47-1', 'el9, arm9', 1, '20230810', '', 'EL', '');
+INSERT INTO versions VALUES ('backrest', '2.47-1', 'el9, arm9', 1, '20230803', '', 'EL', '');
 INSERT INTO versions VALUES ('backrest', '2.46-1', 'el9, arm9', 0, '20230524', '', 'EL', '');
 
-INSERT INTO projects VALUES ('patron4', 'app', 11, 0, 'haproxy', 4, 'https://github.com/pgedge/patron4/tags',
-  'patron4', 0, 'patron4.png', 'HA', 'https://github.com/pgedge/patron4');
-INSERT INTO releases VALUES ('patron4', 1, 'patron4', 'Patron4 4.0.2', '', 'test', '', 1, 'POSTGRES', '', '');
-INSERT INTO versions VALUES ('patron4', '4.0.2', '', 1, '20230622', '', 'EL9', '');
+INSERT INTO projects VALUES ('patroni', 'app', 11, 0, 'etcd', 4, 'https://github.com/pgedge/patroni/tags',
+  'patroni', 0, 'patroni.png', 'HA', 'https://github.com/pgedge/patroni');
+INSERT INTO releases VALUES ('patroni', 1, 'patroni', 'Patroni', '', 'test', '', 1, 'POSTGRES', '', '');
+INSERT INTO versions VALUES ('patroni', '3.1.0.1', '', 1, '20230810', '', 'EL9', '');
+
+INSERT INTO projects VALUES ('etcd', 'app', 11, 0, 'hub', 4, 'https://github.com/etcd-io/etcd/tags',
+  'etcd', 0, 'etcd.png', 'HA', 'https://github.com/etcd-io/etcd');
+INSERT INTO releases VALUES ('etcd', 1, 'etcd', 'Etcd', '', 'test', '', 1, 'POSTGRES', '', '');
+INSERT INTO versions VALUES ('etcd', '3.5.9', 'el9, arm9', 1, '20230810', '', 'EL9', '');
 
 INSERT INTO projects VALUES ('ddlx', 'ext',     4, 0, 'hub', 0, 'https://github.com/lacanoid/pgddl/releases', 'ddlx',  1, 'ddlx.png', 'DDL Extractor', 'https://github.com/lacanoid/pgddl#ddl-extractor-functions--for-postgresql');
 INSERT INTO releases VALUES ('ddlx-pg13', 2, 'ddlx', 'DDLeXtact', '', 'prod','',  0, 'POSTGRES', '', '');

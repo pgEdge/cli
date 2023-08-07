@@ -480,6 +480,7 @@ initPG () {
     initC  "backrest" "backrest" "$backrestV" "$outPlat" "postgres/backrest" "" "" "nil"
     #initC  "csvdiff" "csvdiff" "$csvdiffV" "$outPlat" "csvdiff" "" "" "nil"
     initC  "patroni"   "patroni"   "$patroniV" "" "postgres/patroni" "" "" "nil"
+    initC  "etcd"   "etcd"   "$etcdV" "$outPlat" "etcd" "" "" "nil"
   fi
 
   return
