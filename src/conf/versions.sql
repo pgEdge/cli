@@ -131,8 +131,6 @@ INSERT INTO versions VALUES ('hub', '23.125', '',  0, '20230731', '', '', '');
 INSERT INTO versions VALUES ('hub', '23.124', '',  0, '20230721', '', '', '');
 INSERT INTO versions VALUES ('hub', '23.123', '',  0, '20230720', '', '', '');
 INSERT INTO versions VALUES ('hub', '23.122', '',  0, '20230718', '', '', '');
-INSERT INTO versions VALUES ('hub', '23.121', '',  0, '20230630', '', '', '');
-INSERT INTO versions VALUES ('hub', '23.120', '',  0, '20230629', '', '', '');
 
 -- ##
 INSERT INTO projects VALUES ('pg', 'pge', 1, 5432, 'hub', 1, 'https://github.com/postgres/postgres/tags',
@@ -140,39 +138,37 @@ INSERT INTO projects VALUES ('pg', 'pge', 1, 5432, 'hub', 1, 'https://github.com
 
 INSERT INTO releases VALUES ('pg11', 4, 'pg', 'PostgreSQL', '', 'prod',
   '<font size=-1>New in <a href=https://www.postgresql.org/docs/11/release-11.html>2018</a></font>', 1, 'POSTGRES', '', '');
-INSERT INTO versions VALUES ('pg11', '11.20-1', 'el8', 1, '20230511', '', '', '');
-INSERT INTO versions VALUES ('pg11', '11.19-1', 'el8', 0, '20230209', '', '', '');
+INSERT INTO versions VALUES ('pg11', '11.21-1', 'el8', 1, '20230810', '', '', '');
+INSERT INTO versions VALUES ('pg11', '11.20-1', 'el8', 0, '20230511', '', '', '');
 
 INSERT INTO releases VALUES ('pg12', 3, 'pg', 'PostgreSQL', '', 'prod',
   '<font size=-1>New in <a href=https://www.postgresql.org/docs/12/release-12.html>2019</a></font>', 1, 'POSTGRES', '', '');
-INSERT INTO versions VALUES ('pg12', '12.15-1', 'el8', 1, '20230511', '', '', '');
-INSERT INTO versions VALUES ('pg12', '12.14-1', 'el8', 0, '20230209', '', '', '');
+INSERT INTO versions VALUES ('pg12', '12.16-1', 'el8', 1, '20230810', '', '', '');
+INSERT INTO versions VALUES ('pg12', '12.15-1', 'el8', 0, '20230511', '', '', '');
 
 INSERT INTO releases VALUES ('pg13', 2, 'pg', '', '', 'prod',
-  '<font size=-1>New in <a href=https://www.postgresql.org/docs/13/release-13.html>2.21</a></font>',
+  '<font size=-1>New in <a href=https://www.postgresql.org/docs/13/release-13.html>2020</a></font>',
   1, 'POSTGRES', '', '');
-INSERT INTO versions VALUES ('pg13', '13.11-1', 'el8', 1, '20230511','', '', '');
-INSERT INTO versions VALUES ('pg13', '13.10-1', 'el8', 0, '20230209','', '', '');
+INSERT INTO versions VALUES ('pg13', '13.12-1', 'el8', 1, '20230810','', '', '');
+INSERT INTO versions VALUES ('pg13', '13.11-1', 'el8', 0, '20230511','', '', '');
 
 INSERT INTO releases VALUES ('pg14', 1, 'pg', '', '', 'prod', 
   '<font size=-1>New in <a href=https://www.postgresql.org/docs/14/release-14.html>2021</a></font>',
   1, 'POSTGRES', '', '');
-INSERT INTO versions VALUES ('pg14', '14.8-1', 'el8', 1, '20230511','', '', '');
-INSERT INTO versions VALUES ('pg14', '14.7-1', 'el8', 0, '20230209','', '', '');
+INSERT INTO versions VALUES ('pg14', '14.9-1', 'el8', 1, '20230810','', '', '');
+INSERT INTO versions VALUES ('pg14', '14.8-1', 'el8', 0, '20230511','', '', '');
 
 INSERT INTO releases VALUES ('pg15', 2, 'pg', '', '', 'prod', 
-  '<font size=-1>New in <a href=https://www.postgresql.org/docs/15/release-15.html>2022!</a></font>',
+  '<font size=-1>New in <a href=https://www.postgresql.org/docs/15/release-15.html>2022</a></font>',
   1, 'POSTGRES', '', '');
-INSERT INTO versions VALUES ('pg15', '15.3-2',  'el8, el9, arm9',      1, '20230608','', '', '');
-INSERT INTO versions VALUES ('pg15', '15.3-1',  'el8, el9, arm, arm9', 0, '20230511','', '', '');
-INSERT INTO versions VALUES ('pg15', '15.2-4',  'el8, el9, arm, arm9', 0, '20230426','', '', '');
+INSERT INTO versions VALUES ('pg15', '15.4-1',  'el8, el9, arm9',      1, '20230810','', '', '');
+INSERT INTO versions VALUES ('pg15', '15.3-2',  'el8, el9, arm9',      0, '20230608','', '', '');
 
 INSERT INTO releases VALUES ('pg16', 2, 'pg', '', '', 'test', 
   '<font size=-1>New in <a href=https://www.postgresql.org/docs/16/release-16.html>2023!</a></font>',
   1, 'POSTGRES', '', '');
-INSERT INTO versions VALUES ('pg16', '16beta2-1',  'el9, arm9', 1, '20230629','', '', '');
-INSERT INTO versions VALUES ('pg16', '16beta1-2',  'el9, arm9', 0, '20230608','', '', '');
-INSERT INTO versions VALUES ('pg16', '16beta1-1',  'el9, arm9', 0, '20230525','', '', '');
+INSERT INTO versions VALUES ('pg16', '16beta3-1',  'el9, arm9', 1, '20230810','', '', '');
+INSERT INTO versions VALUES ('pg16', '16beta2-1',  'el9, arm9', 0, '20230629','', '', '');
 
 INSERT INTO projects VALUES ('debezium', 'strm', 10, 8083, '', 3, 'https://debezium.io/releases/1.9/',
   'Debezium', 0, 'debezium.png', 'Heterogeneous CDC', 'https://debezium.io');

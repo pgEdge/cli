@@ -10,7 +10,8 @@
   - validate proposed 'um install-pgedge()' --> 'secure extend-pgedge()'
 
 
-## done so far for 23.127 as of 2023-08-08
+## done for 23.127 as of 2023-08-10
+  - add support for pg16beta3 & bumped version of pg11 thru pg15
   - add 'secure' api for interacting with pgEdge Cloud services
   - add 'requests' & 'awscli' as default nclibs
   - enhance northwind app to use schema 'northwind' rather than defaulting to 'public'
