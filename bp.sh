@@ -23,7 +23,7 @@ fi
 
 sudo rm -rf /var/lib/pgbackrest
 
-./startHTTP.sh
+./devel/startHTTP.sh
 ./build.sh -X posix -R
 
 cd $outp

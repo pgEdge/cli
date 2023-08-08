@@ -1,9 +1,0 @@
-now=`date`
-msg="stopping prompgexp"
-echo $msg
-echo "$msg - $now" >> data/logs/prompgexp/prompgexp.log
-pid=`ps aux | grep [p]rompgexp | head -1 | awk '{print $2}'`
-if [ "$pid" > " " ]; then
-  echo "killing ($pid)"
-  kill -9 $pid > /dev/null 2>&1
-fi

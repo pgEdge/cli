@@ -1,0 +1,23 @@
+#!/bin/bash
+cd "$(dirname "$0")"
+
+ver=$1
+
+echo " "
+echo "## INSTALL PGPOOL-II v$ver ###############################"
+source getPKMG.sh
+
+if [ "$ver" == "" ]; then
+  echo "ERROR: version must be supplied"
+  exit 1
+fi
+
+set -x
+
+major_ver=`echo $ver | cut -c1-3`
+
+repo=https://www.pgpool.net/yum/rpms/$major_ver/redhat/rhel-8-x86_64
+rpm=pgpool-II-pg13-$ver-1pgdg.rhel8.x86_64.rpm
+
+sudo yum install -y $repo/$rpm
+
