@@ -9,7 +9,7 @@ import pgbench, northwind, cluster
 cluster_dir = "cluster"
 
 def get_access_token(auth_json):
-  ## Use pgEdge Cloud CLI to get access token
+  ## Use pgEdge Cloud API to get access token
   access_token=None
   cred=json.dumps(auth_json).replace("{","").replace("}","")
   try:
@@ -25,7 +25,7 @@ def get_access_token(auth_json):
 
 
 def get_pgedge(cmd):
-  ## Call Get to pgEdge CLI
+  ## Call Get to pgEdge API
   with open(f"{cluster_dir}{os.sep}creds.json") as f:
     parsed_json = json.load(f)
     access=get_access_token(parsed_json)
@@ -111,7 +111,7 @@ def get_cluster_id(cluster_name):
   return cluster_id
 
 
-def get_node_id(cluster_name,node_name):
+def get_node_id(cluster_name, node_name):
   """Return the node id based on cluster and node display name"""
   try:
     with open(f"{cluster_dir}{os.sep}{cluster_name}{os.sep}{cluster_name}.json") as f:
@@ -125,17 +125,17 @@ def get_node_id(cluster_name,node_name):
 
 
 def push_metrics(cluster_name, target_info, client_id=None, client_secret=None):
-  """push pgEdge Metrics to a specified target"""
+  """Coming Soon: push pgEdge Metrics to a specified target"""
   util.exit_message("Coming Soon!")
 
 
 def create_cluster(cluster_name, cluster_info, client_id=None, client_secret=None):
-  """Create a pgEdge Cloud Cluster"""
+  """Coming Soon: Create a pgEdge Cloud Cluster"""
   util.exit_message("Coming Soon!")
 
 
 def destroy_cluster(cluster_id):
-  """Delete a pgEdge Cloud Cluster"""
+  """Coming Soon: Delete a pgEdge Cloud Cluster"""
   util.exit_message("Coming Soon!")
 
 
