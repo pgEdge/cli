@@ -5,7 +5,7 @@ echo "$msg - $now" >> data/logs/prompgexp/prompgexp.log
 
 logfile=data/logs/prompgexp/prompgexp.log
 
-export DATA_SOURCE_NAME="postgresql://postgres:@localhost:5432/demo?sslmode=disable"
+export DATA_SOURCE_NAME="postgresql://user:password@localhost:5432/dbname?sslmode=disable"
 export PG_EXPORTER_EXTEND_QUERY_PATH="prompgexp/queries.yml"
 
 prompgexp/prompgexp  >> $logfile 2>&1 &
