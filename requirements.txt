@@ -1,13 +1,9 @@
-# core #######################
+requests
 paramiko>=3.2.0
 psycopg>=3.1.9
 psycopg-binary>=3.1.9
-
-# ultra-ha ###################
 paho-mqtt>=1.6.1
 psutil>=5.9.5
 patroni>=3.0.4
-
-# ace ########################
 apscheduler>=3.10.1
-sqlalchemy>=2.0.19
+##sqlalchemy>=2.0.19

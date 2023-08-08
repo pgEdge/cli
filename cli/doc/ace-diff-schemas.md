@@ -1,5 +1,5 @@
 ## SYNOPSIS
-    ./nodectl cluster diff-schemas CLUSTER_NAME NODE1 NODE2 SCHEMA_NAME
+    ./nodectl ace diff-schemas CLUSTER_NAME NODE1 NODE2 SCHEMA_NAME
  
 ## DESCRIPTION
     Compare Postgres schemas on different cluster nodes
