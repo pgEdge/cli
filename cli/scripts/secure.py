@@ -19,10 +19,8 @@ def get_access_token(auth_json):
       access_token = response.json()["access_token"]
     else:
       util.exit_message(f"Unable to get token")
-      exit
   except:
     util.exit_message(f"Unable to get token")
-    exit
   return access_token
 
 
@@ -39,24 +37,7 @@ def get_pgedge(cmd):
     return response.json()
   else:
     util.exit_message(f"Unable to run {cmd}")
-    exit
 
-
-def delete_pgedge(cmd):
-  ## Execute a pgEdgeCLI command
-  with open(f"{cluster_dir}{os.sep}creds.json") as f:
-    parsed_json = json.load(f)
-    access=get_access_token(parsed_json)
-  url = "https://api.pgedge.com/" + cmd 
-  header={}
-  header["Authorization"]="Bearer " + access
-  response = requests.get(url, headers=header)
-  if str(response.status_code)=='200':
-    print(response.json())
-  else:
-    util.exit_message(f"Unable to run {cmd}")
-    exit
-    
 
 def login(client_id, client_secret):
   """Login nodeCtl with a pgEdge Cloud Account"""
@@ -74,21 +55,21 @@ def login(client_id, client_secret):
   except:
     util.exit_message(f"Unable to create creds file")
   print(f"Logged in to pgEdge Secure")
-  return 1
+  return 0
 
 
 def list_clusters():
   """List all clusters in a pgEdge Cloud Account"""
   response=get_pgedge("clusters")
   print(response)
-  return 1
+  return 0
 
 
 def list_cluster_nodes(cluster_id):
   """List all nodes in a pgEdge Cloud Account cluster"""
   response=get_pgedge(f"clusters/{cluster_id}/nodes")
   print(response)
-  return 1
+  return 0
   
 
 def import_cluster(cluster_id):
@@ -115,7 +96,8 @@ def import_cluster(cluster_id):
     node_json["ip"]=node["public_ip_address"]
     nodes.append(node_json)
   cluster.create_remote_json(cluster_name, db, n, usr, passwd, pg, create_dt, id, nodes)
-  return("Cluster info json file created")
+  print("Cluster info json file created")
+  return 0
 
 
 def get_cluster_id(cluster_name):
@@ -154,7 +136,7 @@ def create_cluster(cluster_name, cluster_info, client_id=None, client_secret=Non
 
 def destroy_cluster(cluster_id):
   """Delete a pgEdge Cloud Cluster"""
-  delete_pgedge(f"deletecluster {cluster_id}")
+  util.exit_message("Coming Soon!")
 
 
 if __name__ == '__main__':
