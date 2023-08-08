@@ -8,6 +8,7 @@
   - replicate ddl automagically to the spock.replicate_ddl command if ddl_entry_point = 'on'
   - test json fields for replication
   - validate proposed 'um install-pgedge()' --> 'secure extend-pgedge()'
+  - `spock_create_subscriber` tool (from Spock ReadMe)
 
 
 ## done for 23.127 as of 2023-08-10
