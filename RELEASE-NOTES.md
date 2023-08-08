@@ -10,7 +10,8 @@
   - validate proposed 'um install-pgedge()' --> 'secure extend-pgedge()'
 
 
-## done so far for 23.127 as of 2023-08-07
+## done so far for 23.127 as of 2023-08-08
+  - add 'secure' api for interacting with pgEdge Cloud services
   - enhance northwind app to use schema 'northwind' rather than defaulting to 'public'
   - the basic cluster.import_remote_def() now works
   - spock.repset_add_table() only throws WARNING when table cannot be added
