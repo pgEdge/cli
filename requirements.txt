@@ -1,9 +1,14 @@
-requests
+requests>=2.31.0
+awscli>=1.29.21
 paramiko>=3.2.0
 psycopg>=3.1.9
 psycopg-binary>=3.1.9
-paho-mqtt>=1.6.1
 psutil>=5.9.5
+
+## we need the patroni dependencies
 patroni>=3.0.4
-apscheduler>=3.10.1
+
+## futures ??
+##apscheduler>=3.10.1
+##paho-mqtt>=1.6.1
 ##sqlalchemy>=2.0.19
