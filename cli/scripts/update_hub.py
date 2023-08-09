@@ -27,14 +27,6 @@ def run_sql(cmd):
     rc = 1
 
 
-#def update_3_3_0():
-#  print("")
-#  print("## Updating Metadata to 3.3.0 ##################")
-#  ## update components table
-#  run_sql("ALTER TABLE components ADD COLUMN pidfile TEXT")
-#  return
-
-
 def mainline():
   ## need from_version & to_version
   if len(sys.argv) == 3:
@@ -52,12 +44,9 @@ def mainline():
     print ("Nothing to do.")
     sys.exit(0)
 
-  if (p_from_ver < "23.124") and (p_to_ver >= "23.124"):
+  if (p_from_ver < "23.127") and (p_to_ver >= "23.127"):
     util.echo_cmd(NC + " remove nclibs")
     util.echo_cmd(NC + " install nclibs")
-
-  #if (p_from_ver < "3.3.0") and (p_to_ver >= "3.3.0"):
-  #  update_3_3_0()
 
   sys.exit(rc)
   return
