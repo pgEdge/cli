@@ -164,7 +164,7 @@ if withBACKREST == "True":
 
 if withCAT == "True":
   util.message("  ")
-  osSys(nc + "install pgcat2")
+  osSys(nc + "install pgcat")
 
 if withPATRONI == "True":
   util.message("  ")
