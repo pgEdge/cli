@@ -3,9 +3,12 @@ cd "$(dirname "$0")"
 
 set -x
 
-rpm=pgadmin4-redhat-repo-1-1.noarch.rpm
-url=https://ftp.postgresql.org/pub/pgadmin/pgadmin4
+rpm=pgadmin4-redhat-repo-2-1.noarch.rpm
+url=https://ftp.postgresql.org/pub/pgadmin/pgadmin4/yum
 
-sudo rpm -i --force $url/yum/$rpm
+sudo rpm -i $url/$rpm
+
 sudo yum install -y pgadmin4-web
+
+sudo /usr/pgadmin4/bin/setup-web.sh
 
