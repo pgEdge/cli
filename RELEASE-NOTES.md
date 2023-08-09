@@ -18,7 +18,7 @@
   - the basic cluster.import_remote_def() now works
   - spock.repset_add_table() only throws WARNING when table cannot be added
   - create a good dev baseline for etcd & patroni installs
-  - create a good dev baseline for pgcat2 (throwing a sed error)
+  - create a good dev baseline for pgcat (throwing a sed error)
 
 
 ## done for 23.126 as of 2023-08-03
@@ -87,7 +87,7 @@
   - bump pg16beta1 to pg16beta2
   - improve `ace diff-tables` to optionally use checksums
   - basic v1.0 of nodectl-mqtt avaialble in dev\test mode
-  - get latest pgcat2 & postgrest and make work for arm9 and el9 in dev\test
+  - get latest pgcat & postgrest and make work for arm9 and el9 in dev\test
   - bump pglogical to v2.4.3 (for testing only)
   - improve `info` layout whilst showing `cloud-init query` (if available)
   - improve `install.py` with an `update --silent` & `info` command at end

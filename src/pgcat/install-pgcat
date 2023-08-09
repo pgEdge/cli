@@ -1,5 +1,5 @@
 #!/bin/bash
 cd "$(dirname "$0")"
 
-./config-pgcat2 
+./config-pgcat
 
