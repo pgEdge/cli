@@ -19,6 +19,7 @@
   - spock.repset_add_table() only throws WARNING when table cannot be added
   - create a good dev baseline for etcd & patroni installs
   - create a good dev baseline for pgcat (throwing a sed error)
+  - get devel scripts for start & stop http.server out of base directory & into devel 
 
 
 ## done for 23.126 as of 2023-08-03
