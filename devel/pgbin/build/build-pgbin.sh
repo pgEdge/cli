@@ -139,7 +139,9 @@ function buildPostgres {
 	cd $baseDir/$workDir/$pgSrcDir
 
 	if [ "$pgShortV" == "15" ] || [ "$pgShortV" == "16" ]; then
-		if [ ! -f "$DIFF1" ]; then
+		if [ "$DIFF1" == "" ]; then
+			echo "std postgres build, no patches to apply"
+		elif [ ! -f "$DIFF1" ]; then
 			echo "# DIFF1 not found : $DIFF1"
 			exit 1
 		else
