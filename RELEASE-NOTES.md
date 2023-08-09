@@ -9,10 +9,12 @@
   - test json fields for replication
   - validate proposed 'um install-pgedge()' --> 'secure extend-pgedge()'
   - `spock_create_subscriber` tool (from Spock ReadMe)
+  - more default conf setting tweaks from customer support
+  - explore possible inclusion of function for calling aws lambdas
 
 
 ## done for 23.127 as of 2023-08-10
-  - add support for pg16beta3 & bumped version of pg11 thru pg15
+  - add support for pg16beta3 & bumped versions of pg11 thru pg15
   - add 'secure' api for interacting with pgEdge Cloud services
   - add 'requests' & 'awscli' as default nclibs
   - enhance northwind app to use schema 'northwind' rather than defaulting to 'public'
