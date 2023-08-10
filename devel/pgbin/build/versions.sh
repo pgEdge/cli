@@ -4,10 +4,10 @@ spockFull31V=3.1.4
 spockBuild31V=1
 
 pg16V=16beta3
-pg16BuildV=1
+pg16BuildV=2
 
 pg15V=15.4
-pg15BuildV=1
+pg15BuildV=2
 
 pg14V=14.9
 pg14BuildV=1

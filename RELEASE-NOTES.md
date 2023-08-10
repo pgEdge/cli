@@ -9,8 +9,12 @@
   - test json fields for replication
   - validate proposed 'um install-pgedge()' --> 'secure extend-pgedge()'
   - `spock_create_subscriber` tool (from Spock ReadMe)
-  - more default conf setting tweaks from customer support
-  - explore possible inclusion of function for calling aws lambdas
+  - more default conf setting tweaks from customer support (from hari)
+  - explore possible inclusion of function for calling aws lambdas (hari)
+
+
+## done for 23.128 as of 2023-08-11
+  - bump to pg15.4-2 & pg16beta3-2 to support static linking for uuid-ossp
 
 
 ## done for 23.127 as of 2023-08-10
