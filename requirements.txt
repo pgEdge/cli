@@ -11,3 +11,4 @@ patroni>=3.0.4
 # ace ########################
 apscheduler>=3.10.1
 sqlalchemy>=2.0.19
+psycopg-pool>=3.1.7

@@ -7,14 +7,37 @@
 import os, sys, random, time, json, socket, subprocess, re
 import util, fire, meta, cluster
 from datetime import datetime
+import multiprocessing as mp
 
 l_dir = "/tmp"
 
 try:
   import psycopg
+  from psycopg_pool import ConnectionPool
 except ImportError as e:
   util.exit_message("Missing 'psycopg' module from pip", 1)
 
+pools = []
+POOL_INIT = False
+queue = mp.Queue()
+
+def init_connection_pool(cluster_name):
+    il, db, pg, count, usr, passwd, os_user, cert, nodes = cluster.load_json(cluster_name)
+    pg_v = util.get_pg_v(pg)
+    dbp = util.get_column("port", pg_v)
+
+    n = 0
+    for node in nodes:
+        util.message(json.dumps(node))
+        n = n + 1
+        if n > 2:
+            util.message(f"### WARNING!! Node {n} ignored.  Only supports first two nodes for the moment.")
+            break
+        conninfo = f"postgresql://{node['ip']}:{node['port']}/{db}?user={usr}&password={passwd}"
+        util.message(conninfo)
+        pools.append(ConnectionPool(conninfo, max_size=50))
+
+    POOL_INIT = True
 
 def get_pg_connection(pg_v, db, ip, usr):
   dbp = util.get_column("port", pg_v)
@@ -142,6 +165,22 @@ def fix_schema(diff_file, sql1, sql2):
       else:
         continue
   return(1)
+
+def get_row_count(p_con, p_schema, p_table):
+  sql = f"SELECT count(*) FROM {p_schema}.{p_table}"
+
+  try:
+    cur = p_con.cursor()
+    cur.execute(sql)
+    r = cur.fetchone()
+    cur.close()
+  except Exception as e:
+    util.exit_message("Error in get_row_count():\n" + str(e), 1)
+
+  if not r:
+    return 0
+
+  return int(r[0])
 
 
 def get_cols(p_con, p_schema, p_table):
@@ -317,8 +356,41 @@ def diff_spock(cluster_name, node1, node2):
   return(compare_spock)
 
 
+def compare_checksums(conn_pools, table_name, p_key, block_rows, offset):
+    sql = f"""
+    SELECT md5(cast(array_agg(t.*) AS text)) 
+    FROM (SELECT * 
+            FROM {table_name} 
+            ORDER BY {p_key} 
+            OFFSET {offset} 
+            LIMIT {block_rows}) t;
+    """
+
+    hash1 = ""
+    hash2 = ""
+
+    # TODO: Use asyncio here to parallelise connections to 
+    # nodes in the cluster.
+    with conn_pools[0].connection() as conn1:
+        cur1 = conn1.cursor()
+        cur1.execute(sql)
+        hash1 = cur1.fetchone()[0]
+        cur1.close()
+
+    with conn_pools[1].connection() as conn2:
+        cur2 = conn2.cursor()
+        cur2.execute(sql)
+        hash2 = cur2.fetchone()[0]
+        cur2.close()
+
+    if hash1 != hash2:
+        # TODO: Add logic to output data here
+        queue.put('Block mismatch')
+
 def diff_tables(cluster_name, table_name, checksum_use=False, block_rows=1):
   """Efficiently compare tables across cluster using optional checksums and blocks of rows."""
+
+  global br
 
   bad_br = True
   try:
@@ -330,15 +402,12 @@ def diff_tables(cluster_name, table_name, checksum_use=False, block_rows=1):
   if bad_br:
     util.exit_message(f"block_rows parm '{block_rows}' must be integer >= 10")
 
+
   if str(checksum_use) == "True" or str(checksum_use) == "False":
     pass
   else:
     util.exit_message(f"checksum_use parm '{checksum_use}' must be 'True' or 'False'")
 
-
-  if not os.path.isfile("/usr/local/bin/csvdiff"):
-    util.message("Installing the required 'csvdiff' component.")
-    os.system("./nodectl install csvdiff")
 
   util.message(f"\n## Validating cluster {cluster_name} exists")
   util.check_cluster_exists(cluster_name)
@@ -349,75 +418,114 @@ def diff_tables(cluster_name, table_name, checksum_use=False, block_rows=1):
   l_schema = nm_lst[0]
   l_table = nm_lst[1]
 
-  il, db, pg, count, usr, passwd, os_usr, cert, nodes = cluster.load_json(cluster_name)
-  con1 = None
-  con2 = None
-  util.message(f"\n## Validating connections to each node in cluster")
-  try:
-    n = 0
-    for nd in nodes:
-      n = n + 1
-      if n == 1:
-        util.message(f'### Getting Conection to Node1 ({nd["nodename"]}) - {usr}@{nd["ip"]}:{nd["port"]}/{db}')
-        con1 = psycopg.connect(dbname=db, user=usr, password=passwd, host=nd["ip"], port=nd["port"])
-      elif n == 2:
-        util.message(f'### Getting Conection to Node2 ({nd["nodename"]}) - {usr}@{nd["ip"]}:{nd["port"]}/{db}')
-        con2 = psycopg.connect(dbname=db, user=usr, password=passwd, host=nd["ip"], port=nd["port"])
-      else:
-        util.message(f"### WARNING!! Node {n} ignored.  Only supports first two nodes for the moment.")
-  except Exception as e:
-    util.exit_message("Error in diff_tbls() Getting Connections:\n" + str(e), 1)
+  if not POOL_INIT:
+      init_connection_pool(cluster_name)
+
+  #il, db, pg, count, usr, passwd, os_usr, cert, nodes = cluster.load_json(cluster_name)
+  #con1 = None
+  #con2 = None
+  #util.message(f"\n## Validating connections to each node in cluster")
+  #try:
+  #  n = 0
+  #  for nd in nodes:
+  #    n = n + 1
+  #    if n == 1:
+  #      util.message(f'### Getting Conection to Node1 ({nd["nodename"]}) - {usr}@{nd["ip"]}:{nd["port"]}/{db}')
+  #      con1 = psycopg.connect(dbname=db, user=usr, password=passwd, host=nd["ip"], port=nd["port"])
+  #    elif n == 2:
+  #      util.message(f'### Getting Conection to Node2 ({nd["nodename"]}) - {usr}@{nd["ip"]}:{nd["port"]}/{db}')
+  #      con2 = psycopg.connect(dbname=db, user=usr, password=passwd, host=nd["ip"], port=nd["port"])
+  #    else:
+  #      util.message(f"### WARNING!! Node {n} ignored.  Only supports first two nodes for the moment.")
+  #except Exception as e:
+  #  util.exit_message("Error in diff_tbls() Getting Connections:\n" + str(e), 1)
+
 
   util.message(f"\n## Validating table {table_name} is comparable across nodes")
-  c1_cols = get_cols(con1, l_schema, l_table)
-  c1_key = get_key(con1, l_schema, l_table)
-  if c1_cols and c1_key:
-    util.message(f"## con1 cols={c1_cols}  key={c1_key}")
-  else:
-    if not c1_cols:
-      util.exit_message(f"Invalid table name '{table_name}'")
-    else:
-      util.exit_message(f"No primary key found for '{table_name}'")
 
-  c2_cols = get_cols(con2, l_schema, l_table)
-  c2_key = get_key(con2, l_schema, l_table)
-  if c2_cols and c2_key:
-    util.message(f"## con2 cols={c2_cols}  key={c2_key}")
-  else:
-    if not c2_cols:
-      util.exit_message(f"Invalid table name '{table_name}'")
-    else:
-      util.exit_message(f"No primary key found for '{table_name}'")
+  # TODO: Need to add support to specify which two nodes in the cluster
+
+  # Use a conns from the pool
+  with pools[0].connection() as con1:
+      util.message("\n## Getting schema from first node")
+      c1_cols = get_cols(con1, l_schema, l_table)
+      c1_key = get_key(con1, l_schema, l_table)
+      if c1_cols and c1_key:
+        util.message(f"## con1 cols={c1_cols}  key={c1_key}")
+      else:
+        if not c1_cols:
+          util.exit_message(f"Invalid table name '{table_name}'")
+        else:
+          util.exit_message(f"No primary key found for '{table_name}'")
+
+      t1_rows = get_row_count(con1, l_schema, l_table)
+
+  with pools[1].connection() as con2:
+      util.message("\n## Getting schema from first node")
+      c2_cols = get_cols(con2, l_schema, l_table)
+      c2_key = get_key(con2, l_schema, l_table)
+      if c2_cols and c2_key:
+        util.message(f"## con2 cols={c2_cols}  key={c2_key}")
+      else:
+        if not c2_cols:
+          util.exit_message(f"Invalid table name '{table_name}'")
+        else:
+          util.exit_message(f"No primary key found for '{table_name}'")
+
+      t2_rows = get_row_count(con2, l_schema, l_table)
 
   if (c1_cols != c2_cols) or (c1_key != c2_key):
     util.exit_message("Tables don't match in con1 & con2")
 
+  if t1_rows != t2_rows:
+      # TODO: Add feature to record diffs into a file
+      util.message("####### TABLES DO NOT MATCH ########")
+
+  total_blocks = t1_rows // block_rows
+  total_blocks = total_blocks if total_blocks > 0 else 1
+  max_procs = mp.cpu_count() * 2
+  procs = max_procs if total_blocks > max_procs else total_blocks
+
+  util.message(f'total blocks = {total_blocks}, procs = {procs}')
+
   start_time = datetime.now()
   util.message(f"\n## start_time = {start_time} #################")
 
-  csv1 = write_tbl_csv(con1, "con1", l_schema, l_table, c1_cols, c1_key, 
-                       checksum_use, block_rows, l_dir)
+  with mp.Pool(procs) as pool:
+    util.message('Starting multiprocessing tasks')
+    chunk_size = t1_rows // procs
+    offsets = [x for x in range(0, (t1_rows - chunk_size) + 1, chunk_size)]
+    results = [pool.apply(compare_checksums, args=(pools, table_name, c1_key, block_rows, offset,)) for offset in offsets]
 
-  csv2 = write_tbl_csv(con2, "con2", l_schema, l_table, c2_cols, c2_key,
-                       checksum_use, block_rows, l_dir)
+  if not queue.empty():
+      util.message("####### TABLES DO NOT MATCH ########")
+  else:
+      util.message('####### TABLES MATCH ##########')
+
+
+  #csv1 = write_tbl_csv(con1, "con1", l_schema, l_table, c1_cols, c1_key, 
+  #                     checksum_use, block_rows, l_dir)
+
+  #csv2 = write_tbl_csv(con2, "con2", l_schema, l_table, c2_cols, c2_key,
+  #                     checksum_use, block_rows, l_dir)
 
   run_time = datetime.now() - start_time
   util.message(f"\n## run_time = {run_time} ##############################")
 
 
-  cmd = "csvdiff -o json " + csv1 + "  " + csv2
-  util.message("\n## Running # " + cmd + "\n")
-  diff_s = subprocess.check_output(cmd, shell=True)
-  diff_j = json.loads(diff_s)
+  #cmd = "csvdiff -o json " + csv1 + "  " + csv2
+  #util.message("\n## Running # " + cmd + "\n")
+  #diff_s = subprocess.check_output(cmd, shell=True)
+  #diff_j = json.loads(diff_s)
 
-  if diff_j['Additions'] or diff_j['Deletions'] or diff_j['Modifications']:
-    print(json.dumps(diff_j, indent=2))
-    rc = 1
-  else:
-    util.message("TABLES ARE SAME!!")
-    rc = 0
+  #if diff_j['Additions'] or diff_j['Deletions'] or diff_j['Modifications']:
+  #  print(json.dumps(diff_j, indent=2))
+  #  rc = 1
+  #else:
+  #  util.message("TABLES ARE SAME!!")
+  #  rc = 0
 
-  return(rc)
+  return 0 if queue.empty() else 1
 
 
 if __name__ == '__main__':
