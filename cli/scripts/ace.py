@@ -356,7 +356,7 @@ def diff_spock(cluster_name, node1, node2):
   return(compare_spock)
 
 
-def compare_checksums(conn_pools, table_name, p_key, block_rows, offset):
+def compare_checksums(cluster_name, table_name, p_key, block_rows, offset):
     sql = f"""
     SELECT md5(cast(array_agg(t.*) AS text)) 
     FROM (SELECT * 
@@ -369,19 +369,23 @@ def compare_checksums(conn_pools, table_name, p_key, block_rows, offset):
     hash1 = ""
     hash2 = ""
 
+    il, db, pg, count, usr, passwd, os_usr, cert, nodes = cluster.load_json(cluster_name)
+    con1 = psycopg.connect(dbname=db, user=usr, password=passwd, host=nodes[0]["ip"], port=nodes[0]["port"])
+    con2 = psycopg.connect(dbname=db, user=usr, password=passwd, host=nodes[1]["ip"], port=nodes[1]["port"])
+
     # TODO: Use asyncio here to parallelise connections to 
     # nodes in the cluster.
-    with conn_pools[0].connection() as conn1:
-        cur1 = conn1.cursor()
-        cur1.execute(sql)
-        hash1 = cur1.fetchone()[0]
-        cur1.close()
+    #with conn_pools[0].connection() as conn1:
+    cur1 = con1.cursor()
+    cur1.execute(sql)
+    hash1 = cur1.fetchone()[0]
+    cur1.close()
 
-    with conn_pools[1].connection() as conn2:
-        cur2 = conn2.cursor()
-        cur2.execute(sql)
-        hash2 = cur2.fetchone()[0]
-        cur2.close()
+    #with conn_pools[1].connection() as conn2:
+    cur2 = con2.cursor()
+    cur2.execute(sql)
+    hash2 = cur2.fetchone()[0]
+    cur2.close()
 
     if hash1 != hash2:
         # TODO: Add logic to output data here
@@ -495,7 +499,7 @@ def diff_tables(cluster_name, table_name, checksum_use=False, block_rows=1):
     util.message('Starting multiprocessing tasks')
     chunk_size = t1_rows // procs
     offsets = [x for x in range(0, (t1_rows - chunk_size) + 1, chunk_size)]
-    results = [pool.apply(compare_checksums, args=(pools, table_name, c1_key, block_rows, offset,)) for offset in offsets]
+    results = [pool.apply(compare_checksums, args=(cluster_name, table_name, c1_key, block_rows, offset,)) for offset in offsets]
 
   if not queue.empty():
       util.message("####### TABLES DO NOT MATCH ########")
