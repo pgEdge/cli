@@ -51,6 +51,7 @@ function linuxCopySharedLibs {
 
   cp -Pv $lib/libLLVM*.so*         $shared_lib/.
   cp -Pv $lib/libffi*.so*          $shared_lib/.
+  cp -Pv $lib/libossp-uuid.so.16*  $shared_lib/.
 
   # plv8
   ##cp -Pv $lib/libc++.so.*          $shared_lib/.
@@ -85,7 +86,7 @@ function linuxCopySharedLibs {
 
   ## cleanups at the end #################
   cd $shared_lib
-  ln -fs libcrypt.so.1 libcrypt.so
+  #ln -fs libcrypt.so.1 libcrypt.so
 
   sl="$shared_lib/."
   rm -f $sl/*.a

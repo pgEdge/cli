@@ -53,6 +53,29 @@ def clean():
   run_cmd('clean')
 
 
+def install_pgedge(User=None, Passwd=None, db=None, tenancy='Single', leader='False', customer_id=None):
+    """
+    './nc um install-pgedge' is a proposed wrapper for './nc install pgedge'
+
+  Proposed wrapper for './nc install pgedge'
+
+      New fields are:
+        tenancy:     defaults to 'Single' and optionally can be set to 'Multi'
+        leader:      defaults to 'False' and optionally can be set to 'True'
+        customer_id: defaults to None and MUST BE VALID if provided
+
+      New EditChecks are:
+        if tenancy == 'Multi':
+          'customer_id' must be VALIDated
+          'User' & 'db' must not be specified (& are set to u-{customer_id} & d-{customer_id})
+          'leader' will overridden & be set to 'False'
+
+        if leader == 'True':
+          'tenancy' must be 'Single'
+          --pgcat & --patroni & --backrest flags will be overridden & set to 'True'   
+    """
+
+
 if __name__ == '__main__':
   fire.Fire({
     'list':list,
@@ -60,6 +83,6 @@ if __name__ == '__main__':
     'install':install,
     'remove':remove,
     'upgrade':upgrade,
-    ## 'downgrade':downgrade,
+    'install-pgedge':install_pgedge,
     'clean':clean,
   })

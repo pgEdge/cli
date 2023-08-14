@@ -1,0 +1,42 @@
+#!/bin/bash
+cd "$(dirname "$0")"
+
+## set -x
+
+sudo systemctl stop pgcat > /dev/null 2>&1
+sudo cp pgcat   /usr/local/bin/.
+sudo chmod 755 /usr/local/bin/pgcat
+
+cp pgcat.toml.template pgcat.toml
+
+if [ "$pgeUser" == "" ]; then
+  usr=$USER
+else
+  usr="$pgeUser"
+fi
+
+if [ "$pgePasswd" == "" ]; then
+  passwd=`head -1 ~/.pgpass | cut -d':' -f 5`
+else
+  passwd="$pgePasswd"
+fi
+
+if [ "$pgName" == "" ]; then
+  db=postgres
+else
+  db="$pgName"
+fi
+
+sed -i -e "s/USR/$usr/g"       pgcat.toml
+sed -i -e "s/PASSWD/$passwd/g" pgcat.toml
+sed -i -e "s/DB/$db/g"         pgcat.toml
+
+sudo mkdir -p /etc/pgcat/conf
+sudo cp pgcat.toml /etc/pgcat/conf/.
+
+sudo cp pgcat.service /etc/systemd/system/.
+sudo systemctl daemon-reload
+sudo systemctl enable pgcat
+sudo systemctl start  pgcat
+
+

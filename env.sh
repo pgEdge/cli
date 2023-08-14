@@ -1,30 +1,30 @@
 
 bundle=pgedge
 api=nodectl
-hubV=23.126
+hubV=23.128
 
 spock31V=3.1.4-1
 catV=1.0.0
 ncdV=1.0
 
-pgedgeV=2-1
+pgedgeV=2-2
 
-P16=16beta2-1
-P15=15.3-2
-P14=14.8-1
-P13=13.11-1
-P12=12.15-1
-P11=11.20-1
+P16=16beta3-2
+P15=15.4-2
+P14=14.9-1
+P13=13.12-1
+P12=12.16-1
+P11=11.21-1
 
-goV=1.19.3
+##goV=1.19.3
 postgrestV=11.1.0-1
 prompgexpV=0.11.1
-nodejsV=18.12.1
-backrestV=2.46-1
+##nodejsV=18.12.1
+backrestV=2.47-1
 csvdiffV=1.4.0
 curlV=2.1.1-1
 readonlyV=1.1.0-1
-foslotsV=1a-1
+##foslotsV=1a-1
 
 multicorn2V=2.4-1
 esfdwV=0.11.2
@@ -37,7 +37,7 @@ oraclefdwV=2.5.0-1
 inclV=21.6
 orafceV=4.3.0-1
 ora2pgV=23.1
-v8V=3.1.2-1
+v8V=3.2.0-1
 
 anonV=1.1.0-1
 ddlxV=0.17-1
@@ -50,7 +50,8 @@ partmanV=4.7.3-1
 repackV=1.4.8-1
 hintV=1.5.0-1
 
-patroniV=3.0
+patroniV=3.1.0.1
+etcdV=3.5.9
 
 audit15V=1.7.0-1
 postgisV=3.3.4-1

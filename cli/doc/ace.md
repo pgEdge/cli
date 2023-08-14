@@ -1,5 +1,5 @@
 ## SYNOPSIS
-    ./nodectl cluster COMMAND
+    ./nodectl ace COMMAND
  
 ## COMMANDS
     COMMAND is one of the following:

@@ -6,10 +6,7 @@ if [ ! "$rc" == "0" ]; then
   exit 1
 fi
 
-pipV=`pip3 --version`
-echo "pipV = $pipV"
-
 rm -f get-pip.py
-wget https://bootstrap.pypa.io/get-pip.py
+curl -o get-pip.py https://bootstrap.pypa.io/get-pip.py
 python3 get-pip.py
 rm get-pip.py

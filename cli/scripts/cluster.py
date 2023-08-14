@@ -9,22 +9,11 @@ import pgbench, northwind
 base_dir = "cluster"
 
 
-def add_repset_tables(p_spk, p_repset, p_tbls, p_db, p_host, p_usr, p_key):
-  for tbl in p_tbls:
-    util.echo_cmd(p_spk + " repset-add-table " + p_repset + " " + tbl + " --db " + p_db,
-                  host=p_host, usr=p_usr, key=p_key)
-
-
-def drop_tables(p_tbls, p_nc, p_db, p_pg, p_host, p_usr, p_key):
-  for tbl in reversed(p_tbls):
-    util.psql_cmd("DROP TABLE " + tbl, p_nc, p_db, p_pg, host=p_host, usr=p_usr, key=p_key)
-
-
 def log_old_vals(p_run_sums, p_nc, p_db, p_pg, p_host, p_usr, p_key):
   for tbl_col in p_run_sums:
     tbl_col_lst = tbl_col.split(".")
-    tbl = tbl_col_lst[0]
-    col = tbl_col_lst[1]
+    tbl = tbl_col_lst[0] + "." + tbl_col_lst[1]
+    col = tbl_col_lst[2]
 
     cmd = "ALTER TABLE " + tbl + " ALTER COLUMN " + col + " SET (LOG_OLD_VALUE=true)"
     util.psql_cmd(cmd, p_nc, p_db, p_pg, p_host, p_usr, p_key)
@@ -53,6 +42,30 @@ def create_local_json(cluster_name, db, num_nodes, usr, passwd, pg, port1):
     node_json["path"] = os.getcwd() + os.sep + "cluster" + os.sep + cluster_name + os.sep + "n" + str(n)
     cluster_json["nodes"].append(node_json)
     port1=port1+1
+  try:
+    text_file.write(json.dumps(cluster_json, indent=2))
+    text_file.close()
+  except: 
+     util.exit_message("Unable to create JSON file", 1)
+
+
+def create_remote_json(cluster_name, db, num_nodes, usr, passwd, pg, create_dt, id, nodes):
+  cluster_dir = base_dir + os.sep + cluster_name
+  os.system("mkdir -p " + cluster_dir)
+  text_file = open(cluster_dir + os.sep + cluster_name + ".json", "w")
+  cluster_json = {}
+  cluster_json["cluster"] = cluster_name
+  cluster_json["id"] = id
+  cluster_json["is_localhost"] = "False"
+  cluster_json["create_dt"] = create_dt
+  cluster_json["db_name"] = db
+  cluster_json["db_user"] = usr
+  cluster_json["db_init_passwd"] = passwd
+  cluster_json["os_user"] = usr
+  cluster_json["ssh_key"] = ""
+  cluster_json["pg_ver"] = pg
+  cluster_json["count"] = num_nodes
+  cluster_json["nodes"]=(nodes)
   try:
     text_file.write(json.dumps(cluster_json, indent=2))
     text_file.close()
@@ -97,10 +110,19 @@ def get_cluster_json(cluster_name):
 def import_remote_def(cluster_name, json_file_name):
   """Import a cluster definition file so we can work with it like a pgEdge cluster."""
 
-  if not os.path.exists(p_json_file):
-    util.exit_error(f"file '{p_json_file}' not found")
+  try:
+    with open(json_file_name) as f:
+      j_clus = json.load(f)
+  except FileNotFoundError:
+    util.exit_message(f"file '{json_file_name}' not found")
+  except Exception as e:
+    util.exit_message(f"Unable to parse file '{json_file_name}' into json object.\n  {e.msg}")
 
-  os.system(f"mkdir -p ../cluster/{p_json}")
+  cluster_dir = f"cluster/{cluster_name}"
+
+  util.echo_cmd(f"mkdir -p {cluster_dir}")
+
+  util.echo_cmd(f"cp {json_file_name} {cluster_dir}/{cluster_name}.json")
 
 
 def reset_remote(cluster_name):
@@ -143,12 +165,6 @@ def init_remote(cluster_name, app=None):
       util.exit_message("cannot ssh to node")
 
   ssh_install_pgedge(cluster_name, cj["db_init_passwd"])
-
-
-def create_secure(cluster_name, locations="", pg=None, app=None, 
-                 User="lcusr", Passwd="lcpasswd", db="lcdb"):
-  """Coming Soon! Create a secure pgEdge cluster of N nodes."""
-  util.exit_message("Coming Soon!")
 
 
 def create_local(cluster_name, num_nodes, pg="16", app=None, port1=6432, 
@@ -305,7 +321,7 @@ def app_install(cluster_name, app_name, factor=1):
   elif app_name == "northwind":
     northwind.install(cluster_name, factor)
   else:
-    util.exit_message("Invalid application name.")
+    util.exit_message(f"Invalid app_name '{app_name}'.")
 
 
 def app_remove(cluster_name, app_name):
@@ -320,7 +336,6 @@ def app_remove(cluster_name, app_name):
 
 if __name__ == '__main__':
   fire.Fire({
-    'create-secure':  create_secure,
     'create-local':   create_local,
     'destroy-local':  destroy_local,
     'init-remote':    init_remote,

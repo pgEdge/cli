@@ -1,16 +1,46 @@
 # pgEdge Platform Release Notes #############
 
-## to do's for 23.126 and beyond
+## to do's for 23.128 and beyond
   - add support for pljava-pg15 & -pg16 (cannot find libjvm17  setting from util.get_jvm_location)
-  - improve test support for patroni, etcd, haproxy
+  - add support for plv8-3.2.0
   - improve efficiency of `ace diff-tables` to handle massive tables w blocks of checksums
   - fix port numbers in cluster.create-local() (env & .json)
-  - add support for plv8-3.2beta1-pg15
+  - replicate ddl automagically to the spock.replicate_ddl command if ddl_entry_point = 'on'
+  - test json fields for replication
+  - validate proposed 'um install-pgedge()' --> 'secure extend-pgedge()'
+  - `spock_create_subscriber` tool (from Spock ReadMe)
+  - more default conf setting tweaks from customer support (from hari)
+  - explore possible inclusion of function for calling aws lambdas (hari)
 
-## done for 23.126 as of 2023-08-01
+
+## done for 23.128 as of 2023-08-11
+  - bump to pg15.4-2 & pg16beta3-2 to support static linking for uuid-ossp
+
+
+## done for 23.127 as of 2023-08-10
+  - add support for pg16beta3 & bumped versions of pg11 thru pg15
+  - add 'secure' api for interacting with pgEdge Cloud services
+  - add 'requests' & 'awscli' as default nclibs
+  - enhance northwind app to use schema 'northwind' rather than defaulting to 'public'
+  - the basic cluster.import_remote_def() now works
+  - spock.repset_add_table() only throws WARNING when table cannot be added
+  - create a good dev baseline for etcd & patroni installs
+  - create a good dev baseline for pgcat (throwing a sed error)
+  - get devel scripts for start & stop http.server out of base directory & into devel 
+
+
+## done for 23.126 as of 2023-08-03
   - improve devel/setup doc & completeness
   - add support for `./nc psql 99 -f`
+  - confirm 'cluster app-install northwind' works fully
   - drop unused from spock.py {validate(), tune() & install()}
+  - fix regression in spock.repset_add_tables() for wildcards
+  - soften bad_os warning
+  - fix bug where `./nc tune` setting working_mem to 0 GB
+  - 'install pgedge' now supports parms --with-patroni, --with-backrest & --with-cat
+  - bump backrest from 2.46 to 2.47
+  - fix install/remove for backrest not to assume pg15
+  - bump plv8 to 3.2.0
 
 
 ## done for 23.125 as of 2023-07-31
@@ -65,7 +95,7 @@
   - bump pg16beta1 to pg16beta2
   - improve `ace diff-tables` to optionally use checksums
   - basic v1.0 of nodectl-mqtt avaialble in dev\test mode
-  - get latest pgcat2 & postgrest and make work for arm9 and el9 in dev\test
+  - get latest pgcat & postgrest and make work for arm9 and el9 in dev\test
   - bump pglogical to v2.4.3 (for testing only)
   - improve `info` layout whilst showing `cloud-init query` (if available)
   - improve `install.py` with an `update --silent` & `info` command at end

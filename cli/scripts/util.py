@@ -2,7 +2,7 @@
 #  Copyright 2022-2023 PGEDGE  All rights reserved. #
 #####################################################
 
-MY_VERSION = "23.126"
+MY_VERSION = "23.128"
 
 from subprocess import Popen, PIPE, STDOUT
 from datetime import datetime, timedelta
@@ -170,17 +170,18 @@ def echo_cmd(cmd, sleep_secs=0, host="", usr="", key=""):
 
   return(1)
 
+
 def psql_cmd(cmd, nc, db, pg, host, usr, key):
   echo_cmd(nc + " psql " + str(pg) + " \"" + cmd + "\" " + db, host=host, usr=usr, key=key)
 
 
-def print_exception(e):
+def print_exception(e, msg_type="error"):
   lines = str(e).splitlines()
   for line in lines:
      if line.startswith("HINT:"):
        pass
      else:
-       message(line, "error")
+       message(line, msg_type)
 
 
 def exit_exception(e):
@@ -918,6 +919,9 @@ def message(p_msg, p_state="info", p_isJSON=None):
   if p_state.lower() == "error":
     my_logger.error(p_msg)
     prefix = "ERROR: "
+  elif p_state.lower() == "warning":
+    my_logger.warning(p_msg)
+    prefix = "WARNING: "
   elif p_state.lower() == "debug":
     my_logger.debug(p_msg)
     prefix = "DEBUG: "
@@ -1675,10 +1679,10 @@ def get_mem_mb():
 
 
 def str_mem(in_mb):
-  if in_mb < 501:
+  if in_mb < 2000:
     return(str(in_mb) + "MB")
 
-  in_gb = round((in_mb / 1024))
+  in_gb = round((in_mb / 1000))
   return(str(in_gb) + "GB")
 
 
@@ -2226,7 +2230,7 @@ def warn_bad_os(el_ver):
     return()
   else:
     bad_os_warn = True
-    message("# WARNING! Upgrade to EL9+ or Ubuntu 22+ for advanced functionality.")
+    message("# WARNING! Change to EL9 or Ubuntu 22.04 for advanced functionality.")
 
 
 def is_el8():

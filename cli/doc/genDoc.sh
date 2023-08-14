@@ -21,7 +21,6 @@ $nc service config          --help
 $nc service init            --help
 
 $nc spock --help
-$nc spock tune              --help
 $nc spock node-create       --help
 $nc spock node-drop         --help
 $nc spock repset-create     --help
@@ -43,7 +42,6 @@ $nc spock metrics-check     --help
 $nc spock set-readonly      --help
 
 $nc cluster --help
-$nc cluster create-secure     --help
 $nc cluster create-local      --help
 $nc cluster destroy-local     --help
 $nc cluster init-remote       --help
@@ -51,13 +49,20 @@ $nc cluster reset-remote      --help
 $nc cluster import-remote-def --help
 $nc cluster command           --help
 
+$nc secure --help
+$nc secure login              --help
+$nc secure list-clusters      --help
+$nc secure list-cluster-nodes --help
+$nc secure import-cluster     --help
+$nc secure get-cluster-id     --help
+$nc secure get-node-id        --help
+$nc secure push-metrics       --help
+$nc secure create-cluster     --help
+$nc secure destroy-cluster    --help
+
 $nc ace --help
 $nc ace diff-tables         --help
 $nc ace diff-schemas        --help
 $nc ace diff-spock          --help
-
-$nc starfleet get-token      --help
-$nc starfleet create-cluster --help
-$nc starfleet get-nodes      --help
 
 unset pgeMdDir

@@ -6,21 +6,30 @@
   "db_user": "admin",
   "db_init_passwd": "inSecure123!",
   "os_user": "rocky",
-  "ssh_key": "~/keys/dl-m2-air-key",
+  "ssh_key": "~/keys/t9-key",
   "pg_ver": "15",
   "count": 2,
   "nodes": [
     {
       "nodename": "t9e",
       "ip": "3.86.87.78",
-      "port": 5432,
-      "path": "~/pgedge"
+      "path": "~/pgedge",
+      "location": "IAD",
+      "port": 5432
     },
     {
       "nodename": "t9w",
       "ip": "34.222.171.103",
-      "port": 5432,
-      "path": "~/pgedge"
+      "path": "~/pgedge",
+      "location": "PDX",
+      "port": 5432
+    },
+    {
+      "nodename": "t9d",
+      "ip": "34.241.54.173",
+      "path": "~/pgedge",
+      "location": "DUB",
+      "port": 5432
     }
   ]
 }

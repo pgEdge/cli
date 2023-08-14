@@ -139,7 +139,9 @@ function buildPostgres {
 	cd $baseDir/$workDir/$pgSrcDir
 
 	if [ "$pgShortV" == "15" ] || [ "$pgShortV" == "16" ]; then
-		if [ ! -f "$DIFF1" ]; then
+		if [ "$DIFF1" == "" ]; then
+			echo "std postgres build, no patches to apply"
+		elif [ ! -f "$DIFF1" ]; then
 			echo "# DIFF1 not found : $DIFF1"
 			exit 1
 		else
@@ -166,9 +168,8 @@ function buildPostgres {
 	if [ $OS == "osx" ] || [ $OS == "el8" ]; then
 		conf="$conf --without-python --without-perl"
 	else
-		##export LLVM_CONFIG=/usr/bin/llvm-config-64
 		conf="$conf  --with-libxslt --with-libxml"
-		conf="$conf --with-uuid=ossp --with-gssapi --with-ldap --with-pam --enable-debug"
+		conf="$conf --with-uuid=ossp --with-gssapi --with-ldap --with-pam --enable-debug --enable-dtrace"
 		conf="$conf --with-llvm LLVM_CONFIG=/usr/bin/llvm-config-64 --with-openssl --with-systemd --enable-tap-tests"
 		conf="$conf --with-python PYTHON=/usr/bin/python3.9"
 	fi

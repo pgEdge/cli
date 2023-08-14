@@ -11,6 +11,10 @@ if pgN == "":
 pgV = "pg" + pgN
 
 withPOSTGREST = str(os.getenv("withPOSTGREST", "False"))
+withPATRONI = str(os.getenv("withPATRONI", "False"))
+withCAT = str(os.getenv("withCAT", "False"))
+withBACKREST = str(os.getenv("withBACKREST", "False"))
+
 isAutoStart   = str(os.getenv("isAutoStart",   "False"))
 isDebug       = str(os.getenv("pgeDebug",      "0"))
 
@@ -153,4 +157,16 @@ osSys(nc + "install spock31-" + pgV + " -d " + db1)
 if withPOSTGREST == "True":
   util.message("  ")
   osSys(nc + "install postgrest")
+
+if withBACKREST == "True":
+  util.message("  ")
+  osSys(nc + "install backrest")
+
+if withCAT == "True":
+  util.message("  ")
+  osSys(nc + "install pgcat")
+
+if withPATRONI == "True":
+  util.message("  ")
+  osSys(nc + "install patroni")
 

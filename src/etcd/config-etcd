@@ -1,0 +1,27 @@
+#!/bin/bash
+cd "$(dirname "$0")"
+
+sudo yum install -y golang
+sudo systemctl stop etcd > /dev/null 2>&1
+
+sudo cp etcd    /usr/local/bin/.
+sudo cp etcdctl /usr/local/bin/.
+
+sudo chmod +x /usr/local/bin/etcd*
+
+etcd --version
+etcdctl version
+
+## Configure etcd ###########################
+sudo mkdir -p /var/lib/etcd/
+sudo mkdir -p /etc/etcd
+
+sudo groupadd --system etcd > /dev/null 2>&1
+sudo useradd -s /sbin/nologin --system -g etcd etcd  > /dev/null 2>&1
+
+sudo chown -R etcd:etcd /var/lib/etcd/
+
+sudo cp etcd.service /etc/systemd/system/.
+sudo systemctl daemon-reload
+sudo systemctl enable etcd
+sudo systemctl start  etcd

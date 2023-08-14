@@ -1,0 +1,30 @@
+#!/bin/bash
+cd "$(dirname "$0")"
+
+PATRONI_CONF=/usr/patroni/conf
+
+if [ -d $MY_HOME/data/pg15 ]; then
+  PGDATA=$MY_HOME/data/pg15
+elif [ -d $MY_HOME/data/pg16 ]; then
+  PGDATA=$MY_HOME/data/pg16
+else
+  echo "ERROR: pg15 or pg16 must be installed and initialized"
+  exit 1
+fi
+
+echo ""
+echo "## Install HA Proxy ..."
+sudo yum install -y haproxy wget
+
+echo ""
+if [ -f $PGDATA/server.key ]; then
+  echo "## Copying Certs for Patroni..."
+  sudo mkdir -p $PATRONI_CONF
+  sudo cp $PGDATA/server.* $PATRONI_CONF/.
+else
+  echo "## No pg instance to configure for patroni"
+  exit 0
+fi
+
+exit 0
+

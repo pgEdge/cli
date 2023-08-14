@@ -4,7 +4,6 @@ Installation and configuration of a pgEdge SPOCK cluster
 ## Synopsis
     ./nodectl cluster <command> [parameters] [options]   
 
-[**create-secure**](doc/cluster-create-secure.md) - Coming soon! Provision a secure global cluster in the Cloud using your own account.<br>
 [**create-local**](doc/cluster-create-local.md)   - Create a localhost test cluster of N pgEdge nodes on different ports.<br>
 [**destroy-local**](doc/cluster-destroy-local.md) - Stop and then nuke a localhost cluster<br>
 [**init-remote**](doc/cluster-init-remote.md)     - Configure a test SSH cluster from a JSON cluster definition file.<br>
