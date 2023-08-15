@@ -2,7 +2,6 @@
 
 ## to do's for 23.128 and beyond
   - add support for pljava-pg15 & -pg16 (cannot find libjvm17  setting from util.get_jvm_location)
-  - add support for plv8-3.2.0
   - improve efficiency of `ace diff-tables` to handle massive tables w blocks of checksums
   - fix port numbers in cluster.create-local() (env & .json)
   - replicate ddl automagically to the spock.replicate_ddl command if ddl_entry_point = 'on'
@@ -15,6 +14,8 @@
 
 ## done for 23.128 as of 2023-08-11
   - bump to pg15.4-2 & pg16beta3-2 to support static linking for uuid-ossp
+  - bump pgcat to 1.1.1
+  - add support for plv8-3.2.0
 
 
 ## done for 23.127 as of 2023-08-10
