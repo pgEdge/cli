@@ -39,6 +39,11 @@ sudo cp pgcat.service /etc/systemd/system/.
 
 sudo systemctl daemon-reload
 sudo systemctl enable pgcat
-sudo systemctl start  pgcat
 
+echo "Starting PgCat service..."
+sudo systemctl start pgcat
+#util.set_column("autostart", "pgcat", "on")
+#util.set_column("svcname", "pgcat", "pgcat")
 
+sleep 3
+sudo systemctl status pgcat --lines 25 --full --no-pager

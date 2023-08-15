@@ -1,13 +1,16 @@
 [Unit]
-Description=Connection Pooling & Routing
+Description=PgCat pooler
 After=network.target
+StartLimitIntervalSec=0
 
 [Service]
 Type=simple
-User=USR 
+User=USR
+Restart=always
+RestartSec=1
+Environment=RUST_LOG=info
+LimitNOFILE=65536
 ExecStart=/usr/local/bin/pgcat  /etc/pgcat/conf/pgcat.toml
-ExecReload=/bin/kill -HUP $MAINPID
-KillSignal=SIGINT
 
 [Install]
 WantedBy=multi-user.target
