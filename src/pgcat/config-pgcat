@@ -34,7 +34,9 @@ sed -i -e "s/DB/$db/g"         pgcat.toml
 sudo mkdir -p /etc/pgcat/conf
 sudo cp pgcat.toml /etc/pgcat/conf/.
 
+sed -i -e "s/USR/$usr/g"       pgcat.service
 sudo cp pgcat.service /etc/systemd/system/.
+
 sudo systemctl daemon-reload
 sudo systemctl enable pgcat
 sudo systemctl start  pgcat
