@@ -346,10 +346,10 @@ INSERT INTO versions VALUES ('postgis-pg15', '3.3.4-1', 'el9, arm9', 1, '2023073
 INSERT INTO versions VALUES ('postgis-pg15', '3.3.3-1', 'el9, arm9', 0, '20230623', 'pg15', '', 'https://git.osgeo.org/gitea/postgis/postgis/raw/tag/3.3.3/NEWS');
 INSERT INTO versions VALUES ('postgis-pg15', '3.3.2-1', 'el9, arm9', 0, '20230608', 'pg15', '', 'https://git.osgeo.org/gitea/postgis/postgis/raw/tag/3.3.2/NEWS');
 
-INSERT INTO projects VALUES ('pgadmin', 'app', 3, 80, '', 1, 'https://www.pgadmin.org/news/',
-  'pgadmin', 0, 'pgadmin.png', 'PostgreSQL Tools', 'https://pgadmin.org');
-INSERT INTO releases VALUES ('pgadmin', 2, 'pgadmin', 'pgAdmin 4', '', 'test', '', 1, '', '', '');
-INSERT INTO versions VALUES ('pgadmin', '6.9', '', 0, '20220512', '', '', '');
+INSERT INTO projects VALUES ('pgadmin4', 'app', 3, 80, '', 1, 'https://www.pgadmin.org/news/',
+  'pgadmin4', 0, 'pgadmin.png', 'PostgreSQL Tools', 'https://pgadmin.org');
+INSERT INTO releases VALUES ('pgadmin4', 2, 'pgadmin4', 'pgAdmin 4', '', 'test', '', 1, '', '', '');
+INSERT INTO versions VALUES ('pgadmin4', '7.5', '', 0, '20230727', '', '', '');
 
 INSERT INTO projects VALUES ('bulkload', 'ext', 4, 0, 'hub', 5, 'https://github.com/ossc-db/pg_bulkload/releases',
   'bulkload', 1, 'bulkload.png', 'High Speed Data Loading', 'https://github.com/ossc-db/pg_bulkload');
