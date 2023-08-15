@@ -1,9 +1,11 @@
  
 ####################################################################
-######          Copyright (c)  2020-2022 OSCG             ##########
+######          Copyright (c)  2021-2023 pgEdge           ##########
 ####################################################################
 
-import util
+import util, sys
 
-util.create_extension("pgXX", "plv8-3.1.1", True, "plv8")
+#print(f"Argument List: {sys.argv}")
+
+util.create_extension("pgXX", "plv8-3.2.0", True, "plv8")
 
