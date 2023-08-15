@@ -2,7 +2,7 @@
     ./nodectl secure destroy-cluster CLUSTER_ID
  
 ## DESCRIPTION
-    Delete a pgEdge Cloud Cluster
+    Coming Soon: Delete a pgEdge Cloud Cluster
  
 ## POSITIONAL ARGUMENTS
     CLUSTER_ID

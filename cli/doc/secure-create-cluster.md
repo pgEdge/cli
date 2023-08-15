@@ -2,7 +2,7 @@
     ./nodectl secure create-cluster CLUSTER_NAME CLUSTER_INFO <flags>
  
 ## DESCRIPTION
-    Create a pgEdge Cloud Cluster
+    Coming Soon: Create a pgEdge Cloud Cluster
  
 ## POSITIONAL ARGUMENTS
     CLUSTER_NAME

@@ -9,6 +9,6 @@
      import-cluster      # Enable nodeCtl cluster commands on a pgEdge Cloud Cluster
      get-cluster-id      # Return the cluster id based on a cluster display name
      get-node-id         # Return the node id based on cluster and node display name
-     push-metrics        # push pgEdge Metrics to a specified target
-     create-cluster      # Create a pgEdge Cloud Cluster
-     destroy-cluster     # Delete a pgEdge Cloud Cluster
+     push-metrics        # Coming Soon: push pgEdge Metrics to a specified target
+     create-cluster      # Coming Soon: Create a pgEdge Cloud Cluster
+     destroy-cluster     # Coming Soon: Delete a pgEdge Cloud Cluster
