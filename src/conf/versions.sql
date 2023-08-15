@@ -402,7 +402,8 @@ INSERT INTO versions VALUES ('ncd', '1.0', '', 0, '20230623', '', '', '');
 INSERT INTO projects VALUES ('pgcat', 'pge', 4, 5433, 'hub', 3, 'https://github.com/pgedge/pgcat/tags',
   'cat',  0, 'pgcat.png', 'Connection Pooler', 'https://github.com/pgedge/pgcat');
 INSERT INTO releases VALUES ('pgcat', 2, 'pgcat',  'pgCat', '', 'test', '', 1, 'MIT', '', '');
-INSERT INTO versions VALUES ('pgcat', '1.0.0', 'el9, arm9', 1, '20230629', '', '', '');
+INSERT INTO versions VALUES ('pgcat', '1.1.1', 'el9, arm9', 1, '20230817', '', '', '');
+INSERT INTO versions VALUES ('pgcat', '1.0.0', 'el9, arm9', 0, '20230629', '', '', '');
 
 INSERT INTO projects VALUES ('backrest', 'pge', 4, 0, 'hub', 3, 'http://pgbackrest.org',
   'backrest',  0, 'backrest.png', 'Backup & Restore', 'http://pgbackrest.org');

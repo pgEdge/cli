@@ -1,5 +1,5 @@
 [Unit]
-Description=Coonnection Pooling & Routing
+Description=Connection Pooling & Routing
 After=network.target
 
 [Service]
