@@ -12,10 +12,10 @@
   - explore possible inclusion of function for calling aws lambdas (hari)
 
 
-## done so far for 23.128 as of 2023-08-15
+## done so far for 23.128 as of 2023-08-16
   - bump to pg15.4-2 & pg16beta3-2 to support static linking for uuid-ossp
   - bump pgcat to 1.1.1 & make avaialble for dev and test
-  - add support for plv8-3.2.0
+  - add support for plv8-3.2.0 for dev and test
 
 
 ## done for 23.127 as of 2023-08-10
