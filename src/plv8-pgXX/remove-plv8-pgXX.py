@@ -5,7 +5,7 @@
 
 import util, sys
 
-#print(f"Argument List: {sys.argv}")
 
-util.remove_pgconf_keyval("pgXX", "shared_preload_libraries", "plv8-3.2.0")
+sys.exit(0)
+#util.remove_pgconf_keyval("pgXX", "shared_preload_libraries", "plv8")
 

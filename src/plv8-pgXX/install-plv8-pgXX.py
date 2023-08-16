@@ -7,5 +7,5 @@ import util, sys
 
 #print(f"Argument List: {sys.argv}")
 
-util.create_extension("pgXX", "plv8-3.2.0", True, "plv8")
+util.create_extension("pgXX", "", False, "plv8")
 
