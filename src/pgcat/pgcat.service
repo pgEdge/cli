@@ -7,8 +7,8 @@ StartLimitIntervalSec=0
 Type=simple
 User=USR
 Restart=always
-RestartSec=1
-Environment=RUST_LOG=info
+RestartSec=5
+Environment=RUST_LOG=debug
 LimitNOFILE=65536
 ExecStart=/usr/local/bin/pgcat  /etc/pgcat/conf/pgcat.toml
 

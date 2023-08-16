@@ -9,9 +9,9 @@ healthcheck_timeout = 1000
 healthcheck_delay = 30000
 shutdown_timeout = 60000
 ban_time = 60 # seconds
-autoreload = 15000
-# tls_certificate = "server.cert"
-# tls_private_key = "server.key"
+autoreload = 5000
+tls_certificate = "CERTD/server.crt"
+tls_private_key = "CERTD/server.key"
 admin_username = "USR"
 admin_password = "PASSWD"
 
