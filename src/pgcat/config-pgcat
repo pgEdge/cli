@@ -1,7 +1,7 @@
 #!/bin/bash
 cd "$(dirname "$0")"
 
-set -x
+#set -x
 
 certd=""
 if [ -f "$MY_HOME/data/pg15/server.crt" ]; then
@@ -55,5 +55,5 @@ sudo systemctl start pgcat
 #util.set_column("svcname", "pgcat", "pgcat")
 
 sleep 3
-sudo systemctl status pgcat --lines 10 --full --no-pager
+sudo systemctl status pgcat --lines 0 --no-pager
 exit 0
