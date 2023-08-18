@@ -6,21 +6,11 @@ setlocal
 @REM ###################################################
 
 set MY_HOME=%~sdp0
-
-if "%MY_HOME%"=="%MY_HOME: =%" goto pgc_run
-(
-    echo The DOS Short Path is not enabled on this drive/directory.
-    echo Your local System Administrator needs to fix before using BigSQL PGC from here.
-    goto pgc_exit
-)
-
-:pgc_run
-
 set MY_HOME=%MY_HOME:~0,-1%
 set MY_LOGS=%MY_HOME%\logs\pgcli_log.out
 
 cd /d %MY_HOME%
-set PATH=%SYSTEMROOT%\System32;%SYSTEMROOT%\System32\wbem;"%PATH%"
+@REM set PATH=%SYSTEMROOT%\System32;%SYSTEMROOT%\System32\wbem;"%PATH%"
 
 if NOT EXIST "%MY_HOME%\hub_new" goto pgc_cmd
 (
@@ -48,24 +38,6 @@ if NOT EXIST "%MY_HOME%\hub_new" goto pgc_cmd
 :pgc_cmd
 
 set PYTHONPATH=%MY_HOME%\hub\scripts;%MY_HOME%\hub\scripts\lib
-
-if NOT EXIST "%MY_HOME%\python37" goto check_python2
-(
-   set PATH=%MY_HOME%\python37;%PATH%
-   set PYTHONHOME=%MY_HOME%\python37
-   goto pgc_run
-)
-
-:check_python2
-
-if NOT EXIST "%MY_HOME%\python2" goto pgc_run
-(
-   set PATH=%MY_HOME%\python2;%PATH%
-   set PYTHONHOME=%MY_HOME%\python2
-)
-
-:pgc_run
-
 python -u hub\scripts\pgc.py %*
 
 :pgc_exit

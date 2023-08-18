@@ -17,6 +17,7 @@
   - bump pgcat to 1.1.1 & make avaialble for dev and test
   - add support for plv8-3.2.0 for dev and test
   - design for spock.db_create()
+  - WIP Windoze CLI
 
 
 ## done for 23.127 as of 2023-08-10
