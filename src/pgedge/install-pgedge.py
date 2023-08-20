@@ -7,7 +7,7 @@ nc = "./nodectl "
 
 pgN = os.getenv('pgN', '')
 if pgN == "":
-  pgN = "16"
+  pgN = util.DEFAULT_PG
 pgV = "pg" + pgN
 
 withPOSTGREST = str(os.getenv("withPOSTGREST", "False"))
