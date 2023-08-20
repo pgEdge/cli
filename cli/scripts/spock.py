@@ -681,31 +681,42 @@ def metrics_check(db, pg=None):
 
 
 def db_create(db=None, User=None, Passwd=None, Id=None, pg=None):
-    """
-    Create a pg db with spock installed into it.
+  """
+  Create a pg db with spock installed into it.
 
-    Edit Checks:
-        if -I specified:
-           -P is required
-           -U = u-<ID>
-           -d = d-<ID>
+  Edit Checks:
+      if -I specified:
+         -P is required
+         -U = u-<ID>
+         -d = d-<ID>
 
-        if -U specified:
-          -I must be None
-          -d must be specified
-          if -P == None
-             user must already exist
+      if -U specified:
+        -I must be None
+        -d must be specified
+        if -P == None
+           user must already exist
 
-     Usage:
-         spock db-createdb -d <db> [-U <usr> -P <passwd>]
-         spock db-createdb -I <id>  -P <passwd>
-        
-    """
+   Usage:
+       spock db-createdb -d <db> [-U <usr> -P <passwd>]
+       spock db-createdb -I <id>  -P <passwd>
+      
+  """
+
+  return
+
+
+def db_drop(db=None, pg=None):
+  """
+  Drop a pg db.
+  """
+
+  return
 
 
 if __name__ == '__main__':
   fire.Fire({
       'db-create':           db_create,
+      'db-drop':             db_drop,
       'node-create':         node_create,
       'node-drop':           node_drop,
       'node-alter-location': node_alter_location,
