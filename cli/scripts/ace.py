@@ -4,7 +4,7 @@
 
 """ACE is the place of the Anti Chaos Engine"""
 
-import os, sys, random, time, json, socket, subprocess, re
+import os, sys, csv, random, time, json, socket, subprocess, re
 import util, fire, meta, cluster
 from datetime import datetime
 import multiprocessing as mp
@@ -23,6 +23,7 @@ PGCAT_HOST = "localhost"
 PGCAT_PORT = 5432
 PGCAT_DB1 = "db1"
 PGCAT_DB2 = "db2"
+MAX_DIFF_ROWS = 10000
 
 
 def get_pg_connection(pg_v, db, ip, usr):
@@ -101,26 +102,19 @@ def write_tbl_csv(
     try:
         out_file = get_csv_file_name(p_prfx, p_schm, p_tbl, p_base_dir)
 
-        cur = p_con.cursor()
 
-        if p_checksums:
-            sql = (
-                f"SELECT {p_key}, spock.md5_agg() WITHIN GROUP "
-                + f" (ORDER BY ({p_cols})) FROM {p_schm}.{p_tbl} GROUP BY {p_key}"
-            )
-        else:
-            sql = (
-                "SELECT "
-                + p_cols
-                + " "
-                + "  FROM "
-                + p_schm
-                + "."
-                + p_tbl
-                + " "
-                + "ORDER BY "
-                + p_key
-            )
+        sql = (
+            "SELECT "
+            + p_cols
+            + " "
+            + "  FROM "
+            + p_schm
+            + "."
+            + p_tbl
+            + " "
+            + "ORDER BY "
+            + p_key
+        )
 
         copy_sql = "COPY (" + sql + ") TO STDOUT WITH DELIMITER ',' CSV HEADER;"
 
@@ -410,13 +404,21 @@ def diff_spock(cluster_name, node1, node2):
 
 
 def compare_checksums(cluster_name, table_name, p_key, block_rows, offset):
-    sql = f"""
+    hash_sql = f"""
     SELECT md5(cast(array_agg(t.*) AS text)) 
     FROM (SELECT * 
             FROM {table_name} 
             ORDER BY {p_key} 
             OFFSET {offset} 
             LIMIT {block_rows}) t;
+    """
+
+    block_sql = f"""
+    SELECT *
+    FROM {table_name}
+    ORDER BY {p_key}
+    OFFSET {offset}
+    LIMIT {block_rows}
     """
 
     hash1 = ""
@@ -433,24 +435,30 @@ def compare_checksums(cluster_name, table_name, p_key, block_rows, offset):
     )
 
     cur1 = con1.cursor()
-    cur1.execute(sql)
+    cur1.execute(hash_sql)
     hash1 = cur1.fetchone()[0]
-    cur1.close()
 
     cur2 = con2.cursor()
-    cur2.execute(sql)
+    cur2.execute(hash_sql)
     hash2 = cur2.fetchone()[0]
-    cur2.close()
 
     if hash1 != hash2:
-        # TODO: Add logic to output data here
-        queue.put("Block mismatch")
+        size = queue.qsize()
+        if size * block_rows > MAX_DIFF_ROWS:
+            return
+        
+        cur1.execute(block_sql)
+        t1_result = cur1.fetchall()
+        cur2.execute(block_sql)
+        t2_result = cur2.fetchall()
+        block_result = {'offset': offset, 't1_rows': t1_result, 't2_rows': t2_result}
+
+        queue.put(block_result)
 
 
-def diff_tables(cluster_name, table_name, checksum_use=False, block_rows=1):
+
+def diff_tables(cluster_name, table_name, checksum_use=False, block_rows=1, max_cpu_ratio=0.6):
     """Efficiently compare tables across cluster using optional checksums and blocks of rows."""
-
-    global br
 
     bad_br = True
     try:
@@ -541,13 +549,9 @@ def diff_tables(cluster_name, table_name, checksum_use=False, block_rows=1):
     t1_rows = get_row_count(con1, l_schema, l_table)
     t2_rows = get_row_count(con2, l_schema, l_table)
 
-    if t1_rows != t2_rows:
-        # TODO: Add feature to record diffs into a file
-        util.message("####### TABLES DO NOT MATCH ########")
-
     total_blocks = t1_rows // block_rows
     total_blocks = total_blocks if total_blocks > 0 else 1
-    max_procs = mp.cpu_count() * 2
+    max_procs = int(mp.cpu_count() * max_cpu_ratio)
     procs = max_procs if total_blocks > max_procs else total_blocks
 
     start_time = datetime.now()
@@ -573,11 +577,59 @@ def diff_tables(cluster_name, table_name, checksum_use=False, block_rows=1):
 
     if not queue.empty():
         util.message("####### TABLES DO NOT MATCH ########")
+        write_diffs(c1_cols, max(t1_rows, t2_rows), l_schema, l_table)
+        util.message("\n###### Diff written to out.diff ######")
     else:
         util.message("####### TABLES MATCH ##########")
 
     run_time = datetime.now() - start_time
     util.message(f"\n## run_time = {run_time} ##############################")
+
+def write_diffs(cols, row_count, l_schema, l_table):
+
+    t1_write_path = get_csv_file_name("t1", l_schema, l_table)
+    t2_write_path = get_csv_file_name("t2", l_schema, l_table)
+
+    num_cols = len(cols.split(','))
+
+    t1_list, t2_list = [''] * row_count, [''] * row_count
+
+    with open(t1_write_path, "w") as f1, open(t2_write_path, "w") as f2:
+        while queue.qsize() > 0:
+            # Get conflicting block details from the multiprocessing queue
+            cur_entry = queue.get()
+            offset = cur_entry['offset']
+            t1_rows = cur_entry['t1_rows']
+            t2_rows = cur_entry['t2_rows']
+
+            # Write rows to the in-memory list at the offset
+            #
+            # TODO: This might get expensive wrt time and space
+            #       if we increase max_blocks. Ideal way would be 
+            #       to write directly to file at offset, trim empty lines,
+            #       and then use ydiff
+
+            insert_index = offset
+
+            for t1_row, t2_row in zip(t1_rows, t2_rows):
+                t1_list.insert(insert_index, t1_row)
+                t2_list.insert(insert_index, t2_row)
+                insert_index+=1
+
+
+            t1_writer = csv.writer(f1)
+            t2_writer = csv.writer(f2)
+
+            for i in range(num_cols):
+                for x1, x2 in zip(t1_list, t2_list):
+                    if not (x1 or x2):
+                        continue
+                    t1_writer.writerow(x1)
+                    t2_writer.writerow(x2)
+
+    cmd = f"diff -u {t1_write_path} {t2_write_path} | ydiff > out.diff"
+    util.message("\n#### Running '{cmd}' ####")
+    diff_s = subprocess.check_output(cmd, shell=True)
 
 
 if __name__ == "__main__":
