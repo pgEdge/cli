@@ -62,6 +62,8 @@ $nc cluster init-remote       --help
 $nc cluster reset-remote      --help
 $nc cluster import-remote-def --help
 $nc cluster command           --help
+$nc cluster app-install       --help
+$nc cluster app-remove        --help
 
 $nc secure --help
 $nc secure config             --help
