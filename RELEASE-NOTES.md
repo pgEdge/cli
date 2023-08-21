@@ -12,11 +12,12 @@
   - explore possible inclusion of function for calling aws lambdas (hari)
 
 
-## done so far for 23.128 as of 2023-08-18
+## done so far for 23.128 as of 2023-08-21
   - bump to pg15.4-2 & pg16beta3-2 to support static linking for uuid-ossp
   - bump pgcat to 1.1.1 & make avaialble for dev and test
   - add support for plv8-3.2.0 for dev and test
-  - design for spock.db_create()
+  - design for spock.db_create() & spock.db_drop()
+  - 2nd pass and document secure CLI
   - WIP Windoze CLI
   - WIP refactor install-pgedge.py to use spock.db_create()
 
