@@ -3,6 +3,8 @@
  
 ## COMMANDS
     COMMAND is one of the following:
+     db-create           # Create a pg db with spock installed into it.
+     db-drop             # Drop a pg db.
      node-create         # Define a node for spock.
      node-drop           # Remove a spock node.
      node-alter-location # Set location details for spock node.

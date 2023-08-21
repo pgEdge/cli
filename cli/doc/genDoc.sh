@@ -40,6 +40,8 @@ $nc spock sub-wait-for-sync --help
 $nc spock health-check      --help
 $nc spock metrics-check     --help
 $nc spock set-readonly      --help
+$nc spock db-create         --help
+$nc spock db-drop           --help
 
 $nc cluster --help
 $nc cluster create-local      --help
@@ -50,10 +52,12 @@ $nc cluster import-remote-def --help
 $nc cluster command           --help
 
 $nc secure --help
-$nc secure login              --help
+$nc secure config             --help
+$nc secure list-cloud-acct    --help
 $nc secure list-clusters      --help
-$nc secure list-cluster-nodes --help
-$nc secure import-cluster     --help
+$nc secure cluster-status     --help
+$nc secure list-nodes         --help
+$nc secure import-cluster-def --help
 $nc secure get-cluster-id     --help
 $nc secure get-node-id        --help
 $nc secure push-metrics       --help

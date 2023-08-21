@@ -1,8 +1,8 @@
 ## SYNOPSIS
-    ./nodectl secure destroy-cluster CLUSTER_ID <flags>
+    ./nodectl secure cluster-status CLUSTER_ID <flags>
  
 ## DESCRIPTION
-    Delete a pgEdge Cloud Cluster
+    Return info on a cluster in a pgEdge Cloud Account
  
 ## POSITIONAL ARGUMENTS
     CLUSTER_ID

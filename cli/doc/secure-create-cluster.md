@@ -1,17 +1,12 @@
 ## SYNOPSIS
-    ./nodectl secure create-cluster CLUSTER_NAME CLUSTER_INFO <flags>
+    ./nodectl secure create-cluster CLUSTER_NAME <flags>
  
 ## DESCRIPTION
-    Coming Soon: Create a pgEdge Cloud Cluster
+    Create a new Cloud Cluster based on json file
  
 ## POSITIONAL ARGUMENTS
     CLUSTER_NAME
-    CLUSTER_INFO
  
 ## FLAGS
-    --client_id=CLIENT_ID
-        Type: Optional[]
-        Default: None
-    --client_secret=CLIENT_SECRET
-        Type: Optional[]
-        Default: None
+    -p, --profile=PROFILE
+        Default: Default
