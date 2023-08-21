@@ -20,8 +20,8 @@ use JSON;
 # Create a variable with the path to each node.
 # 
 
-my $n1 = "~/work/nodectl/pgedge/cluster/demo/n1"; 
-my $n2 = "~/work/nodectl/pgedge/cluster/demo/n2";
+my $n1 = "./pgedge/cluster/demo/n1"; 
+my $n2 = "./pgedge/cluster/demo/n2";
 
 #
 # First, we use nodectl to create a two-node cluster named demo; the nodes are named n1/n2 (default names), 
