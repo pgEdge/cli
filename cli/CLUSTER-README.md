@@ -5,11 +5,13 @@ Installation and configuration of a pgEdge SPOCK cluster
     ./nodectl cluster <command> [parameters] [options]   
 
 [**create-local**](doc/cluster-create-local.md)   - Create a localhost test cluster of N pgEdge nodes on different ports.<br>
-[**destroy-local**](doc/cluster-destroy-local.md) - Stop and then nuke a localhost cluster<br>
+[**destroy-local**](doc/cluster-destroy-local.md) - Stop and then nuke a localhost cluster.<br>
 [**init-remote**](doc/cluster-init-remote.md)     - Configure a test SSH cluster from a JSON cluster definition file.<br>
 [**reset-remote**](doc/cluster-reset-remote.md)   - Reset a test SSH cluster.<br>
 [**import-remote-def**](doc/cluster-import-remote-def.md)  - Import a cluster definition file so we can work with it like a pgEdge cluster.<br>
-[**command**](doc/cluster-command.md)             - Run `nodectl` command on one or all nodes of a cluster<br>
+[**command**](doc/cluster-command.md)             - Run `nodectl` command on one or all nodes of a cluster.<br>
+[**app-install**](doc/cluster-app-install.md)     - Install an application such as NorthWind or pgBench.<br>
+[**app-remove**](doc/cluster-app-remove.md)       - Remove an application.<br>
 
 ## Options
     --json             # Turn on JSON output
