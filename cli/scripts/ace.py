@@ -7,7 +7,7 @@
 import os, sys, csv, random, time, json, socket, subprocess, re
 import util, fire, meta, cluster
 from datetime import datetime
-import multiprocessing as mp
+from multiprocessing import Manager, Pool, cpu_count
 
 l_dir = "/tmp"
 
@@ -17,13 +17,23 @@ try:
 except ImportError as e:
     util.exit_message("Missing 'psycopg' module from pip", 1)
 
-queue = mp.Queue()
+queue = Manager().list()
 
 PGCAT_HOST = "localhost"
 PGCAT_PORT = 5432
 PGCAT_DB1 = "db1"
 PGCAT_DB2 = "db2"
+
+# Set max number of rows up to which
+# diff-tables will work
 MAX_DIFF_ROWS = 10000
+MAX_ALLOWED_BLOCK_SIZE = 10000
+
+
+# Return codes for compare_checksums
+BLOCK_OK = 0
+MAX_DIFF_EXCEEDED = 1
+BLOCK_MISMATCH = 2
 
 
 def get_pg_connection(pg_v, db, ip, usr):
@@ -101,7 +111,6 @@ def write_tbl_csv(
 ):
     try:
         out_file = get_csv_file_name(p_prfx, p_schm, p_tbl, p_base_dir)
-
 
         sql = (
             "SELECT "
@@ -443,22 +452,29 @@ def compare_checksums(cluster_name, table_name, p_key, block_rows, offset):
     hash2 = cur2.fetchone()[0]
 
     if hash1 != hash2:
-        size = queue.qsize()
-        if size * block_rows > MAX_DIFF_ROWS:
-            return
-        
         cur1.execute(block_sql)
         t1_result = cur1.fetchall()
         cur2.execute(block_sql)
         t2_result = cur2.fetchall()
-        block_result = {'offset': offset, 't1_rows': t1_result, 't2_rows': t2_result}
+        block_result = {"offset": offset, "t1_rows": t1_result, "t2_rows": t2_result}
+        queue.append(block_result)
 
-        queue.put(block_result)
+        size = len(queue)
+        if size * block_rows > MAX_DIFF_ROWS:
+            return MAX_DIFF_EXCEEDED
+
+        return BLOCK_MISMATCH
+
+    return BLOCK_OK
 
 
-
-def diff_tables(cluster_name, table_name, checksum_use=False, block_rows=1, max_cpu_ratio=0.6):
+def diff_tables(
+    cluster_name, table_name, checksum_use=False, block_rows=1, max_cpu_ratio=1
+):
     """Efficiently compare tables across cluster using optional checksums and blocks of rows."""
+
+    if block_rows > MAX_ALLOWED_BLOCK_SIZE:
+        util.exit_message(f"Desired block row size is > {MAX_ALLOWED_BLOCK_SIZE}")
 
     bad_br = True
     try:
@@ -504,14 +520,22 @@ def diff_tables(cluster_name, table_name, checksum_use=False, block_rows=1, max_
                     f'### Getting Conection to Node1 ({nd["nodename"]}) - {usr}@{PGCAT_HOST}:{PGCAT_PORT}/{PGCAT_DB1}'
                 )
                 con1 = psycopg.connect(
-                    dbname=PGCAT_DB1, user=usr, password=passwd, host=PGCAT_HOST, port=PGCAT_PORT
+                    dbname=PGCAT_DB1,
+                    user=usr,
+                    password=passwd,
+                    host=PGCAT_HOST,
+                    port=PGCAT_PORT,
                 )
             elif n == 2:
                 util.message(
                     f'### Getting Conection to Node2 ({nd["nodename"]}) - {usr}@{PGCAT_HOST}:{PGCAT_PORT}/{PGCAT_DB2}'
                 )
                 con2 = psycopg.connect(
-                    dbname=PGCAT_DB2, user=usr, password=passwd, host=PGCAT_HOST, port=PGCAT_PORT
+                    dbname=PGCAT_DB2,
+                    user=usr,
+                    password=passwd,
+                    host=PGCAT_HOST,
+                    port=PGCAT_PORT,
                 )
             else:
                 util.message(
@@ -534,7 +558,7 @@ def diff_tables(cluster_name, table_name, checksum_use=False, block_rows=1, max_
 
     c2_cols = get_cols(con2, l_schema, l_table)
     c2_key = get_key(con2, l_schema, l_table)
-    
+
     if c2_cols and c2_key:
         util.message(f"## con2 cols={c2_cols}  key={c2_key}")
     else:
@@ -545,22 +569,42 @@ def diff_tables(cluster_name, table_name, checksum_use=False, block_rows=1, max_
 
     if (c1_cols != c2_cols) or (c1_key != c2_key):
         util.exit_message("Tables don't match in con1 & con2")
-    
+
     t1_rows = get_row_count(con1, l_schema, l_table)
     t2_rows = get_row_count(con2, l_schema, l_table)
 
-    total_blocks = t1_rows // block_rows
+    max_rows = max(t1_rows, t2_rows)
+
+    total_blocks = max_rows // block_rows
     total_blocks = total_blocks if total_blocks > 0 else 1
-    max_procs = int(mp.cpu_count() * max_cpu_ratio)
+    cpus = cpu_count()
+    max_procs = int(cpus * max_cpu_ratio) if cpus > 1 else 1
     procs = max_procs if total_blocks > max_procs else total_blocks
+
+    print(
+        f"total_blocks = {total_blocks}, cpus = {cpus}, max_procs = {max_procs}, procs={procs}"
+    )
+
+    # Check if we have enough procs to cover all rows in the table
+
+    needed_block_size = (max(t1_rows, t2_rows) // procs) + 1
+
+    if block_rows < needed_block_size:
+        block_rows = needed_block_size
+
+    if block_rows > MAX_ALLOWED_BLOCK_SIZE:
+        util.exit_message(f"Needed block rows are > {MAX_ALLOWED_BLOCK_SIZE}")
 
     start_time = datetime.now()
     util.message(f"\n## start_time = {start_time} #################")
 
-    with mp.Pool(procs) as pool:
+    with Pool(procs) as pool:
         util.message("Starting multiprocessing tasks")
         chunk_size = t1_rows // procs
         offsets = [x for x in range(0, (t1_rows - chunk_size) + 1, chunk_size)]
+        print(
+            f"total blocks = {total_blocks}, max procs = {max_procs}, procs = {procs}, chunk_size = {chunk_size}, offsets = {offsets}"
+        )
         results = [
             pool.apply(
                 compare_checksums,
@@ -575,37 +619,52 @@ def diff_tables(cluster_name, table_name, checksum_use=False, block_rows=1, max_
             for offset in offsets
         ]
 
-    if not queue.empty():
-        util.message("####### TABLES DO NOT MATCH ########")
+    mismatch = False
+    diffs_exceeded = False
+
+    for result in results:
+        if result == MAX_DIFF_EXCEEDED:
+            diffs_exceeded = True
+
+        if result == BLOCK_MISMATCH or result == MAX_DIFF_EXCEEDED:
+            mismatch = True
+
+    if mismatch:
+        if diffs_exceeded:
+            util.message(
+                f"####### TABLES DO NOT MATCH. DIFFS MAY HAVE EXCEEDED {MAX_DIFF_ROWS} ROWS ########"
+            )
+
+        else:
+            util.message("####### TABLES DO NOT MATCH ########")
+
         write_diffs(c1_cols, max(t1_rows, t2_rows), l_schema, l_table)
         util.message("\n###### Diff written to out.diff ######")
     else:
-        util.message("####### TABLES MATCH ##########")
+        util.message("####### TABLES MATCH OK ##########")
 
     run_time = datetime.now() - start_time
     util.message(f"\n## run_time = {run_time} ##############################")
 
-def write_diffs(cols, row_count, l_schema, l_table):
 
+def write_diffs(cols, row_count, l_schema, l_table):
     t1_write_path = get_csv_file_name("t1", l_schema, l_table)
     t2_write_path = get_csv_file_name("t2", l_schema, l_table)
 
-    num_cols = len(cols.split(','))
+    num_cols = len(cols.split(","))
 
-    t1_list, t2_list = [''] * row_count, [''] * row_count
+    t1_list, t2_list = [""] * row_count, [""] * row_count
 
     with open(t1_write_path, "w") as f1, open(t2_write_path, "w") as f2:
-        while queue.qsize() > 0:
-            # Get conflicting block details from the multiprocessing queue
-            cur_entry = queue.get()
-            offset = cur_entry['offset']
-            t1_rows = cur_entry['t1_rows']
-            t2_rows = cur_entry['t2_rows']
+        for cur_entry in queue:
+            offset = cur_entry["offset"]
+            t1_rows = cur_entry["t1_rows"]
+            t2_rows = cur_entry["t2_rows"]
 
             # Write rows to the in-memory list at the offset
             #
             # TODO: This might get expensive wrt time and space
-            #       if we increase max_blocks. Ideal way would be 
+            #       if we increase max_blocks. Ideal way would be
             #       to write directly to file at offset, trim empty lines,
             #       and then use ydiff
 
@@ -614,21 +673,19 @@ def write_diffs(cols, row_count, l_schema, l_table):
             for t1_row, t2_row in zip(t1_rows, t2_rows):
                 t1_list.insert(insert_index, t1_row)
                 t2_list.insert(insert_index, t2_row)
-                insert_index+=1
-
+                insert_index += 1
 
             t1_writer = csv.writer(f1)
             t2_writer = csv.writer(f2)
 
-            for i in range(num_cols):
-                for x1, x2 in zip(t1_list, t2_list):
-                    if not (x1 or x2):
-                        continue
-                    t1_writer.writerow(x1)
-                    t2_writer.writerow(x2)
+            for x1, x2 in zip(t1_list, t2_list):
+                if not (x1 or x2):
+                    continue
+                t1_writer.writerow(x1)
+                t2_writer.writerow(x2)
 
     cmd = f"diff -u {t1_write_path} {t2_write_path} | ydiff > out.diff"
-    util.message("\n#### Running '{cmd}' ####")
+    util.message(f"\n#### Running {cmd} ####")
     diff_s = subprocess.check_output(cmd, shell=True)
 
 
