@@ -6,17 +6,17 @@
   - fix port numbers in cluster.create-local() (env & .json)
   - replicate ddl automagically to the spock.replicate_ddl command if ddl_entry_point = 'on'
   - test json fields for replication
-  - validate proposed 'um install-pgedge()' --> 'secure extend-pgedge()'
   - `spock_create_subscriber` tool (from Spock ReadMe)
   - more default conf setting tweaks from customer support (from hari)
   - explore possible inclusion of function for calling aws lambdas (hari)
 
 
-## done so far for 23.128 as of 2023-08-21
+## done so far for 23.128 as of 2023-08-22
   - bump to pg15.4-2 & pg16beta3-2 to support static linking for uuid-ossp
   - bump pgcat to 1.1.1 & make avaialble for dev and test
   - add support for plv8-3.2.0 for dev and test
-  - design for spock.db_create() & spock.db_drop()
+  - design spock.db_create() & spock.db_drop() for support of Dev Edition
+  - refactor 'um install-pgedge()' to use new spock.db_create()
   - 2nd pass and document secure CLI
   - WIP Windoze CLI
   - WIP refactor install-pgedge.py to use spock.db_create()

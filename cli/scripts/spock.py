@@ -26,23 +26,6 @@ def error_exit(p_msg, p_rc=1):
     sys.exit(p_rc)
 
 
-def osSys(cmd, sleepy=0, fatal_exit=True):
-  isSilent = os.getenv('isSilent', 'False')
-  if isSilent == "False":
-    s_cmd = util.scrub_passwd(cmd)
-    util.message('#')
-    util.message('# ' + str(s_cmd))
-
-  rc = os.system(cmd)
-  if rc != 0 and fatal_exit:
-    error_exit("FATAL ERROR running SPOCK", 1)
-
-  if sleepy > 0:
-    time.sleep(sleepy)
-
-  return
-
-
 def json_dumps(p_input):
   if os.getenv("isJson", "") == "True":
     return(json.dumps(p_input))
@@ -701,6 +684,19 @@ def db_create(db=None, User=None, Passwd=None, Id=None, pg=None):
        spock db-createdb -I <id>  -P <passwd>
       
   """
+
+  nc = "./nodectl "
+  ncb = nc + "pgbin " + str(pg) + " "
+
+  if User and Passwd:
+    cmd = "CREATE ROLE " + User + " PASSWORD '" + Passwd + \
+      "' SUPERUSER CREATEDB CREATEROLE INHERIT LOGIN"
+    util.echo_cmd(ncb +  '"psql -c \\"' + cmd + '\\" postgres" > /dev/null')
+
+  cmd = "createdb '" + db + "' --owner='" + User + "'"
+  util.echo_cmd(ncb  + '"' + cmd + '"')
+
+  util.echo_cmd(nc + "install spock31-pg" + str(pg) + " -d " + str(db))
 
   return
 
