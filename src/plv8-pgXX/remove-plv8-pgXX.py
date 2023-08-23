@@ -1,9 +1,11 @@
  
 ####################################################################
-######          Copyright (c)  2020-2021 OSCG             ##########
+######          Copyright (c)  2021-2023 pgEdge           ##########
 ####################################################################
 
-import util
+import util, sys
 
-util.remove_pgconf_keyval("pgXX", "shared_preload_libraries", "plv8-3.1.1")
+
+sys.exit(0)
+#util.remove_pgconf_keyval("pgXX", "shared_preload_libraries", "plv8")
 

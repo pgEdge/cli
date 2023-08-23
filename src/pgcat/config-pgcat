@@ -1,7 +1,14 @@
 #!/bin/bash
 cd "$(dirname "$0")"
 
-## set -x
+#set -x
+
+certd=""
+if [ -f "$MY_HOME/data/pg15/server.crt" ]; then
+  certd="$MY_HOME/data/pg15"
+elif [ -f "$MY_HOME/data/pg16/server.crt" ]; then
+  certd="$MY_HOME/data/pg16"
+fi
 
 sudo systemctl stop pgcat > /dev/null 2>&1
 sudo cp pgcat   /usr/local/bin/.
@@ -31,12 +38,22 @@ sed -i -e "s/USR/$usr/g"       pgcat.toml
 sed -i -e "s/PASSWD/$passwd/g" pgcat.toml
 sed -i -e "s/DB/$db/g"         pgcat.toml
 
+sed -i -e "s|CERTD|$certd|g"   pgcat.toml
+
 sudo mkdir -p /etc/pgcat/conf
 sudo cp pgcat.toml /etc/pgcat/conf/.
 
+sed -i -e "s/USR/$usr/g"       pgcat.service
 sudo cp pgcat.service /etc/systemd/system/.
+
 sudo systemctl daemon-reload
 sudo systemctl enable pgcat
-sudo systemctl start  pgcat
 
+echo "Starting PgCat service..."
+sudo systemctl start pgcat
+#util.set_column("autostart", "pgcat", "on")
+#util.set_column("svcname", "pgcat", "pgcat")
 
+sleep 3
+sudo systemctl status pgcat --lines 0 --no-pager
+exit 0

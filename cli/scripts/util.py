@@ -16,6 +16,7 @@ import api, meta
 
 ONE_DAY = 86400
 ONE_WEEK = ONE_DAY * 7
+DEFAULT_PG = "16"
 
 bad_os_warn = False
 
@@ -275,7 +276,7 @@ def get_glibc_version():
 
 def get_random_password(p_length=12):
   import string, random
-  passwd_chars = string.ascii_letters + string.digits + "~!@#$%^&*()_+{}|"
+  passwd_chars = string.ascii_letters + string.digits + "~!@()_+-{}|"
   passwd = []
   for x in range(p_length):
     passwd.append(random.choice(passwd_chars))

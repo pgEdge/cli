@@ -3,11 +3,6 @@ out/
 devel/pg/src
 devel/pg/1*
 devel/pg/postgrest
-devel/build/*
-devel/pg/postgres
 web/static/html/*.html
-cli/scripts/*.out
-cli/scripts/conf
-src/instantclient/*.zip
 .DS_STORE
 __pycache__

@@ -2,19 +2,24 @@
 
 ## to do's for 23.128 and beyond
   - add support for pljava-pg15 & -pg16 (cannot find libjvm17  setting from util.get_jvm_location)
-  - add support for plv8-3.2.0
   - improve efficiency of `ace diff-tables` to handle massive tables w blocks of checksums
   - fix port numbers in cluster.create-local() (env & .json)
   - replicate ddl automagically to the spock.replicate_ddl command if ddl_entry_point = 'on'
   - test json fields for replication
-  - validate proposed 'um install-pgedge()' --> 'secure extend-pgedge()'
   - `spock_create_subscriber` tool (from Spock ReadMe)
   - more default conf setting tweaks from customer support (from hari)
   - explore possible inclusion of function for calling aws lambdas (hari)
 
 
-## done for 23.128 as of 2023-08-11
+## done so far for 23.128 as of 2023-08-22
   - bump to pg15.4-2 & pg16beta3-2 to support static linking for uuid-ossp
+  - bump pgcat to 1.1.1 & make avaialble for dev and test
+  - add support for plv8-3.2.0 for dev and test
+  - design spock.db_create() & spock.db_drop() for support of Dev Edition
+  - refactor 'um install-pgedge()' to use new spock.db_create()
+  - 2nd pass and document secure CLI
+  - WIP Windoze CLI
+  - WIP refactor install-pgedge.py to use spock.db_create()
 
 
 ## done for 23.127 as of 2023-08-10

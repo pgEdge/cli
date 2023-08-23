@@ -125,7 +125,7 @@ INSERT INTO categories VALUES (9,  87, 'Management & Monitoring', 'Manage/Monito
 -- ## HUB ################################
 INSERT INTO projects VALUES ('hub', 'app', 0, 0, 'hub', 0, 'https://github.com/pgedge/nodectl','',0,'','','');
 INSERT INTO releases VALUES ('hub', 1, 'hub', '', '', 'hidden', '', 1, '', '', '');
-INSERT INTO versions VALUES ('hub', '23.128', '',  1, '20230817', '', '', '');
+INSERT INTO versions VALUES ('hub', '23.128', '',  1, '20230822', '', '', '');
 INSERT INTO versions VALUES ('hub', '23.127', '',  0, '20230810', '', '', '');
 INSERT INTO versions VALUES ('hub', '23.126', '',  0, '20230803', '', '', '');
 INSERT INTO versions VALUES ('hub', '23.125', '',  0, '20230731', '', '', '');
@@ -162,14 +162,14 @@ INSERT INTO versions VALUES ('pg14', '14.8-1', 'el8', 0, '20230511','', '', '');
 INSERT INTO releases VALUES ('pg15', 2, 'pg', '', '', 'prod', 
   '<font size=-1>New in <a href=https://www.postgresql.org/docs/15/release-15.html>2022</a></font>',
   1, 'POSTGRES', '', '');
-INSERT INTO versions VALUES ('pg15', '15.4-2',  'el8, el9, arm9',      1, '20230817','', '', '');
+INSERT INTO versions VALUES ('pg15', '15.4-2',  'el8, el9, arm9',      1, '20230822','', '', '');
 INSERT INTO versions VALUES ('pg15', '15.4-1',  'el8, el9, arm9',      0, '20230810','', '', '');
 INSERT INTO versions VALUES ('pg15', '15.3-2',  'el8, el9, arm9',      0, '20230608','', '', '');
 
 INSERT INTO releases VALUES ('pg16', 2, 'pg', '', '', 'test', 
   '<font size=-1>New in <a href=https://www.postgresql.org/docs/16/release-16.html>2023!</a></font>',
   1, 'POSTGRES', '', '');
-INSERT INTO versions VALUES ('pg16', '16beta3-2',  'el9, arm9', 1, '20230817','', '', '');
+INSERT INTO versions VALUES ('pg16', '16beta3-2',  'el9, arm9', 1, '20230822','', '', '');
 INSERT INTO versions VALUES ('pg16', '16beta3-1',  'el9, arm9', 0, '20230810','', '', '');
 INSERT INTO versions VALUES ('pg16', '16beta2-1',  'el9, arm9', 0, '20230629','', '', '');
 
@@ -251,7 +251,7 @@ INSERT INTO versions VALUES ('orafce-pg15', '4.2.5-1',   'arm9, el9', 0, '202304
 INSERT INTO projects VALUES ('plv8', 'dev', 3, 0, 'hub', 0, 'https://github.com/plv8/plv8/tags',
   'plv8',   1, 'v8.png', 'Javascript Stored Procedures', 'https://github.com/plv8/plv8');
 INSERT INTO releases VALUES ('plv8-pg15', 4, 'plv8', 'PL/V8', '', 'test', '', 1, 'POSTGRES', '', '');
-INSERT INTO versions VALUES ('plv8-pg15', '3.2.0-1', 'arm9, el9', 0, '20230803', 'pg15', '', '');
+INSERT INTO versions VALUES ('plv8-pg15', '3.2.0-1', 'arm9, el9', 1, '20230822', 'pg15', '', '');
 
 INSERT INTO projects VALUES ('pljava', 'dev', 3, 0, 'hub', 0, 'https://github.com/tada/pljava/releases', 
   'pljava', 1, 'pljava.png', 'Java Stored Procedures', 'https://github.com/tada/pljava');
@@ -346,10 +346,10 @@ INSERT INTO versions VALUES ('postgis-pg15', '3.3.4-1', 'el9, arm9', 1, '2023073
 INSERT INTO versions VALUES ('postgis-pg15', '3.3.3-1', 'el9, arm9', 0, '20230623', 'pg15', '', 'https://git.osgeo.org/gitea/postgis/postgis/raw/tag/3.3.3/NEWS');
 INSERT INTO versions VALUES ('postgis-pg15', '3.3.2-1', 'el9, arm9', 0, '20230608', 'pg15', '', 'https://git.osgeo.org/gitea/postgis/postgis/raw/tag/3.3.2/NEWS');
 
-INSERT INTO projects VALUES ('pgadmin', 'app', 3, 80, '', 1, 'https://www.pgadmin.org/news/',
-  'pgadmin', 0, 'pgadmin.png', 'PostgreSQL Tools', 'https://pgadmin.org');
-INSERT INTO releases VALUES ('pgadmin', 2, 'pgadmin', 'pgAdmin 4', '', 'test', '', 1, '', '', '');
-INSERT INTO versions VALUES ('pgadmin', '6.9', '', 0, '20220512', '', '', '');
+INSERT INTO projects VALUES ('pgadmin4', 'app', 3, 80, '', 1, 'https://www.pgadmin.org/news/',
+  'pgadmin4', 0, 'pgadmin.png', 'PostgreSQL Tools', 'https://pgadmin.org');
+INSERT INTO releases VALUES ('pgadmin4', 2, 'pgadmin4', 'pgAdmin 4', '', 'test', '', 1, '', '', '');
+INSERT INTO versions VALUES ('pgadmin4', '7.5', '', 0, '20230727', '', '', '');
 
 INSERT INTO projects VALUES ('bulkload', 'ext', 4, 0, 'hub', 5, 'https://github.com/ossc-db/pg_bulkload/releases',
   'bulkload', 1, 'bulkload.png', 'High Speed Data Loading', 'https://github.com/ossc-db/pg_bulkload');
@@ -381,7 +381,8 @@ INSERT INTO versions VALUES ('badger', '11.8', '', 0, '20220408', '', '', '');
 INSERT INTO projects VALUES ('pgedge', 'pge', 0, 0, 'hub', 3, 'http://pgedge.org',
   'pgedge',  0, 'pgedge.png', 'Multi-Active Global Postgres Clusters', 'http://pgedge.com');
 INSERT INTO releases VALUES ('pgedge', 1, 'pgedge',  'pgEdge', '', 'test', '', 1, 'pgEdge Community', '', '');
-INSERT INTO versions VALUES ('pgedge', '2-2',   '', 1, '20230803', '', '', '');
+INSERT INTO versions VALUES ('pgedge', '2-3',   '', 1, '20230822', '', '', '');
+INSERT INTO versions VALUES ('pgedge', '2-2',   '', 0, '20230803', '', '', '');
 INSERT INTO versions VALUES ('pgedge', '2-1',   '', 0, '20230511', '', '', '');
 
 INSERT INTO projects VALUES ('nclibs', 'pge', 0, 0, 'hub', 3, 'https://github.com/pgedge',
@@ -402,7 +403,8 @@ INSERT INTO versions VALUES ('ncd', '1.0', '', 0, '20230623', '', '', '');
 INSERT INTO projects VALUES ('pgcat', 'pge', 4, 5433, 'hub', 3, 'https://github.com/pgedge/pgcat/tags',
   'cat',  0, 'pgcat.png', 'Connection Pooler', 'https://github.com/pgedge/pgcat');
 INSERT INTO releases VALUES ('pgcat', 2, 'pgcat',  'pgCat', '', 'test', '', 1, 'MIT', '', '');
-INSERT INTO versions VALUES ('pgcat', '1.0.0', 'el9, arm9', 1, '20230629', '', '', '');
+INSERT INTO versions VALUES ('pgcat', '1.1.1', 'el9, arm9', 1, '20230822', '', '', '');
+INSERT INTO versions VALUES ('pgcat', '1.0.0', 'el9, arm9', 0, '20230629', '', '', '');
 
 INSERT INTO projects VALUES ('backrest', 'pge', 4, 0, 'hub', 3, 'http://pgbackrest.org',
   'backrest',  0, 'backrest.png', 'Backup & Restore', 'http://pgbackrest.org');

@@ -2,7 +2,7 @@
     ./nodectl secure push-metrics CLUSTER_NAME TARGET_INFO <flags>
  
 ## DESCRIPTION
-    push pgEdge Metrics to a specified target
+    Coming Soon: push pgEdge Metrics to a specified target
  
 ## POSITIONAL ARGUMENTS
     CLUSTER_NAME
@@ -15,3 +15,5 @@
     --client_secret=CLIENT_SECRET
         Type: Optional[]
         Default: None
+    -p, --profile=PROFILE
+        Default: Default

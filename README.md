@@ -63,6 +63,8 @@ table-wait-for-sync  Pause until a table finishes synchronizing
 health-check         Check if PG instance is accepting connections
 metrics-check        Retrieve advanced DB & OS metrics
 set-readonly         Turn PG read-only mode 'on' or 'off'
+db-create            Create a Spock Database
+db-drop              Drop a database
 ```
 
 ## `cluster` Installation and configuration of a SPOCK cluster
@@ -73,26 +75,30 @@ init-remote         Initialize pgEdge on a remote cluster that you create & mana
 reset-remote        Reset pgEdge on a remote cluster
 import-remote-def   Import a json cluster defintion file
 command             Run nodectl command on one or all nodes of a cluster
+app-install         Install an application such as NorthWind or pgBench
+app-remove          Remove an application
 ```
 
 ## `secure` Interact with pgEdge Cloud services
 ```
-login               Login nodeCtl with a pgEdge Cloud Account
+config              Login nodeCtl with a pgEdge Cloud Account
+list-cloud-acct     List all cloud account ids in a pgEdge Cloud Account
 list-clusters       List all clusters in a pgEdge Cloud Account
-list-cluster-nodes  List all nodes in a pgEdge Cloud Account cluster
-import-cluster      Enable nodeCtl cluster commands on a pgEdge Cloud Cluster
+cluster-status      Return info on a cluster in a pgEdge Cloud Account
+list-nodes          List all nodes in a pgEdge Cloud Account cluster
+import-cluster-def  Enable nodeCtl cluster commands on a pgEdge Cloud Cluster
 get-cluster-id      Return the cluster id based on a cluster display name
 get-node-id         Return the node id based on cluster and node display name
-push-metrics        Push pgEdge Metrics to a specified target
-create-cluster      Create a pgEdge Cloud Cluster
+push-metrics        Coming Soon: push pgEdge Metrics to a specified target
+create-cluster      Create a new Cloud Cluster based on json file
 destroy-cluster     Delete a pgEdge Cloud Cluster
 ```
 
 ## `ace` Anti Chaos Engine
 ```
-diff-tables
-diff-schemas
-diff-spock
+diff-tables         Compare tables in a cluster
+diff-schemas        Compare Schema meta-data
+diff-spock          Compare spock rules setup across cluster nodes
 ```
 
 ## Options

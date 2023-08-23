@@ -1,5 +1,5 @@
 
-import util
+import util, spock
 import os, sys, random, time
 
 thisDir = os.path.dirname(os.path.realpath(__file__))
@@ -7,8 +7,8 @@ nc = "./nodectl "
 
 pgN = os.getenv('pgN', '')
 if pgN == "":
-  pgN = "16"
-pgV = "pg" + pgN
+  pgN = util.DEFAULT_PG
+pgV = "pg" + str(pgN)
 
 withPOSTGREST = str(os.getenv("withPOSTGREST", "False"))
 withPATRONI = str(os.getenv("withPATRONI", "False"))
@@ -20,11 +20,11 @@ isDebug       = str(os.getenv("pgeDebug",      "0"))
 
 
 def error_exit(p_msg, p_rc=1):
-    util.message("ERROR: " + p_msg)
-    if isDebug == "0":
-      os.system(nc + "remove pgedge")
+  util.message("ERROR: " + p_msg)
+  if isDebug == "0":
+    os.system(nc + "remove pgedge")
 
-    sys.exit(p_rc)
+  sys.exit(p_rc)
 
 
 def osSys(cmd, fatal_exit=True):
@@ -141,18 +141,10 @@ osSys(nc + "config " + pgV + " --port=" + str(prt))
 osSys(nc + "start " + pgV)
 time.sleep(3)
 
-if usr and passwd:
-  ncb = nc + 'pgbin ' + pgN + ' '
-  cmd = "CREATE ROLE " + usr + " PASSWORD '" + passwd + "' SUPERUSER CREATEDB CREATEROLE INHERIT LOGIN"
-  osSys(ncb +  '"psql -c \\"' + cmd + '\\" postgres" > /dev/null') 
-
-  cmd = "createdb '" + db1 + "' --owner='" + usr + "'"
-  osSys(ncb  + '"' + cmd + '"')
+spock.db_create(db1, usr, passwd, None, pgN)
 
 osSys(nc + "tune " + pgV)
 time.sleep(3)
-
-osSys(nc + "install spock31-" + pgV + " -d " + db1)
 
 if withPOSTGREST == "True":
   util.message("  ")
