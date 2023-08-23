@@ -7,7 +7,7 @@
 import os, sys, csv, random, time, json, socket, subprocess, re
 import util, fire, meta, cluster
 from datetime import datetime
-from multiprocessing import Manager, Pool, cpu_count
+from multiprocessing import Manager, Pool, cpu_count, Value
 
 l_dir = "/tmp"
 
@@ -17,7 +17,9 @@ try:
 except ImportError as e:
     util.exit_message("Missing 'psycopg' module from pip", 1)
 
+# Shared variables needed by multiprocessing 
 queue = Manager().list()
+diff_rows = Value('I', 0)
 
 PGCAT_HOST = "localhost"
 PGCAT_PORT = 5432
@@ -28,6 +30,7 @@ PGCAT_DB2 = "db2"
 # diff-tables will work
 MAX_DIFF_ROWS = 10000
 MAX_ALLOWED_BLOCK_SIZE = 10000
+MAX_CPU_RATIO = 0.6
 
 
 # Return codes for compare_checksums
@@ -433,6 +436,7 @@ def compare_checksums(cluster_name, table_name, p_key, block_rows, offset):
     hash1 = ""
     hash2 = ""
 
+    # Read cluster information and connect to the local instance of pgcat
     il, db, pg, count, usr, passwd, os_usr, cert, nodes = cluster.load_json(
         cluster_name
     )
@@ -443,6 +447,8 @@ def compare_checksums(cluster_name, table_name, p_key, block_rows, offset):
         dbname=PGCAT_DB2, user=usr, password=passwd, host=PGCAT_HOST, port=PGCAT_PORT
     )
 
+    # Get the hash of the block from both tables we are 
+    # currently looking at.
     cur1 = con1.cursor()
     cur1.execute(hash_sql)
     hash1 = cur1.fetchone()[0]
@@ -452,6 +458,7 @@ def compare_checksums(cluster_name, table_name, p_key, block_rows, offset):
     hash2 = cur2.fetchone()[0]
 
     if hash1 != hash2:
+        # Get mismatching blocks from both tables
         cur1.execute(block_sql)
         t1_result = cur1.fetchall()
         cur2.execute(block_sql)
@@ -459,8 +466,10 @@ def compare_checksums(cluster_name, table_name, p_key, block_rows, offset):
         block_result = {"offset": offset, "t1_rows": t1_result, "t2_rows": t2_result}
         queue.append(block_result)
 
-        size = len(queue)
-        if size * block_rows > MAX_DIFF_ROWS:
+        with diff_rows.get_lock():
+            diff_rows += max(len(t1_result), len(t2_result))
+
+        if diff_rows > MAX_DIFF_ROWS:
             return MAX_DIFF_EXCEEDED
 
         return BLOCK_MISMATCH
@@ -468,11 +477,14 @@ def compare_checksums(cluster_name, table_name, p_key, block_rows, offset):
     return BLOCK_OK
 
 
+# TODO: Add feature to allow users to specify offset and limit
+
 def diff_tables(
-    cluster_name, table_name, checksum_use=False, block_rows=1, max_cpu_ratio=1
+    cluster_name, table_name, checksum_use=False, block_rows=1, max_cpu_ratio=MAX_CPU_RATIO
 ):
     """Efficiently compare tables across cluster using optional checksums and blocks of rows."""
 
+    # Capping max block size here to prevent the has function from taking forever
     if block_rows > MAX_ALLOWED_BLOCK_SIZE:
         util.exit_message(f"Desired block row size is > {MAX_ALLOWED_BLOCK_SIZE}")
 
@@ -511,6 +523,8 @@ def diff_tables(
     con2 = None
     util.message(f"\n## Validating connections to each node in cluster")
 
+    # Get two connections to pgcat.
+    # TODO: Need to specify which two nodes to connect to.
     try:
         n = 0
         for nd in nodes:
@@ -586,12 +600,19 @@ def diff_tables(
     )
 
     # Check if we have enough procs to cover all rows in the table
+    # Suppose that block size = 100, cpus = 2, total_rows = 1000
+    # Needed minimum block size to cover all rows = 1000/2 = 500
+    # But, specified block size = 100, which is not sufficient to 
+    # cover all rows. 
+    # Therefore, we need a check to see if the specified block size
+    # is at least = needed_block_size
 
     needed_block_size = (max(t1_rows, t2_rows) // procs) + 1
 
     if block_rows < needed_block_size:
         block_rows = needed_block_size
 
+    # Once we reinit block_rows, check against MAX_ALLOWED_BLOCK_SIZE again 
     if block_rows > MAX_ALLOWED_BLOCK_SIZE:
         util.exit_message(f"Needed block rows are > {MAX_ALLOWED_BLOCK_SIZE}")
 
@@ -629,6 +650,8 @@ def diff_tables(
         if result == BLOCK_MISMATCH or result == MAX_DIFF_EXCEEDED:
             mismatch = True
 
+    # Mismatch is True if there is a block mismatch or if we have 
+    # estimated that diffs may be greater than max allowed diffs
     if mismatch:
         if diffs_exceeded:
             util.message(
@@ -653,6 +676,17 @@ def write_diffs(cols, row_count, l_schema, l_table):
 
     num_cols = len(cols.split(","))
 
+    # Elements in the shared queue may be out of order
+    # In order to run the diff, mismatching blocks from
+    # both tables need to be written in order int their 
+    # respective files for ydiff to work
+    # The way we do this -- currently in a not so efficient way --
+    # is by creating two empty lists both equal to the sizes
+    # of row count. Then, we consume from the queue and insert into 
+    # the list at the index = offset of the block.
+    # Finally, we consume from the list and write to the respective files.
+    # Now, we simply run ydiff on these files and log the output to
+    # out.diff
     t1_list, t2_list = [""] * row_count, [""] * row_count
 
     with open(t1_write_path, "w") as f1, open(t2_write_path, "w") as f2:
