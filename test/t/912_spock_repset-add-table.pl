@@ -1,11 +1,5 @@
-# This is a complex test case; after creating a two node cluster on the localhost, 
-# the test case executes the commands in the Getting Started Guide at the pgEdge website.
+# This test adds the pgbench tables to the replication set on node 1.
 #
-# ASK CADY: What is an easy way to confirm that the tables have been added to the repsets?
-
-
-
-
 
 use strict;
 use warnings;
@@ -13,6 +7,8 @@ use File::Which;
 use IPC::Cmd qw(run);
 use Try::Tiny;
 use JSON;
+use lib './t/lib';
+use contains;
 
 # Our parameters are:
 
@@ -23,35 +19,43 @@ my $version = "pg16";
 my $spock = "3.1";
 my $cluster = "demo";
 my $repset = "demo-repset";
-my $n1 = "~/work/nodectl/pgedge/cluster/demo/n1/pgedge";
-my $n2 = "~/work/nodectl/pgedge/cluster/demo/n2/pgedge";
+my $n1 = "~/work/nodectl/pgedge/cluster/demo/n1";
+my $n2 = "~/work/nodectl/pgedge/cluster/demo/n2";
 
+# On node 1:
+# ==========
+# We can retrieve the home directory from nodectl in json form...i
 #
-# Then, on each node, invoke spock repset-add-table to add pgbench tables to the repset:
-#
+my $json = `$n1/pgedge/nc --json info`;
+print("my json = $json");
+my $out = decode_json($json);
+my $homedir = $out->[0]->{"home"};
+print("The home directory is {$homedir}\n");
 
-my $cmd21 = qq($n1/nodectl spock repset-add-table $repset 'pgbench_*' $database);
+# We can retrieve the port number from nodectl in json form...
+my $json2 = `$n1/pgedge/nc --json info pg16`;
+print("my json = $json2");
+my $out2 = decode_json($json2);
+my $port = $out2->[0]->{"port"};
+print("The port number is {$port}\n");
+
+# Then, on node 1, invoke spock repset-add-table to add pgbench tables to the repset:
+
+my $cmd21 = qq($homedir/nodectl spock repset-add-table $repset 'pgbench_*' $database);
 print("cmd21 = $cmd21\n");
 my($success21, $error_message21, $full_buf21, $stdout_buf21, $stderr_buf21)= IPC::Cmd::run(command => $cmd21, verbose => 0);
-
-print("success21 = $success21\n");
 print("stdout_buf21 = @$stdout_buf21\n");
 
-my $cmd22 = qq($n2/nodectl spock repset-add-table $repset 'pgbench_*' $database);
-print("cmd22 = $cmd22\n");
-my($success22, $error_message22, $full_buf22, $stdout_buf22, $stderr_buf22)= IPC::Cmd::run(command => $cmd22, verbose => 0);
+# Use psql to query the spock.replication_set_table table to confirm that the pgbench tables are added:
 
-print("success22 = $success22\n");
-print("stdout_buf22 = @$stdout_buf22\n");
+print("We just added the pgbench tables to the replication set on ($n1).\n");
 
-#
-# Test
-#
+my $cmd20 = qq($homedir/$version/bin/psql -t -h 127.0.0.1 -p $port -d $database -c "SELECT * FROM spock.replication_set_table");
+print("cmd20 = $cmd20\n");
+my($success20, $error_message20, $full_buf20, $stdout_buf20, $stderr_buf20)= IPC::Cmd::run(command => $cmd20, verbose => 0);
+print("stdout_buf20 = (@$stdout_buf20)\n");
 
-print("If the word 4 is in @$stdout_buf22 we've altered the tables on node 1 to set up pgbench!\n");
-
-my $substring = "ALTER";
-if(index($stdout_buf22, $substring) == -1)
+if(contains(@$stdout_buf20[0], "pgbench_accounts"))
 
 {
     exit(0);
@@ -59,7 +63,6 @@ if(index($stdout_buf22, $substring) == -1)
 else
 {
     exit(1);
+
 }
-
-
 
