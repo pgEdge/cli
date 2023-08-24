@@ -701,10 +701,18 @@ def db_create(db=None, User=None, Passwd=None, Id=None, pg=None):
   nc = "./nodectl "
   ncb = nc + "pgbin " + str(pg) + " "
 
-  if User and Passwd:
-    cmd = "CREATE ROLE " + User + " PASSWORD '" + Passwd + \
-      "' SUPERUSER CREATEDB CREATEROLE INHERIT LOGIN"
-    util.echo_cmd(ncb +  '"psql -c \\"' + cmd + '\\" postgres"')
+  privs = ""
+  if Id and Passwd:
+    privs = "NOSUPERUSER NOCREATEDB NOCREATEROLE NOINHERIT LOGIN"
+    User = "u_" + str(Id)
+    db = "d_" + str(Id)
+  elif User and Passwd and db:
+    privs = "SUPERUSER CREATEDB CREATEROLE INHERIT LOGIN"
+  else:
+    util.exit_message("db_create() must have parms of (-I -P) or (-U -P -d)")
+
+  cmd = "CREATE ROLE " + User + " PASSWORD '" + Passwd + "' " + privs
+  util.echo_cmd(ncb +  '"psql -c \\"' + cmd + '\\" postgres"')
 
   cmd = "createdb '" + db + "' --owner='" + User + "'"
   util.echo_cmd(ncb  + '"' + cmd + '"')
