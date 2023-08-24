@@ -691,10 +691,13 @@ def db_create(db=None, User=None, Passwd=None, Id=None, pg=None):
   if User and Passwd:
     cmd = "CREATE ROLE " + User + " PASSWORD '" + Passwd + \
       "' SUPERUSER CREATEDB CREATEROLE INHERIT LOGIN"
-    util.echo_cmd(ncb +  '"psql -c \\"' + cmd + '\\" postgres" > /dev/null')
+    util.echo_cmd(ncb +  '"psql -c \\"' + cmd + '\\" postgres"')
 
   cmd = "createdb '" + db + "' --owner='" + User + "'"
   util.echo_cmd(ncb  + '"' + cmd + '"')
+
+  cmd = "REVOKE ALL ON DATABASE " + str(db) + " FROM PUBLIC"
+  util.echo_cmd(ncb +  '"psql -c \\"' + cmd + '\\" postgres"')
 
   util.echo_cmd(nc + "install spock31-pg" + str(pg) + " -d " + str(db))
 
