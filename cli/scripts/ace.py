@@ -461,12 +461,16 @@ def compare_checksums(cluster_name, table_name, p_key, block_rows, offset):
             t1_result = cur1.fetchall()
             cur2.execute(block_sql)
             t2_result = cur2.fetchall()
-            block_result = {"offset": offset, "t1_rows": t1_result, "t2_rows": t2_result}
+            block_result = {
+                "offset": offset,
+                "t1_rows": t1_result,
+                "t2_rows": t2_result,
+            }
             queue.append(block_result)
 
             # We can only estimate how many diffs we may have..
             # The actuall diff calc is done later by ydiff
-            # So, even if there is just one row mismatch, and 
+            # So, even if there is just one row mismatch, and
             # we hit this condition, we will still need
             # to return early here.
             if len(queue) * block_rows >= MAX_DIFF_ROWS:
@@ -478,6 +482,7 @@ def compare_checksums(cluster_name, table_name, p_key, block_rows, offset):
 
 
 # TODO: Add feature to allow users to specify offset and limit
+
 
 def diff_tables(
     cluster_name,
@@ -621,7 +626,7 @@ def diff_tables(
 
     with Pool(procs) as pool:
         util.message("Starting multiprocessing tasks")
-        #chunk_size = row_count // procs
+        # chunk_size = row_count // procs
         offsets = [x for x in range(0, row_count + 1, block_rows)]
         results = [
             pool.apply(
