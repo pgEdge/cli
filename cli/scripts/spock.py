@@ -685,6 +685,19 @@ def db_create(db=None, User=None, Passwd=None, Id=None, pg=None):
       
   """
 
+  if db == None:
+    db = os.getenv('pgName', None)
+
+  if User == None:
+    User = os.getenv('pgeUser', None)
+
+  if Passwd == None:
+    Passwd = os.getenv('pgePasswd', None)
+
+  if pg == None:
+    pg_v = util.get_pg_v(pg)
+    pg = pg_v[2:]
+
   nc = "./nodectl "
   ncb = nc + "pgbin " + str(pg) + " "
 
@@ -699,7 +712,13 @@ def db_create(db=None, User=None, Passwd=None, Id=None, pg=None):
   cmd = "REVOKE ALL ON DATABASE " + str(db) + " FROM PUBLIC"
   util.echo_cmd(ncb +  '"psql -c \\"' + cmd + '\\" postgres"')
 
-  util.echo_cmd(nc + "install spock31-pg" + str(pg) + " -d " + str(db))
+  spock_comp = "spock31-pg" + str(pg)
+  st8 = util.get_comp_state(spock_comp)
+  if st8 in ("Installed", "Enabled"):
+    cmd = "CREATE EXTENSION spock"
+    util.echo_cmd(ncb +  '"psql -c \\"' + cmd + '\\" ' + str(db) + '"')
+  else:
+    util.echo_cmd(nc + "install " + spock_comp + " -d " + str(db))
 
   return
 
