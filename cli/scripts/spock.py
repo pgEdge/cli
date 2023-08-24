@@ -510,8 +510,7 @@ def get_table_list(table, db, pg_v):
 
   if len(ret) > 0:
     return(ret)
-
-  return([table])
+  util.exit_message(f"Could not find table that matches {table}",1)
 
 
 def repset_add_table(replication_set, table, db, synchronize_data=False, columns=None, row_filter=None, include_partitions=True, pg=None):
