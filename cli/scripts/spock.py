@@ -666,21 +666,13 @@ def db_create(db=None, User=None, Passwd=None, Id=None, pg=None):
   """
   Create a pg db with spock installed into it.
 
-  Edit Checks:
-      if -I specified:
-         -P is required
-         -U = u-<ID>
-         -d = d-<ID>
-
-      if -U specified:
-        -I must be None
-        -d must be specified
-        if -P == None
-           user must already exist
 
    Usage:
-       spock db-createdb -d <db> [-U <usr> -P <passwd>]
-       spock db-createdb -I <id>  -P <passwd>
+       To create a superuser than has access to the whole cluster of db's
+          spock db-createdb -d <db> [-U <usr> -P <passwd>]
+
+       to create an admin user that owns a specifc tennant database
+          spock db-createdb -I <id>  -P <passwd>
       
   """
 
@@ -703,8 +695,8 @@ def db_create(db=None, User=None, Passwd=None, Id=None, pg=None):
   privs = ""
   if Id and Passwd:
     privs = "NOSUPERUSER NOCREATEDB NOCREATEROLE NOINHERIT LOGIN"
-    User = "u_" + str(Id)
-    db = "d_" + str(Id)
+    User = "admin_" + str(Id)
+    db = "db_" + str(Id)
   elif User and Passwd and db:
     privs = "SUPERUSER CREATEDB CREATEROLE INHERIT LOGIN"
   else:

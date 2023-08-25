@@ -11,15 +11,15 @@
   - explore possible inclusion of function for calling aws lambdas (hari)
 
 
-## done so far for 23.128 as of 2023-08-22
+## done so far for 23.128 as of 2023-08-24
+  - Cady fixed a tricky problem (reported by susan) when adding tables to a repset  w/ a wildcard
   - bump to pg15.4-2 & pg16beta3-2 to support static linking for uuid-ossp
-  - bump pgcat to 1.1.1 & make avaialble for dev and test
-  - add support for plv8-3.2.0 for dev and test
-  - design spock.db_create() & spock.db_drop() for support of Dev Edition
-  - refactor 'um install-pgedge()' to use new spock.db_create()
-  - 2nd pass and document secure CLI
-  - WIP Windoze CLI
-  - WIP refactor install-pgedge.py to use spock.db_create()
+  - bump pgcat tolatest (1.1.1) & make avaialable for dev and test
+  - add support for latest plv8 (3.2.0) for dev and test
+  - 2nd pass at implementing spock.db_create() for supporting Dev Edition reqmnts 
+  - 2nd pass and document `secure` CLI
+  - WIP: Windoze compatability for `secure` & `cluster` CLI commands
+  - WIP: refactor install-pgedge.py to use spock.db_create()
 
 
 ## done for 23.127 as of 2023-08-10
