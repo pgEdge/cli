@@ -11,8 +11,8 @@
 233_servicestop_15.pl
 235_servicereload_pg15.pl
 237_service_restart_pg15.pl
-239_service_enable_pg15.pl
 241_service_disable_pg15.pl
+239_service_enable_pg15.pl
 275_service_enable.pl
 277_service_enable_error.pl
 299_service_breakdown_with_control_check_pg15.pl
