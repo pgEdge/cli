@@ -19,8 +19,8 @@ my $version = "pg16";
 my $spock = "3.1";
 my $cluster = "demo";
 my $repset = "demo-repset";
-my $n1 = "~/work/nodectl/pgedge/cluster/demo/n1";
-my $n2 = "~/work/nodectl/pgedge/cluster/demo/n2";
+my $n1 = "~/work/nodectl/test/pgedge/cluster/demo/n1";
+my $n2 = "~/work/nodectl/test/pgedge/cluster/demo/n2";
 
 # In this test case, we're just verifying that the second node of a two node cluster has been properly installed 
 # by the cluster create-local command.
