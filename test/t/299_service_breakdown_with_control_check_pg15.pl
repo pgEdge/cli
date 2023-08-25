@@ -10,7 +10,7 @@ use File::Which;
 use IPC::Cmd qw(run);
 use Try::Tiny;
 use JSON;
-use lib '../lib';
+use lib './lib';
 use contains;
 
 # Our parameters are:
@@ -32,11 +32,17 @@ chdir ("./pgedge");
 
 my $json_info = decode_json(`./nc --json info`);
 my $home = $json_info->[0]->{"home"};
-print("the home directory is = {$home}\n");
+print("The home directory is = {$home}\n");
 
-my $out2 = decode_json(`./nc --json info pg15`);
-my $datadir = $out2->[0]->{"datadir"};
-print("the data directory is = {$datadir}\n");
+print("The next line calls the decode_json function.\n");
+my $json = `./nc --json info pg15`;
+
+print("json -->$json<--\n");
+
+my $out = decode_json(`./nc --json info pg15`);
+print("The last line before this calls the decode_json function. Next, I'll set the value into datadir. \n");
+my $datadir = $out->[0]->{"datadir"};
+print("I just set the data directory to: = {$datadir}\n");
 
 print("datadir = $datadir\n");
 print("home = $home\n");
@@ -68,7 +74,7 @@ sub remove_data_dir
         my $cmd2 = qq(rm -rf $datadir);
         print("I'm removing the data directory with the following command: = $cmd2\n");
         my ($success2, $error_message2, $full_buf2, $stdout_buf2, $stderr_buf2)= IPC::Cmd::run(command => $cmd2, verbose => 0);
-	print("stdout_buf = @$stdout_buf\n");
+	print("I'm removing the data directory with the following command: = @$stdout_buf2\n");
 	print ("The data directory should be gone now.\n");
     }
     else
@@ -89,14 +95,14 @@ sub remove_home_dir
         #print("cmd3 = $cmd3\n");
         my ($success3, $error_message3, $full_buf3, $stdout_buf3, $stderr_buf3)= IPC::Cmd::run(command => $cmd3, verbose => 0);
         print("I'm removing the home directory with the following command: = $cmd3\n");
-        print("stdout_buf = @$stdout_buf\n");
+        print("stdout_buf = @$stdout_buf3\n");
         print ("The $home directory should be gone now.\n");
 
         my $cmd4 = qq(sudo rm ~/.pgpass);
         print("cmd4 = $cmd4");
         my ($success4, $error_message4, $full_buf4, $stdout_buf4, $stderr_buf4)= IPC::Cmd::run(command => $cmd4, verbose => 0);
         print("I'm removing the data directory with the following command: = $cmd4\n");
-        print("stdout_buf = @$stdout_buf\n");
+        print("stdout_buf = @$stdout_buf4\n");
         print ("The pgpass file should be gone now.\n");
 
 	exit(0);

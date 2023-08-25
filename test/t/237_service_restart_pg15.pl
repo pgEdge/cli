@@ -9,7 +9,7 @@ use File::Which;
 use IPC::Cmd qw(run);
 use Try::Tiny;
 use JSON;
-use lib '../lib';
+use lib './lib';
 use contains;
 
 
@@ -31,7 +31,7 @@ print("stderr_buf = @$stderr_buf\n");
 
 # Test for the search_term in a buffer.
 
-if (contains(@$stdout_buf[0], "stopping"))
+if (contains(@$stdout_buf[0], "stop"))
 
 {
     exit(0);

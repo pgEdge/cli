@@ -9,7 +9,7 @@ use File::Which;
 use IPC::Cmd qw(run);
 use Try::Tiny;
 use JSON;
-use lib '../lib';
+use lib './lib';
 use contains;
 
 #
