@@ -1,0 +1,15 @@
+[Unit]
+Description=patroni HA Solution for PostgreSQL
+Documentation=https://patroni.readthedocs.io/en/latest/
+After=network.target
+
+[Service]
+User=etcd
+Type=notify
+ExecStart=/usr/local/patroni/patroni.py /etc/patroni.yaml
+Restart=always
+RestartSec=10s
+LimitNOFILE=40000
+
+[Install]
+WantedBy=multi-user.target
