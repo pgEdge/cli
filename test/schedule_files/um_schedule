@@ -1,0 +1,14 @@
+t/020_nodectl_install_pgedge.pl
+t/300_setup_script.pl
+t/305_um_list.pl
+t/306_nc_um_list.pl
+t/307_nc_mu_list.pl
+t/310_um_update.pl
+t/315_um_install_hypopg.pl
+t/317_um_remove_hypopg.pl
+t/320_um_install_orafce.pl
+t/323_um_remove_orafce.pl
+t/325_um_install_curl.pl
+t/328_um_remove_curl.pl
+t/399_um_breakdown_script.pl
+
