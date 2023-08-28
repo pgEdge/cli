@@ -1,0 +1,32 @@
+{
+  "cluster": "eqn-t9-das",
+  "is_localhost": "False",
+  "create_dt": "1970-01-01",
+  "db_name": "db1",
+  "db_user": "admin",
+  "db_init_passwd": "inSecure123!",
+  "os_user": "test",
+  "ssh_key": "~/keys/eqn-test-key",
+  "pg_ver": "15",
+  "count": 3,
+  "nodes": [
+    {
+      "nodename": "eqn-t9d",
+      "ip": "145.40.99.219",
+      "path": "~/pgedge",
+      "location": "DFW"
+    },
+    {
+      "nodename": "eqn-t9a",
+      "ip": "147.75.85.99",
+      "path": "~/pgedge",
+      "location": "AMS"
+    },
+    {
+      "nodename": "eqn-t9s",
+      "ip": "145.40.73.135",
+      "path": "~/pgedge",
+      "location": "SIN"
+    }
+  ]
+}
