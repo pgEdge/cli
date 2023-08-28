@@ -135,27 +135,35 @@ function checkODBC {
 
 
 function buildPostgres {
-	echo "# buildPOSTGRES"	
-	cd $baseDir/$workDir/$pgSrcDir
+  echo "# buildPOSTGRES"	
+  cd $baseDir/$workDir/$pgSrcDir
 
-	if [ "$pgShortV" == "15" ] || [ "$pgShortV" == "16" ]; then
-		if [ "$DIFF1" == "" ]; then
-			echo "std postgres build, no patches to apply"
-		elif [ ! -f "$DIFF1" ]; then
-			echo "# DIFF1 not found : $DIFF1"
-			exit 1
-		else
-			echo "# Applying $DIFF1"
-			patch -p1 -i $DIFF1
-			rc=$?
-			if [ "$rc" == "0" ]; then
-				echo "# patch succesfully applied"
-			else
-				echo "# FATAL ERROR: applying patch"
-				exit 1
-			fi
-		fi
-	fi
+  if [ "$pgShortV" == "15" ] || [ "$pgShortV" == "16" ]; then
+    if [ "$DIFF1" == "" ]; then
+      echo "std postgres build, no patches to apply"
+    else
+      echo "# Applying $DIFF1"
+      patch -p1 -i $DIFF1
+      rc=$?
+      if [ "$rc" == "0" ]; then
+        echo "# patch succesfully applied"
+      else
+        echo "# FATAL ERROR: applying patch"
+        exit 1
+      fi
+      if [ ! "$DIFF2" == "" ]; then
+        echo "# Applying $DIFF2"
+        patch -p1 -i $DIFF2
+        rc=$?
+        if [ "$rc" == "0" ]; then
+          echo "# patch succesfully applied"
+        else
+          echo "# FATAL ERROR: applying patch"
+          exit 1
+        fi
+      fi
+    fi
+  fi
 
 	mkdir -p $baseDir/$workDir/logs
 	#buildLocation="$baseDir/$workDir/build/pg$pgShortV-$pgSrcV-$pgBldV-$OS"
