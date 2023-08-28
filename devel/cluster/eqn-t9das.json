@@ -21,12 +21,6 @@
       "ip": "147.75.85.99",
       "path": "~/pgedge",
       "location": "AMS"
-    },
-    {
-      "nodename": "eqn-t9s",
-      "ip": "145.40.73.135",
-      "path": "~/pgedge",
-      "location": "SIN"
     }
   ]
 }
