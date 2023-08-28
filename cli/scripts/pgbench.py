@@ -48,7 +48,10 @@ def install(cluster_name, factor=1):
   util.message("\n# setup individual nodes ##########")
   for nd in nodes:
     nodename = nd["nodename"]
-    port = nd["port"]
+    try:
+      port = str(n["port"])
+    except Exception as e:
+      port = "5432"
     host = nd["ip"]
     nc = nd["path"] + "/pgedge/nodectl "
     setup_node(nodename, port, nc, count, db, str(pg), host, factor,
@@ -56,12 +59,20 @@ def install(cluster_name, factor=1):
 
   util.message("\n# wire nodes together #############")
   for pub in nodes:
-    pub_ip_port = "host=" + str(pub["ip"]) + " port=" + str(pub["port"])
+    try:
+      pubport = str(pub["port"])
+    except Exception as e:
+      pubport = "5432"
+    pub_ip_port = "host=" + str(pub["ip"]) + " port=" + pubport
     spk = pub["path"] + "/pgedge/nodectl spock "
     host = pub["ip"]
 
     for sub in nodes:
-      sub_ip_port = "host=" + str(sub["ip"]) + " port=" + str(sub["port"])
+      try:
+        subport = str(sub["port"])
+      except Exception as e:
+        subport = "5432"
+      sub_ip_port = "host=" + str(sub["ip"]) + " port=" + subport
 
       if pub_ip_port != sub_ip_port:
         sub_name = "sub_" + pub["nodename"] + sub["nodename"] + " "
@@ -78,12 +89,20 @@ def remove(cluster_name):
   db_pg = " " + str(db) + " --pg=" + str(pg)
 
   for pub in nodes:
-    pub_ip_port = "host=" + str(pub["ip"]) + " port=" + str(pub["port"])
+    try:
+      pubport = str(pub["port"])
+    except Exception as e:
+      pubport = "5432"
+    pub_ip_port = "host=" + str(pub["ip"]) + " port=" + pubport
     spk = pub["path"] + "/pgedge/nodectl spock "
     host = pub["ip"]
 
     for sub in nodes:
-      sub_ip_port = "host=" + str(sub["ip"]) + " port=" + str(sub["port"])
+      try:
+        subport = str(sub["port"])
+      except Exception as e:
+        subport = "5432"
+      sub_ip_port = "host=" + str(sub["ip"]) + " port=" + subport
 
       if pub_ip_port != sub_ip_port:
         sub_name = "sub_" + pub["nodename"] + sub["nodename"] + " "

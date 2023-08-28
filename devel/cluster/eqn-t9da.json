@@ -1,5 +1,5 @@
 {
-  "cluster": "eqn-t9-das",
+  "cluster": "eqn-t9-da",
   "is_localhost": "False",
   "create_dt": "1970-01-01",
   "db_name": "db1",
@@ -8,7 +8,7 @@
   "os_user": "test",
   "ssh_key": "~/keys/eqn-test-key",
   "pg_ver": "15",
-  "count": 3,
+  "count": 2,
   "nodes": [
     {
       "nodename": "eqn-t9d",
