@@ -13,7 +13,6 @@ l_dir = "/tmp"
 
 try:
     import psycopg
-    from psycopg_pool import ConnectionPool
 except ImportError as e:
     util.exit_message("Missing 'psycopg' module from pip", 1)
 
