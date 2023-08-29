@@ -27,7 +27,7 @@ PGCAT_DB2 = "db2"
 # Set max number of rows up to which
 # diff-tables will work
 MAX_DIFF_ROWS = 10000
-MAX_ALLOWED_BLOCK_SIZE = 10000
+MAX_ALLOWED_BLOCK_SIZE = 100000
 MAX_CPU_RATIO = 0.6
 
 
@@ -415,11 +415,11 @@ def diff_spock(cluster_name, node1, node2):
 
 def compare_checksums(cluster_name, table_name, p_key, block_rows, offset):
     hash_sql = f"""
-    SELECT md5(cast(array_agg(t.*) AS text)) 
-    FROM (SELECT * 
-            FROM {table_name} 
-            ORDER BY {p_key} 
-            OFFSET {offset} 
+    SELECT md5(cast(array_agg(t.*) AS text))
+    FROM (SELECT *
+            FROM {table_name}
+            ORDER BY {p_key}
+            OFFSET {offset}
             LIMIT {block_rows}) t;
     """
 
@@ -457,9 +457,16 @@ def compare_checksums(cluster_name, table_name, p_key, block_rows, offset):
         if hash1 != hash2:
             # Get mismatching blocks from both tables
             cur1.execute(block_sql)
-            t1_result = cur1.fetchall()
+            t1_result = set(cur1.fetchall())
             cur2.execute(block_sql)
-            t2_result = cur2.fetchall()
+            t2_result = set(cur2.fetchall())
+
+            t1_diff = t1_result.difference(t2_result)
+            t2_diff = t2_result.difference(t1_result)
+            diff = t1_diff.union(t2_diff)
+
+            print(diff)
+
             block_result = {
                 "offset": offset,
                 "t1_rows": t1_result,
@@ -467,8 +474,8 @@ def compare_checksums(cluster_name, table_name, p_key, block_rows, offset):
             }
             queue.append(block_result)
 
-            # We can only estimate how many diffs we may have..
-            # The actuall diff calc is done later by ydiff
+            # We can only estimate how many diffs we may have.
+            # The actuall diff calc is done later by ydiff.
             # So, even if there is just one row mismatch, and
             # we hit this condition, we will still need
             # to return early here.
@@ -600,7 +607,7 @@ def diff_tables(
     total_blocks = row_count // block_rows
     total_blocks = total_blocks if total_blocks > 0 else 1
     cpus = cpu_count()
-    max_procs = int(cpus * max_cpu_ratio) if cpus > 1 else 1
+    max_procs = int(cpus * max_cpu_ratio * 2) if cpus > 1 else 1
     procs = max_procs if total_blocks > max_procs else total_blocks
 
     # Check if we have enough procs to cover all rows in the table
@@ -662,7 +669,7 @@ def diff_tables(
         else:
             util.message("####### TABLES DO NOT MATCH ########")
 
-        write_diffs(c1_cols, row_count, l_schema, l_table)
+        #write_diffs(c1_cols, row_count, l_schema, l_table)
         util.message("\n###### Diff written to out.diff ######")
     else:
         util.message("####### TABLES MATCH OK ##########")
