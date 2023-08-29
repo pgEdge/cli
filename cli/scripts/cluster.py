@@ -250,13 +250,6 @@ def ssh_install_pgedge(cluster_name, passwd):
       REPO = "https://pgedge-download.s3.amazonaws.com/REPO"
       os.environ['REPO'] = REPO
 
-    ##if il == "True":
-    ##  REPO = util.get_value("GLOBAL", "REPO")
-    ##  os.environ['REPO'] = REPO
-    ##else:
-    ##  os.environ['REPO'] = ""
-    ##  REPO = "https://pgedge-download.s3.amazonaws.com/REPO"
-
     util.message(f"########                node={ndnm}, host={ndip}, path={ndpath} REPO={REPO}\n")
 
     cmd1 = f"mkdir -p {ndpath}; cd {ndpath}; "
