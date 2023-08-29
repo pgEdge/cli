@@ -190,7 +190,7 @@ def create_local(cluster_name, num_nodes, pg="16", app=None, port1=6432,
     util.exit_message("port1 parameter is not an integer", 1)
 
   kount = meta.get_installed_count()
-  if kount > 0:
+  if kount > 1:
     util.message("WARNING: No other components should be installed when using 'cluster local'")
 
   if num_nodes < 1:
