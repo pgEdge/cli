@@ -128,10 +128,6 @@ INSERT INTO releases VALUES ('hub', 1, 'hub', '', '', 'hidden', '', 1, '', '', '
 INSERT INTO versions VALUES ('hub', '23.128', '',  1, '20230829', '', '', '');
 INSERT INTO versions VALUES ('hub', '23.127', '',  0, '20230810', '', '', '');
 INSERT INTO versions VALUES ('hub', '23.126', '',  0, '20230803', '', '', '');
-INSERT INTO versions VALUES ('hub', '23.125', '',  0, '20230731', '', '', '');
-INSERT INTO versions VALUES ('hub', '23.124', '',  0, '20230721', '', '', '');
-INSERT INTO versions VALUES ('hub', '23.123', '',  0, '20230720', '', '', '');
-INSERT INTO versions VALUES ('hub', '23.122', '',  0, '20230718', '', '', '');
 
 -- ##
 INSERT INTO projects VALUES ('pg', 'pge', 1, 5432, 'hub', 1, 'https://github.com/postgres/postgres/tags',
@@ -169,7 +165,7 @@ INSERT INTO versions VALUES ('pg15', '15.3-2',  'el8, el9, arm9',      0, '20230
 INSERT INTO releases VALUES ('pg16', 2, 'pg', '', '', 'test', 
   '<font size=-1>New in <a href=https://www.postgresql.org/docs/16/release-16.html>2023!</a></font>',
   1, 'POSTGRES', '', '');
-INSERT INTO versions VALUES ('pg16', '16beta3-2',  'el9, arm9', 1, '20230829','', '', '');
+INSERT INTO versions VALUES ('pg16', '16rc1-1',    'el9, arm9', 1, '20230831','', '', '');
 INSERT INTO versions VALUES ('pg16', '16beta3-1',  'el9, arm9', 0, '20230810','', '', '');
 INSERT INTO versions VALUES ('pg16', '16beta2-1',  'el9, arm9', 0, '20230629','', '', '');
 
@@ -413,7 +409,7 @@ INSERT INTO versions VALUES ('backrest', '2.46-1', 'el9, arm9', 0, '20230524', '
 INSERT INTO projects VALUES ('patroni', 'app', 11, 0, '', 4, 'https://github.com/pgedge/patroni/tags',
   'patroni', 0, 'patroni.png', 'HA', 'https://github.com/pgedge/patroni');
 INSERT INTO releases VALUES ('patroni', 1, 'patroni', 'Patroni', '', 'test', '', 1, 'POSTGRES', '', '');
-INSERT INTO versions VALUES ('patroni', '3.1.0.1', '', 1, '20230810', '', 'EL9', '');
+INSERT INTO versions VALUES ('patroni', '3.1.0.1', '', 1, '20230829', '', 'EL9', '');
 
 INSERT INTO projects VALUES ('etcd', 'app', 11, 0, 'hub', 4, 'https://github.com/etcd-io/etcd/tags',
   'etcd', 0, 'etcd.png', 'HA', 'https://github.com/etcd-io/etcd');
