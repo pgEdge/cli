@@ -1,27 +1,84 @@
 #!/bin/bash
+
+# Define the installation directory
+INSTALL_DIR="/usr/local/etcd"
+
+# Ensure the script is executed from its own directory
 cd "$(dirname "$0")"
 
-sudo yum install -y golang
+# Check if GoLang is already installed, if not then install
+if ! command -v go &> /dev/null; then
+    echo "Installing GoLang..."
+    sudo yum install -y golang
+else
+    echo "GoLang is already installed."
+fi
+
+# Stop any running etcd services
+echo "Stopping any running etcd services..."
 sudo systemctl stop etcd > /dev/null 2>&1
 
-sudo cp etcd    /usr/local/bin/.
-sudo cp etcdctl /usr/local/bin/.
+# Copy etcd binaries to the defined installation directory
+echo "Setting up etcd binaries in $INSTALL_DIR/bin..."
+sudo mkdir -p "$INSTALL_DIR/bin"
+sudo mkdir -p "$INSTALL_DIR/etc"
+sudo cp etcd "$INSTALL_DIR/bin/"
+sudo cp etcdctl "$INSTALL_DIR/bin/"
+sudo chmod +x "$INSTALL_DIR/bin/etcd"
+sudo chmod +x "$INSTALL_DIR/bin/etcdctl"
 
-sudo chmod +x /usr/local/bin/etcd*
+# Update PATH variable or link binaries to /usr/local/bin for system-wide access
+sudo ln -sf "$INSTALL_DIR/bin/etcd" /usr/local/bin/
+sudo ln -sf "$INSTALL_DIR/bin/etcdctl" /usr/local/bin/
 
+# Display the versions of etcd and etcdctl
+echo "Displaying etcd versions..."
 etcd --version
 etcdctl version
 
-## Configure etcd ###########################
+# Configure etcd
+echo "Configuring etcd..."
+
+# Create required directories for etcd database
 sudo mkdir -p /var/lib/etcd/
 sudo mkdir -p /etc/etcd
 
-sudo groupadd --system etcd > /dev/null 2>&1
-sudo useradd -s /sbin/nologin --system -g etcd etcd  > /dev/null 2>&1
+# Substitute placeholders in the template file
+# Determine hostname and IP address
+host_name=$(uname -n)
+host_ip=$(hostname -I | awk '{print $1}')
 
+# Define the file paths
+template="etcd.yaml.template"
+output="etcd.yaml"
+
+# If no argument is supplied, it's the master.
+if [ -z "$1" ]; then
+  sed -e "s/hostname/${host_name}/g" -e "s/host_ip/${host_ip}/g" "$template" > "$output"
+else
+  sed -e "s/hostname/${host_name}/g" -e "s/host_ip/${host_ip}/g" -e "s|initial-cluster: \"node1=http://host_ip:2380\"|initial-cluster: \"$1\"|g" "$template" > "$output"
+fi
+
+sudo cp etcd.yaml "$INSTALL_DIR/etc/"
+
+# Set up etcd user, group, and permissions
+echo "Configuring etcd user, group, and permissions..."
+if ! id etcd &> /dev/null; then
+    sudo groupadd --system etcd
+    sudo useradd -s /sbin/nologin --system -g etcd etcd
+fi
+
+# Change the ownership to the etcd user and group
 sudo chown -R etcd:etcd /var/lib/etcd/
+sudo chown -R etcd:etcd /etc/etcd/
+sudo chown etcd:etcd "$INSTALL_DIR/etc/"
 
+# Setup systemd service for etcd
+echo "Setting up etcd service..."
 sudo cp etcd.service /etc/systemd/system/.
 sudo systemctl daemon-reload
 sudo systemctl enable etcd
-sudo systemctl start  etcd
+sudo systemctl start etcd
+
+echo "Etcd setup complete in $INSTALL_DIR!"
+

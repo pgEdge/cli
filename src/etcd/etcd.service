@@ -8,7 +8,7 @@ User=etcd
 Type=notify
 Environment=ETCD_DATA_DIR=/var/lib/etcd
 Environment=ETCD_NAME=%m
-ExecStart=/usr/local/bin/etcd
+ExecStart=/usr/local/bin/etcd --config=/usr/local/etcd/etc/etcd.yaml
 Restart=always
 RestartSec=10s
 LimitNOFILE=40000

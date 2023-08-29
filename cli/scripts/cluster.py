@@ -126,18 +126,34 @@ def import_remote_def(cluster_name, json_file_name):
 
 
 def reset_remote(cluster_name):
-  """Reset a test cluster from json definition file of existing nodes."""
-  il, db, pg, count, user, db_passwd, os_user, key, nodes = load_json(cluster_name)
+    """Reset a test cluster from json definition file of existing nodes."""
+    il, db, pg, count, user, db_passwd, os_user, key, nodes = load_json(cluster_name)
 
-  util.message("\n## Ensure that PG is stopped.")
-  for nd in nodes:
-     cmd = nd["path"] + "/nodectl stop 2> /dev/null"
-     util.echo_cmd(cmd, host=nd["ip"], usr=os_user, key=key)
+    util.message("\n## Ensure that PG is stopped.")
+    for nd in nodes:
+        # Stopping PG on primary node
+        cmd = nd["path"] + "/nodectl stop 2> /dev/null"
+        util.echo_cmd(cmd, host=nd["ip"], usr=os_user, key=key)
 
-  util.message(f"\n## Ensure that pgEdge root directory is gone")
-  for nd in nodes:
-     cmd = "rm -rf " + nd["path"]
-     util.echo_cmd(cmd, host=nd["ip"], usr=os_user, key=key)
+        # Stopping PG on rps (if they exist)
+        for rp in nd.get("replicas", []):
+          rp_name = rp["rp_name"]
+          rp_ip = rp["rp_ip"]
+          
+          util.echo_cmd(cmd, host=rp_ip, usr=os_user, key=key)
+
+    util.message(f"\n## Ensure that pgEdge root directory is gone")
+    for nd in nodes:
+        # Removing PG directory on primary node
+        cmd = "rm -rf " + nd["path"]
+        util.echo_cmd(cmd, host=nd["ip"], usr=os_user, key=key)
+
+        # Removing PG directory on rps (if they exist)
+        for rp in nd.get("replicas", []):
+          rp_name = rp["rp_name"]
+          rp_ip = rp["rp_ip"]
+
+          util.echo_cmd(cmd, host=rp_ip, usr=os_user, key=key)
 
 
 def init_remote(cluster_name, app=None):
@@ -163,6 +179,7 @@ def init_remote(cluster_name, app=None):
       print("OK")
     else:
       util.exit_message("cannot ssh to node")
+      
 
   ssh_install_pgedge(cluster_name, cj["db_init_passwd"])
 
@@ -230,43 +247,46 @@ def print_install_hdr(cluster_name, db, pg, db_user, count):
   util.message("#")
   util.message(f"######## ssh_install_pgedge: cluster={cluster_name}, db={db}, pg={pg} db_user={db_user}, count={count}")
 
-
 def ssh_install_pgedge(cluster_name, passwd):
   il, db, pg, count, db_user, db_passwd, os_user, ssh_key, nodes = load_json(cluster_name)
-  for n in nodes:
-    print_install_hdr(cluster_name, db, pg, db_user, count)
-    ndnm = n["nodename"]
-    ndpath = n["path"]
-    ndip = n["ip"]
-    try:
-      ndport = str(n["port"])
-    except Exception as e:
-      ndport = "5432"
 
-    REPO = os.getenv("REPO", "")
-    if REPO == "":
-      REPO = "https://pgedge-download.s3.amazonaws.com/REPO"
-      os.environ['REPO'] = REPO
+  for node in nodes:
+    nodename, port, path, ip, rp_count = node["nodename"], node["port"], node["path"], node["ip"], node["replica_count"]
 
-    ##if il == "True":
-    ##  REPO = util.get_value("GLOBAL", "REPO")
-    ##  os.environ['REPO'] = REPO
-    ##else:
-    ##  os.environ['REPO'] = ""
-    ##  REPO = "https://pgedge-download.s3.amazonaws.com/REPO"
+    # Install on primary node
+    install_on_host(cluster_name, db, pg, db_user, count, nodename, path, ip, port, os_user, 
+                    ssh_key, passwd, il, rp_count, 'primary', node.get("replicas", []))
 
-    util.message(f"########                node={ndnm}, host={ndip}, path={ndpath} REPO={REPO}\n")
+    # Install on sync replicas
+    for replica in node.get("replicas", []):
+      rp_name, rp_ip = replica["rp_name"], replica["rp_ip"]
+      install_on_host(cluster_name, db, pg, db_user, count, rp_name, path, rp_ip, port, os_user, 
+                      ssh_key, passwd, il, rp_count, 'replica', node.get("replicas", []))
 
-    cmd1 = f"mkdir -p {ndpath}; cd {ndpath}; "
-    cmd2 = f"python3 -c \"\$(curl -fsSL {REPO}/install.py)\""
-    util.echo_cmd(cmd1 + cmd2, host=n["ip"], usr=os_user, key=ssh_key)
-    
-    nc = (ndpath + "/pgedge/nodectl ")
-    parms =  " -U " + str(db_user) + " -P " + str(passwd) + " -d " + str(db) + \
-             " -p " + str(ndport) + " --pg " + str(pg)
-    rc = util.echo_cmd(nc + " install pgedge" + parms, host=n["ip"], usr=os_user, key=ssh_key)
-    util.message("#")
 
+def install_on_host(cluster_name, db, pg, db_user, count, nodename, nodepath, nodeip, nodeport, os_user, 
+                    ssh_key, passwd, il, rp_count, node_type, replicas):
+
+  print_install_hdr(cluster_name, db, pg, db_user, count)
+  util.message(f"######## node={nodename}, host={nodeip}, port={nodeport}, path={nodepath}\n")
+  REPO = os.getenv("REPO", "https://pgedge-download.s3.amazonaws.com/REPO")
+  cmd1 = f"mkdir -p {nodepath}; cd {nodepath}; "
+  cmd2 = f"python3 -c \"\$(curl -fsSL {REPO}/install.py)\""
+  util.echo_cmd(cmd1 + cmd2, host=nodeip, usr=os_user, key=ssh_key)
+
+  nc = (nodepath + "/pgedge/nodectl ")
+  parms = f" -U {db_user} -P {passwd} -d {db} -p {nodeport} --pg {pg}"
+  rc = util.echo_cmd(nc + " install pgedge" + parms, host=nodeip, usr=os_user, key=ssh_key)
+  
+  initial_cluster = f'-initial-cluster: '
+  if node_type == 'primary':
+    rc = util.echo_cmd(nc + " install etcd" + parms, host=nodeip, usr=os_user, key=ssh_key)
+  elif node_type == 'replica' and rp_count > 0:
+    initial_cluster += f'node1=http://{nodename}:2380'
+    for idx, replica in enumerate(replicas, start=2):
+      initial_cluster += f', node{idx}=http://{replica["rp_ip"]}:2380'
+      print(initial_cluster)
+    rc = util.echo_cmd(nc + f" install etcd 3.5.9 \"{initial_cluster}\"", host=nodeip, usr=os_user, key=ssh_key)
 
 def destroy_local(cluster_name):
   """Stop and then nuke a localhost cluster."""

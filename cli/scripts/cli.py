@@ -1359,7 +1359,7 @@ try:
           info_arg=1
           p_version = "all"
       else:
-        if p_mode in ("config" , "init", "provision") and len(p_comp_list) == 1:
+        if p_mode in ("config" , "init", "provision", "install") and len(p_comp_list) == 1:
           if str(args[i]) > '':
             extra_args = extra_args + '"' + str(args[i]) + '" '
         elif( p_mode in ("info", "download", "install", "update") and len(p_comp_list) == 1 and info_arg == 0 ):
@@ -1368,6 +1368,7 @@ try:
           else:
             ver1 = meta.wildcard_version(p_comp_list[0], args[i])
             p_version = meta.get_platform_specific_version(p_comp_list[0], ver1)
+            print(p_version)
             if p_version == "-1":
               util.print_error("Invalid component version parameter  (" + ver1 + ")")
               exit_cleanly(1)
