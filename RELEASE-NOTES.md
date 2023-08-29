@@ -3,11 +3,15 @@
 ## to do's for 23.129 and beyond
   - add support for pljava-pg15 & -pg16 (cannot find libjvm17  setting from util.get_jvm_location)
   - fix port numbers in cluster.create-local() (env & .json)
-  - replicate ddl automagically to the spock.replicate_ddl command if table is a 'leader'
+  - replicate ddl automagically to the spock.replicate_ddl command if cluster is a 'leader'
   - test json fields for replication
   - `spock_create_subscriber` tool (from Spock ReadMe)
   - more default conf setting tweaks from customer support (from hari)
   - explore possible inclusion of function for calling aws lambdas (hari)
+
+
+## done so far for 23.129 as of 2023-08-29
+  - fix northwind demo to work with cluster that default to port 5432 without specifying
 
 
 ## done for 23.128 as of 2023-08-29
