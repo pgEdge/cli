@@ -2,7 +2,7 @@
 
 ## to do's for 23.129 and beyond
   - add support for pljava-pg15 & -pg16 (cannot find libjvm17  setting from util.get_jvm_location)
-  - fix port numbers in cluster.create-local() (env & .json)
+  - fix port numbers in cluster.create-local()'s env file
   - replicate ddl automagically to the spock.replicate_ddl command if cluster is a 'leader'
   - test json fields for replication
   - `spock_create_subscriber` tool (from Spock ReadMe)
@@ -11,7 +11,8 @@
 
 
 ## done so far for 23.129 as of 2023-08-29
-  - fix northwind demo to work with cluster that default to port 5432 without specifying
+  - fix northwind demo to work with nodes that default to port 5432
+  - start with first avail port after 6432 for port1 in cluster.create-local()
 
 
 ## done for 23.128 as of 2023-08-29

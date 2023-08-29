@@ -198,11 +198,13 @@ def create_local(cluster_name, num_nodes, pg="16", app=None, port1=6432,
 
   usr = util.get_user()
 
-  for n in range(port1, port1 + num_nodes):
-    util.message("# checking port " + str(n) + " availability...")
-    if not util.is_socket_busy(n):
-      break
-
+  ## increment port1 to the first available port from it's initial value
+  n = port1
+  while util.is_socket_busy(n):
+    util.message(f"# port {n} is busy")
+    n = n + 1
+  port1 = n
+ 
   if os.path.exists(cluster_dir):
     util.exit_message("cluster already exists: " + str(cluster_dir), 1)
 
