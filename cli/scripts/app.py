@@ -111,7 +111,7 @@ def install_northwind(db, replication_set=None, country=None, pg=None):
     os.system(f"./nodectl spock repset-add-table {replication_set}_eu 'northwind.employees' {db} --columns='employee_id, last_name, first_name, title, title_of_courtesy, hire_date, country, photo, notes, reports_to, photo_path'")
 
 
-def run_northwind(db, offset, time, rate, pg=None):
+def run_northwind(db, offset, run_time=60, pg=None):
   """Run Sample Queries to Create Orders in Northwind"""
   pg_v = util.get_pg_v(pg)
   usr = util.get_user()
@@ -123,63 +123,78 @@ def run_northwind(db, offset, time, rate, pg=None):
     cur.close()
   except Exception as e:
     util.exit_exception(e)
-
-  ##t_end = time.time() + time
-  ##while time.time() < t_end:
   v_order_id = mx_ooid + offset
-  v_employee_id = random.randrange(9)
+  while True:
+    v_employee_id = random.randrange(9)+1
 
-  v_order_date = datetime.date.today().strftime("%Y-%m-%d")
-  v_required_date = datetime.date.today().replace(day=datetime.date.today().day + 5).strftime("%Y-%m-%d")
-  v_shipped_date = datetime.date.today().replace(day=datetime.date.today().day + 2).strftime("%Y-%m-%d")
+    v_order_date = datetime.date.today().strftime("%Y-%m-%d")
+    v_required_date = (datetime.date.today() + datetime.timedelta(days=5)).strftime("%Y-%m-%d")
+    v_shipped_date = (datetime.date.today() + datetime.timedelta(days=2)).strftime("%Y-%m-%d")
 
-  offset_cust = random.randrange(91)
-  try:
-    con = get_pg_connection(pg_v, db, usr)
-    cur = con.cursor()
-    cur.execute(f"SELECT customer_id, contact_name, address, city, region, postal_code, country \
+    offset_cust = random.randrange(91)+1
+    try:
+      con = get_pg_connection(pg_v, db, usr)
+      cur = con.cursor()
+      cur.execute(f"SELECT customer_id, contact_name, address, city, region, postal_code, country \
                 FROM northwind.customers LIMIT 1 OFFSET {offset_cust}")
-    data=cur.fetchone()
-    v_customer_id, v_contact_name, v_address, v_city, v_region, v_postal_code, v_country = data[0],data[1],data[2],data[3],data[4],data[5],data[6]
-    cur.close()
-  except Exception as e:
-    util.exit_exception(e)
+      data=cur.fetchone()
+      v_customer_id, v_contact_name, v_address, v_city, v_region, v_postal_code, v_country = data[0],data[1],data[2],data[3],data[4],data[5],data[6]
+      cur.close()
+    except Exception as e:
+      util.exit_exception(e)
 
-  ship_via = random.randrange(6)
-  freight = random.random() * 100
-  print(f"INSERT INTO northwind.orders (order_id, customer_id, employee_id, order_date, required_date, \
+    ship_via = random.randrange(6) + 1
+    freight = random.random() * 100
+    v_address = v_address.replace('\'','\'\'')
+    try:
+      con = get_pg_connection(pg_v, db, usr)
+      cur = con.cursor()
+      cur.execute(f"INSERT INTO northwind.orders (order_id, customer_id, employee_id, order_date, required_date, \
         shipped_date, ship_via, freight, ship_name, ship_address, ship_city, ship_region, ship_postal_code, \
-        ship_country)") 
-  print(f"VALUES ({v_order_id}, {v_customer_id}, {v_employee_id}, {v_order_date}, {v_required_date}, \
-        {v_shipped_date}, {ship_via}, {freight}, {v_contact_name}, {v_address}, {v_city}, {v_region}, \
-            {v_postal_code}, {v_country})")
+        ship_country) VALUES ({v_order_id}, '{v_customer_id}', {v_employee_id}, '{v_order_date}', '{v_required_date}', \
+        '{v_shipped_date}', {ship_via}, {freight}, '{v_contact_name}', '{v_address}', '{v_city}', '{v_region}', \
+            '{v_postal_code}', '{v_country}')")
+      con.commit()
+      cur.close()
+    except Exception as e:
+      util.exit_exception(e)
 
-  offset_det = random.randrange(77)
-  try:
-    con = get_pg_connection(pg_v, db, usr)
-    cur = con.cursor()
-    cur.execute(f"SELECT product_id, unit_price, units_on_order, units_in_stock, reorder_level \
+    offset_det = random.randrange(77)
+    try:
+      con = get_pg_connection(pg_v, db, usr)
+      cur = con.cursor()
+      cur.execute(f"SELECT product_id, unit_price, units_on_order, units_in_stock, reorder_level \
                 FROM northwind.products LIMIT 1 OFFSET {offset_det}")
-    data=cur.fetchone()
-    v_product_id, v_unit_price, v_units_on_order, v_units_in_stock, v_reorder_level = data[0],data[1],data[2],data[3],data[4]
-    cur.close()
-  except Exception as e:
-    util.exit_exception(e)
+      data=cur.fetchone()
+      v_product_id, v_unit_price, v_units_on_order, v_units_in_stock, v_reorder_level = data[0],data[1],data[2],data[3],data[4]
+      cur.close()
+    except Exception as e:
+      util.exit_exception(e)
 
-  v_quantity = random.randrange(130)
-  v_discount = random.random() 
-  print(f"INSERT INTO northwind.orders_details(order_id, product_id, unit_price, quantity, discount)")
-  print(f"VALUES ({v_order_id}, {v_product_id}, {v_unit_price}, {v_quantity}, {v_discount})")
-  v_units_on_order = v_units_on_order + v_quantity
-  if v_units_in_stock < v_reorder_level:
-    v_units_in_stock = v_units_in_stock + 100
-
-  print(f"UPDATE northwind.products SET units_on_order = {v_units_on_order}, units_in_stock = {v_units_in_stock} \
+    v_quantity = random.randrange(130)
+    v_discount = random.random() 
+    try:
+      con = get_pg_connection(pg_v, db, usr)
+      cur = con.cursor()
+      cur.execute(f"INSERT INTO northwind.order_details(order_id, product_id, unit_price, quantity, discount) \
+                VALUES ({v_order_id}, {v_product_id}, {v_unit_price}, {v_quantity}, {v_discount})")
+      v_units_on_order = v_units_on_order + v_quantity
+      if v_units_in_stock < v_reorder_level:
+        v_units_in_stock = v_units_in_stock + 100
+      cur.execute(f"UPDATE northwind.products SET units_on_order = {v_units_on_order}, units_in_stock = {v_units_in_stock} \
         WHERE product_id = {v_product_id}")
+      con.commit()
+      cur.close()
+    except Exception as e:
+      util.exit_exception(e)
+    print(f"Placed order with order_id = {v_order_id}")
+    if time.process_time() >= run_time:
+        util.exit_message(f"Finished running Northwind App for {run_time} seconds",0)
+    v_order_id = v_order_id + 10
 
 
 def validate_northwind(db, pg=None):
-  """Run Sample Queries to Create Orders in Northwind"""
+  """Validate running sums in the Northwind products table"""
   pg_v = util.get_pg_v(pg)
   usr = util.get_user()
   try:
@@ -195,7 +210,7 @@ def validate_northwind(db, pg=None):
 
 
 def uninstall_northwind(db, pg=None):
-  """Drop northwind data and schema"""
+  """Drop northwind schema"""
   pg_v = util.get_pg_v(pg)
   usr = util.get_user()
   try:
