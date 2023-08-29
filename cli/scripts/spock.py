@@ -708,8 +708,8 @@ def db_create(db=None, User=None, Passwd=None, Id=None, pg=None):
   cmd = "createdb '" + db + "' --owner='" + User + "'"
   util.echo_cmd(ncb  + '"' + cmd + '"')
 
-  cmd = "REVOKE ALL ON DATABASE " + str(db) + " FROM PUBLIC"
-  util.echo_cmd(ncb +  '"psql -c \\"' + cmd + '\\" postgres"')
+  ##cmd = "REVOKE ALL ON DATABASE " + str(db) + " FROM PUBLIC"
+  ##util.echo_cmd(ncb +  '"psql -c \\"' + cmd + '\\" postgres"')
 
   spock_comp = "spock31-pg" + str(pg)
   st8 = util.get_comp_state(spock_comp)
