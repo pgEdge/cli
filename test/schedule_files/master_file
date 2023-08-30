@@ -76,11 +76,10 @@ t/945_confirm_replication.pl
 t/999_gsg_breakdown.pl
 # break
 t/020_nodectl_install_pgedge.pl
-t/404_spock_node_create_error.pl
-t/405_spock_node_create_error.pl
-t/406_spock_node_create_error.pl
-t/407_spock_error_breakdown_script.pl
-t/410_spock_repset_create_error.pl
-t/411_spock_repset_create_error.pl
-t/412_spock_repset_create_error.pl
-t/414_spock_error_breakdown_script.pl
+t/4040_spock_node_create_error.pl
+t/4050_spock_node_create_error.pl
+t/4060_spock_node_create_error.pl
+t/4100_spock_repset_create_error.pl
+t/4110_spock_repset_create_error.pl
+t/4120_spock_repset_create_error.pl
+#t/4140_spock_error_breakdown_script.pl
