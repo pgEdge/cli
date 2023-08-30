@@ -13,6 +13,7 @@
 ## done so far for 23.129 as of 2023-08-29
   - fix northwind demo to work with nodes that default to port 5432
   - start with first avail port after 6432 for port1 in cluster.create-local()
+  - improve db-create to return json & generate a passwd if not supplied
 
 
 ## done for 23.128 as of 2023-08-29
