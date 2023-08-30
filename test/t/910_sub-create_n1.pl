@@ -46,6 +46,8 @@ print("The port number is {$port}\n");
 
 # Then, create the subscription on node 1:
 
+print("repuser before chomp = $repuser\n");
+chomp($repuser);
 my $cmd11 = qq($homedir/nodectl spock sub-create sub_n1n2 'host=127.0.0.1 port=$port user=$repuser dbname=$database' $database);
 print("cmd11 = $cmd11\n");
 my($success11, $error_message11, $full_buf11, $stdout_buf11, $stderr_buf11)= IPC::Cmd::run(command => $cmd11, verbose => 0);
