@@ -7,7 +7,8 @@
 import os, sys, itertools, csv, random, time, json, socket, subprocess, re
 import util, fire, meta, cluster
 from datetime import datetime
-from multiprocessing import Manager, Pool, cpu_count, Value
+from multiprocessing import Manager, Pool, cpu_count, Value, Queue
+from tqdm import tqdm
 
 l_dir = "/tmp"
 
@@ -18,6 +19,8 @@ except ImportError as e:
 
 # Shared variables needed by multiprocessing
 queue = Manager().list()
+result_queue = Manager().list()
+job_queue = Queue()
 
 PGCAT_HOST = "localhost"
 PGCAT_PORT = 5432
@@ -27,7 +30,7 @@ PGCAT_DB2 = "db2"
 # Set max number of rows up to which
 # diff-tables will work
 MAX_DIFF_ROWS = 10000
-MAX_ALLOWED_BLOCK_SIZE = 100000
+MAX_ALLOWED_BLOCK_SIZE = 50000
 MAX_CPU_RATIO = 0.6
 
 
@@ -35,6 +38,8 @@ MAX_CPU_RATIO = 0.6
 BLOCK_OK = 0
 MAX_DIFF_EXCEEDED = 1
 BLOCK_MISMATCH = 2
+
+pbar = tqdm(total=100)
 
 
 def get_pg_connection(pg_v, db, ip, usr):
@@ -413,82 +418,99 @@ def diff_spock(cluster_name, node1, node2):
     return compare_spock
 
 
-def compare_checksums(cluster_name, table_name, p_key, block_rows, offset):
-    hash_sql = f"""
-    SELECT md5(cast(array_agg(t.*) AS text))
-    FROM (SELECT *
-            FROM {table_name}
-            ORDER BY {p_key}
-            OFFSET {offset}
-            LIMIT {block_rows}) t;
-    """
-
-    block_sql = f"""
-    SELECT *
-    FROM {table_name}
-    ORDER BY {p_key}
-    OFFSET {offset}
-    LIMIT {block_rows}
-    """
+def compare_checksums(cluster_name, table_name, p_key, block_rows, total_offsets):
 
     hash1 = ""
     hash2 = ""
+    offset = None
 
     # Read cluster information and connect to the local instance of pgcat
     il, db, pg, count, usr, passwd, os_usr, cert, nodes = cluster.load_json(
         cluster_name
     )
     con1 = psycopg.connect(
-        dbname=PGCAT_DB1, user=usr, password=passwd, host=PGCAT_HOST, port=PGCAT_PORT
+        dbname=PGCAT_DB1, user=usr, password=passwd, host=PGCAT_HOST, port=PGCAT_PORT, prepare_threshold=1
     )
     con2 = psycopg.connect(
-        dbname=PGCAT_DB2, user=usr, password=passwd, host=PGCAT_HOST, port=PGCAT_PORT
+        dbname=PGCAT_DB2, user=usr, password=passwd, host=PGCAT_HOST, port=PGCAT_PORT, prepare_threshold=1
     )
 
-    # Get the hash of the block from both tables we are
-    # currently looking at.
     with con1.cursor() as cur1, con2.cursor() as cur2:
-        cur1.execute(hash_sql)
-        hash1 = cur1.fetchone()[0]
+        while True:
+            if job_queue.empty():
+               break 
 
-        cur2.execute(hash_sql)
-        hash2 = cur2.fetchone()[0]
+            try:
+                offset = job_queue.get_nowait()
+            except queue.Empty:
+                break
+            except Exception as e:
+                util.exit_message("Multiprocessing error: ", e)
+                break
 
-        if hash1 != hash2:
-            # Get mismatching blocks from both tables
-            cur1.execute(block_sql)
-            t1_result = set(cur1.fetchall())
-            cur2.execute(block_sql)
-            t2_result = set(cur2.fetchall())
 
-            t1_diff = t1_result.difference(t2_result)
-            t2_diff = t2_result.difference(t1_result)
-            diff = t1_diff.union(t2_diff)
+            hash_sql = f"""
+            SELECT md5(cast(array_agg(t.* ORDER BY {p_key}) AS text))
+            FROM (SELECT *
+                    FROM {table_name}
+                    OFFSET {offset}
+                    LIMIT {block_rows}) t;
+            """
 
-            print(diff)
+            block_sql = f"""
+            SELECT *
+            FROM {table_name}
+            ORDER BY {p_key}
+            OFFSET {offset}
+            LIMIT {block_rows}
+            """
 
-            block_result = {
-                "offset": offset,
-                "t1_rows": t1_result,
-                "t2_rows": t2_result,
-            }
-            queue.append(block_result)
 
-            # We can only estimate how many diffs we may have.
-            # The actuall diff calc is done later by ydiff.
-            # So, even if there is just one row mismatch, and
-            # we hit this condition, we will still need
-            # to return early here.
-            if len(queue) * block_rows >= MAX_DIFF_ROWS:
-                return MAX_DIFF_EXCEEDED
+            # Get the hash of the block from both tables we are
+            # currently looking at.
+            #start = time.time()
+            cur1.execute(hash_sql)
+            hash1 = cur1.fetchone()[0]
 
-            return BLOCK_MISMATCH
+            cur2.execute(hash_sql)
+            hash2 = cur2.fetchone()[0]
+            #print(f'getting hash took: {time.time() - start}')
 
-    return BLOCK_OK
+            if hash1 != hash2:
+                util.message(f"Found block mismatch at offset: {offset}")
+                # Get mismatching blocks from both tables
+                cur1.execute(block_sql)
+                t1_result = set(cur1.fetchall())
+                cur2.execute(block_sql)
+                t2_result = set(cur2.fetchall())
+
+                t1_diff = t1_result.difference(t2_result)
+                t2_diff = t2_result.difference(t1_result)
+                #diff = t1_diff.union(t2_diff)
+
+                block_result = {
+                    "offset": offset,
+                    "t1_rows": t1_diff,
+                    "t2_rows": t2_diff,
+                }
+                queue.append(block_result)
+
+                # We can only estimate how many diffs we may have.
+                # The actuall diff calc is done later by ydiff.
+                # So, even if there is just one row mismatch, and
+                # we hit this condition, we will still need
+                # to return early here.
+                if len(queue) * block_rows >= MAX_DIFF_ROWS:
+                    result_queue.append(MAX_DIFF_EXCEEDED)
+
+                result_queue.append(BLOCK_MISMATCH)
+
+            result_queue.append(BLOCK_OK)
+
+            pbar.update(round(100/total_offsets, 2))
 
 
 # TODO: Add feature to allow users to specify offset and limit
-
 
 def diff_tables(
     cluster_name,
@@ -618,22 +640,29 @@ def diff_tables(
     # Therefore, we need a check to see if the specified block size
     # is at least = needed_block_size
 
-    needed_block_size = (row_count // procs) + 1
+    #needed_block_size = (row_count // procs) + 1
 
-    if block_rows < needed_block_size:
-        block_rows = needed_block_size
+    #if block_rows < needed_block_size:
+    #    block_rows = needed_block_size
 
     # Once we reinit block_rows, check against MAX_ALLOWED_BLOCK_SIZE again
-    if block_rows > MAX_ALLOWED_BLOCK_SIZE:
-        util.exit_message(f"Needed block rows are > {MAX_ALLOWED_BLOCK_SIZE}")
+    #if block_rows > MAX_ALLOWED_BLOCK_SIZE:
+    #    util.exit_message(f"Needed block rows are > {MAX_ALLOWED_BLOCK_SIZE}")
 
     start_time = datetime.now()
     util.message(f"\n## start_time = {start_time} #################")
 
+    offset_count = 0
+    for x in range(0, row_count + 1, block_rows):
+        job_queue.put(x) 
+
+        # simpler alternative to getting qsize
+        offset_count+=1
+
+
     with Pool(procs) as pool:
-        util.message("Starting multiprocessing tasks")
-        # chunk_size = row_count // procs
-        offsets = [x for x in range(0, row_count + 1, block_rows)]
+        util.message("\n##### STARTING MULTIPROCESSING TASKS #####\n")
+
         results = [
             pool.apply(
                 compare_checksums,
@@ -642,16 +671,16 @@ def diff_tables(
                     table_name,
                     c1_key,
                     block_rows,
-                    offset,
-                ),
+                    offset_count
+                )
             )
-            for offset in offsets
+            for _ in range(procs)
         ]
 
     mismatch = False
     diffs_exceeded = False
 
-    for result in results:
+    for result in result_queue:
         if result == MAX_DIFF_EXCEEDED:
             diffs_exceeded = True
 
@@ -667,12 +696,12 @@ def diff_tables(
             )
 
         else:
-            util.message("####### TABLES DO NOT MATCH ########")
+            util.message("\n####### TABLES DO NOT MATCH ########")
 
-        #write_diffs(c1_cols, row_count, l_schema, l_table)
+        write_diffs(c1_cols, row_count, l_schema, l_table)
         util.message("\n###### Diff written to out.diff ######")
     else:
-        util.message("####### TABLES MATCH OK ##########")
+        util.message("\n####### TABLES MATCH OK ##########")
 
     run_time = datetime.now() - start_time
     util.message(f"\n## run_time = {run_time} ##############################")
