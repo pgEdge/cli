@@ -28,18 +28,18 @@ esfdwV=0.11.2
 bqfdwV=1.9
 
 citusV=11.2.0-1
-vectorV=0.4.4-1
+vectorV=0.5.0-1
 
 oraclefdwV=2.5.0-1
 inclV=21.6
-orafceV=4.3.0-1
+orafceV=4.5.0-1
 ora2pgV=23.1
 v8V=3.2.0-1
 
 anonV=1.1.0-1
 ddlxV=0.17-1
 hypoV=1.4.0-1
-timescaleV=2.11.0-1
+timescaleV=2.11.2-1
 logicalV=2.4.3-1
 profV=4.2.2-1
 bulkloadV=3.1.19-1
@@ -51,11 +51,11 @@ patroniV=3.1.0.1
 etcdV=3.5.9
 
 audit15V=1.7.0-1
-postgisV=3.3.4-1
+postgisV=3.4.0-1
 
 pljavaV=1.6.4-1
 debuggerV=1.5-1
-cronV=1.5.2-1
+cronV=1.6.0-1
 
 #mysqlfdwV=2.8.0-1
 #mongofdwV=5.4.0-1

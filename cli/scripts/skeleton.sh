@@ -9,6 +9,9 @@ function test16 {
   ./nodectl install hypopg-$pgV        -d demo
   ./nodectl install orafce-$pgV        -d demo
   ./nodectl install curl-$pgV          -d demo
+  ./nodectl install cron-$pgV
+  ./nodectl install postgis-$pgV       -d demo
+  ./nodectl install vector-$pgV        -d demo
 }
 
 
@@ -27,10 +30,11 @@ function test15 {
   ./nodectl install postgis-$pgV       -d demo
   ./nodectl install hintplan-$pgV      -d demo
   ./nodectl install timescaledb-$pgV   -d demo
+  ./nodectl install vector-$pgV        -d demo
+  ./nodectl install pldebugger-$pgV    -d demo
 
   #./nodectl install foslots-$pgV       -d demo
   #./nodectl install plprofiler-$pgV
-  ./nodectl install pldebugger-$pgV    -d demo
 
   #./nodectl install decoderbufs-$pgV   -d demo
   #./nodectl install plv8-$pgV          -d demo
