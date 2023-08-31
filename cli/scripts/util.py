@@ -2,7 +2,7 @@
 #  Copyright 2022-2023 PGEDGE  All rights reserved. #
 #####################################################
 
-MY_VERSION = "23.128"
+MY_VERSION = "23.129"
 
 from subprocess import Popen, PIPE, STDOUT
 from datetime import datetime, timedelta
@@ -281,6 +281,7 @@ def get_random_password(p_length=12):
   for x in range(p_length):
     passwd.append(random.choice(passwd_chars))
   return(''.join(passwd))
+
 
 def get_1st_ip():
   hostname = socket.gethostname()   

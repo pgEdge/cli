@@ -58,7 +58,7 @@ elif [ "$majorV" == "15" ]; then
   pgV=$pg15V
   pgBuildV=$pg15BuildV
 
-  if [ "$OS" == "el9" ]; then
+  if [ "$OS" == "el9" ] || [ "$OS" == "arm9" ]; then
     cd spock-private
     git checkout main
     git pull

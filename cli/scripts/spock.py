@@ -669,10 +669,10 @@ def db_create(db=None, User=None, Passwd=None, Id=None, pg=None):
 
    Usage:
        To create a superuser than has access to the whole cluster of db's
-          spock db-createdb -d <db> [-U <usr> -P <passwd>]
+          spock db-createdb -d <db> -U <usr> -P <passwd>
 
        to create an admin user that owns a specifc tennant database
-          spock db-createdb -I <id>  -P <passwd>
+          spock db-createdb -I <id>  [-P <passwd>]
       
   """
 
@@ -682,8 +682,11 @@ def db_create(db=None, User=None, Passwd=None, Id=None, pg=None):
   if User == None:
     User = os.getenv('pgeUser', None)
 
+  ## one way or another, the user that creates the db will have a password
   if Passwd == None:
     Passwd = os.getenv('pgePasswd', None)
+    if Passwd == None:
+      Passwd = util.get_random_password()
 
   if pg == None:
     pg_v = util.get_pg_v(pg)
@@ -693,32 +696,47 @@ def db_create(db=None, User=None, Passwd=None, Id=None, pg=None):
   ncb = nc + "pgbin " + str(pg) + " "
 
   privs = ""
-  if Id and Passwd:
+  if Id:
     privs = "NOSUPERUSER NOCREATEDB NOCREATEROLE NOINHERIT LOGIN"
     User = "admin_" + str(Id)
     db = "db_" + str(Id)
-  elif User and Passwd and db:
+  elif User and db:
     privs = "SUPERUSER CREATEDB CREATEROLE INHERIT LOGIN"
   else:
-    util.exit_message("db_create() must have parms of (-I -P) or (-U -P -d)")
+    util.exit_message("db_create() must have parms of (-I) or (-U -d)")
 
   cmd = "CREATE ROLE " + User + " PASSWORD '" + Passwd + "' " + privs
-  util.echo_cmd(ncb +  '"psql -c \\"' + cmd + '\\" postgres"')
+  rc1 = util.echo_cmd(ncb +  '"psql -q -c \\"' + cmd + '\\" postgres"')
 
   cmd = "createdb '" + db + "' --owner='" + User + "'"
-  util.echo_cmd(ncb  + '"' + cmd + '"')
-
-  cmd = "REVOKE ALL ON DATABASE " + str(db) + " FROM PUBLIC"
-  util.echo_cmd(ncb +  '"psql -c \\"' + cmd + '\\" postgres"')
+  rc2 = util.echo_cmd(ncb  + '"' + cmd + '"')
 
   spock_comp = "spock31-pg" + str(pg)
   st8 = util.get_comp_state(spock_comp)
   if st8 in ("Installed", "Enabled"):
     cmd = "CREATE EXTENSION spock"
-    util.echo_cmd(ncb +  '"psql -c \\"' + cmd + '\\" ' + str(db) + '"')
+    rc3 = util.echo_cmd(ncb +  '"psql -q -c \\"' + cmd + '\\" ' + str(db) + '"')
   else:
-    util.echo_cmd(nc + "install " + spock_comp + " -d " + str(db))
+    rc3 = util.echo_cmd(nc + "install " + spock_comp + " -d " + str(db))
 
+  ##print(f" rcs = {rc1}, {rc2}, {rc3}")
+  rcs = rc1 + rc2 + rc3
+  if rcs == 0:
+    status = "success"
+  else:
+    status = "error"
+
+  return_json = {}
+  return_json["status"] = status
+  return_json["db_name"] = db 
+  return_json["users"] = []
+
+  user_json={}
+  user_json["user"] = User
+  user_json["passwd"] = Passwd
+  return_json["users"].append(user_json)
+
+  print(json_dumps(return_json))
   return
 
 

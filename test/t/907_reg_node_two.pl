@@ -45,17 +45,21 @@ my $port = $out2->[0]->{"port"};
 print("The port number is {$port}\n");
 
 # Register node 2 and add the replication set entry on n2: 
+print("repuser before chomp = $repuser\n");
+chomp($repuser);
 
 my $cmd4 = qq($homedir/nodectl spock node-create n2 'host=127.0.0.1 port=$port user=$repuser dbname=$database' $database);
 print("cmd4 = $cmd4\n");
 my ($success4, $error_message4, $full_buf4, $stdout_buf4, $stderr_buf4)= IPC::Cmd::run(command => $cmd4, verbose => 0);
 
-print("stderr_buf4 = @$stderr_buf4\n");
+print("stdout_buf4 = @$stdout_buf4\n");
 print("We just invoked the ./nc spock node-create n2 command\n");
 
 my $cmd5 = qq($homedir/nodectl spock repset-create $repset $database);
 print("cmd5 = $cmd5\n");
 my ($success5, $error_message5, $full_buf5, $stdout_buf5, $stderr_buf5)= IPC::Cmd::run(command => $cmd5, verbose => 0);
+
+print("stdout_buf5 = @$stdout_buf5\n");
 print("We just executed the command that creates the replication set (demo-repset)\n");
 
 # Then, use the info to connect to psql and test for the existence of the replication set.

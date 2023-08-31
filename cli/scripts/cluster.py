@@ -207,7 +207,7 @@ def create_local(cluster_name, num_nodes, pg="16", app=None, port1=6432,
     util.exit_message("port1 parameter is not an integer", 1)
 
   kount = meta.get_installed_count()
-  if kount > 0:
+  if kount > 1:
     util.message("WARNING: No other components should be installed when using 'cluster local'")
 
   if num_nodes < 1:
@@ -215,11 +215,13 @@ def create_local(cluster_name, num_nodes, pg="16", app=None, port1=6432,
 
   usr = util.get_user()
 
-  for n in range(port1, port1 + num_nodes):
-    util.message("# checking port " + str(n) + " availability...")
-    if not util.is_socket_busy(n):
-      break
-
+  ## increment port1 to the first available port from it's initial value
+  n = port1
+  while util.is_socket_busy(n):
+    util.message(f"# port {n} is busy")
+    n = n + 1
+  port1 = n
+ 
   if os.path.exists(cluster_dir):
     util.exit_message("cluster already exists: " + str(cluster_dir), 1)
 
@@ -253,15 +255,7 @@ def ssh_install_pgedge(cluster_name, passwd):
   for node in nodes:
     nodename, port, path, ip, rp_count = node["nodename"], node["port"], node["path"], node["ip"], node["replica_count"]
 
-    # Install on primary node
-    install_on_host(cluster_name, db, pg, db_user, count, nodename, path, ip, port, os_user, 
-                    ssh_key, passwd, il, rp_count, 'primary', node.get("replicas", []))
-
-    # Install on sync replicas
-    for replica in node.get("replicas", []):
-      rp_name, rp_ip = replica["rp_name"], replica["rp_ip"]
-      install_on_host(cluster_name, db, pg, db_user, count, rp_name, path, rp_ip, port, os_user, 
-                      ssh_key, passwd, il, rp_count, 'replica', node.get("replicas", []))
+    util.message(f"########                node={ndnm}, host={ndip}, path={ndpath} REPO={REPO}\n")
 
 
 def install_on_host(cluster_name, db, pg, db_user, count, nodename, nodepath, nodeip, nodeport, os_user, 

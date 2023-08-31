@@ -49,7 +49,7 @@ def install(cluster_name, factor=1):
   for nd in nodes:
     nodename = nd["nodename"]
     try:
-      port = str(n["port"])
+      port = str(nd["port"])
     except Exception as e:
       port = "5432"
     host = nd["ip"]

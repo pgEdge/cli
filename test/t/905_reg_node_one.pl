@@ -45,15 +45,16 @@ my $json2 = `$n1/pgedge/nc --json info pg16`;
 print("my json = $json2");
 my $out2 = decode_json($json2);
 my $port = $out2->[0]->{"port"};
-print("The port number is {$port}\n");
+# print("The port number is {$port}\n");
 
 # Register node 1 and the repset entry on n1: 
-
+print("repuser before chomp = $repuser\n");
+chomp($repuser);
 my $cmd2 = qq($homedir/nodectl spock node-create n1 'host=127.0.0.1 port=$port user=$repuser dbname=$database' $database);
 print("cmd2 = $cmd2\n");
 my ($success2, $error_message2, $full_buf2, $stdout_buf2, $stderr_buf2)= IPC::Cmd::run(command => $cmd2, verbose => 0);
 
-print("We just invoked the ./nc spock node-create n1 command\n");
+print("stdout_buf2 = @$stdout_buf2\n");
 
 my $cmd3 = qq($homedir/nodectl spock repset-create $repset $database);
 print("cmd3 = $cmd3\n");

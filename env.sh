@@ -1,7 +1,7 @@
 
 bundle=pgedge
 api=nodectl
-hubV=23.128
+hubV=23.129
 
 spock31V=3.1.5-1
 catV=1.1.1
@@ -9,22 +9,19 @@ ncdV=1.0
 
 pgedgeV=2-3
 
-P16=16beta3-2
+P16=16rc1-1
 P15=15.4-2
 P14=14.9-1
 P13=13.12-1
 P12=12.16-1
 P11=11.21-1
 
-##goV=1.19.3
 postgrestV=11.1.0-1
 prompgexpV=0.11.1
-##nodejsV=18.12.1
 backrestV=2.47-1
 csvdiffV=1.4.0
 curlV=2.1.1-1
 readonlyV=1.1.0-1
-##foslotsV=1a-1
 
 multicorn2V=2.4-1
 esfdwV=0.11.2
