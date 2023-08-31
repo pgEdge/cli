@@ -7,13 +7,13 @@
 # Examples and setup tests
 #
 t/020_nodectl_install_pgedge.pl
-t/200_service_setup_script_16.pl
-t/232_servicestop_16.pl
-t/230_servicestart_pg16.pl
-t/234_servicereload_pg16.pl
-t/236_service_restart_pg16.pl
-t/240_service_disable_pg16.pl
-t/238_service_enable_pg16.pl
-t/299_service_breakdown_with_control_check_pg16.pl
+t/2000_service_setup_script_16.pl
+t/2320_servicestop_16.pl
+t/2300_servicestart_pg16.pl
+t/2340_servicereload_pg16.pl
+t/2360_service_restart_pg16.pl
+t/2400_service_disable_pg16.pl
+t/2380_service_enable_pg16.pl
+t/2990_service_breakdown_with_control_check_pg16.pl
 
 
