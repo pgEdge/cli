@@ -16,20 +16,11 @@ use contains;
 #
 # Move into the pgedge directory.
 #
- chdir("./pgedge");
-
-#
-# Register node 1:
-
-my $cmd2 = qq(./nodectl spock node-create n1 'host=127.0.0.1 port=6432 user=lcdb dbname=lcdb' lcdb);
-print("cmd2 = $cmd2\n");
-my ($success2, $error_message2, $full_buf2, $stdout_buf2, $stderr_buf2)= IPC::Cmd::run(command => $cmd2, verbose => 0);
-
-print("full_buf2 = @$full_buf2\n");
+ chdir("./pgedge/cluster/demo/n1/pgedge/");
 
 #
 # This command creates a repset if provided with a replication set name and a database name; we are 
-# omitting the replication set name to throw an error.
+# omitting a parameter to throw an error.
 
 my $cmd3 = qq(./nodectl spock repset-create lcdb);
 print("cmd3 = $cmd3\n");

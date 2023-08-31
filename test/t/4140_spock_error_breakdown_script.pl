@@ -19,9 +19,10 @@ my $cluster = "demo";
 my $repset = "demo-repset";
 my $n1 = "~/work/nodectl/test/pgedge/nodectl";
 
-# Move into the pgedge directory
+# Move into the pgedge directory.
+#
+ chdir("./pgedge/cluster/demo/n1/pgedge/");
 
-chdir ("./pgedge");
 
 # Get the location of the data directory and home directory before removing pgEdge; store them in $datadir and $home.
 
@@ -30,11 +31,11 @@ my $home = $json_info->[0]->{"home"};
 print("The home directory is = {$home}\n");
 
 print("The next line calls the decode_json function.\n");
-my $json = `./nc --json info pg15`;
+my $json = `./nc --json info pg16`;
 
 print("json -->$json<--\n");
 
-my $out = decode_json(`./nc --json info pg15`);
+my $out = decode_json(`./nc --json info $version`);
 print("The last line before this calls the decode_json function. Next, I'll set the value into datadir. \n");
 my $datadir = $out->[0]->{"datadir"};
 print("I just set the data directory to: = {$datadir}\n");
@@ -49,7 +50,7 @@ sub remove_pgedge_leave_data
         print ("pgedge exists\n");
         # Then, use nodectl to remove the pgEdge/Postgres installation; this command leaves the data directory intact.     
         my $cmd = qq(./nodectl remove pgedge);
-        print("I'm removing the pgEdge installation with the following command: = $cmd\n");
+        print("I'm removing the pgEdge installation and the data directory with the following command: = $cmd\n");
         my ($success, $error_message, $full_buf, $stdout_buf, $stderr_buf)= IPC::Cmd::run(command => $cmd, verbose => 0);
         print("stdout_buf = @$stdout_buf\n");
         print ("pgEdge platform should be gone now. \n");
@@ -69,7 +70,6 @@ sub remove_data_dir
         my $cmd2 = qq(rm -rf $datadir);
         print("I'm removing the data directory with the following command: = $cmd2\n");
         my ($success2, $error_message2, $full_buf2, $stdout_buf2, $stderr_buf2)= IPC::Cmd::run(command => $cmd2, verbose => 0);
-        print("I'm removing the data directory with the following command: = @$stdout_buf2\n");
         print ("The data directory should be gone now.\n");
     }
     else
@@ -86,7 +86,7 @@ sub remove_home_dir
 
     # Remove the home directory and the .pgpass file
 
-        my $cmd3 = qq(rm -rf $home);
+        my $cmd3 = qq(rm -rf pgedge);
         #print("cmd3 = $cmd3\n");
         my ($success3, $error_message3, $full_buf3, $stdout_buf3, $stderr_buf3)= IPC::Cmd::run(command => $cmd3, verbose => 0);
         print("I'm removing the home directory with the following command: = $cmd3\n");

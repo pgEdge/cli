@@ -12,6 +12,11 @@ use lib './t/lib';
 use contains;
 
 
+#
+# Move into the pgedge directory.
+#
+ chdir("./pgedge/cluster/demo/n1/pgedge/");
+
 # Call the command to create a repset, but provide the wrong database name: 
 
 my $cmd3 = qq(./nodectl spock repset-create my_repset postgres);
@@ -22,9 +27,9 @@ print("error_message3 = $error_message3\n");
 print("stdout_buf3 = @$stdout_buf3\n");
 
 
-print("If the server reports an ERROR for the wrong database name, the test succeeded\n");
+print("If the server reports an ERROR for a missing spock schema (we're in the wrong db), the test succeeded\n");
 
-if(contains($error_message3, "failed"))
+if(contains($error_message3, "exited"))
 {
     exit(0);
 }
