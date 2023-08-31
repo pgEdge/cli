@@ -49,7 +49,7 @@ citusFullV=11.2.0
 citusShortV=
 citusBuildV=1
 
-vectorFullV=0.4.4
+vectorFullV=0.5.0
 vectorShortV=
 vectorBuildV=1
 
@@ -57,11 +57,11 @@ hypopgFullV=1.4.0
 hypopgShortV=
 hypopgBuildV=1
 
-postgisFullV=3.3.4
+postgisFullV=3.4.0
 postgisShortV=
 postgisBuildV=1
 
-orafceFullV=4.3.0
+orafceFullV=4.5.0
 orafceShortV=
 orafceBuildV=1
 
@@ -133,11 +133,11 @@ hintplanFullV=1.5.0
 hintplanShortV=
 hintplanBuildV=1
 
-timescaledbFullV=2.11.0
+timescaledbFullV=2.11.2
 timescaledbShortV=
 timescaledbBuildV=1
 
-cronFullV=1.5.2
+cronFullV=1.6.0
 cronShortV=
 cronBuildV=1
 
