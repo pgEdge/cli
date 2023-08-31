@@ -22,10 +22,8 @@ sudo systemctl stop etcd > /dev/null 2>&1
 echo "Setting up etcd binaries in $INSTALL_DIR/bin..."
 sudo mkdir -p "$INSTALL_DIR/bin"
 sudo mkdir -p "$INSTALL_DIR/etc"
-sudo cp etcd "$INSTALL_DIR/bin/"
-sudo cp etcdctl "$INSTALL_DIR/bin/"
-sudo chmod +x "$INSTALL_DIR/bin/etcd"
-sudo chmod +x "$INSTALL_DIR/bin/etcdctl"
+sudo cp etcd etcdctl "$INSTALL_DIR/bin/"
+sudo chmod +x "$INSTALL_DIR/bin/etcd*"
 
 # Update PATH variable or link binaries to /usr/local/bin for system-wide access
 sudo ln -sf "$INSTALL_DIR/bin/etcd" /usr/local/bin/
@@ -43,24 +41,6 @@ echo "Configuring etcd..."
 sudo mkdir -p /var/lib/etcd/
 sudo mkdir -p /etc/etcd
 
-# Substitute placeholders in the template file
-# Determine hostname and IP address
-host_name=$(uname -n)
-host_ip=$(hostname -I | awk '{print $1}')
-
-# Define the file paths
-template="etcd.yaml.template"
-output="etcd.yaml"
-
-# If no argument is supplied, it's the master.
-if [ -z "$1" ]; then
-  sed -e "s/hostname/${host_name}/g" -e "s/host_ip/${host_ip}/g" "$template" > "$output"
-else
-  sed -e "s/hostname/${host_name}/g" -e "s/host_ip/${host_ip}/g" -e "s|initial-cluster: \"node1=http://host_ip:2380\"|initial-cluster: \"$1\"|g" "$template" > "$output"
-fi
-
-sudo cp etcd.yaml "$INSTALL_DIR/etc/"
-
 # Set up etcd user, group, and permissions
 echo "Configuring etcd user, group, and permissions..."
 if ! id etcd &> /dev/null; then
@@ -71,7 +51,7 @@ fi
 # Change the ownership to the etcd user and group
 sudo chown -R etcd:etcd /var/lib/etcd/
 sudo chown -R etcd:etcd /etc/etcd/
-sudo chown etcd:etcd "$INSTALL_DIR/etc/"
+sudo chown -R etcd:etcd "$INSTALL_DIR/"
 
 # Setup systemd service for etcd
 echo "Setting up etcd service..."

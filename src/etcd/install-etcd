@@ -1,5 +1,5 @@
 #!/bin/bash
 cd "$(dirname "$0")"
 
-./config-etcd $1 $2
+./config-etcd
 

@@ -2,12 +2,14 @@
 #  Copyright 2022-2023 PGEDGE  All rights reserved. #
 #####################################################
 
-import os, sys, random, json, socket, datetime
+import os, sys, random, json, socket, datetime, yaml
 import util, fire, meta
 import pgbench, northwind
 
 base_dir = "cluster"
 
+
+ETCD_PATH = f"/usr/local/etcd"
 
 def log_old_vals(p_run_sums, p_nc, p_db, p_pg, p_host, p_usr, p_key):
   for tbl_col in p_run_sums:
@@ -249,38 +251,73 @@ def print_install_hdr(cluster_name, db, pg, db_user, count):
   util.message("#")
   util.message(f"######## ssh_install_pgedge: cluster={cluster_name}, db={db}, pg={pg} db_user={db_user}, count={count}")
 
+
+
+
+def generate_etcd_config(node_name, primary_ip, replicas):
+  initial_cluster = [f"{node_name}={primary_ip}:2380"]
+
+  for idx, replica in enumerate(replicas, start=2):
+    node_name_replica = f"node{idx}"
+    initial_cluster.append(f"{node_name_replica}={replica['rp_ip']}:2380")
+
+  config = {
+    'name': node_name,
+    'initial-cluster': ",".join(initial_cluster),
+    'initial-cluster-token': "devops_token",
+    'initial-cluster-state': "new" if node_name == 'node1' else "existing",
+    'initial-advertise-peer-urls': f"http://{primary_ip}:2380",
+    'data-dir': "/var/lib/etcd/postgresql",
+    'listen-peer-urls': f"http://{primary_ip}:2380",
+    'listen-client-urls': f"http://{primary_ip}:2379,http://localhost:2379",
+    'advertise-client-urls': f"http://{primary_ip}:2379"
+  }
+  return config
+
 def ssh_install_pgedge(cluster_name, passwd):
   il, db, pg, count, db_user, db_passwd, os_user, ssh_key, nodes = load_json(cluster_name)
 
   for node in nodes:
     nodename, port, path, ip, rp_count = node["nodename"], node["port"], node["path"], node["ip"], node["replica_count"]
 
-    util.message(f"########                node={ndnm}, host={ndip}, path={ndpath} REPO={REPO}\n")
+    replicas = node.get("replicas", [])
+    install_on_host(cluster_name, db, pg, db_user, count, nodename, path, ip, port, os_user,
+                    ssh_key, passwd, il, rp_count, 'primary', replicas)
 
+    for replica in replicas:
+      rp_name, rp_ip = replica["rp_name"], replica["rp_ip"]
+      install_on_host(cluster_name, db, pg, db_user, count, rp_name, path, rp_ip, port, os_user,
+                      ssh_key, passwd, il, rp_count, 'replica', replicas)
 
-def install_on_host(cluster_name, db, pg, db_user, count, nodename, nodepath, nodeip, nodeport, os_user, 
+def install_on_host(cluster_name, db, pg, db_user, count, nodename, nodepath, nodeip, nodeport, os_user,
                     ssh_key, passwd, il, rp_count, node_type, replicas):
-
   print_install_hdr(cluster_name, db, pg, db_user, count)
   util.message(f"######## node={nodename}, host={nodeip}, port={nodeport}, path={nodepath}\n")
+
   REPO = os.getenv("REPO", "https://pgedge-download.s3.amazonaws.com/REPO")
   cmd1 = f"mkdir -p {nodepath}; cd {nodepath}; "
-  cmd2 = f"python3 -c \"\$(curl -fsSL {REPO}/install.py)\""
+  cmd2 = f"python3 -c '$(curl -fsSL {REPO}/install.py)'"
+
   util.echo_cmd(cmd1 + cmd2, host=nodeip, usr=os_user, key=ssh_key)
 
   nc = (nodepath + "/pgedge/nodectl ")
   parms = f" -U {db_user} -P {passwd} -d {db} -p {nodeport} --pg {pg}"
   rc = util.echo_cmd(nc + " install pgedge" + parms, host=nodeip, usr=os_user, key=ssh_key)
-  
-  initial_cluster = f'-initial-cluster: '
+
   if node_type == 'primary':
-    rc = util.echo_cmd(nc + " install etcd" + parms, host=nodeip, usr=os_user, key=ssh_key)
+    rc = util.echo_cmd(nc + f" install etcd", host=nodeip, usr=os_user, key=ssh_key)
+    etcd_config = generate_etcd_config(nodename, nodeip, replicas)
+    remote_yaml_content = yaml.dump(etcd_config)
+    util.echo_cmd(f"echo '{remote_yaml_content}' | sudo tee {ETCD_PATH}/etc/etcd.yaml > /dev/null", host=nodeip, usr=os_user, key=ssh_key)
+    rc = util.echo_cmd(nc + f" config etcd", host=nodeip, usr=os_user, key=ssh_key)
+
   elif node_type == 'replica' and rp_count > 0:
-    initial_cluster += f'node1=http://{nodename}:2380'
-    for idx, replica in enumerate(replicas, start=2):
-      initial_cluster += f', node{idx}=http://{replica["rp_ip"]}:2380'
-      print(initial_cluster)
-    rc = util.echo_cmd(nc + f" install etcd 3.5.9 \"{initial_cluster}\"", host=nodeip, usr=os_user, key=ssh_key)
+    rc = util.echo_cmd(nc + f" install etcd", host=nodeip, usr=os_user, key=ssh_key)
+    etcd_config = generate_etcd_config(nodename, nodeip, replicas)
+    remote_yaml_content = yaml.dump(etcd_config)
+    rc = util.echo_cmd(f"echo '{remote_yaml_content}' > {ETCD_PATH}/etc/etcd.yaml", host=nodeip, usr=os_user, key=ssh_key)
+    util.echo_cmd(f"echo '{remote_yaml_content}' | sudo tee {ETCD_PATH}/etc/etcd.yaml > /dev/null", host=nodeip, usr=os_user, key=ssh_key)
+    rc = util.echo_cmd(nc + f" config etcd", host=nodeip, usr=os_user, key=ssh_key)
 
 def destroy_local(cluster_name):
   """Stop and then nuke a localhost cluster."""
