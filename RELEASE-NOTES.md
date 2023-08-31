@@ -1,25 +1,33 @@
 # pgEdge Platform Release Notes #############
 
-## to do's for 23.128 and beyond
+## to do's for 23.129 and beyond
   - add support for pljava-pg15 & -pg16 (cannot find libjvm17  setting from util.get_jvm_location)
-  - improve efficiency of `ace diff-tables` to handle massive tables w blocks of checksums
-  - fix port numbers in cluster.create-local() (env & .json)
-  - replicate ddl automagically to the spock.replicate_ddl command if ddl_entry_point = 'on'
+  - fix port numbers in cluster.create-local()'s env file
+  - replicate ddl automagically to the spock.replicate_ddl command if cluster is a 'leader'
   - test json fields for replication
   - `spock_create_subscriber` tool (from Spock ReadMe)
   - more default conf setting tweaks from customer support (from hari)
   - explore possible inclusion of function for calling aws lambdas (hari)
 
 
-## done so far for 23.128 as of 2023-08-24
-  - Cady fixed a tricky problem (reported by susan) when adding tables to a repset  w/ a wildcard
-  - bump to pg15.4-2 & pg16beta3-2 to support static linking for uuid-ossp
-  - bump pgcat tolatest (1.1.1) & make avaialable for dev and test
-  - add support for latest plv8 (3.2.0) for dev and test
+## done so far for 23.129 as of 2023-08-29
+  - fix northwind demo to work with nodes that default to port 5432
+  - start with first avail port after 6432 for port1 in cluster.create-local()
+  - improve db-create to return json & generate a passwd if not supplied
+
+
+## done for 23.128 as of 2023-08-29
+  - bump pg16 to rc1 
+  - spock to 3.1.5 (with new security roles defined & diff2 backpatch to pg15)
+  - improve efficiency of `ace diff-tables` to handle massive tables w blocks of checksums
+  - bump pgcat to 1.1.1 & make available for dev and test
+  - add support for plv8 3.2.0 for dev and test
+  - fixed a tricky problem (reported by susan) when adding tables to a repset  w/ a wildcard (cady)
+  - Fix missing static lib for uuid-ossp in pg15 & pg16 builds
   - 2nd pass at implementing spock.db_create() for supporting Dev Edition reqmnts 
-  - 2nd pass and document `secure` CLI
-  - WIP: Windoze compatability for `secure` & `cluster` CLI commands
   - WIP: refactor install-pgedge.py to use spock.db_create()
+  - 2nd pass and document `secure` CLI (cady)
+  - WIP: Windoze compatibility for `secure` & `cluster` CLI commands
 
 
 ## done for 23.127 as of 2023-08-10

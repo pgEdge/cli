@@ -58,32 +58,36 @@ elif [ "$majorV" == "15" ]; then
   pgV=$pg15V
   pgBuildV=$pg15BuildV
 
-  if [ "$OS" == "el9" ]; then
-    cd spock
-    git checkout REL3_1_STABLE
+  if [ "$OS" == "el9" ] || [ "$OS" == "arm9" ]; then
+    cd spock-private
+    git checkout main
     git pull
     diff1=$PWD/pg15-log_old_value.diff
-    if [ -f "$diff1" ]; then
+    diff2=$PWD/pg15-allow_logical_decoding_on_standbys.patch
+    if [ -f "$diff1" ] && [ -f "$diff2" ]; then
       export DIFF1="$diff1"
+      export DIFF2="$diff2"
     else
-      echo "FATAL ERROR: Missing $diff1"
+      echo "FATAL ERROR: Missing $diff1 or $diff2"
       exit 1
     fi
     cd ..
   else
     export DIFF1=""
+    export DIFF2=""
   fi
 
 elif [ "$majorV" == "16" ]; then
   pgV=$pg16V
   pgBuildV=$pg16BuildV
 
-  cd spock
-  git checkout REL3_1_STABLE
+  cd spock-private
+  git checkout main
   git pull
   diff1=$PWD/pg16-log_old_value.diff
   if [ -f "$diff1" ]; then
     export DIFF1="$diff1"
+    export DIFF2=""
   else
     echo "FATAL ERROR: Missing $diff1"
     exit 1

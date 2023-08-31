@@ -1,7 +1,9 @@
-# 030_nodectl_init_pg.pl
-#
-# This test sets up a database cluster, adds the user to the pgpass file, and queries the psql command line.
-# The test confirms that the spock extension version noted in the parameter list is installed to confirm success.
+# This test case runs the command:
+# ./nodectl install pgedge --pg 16 -U admin -P password -d demo
+# The command does not add an entry to the ~/.pgpass file, so we do that in this case as well, to simplify
+# authentication with psql.
+# We also query ./nodectl --json info pg16 to find the port number of the running instance in case there is more than 
+# one running - the test will use the returned port to log in to psql and confirm that spock has been installed.
 #
 
 use strict;
