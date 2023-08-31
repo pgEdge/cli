@@ -43,6 +43,8 @@ my $port = $out2->[0]->{"port"};
 print("The port number is {$port}\n");
 
 # Create the subscription on node 2#
+print("repuser before chomp = $repuser\n");
+chomp($repuser);
 
 my $cmd12 = qq($homedir/nodectl spock sub-create sub_n2n1 'host=127.0.0.1 port=$port user=$repuser dbname=$database' $database);
 print("cmd12 = $cmd12\n");

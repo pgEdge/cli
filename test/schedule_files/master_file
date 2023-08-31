@@ -82,4 +82,4 @@ t/4060_spock_node_create_error.pl
 t/4100_spock_repset_create_error.pl
 t/4110_spock_repset_create_error.pl
 t/4120_spock_repset_create_error.pl
-#t/4140_spock_error_breakdown_script.pl
+t/4140_spock_error_breakdown_script.pl
