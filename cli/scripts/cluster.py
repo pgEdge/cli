@@ -107,7 +107,7 @@ def get_cluster_json(cluster_name):
   return(parsed_json)
 
 
-def import_remote_def(cluster_name, json_file_name):
+def remote_import_def(cluster_name, json_file_name):
   """Import a cluster definition file so we can work with it like a pgEdge cluster."""
 
   try:
@@ -125,7 +125,7 @@ def import_remote_def(cluster_name, json_file_name):
   util.echo_cmd(f"cp {json_file_name} {cluster_dir}/{cluster_name}.json")
 
 
-def reset_remote(cluster_name):
+def remote_reset(cluster_name):
   """Reset a test cluster from json definition file of existing nodes."""
   il, db, pg, count, user, db_passwd, os_user, key, nodes = load_json(cluster_name)
 
@@ -140,7 +140,7 @@ def reset_remote(cluster_name):
      util.echo_cmd(cmd, host=nd["ip"], usr=os_user, key=key)
 
 
-def init_remote(cluster_name, app=None):
+def remote_init(cluster_name, app=None):
   """Initialize a test cluster from json definition file of existing nodes."""
 
   util.message(f"## Loading cluster '{cluster_name}' json definition file")
@@ -167,7 +167,7 @@ def init_remote(cluster_name, app=None):
   ssh_install_pgedge(cluster_name, cj["db_init_passwd"])
 
 
-def create_local(cluster_name, num_nodes, pg="16", app=None, port1=6432, 
+def local_create(cluster_name, num_nodes, pg="16", app=None, port1=6432, 
                  User="lcusr", Passwd="lcpasswd", db="lcdb"):
   """Create a localhost test cluster of N pgEdge nodes on different ports."""
 
@@ -263,7 +263,7 @@ def ssh_install_pgedge(cluster_name, passwd):
     util.message("#")
 
 
-def destroy_local(cluster_name):
+def local_destroy(cluster_name):
   """Stop and then nuke a localhost cluster."""
 
   if not os.path.exists(base_dir):
@@ -340,11 +340,11 @@ def app_remove(cluster_name, app_name):
 
 if __name__ == '__main__':
   fire.Fire({
-    'create-local':   create_local,
-    'destroy-local':  destroy_local,
-    'init-remote':    init_remote,
-    'reset-remote':   reset_remote,
-    'import-remote-def': import_remote_def,
+    'local-create':   local_create,
+    'local-destroy':  local_destroy,
+    'remote-init':    remote_init,
+    'remote-reset':   remote_reset,
+    'remote-import-def': remote_import_def,
     'command':        command,
     'app-install':    app_install,
     'app-remove':     app_remove
