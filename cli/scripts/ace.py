@@ -21,6 +21,7 @@ except ImportError as e:
 queue = Manager().list()
 result_queue = Manager().list()
 job_queue = Queue()
+row_diff_count = Value('I', 0)
 
 PGCAT_HOST = "localhost"
 PGCAT_PORT = 5432
@@ -420,6 +421,8 @@ def diff_spock(cluster_name, node1, node2):
 
 def compare_checksums(cluster_name, table_name, p_key, block_rows, total_offsets):
 
+    global row_diff_count
+
     hash1 = ""
     hash2 = ""
     offset = None
@@ -474,7 +477,6 @@ def compare_checksums(cluster_name, table_name, p_key, block_rows, total_offsets
 
             cur2.execute(hash_sql)
             hash2 = cur2.fetchone()[0]
-            #print(f'getting hash took: {time.time() - start}')
 
             if hash1 != hash2:
                 util.message(f"Found block mismatch at offset: {offset}")
@@ -495,17 +497,21 @@ def compare_checksums(cluster_name, table_name, p_key, block_rows, total_offsets
                 }
                 queue.append(block_result)
 
+                with row_diff_count.get_lock():
+                    row_diff_count.value += len(t1_diff) + len(t2_diff)
+ 
                 # We can only estimate how many diffs we may have.
                 # The actuall diff calc is done later by ydiff.
                 # So, even if there is just one row mismatch, and
                 # we hit this condition, we will still need
                 # to return early here.
-                if len(queue) * block_rows >= MAX_DIFF_ROWS:
+                if row_diff_count.value >= MAX_DIFF_ROWS:
                     result_queue.append(MAX_DIFF_EXCEEDED)
+                else:
+                    result_queue.append(BLOCK_MISMATCH)
 
-                result_queue.append(BLOCK_MISMATCH)
-
-            result_queue.append(BLOCK_OK)
+            else:
+                result_queue.append(BLOCK_OK)
 
             pbar.update(round(100/total_offsets, 2))
 
@@ -692,7 +698,7 @@ def diff_tables(
     if mismatch:
         if diffs_exceeded:
             util.message(
-                f"####### TABLES DO NOT MATCH. DIFFS MAY HAVE EXCEEDED {MAX_DIFF_ROWS} ROWS ########"
+                f"####### TABLES DO NOT MATCH. DIFFS HAVE EXCEEDED {MAX_DIFF_ROWS} ROWS ########"
             )
 
         else:
