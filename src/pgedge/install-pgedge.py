@@ -141,7 +141,7 @@ osSys(nc + "config " + pgV + " --port=" + str(prt))
 osSys(nc + "start " + pgV)
 time.sleep(3)
 
-spock.db_create(db1, usr, passwd, None, pgN)
+db.create(db1, usr, passwd, None, pgN)
 
 osSys(nc + "tune " + pgV)
 time.sleep(3)

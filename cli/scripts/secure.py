@@ -10,12 +10,6 @@ cluster_dir = "cluster"
 home_dir = os.getenv("HOME")
 
 
-def json_dumps(p_input):
-  if os.getenv("isJson", "") == "True":
-    print(json.dumps(p_input))
-  print(json.dumps(p_input, indent=2))
-
-
 def get_access_token(profile='Default', client_id=None, client_secret=None):
   ## Use pgEdge Cloud API to get access token
   access_token=None
@@ -97,13 +91,13 @@ def config(client_id, client_secret, profile='Default'):
 def list_cloud_acct(profile='Default'):
   """List all cloud account ids in a pgEdge Cloud Account"""
   response=get_pgedge("cloud-accounts", profile)
-  json_dumps(response)
+  util.json_dumps(response)
 
 
 def list_clusters(profile='Default'):
   """List all clusters in a pgEdge Cloud Account"""
   response=get_pgedge("clusters", profile)
-  json_dumps(response)
+  util.json_dumps(response)
 
 
 def cluster_status(cluster_id, profile='Default'):
@@ -117,7 +111,7 @@ def cluster_status(cluster_id, profile='Default'):
 def list_nodes(cluster_id, profile='Default'):
   """List all nodes in a pgEdge Cloud Account cluster"""
   response=get_pgedge(f"clusters/{cluster_id}/nodes", profile)
-  json_dumps(response)
+  util.json_dumps(response)
   
 
 def import_cluster_def(cluster_id, profile='Default'):
@@ -170,11 +164,6 @@ def get_node_id(cluster_name, node_name):
   util.exit_message(node_id,0)
 
 
-def push_metrics(cluster_name, target_info, client_id=None, client_secret=None, profile='Default'):
-  """Coming Soon: push pgEdge Metrics to a specified target"""
-  util.exit_message("Coming Soon!")
-
-
 def create_cluster(cluster_name, profile='Default'):
   """Create a new Cloud Cluster based on json file"""
   with open(f"{cluster_name}.json") as f:
@@ -203,7 +192,6 @@ if __name__ == '__main__':
     'import-cluster-def': import_cluster_def,
     'get-cluster-id':     get_cluster_id,
     'get-node-id':        get_node_id,
-    'push-metrics':       push_metrics,
     'create-cluster':     create_cluster,
     'destroy-cluster':    destroy_cluster
   })

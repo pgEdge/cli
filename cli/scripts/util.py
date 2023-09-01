@@ -43,6 +43,13 @@ MY_HOME = os.getenv('MY_HOME', '..' + os.sep + '..')
 pid_file = os.path.join(MY_HOME, 'conf', 'cli.pid')
 
 
+def json_dumps(p_input):
+  if os.getenv("isJson", "") == "True":
+    return(json.dumps(p_input))
+
+  return(json.dumps(p_input, indent=2))
+
+
 def get_pg_v(pg):
   pg_v = str(pg)
 
