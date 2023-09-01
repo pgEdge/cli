@@ -740,65 +740,8 @@ def db_create(db=None, User=None, Passwd=None, Id=None, pg=None):
   return
 
 
-def db_drop(db=None, Id=None, pg=None):
-  """
-  Drop a pg db.
-
-  Notes:
-    - only one of db or Id may be specified
-    - if Id is specfied, also drop the Users associated with the DB
-  """
-
-  options = "--echo --force"
-
-  return
-
-
-def db_backup(db=None, Id=None, pg=None):
-  """
-  Full backup of a database.
-
-  MAX_RETAIN_DAYS = 7
-
-  options = "--format=directory --jobs=2 --blobs --verbose"
-
-  backup_id = "db_1af789e3:20230823-232425-utc"
-
-  ## drop any backups in object storage older than MAX_RETAIN_DAYS
-
-  ## drop previous disk file backup
-
-  ## run a pg_dump to a disk file
-
-  ## copy dump disk file to s3 storage
-  """
-
-  return()
-
-
-def db_list_backups(db=None, pg=None):
-  """
-  List backups that can be restored.
-  """
-
-  return
-
-
-def db_restore(backup_id):
-  """
-  Restore a database backup.
-  """
-
-  return
-
-
 if __name__ == '__main__':
   fire.Fire({
-      'db-create':           db_create,
-      'db-drop':             db_drop,
-      'db-backup':           db_backup,
-      'db-restore':          db_restore,
-      'db-list-backups':     db_list_backups,
       'node-create':         node_create,
       'node-drop':           node_drop,
       'node-alter-location': node_alter_location,
@@ -830,6 +773,7 @@ if __name__ == '__main__':
       'health-check':        health_check,
       'metrics-check':       metrics_check,
       'set-readonly':        set_readonly,
+      'db-create':           db_create
   })
 
 
