@@ -60,20 +60,23 @@ sub-sync             Synchronize a subscription
 sub-resync-table     Resynchronize a table
 sub-wait-for-sync    Pause until the subscription is synchronized
 table-wait-for-sync  Pause until a table finishes synchronizing
+```
+
+## `db` Database Operations
+```
 health-check         Check if PG instance is accepting connections
 metrics-check        Retrieve advanced DB & OS metrics
 set-readonly         Turn PG read-only mode 'on' or 'off'
-db-create            Create a Spock Database
-db-drop              Drop a database
+create               Create a database
 ```
 
 ## `cluster` Installation and configuration of a SPOCK cluster
 ```
-create-local        Create a localhost test cluster of N pgEdge nodes on different ports
-destroy-local       Stop and then nuke a cluster
-init-remote         Initialize pgEdge on a remote cluster that you create & manage yourself
-reset-remote        Reset pgEdge on a remote cluster
-import-remote-def   Import a json cluster defintion file
+local-create        Create a localhost test cluster of N pgEdge nodes on different ports
+local-destroy       Stop and then nuke a cluster
+remote-init         Initialize pgEdge on a remote cluster that you create & manage yourself
+remote-reset        Reset pgEdge on a remote cluster
+remote-import-def   Import a json cluster defintion file
 command             Run nodectl command on one or all nodes of a cluster
 app-install         Install an application such as NorthWind or pgBench
 app-remove          Remove an application
