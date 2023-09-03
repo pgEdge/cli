@@ -1,7 +1,7 @@
 # pgEdge NodeCtl : Command Line Interface
 
 NODECTL is the pgEdge Command Line Interface (CLI) for managing components. 
-The modules are `um`, `service`, `spock`, `cluster`, `secure`, and `ace`.  
+The modules are `um`, `service`, `spock`, `cluster`, `db`, `secure`, and `ace`.  
 We are licensed under the pgEdge Community License 1.0
 
 ## Synopsis
