@@ -11,6 +11,5 @@
      import-cluster-def  # Enable nodeCtl cluster commands on a pgEdge Cloud Cluster
      get-cluster-id      # Return the cluster id based on a cluster display name
      get-node-id         # Return the node id based on cluster and node display name
-     push-metrics        # Coming Soon: push pgEdge Metrics to a specified target
      create-cluster      # Create a new Cloud Cluster based on json file
      destroy-cluster     # Delete a pgEdge Cloud Cluster

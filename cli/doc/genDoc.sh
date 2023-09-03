@@ -55,7 +55,6 @@ $nc spock set-readonly      --help
 
 $nc db --help
 $nc db create               --help
-$nc db drop                 --help
 
 $nc cluster --help
 $nc cluster local-create      --help

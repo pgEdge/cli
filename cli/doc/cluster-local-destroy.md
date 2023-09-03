@@ -1,5 +1,5 @@
 ## SYNOPSIS
-    ./nodectl cluster destroy-local CLUSTER_NAME
+    ./nodectl cluster local-destroy CLUSTER_NAME
  
 ## DESCRIPTION
     Stop and then nuke a localhost cluster.

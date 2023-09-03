@@ -1,22 +1,13 @@
 ## SYNOPSIS
-    ./nodectl spock db-create <flags>
+    ./nodectl db create <flags>
  
 ## DESCRIPTION
-    Edit Checks:
-    if -I specified:
-       -P is required
-       -U = u-<ID>
-       -d = d-<ID>
+    Usage:
+    To create a superuser than has access to the whole cluster of db's
+       db create -d <db> -U <usr> -P <passwd>
 
-    if -U specified:
-      -I must be None
-      -d must be specified
-      if -P == None
-         user must already exist
-
- Usage:
-     spock db-createdb -d <db> [-U <usr> -P <passwd>]
-     spock db-createdb -I <id>  -P <passwd>
+    to create an admin user that owns a specifc tennant database
+       db create -I <id>  [-P <passwd>]
  
 ## FLAGS
     -d, --db=DB

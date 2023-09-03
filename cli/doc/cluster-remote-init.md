@@ -1,5 +1,5 @@
 ## SYNOPSIS
-    ./nodectl cluster init-remote CLUSTER_NAME <flags>
+    ./nodectl cluster remote-init CLUSTER_NAME <flags>
  
 ## DESCRIPTION
     Initialize a test cluster from json definition file of existing nodes.
