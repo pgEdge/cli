@@ -52,15 +52,17 @@ $nc spock table-wait-for-sync --help
 $nc spock health-check      --help
 $nc spock metrics-check     --help
 $nc spock set-readonly      --help
-$nc spock db-create         --help
-$nc spock db-drop           --help
+
+$nc db --help
+$nc db create               --help
+$nc db drop                 --help
 
 $nc cluster --help
-$nc cluster create-local      --help
-$nc cluster destroy-local     --help
-$nc cluster init-remote       --help
-$nc cluster reset-remote      --help
-$nc cluster import-remote-def --help
+$nc cluster local-create      --help
+$nc cluster local-destroy     --help
+$nc cluster remote-init       --help
+$nc cluster remote-reset      --help
+$nc cluster remote-import-def --help
 $nc cluster command           --help
 $nc cluster app-install       --help
 $nc cluster app-remove        --help
