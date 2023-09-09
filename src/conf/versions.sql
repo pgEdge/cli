@@ -394,16 +394,6 @@ INSERT INTO projects VALUES ('nclibs', 'pge', 0, 0, 'hub', 3, 'https://github.co
 INSERT INTO releases VALUES ('nclibs', 2, 'nclibs',  'CSV Diff', '', 'test', '', 1, '', '', '');
 INSERT INTO versions VALUES ('nclibs', '1.0', '', 1, '20230715', '', '', '');
 
-INSERT INTO projects VALUES ('csvdiff', 'pge', 0, 0, 'hub', 3, 'https://github.com/luss/csvdiff/tags',
-  'csvdiff',  0, 'csvdiff.png', 'csvdiff', 'https://github.com/luss/csvdiff');
-INSERT INTO releases VALUES ('csvdiff', 2, 'csvdiff',  'CSV Diff', '', 'test', '', 1, '', '', '');
-INSERT INTO versions VALUES ('csvdiff', '1.4.0', 'el9, arm9', 1, '20230511', '', '', '');
-
-INSERT INTO projects VALUES ('ncd', 'pge', 4, 0, 'hub', 3, 'https://github.com/pgedge/nodectl-mqtt/tags',
-  'cat',  0, 'ncd.png', 'nodectl-mqtt', 'https://github.com/pgedge/nodectl-mqtt');
-INSERT INTO releases VALUES ('ncd', 2, 'ncd',  'nodectl-mqtt', '', 'test', '', 1, 'pgEdge Community', '', '');
-INSERT INTO versions VALUES ('ncd', '1.0', '', 0, '20230623', '', '', '');
-
 INSERT INTO projects VALUES ('pgcat', 'pge', 4, 5433, 'hub', 3, 'https://github.com/pgedge/pgcat/tags',
   'cat',  0, 'pgcat.png', 'Connection Pooler', 'https://github.com/pgedge/pgcat');
 INSERT INTO releases VALUES ('pgcat', 2, 'pgcat',  'pgCat', '', 'test', '', 1, 'MIT', '', '');
