@@ -12,6 +12,7 @@
 
 ## done so far for 23.129 as of 2023-09-09
   - add support to pg16 for pgCron & pgAudit
+  - bump plprofiler to 4.2.4 and support pg15 & pg16
   - bump pgVector, PostGIS, TimescaleDB, & Orafce  to latest versions 
   - rename the cluster CLI local & remote commands for consistency
   - move the new 'spock db-create` command to `db create`
