@@ -113,10 +113,10 @@ if [ "$1" == "postgis" ]; then
 fi
 
 if [ "$1" == "audit" ]; then
-  if [ "$pgV" == "15" ]; then
+  if [ "$pgV" == "16" ]; then
+    build audit $auditFull16V $2 audit    
+  elif [ "$pgV" == "15" ]; then
     build audit $auditFull15V $2 audit    
-  elif [ "$pgV" == "14" ]; then
-    build audit $auditFull14V $2 audit    
   fi
 fi
 

@@ -10,8 +10,9 @@
   - explore possible inclusion of function for calling aws lambdas (hari)
 
 
-## done so far for 23.129 as of 2023-08-29
-  - bump pgVector, PostGIS, TimescaleDB, Orafce, & pgCron  to latest versions 
+## done so far for 23.129 as of 2023-09-09
+  - add support to pg16 for pgCron & pgAudit
+  - bump pgVector, PostGIS, TimescaleDB, & Orafce  to latest versions 
   - rename the cluster CLI local & remote commands for consistency
   - move the new 'spock db-create` command to `db create`
   - move new 'pool' cli commands to `db pool-`

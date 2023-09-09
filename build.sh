@@ -447,6 +447,7 @@ initPG () {
     initC "plprofiler-pg$pgM" "plprofiler" "$profV"     "$outPlat" "postgres/profiler" "" "" "nil"
     initC "postgis-pg$pgM"    "postgis"    "$postgisV"  "$outPlat" "postgres/postgis"  "" "" "nil"
     initC "cron-pg$pgM"       "cron"       "$cronV"     "$outPlat" "postgres/cron"     "" "" "nil"
+    initC "audit-pg$pgM"      "audit"      "$audit16V"  "$outPlat" "postgres/audit"    "" "" "nil"
   fi
 
   if [ "$pgM" == "15" ] && [ "$isEL" == "True" ]; then

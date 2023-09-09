@@ -51,6 +51,7 @@ patroniV=3.1.0.1
 etcdV=3.5.9
 
 audit15V=1.7.0-1
+audit16V=16.0-1
 postgisV=3.4.0-1
 
 pljavaV=1.6.4-1
