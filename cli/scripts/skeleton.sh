@@ -12,6 +12,7 @@ function test16 {
   ./nodectl install cron-$pgV
   ./nodectl install postgis-$pgV       -d demo
   ./nodectl install vector-$pgV        -d demo
+  ./nodectl install audit-$pgV         -d demo
 }
 
 
@@ -33,11 +34,10 @@ function test15 {
   ./nodectl install vector-$pgV        -d demo
   ./nodectl install pldebugger-$pgV    -d demo
 
-  #./nodectl install foslots-$pgV       -d demo
-  #./nodectl install plprofiler-$pgV
+  ./nodectl install plv8-$pgV          -d demo
+  ./nodectl install plprofiler-$pgV
 
   #./nodectl install decoderbufs-$pgV   -d demo
-  #./nodectl install plv8-$pgV          -d demo
 
   #./nodectl install citus-$pgV         -d demo
   #./nodectl install bulkload-$pg V     -d demo
