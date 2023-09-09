@@ -252,6 +252,10 @@ def _SynopsisSection(component, actions_grouped_by_kind, spec, metadata,
     txt = txt.replace("secure.py", "./nodectl secure")
     prfx = "secure"
 
+  elif "db.py" in txt:
+    txt = txt.replace("db.py", "./nodectl db")
+    prfx = "db"
+
   if sfx > "":
     MD_FILE = prfx + "-" + sfx + ".md"
   else:

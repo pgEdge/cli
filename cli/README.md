@@ -44,10 +44,11 @@ We are licensed under the pgEdge Community License v1.0
 [**metrics-check**](doc/spock-metrics-check.md)        - Retrieve advanced DB & OS metrics<br>
 
 ## cluster - Installation and configuration of a pgEdge SPOCK cluster
-[**create-local**](doc/cluster-create-local.md)   - Create local cluster of N pgEdge nodes on different ports<br>
-[**destroy**](doc/cluster-destroy.md)             - Stop and then nuke a cluster<br>
-[**validate**](doc/cluster-validate.md)           - Validate a remote cluster configuration<br>
-[**init**](doc/cluster-init.md)                   - Initialize a remote cluster for SPOCK<br>
+[**local-create**](doc/cluster-local-create.md)   - Create local cluster of N pgEdge nodes on different ports<br>
+[**local-destroy**](doc/cluster-local-destroy.md) - Stop and then nuke a cluster<br>
+[**remote-init**](doc/cluster-remote-init.md)     - Initialize a remote cluster for SPOCK<br>
+[**remote-reset**](doc/cluster-remote-reset.md)   - Reset a remote cluster for SPOCK<br>
+[**remote-import-def**](doc/cluster-remote-import-def.md)  - Import a JSON defintion file for a remote cluster<br>
 [**command**](doc/cluster-command.md)             - Run `nodectl` command on one or all nodes of a cluster<br>
 [**app-install**](doc/cluster-app-install.md)     - Install an application such as NorthWind or pgBench<br>
 [**app-remove**](doc/cluster-app-remove.md)       - Remove an application<br>
