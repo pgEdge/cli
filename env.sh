@@ -7,7 +7,7 @@ spock31V=3.1.5-1
 catV=1.1.1
 ncdV=1.0
 
-pgedgeV=2-3
+pgedgeV=2-4
 
 P16=16rc1-1
 P15=15.4-2

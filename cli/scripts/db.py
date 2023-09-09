@@ -94,7 +94,9 @@ def create(db=None, User=None, Passwd=None, Id=None, pg=None):
   user_json["passwd"] = Passwd
   return_json["users"].append(user_json)
 
-  print(util.json_dumps(return_json))
+  if Id:
+    print(util.json_dumps(return_json))
+
   return
 
 
