@@ -11,6 +11,7 @@
 
 
 ## done so far for 23.129 as of 2023-09-09
+  - fix northwind schema and data to use numeric(9,2) for prices & double for discount (was using real)
   - add support to pg16 for pgCron & pgAudit
   - bump plprofiler to 4.2.4 and support pg15 & pg16
   - bump pgVector, PostGIS, TimescaleDB, & Orafce  to latest versions 
