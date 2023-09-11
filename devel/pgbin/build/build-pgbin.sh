@@ -76,7 +76,7 @@ function checkPostgres {
 	else
 		pgSrcV=`$pgSrcDir/configure --version | head -1 | awk '{print $3}'`
 		echo "pgSrcV=$pgSrcV/rc"
-		if [[ "${pgSrcV/rc}" =~ ^16r* ]]; then
+		if [[ "${pgSrcV/rc}" =~ ^16.* ]]; then
 			pgShortV="16"
 			bndlPrfx=pg16
 			if [ "$OS" == "osx" ]; then
