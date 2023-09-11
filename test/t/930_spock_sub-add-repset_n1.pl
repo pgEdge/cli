@@ -32,7 +32,7 @@ my $homedir = $out->[0]->{"home"};
 print("The home directory is {$homedir}\n");
 
 # We can retrieve the port number from nodectl in json form...
-my $json2 = `$n2/pgedge/nc --json info pg16`;
+my $json2 = `$n1/pgedge/nc --json info pg16`;
 print("my json = $json2");
 my $out2 = decode_json($json2);
 my $port = $out2->[0]->{"port"};
