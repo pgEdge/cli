@@ -1,8 +1,6 @@
 # This test case creates an installation error.
 # ./nodectl cluster create-local demo 2 --pg 18
 #
-# We also query ./nodectl --json info pg15 to confirm the version of the running instance.
-#
 
 use strict;
 use warnings;
