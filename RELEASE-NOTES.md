@@ -2,15 +2,15 @@
 
 ## to do's for 23.129 and beyond
   - add support for pljava-pg15 & -pg16 (cannot find libjvm17  setting from util.get_jvm_location)
-  - fix port numbers in cluster.create-local()'s env file
+  - fix port numbers in cluster local-create()'s env file
   - replicate ddl automagically to the spock.replicate_ddl command if cluster is a 'leader'
   - test json fields for replication
-  - `spock_create_subscriber` tool (from Spock ReadMe)
   - more default conf setting tweaks from customer support (from hari)
   - explore possible inclusion of function for calling aws lambdas (hari)
 
 
-## done so far for 23.129 as of 2023-09-09
+## done so far for 23.129 as of 2023-09-11
+  - bump pg16 to 16.0 for GA
   - fix northwind schema and data to use numeric(9,2) for prices & double for discount (was using real)
   - add support to pg16 for pgCron & pgAudit
   - bump plprofiler to 4.2.4 and support pg15 & pg16

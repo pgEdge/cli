@@ -163,12 +163,10 @@ INSERT INTO versions VALUES ('pg15', '15.4-2',  'el8, el9, arm9',      1, '20230
 INSERT INTO versions VALUES ('pg15', '15.4-1',  'el8, el9, arm9',      0, '20230810','', '', '');
 INSERT INTO versions VALUES ('pg15', '15.3-2',  'el8, el9, arm9',      0, '20230608','', '', '');
 
-INSERT INTO releases VALUES ('pg16', 2, 'pg', '', '', 'test', 
+INSERT INTO releases VALUES ('pg16', 2, 'pg', '', '', 'prod', 
   '<font size=-1>New in <a href=https://www.postgresql.org/docs/16/release-16.html>2023!</a></font>',
   1, 'POSTGRES', '', '');
-INSERT INTO versions VALUES ('pg16', '16rc1-1',    'el9, arm9', 1, '20230831','', '', '');
-INSERT INTO versions VALUES ('pg16', '16beta3-1',  'el9, arm9', 0, '20230810','', '', '');
-INSERT INTO versions VALUES ('pg16', '16beta2-1',  'el9, arm9', 0, '20230629','', '', '');
+INSERT INTO versions VALUES ('pg16', '16.0-1',    'el9, arm9', 1, '20230914','', '', '');
 
 INSERT INTO projects VALUES ('debezium', 'strm', 10, 8083, '', 3, 'https://debezium.io/releases/1.9/',
   'Debezium', 0, 'debezium.png', 'Heterogeneous CDC', 'https://debezium.io');
