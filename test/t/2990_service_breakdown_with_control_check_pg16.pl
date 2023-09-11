@@ -29,27 +29,25 @@ my $n1 = "~/work/nodectl/test/pgedge/nodectl";
 chdir ("./pgedge");
 
 # Get the location of the data directory and home directory before removing pgEdge; store them in $datadir and $home.
+# Confirm that the node is installed properly - retrieve the path and port:
 
-my $json_info = decode_json(`./nc --json info`);
-my $home = $json_info->[0]->{"home"};
-print("The home directory is = {$home}\n");
+my $json = `./nc --json info`;
+print("my json = $json");
+my $out = decode_json($json);
+my $homedir = $out->[0]->{"home"};
 
-print("The next line calls the decode_json function.\n");
-my $json = `./nc --json info pg15`;
+print("The home directory is {$homedir}\n");
 
-print("json -->$json<--\n");
+my $json2 = `./nc --json info pg16`;
+print("my json = $json2");
+my $out2 = decode_json($json2);
+my $datadir = $out2->[0]->{"datadir"};
 
-my $out = decode_json(`./nc --json info pg16`);
-print("The last line before this calls the decode_json function. Next, I'll set the value into datadir. \n");
-my $datadir = $out->[0]->{"datadir"};
-print("I just set the data directory to: = {$datadir}\n");
-
-print("datadir = $datadir\n");
-print("home = $home\n");
+print("The port number is {$datadir}\n");
 
 sub remove_pgedge_leave_data
 {
-    if (defined $home && length $home > 0)
+    if (defined $homedir && length $homedir > 0)
     {
         print ("pgedge exists\n");
         # Then, use nodectl to remove the pgEdge/Postgres installation; this command leaves the data directory intact.     
@@ -85,18 +83,18 @@ sub remove_data_dir
 
 sub remove_home_dir
 {
-    if (defined $home && length $home > 0)
+    if (defined $homedir && length $homedir > 0)
     {
         print ("The home directory remains");
     
     # Remove the home directory and the .pgpass file
     
-        my $cmd3 = qq(rm -rf $home);
+        my $cmd3 = qq(rm -rf $homedir);
         #print("cmd3 = $cmd3\n");
         my ($success3, $error_message3, $full_buf3, $stdout_buf3, $stderr_buf3)= IPC::Cmd::run(command => $cmd3, verbose => 0);
         print("I'm removing the home directory with the following command: = $cmd3\n");
         print("stdout_buf = @$stdout_buf3\n");
-        print ("The $home directory should be gone now.\n");
+        print ("The $homedir directory should be gone now.\n");
 
         my $cmd4 = qq(sudo rm ~/.pgpass);
         print("cmd4 = $cmd4");
