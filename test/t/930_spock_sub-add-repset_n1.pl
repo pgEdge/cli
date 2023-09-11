@@ -32,7 +32,7 @@ my $homedir = $out->[0]->{"home"};
 print("The home directory is {$homedir}\n");
 
 # We can retrieve the port number from nodectl in json form...
-my $json2 = `$n1/pgedge/nc --json info pg16`;
+my $json2 = `$n2/pgedge/nc --json info pg16`;
 print("my json = $json2");
 my $out2 = decode_json($json2);
 my $port = $out2->[0]->{"port"};
@@ -47,7 +47,7 @@ my($success23, $error_message23, $full_buf23, $stdout_buf23, $stderr_buf23)= IPC
 print("success23 = $success23\n");
 print("stdout_buf23 = @$stdout_buf23\n");
 
-print("We just added the replication set to the subscription on ($n1).\n");
+print("We just added the replication set to the subscription on ($n1) to connect to ($n2).\n");
 
 my $cmd20 = qq($homedir/$version/bin/psql -t -h 127.0.0.1 -p $port -d $database -c "SELECT * FROM spock.subscription");
 print("cmd20 = $cmd20\n");
