@@ -1,6 +1,6 @@
 # pgEdge Platform Release Notes #############
 
-## to do's for 23.129 and beyond
+## to do's for 23.130 and beyond
   - add support for pljava-pg15 & -pg16 (cannot find libjvm17  setting from util.get_jvm_location)
   - fix port numbers in cluster local-create()'s env file
   - replicate ddl automagically to the spock.replicate_ddl command if cluster is a 'leader'
@@ -9,7 +9,7 @@
   - explore possible inclusion of function for calling aws lambdas (hari)
 
 
-## done so far for 23.129 as of 2023-09-12
+## done for 23.129 on 2023-09-14
   - leverage lbzip2, if present, to dramatically speed installation
   - bump spock to 3.1.6
   - bump pg16 to 16.0 for GA
@@ -28,7 +28,7 @@
   - improve db-create to return json & generate a passwd if not supplied
 
 
-## done for 23.128 as of 2023-08-29
+## done for 23.128 on 2023-08-29
   - bump pg16 to rc1 
   - spock to 3.1.5 (with new security roles defined & diff2 backpatch to pg15)
   - improve efficiency of `ace diff-tables` to handle massive tables w blocks of checksums
@@ -42,7 +42,7 @@
   - WIP: Windoze compatibility for `secure` & `cluster` CLI commands
 
 
-## done for 23.127 as of 2023-08-10
+## done for 23.127 on 2023-08-10
   - add support for pg16beta3 & bumped versions of pg11 thru pg15
   - add 'secure' api for interacting with pgEdge Cloud services
   - add 'requests' & 'awscli' as default nclibs
@@ -54,7 +54,7 @@
   - get devel scripts for start & stop http.server out of base directory & into devel 
 
 
-## done for 23.126 as of 2023-08-03
+## done for 23.126 on 2023-08-03
   - improve devel/setup doc & completeness
   - add support for `./nc psql 99 -f`
   - confirm 'cluster app-install northwind' works fully
@@ -93,7 +93,7 @@
   - improve cluster.command() to work with local and remote
   - improve lag monitoring & expose via spock.metrics_check()
 
-## done for 23.122 as of 2023-07-18
+## done for 23.122 on 2023-07-18
   - install platform specific `nclibs` and support running  on el9-amd, el9-arm, ubu22-amd & osx-amd/arm
   - bump spock to 3.1.4 (bug fixes)
   - document 'service init' & 'service config' commands as internal use only
@@ -109,14 +109,14 @@
   - improve `cluster.echo_cmd()` to handle remote ssh when os_user is presented
   - verify `cluster.echo_cmd()` handles remote ssh when ssh_key is present
 
-## done for 23.121 as of 2023-06-30
+## done for 23.121 on 2023-06-30
   - fix regression to allow core PG functionality to use Python 3.6+ (not require Python 3.9+)
   - improve `ace diff-tables` error handling and re-factor for going fwd
   - make 1st and 2nd passes at `cluster remote-init`
   - bump orafce to v4.3.0
   - bump curl to v2.1.1
 
-## done for 23.120 as of 2023-06-29
+## done for 23.120 on 2023-06-29
   - bump pg16beta1 to pg16beta2
   - improve `ace diff-tables` to optionally use checksums
   - basic v1.0 of nodectl-mqtt avaialble in dev\test mode
@@ -125,13 +125,13 @@
   - improve `info` layout whilst showing `cloud-init query` (if available)
   - improve `install.py` with an `update --silent` & `info` command at end
 
-## done for 23.119 as of 2023-06-23
+## done for 23.119 on 2023-06-23
   - fix spock bug resulting from multiple updates in same transaction.
   - bump postgis to v3.3.3
   - scrub passwd from logs
   - fix a hanging regression when NOT in an EC2 kind of VM
 
-## done for 23.118 as of 2023-06-22
+## done for 23.118 on 2023-06-22
   - improve ssh support for `cluster create-local`
   - add devel/setup support for zookeeper & patroni
   - stub out starfleet support
@@ -139,7 +139,7 @@
   - add cloud metadata to INFO command (region, az, instance_id, account_id, flavor)
   - new version of spock 3.1.3 supporting double update bug fix and other.
 
-## done for 23.117 as of 2023-06-08:
+## done for 23.117 on 2023-06-08:
   - fix broken LLVM support in pg15.3-2 & pg16beta1-2
   - default `install pgedge` to pg16
   - improve support for docker-compose
@@ -152,11 +152,11 @@
   - wip `cluster create-local` use passwordless ssh on localhost
 
 
-## done for 23.116 as of 2023-05-20
+## done for 23.116 on 2023-05-20
   - `cluster create-local`
   - add support for pg16 beta1
 
 
-## done for 23.115 as of 2023-05-15
+## done for 23.115 on 2023-05-15
   - add support for pg16-dev3
 
