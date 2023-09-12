@@ -26,20 +26,6 @@ def error_exit(p_msg, p_rc=1):
     sys.exit(p_rc)
 
 
-def get_pg_connection(pg_v, db, usr):
-  dbp = util.get_column("port", pg_v)
-
-  if util.debug_lvl() > 0:
-    util.message(f"get_pg_connection(): dbname={db}, user={usr}, port={dbp}", "debug")
-
-  try:
-    con = psycopg.connect(dbname=db, user=usr, host="127.0.0.1", port=dbp, autocommit=False)
-  except Exception as e:
-    util.exit_exception(e)
-
-  return(con)
-
-
 def run_psyco_sql(pg_v, db, cmd, usr=None):
   if usr == None:
     usr = util.get_user()
@@ -50,7 +36,7 @@ def run_psyco_sql(pg_v, db, cmd, usr=None):
   if util.debug_lvl() > 0:
     util.message(cmd, "debug")
 
-  con = get_pg_connection(pg_v, db, usr)
+  con = util.get_pg_connection(pg_v, db, usr)
   if util.debug_lvl() > 0:
     util.message("run_psyco_sql(): " + str(con), "debug")
 
@@ -153,7 +139,7 @@ UPDATE spock.node
  WHERE location = ?
 """
 
-  con = get_pg_connection(pg_v, db, util.get_user())
+  con = util.get_pg_connection(pg_v, db, util.get_user())
 
   rc = 0
   try:
@@ -432,7 +418,7 @@ def set_readonly(readonly="off", pg=None):
   pg_v = util.get_pg_v(pg)
 
   try:
-    con = get_pg_connection(pg_v, "postgres",  util.get_user())
+    con = util.get_pg_connection(pg_v, "postgres",  util.get_user())
     cur = con.cursor(row_factory=psycopg.rows.dict_row)
 
     util.change_pgconf_keyval(pg_v, "default_transaction_read_only", readonly, True)
@@ -461,57 +447,12 @@ def get_pii_cols(db,schema=None,pg=None):
   sys.exit(0)
 
 
-def get_table_list(table, db, pg_v):
-  w_schema = None
-  w_table = None
-
-  l_tbl = table.split(".")
-  if len(l_tbl) > 2:
-    util.exit_message("Invalid table wildcard", 1)
-
-  if len(l_tbl) == 2:
-    w_schema = str(l_tbl[0])
-    w_table = str(l_tbl[1])
-  elif len(l_tbl) == 1:
-    w_table = str(l_tbl[0])
-
-  sql = "SELECT table_schema || '.' || table_name as schema_table \n" + \
-        "  FROM information_schema.tables\n" + \
-        " WHERE TABLE_TYPE = 'BASE TABLE'" 
-
-  if w_schema:
-    sql = sql + "\n   AND table_schema = '" + w_schema + "'"
-
-  sql = sql + "\n   AND table_name LIKE '" + w_table.replace("*", "%") + "'"
-
-  con = get_pg_connection(pg_v, db, util.get_user())
-
-  try:
-    cur = con.cursor()
-    cur.execute(sql)
-
-    ret = cur.fetchall()
-
-    try:
-      cur.close()
-      con.close()
-    except Exception as e:
-      pass
-
-  except Exception as e:
-    util.exit_exception(e)
-
-  if len(ret) > 0:
-    return(ret)
-  util.exit_message(f"Could not find table that matches {table}",1)
-
-
 def repset_add_table(replication_set, table, db, synchronize_data=False, columns=None, row_filter=None, include_partitions=True, pg=None):
   """Add table(s) to replication set."""
 
   pg_v = util.get_pg_v(pg)
-  tbls = get_table_list(table, db, pg_v)
-  con = get_pg_connection(pg_v, db, util.get_user())
+  tbls = util.get_table_list(table, db, pg_v)
+  con = util.get_pg_connection(pg_v, db, util.get_user())
 
   for tbl in tbls:
     tab = str(tbl[0])
@@ -613,7 +554,7 @@ def metrics_check(db, pg=None):
       pass
 
   try:
-    con = get_pg_connection(pg_v, db, usr)
+    con = util.get_pg_connection(pg_v, db, usr)
     cur = con.cursor()
     cur.execute("SELECT setting FROM pg_settings WHERE name = 'default_transaction_read_only'")
     data = cur.fetchone()

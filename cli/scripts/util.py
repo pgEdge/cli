@@ -12,6 +12,12 @@ import hashlib, glob, random, json, uuid, logging, tempfile
 import shutil, filecmp, traceback, time, subprocess, getpass
 import tarfile
 
+## Psycopg is only needed for advanced functionality
+try:
+  import psycopg
+except Exception as e:
+  pass
+
 import api, meta
 
 ONE_DAY = 86400
@@ -41,6 +47,66 @@ my_logger = logging.getLogger('cli_logger')
 MY_CMD = os.getenv('MY_CMD')
 MY_HOME = os.getenv('MY_HOME', '..' + os.sep + '..')
 pid_file = os.path.join(MY_HOME, 'conf', 'cli.pid')
+
+
+def get_pg_connection(pg_v, db, usr):
+  dbp = get_column("port", pg_v)
+
+  if debug_lvl() > 0:
+    message(f"get_pg_connection(): dbname={db}, user={usr}, port={dbp}", "debug")
+
+  try:
+    con = psycopg.connect(dbname=db, user=usr, host="127.0.0.1", port=dbp, autocommit=False)
+  except Exception as e:
+    exit_exception(e)
+
+  return(con)
+
+
+def get_table_list(table, db, pg_v):
+  w_schema = None
+  w_table = None
+
+  l_tbl = table.split(".")
+  if len(l_tbl) > 2:
+    exit_message("Invalid table wildcard", 1)
+
+  if len(l_tbl) == 2:
+    w_schema = str(l_tbl[0])
+    w_table = str(l_tbl[1])
+  elif len(l_tbl) == 1:
+    w_table = str(l_tbl[0])
+
+  sql = "SELECT table_schema || '.' || table_name as schema_table \n" + \
+        "  FROM information_schema.tables\n" + \
+        " WHERE TABLE_TYPE = 'BASE TABLE'"
+
+  if w_schema:
+    sql = sql + "\n   AND table_schema = '" + w_schema + "'"
+
+  sql = sql + "\n   AND table_name LIKE '" + w_table.replace("*", "%") + "'"
+
+  con = get_pg_connection(pg_v, db, get_user())
+
+  try:
+    cur = con.cursor()
+    cur.execute(sql)
+
+    ret = cur.fetchall()
+
+    try:
+      cur.close()
+      con.close()
+    except Exception as e:
+      pass
+
+  except Exception as e:
+    exit_exception(e)
+
+  if len(ret) > 0:
+    return(ret)
+
+  exit_message(f"Could not find table that matches {table}",1)
 
 
 def json_dumps(p_input):
