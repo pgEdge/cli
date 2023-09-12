@@ -9,9 +9,11 @@
   - explore possible inclusion of function for calling aws lambdas (hari)
 
 
-## done so far for 23.129 as of 2023-09-11
+## done so far for 23.129 as of 2023-09-12
   - bump spock to 3.1.6
   - bump pg16 to 16.0 for GA
+  - bump oraclefdw 2.6.0 and add support for pg16
+  - bump partman to 4.7.4 and add support for pg16
   - continuous improvements in quality & quantity of test scripts (thank u Susan and team)
   - fix northwind schema and data to use numeric(9,2) for prices & double for discount (was using real)
   - add support to pg16 for pgCron & pgAudit

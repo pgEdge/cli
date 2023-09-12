@@ -227,13 +227,15 @@ INSERT INTO versions VALUES ('ora2pg', '23.1', '', 0, '20220512', '', '', 'https
 
 INSERT INTO projects VALUES ('oraclefdw', 'fdw', 6, 0, 'hub', 0, 'https://github.com/laurenz/oracle_fdw/tags',
   'oraclefdw', 1, 'oracle_fdw.png', 'Oracle from PG', 'https://github.com/laurenz/oracle_fdw');
-INSERT INTO releases VALUES ('oraclefdw-pg15', 2, 'oraclefdw', 'OracleFDW', '', 'test', '', 1, 'POSTGRES', '', '');
-INSERT INTO versions VALUES ('oraclefdw-pg15','2.5.0-1', 'el8', 1, '20221028', 'pg15', '', 'https://github.com/laurenz/oracle_fdw/releases/tag/ORACLE_FDW_2_5_0');
+INSERT INTO releases VALUES ('oraclefdw-pg15', 2, 'oraclefdw', 'OracleFDW', '', 'prod', '', 1, 'POSTGRES', '', '');
+INSERT INTO releases VALUES ('oraclefdw-pg16', 2, 'oraclefdw', 'OracleFDW', '', 'prod', '', 1, 'POSTGRES', '', '');
+INSERT INTO versions VALUES ('oraclefdw-pg15','2.6.0-1', 'el9', 1, '20230914', 'pg15', '', 'https://github.com/laurenz/oracle_fdw/releases/tag/ORACLE_FDW_2_6_0');
+INSERT INTO versions VALUES ('oraclefdw-pg16','2.6.0-1', 'el9', 1, '20230914', 'pg16', '', 'https://github.com/laurenz/oracle_fdw/releases/tag/ORACLE_FDW_2_6_0');
 
 INSERT INTO projects VALUES ('instantclient', 'sql', 6, 0, 'hub', 0, 'https://www.oracle.com/database/technologies/instant-client/linux-x86-64-downloads.html', 
   'instantclient', 0, 'instantclient.png', 'Oracle Instant Client', 'https://www.oracle.com/database/technologies/instant-client.html');
 INSERT INTO releases VALUES ('instantclient', 2, 'instantclient', 'Instant Client', '', 'test','', 0, 'ORACLE', '', '');
-INSERT INTO versions VALUES ('instantclient', '21.6', '', 0, '20220420', '', '', '');
+INSERT INTO versions VALUES ('instantclient', '21.11', '', 0, '20230914', '', '', '');
 
 INSERT INTO projects VALUES ('orafce', 'ext', 4, 0, 'hub', 0, 'https://github.com/orafce/orafce/releases',
   'orafce', 1, 'larry.png', 'Ora Built-in Packages', 'https://github.com/orafce/orafce#orafce---oracles-compatibility-functions-and-packages');
@@ -241,9 +243,6 @@ INSERT INTO releases VALUES ('orafce-pg15', 2, 'orafce', 'OraFCE', '', 'prod', '
 INSERT INTO releases VALUES ('orafce-pg16', 2, 'orafce', 'OraFCE', '', 'prod', '', 1, 'POSTGRES', '', '');
 INSERT INTO versions VALUES ('orafce-pg15', '4.5.0-1',   'arm9, el9', 1, '20230914', 'pg15', '', '');
 INSERT INTO versions VALUES ('orafce-pg16', '4.5.0-1',   'arm9, el9', 1, '20230914', 'pg16', '', '');
-INSERT INTO versions VALUES ('orafce-pg15', '4.3.0-1',   'arm9, el9', 0, '20230630', 'pg15', '', '');
-INSERT INTO versions VALUES ('orafce-pg16', '4.3.0-1',   'arm9, el9', 0, '20230630', 'pg16', '', '');
-INSERT INTO versions VALUES ('orafce-pg15', '4.2.5-1',   'arm9, el9', 0, '20230422', 'pg15', '', '');
 
 INSERT INTO projects VALUES ('plv8', 'dev', 3, 0, 'hub', 0, 'https://github.com/plv8/plv8/tags',
   'plv8',   1, 'v8.png', 'Javascript Stored Procedures', 'https://github.com/plv8/plv8');
@@ -369,7 +368,10 @@ INSERT INTO versions VALUES ('repack-pg15', '1.4.8-1', 'arm, el8', 1, '20221019'
 INSERT INTO projects VALUES ('partman', 'ext', 4, 0, 'hub', 4, 'https://github.com/pgpartman/pg_partman/tags',
   'partman', 1, 'partman.png', 'Partition Management', 'https://github.com/pgpartman/pg_partman#pg-partition-manager');
 INSERT INTO releases VALUES ('partman-pg15', 6, 'partman', 'pgPartman',   '', 'prod', '', 1, 'POSTGRES', '', '');
-INSERT INTO versions VALUES ('partman-pg15', '4.7.3-1',  'arm9, el9', 1, '20220418', 'pg15', '', '');
+INSERT INTO releases VALUES ('partman-pg16', 6, 'partman', 'pgPartman',   '', 'prod', '', 1, 'POSTGRES', '', '');
+INSERT INTO versions VALUES ('partman-pg15', '4.7.4-1',  'arm9, el9', 1, '20230914', 'pg15', '', '');
+INSERT INTO versions VALUES ('partman-pg16', '4.7.4-1',  'arm9, el9', 1, '20230914', 'pg16', '', '');
+INSERT INTO versions VALUES ('partman-pg15', '4.7.3-1',  'arm9, el9', 0, '20220418', 'pg15', '', '');
 
 INSERT INTO projects VALUES ('hypopg', 'ext', 4, 0, 'hub', 8, 'https://github.com/HypoPG/hypopg/releases',
   'hypopg', 1, 'whatif.png', 'Hypothetical Indexes', 'https://hypopg.readthedocs.io/en/latest/');

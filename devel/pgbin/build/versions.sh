@@ -65,7 +65,7 @@ orafceFullV=4.5.0
 orafceShortV=
 orafceBuildV=1
 
-oraclefdwFullV=2.5.0
+oraclefdwFullV=2.6.0
 oraclefdwShortV=
 oraclefdwBuildV=1
 
@@ -126,7 +126,7 @@ repackFullV=1.4.8
 repackShortV=
 repackBuildV=1
 
-partmanFullV=4.7.3
+partmanFullV=4.7.4
 partmanShortV=
 partmanBuildV=1
 

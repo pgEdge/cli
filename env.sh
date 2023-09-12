@@ -30,7 +30,7 @@ bqfdwV=1.9
 citusV=11.2.0-1
 vectorV=0.5.0-1
 
-oraclefdwV=2.5.0-1
+oraclefdwV=2.6.0-1
 inclV=21.6
 orafceV=4.5.0-1
 ora2pgV=23.1
@@ -43,7 +43,7 @@ timescaleV=2.11.2-1
 logicalV=2.4.3-1
 profV=4.2.4-1
 bulkloadV=3.1.19-1
-partmanV=4.7.3-1
+partmanV=4.7.4-1
 repackV=1.4.8-1
 hintV=1.5.0-1
 

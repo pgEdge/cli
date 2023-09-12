@@ -207,7 +207,7 @@ initDir () {
   ##copy-pgXX "mysqlfdw"  
   copy-pgXX "mongofdw"  
   copy-pgXX "decoderbufs"  
-  ##copy-pgXX "oraclefdw"  
+  copy-pgXX "oraclefdw"  
   ##copy-pgXX "tdsfdw"  
   copy-pgXX "cron"
   copy-pgXX "readonly"
@@ -438,16 +438,18 @@ initPG () {
   zipDir "$pgComp" "$pgV" "$outPlat" "Enabled"
 
   if [ "$pgM" == "16" ] && [ "$isEL9" == "True" ]; then
-    initC "spock31-pg$pgM"    "spock31"    "$spock31V"  "$outPlat" "postgres/spock31"  "" "" "nil"
-    initC "hypopg-pg$pgM"     "hypopg"     "$hypoV"     "$outPlat" "postgres/hypopg"   "" "" "nil"
-    initC "pljava-pg$pgM"     "pljava"     "$pljavaV"   "$outPlat" "postgres/pljava"   "" "" "nil"
-    initC "curl-pg$pgM"       "curl"       "$curlV"     "$outPlat" "postgres/curl"     "" "" "nil"
-    initC "orafce-pg$pgM"     "orafce"     "$orafceV"   "$outPlat" "postgres/orafce"   "" "" "nil"
-    initC "vector-pg$pgM"     "vector"     "$vectorV"   "$outPlat" "postgres/vector"   "" "" "nil"
-    initC "plprofiler-pg$pgM" "plprofiler" "$profV"     "$outPlat" "postgres/profiler" "" "" "nil"
-    initC "postgis-pg$pgM"    "postgis"    "$postgisV"  "$outPlat" "postgres/postgis"  "" "" "nil"
-    initC "cron-pg$pgM"       "cron"       "$cronV"     "$outPlat" "postgres/cron"     "" "" "nil"
-    initC "audit-pg$pgM"      "audit"      "$audit16V"  "$outPlat" "postgres/audit"    "" "" "nil"
+    initC "spock31-pg$pgM"    "spock31"    "$spock31V"   "$outPlat" "postgres/spock31"   "" "" "nil"
+    initC "hypopg-pg$pgM"     "hypopg"     "$hypoV"      "$outPlat" "postgres/hypopg"    "" "" "nil"
+    initC "pljava-pg$pgM"     "pljava"     "$pljavaV"    "$outPlat" "postgres/pljava"    "" "" "nil"
+    initC "curl-pg$pgM"       "curl"       "$curlV"      "$outPlat" "postgres/curl"      "" "" "nil"
+    initC "orafce-pg$pgM"     "orafce"     "$orafceV"    "$outPlat" "postgres/orafce"    "" "" "nil"
+    initC "vector-pg$pgM"     "vector"     "$vectorV"    "$outPlat" "postgres/vector"    "" "" "nil"
+    initC "plprofiler-pg$pgM" "plprofiler" "$profV"      "$outPlat" "postgres/profiler"  "" "" "nil"
+    initC "postgis-pg$pgM"    "postgis"    "$postgisV"   "$outPlat" "postgres/postgis"   "" "" "nil"
+    initC "cron-pg$pgM"       "cron"       "$cronV"      "$outPlat" "postgres/cron"      "" "" "nil"
+    initC "audit-pg$pgM"      "audit"      "$audit16V"   "$outPlat" "postgres/audit"     "" "" "nil"
+    initC "partman-pg$pgM"    "partman"    "$partmanV"   "$outPlat" "postgres/partman"   "" "" "nil"
+    initC "oraclefdw-pg$pgM"  "oraclefdw"  "$oraclefdwV" "$outPlat" "postgres/oraclefdw" "" "" "nil"
   fi
 
   if [ "$pgM" == "15" ] && [ "$isEL" == "True" ]; then
@@ -474,6 +476,7 @@ initPG () {
       initC "cron-pg$pgM" "cron" "$cronV" "$outPlat" "postgres/cron" "" "" "nil"
       initC "readonly-pg$pgM" "readonly" "$readonlyV" "$outPlat" "postgres/readonly" "" "" "nil"
       initC "hintplan-pg$pgM" "hintplan" "$hintV" "$outPlat" "postgres/hintplan" "" "" "nil"
+      initC "oraclefdw-pg$pgM"  "oraclefdw"  "$oraclefdwV" "$outPlat" "postgres/oraclefdw" "" "" "nil"
     fi
 
   fi
