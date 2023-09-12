@@ -10,6 +10,7 @@
 
 
 ## done so far for 23.129 as of 2023-09-12
+  - leverage lbzip2, if present, to dramatically speed installation
   - bump spock to 3.1.6
   - bump pg16 to 16.0 for GA
   - bump oraclefdw 2.6.0 and add support for pg16

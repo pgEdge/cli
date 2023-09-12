@@ -341,9 +341,13 @@ def install_comp(p_app, p_ver=0, p_rver=None, p_re_install=False):
     elif not retrieve_comp(base_name, p_app):
       exit_cleanly(1)
 
-    util.message(" Unpacking " + file)
+    util.message("\nUnpacking " + file)
+    full_file = "conf" + os.sep + "cache" + os.sep + file
 
-    tarFileObj = ProgressTarExtract("conf" + os.sep + "cache" + os.sep + file)
+    if platform.system() in ("Linux", "Darwin"):
+      return(util.posix_unpack(full_file))
+
+    tarFileObj = ProgressTarExtract(full_file)
     tarFileObj.component_name = p_app
     tarFileObj.file_name = file
 

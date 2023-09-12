@@ -534,7 +534,6 @@ def install_extension(p_pg, p_ext):
   install_comp(p_ext + "-" + p_pg)
 
 
-
 ## Install Component ######################################################
 def install_comp(p_app, p_ver=0, p_rver=None, p_re_install=False):
   if p_ver is None:
@@ -587,9 +586,13 @@ def install_comp(p_app, p_ver=0, p_rver=None, p_re_install=False):
   elif not retrieve_comp(base_name, p_app):
     return(1)
 
-  message(" Unpacking " + file)
+  message("\nUnpacking " + file)
+  full_file = "conf" + os.sep + "cache" + os.sep + file
 
-  tarFileObj = ProgressTarExtract("conf" + os.sep + "cache" + os.sep + file)
+  if platform.system() in ("Linux", "Darwin"):
+    return(posix_unpack(full_file))
+
+  tarFileObj = ProgressTarExtract(full_file)
   tarFileObj.component_name = p_app
   tarFileObj.file_name = file
 
@@ -614,6 +617,20 @@ def install_comp(p_app, p_ver=0, p_rver=None, p_re_install=False):
   tar.close
   message("Unpack complete")
   return(0)
+
+
+def posix_unpack(file_nm):
+  rc = os.system("lbzip2 --version > /dev/null 2>&1")
+  if rc == 0:
+    rc = echo_cmd("lbzip2 -kfd " + file_nm)
+    if rc == 1:
+      return(1)
+    file_nm = file_nm.replace(".bz2", "")
+    rc = echo_cmd("tar -xf " + file_nm)
+    echo_cmd("rm -f " + file_nm)
+    return(rc)
+
+  return(echo_cmd("tar -xf " + file_nm))
 
 
 ## Download tarball component and verify against checksum ###############
