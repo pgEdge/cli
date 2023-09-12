@@ -37,52 +37,6 @@ MAX_DIFF_EXCEEDED = 1
 BLOCK_MISMATCH = 2
 
 
-def get_pg_connection(pg_v, db, ip, usr):
-    dbp = util.get_column("port", pg_v)
-
-    if util.debug_lvl() > 0:
-        util.message(
-            f"get_pg_connection(): dbname={db}, user={usr}, port={dbp}", "debug"
-        )
-
-    try:
-        con = psycopg.connect(dbname=db, user=usr, host=ip, port=dbp, autocommit=False)
-    except Exception as e:
-        util.exit_exception(e)
-
-    return con
-
-
-def run_psyco_sql(pg_v, db, cmd, ip, usr=None):
-    if usr == None:
-        usr = util.get_user()
-
-    if util.is_verbose():
-        util.message(cmd, "info")
-
-    if util.debug_lvl() > 0:
-        util.message(cmd, "debug")
-
-    con = get_pg_connection(pg_v, db, ip, usr)
-    if util.debug_lvl() > 0:
-        util.message("run_psyco_sql(): " + str(con), "debug")
-
-    try:
-        cur = con.cursor(row_factory=psycopg.rows.dict_row)
-        cur.execute(cmd)
-        con.commit()
-
-        return cur.fetchall()
-        try:
-            cur.close()
-            con.close()
-        except Exception as e:
-            pass
-
-    except Exception as e:
-        util.exit_exception(e)
-
-
 def prCyan(skk):
     print("\033[96m {}\033[00m".format(skk))
 
@@ -347,7 +301,7 @@ def diff_spock(cluster_name, node1, node2):
            FROM spock.node n LEFT OUTER JOIN spock.subscription s
            ON s.sub_target=n.node_id WHERE s.sub_name IS NOT NULL;
         """
-        node_info = run_psyco_sql(pg_v, db, sql, cluster_node["ip"])
+        node_info = util.run_psyco_sql(pg_v, db, sql, cluster_node["ip"])
         print("  " + node_info[0]["node_name"])
         diff_spock["node"] = node_info[0]["node_name"]
 
@@ -379,7 +333,7 @@ def diff_spock(cluster_name, node1, node2):
         sql = """
         SELECT set_name, string_agg(relname,'   ') as relname FROM spock.tables GROUP BY set_name ORDER BY set_name;
         """
-        table_info = run_psyco_sql(pg_v, db, sql, cluster_node["ip"])
+        table_info = util.run_psyco_sql(pg_v, db, sql, cluster_node["ip"])
         diff_spock["rep_set_info"] = []
         prCyan("Tables in RepSets:")
         if table_info == []:
