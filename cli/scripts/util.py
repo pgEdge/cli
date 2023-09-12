@@ -49,6 +49,42 @@ MY_HOME = os.getenv('MY_HOME', '..' + os.sep + '..')
 pid_file = os.path.join(MY_HOME, 'conf', 'cli.pid')
 
 
+def run_psyco_sql(pg_v, db, cmd, usr=None):
+  if usr == None:
+    usr = get_user()
+
+  if is_verbose():
+    message(cmd, "info")
+
+  if debug_lvl() > 0:
+    message(cmd, "debug")
+
+  con = get_pg_connection(pg_v, db, usr)
+  if debug_lvl() > 0:
+    message("run_psyco_sql(): " + str(con), "debug")
+
+  try:
+    cur = con.cursor(row_factory=psycopg.rows.dict_row)
+    cur.execute(cmd)
+    con.commit()
+
+    print(json_dumps(cur.fetchall()))
+
+    try:
+      cur.close()
+      con.close()
+    except Exception as e:
+      pass
+
+  except Exception as e:
+    if "already exists" in str(e):
+      exit_message("already exists", 0)
+    elif "already subscribes" in str(e):
+      exit_message("already subscribes", 0)
+    else:
+      exit_exception(e)
+
+
 def get_pg_connection(pg_v, db, usr):
   dbp = get_column("port", pg_v)
 

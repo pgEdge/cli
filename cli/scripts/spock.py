@@ -26,42 +26,6 @@ def error_exit(p_msg, p_rc=1):
     sys.exit(p_rc)
 
 
-def run_psyco_sql(pg_v, db, cmd, usr=None):
-  if usr == None:
-    usr = util.get_user()
-
-  if util.is_verbose():
-    util.message(cmd, "info")
-
-  if util.debug_lvl() > 0:
-    util.message(cmd, "debug")
-
-  con = util.get_pg_connection(pg_v, db, usr)
-  if util.debug_lvl() > 0:
-    util.message("run_psyco_sql(): " + str(con), "debug")
-
-  try:
-    cur = con.cursor(row_factory=psycopg.rows.dict_row)
-    cur.execute(cmd)
-    con.commit()
-
-    print(util.json_dumps(cur.fetchall()))
-
-    try:
-      cur.close()
-      con.close()
-    except Exception as e:
-      pass
-
-  except Exception as e:
-    if "already exists" in str(e):
-      util.exit_message("already exists", 0)
-    elif "already subscribes" in str(e):
-      util.exit_message("already subscribes", 0)
-    else:
-      util.exit_exception(e)
-
-
 def change_pg_pwd(pwd_file, db="*", user="postgres", host="localhost", pg=None ):
   pg_v = util.get_pg_v(pg)
   dbp = util.get_column("port", pg_v)
@@ -94,7 +58,7 @@ def node_add_interface(node_name, interface_name, dsn, db, pg=None):
            get_eq("node_name", node_name, ", ") + \
            get_eq("interface_name", interface_name, ", ") + \
            get_eq("dsn", dsn, ")")
-  run_psyco_sql(pg_v, db, sql)
+  util.run_psyco_sql(pg_v, db, sql)
   sys.exit(0)
 
 
@@ -104,7 +68,7 @@ def node_drop_interface(node_name, interface_name, db, pg=None):
   sql = "SELECT spock.node_drop_interface(" + \
            get_eq("node_name", node_name, ", ") + \
            get_eq("interface_name", interface_name, ")")
-  run_psyco_sql(pg_v, db, sql)
+  util.run_psyco_sql(pg_v, db, sql)
   sys.exit(0)
 
 
@@ -114,7 +78,7 @@ def node_create(node_name, dsn, db, pg=None):
   sql = "SELECT spock.node_create(" + \
            get_eq("node_name", node_name, ", ") + \
            get_eq("dsn",       dsn,       ")")
-  run_psyco_sql(pg_v, db, sql)
+  util.run_psyco_sql(pg_v, db, sql)
   sys.exit(0)
 
 
@@ -122,7 +86,7 @@ def node_drop(node_name, db, pg=None):
   """Remove a spock node."""
   pg_v = util.get_pg_v(pg)
   sql = "SELECT spock.node_drop(" + get_eq("node_name", node_name, ")")
-  run_psyco_sql(pg_v, db, sql)
+  util.run_psyco_sql(pg_v, db, sql)
   sys.exit(0)
 
 
@@ -160,7 +124,7 @@ def node_list(db, pg=None):
   sql = """
 SELECT node_id, node_name FROM spock.node ORDER BY node_name
 """
-  run_psyco_sql(pg_v, db, sql)
+  util.run_psyco_sql(pg_v, db, sql)
   sys.exit(0)
 
 
@@ -174,7 +138,7 @@ def repset_create(set_name, db, replicate_insert=True, replicate_update=True,
            get_eq("replicate_update",   replicate_update,   ", ") + \
            get_eq("replicate_delete",   replicate_delete,   ", ") + \
            get_eq("replicate_truncate", replicate_truncate, ")")
-  run_psyco_sql(pg_v, db, sql)
+  util.run_psyco_sql(pg_v, db, sql)
   sys.exit(0)
 
 
@@ -188,7 +152,7 @@ def repset_alter(set_name, db, replicate_insert=True, replicate_update=True,
            get_eq("replicate_update",   replicate_update,   ", ") + \
            get_eq("replicate_delete",   replicate_delete,   ", ") + \
            get_eq("replicate_truncate", replicate_truncate, ")")
-  run_psyco_sql(pg_v, db, sql)
+  util.run_psyco_sql(pg_v, db, sql)
   sys.exit(0)
 
 
@@ -201,7 +165,7 @@ def repset_drop(set_name, db, pg=None):
   """Remove a replication set."""
   pg_v = util.get_pg_v(pg)
   sql = "SELECT spock.repset_drop(" + get_eq("set_name", set_name, ")")
-  run_psyco_sql(pg_v, db, sql)
+  util.run_psyco_sql(pg_v, db, sql)
   sys.exit(0)
 
 
@@ -212,7 +176,7 @@ def repset_add_seq(set_name, db, relation, synchronize_data=False, pg=None):
            get_eq("set_name", set_name, ", ") + \
            get_eq("relation", relation, ", ") + \
            get_eq("synchronize_data", synchronize_data, ")")
-  run_psyco_sql(pg_v, db, sql)
+  util.run_psyco_sql(pg_v, db, sql)
   sys.exit(0)
 
 
@@ -223,7 +187,7 @@ def repset_add_all_seqs(set_name, db, schema_names, synchronize_data=False, pg=N
            get_eq("set_name", set_name, ", ") + \
            get_eq("schemas", schema_names, ", ") + \
            get_eq("synchronize_data", synchronize_data, ")")
-  run_psyco_sql(pg_v, db, sql)
+  util.run_psyco_sql(pg_v, db, sql)
   sys.exit(0)
 
 
@@ -233,7 +197,7 @@ def repset_remove_seq(set_name, relation, db, pg=None):
   sql = "SELECT spock.repset_remove_seq(" + \
            get_eq("set_name", set_name, ", ") + \
            get_eq("relation", relation, ")")
-  run_psyco_sql(pg_v, db, sql)
+  util.run_psyco_sql(pg_v, db, sql)
   sys.exit(0)
 
 
@@ -246,7 +210,7 @@ def repset_list_tables(schema, db, pg=None):
       sql = sql + " WHERE nspname='" + schema + "'"
   sql = sql + " ORDER BY set_name, nspname, relname;"
 
-  run_psyco_sql(pg_v, db, sql)
+  util.run_psyco_sql(pg_v, db, sql)
   sys.exit(0)
 
 
@@ -264,7 +228,7 @@ def sub_create(subscription_name, provider_dsn, db,
            get_eq("synchronize_data",      synchronize_data,      ", ") + \
            get_eq("forward_origins",       str(forward_origins), ", ", True) + \
            get_eq("apply_delay",           apply_delay,           ")")
-  run_psyco_sql(pg_v, db, sql)
+  util.run_psyco_sql(pg_v, db, sql)
   sys.exit(0)
 
 
@@ -272,7 +236,7 @@ def sub_drop(subscription_name, db, pg=None):
   """Delete a subscription."""
   pg_v = util.get_pg_v(pg)
   sql = "SELECT spock.sub_drop(" + get_eq("subscription_name", subscription_name, ")")
-  run_psyco_sql(pg_v, db, sql)
+  util.run_psyco_sql(pg_v, db, sql)
   sys.exit(0)
 
 
@@ -282,7 +246,7 @@ def sub_enable(subscription_name, db, immediate=False, pg=None):
   sql = "SELECT spock.sub_enable(" + \
            get_eq("subscription_name", subscription_name, ", ") + \
            get_eq("immediate",         immediate,         ")")
-  run_psyco_sql(pg_v, db, sql)
+  util.run_psyco_sql(pg_v, db, sql)
   sys.exit(0)
 
 
@@ -292,7 +256,7 @@ def sub_disable(subscription_name, db, immediate=False, pg=None):
   sql = "SELECT spock.sub_disable(" + \
            get_eq("subscription_name", subscription_name, ", ") + \
            get_eq("immediate",         immediate,         ")")
-  run_psyco_sql(pg_v, db, sql)
+  util.run_psyco_sql(pg_v, db, sql)
   sys.exit(0)
 
 
@@ -302,7 +266,7 @@ def sub_alter_interface(subscription_name, interface_name, db, pg=None):
   sql = "SELECT spock.sub_disable(" + \
            get_eq("subscription_name", subscription_name, ", ") + \
            get_eq("interface_name", interface_name, ")")
-  run_psyco_sql(pg_v, db, sql)
+  util.run_psyco_sql(pg_v, db, sql)
   sys.exit(0)
 
 
@@ -326,7 +290,7 @@ def sub_show_status(subscription_name, db, pg=None):
     sql = sql + get_eq("subscription_name", subscription_name, "")
   sql = sql + ")"
 
-  run_psyco_sql(pg_v, db, sql)
+  util.run_psyco_sql(pg_v, db, sql)
   sys.exit(0)
 
 
@@ -339,7 +303,7 @@ def sub_show_table(subscription_name, relation, db, pg=None):
            get_eq("subscription_name", subscription_name, ", ") + \
            "relation := '" + relation + "'::regclass)"
 
-  run_psyco_sql(pg_v, db, sql)
+  util.run_psyco_sql(pg_v, db, sql)
   sys.exit(0)
 
 
@@ -355,7 +319,7 @@ def sub_resync_table(subscription_name, relation, db, truncate=False, pg=None):
            get_eq("subscription_name", subscription_name, ", ") + \
            get_eq("relation", relation, ", ") + \
            get_eq("truncate", truncate, ")")
-  run_psyco_sql(pg_v, db, sql)
+  util.run_psyco_sql(pg_v, db, sql)
   sys.exit(0)
 
 
@@ -368,7 +332,7 @@ def sub_add_repset(subscription_name, replication_set, db, pg=None):
            get_eq("subscription_name", subscription_name, ", ") + \
            get_eq("replication_set",   replication_set,   ")")
 
-  run_psyco_sql(pg_v, db, sql)
+  util.run_psyco_sql(pg_v, db, sql)
   sys.exit(0)
 
 
@@ -379,7 +343,7 @@ def sub_remove_repset(subscription_name, replication_set, db, pg=None):
   sql = "SELECT spock.sub_remove_repset(" + \
            get_eq("subscription_name", subscription_name, ", ") + \
            get_eq("replication_set",   replication_set,   ")")
-  run_psyco_sql(pg_v, db, sql)
+  util.run_psyco_sql(pg_v, db, sql)
   sys.exit(0)
 
 
@@ -388,7 +352,7 @@ def table_wait_for_sync(subscription_name, relation, db, pg=None):
   sql = "SELECT spock.table_wait_for_sync(" + \
            get_eq("subscription_name", subscription_name, ", ") + \
            get_eq("relation",   relation,   ")")
-  run_psyco_sql(pg_v, db, sql)
+  util.run_psyco_sql(pg_v, db, sql)
   sys.exit(0)
 
 
@@ -405,7 +369,7 @@ def sub_wait_for_sync(subscription_name, db, pg=None):
   sql = "SELECT spock.sub_wait_for_sync(" + \
            get_eq("subscription_name", subscription_name, ")")
 
-  run_psyco_sql(pg_v, db, sql)
+  util.run_psyco_sql(pg_v, db, sql)
   sys.exit(0)
 
 
@@ -443,7 +407,7 @@ def get_pii_cols(db,schema=None,pg=None):
     schema="public"
   sql = "SELECT pii_table, pii_column FROM spock.pii WHERE pii_schema='" + schema + "' ORDER BY pii_table;"
 
-  run_psyco_sql(pg_v, db, sql)
+  util.run_psyco_sql(pg_v, db, sql)
   sys.exit(0)
 
 
@@ -488,7 +452,7 @@ def repset_remove_table(replication_set, table, db, pg=None):
   sql = "SELECT spock.repset_remove_table(" + \
            get_eq("set_name",   replication_set,   ", ") + \
            get_eq("relation",   table,             ")")
-  run_psyco_sql(pg_v, db, sql)
+  util.run_psyco_sql(pg_v, db, sql)
   sys.exit(0)
 
 
