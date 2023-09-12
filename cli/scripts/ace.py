@@ -485,7 +485,8 @@ def compare_checksums(cluster_name, table_name, p_key, block_rows, offset):
 
 def diff_tables(
     cluster_name,
-    table_name,
+    table_name=None,
+    rep_set=None,
     checksum_use=False,
     block_rows=1,
     max_cpu_ratio=MAX_CPU_RATIO,
