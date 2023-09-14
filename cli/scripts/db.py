@@ -3,7 +3,7 @@
 #####################################################
 
 import os, sys, random, json, socket, datetime
-import util, fire, meta, subprocess, requests
+import util, fire, meta, subprocess
 
 
 def pool_add_user(User, Passwd, size, timeout=0):
