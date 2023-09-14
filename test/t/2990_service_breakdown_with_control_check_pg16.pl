@@ -55,7 +55,6 @@ sub remove_pgedge_leave_data
         print("I'm removing the pgEdge installation with the following command: = $cmd\n");
         my ($success, $error_message, $full_buf, $stdout_buf, $stderr_buf)= IPC::Cmd::run(command => $cmd, verbose => 0); 
         print("stdout_buf = @$stdout_buf\n");
-        print ("pgEdge platform should be gone now. \n");
     }	    
     else
     {
@@ -72,8 +71,6 @@ sub remove_data_dir
         my $cmd2 = qq(rm -rf $datadir);
         print("I'm removing the data directory with the following command: = $cmd2\n");
         my ($success2, $error_message2, $full_buf2, $stdout_buf2, $stderr_buf2)= IPC::Cmd::run(command => $cmd2, verbose => 0);
-	print("I'm removing the data directory with the following command: = @$stdout_buf2\n");
-	print ("The data directory should be gone now.\n");
     }
     else
     {
@@ -94,14 +91,12 @@ sub remove_home_dir
         my ($success3, $error_message3, $full_buf3, $stdout_buf3, $stderr_buf3)= IPC::Cmd::run(command => $cmd3, verbose => 0);
         print("I'm removing the home directory with the following command: = $cmd3\n");
         print("stdout_buf = @$stdout_buf3\n");
-        print ("The $homedir directory should be gone now.\n");
 
         my $cmd4 = qq(sudo rm ~/.pgpass);
         print("cmd4 = $cmd4");
         my ($success4, $error_message4, $full_buf4, $stdout_buf4, $stderr_buf4)= IPC::Cmd::run(command => $cmd4, verbose => 0);
-        print("I'm removing the data directory with the following command: = $cmd4\n");
+        print("I'm removing the .pgpass file.\n");
         print("stdout_buf = @$stdout_buf4\n");
-        print ("The pgpass file should be gone now.\n");
 
 	exit(0);
     }
