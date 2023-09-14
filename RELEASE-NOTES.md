@@ -11,7 +11,8 @@
 
 ## done for 23.129 on 2023-09-14
   - leverage lbzip2, if present, to dramatically speed installation
-  - bump spock to 3.1.6
+  - improve Dockerfile.el9 to install lbzip2
+  - bump spock to 3.1.6 GA
   - bump pg16 to 16.0 for GA
   - bump oraclefdw 2.6.0 and add support for pg16
   - bump partman to 4.7.4 and add support for pg16
