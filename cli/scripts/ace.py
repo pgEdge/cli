@@ -40,7 +40,7 @@ BLOCK_OK = 0
 MAX_DIFF_EXCEEDED = 1
 BLOCK_MISMATCH = 2
 
-pbar = tqdm(total=100)
+pbar = tqdm(total=100, leave=True)
 
 
 def get_pg_connection(pg_v, db, ip, usr):
@@ -456,6 +456,7 @@ def compare_checksums(cluster_name, table_name, p_key, block_rows, total_offsets
             SELECT md5(cast(array_agg(t.* ORDER BY {p_key}) AS text))
             FROM (SELECT *
                     FROM {table_name}
+                    ORDER BY {p_key}
                     OFFSET {offset}
                     LIMIT {block_rows}) t;
             """
@@ -479,23 +480,39 @@ def compare_checksums(cluster_name, table_name, p_key, block_rows, total_offsets
             hash2 = cur2.fetchone()[0]
 
             if hash1 != hash2:
-                util.message(f"Found block mismatch at offset: {offset}")
                 # Get mismatching blocks from both tables
                 cur1.execute(block_sql)
-                t1_result = set(cur1.fetchall())
+                t1_result = cur1.fetchall()
                 cur2.execute(block_sql)
-                t2_result = set(cur2.fetchall())
+                t2_result = cur2.fetchall()
 
-                t1_diff = t1_result.difference(t2_result)
-                t2_diff = t2_result.difference(t1_result)
-                #diff = t1_diff.union(t2_diff)
+                t1_tuples = []
+
+                for tup in t1_result:
+                    str_tup = tuple(str(elem) for elem in tup)
+                    t1_tuples.append(str_tup)
+
+                t2_tuples = []
+
+                for tup in t2_result:
+                    str_tup = tuple(str(elem) for elem in tup)
+                    t2_tuples.append(str_tup)
+
+                t1_set = set(t1_result)
+                t2_set = set(t2_result)
+
+                t1_diff = t1_set.difference(t2_set)
+                t2_diff = t2_set.difference(t1_set)
 
                 block_result = {
                     "offset": offset,
                     "t1_rows": t1_diff,
                     "t2_rows": t2_diff,
                 }
-                queue.append(block_result)
+
+                if len(t1_diff) > 0 or len(t2_diff) > 0:
+                    util.message(f"Found block mismatch at offset: {offset}")
+                    queue.append(block_result)
 
                 with row_diff_count.get_lock():
                     row_diff_count.value += len(t1_diff) + len(t2_diff)
@@ -507,6 +524,7 @@ def compare_checksums(cluster_name, table_name, p_key, block_rows, total_offsets
                 # to return early here.
                 if row_diff_count.value >= MAX_DIFF_ROWS:
                     result_queue.append(MAX_DIFF_EXCEEDED)
+                    break
                 else:
                     result_queue.append(BLOCK_MISMATCH)
 
@@ -667,7 +685,7 @@ def diff_tables(
 
 
     with Pool(procs) as pool:
-        util.message("\n##### STARTING MULTIPROCESSING TASKS #####\n")
+        util.message("\n##### INITIAL CHECKS PASSED. COMPARING TABLES #####\n")
 
         results = [
             pool.apply(
