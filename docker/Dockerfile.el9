@@ -1,5 +1,6 @@
 FROM rockylinux:9.2
-RUN yum install curl sudo procps vim unzip -y --allowerasing
+RUN yum install epel-release -y
+RUN yum install curl sudo procps vim unzip lbzip2 -y --allowerasing
 RUN yum install python3 -y
 RUN yum install openssh-server openssh-clients dnsutils -y
 RUN useradd -m pgedge -s /bin/bash
