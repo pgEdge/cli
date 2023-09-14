@@ -763,23 +763,39 @@ def write_diffs(cols, row_count, l_schema, l_table):
             #       to write directly to file at offset, trim empty lines,
             #       and then use ydiff
 
-            insert_index = offset
+            #insert_index = offset
 
-            for t1_row, t2_row in itertools.zip_longest(t1_rows, t2_rows):
-                t1_list.insert(insert_index, t1_row)
-                t2_list.insert(insert_index, t2_row)
-                insert_index += 1
+            #for t1_row in t1_rows:
+            #    t1_list.insert(insert_index, t1_row)
+            #    insert_index+=1
+
+            #insert_index = offset
+
+            #for t2_row in t2_rows:
+            #    t2_list.insert(insert_index, t2_row)
+            #    insert_index+=1
+
+            #for t1_row, t2_row in itertools.zip_longest(t1_rows, t2_rows):
+            #    t1_list.insert(insert_index, t1_row)
+            #    t2_list.insert(insert_index, t2_row)
+            #    insert_index += 1
 
             t1_writer = csv.writer(f1)
             t2_writer = csv.writer(f2)
 
-            for x1, x2 in itertools.zip_longest(t1_list, t2_list):
-                if x1 == None and x2 == None:
-                    continue
-                if x1:
-                    t1_writer.writerow(x1)
-                if x2:
-                    t2_writer.writerow(x2)
+            for x1 in t1_rows:
+                t1_writer.writerow(x1)
+
+            for x2 in t2_rows:
+                t2_writer.writerow(x2)
+
+            #for x1, x2 in itertools.zip_longest(t1_list, t2_list):
+            #    if x1 == None and x2 == None:
+            #        continue
+            #    if x1:
+            #        t1_writer.writerow(x1)
+            #    if x2:
+            #        t2_writer.writerow(x2)
 
     cmd = f"diff -u {t1_write_path} {t2_write_path} | ydiff > out.diff"
     util.message(f"\n#### Running {cmd} ####")
