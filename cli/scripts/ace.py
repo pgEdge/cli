@@ -40,7 +40,7 @@ BLOCK_OK = 0
 MAX_DIFF_EXCEEDED = 1
 BLOCK_MISMATCH = 2
 
-pbar = tqdm(total=100, leave=True)
+pbar = tqdm(total=100, leave=False)
 
 
 def get_pg_connection(pg_v, db, ip, usr):
@@ -418,14 +418,20 @@ def diff_spock(cluster_name, node1, node2):
     ##print(json.dumps(compare_spock,indent=2))
     return compare_spock
 
+def update_progressbar(res):
+    result, offset_size = res[0], res[1]
+    if res[0] == MAX_DIFF_EXCEEDED:
+        util.exit_message(f"Differences between tables have exceeded {MAX_DIFF_ROWS} rows")
+    else:
+        progress = 100.0/offset_size
+        pbar.update(progress)
 
-def compare_checksums(cluster_name, table_name, p_key, block_rows, total_offsets):
+def compare_checksums(cluster_name, table_name, p_key, block_rows, offset, total_offsets):
 
     global row_diff_count
 
     hash1 = ""
     hash2 = ""
-    offset = None
 
     # Read cluster information and connect to the local instance of pgcat
     il, db, pg, count, usr, passwd, os_usr, cert, nodes = cluster.load_json(
@@ -439,99 +445,87 @@ def compare_checksums(cluster_name, table_name, p_key, block_rows, total_offsets
     )
 
     with con1.cursor() as cur1, con2.cursor() as cur2:
-        while True:
-            if job_queue.empty():
-               break 
+        hash_sql = f"""
+        SELECT md5(cast(array_agg(t.* ORDER BY {p_key}) AS text))
+        FROM (SELECT *
+                FROM {table_name}
+                ORDER BY {p_key}
+                OFFSET {offset}
+                LIMIT {block_rows}) t;
+        """
 
-            try:
-                offset = job_queue.get_nowait()
-            except queue.Empty:
-                break
-            except Exception as e:
-                util.exit_message("Multiprocessing error: ", e)
-                break
-
-
-            hash_sql = f"""
-            SELECT md5(cast(array_agg(t.* ORDER BY {p_key}) AS text))
-            FROM (SELECT *
-                    FROM {table_name}
-                    ORDER BY {p_key}
-                    OFFSET {offset}
-                    LIMIT {block_rows}) t;
-            """
-
-            block_sql = f"""
-            SELECT *
-            FROM {table_name}
-            ORDER BY {p_key}
-            OFFSET {offset}
-            LIMIT {block_rows}
-            """
+        block_sql = f"""
+        SELECT *
+        FROM {table_name}
+        ORDER BY {p_key}
+        OFFSET {offset}
+        LIMIT {block_rows}
+        """
 
 
-            # Get the hash of the block from both tables we are
-            # currently looking at.
-            #start = time.time()
-            cur1.execute(hash_sql)
-            hash1 = cur1.fetchone()[0]
+        # Get the hash of the block from both tables we are
+        # currently looking at.
+        #start = time.time()
+        cur1.execute(hash_sql)
+        hash1 = cur1.fetchone()[0]
 
-            cur2.execute(hash_sql)
-            hash2 = cur2.fetchone()[0]
+        cur2.execute(hash_sql)
+        hash2 = cur2.fetchone()[0]
 
-            if hash1 != hash2:
-                # Get mismatching blocks from both tables
-                cur1.execute(block_sql)
-                t1_result = cur1.fetchall()
-                cur2.execute(block_sql)
-                t2_result = cur2.fetchall()
+        if hash1 != hash2:
+            # Get mismatching blocks from both tables
+            cur1.execute(block_sql)
+            t1_result = cur1.fetchall()
+            cur2.execute(block_sql)
+            t2_result = cur2.fetchall()
 
-                t1_tuples = []
+            t1_tuples = []
 
-                for tup in t1_result:
-                    str_tup = tuple(str(elem) for elem in tup)
-                    t1_tuples.append(str_tup)
+            for tup in t1_result:
+                str_tup = tuple(str(elem) for elem in tup)
+                t1_tuples.append(str_tup)
 
-                t2_tuples = []
+            t2_tuples = []
 
-                for tup in t2_result:
-                    str_tup = tuple(str(elem) for elem in tup)
-                    t2_tuples.append(str_tup)
+            for tup in t2_result:
+                str_tup = tuple(str(elem) for elem in tup)
+                t2_tuples.append(str_tup)
 
-                t1_set = set(t1_result)
-                t2_set = set(t2_result)
+            t1_set = set(t1_result)
+            t2_set = set(t2_result)
 
-                t1_diff = t1_set.difference(t2_set)
-                t2_diff = t2_set.difference(t1_set)
+            t1_diff = t1_set.difference(t2_set)
+            t2_diff = t2_set.difference(t1_set)
 
-                block_result = {
-                    "offset": offset,
-                    "t1_rows": t1_diff,
-                    "t2_rows": t2_diff,
-                }
+            block_result = {
+                "offset": offset,
+                "t1_rows": t1_diff,
+                "t2_rows": t2_diff,
+            }
 
-                if len(t1_diff) > 0 or len(t2_diff) > 0:
-                    util.message(f"Found block mismatch at offset: {offset}")
-                    queue.append(block_result)
+            if len(t1_diff) > 0 or len(t2_diff) > 0:
+                util.message(f"\nFound block mismatch at offset: {offset}")
+                queue.append(block_result)
 
-                with row_diff_count.get_lock():
-                    row_diff_count.value += len(t1_diff) + len(t2_diff)
- 
-                # We can only estimate how many diffs we may have.
-                # The actuall diff calc is done later by ydiff.
-                # So, even if there is just one row mismatch, and
-                # we hit this condition, we will still need
-                # to return early here.
-                if row_diff_count.value >= MAX_DIFF_ROWS:
-                    result_queue.append(MAX_DIFF_EXCEEDED)
-                    break
-                else:
-                    result_queue.append(BLOCK_MISMATCH)
+            with row_diff_count.get_lock():
+                row_diff_count.value += len(t1_diff) + len(t2_diff)
 
+            # We can only estimate how many diffs we may have.
+            # The actuall diff calc is done later by ydiff.
+            # So, even if there is just one row mismatch, and
+            # we hit this condition, we will still need
+            # to return early here.
+            # TODO: Figure out how to exit early here
+            if row_diff_count.value >= MAX_DIFF_ROWS:
+                result_queue.append(MAX_DIFF_EXCEEDED)
+                return MAX_DIFF_EXCEEDED, total_offsets
             else:
-                result_queue.append(BLOCK_OK)
+                result_queue.append(BLOCK_MISMATCH)
+                return BLOCK_MISMATCH, total_offsets
 
-            pbar.update(round(100/total_offsets, 2))
+        else:
+            result_queue.append(BLOCK_OK)
+            return BLOCK_OK, total_offsets
 
 
 # TODO: Add feature to allow users to specify offset and limit
@@ -676,30 +670,13 @@ def diff_tables(
     start_time = datetime.now()
     util.message(f"\n## start_time = {start_time} #################")
 
-    offset_count = 0
-    for x in range(0, row_count + 1, block_rows):
-        job_queue.put(x) 
-
-        # simpler alternative to getting qsize
-        offset_count+=1
-
+    offsets = [x for x in range(0, row_count + 1, block_rows)]
+    total_offsets = len(offsets)
 
     with Pool(procs) as pool:
-        util.message("\n##### INITIAL CHECKS PASSED. COMPARING TABLES #####\n")
-
-        results = [
-            pool.apply(
-                compare_checksums,
-                args=(
-                    cluster_name,
-                    table_name,
-                    c1_key,
-                    block_rows,
-                    offset_count
-                )
-            )
-            for _ in range(procs)
-        ]
+        results = [pool.apply_async(compare_checksums, args=(cluster_name, table_name, c1_key, block_rows, offset, total_offsets,), callback=update_progressbar) for offset in offsets]
+        pool.close()
+        pool.join()
 
     mismatch = False
     diffs_exceeded = False
@@ -716,11 +693,11 @@ def diff_tables(
     if mismatch:
         if diffs_exceeded:
             util.message(
-                f"####### TABLES DO NOT MATCH. DIFFS HAVE EXCEEDED {MAX_DIFF_ROWS} ROWS ########"
+                f"\n\n####### TABLES DO NOT MATCH. DIFFS HAVE EXCEEDED {MAX_DIFF_ROWS} ROWS ########"
             )
 
         else:
-            util.message("\n####### TABLES DO NOT MATCH ########")
+            util.message("\n\n####### TABLES DO NOT MATCH ########")
 
         write_diffs(c1_cols, row_count, l_schema, l_table)
         util.message("\n###### Diff written to out.diff ######")
@@ -748,7 +725,7 @@ def write_diffs(cols, row_count, l_schema, l_table):
     # Finally, we consume from the list and write to the respective files.
     # Now, we simply run ydiff on these files and log the output to
     # out.diff
-    t1_list, t2_list = [""] * row_count, [""] * row_count
+    #t1_list, t2_list = [""] * row_count, [""] * row_count
 
     with open(t1_write_path, "w") as f1, open(t2_write_path, "w") as f2:
         for cur_entry in queue:
