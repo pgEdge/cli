@@ -449,7 +449,9 @@ initPG () {
     initC "cron-pg$pgM"       "cron"       "$cronV"      "$outPlat" "postgres/cron"      "" "" "nil"
     initC "audit-pg$pgM"      "audit"      "$audit16V"   "$outPlat" "postgres/audit"     "" "" "nil"
     initC "partman-pg$pgM"    "partman"    "$partmanV"   "$outPlat" "postgres/partman"   "" "" "nil"
-    initC "oraclefdw-pg$pgM"  "oraclefdw"  "$oraclefdwV" "$outPlat" "postgres/oraclefdw" "" "" "nil"
+    if [ `arch` != "aarch64" ]; then
+      initC "oraclefdw-pg$pgM"  "oraclefdw"  "$oraclefdwV" "$outPlat" "postgres/oraclefdw" "" "" "nil"
+    fi
   fi
 
   if [ "$pgM" == "15" ] && [ "$isEL" == "True" ]; then
@@ -476,7 +478,9 @@ initPG () {
       initC "cron-pg$pgM" "cron" "$cronV" "$outPlat" "postgres/cron" "" "" "nil"
       initC "readonly-pg$pgM" "readonly" "$readonlyV" "$outPlat" "postgres/readonly" "" "" "nil"
       initC "hintplan-pg$pgM" "hintplan" "$hintV" "$outPlat" "postgres/hintplan" "" "" "nil"
-      initC "oraclefdw-pg$pgM"  "oraclefdw"  "$oraclefdwV" "$outPlat" "postgres/oraclefdw" "" "" "nil"
+      if [ `arch` != "aarch64" ]; then
+        initC "oraclefdw-pg$pgM"  "oraclefdw"  "$oraclefdwV" "$outPlat" "postgres/oraclefdw" "" "" "nil"
+      fi
     fi
 
   fi
