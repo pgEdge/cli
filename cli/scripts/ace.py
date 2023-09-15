@@ -21,7 +21,7 @@ except ImportError as e:
 queue = Manager().list()
 result_queue = Manager().list()
 job_queue = Queue()
-row_diff_count = Value('I', 0)
+row_diff_count = Value("I", 0)
 
 PGCAT_HOST = "localhost"
 PGCAT_PORT = 5432
@@ -40,7 +40,7 @@ BLOCK_OK = 0
 MAX_DIFF_EXCEEDED = 1
 BLOCK_MISMATCH = 2
 
-#pbar = tqdm(total=100, leave=False)
+# pbar = tqdm(total=100, leave=False)
 
 
 def get_pg_connection(pg_v, db, ip, usr):
@@ -418,19 +418,16 @@ def diff_spock(cluster_name, node1, node2):
     ##print(json.dumps(compare_spock,indent=2))
     return compare_spock
 
-#def update_progressbar(res):
-#    result, offset_size = res[0], res[1]
-#    if res[0] == MAX_DIFF_EXCEEDED:
-#        util.exit_message(f"Differences between tables have exceeded {MAX_DIFF_ROWS} rows")
-#    else:
-#        progress = round(100.0/offset_size, 2)
-#        pbar.update(progress)
 
 def run_apply_async_multiprocessing(func, argument_list, num_processes):
-
     pool = Pool(processes=num_processes)
 
-    jobs = [pool.apply_async(func=func, args=(*argument,)) if isinstance(argument, tuple) else pool.apply_async(func=func, args=(argument,)) for argument in argument_list]
+    jobs = [
+        pool.apply_async(func=func, args=(*argument,))
+        if isinstance(argument, tuple)
+        else pool.apply_async(func=func, args=(argument,))
+        for argument in argument_list
+    ]
     pool.close()
     result_list_tqdm = []
     for job in tqdm(jobs):
@@ -439,8 +436,9 @@ def run_apply_async_multiprocessing(func, argument_list, num_processes):
     return result_list_tqdm
 
 
-def compare_checksums(cluster_name, table_name, p_key, block_rows, offset, total_offsets):
-
+def compare_checksums(
+    cluster_name, table_name, p_key, block_rows, offset, total_offsets
+):
     global row_diff_count
 
     hash1 = ""
@@ -451,10 +449,20 @@ def compare_checksums(cluster_name, table_name, p_key, block_rows, offset, total
         cluster_name
     )
     con1 = psycopg.connect(
-        dbname=PGCAT_DB1, user=usr, password=passwd, host=PGCAT_HOST, port=PGCAT_PORT, prepare_threshold=1
+        dbname=PGCAT_DB1,
+        user=usr,
+        password=passwd,
+        host=PGCAT_HOST,
+        port=PGCAT_PORT,
+        prepare_threshold=1,
     )
     con2 = psycopg.connect(
-        dbname=PGCAT_DB2, user=usr, password=passwd, host=PGCAT_HOST, port=PGCAT_PORT, prepare_threshold=1
+        dbname=PGCAT_DB2,
+        user=usr,
+        password=passwd,
+        host=PGCAT_HOST,
+        port=PGCAT_PORT,
+        prepare_threshold=1,
     )
 
     with con1.cursor() as cur1, con2.cursor() as cur2:
@@ -475,10 +483,9 @@ def compare_checksums(cluster_name, table_name, p_key, block_rows, offset, total
         LIMIT {block_rows}
         """
 
-
         # Get the hash of the block from both tables we are
         # currently looking at.
-        #start = time.time()
+        # start = time.time()
         cur1.execute(hash_sql)
         hash1 = cur1.fetchone()[0]
 
@@ -517,7 +524,7 @@ def compare_checksums(cluster_name, table_name, p_key, block_rows, offset, total
             }
 
             if len(t1_diff) > 0 or len(t2_diff) > 0:
-                #util.message(f"\nFound block mismatch at offset: {offset}")
+                # util.message(f"\nFound block mismatch at offset: {offset}")
                 queue.append(block_result)
 
             with row_diff_count.get_lock():
@@ -542,6 +549,7 @@ def compare_checksums(cluster_name, table_name, p_key, block_rows, offset, total
 
 
 # TODO: Add feature to allow users to specify offset and limit
+
 
 def diff_tables(
     cluster_name,
@@ -663,37 +671,27 @@ def diff_tables(
     max_procs = int(cpus * max_cpu_ratio * 2) if cpus > 1 else 1
     procs = max_procs if total_blocks > max_procs else total_blocks
 
-    # Check if we have enough procs to cover all rows in the table
-    # Suppose that block size = 100, cpus = 2, total_rows = 1000
-    # Needed minimum block size to cover all rows = 1000/2 = 500
-    # But, specified block size = 100, which is not sufficient to
-    # cover all rows.
-    # Therefore, we need a check to see if the specified block size
-    # is at least = needed_block_size
-
-    #needed_block_size = (row_count // procs) + 1
-
-    #if block_rows < needed_block_size:
-    #    block_rows = needed_block_size
-
-    # Once we reinit block_rows, check against MAX_ALLOWED_BLOCK_SIZE again
-    #if block_rows > MAX_ALLOWED_BLOCK_SIZE:
-    #    util.exit_message(f"Needed block rows are > {MAX_ALLOWED_BLOCK_SIZE}")
-
     start_time = datetime.now()
     util.message(f"\n## start_time = {start_time} #################")
 
     offsets = [x for x in range(0, row_count + 1, block_rows)]
     total_offsets = len(offsets)
 
-    arg_list = [(cluster_name, table_name, c1_key, block_rows, offset, total_offsets,) for offset in offsets]
+    arg_list = [
+        (
+            cluster_name,
+            table_name,
+            c1_key,
+            block_rows,
+            offset,
+            total_offsets,
+        )
+        for offset in offsets
+    ]
 
-    result_list = run_apply_async_multiprocessing(func=compare_checksums, argument_list=arg_list, num_processes=procs)
-
-    #with Pool(procs) as pool:
-    #    results = [pool.apply_async(compare_checksums, args=(cluster_name, table_name, c1_key, block_rows, offset, total_offsets,), callback=update_progressbar) for offset in offsets]
-    #    pool.close()
-    #    pool.join()
+    result_list = run_apply_async_multiprocessing(
+        func=compare_checksums, argument_list=arg_list, num_processes=procs
+    )
 
     mismatch = False
     diffs_exceeded = False
@@ -742,7 +740,7 @@ def write_diffs(cols, row_count, l_schema, l_table):
     # Finally, we consume from the list and write to the respective files.
     # Now, we simply run ydiff on these files and log the output to
     # out.diff
-    #t1_list, t2_list = [""] * row_count, [""] * row_count
+    # t1_list, t2_list = [""] * row_count, [""] * row_count
 
     with open(t1_write_path, "w") as f1, open(t2_write_path, "w") as f2:
         for cur_entry in queue:
@@ -757,19 +755,19 @@ def write_diffs(cols, row_count, l_schema, l_table):
             #       to write directly to file at offset, trim empty lines,
             #       and then use ydiff
 
-            #insert_index = offset
+            # insert_index = offset
 
-            #for t1_row in t1_rows:
+            # for t1_row in t1_rows:
             #    t1_list.insert(insert_index, t1_row)
             #    insert_index+=1
 
-            #insert_index = offset
+            # insert_index = offset
 
-            #for t2_row in t2_rows:
+            # for t2_row in t2_rows:
             #    t2_list.insert(insert_index, t2_row)
             #    insert_index+=1
 
-            #for t1_row, t2_row in itertools.zip_longest(t1_rows, t2_rows):
+            # for t1_row, t2_row in itertools.zip_longest(t1_rows, t2_rows):
             #    t1_list.insert(insert_index, t1_row)
             #    t2_list.insert(insert_index, t2_row)
             #    insert_index += 1
@@ -783,7 +781,7 @@ def write_diffs(cols, row_count, l_schema, l_table):
             for x2 in t2_rows:
                 t2_writer.writerow(x2)
 
-            #for x1, x2 in itertools.zip_longest(t1_list, t2_list):
+            # for x1, x2 in itertools.zip_longest(t1_list, t2_list):
             #    if x1 == None and x2 == None:
             #        continue
             #    if x1:
