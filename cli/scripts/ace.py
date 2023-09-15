@@ -40,7 +40,7 @@ BLOCK_OK = 0
 MAX_DIFF_EXCEEDED = 1
 BLOCK_MISMATCH = 2
 
-pbar = tqdm(total=100, leave=False)
+#pbar = tqdm(total=100, leave=False)
 
 
 def get_pg_connection(pg_v, db, ip, usr):
@@ -418,13 +418,26 @@ def diff_spock(cluster_name, node1, node2):
     ##print(json.dumps(compare_spock,indent=2))
     return compare_spock
 
-def update_progressbar(res):
-    result, offset_size = res[0], res[1]
-    if res[0] == MAX_DIFF_EXCEEDED:
-        util.exit_message(f"Differences between tables have exceeded {MAX_DIFF_ROWS} rows")
-    else:
-        progress = 100.0/offset_size
-        pbar.update(progress)
+#def update_progressbar(res):
+#    result, offset_size = res[0], res[1]
+#    if res[0] == MAX_DIFF_EXCEEDED:
+#        util.exit_message(f"Differences between tables have exceeded {MAX_DIFF_ROWS} rows")
+#    else:
+#        progress = round(100.0/offset_size, 2)
+#        pbar.update(progress)
+
+def run_apply_async_multiprocessing(func, argument_list, num_processes):
+
+    pool = Pool(processes=num_processes)
+
+    jobs = [pool.apply_async(func=func, args=(*argument,)) if isinstance(argument, tuple) else pool.apply_async(func=func, args=(argument,)) for argument in argument_list]
+    pool.close()
+    result_list_tqdm = []
+    for job in tqdm(jobs):
+        result_list_tqdm.append(job.get())
+
+    return result_list_tqdm
+
 
 def compare_checksums(cluster_name, table_name, p_key, block_rows, offset, total_offsets):
 
@@ -504,7 +517,7 @@ def compare_checksums(cluster_name, table_name, p_key, block_rows, offset, total
             }
 
             if len(t1_diff) > 0 or len(t2_diff) > 0:
-                util.message(f"\nFound block mismatch at offset: {offset}")
+                #util.message(f"\nFound block mismatch at offset: {offset}")
                 queue.append(block_result)
 
             with row_diff_count.get_lock():
@@ -673,10 +686,14 @@ def diff_tables(
     offsets = [x for x in range(0, row_count + 1, block_rows)]
     total_offsets = len(offsets)
 
-    with Pool(procs) as pool:
-        results = [pool.apply_async(compare_checksums, args=(cluster_name, table_name, c1_key, block_rows, offset, total_offsets,), callback=update_progressbar) for offset in offsets]
-        pool.close()
-        pool.join()
+    arg_list = [(cluster_name, table_name, c1_key, block_rows, offset, total_offsets,) for offset in offsets]
+
+    result_list = run_apply_async_multiprocessing(func=compare_checksums, argument_list=arg_list, num_processes=procs)
+
+    #with Pool(procs) as pool:
+    #    results = [pool.apply_async(compare_checksums, args=(cluster_name, table_name, c1_key, block_rows, offset, total_offsets,), callback=update_progressbar) for offset in offsets]
+    #    pool.close()
+    #    pool.join()
 
     mismatch = False
     diffs_exceeded = False
