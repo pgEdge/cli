@@ -63,30 +63,29 @@ ansi_escape = re.compile(r'\x1b[^m]*m')
 
 dep9 = util.get_depend()
 
+fire_list = ["service", "um", "spock", "cluster", "ace", "secure", "db", "app"]
+
 mode_list = ["start", "stop", "restart", "status", "list", "info", "update",
              "upgrade", "downgrade", "enable", "disable", "install", "tune",
              "remove", "reload", "help", "get", "set", "unset", "backrest",
-             "backrest", "change-pgconf", "top", "pgbin", "psql", "--autostart", 
-             "service", "um", "spock", "cluster", "ace", "secure", "db",
+             "change-pgconf", "top", "pgbin", "psql", "--autostart", 
              "--pg", "--start", "--no-restart", "--no-preload",
              "--help", "--json", "--jsonp", "--test", "--extensions", "--svcs",
              "--list", "--old", "--showduplicates", "-y", "-t",
-             "--verbose", "--country", "-v", "--debug", "--debug2"]
-
-fire_mode_list = ["service", "um", "spock", "cluster", "ace", "secure", "db"]
+             "--verbose", "--country", "-v", "--debug", "--debug2"] + fire_list
 
 mode_list_advanced = ['kill', 'config', 'init', 'clean', 'useradd', 'spock', 
                       'pgbin', 'psql', 'cluster', 'ace', 'service', 'um', 
-                      'advanced', 'secure', 'db']
+                      'advanced', 'secure', 'db', 'app']
 
-ignore_comp_list = [ "get", "set", "unset", "spock", "pgbin", "psql", 
-                     "cluster", "service", "um", "secure", "useradd", "backrest", 
-                     "ace", "db", "change-pgconf"]
+ignore_comp_list = [ "get", "set", "unset", "pgbin", "psql", 
+                     "service", "useradd", "backrest",
+                     "change-pgconf"] + fire_list
 
 no_log_commands = ['status', 'info', 'list', 'top', 'get', 'metrics-check']
 
-lock_commands = ["install", "remove", "update", "upgrade", "downgrade", "db",
-                 "spock", "cluster", "ace", "secure", "backrest", "um", "service"]
+lock_commands = ["install", "remove", "update", "upgrade", "downgrade",
+                 "backrest", "service"] + fire_list
 
 my_depend = []
 installed_comp_list = []
@@ -1472,7 +1471,7 @@ try:
 
 
   ## FIRE AWAY ###############################################################
-  if p_mode in fire_mode_list:
+  if p_mode in fire_list:
     fire_away(p_mode, args)
 
 
