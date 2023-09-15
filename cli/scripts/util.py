@@ -115,7 +115,8 @@ def get_table_list(table, db, pg_v):
 
   sql = "SELECT table_schema || '.' || table_name as schema_table \n" + \
         "  FROM information_schema.tables\n" + \
-        " WHERE TABLE_TYPE = 'BASE TABLE'"
+        " WHERE TABLE_TYPE = 'BASE TABLE' \n" + \
+        " AND table_schema NOT IN ('spock','pg_catalog','information_schema')" 
 
   if w_schema:
     sql = sql + "\n   AND table_schema = '" + w_schema + "'"
