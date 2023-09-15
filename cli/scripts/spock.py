@@ -73,7 +73,14 @@ def node_drop_interface(node_name, interface_name, db, pg=None):
 
 
 def node_create(node_name, dsn, db, pg=None):
-  """Define a node for spock."""
+  """
+  Define a node for spock.
+  
+Create a spock node
+    NODE_NAME - name of the new node, only one node is allowed per database
+    DSN - connection string to the node, for nodes that are supposed to be providers, this should be reachable from outside
+    DB - database
+  """
   pg_v = util.get_pg_v(pg)
   sql = "SELECT spock.node_create(" + \
            get_eq("node_name", node_name, ", ") + \
@@ -83,7 +90,13 @@ def node_create(node_name, dsn, db, pg=None):
 
 
 def node_drop(node_name, db, pg=None):
-  """Remove a spock node."""
+  """
+  Remove a spock node.
+
+Drop spock node
+    NODE_NAME - name of an existing node
+    DB - database
+  """
   pg_v = util.get_pg_v(pg)
   sql = "SELECT spock.node_drop(" + get_eq("node_name", node_name, ")")
   util.run_psyco_sql(pg_v, db, sql)
@@ -412,7 +425,19 @@ def get_pii_cols(db,schema=None,pg=None):
 
 
 def repset_add_table(replication_set, table, db, synchronize_data=False, columns=None, row_filter=None, include_partitions=True, pg=None):
-  """Add table(s) to replication set."""
+  """
+  Add table(s) to replication set.
+  
+Add a table or tables to replication set
+  REPLICATION_SET - name of the existing replication set
+  RELATION - name or name pattern of the table(s) to be added to the set 
+    e.g. '*' for all tables, 'public.*' for all tables in public schema
+  DB - database name
+  SYNCHRONIZE_DATA - synchronized table data on all related subscribers
+  COLUMNS - list of columns to replicate
+  ROW_FILTER - row filtering expression
+  INCLUDE_PARTITIONS - include all partitions in replication
+  """
 
   pg_v = util.get_pg_v(pg)
   tbls = util.get_table_list(table, db, pg_v)
