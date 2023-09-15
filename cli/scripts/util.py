@@ -2,7 +2,7 @@
 #  Copyright 2022-2023 PGEDGE  All rights reserved. #
 #####################################################
 
-MY_VERSION = "23.129"
+MY_VERSION = "23.130"
 
 from subprocess import Popen, PIPE, STDOUT
 from datetime import datetime, timedelta
@@ -620,17 +620,19 @@ def install_comp(p_app, p_ver=0, p_rver=None, p_re_install=False):
 
 
 def posix_unpack(file_nm):
+
   rc = os.system("lbzip2 --version > /dev/null 2>&1")
   if rc == 0:
-    rc = echo_cmd("lbzip2 -kfd " + file_nm)
+    message("  using lbzip2")
+    rc = os.system(f"lbzip2 -kfd {file_nm}")
     if rc == 1:
       return(1)
     file_nm = file_nm.replace(".bz2", "")
-    rc = echo_cmd("tar -xf " + file_nm)
-    echo_cmd("rm -f " + file_nm)
+    rc = os.system(f"tar -xf {file_nm}")
+    os.system(f"rm -f {file_nm}")
     return(rc)
 
-  return(echo_cmd("tar -xf " + file_nm))
+  return(os.system(f"tar -xf {file_nm}"))
 
 
 ## Download tarball component and verify against checksum ###############
