@@ -35,7 +35,8 @@ fi
 echo "****** Phase 2 running as pgedge"
 
 cd /opt/pgedge/
-python3 -c "$(curl -fsSL https://pgedge-download.s3.amazonaws.com/REPO/install.py)"
+export REPO=https://pgedge-download.s3.amazonaws.com/REPO
+python3 -c "$(curl -fsSL $REPO/install.py)"
 cd /opt/pgedge/pgedge
 ./nodectl install pgedge -U dbuser -P dbpassword -d demo
 
