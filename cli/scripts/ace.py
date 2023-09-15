@@ -730,47 +730,14 @@ def write_diffs(cols, row_count, l_schema, l_table):
     num_cols = len(cols.split(","))
 
     # Elements in the shared queue may be out of order
-    # In order to run the diff, mismatching blocks from
-    # both tables need to be written in order int their
-    # respective files for ydiff to work
-    # The way we do this -- currently in a not so efficient way --
-    # is by creating two empty lists both equal to the sizes
-    # of row count. Then, we consume from the queue and insert into
-    # the list at the index = offset of the block.
-    # Finally, we consume from the list and write to the respective files.
-    # Now, we simply run ydiff on these files and log the output to
-    # out.diff
-    # t1_list, t2_list = [""] * row_count, [""] * row_count
+    # Ordering cannot be guaranteed since primary keys
+    # could be of varying types, and even composite keys
 
     with open(t1_write_path, "w") as f1, open(t2_write_path, "w") as f2:
         for cur_entry in queue:
             offset = cur_entry["offset"]
             t1_rows = cur_entry["t1_rows"]
             t2_rows = cur_entry["t2_rows"]
-
-            # Write rows to the in-memory list at the offset
-            #
-            # TODO: This might get expensive wrt time and space
-            #       if we increase max_blocks. Ideal way would be
-            #       to write directly to file at offset, trim empty lines,
-            #       and then use ydiff
-
-            # insert_index = offset
-
-            # for t1_row in t1_rows:
-            #    t1_list.insert(insert_index, t1_row)
-            #    insert_index+=1
-
-            # insert_index = offset
-
-            # for t2_row in t2_rows:
-            #    t2_list.insert(insert_index, t2_row)
-            #    insert_index+=1
-
-            # for t1_row, t2_row in itertools.zip_longest(t1_rows, t2_rows):
-            #    t1_list.insert(insert_index, t1_row)
-            #    t2_list.insert(insert_index, t2_row)
-            #    insert_index += 1
 
             t1_writer = csv.writer(f1)
             t2_writer = csv.writer(f2)
@@ -780,14 +747,6 @@ def write_diffs(cols, row_count, l_schema, l_table):
 
             for x2 in t2_rows:
                 t2_writer.writerow(x2)
-
-            # for x1, x2 in itertools.zip_longest(t1_list, t2_list):
-            #    if x1 == None and x2 == None:
-            #        continue
-            #    if x1:
-            #        t1_writer.writerow(x1)
-            #    if x2:
-            #        t2_writer.writerow(x2)
 
     cmd = f"diff -u {t1_write_path} {t2_write_path} | ydiff > out.diff"
     util.message(f"\n#### Running {cmd} ####")
