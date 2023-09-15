@@ -9,6 +9,11 @@
   - explore possible inclusion of function for calling aws lambdas (hari)
 
 
+## done for 23.130 as of 2023-09-15
+  - new `app` cli first cust
+  - quite down new lbzip2 output 
+
+
 ## done for 23.129 on 2023-09-14
   - leverage lbzip2, if present, to dramatically speed installation
   - improve Dockerfile.el9 to install lbzip2
