@@ -224,14 +224,35 @@ def uninstall_northwind(db, pg=None):
   util.exit_message(f"Uninstalled northwind from database: {db}",0)
 
 
+def remove(app):
+  pass
+
+
+def install(app):
+  pass
+
+
+def run(app, rate):
+  pass
+
+
+def validate(app):
+  pass
+
+
 if __name__ == '__main__':
   fire.Fire({
-      'install-pgbench': install_pgbench,
-      'run-pgbench': run_pgbench,
-      'validate-pgbench': validate_pgbench,
-      'uninstall-pgbench': uninstall_pgbench,
-      'install-northwind': install_northwind,
-      'run-northwind': run_northwind,
-      'validate-northwind': validate_northwind,
-      'uninstall-northwind': uninstall_northwind
-      })
+    'remove': remove,
+    'install': install,
+    'run': run,
+    'validate': validate,
+
+    'install-pgbench': install_pgbench,
+    'run-pgbench': run_pgbench,
+    'validate-pgbench': validate_pgbench,
+    'uninstall-pgbench': uninstall_pgbench,
+    'install-northwind': install_northwind,
+    'run-northwind': run_northwind,
+    'validate-northwind': validate_northwind,
+    'uninstall-northwind': uninstall_northwind
+    })
