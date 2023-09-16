@@ -10,6 +10,7 @@
 
 
 ## done for 23.130 as of 2023-09-15
+  - dramatic improvements to ACE as it is polished pre GA
   - new `app` cli first cust
   - quite down new lbzip2 output 
 
