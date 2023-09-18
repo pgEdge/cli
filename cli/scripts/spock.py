@@ -169,11 +169,6 @@ def repset_alter(set_name, db, replicate_insert=True, replicate_update=True,
   sys.exit(0)
 
 
-def repset_alter_seq():
-  """Change a replication set sequence."""
-  util.exit_message("Not implemented yet.")
-
-
 def repset_drop(set_name, db, pg=None):
   """Remove a replication set."""
   pg_v = util.get_pg_v(pg)
@@ -182,25 +177,19 @@ def repset_drop(set_name, db, pg=None):
   sys.exit(0)
 
 
-def repset_add_seq(set_name, db, relation, synchronize_data=False, pg=None):
+def repset_add_seq(replication_set, sequence, db, synchronize_data=False, pg=None):
   """Add a sequence to a replication set."""
   pg_v = util.get_pg_v(pg)
-  sql = "SELECT spock.repset_add_seq(" + \
-           get_eq("set_name", set_name, ", ") + \
-           get_eq("relation", relation, ", ") + \
-           get_eq("synchronize_data", synchronize_data, ")")
-  util.run_psyco_sql(pg_v, db, sql)
-  sys.exit(0)
+  seqs = util.get_seq_list(sequence, db, pg_v)
 
-
-def repset_add_all_seqs(set_name, db, schema_names, synchronize_data=False, pg=None):
-  """Add sequences to a replication set."""
-  pg_v = util.get_pg_v(pg)
-  sql = "SELECT spock.repset_add_all_seqs(" + \
-           get_eq("set_name", set_name, ", ") + \
-           get_eq("schemas", schema_names, ", ") + \
+  for sequence in seqs:
+    seq = str(sequence[0])
+    sql = "SELECT spock.repset_add_seq(" + \
+           get_eq("set_name", replication_set, ", ") + \
+           get_eq("relation", seq, ", ") + \
            get_eq("synchronize_data", synchronize_data, ")")
-  util.run_psyco_sql(pg_v, db, sql)
+    util.run_psyco_sql(pg_v, db, sql)
+    util.message(f"Adding sequence {seq} to replication set {replication_set}.")
   sys.exit(0)
 
 
@@ -210,6 +199,34 @@ def repset_remove_seq(set_name, relation, db, pg=None):
   sql = "SELECT spock.repset_remove_seq(" + \
            get_eq("set_name", set_name, ", ") + \
            get_eq("relation", relation, ")")
+  util.run_psyco_sql(pg_v, db, sql)
+  sys.exit(0)
+
+
+def repset_add_partition(parent_table, db, partition=None, row_filter=None, pg=None):
+  """Add a partition to a replication set."""
+  util.exit_message("Not implemented yet.")
+  pg_v = util.get_pg_v(pg)
+  sql = "SELECT spock.repset_add_partition(" + \
+           get_eq("parent", parent_table, "")
+  if partition != None :
+    sql = sql + "," + get_eq("partition", partition, "") 
+  if row_filter != None :
+    sql = sql + "," + get_eq("row_filter", row_filter, "")
+  sql = sql + ")" 
+  util.run_psyco_sql(pg_v, db, sql)
+  sys.exit(0)
+
+
+def repset_remove_partition(parent_table, db, partition=None, pg=None):
+  """Remove a partition from a replication set."""
+  util.exit_message("Not implemented yet.")
+  pg_v = util.get_pg_v(pg)
+  sql = "SELECT spock.repset_remove_partition(" + \
+           get_eq("parent", parent_table, "")
+  if partition != None:
+    sql = sql + "," + get_eq("partition", partition, "") 
+  sql = sql + ")" 
   util.run_psyco_sql(pg_v, db, sql)
   sys.exit(0)
 
@@ -276,21 +293,11 @@ def sub_disable(subscription_name, db, immediate=False, pg=None):
 def sub_alter_interface(subscription_name, interface_name, db, pg=None):
   """Modify an interface to a subscription."""
   pg_v = util.get_pg_v(pg)
-  sql = "SELECT spock.sub_disable(" + \
+  sql = "SELECT spock.sub_alter_interface(" + \
            get_eq("subscription_name", subscription_name, ", ") + \
            get_eq("interface_name", interface_name, ")")
   util.run_psyco_sql(pg_v, db, sql)
   sys.exit(0)
-
-
-def sub_enable_interface():
-  """Make an interface live."""
-  util.exit_message("Not implemented yet.")
-
-
-def sub_disable_interface():
-  """Put an interface on the back burner."""
-  util.exit_message("Not implemented yet.")
 
 
 def sub_show_status(subscription_name, db, pg=None):
@@ -318,11 +325,6 @@ def sub_show_table(subscription_name, relation, db, pg=None):
 
   util.run_psyco_sql(pg_v, db, sql)
   sys.exit(0)
-
-
-def sub_sync():
-  """Synchronize a subscription."""
-  util.exit_message("Not implemented yet.")
 
 
 def sub_resync_table(subscription_name, relation, db, truncate=False, pg=None):
@@ -367,11 +369,6 @@ def table_wait_for_sync(subscription_name, relation, db, pg=None):
            get_eq("relation",   relation,   ")")
   util.run_psyco_sql(pg_v, db, sql)
   sys.exit(0)
-
-
-def sub_sync():
-  """Pause until a subscription is synchronized."""
-  util.exit_message("Not implemented yet.")
 
 
 def sub_wait_for_sync(subscription_name, db, pg=None):
@@ -587,35 +584,35 @@ def metrics_check(db, pg=None):
 
 if __name__ == '__main__':
   fire.Fire({
-      'node-create':         node_create,
-      'node-drop':           node_drop,
-      'node-alter-location': node_alter_location,
-      'node-list':           node_list,
-      'node-add-interface':  node_add_interface,
-      'node-drop-interface': node_drop_interface,
-      'repset-create':       repset_create,
-      'repset-alter':        repset_alter,
-      'repset-drop':         repset_drop,
-      'repset-add-table':    repset_add_table,
-      'repset-remove-table': repset_remove_table,
-      'repset-add-seq':      repset_add_seq,
-      'repset-remove-seq':   repset_remove_seq,
-      'repset-alter-seq':    repset_alter_seq,
-      'repset-list-tables':  repset_list_tables,
-      'sub-create':          sub_create,
-      'sub-drop':            sub_drop,
-      'sub-alter-interface': sub_alter_interface,
-      'sub-enable':          sub_enable,
-      'sub-disable':         sub_disable,
-      'sub-add-repset':      sub_add_repset,
-      'sub-remove-repset':   sub_remove_repset,
-      'sub-show-status':     sub_show_status,
-      'sub-show-table':      sub_show_table,
-      'sub-sync':            sub_sync,
-      'sub-resync-table':    sub_resync_table,
-      'sub-wait-for-sync':   sub_wait_for_sync,
-      'table-wait-for-sync': table_wait_for_sync,
-      'health-check':        health_check,
-      'metrics-check':       metrics_check,
-      'set-readonly':        set_readonly
+      'node-create':             node_create,
+      'node-drop':               node_drop,
+      'node-alter-location':     node_alter_location,
+      'node-list':               node_list,
+      'node-add-interface':      node_add_interface,
+      'node-drop-interface':     node_drop_interface,
+      'repset-create':           repset_create,
+      'repset-alter':            repset_alter,
+      'repset-drop':             repset_drop,
+      'repset-add-table':        repset_add_table,
+      'repset-remove-table':     repset_remove_table,
+      'repset-add-seq':          repset_add_seq,
+      'repset-remove-seq':       repset_remove_seq,
+      'repset-add-partition':    repset_add_partition,
+      'repset-remove-partition': repset_remove_partition,
+      'repset-list-tables':      repset_list_tables,
+      'sub-create':              sub_create,
+      'sub-drop':                sub_drop,
+      'sub-alter-interface':     sub_alter_interface,
+      'sub-enable':              sub_enable,
+      'sub-disable':             sub_disable,
+      'sub-add-repset':          sub_add_repset,
+      'sub-remove-repset':       sub_remove_repset,
+      'sub-show-status':         sub_show_status,
+      'sub-show-table':          sub_show_table,
+      'sub-resync-table':        sub_resync_table,
+      'sub-wait-for-sync':       sub_wait_for_sync,
+      'table-wait-for-sync':     table_wait_for_sync,
+      'health-check':            health_check,
+      'metrics-check':           metrics_check,
+      'set-readonly':            set_readonly
   })
