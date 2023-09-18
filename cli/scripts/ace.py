@@ -9,6 +9,7 @@ import util, fire, meta, cluster
 from datetime import datetime
 from multiprocessing import Manager, Pool, cpu_count, Value, Queue
 from tqdm import tqdm
+from ordered_set import OrderedSet
 
 l_dir = "/tmp"
 
@@ -404,11 +405,11 @@ def compare_checksums(
                 str_tup = tuple(str(elem) for elem in tup)
                 t2_tuples.append(str_tup)
 
-            t1_set = set(t1_result)
-            t2_set = set(t2_result)
+            t1_set = OrderedSet(t1_result)
+            t2_set = OrderedSet(t2_result)
 
-            t1_diff = t1_set.difference(t2_set)
-            t2_diff = t2_set.difference(t1_set)
+            t1_diff = t1_set - t2_set
+            t2_diff = t2_set - t1_set
 
             block_result = {
                 "offset": offset,
