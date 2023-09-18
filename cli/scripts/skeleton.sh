@@ -13,6 +13,8 @@ function test16 {
   ./nodectl install postgis-$pgV       -d demo
   ./nodectl install vector-$pgV        -d demo
   ./nodectl install audit-$pgV         -d demo
+  ./nodectl install plv8-$pgV          -d demo
+  ./nodectl install plprofiler-$pgV
 }
 
 
@@ -47,7 +49,6 @@ function test15 {
   #./nodectl install oraclefdw-$pgV     -d demo
   #./nodectl install esfdw-$pgV         -d demo
   #./nodectl install multicorn2-$pgV    -d demo
-  #./nodectl install hypopg-$pgV        -d demo
 }
 
 
