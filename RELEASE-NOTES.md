@@ -10,10 +10,11 @@
 
 
 ## done for 23.130 as of 2023-09-18
+  - bump postgrest to 11.2.0
   - bump hintplan and add support for pg16
   - add support for pg16 to plv8 3.2.0
   - dramatic improvements to ACE as it is polished pre GA
-  - new `app` cli first cust
+  - new `app` cli first cut
   - quite down new lbzip2 output 
 
 

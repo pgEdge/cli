@@ -16,7 +16,7 @@ P13=13.12-1
 P12=12.16-1
 P11=11.21-1
 
-postgrestV=11.1.0-1
+postgrestV=11.2.0-1
 prompgexpV=0.11.1
 backrestV=2.47-1
 csvdiffV=1.4.0
