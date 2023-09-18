@@ -45,13 +45,16 @@ profV=4.2.4-1
 bulkloadV=3.1.19-1
 partmanV=4.7.4-1
 repackV=1.4.8-1
-hintV=1.5.0-1
+
+hint15V=1.5.0-1
+hint16V=1.6.0-1
 
 patroniV=3.1.0.1
 etcdV=3.5.9
 
 audit15V=1.7.0-1
 audit16V=16.0-1
+
 postgisV=3.4.0-1
 
 pljavaV=1.6.4-1

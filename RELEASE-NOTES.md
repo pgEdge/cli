@@ -9,7 +9,9 @@
   - explore possible inclusion of function for calling aws lambdas (hari)
 
 
-## done for 23.130 as of 2023-09-15
+## done for 23.130 as of 2023-09-18
+  - bump hintplan and add support for pg16
+  - add support for pg16 to plv8 3.2.0
   - dramatic improvements to ACE as it is polished pre GA
   - new `app` cli first cust
   - quite down new lbzip2 output 

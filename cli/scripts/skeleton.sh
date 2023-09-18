@@ -14,6 +14,7 @@ function test16 {
   ./nodectl install vector-$pgV        -d demo
   ./nodectl install audit-$pgV         -d demo
   ./nodectl install plv8-$pgV          -d demo
+  ./nodectl install hintplan-$pgV      -d demo
   ./nodectl install plprofiler-$pgV
 }
 
