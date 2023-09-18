@@ -189,7 +189,7 @@ def repset_add_seq(replication_set, sequence, db, synchronize_data=False, pg=Non
            get_eq("relation", seq, ", ") + \
            get_eq("synchronize_data", synchronize_data, ")")
     util.run_psyco_sql(pg_v, db, sql)
-  util.message(f"Adding sequence {seq} to replication set {replication_set}.")
+    util.message(f"Adding sequence {seq} to replication set {replication_set}.")
   sys.exit(0)
 
 
