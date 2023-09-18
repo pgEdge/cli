@@ -169,11 +169,6 @@ def repset_alter(set_name, db, replicate_insert=True, replicate_update=True,
   sys.exit(0)
 
 
-def repset_alter_seq():
-  """Change a replication set sequence."""
-  util.exit_message("Not implemented yet.")
-
-
 def repset_drop(set_name, db, pg=None):
   """Remove a replication set."""
   pg_v = util.get_pg_v(pg)
@@ -283,16 +278,6 @@ def sub_alter_interface(subscription_name, interface_name, db, pg=None):
   sys.exit(0)
 
 
-def sub_enable_interface():
-  """Make an interface live."""
-  util.exit_message("Not implemented yet.")
-
-
-def sub_disable_interface():
-  """Put an interface on the back burner."""
-  util.exit_message("Not implemented yet.")
-
-
 def sub_show_status(subscription_name, db, pg=None):
   """Display the status of the subcription."""
 
@@ -318,11 +303,6 @@ def sub_show_table(subscription_name, relation, db, pg=None):
 
   util.run_psyco_sql(pg_v, db, sql)
   sys.exit(0)
-
-
-def sub_sync():
-  """Synchronize a subscription."""
-  util.exit_message("Not implemented yet.")
 
 
 def sub_resync_table(subscription_name, relation, db, truncate=False, pg=None):
@@ -367,11 +347,6 @@ def table_wait_for_sync(subscription_name, relation, db, pg=None):
            get_eq("relation",   relation,   ")")
   util.run_psyco_sql(pg_v, db, sql)
   sys.exit(0)
-
-
-def sub_sync():
-  """Pause until a subscription is synchronized."""
-  util.exit_message("Not implemented yet.")
 
 
 def sub_wait_for_sync(subscription_name, db, pg=None):
@@ -600,7 +575,6 @@ if __name__ == '__main__':
       'repset-remove-table': repset_remove_table,
       'repset-add-seq':      repset_add_seq,
       'repset-remove-seq':   repset_remove_seq,
-      'repset-alter-seq':    repset_alter_seq,
       'repset-list-tables':  repset_list_tables,
       'sub-create':          sub_create,
       'sub-drop':            sub_drop,
@@ -611,7 +585,6 @@ if __name__ == '__main__':
       'sub-remove-repset':   sub_remove_repset,
       'sub-show-status':     sub_show_status,
       'sub-show-table':      sub_show_table,
-      'sub-sync':            sub_sync,
       'sub-resync-table':    sub_resync_table,
       'sub-wait-for-sync':   sub_wait_for_sync,
       'table-wait-for-sync': table_wait_for_sync,
