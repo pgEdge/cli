@@ -59,67 +59,6 @@ def get_dump_file_name(p_prfx, p_schm, p_base_dir="/tmp"):
     return p_base_dir + os.sep + p_prfx + "-" + p_schm + ".sql"
 
 
-def write_tbl_csv(
-    p_con,
-    p_prfx,
-    p_schm,
-    p_tbl,
-    p_cols,
-    p_key,
-    p_checksums,
-    p_blockrows,
-    p_base_dir=None,
-):
-    try:
-        out_file = get_csv_file_name(p_prfx, p_schm, p_tbl, p_base_dir)
-
-        sql = (
-            "SELECT "
-            + p_cols
-            + " "
-            + "  FROM "
-            + p_schm
-            + "."
-            + p_tbl
-            + " "
-            + "ORDER BY "
-            + p_key
-        )
-
-        copy_sql = "COPY (" + sql + ") TO STDOUT WITH DELIMITER ',' CSV HEADER;"
-
-        util.message("\n## COPY table " + p_tbl + " to " + out_file + " #############")
-        ##print(f"DEBUG sql={sql}")
-
-        with open(out_file, "wb") as f:
-            with cur.copy(copy_sql) as copy:
-                for data in copy:
-                    f.write(data)
-
-        with open(out_file, "r") as fp:
-            lines = len(fp.readlines())
-
-        size_b = os.path.getsize(out_file)
-        size_m = round((size_b / 1000000.0), 6)
-
-        util.message(
-            "### "
-            + str(f"{(lines - 1):,}")
-            + " rows  "
-            + str(size_m)
-            + " MiB "
-            + " checksum_use="
-            + str(p_checksums)
-            + " "
-            + " block_rows="
-            + str(p_blockrows)
-        )
-    except Exception as e:
-        util.exit_message("Error in write_tbl_csv():\n" + str(e), 1)
-
-    return out_file
-
-
 def write_pg_dump(p_ip, p_db, p_prfx, p_schm, p_base_dir="/tmp"):
     out_file = get_dump_file_name(p_prfx, p_schm, p_base_dir)
     try:
@@ -512,12 +451,16 @@ def diff_tables(
     checksum_use=False,
     block_rows=1,
     max_cpu_ratio=MAX_CPU_RATIO,
+    output='csv'
 ):
     """Efficiently compare tables across cluster using optional checksums and blocks of rows."""
 
     # Capping max block size here to prevent the has function from taking forever
     if block_rows > MAX_ALLOWED_BLOCK_SIZE:
         util.exit_message(f"Desired block row size is > {MAX_ALLOWED_BLOCK_SIZE}")
+
+    if output not in ['csv', 'json']:
+        util.exit_message("Bad output format. Supported: 'csv', 'json'")
 
     bad_br = True
     try:
@@ -667,35 +610,62 @@ def diff_tables(
             )
 
         else:
-            util.message("\n\n####### TABLES DO NOT MATCH ########")
+            util.message("\n\n####### TABLES DO NOT MATCH ########\n")
 
-        write_diffs(c1_cols, row_count, l_schema, l_table)
-        util.message("\n###### Diff written to out.diff ######")
+        if output == 'csv':
+            write_diffs_csv(c1_cols, l_schema, l_table)
+            util.message("\n###### Diff written to out.diff ######")
+        elif output == 'json':
+            write_diffs_json(c1_cols, l_schema, l_table)
+
     else:
         util.message("\n####### TABLES MATCH OK ##########")
 
     run_time = datetime.now() - start_time
     util.message(f"\n## run_time = {run_time} ##############################")
 
+def write_diffs_json(cols, l_schema, l_table):
 
-def write_diffs(cols, row_count, l_schema, l_table):
+    output_json = []
+
+    cols = cols.split(',')
+
+
+    for cur_entry in queue:
+        offset = cur_entry["offset"]
+        t1_rows = cur_entry["t1_rows"]
+        t2_rows = cur_entry["t2_rows"]
+
+        entry_json = {}
+
+        entry_json['offset'] = offset
+        entry_json['t1_rows'] = [dict(zip(cols, row)) for row in t1_rows]
+        entry_json['t2_rows'] = [dict(zip(cols, row)) for row in t2_rows]
+
+        output_json.append(entry_json)
+
+    print(json.dumps(output_json, indent=2, sort_keys=True, default=str))
+
+
+def write_diffs_csv(c1_cols, l_schema, l_table):
     t1_write_path = get_csv_file_name("t1", l_schema, l_table)
     t2_write_path = get_csv_file_name("t2", l_schema, l_table)
-
-    num_cols = len(cols.split(","))
 
     # Elements in the shared queue may be out of order
     # Ordering cannot be guaranteed since primary keys
     # could be of varying types, and even composite keys
 
     with open(t1_write_path, "w") as f1, open(t2_write_path, "w") as f2:
+        t1_writer = csv.writer(f1)
+        t2_writer = csv.writer(f2)
+
+        t1_writer.writerow(c1_cols.split(','))
+        t2_writer.writerow(c1_cols.split(','))
+
         for cur_entry in queue:
             offset = cur_entry["offset"]
             t1_rows = cur_entry["t1_rows"]
             t2_rows = cur_entry["t2_rows"]
-
-            t1_writer = csv.writer(f1)
-            t2_writer = csv.writer(f2)
 
             for x1 in t1_rows:
                 t1_writer.writerow(x1)
