@@ -421,7 +421,7 @@ def compare_checksums(
                 queue.append(block_result)
 
             with row_diff_count.get_lock():
-                row_diff_count.value += len(t1_diff) + len(t2_diff)
+                row_diff_count.value += max(len(t1_diff), len(t2_diff))
 
             # We can only estimate how many diffs we may have.
             # The actuall diff calc is done later by ydiff.
@@ -611,12 +611,13 @@ def diff_tables(
 
         else:
             util.message("\n\n####### TABLES DO NOT MATCH ########\n")
+            util.message(f"\n####### FOUND {row_diff_count.value} DIFFERENCES ########\n")
 
         if output == 'csv':
             write_diffs_csv(c1_cols, l_schema, l_table)
             util.message("\n###### Diff written to out.diff ######")
         elif output == 'json':
-            write_diffs_json(c1_cols, l_schema, l_table)
+            write_diffs_json(c1_cols, block_rows, l_schema, l_table)
 
     else:
         util.message("\n####### TABLES MATCH OK ##########")
@@ -624,12 +625,17 @@ def diff_tables(
     run_time = datetime.now() - start_time
     util.message(f"\n## run_time = {run_time} ##############################")
 
-def write_diffs_json(cols, l_schema, l_table):
+def write_diffs_json(cols, block_rows, l_schema, l_table):
 
-    output_json = []
+    output_json = {}
+
+    output_json['total_diffs'] = row_diff_count.value
+    output_json['block_size'] = block_rows
+    output_json['diffs'] = []
+
+    diff_json = output_json['diffs']
 
     cols = cols.split(',')
-
 
     for cur_entry in queue:
         offset = cur_entry["offset"]
@@ -642,7 +648,7 @@ def write_diffs_json(cols, l_schema, l_table):
         entry_json['t1_rows'] = [dict(zip(cols, row)) for row in t1_rows]
         entry_json['t2_rows'] = [dict(zip(cols, row)) for row in t2_rows]
 
-        output_json.append(entry_json)
+        diff_json.append(entry_json)
 
     print(json.dumps(output_json, indent=2, sort_keys=True, default=str))
 
