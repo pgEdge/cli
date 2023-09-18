@@ -130,7 +130,8 @@ partmanFullV=4.7.4
 partmanShortV=
 partmanBuildV=1
 
-hintplanFullV=1.6.0
+hintplan16V=1.6.0
+hintplan15V=1.5.1
 hintplanShortV=
 hintplanBuildV=1
 

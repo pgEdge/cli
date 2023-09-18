@@ -53,7 +53,11 @@ if [ "$1" == "pldebugger" ]; then
 fi
 
 if [ "$1" == "hintplan" ]; then
-  build hintplan $hintplanFullV $2 hintplan
+  if [ "$pgV" == "16" ]; then
+    build hintplan $hintplan16V $2 hintplan
+  elif [ "$pgV" == "15" ]; then
+    build hintplan $hintplan15V $2 hintplan
+  fi
 fi
 
 if [ "$1" == "decoderbufs" ]; then

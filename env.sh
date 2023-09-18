@@ -46,7 +46,7 @@ bulkloadV=3.1.19-1
 partmanV=4.7.4-1
 repackV=1.4.8-1
 
-hint15V=1.5.0-1
+hint15V=1.5.1-1
 hint16V=1.6.0-1
 
 patroniV=3.1.0.1

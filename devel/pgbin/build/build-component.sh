@@ -604,7 +604,11 @@ if [[ $buildBackrest == "true" ]]; then
 fi
 
 if [[ $buildHintPlan == "true" ]]; then
-	buildComp hintplan "$hintplanShortV" "$hintplanFullV" "$hintplanBuildV" "$Source"
+	if [ "$pgShortVersion" == "15" ]; then
+		buildComp hintplan "$hintplanShortV" "$hintplan15V" "$hintplanBuildV" "$Source"
+	elif [ "$pgShortVersion" == "16" ]; then
+		buildComp hintplan "$hintplanShortV" "$hintplan16V" "$hintplanBuildV" "$Source"
+	fi
 fi
 
 if [[ $buildTimeScaleDB == "true" ]]; then

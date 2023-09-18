@@ -294,7 +294,7 @@ INSERT INTO projects VALUES ('hintplan', 'ext', 4, 0, 'hub', 0, 'https://github.
   'hintplan', 1, 'hintplan.png', 'Execution Plan Hints', 'https://github.com/ossc-db/pg_hint_plan');
 INSERT INTO releases VALUES ('hintplan-pg15', 10, 'hintplan', 'pgHintPlan', '', 'prod', '', 1, 'POSTGRES', '', '');
 INSERT INTO releases VALUES ('hintplan-pg16', 10, 'hintplan', 'pgHintPlan', '', 'prod', '', 1, 'POSTGRES', '', '');
-INSERT INTO versions VALUES ('hintplan-pg15', '1.5.0-1', 'arm9, el9', 1, '20230128', 'pg15', '', 'https://github.com/pghintplan/pghintplan/releases/tag/1.5.0');
+INSERT INTO versions VALUES ('hintplan-pg15', '1.5.1-1', 'arm9, el9', 1, '20231001', 'pg15', '', 'https://github.com/pghintplan/pghintplan/releases/tag/1.5.1');
 INSERT INTO versions VALUES ('hintplan-pg16', '1.6.0-1', 'arm9, el9', 1, '20231001', 'pg16', '', 'https://github.com/pghintplan/pghintplan/releases/tag/1.6.0');
 
 INSERT INTO projects VALUES ('readonly', 'ext', 4, 0, 'hub',0, 'https://github.com/pgedge/readonly/tags',
