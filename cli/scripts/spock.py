@@ -203,6 +203,34 @@ def repset_remove_seq(set_name, relation, db, pg=None):
   sys.exit(0)
 
 
+def repset_add_partition(parent_table, db, partition=None, row_filter=None, pg=None):
+  """Add a partition to a replication set."""
+  util.exit_message("Not implemented yet.")
+  pg_v = util.get_pg_v(pg)
+  sql = "SELECT spock.repset_add_partition(" + \
+           get_eq("parent", parent_table, "")
+  if partition != None :
+    sql = sql + "," + get_eq("partition", partition, "") 
+  if row_filter != None :
+    sql = sql + "," + get_eq("row_filter", row_filter, "")
+  sql = sql + ")" 
+  util.run_psyco_sql(pg_v, db, sql)
+  sys.exit(0)
+
+
+def repset_remove_partition(parent_table, db, partition=None, pg=None):
+  """Remove a partition from a replication set."""
+  util.exit_message("Not implemented yet.")
+  pg_v = util.get_pg_v(pg)
+  sql = "SELECT spock.repset_remove_partition(" + \
+           get_eq("parent", parent_table, "")
+  if partition != None:
+    sql = sql + "," + get_eq("partition", partition, "") 
+  sql = sql + ")" 
+  util.run_psyco_sql(pg_v, db, sql)
+  sys.exit(0)
+
+
 def repset_list_tables(schema, db, pg=None):
   """List tables in replication sets."""
   pg_v = util.get_pg_v(pg)
@@ -556,33 +584,35 @@ def metrics_check(db, pg=None):
 
 if __name__ == '__main__':
   fire.Fire({
-      'node-create':         node_create,
-      'node-drop':           node_drop,
-      'node-alter-location': node_alter_location,
-      'node-list':           node_list,
-      'node-add-interface':  node_add_interface,
-      'node-drop-interface': node_drop_interface,
-      'repset-create':       repset_create,
-      'repset-alter':        repset_alter,
-      'repset-drop':         repset_drop,
-      'repset-add-table':    repset_add_table,
-      'repset-remove-table': repset_remove_table,
-      'repset-add-seq':      repset_add_seq,
-      'repset-remove-seq':   repset_remove_seq,
-      'repset-list-tables':  repset_list_tables,
-      'sub-create':          sub_create,
-      'sub-drop':            sub_drop,
-      'sub-alter-interface': sub_alter_interface,
-      'sub-enable':          sub_enable,
-      'sub-disable':         sub_disable,
-      'sub-add-repset':      sub_add_repset,
-      'sub-remove-repset':   sub_remove_repset,
-      'sub-show-status':     sub_show_status,
-      'sub-show-table':      sub_show_table,
-      'sub-resync-table':    sub_resync_table,
-      'sub-wait-for-sync':   sub_wait_for_sync,
-      'table-wait-for-sync': table_wait_for_sync,
-      'health-check':        health_check,
-      'metrics-check':       metrics_check,
-      'set-readonly':        set_readonly
+      'node-create':             node_create,
+      'node-drop':               node_drop,
+      'node-alter-location':     node_alter_location,
+      'node-list':               node_list,
+      'node-add-interface':      node_add_interface,
+      'node-drop-interface':     node_drop_interface,
+      'repset-create':           repset_create,
+      'repset-alter':            repset_alter,
+      'repset-drop':             repset_drop,
+      'repset-add-table':        repset_add_table,
+      'repset-remove-table':     repset_remove_table,
+      'repset-add-seq':          repset_add_seq,
+      'repset-remove-seq':       repset_remove_seq,
+      'repset-add-partition':    repset_add_partition,
+      'repset-remove-partition': repset_remove_partition,
+      'repset-list-tables':      repset_list_tables,
+      'sub-create':              sub_create,
+      'sub-drop':                sub_drop,
+      'sub-alter-interface':     sub_alter_interface,
+      'sub-enable':              sub_enable,
+      'sub-disable':             sub_disable,
+      'sub-add-repset':          sub_add_repset,
+      'sub-remove-repset':       sub_remove_repset,
+      'sub-show-status':         sub_show_status,
+      'sub-show-table':          sub_show_table,
+      'sub-resync-table':        sub_resync_table,
+      'sub-wait-for-sync':       sub_wait_for_sync,
+      'table-wait-for-sync':     table_wait_for_sync,
+      'health-check':            health_check,
+      'metrics-check':           metrics_check,
+      'set-readonly':            set_readonly
   })
