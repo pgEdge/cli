@@ -146,6 +146,52 @@ def get_table_list(table, db, pg_v):
   exit_message(f"Could not find table that matches {table}",1)
 
 
+def get_seq_list(seq, db, pg_v):
+  w_schema = None
+  w_seq = None
+
+  l_seq = seq.split(".")
+  if len(l_seq) > 2:
+    exit_message("Invalid sequnce wildcard", 1)
+
+  if len(l_seq) == 2:
+    w_schema = str(l_seq[0])
+    w_seq = str(l_seq[1])
+  elif len(l_seq) == 1:
+    w_seq = str(l_seq[0])
+
+  sql = "SELECT sequence_schema || '.' || sequence_name as schema_seq \n" + \
+        "  FROM information_schema.sequences \n" + \
+        " AND sequence_schema NOT IN ('spock','pg_catalog','information_schema')" 
+
+  if w_schema:
+    sql = sql + "\n   AND sequence_schema = '" + w_schema + "'"
+
+  sql = sql + "\n   AND sequence_name LIKE '" + w_seq.replace("*", "%") + "'"
+
+  con = get_pg_connection(pg_v, db, get_user())
+
+  try:
+    cur = con.cursor()
+    cur.execute(sql)
+
+    ret = cur.fetchall()
+
+    try:
+      cur.close()
+      con.close()
+    except Exception as e:
+      pass
+
+  except Exception as e:
+    exit_exception(e)
+
+  if len(ret) > 0:
+    return(ret)
+
+  exit_message(f"Could not find sequence that matches {seq}",1)
+
+
 def json_dumps(p_input):
   if os.getenv("isJson", "") == "True":
     return(json.dumps(p_input))
