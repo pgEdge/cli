@@ -265,7 +265,7 @@ def sub_disable(subscription_name, db, immediate=False, pg=None):
 def sub_alter_interface(subscription_name, interface_name, db, pg=None):
   """Modify an interface to a subscription."""
   pg_v = util.get_pg_v(pg)
-  sql = "SELECT spock.sub_disable(" + \
+  sql = "SELECT spock.sub_alter_interface(" + \
            get_eq("subscription_name", subscription_name, ", ") + \
            get_eq("interface_name", interface_name, ")")
   util.run_psyco_sql(pg_v, db, sql)
