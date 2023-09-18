@@ -177,25 +177,19 @@ def repset_drop(set_name, db, pg=None):
   sys.exit(0)
 
 
-def repset_add_seq(set_name, db, relation, synchronize_data=False, pg=None):
+def repset_add_seq(replication_set, sequence, db, synchronize_data=False, pg=None):
   """Add a sequence to a replication set."""
   pg_v = util.get_pg_v(pg)
-  sql = "SELECT spock.repset_add_seq(" + \
-           get_eq("set_name", set_name, ", ") + \
-           get_eq("relation", relation, ", ") + \
-           get_eq("synchronize_data", synchronize_data, ")")
-  util.run_psyco_sql(pg_v, db, sql)
-  sys.exit(0)
+  seqs = util.get_seq_list(sequence, db, pg_v)
 
-
-def repset_add_all_seqs(set_name, db, schema_names, synchronize_data=False, pg=None):
-  """Add sequences to a replication set."""
-  pg_v = util.get_pg_v(pg)
-  sql = "SELECT spock.repset_add_all_seqs(" + \
-           get_eq("set_name", set_name, ", ") + \
-           get_eq("schemas", schema_names, ", ") + \
+  for sequence in seqs:
+    seq = str(sequence[0])
+    sql = "SELECT spock.repset_add_seq(" + \
+           get_eq("set_name", replication_set, ", ") + \
+           get_eq("relation", seq, ", ") + \
            get_eq("synchronize_data", synchronize_data, ")")
-  util.run_psyco_sql(pg_v, db, sql)
+    util.run_psyco_sql(pg_v, db, sql)
+  util.message(f"Adding sequence {seq} to replication set {replication_set}.")
   sys.exit(0)
 
 
