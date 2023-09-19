@@ -9,11 +9,12 @@
   - explore possible inclusion of function for calling aws lambdas (hari)
 
 
-## done for 23.130 as of 2023-09-18
+## done for 23.130 as of 2023-09-19
   - bump postgrest to 11.2.0
   - bump hintplan and add support for pg16
   - add support for pg16 to plv8 3.2.0
   - dramatic improvements to ACE as it is polished pre GA
+  - update nclibs with new ACE reqmnts (tqdm & ordered-set)
   - new `app` cli first cut
   - quite down new lbzip2 output 
 
