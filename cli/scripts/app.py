@@ -61,7 +61,7 @@ def validate_pgbench(db, pg=None):
   util.exit_message(f"Sum of tbalance in pgbench_tellers= {v_sum}",0)
 
 
-def uninstall_pgbench(db, pg=None):
+def remove_pgbench(db, pg=None):
   """Drop pgBench Tables"""
   pg_v = util.get_pg_v(pg)
   usr = util.get_user()
@@ -76,18 +76,22 @@ def uninstall_pgbench(db, pg=None):
     cur.close()
   except Exception as e:
     util.exit_exception(e)
-  util.exit_message(f"Uninstalled pgBench from database: {db}",0)
+  util.exit_message(f"Dropped pgBench tables from database: {db}",0)
 
 
 def install_northwind(db, replication_set=None, country=None, pg=None):
   """Install northwind data, Alter tables, and add to repsets"""
-  os.system(f"psql -f hub{os.sep}scripts{os.sep}sql{os.sep}northwind.sql {db}")
+  pg_v = util.get_pg_v(pg)
+  pg_n = pg_v.replace('pg', '')
+
+  sql_file = f"hub{os.sep}scripts{os.sep}sql{os.sep}northwind.sql"
+  os.system(f"./nodectl psql {pg_n} -f {sql_file} {db}")
+
   if country:
     if country!='US' or country!='USA':
       out_of_country='USA'
     else:
       out_of_country='UK'
-  pg_v = util.get_pg_v(pg)
   usr = util.get_user()  
   try:
     con = get_pg_connection(pg_v, db, usr)
@@ -209,7 +213,7 @@ def validate_northwind(db, pg=None):
   util.exit_message(f"  Sum of units on order: {sum_on_order}\n  Sum of units in stock: {sum_in_stock}",0)
 
 
-def uninstall_northwind(db, pg=None):
+def remove_northwind(db, pg=None):
   """Drop northwind schema"""
   pg_v = util.get_pg_v(pg)
   usr = util.get_user()
@@ -221,38 +225,17 @@ def uninstall_northwind(db, pg=None):
     cur.close()
   except Exception as e:
     util.exit_exception(e)
-  util.exit_message(f"Uninstalled northwind from database: {db}",0)
-
-
-def remove(app):
-  pass
-
-
-def install(app):
-  pass
-
-
-def run(app, rate):
-  pass
-
-
-def validate(app):
-  pass
+  util.exit_message(f"Dropped northwind schema from database: {db}",0)
 
 
 if __name__ == '__main__':
   fire.Fire({
-    'remove': remove,
-    'install': install,
-    'run': run,
-    'validate': validate,
-
     'install-pgbench': install_pgbench,
     'run-pgbench': run_pgbench,
     'validate-pgbench': validate_pgbench,
-    'uninstall-pgbench': uninstall_pgbench,
+    'remove-pgbench': remove_pgbench,
     'install-northwind': install_northwind,
     'run-northwind': run_northwind,
     'validate-northwind': validate_northwind,
-    'uninstall-northwind': uninstall_northwind
+    'remove-northwind': remove_northwind
     })
