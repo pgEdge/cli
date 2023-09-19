@@ -5,6 +5,7 @@ psycopg>=3.1.10
 psycopg-binary>=3.1.10
 psutil>=5.9.5
 tqdm>=4.66.1
+ordered-set>=4.1.0
 
 ## we need the patroni dependencies
 patroni>=3.1.0
