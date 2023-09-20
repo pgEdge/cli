@@ -3,6 +3,9 @@
 spockFull31V=3.1.6
 spockBuild31V=1
 
+pg17V=17devel
+pg17BuildV=1
+
 pg16V=16.0
 pg16BuildV=1
 
@@ -17,9 +20,6 @@ pg13BuildV=1
 
 pg12V=12.16
 pg12BuildV=1
-
-pg11V=11.21
-pg11BuildV=1
 
 readonlyFullV=1.1.0
 readonlyShortV=

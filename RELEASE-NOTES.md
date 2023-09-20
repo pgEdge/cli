@@ -2,6 +2,7 @@
 
 
 ## done for 23.130 as of 2023-09-19
+  - welcome to `test` pg17devel-1
   - new `app` cli is code complete
   - refactor `pgbench.py` & `northwind.py` to use `app.py` where appropriate
   - app.run_northwind() now supports Rate & Time same as run_pgbench()

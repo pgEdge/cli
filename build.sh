@@ -21,7 +21,7 @@ printUsageMessage () {
   echo "#-------------------------------------------------------------------#"
   echo "#                Copyright (c) 2022-2023 PGEDGE                     #"
   echo "#-------------------------------------------------------------------#"
-  echo "# -p $P16 $P15 $P14 $P13 $P12 $P11"
+  echo "# -p $P17 $P16 $P15 $P14 $P13 $P12"
   echo "# -b hub-$hubV"
   echo "#-------------------------------------------------------------------#"
 }
@@ -389,9 +389,7 @@ initC () {
 
 
 initPG () {
-  if [ "$pgM" == "11" ]; then
-    pgV=$P11
-  elif [ "$pgM" == "12" ]; then
+  if [ "$pgM" == "12" ]; then
     pgV=$P12
   elif [ "$pgM" == "13" ]; then
     pgV=$P13
@@ -401,6 +399,8 @@ initPG () {
     pgV=$P15
   elif [ "$pgM" == "16" ]; then
     pgV=$P16
+  elif [ "$pgM" == "17" ]; then
+    pgV=$P17
   else
     echo "ERROR: Invalid PG version '$pgM'"
     exit 1

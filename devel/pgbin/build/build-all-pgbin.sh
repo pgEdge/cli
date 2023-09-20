@@ -41,10 +41,7 @@ function runPgBin {
 majorV="$1"
 optional="$2"
 
-if [ "$majorV" == "11" ]; then
-  pgV=$pg11V
-  pgBuildV=$pg11BuildV
-elif [ "$majorV" == "12" ]; then
+if [ "$majorV" == "12" ]; then
   pgV=$pg12V
   pgBuildV=$pg12BuildV
 elif [ "$majorV" == "13" ]; then
@@ -93,6 +90,24 @@ elif [ "$majorV" == "16" ]; then
     exit 1
   fi
   cd ..
+
+elif [ "$majorV" == "17" ]; then
+  pgV=$pg17V
+  pgBuildV=$pg17BuildV
+
+  cd spock-private
+  git checkout main
+  git pull
+  diff1=$PWD/pg16-log_old_value.diff
+  if [ -f "$diff1" ]; then
+    export DIFF1="$diff1"
+    export DIFF2=""
+  else
+    echo "FATAL ERROR: Missing $diff1"
+    exit 1
+  fi
+  cd ..
+
 fi
 
 runPgBin "$binBld" "$pgSrc-$pgV.tar.gz" "$pgBuildV"
