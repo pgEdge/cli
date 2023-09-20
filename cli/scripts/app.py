@@ -21,7 +21,7 @@ def get_pg_connection(pg_v, db, usr):
   return(con)
 
 
-def install_pgbench(db, replication_set=None, pg=None):
+def pgbench_install(db, replication_set=None, pg=None):
   """Initialize pgBench data, Alter Tables, and add to replication_set"""
   pg_v = util.get_pg_v(pg)
   usr = util.get_user()  
@@ -40,13 +40,13 @@ def install_pgbench(db, replication_set=None, pg=None):
     os.system(f"./nodectl spock repset-add-table {replication_set} 'pgbench_*' {db}")
 
 
-def run_pgbench(db, Rate, Time, pg=None):
+def pgbench_run(db, Rate, Time, pg=None):
   """Run pgBench"""
   pg_v = util.get_pg_v(pg)
   os.system(f"{pg_v}{os.sep}bin{os.sep}pgbench -R {Rate} -T {Time} -n {db}")
 
 
-def validate_pgbench(db, pg=None):
+def pgbench_validate(db, pg=None):
   """Validate pgBench"""
   pg_v = util.get_pg_v(pg)
   usr = util.get_user()  
@@ -61,7 +61,7 @@ def validate_pgbench(db, pg=None):
   util.exit_message(f"Sum of tbalance in pgbench_tellers= {v_sum}",0)
 
 
-def remove_pgbench(db, pg=None):
+def pgbench_remove(db, pg=None):
   """Drop pgBench Tables"""
   pg_v = util.get_pg_v(pg)
   usr = util.get_user()
@@ -79,7 +79,7 @@ def remove_pgbench(db, pg=None):
   util.exit_message(f"Dropped pgBench tables from database: {db}",0)
 
 
-def install_northwind(db, replication_set=None, country=None, pg=None):
+def northwind_install(db, replication_set=None, country=None, pg=None):
   """Install northwind data, Alter tables, and add to repsets"""
   pg_v = util.get_pg_v(pg)
   pg_n = pg_v.replace('pg', '')
@@ -115,7 +115,7 @@ def install_northwind(db, replication_set=None, country=None, pg=None):
     os.system(f"./nodectl spock repset-add-table {replication_set}_eu 'northwind.employees' {db} --columns='employee_id, last_name, first_name, title, title_of_courtesy, hire_date, country, photo, notes, reports_to, photo_path'")
 
 
-def run_northwind(db, offset, Rate=2, Time=10, pg=None):
+def northwind_run(db, offset, Rate=2, Time=10, pg=None):
   """Run Sample Queries to Create Orders in Northwind"""
 
   print(f"db={db}, offset={offset}, Rate={Rate}, Time={Time}\n")
@@ -212,7 +212,7 @@ def run_northwind(db, offset, Rate=2, Time=10, pg=None):
     v_order_id = v_order_id + 10
 
 
-def validate_northwind(db, pg=None):
+def northwind_validate(db, pg=None):
   """Validate running sums in the Northwind products table"""
   pg_v = util.get_pg_v(pg)
   usr = util.get_user()
@@ -228,7 +228,7 @@ def validate_northwind(db, pg=None):
   util.exit_message(f"  Sum of units on order: {sum_on_order}\n  Sum of units in stock: {sum_in_stock}",0)
 
 
-def remove_northwind(db, pg=None):
+def northwind_remove(db, pg=None):
   """Drop northwind schema"""
   pg_v = util.get_pg_v(pg)
   usr = util.get_user()
@@ -245,12 +245,12 @@ def remove_northwind(db, pg=None):
 
 if __name__ == '__main__':
   fire.Fire({
-    'install-pgbench': install_pgbench,
-    'run-pgbench': run_pgbench,
-    'validate-pgbench': validate_pgbench,
-    'remove-pgbench': remove_pgbench,
-    'install-northwind': install_northwind,
-    'run-northwind': run_northwind,
-    'validate-northwind': validate_northwind,
-    'remove-northwind': remove_northwind
+    'pgbench-install': pgbench_install,
+    'pgbench-run': pgbench_run,
+    'pgbench-validate': pgbench_validate,
+    'pgbench-remove': pgbench_remove,
+    'northwind-install': northwind_install,
+    'northwind-run': northwind_run,
+    'northwind-validate': northwind_validate,
+    'northwind-remove': northwind_remove
     })
