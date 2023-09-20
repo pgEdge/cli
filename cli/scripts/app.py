@@ -154,8 +154,9 @@ def run_northwind(db, offset, Rate=2, Time=10, pg=None):
     v_shipped_date = (datetime.date.today() + datetime.timedelta(days=2)).strftime("%Y-%m-%d")
 
     offset_cust = random.randrange(91)+1
+
+    con = get_pg_connection(pg_v, db, usr)
     try:
-      con = get_pg_connection(pg_v, db, usr)
       cur = con.cursor()
       cur.execute(f"SELECT customer_id, contact_name, address, city, region, postal_code, country \
                 FROM northwind.customers LIMIT 1 OFFSET {offset_cust}")
@@ -169,7 +170,6 @@ def run_northwind(db, offset, Rate=2, Time=10, pg=None):
     freight = random.random() * 100
     v_address = v_address.replace('\'','\'\'')
     try:
-      con = get_pg_connection(pg_v, db, usr)
       cur = con.cursor()
       cur.execute(f"INSERT INTO northwind.orders (order_id, customer_id, employee_id, order_date, required_date, \
         shipped_date, ship_via, freight, ship_name, ship_address, ship_city, ship_region, ship_postal_code, \
@@ -183,7 +183,6 @@ def run_northwind(db, offset, Rate=2, Time=10, pg=None):
 
     offset_det = random.randrange(77)
     try:
-      con = get_pg_connection(pg_v, db, usr)
       cur = con.cursor()
       cur.execute(f"SELECT product_id, unit_price, units_on_order, units_in_stock, reorder_level \
                 FROM northwind.products LIMIT 1 OFFSET {offset_det}")
