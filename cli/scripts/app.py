@@ -2,8 +2,8 @@
 #  Copyright 2022-2023 PGEDGE  All rights reserved. #
 #####################################################
 
-import sys, os, json, time, logging, datetime
-import util, spock, random, meta, api, fire
+import sys, os, json, time, logging, datetime, random, time
+import util, spock, meta, api, fire
 
 try:
   import psycopg
@@ -40,10 +40,10 @@ def install_pgbench(db, replication_set=None, pg=None):
     os.system(f"./nodectl spock repset-add-table {replication_set} 'pgbench_*' {db}")
 
 
-def run_pgbench(db, rate, time, pg=None):
+def run_pgbench(db, Rate, Time, pg=None):
   """Run pgBench"""
   pg_v = util.get_pg_v(pg)
-  os.system(f"{pg_v}{os.sep}bin{os.sep}pgbench -R {rate} -T {time} -n {db}")
+  os.system(f"{pg_v}{os.sep}bin{os.sep}pgbench -R {Rate} -T {Time} -n {db}")
 
 
 def validate_pgbench(db, pg=None):
@@ -115,8 +115,11 @@ def install_northwind(db, replication_set=None, country=None, pg=None):
     os.system(f"./nodectl spock repset-add-table {replication_set}_eu 'northwind.employees' {db} --columns='employee_id, last_name, first_name, title, title_of_courtesy, hire_date, country, photo, notes, reports_to, photo_path'")
 
 
-def run_northwind(db, offset, run_time=60, pg=None):
+def run_northwind(db, offset, Rate=2, Time=10, pg=None):
   """Run Sample Queries to Create Orders in Northwind"""
+
+  print(f"db={db}, offset={offset}, Rate={Rate}, Time={Time}\n")
+
   pg_v = util.get_pg_v(pg)
   usr = util.get_user()
   try:
@@ -128,7 +131,22 @@ def run_northwind(db, offset, run_time=60, pg=None):
   except Exception as e:
     util.exit_exception(e)
   v_order_id = mx_ooid + offset
+
+  k = 0
+  start_t = time.time()
   while True:
+    k = k + 1
+    run_t = time.time() - start_t
+    expected_t = (k / Rate) + start_t
+
+    current_t = time.time()
+    if current_t > (start_t + Time):
+      util.exit_message(f"Finished running Northwind App for {Time} seconds",0)
+
+    delay = expected_t - current_t
+    if delay > 0:
+      time.sleep(delay)
+
     v_employee_id = random.randrange(9)+1
 
     v_order_date = datetime.date.today().strftime("%Y-%m-%d")
@@ -191,9 +209,7 @@ def run_northwind(db, offset, run_time=60, pg=None):
       cur.close()
     except Exception as e:
       util.exit_exception(e)
-    print(f"Placed order with order_id = {v_order_id}")
-    if time.process_time() >= run_time:
-        util.exit_message(f"Finished running Northwind App for {run_time} seconds",0)
+    print(f"Placed order {k} with order_id = {v_order_id}")
     v_order_id = v_order_id + 10
 
 

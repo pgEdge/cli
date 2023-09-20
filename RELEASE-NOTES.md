@@ -8,6 +8,7 @@
   - dramatic improvements to ACE as it is polished pre GA
   - update nclibs with new ACE reqmnts (tqdm & ordered-set)
   - new `app` cli first cut
+  - app.run_northwind() now supports Rate & Time same as run_pgbench()
   - quite down new lbzip2 output 
 
 
