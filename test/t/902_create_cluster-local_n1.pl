@@ -33,7 +33,7 @@ my $n2 = "~/work/nodectl/test/pgedge/cluster/demo/n2";
 # the database is named lcdb (default), and it is owned by lcdb (default).
 # 
 
-my $cmd = qq(./nodectl cluster create-local $cluster 2 -U $username -P $password -d $database --$version);
+my $cmd = qq(./nodectl cluster local-create $cluster 2 -U $username -P $password -d $database --$version);
 print("cmd = $cmd\n");
 my ($success, $error_message, $full_buf, $stdout_buf, $stderr_buf)= IPC::Cmd::run(command => $cmd, verbose => 0);
 

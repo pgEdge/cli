@@ -1,20 +1,14 @@
 # pgEdge Platform Release Notes #############
 
-## to do's for 23.130 and beyond
-  - add support for pljava-pg15 & -pg16 (cannot find libjvm17  setting from util.get_jvm_location)
-  - fix port numbers in cluster local-create()'s env file
-  - replicate ddl automagically to the spock.replicate_ddl command if cluster is a 'leader'
-  - test json fields for replication
-  - more default conf setting tweaks from customer support (from hari)
-  - explore possible inclusion of function for calling aws lambdas (hari)
 
-
-## done for 23.130 as of 2023-09-18
+## done for 23.130 as of 2023-09-19
   - bump postgrest to 11.2.0
   - bump hintplan and add support for pg16
   - add support for pg16 to plv8 3.2.0
   - dramatic improvements to ACE as it is polished pre GA
+  - update nclibs with new ACE reqmnts (tqdm & ordered-set)
   - new `app` cli first cut
+  - app.run_northwind() now supports Rate & Time same as run_pgbench()
   - quite down new lbzip2 output 
 
 
