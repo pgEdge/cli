@@ -53,10 +53,10 @@ def pgbench_remove(db, pg=None):
   try:
     con = util.get_pg_connection(pg_v, db, usr)
     cur = con.cursor()
-    cur.execute("DROP TABLE pgbench_accounts")
-    cur.execute("DROP TABLE pgbench_branches")
-    cur.execute("DROP TABLE pgbench_tellers")
-    cur.execute("DROP TABLE pgbench_history")
+    cur.execute("DROP TABLE IF EXISTS pgbench_accounts CASCADE")
+    cur.execute("DROP TABLE IF EXISTS pgbench_branches CASCADE")
+    cur.execute("DROP TABLE IF EXISTS pgbench_tellers  CASCADE")
+    cur.execute("DROP TABLE IF EXISTS pgbench_history  CASCADE")
     con.commit()
     cur.close()
   except Exception as e:
@@ -77,6 +77,7 @@ def northwind_install(db, replication_set=None, country=None, pg=None):
       out_of_country='USA'
     else:
       out_of_country='UK'
+
   usr = util.get_user()  
   try:
     con = util.get_pg_connection(pg_v, db, usr)
@@ -90,6 +91,7 @@ def northwind_install(db, replication_set=None, country=None, pg=None):
     cur.close()
   except Exception as e:
     util.exit_exception(e)
+
   if replication_set:
     os.system(f"./nodectl spock repset-add-table {replication_set} 'northwind.*' {db}")
   if country:
