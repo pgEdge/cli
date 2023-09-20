@@ -24,10 +24,10 @@ result_queue = Manager().list()
 job_queue = Queue()
 row_diff_count = Value("I", 0)
 
-PGCAT_HOST = "localhost"
-PGCAT_PORT = 5432
-PGCAT_DB1 = "db1"
-PGCAT_DB2 = "db2"
+#PGCAT_HOST = "localhost"
+#PGCAT_PORT = 5432
+#PGCAT_DB1 = "db1"
+#PGCAT_DB2 = "db2"
 
 # Set max number of rows up to which
 # diff-tables will work
@@ -342,20 +342,24 @@ def compare_checksums(
     il, db, pg, count, usr, passwd, os_usr, cert, nodes = cluster.load_json(
         cluster_name
     )
+    pg_v = util.get_pg_v(pg)
+    port = util.get_column("port", pg_v)
+
+    # TODO: Temporary fix. Need to remove hardcoded values here
     con1 = psycopg.connect(
-        dbname=PGCAT_DB1,
+        dbname=db,
         user=usr,
         password=passwd,
-        host=PGCAT_HOST,
-        port=PGCAT_PORT,
+        host=nodes[0]['ip'],
+        port=port,
         prepare_threshold=1,
     )
     con2 = psycopg.connect(
-        dbname=PGCAT_DB2,
+        dbname=db,
         user=usr,
         password=passwd,
-        host=PGCAT_HOST,
-        port=PGCAT_PORT,
+        host=nodes[1]['ip'],
+        port=port,
         prepare_threshold=1,
     )
 
@@ -494,6 +498,9 @@ def diff_tables(
     il, db, pg, count, usr, passwd, os_usr, cert, nodes = cluster.load_json(
         cluster_name
     )
+    pg_v = util.get_pg_v(pg)
+    port = util.get_column("port", pg_v)
+
     con1 = None
     con2 = None
     util.message(f"\n## Validating connections to each node in cluster")
@@ -506,25 +513,25 @@ def diff_tables(
             n = n + 1
             if n == 1:
                 util.message(
-                    f'### Getting Conection to Node1 ({nd["nodename"]}) - {usr}@{PGCAT_HOST}:{PGCAT_PORT}/{PGCAT_DB1}'
+                    f'### Getting Conection to Node1 ({nd["nodename"]}) - {usr}@{nd["ip"]}:{port}/{db}'
                 )
                 con1 = psycopg.connect(
-                    dbname=PGCAT_DB1,
+                    dbname=db,
                     user=usr,
                     password=passwd,
-                    host=PGCAT_HOST,
-                    port=PGCAT_PORT,
+                    host=nd['ip'],
+                    port=port,
                 )
             elif n == 2:
                 util.message(
-                    f'### Getting Conection to Node2 ({nd["nodename"]}) - {usr}@{PGCAT_HOST}:{PGCAT_PORT}/{PGCAT_DB2}'
+                    f'### Getting Conection to Node2 ({nd["nodename"]}) - {usr}@{nd["ip"]}:{port}/{db}'
                 )
                 con2 = psycopg.connect(
-                    dbname=PGCAT_DB2,
+                    dbname=db,
                     user=usr,
                     password=passwd,
-                    host=PGCAT_HOST,
-                    port=PGCAT_PORT,
+                    host=nd['ip'],
+                    port=port,
                 )
             else:
                 util.message(
@@ -651,7 +658,9 @@ def write_diffs_json(cols, block_rows, l_schema, l_table):
 
         diff_json.append(entry_json)
 
-    print(json.dumps(output_json, indent=2, sort_keys=True, default=str))
+    util.message(json.dumps(output_json, indent=2, sort_keys=True, default=str))
+
+    return output_json
 
 
 def write_diffs_csv(c1_cols, l_schema, l_table):
