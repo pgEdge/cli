@@ -5,28 +5,13 @@
 import sys, os, json, time, logging, datetime, random, time
 import util, spock, meta, api, fire
 
-try:
-  import psycopg
-except ImportError as e:
-  util.exit_message("Missing 'psycopg' module from pip", 1)
-
-def get_pg_connection(pg_v, db, usr):
-  dbp = util.get_column("port", pg_v)
-  if util.debug_lvl() > 0:
-    util.message(f"get_pg_connection(): dbname={db}, user={usr}, port={dbp}", "debug")
-  try:
-    con = psycopg.connect(dbname=db, user=usr, host="127.0.0.1", port=dbp, autocommit=False)
-  except Exception as e:
-    util.exit_exception(e)
-  return(con)
-
 
 def pgbench_install(db, replication_set=None, pg=None):
   """Initialize pgBench data, Alter Tables, and add to replication_set"""
   pg_v = util.get_pg_v(pg)
   usr = util.get_user()  
   try:
-    con = get_pg_connection(pg_v, db, usr)
+    con = util.get_pg_connection(pg_v, db, usr)
     cur = con.cursor()
     os.system(f"{pg_v}{os.sep}bin{os.sep}pgbench -i {db}")
     cur.execute("ALTER TABLE pgbench_accounts ALTER COLUMN abalance SET (LOG_OLD_VALUE=true)")
@@ -51,7 +36,7 @@ def pgbench_validate(db, pg=None):
   pg_v = util.get_pg_v(pg)
   usr = util.get_user()  
   try:
-    con = get_pg_connection(pg_v, db, usr)
+    con = util.get_pg_connection(pg_v, db, usr)
     cur = con.cursor()
     cur.execute("SELECT SUM(tbalance) FROM pgbench_tellers;")
     v_sum = cur.fetchone()[0]
@@ -66,7 +51,7 @@ def pgbench_remove(db, pg=None):
   pg_v = util.get_pg_v(pg)
   usr = util.get_user()
   try:
-    con = get_pg_connection(pg_v, db, usr)
+    con = util.get_pg_connection(pg_v, db, usr)
     cur = con.cursor()
     cur.execute("DROP TABLE pgbench_accounts")
     cur.execute("DROP TABLE pgbench_branches")
@@ -94,7 +79,7 @@ def northwind_install(db, replication_set=None, country=None, pg=None):
       out_of_country='UK'
   usr = util.get_user()  
   try:
-    con = get_pg_connection(pg_v, db, usr)
+    con = util.get_pg_connection(pg_v, db, usr)
     cur = con.cursor()
     cur.execute("ALTER TABLE northwind.products ALTER COLUMN units_in_stock SET (LOG_OLD_VALUE=true)")
     cur.execute("ALTER TABLE northwind.products ALTER COLUMN units_on_order SET (LOG_OLD_VALUE=true)")
@@ -123,7 +108,7 @@ def northwind_run(db, offset, Rate=2, Time=10, pg=None):
   pg_v = util.get_pg_v(pg)
   usr = util.get_user()
   try:
-    con = get_pg_connection(pg_v, db, usr)
+    con = util.get_pg_connection(pg_v, db, usr)
     cur = con.cursor()
     cur.execute("SELECT MAX(order_id) FROM northwind.orders")
     mx_ooid = cur.fetchone()[0]
@@ -155,7 +140,7 @@ def northwind_run(db, offset, Rate=2, Time=10, pg=None):
 
     offset_cust = random.randrange(91)+1
 
-    con = get_pg_connection(pg_v, db, usr)
+    con = util.get_pg_connection(pg_v, db, usr)
     try:
       cur = con.cursor()
       cur.execute(f"SELECT customer_id, contact_name, address, city, region, postal_code, country \
@@ -195,7 +180,7 @@ def northwind_run(db, offset, Rate=2, Time=10, pg=None):
     v_quantity = random.randrange(130)
     v_discount = random.random() 
     try:
-      con = get_pg_connection(pg_v, db, usr)
+      con = util.get_pg_connection(pg_v, db, usr)
       cur = con.cursor()
       cur.execute(f"INSERT INTO northwind.order_details(order_id, product_id, unit_price, quantity, discount) \
                 VALUES ({v_order_id}, {v_product_id}, {v_unit_price}, {v_quantity}, {v_discount})")
@@ -217,7 +202,7 @@ def northwind_validate(db, pg=None):
   pg_v = util.get_pg_v(pg)
   usr = util.get_user()
   try:
-    con = get_pg_connection(pg_v, db, usr)
+    con = util.get_pg_connection(pg_v, db, usr)
     cur = con.cursor()
     cur.execute("SELECT SUM(units_on_order), SUM(units_in_stock) FROM northwind.products")
     data=cur.fetchone()
@@ -233,7 +218,7 @@ def northwind_remove(db, pg=None):
   pg_v = util.get_pg_v(pg)
   usr = util.get_user()
   try:
-    con = get_pg_connection(pg_v, db, usr)
+    con = util.get_pg_connection(pg_v, db, usr)
     cur = con.cursor()
     cur.execute("DROP SCHEMA northwind CASCADE")
     con.commit()
