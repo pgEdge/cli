@@ -13,9 +13,6 @@ def setup_node(node_nm, port, nc, num_nodes, db, pg, host, os_user, ssh_key):
   util.echo_cmd(app + "pgbench-install " + db,
                 host=host, usr=os_user, key=ssh_key)
 
-  #pgbench_cmd = '"pgbench --initialize --scale=' + str(scale) + ' ' + str(db) + '"'
-  #util.echo_cmd(pgb + str(pg) +  " " + pgbench_cmd, host=host, usr=os_user, key=ssh_key)
-
   dsn = "'host=127.0.0.1 port=" + str(port) + " dbname=" + db + "'"
   util.echo_cmd(spk + "node-create " + node_nm + " --dsn " + dsn + " --db " + db,
                  host=host, usr=os_user, key=ssh_key)
@@ -25,13 +22,6 @@ def setup_node(node_nm, port, nc, num_nodes, db, pg, host, os_user, ssh_key):
                   host=host, usr=os_user, key=ssh_key)
   util.echo_cmd(spk + "repset-add-table " + rep_set + " public.pgbench* --db " + db,
                   host=host, usr=os_user, key=ssh_key)
-
-  #log_old_val("pgbench_accounts", "abalance", "true", nc, db, pg,
-  #              host=host, usr=os_user, key=ssh_key)
-  #log_old_val("pgbench_branches", "bbalance", "true", nc, db, pg,
-  #              host=host, usr=os_user, key=ssh_key)
-  #log_old_val("pgbench_tellers",  "tbalance", "true", nc, db, pg,
-  #              host=host, usr=os_user, key=ssh_key)
 
 
 def psql_cmd(cmd, nc, db, pg, host, usr, key):
