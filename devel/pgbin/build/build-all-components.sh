@@ -149,11 +149,11 @@ if [ "$1" == "timescaledb" ]; then
 fi
 
 if [ "$1" == "spock31" ]; then
-  build spock31 $spockFull31V $2  spock31
+  build spock31 $spock31V $2  spock31
 fi
 
-if [ "$1" == "pool2" ]; then
-  build pool2 $pool2FullV $2 pool2
+if [ "$1" == "spock32" ]; then
+  build spock32 $spock32V $2  spock32
 fi
 
 if [ "$1" == "pglogical" ]; then

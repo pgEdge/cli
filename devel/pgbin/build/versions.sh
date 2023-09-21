@@ -1,7 +1,10 @@
 #!/bin/bash
 
-spockFull31V=3.1.6
-spockBuild31V=1
+spock32V=3.2dev1 
+spockBld32V=1
+
+spock31V=3.1.6
+spockBld31V=1
 
 pg17V=17devel
 pg17BuildV=1

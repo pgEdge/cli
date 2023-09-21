@@ -143,7 +143,7 @@ function buildPostgres {
   echo "# buildPOSTGRES"	
   cd $baseDir/$workDir/$pgSrcDir
 
-  if [ "$pgShortV" == "15" ] || [ "$pgShortV" == "16" ]; then
+  if [ "$pgShortV" == "15" ] || [ "$pgShortV" == "16" ] || [ "$pgShortV" == "17" ]; then
     if [ "$DIFF1" == "" ]; then
       echo "std postgres build, no patches to apply"
     else
@@ -536,9 +536,9 @@ isPassed "$sourceTarPassed" "Postgres source tarball (-t)"
 checkCmd "checkPostgres"
 checkCmd "buildPostgres"
 
-if [ "$buildODBC" == "1" ]; then
-  buildApp "checkODBC" "buildODBC"
-fi
+#if [ "$buildODBC" == "1" ]; then
+#  buildApp "checkODBC" "buildODBC"
+#fi
 
 copySharedLibs
 checkCmd "updateSharedLibPaths"
