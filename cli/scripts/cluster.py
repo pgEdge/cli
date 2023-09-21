@@ -140,7 +140,7 @@ def remote_reset(cluster_name):
      util.echo_cmd(cmd, host=nd["ip"], usr=os_user, key=key)
 
 
-def remote_init(cluster_name, app=None):
+def remote_init(cluster_name):
   """Initialize a test cluster from json definition file of existing nodes."""
 
   util.message(f"## Loading cluster '{cluster_name}' json definition file")
@@ -167,7 +167,7 @@ def remote_init(cluster_name, app=None):
   ssh_install_pgedge(cluster_name, cj["db_init_passwd"])
 
 
-def local_create(cluster_name, num_nodes, pg="16", app=None, port1=6432, 
+def local_create(cluster_name, num_nodes, pg="16", port1=6432, 
                  User="lcusr", Passwd="lcpasswd", db="lcdb"):
   """Create a localhost test cluster of N pgEdge nodes on different ports."""
 
@@ -224,8 +224,6 @@ def local_create(cluster_name, num_nodes, pg="16", app=None, port1=6432,
 
   ssh_install_pgedge(cluster_name, Passwd)
 
-  if app == "pgbench":
-    pgbench.install(cluster_name)
 
 
 def print_install_hdr(cluster_name, db, pg, db_user, count):
