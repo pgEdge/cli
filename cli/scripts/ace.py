@@ -342,8 +342,6 @@ def compare_checksums(
     il, db, pg, count, usr, passwd, os_usr, cert, nodes = cluster.load_json(
         cluster_name
     )
-    pg_v = util.get_pg_v(pg)
-    port = util.get_column("port", pg_v)
 
     # TODO: Temporary fix. Need to remove hardcoded values here
     con1 = psycopg.connect(
@@ -351,7 +349,7 @@ def compare_checksums(
         user=usr,
         password=passwd,
         host=nodes[0]['ip'],
-        port=port,
+        port=nodes[0].get('port', 5432),
         prepare_threshold=1,
     )
     con2 = psycopg.connect(
@@ -359,7 +357,7 @@ def compare_checksums(
         user=usr,
         password=passwd,
         host=nodes[1]['ip'],
-        port=port,
+        port=nodes[1].get('port', 5432),
         prepare_threshold=1,
     )
 
@@ -498,8 +496,6 @@ def diff_tables(
     il, db, pg, count, usr, passwd, os_usr, cert, nodes = cluster.load_json(
         cluster_name
     )
-    pg_v = util.get_pg_v(pg)
-    port = util.get_column("port", pg_v)
 
     con1 = None
     con2 = None
@@ -513,25 +509,25 @@ def diff_tables(
             n = n + 1
             if n == 1:
                 util.message(
-                    f'### Getting Conection to Node1 ({nd["nodename"]}) - {usr}@{nd["ip"]}:{port}/{db}'
+                    f'### Getting Conection to Node1 ({nd["nodename"]}) - {usr}@{nd["ip"]}:{nd.get("port",5432)}/{db}'
                 )
                 con1 = psycopg.connect(
                     dbname=db,
                     user=usr,
                     password=passwd,
                     host=nd['ip'],
-                    port=port,
+                    port=nd.get('port', 5432),
                 )
             elif n == 2:
                 util.message(
-                    f'### Getting Conection to Node2 ({nd["nodename"]}) - {usr}@{nd["ip"]}:{port}/{db}'
+                    f'### Getting Conection to Node2 ({nd["nodename"]}) - {usr}@{nd["ip"]}:{nd.get("port", 5432)}/{db}'
                 )
                 con2 = psycopg.connect(
                     dbname=db,
                     user=usr,
                     password=passwd,
                     host=nd['ip'],
-                    port=port,
+                    port=nd.get('port', 5432),
                 )
             else:
                 util.message(
