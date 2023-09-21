@@ -70,7 +70,11 @@ def create(db=None, User=None, Passwd=None, Id=None, pg=None):
   cmd = "createdb '" + db + "' --owner='" + User + "'"
   rc2 = util.echo_cmd(ncb  + '"' + cmd + '"')
 
-  spock_comp = "spock31-pg" + str(pg)
+  if str(pg) == "17":
+    spock_comp = "spock32-pg" + str(pg)
+  else:
+    spock_comp = "spock31-pg" + str(pg)
+
   st8 = util.get_comp_state(spock_comp)
   if st8 in ("Installed", "Enabled"):
     cmd = "CREATE EXTENSION spock"

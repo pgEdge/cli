@@ -194,6 +194,7 @@ initDir () {
 
   copy-pgXX "orafce"
   copy-pgXX "spock31"
+  copy-pgXX "spock32"
   copy-pgXX "curl"
   copy-pgXX "pglogical"
   copy-pgXX "anon"
@@ -436,6 +437,10 @@ initPG () {
   initDir "$pgComp" "pg" "$pgV" "$outPlat" "postgres/$pgComp" "Enabled" "5432" "nil"
   supplementalPG "$pgComp"
   zipDir "$pgComp" "$pgV" "$outPlat" "Enabled"
+
+  if [ "$pgM" == "17" ] && [ "$isEL9" == "True" ]; then
+    initC "spock32-pg$pgM"    "spock32"    "$spock32V"   "$outPlat" "postgres/spock32"   "" "" "nil"
+  fi
 
   if [ "$pgM" == "16" ] && [ "$isEL9" == "True" ]; then
     initC "spock31-pg$pgM"    "spock31"    "$spock31V"   "$outPlat" "postgres/spock31"   "" "" "nil"
