@@ -154,7 +154,8 @@ def northwind_run(db, offset, Rate=2, Time=10, pg=None):
       cur.execute(f"SELECT customer_id, contact_name, address, city, region, postal_code, country \
                 FROM northwind.customers LIMIT 1 OFFSET {offset_cust}")
       data=cur.fetchone()
-      v_customer_id, v_contact_name, v_address, v_city, v_region, v_postal_code, v_country = data[0],data[1],data[2],data[3],data[4],data[5],data[6]
+      if data:
+        v_customer_id, v_contact_name, v_address, v_city, v_region, v_postal_code, v_country = data[0],data[1],data[2],data[3],data[4],data[5],data[6]
       cur.close()
     except Exception as e:
       util.exit_exception(e)
