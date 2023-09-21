@@ -1,12 +1,12 @@
 
 ## set -x
 
-v11=11.21
 v12=12.16
 v13=13.12
 v14=14.9
 v15=15.4
 v16=16.0
+v17=17devel
 
 UNAME=`uname`
 
@@ -70,6 +70,8 @@ downBuild () {
     patchFromSpock REL3_1_STABLE pg15-log_old_value.diff
   elif [ "$pgV" == "16" ]; then
     patchFromSpock REL3_1_STABLE pg16-log_old_value.diff
+  elif [ "$pgV" == "17" ]; then
+    patchFromSpock main pg16-log_old_value.diff
   fi
 
   makeInstall
@@ -78,13 +80,6 @@ downBuild () {
 
 
 makeInstall () {
-  ##brew --version > /dev/null 2>&1
-  ##rc=$?
-  ##if [ "$UNAME" = "Darwin" ] && [ ! "$rc" == "0" ]; then
-  ##  echo "ERROR: Darwin requires BREW"
-  ##  exit 1
-  ##fi
-
   if [ "$UNAME" = "Darwin" ]; then
     ##export LLVM_CONFIG="/opt/homebrew/opt/llvm/bin/llvm-config"
     ##export LDFLAGS="-L/opt/homebrew/opt/openssl@3/lib"
@@ -122,10 +117,7 @@ makeInstall () {
 
 options=""
 pgV=$1
-if [ "$1" == "11" ]; then
-  options=""
-  downBuild $v11
-elif [ "$1" == "12" ]; then
+if [ "$1" == "12" ]; then
   options=""
   downBuild $v12
 elif [ "$1" == "13" ]; then
@@ -140,8 +132,11 @@ elif [ "$1" == "15" ]; then
 elif [ "$1" == "16" ]; then
   options="--with-zstd --with-lz4 --with-icu"
   downBuild $v16
+elif [ "$1" == "17" ]; then
+  options="--with-zstd --with-lz4 --with-icu"
+  downBuild $v17
 else
-  echo "ERROR: Incorrect PG version.  Must be between 11 and 16"
+  echo "ERROR: Incorrect PG version.  Must be between 12 & 17"
   exit 1
 fi
  
