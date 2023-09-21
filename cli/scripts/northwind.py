@@ -11,14 +11,16 @@ g_tables = "northwind.*"
 
 g_repset = "nw-repset"
 
-g_running_sums = ("northwind.products.units_in_stock", "northwind.products.units_on_order")
+##g_running_sums = ("northwind.products.units_in_stock", "northwind.products.units_on_order")
 
 
 def setup_node(node_nm, port, nc, num_nodes, my_home, db, pg, host, factor, os_user, ssh_key):
   spk = nc + " spock "
+  app = nc + " app "
 
-  sql_file = my_home + os.sep + "hub/scripts/sql/northwind.sql"
-  cmd = nc + " psql " + str(pg) + " -f " + sql_file + " " + str(db)
+  ##sql_file = my_home + os.sep + "hub/scripts/sql/northwind.sql"
+  ##cmd = nc + " psql " + str(pg) + " -f " + sql_file + " " + str(db)
+  cmd = app + "northwind-install " + str(db)
   util.echo_cmd(cmd, host=host, usr=os_user, key=ssh_key)
 
   dsn = "'host=127.0.0.1 port=" + str(port) + " dbname=" + db + "'"
@@ -31,7 +33,7 @@ def setup_node(node_nm, port, nc, num_nodes, my_home, db, pg, host, factor, os_u
   util.echo_cmd(spk + "repset-add-table " + g_repset + " " + g_tables + " --db " + db,
                   host=host, usr=os_user, key=ssh_key)
 
-  cluster.log_old_vals(g_running_sums, nc, db, pg, host, os_user, ssh_key)
+  ##cluster.log_old_vals(g_running_sums, nc, db, pg, host, os_user, ssh_key)
 
 
 def install(cluster_name, factor=1):
