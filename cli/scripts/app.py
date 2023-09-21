@@ -9,11 +9,14 @@ import util, spock, meta, api, fire
 def pgbench_install(db, replication_set=None, pg=None):
   """Initialize pgBench data, Alter Tables, and add to replication_set"""
   pg_v = util.get_pg_v(pg)
+  pg = pg_v.replace('pg', '')
   usr = util.get_user()  
   try:
     con = util.get_pg_connection(pg_v, db, usr)
     cur = con.cursor()
-    os.system(f"{pg_v}{os.sep}bin{os.sep}pgbench -i {db}")
+    pgbench_cmd = '"pgbench --initialize --scale=1 ' + str(db) + '"'
+    util.echo_cmd(f"./nc pgbin " + str(pg) +  " " + pgbench_cmd)
+    ##os.system(f"{pg_v}{os.sep}bin{os.sep}pgbench -i {db}")
     cur.execute("ALTER TABLE pgbench_accounts ALTER COLUMN abalance SET (LOG_OLD_VALUE=true)")
     cur.execute("ALTER TABLE pgbench_branches ALTER COLUMN bbalance SET (LOG_OLD_VALUE=true)")
     cur.execute("ALTER TABLE pgbench_tellers ALTER COLUMN tbalance SET (LOG_OLD_VALUE=true);")
@@ -28,7 +31,10 @@ def pgbench_install(db, replication_set=None, pg=None):
 def pgbench_run(db, Rate, Time, pg=None):
   """Run pgBench"""
   pg_v = util.get_pg_v(pg)
-  os.system(f"{pg_v}{os.sep}bin{os.sep}pgbench -R {Rate} -T {Time} -n {db}")
+  pg = pg_v.replace('pg', '')
+  pgbench_cmd = f'"pgbench -R {Rate} -T {Time} -n {db}"'
+  util.echo_cmd(f"./nc pgbin " + str(pg) +  " " + pgbench_cmd)
+  ##os.system(f"{pg_v}{os.sep}bin{os.sep}pgbench -R {Rate} -T {Time} -n {db}")
 
 
 def pgbench_validate(db, pg=None):
