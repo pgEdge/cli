@@ -252,9 +252,12 @@ def sub_create(subscription_name, provider_dsn, db,
   pg_v = util.get_pg_v(pg)
   sql = "SELECT spock.sub_create(" + \
            get_eq("subscription_name",     subscription_name,     ", ") + \
-           get_eq("provider_dsn",          provider_dsn,          ", ") + \
-           get_eq("replication_sets",      ','.join(replication_sets) ,", ", True) + \
-           get_eq("synchronize_structure", synchronize_structure, ", ") + \
+           get_eq("provider_dsn",          provider_dsn,          ", ") 
+  if "," in str(replication_sets):
+    sql = sql + get_eq("replication_sets", ','.join(replication_sets) ,", ", True)
+  else:
+    sql = sql + get_eq("replication_sets", replication_sets ,", ", True)
+  sql = sql + get_eq("synchronize_structure", synchronize_structure, ", ") + \
            get_eq("synchronize_data",      synchronize_data,      ", ") + \
            get_eq("forward_origins",       str(forward_origins), ", ", True) + \
            get_eq("apply_delay",           apply_delay,           ")")
