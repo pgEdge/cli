@@ -70,6 +70,8 @@ def create(db=None, User=None, Passwd=None, Id=None, pg=None):
   cmd = "createdb '" + db + "' --owner='" + User + "'"
   rc2 = util.echo_cmd(ncb  + '"' + cmd + '"')
 
+  util.echo_cmd(nc + "tune pg" + str(pg))
+
   if str(pg) == "17":
     spock_comp = "spock32-pg" + str(pg)
   else:

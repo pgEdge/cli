@@ -143,7 +143,6 @@ time.sleep(3)
 
 db.create(db1, usr, passwd, None, pgN)
 
-osSys(nc + "tune " + pgV)
 time.sleep(3)
 
 if withPOSTGREST == "True":
