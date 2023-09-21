@@ -5,7 +5,7 @@
 # (The northwind database originates from microsoft : http://northwinddatabase.codeplex.com/license)
 # Microsoft Public License (Ms-PL)
 
-import util, cluster, os
+import util, cluster, os, sys
 
 g_tables = "northwind.*"
 
@@ -79,36 +79,13 @@ def remove(cluster_name):
   il, db, pg, count, db_usr, db_passwd, os_user, ssh_key, nodes = cluster.load_json(cluster_name)
   db_pg = " " + str(db) + " --pg=" + str(pg)
 
+  rc2 = 0
   for pub in nodes:
-    try:
-      pubport = str(pub["port"])
-    except Exception as e:
-      pubport = "5432"
-    pub_ip_port = "host=" + str(pub["ip"]) + " port=" + pubport
-    spk = pub["path"] + "/pgedge/nodectl spock "
+    app = pub["path"] + "/pgedge/nodectl app "
     host = pub["ip"]
+    print("")
+    rc1 = util.echo_cmd(app + "northwind-remove " + db_pg, host=host, usr=os_user, key=ssh_key)
+    rc2 = rc2 + rc1
 
-    for sub in nodes:
-      try:
-        subport = str(sub["port"])
-      except Exception as e:
-        subport = "5432"
-      sub_ip_port = "host=" + str(sub["ip"]) + " port=" + subport
-
-      if pub_ip_port != sub_ip_port:
-        sub_name = "sub_" + pub["nodename"] + sub["nodename"] + " "
-        util.echo_cmd(spk + "sub-drop " + sub_name + db_pg, 
-                        host=host, usr=os_user, key=ssh_key)
-
-  for nd in nodes:
-    host = nd["ip"]
-    nc =nd["path"] + "/pgedge/nodectl "
-    spk = nc + "spock "
-    util.echo_cmd(spk + "repset-drop " + g_repset + " " + db_pg, 
-                    host=host, usr=os_user, key=ssh_key)
-    util.echo_cmd(spk + "node-drop " + nd["nodename"] + db_pg, 
-                    host=host, usr=os_user, key=ssh_key)
-
-    cmd = nc + " psql " + str(pg) + " -c \"DROP SCHEMA northwind CASCADE\" " + str(db)
-    util.echo_cmd(cmd, host=host, usr=os_user, key=ssh_key)
+  sys.exit(rc2)
 
