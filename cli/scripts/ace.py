@@ -30,8 +30,6 @@ BLOCK_OK = 0
 MAX_DIFF_EXCEEDED = 1
 BLOCK_MISMATCH = 2
 
-# pbar = tqdm(total=100, leave=False)
-
 
 def prCyan(skk):
     print("\033[96m {}\033[00m".format(skk))
@@ -336,16 +334,16 @@ def compare_checksums(
         dbname=db,
         user=usr,
         password=passwd,
-        host=nodes[0]['ip'],
-        port=nodes[0].get('port', 5432),
+        host=nodes[0]["ip"],
+        port=nodes[0].get("port", 5432),
         prepare_threshold=1,
     )
     con2 = psycopg.connect(
         dbname=db,
         user=usr,
         password=passwd,
-        host=nodes[1]['ip'],
-        port=nodes[1].get('port', 5432),
+        host=nodes[1]["ip"],
+        port=nodes[1].get("port", 5432),
         prepare_threshold=1,
     )
 
@@ -440,16 +438,13 @@ def diff_tables(
     table_name,
     block_rows=1000,
     max_cpu_ratio=MAX_CPU_RATIO,
-    output='csv'
+    pretty_print=False,
 ):
     """Efficiently compare tables across cluster using optional checksums and blocks of rows."""
 
     # Capping max block size here to prevent the has function from taking forever
     if block_rows > MAX_ALLOWED_BLOCK_SIZE:
         util.exit_message(f"Desired block row size is > {MAX_ALLOWED_BLOCK_SIZE}")
-
-    if output not in ['csv', 'json']:
-        util.exit_message("Bad output format. Supported: 'csv', 'json'")
 
     bad_br = True
     try:
@@ -494,8 +489,8 @@ def diff_tables(
                     dbname=db,
                     user=usr,
                     password=passwd,
-                    host=nd['ip'],
-                    port=nd.get('port', 5432),
+                    host=nd["ip"],
+                    port=nd.get("port", 5432),
                 )
             elif n == 2:
                 util.message(
@@ -505,8 +500,8 @@ def diff_tables(
                     dbname=db,
                     user=usr,
                     password=passwd,
-                    host=nd['ip'],
-                    port=nd.get('port', 5432),
+                    host=nd["ip"],
+                    port=nd.get("port", 5432),
                 )
             else:
                 util.message(
@@ -594,31 +589,34 @@ def diff_tables(
 
         else:
             util.message("\n\n####### TABLES DO NOT MATCH ########\n")
-            util.message(f"\n####### FOUND {row_diff_count.value} DIFFERENCES ########\n")
+            util.message(
+                f"\n####### FOUND {row_diff_count.value} DIFFERENCES ########\n"
+            )
 
-        if output == 'csv':
-            write_diffs_csv(c1_cols, l_schema, l_table)
-            util.message("\n###### Diff written to out.diff ######")
-        elif output == 'json':
-            write_diffs_json(c1_cols, block_rows, l_schema, l_table)
+            pretty = True if pretty_print else False
+            write_diffs_json(
+                c1_cols, block_rows, l_schema, l_table, pretty_print=pretty
+            )
 
     else:
         util.message("\n####### TABLES MATCH OK ##########")
 
     run_time = datetime.now() - start_time
-    util.message(f"\n## run_time = {run_time} ##############################")
+    util.message(
+        f"\n## TOTAL ROWS CHECKED = {t1_rows + t2_rows}. RUN TIME = {run_time} ##############################"
+    )
 
-def write_diffs_json(cols, block_rows, l_schema, l_table):
 
+def write_diffs_json(cols, block_rows, l_schema, l_table, pretty_print=False):
     output_json = {}
 
-    output_json['total_diffs'] = row_diff_count.value
-    output_json['block_size'] = block_rows
-    output_json['diffs'] = []
+    output_json["total_diffs"] = row_diff_count.value
+    output_json["block_size"] = block_rows
+    output_json["diffs"] = []
 
-    diff_json = output_json['diffs']
+    diff_json = output_json["diffs"]
 
-    cols = cols.split(',')
+    cols = cols.split(",")
 
     for cur_entry in queue:
         offset = cur_entry["offset"]
@@ -627,15 +625,16 @@ def write_diffs_json(cols, block_rows, l_schema, l_table):
 
         entry_json = {}
 
-        entry_json['offset'] = offset
-        entry_json['t1_rows'] = [dict(zip(cols, row)) for row in t1_rows]
-        entry_json['t2_rows'] = [dict(zip(cols, row)) for row in t2_rows]
+        entry_json["offset"] = offset
+        entry_json["t1_rows"] = [dict(zip(cols, row)) for row in t1_rows]
+        entry_json["t2_rows"] = [dict(zip(cols, row)) for row in t2_rows]
 
         diff_json.append(entry_json)
 
-    util.message(json.dumps(output_json, indent=2, sort_keys=True, default=str))
-
-    return output_json
+    if pretty_print:
+        print(json.dumps(output_json, indent=2, default=str))
+    else:
+        print(json.dumps(output_json, default=str))
 
 
 def write_diffs_csv(c1_cols, l_schema, l_table):
@@ -650,8 +649,8 @@ def write_diffs_csv(c1_cols, l_schema, l_table):
         t1_writer = csv.writer(f1)
         t2_writer = csv.writer(f2)
 
-        t1_writer.writerow(c1_cols.split(','))
-        t2_writer.writerow(c1_cols.split(','))
+        t1_writer.writerow(c1_cols.split(","))
+        t2_writer.writerow(c1_cols.split(","))
 
         for cur_entry in queue:
             offset = cur_entry["offset"]
