@@ -4,7 +4,7 @@
 
 """ACE is the place of the Anti Chaos Engine"""
 
-import os, sys, itertools, csv, random, time, json, socket, subprocess, re
+import os, sys, itertools, csv, random, time, json, socket, subprocess, re, asyncio
 import util, fire, meta, cluster, psycopg
 from datetime import datetime
 from multiprocessing import Manager, Pool, cpu_count, Value, Queue
@@ -316,6 +316,13 @@ def run_apply_async_multiprocessing(func, argument_list, num_processes):
 
     return result_list_tqdm
 
+async def run_query(conn_str, query):
+    async with await psycopg.AsyncConnection.connect(conn_str) as aconn:
+        async with aconn.cursor() as acur:
+            await acur.execute(query)
+            results = await acur.fetchall()
+            return results
+
 
 def compare_checksums(
     cluster_name, table_name, p_key, block_rows, offset, total_offsets
@@ -325,112 +332,98 @@ def compare_checksums(
     hash1 = ""
     hash2 = ""
 
+    hash_sql = f"""
+    SELECT md5(cast(array_agg(t.* ORDER BY {p_key}) AS text))
+    FROM (SELECT *
+            FROM {table_name}
+            ORDER BY {p_key}
+            OFFSET {offset}
+            LIMIT {block_rows}) t;
+    """
+
+    block_sql = f"""
+    SELECT *
+    FROM {table_name}
+    ORDER BY {p_key}
+    OFFSET {offset}
+    LIMIT {block_rows}
+    """
+
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+
     # Read cluster information and connect to the local instance of pgcat
     il, db, pg, count, usr, passwd, os_usr, cert, nodes = cluster.load_json(
         cluster_name
     )
 
-    con1 = psycopg.connect(
-        dbname=db,
-        user=usr,
-        password=passwd,
-        host=nodes[0]["ip"],
-        port=nodes[0].get("port", 5432),
-        prepare_threshold=1,
-    )
-    con2 = psycopg.connect(
-        dbname=db,
-        user=usr,
-        password=passwd,
-        host=nodes[1]["ip"],
-        port=nodes[1].get("port", 5432),
-        prepare_threshold=1,
-    )
+    conn_str1 = f"dbname = {db} user={usr} password={passwd} host={nodes[0]['ip']} port={nodes[0].get('port', 5432)}"
+    conn_str2 = f"dbname = {db} user={usr} password={passwd} host={nodes[1]['ip']} port={nodes[1].get('port', 5432)}"
 
-    with con1.cursor() as cur1, con2.cursor() as cur2:
-        hash_sql = f"""
-        SELECT md5(cast(array_agg(t.* ORDER BY {p_key}) AS text))
-        FROM (SELECT *
-                FROM {table_name}
-                ORDER BY {p_key}
-                OFFSET {offset}
-                LIMIT {block_rows}) t;
-        """
+    task1 = loop.create_task(run_query(conn_str1, hash_sql))
+    task2 = loop.create_task(run_query(conn_str2, hash_sql))
 
-        block_sql = f"""
-        SELECT *
-        FROM {table_name}
-        ORDER BY {p_key}
-        OFFSET {offset}
-        LIMIT {block_rows}
-        """
+    loop.run_until_complete(asyncio.gather(task1, task2))
 
-        # Get the hash of the block from both tables we are
-        # currently looking at.
-        # start = time.time()
-        cur1.execute(hash_sql)
-        hash1 = cur1.fetchone()[0]
+    hash1 = task1.result()[0]
+    hash2 = task2.result()[0]
 
-        cur2.execute(hash_sql)
-        hash2 = cur2.fetchone()[0]
+    if hash1[0] != hash2[0]:
+        task1 = loop.create_task(run_query(conn_str1, block_sql))
+        task2 = loop.create_task(run_query(conn_str2, block_sql))
 
-        if hash1 != hash2:
-            # Get mismatching blocks from both tables
-            cur1.execute(block_sql)
-            t1_result = cur1.fetchall()
-            cur2.execute(block_sql)
-            t2_result = cur2.fetchall()
+        loop.run_until_complete(asyncio.gather(task1, task2))
 
-            t1_tuples = []
+        t1_result = task1.result()
+        t2_result = task2.result()
 
-            for tup in t1_result:
-                str_tup = tuple(str(elem) for elem in tup)
-                t1_tuples.append(str_tup)
+        t1_tuples = []
 
-            t2_tuples = []
+        for tup in t1_result:
+            str_tup = tuple(str(elem) for elem in tup)
+            t1_tuples.append(str_tup)
 
-            for tup in t2_result:
-                str_tup = tuple(str(elem) for elem in tup)
-                t2_tuples.append(str_tup)
+        t2_tuples = []
 
-            t1_set = OrderedSet(t1_result)
-            t2_set = OrderedSet(t2_result)
+        for tup in t2_result:
+            str_tup = tuple(str(elem) for elem in tup)
+            t2_tuples.append(str_tup)
 
-            t1_diff = t1_set - t2_set
-            t2_diff = t2_set - t1_set
+        t1_set = OrderedSet(t1_result)
+        t2_set = OrderedSet(t2_result)
 
-            block_result = {
-                "offset": offset,
-                "t1_rows": t1_diff,
-                "t2_rows": t2_diff,
-            }
+        t1_diff = t1_set - t2_set
+        t2_diff = t2_set - t1_set
 
-            if len(t1_diff) > 0 or len(t2_diff) > 0:
-                # util.message(f"\nFound block mismatch at offset: {offset}")
-                queue.append(block_result)
+        block_result = {
+            "offset": offset,
+            "t1_rows": t1_diff,
+            "t2_rows": t2_diff,
+        }
 
-            with row_diff_count.get_lock():
-                row_diff_count.value += max(len(t1_diff), len(t2_diff))
+        if len(t1_diff) > 0 or len(t2_diff) > 0:
+            # util.message(f"\nFound block mismatch at offset: {offset}")
+            queue.append(block_result)
 
-            # We can only estimate how many diffs we may have.
-            # The actuall diff calc is done later by ydiff.
-            # So, even if there is just one row mismatch, and
-            # we hit this condition, we will still need
-            # to return early here.
-            # TODO: Figure out how to exit early here
-            if row_diff_count.value >= MAX_DIFF_ROWS:
-                result_queue.append(MAX_DIFF_EXCEEDED)
-                return MAX_DIFF_EXCEEDED, total_offsets
-            else:
-                result_queue.append(BLOCK_MISMATCH)
-                return BLOCK_MISMATCH, total_offsets
+        with row_diff_count.get_lock():
+            row_diff_count.value += max(len(t1_diff), len(t2_diff))
 
+        # We can only estimate how many diffs we may have.
+        # The actuall diff calc is done later by ydiff.
+        # So, even if there is just one row mismatch, and
+        # we hit this condition, we will still need
+        # to return early here.
+        # TODO: Figure out how to exit early here
+        if row_diff_count.value >= MAX_DIFF_ROWS:
+            result_queue.append(MAX_DIFF_EXCEEDED)
+            return MAX_DIFF_EXCEEDED, total_offsets
         else:
-            result_queue.append(BLOCK_OK)
-            return BLOCK_OK, total_offsets
+            result_queue.append(BLOCK_MISMATCH)
+            return BLOCK_MISMATCH, total_offsets
 
-
-# TODO: Add feature to allow users to specify offset and limit
+    else:
+        result_queue.append(BLOCK_OK)
+        return BLOCK_OK, total_offsets
 
 
 def diff_tables(
