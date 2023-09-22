@@ -5,7 +5,7 @@
 """ACE is the place of the Anti Chaos Engine"""
 
 import os, sys, itertools, csv, random, time, json, socket, subprocess, re
-import util, fire, meta, cluster
+import util, fire, meta, cluster, psycopg
 from datetime import datetime
 from multiprocessing import Manager, Pool, cpu_count, Value, Queue
 from tqdm import tqdm
@@ -13,28 +13,17 @@ from ordered_set import OrderedSet
 
 l_dir = "/tmp"
 
-try:
-    import psycopg
-except ImportError as e:
-    util.exit_message("Missing 'psycopg' module from pip", 1)
-
 # Shared variables needed by multiprocessing
 queue = Manager().list()
 result_queue = Manager().list()
 job_queue = Queue()
 row_diff_count = Value("I", 0)
 
-#PGCAT_HOST = "localhost"
-#PGCAT_PORT = 5432
-#PGCAT_DB1 = "db1"
-#PGCAT_DB2 = "db2"
-
 # Set max number of rows up to which
 # diff-tables will work
 MAX_DIFF_ROWS = 10000
 MAX_ALLOWED_BLOCK_SIZE = 50000
 MAX_CPU_RATIO = 0.6
-
 
 # Return codes for compare_checksums
 BLOCK_OK = 0
@@ -343,7 +332,6 @@ def compare_checksums(
         cluster_name
     )
 
-    # TODO: Temporary fix. Need to remove hardcoded values here
     con1 = psycopg.connect(
         dbname=db,
         user=usr,
@@ -449,10 +437,8 @@ def compare_checksums(
 
 def diff_tables(
     cluster_name,
-    table_name=None,
-    rep_set=None,
-    checksum_use=False,
-    block_rows=1,
+    table_name,
+    block_rows=1000,
     max_cpu_ratio=MAX_CPU_RATIO,
     output='csv'
 ):
@@ -474,13 +460,6 @@ def diff_tables(
         pass
     if bad_br:
         util.exit_message(f"block_rows parm '{block_rows}' must be integer >= 10")
-
-    if str(checksum_use) == "True" or str(checksum_use) == "False":
-        pass
-    else:
-        util.exit_message(
-            f"checksum_use parm '{checksum_use}' must be 'True' or 'False'"
-        )
 
     util.message(f"\n## Validating cluster {cluster_name} exists")
     util.check_cluster_exists(cluster_name)
