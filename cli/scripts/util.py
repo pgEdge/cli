@@ -666,20 +666,16 @@ def install_comp(p_app, p_ver=0, p_rver=None, p_re_install=False):
   return(0)
 
 
+## use lbzip2 when available for dramatic speedups when unzipping an archive
 def posix_unpack(file_nm):
-
   rc = os.system("lbzip2 --version > /dev/null 2>&1")
   if rc == 0:
-    message("  using lbzip2")
-    rc = os.system(f"lbzip2 -kfd {file_nm}")
+    rc = echo_cmd(f"lbzip2 -dc {file_nm} | tar xf -")
     if rc == 1:
       return(1)
-    file_nm = file_nm.replace(".bz2", "")
-    rc = os.system(f"tar -xf {file_nm}")
-    os.system(f"rm -f {file_nm}")
     return(rc)
 
-  return(os.system(f"tar -xf {file_nm}"))
+  return(echo_cmd(f"tar -xf {file_nm}"))
 
 
 ## Download tarball component and verify against checksum ###############
