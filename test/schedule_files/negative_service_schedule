@@ -1,0 +1,10 @@
+t/020_nodectl_install_pgedge.pl
+t/2000_service_setup_script_pg16.pl
+t/start_service_component.pl
+t/stop_service_component.pl
+t/status_without_flag.pl
+t/enable_service_component.pl
+t/disable_service_component.pl
+t/enable_more_components_pg16.pl
+t/disable_more_components_pg16.pl
+t/2990_service_breakdown_with_control_check_pg16.pl
