@@ -1,7 +1,8 @@
 # pgEdge Platform Release Notes #############
 
 
-## done for 23.130 as of 2023-09-21
+## done for 23.130 as of 2023-09-26
+  - installing spock now sets hot_standby_feedback='on' & wal_sender_timeout='5s'
   - new `app` cli is code complete
   - refactor `pgbench.py` & `northwind.py` to use `app.py` where appropriate
   - app.run_northwind() now supports Rate & Time same as run_pgbench()

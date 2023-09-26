@@ -14,6 +14,9 @@ util.change_pgconf_keyval("pgXX", "max_worker_processes", str(max_worker_procs),
 util.change_pgconf_keyval("pgXX", "max_replication_slots", "16", True)
 util.change_pgconf_keyval("pgXX", "max_wal_senders", "16", True)
 
+util.change_pgconf_keyval("pgXX", "hot_standby_feedback", "on", True)
+util.change_pgconf_keyval("pgXX", "wal_sender_timeout", "5s", True)
+
 util.change_pgconf_keyval("pgXX", "track_commit_timestamp", "on", True)
 #util.change_pgconf_keyval("pgXX", "log_min_messages", "debug3", True)
 
