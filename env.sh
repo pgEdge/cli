@@ -4,7 +4,7 @@ api=nodectl
 hubV=23.130
 
 spock32V=3.2dev1-1
-spock31V=3.1.6-1
+spock31V=3.1.7-1
 catV=1.1.1
 ncdV=1.0
 

@@ -1,7 +1,8 @@
 # pgEdge Platform Release Notes #############
 
 
-## done for 23.130 as of 2023-09-26
+## done for 23.130 on 2023-09-27
+  - bump spock to 3.1.7
   - installing spock now sets hot_standby_feedback='on' & wal_sender_timeout='5s'
   - new `app` cli is code complete
   - refactor `pgbench.py` & `northwind.py` to use `app.py` where appropriate
@@ -10,7 +11,7 @@
   - bump postgrest to 11.2.0
   - bump hintplan and add support for pg16
   - add support for pg16 to plv8 3.2.0
-  - dramatic improvements to ACE as it is polished pre GA
+  - improvements to ACE diff-tables for 1st GA
   - update nclibs with new ACE reqmnts (tqdm & ordered-set)
   - welcome pg17dev & spock32dev
   - quite down new lbzip2 output 
