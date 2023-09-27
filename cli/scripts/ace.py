@@ -317,6 +317,7 @@ def run_apply_async_multiprocessing(func, argument_list, num_processes):
 
     return result_list_tqdm
 
+
 async def run_query(conn_str, query):
     async with await psycopg.AsyncConnection.connect(conn_str) as aconn:
         async with aconn.cursor() as acur:
@@ -326,7 +327,13 @@ async def run_query(conn_str, query):
 
 
 def compare_checksums(
-    cluster_name, node_list, table_name, p_key, block_rows, offset, 
+    cluster_name,
+    node_list,
+    table_name,
+    cols,
+    p_key,
+    block_rows,
+    offset,
 ):
     global row_diff_count
 
@@ -355,6 +362,10 @@ def compare_checksums(
     # combinations = [('n1,n2'), ('n1', 'n3'), ('n2', 'n3')]
     node_pairs = combinations(node_list, 2)
 
+    block_result = {}
+    block_result["offset"] = offset
+    block_result["diffs"] = []
+
     for node_pair in node_pairs:
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
@@ -364,11 +375,11 @@ def compare_checksums(
             cluster_name
         )
 
-        host1 = next(filter(lambda x: x.get('nodename') == node_pair[0], nodes))
-        host2 = next(filter(lambda x: x.get('nodename') == node_pair[1], nodes))
+        host1 = next(filter(lambda x: x.get("nodename") == node_pair[0], nodes))
+        host2 = next(filter(lambda x: x.get("nodename") == node_pair[1], nodes))
 
         conn_str1 = f"dbname = {db} user={usr} password={passwd} host={host1['ip']} port={host1.get('port', 5432)}"
-        conn_str1 = f"dbname = {db} user={usr} password={passwd} host={host2['ip']} port={host2.get('port', 5432)}"
+        conn_str2 = f"dbname = {db} user={usr} password={passwd} host={host2['ip']} port={host2.get('port', 5432)}"
 
         task1 = loop.create_task(run_query(conn_str1, hash_sql))
         task2 = loop.create_task(run_query(conn_str2, hash_sql))
@@ -405,24 +416,17 @@ def compare_checksums(
             t1_diff = t1_set - t2_set
             t2_diff = t2_set - t1_set
 
-            block_result = {
-                "offset": offset,
-                host1['nodename']: t1_diff,
-                host2['nodename']: t2_diff,
-            }
-
             if len(t1_diff) > 0 or len(t2_diff) > 0:
-                # util.message(f"\nFound block mismatch at offset: {offset}")
-                queue.append(block_result)
+                block_result["diffs"].append(
+                    {
+                        host1["nodename"]: [dict(zip(cols, row)) for row in t1_diff],
+                        host2["nodename"]: [dict(zip(cols, row)) for row in t2_diff],
+                    }
+                )
 
             with row_diff_count.get_lock():
                 row_diff_count.value += max(len(t1_diff), len(t2_diff))
 
-            # We can only estimate how many diffs we may have.
-            # The actuall diff calc is done later by ydiff.
-            # So, even if there is just one row mismatch, and
-            # we hit this condition, we will still need
-            # to return early here.
             # TODO: Figure out how to exit early here
             if row_diff_count.value >= MAX_DIFF_ROWS:
                 result_queue.append(MAX_DIFF_EXCEEDED)
@@ -432,6 +436,9 @@ def compare_checksums(
         else:
             result_queue.append(BLOCK_OK)
 
+    if len(block_result["diffs"]) > 0:
+        queue.append(block_result)
+
 
 def diff_tables(
     cluster_name,
@@ -439,7 +446,7 @@ def diff_tables(
     block_rows=1000,
     max_cpu_ratio=MAX_CPU_RATIO,
     pretty_print=False,
-    nodes="all"
+    nodes="all",
 ):
     """Efficiently compare tables across cluster using optional checksums and blocks of rows."""
 
@@ -456,18 +463,21 @@ def diff_tables(
         pass
     if bad_br:
         util.exit_message(f"block_rows parm '{block_rows}' must be integer >= 10")
-    
+
     node_list = []
 
     try:
         if nodes != "all":
-            node_list = nodes.split(',')
+            node_list = nodes.split(",")
     except Exception as e:
-        util.exit_message('Nodes should be a comma-separated list of nodenames. E.g., --nodes="n1,n2"')
+        util.exit_message(
+            'Nodes should be a comma-separated list of nodenames. E.g., --nodes="n1,n2"'
+        )
 
     if len(node_list) > 3:
-        util.exit_message('diff-tables currently supports up to a three-way table comparison')
-
+        util.exit_message(
+            "diff-tables currently supports up to a three-way table comparison"
+        )
 
     util.message(f"\n## Validating cluster {cluster_name} exists")
     util.check_cluster_exists(cluster_name)
@@ -480,7 +490,7 @@ def diff_tables(
 
     util.message(f"\n## Validating table {table_name} is comparable across nodes")
 
-    il, db, pg, count, usr, passwd, os_usr, cert, nodes = cluster.load_json(
+    il, db, pg, count, usr, passwd, os_usr, cert, cluster_nodes = cluster.load_json(
         cluster_name
     )
 
@@ -489,13 +499,22 @@ def diff_tables(
     util.message(f"\n## Validating connections to each node in cluster")
 
     try:
-        for nd in nodes:
-            if (node_list and nd['nodename'] in node_list) or (not node_list):
+        for nd in cluster_nodes:
+            if nodes == "all":
+                node_list.append(nd["nodename"])
+
+            if (node_list and nd["nodename"] in node_list) or (not node_list):
                 util.message(
                     f'### Getting Conection to ({nd["nodename"]}) - {usr}@{nd["ip"]}:{nd.get("port",5432)}/{db}'
                 )
-                psql_conn = psycopg.connect(dbname=db, user=usr, password=passwd, host=nd["ip"], port=nd.get("port", 5432))
-                conn_info = {"nodename": nd['nodename'], 'connection_obj': psql_conn}
+                psql_conn = psycopg.connect(
+                    dbname=db,
+                    user=usr,
+                    password=passwd,
+                    host=nd["ip"],
+                    port=nd.get("port", 5432),
+                )
+                conn_info = {"nodename": nd["nodename"], "connection_obj": psql_conn}
                 conn_list.append(conn_info)
     except Exception as e:
         util.exit_message("Error in diff_tbls() Getting Connections:\n" + str(e), 1)
@@ -505,11 +524,11 @@ def diff_tables(
 
     for conn in conn_list:
         util.message(f"\n## Validating table {table_name} is comparable across nodes")
-        curr_cols = get_cols(conn, l_schema, l_table)
-        curr_key = get_key(conn, l_schema, l_table)
+        curr_cols = get_cols(conn["connection_obj"], l_schema, l_table)
+        curr_key = get_key(conn["connection_obj"], l_schema, l_table)
 
         if curr_cols and curr_key:
-            util.message(f"## con1 cols={c1_cols}  key={c1_key}")
+            util.message(f"## con1 cols={curr_cols}  key={curr_key}")
         else:
             if not curr_cols:
                 util.exit_message(f"Invalid table name '{table_name}'")
@@ -528,9 +547,11 @@ def diff_tables(
         key = curr_key
 
     row_count = 0
+    total_rows = 0
 
     for conn in conn_list:
-        rows = get_row_count(conn, l_schema, l_table)
+        rows = get_row_count(conn["connection_obj"], l_schema, l_table)
+        total_rows += rows
         if rows > row_count:
             row_count = rows
 
@@ -547,14 +568,7 @@ def diff_tables(
     total_offsets = len(offsets)
 
     arg_list = [
-        (
-            cluster_name,
-            table_name,
-            key,
-            block_rows,
-            offset,
-            total_offsets,
-        )
+        (cluster_name, node_list, table_name, cols.split(","), key, block_rows, offset)
         for offset in offsets
     ]
 
@@ -587,16 +601,14 @@ def diff_tables(
             )
 
             pretty = True if pretty_print else False
-            write_diffs_json(
-                c1_cols, block_rows, l_schema, l_table, pretty_print=pretty
-            )
+            write_diffs_json(cols, block_rows, l_schema, l_table, pretty_print=pretty)
 
     else:
         util.message("\n####### TABLES MATCH OK ##########")
 
     run_time = datetime.now() - start_time
     util.message(
-        f"\n## TOTAL ROWS CHECKED = {t1_rows + t2_rows}. RUN TIME = {run_time} ##############################"
+        f"\n## TOTAL ROWS CHECKED = {total_rows}. RUN TIME = {run_time} ##############################"
     )
 
 
@@ -605,24 +617,7 @@ def write_diffs_json(cols, block_rows, l_schema, l_table, pretty_print=False):
 
     output_json["total_diffs"] = row_diff_count.value
     output_json["block_size"] = block_rows
-    output_json["diffs"] = []
-
-    diff_json = output_json["diffs"]
-
-    cols = cols.split(",")
-
-    for cur_entry in queue:
-        offset = cur_entry["offset"]
-        t1_rows = cur_entry["t1_rows"]
-        t2_rows = cur_entry["t2_rows"]
-
-        entry_json = {}
-
-        entry_json["offset"] = offset
-        entry_json["t1_rows"] = [dict(zip(cols, row)) for row in t1_rows]
-        entry_json["t2_rows"] = [dict(zip(cols, row)) for row in t2_rows]
-
-        diff_json.append(entry_json)
+    output_json["diffs"] = [cur_entry for cur_entry in queue]
 
     if pretty_print:
         print(json.dumps(output_json, indent=2, default=str))
