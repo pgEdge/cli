@@ -468,7 +468,7 @@ def diff_tables(
 
     try:
         if nodes != "all":
-            node_list = nodes.split(",")
+            node_list = [s.strip() for s in nodes.split(",")]
     except Exception as e:
         util.exit_message(
             'Nodes should be a comma-separated list of nodenames. E.g., --nodes="n1,n2"'
