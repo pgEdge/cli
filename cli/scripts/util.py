@@ -2,7 +2,7 @@
 #  Copyright 2022-2023 PGEDGE  All rights reserved. #
 #####################################################
 
-MY_VERSION = "23.130"
+MY_VERSION = "23.131"
 
 from subprocess import Popen, PIPE, STDOUT
 from datetime import datetime, timedelta
@@ -12,10 +12,10 @@ import hashlib, glob, random, json, uuid, logging, tempfile
 import shutil, filecmp, traceback, time, subprocess, getpass
 import tarfile
 
-## Psycopg is only needed for advanced functionality
 try:
   import psycopg
 except Exception as e:
+  ## Psycopg is only needed for advanced functionality
   pass
 
 import api, meta
