@@ -125,7 +125,7 @@ INSERT INTO categories VALUES (9,  87, 'Management & Monitoring', 'Manage/Monito
 -- ## HUB ################################
 INSERT INTO projects VALUES ('hub', 'app', 0, 0, 'hub', 0, 'https://github.com/pgedge/nodectl','',0,'','','');
 INSERT INTO releases VALUES ('hub', 1, 'hub', '', '', 'hidden', '', 1, '', '', '');
-INSERT INTO versions VALUES ('hub', '23.131', '',  1, '20231001', '', '', '');
+INSERT INTO versions VALUES ('hub', '23.131', '',  1, '20230928', '', '', '');
 INSERT INTO versions VALUES ('hub', '23.130', '',  0, '20230927', '', '', '');
 INSERT INTO versions VALUES ('hub', '23.129', '',  0, '20230914', '', '', '');
 INSERT INTO versions VALUES ('hub', '23.128', '',  0, '20230829', '', '', '');
@@ -347,7 +347,7 @@ INSERT INTO versions VALUES ('spock31-pg15', '3.1.5-1', 'el9, arm9', 0, '2023082
 INSERT INTO versions VALUES ('spock31-pg16', '3.1.5-1', 'el9, arm9', 0, '20230829', 'pg16', '', '');
 
 INSERT INTO releases VALUES ('spock32-pg17', 4, 'spock', 'Spock', '', 'test', '', 1, 'pgEdge Community', '', '');
-INSERT INTO versions VALUES ('spock32-pg17', '3.2dev1-1', 'el9, arm9', 1, '20230927', 'pg17', '', '');
+INSERT INTO versions VALUES ('spock32-pg17', '3.2dev2-1', 'el9', 1, '20230928', 'pg17', '', '');
 
 INSERT INTO projects VALUES ('pglogical', 'ext', 4, 0, 'hub', 1, 'https://github.com/2ndQuadrant/pglogical/releases',
   'pglogical', 1, 'spock.png', 'Logical Replication', 'https://github.com/2ndQuadrant/pglogical');
