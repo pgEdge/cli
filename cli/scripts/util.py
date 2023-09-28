@@ -734,10 +734,13 @@ def create_extension(p_pg, p_ext, p_reboot=False, p_extension="", p_cascade=Fals
   if p_extension == "":
     p_extension = p_ext
 
-  cmd = "CREATE EXTENSION IF NOT EXISTS " + p_extension
-  if p_cascade:
-    cmd = cmd + " CASCADE"
-  run_sql_cmd (p_pg, cmd, True)
+  if p_extension == "none":
+    pass
+  else:
+    cmd = "CREATE EXTENSION IF NOT EXISTS " + p_extension
+    if p_cascade:
+      cmd = cmd + " CASCADE"
+    run_sql_cmd (p_pg, cmd, True)
 
   return True
 

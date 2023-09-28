@@ -7,6 +7,7 @@ spock32V=3.2dev2-1
 spock31V=3.1.7-1
 catV=1.1.1
 ncdV=1.0
+foslotsV=1a-1
 
 pgedgeV=2-5
 
