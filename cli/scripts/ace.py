@@ -1,4 +1,4 @@
-#####################################################
+####################################################
 #  Copyright 2022-2023 PGEDGE  All rights reserved. #
 #####################################################
 
@@ -30,6 +30,7 @@ MAX_CPU_RATIO = 0.6
 BLOCK_OK = 0
 MAX_DIFF_EXCEEDED = 1
 BLOCK_MISMATCH = 2
+BLOCK_ERROR = 3
 
 
 def prCyan(skk):
@@ -337,8 +338,8 @@ def compare_checksums(
 ):
     global row_diff_count
 
-    hash1 = ""
-    hash2 = ""
+    if row_diff_count.value >= MAX_DIFF_ROWS:
+        return
 
     hash_sql = f"""
     SELECT md5(cast(array_agg(t.* ORDER BY {p_key}) AS text))
@@ -366,28 +367,38 @@ def compare_checksums(
     block_result["offset"] = offset
     block_result["diffs"] = []
 
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+
+    # Read cluster information and connect to the local instance of pgcat
+    il, db, pg, count, usr, passwd, os_usr, cert, nodes = cluster.load_json(
+        cluster_name
+    )
+
     for node_pair in node_pairs:
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
+        if row_diff_count.value >= MAX_DIFF_ROWS:
+            queue.append(block_result)
+            return
 
-        # Read cluster information and connect to the local instance of pgcat
-        il, db, pg, count, usr, passwd, os_usr, cert, nodes = cluster.load_json(
-            cluster_name
-        )
+        try:
+            host1 = next(filter(lambda x: x.get("nodename") == node_pair[0], nodes))
+            host2 = next(filter(lambda x: x.get("nodename") == node_pair[1], nodes))
 
-        host1 = next(filter(lambda x: x.get("nodename") == node_pair[0], nodes))
-        host2 = next(filter(lambda x: x.get("nodename") == node_pair[1], nodes))
+            conn_str1 = f"dbname = {db} user={usr} password={passwd} host={host1['ip']} port={host1.get('port', 5432)}"
+            conn_str2 = f"dbname = {db} user={usr} password={passwd} host={host2['ip']} port={host2.get('port', 5432)}"
 
-        conn_str1 = f"dbname = {db} user={usr} password={passwd} host={host1['ip']} port={host1.get('port', 5432)}"
-        conn_str2 = f"dbname = {db} user={usr} password={passwd} host={host2['ip']} port={host2.get('port', 5432)}"
+            task1 = loop.create_task(run_query(conn_str1, hash_sql))
+            task2 = loop.create_task(run_query(conn_str2, hash_sql))
 
-        task1 = loop.create_task(run_query(conn_str1, hash_sql))
-        task2 = loop.create_task(run_query(conn_str2, hash_sql))
+            loop.run_until_complete(asyncio.gather(task1, task2))
 
-        loop.run_until_complete(asyncio.gather(task1, task2))
-
-        hash1 = task1.result()[0]
-        hash2 = task2.result()[0]
+            hash1 = task1.result()[0]
+            hash2 = task2.result()[0]
+        except Exception as e:
+            util.exit_message(
+                "Errored while connecting to database. Please check the nodenames you have provided"
+            )
+            return
 
         if hash1[0] != hash2[0]:
             task1 = loop.create_task(run_query(conn_str1, block_sql))
@@ -395,23 +406,8 @@ def compare_checksums(
 
             loop.run_until_complete(asyncio.gather(task1, task2))
 
-            t1_result = task1.result()
-            t2_result = task2.result()
-
-            t1_tuples = []
-
-            for tup in t1_result:
-                str_tup = tuple(str(elem) for elem in tup)
-                t1_tuples.append(str_tup)
-
-            t2_tuples = []
-
-            for tup in t2_result:
-                str_tup = tuple(str(elem) for elem in tup)
-                t2_tuples.append(str_tup)
-
-            t1_set = OrderedSet(t1_result)
-            t2_set = OrderedSet(t2_result)
+            t1_set = OrderedSet(task1.result())
+            t2_set = OrderedSet(task2.result())
 
             t1_diff = t1_set - t2_set
             t2_diff = t2_set - t1_set
@@ -427,9 +423,10 @@ def compare_checksums(
             with row_diff_count.get_lock():
                 row_diff_count.value += max(len(t1_diff), len(t2_diff))
 
-            # TODO: Figure out how to exit early here
             if row_diff_count.value >= MAX_DIFF_ROWS:
                 result_queue.append(MAX_DIFF_EXCEEDED)
+                queue.append(block_result)
+                return
             else:
                 result_queue.append(BLOCK_MISMATCH)
 
@@ -514,8 +511,7 @@ def diff_tables(
                     host=nd["ip"],
                     port=nd.get("port", 5432),
                 )
-                conn_info = {"nodename": nd["nodename"], "connection_obj": psql_conn}
-                conn_list.append(conn_info)
+                conn_list.append(psql_conn)
     except Exception as e:
         util.exit_message("Error in diff_tbls() Getting Connections:\n" + str(e), 1)
 
@@ -524,8 +520,8 @@ def diff_tables(
 
     for conn in conn_list:
         util.message(f"\n## Validating table {table_name} is comparable across nodes")
-        curr_cols = get_cols(conn["connection_obj"], l_schema, l_table)
-        curr_key = get_key(conn["connection_obj"], l_schema, l_table)
+        curr_cols = get_cols(conn, l_schema, l_table)
+        curr_key = get_key(conn, l_schema, l_table)
 
         if curr_cols and curr_key:
             util.message(f"## con1 cols={curr_cols}  key={curr_key}")
@@ -550,7 +546,7 @@ def diff_tables(
     total_rows = 0
 
     for conn in conn_list:
-        rows = get_row_count(conn["connection_obj"], l_schema, l_table)
+        rows = get_row_count(conn, l_schema, l_table)
         total_rows += rows
         if rows > row_count:
             row_count = rows
@@ -567,8 +563,10 @@ def diff_tables(
     offsets = [x for x in range(0, row_count + 1, block_rows)]
     total_offsets = len(offsets)
 
+    cols_list = cols.split(",")
+
     arg_list = [
-        (cluster_name, node_list, table_name, cols.split(","), key, block_rows, offset)
+        (cluster_name, node_list, table_name, cols_list, key, block_rows, offset)
         for offset in offsets
     ]
 
@@ -600,8 +598,7 @@ def diff_tables(
                 f"\n####### FOUND {row_diff_count.value} DIFFERENCES ########\n"
             )
 
-            pretty = True if pretty_print else False
-            write_diffs_json(cols, block_rows, l_schema, l_table, pretty_print=pretty)
+        write_diffs_json(cols, block_rows, l_schema, l_table, pretty_print=pretty_print)
 
     else:
         util.message("\n####### TABLES MATCH OK ##########")
