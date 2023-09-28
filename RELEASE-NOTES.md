@@ -1,6 +1,7 @@
 # pgEdge Platform Release Notes #############
 
 ## done for 23.131 as of 2023-09-28
+  - improve `cluster` commands by passing env REPO to remote sessions
 
 
 ## done for 23.130 on 2023-09-27
