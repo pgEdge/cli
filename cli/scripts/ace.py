@@ -444,6 +444,7 @@ def diff_tables(
     block_rows=1000,
     max_cpu_ratio=MAX_CPU_RATIO,
     pretty_print=False,
+    output='csv',
     nodes="all"
 ):
     """Efficiently compare tables across cluster using optional checksums and blocks of rows."""
@@ -451,6 +452,9 @@ def diff_tables(
     # Capping max block size here to prevent the has function from taking forever
     if block_rows > MAX_ALLOWED_BLOCK_SIZE:
         util.exit_message(f"Desired block row size is > {MAX_ALLOWED_BLOCK_SIZE}")
+
+    if output not in ['csv', 'json']:
+        util.exit_message(f'Diff-tables currently supports only csv and json output formats')
 
     bad_br = True
     try:
@@ -516,8 +520,9 @@ def diff_tables(
                     port=nd.get("port", 5432),
                 )
                 conn_list.append(psql_conn)
+
     except Exception as e:
-        util.exit_message("Error in diff_tbls() Getting Connections:\n" + str(e), 1)
+        util.exit_message("Error in diff_tbls() Getting Connections:" + str(e), 1)
 
     util.message(f"Connections successful to nodes in cluster", p_state='success')
 
@@ -602,10 +607,13 @@ def diff_tables(
         else:
             util.message("TABLES DO NOT MATCH", p_state='warning')
             util.message(
-                f"FOUND {row_diff_count.value} DIFFERENCES", p_state='warning'
+                f"FOUND {row_diff_count.value} DIFFERENCES\n", p_state='warning'
             )
 
-        write_diffs_json(cols, block_rows, l_schema, l_table, pretty_print=pretty_print)
+        if output == 'json':
+            write_diffs_json(cols, block_rows, l_schema, l_table, pretty_print=pretty_print)
+        elif output == 'csv':
+            write_diffs_csv(node_list, cols, l_schema, l_table)
 
     else:
         util.message("TABLES MATCH OK\n", p_state='success')
@@ -628,39 +636,50 @@ def write_diffs_json(cols, block_rows, l_schema, l_table, pretty_print=False):
     with open(filename, 'w') as f:
         f.write(json.dumps(output_json, default=str))
     
-    util.message(f'Diffs written to {filename}', p_state='info')
+    util.message(f'Diffs written out to {filename}', p_state='info')
 
 
-def write_diffs_csv(c1_cols, l_schema, l_table):
-    t1_write_path = get_csv_file_name("t1", l_schema, l_table)
-    t2_write_path = get_csv_file_name("t2", l_schema, l_table)
+def write_diffs_csv(node_list, cols, l_schema, l_table):
 
-    # Elements in the shared queue may be out of order
-    # Ordering cannot be guaranteed since primary keys
-    # could be of varying types, and even composite keys
+    import pandas as pd
 
-    with open(t1_write_path, "w") as f1, open(t2_write_path, "w") as f2:
-        t1_writer = csv.writer(f1)
-        t2_writer = csv.writer(f2)
+    seen_nodepairs = {}
 
-        t1_writer.writerow(c1_cols.split(","))
-        t2_writer.writerow(c1_cols.split(","))
+    for entry in queue:
+        diff_list = entry["diffs"]
 
-        for cur_entry in queue:
-            offset = cur_entry["offset"]
-            t1_rows = cur_entry["t1_rows"]
-            t2_rows = cur_entry["t2_rows"]
+        if not diff_list:
+            continue
 
-            for x1 in t1_rows:
-                t1_writer.writerow(x1)
+        for diff_json in diff_list:
 
-            for x2 in t2_rows:
-                t2_writer.writerow(x2)
+            node1, node2 = diff_json.keys()
+            t1_write_path = node1 + '_X_' + node2 + '_' + node1 + '.csv'
+            t2_write_path = node1 + '_X_' + node2 + '_' + node2 + '.csv'
 
-    cmd = f"diff -u {t1_write_path} {t2_write_path} | ydiff > out.diff"
-    util.message(f"\n#### Running {cmd} ####")
-    diff_s = subprocess.check_output(cmd, shell=True)
+            df1 = pd.DataFrame.from_dict(diff_json[node1])
+            df2 = pd.DataFrame.from_dict(diff_json[node2])
 
+            lookup_str = node1 + ',' + node2
+
+            if lookup_str in seen_nodepairs:
+                df1.to_csv(t1_write_path, mode='a', header=False, index=False)
+                df2.to_csv(t2_write_path, mode='a', header=False, index=False)
+            else:
+                seen_nodepairs[lookup_str] = 1
+                df1.to_csv(t1_write_path, header=True, index=False)
+                df2.to_csv(t2_write_path, header=True, index=False)
+
+    
+    for node_pair in seen_nodepairs.keys():
+        n1, n2 = node_pair.split(',')
+        diff_file_name = n1 + '_X_' + n2 + '.diff'
+        t1_write_path = n1 + '_X_' + n2 + '_' + n1 + '.csv'
+        t2_write_path = n1 + '_X_' + n2 + '_' + n2 + '.csv'
+        cmd = f"diff -u {t1_write_path} {t2_write_path} | ydiff > {diff_file_name}"
+        diff_s = subprocess.check_output(cmd, shell=True)
+
+        util.message(f'Diffs between {n1} and {n2} have been written out to {diff_file_name}', p_state='info')
 
 if __name__ == "__main__":
     fire.Fire(
