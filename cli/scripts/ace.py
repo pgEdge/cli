@@ -11,6 +11,7 @@ from multiprocessing import Manager, Pool, cpu_count, Value, Queue
 from tqdm import tqdm
 from ordered_set import OrderedSet
 from itertools import combinations
+from datetime import datetime
 
 l_dir = "/tmp"
 
@@ -443,7 +444,7 @@ def diff_tables(
     block_rows=1000,
     max_cpu_ratio=MAX_CPU_RATIO,
     pretty_print=False,
-    nodes="all",
+    nodes="all"
 ):
     """Efficiently compare tables across cluster using optional checksums and blocks of rows."""
 
@@ -476,8 +477,11 @@ def diff_tables(
             "diff-tables currently supports up to a three-way table comparison"
         )
 
-    util.message(f"\n## Validating cluster {cluster_name} exists")
+    if nodes != 'all' and len(node_list) == 1:
+        util.exit_message('diff-tables needs at least two nodes to compare')
+
     util.check_cluster_exists(cluster_name)
+    util.message(f"Cluster {cluster_name} exists", p_state='success')
 
     nm_lst = table_name.split(".")
     if len(nm_lst) != 2:
@@ -485,15 +489,18 @@ def diff_tables(
     l_schema = nm_lst[0]
     l_table = nm_lst[1]
 
-    util.message(f"\n## Validating table {table_name} is comparable across nodes")
 
     il, db, pg, count, usr, passwd, os_usr, cert, cluster_nodes = cluster.load_json(
         cluster_name
     )
 
+    if nodes != 'all' and len(node_list) > 1:
+        for n in node_list:
+            if not any(filter(lambda x: x['nodename'] == n, cluster_nodes)):
+                util.exit_message("Specified nodenames not present in cluster")
+
     conn_list = []
 
-    util.message(f"\n## Validating connections to each node in cluster")
 
     try:
         for nd in cluster_nodes:
@@ -501,9 +508,6 @@ def diff_tables(
                 node_list.append(nd["nodename"])
 
             if (node_list and nd["nodename"] in node_list) or (not node_list):
-                util.message(
-                    f'### Getting Conection to ({nd["nodename"]}) - {usr}@{nd["ip"]}:{nd.get("port",5432)}/{db}'
-                )
                 psql_conn = psycopg.connect(
                     dbname=db,
                     user=usr,
@@ -515,21 +519,19 @@ def diff_tables(
     except Exception as e:
         util.exit_message("Error in diff_tbls() Getting Connections:\n" + str(e), 1)
 
+    util.message(f"Connections successful to nodes in cluster", p_state='success')
+
     cols = None
     key = None
 
     for conn in conn_list:
-        util.message(f"\n## Validating table {table_name} is comparable across nodes")
         curr_cols = get_cols(conn, l_schema, l_table)
         curr_key = get_key(conn, l_schema, l_table)
 
-        if curr_cols and curr_key:
-            util.message(f"## con1 cols={curr_cols}  key={curr_key}")
-        else:
-            if not curr_cols:
-                util.exit_message(f"Invalid table name '{table_name}'")
-            else:
-                util.exit_message(f"No primary key found for '{table_name}'")
+        if not curr_cols:
+            util.exit_message(f"Invalid table name '{table_name}'")
+        if not curr_key:
+            util.exit_message(f"No primary key found for '{table_name}'")
 
         if (not cols) and (not key):
             cols = curr_cols
@@ -541,6 +543,8 @@ def diff_tables(
 
         cols = curr_cols
         key = curr_key
+
+    util.message(f"Table {table_name} is comparable across nodes", p_state='success')
 
     row_count = 0
     total_rows = 0
@@ -558,7 +562,6 @@ def diff_tables(
     procs = max_procs if total_blocks > max_procs else total_blocks
 
     start_time = datetime.now()
-    util.message(f"\n## start_time = {start_time} #################")
 
     offsets = [x for x in range(0, row_count + 1, block_rows)]
     total_offsets = len(offsets)
@@ -570,6 +573,8 @@ def diff_tables(
         for offset in offsets
     ]
 
+    print("")
+    util.message('Starting jobs to compare tables...\n', p_state='info')
     result_list = run_apply_async_multiprocessing(
         func=compare_checksums, argument_list=arg_list, num_processes=procs
     )
@@ -584,28 +589,30 @@ def diff_tables(
         if result == BLOCK_MISMATCH or result == MAX_DIFF_EXCEEDED:
             mismatch = True
 
+    print("")
+
     # Mismatch is True if there is a block mismatch or if we have
     # estimated that diffs may be greater than max allowed diffs
     if mismatch:
         if diffs_exceeded:
             util.message(
-                f"\n\n####### TABLES DO NOT MATCH. DIFFS HAVE EXCEEDED {MAX_DIFF_ROWS} ROWS ########"
+                f"TABLES DO NOT MATCH. DIFFS HAVE EXCEEDED {MAX_DIFF_ROWS} ROWS", p_state='warning'
             )
 
         else:
-            util.message("\n\n####### TABLES DO NOT MATCH ########\n")
+            util.message("TABLES DO NOT MATCH", p_state='warning')
             util.message(
-                f"\n####### FOUND {row_diff_count.value} DIFFERENCES ########\n"
+                f"FOUND {row_diff_count.value} DIFFERENCES", p_state='warning'
             )
 
         write_diffs_json(cols, block_rows, l_schema, l_table, pretty_print=pretty_print)
 
     else:
-        util.message("\n####### TABLES MATCH OK ##########")
+        util.message("TABLES MATCH OK\n", p_state='success')
 
     run_time = datetime.now() - start_time
     util.message(
-        f"\n## TOTAL ROWS CHECKED = {total_rows}. RUN TIME = {run_time} ##############################"
+        f"TOTAL ROWS CHECKED = {total_rows}. RUN TIME = {run_time}", p_state='info'
     )
 
 
@@ -616,10 +623,12 @@ def write_diffs_json(cols, block_rows, l_schema, l_table, pretty_print=False):
     output_json["block_size"] = block_rows
     output_json["diffs"] = [cur_entry for cur_entry in queue]
 
-    if pretty_print:
-        print(json.dumps(output_json, indent=2, default=str))
-    else:
-        print(json.dumps(output_json, default=str))
+    ts = datetime.now().strftime('%Y%m%d%H%M%S')
+    filename = 'diff_' + ts + '.json'
+    with open(filename, 'w') as f:
+        f.write(json.dumps(output_json, default=str))
+    
+    util.message(f'Diffs written to {filename}', p_state='info')
 
 
 def write_diffs_csv(c1_cols, l_schema, l_table):
