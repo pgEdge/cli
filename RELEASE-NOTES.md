@@ -6,6 +6,7 @@
   - `readonly` now available for pg15 & pg16
   - `psql` command is now just two args: "sql command" & db
   - `install pgedge` also now installs `foslots` and `readonly` for pg15 & pg16
+  - fix 'export REPO' bug found by QA
 
 ## done for 23.131 on 2023-09-28
   - improve `cluster` commands by passing env REPO to remote sessions
