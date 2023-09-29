@@ -475,6 +475,7 @@ initPG () {
       initC "partman-pg$pgM"    "partman"    "$partmanV"   "$outPlat" "postgres/partman"   "" "" "nil"
       initC "plv8-pg$pgM"       "plv8"       "$v8V"        "$outPlat" "postgres/plv8"      "" "" "nil"
       initC "foslots-pg$pgM"    "foslots"    "$foslotsV"   "$outPlat" "postgres/foslots"   "" "" "nil"
+      initC "readonly-pg$pgM"   "readonly"   "$readonlyV"  "$outPlat" "postgres/readonly"  "" "" "nil"
       if [ `arch` != "aarch64" ]; then
         initC "oraclefdw-pg$pgM"  "oraclefdw"  "$oraclefdwV" "$outPlat" "postgres/oraclefdw" "" "" "nil"
       fi

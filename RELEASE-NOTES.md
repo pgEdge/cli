@@ -1,7 +1,8 @@
 # pgEdge Platform Release Notes #############
 
 ## done for 23.132 as of 2023-09-29
-  - add foslots to pg15 & pg16
+  - add `foslots` back to pg15 & pg16
+  - `readonly` now available for pg15 & pg16
 
 ## done for 23.131 on 2023-09-28
   - improve `cluster` commands by passing env REPO to remote sessions
