@@ -1,6 +1,6 @@
 # pgEdge Platform Release Notes #############
 
-## done for 23.132 as of 2023-09-29
+## done for 23.132 on 2023-09-29
   - improvements to ACE diff-tables to compare three node clusters 
   - add `foslots` back to pg15 & pg16
   - `readonly` now available for pg15 & pg16
