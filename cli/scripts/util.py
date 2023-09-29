@@ -329,7 +329,7 @@ def echo_cmd(cmd, sleep_secs=0, host="", usr="", key=""):
 
 
 def psql_cmd(cmd, nc, db, pg, host, usr, key):
-  echo_cmd(nc + " psql " + str(pg) + " \"" + cmd + "\" " + db, host=host, usr=usr, key=key)
+  echo_cmd(nc + " psql \"" + cmd + "\" " + db, host=host, usr=usr, key=key)
 
 
 def print_exception(e, msg_type="error"):

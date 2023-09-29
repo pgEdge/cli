@@ -73,10 +73,9 @@ def pgbench_remove(db, pg=None):
 def northwind_install(db, replication_set=None, country=None, pg=None):
   """Install northwind data, Alter tables, and add to repsets"""
   pg_v = util.get_pg_v(pg)
-  pg_n = pg_v.replace('pg', '')
 
   sql_file = f"hub{os.sep}scripts{os.sep}sql{os.sep}northwind.sql"
-  os.system(f"./nodectl psql {pg_n} -f {sql_file} {db}")
+  os.system(f"./nodectl psql -f {sql_file} {db}")
 
   if country:
     if country!='US' or country!='USA':

@@ -1395,18 +1395,16 @@ try:
 
 
   ## PSQL #######################################################################
-  psql_bad_msg = 'Three args required, try: psql 15 "sql command" database'
+  psql_bad_msg = 'Two args required, try: psql "sql command" database'
   if p_mode == 'psql':
-    if len(args) == 6:
-      pg_v   = str(args[2])
-      c_or_f = str(args[3])
-      sql_cmd = str(args[4])
-      db = str(args[5])
-    elif len(args) == 5:
-      pg_v = str(args[2])
-      c_or_f = "-c"
+    if len(args) == 5:
+      c_or_f = str(args[2])
       sql_cmd = str(args[3])
       db = str(args[4])
+    elif len(args) == 4:
+      c_or_f = "-c"
+      sql_cmd = str(args[2])
+      db = str(args[3])
     else:
       util.exit_message(psql_bad_msg)
 
@@ -1418,7 +1416,9 @@ try:
     else:
       util.exit_message(psql_bad_msg)
 
-    cmd = "./nc pgbin " + pg_v + " 'psql " + sql_cmd +  db + "'"
+    pg_v = util.get_pg_v(None)
+
+    cmd = "./nc pgbin " + pg_v.replace("pg","") + " 'psql " + sql_cmd +  db + "'"
 
     if isVERBOSE:
       print(f"pg_v={pg_v}, sql_cmd={sql_cmd}, db={db}")

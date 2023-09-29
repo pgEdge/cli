@@ -24,15 +24,10 @@ def setup_node(node_nm, port, nc, num_nodes, db, pg, host, os_user, ssh_key):
                   host=host, usr=os_user, key=ssh_key)
 
 
-def psql_cmd(cmd, nc, db, pg, host, usr, key):
-  util.echo_cmd(nc + "psql " + str(pg) + " \"" + cmd + "\" " + db,
-                  host=host, usr=usr, key=key)
-
-
 def log_old_val(tbl, col, val, nc, db, pg, host, usr, key):
   cmd = "ALTER TABLE " + tbl + " ALTER COLUMN " + col + \
     " SET (LOG_OLD_VALUE=" + val + ")"
-  psql_cmd(cmd, nc, db, pg, host, usr, key)
+  util.psql_cmd(cmd, nc, db, pg, host, usr, key)
 
 
 def install(cluster_name, factor=1):
