@@ -4,7 +4,8 @@
 
 use strict;
 use warnings;
-
+use lib './t/lib';
+use contains;
 use File::Which;
 use IPC::Cmd qw(run);
 use Try::Tiny;
@@ -21,7 +22,7 @@ use JSON;
 # to the .pgpass file.
 # 
 
-my $cmd = qq(./nodectl cluster create-local demo 2 --pg 15);
+my $cmd = qq(./nodectl cluster local-create demo 2 --pg 15);
 print("cmd = $cmd\n");
 my ($success, $error_message, $full_buf, $stdout_buf, $stderr_buf)= IPC::Cmd::run(command => $cmd, verbose => 0);
 
@@ -44,12 +45,12 @@ my $out = decode_json($json);
 my $component = $out->[0]->{"component"};
 print("The cluster is running = {$component}\n");
 
-if ($component eq "pg15")
+if(contains($component, "pg15"))
 {
-    exit(0);
+exit(0);
 }
 else
 {
-    exit(1);
+exit(1);
 }
 

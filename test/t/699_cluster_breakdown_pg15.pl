@@ -5,7 +5,8 @@
 
 use strict;
 use warnings;
-
+use lib './t/lib';
+use contains;
 use File::Which;
 use File::Path;
 use IPC::Cmd qw(run);
@@ -31,7 +32,7 @@ print("home = $home\n");
 # Then, use nodectl to remove the Postgres installation.
 #
 
-my $cmd = qq(./nodectl cluster destroy-local demo);
+my $cmd = qq(./nodectl cluster local-destroy demo);
 print("cmd = $cmd\n");
 my ($success, $error_message, $full_buf, $stdout_buf, $stderr_buf)= IPC::Cmd::run(command => $cmd, verbose => 0);
 
@@ -50,12 +51,13 @@ print("stderr_buf = @$stderr_buf\n");
 
 my $result = system("rm -rf $home");
 
-if (defined($success))
+if(contains(@$stdout_buf[0], "stop"))
+
 {
     exit(0);
 }
 else
 {
     exit(1);
-}    
+}
     

@@ -75,6 +75,8 @@ def create(db=None, User=None, Passwd=None, Id=None, pg=None):
   if str(pg) == "17":
     spock_comp = "spock32-pg" + str(pg)
   else:
+    util.echo_cmd(nc + "install readonly --no-restart")
+    util.echo_cmd(nc + "install foslots  --no-restart")
     spock_comp = "spock31-pg" + str(pg)
 
   st8 = util.get_comp_state(spock_comp)

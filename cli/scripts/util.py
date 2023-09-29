@@ -345,9 +345,7 @@ def echo_cmd(cmd, sleep_secs=0, host="", usr="", key=""):
 
 
 def psql_cmd(cmd, nc, db, pg, host, usr, key):
-    echo_cmd(
-        nc + " psql " + str(pg) + ' "' + cmd + '" ' + db, host=host, usr=usr, key=key
-    )
+    echo_cmd(nc + " psql \"" + cmd + "\" " + db, host=host, usr=usr, key=key)
 
 
 def print_exception(e, msg_type="error"):
@@ -752,8 +750,6 @@ def restart_postgres(p_pg):
 def create_extension(p_pg, p_ext, p_reboot=False, p_extension="", p_cascade=False):
     isPreload = os.getenv("isPreload")
 
-    ##p_ext = p_ext.split("-")[0]
-
     if p_ext > " " and isPreload == "True":
         rc = change_pgconf_keyval(p_pg, "shared_preload_libraries", p_ext)
 
@@ -765,12 +761,20 @@ def create_extension(p_pg, p_ext, p_reboot=False, p_extension="", p_cascade=Fals
     if p_extension == "":
         p_extension = p_ext
 
-    cmd = "CREATE EXTENSION IF NOT EXISTS " + p_extension
-    if p_cascade:
-        cmd = cmd + " CASCADE"
-    run_sql_cmd(p_pg, cmd, True)
+    if p_extension == "none" or isRestart == "False":
+        pass
+    else:
+        create_ext_cmd(p_extension, p_cascade, p_pg)
 
     return True
+
+
+def create_ext_cmd(p_extension, p_cascade, p_pg):
+  cmd = "CREATE EXTENSION IF NOT EXISTS " + p_extension
+  if p_cascade:
+    cmd = cmd + " CASCADE"
+  run_sql_cmd (p_pg, cmd, True)
+
 
 
 def create_virtualenv():

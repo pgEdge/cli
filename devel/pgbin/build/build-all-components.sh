@@ -93,7 +93,7 @@ if [ "$1" == "readonly" ]; then
 fi
 
 if [ "$1" == "foslots" ]; then
-  build foslots $foslotsFullV $2 foslots
+  build foslots $foslotsV $2 foslots
 fi
 
 if [ "$1" == "cron" ]; then

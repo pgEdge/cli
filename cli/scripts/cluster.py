@@ -250,7 +250,7 @@ def ssh_install_pgedge(cluster_name, passwd):
 
     util.message(f"########                node={ndnm}, host={ndip}, path={ndpath} REPO={REPO}\n")
 
-    cmd0 = f"REPO={REPO}; "
+    cmd0 = f"export REPO={REPO}; "
     cmd1 = f"mkdir -p {ndpath}; cd {ndpath}; "
     cmd2 = f"python3 -c \"\$(curl -fsSL {REPO}/install.py)\""
     util.echo_cmd(cmd0 + cmd1 + cmd2, host=n["ip"], usr=os_user, key=ssh_key)

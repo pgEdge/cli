@@ -429,7 +429,7 @@ function buildTimeScaleDBComponent {
         packageComponent $componentBundle
 }
 
-TEMP=`getopt -l no-tar, copy-bin,no-copy-bin,with-pgver:,with-pgbin:,build-curl:,build-hypopg:,build-postgis:,build-logfdw:,build-tdsfdw:,build-mongofdw:,build-mysqlfdw:,build-oraclefdw:,build-orafce:,build-audit:,build-partman:,build-pldebugger:,build-pljava:,build-plv8:,build-plprofiler:,build-bulkload:,build-backrest:,build-psqlodbc:,build-repack:,build-spock31:,build-spock32:,build-pglogical:,build-hintplan:,build-timescaledb:,build-readonly:,build-cron:,build-multicorn2:,build-anon,build-ddlx:,build-citus:,build-vector: -- "$@"`
+TEMP=`getopt -l no-tar, copy-bin,no-copy-bin,with-pgver:,with-pgbin:,build-curl:,build-hypopg:,build-postgis:,build-logfdw:,build-tdsfdw:,build-mongofdw:,build-mysqlfdw:,build-oraclefdw:,build-orafce:,build-audit:,build-partman:,build-pldebugger:,build-pljava:,build-plv8:,build-plprofiler:,build-bulkload:,build-backrest:,build-psqlodbc:,build-repack:,build-spock31:,build-spock32:,build-foslots:,build-pglogical:,build-hintplan:,build-timescaledb:,build-readonly:,build-cron:,build-multicorn2:,build-anon,build-ddlx:,build-citus:,build-vector: -- "$@"`
 
 if [ $? != 0 ] ; then
 	echo "Required parameters missing, Terminating..."
@@ -467,6 +467,7 @@ while true; do
     --build-pglogical ) buildPgLogical=true; Source=$2; shift; shift ;;
     --build-spock31 ) buildSpock31=true; Source=$2; shift; shift ;;
     --build-spock32 ) buildSpock32=true; Source=$2; shift; shift ;;
+    --build-foslots ) buildFoSlots=true; Source=$2; shift; shift ;;
     --build-hintplan ) buildHintPlan=true; Source=$2; shift; shift ;;
     --build-timescaledb ) buildTimeScaleDB=true; timescaleDBSource=$2; shift; shift ;;
     --build-readonly ) buildReadOnly=true; Source=$2; shift; shift ;;
@@ -566,6 +567,10 @@ fi
 
 if [[ $buildSpock31 == "true" ]]; then
 	buildComp spock31  "" "$spock31V" "$spockBld31V" "$Source"
+fi
+
+if [[ $buildFoSlots == "true" ]]; then
+	buildComp foslots  "" "$foslotsV" "$foslotsBldV" "$Source"
 fi
 
 if [[ $buildSpock32 == "true" ]]; then
