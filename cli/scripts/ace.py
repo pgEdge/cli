@@ -312,10 +312,15 @@ def run_apply_async_multiprocessing(func, argument_list, num_processes):
         else pool.apply_async(func=func, args=(argument,))
         for argument in argument_list
     ]
+
     pool.close()
     result_list_tqdm = []
-    for job in tqdm(jobs):
-        result_list_tqdm.append(job.get())
+
+    try:
+        for job in tqdm(jobs):
+            result_list_tqdm.append(job.get(timeout=5))
+    except Exception as e:
+        util.exit_message("One or more jobs have errored. Please check the connection to the database nodes")
 
     return result_list_tqdm
 
@@ -396,16 +401,21 @@ def compare_checksums(
             hash1 = task1.result()[0]
             hash2 = task2.result()[0]
         except Exception as e:
-            util.exit_message(
-                "Errored while connecting to database. Please check the nodenames you have provided"
-            )
+            #util.exit_message(
+            #    f"Process {os.getpid()}: Errored while connecting to nodes"
+            #)
+            result_queue.append(BLOCK_ERROR)
             return
 
         if hash1[0] != hash2[0]:
-            task1 = loop.create_task(run_query(conn_str1, block_sql))
-            task2 = loop.create_task(run_query(conn_str2, block_sql))
-
-            loop.run_until_complete(asyncio.gather(task1, task2))
+            try:
+                task1 = loop.create_task(run_query(conn_str1, block_sql))
+                task2 = loop.create_task(run_query(conn_str2, block_sql))
+                loop.run_until_complete(asyncio.gather(task1, task2))
+            except Exception as e:
+                util.exit_message("Errored while connecting to nodes")
+                result_queue.append(BLOCK_ERROR)
+                return
 
             t1_set = OrderedSet(task1.result())
             t2_set = OrderedSet(task2.result())
@@ -444,8 +454,8 @@ def diff_tables(
     block_rows=1000,
     max_cpu_ratio=MAX_CPU_RATIO,
     pretty_print=False,
-    output='csv',
-    nodes="all"
+    output="csv",
+    nodes="all",
 ):
     """Efficiently compare tables across cluster using optional checksums and blocks of rows."""
 
@@ -453,8 +463,10 @@ def diff_tables(
     if block_rows > MAX_ALLOWED_BLOCK_SIZE:
         util.exit_message(f"Desired block row size is > {MAX_ALLOWED_BLOCK_SIZE}")
 
-    if output not in ['csv', 'json']:
-        util.exit_message(f'Diff-tables currently supports only csv and json output formats')
+    if output not in ["csv", "json"]:
+        util.exit_message(
+            f"Diff-tables currently supports only csv and json output formats"
+        )
 
     bad_br = True
     try:
@@ -481,11 +493,11 @@ def diff_tables(
             "diff-tables currently supports up to a three-way table comparison"
         )
 
-    if nodes != 'all' and len(node_list) == 1:
-        util.exit_message('diff-tables needs at least two nodes to compare')
+    if nodes != "all" and len(node_list) == 1:
+        util.exit_message("diff-tables needs at least two nodes to compare")
 
     util.check_cluster_exists(cluster_name)
-    util.message(f"Cluster {cluster_name} exists", p_state='success')
+    util.message(f"Cluster {cluster_name} exists", p_state="success")
 
     nm_lst = table_name.split(".")
     if len(nm_lst) != 2:
@@ -493,18 +505,16 @@ def diff_tables(
     l_schema = nm_lst[0]
     l_table = nm_lst[1]
 
-
     il, db, pg, count, usr, passwd, os_usr, cert, cluster_nodes = cluster.load_json(
         cluster_name
     )
 
-    if nodes != 'all' and len(node_list) > 1:
+    if nodes != "all" and len(node_list) > 1:
         for n in node_list:
-            if not any(filter(lambda x: x['nodename'] == n, cluster_nodes)):
+            if not any(filter(lambda x: x["nodename"] == n, cluster_nodes)):
                 util.exit_message("Specified nodenames not present in cluster")
 
     conn_list = []
-
 
     try:
         for nd in cluster_nodes:
@@ -524,7 +534,7 @@ def diff_tables(
     except Exception as e:
         util.exit_message("Error in diff_tbls() Getting Connections:" + str(e), 1)
 
-    util.message(f"Connections successful to nodes in cluster", p_state='success')
+    util.message(f"Connections successful to nodes in cluster", p_state="success")
 
     cols = None
     key = None
@@ -549,7 +559,7 @@ def diff_tables(
         cols = curr_cols
         key = curr_key
 
-    util.message(f"Table {table_name} is comparable across nodes", p_state='success')
+    util.message(f"Table {table_name} is comparable across nodes", p_state="success")
 
     row_count = 0
     total_rows = 0
@@ -579,13 +589,14 @@ def diff_tables(
     ]
 
     print("")
-    util.message('Starting jobs to compare tables...\n', p_state='info')
+    util.message("Starting jobs to compare tables...\n", p_state="info")
     result_list = run_apply_async_multiprocessing(
         func=compare_checksums, argument_list=arg_list, num_processes=procs
     )
 
     mismatch = False
     diffs_exceeded = False
+    errors = False
 
     for result in result_queue:
         if result == MAX_DIFF_EXCEEDED:
@@ -594,33 +605,45 @@ def diff_tables(
         if result == BLOCK_MISMATCH or result == MAX_DIFF_EXCEEDED:
             mismatch = True
 
+        if result == BLOCK_ERROR:
+            errors = True
+
     print("")
+
+    if errors:
+        util.message(
+            "There were one or more errors while connecting to databases. Please examine the connection information provided or the nodes' status before running this script again.",
+            p_state="error",
+        )
 
     # Mismatch is True if there is a block mismatch or if we have
     # estimated that diffs may be greater than max allowed diffs
     if mismatch:
         if diffs_exceeded:
             util.message(
-                f"TABLES DO NOT MATCH. DIFFS HAVE EXCEEDED {MAX_DIFF_ROWS} ROWS", p_state='warning'
+                f"TABLES DO NOT MATCH. DIFFS HAVE EXCEEDED {MAX_DIFF_ROWS} ROWS",
+                p_state="warning",
             )
 
         else:
-            util.message("TABLES DO NOT MATCH", p_state='warning')
+            util.message("TABLES DO NOT MATCH", p_state="warning")
             util.message(
-                f"FOUND {row_diff_count.value} DIFFERENCES\n", p_state='warning'
+                f"FOUND {row_diff_count.value} DIFFERENCES\n", p_state="warning"
             )
 
-        if output == 'json':
-            write_diffs_json(cols, block_rows, l_schema, l_table, pretty_print=pretty_print)
-        elif output == 'csv':
+        if output == "json":
+            write_diffs_json(
+                cols, block_rows, l_schema, l_table, pretty_print=pretty_print
+            )
+        elif output == "csv":
             write_diffs_csv(node_list, cols, l_schema, l_table)
 
     else:
-        util.message("TABLES MATCH OK\n", p_state='success')
+        util.message("TABLES MATCH OK\n", p_state="success")
 
     run_time = datetime.now() - start_time
     util.message(
-        f"TOTAL ROWS CHECKED = {total_rows}. RUN TIME = {run_time}", p_state='info'
+        f"TOTAL ROWS CHECKED = {total_rows}. RUN TIME = {run_time}", p_state="info"
     )
 
 
@@ -631,16 +654,15 @@ def write_diffs_json(cols, block_rows, l_schema, l_table, pretty_print=False):
     output_json["block_size"] = block_rows
     output_json["diffs"] = [cur_entry for cur_entry in queue]
 
-    ts = datetime.now().strftime('%Y%m%d%H%M%S')
-    filename = 'diff_' + ts + '.json'
-    with open(filename, 'w') as f:
+    ts = datetime.now().strftime("%Y%m%d%H%M%S")
+    filename = "diff_" + ts + ".json"
+    with open(filename, "w") as f:
         f.write(json.dumps(output_json, default=str))
-    
-    util.message(f'Diffs written out to {filename}', p_state='info')
+
+    util.message(f"Diffs written out to {filename}", p_state="info")
 
 
 def write_diffs_csv(node_list, cols, l_schema, l_table):
-
     import pandas as pd
 
     seen_nodepairs = {}
@@ -652,34 +674,36 @@ def write_diffs_csv(node_list, cols, l_schema, l_table):
             continue
 
         for diff_json in diff_list:
-
             node1, node2 = diff_json.keys()
-            t1_write_path = node1 + '_X_' + node2 + '_' + node1 + '.csv'
-            t2_write_path = node1 + '_X_' + node2 + '_' + node2 + '.csv'
+            t1_write_path = node1 + "_X_" + node2 + "_" + node1 + ".csv"
+            t2_write_path = node1 + "_X_" + node2 + "_" + node2 + ".csv"
 
             df1 = pd.DataFrame.from_dict(diff_json[node1])
             df2 = pd.DataFrame.from_dict(diff_json[node2])
 
-            lookup_str = node1 + ',' + node2
+            lookup_str = node1 + "," + node2
 
             if lookup_str in seen_nodepairs:
-                df1.to_csv(t1_write_path, mode='a', header=False, index=False)
-                df2.to_csv(t2_write_path, mode='a', header=False, index=False)
+                df1.to_csv(t1_write_path, mode="a", header=False, index=False)
+                df2.to_csv(t2_write_path, mode="a", header=False, index=False)
             else:
                 seen_nodepairs[lookup_str] = 1
                 df1.to_csv(t1_write_path, header=True, index=False)
                 df2.to_csv(t2_write_path, header=True, index=False)
 
-    
     for node_pair in seen_nodepairs.keys():
-        n1, n2 = node_pair.split(',')
-        diff_file_name = n1 + '_X_' + n2 + '.diff'
-        t1_write_path = n1 + '_X_' + n2 + '_' + n1 + '.csv'
-        t2_write_path = n1 + '_X_' + n2 + '_' + n2 + '.csv'
+        n1, n2 = node_pair.split(",")
+        diff_file_name = n1 + "_X_" + n2 + ".diff"
+        t1_write_path = n1 + "_X_" + n2 + "_" + n1 + ".csv"
+        t2_write_path = n1 + "_X_" + n2 + "_" + n2 + ".csv"
         cmd = f"diff -u {t1_write_path} {t2_write_path} | ydiff > {diff_file_name}"
         diff_s = subprocess.check_output(cmd, shell=True)
 
-        util.message(f'Diffs between {n1} and {n2} have been written out to {diff_file_name}', p_state='info')
+        util.message(
+            f"Diffs between {n1} and {n2} have been written out to {diff_file_name}",
+            p_state="info",
+        )
+
 
 if __name__ == "__main__":
     fire.Fire(
