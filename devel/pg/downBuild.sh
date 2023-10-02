@@ -39,13 +39,16 @@ patchFromSpock () {
   patch=$2
 
   echoCmd "cd contrib"
-  echoCmd "git clone https://github.com/pgedge/spock"
-  echoCmd "cd spock"
+  if [ ! -d spock-private ]; then
+    echoCmd "git clone https://github.com/pgedge/spock-private"
+  fi
+  echoCmd "cd spock-private"
   echoCmd "git checkout $branch"
+  echoCmd "git pull"
   echoCmd "cd ../.."
-  echoCmd "patch -p1 -i contrib/spock/$patch"
+  echoCmd "patch -p1 -i contrib/spock-private/$patch"
 
-  sleep 10
+  sleep 2
 }
 
 
@@ -67,11 +70,12 @@ downBuild () {
   echoCmd "cd $1"
 
   if [ "$pgV" == "15" ]; then
-    patchFromSpock REL3_1_STABLE pg15-log_old_value.diff
+    patchFromSpock main patches/pg15-005-log_old_value.diff
+    patchFromSpock main patches/pg15-010-allow_logical_decoding_on_standbys.patch
   elif [ "$pgV" == "16" ]; then
-    patchFromSpock REL3_1_STABLE pg16-log_old_value.diff
+    patchFromSpock main  patches/pg16-005-log_old_value.diff
   elif [ "$pgV" == "17" ]; then
-    patchFromSpock main pg16-log_old_value.diff
+    patchFromSpock main patches/pg17-005-log_old_value.diff
   fi
 
   makeInstall
