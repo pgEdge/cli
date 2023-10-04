@@ -320,17 +320,22 @@ def run_apply_async_multiprocessing(func, argument_list, num_processes):
         for job in tqdm(jobs):
             result_list_tqdm.append(job.get(timeout=5))
     except Exception as e:
-        util.exit_message("One or more jobs have errored. Please check the connection to the database nodes")
+        util.exit_message(
+            "One or more jobs have errored. Please check the connection to the database nodes"
+        )
 
     return result_list_tqdm
 
 
 async def run_query(conn_str, query):
-    async with await psycopg.AsyncConnection.connect(conn_str) as aconn:
-        async with aconn.cursor() as acur:
-            await acur.execute(query)
-            results = await acur.fetchall()
-            return results
+    try:
+        async with await psycopg.AsyncConnection.connect(conn_str) as aconn:
+            async with aconn.cursor() as acur:
+                await acur.execute(query)
+                results = await acur.fetchall()
+                return results
+    except Exception as e:
+        pass
 
 
 def compare_checksums(
@@ -395,15 +400,11 @@ def compare_checksums(
 
             task1 = loop.create_task(run_query(conn_str1, hash_sql))
             task2 = loop.create_task(run_query(conn_str2, hash_sql))
-
             loop.run_until_complete(asyncio.gather(task1, task2))
 
             hash1 = task1.result()[0]
             hash2 = task2.result()[0]
         except Exception as e:
-            #util.exit_message(
-            #    f"Process {os.getpid()}: Errored while connecting to nodes"
-            #)
             result_queue.append(BLOCK_ERROR)
             return
 
@@ -413,7 +414,6 @@ def compare_checksums(
                 task2 = loop.create_task(run_query(conn_str2, block_sql))
                 loop.run_until_complete(asyncio.gather(task1, task2))
             except Exception as e:
-                util.exit_message("Errored while connecting to nodes")
                 result_queue.append(BLOCK_ERROR)
                 return
 
@@ -611,9 +611,8 @@ def diff_tables(
     print("")
 
     if errors:
-        util.message(
-            "There were one or more errors while connecting to databases. Please examine the connection information provided or the nodes' status before running this script again.",
-            p_state="error",
+        util.exit_message(
+            "There were one or more errors while connecting to databases.\n Please examine the connection information provided or the nodes' status before running this script again."
         )
 
     # Mismatch is True if there is a block mismatch or if we have
