@@ -436,7 +436,7 @@ def diff_tables(
     output="csv",
     nodes="all",
 ):
-    """Efficiently compare tables across cluster using optional checksums and blocks of rows."""
+    """Efficiently compare tables across cluster using checksums and blocks of rows."""
 
     # Capping max block size here to prevent the has function from taking forever
     if block_rows > MAX_ALLOWED_BLOCK_SIZE:

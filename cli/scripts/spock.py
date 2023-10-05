@@ -3,7 +3,7 @@
 #####################################################
 
 import sys, os, json, subprocess, time
-import util, meta, api, fire
+import util, meta, api, fire, psycopg
 
 nc = "./nodectl "
 
@@ -11,11 +11,6 @@ isAutoStart   = str(os.getenv("isAutoStart",   "False"))
   
 ## force use of PGPASSWORD from ~/.pgpass
 os.environ["PGPASSWORD"] = ""
-
-try:
-  import psycopg
-except ImportError as e:
-  util.exit_message("Missing 'psycopg' module from pip", 1)
 
 
 def error_exit(p_msg, p_rc=1):

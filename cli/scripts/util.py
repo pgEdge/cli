@@ -2783,7 +2783,11 @@ def download_file(p_url, p_file):
 
 def unpack_file(p_file):
     if platform.system() in ("Linux", "Darwin"):
-        return posix_unpack(p_file)
+        rc = posix_unpack(os.getcwd() + os.sep + p_file)
+        if rc == 0:
+            return True
+        else:
+            return False
 
     message(f"Unpacking {p_file} ...")
     try:
