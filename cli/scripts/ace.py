@@ -4,14 +4,17 @@
 
 """ACE is the place of the Anti Chaos Engine"""
 
-import os, sys, itertools, csv, random, time, json, socket, subprocess, re, asyncio
-import util, fire, meta, cluster, psycopg
+import traceback
+import os, json, subprocess, re
+import util, fire, cluster, psycopg
 from datetime import datetime
 from multiprocessing import Manager, Pool, cpu_count, Value, Queue
 from tqdm import tqdm
 from ordered_set import OrderedSet
 from itertools import combinations
 from datetime import datetime
+from mpire import WorkerPool
+from concurrent.futures import ThreadPoolExecutor
 
 l_dir = "/tmp"
 
@@ -24,7 +27,7 @@ row_diff_count = Value("I", 0)
 # Set max number of rows up to which
 # diff-tables will work
 MAX_DIFF_ROWS = 10000
-MAX_ALLOWED_BLOCK_SIZE = 50000
+MAX_ALLOWED_BLOCK_SIZE = 100000
 MAX_CPU_RATIO = 0.6
 
 # Return codes for compare_checksums
@@ -32,6 +35,9 @@ BLOCK_OK = 0
 MAX_DIFF_EXCEEDED = 1
 BLOCK_MISMATCH = 2
 BLOCK_ERROR = 3
+
+# Cluster name
+c_name = ""
 
 
 def prCyan(skk):
@@ -303,54 +309,39 @@ def diff_spock(cluster_name, node1, node2):
     return compare_spock
 
 
-def run_apply_async_multiprocessing(func, argument_list, num_processes):
-    pool = Pool(processes=num_processes)
-
-    jobs = [
-        pool.apply_async(func=func, args=(*argument,))
-        if isinstance(argument, tuple)
-        else pool.apply_async(func=func, args=(argument,))
-        for argument in argument_list
-    ]
-
-    pool.close()
-    result_list_tqdm = []
-
-    try:
-        for job in tqdm(jobs):
-            result_list_tqdm.append(job.get(timeout=5))
-    except Exception as e:
-        util.exit_message(
-            "One or more jobs have errored. Please check the connection to the database nodes"
-        )
-
-    return result_list_tqdm
+def run_query(worker_state, host, query):
+    cur = worker_state[host]
+    cur.execute(query)
+    results = cur.fetchall()
+    return results
 
 
-async def run_query(conn_str, query):
-    try:
-        async with await psycopg.AsyncConnection.connect(conn_str) as aconn:
-            async with aconn.cursor() as acur:
-                await acur.execute(query)
-                results = await acur.fetchall()
-                return results
-    except Exception as e:
-        pass
+def init_db_connection(shared_objects, worker_state):
+    # Read cluster information and connect to the local instance of pgcat
+    il, db, pg, count, usr, passwd, os_usr, cert, nodes = cluster.load_json(
+        shared_objects["cluster_name"]
+    )
+
+    for node in nodes:
+        conn_str = f"dbname = {db} user={usr} password={passwd} host={node['ip']} port={node.get('port', 5432)}"
+        worker_state[node["nodename"]] = psycopg.connect(conn_str).cursor()
 
 
 def compare_checksums(
-    cluster_name,
-    node_list,
-    table_name,
-    cols,
-    p_key,
-    block_rows,
+    shared_objects,
+    worker_state,
     offset,
 ):
     global row_diff_count
 
     if row_diff_count.value >= MAX_DIFF_ROWS:
         return
+
+    p_key = shared_objects["p_key"]
+    table_name = shared_objects["table_name"]
+    block_rows = shared_objects["block_rows"]
+    node_list = shared_objects["node_list"]
+    cols = shared_objects["cols_list"]
 
     hash_sql = f"""
     SELECT md5(cast(array_agg(t.* ORDER BY {p_key}) AS text))
@@ -369,56 +360,47 @@ def compare_checksums(
     LIMIT {block_rows}
     """
 
-    # Generate combinations of node pairs from node_list
-    # E.g., if node_list = ['n1', 'n2', 'n3'] then generate
-    # combinations = [('n1,n2'), ('n1', 'n3'), ('n2', 'n3')]
     node_pairs = combinations(node_list, 2)
 
     block_result = {}
     block_result["offset"] = offset
     block_result["diffs"] = []
 
-    loop = asyncio.new_event_loop()
-    asyncio.set_event_loop(loop)
-
-    # Read cluster information and connect to the local instance of pgcat
-    il, db, pg, count, usr, passwd, os_usr, cert, nodes = cluster.load_json(
-        cluster_name
-    )
-
     for node_pair in node_pairs:
+        host1 = node_pair[0]
+        host2 = node_pair[1]
+
         if row_diff_count.value >= MAX_DIFF_ROWS:
             queue.append(block_result)
             return
 
         try:
-            host1 = next(filter(lambda x: x.get("nodename") == node_pair[0], nodes))
-            host2 = next(filter(lambda x: x.get("nodename") == node_pair[1], nodes))
-
-            conn_str1 = f"dbname = {db} user={usr} password={passwd} host={host1['ip']} port={host1.get('port', 5432)}"
-            conn_str2 = f"dbname = {db} user={usr} password={passwd} host={host2['ip']} port={host2.get('port', 5432)}"
-
-            task1 = loop.create_task(run_query(conn_str1, hash_sql))
-            task2 = loop.create_task(run_query(conn_str2, hash_sql))
-            loop.run_until_complete(asyncio.gather(task1, task2))
-
-            hash1 = task1.result()[0]
-            hash2 = task2.result()[0]
+            with ThreadPoolExecutor(max_workers=2) as executor:
+                futures = [
+                    executor.submit(run_query, worker_state, host1, hash_sql),
+                    executor.submit(run_query, worker_state, host2, hash_sql),
+                ]
+                hash1, hash2 = [f.result()[0][0] for f in futures]
         except Exception as e:
+            traceback.print_exc()
             result_queue.append(BLOCK_ERROR)
             return
 
-        if hash1[0] != hash2[0]:
+        if hash1 != hash2:
             try:
-                task1 = loop.create_task(run_query(conn_str1, block_sql))
-                task2 = loop.create_task(run_query(conn_str2, block_sql))
-                loop.run_until_complete(asyncio.gather(task1, task2))
+                with ThreadPoolExecutor(max_workers=2) as executor:
+                    futures = [
+                        executor.submit(run_query, worker_state, host1, block_sql),
+                        executor.submit(run_query, worker_state, host2, block_sql),
+                    ]
+                    t1_result, t2_result = [f.result() for f in futures]
             except Exception as e:
+                traceback.print_exc()
                 result_queue.append(BLOCK_ERROR)
                 return
 
-            t1_set = OrderedSet(task1.result())
-            t2_set = OrderedSet(task2.result())
+            t1_set = OrderedSet(t1_result)
+            t2_set = OrderedSet(t2_result)
 
             t1_diff = t1_set - t2_set
             t2_diff = t2_set - t1_set
@@ -426,8 +408,8 @@ def compare_checksums(
             if len(t1_diff) > 0 or len(t2_diff) > 0:
                 block_result["diffs"].append(
                     {
-                        host1["nodename"]: [dict(zip(cols, row)) for row in t1_diff],
-                        host2["nodename"]: [dict(zip(cols, row)) for row in t2_diff],
+                        host1: [dict(zip(cols, row)) for row in t1_diff],
+                        host2: [dict(zip(cols, row)) for row in t2_diff],
                     }
                 )
 
@@ -435,8 +417,8 @@ def compare_checksums(
                 row_diff_count.value += max(len(t1_diff), len(t2_diff))
 
             if row_diff_count.value >= MAX_DIFF_ROWS:
-                result_queue.append(MAX_DIFF_EXCEEDED)
                 queue.append(block_result)
+                result_queue.append(MAX_DIFF_EXCEEDED)
                 return
             else:
                 result_queue.append(BLOCK_MISMATCH)
@@ -579,20 +561,33 @@ def diff_tables(
     start_time = datetime.now()
 
     offsets = [x for x in range(0, row_count + 1, block_rows)]
-    total_offsets = len(offsets)
 
     cols_list = cols.split(",")
 
-    arg_list = [
-        (cluster_name, node_list, table_name, cols_list, key, block_rows, offset)
-        for offset in offsets
-    ]
+    shared_objects = {
+        "cluster_name": cluster_name,
+        "node_list": node_list,
+        "table_name": table_name,
+        "cols_list": cols_list,
+        "p_key": key,
+        "block_rows": block_rows,
+    }
 
     print("")
     util.message("Starting jobs to compare tables...\n", p_state="info")
-    result_list = run_apply_async_multiprocessing(
-        func=compare_checksums, argument_list=arg_list, num_processes=procs
-    )
+
+    with WorkerPool(
+        n_jobs=procs,
+        shared_objects=shared_objects,
+        use_worker_state=True,
+    ) as pool:
+        pool.map_unordered(
+            compare_checksums,
+            offsets,
+            worker_init=init_db_connection,
+            progress_bar=True,
+            iterable_len=len(offsets),
+        )
 
     mismatch = False
     diffs_exceeded = False
