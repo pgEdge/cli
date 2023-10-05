@@ -36,9 +36,6 @@ MAX_DIFF_EXCEEDED = 1
 BLOCK_MISMATCH = 2
 BLOCK_ERROR = 3
 
-# Cluster name
-c_name = ""
-
 
 def prCyan(skk):
     print("\033[96m {}\033[00m".format(skk))
