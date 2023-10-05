@@ -26,32 +26,7 @@ my $n1 = "./cluster/demo/n1";
 my $n2 = "./cluster/demo/n2";
 
 
-# Move into the pgedge directory
-
-chdir ("./pgedge");
-
-# Get the location of the data directory and home directory before removing pgEdge; store them in $datadir and $home.
-
-my $json_info = decode_json(`$n1/pgedge/nc --json info`);
-my $home = $json_info->[0]->{"home"};
-print("The home directory is = {$home}\n");
-
-my $json = `$n1/pgedge/nc --json info`;
-
-print("The json from the first node is: -->$json<--\n");
-
-my $out = decode_json(`$n1/pgedge/nc --json info pg15`);
-my $datadir = $out->[0]->{"datadir"};
-print("I just set the data directory to: = {$datadir}\n");
-
-print("datadir = $datadir\n");
-print("home = $home\n");
-
-# Move up one directory
-
-chdir ("../");
-
-# rm -rf pgedge
+# Remove the pgedge directory
 
 my $cmd3 = qq(rm -rf pgedge);
 my ($success3, $error_message3, $full_buf3, $stdout_buf3, $stderr_buf3)= IPC::Cmd::run(command => $cmd3, verbose => 0);
@@ -59,7 +34,7 @@ print("I'm removing the pgedge directory with the following command: = $cmd3\n")
 print("stdout_buf = @$stdout_buf3\n");
 print ("The pgedge directory should be gone now.\n");
 
-# sudo rm ~/.pgpass
+# Remove the ~/.pgpass file
 
 my $cmd4 = qq(sudo rm ~/.pgpass);
 print("cmd4 = $cmd4");
@@ -67,9 +42,9 @@ my ($success4, $error_message4, $full_buf4, $stdout_buf4, $stderr_buf4)= IPC::Cm
 print("I'm removing the .pgpass file with the following command: = $cmd4\n");
 print("stdout_buf = @$stdout_buf4\n");
 print ("The pgpass file should be gone now.\n");
-print ("We're checking to see if the $home directory still exists.\n");
+print ("We're checking to see if the $n1 directory still exists.\n");
 
-if(defined($home) && length($home) > 0)
+if(defined($n1) && length($n1) > 0)
 {
     exit(0);
 }
