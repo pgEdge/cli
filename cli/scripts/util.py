@@ -2782,6 +2782,9 @@ def download_file(p_url, p_file):
 
 
 def unpack_file(p_file):
+    if platform.system() in ("Linux", "Darwin"):
+        return posix_unpack(p_file)
+
     message(f"Unpacking {p_file} ...")
     try:
         tar = tarfile.open(p_file)
