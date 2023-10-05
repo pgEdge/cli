@@ -25,14 +25,14 @@ my $n2 = "~/work/nodectl/test/pgedge/cluster/demo/n2";
 # We retrieve info for node 2:
 
 my $json3 = `$n2/pgedge/nc --json info`;
-print("my json = $json3");
+#print("my json = $json3");
 my $out3 = decode_json($json3);
 my $homedir = $out3->[0]->{"home"};
 print("The home directory is {$homedir}\n");
 
 # We can retrieve the port number from nodectl in json form...
 my $json4 = `$n2/pgedge/nc --json info pg16`;
-print("my json = $json4");
+#print("my json = $json4");
 my $out4 = decode_json($json4);
 my $port = $out4->[0]->{"port"};
 print("The port number is {$port}\n");
