@@ -1129,7 +1129,7 @@ def exit_message(p_msg, p_rc=1, p_isJSON=None):
 
 
 ## print codified message to stdout & logfile
-def message(p_msg, p_state="default", p_isJSON=None):
+def message(p_msg, p_state="info", p_isJSON=None):
     if p_isJSON == None:
         p_isJSON = os.getenv("isJson")
 
@@ -1150,7 +1150,7 @@ def message(p_msg, p_state="default", p_isJSON=None):
     elif log_level == "success":
         print(bcolours.OKGREEN + characters.TICK + ' ' + p_msg + bcolours.ENDC)
     elif log_level == "info":
-        print(characters.INFO + "  " + p_msg)
+        print(p_msg)
     else:
         my_logger.info(p_msg)
         prefix = ""
