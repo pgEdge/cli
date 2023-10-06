@@ -76,6 +76,8 @@ downBuild () {
     patchFromSpock main  patches/pg16-005-log_old_value.diff
   elif [ "$pgV" == "17" ]; then
     patchFromSpock main patches/pg17-005-log_old_value.diff
+    patchFromSpock main patches/pg17-009-hidden_columns.diff
+    patchFromSpock main patches/pg17-010-hidden_columns_v2.diff
   fi
 
   makeInstall
