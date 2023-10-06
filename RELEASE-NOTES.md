@@ -1,7 +1,13 @@
 # pgEdge Platform Release Notes #############
 
+## done for 23.133 on 2023-10-06
+  - slew of optimisations in diff-tables (tej)
+  - lots more testing improvements (susan's team)
+  - 1st pass at hidden columns for pg17 (korry)
+
+
 ## done for 23.132 on 2023-09-29
-  - improvements to ACE diff-tables to compare three node clusters 
+  - improvements to ACE diff-tables to compare three node clusters (tej)
   - add `foslots` back to pg15 & pg16
   - `readonly` now available for pg15 & pg16
   - `psql` command is now just two args: "sql command" & db
