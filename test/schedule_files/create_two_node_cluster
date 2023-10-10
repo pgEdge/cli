@@ -29,5 +29,6 @@ t/945_confirm_replication.pl
 t/950_check_IN_UP_TR_DEL.pl
 t/955_sub-show-status.pl
 t/957_sub-show-table.pl
+t/959_spock_metrics-check.pl
 t/998_breakdown_cluster.pl
 
