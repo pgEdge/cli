@@ -476,6 +476,25 @@ def repset_remove_table(replication_set, table, db, pg=None):
   sys.exit(0)
 
 
+def replicate_ddl(replication_sets, sql_command, db, pg=None):
+  """Replicate DDL through replication set(s).
+  
+  Replicate DDL statement through replication set(s)
+  REPLICATION_SETS - name of one or more replication sets, eg. default or [default,ddl_sql]
+  SQL_COMMAND - DDL or other SQL command, NOTE: must specify schema
+  DB - database name
+  """
+  pg_v = util.get_pg_v(pg)
+  sql = "SELECT spock.replicate_ddl(" + \
+           get_eq("command",          sql_command,     ", ")
+  if "," in str(replication_sets):
+    sql = sql + get_eq("replication_sets", ','.join(replication_sets) ,")", True)
+  else:
+    sql = sql + get_eq("replication_sets", replication_sets ,")", True)
+  util.run_psyco_sql(pg_v, db, sql)
+  sys.exit(0)
+
+
 def health_check(pg=None):
   """Check if PG instance is accepting connections."""
   pg_v = util.get_pg_v(pg)
@@ -610,6 +629,7 @@ if __name__ == '__main__':
       'sub-resync-table':        sub_resync_table,
       'sub-wait-for-sync':       sub_wait_for_sync,
       'table-wait-for-sync':     table_wait_for_sync,
+      'replicate-ddl':           replicate_ddl,
       'health-check':            health_check,
       'metrics-check':           metrics_check,
       'set-readonly':            set_readonly
