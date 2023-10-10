@@ -8,7 +8,7 @@ import traceback
 import os, json, subprocess, re
 import util, fire, cluster, psycopg
 from datetime import datetime
-from multiprocessing import Manager, Pool, cpu_count, Value, Queue
+from multiprocessing import Manager, cpu_count, Value, Queue
 from tqdm import tqdm
 from ordered_set import OrderedSet
 from itertools import combinations
@@ -378,8 +378,7 @@ def compare_checksums(
                     executor.submit(run_query, worker_state, host2, hash_sql),
                 ]
                 hash1, hash2 = [f.result()[0][0] for f in futures]
-        except Exception as e:
-            traceback.print_exc()
+        except Exception:
             result_queue.append(BLOCK_ERROR)
             return
 
@@ -391,8 +390,7 @@ def compare_checksums(
                         executor.submit(run_query, worker_state, host2, block_sql),
                     ]
                     t1_result, t2_result = [f.result() for f in futures]
-            except Exception as e:
-                traceback.print_exc()
+            except Exception:
                 result_queue.append(BLOCK_ERROR)
                 return
 
@@ -432,13 +430,12 @@ def diff_tables(
     table_name,
     block_rows=1000,
     max_cpu_ratio=MAX_CPU_RATIO,
-    pretty_print=False,
     output="csv",
     nodes="all",
 ):
     """Efficiently compare tables across cluster using checksums and blocks of rows."""
 
-    # Capping max block size here to prevent the has function from taking forever
+    # Capping max block size here to prevent the hash function from taking forever
     if block_rows > MAX_ALLOWED_BLOCK_SIZE:
         util.exit_message(f"Desired block row size is > {MAX_ALLOWED_BLOCK_SIZE}")
 
@@ -450,12 +447,12 @@ def diff_tables(
     bad_br = True
     try:
         b_r = int(block_rows)
-        if b_r >= 10:
+        if b_r >= 1000:
             bad_br = False
     except:
         pass
     if bad_br:
-        util.exit_message(f"block_rows parm '{block_rows}' must be integer >= 10")
+        util.exit_message(f"block_rows parm '{block_rows}' must be integer >= 1000")
 
     node_list = []
 
@@ -623,11 +620,10 @@ def diff_tables(
             )
 
         if output == "json":
-            write_diffs_json(
-                cols, block_rows, l_schema, l_table, pretty_print=pretty_print
-            )
+            write_diffs_json(block_rows)
+
         elif output == "csv":
-            write_diffs_csv(node_list, cols, l_schema, l_table)
+            write_diffs_csv()
 
     else:
         util.message("TABLES MATCH OK\n", p_state="success")
@@ -638,7 +634,7 @@ def diff_tables(
     )
 
 
-def write_diffs_json(cols, block_rows, l_schema, l_table, pretty_print=False):
+def write_diffs_json(block_rows):
     output_json = {}
 
     output_json["total_diffs"] = row_diff_count.value
@@ -653,7 +649,8 @@ def write_diffs_json(cols, block_rows, l_schema, l_table, pretty_print=False):
     util.message(f"Diffs written out to {filename}", p_state="info")
 
 
-def write_diffs_csv(node_list, cols, l_schema, l_table):
+# TODO: Come up with better naming convention for diff files
+def write_diffs_csv():
     import pandas as pd
 
     seen_nodepairs = {}
@@ -696,11 +693,104 @@ def write_diffs_csv(node_list, cols, l_schema, l_table):
         )
 
 
+def repair(cluster_name, diff_file, source_of_truth, table_name):
+    import pandas as pd
+
+    # Check if diff_file exists on disk
+    if not os.path.exists(diff_file):
+        util.exit_message(f"Diff file {diff_file} does not exist")
+
+    util.check_cluster_exists(cluster_name)
+    util.message(f"Cluster {cluster_name} exists", p_state="success")
+
+    nm_lst = table_name.split(".")
+    if len(nm_lst) != 2:
+        util.exit_message(f"TableName {table_name} must be of form 'schema.table_name'")
+
+    l_schema = nm_lst[0]
+    l_table = nm_lst[1]
+
+    il, db, pg, count, usr, passwd, os_usr, cert, cluster_nodes = cluster.load_json(
+        cluster_name
+    )
+
+    if not any(lambda x: source_of_truth == x["nodename"] for x in cluster_nodes):
+        util.exit_message(
+            f"Source of truth node {source_of_truth} not present in cluster"
+        )
+
+    conn_list = []
+    try:
+        for nd in cluster_nodes:
+            conn_list.append(
+                psycopg.connect(
+                    dbname=db,
+                    user=usr,
+                    password=passwd,
+                    host=nd["ip"],
+                    port=nd.get("port", 5432),
+                )
+            )
+
+    except Exception as e:
+        util.exit_message("Error in diff_tbls() Getting Connections:" + str(e), 1)
+
+    util.message(f"Connections successful to nodes in cluster", p_state="success")
+
+    cols = None
+    key = None
+
+    for conn in conn_list:
+        curr_cols = get_cols(conn, l_schema, l_table)
+        curr_key = get_key(conn, l_schema, l_table)
+
+        if not curr_cols:
+            util.exit_message(f"Invalid table name '{table_name}'")
+        if not curr_key:
+            util.exit_message(f"No primary key found for '{table_name}'")
+
+        if (not cols) and (not key):
+            cols = curr_cols
+            key = curr_key
+            continue
+
+        if (curr_cols != cols) or (curr_key != key):
+            util.exit_message("Table schemas don't match")
+
+        cols = curr_cols
+        key = curr_key
+
+    util.message(f"Table {table_name} is comparable across nodes", p_state="success")
+
+    with open(diff_file) as f:
+        diff_json = json.load(f)
+
+    true_df = pd.DataFrame()
+    true_rows = [
+        entry
+        for diff in diff_json["diffs"]
+        for d in diff["diffs"]
+        for entry in d.get(source_of_truth, [])
+    ]
+    true_df = pd.concat([true_df, pd.DataFrame(true_rows)], ignore_index=True)
+    true_df.drop_duplicates(inplace=True)
+
+    for conn in conn_list:
+        # Unpack true_df into (key, row) tuples
+        true_rows = true_df.to_records(index=False)
+
+    util.message(
+        f"Successfully applied diffs to {table_name} in cluster {cluster_name}",
+        p_state="success",
+    )
+
+
 if __name__ == "__main__":
     fire.Fire(
         {
             "diff-tables": diff_tables,
             "diff-schemas": diff_schemas,
             "diff-spock": diff_spock,
+            "repair": repair,
         }
     )
