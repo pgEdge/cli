@@ -81,7 +81,7 @@ if(!(contains(@$stderr_buf32[0], "ERROR")))
     exit(1);
 }
 
-# We'll alter the repset now, so it doesn't accept INSERT statements...
+# We'll alter the repset now, so it doesn't accept DELETE statements...
 
 my $cmd34 = qq($homedir/nodectl spock repset-alter my_new_repset lcdb --replicate_delete=false);
 print("cmd34 = $cmd34\n");
@@ -92,14 +92,83 @@ if(!(contains(@$full_buf34[0], "repset_alter")))
     exit(1);
 }
 
+# Then, use the info to connect to psql and test for the existence of the replication set.
+
+my $cmd35 = qq($homedir/$version/bin/psql -t -h 127.0.0.1 -p $port -d $database -c "SELECT * FROM spock.replication_set");
+print("cmd35 = $cmd35\n");
+my($success35, $error_message35, $full_buf35, $stdout_buf35, $stderr_buf35)= IPC::Cmd::run(command => $cmd35, verbose => 0);
+
+if(!(contains(@$stdout_buf35[0], "my_new_repset       | t                | t                | f                | t")))
+{
+    exit(1);
+}
+
+
+# We'll alter the repset now, so it doesn't accept INSERT statements...
+
+my $cmd36 = qq($homedir/nodectl spock repset-alter my_new_repset lcdb --replicate_insert=false);
+print("cmd36 = $cmd36\n");
+my ($success36, $error_message36, $full_buf36, $stdout_buf36, $stderr_buf36)= IPC::Cmd::run(command => $cmd36, verbose => 0);
+
+if(!(contains(@$full_buf36[0], "repset_alter")))
+{
+    exit(1);
+}
 
 # Then, use the info to connect to psql and test for the existence of the replication set.
 
-my $cmd5 = qq($homedir/$version/bin/psql -t -h 127.0.0.1 -p $port -d $database -c "SELECT * FROM spock.replication_set");
-print("cmd5 = $cmd5\n");
-my($success5, $error_message5, $full_buf5, $stdout_buf5, $stderr_buf5)= IPC::Cmd::run(command => $cmd5, verbose => 0);
+my $cmd37 = qq($homedir/$version/bin/psql -t -h 127.0.0.1 -p $port -d $database -c "SELECT * FROM spock.replication_set");
+print("cmd37 = $cmd37\n");
+my($success37, $error_message37, $full_buf37, $stdout_buf37, $stderr_buf37)= IPC::Cmd::run(command => $cmd37, verbose => 0);
 
-if(contains(@$stdout_buf5[0], "my_new_repset       | t                | t                | f                | t"))
+if(!(contains(@$stdout_buf37[0], "my_new_repset       | f                | t                | t                | t")))
+{
+    exit(1);
+}
+
+
+# We'll alter the repset now, so it doesn't accept UPDATE statements...
+
+my $cmd38 = qq($homedir/nodectl spock repset-alter my_new_repset lcdb --replicate_update=false);
+print("cmd38 = $cmd38\n");
+my ($success38, $error_message38, $full_buf38, $stdout_buf38, $stderr_buf38)= IPC::Cmd::run(command => $cmd38, verbose => 0);
+
+if(!(contains(@$full_buf38[0], "repset_alter")))
+{
+    exit(1);
+}
+
+
+# Then, use the info to connect to psql and test for the existence of the replication set.
+
+my $cmd39 = qq($homedir/$version/bin/psql -t -h 127.0.0.1 -p $port -d $database -c "SELECT * FROM spock.replication_set");
+print("cmd39 = $cmd35\n");
+my($success39, $error_message39, $full_buf39, $stdout_buf39, $stderr_buf39)= IPC::Cmd::run(command => $cmd39, verbose => 0);
+
+if(!(contains(@$stdout_buf39[0], "my_new_repset       | t                | f                | t                | t")))
+{
+    exit(1);
+}
+
+
+# We'll alter the repset now, so it doesn't accept TRUNCATE statements...
+
+my $cmd40 = qq($homedir/nodectl spock repset-alter my_new_repset lcdb --replicate_truncate=false);
+print("cmd40 = $cmd40\n");
+my ($success40, $error_message40, $full_buf40, $stdout_buf40, $stderr_buf40)= IPC::Cmd::run(command => $cmd40, verbose => 0);
+
+if(!(contains(@$full_buf40[0], "repset_alter")))
+{
+    exit(1);
+}
+
+# Then, use the info to connect to psql and test for the existence of the replication set.
+
+my $cmd41 = qq($homedir/$version/bin/psql -t -h 127.0.0.1 -p $port -d $database -c "SELECT * FROM spock.replication_set");
+print("cmd41 = $cmd41\n");
+my($success41, $error_message41, $full_buf41, $stdout_buf41, $stderr_buf41)= IPC::Cmd::run(command => $cmd41, verbose => 0);
+
+if(contains(@$stdout_buf41[0], "my_new_repset       | t                | t                | t                | f"))
 
 {
     exit(0);
