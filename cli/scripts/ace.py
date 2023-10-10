@@ -4,15 +4,19 @@
 
 """ACE is the place of the Anti Chaos Engine"""
 
-import traceback
-import os, json, subprocess, re
-import util, fire, cluster, psycopg
+import os
+import json
+
+import subprocess
+import re
+import util
+import fire
+import cluster
+import psycopg
 from datetime import datetime
 from multiprocessing import Manager, cpu_count, Value, Queue
-from tqdm import tqdm
 from ordered_set import OrderedSet
 from itertools import combinations
-from datetime import datetime
 from mpire import WorkerPool
 from concurrent.futures import ThreadPoolExecutor
 
@@ -302,7 +306,6 @@ def diff_spock(cluster_name, node1, node2):
         else:
             prRed("    Difference in Replication Rules")
 
-    ##print(json.dumps(compare_spock,indent=2))
     return compare_spock
 
 
@@ -441,7 +444,7 @@ def diff_tables(
 
     if output not in ["csv", "json"]:
         util.exit_message(
-            f"Diff-tables currently supports only csv and json output formats"
+            "Diff-tables currently supports only csv and json output formats"
         )
 
     bad_br = True
@@ -449,7 +452,7 @@ def diff_tables(
         b_r = int(block_rows)
         if b_r >= 1000:
             bad_br = False
-    except:
+    except ValueError:
         pass
     if bad_br:
         util.exit_message(f"block_rows parm '{block_rows}' must be integer >= 1000")
@@ -459,9 +462,11 @@ def diff_tables(
     try:
         if nodes != "all":
             node_list = [s.strip() for s in nodes.split(",")]
-    except Exception as e:
+    except ValueError as e:
         util.exit_message(
-            'Nodes should be a comma-separated list of nodenames. E.g., --nodes="n1,n2"'
+            'Nodes should be a comma-separated list of nodenames. E.g., --nodes="n1,n2". Error: {}'.format(
+                e
+            )
         )
 
     if len(node_list) > 3:
@@ -510,7 +515,7 @@ def diff_tables(
     except Exception as e:
         util.exit_message("Error in diff_tbls() Getting Connections:" + str(e), 1)
 
-    util.message(f"Connections successful to nodes in cluster", p_state="success")
+    util.message("Connections successful to nodes in cluster", p_state="success")
 
     cols = None
     key = None
@@ -685,7 +690,7 @@ def write_diffs_csv():
         t1_write_path = n1 + "_X_" + n2 + "_" + n1 + ".csv"
         t2_write_path = n1 + "_X_" + n2 + "_" + n2 + ".csv"
         cmd = f"diff -u {t1_write_path} {t2_write_path} | ydiff > {diff_file_name}"
-        diff_s = subprocess.check_output(cmd, shell=True)
+        subprocess.check_output(cmd, shell=True)
 
         util.message(
             f"Diffs between {n1} and {n2} have been written out to {diff_file_name}",
@@ -735,7 +740,7 @@ def repair(cluster_name, diff_file, source_of_truth, table_name):
     except Exception as e:
         util.exit_message("Error in diff_tbls() Getting Connections:" + str(e), 1)
 
-    util.message(f"Connections successful to nodes in cluster", p_state="success")
+    util.message("Connections successful to nodes in cluster", p_state="success")
 
     cols = None
     key = None
@@ -775,9 +780,34 @@ def repair(cluster_name, diff_file, source_of_truth, table_name):
     true_df = pd.concat([true_df, pd.DataFrame(true_rows)], ignore_index=True)
     true_df.drop_duplicates(inplace=True)
 
+    true_df[key] = true_df[key].astype(str)
+
+    true_df = true_df[[c for c in true_df if c not in [key]] + [key]]
     for conn in conn_list:
         # Unpack true_df into (key, row) tuples
         true_rows = true_df.to_records(index=False)
+
+    true_rows = [tuple(row) for row in true_rows]
+
+    update_sql = f"UPDATE {table_name} SET "
+    cols_list = cols.split(",")
+
+    for col in cols_list:
+        if col == key:
+            continue
+        update_sql += f"{col} = %s, "
+
+    update_sql = update_sql[:-2]
+    update_sql += f" WHERE {key} = %s"
+
+    for conn in conn_list:
+        try:
+            cur = conn.cursor()
+            cur.executemany(update_sql, true_rows)
+            conn.commit()
+            cur.close()
+        except Exception as e:
+            util.exit_message("Error in repair():" + str(e), 1)
 
     util.message(
         f"Successfully applied diffs to {table_name} in cluster {cluster_name}",
