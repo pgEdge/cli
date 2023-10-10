@@ -4,15 +4,19 @@
 
 """ACE is the place of the Anti Chaos Engine"""
 
-import traceback
-import os, json, subprocess, re
-import util, fire, cluster, psycopg
+import os
+import json
+
+import subprocess
+import re
+import util
+import fire
+import cluster
+import psycopg
 from datetime import datetime
-from multiprocessing import Manager, Pool, cpu_count, Value, Queue
-from tqdm import tqdm
+from multiprocessing import Manager, cpu_count, Value, Queue
 from ordered_set import OrderedSet
 from itertools import combinations
-from datetime import datetime
 from mpire import WorkerPool
 from concurrent.futures import ThreadPoolExecutor
 
@@ -302,7 +306,6 @@ def diff_spock(cluster_name, node1, node2):
         else:
             prRed("    Difference in Replication Rules")
 
-    ##print(json.dumps(compare_spock,indent=2))
     return compare_spock
 
 
@@ -378,8 +381,7 @@ def compare_checksums(
                     executor.submit(run_query, worker_state, host2, hash_sql),
                 ]
                 hash1, hash2 = [f.result()[0][0] for f in futures]
-        except Exception as e:
-            traceback.print_exc()
+        except Exception:
             result_queue.append(BLOCK_ERROR)
             return
 
@@ -391,8 +393,7 @@ def compare_checksums(
                         executor.submit(run_query, worker_state, host2, block_sql),
                     ]
                     t1_result, t2_result = [f.result() for f in futures]
-            except Exception as e:
-                traceback.print_exc()
+            except Exception:
                 result_queue.append(BLOCK_ERROR)
                 return
 
@@ -432,39 +433,40 @@ def diff_tables(
     table_name,
     block_rows=1000,
     max_cpu_ratio=MAX_CPU_RATIO,
-    pretty_print=False,
     output="csv",
     nodes="all",
 ):
     """Efficiently compare tables across cluster using checksums and blocks of rows."""
 
-    # Capping max block size here to prevent the has function from taking forever
+    # Capping max block size here to prevent the hash function from taking forever
     if block_rows > MAX_ALLOWED_BLOCK_SIZE:
         util.exit_message(f"Desired block row size is > {MAX_ALLOWED_BLOCK_SIZE}")
 
     if output not in ["csv", "json"]:
         util.exit_message(
-            f"Diff-tables currently supports only csv and json output formats"
+            "Diff-tables currently supports only csv and json output formats"
         )
 
     bad_br = True
     try:
         b_r = int(block_rows)
-        if b_r >= 10:
+        if b_r >= 1000:
             bad_br = False
-    except:
+    except ValueError:
         pass
     if bad_br:
-        util.exit_message(f"block_rows parm '{block_rows}' must be integer >= 10")
+        util.exit_message(f"block_rows parm '{block_rows}' must be integer >= 1000")
 
     node_list = []
 
     try:
         if nodes != "all":
             node_list = [s.strip() for s in nodes.split(",")]
-    except Exception as e:
+    except ValueError as e:
         util.exit_message(
-            'Nodes should be a comma-separated list of nodenames. E.g., --nodes="n1,n2"'
+            'Nodes should be a comma-separated list of nodenames. E.g., --nodes="n1,n2". Error: {}'.format(
+                e
+            )
         )
 
     if len(node_list) > 3:
@@ -513,7 +515,7 @@ def diff_tables(
     except Exception as e:
         util.exit_message("Error in diff_tbls() Getting Connections:" + str(e), 1)
 
-    util.message(f"Connections successful to nodes in cluster", p_state="success")
+    util.message("Connections successful to nodes in cluster", p_state="success")
 
     cols = None
     key = None
@@ -623,11 +625,10 @@ def diff_tables(
             )
 
         if output == "json":
-            write_diffs_json(
-                cols, block_rows, l_schema, l_table, pretty_print=pretty_print
-            )
+            write_diffs_json(block_rows)
+
         elif output == "csv":
-            write_diffs_csv(node_list, cols, l_schema, l_table)
+            write_diffs_csv()
 
     else:
         util.message("TABLES MATCH OK\n", p_state="success")
@@ -638,7 +639,7 @@ def diff_tables(
     )
 
 
-def write_diffs_json(cols, block_rows, l_schema, l_table, pretty_print=False):
+def write_diffs_json(block_rows):
     output_json = {}
 
     output_json["total_diffs"] = row_diff_count.value
@@ -653,7 +654,8 @@ def write_diffs_json(cols, block_rows, l_schema, l_table, pretty_print=False):
     util.message(f"Diffs written out to {filename}", p_state="info")
 
 
-def write_diffs_csv(node_list, cols, l_schema, l_table):
+# TODO: Come up with better naming convention for diff files
+def write_diffs_csv():
     import pandas as pd
 
     seen_nodepairs = {}
@@ -688,12 +690,129 @@ def write_diffs_csv(node_list, cols, l_schema, l_table):
         t1_write_path = n1 + "_X_" + n2 + "_" + n1 + ".csv"
         t2_write_path = n1 + "_X_" + n2 + "_" + n2 + ".csv"
         cmd = f"diff -u {t1_write_path} {t2_write_path} | ydiff > {diff_file_name}"
-        diff_s = subprocess.check_output(cmd, shell=True)
+        subprocess.check_output(cmd, shell=True)
 
         util.message(
             f"Diffs between {n1} and {n2} have been written out to {diff_file_name}",
             p_state="info",
         )
+
+
+def repair(cluster_name, diff_file, source_of_truth, table_name):
+    import pandas as pd
+
+    # Check if diff_file exists on disk
+    if not os.path.exists(diff_file):
+        util.exit_message(f"Diff file {diff_file} does not exist")
+
+    util.check_cluster_exists(cluster_name)
+    util.message(f"Cluster {cluster_name} exists", p_state="success")
+
+    nm_lst = table_name.split(".")
+    if len(nm_lst) != 2:
+        util.exit_message(f"TableName {table_name} must be of form 'schema.table_name'")
+
+    l_schema = nm_lst[0]
+    l_table = nm_lst[1]
+
+    il, db, pg, count, usr, passwd, os_usr, cert, cluster_nodes = cluster.load_json(
+        cluster_name
+    )
+
+    if not any(lambda x: source_of_truth == x["nodename"] for x in cluster_nodes):
+        util.exit_message(
+            f"Source of truth node {source_of_truth} not present in cluster"
+        )
+
+    conn_list = []
+    try:
+        for nd in cluster_nodes:
+            conn_list.append(
+                psycopg.connect(
+                    dbname=db,
+                    user=usr,
+                    password=passwd,
+                    host=nd["ip"],
+                    port=nd.get("port", 5432),
+                )
+            )
+
+    except Exception as e:
+        util.exit_message("Error in diff_tbls() Getting Connections:" + str(e), 1)
+
+    util.message("Connections successful to nodes in cluster", p_state="success")
+
+    cols = None
+    key = None
+
+    for conn in conn_list:
+        curr_cols = get_cols(conn, l_schema, l_table)
+        curr_key = get_key(conn, l_schema, l_table)
+
+        if not curr_cols:
+            util.exit_message(f"Invalid table name '{table_name}'")
+        if not curr_key:
+            util.exit_message(f"No primary key found for '{table_name}'")
+
+        if (not cols) and (not key):
+            cols = curr_cols
+            key = curr_key
+            continue
+
+        if (curr_cols != cols) or (curr_key != key):
+            util.exit_message("Table schemas don't match")
+
+        cols = curr_cols
+        key = curr_key
+
+    util.message(f"Table {table_name} is comparable across nodes", p_state="success")
+
+    with open(diff_file) as f:
+        diff_json = json.load(f)
+
+    true_df = pd.DataFrame()
+    true_rows = [
+        entry
+        for diff in diff_json["diffs"]
+        for d in diff["diffs"]
+        for entry in d.get(source_of_truth, [])
+    ]
+    true_df = pd.concat([true_df, pd.DataFrame(true_rows)], ignore_index=True)
+    true_df.drop_duplicates(inplace=True)
+
+    true_df[key] = true_df[key].astype(str)
+
+    true_df = true_df[[c for c in true_df if c not in [key]] + [key]]
+    for conn in conn_list:
+        # Unpack true_df into (key, row) tuples
+        true_rows = true_df.to_records(index=False)
+
+    true_rows = [tuple(row) for row in true_rows]
+
+    update_sql = f"UPDATE {table_name} SET "
+    cols_list = cols.split(",")
+
+    for col in cols_list:
+        if col == key:
+            continue
+        update_sql += f"{col} = %s, "
+
+    update_sql = update_sql[:-2]
+    update_sql += f" WHERE {key} = %s"
+
+    for conn in conn_list:
+        try:
+            cur = conn.cursor()
+            cur.executemany(update_sql, true_rows)
+            conn.commit()
+            cur.close()
+        except Exception as e:
+            util.exit_message("Error in repair():" + str(e), 1)
+
+    util.message(
+        f"Successfully applied diffs to {table_name} in cluster {cluster_name}",
+        p_state="success",
+    )
 
 
 if __name__ == "__main__":
@@ -702,5 +821,6 @@ if __name__ == "__main__":
             "diff-tables": diff_tables,
             "diff-schemas": diff_schemas,
             "diff-spock": diff_spock,
+            "repair": repair,
         }
     )
