@@ -32,5 +32,6 @@ t/957_sub-show-table.pl
 t/959_spock_metrics-check.pl
 t/961_spock_health-check.pl
 t/963_spock_repset-list-tables.pl
+t/965_spock_node-list.pl
 t/998_breakdown_cluster.pl
 
