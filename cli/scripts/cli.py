@@ -68,19 +68,18 @@ fire_list = ["service", "um", "spock", "cluster", "ace", "secure", "db", "app"]
 mode_list = ["start", "stop", "restart", "status", "list", "info", "update",
              "upgrade", "downgrade", "enable", "disable", "install", "tune",
              "remove", "reload", "help", "get", "set", "unset", "backrest",
-             "change-pgconf", "top", "pgbin", "psql", "--autostart", 
+             "change-pgconf", "top", "pgbin", "psql", "pg_isready", "--autostart", 
              "--pg", "--start", "--no-restart", "--no-preload",
              "--help", "--json", "--jsonp", "--test", "--extensions", "--svcs",
              "--list", "--old", "--showduplicates", "-y", "-t",
              "--verbose", "--country", "-v", "--debug", "--debug2"] + fire_list
 
 mode_list_advanced = ['kill', 'config', 'init', 'clean', 'useradd', 'spock', 
-                      'pgbin', 'psql', 'cluster', 'ace', 'service', 'um', 
+                      'pgbin', 'psql', 'pg_isready', 'cluster', 'ace', 'service', 'um', 
                       'advanced', 'secure', 'db', 'app']
 
-ignore_comp_list = [ "get", "set", "unset", "pgbin", "psql", 
-                     "service", "useradd", "backrest",
-                     "change-pgconf"] + fire_list
+ignore_comp_list = [ "get", "set", "unset", "pgbin", "psql", "pg_isready",
+                     "service", "useradd", "backrest", "change-pgconf"] + fire_list
 
 no_log_commands = ['status', 'info', 'list', 'top', 'get', 'metrics-check']
 
@@ -1392,6 +1391,17 @@ try:
 
   if p_mode != "update":
     update_if_needed()
+
+
+  ## PG_ISREADY #################################################################
+  if p_mode == 'pg_isready':
+    pg_v = util.get_pg_v(None)
+    cmd = "./nc pgbin " + pg_v.replace("pg","") + " pg_isready"
+    rc = os.system(cmd)
+    if rc == 0:
+      sys.exit(0)
+    else:
+      sys.exit(1)
 
 
   ## PSQL #######################################################################

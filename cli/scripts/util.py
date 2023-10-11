@@ -221,6 +221,8 @@ def get_pg_v(pg):
 
         if k == 1:
             pg_v = str(p[0])
+        elif k == 0:
+            exit_message("PG is not installed", 1)
         else:
             exit_message("must be one PG installed", 1)
 
