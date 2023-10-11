@@ -57,10 +57,10 @@ elif [ "$majorV" == "15" ]; then
 
   if [ "$OS" == "el9" ] || [ "$OS" == "arm9" ]; then
     cd spock-private
-    git checkout REL3_1_STABLE
+    git checkout main
     git pull
-    diff1=$PWD/pg15-log_old_value.diff
-    diff2=$PWD/pg15-allow_logical_decoding_on_standbys.patch
+    diff1=$PWD/patches/pg15-005-log_old_value.diff
+    diff2=$PWD/patches/pg15-010-allow_logical_decoding_on_standbys.patch
     if [ -f "$diff1" ] && [ -f "$diff2" ]; then
       export DIFF1="$diff1"
       export DIFF2="$diff2"
@@ -79,9 +79,9 @@ elif [ "$majorV" == "16" ]; then
   pgBuildV=$pg16BuildV
 
   cd spock-private
-  git checkout REL3_1_STABLE
+  git checkout main
   git pull
-  diff1=$PWD/pg16-log_old_value.diff
+  diff1=$PWD/patches/pg16-005-log_old_value.diff
   if [ -f "$diff1" ]; then
     export DIFF1="$diff1"
     export DIFF2=""
@@ -98,7 +98,7 @@ elif [ "$majorV" == "17" ]; then
   cd spock-private
   git checkout main
   git pull
-  diff1=$PWD/pg16-log_old_value.diff
+  diff1=$PWD/patches/pg17-005-log_old_value.diff
   if [ -f "$diff1" ]; then
     export DIFF1="$diff1"
     export DIFF2=""
