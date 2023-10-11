@@ -34,5 +34,6 @@ t/961_spock_health-check.pl
 t/963_spock_repset-list-tables.pl
 t/965_spock_node-list.pl
 t/967_spock_repset-alter.pl
+t/969_spock_repset-remove-table.pl
 t/998_breakdown_cluster.pl
 
