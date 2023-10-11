@@ -65,18 +65,19 @@ dep9 = util.get_depend()
 
 fire_list = ["service", "um", "spock", "cluster", "ace", "secure", "db", "app"]
 
-mode_list = ["start", "stop", "restart", "status", "list", "info", "update",
-             "upgrade", "downgrade", "enable", "disable", "install", "tune",
-             "remove", "reload", "help", "get", "set", "unset", "backrest",
-             "change-pgconf", "top", "pgbin", "psql", "pg_isready", "--autostart", 
-             "--pg", "--start", "--no-restart", "--no-preload",
+mode_list_advanced = ['kill', 'config', 'init', 'clean', 'useradd', 'spock', 'downgrade',
+                      'pgbin', 'psql', 'pg_isready', 'cluster', 'ace', 'enable', 'upgrade',
+                      'secure', 'db', 'app', 'update', 'disable', 'tune', 'backrest',
+                      'get', 'top', 'set', 'unset', 'reload']
+
+mode_list = ["start", "stop", "restart", "status", "list", "info", "help", 
+             "install", "remove", "--pg", "--start", "--no-restart", "--no-preload",
              "--help", "--json", "--jsonp", "--test", "--extensions", "--svcs",
              "--list", "--old", "--showduplicates", "-y", "-t",
-             "--verbose", "--country", "-v", "--debug", "--debug2"] + fire_list
+             "--verbose", "--country", "-v", "--debug", "--debug2"] + \
+             fire_list + mode_list_advanced
 
-mode_list_advanced = ['kill', 'config', 'init', 'clean', 'useradd', 'spock', 
-                      'pgbin', 'psql', 'pg_isready', 'cluster', 'ace', 'service', 'um', 
-                      'advanced', 'secure', 'db', 'app']
+mode_list
 
 ignore_comp_list = [ "get", "set", "unset", "pgbin", "psql", "pg_isready",
                      "service", "useradd", "backrest", "change-pgconf"] + fire_list
