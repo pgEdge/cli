@@ -74,7 +74,9 @@ def fix_schema(diff_file, sql1, sql2):
     with open(diff_file) as diff_list:
         for i in diff_list.readlines():
             if re.search("\,", i):
-                linenum = i.split(",")[0]
+                # TODO: Fix this
+                # linenum = i.split(",")[0]
+                pass
             elif re.search(r"^< CREATE.", i):
                 newtable = True
                 print(i.replace("<", ""))
@@ -84,7 +86,7 @@ def fix_schema(diff_file, sql1, sql2):
                 print(
                     " DROP TABLE " + i.replace("> CREATE TABLE ", "").replace(" (", ";")
                 )
-            elif newtable == True:
+            elif newtable:
                 print(i.replace("<", ""))
                 if re.search(r".;$", i):
                     newtable = False
@@ -147,7 +149,8 @@ def get_cols(p_con, p_schema, p_table):
 def get_key(p_con, p_schema, p_table):
     sql = """
     SELECT C.COLUMN_NAME
-    FROM INFORMATION_SCHEMA.TABLE_CONSTRAINTS T  , INFORMATION_SCHEMA.CONSTRAINT_COLUMN_USAGE C
+    FROM INFORMATION_SCHEMA.TABLE_CONSTRAINTS T,
+    INFORMATION_SCHEMA.CONSTRAINT_COLUMN_USAGE C
     WHERE c.constraint_name = t.constraint_name
     AND c.table_schema = t.constraint_schema
     AND c.table_schema = %s AND c.table_name = %s
@@ -251,7 +254,7 @@ def diff_spock(cluster_name, node1, node2):
         prCyan("  Subscriptions:")
 
         for node in node_info:
-            if node["sub_name"] == None:
+            if node["sub_name"] is None:
                 hints.append("Hint: No subscriptions have been created on this node")
             else:
                 print("    " + node["sub_name"])
@@ -274,7 +277,8 @@ def diff_spock(cluster_name, node1, node2):
                 diff_spock["subscriptions"] = diff_sub
 
         sql = """
-        SELECT set_name, string_agg(relname,'   ') as relname FROM spock.tables GROUP BY set_name ORDER BY set_name;
+        SELECT set_name, string_agg(relname,'   ') as relname
+        FROM spock.tables GROUP BY set_name ORDER BY set_name;
         """
         table_info = util.run_psyco_sql(pg_v, db, sql, cluster_node["ip"])
         diff_spock["rep_set_info"] = []
@@ -282,10 +286,11 @@ def diff_spock(cluster_name, node1, node2):
         if table_info == []:
             hints.append("Hint: No tables in database")
         for table in table_info:
-            if table["set_name"] == None:
+            if table["set_name"] is None:
                 print(" - Not in a replication set")
                 hints.append(
-                    "Hint: Tables not in replication set might not have primary keys, or you need to run repset-add-table"
+                    "Hint: Tables not in replication set might not have primary keys, \
+                        or you need to run repset-add-table"
                 )
             else:
                 print(" - " + table["set_name"])
@@ -294,6 +299,7 @@ def diff_spock(cluster_name, node1, node2):
             print("   - " + table["relname"])
 
         compare_spock.append(diff_spock)
+
         for hint in hints:
             prRed(hint)
         print("\n")
@@ -323,7 +329,12 @@ def init_db_connection(shared_objects, worker_state):
     )
 
     for node in nodes:
-        conn_str = f"dbname = {db} user={usr} password={passwd} host={node['ip']} port={node.get('port', 5432)}"
+        conn_str = f"dbname = {db}      \
+                    user={usr}          \
+                    password={passwd}   \
+                    host={node['ip']}   \
+                    port={node.get('port', 5432)}"
+
         worker_state[node["nodename"]] = psycopg.connect(conn_str).cursor()
 
 
@@ -370,11 +381,13 @@ def compare_checksums(
         host1 = node_pair[0]
         host2 = node_pair[1]
 
+        # Return early if we have already exceeded the max number of diffs
         if row_diff_count.value >= MAX_DIFF_ROWS:
             queue.append(block_result)
             return
 
         try:
+            # Run the checksum query on both nodes in parallel
             with ThreadPoolExecutor(max_workers=2) as executor:
                 futures = [
                     executor.submit(run_query, worker_state, host1, hash_sql),
@@ -387,6 +400,7 @@ def compare_checksums(
 
         if hash1 != hash2:
             try:
+                # Run the block query on both nodes in parallel
                 with ThreadPoolExecutor(max_workers=2) as executor:
                     futures = [
                         executor.submit(run_query, worker_state, host1, block_sql),
@@ -397,6 +411,7 @@ def compare_checksums(
                 result_queue.append(BLOCK_ERROR)
                 return
 
+            # Collect results into OrderedSets for comparison
             t1_set = OrderedSet(t1_result)
             t2_set = OrderedSet(t2_result)
 
@@ -464,9 +479,8 @@ def diff_tables(
             node_list = [s.strip() for s in nodes.split(",")]
     except ValueError as e:
         util.exit_message(
-            'Nodes should be a comma-separated list of nodenames. E.g., --nodes="n1,n2". Error: {}'.format(
-                e
-            )
+            f'Nodes should be a comma-separated list of nodenames. \
+                E.g., --nodes="n1,n2". Error: {e}'
         )
 
     if len(node_list) > 3:
@@ -555,14 +569,22 @@ def diff_tables(
     total_blocks = total_blocks if total_blocks > 0 else 1
     cpus = cpu_count()
     max_procs = int(cpus * max_cpu_ratio * 2) if cpus > 1 else 1
-    procs = max_procs if total_blocks > max_procs else total_blocks
+    procs = (
+        max_procs if total_blocks > max_procs else total_blocks
+    )  # if we don't have enough blocks to keep all CPUs busy, use fewer processes
 
     start_time = datetime.now()
 
+    """
+    Generate offsets for each process to work on.
+    We go up to the max rows among all nodes because we want our set difference logic
+    to capture diffs even if rows are absent in one node
+    """
     offsets = [x for x in range(0, row_count + 1, block_rows)]
 
     cols_list = cols.split(",")
 
+    # Shared variables needed by all workers
     shared_objects = {
         "cluster_name": cluster_name,
         "node_list": node_list,
@@ -606,7 +628,9 @@ def diff_tables(
 
     if errors:
         util.exit_message(
-            "There were one or more errors while connecting to databases.\n Please examine the connection information provided or the nodes' status before running this script again."
+            "There were one or more errors while connecting to databases.\n \
+                Please examine the connection information provided, or the nodes' \
+                    status before running this script again."
         )
 
     # Mismatch is True if there is a block mismatch or if we have
@@ -648,6 +672,7 @@ def write_diffs_json(block_rows):
 
     ts = datetime.now().strftime("%Y%m%d%H%M%S")
     filename = "diff_" + ts + ".json"
+
     with open(filename, "w") as f:
         f.write(json.dumps(output_json, default=str))
 
@@ -719,7 +744,8 @@ def repair(cluster_name, diff_file, source_of_truth, table_name):
         cluster_name
     )
 
-    if not any(lambda x: source_of_truth == x["nodename"] for x in cluster_nodes):
+    # Check to see if source_of_truth node is present in cluster
+    if not any(node.get("nodename") == source_of_truth for node in cluster_nodes):
         util.exit_message(
             f"Source of truth node {source_of_truth} not present in cluster"
         )
@@ -777,11 +803,14 @@ def repair(cluster_name, diff_file, source_of_truth, table_name):
         for d in diff["diffs"]
         for entry in d.get(source_of_truth, [])
     ]
+
+    # Collect all rows from our source of truth node and dedupe
     true_df = pd.concat([true_df, pd.DataFrame(true_rows)], ignore_index=True)
     true_df.drop_duplicates(inplace=True)
 
     true_df[key] = true_df[key].astype(str)
 
+    # Move the key column to the end since we will be using it in the WHERE clause
     true_df = true_df[[c for c in true_df if c not in [key]] + [key]]
     for conn in conn_list:
         # Unpack true_df into (key, row) tuples
@@ -789,6 +818,9 @@ def repair(cluster_name, diff_file, source_of_truth, table_name):
 
     true_rows = [tuple(row) for row in true_rows]
 
+    """
+    Here we are constructing an UPDATE query from true_rows and applying it to all nodes
+    """
     update_sql = f"UPDATE {table_name} SET "
     cols_list = cols.split(",")
 
@@ -800,6 +832,7 @@ def repair(cluster_name, diff_file, source_of_truth, table_name):
     update_sql = update_sql[:-2]
     update_sql += f" WHERE {key} = %s"
 
+    # Apply the diffs to all nodes in the cluster
     for conn in conn_list:
         try:
             cur = conn.cursor()
