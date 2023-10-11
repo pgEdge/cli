@@ -78,12 +78,12 @@ if(!(contains(@$stderr_buf12[0], "ERROR")))
 
 # Add code to test what happens if a port number is omitted:
 
-my $cmd13 = qq($homedir1/nodectl spock sub-create sub_n1n2 'host=127.0.0.1 port= user=$repuser dbname=$database' $database);
+my $cmd13 = qq($homedir1/nodectl spock sub-create sub_n1n2 'host=127.0.0.1 user=$repuser dbname=$database' $database);
 print("cmd13 = $cmd13\n");
 my($success13, $error_message13, $full_buf13, $stdout_buf13, $stderr_buf13)= IPC::Cmd::run(command => $cmd13, verbose => 0);
 print("stdout_buf13 = @$stdout_buf13\n");
 
-if(!(contains(@$stdout_buf13[0], "ERROR")))
+if(!(contains(@$stdout_buf13[0], "could not connect")))
 {
     exit(1);
 }
@@ -96,7 +96,7 @@ print("cmd14 = $cmd14\n");
 my($success14, $error_message14, $full_buf14, $stdout_buf14, $stderr_buf14)= IPC::Cmd::run(command => $cmd14, verbose => 0);
 print("stdout_buf14 = @$stdout_buf14\n");
 
-if(!(contains(@$stdout_buf14[0], "ERROR")))
+if(!(contains(@$stdout_buf14[0], "could not connect")))
 {
     exit(1);
 }
@@ -109,7 +109,7 @@ print("cmd15 = $cmd15\n");
 my($success15, $error_message15, $full_buf15, $stdout_buf15, $stderr_buf15)= IPC::Cmd::run(command => $cmd15, verbose => 0);
 print("stdout_buf15 = @$stdout_buf15\n");
 
-if(!(contains(@$stdout_buf15[0], "ERROR")))
+if(!(contains(@$stdout_buf15[0], "could not connect")))
 {
     exit(1);
 }
