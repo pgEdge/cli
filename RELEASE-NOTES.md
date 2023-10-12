@@ -2,7 +2,8 @@
 
 
 ## done for 23.134 on 2023-10-12
-  - new nclibs includes `empire`
+  - new ACE functionality for table repair
+  - new nclibs includes mpire & pandas
   - bump patroni to v3.1.2.1
   - suppress CloudInfo: when cloud_name == "unknown"
 
