@@ -407,7 +407,7 @@ def info(p_json, p_home, p_repo, print_flag=True):
     admin_display + "  " + host_display + "  " + host_ip)
   print(bold_start + "#          OS: " + bold_end + os2.rstrip() + " " + glibc_v_display + os_arch)
   print(bold_start + "#     Machine: " + bold_end + mem + ", " + cores + " vCPU, " + cpu)
-  if instance_id > "":
+  if instance_id > "" and not cloud_name == "unknown":
     print(bold_start + "#  Cloud Info: " + bold_end +\
       f"{cloud_name}  {cloud_platform}  {instance_id}  {flavor}  {az}")
 
