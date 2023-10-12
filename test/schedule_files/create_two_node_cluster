@@ -10,8 +10,10 @@
 
 t/9000_install_pgedge_node_1.pl
 t/9001_install_pgedge_node_2.pl
-t/905_reg_node_one.pl
-t/907_reg_node_two.pl
+t/9006_repset-create_node_1.pl
+t/9007_repset-create_node_2.pl
+
+
 t/908_update_user_n1.pl
 t/909_update_user_n2.pl
 t/910_sub-create_n1.pl
