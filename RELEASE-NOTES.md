@@ -1,5 +1,11 @@
 # pgEdge Platform Release Notes #############
 
+
+## done for 23.134 on 2023-10-12
+  - new nclibs includes `empire`
+  - bump patroni to v3.1.2.1
+
+
 ## done for 23.133 on 2023-10-10
   - add new pg_isready command (per susan's team suggestion)
   - slew of optimisations in diff-tables (tej)

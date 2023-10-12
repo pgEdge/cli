@@ -436,7 +436,8 @@ INSERT INTO versions VALUES ('backrest', '2.46-1', 'el9, arm9', 0, '20230524', '
 INSERT INTO projects VALUES ('patroni', 'app', 11, 0, '', 4, 'https://github.com/pgedge/patroni/tags',
   'patroni', 0, 'patroni.png', 'HA', 'https://github.com/pgedge/patroni');
 INSERT INTO releases VALUES ('patroni', 1, 'patroni', 'Patroni', '', 'test', '', 1, 'POSTGRES', '', '');
-INSERT INTO versions VALUES ('patroni', '3.1.0.1', '', 1, '20230829', '', 'EL9', '');
+INSERT INTO versions VALUES ('patroni', '3.1.2.1', '', 1, '20231012', '', 'EL9', '');
+INSERT INTO versions VALUES ('patroni', '3.1.0.1', '', 0, '20230829', '', 'EL9', '');
 
 INSERT INTO projects VALUES ('etcd', 'app', 11, 0, 'hub', 4, 'https://github.com/etcd-io/etcd/tags',
   'etcd', 0, 'etcd.png', 'HA', 'https://github.com/etcd-io/etcd');
