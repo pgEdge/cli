@@ -1,0 +1,25 @@
+# The tests in this schedule tests suppressing replication of the 
+# deleted transactions with the --repset_delete=False
+# flag
+#
+# setup scripts
+t/9000_install_pgedge_node_1.pl
+t/9051_create_node_one.pl
+t/9001_install_pgedge_node_2.pl
+t/9052_create_node_two.pl
+# test cases
+t/9060_delete_false_n1.pl
+t/9061_sub_n1n2_delete_false.pl
+t/9062_delete_false_n2.pl
+t/9063_sub_n2n1_delete_false.pl
+t/9064_delete_replication_check.pl
+# cleanup scripts
+t/9080_repset_drop_n1.pl
+t/9081_repset_drop_n2.pl
+t/9082_sub_drop_n1.pl
+t/9083_sub_drop_n2.pl
+t/9084_table_drop_n1.pl
+t/9085_table_drop_n2.pl
+t/9086_node_drop_n1.pl
+t/9087_node_drop_n2.pl
+
