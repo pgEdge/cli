@@ -39,7 +39,7 @@ my $repset = "demo-noupdate-repset";
 my $n1 = "~/work/nodectl/test/pgedge/cluster/demo/n1";
 my $n2 = "~/work/nodectl/test/pgedge/cluster/demo/n2";
 my $schema = "public";
-my $table_name="foo_no_update";
+my $table_name="foo";
 
 # We can retrieve the home directory from nodectl in json form... 
 
