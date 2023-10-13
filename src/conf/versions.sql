@@ -125,7 +125,7 @@ INSERT INTO categories VALUES (9,  87, 'Management & Monitoring', 'Manage/Monito
 -- ## HUB ################################
 INSERT INTO projects VALUES ('hub', 'app', 0, 0, 'hub', 0, 'https://github.com/pgedge/nodectl','',0,'','','');
 INSERT INTO releases VALUES ('hub', 1, 'hub', '', '', 'hidden', '', 1, '', '', '');
-INSERT INTO versions VALUES ('hub', '23.134', '',  1, '20231015', '', '', '');
+INSERT INTO versions VALUES ('hub', '23.134', '',  1, '20231013', '', '', '');
 INSERT INTO versions VALUES ('hub', '23.133', '',  0, '20231006', '', '', '');
 INSERT INTO versions VALUES ('hub', '23.132', '',  0, '20230929', '', '', '');
 INSERT INTO versions VALUES ('hub', '23.131', '',  0, '20230928', '', '', '');
@@ -436,7 +436,7 @@ INSERT INTO versions VALUES ('backrest', '2.46-1', 'el9, arm9', 0, '20230524', '
 INSERT INTO projects VALUES ('patroni', 'app', 11, 0, '', 4, 'https://github.com/pgedge/patroni/tags',
   'patroni', 0, 'patroni.png', 'HA', 'https://github.com/pgedge/patroni');
 INSERT INTO releases VALUES ('patroni', 1, 'patroni', 'Patroni', '', 'test', '', 1, 'POSTGRES', '', '');
-INSERT INTO versions VALUES ('patroni', '3.1.2.1', '', 1, '20231012', '', 'EL9', '');
+INSERT INTO versions VALUES ('patroni', '3.1.2.1', '', 1, '20231013', '', 'EL9', '');
 INSERT INTO versions VALUES ('patroni', '3.1.0.1', '', 0, '20230829', '', 'EL9', '');
 
 INSERT INTO projects VALUES ('etcd', 'app', 11, 0, 'hub', 4, 'https://github.com/etcd-io/etcd/tags',
