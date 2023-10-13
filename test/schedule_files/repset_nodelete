@@ -22,4 +22,4 @@ t/9084_table_drop_n1.pl
 t/9085_table_drop_n2.pl
 t/9086_node_drop_n1.pl
 t/9087_node_drop_n2.pl
-
+t/9998_remove_pgedge.pl
