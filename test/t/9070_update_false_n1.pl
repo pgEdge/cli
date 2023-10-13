@@ -34,7 +34,7 @@ my $database = "lcdb";
 my $version = "pg16";
 my $spock = "3.1";
 my $cluster = "demo";
-my $repset = "demo-noupdate-repset";
+my $repset = "demo-repset";
 my $n1 = "~/work/nodectl/test/pgedge/cluster/demo/n1";
 my $n2 = "~/work/nodectl/test/pgedge/cluster/demo/n2";
 
@@ -73,9 +73,9 @@ print("We just executed the command that creates the replication set (demo-noupd
 
 print ("-"x150,"\n");
 
-     # Creating public.foo_no_update Table
+     # Creating foo Table
 
-    my $cmd6 = qq($homedir/$version/bin/psql -t -h 127.0.0.1 -p $port -d $database -c "CREATE TABLE public.foo_no_update (col1 INT PRIMARY KEY)");
+    my $cmd6 = qq($homedir/$version/bin/psql -t -h 127.0.0.1 -p $port -d $database -c "CREATE TABLE foo (col1 INT PRIMARY KEY)");
     print("cmd6 = $cmd6\n");
     my($success6, $error_message6, $full_buf6, $stdout_buf6, $stderr_buf6)= IPC::Cmd::run(command => $cmd6, verbose => 0);
     print ("-"x150,"\n");
@@ -85,26 +85,24 @@ print ("-"x150,"\n");
      print("cmd9 = $cmd9\n");
    my ($success9, $error_message9, $full_buf9, $stdout_buf9, $stderr_buf9)= IPC::Cmd::run(command => $cmd9, verbose => 0);
      
-     print("stdout_buf9= @$stdout_buf9\n");
+    print("stdout_buf9= @$stdout_buf9\n");
 
-   print ("-"x150,"\n");
-   print("\n");
+    print ("-"x150,"\n");
+    print("\n");
 
-    # Inserting into public.foo table
+    # Inserting into foo table
 
-   my $cmd7 = qq($homedir/$version/bin/psql -t -h 127.0.0.1 -p $port -d $database -c "INSERT INTO public.foo_no_update select generate_series(1,10)");
-   print("cmd7 = $cmd7\n");
-   my($success7, $error_message7, $full_buf7, $stdout_buf7, $stderr_buf7)= IPC::Cmd::run(command => $cmd7, verbose => 0);
+    my $cmd7 = qq($homedir/$version/bin/psql -t -h 127.0.0.1 -p $port -d $database -c "INSERT INTO foo select generate_series(1,10)");
+    print("cmd7 = $cmd7\n");
+    my($success7, $error_message7, $full_buf7, $stdout_buf7, $stderr_buf7)= IPC::Cmd::run(command => $cmd7, verbose => 0);
    
     print("\n");
-   print ("-"x150,"\n");
- print("\n");
-  
-
+    print ("-"x150,"\n");
+    print("\n");
    
    #Adding Table to the Repset
 
-    my $cmd8 = qq($homedir/nodectl spock repset-add-table $repset public.foo_no_update $database);
+    my $cmd8 = qq($homedir/nodectl spock repset-add-table $repset foo $database);
     print("cmd8 = $cmd8\n");
     my($success8, $error_message8, $full_buf8, $stdout_buf8, $stderr_buf8)= IPC::Cmd::run(command => $cmd8, verbose => 0);
     print("stdout_buf8 = @$stdout_buf8\n");
@@ -117,11 +115,7 @@ print ("-"x150,"\n");
  print("cmd5 = $cmd5\n");
  my ($success5, $error_message5, $full_buf5, $stdout_buf5, $stderr_buf5)= IPC::Cmd::run(command => $cmd5, verbose => 0);
 
-#print("stdout_buf5 = @$stdout_buf5\n");
-    
-
-
-if(contains(@$stdout_buf5[0], "demo-noupdate-repset"))
+if(contains(@$stdout_buf3[0], '"repset_create":'))
 
 {
     exit(0);

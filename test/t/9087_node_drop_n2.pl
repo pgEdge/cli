@@ -28,7 +28,7 @@ my $database = "lcdb";
 my $version = "pg16";
 my $spock = "3.1";
 my $cluster = "demo";
-my $repset = "demo-noinsert-repset";
+my $repset = "demo-repset";
 my $n1 = "~/work/nodectl/test/pgedge/cluster/demo/n1";
 my $n2 = "~/work/nodectl/test/pgedge/cluster/demo/n2";
 
@@ -60,17 +60,17 @@ my ($success3, $error_message3, $full_buf3, $stdout_buf3, $stderr_buf3)= IPC::Cm
 print("success3 = $success3\n");
 print("stdout_buf3 = @$stdout_buf3\n");
 
-print("We just executed the command that drops the node n2");
+print("We just executed the command that drops the node n2.\n");
 
-# Then, use the info to connect to psql and test for the existence of the node.
+if(contains(@$stdout_buf3[0], '"node_drop": true'))
 
-my $cmd5 = qq($homedir/$version/bin/psql -t -h 127.0.0.1 -p $port -d $database -c "SELECT * FROM spock.node");
-print("cmd5 = $cmd5\n");
-my($success5, $error_message5, $full_buf5, $stdout_buf5, $stderr_buf5)= IPC::Cmd::run(command => $cmd5, verbose => 0);
-
-
-
-print("stdout_buf5 = @$stdout_buf5\n");
+{
+    exit(0);
+}
+else
+{
+    exit(1);
+}
 
 
 

@@ -68,16 +68,15 @@ print("cmd11 = $cmd11\n");
 my($success11, $error_message11, $full_buf11, $stdout_buf11, $stderr_buf11)= IPC::Cmd::run(command => $cmd11, verbose => 0);
 print("stdout_buf11 = @$stdout_buf11\n");
 
-# Then, we connect with psql and confirm that the subscription exists.
+if(contains(@$stdout_buf11[0], '"sub_drop": 1'))
 
-my $cmd7 = qq($homedir1/$version/bin/psql -t -h 127.0.0.1 -p $port1 -d $database -c "SELECT * FROM spock.subscription");
-print("cmd7 = $cmd7\n");
-my($success7, $error_message7, $full_buf7, $stdout_buf7, $stderr_buf7)= IPC::Cmd::run(command => $cmd7, verbose => 0);
+{
+    exit(0);
+}
+else
+{
+    exit(1);
+}
 
 
- # Then, use the info to connect to psql and test for the existence of the replication set.
- my $cmd5 = qq($homedir1/$version/bin/psql -t -h 127.0.0.1 -p $port1 -d $database -c "SELECT * FROM spock.replication_set WHERE set_name='$repset'");
- print("cmd5 = $cmd5\n");
- my ($success5, $error_message5, $full_buf5, $stdout_buf5, $stderr_buf5)= IPC::Cmd::run(command => $cmd5, verbose => 0);
 
-print("stdout_buf5 = @$stdout_buf5\n");

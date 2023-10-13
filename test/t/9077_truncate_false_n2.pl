@@ -71,9 +71,9 @@ print("We just executed the command that creates the replication set (demo-notru
 
 print ("-"x150,"\n");
 
-     # Creating public.foo_no_truncate Table
+     # Creating foo Table
 
-    my $cmd6 = qq($homedir/$version/bin/psql -t -h 127.0.0.1 -p $port -d $database -c "CREATE TABLE public.foo_no_truncate (col1 INT PRIMARY KEY)");
+    my $cmd6 = qq($homedir/$version/bin/psql -t -h 127.0.0.1 -p $port -d $database -c "CREATE TABLE foo (col1 INT PRIMARY KEY)");
     print("cmd6 = $cmd6\n");
     my($success6, $error_message6, $full_buf6, $stdout_buf6, $stderr_buf6)= IPC::Cmd::run(command => $cmd6, verbose => 0);
     
@@ -88,9 +88,9 @@ print ("-"x150,"\n");
    print ("-"x150,"\n");
    print("\n");
 
-    # truncateing into public.foo table
+    # truncating into foo table
 
-   my $cmd7 = qq($homedir/$version/bin/psql -t -h 127.0.0.1 -p $port -d $database -c "truncate INTO public.foo_no_truncate select generate_series(1,10)");
+   my $cmd7 = qq($homedir/$version/bin/psql -t -h 127.0.0.1 -p $port -d $database -c "truncate INTO foo select generate_series(1,10)");
    print("cmd7 = $cmd7\n");
    my($success7, $error_message7, $full_buf7, $stdout_buf7, $stderr_buf7)= IPC::Cmd::run(command => $cmd7, verbose => 0);
    

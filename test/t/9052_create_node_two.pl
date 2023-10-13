@@ -26,7 +26,7 @@ my $database = "lcdb";
 my $version = "pg16";
 my $spock = "3.1";
 my $cluster = "demo";
-#my $repset = "demo-repset";
+my $repset = "demo-repset";
 my $n1 = "~/work/nodectl/test/pgedge/cluster/demo/n1";
 my $n2 = "~/work/nodectl/test/pgedge/cluster/demo/n2";
 
@@ -61,6 +61,15 @@ my ($success3, $error_message3, $full_buf3, $stdout_buf3, $stderr_buf3)= IPC::Cm
 print("stdout_buf3= @$stdout_buf3");
 print("We just invoked the ./nc spock node-list n2 command\n");
 
+if(contains(@$stdout_buf3[0], "n2"))
+
+{
+    exit(0);
+}
+else
+{
+    exit(1);
+}
 
 
 

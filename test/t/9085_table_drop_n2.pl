@@ -28,7 +28,7 @@ my $database = "lcdb";
 my $version = "pg16";
 my $spock = "3.1";
 my $cluster = "demo";
-my $repset = "demo-nodeletet-repset";
+my $repset = "demo-repset";
 my $n1 = "~/work/nodectl/test/pgedge/cluster/demo/n1";
 my $n2 = "~/work/nodectl/test/pgedge/cluster/demo/n2";
 
@@ -47,26 +47,42 @@ my $out1 = decode_json($json1);
 my $port = $out1->[0]->{"port"};
 print("The port number is {$port}\n");
 
-
-
 # Register node 1 and the repset entry on n2: 
 print("repuser before chomp = $repuser\n");
 chomp($repuser);
 
+     # Dropping foo Table
 
-
-
-     # Dropping public.foo_no_deletet Table
-
-    my $cmd6 = qq($homedir/$version/bin/psql -t -h 127.0.0.1 -p $port -d $database -c "DROP TABLE foo_no_deletet");
-    print("cmd6 = $cmd6\n");
-    my($success6, $error_message6, $full_buf6, $stdout_buf6, $stderr_buf6)= IPC::Cmd::run(command => $cmd6, verbose => 0);
+     my $cmd6 = qq($homedir/$version/bin/psql -t -h 127.0.0.1 -p $port -d $database -c "DROP TABLE foo CASCADE");
+     print("cmd6 = $cmd6\n");
+     my($success6, $error_message6, $full_buf6, $stdout_buf6, $stderr_buf6)= IPC::Cmd::run(command => $cmd6, verbose => 0);
     
 
      my $cmd7 = qq($homedir/$version/bin/psql -t -h 127.0.0.1 -p $port -d $database -c "SELECT * FROM spock.tables");
      print("cmd7 = $cmd7\n");
- my ($success7, $error_message7, $full_buf7, $stdout_buf7, $stderr_buf7)= IPC::Cmd::run(command => $cmd7, verbose => 0);
-     
+     my ($success7, $error_message7, $full_buf7, $stdout_buf7, $stderr_buf7)= IPC::Cmd::run(command => $cmd7, verbose => 0);
+    
+     print("success6 = $success6\n");
+     print("error_message6 = $error_message6\n");
+     print("full_buf6 = @$full_buf6\n");
+     print("stdout_buf6 = @$stdout_buf6\n");
+     print("stderr_buf6 = @$stderr_buf6\n");
+
+     print("success7 = $success7\n");
+     print("error_message7 = $error_message7\n");
+     print("full_buf7 = @$full_buf7\n");
+     print("stdout_buf7 = @$stdout_buf7\n");
+     print("stderr_buf7 = @$stderr_buf7\n");
+
+if(contains(@$stdout_buf6[0], "DROP TABLE"))
+
+{
+    exit(0);
+}
+else
+{
+    exit(1);
+}
 
  
   
