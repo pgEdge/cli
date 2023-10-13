@@ -11,7 +11,7 @@ use File::Which;
 use IPC::Cmd qw(run);
 use Try::Tiny;
 use JSON;
-use lib './t/lib';
+use lib './lib';
 use contains;
 
 # Our parameters are:
