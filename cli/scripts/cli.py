@@ -63,10 +63,10 @@ ansi_escape = re.compile(r'\x1b[^m]*m')
 
 dep9 = util.get_depend()
 
-fire_list = ["service", "um", "spock", "cluster", "ace", "secure", "db", "app"]
+fire_list = ["service", "um", "spock", "cluster", "patroni-cluster", "ace", "secure", "db", "app"]
 
 mode_list_advanced = ['kill', 'config', 'init', 'clean', 'useradd', 'spock', 'downgrade',
-                      'pgbin', 'psql', 'pg_isready', 'cluster', 'ace', 'enable', 'upgrade',
+                      'pgbin', 'psql', 'pg_isready', 'cluster', 'patroni-cluster', 'ace', 'enable', 'upgrade',
                       'secure', 'db', 'app', 'update', 'disable', 'tune', 'backrest',
                       'get', 'top', 'set', 'unset', 'reload']
 
@@ -1321,7 +1321,7 @@ p_mode = args[1]
 
 if (p_mode in no_log_commands) and (isJSON == True):
   pass
-elif p_mode in ('service', 'spock', 'um', 'cluster') and (len(args) > 2) and (args[2] in no_log_commands):
+elif p_mode in ('service', 'spock', 'um', 'cluster', 'patroni-cluster') and (len(args) > 2) and (args[2] in no_log_commands):
   pass
 else:
   my_logger.command(MY_CMD + " %s", util.scrub_passwd(full_cmd_line))

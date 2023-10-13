@@ -1,0 +1,45 @@
+{
+    "HAProxy": {
+        "ip": "X.X.X.X",
+        "local_ip": "Y.Y.Y.Y",
+        "username": "pgedge",
+        "ssh_key_path": "~/Downloads/t9-key"
+    },  
+    "cluster":{
+        "cluster": "nv",
+        "create_dt": "2023-10-03",
+        "db_name": "pgedge",
+        "db_user": "postgres",
+        "db_init_passwd": "pgedge",
+        "os_user": "pgedge",
+        "ssh_key": "~/Downloads/t9-key",
+        "pg_ver": "16",
+        "port": "5432",
+        "path": "/home/pgedge/pgedge/",
+        "il": false,
+        "count": "3"
+    },      
+    "nodes": [
+        {
+            "name": "node1",
+            "ip": "3.80.73.43",
+            "local_ip": "172.31.25.26",
+            "primary": true,
+            "bootstrap": true
+        },  
+        {
+            "name": "node2",
+            "ip": "3.80.80.169",
+            "local_ip": "172.31.25.98",
+            "primary": false,
+            "bootstrap": true
+        },
+        {
+            "name": "node3",
+            "ip": "52.72.218.10",
+            "local_ip": "172.31.31.157",
+            "primary": false,
+            "bootstrap": false
+        }   
+    ]
+}
