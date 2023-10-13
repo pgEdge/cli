@@ -125,15 +125,14 @@ INSERT INTO categories VALUES (9,  87, 'Management & Monitoring', 'Manage/Monito
 -- ## HUB ################################
 INSERT INTO projects VALUES ('hub', 'app', 0, 0, 'hub', 0, 'https://github.com/pgedge/nodectl','',0,'','','');
 INSERT INTO releases VALUES ('hub', 1, 'hub', '', '', 'hidden', '', 1, '', '', '');
-INSERT INTO versions VALUES ('hub', '23.134', '',  1, '20231013', '', '', '');
+INSERT INTO versions VALUES ('hub', '23.135', '',  1, '20231016', '', '', '');
+INSERT INTO versions VALUES ('hub', '23.134', '',  0, '20231013', '', '', '');
 INSERT INTO versions VALUES ('hub', '23.133', '',  0, '20231006', '', '', '');
 INSERT INTO versions VALUES ('hub', '23.132', '',  0, '20230929', '', '', '');
 INSERT INTO versions VALUES ('hub', '23.131', '',  0, '20230928', '', '', '');
 INSERT INTO versions VALUES ('hub', '23.130', '',  0, '20230927', '', '', '');
 INSERT INTO versions VALUES ('hub', '23.129', '',  0, '20230914', '', '', '');
 INSERT INTO versions VALUES ('hub', '23.128', '',  0, '20230829', '', '', '');
-INSERT INTO versions VALUES ('hub', '23.127', '',  0, '20230810', '', '', '');
-INSERT INTO versions VALUES ('hub', '23.126', '',  0, '20230803', '', '', '');
 
 -- ##
 INSERT INTO projects VALUES ('pg', 'pge', 1, 5432, 'hub', 1, 'https://github.com/postgres/postgres/tags',
