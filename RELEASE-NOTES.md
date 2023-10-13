@@ -1,10 +1,12 @@
 # pgEdge Platform Release Notes #############
 
 
-## done for 23.134 on 2023-10-12
-  - new ACE functionality for table repair
-  - new nclibs includes mpire & pandas
-  - bump patroni to v3.1.2.1
+## done for 23.134 on 2023-10-13
+  - new ACE functionality for table repair (tej)
+  - new nclibs includes mpire & pandas (for ACE)
+  - bump patroni to v3.1.2.1 for patroni-cluster HA (ibrar)
+  - add CLI for spock.replicate_ddl (cady)
+  - lots more testing improvements (susan's team)
   - suppress CloudInfo: when cloud_name == "unknown"
 
 
