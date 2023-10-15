@@ -695,10 +695,10 @@ def install_comp(p_app, p_ver=0, p_rver=None, p_re_install=False):
 def posix_unpack(file_nm):
     rc = os.system("lbzip2 --version > /dev/null 2>&1")
     if rc == 0:
-        rc = echo_cmd(f"lbzip2 -dc {file_nm} | tar xf -")
-        if rc == 1:
-            return 1
-        return rc
+        rc = os.system(f"lbzip2 -dc {file_nm} | tar xf -")
+        if rc == 0:
+            return rc
+        return 1 
 
     return echo_cmd(f"tar -xf {file_nm}")
 
