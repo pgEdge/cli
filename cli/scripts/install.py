@@ -1,11 +1,11 @@
 #####################################################
-#  Copyright 2022-2023 PGEDGE  All rights reserved. #
+#  Copyright 2022-2024 PGEDGE  All rights reserved. #
 #####################################################
 
 import sys, os
 
-VER="23.135"
-REPO=os.getenv("REPO", "https://pgedge-download.s3.amazonaws.com/REPO")
+VER="24.001"
+REPO=os.getenv("REPO", "https://pgedge-upstream.s3.amazonaws.com/REPO")
 
 if sys.version_info < (3, 6):
   print("ERROR: Requires Python 3.6 or greater")

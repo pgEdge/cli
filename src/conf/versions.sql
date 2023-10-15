@@ -6,42 +6,6 @@ DROP TABLE IF EXISTS versions;
 DROP TABLE IF EXISTS releases;
 DROP TABLE IF EXISTS projects;
 DROP TABLE IF EXISTS categories;
-DROP TABLE IF EXISTS grp_cats;
-DROP TABLE IF EXISTS grps;
-
-CREATE TABLE grps (
-  grp        TEXT     NOT NULL PRIMARY KEY,
-  sort_order SMALLINT NOT NULL,
-  short_desc TEXT     NOT NULL
-);
-INSERT INTO grps VALUES ('pg',  1, 'PostgreSQL');
-INSERT INTO grps VALUES ('pgc', 2, 'Postgres Community');
-INSERT INTO grps VALUES ('ods', 3, 'Other Datastores');
-
-CREATE TABLE grp_cats (
-  grp_cat    TEXT     NOT NULL PRIMARY KEY,
-  sort_order SMALLINT NOT NULL,
-  grp        TEXT     NOT NULL,
-  web_page   TEXT     NOT NULL,
-  page_title TEXT     NOT NULL,
-  short_desc TEXT     NOT NULL,
-  FOREIGN KEY (grp) REFERENCES grps(grp)
-);
-INSERT INTO grp_cats VALUES ('pg',    1, 'pg',  'postgres-core',       'Postgres',        'PostgreSQL&reg;');
-INSERT INTO grp_cats VALUES ('pge',   1, 'pgc', 'postgres-pgedge',     'pgEdge',          'pgEdge');
-INSERT INTO grp_cats VALUES ('fdw',   2, 'pgc', 'postgres-fdws',       'PG FDWs',         'Foreign Data Wrappers');
-INSERT INTO grp_cats VALUES ('ext',   3, 'pgc', 'postgres-extensions', 'PG Extensions',   'Extensions');
-INSERT INTO grp_cats VALUES ('app',   4, 'pgc', 'postgres-apps',       'PG Applications', 'Applications');
-INSERT INTO grp_cats VALUES ('dev',   5, 'pgc', 'postgres-devs',       'PG DevOps',       'For Developers');
-INSERT INTO grp_cats VALUES ('strm',  2, 'ods', 'change-data-capture', 'Streaming & CDC', 'Streaming & Change Data Capture');
-
-CREATE VIEW v_grp_cats AS
-   SELECT g.sort_order as grp_sort, c.sort_order as cat_sort,
-          g.grp, g.short_desc as grp_short_desc, c.grp_cat, c.web_page, c.page_title,
-          c.short_desc as grp_cat_desc
-     FROM grps g, grp_cats c
-    WHERE g.grp = c.grp
- ORDER BY 1, 2;
 
 
 CREATE TABLE categories (
@@ -125,23 +89,12 @@ INSERT INTO categories VALUES (9,  87, 'Management & Monitoring', 'Manage/Monito
 -- ## HUB ################################
 INSERT INTO projects VALUES ('hub', 'app', 0, 0, 'hub', 0, 'https://github.com/pgedge/nodectl','',0,'','','');
 INSERT INTO releases VALUES ('hub', 1, 'hub', '', '', 'hidden', '', 1, '', '', '');
-INSERT INTO versions VALUES ('hub', '23.135', '',  1, '20231016', '', '', '');
+INSERT INTO versions VALUES ('hub', '24.001', '',  1, '20231015', '', '', '');
 INSERT INTO versions VALUES ('hub', '23.134', '',  0, '20231013', '', '', '');
-INSERT INTO versions VALUES ('hub', '23.133', '',  0, '20231006', '', '', '');
-INSERT INTO versions VALUES ('hub', '23.132', '',  0, '20230929', '', '', '');
-INSERT INTO versions VALUES ('hub', '23.131', '',  0, '20230928', '', '', '');
-INSERT INTO versions VALUES ('hub', '23.130', '',  0, '20230927', '', '', '');
-INSERT INTO versions VALUES ('hub', '23.129', '',  0, '20230914', '', '', '');
-INSERT INTO versions VALUES ('hub', '23.128', '',  0, '20230829', '', '', '');
 
 -- ##
 INSERT INTO projects VALUES ('pg', 'pge', 1, 5432, 'hub', 1, 'https://github.com/postgres/postgres/tags',
  'postgres', 0, 'postgresql.png', 'Best RDBMS', 'https://postgresql.org');
-
-INSERT INTO releases VALUES ('pg11', 4, 'pg', 'PostgreSQL', '', 'prod',
-  '<font size=-1>New in <a href=https://www.postgresql.org/docs/11/release-11.html>2018</a></font>', 1, 'POSTGRES', '', '');
-INSERT INTO versions VALUES ('pg11', '11.21-1', 'el8', 1, '20230810', '', '', '');
-INSERT INTO versions VALUES ('pg11', '11.20-1', 'el8', 0, '20230511', '', '', '');
 
 INSERT INTO releases VALUES ('pg12', 3, 'pg', 'PostgreSQL', '', 'prod',
   '<font size=-1>New in <a href=https://www.postgresql.org/docs/12/release-12.html>2019</a></font>', 1, 'POSTGRES', '', '');

@@ -4,6 +4,8 @@ paramiko>=3.3.1
 psycopg>=3.1.12
 psycopg-binary>=3.1.12
 psutil>=5.9.5
+
+## ACE
 tqdm>=4.66.1
 ordered-set>=4.1.0
 mpire>=2.8.0
@@ -12,7 +14,3 @@ pandas>=2.1.1
 ## we need the patroni dependencies
 patroni>=3.1.2
 
-## futures ??
-##apscheduler>=3.10.1
-##paho-mqtt>=1.6.1
-##sqlalchemy>=2.0.19
