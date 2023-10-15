@@ -1,4 +1,3 @@
-DROP VIEW  IF EXISTS v_grp_cats;
 DROP VIEW  IF EXISTS v_versions;
 
 DROP TABLE IF EXISTS locations;
@@ -63,16 +62,13 @@ CREATE TABLE versions (
 );
 
 CREATE VIEW v_versions AS
-  SELECT c.grp_sort, c.cat_sort, c.grp, c.grp_short_desc, c.grp_cat, 
-         c.web_page, c.page_title, c.grp_cat_desc, r.sort_order as rel_sort,
-         p.image_file, r.component, r.project, r.stage, r.disp_name as rel_name,
+  SELECT p.image_file, r.component, r.project, r.stage, r.disp_name as rel_name,
          v.version, p.sources_url, p.project_url, v.platform, 
          v.is_current, v.release_date as rel_date, p.description as proj_desc, 
          r.description as rel_desc, v.pre_reqs, r.license, p.depends, 
          r.is_available, v.release_notes as rel_notes
-    FROM v_grp_cats c, projects p, releases r, versions v
-   WHERE c.grp_cat = p.grp_cat
-     AND p.project = r.project
+    FROM projects p, releases r, versions v
+   WHERE p.project = r.project
      AND r.component = v.component;
 
 INSERT INTO categories VALUES (0,   0, 'Hidden', 'NotShown');
