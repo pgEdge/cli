@@ -507,14 +507,14 @@ setupOutdir () {
   conf="$SRC/conf"
 
   cp $conf/db_local.db  conf/.
-  cp $conf/versions.sql  conf/.
-  sqlite3 conf/db_local.db < conf/versions.sql
+  cp $conf/versions24.sql  conf/.
+  sqlite3 conf/db_local.db < conf/versions24.sql
 }
 
 
 ###############################    MAINLINE   #########################################
 osName=`uname`
-verSQL="versions.sql"
+verSQL="versions24.sql"
 
 PLATFORM=`cat /etc/os-release | grep PLATFORM_ID | cut -d: -f2 | tr -d '\"'`
 if [ "$PLATFORM" == "el8" ]; then
