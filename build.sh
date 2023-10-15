@@ -482,36 +482,6 @@ initPG () {
     fi
   fi
 
-  ##if [ "$pgM" == "15" ] && [ "$isEL" == "True" ]; then
-  ##  if [ "$isEL9" == "True" ]; then
-  ##    initC "spock31-pg$pgM" "spock31"   "$spock31V"        "$outPlat" "postgres/spock31"     "" "" "nil"
-  ##    initC "postgrest" "postgrest" "$postgrestV"  "$outPlat"  "postgres/postgrest"  "" "" "nil"
-  ##    initC "pgcat"  "pgcat"  "$catV"  "$outPlat" "postgres/pgcat" "" "" "nil"
-  ##    initC "hypopg-pg$pgM"  "hypopg"    "$hypoV"      "$outPlat" "postgres/hypopg"  "" "" "nil"
-  ##    initC "pljava-pg$pgM"  "pljava"  "$pljavaV"  "$outPlat" "postgres/pljava"  "" "" "nil"
-  ##    initC "timescaledb-pg$pgM" "timescaledb" "$timescaleV" "$outPlat" "postgres/timescale" "" "" "nil"
-  ##    initC "citus-pg$pgM" "citus" "$citusV" "$outPlat" "postgres/citus" "" "" "nil"
-  ##    initC "vector-pg$pgM" "vector" "$vectorV" "$outPlat" "postgres/vector" "" "" "nil"
-  ##    initC "postgis-pg$pgM" "postgis" "$postgisV" "$outPlat" "postgres/postgis" "" "" "nil"
-  ##    initC "pglogical-pg$pgM" "pglogical" "$logicalV" "$outPlat" "postgres/logical" "" "" "nil"
-  ##    initC "anon-pg$pgM" "anon" "$anonV" "$outPlat" "postgres/anon" "" "" "nil"
-  ##    initC "plprofiler-pg$pgM" "plprofiler" "$profV" "$outPlat" "postgres/profiler" "" "" "nil"
-  ##    initC "pldebugger-pg$pgM" "pldebugger" "$debuggerV" "$outPlat" "postgres/pldebugger" "" "" "nil"
-  ##    initC "partman-pg$pgM" "partman" "$partmanV" "$outPlat" "postgres/partman" "" "" "nil"
-  ##    initC "orafce-pg$pgM" "orafce" "$orafceV" "$outPlat" "postgres/orafce" "" "" "nil"
-  ##    initC "audit-pg$pgM" "audit" "$audit15V" "$outPlat" "postgres/audit" "" "" "nil"
-  ##    initC "curl-pg$pgM"  "curl"    "$curlV"       "$outPlat" "postgres/curl"   "" "" "nil"
-  ##    initC "cron-pg$pgM" "cron" "$cronV" "$outPlat" "postgres/cron" "" "" "nil"
-  ##    initC "readonly-pg$pgM" "readonly" "$readonlyV" "$outPlat" "postgres/readonly" "" "" "nil"
-  ##    initC "hintplan-pg$pgM" "hintplan" "$hint15V" "$outPlat" "postgres/hintplan" "" "" "nil"
-  ##    initC "plv8-pg$pgM"  "plv8"    "$v8V"       "$outPlat" "postgres/plv8"   "" "" "nil"
-  ##    initC "foslots-pg$pgM"    "foslots"    "$foslotsV"   "$outPlat" "postgres/foslots"   "" "" "nil"
-  ##    if [ `arch` != "aarch64" ]; then
-  ##      initC "oraclefdw-pg$pgM"  "oraclefdw"  "$oraclefdwV" "$outPlat" "postgres/oraclefdw" "" "" "nil"
-  ##    fi
-  ##  fi
-  ##fi
-
   if [  "$isEL9" == "True" ]; then
     initC "pgedge"   "pgedge"   "$pgedgeV"   ""         "postgres/pgedge"   "" "" "Y"
     initC "backrest" "backrest" "$backrestV" "$outPlat" "postgres/backrest" "" "" "nil"
