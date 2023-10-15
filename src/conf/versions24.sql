@@ -115,78 +115,9 @@ INSERT INTO releases VALUES ('pg16', 2, 'pg', '', '', 'prod',
   '<font size=-1>New in <a href=https://www.postgresql.org/docs/16/release-16.html>2023!</a></font>', 1, 'POSTGRES', '', '');
 INSERT INTO versions VALUES ('pg16', '16.0-1',    'el9, arm9', 1, '20230914','', '', '');
 
-INSERT INTO releases VALUES ('pg17', 2, 'pg', '', '', 'test', 
+INSERT INTO releases VALUES ('pg17', 2, 'pg', '', '', 'prod', 
   '<font size=-1>New in <a href=https://www.postgresql.org/docs/17/release-17.html>2024!</a></font>', 1, 'POSTGRES', '', '');
 INSERT INTO versions VALUES ('pg17', '17devel-1', 'el9', 1, '20230927','', '', '');
-
-INSERT INTO projects VALUES ('debezium', 'strm', 10, 8083, '', 3, 'https://debezium.io/releases/1.9/',
-  'Debezium', 0, 'debezium.png', 'Heterogeneous CDC', 'https://debezium.io');
-INSERT INTO releases VALUES ('debezium', 1, 'debezium', 'Debezium', '', 'test', '', 1, 'Apache', '', '');
-INSERT INTO versions VALUES ('debezium', '1.9.2.Final',   '', 0, '20220520', '', '', '');
-
-INSERT INTO projects VALUES ('olr', 'strm', 10, 8083, '', 3, 'https://github.com/bersler/OpenLogReplicator/releases',
-  'OLR', 0, 'olr.png', 'Oracle Binary Log Replicator', 'https://www.bersler.com/openlogreplicator');
-INSERT INTO releases VALUES ('olr', 3, 'olr', 'OLR', '', 'test', '', 1, 'GPL', '', '');
-INSERT INTO versions VALUES ('olr', '0.9.41-beta',   '', 0, '20220328', '', '', '');
-INSERT INTO versions VALUES ('olr', '0.9.40-beta',   '', 0, '2022.214', '', '', '');
-
-INSERT INTO projects VALUES ('kafka', 'strm', 10, 9092, '', 2, 'https://kafka.apache.org/downloads',
-  'Kafka', 0, 'kafka.png', 'Streaming Platform', 'https://kafka.apache.org');
-INSERT INTO releases VALUES ('kafka', 0, 'kafka', 'Apache Kafka', '', 'test', '', 1, 'Apache', '', '');
-INSERT INTO versions VALUES ('kafka', '3.2.0', '', 0, '20220517', '', '', 'https://downloads.apache.org/kafka/3.2.0/RELEASE_NOTES.html');
-
-INSERT INTO projects VALUES ('apicurio', 'strm', 10, 8080, 'hub', 1, 'https://github.com/apicurio/apicurio-registry/releases',
-  'apicurio', 0, 'apicurio.png', 'Schema Registry', 'https://www.apicur.io/registry/');
-INSERT INTO releases VALUES ('apicurio', 3, 'apicurio', 'Apicurio', '', 'test', '', 1, 'Apache', '', '');
-INSERT INTO versions VALUES ('apicurio', '2.2.3', '',  0, '20220414', '', '', '');
-INSERT INTO versions VALUES ('apicurio', '2.2.2', '',  0, '20220328', '', '', '');
-
-INSERT INTO projects VALUES ('decoderbufs', 'strm', 10, 0, 'hub', 0, 'https://github.com/debezium/postgres-decoderbufs', 
-  'decoderbufs', 1, 'protobuf.png', 'Logical decoding via ProtoBuf', 'https://github.com/debezium/postgres-decoderbufs');
-INSERT INTO releases VALUES ('decoderbufs-pg14',  4, 'decoderbufs', 'DecoderBufs', '', 'test', '', 1, 'MIT', '', '');
-INSERT INTO versions VALUES ('decoderbufs-pg14', '1.7.0-1', 'arm, el8', 0, '20211001', 'pg14', '', '');
-
-INSERT INTO projects VALUES ('mongofdw', 'fdw', 5, 0, 'hub', 0, 'https://github.com/EnterpriseDB/mongo_fdw/tags', 
-  'mongofdw', 1, 'mongodb.png', 'MongoDB from PG', 'https://github.com/EnterpriseDB/mongo_fdw#mongo_fdw');
-INSERT INTO releases VALUES ('mongofdw-pg14',  3, 'mongofdw', 'MongoFDW', '', 'prod', '', 1, 'AGPLv3', '', '');
-INSERT INTO versions VALUES ('mongofdw-pg14', '5.4.0-1', 'el8', 0, '20220519', 'pg14', '', '');
-
-INSERT INTO projects VALUES ('mysqlfdw', 'fdw', 5, 0, 'hub', 0, 'https://github.com/EnterpriseDB/mysql_fdw/tags', 
-  'mysqlfdw', 1, 'mysql.png', 'MySQL & MariaDB from PG', 'https://github.com/EnterpriseDb/mysql_fdw');
-INSERT INTO releases VALUES ('mysqlfdw-pg14',  4, 'mysqlfdw', 'MySQL FDW',  '', 'test', '', 1, 'POSTGRES', '', '');
-INSERT INTO versions VALUES ('mysqlfdw-pg14', '2.8.0-1', 'el8, arm', 0, '20220516', 'pg14', '', '');
-
-INSERT INTO projects VALUES ('tdsfdw', 'fdw', 5, 0, 'hub', 0, 'https://github.com/tds-fdw/tds_fdw/tags',
-  'tdsfdw', 1, 'tds.png', 'SQL Svr & Sybase from PG', 'https://github.com/tds-fdw/tds_fdw/#tds-foreign-data-wrapper');
-INSERT INTO releases VALUES ('tdsfdw-pg15', 4, 'tdsfdw', 'TDS FDW', '', 'test', '', 1, 'POSTGRES', '', '');
-INSERT INTO versions VALUES ('tdsfdw-pg15', '2.0.3-1', 'el8', 0, '20221022', 'pg15', '', 'https://github.com/tds-fdw/tds_fdw/releases/tag/v2.0.3');
-
-INSERT INTO projects VALUES ('bqfdw', 'fdw', 5, 0, 'multicorn2', 1, 'https://pypi.org/project/bigquery-fdw/#history',
-  'bqfdw', 1, 'bigquery.png', 'BigQuery from PG', 'https://pypi.org/project/bigquery-fdw');
-INSERT INTO releases VALUES ('bqfdw-pg14',  3, 'bqfdw', 'BigQueryFDW', '', 'prod', '', 1, 'MIT', '', '');
-INSERT INTO versions VALUES ('bqfdw-pg14', '1.9', 'amd',  0, '20211218', 'pg14', '', '');
-
-INSERT INTO projects VALUES ('esfdw', 'fdw', 5, 0, 'multicorn2', 1, 'https://pypi.org/project/pg-es-fdw/#history',
-  'esfdw', 1, 'esfdw.png', 'ElasticSearch from PG', 'https://pypi.org/project/pg-es-fdw/');
-INSERT INTO releases VALUES ('esfdw-pg15',  4, 'esfdw', 'ElasticSearchFDW', '', 'prod', '', 1, 'MIT', '', '');
-INSERT INTO versions VALUES ('esfdw-pg15', '0.11.2', 'amd',  1, '20220918', 'pg15', '', '');
-
-INSERT INTO projects VALUES ('ora2pg', 'dev', 6, 0, 'hub', 0, 'https://github.com/darold/ora2pg/tags',
-  'ora2pg', 0, 'ora2pg.png', 'Migrate from Oracle to PG', 'https://ora2pg.darold.net');
-INSERT INTO releases VALUES ('ora2pg', 2, 'ora2pg', 'Oracle to PG', '', 'test', '', 1, 'GPLv2', '', '');
-INSERT INTO versions VALUES ('ora2pg', '23.1', '', 0, '20220512', '', '', 'https://github.com/darold/ora2pg/releases/tag/v23.1');
-
-INSERT INTO projects VALUES ('oraclefdw', 'fdw', 6, 0, 'hub', 0, 'https://github.com/laurenz/oracle_fdw/tags',
-  'oraclefdw', 1, 'oracle_fdw.png', 'Oracle from PG', 'https://github.com/laurenz/oracle_fdw');
-INSERT INTO releases VALUES ('oraclefdw-pg15', 2, 'oraclefdw', 'OracleFDW', '', 'prod', '', 1, 'POSTGRES', '', '');
-INSERT INTO releases VALUES ('oraclefdw-pg16', 2, 'oraclefdw', 'OracleFDW', '', 'prod', '', 1, 'POSTGRES', '', '');
-INSERT INTO versions VALUES ('oraclefdw-pg15','2.6.0-1', 'el9', 1, '20230914', 'pg15', '', 'https://github.com/laurenz/oracle_fdw/releases/tag/ORACLE_FDW_2_6_0');
-INSERT INTO versions VALUES ('oraclefdw-pg16','2.6.0-1', 'el9', 1, '20230914', 'pg16', '', 'https://github.com/laurenz/oracle_fdw/releases/tag/ORACLE_FDW_2_6_0');
-
-INSERT INTO projects VALUES ('instantclient', 'sql', 6, 0, 'hub', 0, 'https://www.oracle.com/database/technologies/instant-client/linux-x86-64-downloads.html', 
-  'instantclient', 0, 'instantclient.png', 'Oracle Instant Client', 'https://www.oracle.com/database/technologies/instant-client.html');
-INSERT INTO releases VALUES ('instantclient', 2, 'instantclient', 'Instant Client', '', 'test','', 0, 'ORACLE', '', '');
-INSERT INTO versions VALUES ('instantclient', '21.11', '', 0, '20230914', '', '', '');
 
 INSERT INTO projects VALUES ('orafce', 'ext', 4, 0, 'hub', 0, 'https://github.com/orafce/orafce/releases',
   'orafce', 1, 'larry.png', 'Ora Built-in Packages', 'https://github.com/orafce/orafce#orafce---oracles-compatibility-functions-and-packages');
