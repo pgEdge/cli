@@ -110,8 +110,6 @@ INSERT INTO versions VALUES ('pg14', '14.8-1', 'el8', 0, '20230511','', '', '');
 INSERT INTO releases VALUES ('pg15', 2, 'pg', '', '', 'prod', 
   '<font size=-1>New in <a href=https://www.postgresql.org/docs/15/release-15.html>2022</a></font>', 1, 'POSTGRES', '', '');
 INSERT INTO versions VALUES ('pg15', '15.4-2',  'el8, el9, arm9',      1, '20230829','', '', '');
-INSERT INTO versions VALUES ('pg15', '15.4-1',  'el8, el9, arm9',      0, '20230810','', '', '');
-INSERT INTO versions VALUES ('pg15', '15.3-2',  'el8, el9, arm9',      0, '20230608','', '', '');
 
 INSERT INTO releases VALUES ('pg16', 2, 'pg', '', '', 'prod', 
   '<font size=-1>New in <a href=https://www.postgresql.org/docs/16/release-16.html>2023!</a></font>', 1, 'POSTGRES', '', '');
@@ -119,7 +117,7 @@ INSERT INTO versions VALUES ('pg16', '16.0-1',    'el9, arm9', 1, '20230914','',
 
 INSERT INTO releases VALUES ('pg17', 2, 'pg', '', '', 'test', 
   '<font size=-1>New in <a href=https://www.postgresql.org/docs/17/release-17.html>2024!</a></font>', 1, 'POSTGRES', '', '');
-INSERT INTO versions VALUES ('pg17', '17devel-1', 'el9, arm9', 1, '20230927','', '', '');
+INSERT INTO versions VALUES ('pg17', '17devel-1', 'el9', 1, '20230927','', '', '');
 
 INSERT INTO projects VALUES ('debezium', 'strm', 10, 8083, '', 3, 'https://debezium.io/releases/1.9/',
   'Debezium', 0, 'debezium.png', 'Heterogeneous CDC', 'https://debezium.io');
@@ -303,8 +301,6 @@ INSERT INTO versions VALUES ('spock31-pg15', '3.1.7-1', 'el9, arm9', 1, '2023092
 INSERT INTO versions VALUES ('spock31-pg16', '3.1.7-1', 'el9, arm9', 1, '20230927', 'pg16', '', '');
 INSERT INTO versions VALUES ('spock31-pg15', '3.1.6-1', 'el9, arm9', 0, '20230914', 'pg15', '', '');
 INSERT INTO versions VALUES ('spock31-pg16', '3.1.6-1', 'el9, arm9', 0, '20230914', 'pg16', '', '');
-INSERT INTO versions VALUES ('spock31-pg15', '3.1.5-1', 'el9, arm9', 0, '20230829', 'pg15', '', '');
-INSERT INTO versions VALUES ('spock31-pg16', '3.1.5-1', 'el9, arm9', 0, '20230829', 'pg16', '', '');
 
 INSERT INTO releases VALUES ('spock32-pg17', 4, 'spock', 'Spock', '', 'test', '', 1, 'pgEdge Community', '', '');
 INSERT INTO versions VALUES ('spock32-pg17', '3.2dev2-1', 'el9', 1, '20230928', 'pg17', '', '');
