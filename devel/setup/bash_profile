@@ -1,6 +1,6 @@
 # PGEDGE NODECTL for ~/.bash... ############################################################
 alias bp="cd ~/dev/nodectl; . ./bp.sh"
-alias ver="vi ~/dev/nodectl/src/conf/versions.sql"
+alias ver24="vi ~/dev/nodectl/src/conf/versions24.sql"
 
 export REGION=us-east-2
 export BUCKET=s3://pgedge-upstream
