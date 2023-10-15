@@ -1,7 +1,8 @@
 # pgEdge Platform Release Notes #############
 
 
-## done for 23.135 on 2023-10-16
+## done for 24.001 on 2023-10-15
+  - begin dev for 2024 Edition
 
 
 ## done for 23.134 on 2023-10-13
