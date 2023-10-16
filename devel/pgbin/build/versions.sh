@@ -27,6 +27,9 @@ pg12BuildV=1
 foslotsV=1a
 foslotsBldV=1
 
+snwflkV=1.0
+snwflkBldV=1
+
 readonlyFullV=1.1.0
 readonlyShortV=
 readonlyBuildV=1

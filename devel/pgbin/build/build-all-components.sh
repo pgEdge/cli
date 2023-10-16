@@ -148,6 +148,10 @@ if [ "$1" == "timescaledb" ]; then
   build timescaledb $timescaledbFullV $2 timescale
 fi
 
+if [ "$1" == "snowflake" ]; then
+  build snowflake $snwflkV $2  snowflake
+fi
+
 if [ "$1" == "spock31" ]; then
   build spock31 $spock31V $2  spock31
 fi
