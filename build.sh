@@ -193,6 +193,7 @@ initDir () {
   fi
 
   copy-pgXX "orafce"
+  copy-pgXX "snowflake"
   copy-pgXX "spock31"
   copy-pgXX "spock32"
   copy-pgXX "curl"
@@ -438,30 +439,30 @@ initPG () {
   supplementalPG "$pgComp"
   zipDir "$pgComp" "$pgV" "$outPlat" "Enabled"
 
-  if [ "$pgM" == "17" ] && [ "$isEL9" == "True" ]; then
-    initC "spock32-pg$pgM"    "spock32"    "$spock32V"   "$outPlat" "postgres/spock32"   "" "" "nil"
-  fi
+  if [ "$isEL9" == "True" ]; then
+    if [ "$pgM" == "17" ]; then
+      initC "spock32-pg$pgM"    "spock32"    "$spock32V"   "$outPlat" "postgres/spock32"   "" "" "nil"
+    fi
 
-  if [ "$pgM" == "16" ] && [ "$isEL9" == "True" ]; then
-    initC "audit-pg$pgM"      "audit"      "$audit16V"   "$outPlat" "postgres/audit"     "" "" "nil"
-    initC "hintplan-pg$pgM"   "hintplan"   "$hint16V"    "$outPlat" "postgres/hintplan"  "" "" "nil"
-  fi
+    if [ "$pgM" == "16" ]; then
+      initC "audit-pg$pgM"      "audit"      "$audit16V"   "$outPlat" "postgres/audit"     "" "" "nil"
+      initC "hintplan-pg$pgM"   "hintplan"   "$hint16V"    "$outPlat" "postgres/hintplan"  "" "" "nil"
+    fi
 
-  if [ "$pgM" == "15" ] && [ "$isEL9" == "True" ]; then
-    initC "audit-pg$pgM"      "audit"      "$audit15V"   "$outPlat" "postgres/audit"     "" "" "nil"
-    initC "hintplan-pg$pgM"   "hintplan"   "$hint15V"    "$outPlat" "postgres/hintplan"  "" "" "nil"
+    if [ "$pgM" == "15" ]; then
+      initC "audit-pg$pgM"      "audit"      "$audit15V"   "$outPlat" "postgres/audit"     "" "" "nil"
+      initC "hintplan-pg$pgM"   "hintplan"   "$hint15V"    "$outPlat" "postgres/hintplan"  "" "" "nil"
 
-    initC "timescaledb-pg$pgM" "timescaledb" "$timescaleV" "$outPlat" "postgres/timescale" "" "" "nil"
-    initC "pglogical-pg$pgM" "pglogical" "$logicalV" "$outPlat" "postgres/logical" "" "" "nil"
-    initC "pldebugger-pg$pgM" "pldebugger" "$debuggerV" "$outPlat" "postgres/pldebugger" "" "" "nil"
-    initC "anon-pg$pgM" "anon" "$anonV" "$outPlat" "postgres/anon" "" "" "nil"
-    initC "curl-pg$pgM"  "curl"    "$curlV"       "$outPlat" "postgres/curl"   "" "" "nil"
-    initC "citus-pg$pgM" "citus" "$citusV" "$outPlat" "postgres/citus" "" "" "nil"
-    initC "hypopg-pg$pgM"  "hypopg"    "$hypoV"      "$outPlat" "postgres/hypopg"  "" "" "nil"
-  fi
+      initC "timescaledb-pg$pgM" "timescaledb" "$timescaleV" "$outPlat" "postgres/timescale" "" "" "nil"
+      initC "pglogical-pg$pgM" "pglogical" "$logicalV" "$outPlat" "postgres/logical" "" "" "nil"
+      initC "pldebugger-pg$pgM" "pldebugger" "$debuggerV" "$outPlat" "postgres/pldebugger" "" "" "nil"
+      initC "anon-pg$pgM" "anon" "$anonV" "$outPlat" "postgres/anon" "" "" "nil"
+      initC "curl-pg$pgM"  "curl"    "$curlV"       "$outPlat" "postgres/curl"   "" "" "nil"
+      initC "citus-pg$pgM" "citus" "$citusV" "$outPlat" "postgres/citus" "" "" "nil"
+      initC "hypopg-pg$pgM"  "hypopg"    "$hypoV"      "$outPlat" "postgres/hypopg"  "" "" "nil"
+    fi
 
-  if [ "$pgM" == "15" ]  || [ "$pgM" == "16" ]; then
-    if [ "$isEL9" == "True" ]; then
+    if [ "$pgM" == "15" ] || [ "$pgM" == "16" ]; then
 
       initC "spock31-pg$pgM"    "spock31"    "$spock31V"   "$outPlat" "postgres/spock31"   "" "" "nil"
       initC "hypopg-pg$pgM"     "hypopg"     "$hypoV"      "$outPlat" "postgres/hypopg"    "" "" "nil"
@@ -480,9 +481,7 @@ initPG () {
         initC "oraclefdw-pg$pgM"  "oraclefdw"  "$oraclefdwV" "$outPlat" "postgres/oraclefdw" "" "" "nil"
       fi
     fi
-  fi
 
-  if [  "$isEL9" == "True" ]; then
     initC "pgedge"   "pgedge"   "$pgedgeV"   ""         "postgres/pgedge"   "" "" "Y"
     initC "backrest" "backrest" "$backrestV" "$outPlat" "postgres/backrest" "" "" "nil"
     initC "patroni"  "patroni"  "$patroniV"  ""         "postgres/patroni"  "" "" "nil"
