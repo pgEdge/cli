@@ -443,7 +443,7 @@ def compare_checksums(
         queue.append(block_result)
 
 
-def diff_tables(
+def table_diff(
     cluster_name,
     table_name,
     block_rows=1000,
@@ -470,7 +470,7 @@ def diff_tables(
     except ValueError:
         pass
     if bad_br:
-        util.exit_message(f"block_rows parm '{block_rows}' must be integer >= 1000")
+        util.exit_message(f"block_rows param '{block_rows}' must be integer >= 1000")
 
     node_list = []
 
@@ -723,7 +723,7 @@ def write_diffs_csv():
         )
 
 
-def repair(cluster_name, diff_file, source_of_truth, table_name):
+def table_repair(cluster_name, diff_file, source_of_truth, table_name):
     import pandas as pd
 
     # Check if diff_file exists on disk
@@ -811,26 +811,30 @@ def repair(cluster_name, diff_file, source_of_truth, table_name):
     true_df[key] = true_df[key].astype(str)
 
     # Move the key column to the end since we will be using it in the WHERE clause
-    true_df = true_df[[c for c in true_df if c not in [key]] + [key]]
+    # true_df = true_df[[c for c in true_df if c not in [key]] + [key]]
+    true_df = true_df[[c for c in true_df if c not in [key]]]
     for conn in conn_list:
         # Unpack true_df into (key, row) tuples
         true_rows = true_df.to_records(index=False)
 
-    true_rows = [tuple(row) for row in true_rows]
+    true_rows = [tuple(str(x) for x in row) for row in true_rows]
+    cols_list = cols.split(",")
+    # Remove the key column from the list of columns
+    cols_list.remove(key)
 
     """
     Here we are constructing an UPDATE query from true_rows and applying it to all nodes
     """
-    update_sql = f"UPDATE {table_name} SET "
-    cols_list = cols.split(",")
+    update_sql = f"""
+    INSERT INTO {table_name} ({','.join(cols_list)})
+    VALUES ({','.join(['%s'] * len(cols_list))})
+    ON CONFLICT ({key}) DO UPDATE SET
+    """
 
     for col in cols_list:
-        if col == key:
-            continue
-        update_sql += f"{col} = %s, "
+        update_sql += f"{col} = EXCLUDED.{col}, "
 
-    update_sql = update_sql[:-2]
-    update_sql += f" WHERE {key} = %s"
+    update_sql = update_sql[:-2] + ";"
 
     # Apply the diffs to all nodes in the cluster
     for conn in conn_list:
@@ -840,6 +844,7 @@ def repair(cluster_name, diff_file, source_of_truth, table_name):
             conn.commit()
             cur.close()
         except Exception as e:
+            print(update_sql, true_rows)
             util.exit_message("Error in repair():" + str(e), 1)
 
     util.message(
@@ -851,9 +856,9 @@ def repair(cluster_name, diff_file, source_of_truth, table_name):
 if __name__ == "__main__":
     fire.Fire(
         {
-            "diff-tables": diff_tables,
+            "table-diff": table_diff,
             "diff-schemas": diff_schemas,
             "diff-spock": diff_spock,
-            "repair": repair,
+            "table-repair": table_repair,
         }
     )
