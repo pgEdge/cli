@@ -1,6 +1,6 @@
 #!/bin/bash
 
-spock32V=3.2dev2
+spock32V=3.2dev3
 spockBld32V=1
 
 spock31V=3.1.7
@@ -27,7 +27,7 @@ pg12BuildV=1
 foslotsV=1a
 foslotsBldV=1
 
-snwflkV=1.0
+snwflkV=1.1
 snwflkBldV=1
 
 readonlyFullV=1.1.0

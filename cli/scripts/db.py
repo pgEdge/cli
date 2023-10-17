@@ -72,6 +72,8 @@ def create(db=None, User=None, Passwd=None, Id=None, pg=None):
 
   util.echo_cmd(nc + "tune pg" + str(pg))
 
+  util.echo_cmd(nc + "install snowflake --no-restart")
+
   if str(pg) == "17":
     spock_comp = "spock32-pg" + str(pg)
   else:

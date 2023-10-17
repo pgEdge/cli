@@ -1,8 +1,11 @@
 # pgEdge Platform Release Notes #############
 
 
-## done for 24.001 on 2023-10-15
+## done for 24.001 on 2023-10-17
   - begin dev for 2024 Edition
+  - bump spock to 3.2dev3 and add support for pg15-pg17
+  - add support for snowflake 1.1 to pg15-pg17
+  - install snowflake in pgedge2-6
 
 
 ## done for 23.134 on 2023-10-13
