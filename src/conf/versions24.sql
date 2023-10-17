@@ -231,6 +231,8 @@ INSERT INTO releases VALUES ('spock31-pg16', 4, 'spock', 'Spock', '', 'prod', ''
 INSERT INTO versions VALUES ('spock31-pg15', '3.1.7-1', 'el9, arm9', 1, '20230927', 'pg15', '', '');
 INSERT INTO versions VALUES ('spock31-pg16', '3.1.7-1', 'el9, arm9', 1, '20230927', 'pg16', '', '');
 
+INSERT INTO projects VALUES ('snowflake', 'pge', 4, 0, 'hub', 1, 'https://github.com/pgedge/snowflake/tags',
+  'snowflake', 1, 'snowflake.png', 'Snowflake Sequences', 'https://github.com/pgedge/snowflake/');
 INSERT INTO releases VALUES ('snowflake-pg15', 4, 'snowflake', 'Snowflake', '', 'test', '', 1, 'POSTGRES', '', '');
 INSERT INTO releases VALUES ('snowflake-pg16', 4, 'snowflake', 'Snowflake', '', 'test', '', 1, 'POSTGRES', '', '');
 INSERT INTO releases VALUES ('snowflake-pg17', 4, 'snowflake', 'Snowflake', '', 'test', '', 1, 'POSTGRES', '', '');
@@ -238,7 +240,11 @@ INSERT INTO versions VALUES ('snowflake-pg15', '1.0-1', 'el9', 1, '20231016', 'p
 INSERT INTO versions VALUES ('snowflake-pg16', '1.0-1', 'el9', 1, '20231016', 'pg16', '', '');
 INSERT INTO versions VALUES ('snowflake-pg17', '1.0-1', 'el9', 1, '20231016', 'pg17', '', '');
 
+INSERT INTO releases VALUES ('spock32-pg15', 4, 'spock', 'Spock', '', 'test', '', 1, 'pgEdge Community', '', '');
+INSERT INTO releases VALUES ('spock32-pg16', 4, 'spock', 'Spock', '', 'test', '', 1, 'pgEdge Community', '', '');
 INSERT INTO releases VALUES ('spock32-pg17', 4, 'spock', 'Spock', '', 'test', '', 1, 'pgEdge Community', '', '');
+INSERT INTO versions VALUES ('spock32-pg15', '3.2dev2-1', 'el9', 1, '20230928', 'pg15', '', '');
+INSERT INTO versions VALUES ('spock32-pg16', '3.2dev2-1', 'el9', 1, '20230928', 'pg16', '', '');
 INSERT INTO versions VALUES ('spock32-pg17', '3.2dev2-1', 'el9', 1, '20230928', 'pg17', '', '');
 
 INSERT INTO projects VALUES ('pglogical', 'ext', 4, 0, 'hub', 1, 'https://github.com/2ndQuadrant/pglogical/releases',
