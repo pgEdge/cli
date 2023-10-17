@@ -1,6 +1,9 @@
 # pgEdge Platform Release Notes #############
 
 
+## done for 24.002 on 2023-10-24
+
+
 ## done for 24.001 on 2023-10-17
   - begin dev for 2024 Edition
   - bump spock to 3.2dev3 and add support for pg15-pg17

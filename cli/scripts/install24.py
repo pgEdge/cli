@@ -4,7 +4,7 @@
 
 import sys, os
 
-VER="24.001"
+VER="24.002"
 REPO=os.getenv("REPO", "https://pgedge-upstream.s3.amazonaws.com/REPO")
 
 if sys.version_info < (3, 6):
