@@ -110,6 +110,22 @@ def create(db=None, User=None, Passwd=None, Id=None, pg=None):
   return
 
 
+def set_guc(guc_name, guc_value, reload=False, replace=True, pg=None):
+  """ Set GUC """
+  pg_v = util.get_pg_v(pg)
+
+  util.change_pgconf_keyval(pg_v, guc_name, str(guc_value), replace)
+
+  if reload==True:
+    rc1 = util.echo_cmd(f"./nc reload {pg_v}")
+    return rc1
+
+
+def show_guc(guc_name, pg=None):
+  """ Show GUC """
+  pass
+
+
 def dump(object, source_dsn, file='/tmp/db_0.sql', schema_only=False, pg=None):
   """ Dump a database, schema, object from the source dsn to a file 
   
@@ -118,10 +134,9 @@ def dump(object, source_dsn, file='/tmp/db_0.sql', schema_only=False, pg=None):
     file: location and file name for dump
     schema_only: do not include data in the pg_dump
   """
-  if pg == None:
-    pg_v = util.get_pg_v(pg)
-    pg = pg_v[2:]
-  cmd=f"./nodectl pgbin {pg} \"pg_dump "
+  pg_v = util.get_pg_v(pg)
+
+  cmd=f"./nodectl pgbin {pg_v} \"pg_dump "
 
   if "=" in source_dsn:
     if "," in source_dsn:
@@ -161,10 +176,8 @@ def restore(object, target_dsn, file='/tmp/db_0.sql', pg=None):
   os.system(f"cat {file} | grep -v -E '(spock)' > /tmp/db_1.sql")
   file="/tmp/db_1.sql"
 
-  if pg == None:
-    pg_v = util.get_pg_v(pg)
-    pg = pg_v[2:]
-  cmd=f"./nodectl pgbin {pg} \"psql "
+  pg_v = util.get_pg_v(pg)
+  cmd=f"./nodectl pgbin {pg_v} \"psql "
 
   if "=" in target_dsn:
     if "," in target_dsn:
@@ -202,6 +215,8 @@ def migrate(object, source_dsn, target_dsn, schema_only=False, pg=None):
 if __name__ == '__main__':
   fire.Fire({
     'create':             create,
+    'set-guc':            set_guc,
+    'show-guc':           show_guc,
     'pool-add-user':      pool_add_user,
     'pool-update-user':   pool_update_user,
     'pool-delete-user':   pool_delete_user,
