@@ -178,7 +178,7 @@ if(!(contains(@$stdout_buf41[0], "my_new_repset       | t                | t    
    
 # Then, connect to psql and create a table:
 
-my $cmd42 = qq($homedir/$version/bin/psql -t -h 127.0.0.1 -p $port -d $database -c "CREATE TABLE foo (name VARCHAR(40), amount INTEGER, pkey INTEGER PRIMARY KEY)");
+my $cmd42 = qq($homedir/$version/bin/psql -t -h 127.0.0.1 -p $port -d $database -c "CREATE TABLE bar (name VARCHAR(40), amount INTEGER, pkey INTEGER PRIMARY KEY)");
 print("cmd42 = $cmd42\n");
 my($success42, $error_message42, $full_buf42, $stdout_buf42, $stderr_buf42)= IPC::Cmd::run(command => $cmd42, verbose => 0);
 
@@ -190,7 +190,7 @@ if(!(contains(@$stdout_buf42[0], "CREATE TABLE")))
 
 # Invoke: ./nc spock repset-add-table with a missing dbname.
 
-my $cmd43 = qq($homedir/nodectl spock repset-add-table my_new_repset foo);
+my $cmd43 = qq($homedir/nodectl spock repset-add-table my_new_repset bar);
 print("cmd43 = $cmd43\n");
 my ($success43, $error_message43, $full_buf43, $stdout_buf43, $stderr_buf43)= IPC::Cmd::run(command => $cmd43, verbose => 0);
 
@@ -202,7 +202,7 @@ if(!(contains(@$full_buf43[0], "ERROR")))
 
 # Invoke: ./nc spock repset-add-table demo_rep_set pgbench_accounts demo --columns='column_names' with a non-existent column name.
 
-my $cmd44 = qq($homedir/nodectl spock repset-add-table my_new_repset foo lcdb --columns='nosuchcolumn');
+my $cmd44 = qq($homedir/nodectl spock repset-add-table my_new_repset bar lcdb --columns='nosuchcolumn');
 print("cmd44 = $cmd44\n");
 print("I'm not sure that this command should add the non-existent column to the replication set; I've asked, and am waiting for an answer.\n");
 my ($success44, $error_message44, $full_buf44, $stdout_buf44, $stderr_buf44)= IPC::Cmd::run(command => $cmd44, verbose => 0);
@@ -213,14 +213,14 @@ my $cmd45 = qq($homedir/$version/bin/psql -t -h 127.0.0.1 -p $port -d $database 
 print("cmd45 = $cmd45\n");
 my($success45, $error_message45, $full_buf45, $stdout_buf45, $stderr_buf45)= IPC::Cmd::run(command => $cmd45, verbose => 0);
 
-if(contains(@$stdout_buf45[0], "foo"))
+if(contains(@$stdout_buf45[0], "bar"))
 {
     exit(1);
 }
 
 # Invoke: ./nc spock repset-add-table demo_rep_set pgbench_accounts demo --columns='column_names' correctly
 
-my $cmd46 = qq($homedir/nodectl spock repset-add-table my_new_repset foo lcdb --columns='pkey,amount');
+my $cmd46 = qq($homedir/nodectl spock repset-add-table my_new_repset bar lcdb --columns='pkey,amount');
 print("cmd46 = $cmd46\n");
 my ($success46, $error_message46, $full_buf46, $stdout_buf46, $stderr_buf46)= IPC::Cmd::run(command => $cmd46, verbose => 0);
 

@@ -1,0 +1,34 @@
+# This schedule creates a node, confirms that it's replicating, and then breaks it down again.
+# 
+# Please document your tests as you add them to the schedule; note that the tests in each section should build what they
+# need, and completely clean up after themselves!
+# 
+#
+# Examples and setup tests
+
+# The first script (020) creates the pgedge directory; call this script after each cleanup script:
+
+t/9000_install_pgedge_node_1.pl
+t/9001_install_pgedge_node_2.pl
+t/9006_repset-create_node_1.pl
+t/9007_repset-create_node_2.pl
+t/9010_sub-create_n1.pl
+t/9012_sub-create_n2.pl
+
+t/9016_create_table_n2.pl
+t/9017_create_table_n1.pl
+
+t/9030_spock_sub-add-repset_n1.pl
+t/9032_spock_sub-add-repset_n2.pl
+t/9040_check_configuration.pl
+t/9044_confirm_replication_foo.pl
+#t/9500_check_IN_UP_TR_DEL.pl
+t/9501_sub-show-status.pl
+t/9502_sub-show-table.pl
+t/9503_spock_metrics-check.pl
+t/9504_spock_health-check.pl
+t/9505_spock_repset-list-tables.pl
+t/9506_spock_node-list.pl
+t/9507_spock_repset-alter.pl
+t/9509_spock_repset-remove-table.pl
+t/9998_remove_pgedge.pl

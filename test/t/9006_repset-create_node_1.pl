@@ -61,7 +61,7 @@ print("stdout_buf2 = @$stdout_buf2\n");
 my $cmd30 = qq($homedir/nodectl spock repset-create $database);
 print("cmd30 = $cmd30\n");
 my ($success30, $error_message30, $full_buf30, $stdout_buf30, $stderr_buf30)= IPC::Cmd::run(command => $cmd30, verbose => 0);
-
+print("stdout_buf30 = @$stdout_buf30\n");
 if(!(contains(@$stderr_buf30[0], "ERROR")))
 {
     exit(1);
@@ -72,7 +72,7 @@ if(!(contains(@$stderr_buf30[0], "ERROR")))
 my $cmd31 = qq($homedir/nodectl spock repset-create $database);
 print("cmd31 = $cmd31\n");
 my ($success31, $error_message31, $full_buf31, $stdout_buf31, $stderr_buf31)= IPC::Cmd::run(command => $cmd31, verbose => 0);
-
+print("stdout_buf31 = @$stdout_buf31\n");
 if(!(contains(@$stderr_buf31[0], "ERROR")))
 {
     exit(1);
@@ -81,15 +81,16 @@ if(!(contains(@$stderr_buf31[0], "ERROR")))
 my $cmd3 = qq($homedir/nodectl spock repset-create $repset $database);
 print("cmd3 = $cmd3\n");
 my ($success3, $error_message3, $full_buf3, $stdout_buf3, $stderr_buf3)= IPC::Cmd::run(command => $cmd3, verbose => 0);
+print("stdout_buf3 = @$stdout_buf3\n");
 
-print("We just executed the command that creates the replication set (demo-repset)\n");
+print("We just executed the command that creates the replication set (demo-repset) on $n1\n");
 
 # Then, use the info to connect to psql and test for the existence of the replication set.
 
 my $cmd5 = qq($homedir/$version/bin/psql -t -h 127.0.0.1 -p $port -d $database -c "SELECT * FROM spock.replication_set");
 print("cmd5 = $cmd5\n");
 my($success5, $error_message5, $full_buf5, $stdout_buf5, $stderr_buf5)= IPC::Cmd::run(command => $cmd5, verbose => 0);
-
+print("stdout_buf5 = @$stdout_buf5\n");
 # Test to confirm that cluster is set up.
 
 print("We just installed pgedge/spock in $n1.\n");
