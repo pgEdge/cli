@@ -723,7 +723,7 @@ def write_diffs_csv():
         )
 
 
-def table_repair(cluster_name, diff_file, source_of_truth, table_name):
+def table_repair(cluster_name, diff_file, source_of_truth, table_name, dry_run=False):
     import pandas as pd
 
     # Check if diff_file exists on disk
@@ -810,14 +810,29 @@ def table_repair(cluster_name, diff_file, source_of_truth, table_name):
 
     true_df[key] = true_df[key].astype(str)
 
-    # Move the key column to the end since we will be using it in the WHERE clause
-    # true_df = true_df[[c for c in true_df if c not in [key]] + [key]]
+    # Remove the key column from the list of columns
     true_df = true_df[[c for c in true_df if c not in [key]]]
     for conn in conn_list:
         # Unpack true_df into (key, row) tuples
         true_rows = true_df.to_records(index=False)
 
     true_rows = [tuple(str(x) for x in row) for row in true_rows]
+
+    print()
+
+    nodes_to_repair = ",".join(
+        [nd["nodename"] for nd in cluster_nodes if nd["nodename"] != source_of_truth]
+    )
+    dry_run_msg = (
+        "######## DRY RUN ########\n\n"
+        f"Repair would have attempted to upsert {len(true_rows)} rows on "
+        f"{nodes_to_repair}\n\n"
+        "######## END DRY RUN ########"
+    )
+    if dry_run:
+        util.message(dry_run_msg, p_state="alert")
+        return
+
     cols_list = cols.split(",")
     # Remove the key column from the list of columns
     cols_list.remove(key)
