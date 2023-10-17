@@ -347,7 +347,7 @@ def echo_cmd(cmd, sleep_secs=0, host="", usr="", key=""):
 
 
 def psql_cmd(cmd, nc, db, pg, host, usr, key):
-    echo_cmd(nc + " psql \"" + cmd + "\" " + db, host=host, usr=usr, key=key)
+    echo_cmd(nc + ' psql "' + cmd + '" ' + db, host=host, usr=usr, key=key)
 
 
 def print_exception(e, msg_type="error"):
@@ -698,7 +698,7 @@ def posix_unpack(file_nm):
         rc = os.system(f"lbzip2 -dc {file_nm} | tar xf -")
         if rc == 0:
             return rc
-        return 1 
+        return 1
 
     return echo_cmd(f"tar -xf {file_nm}")
 
@@ -772,11 +772,10 @@ def create_extension(p_pg, p_ext, p_reboot=False, p_extension="", p_cascade=Fals
 
 
 def create_ext_cmd(p_extension, p_cascade, p_pg):
-  cmd = "CREATE EXTENSION IF NOT EXISTS " + p_extension
-  if p_cascade:
-    cmd = cmd + " CASCADE"
-  run_sql_cmd (p_pg, cmd, True)
-
+    cmd = "CREATE EXTENSION IF NOT EXISTS " + p_extension
+    if p_cascade:
+        cmd = cmd + " CASCADE"
+    run_sql_cmd(p_pg, cmd, True)
 
 
 def create_virtualenv():
@@ -1144,13 +1143,16 @@ def message(p_msg, p_state="info", p_isJSON=None):
         print(bcolours.FAIL + characters.CROSS + " " + p_msg + bcolours.ENDC)
         prefix = "ERROR: "
     elif log_level == "warning":
-        print(bcolours.YELLOW + characters.WARNING + ' ' + p_msg + bcolours.ENDC)
+        print(bcolours.YELLOW + characters.WARNING + " " + p_msg + bcolours.ENDC)
         prefix = "WARNING: "
+    elif log_level == "alert":
+        print(bcolours.YELLOW + p_msg + bcolours.ENDC)
+        prefix = "ALERT: "
     elif log_level == "debug":
         my_logger.debug(p_msg)
         prefix = "DEBUG: "
     elif log_level == "success":
-        print(bcolours.OKGREEN + characters.TICK + ' ' + p_msg + bcolours.ENDC)
+        print(bcolours.OKGREEN + characters.TICK + " " + p_msg + bcolours.ENDC)
     elif log_level == "info":
         print(p_msg)
     else:
