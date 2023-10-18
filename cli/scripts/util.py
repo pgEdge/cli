@@ -778,31 +778,6 @@ def create_ext_cmd(p_extension, p_cascade, p_pg):
     run_sql_cmd(p_pg, cmd, True)
 
 
-def create_virtualenv():
-    # rc = system(PIP + " install --user virtualenv" , is_display=True)
-    # return(rc)
-    return 0
-
-
-def confirm_pip():
-    print("Confirming PIP")
-
-    pip_ver = api.get_pip_ver()
-    print("  PIP = v" + pip_ver)
-
-    validate_distutils_click()
-
-    if pip_ver == "None":
-        system(
-            "wget https://bootstrap.pypa.io/get-pip.py -O /tmp/get-pip.py",
-            is_display=True,
-        )
-        system("sudo " + PYTHON + " /tmp/get-pip.py", is_display=True)
-
-    system(PIP + " install --user click", is_display=True)
-    system(PYTHON + " -m pip install --user --upgrade pip", is_display=True)
-
-
 def secure_win_dir(p_dir, p_is_exe, p_user):
     CLI = os.path.join(MY_HOME, "hub", "scripts")
     cmnd = os.path.join(CLI, "PsExec.exe -accepteula -nobanner -s /c ")
