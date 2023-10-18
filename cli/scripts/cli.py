@@ -44,7 +44,7 @@ if os.path.exists(platform_lib_path):
   if platform_lib_path not in sys.path:
     sys.path.append(platform_lib_path)
 
-import util, api, update_hub, startup, meta, repo, component
+import util, api, update_hub, startup, meta, component
 import logging
 import logging.handlers
 from semantic_version import Version

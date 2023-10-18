@@ -2,6 +2,8 @@
 
 
 ## done for 24.002 on 2023-10-18
+  - update copyright notices for 2024
+  - move unused nt.py and repo.py scripts to attic
   - 1st pass at MACHINE cli
   - 1st pass at instructions for settting up virtual env
   - new upsert & dryrun functionality for ACE (tej)
