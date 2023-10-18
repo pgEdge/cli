@@ -3,6 +3,7 @@
 
 ## done for 24.002 on 2023-10-18
   - 1st pass at MACHINE cli
+  - 1st pass at instructions for settting up virtual env
   - new upsert & dryrun functionality for ACE (tej)
   - 1st pass @ get & set GUC functions in db.py (cady)
 
