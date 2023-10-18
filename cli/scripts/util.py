@@ -19,7 +19,7 @@ except Exception as e:
     ## Psycopg is only needed for advanced functionality
     pass
 
-import api, meta
+import api, meta, ini
 
 ONE_DAY = 86400
 ONE_WEEK = ONE_DAY * 7
@@ -48,6 +48,22 @@ my_logger = logging.getLogger("cli_logger")
 MY_CMD = os.getenv("MY_CMD")
 MY_HOME = os.getenv("MY_HOME", ".." + os.sep + "..")
 pid_file = os.path.join(MY_HOME, "conf", "cli.pid")
+
+
+def load_ini(file_nm, section):
+
+    try:
+        text = open(file_nm, 'r').read()
+        config = ini.parse(text)
+        sect = config[section]
+    except Exception as e:
+        exit_message(str(e), 1)
+
+    print(sect)
+
+
+def dump_ini():
+    return
 
 
 def run_psyco_sql(pg_v, db, cmd, usr=None):

@@ -63,7 +63,8 @@ ansi_escape = re.compile(r'\x1b[^m]*m')
 
 dep9 = util.get_depend()
 
-fire_list = ["service", "um", "spock", "cluster", "patroni-cluster", "ace", "secure", "db", "app"]
+fire_list = ["service", "um", "spock", "cluster", "patroni-cluster", "ace",
+             "secure", "db", "app", "machine"]
 
 mode_list_advanced = ['kill', 'config', 'init', 'clean', 'useradd', 'spock', 'downgrade',
                       'pgbin', 'psql', 'pg_isready', 'cluster', 'patroni-cluster', 'ace', 'enable', 'upgrade',
