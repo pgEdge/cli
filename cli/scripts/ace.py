@@ -25,7 +25,6 @@ l_dir = "/tmp"
 # Shared variables needed by multiprocessing
 queue = Manager().list()
 result_queue = Manager().list()
-job_queue = Queue()
 row_diff_count = Value("I", 0)
 
 # Set max number of rows up to which
@@ -644,8 +643,30 @@ def table_diff(
 
         else:
             util.message("TABLES DO NOT MATCH", p_state="warning")
+
+        """
+        Read the result queue and count differences between each node pair
+        in the cluster
+        """
+
+        diff_count = {}
+        for entry in queue:
+            diff_list = entry["diffs"]
+
+            if not diff_list:
+                continue
+
+            for diff_json in diff_list:
+                node1, node2 = diff_json.keys()
+                diff_count[node1 + "_" + node2] = diff_count.get(
+                    node1 + "_" + node2, 0
+                ) + max(len(diff_json[node1]), len(diff_json[node2]))
+
+        for key in diff_count.keys():
+            node1, node2 = key.split("_")
             util.message(
-                f"FOUND {row_diff_count.value} DIFFERENCES\n", p_state="warning"
+                f"FOUND {diff_count[key]} DIFFS BETWEEN {node1} AND {node2}",
+                p_state="warning",
             )
 
         if output == "json":
@@ -877,3 +898,4 @@ if __name__ == "__main__":
             "table-repair": table_repair,
         }
     )
+
