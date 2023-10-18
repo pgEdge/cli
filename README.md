@@ -1,8 +1,31 @@
 # pgEdge NodeCtl : Command Line Interface
 
+
+# Summary
 NODECTL is the pgEdge Command Line Interface (CLI) for managing components. 
+It is licensed under the pgEdge Community License 1.0
+
+# Configuring the Python Environment for Dev/Test
+In order to run the Python code, a suitable POSIX environment is required. 
+Python version 3.9 and later are currently supported. It is recommended that
+a Python Virtual Environment is setup for this purpose, rather than using
+the system Python environment. On Linux and Mac systems, the process is 
+simple as follows:
+
+Create a virtual environment in an appropriate directory. The last argument is the name of the environment; that can be changed as desired:
+
+$ python3 -m venv venv
+
+Now activate the virtual environment:
+
+$ source venv/bin/activate
+
+Some of the components used by NodeCtl require a very recent version of pip, so update that to the latest:
+
+$ pip install --upgrade pip
+
+# CLI Modules 
 The modules are `um`, `service`, `spock`, `cluster`, `db`, `secure`, and `ace`.  
-We are licensed under the pgEdge Community License 1.0
 
 ## Synopsis
     ./nodectl <module> <command> [parameters] [options] 

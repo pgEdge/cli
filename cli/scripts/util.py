@@ -19,7 +19,7 @@ except Exception as e:
     ## Psycopg is only needed for advanced functionality
     pass
 
-import api, meta
+import api, meta, ini
 
 ONE_DAY = 86400
 ONE_WEEK = ONE_DAY * 7
@@ -48,6 +48,20 @@ my_logger = logging.getLogger("cli_logger")
 MY_CMD = os.getenv("MY_CMD")
 MY_HOME = os.getenv("MY_HOME", ".." + os.sep + "..")
 pid_file = os.path.join(MY_HOME, "conf", "cli.pid")
+
+
+def load_ini(file_nm, section):
+
+    try:
+        text = open(file_nm, 'r').read()
+        config = ini.parse(text)
+        for s in config:
+            if s == section:
+                return(config[s])
+    except Exception as e:
+        exit_message(str(e), 1)
+
+    return(None)
 
 
 def run_psyco_sql(pg_v, db, cmd, usr=None):
@@ -776,31 +790,6 @@ def create_ext_cmd(p_extension, p_cascade, p_pg):
     if p_cascade:
         cmd = cmd + " CASCADE"
     run_sql_cmd(p_pg, cmd, True)
-
-
-def create_virtualenv():
-    # rc = system(PIP + " install --user virtualenv" , is_display=True)
-    # return(rc)
-    return 0
-
-
-def confirm_pip():
-    print("Confirming PIP")
-
-    pip_ver = api.get_pip_ver()
-    print("  PIP = v" + pip_ver)
-
-    validate_distutils_click()
-
-    if pip_ver == "None":
-        system(
-            "wget https://bootstrap.pypa.io/get-pip.py -O /tmp/get-pip.py",
-            is_display=True,
-        )
-        system("sudo " + PYTHON + " /tmp/get-pip.py", is_display=True)
-
-    system(PIP + " install --user click", is_display=True)
-    system(PYTHON + " -m pip install --user --upgrade pip", is_display=True)
 
 
 def secure_win_dir(p_dir, p_is_exe, p_user):
