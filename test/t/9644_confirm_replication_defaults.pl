@@ -1,5 +1,5 @@
-# This test case confirms that insert statements are not 
-# replicated on node 2.
+# This test case confirms the default behavior of repsets; to allow all
+# inserts, deletes, updates and truncates to be replicated.
 
 use strict;
 use warnings;
@@ -68,10 +68,10 @@ print("cmd29 = $cmd29\n");
 my($success29, $error_message29, $full_buf29, $stdout_buf29, $stderr_buf29)= IPC::Cmd::run(command => $cmd29, verbose => 0);
 print("stdout_buf = @$stdout_buf29\n");
 
-print("If 555 is in our search string from $n2 listening on $port2 the cluster is replicating update statements and this script 
+print("If 999 is not in our search string from $n2 listening on $port2 the cluster is not replicating statements and this script 
 	should exit.\n");
 
-if(!(contains(@$stdout_buf29[0], "999"))
+if(!(contains(@$stdout_buf29[0], "999")))
 {
     exit(1);
 }
@@ -94,7 +94,7 @@ print("cmd39 = $cmd39\n");
 my($success39, $error_message39, $full_buf39, $stdout_buf39, $stderr_buf39)= IPC::Cmd::run(command => $cmd39, verbose => 0);
 print("stdout_buf = @$stdout_buf39\n");
 
-print("If 222 is in our search string from $n1 listening on $port the cluster is replicating update statements and this script 
+print("If 333 is not in our search string from $n1 listening on $port the cluster is not replicating all statements and this script 
         should exit with fail.\n");
 
 # Test for the search_term in a buffer.
