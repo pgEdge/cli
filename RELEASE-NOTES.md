@@ -1,9 +1,10 @@
 # pgEdge Platform Release Notes #############
 
 
-## done for 24.002 on 2023-10-17
-  - 1st pass @ get & set GUC functions in db.py (cady)
+## done for 24.002 on 2023-10-18
+  - 1st pass at MACHINE cli
   - new upsert & dryrun functionality for ACE (tej)
+  - 1st pass @ get & set GUC functions in db.py (cady)
 
 
 ## done for 24.001 on 2023-10-17

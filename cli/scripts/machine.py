@@ -17,11 +17,11 @@ def get_driver(provider="eqnx"):
     if prvdr == "eqnx":
        drvr =  get_cld_drvr(Provider.EQUINIXMETAL, sect['api_token'])
     elif prvdr in ("aws"):
-       drvr =  get_cld_drvr(Provider.EC2, sect['access_id'], sect['secret_key'])
+       drvr =  get_cld_drvr(Provider.EC2, sect['access_key_id'], sect['secret_access_key'])
     else:
        util.exit_message(f"Invalid get-driver() provider ({prvdr})", 1)
 
-    return(drvr, sect)
+    return(prvdr, drvr, sect)
 
 
 def get_cld_drvr(provider, p1=None, p2=None):
@@ -35,7 +35,7 @@ def get_cld_drvr(provider, p1=None, p2=None):
 
 
 def get_location(location):
-    driver, section = get_driver()
+    prvdr, driver, section = get_driver()
 
     locations = driver.list_locations()
     for l in locations:
@@ -46,8 +46,7 @@ def get_location(location):
 
 
 def create(name, location, provider="eqnx", size=None, image=None, project=None):
-    driver, sect = get_driver(provider)
-    prvdr = provider.lower()
+    prvdr, driver, sect = get_driver(provider)
 
     if prvdr == "eqnx":
         if size == None:
@@ -62,7 +61,7 @@ def create(name, location, provider="eqnx", size=None, image=None, project=None)
 
 
 def create_node_eqnx(name, location, size, image, project):
-    driver, section = get_driver()
+    prvdr, driver, section = get_driver()
     loct = get_location(location)
     if loct == None:
         util.exit_message("Invalid location", 1)
@@ -88,9 +87,24 @@ def location_list(project):
 
 
 def list(provider="eqnx"):
-    driver, sect = get_driver()
-    project = sect['project']
+    """List nodes."""
+    prvdr, driver, sect = get_driver(provider)
 
+    if prvdr == "eqnx":
+        eqnx_list(driver, sect['project'])
+    elif prvdr == "aws":
+        aws_list(driver)
+    else:
+        util.exit_message(f"Invalid list({prvdr}) provider")
+
+
+def aws_list(driver):
+    nodes = driver.list_nodes()
+    for n in nodes:
+      pass
+
+
+def eqnx_list(driver, project):
     nodes = driver.list_nodes(project)
     for n in nodes:
       name = n.name.ljust(7)
