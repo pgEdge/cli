@@ -55,15 +55,13 @@ def load_ini(file_nm, section):
     try:
         text = open(file_nm, 'r').read()
         config = ini.parse(text)
-        sect = config[section]
+        for s in config:
+            if s == section:
+                return(config[s])
     except Exception as e:
         exit_message(str(e), 1)
 
-    print(sect)
-
-
-def dump_ini():
-    return
+    return(None)
 
 
 def run_psyco_sql(pg_v, db, cmd, usr=None):
