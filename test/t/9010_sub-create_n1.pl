@@ -56,7 +56,7 @@ print("The home directory of node 2 is {$homedir2}\n");
 my $json4 = `$n2/pgedge/nc --json info pg16`;
 # print("my json = $json4");
 my $out4 = decode_json($json4);
-my $port2 = $out2->[0]->{"port"};
+my $port2 = $out4->[0]->{"port"};
 print("The port number of node 2 is {$port2}\n");
 
 print("repuser before chomp = $repuser\n");
