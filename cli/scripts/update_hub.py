@@ -60,8 +60,7 @@ if MY_HOME == '':
   sys.exit(1)
 
 ## gotta have a sqlite database to (possibly) update
-db_local = MY_HOME + os.sep + "conf" + os.sep + "db_local.db"
-cL = sqlite3.connect(db_local)
+cL = sqlite3.connect(os.getenv("MY_LITE"))
 
 if __name__ == '__main__':
    mainline()

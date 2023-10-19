@@ -8,6 +8,7 @@
   - 1st pass at instructions for settting up virtual env
   - new upsert & dryrun functionality for ACE (tej)
   - 1st pass @ get & set GUC functions in db.py (cady)
+  - refactor for easier debugging (denis)
 
 
 ## done for 24.001 on 2023-10-17

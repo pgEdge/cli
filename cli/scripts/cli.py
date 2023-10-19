@@ -956,7 +956,7 @@ def get_mode_display():
 def get_help_text():
   helpf = "README.md"
   helpfile = os.path.dirname(os.path.realpath(__file__)) + "/../doc/" + helpf
-  s  = util.read_file_string(helpfile)
+  s  = util.read_file_string(helpfile, "quiet")
 
   lines = s.split('\n')
   new_s = ""
@@ -1061,7 +1061,8 @@ REPO=util.get_value('GLOBAL', 'REPO')
 
 os.chdir(MY_HOME)
 
-db_local = "conf" + os.sep + "db_local.db"
+db_local = os.getenv("MY_LITE")
+
 connL = sqlite3.connect(db_local)
 
 args = sys.argv
