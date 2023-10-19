@@ -4,5 +4,6 @@ devel/pg/src
 devel/pg/1*
 devel/pg/postgrest
 cli/scripts/conf
+cli/scripts/pg1*
 .DS_STORE
 __pycache__

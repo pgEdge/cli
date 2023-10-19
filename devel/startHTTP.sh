@@ -1,5 +1,7 @@
+#!/bin/bash
+cd "$(dirname "$0")"
 
-devel/stopHTTP.sh
+./stopHTTP.sh
 cmd="python3 -m http.server"
 echo $cmd
 cd $OUT
