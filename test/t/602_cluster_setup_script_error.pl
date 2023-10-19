@@ -35,10 +35,10 @@ print("stdout_buf = @$stdout_buf\n");
 print("stderr_buf = @$stderr_buf\n");
 
 #
-# print("If the word ERROR is in @$stdout_buf, the test succeeded\n");
+# print("If the word invalid --pg is in @$stdout_buf, the test succeeded\n");
 #
 
-if(contains(@$stdout_buf[0], "ERROR"))
+if(contains(@$stdout_buf[0], "invalid --pg"))
 {
 exit(0);
 }
