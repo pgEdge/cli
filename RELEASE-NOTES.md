@@ -1,20 +1,23 @@
 # pgEdge Platform Release Notes #############
 
-
 ## done for 24.002 on 2023-10-20
-  - introducing STAZ: Spock Three AZ Clustering (ibrar)
-  - enhance 'install pgedge' for STAZ
+### New Features:
+  + Hidden Columns patch (korry)
+  + STAZ: Spock Three AZ Clustering (ibrar)
+  + new upsert & dryrun functionality for ACE (tej)
+  + 1st pass @ get & set GUC functions in db.py (cady)
+  + 1st pass at MACHINE cli (denis)
+
+### Minor fixes and supporting enhancements:
+  - refactor pg build process to cleanly apply N patches (denis)
+  - bump pg15/16/17 to include HiddenColumns patch (denis)
+  - enhance 'install pgedge' for STAZ (denis)
      + add 'replicator' role
      + support optional '--rm-data' parm
-  - update pgcat, etcd, & staz from 'test' to 'prod' status
-  - bump pg15/16/17 to include korry's hidden_columns patch 
-  - refactor pg build process to cleanly apply N patches
-  - update copyright notices for 2024
-  - move unused nt.py and repo.py scripts to attic
-  - 1st pass at MACHINE cli
-  - 1st pass at instructions for settting up virtual env
-  - new upsert & dryrun functionality for ACE (tej)
-  - 1st pass @ get & set GUC functions in db.py (cady)
+  - update pgcat, etcd, & staz from 'test' to 'prod' status (denis)
+  - update copyright notices for 2024 (denis)
+  - move unused nt.py and repo.py scripts to attic (denis)
+  - 1st pass at instructions for settting up virtual env (denis)
   - refactor for easier debugging (denis)
 
 

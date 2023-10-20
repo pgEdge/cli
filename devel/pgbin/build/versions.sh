@@ -1,6 +1,6 @@
 #!/bin/bash
 
-spock32V=3.2dev3
+spock32V=3.2dev4
 spockBld32V=1
 
 spock31V=3.1.7
