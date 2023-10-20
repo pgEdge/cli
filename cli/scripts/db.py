@@ -6,21 +6,6 @@ import os, sys, random, json, socket, datetime
 import util, fire, meta, subprocess
 
 
-def pool_add_user(User, Passwd, size, timeout=0):
-  """ Coming Soon!"""
-  pass
-
-
-def pool_update_user(User, Passwd=None, size=None, timeout=None):
-  """ Coming Soon!"""
-  pass
-
-
-def pool_delete_user(User):
-  """ Coming Soon!"""
-  pass
-
-
 def create(db=None, User=None, Passwd=None, Id=None, pg=None):
   """
   Create a pg db with spock installed into it.
@@ -217,9 +202,6 @@ if __name__ == '__main__':
     'create':             create,
     'set-guc':            set_guc,
     'show-guc':           show_guc,
-    'pool-add-user':      pool_add_user,
-    'pool-update-user':   pool_update_user,
-    'pool-delete-user':   pool_delete_user,
     'dump':               dump,
     'restore':            restore,
     'migrate':            migrate,
