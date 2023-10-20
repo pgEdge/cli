@@ -73,6 +73,12 @@ def create(db=None, User=None, Passwd=None, Id=None, pg=None):
   else:
     rc3 = util.echo_cmd(nc + "install " + spock_comp + " -d " + str(db))
 
+  rm_data = os.getenv("isRM_DATA", "False")
+  if rm_data == "True":
+    util.message("Removing data directory at your request")
+    util.echo_cmd(nc + "stop")
+    util.echo_cmd("rm -r data")
+
   rcs = rc1 + rc2 + rc3
   if rcs == 0:
     status = "success"
@@ -187,7 +193,7 @@ def restore(object, target_dsn, file='/tmp/db_0.sql', pg=None):
 
 
 def migrate(object, source_dsn, target_dsn, schema_only=False, pg=None):
-  """ Migrate a database, schema, object from a source_dsn to the target_dsn 
+  """ Coming Soon! Migrate a database, schema, object from a source_dsn to the target_dsn 
   
     object: database.schema.object where schema and object can contain wildcard '*'
     source_dsn: host=x, port=x, username=x, password=x, database=x (in any order)

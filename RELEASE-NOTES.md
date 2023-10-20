@@ -2,6 +2,8 @@
 
 
 ## done for 24.002 on 2023-10-20
+  - update `install pgegde` to support '--rm-data' for staz
+  - update pgcat, etcd, & staz from 'test' to 'prod' status
   - introducing STAZ: Spock Three AZ Clustering
   - bump pg15/16/17 to include korry's hidden_columns patch 
   - refactor pg build process to cleanly apply N patches

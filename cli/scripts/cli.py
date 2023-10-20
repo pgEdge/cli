@@ -1300,7 +1300,7 @@ if "--autostart" in args and 'install' in args:
   os.environ['isAutoStart'] = "True"
   args.remove("--autostart")
 
-if "--rm-data" in args and 'remove' in args:
+if "--rm-data" in args:
   os.environ['isRM_DATA'] = "True"
   args.remove("--rm-data")
 
