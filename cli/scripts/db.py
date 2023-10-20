@@ -49,7 +49,10 @@ def create(db=None, User=None, Passwd=None, Id=None, pg=None):
   else:
     util.exit_message("db_create() must have parms of (-I) or (-U -d)")
 
+  
   cmd = "CREATE ROLE " + User + " PASSWORD '" + Passwd + "' " + privs
+  rc1 = util.echo_cmd(ncb +  '"psql -q -c \\"' + cmd + '\\" postgres"')
+  cmd = "CREATE ROLE replicator PASSWORD '" + Passwd + "' " + "SUPERUSER LOGIN REPLICATION"
   rc1 = util.echo_cmd(ncb +  '"psql -q -c \\"' + cmd + '\\" postgres"')
 
   cmd = "createdb '" + db + "' --owner='" + User + "'"
