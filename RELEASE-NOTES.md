@@ -1,7 +1,10 @@
 # pgEdge Platform Release Notes #############
 
 
-## done for 24.002 on 2023-10-18
+## done for 24.002 on 2023-10-20
+  - introducing STAZ: Spock Three AZ Clustering
+  - bump pg15/16/17 to include korry's hidden_columns patch 
+  - refactor pg build process to cleanly apply N patches
   - update copyright notices for 2024
   - move unused nt.py and repo.py scripts to attic
   - 1st pass at MACHINE cli
