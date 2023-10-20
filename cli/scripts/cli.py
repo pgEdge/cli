@@ -44,7 +44,7 @@ if os.path.exists(platform_lib_path):
   if platform_lib_path not in sys.path:
     sys.path.append(platform_lib_path)
 
-import util, api, update_hub, startup, meta, repo, component
+import util, api, update_hub, startup, meta, component
 import logging
 import logging.handlers
 from semantic_version import Version
@@ -63,11 +63,11 @@ ansi_escape = re.compile(r'\x1b[^m]*m')
 
 dep9 = util.get_depend()
 
-fire_list = ["service", "um", "spock", "cluster", "patroni-cluster", "ace",
+fire_list = ["service", "um", "spock", "cluster", "staz", "ace",
              "secure", "db", "app", "machine"]
 
 mode_list_advanced = ['kill', 'config', 'init', 'clean', 'useradd', 'spock', 'downgrade',
-                      'pgbin', 'psql', 'pg_isready', 'cluster', 'patroni-cluster', 'ace', 'enable', 'upgrade',
+                      'pgbin', 'psql', 'pg_isready', 'cluster', 'staz', 'ace', 'enable', 'upgrade',
                       'secure', 'db', 'app', 'update', 'disable', 'tune', 'backrest',
                       'get', 'top', 'set', 'unset', 'reload']
 
@@ -956,7 +956,7 @@ def get_mode_display():
 def get_help_text():
   helpf = "README.md"
   helpfile = os.path.dirname(os.path.realpath(__file__)) + "/../doc/" + helpf
-  s  = util.read_file_string(helpfile)
+  s  = util.read_file_string(helpfile, "quiet")
 
   lines = s.split('\n')
   new_s = ""
@@ -1061,7 +1061,8 @@ REPO=util.get_value('GLOBAL', 'REPO')
 
 os.chdir(MY_HOME)
 
-db_local = "conf" + os.sep + "db_local.db"
+db_local = os.getenv("MY_LITE")
+
 connL = sqlite3.connect(db_local)
 
 args = sys.argv
@@ -1299,7 +1300,7 @@ if "--autostart" in args and 'install' in args:
   os.environ['isAutoStart'] = "True"
   args.remove("--autostart")
 
-if "--rm-data" in args and 'remove' in args:
+if "--rm-data" in args:
   os.environ['isRM_DATA'] = "True"
   args.remove("--rm-data")
 
@@ -1322,7 +1323,7 @@ p_mode = args[1]
 
 if (p_mode in no_log_commands) and (isJSON == True):
   pass
-elif p_mode in ('service', 'spock', 'um', 'cluster', 'patroni-cluster') and (len(args) > 2) and (args[2] in no_log_commands):
+elif p_mode in ('service', 'spock', 'um', 'cluster', 'staz') and (len(args) > 2) and (args[2] in no_log_commands):
   pass
 else:
   my_logger.command(MY_CMD + " %s", util.scrub_passwd(full_cmd_line))

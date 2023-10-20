@@ -70,6 +70,4 @@ t/9030_spock_sub-add-repset_n1.pl
 t/9032_spock_sub-add-repset_n2.pl
 t/9040_check_configuration.pl
 t/9444_confirm_replication_no_truncate.pl
-t/9998_remove_pgedge.pl
-
-~                        
+t/9998_remove_pgedge.pl                        

@@ -486,7 +486,7 @@ initPG () {
 
     initC "pgedge"   "pgedge"   "$pgedgeV"   ""         "postgres/pgedge"   "" "" "Y"
     initC "backrest" "backrest" "$backrestV" "$outPlat" "postgres/backrest" "" "" "nil"
-    initC "patroni"  "patroni"  "$patroniV"  ""         "postgres/patroni"  "" "" "nil"
+    initC "staz"     "staz"     "$stazV"     ""         "postgres/staz"     "" "" "nil"
     initC "etcd"     "etcd"     "$etcdV"     "$outPlat" "etcd"              "" "" "nil"
     initC "pgcat"    "pgcat"    "$catV"      "$outPlat" "postgres/pgcat"    "" "" "nil"
   fi

@@ -11,7 +11,6 @@ if pgN == "":
 pgV = "pg" + str(pgN)
 
 withPOSTGREST = str(os.getenv("withPOSTGREST", "False"))
-withPATRONI = str(os.getenv("withPATRONI", "False"))
 withCAT = str(os.getenv("withCAT", "False"))
 withBACKREST = str(os.getenv("withBACKREST", "False"))
 
@@ -156,8 +155,4 @@ if withBACKREST == "True":
 if withCAT == "True":
   util.message("  ")
   osSys(nc + "install pgcat")
-
-if withPATRONI == "True":
-  util.message("  ")
-  osSys(nc + "install patroni")
 

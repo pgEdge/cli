@@ -139,36 +139,31 @@ function checkODBC {
 }
 
 
-function buildPostgres {
-  echo "# buildPOSTGRES"	
-  cd $baseDir/$workDir/$pgSrcDir
-
-  if [ "$pgShortV" == "15" ] || [ "$pgShortV" == "16" ] || [ "$pgShortV" == "17" ]; then
-    if [ "$DIFF1" == "" ]; then
-      echo "std postgres build, no patches to apply"
-    else
-      echo "# Applying $DIFF1"
-      patch -p1 -i $DIFF1
-      rc=$?
-      if [ "$rc" == "0" ]; then
-        echo "# patch succesfully applied"
-      else
-        echo "# FATAL ERROR: applying patch"
-        exit 1
-      fi
-      if [ ! "$DIFF2" == "" ]; then
-        echo "# Applying $DIFF2"
-        patch -p1 -i $DIFF2
-        rc=$?
-        if [ "$rc" == "0" ]; then
-          echo "# patch succesfully applied"
-        else
-          echo "# FATAL ERROR: applying patch"
-          exit 1
-        fi
-      fi
-    fi
+function patcher {
+  if [ "$1" == "" ]; then
+    return
   fi
+
+  echo "# Applying $1"
+  patch -p1 -i $1
+  rc=$?
+  if [ "$rc" == "0" ]; then
+    echo "# patch succesfully applied"
+  else
+    echo "# FATAL ERROR: applying patch"
+    exit 1
+  fi
+}
+
+function buildPostgres {
+	echo "# buildPOSTGRES"	
+	cd $baseDir/$workDir/$pgSrcDir
+
+	if [ "$pgShortV" == "15" ] || [ "$pgShortV" == "16" ] || [ "$pgShortV" == "17" ]; then
+		patcher "$DIFF1"
+		patcher "$DIFF2"
+		patcher "$DIFF3"
+	fi
 
 	mkdir -p $baseDir/$workDir/logs
 	#buildLocation="$baseDir/$workDir/build/pg$pgShortV-$pgSrcV-$pgBldV-$OS"

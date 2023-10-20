@@ -5,15 +5,17 @@ psycopg>=3.1.12
 psycopg-binary>=3.1.12
 psutil>=5.9.5
 
-## MACHINE
+## MACHINE ##########
 apache-libcloud>=3.8.0
 
-## ACE
+## ACE ##############
 tqdm>=4.66.1
 ordered-set>=4.1.0
 mpire>=2.8.0
 pandas>=2.1.1
 
-## we need the patroni dependencies
+## STAZ #############
+cdiff>=1.0
+# patroni dependencies
 patroni>=3.1.2
 

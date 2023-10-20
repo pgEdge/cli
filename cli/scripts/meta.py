@@ -1,5 +1,5 @@
 #####################################################
-#  Copyright 2022-2023 PGEDGE  All rights reserved. #
+#  Copyright 2022-2024 PGEDGE  All rights reserved. #
 #####################################################
 
 import sys, os, sqlite3, json
@@ -783,4 +783,4 @@ def fatal_error(err, sql, func):
 
 
 ## MAINLINE ################################################################
-con = sqlite3.connect(os.getenv("MY_HOME") + os.sep + "conf" + os.sep + "db_local.db", check_same_thread=False)
+con = sqlite3.connect(os.getenv("MY_LITE"), check_same_thread=False)

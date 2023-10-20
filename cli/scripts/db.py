@@ -1,24 +1,9 @@
 #####################################################
-#  Copyright 2022-2023 PGEDGE  All rights reserved. #
+#  Copyright 2022-2024 PGEDGE  All rights reserved. #
 #####################################################
 
 import os, sys, random, json, socket, datetime
 import util, fire, meta, subprocess
-
-
-def pool_add_user(User, Passwd, size, timeout=0):
-  """ Coming Soon!"""
-  pass
-
-
-def pool_update_user(User, Passwd=None, size=None, timeout=None):
-  """ Coming Soon!"""
-  pass
-
-
-def pool_delete_user(User):
-  """ Coming Soon!"""
-  pass
 
 
 def create(db=None, User=None, Passwd=None, Id=None, pg=None):
@@ -64,7 +49,10 @@ def create(db=None, User=None, Passwd=None, Id=None, pg=None):
   else:
     util.exit_message("db_create() must have parms of (-I) or (-U -d)")
 
+  
   cmd = "CREATE ROLE " + User + " PASSWORD '" + Passwd + "' " + privs
+  rc1 = util.echo_cmd(ncb +  '"psql -q -c \\"' + cmd + '\\" postgres"')
+  cmd = "CREATE ROLE replicator PASSWORD '" + Passwd + "' " + "SUPERUSER LOGIN REPLICATION"
   rc1 = util.echo_cmd(ncb +  '"psql -q -c \\"' + cmd + '\\" postgres"')
 
   cmd = "createdb '" + db + "' --owner='" + User + "'"
@@ -87,6 +75,12 @@ def create(db=None, User=None, Passwd=None, Id=None, pg=None):
     rc3 = util.echo_cmd(ncb +  '"psql -q -c \\"' + cmd + '\\" ' + str(db) + '"')
   else:
     rc3 = util.echo_cmd(nc + "install " + spock_comp + " -d " + str(db))
+
+  rm_data = os.getenv("isRM_DATA", "False")
+  if rm_data == "True":
+    util.message("Removing data directory at your request")
+    util.echo_cmd(nc + "stop")
+    util.echo_cmd("rm -r data")
 
   rcs = rc1 + rc2 + rc3
   if rcs == 0:
@@ -202,7 +196,7 @@ def restore(object, target_dsn, file='/tmp/db_0.sql', pg=None):
 
 
 def migrate(object, source_dsn, target_dsn, schema_only=False, pg=None):
-  """ Migrate a database, schema, object from a source_dsn to the target_dsn 
+  """ Coming Soon! Migrate a database, schema, object from a source_dsn to the target_dsn 
   
     object: database.schema.object where schema and object can contain wildcard '*'
     source_dsn: host=x, port=x, username=x, password=x, database=x (in any order)
@@ -217,9 +211,6 @@ if __name__ == '__main__':
     'create':             create,
     'set-guc':            set_guc,
     'show-guc':           show_guc,
-    'pool-add-user':      pool_add_user,
-    'pool-update-user':   pool_update_user,
-    'pool-delete-user':   pool_delete_user,
     'dump':               dump,
     'restore':            restore,
     'migrate':            migrate,

@@ -6,7 +6,7 @@ CREATE TABLE settings (
   s_value            TEXT      NOT NULL,
   PRIMARY KEY (section, s_key)
 );
-INSERT INTO settings VALUES ('GLOBAL', 'REPO', 'https://oscg-io-download.s3.amazonaws.com/REPO');
+INSERT INTO settings VALUES ('GLOBAL', 'REPO', 'http://localhost:8000');
 
 
 DROP TABLE IF EXISTS hosts;

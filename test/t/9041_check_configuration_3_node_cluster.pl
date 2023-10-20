@@ -21,6 +21,7 @@ my $cluster = "demo";
 my $repset = "demo-repset";
 my $n1 = "~/work/nodectl/test/pgedge/cluster/demo/n1";
 my $n2 = "~/work/nodectl/test/pgedge/cluster/demo/n2";
+my $n3 = "~/work/nodectl/test/pgedge/cluster/demo/n3";
 
 # We can retrieve the home directory from nodectl in json form... 
 my $json = `$n1/pgedge/nc --json info`;
@@ -49,6 +50,20 @@ my $json4 = `$n2/pgedge/nc --json info pg16`;
 my $out4 = decode_json($json4);
 my $port2 = $out4->[0]->{"port"};
 print("The port number is {$port2}\n");
+
+# We can retrieve the home directory from nodectl in json form... 
+my $json5 = `$n3/pgedge/nc --json info`;
+#print("my json = $json5");
+my $out5 = decode_json($json5);
+my $homedir3 = $out5->[0]->{"home"};
+print("The home directory is {$homedir3}\n");
+
+# We can retrieve the port number from nodectl in json form...
+my $json6 = `$n3/pgedge/nc --json info pg16`;
+#print("my json = $json6");
+my $out6 = decode_json($json6);
+my $port3 = $out6->[0]->{"port"};
+print("The port number is {$port3}\n");
 
 
 # Use psql to check the setup:
@@ -96,7 +111,32 @@ print("cmd38 = $cmd38\n");
 my($success38, $error_message38, $full_buf38, $stdout_buf38, $stderr_buf38)= IPC::Cmd::run(command => $cmd38, verbose => 0);
 print("stdout_buf38 = @$stdout_buf38\n");
 
-# Now, confirm that the update on ($n1) took place:
+
+# On Node 3:
+# Use psql to check the setup:
+
+my $cmd39 = qq($homedir3/$version/bin/psql -t -h 127.0.0.1 -p $port3 -d $database -c "SELECT * FROM spock.node");
+print("cmd39 = $cmd39\n");
+my($success39, $error_message39, $full_buf39, $stdout_buf39, $stderr_buf39)= IPC::Cmd::run(command => $cmd39, verbose => 0);
+print("stdout_buf39 = @$stdout_buf39\n");
+
+my $cmd40 = qq($homedir3/$version/bin/psql -t -h 127.0.0.1 -p $port3 -d $database -c "SELECT sub_id, sub_name, sub_slot_name, sub_replication_sets  FROM spock.subscription");
+print("cmd40 = $cmd40\n");
+my($success40, $error_message40, $full_buf40, $stdout_buf40, $stderr_buf40)= IPC::Cmd::run(command => $cmd40, verbose => 0);
+print("stdout_buf40 = @$stdout_buf40\n");
+
+my $cmd41 = qq($homedir3/$version/bin/psql -t -h 127.0.0.1 -p $port3 -d $database -c "SELECT * FROM spock.tables");
+print("cmd41 = $cmd41\n");
+my($success41, $error_message41, $full_buf41, $stdout_buf41, $stderr_buf41)= IPC::Cmd::run(command => $cmd41, verbose => 0);
+print("stdout_buf41 = @$stdout_buf41\n");
+
+my $cmd42 = qq($homedir3/$version/bin/psql -t -h 127.0.0.1 -p $port3 -d $database -c "SELECT * FROM spock.replication_set");
+print("cmd42 = $cmd42\n");
+my($success42, $error_message42, $full_buf42, $stdout_buf42, $stderr_buf42)= IPC::Cmd::run(command => $cmd42, verbose => 0);
+print("stdout_buf42 = @$stdout_buf42\n");
+
+
+# Now, confirm that the demo-repset on ($n1) is there:
 
 if(contains(@$stdout_buf28[0], "demo-repset"))
 

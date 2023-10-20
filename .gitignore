@@ -3,6 +3,7 @@ out/
 devel/pg/src
 devel/pg/1*
 devel/pg/postgrest
-web/static/html/*.html
+cli/scripts/conf
+cli/scripts/pg1*
 .DS_STORE
 __pycache__

@@ -2429,14 +2429,15 @@ def get_file_checksum(p_filename):
 ####################################################################################
 # Read contents of a small file directly into a string
 ####################################################################################
-def read_file_string(p_filename):
+def read_file_string(p_filename, action=None):
     try:
         f = open(p_filename, "r")
         filedata = f.read()
         f.close()
         return filedata
     except IOError as e:
-        print(e)
+        if action == None:
+            print(e)
         return ""
 
 
@@ -3476,6 +3477,7 @@ def delete_shortlink_osx(short_link):
 
 
 ## MAINLINE ################################################################
+my_lite=os.getenv("MY_LITE")
 cL = sqlite3.connect(
-    MY_HOME + os.sep + "conf" + os.sep + "db_local.db", check_same_thread=False
+    my_lite, check_same_thread=False
 )
