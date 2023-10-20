@@ -33,6 +33,41 @@ function runPgBin {
   return
 }
 
+function export_patches {
+  dir=$PWD/spock-private
+  cd $dir
+
+  git checkout main
+  git pull
+
+  dp=$dir/patches
+  export_patch DIFF1 "$dp" "$1"
+  export_patch DIFF2 "$dp" "$2"
+  export_patch DIFF3 "$dp" "$3"
+
+  cd ..
+}
+
+
+function export_patch {
+  DIFF="$1"
+  dirp="$2"
+  patch="$3"
+
+  if [ "x$patch" == "x" ]; then
+    return
+  fi
+
+  p="$dirp/$patch"
+  if [ -f "$p" ]; then
+    export $DIFF="$p"
+  else
+    echo "FATAL ERROR: Missing $DIFF $p"
+    exit 1
+  fi
+
+}
+
 ########################################################################
 ##                     MAINLINE                                       ##
 ########################################################################
@@ -55,58 +90,26 @@ elif [ "$majorV" == "15" ]; then
   pgV=$pg15V
   pgBuildV=$pg15BuildV
 
-  if [ "$OS" == "el9" ] || [ "$OS" == "arm9" ]; then
-    cd spock-private
-    git checkout main
-    git pull
-    diff1=$PWD/patches/pg15-005-log_old_value.diff
-    diff2=$PWD/patches/pg15-010-allow_logical_decoding_on_standbys.patch
-    if [ -f "$diff1" ] && [ -f "$diff2" ]; then
-      export DIFF1="$diff1"
-      export DIFF2="$diff2"
-    else
-      echo "FATAL ERROR: Missing $diff1 or $diff2"
-      exit 1
-    fi
-    cd ..
-  else
-    export DIFF1=""
-    export DIFF2=""
-  fi
+  p1=pg15-005-log_old_value.diff
+  p2=pg15-010-allow_logical_decoding_on_standbys.patch
+  p3=pg15-012-hidden_columns.diff
+  export_patches "$p1" "$p2" "$p3"
 
 elif [ "$majorV" == "16" ]; then
   pgV=$pg16V
   pgBuildV=$pg16BuildV
 
-  cd spock-private
-  git checkout main
-  git pull
-  diff1=$PWD/patches/pg16-005-log_old_value.diff
-  if [ -f "$diff1" ]; then
-    export DIFF1="$diff1"
-    export DIFF2=""
-  else
-    echo "FATAL ERROR: Missing $diff1"
-    exit 1
-  fi
-  cd ..
+  p1=pg16-005-log_old_value.diff
+  p2=pg16-012-hidden_columns.diff
+  export_patches "$p1" "$p2"
 
 elif [ "$majorV" == "17" ]; then
   pgV=$pg17V
   pgBuildV=$pg17BuildV
 
-  cd spock-private
-  git checkout main
-  git pull
-  diff1=$PWD/patches/pg17-005-log_old_value.diff
-  if [ -f "$diff1" ]; then
-    export DIFF1="$diff1"
-    export DIFF2=""
-  else
-    echo "FATAL ERROR: Missing $diff1"
-    exit 1
-  fi
-  cd ..
+  p1=pg17-005-log_old_value.diff
+  p2=pg17-012-hidden_columns-v3.diff
+  export_patches "$p1" "$p2"
 
 fi
 
