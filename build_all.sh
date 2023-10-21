@@ -81,6 +81,10 @@ fi
 echo "############### Build Package Manager ###################"
 rm -f $OUT/hub-$hubV*
 rm -f $OUT/$bundle-$api-$hubV*
+rm -rf $CLI/pg1*
+rm -rf $CLI/conf
+rm -rf $CLI/__pycache__
+rm -rf $CLI/lib/__pycache__
 ./build.sh -X posix -c $bundle-$api -N $hubV
 
 buildALL $majorV $minorV
