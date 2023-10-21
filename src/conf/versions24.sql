@@ -297,15 +297,15 @@ INSERT INTO versions VALUES ('badger', '11.8', '', 0, '20220408', '', '', '');
 
 INSERT INTO projects VALUES ('pgedge', 'pge', 0, 0, 'hub', 3, 'http://pgedge.org',
   'pgedge',  0, 'pgedge.png', 'Multi-Active Global Postgres Clusters', 'http://pgedge.com');
-INSERT INTO releases VALUES ('pgedge', 1, 'pgedge',  'pgEdge', '', 'test', '', 1, 'pgEdge Community', '', '');
+INSERT INTO releases VALUES ('pgedge', 1, 'pgedge',  'pgEdge', '', 'prod', '', 1, 'pgEdge Platform', '', '');
 INSERT INTO versions VALUES ('pgedge', '2-6',   '', 1, '20231017', '', '', '');
 INSERT INTO versions VALUES ('pgedge', '2-5',   '', 0, '20230927', '', '', '');
 INSERT INTO versions VALUES ('pgedge', '2-4',   '', 0, '20230914', '', '', '');
 
-INSERT INTO projects VALUES ('nclibs', 'pge', 0, 0, 'hub', 3, 'https://github.com/pgedge',
-  'nclibs',  0, 'nclibs.png', 'nclibs', 'https://github.com/pgedge');
-INSERT INTO releases VALUES ('nclibs', 2, 'nclibs',  'nodectlLibs', '', 'test', '', 1, '', '', '');
-INSERT INTO versions VALUES ('nclibs', '1.0', '', 1, '20230715', '', '', '');
+INSERT INTO projects VALUES ('nclibs', 'pge', 0, 0, 'hub', 3, 'https://github.com/pgedge/nodectl',
+  'nclibs',  0, 'nclibs.png', 'nclibs', 'https://github.com/pgedge/nodectl');
+INSERT INTO releases VALUES ('nclibs', 2, 'nclibs',  'nodectl Libs', '', 'test', '', 1, '', '', '');
+INSERT INTO versions VALUES ('nclibs', '1.0', '', 1, '20231021', '', '', '');
 
 INSERT INTO projects VALUES ('pgcat', 'pge', 4, 5433, 'hub', 3, 'https://github.com/pgedge/pgcat/tags',
   'cat',  0, 'pgcat.png', 'Connection Pooler', 'https://github.com/pgedge/pgcat');

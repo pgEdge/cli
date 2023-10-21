@@ -12,6 +12,7 @@
 
 ### Minor fixes and supporting enhancements:
   - refactor pg build process to cleanly apply N patches (denis)
+  - support INSTALL_PY env for cluster commands using install24.py
   - bump pg15/16/17 to include HiddenColumns patch (denis)
   - enhance 'install pgedge' for STAZ (denis)
      + add 'replicator' role
