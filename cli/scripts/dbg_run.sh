@@ -1,27 +1,21 @@
-export MY_HOME=$PWD
-export MY_CMD=nc
+#!/bin/bash
+
+mydir="$(dirname "${0}")"
+cd $mydir
+
+source dbg_env.sh
 
 action="$1"
-
-export MY_LOGS=/tmp/cli_log.out
-rm -f $MY_LOGS
-
 base_conf=../../src/conf
-new_conf=$MY_HOME/conf
-export MY_LITE=$new_conf/db_local.db
-if [ ! -d "$new_conf" ] || [ "$action" == "reset" ]; then
-  if [ -d "$new_conf" ]; then
-    python3 -u cli.py stop
-  fi
 
+if [ ! -d "conf" ] || [ "$action" == "reset" ]; then
   ./dbg_cleanup.sh
 
-  rm -rf "$new_conf"
-  mkdir -p "$new_conf/cache"
-  cp $base_conf/db_local.db "$new_conf/."
-  "$NC"/devel/startHTTP.sh
+  mkdir -p "conf/cache"
+  cp $base_conf/db_local.db "conf/."
+  $NC/devel/startHTTP.sh
   
-  exit 0
+  exit   
 fi
 
 sqlite3 "$MY_LITE" < $base_conf/versions24.sql

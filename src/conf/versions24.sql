@@ -259,7 +259,6 @@ INSERT INTO releases VALUES ('postgis-pg15', 3, 'postgis', 'PostGIS', '', 'prod'
 INSERT INTO releases VALUES ('postgis-pg16', 3, 'postgis', 'PostGIS', '', 'prod', '', 1, 'GPLv2', '', '');
 INSERT INTO versions VALUES ('postgis-pg15', '3.4.0-1', 'el9, arm9', 1, '20230914', 'pg15', '', 'https://git.osgeo.org/gitea/postgis/postgis/raw/tag/3.4.0/NEWS');
 INSERT INTO versions VALUES ('postgis-pg16', '3.4.0-1', 'el9, arm9', 1, '20230914', 'pg16', '', 'https://git.osgeo.org/gitea/postgis/postgis/raw/tag/3.4.0/NEWS');
-INSERT INTO versions VALUES ('postgis-pg15', '3.3.4-1', 'el9, arm9', 0, '20230731', 'pg15', '', 'https://git.osgeo.org/gitea/postgis/postgis/raw/tag/3.3.4/NEWS');
 
 INSERT INTO projects VALUES ('pgadmin4', 'app', 3, 80, '', 1, 'https://www.pgadmin.org/news/',
   'pgadmin4', 0, 'pgadmin.png', 'PostgreSQL Tools', 'https://pgadmin.org');
@@ -268,13 +267,13 @@ INSERT INTO versions VALUES ('pgadmin4', '7.5', '', 0, '20230727', '', '', '');
 
 INSERT INTO projects VALUES ('bulkload', 'ext', 4, 0, 'hub', 5, 'https://github.com/ossc-db/pg_bulkload/releases',
   'bulkload', 1, 'bulkload.png', 'High Speed Data Loading', 'https://github.com/ossc-db/pg_bulkload');
-INSERT INTO releases VALUES ('bulkload-pg14', 6, 'bulkload', 'pgBulkLoad',  '', 'prod', '', 1, 'POSTGRES', '', '');
+INSERT INTO releases VALUES ('bulkload-pg14', 6, 'bulkload', 'pgBulkLoad',  '', 'test', '', 1, 'POSTGRES', '', '');
 INSERT INTO versions VALUES ('bulkload-pg14', '3.1.19-1', 'arm, el8', 0, '20211012', 'pg14', '', '');
 
 INSERT INTO projects VALUES ('repack', 'ext', 4, 0, 'hub', 5, 'https://github.com/reorg/pg_repack/tags',
   'repack', 1, 'repack.png', 'Remove Table/Index Bloat' , 'https://github.com/reorg/pg_repack');
-INSERT INTO releases VALUES ('repack-pg15', 6, 'repack', 'pgRepack',  '', 'prod','',  1, 'POSTGRES', '', '');
-INSERT INTO versions VALUES ('repack-pg15', '1.4.8-1', 'arm, el8', 1, '20221019', 'pg15', '', '');
+INSERT INTO releases VALUES ('repack-pg15', 6, 'repack', 'pgRepack',  '', 'test','',  1, 'POSTGRES', '', '');
+INSERT INTO versions VALUES ('repack-pg15', '1.4.8-1', 'arm, el8', 0, '20221019', 'pg15', '', '');
 
 INSERT INTO projects VALUES ('partman', 'ext', 4, 0, 'hub', 4, 'https://github.com/pgpartman/pg_partman/tags',
   'partman', 1, 'partman.png', 'Partition Management', 'https://github.com/pgpartman/pg_partman#pg-partition-manager');
@@ -301,41 +300,39 @@ INSERT INTO projects VALUES ('pgedge', 'pge', 0, 0, 'hub', 3, 'http://pgedge.org
 INSERT INTO releases VALUES ('pgedge', 1, 'pgedge',  'pgEdge', '', 'prod', '', 1, 'pgEdge Platform', '', '');
 INSERT INTO versions VALUES ('pgedge', '2-6',   '', 1, '20231017', '', '', '');
 INSERT INTO versions VALUES ('pgedge', '2-5',   '', 0, '20230927', '', '', '');
-INSERT INTO versions VALUES ('pgedge', '2-4',   '', 0, '20230914', '', '', '');
 
 INSERT INTO projects VALUES ('nclibs', 'pge', 0, 0, 'hub', 3, 'https://github.com/pgedge/nodectl',
   'nclibs',  0, 'nclibs.png', 'nclibs', 'https://github.com/pgedge/nodectl');
-INSERT INTO releases VALUES ('nclibs', 2, 'nclibs',  'nodectl Libs', '', 'test', '', 1, '', '', '');
+INSERT INTO releases VALUES ('nclibs', 2, 'nclibs',  'nodectl Libs', '', 'prod', '', 1, '', '', '');
 INSERT INTO versions VALUES ('nclibs', '1.0', '', 1, '20231021', '', '', '');
 
 INSERT INTO projects VALUES ('pgcat', 'pge', 11, 5433, 'hub', 3, 'https://github.com/pgedge/pgcat/tags',
   'cat',  0, 'pgcat.png', 'Connection Pooler', 'https://github.com/pgedge/pgcat');
 INSERT INTO releases VALUES ('pgcat', 2, 'pgcat',  'pgCat', '', 'prod', '', 1, 'MIT', '', '');
 INSERT INTO versions VALUES ('pgcat', '1.1.1', 'el9, arm9', 1, '20230829', '', '', '');
-INSERT INTO versions VALUES ('pgcat', '1.0.0', 'el9, arm9', 0, '20230629', '', '', '');
 
 INSERT INTO projects VALUES ('backrest', 'pge', 11, 0, 'hub', 3, 'http://pgbackrest.org',
   'backrest',  0, 'backrest.png', 'Backup & Restore', 'http://pgbackrest.org');
 INSERT INTO releases VALUES ('backrest', 2, 'backrest',  'pgBackRest', '', 'prod', '', 1, 'MIT', '', '');
-INSERT INTO versions VALUES ('backrest', '2.47-1', 'el9, arm9', 1, '20230803', '', 'EL', '');
-INSERT INTO versions VALUES ('backrest', '2.46-1', 'el9, arm9', 0, '20230524', '', 'EL', '');
+INSERT INTO versions VALUES ('backrest', '2.47-1', 'el9, arm9', 1, '20230803', '', '', '');
+INSERT INTO versions VALUES ('backrest', '2.46-1', 'el9, arm9', 0, '20230524', '', '', '');
 
 INSERT INTO projects VALUES ('staz', 'app', 11, 0, '', 4, 'https://github.com/pgedge/staz/tags',
   'staz', 0, 'patroni.png', 'HA', 'https://github.com/pgedge/staz');
-INSERT INTO releases VALUES ('staz', 1, 'staz', 'STAZ', '', 'prod', '', 1, 'POSTGRES', '', '');
-INSERT INTO versions VALUES ('staz', '3.1.2.2', '', 1, '20231021', '', 'EL9', '');
+INSERT INTO releases VALUES ('staz', 1, 'staz', 'Spock 3 AZ', '', 'prod', '', 1, 'POSTGRES', '', '');
+INSERT INTO versions VALUES ('staz', '3.1.2.2', '', 1, '20231021', '', '', '');
 
 INSERT INTO projects VALUES ('etcd', 'app', 11, 0, 'hub', 4, 'https://github.com/etcd-io/etcd/tags',
   'etcd', 0, 'etcd.png', 'HA', 'https://github.com/etcd-io/etcd');
 INSERT INTO releases VALUES ('etcd', 1, 'etcd', 'Etcd', '', 'prod', '', 1, 'POSTGRES', '', '');
-INSERT INTO versions VALUES ('etcd', '3.5.9', 'el9, arm9', 0, '20231013', '', 'EL9', '');
+INSERT INTO versions VALUES ('etcd', '3.5.9', 'el9, arm9', 0, '20231013', '', '', '');
 
 INSERT INTO projects VALUES ('ddlx', 'ext',     4, 0, 'hub', 0, 'https://github.com/lacanoid/pgddl/releases', 'ddlx',  1, 'ddlx.png', 'DDL Extractor', 'https://github.com/lacanoid/pgddl#ddl-extractor-functions--for-postgresql');
 INSERT INTO releases VALUES ('ddlx-pg13', 2, 'ddlx', 'DDLeXtact', '', 'prod','',  0, 'POSTGRES', '', '');
-INSERT INTO versions VALUES ('ddlx-pg13', '0.17-1', 'amd', 1, '2.210911', 'pg13', '', '');
+INSERT INTO versions VALUES ('ddlx-pg13', '0.17-1', 'amd', 0, '2.210911', 'pg13', '', '');
 
 INSERT INTO projects VALUES ('multicorn2', 'ext', 4, 0, 'hub', 0, 'https://github.com/pgsql-io/multicorn2/tags',
   'multicorn2', 1, 'multicorn.png', 'Python FDW Library', 'http://multicorn2.org');
 INSERT INTO releases VALUES ('multicorn2-pg15', 1, 'multicorn2', 'Multicorn2', '', 'test','',  1, 'POSTGRES', '', '');
-INSERT INTO versions VALUES ('multicorn2-pg15', '2.4-1', 'arm, el8', 1, '20220909', 'pg15', '', '');
+INSERT INTO versions VALUES ('multicorn2-pg15', '2.4-1', 'arm, el8', 0, '20220909', 'pg15', '', '');
 

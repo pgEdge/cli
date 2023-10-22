@@ -63,7 +63,7 @@ def check_pre_reqs(p_comp, p_ver):
       pre_req = str(data[0])
       if pre_req > '':
         MY_HOME = os.getenv('MY_HOME')
-        req_sh = os.path.join(MY_HOME, 'hub' , 'scripts', 'requirements.sh')
+        req_sh = os.path.join(MY_HOME, 'hub' , 'scripts', 'check_pre_reqs.sh')
         rc = os.system(req_sh + " " + pre_req)
         if rc == 0:
           return True
