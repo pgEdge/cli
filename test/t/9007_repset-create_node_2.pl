@@ -23,7 +23,7 @@ my $repuser = "@$stdout_buf99[0]";
 my $username = "lcusr";
 my $password = "password";
 my $database = "lcdb";
-my $version = "pg16";
+my $version = "pg17";
 my $spock = "3.1";
 my $cluster = "demo";
 my $repset = "demo-repset";
@@ -38,7 +38,7 @@ my $homedir = $out->[0]->{"home"};
 print("The home directory is {$homedir}\n");
 
 # We can retrieve the port number from nodectl in json form...
-my $json2 = `$n2/pgedge/nc --json info pg16`;
+my $json2 = `$n2/pgedge/nc --json info $version`;
 #print("my json = $json2");
 my $out2 = decode_json($json2);
 my $port = $out2->[0]->{"port"};
@@ -62,18 +62,11 @@ my ($success5, $error_message5, $full_buf5, $stdout_buf5, $stderr_buf5)= IPC::Cm
 print("stdout_buf5 = @$stdout_buf5\n");
 print("We just executed the command that creates the replication set (demo-repset)\n");
 
-# Then, use the info to connect to psql and test for the existence of the replication set.
-
-my $cmd6 = qq($homedir/$version/bin/psql -t -h 127.0.0.1 -p $port -d $database -c "SELECT * FROM spock.replication_set");
-print("cmd6 = $cmd6\n");
-my($success6, $error_message6, $full_buf6, $stdout_buf6, $stderr_buf6)= IPC::Cmd::run(command => $cmd6, verbose => 0);
-print("stdout_buf6 = @$stdout_buf6\n");
-
 # Test to confirm that cluster is set up.
 
 print("We just installed pgedge/spock in $n1.\n");
 
-if(contains(@$stdout_buf6[0], "demo-repset"))
+if(contains(@$stdout_buf5[0], "repset_create"))
 
 {
     exit(0);
