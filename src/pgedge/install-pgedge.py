@@ -10,6 +10,8 @@ if pgN == "":
   pgN = util.DEFAULT_PG
 pgV = "pg" + str(pgN)
 
+pause = int(os.getenv('pgePause', '4'))
+
 withPOSTGREST = str(os.getenv("withPOSTGREST", "False"))
 withCAT = str(os.getenv("withCAT", "False"))
 withBACKREST = str(os.getenv("withBACKREST", "False"))
@@ -138,11 +140,11 @@ else:
 osSys(nc + "config " + pgV + " --port=" + str(prt))
 
 osSys(nc + "start " + pgV)
-time.sleep(3)
+time.sleep(pause)
 
 db.create(db1, usr, passwd, None, pgN)
 
-time.sleep(3)
+time.sleep(pause)
 
 if withPOSTGREST == "True":
   util.message("  ")

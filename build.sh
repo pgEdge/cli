@@ -443,6 +443,9 @@ initPG () {
 
     if [ "$pgM" == "15" ] || [ "$pgM" == "16" ] || [ "$pgM" == "17" ]; then
       initC "snowflake-pg$pgM"  "snowflake"  "$snwflkV"    "$outPlat" "postgres/snowflake" "" "" "nil"
+    fi
+
+    if [ "$pgM" == "17" ]; then
       initC "spock32-pg$pgM"    "spock32"    "$spock32V"   "$outPlat" "postgres/spock32"   "" "" "nil"
     fi
 

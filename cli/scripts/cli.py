@@ -74,7 +74,7 @@ mode_list_advanced = ['kill', 'config', 'init', 'clean', 'useradd', 'spock', 'do
 mode_list = ["start", "stop", "restart", "status", "list", "info", "help", 
              "install", "remove", "--pg", "--start", "--no-restart", "--no-preload",
              "--help", "--json", "--jsonp", "--test", "--extensions", "--svcs",
-             "--list", "--old", "--showduplicates", "-y", "-t",
+             "--list", "--old", "--showduplicates", "-y", "-t", "--pause",
              "--verbose", "--country", "-v", "--debug", "--debug2"] + \
              fire_list + mode_list_advanced
 
@@ -1187,6 +1187,15 @@ if "-y" in args:
   isYES = True
   args.remove("-y")
   os.environ['isYes'] = "True"
+
+if "--pause" in args:
+  pause = str(get_next_arg("--pause"))
+  if pause.isnumeric():
+    os.environ['pgePause'] = str(pause)
+    args.remove("--pause")
+    args.remove(pause)
+  else:
+    util.exit_message(f"--pause parm {pause} must be numeric", 1)
 
 if "--pg" in args:
   pgn = str(get_next_arg("--pg"))

@@ -103,7 +103,7 @@ List all cloud account ids in a pgEdge Cloud Account
   PROFILE - profile name of pgEdge Cloud Account for NodeCTL to use
   """
   response=get_pgedge("cloud-accounts", profile)
-  util.json_dumps(response)
+  print(util.json_dumps(response))
 
 
 def list_clusters(profile='Default'):
@@ -114,7 +114,7 @@ List all clusters in a pgEdge Cloud Account
   PROFILE - profile name of pgEdge Cloud Account for NodeCTL to use
   """
   response=get_pgedge("clusters", profile)
-  util.json_dumps(response)
+  print(util.json_dumps(response))
 
 
 def cluster_status(cluster_id, profile='Default'):
@@ -140,7 +140,7 @@ List all nodes in a cluster in a pgEdge Cloud Account
   PROFILE - profile name of pgEdge Cloud Account for NodeCTL to use
   """
   response=get_pgedge(f"clusters/{cluster_id}/nodes", profile)
-  util.json_dumps(response)
+  print(util.json_dumps(response))
   
 
 def import_cluster_def(cluster_id, profile='Default'):
