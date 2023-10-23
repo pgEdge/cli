@@ -445,12 +445,16 @@ def compare_checksums(
 def table_diff(
     cluster_name,
     table_name,
-    block_rows=1000,
+    block_rows=10000,
     max_cpu_ratio=MAX_CPU_RATIO,
     output="csv",
     nodes="all",
 ):
     """Efficiently compare tables across cluster using checksums and blocks of rows."""
+
+    # Read block_rows from environment variable if not passed in
+    block_rows = os.environ.get("ACE_BLOCK_ROWS", block_rows)
+    max_cpu_ratio = os.environ.get("ACE_MAX_CPU_RATIO", max_cpu_ratio)
 
     # Capping max block size here to prevent the hash function from taking forever
     if block_rows > MAX_ALLOWED_BLOCK_SIZE:
@@ -669,6 +673,8 @@ def table_diff(
                 p_state="warning",
             )
 
+        print()
+
         if output == "json":
             write_diffs_json(block_rows)
 
@@ -680,7 +686,8 @@ def table_diff(
 
     run_time = datetime.now() - start_time
     util.message(
-        f"TOTAL ROWS CHECKED = {total_rows}. RUN TIME = {run_time}", p_state="info"
+        f"TOTAL ROWS CHECKED = {total_rows}\nRUN TIME = {util.round_timedelta(run_time)}",
+        p_state="info",
     )
 
 
@@ -739,7 +746,7 @@ def write_diffs_csv():
         subprocess.check_output(cmd, shell=True)
 
         util.message(
-            f"Diffs between {n1} and {n2} have been written out to {diff_file_name}",
+            f"DIFFS BETWEEN {n1} AND {n2}: {diff_file_name}",
             p_state="info",
         )
 
@@ -898,4 +905,3 @@ if __name__ == "__main__":
             "table-repair": table_repair,
         }
     )
-

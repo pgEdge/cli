@@ -51,17 +51,16 @@ pid_file = os.path.join(MY_HOME, "conf", "cli.pid")
 
 
 def load_ini(file_nm, section):
-
     try:
-        text = open(file_nm, 'r').read()
+        text = open(file_nm, "r").read()
         config = ini.parse(text)
         for s in config:
             if s == section:
-                return(config[s])
+                return config[s]
     except Exception as e:
         exit_message(str(e), 1)
 
-    return(None)
+    return None
 
 
 def run_psyco_sql(pg_v, db, cmd, usr=None):
@@ -1188,6 +1187,17 @@ def verify(p_json):
         fatal_sql_error(e, sql, "verify()")
 
     return
+
+
+def round_timedelta(dt):
+    microseconds_in_tenth_of_second = 100000
+    half_of_tenth_of_second = microseconds_in_tenth_of_second // 2
+    remainder = dt.microsecond % microseconds_in_tenth_of_second
+
+    if remainder < half_of_tenth_of_second:
+        return dt - timedelta(microseconds=remainder)
+    else:
+        return dt + timedelta(microseconds=microseconds_in_tenth_of_second - remainder)
 
 
 def verify_comp(p_comp_ver_plat):
@@ -3477,7 +3487,5 @@ def delete_shortlink_osx(short_link):
 
 
 ## MAINLINE ################################################################
-my_lite=os.getenv("MY_LITE")
-cL = sqlite3.connect(
-    my_lite, check_same_thread=False
-)
+my_lite = os.getenv("MY_LITE")
+cL = sqlite3.connect(my_lite, check_same_thread=False)
