@@ -2,6 +2,7 @@
 
 ## done for 24.003 on 2023-10-23
 ### New Features:
+  + MACHINE: 2nd pass includes support for configuring remote firewalls
 
 ### Minor fixes and supporting enhancements:
   + added the '--pause' option to 'install pgegde'
