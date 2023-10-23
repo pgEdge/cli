@@ -684,9 +684,11 @@ def table_diff(
     else:
         util.message("TABLES MATCH OK\n", p_state="success")
 
-    run_time = datetime.now() - start_time
+    run_time = util.round_timedelta(datetime.now() - start_time).total_seconds()
+    run_time_str = f"{run_time:.2f}"
+
     util.message(
-        f"TOTAL ROWS CHECKED = {total_rows}\nRUN TIME = {util.round_timedelta(run_time)}",
+        f"TOTAL ROWS CHECKED = {total_rows}\nRUN TIME = {run_time_str} seconds",
         p_state="info",
     )
 
@@ -778,6 +780,8 @@ def table_repair(cluster_name, diff_file, source_of_truth, table_name, dry_run=F
             f"Source of truth node {source_of_truth} not present in cluster"
         )
 
+    start_time = datetime.now()
+
     conn_list = []
     try:
         for nd in cluster_nodes:
@@ -839,7 +843,7 @@ def table_repair(cluster_name, diff_file, source_of_truth, table_name, dry_run=F
     true_df[key] = true_df[key].astype(str)
 
     # Remove the key column from the list of columns
-    true_df = true_df[[c for c in true_df if c not in [key]]]
+    # true_df = true_df[[c for c in true_df if c not in [key]]]
     for conn in conn_list:
         # Unpack true_df into (key, row) tuples
         true_rows = true_df.to_records(index=False)
@@ -863,13 +867,13 @@ def table_repair(cluster_name, diff_file, source_of_truth, table_name, dry_run=F
 
     cols_list = cols.split(",")
     # Remove the key column from the list of columns
-    cols_list.remove(key)
+    # cols_list.remove(key)
 
     """
     Here we are constructing an UPDATE query from true_rows and applying it to all nodes
     """
     update_sql = f"""
-    INSERT INTO {table_name} ({','.join(cols_list)})
+    INSERT INTO {table_name}
     VALUES ({','.join(['%s'] * len(cols_list))})
     ON CONFLICT ({key}) DO UPDATE SET
     """
@@ -890,9 +894,17 @@ def table_repair(cluster_name, diff_file, source_of_truth, table_name, dry_run=F
             print(update_sql, true_rows)
             util.exit_message("Error in repair():" + str(e), 1)
 
+    run_time = util.round_timedelta(datetime.now() - start_time).total_seconds()
+    run_time_str = f"{run_time:.2f}"
+
     util.message(
         f"Successfully applied diffs to {table_name} in cluster {cluster_name}",
         p_state="success",
+    )
+
+    util.message(
+        f"\nTOTAL ROWS UPSERTED = {len(true_rows)}\nRUN TIME = {run_time_str} seconds",
+        p_state="info",
     )
 
 

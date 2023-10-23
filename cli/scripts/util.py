@@ -1192,7 +1192,7 @@ def verify(p_json):
 def round_timedelta(dt):
     microseconds_in_tenth_of_second = 100000
     half_of_tenth_of_second = microseconds_in_tenth_of_second // 2
-    remainder = dt.microsecond % microseconds_in_tenth_of_second
+    remainder = dt.microseconds % microseconds_in_tenth_of_second
 
     if remainder < half_of_tenth_of_second:
         return dt - timedelta(microseconds=remainder)
