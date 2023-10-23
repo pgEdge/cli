@@ -248,11 +248,15 @@ def ssh_install_pgedge(cluster_name, passwd):
       REPO = "https://pgedge-download.s3.amazonaws.com/REPO"
       os.environ['REPO'] = REPO
 
+    install_py = os.getenv("INSTALL_PY", "")
+    if install_py == "":
+      install_py = "install.py"
+
     util.message(f"########                node={ndnm}, host={ndip}, path={ndpath} REPO={REPO}\n")
 
     cmd0 = f"export REPO={REPO}; "
     cmd1 = f"mkdir -p {ndpath}; cd {ndpath}; "
-    cmd2 = f"python3 -c \"\$(curl -fsSL {REPO}/install.py)\""
+    cmd2 = f"python3 -c \"\$(curl -fsSL {REPO}/{install_py})\""
     util.echo_cmd(cmd0 + cmd1 + cmd2, host=n["ip"], usr=os_user, key=ssh_key)
     
     nc = (ndpath + "/pgedge/nodectl ")

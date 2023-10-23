@@ -1,15 +1,25 @@
 # pgEdge Platform Release Notes #############
 
-## done for 24.002 on 2023-10-20
+## done for 24.003 on 2023-10-23
 ### New Features:
-  + Hidden Columns patch (korry)
+  + MACHINE: 2nd pass includes support for configuring remote firewalls
+
+### Minor fixes and supporting enhancements:
+  + added the '--pause' option to 'install pgegde'
+
+## done for 24.002 on 2023-10-21
+### New Features:
+  + SNOWFLAKE: New extension to support snowflake sequences (jan)
+  + SPOCK: 3.2dev5 readonly(asifr/affan) & snowflake migration (jan)
+  + PG: Hidden Columns patch (korry)
   + STAZ: Spock Three AZ Clustering (ibrar)
-  + new upsert & dryrun functionality for ACE (tej)
-  + 1st pass @ get & set GUC functions in db.py (cady)
-  + 1st pass at MACHINE cli (denis)
+  + ACE: new upsert & dryrun functionality (tej)
+  + DB: 1st pass @ get & set GUC functions (cady)
+  + MACHINE: 1st pass at experimental cli (denis)
 
 ### Minor fixes and supporting enhancements:
   - refactor pg build process to cleanly apply N patches (denis)
+  - support INSTALL_PY env for cluster commands using install24.py
   - bump pg15/16/17 to include HiddenColumns patch (denis)
   - enhance 'install pgedge' for STAZ (denis)
      + add 'replicator' role

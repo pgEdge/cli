@@ -15,7 +15,7 @@ use contains;
 my $username = "lcusr";
 my $password = "password";
 my $database = "lcdb";
-my $version = "pg16";
+my $version = "17";
 my $spock = "3.1";
 my $cluster = "demo";
 my $repset = "demo-repset";

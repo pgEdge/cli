@@ -10,10 +10,13 @@ use IPC::Cmd qw(run);
 use Try::Tiny;
 use JSON;
 
-my $cmd = system("python install.py");
+my $cmd = system("curl -fsSL https://pgedge-upstream.s3.amazonaws.com/REPO/install24.py > install.py");
 print("cmd = $cmd\n");
 
-if (defined($cmd))
+my $cmd2 = system("python install.py");
+print("cmd2 = $cmd2\n");
+
+if (defined($cmd2))
 {
   exit(0);
 }
