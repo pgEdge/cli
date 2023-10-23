@@ -1,5 +1,11 @@
 # pgEdge Platform Release Notes #############
 
+## done for 24.003 on 2023-10-23
+### New Features:
+
+### Minor fixes and supporting enhancements:
+  + added the '--pause' option to 'install pgegde'
+
 ## done for 24.002 on 2023-10-21
 ### New Features:
   + SNOWFLAKE: New extension to support snowflake sequences (jan)

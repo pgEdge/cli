@@ -298,7 +298,8 @@ INSERT INTO versions VALUES ('badger', '11.8', '', 0, '20220408', '', '', '');
 INSERT INTO projects VALUES ('pgedge', 'pge', 0, 0, 'hub', 3, 'http://pgedge.org',
   'pgedge',  0, 'pgedge.png', 'Multi-Active Global Postgres Clusters', 'http://pgedge.com');
 INSERT INTO releases VALUES ('pgedge', 1, 'pgedge',  'pgEdge', '', 'prod', '', 1, 'pgEdge Platform', '', '');
-INSERT INTO versions VALUES ('pgedge', '2-6',   '', 1, '20231017', '', '', '');
+INSERT INTO versions VALUES ('pgedge', '2-07',  '', 1, '20231028', '', '', '');
+INSERT INTO versions VALUES ('pgedge', '2-6',   '', 0, '20231017', '', '', '');
 INSERT INTO versions VALUES ('pgedge', '2-5',   '', 0, '20230927', '', '', '');
 
 INSERT INTO projects VALUES ('nclibs', 'pge', 0, 0, 'hub', 3, 'https://github.com/pgedge/nodectl',
