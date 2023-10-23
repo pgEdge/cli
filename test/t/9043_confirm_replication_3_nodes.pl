@@ -1,5 +1,4 @@
-# This test case confirms that the row updated in test t/914 is correctly 
-# replicated on node 2.
+# This test case confirms that the cluster is replicating correctly.
 
 use strict;
 use warnings;
@@ -17,8 +16,8 @@ use contains;
 my $username = "lcusr";
 my $password = "password";
 my $database = "lcdb";
-my $version = "pg16";
-my $spock = "3.1";
+my $version = "pg17";
+my $spock = "3.2";
 my $cluster = "demo";
 my $repset = "demo-repset";
 my $n1 = "~/work/nodectl/test/pgedge/cluster/demo/n1";
@@ -34,7 +33,7 @@ my $homedir = $out->[0]->{"home"};
 print("The home directory is {$homedir}\n");
 
 # We can retrieve the port number from nodectl in json form...
-my $json2 = `$n1/pgedge/nc --json info pg16`;
+my $json2 = `$n1/pgedge/nc --json info $version`;
 #print("my json = $json2");
 my $out2 = decode_json($json2);
 my $port = $out2->[0]->{"port"};
@@ -48,7 +47,7 @@ my $homedir2 = $out3->[0]->{"home"};
 print("The home directory is {$homedir2}\n");
 
 # We can retrieve the port number from nodectl in json form...
-my $json4 = `$n2/pgedge/nc --json info pg16`;
+my $json4 = `$n2/pgedge/nc --json info $version`;
 #print("my json = $json4");
 my $out4 = decode_json($json4);
 my $port2 = $out4->[0]->{"port"};
@@ -62,7 +61,7 @@ my $homedir3 = $out5->[0]->{"home"};
 print("The home directory is {$homedir3}\n");
 
 # We can retrieve the port number from nodectl in json form...
-my $json6 = `$n3/pgedge/nc --json info pg16`;
+my $json6 = `$n3/pgedge/nc --json info $version`;
 #print("my json = $json6");
 my $out6 = decode_json($json6);
 my $port3 = $out6->[0]->{"port"};

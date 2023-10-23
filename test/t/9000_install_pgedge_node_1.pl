@@ -21,7 +21,8 @@ my $repuser = "@$stdout_buf99[0]";
 my $username = "lcusr";
 my $password = "password";
 my $database = "lcdb";
-my $version = "pg16";
+my $inst_version = "--pg 17";
+my $version = "pg17";
 my $spock = "3.1";
 my $cluster = "demo";
 my $repset = "demo-repset";
@@ -40,7 +41,7 @@ print("stderr_buf = @$stderr_buf\n");
 
 # Download the install.py file into the directory.
 
-my $cmd2 = qq(curl -fsSL https://pgedge-upstream.s3.amazonaws.com/REPO/install.py > $n1/install.py);
+my $cmd2 = qq(curl -fsSL https://pgedge-upstream.s3.amazonaws.com/REPO/install24.py > $n1/install.py);
 print("cmd2 = $cmd2\n");
 my ($success2, $error_message2, $full_buf2, $stdout_buf2, $stderr_buf2)= IPC::Cmd::run(command => $cmd2, verbose => 0);
 
@@ -63,11 +64,10 @@ print("stderr_buf3 = @$stderr_buf3\n");
 
 # Install PostgreSQL.
 
-my $cmd4 = qq($n1/pgedge/nodectl install pgedge -U $username -P $password -d $database -p 6432);
+my $cmd4 = qq($n1/pgedge/nodectl install pgedge -U $username -P $password -d $database -p 6432 $inst_version);
 print("cmd4 = $cmd4\n");
 my ($success4, $error_message4, $full_buf4, $stdout_buf4, $stderr_buf4)= IPC::Cmd::run(command => $cmd4, verbose => 0);
 
-print("success4 = $success4\n");
 print("full_buf4 = @$full_buf4\n");
 print("stderr_buf4 = @$stderr_buf4\n");
 # In this case, stdout_buf4 contains content
@@ -81,7 +81,7 @@ my $homedir = $out->[0]->{"home"};
 
 print("The home directory is {$homedir}\n");
 
-my $json2 = `$n1/pgedge/nc --json info pg16`;
+my $json2 = `$n1/pgedge/nc --json info pg17`;
 print("my json2 = $json2");
 my $out2 = decode_json($json2);
 my $port = $out2->[0]->{"port"};
@@ -94,17 +94,15 @@ my $cmd5 = qq($homedir/$version/bin/psql -t -h 127.0.0.1 -p $port -d $database -
 print("cmd5 = $cmd5\n");
 my($success5, $error_message5, $full_buf5, $stdout_buf5, $stderr_buf5)= IPC::Cmd::run(command => $cmd5, verbose => 0);
 
-print("success5 = $success5\n");
 print("stdout_buf5 = @$stdout_buf5\n");
 
 # Test to confirm that cluster is set up.
 
-print("success5 = $success5\n");
 print("stdout_buf5 = @$stdout_buf5\n");
 print("full_buf5 = @$full_buf5\n");
 print("We just installed pgedge/spock in $n1.\n");
 
-if(contains(@$stdout_buf5[0], "3.1"))
+if(contains(@$stdout_buf5[0], "3.2"))
 
 {
     exit(0);
