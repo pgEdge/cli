@@ -1,6 +1,15 @@
 # pgEdge Platform Release Notes #############
 
-## done for 24.003 on 2023-10-23
+## done for 24.004 on 2023-10-24 ###########
+### New Features:
+  + MACHINE: 2nd pass includes support for configuring remote firewalls
+
+### Minor fixes and supporting enhancements:
+  + fixes to se3cure.py (cady)
+  + default 'install pgedge' to '--pg 17' (denis)
+  + default INSTALL_PY to 'install24.py' if "-upstream" is in REPO (denis)
+
+## done for 24.003 on 2023-10-23 ############
 ### New Features:
   + MACHINE: 2nd pass includes support for configuring remote firewalls
 

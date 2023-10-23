@@ -250,7 +250,10 @@ def ssh_install_pgedge(cluster_name, passwd):
 
     install_py = os.getenv("INSTALL_PY", "")
     if install_py == "":
-      install_py = "install.py"
+      if "-upstream" in REPO:
+        install_py = "install24.py"
+      else:
+        install_py = "install.py"
 
     util.message(f"########                node={ndnm}, host={ndip}, path={ndpath} REPO={REPO}\n")
 
