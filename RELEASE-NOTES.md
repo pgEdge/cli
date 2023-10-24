@@ -1,9 +1,15 @@
 # pgEdge Platform Release Notes #############
 
 ## done for 24.005 on 2023-10-25 ###########
+### New Features:
 
 ### Minor fixes and supporting enhancements:
-  + 'CREATE EXTENSION snpwflake' after install --no-restart"
+  + 'CREATE EXTENSION snowflake' after install --no-restart
+  
+  * better messaging for unsupported pg binaries on a platform
+  * fix' ./nc update' when you in the 24 stream
+  * start dev on 23.135 to include snowflake for pg15 & pg16
+  * check rehup/reload with set db.set_guc()
 
 
 ## done for 24.004 on 2023-10-24 ###########
