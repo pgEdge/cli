@@ -447,14 +447,16 @@ def table_diff(
     table_name,
     block_rows=10000,
     max_cpu_ratio=MAX_CPU_RATIO,
-    output="csv",
+    output="json",
     nodes="all",
 ):
     """Efficiently compare tables across cluster using checksums and blocks of rows."""
 
-    # Read block_rows from environment variable if not passed in
-    block_rows = os.environ.get("ACE_BLOCK_ROWS", block_rows)
-    max_cpu_ratio = os.environ.get("ACE_MAX_CPU_RATIO", max_cpu_ratio)
+    try:
+        block_rows = int(os.environ.get("ACE_BLOCK_ROWS", block_rows))
+        max_cpu_ratio = int(os.environ.get("ACE_MAX_CPU_RATIO", max_cpu_ratio))
+    except Exception:
+        util.exit_message("Invalid values for ACE_BLOCK_ROWS or ACE_MAX_CPU_RATIO")
 
     # Capping max block size here to prevent the hash function from taking forever
     if block_rows > MAX_ALLOWED_BLOCK_SIZE:
@@ -700,13 +702,20 @@ def write_diffs_json(block_rows):
     output_json["block_size"] = block_rows
     output_json["diffs"] = [cur_entry for cur_entry in queue]
 
-    ts = datetime.now().strftime("%Y%m%d%H%M%S")
-    filename = "diff_" + ts + ".json"
+    dirname = datetime.now().astimezone(None).strftime("%Y-%m-%d_%H:%M:%S")
+
+    if not os.path.exists("diffs"):
+        os.mkdir("diffs")
+
+    dirname = os.path.join("diffs", dirname)
+    os.mkdir(dirname)
+
+    filename = "diff.json"
 
     with open(filename, "w") as f:
         f.write(json.dumps(output_json, default=str))
 
-    util.message(f"Diffs written out to {filename}", p_state="info")
+    util.message(f"Diffs written out to {dirname}/{filename}", p_state="info")
 
 
 # TODO: Come up with better naming convention for diff files
@@ -714,6 +723,14 @@ def write_diffs_csv():
     import pandas as pd
 
     seen_nodepairs = {}
+
+    dirname = datetime.now().astimezone(None).strftime("%Y-%m-%d_%H:%M:%S")
+
+    if not os.path.exists("diffs"):
+        os.mkdir("diffs")
+
+    dirname = os.path.join("diffs", dirname)
+    os.mkdir(dirname)
 
     for entry in queue:
         diff_list = entry["diffs"]
@@ -723,8 +740,15 @@ def write_diffs_csv():
 
         for diff_json in diff_list:
             node1, node2 = diff_json.keys()
-            t1_write_path = node1 + "_X_" + node2 + "_" + node1 + ".csv"
-            t2_write_path = node1 + "_X_" + node2 + "_" + node2 + ".csv"
+            node_pair_str = f"{node1}__{node2}"
+            node_pair_dir = os.path.join(dirname, node_pair_str)
+
+            # Create directory for node pair if it doesn't exist
+            if not os.path.exists(node_pair_dir):
+                os.mkdir(node_pair_dir)
+
+            t1_write_path = os.path.join(node_pair_dir, node1 + ".csv")
+            t2_write_path = os.path.join(node_pair_dir, node2 + ".csv")
 
             df1 = pd.DataFrame.from_dict(diff_json[node1])
             df2 = pd.DataFrame.from_dict(diff_json[node2])
@@ -741,9 +765,11 @@ def write_diffs_csv():
 
     for node_pair in seen_nodepairs.keys():
         n1, n2 = node_pair.split(",")
-        diff_file_name = n1 + "_X_" + n2 + ".diff"
-        t1_write_path = n1 + "_X_" + n2 + "_" + n1 + ".csv"
-        t2_write_path = n1 + "_X_" + n2 + "_" + n2 + ".csv"
+        node_pair_str = f"{n1}__{n2}"
+        diff_file_name = os.path.join(dirname, f"{node_pair_str}/out.diff")
+
+        t1_write_path = os.path.join(dirname, node_pair_str, n1 + ".csv")
+        t2_write_path = os.path.join(dirname, node_pair_str, n2 + ".csv")
         cmd = f"diff -u {t1_write_path} {t2_write_path} | ydiff > {diff_file_name}"
         subprocess.check_output(cmd, shell=True)
 
