@@ -55,9 +55,47 @@ def create(name, location, provider="eqnx", size=None, image=None, project=None)
             image = sect['image']
         if project == None:
             project = sect['project']
+
         create_node_eqnx(name, location, size, image, project)
+
+    elif prvdr == "aws":
+        if size == None:
+            size = sect['size']
+        if image == None:
+            image = sect['image']
+        if project:
+            util.exit_message("'project' is not a valid AWS parm", 1)
+
+        create_node_aws(name, location, size, image)
+
     else:
         util.exit_message(f"Invalid node-create({prvdr}) provider")
+
+
+def create_node_aws(name, region, size, image):
+    prvdr, driver, section = get_driver()
+
+    sizes = driver.list_sizes()
+    sz = None
+    for s in sizes:
+        if s.id == size:
+            sz = s
+            break
+
+    if sz == None:
+        util.exit_message(f"Invalid size {size}")
+
+    images = driver.list_images()
+
+    image = images[0]
+
+    node = driver.create_node(
+      name=name,
+      image=image,
+      size=sz,
+      ex_keyname="xyz"
+#      ex_securitygroup=SECURITY_GROUP_NAMES,
+)
 
 
 def create_node_eqnx(name, location, size, image, project):
@@ -101,7 +139,20 @@ def list(provider="eqnx"):
 def aws_list(driver):
     nodes = driver.list_nodes()
     for n in nodes:
-      pass
+      name = n.name.ljust(7)
+      public_ip = n.public_ips[0].ljust(15)
+#      size = n.size.id
+#      ram_disk =str(round(n.size.ram / 1024)) + "GB," + str(n.size.disk) + "GB"
+#      country = n.extra['facility']['metro']['country']
+#      metro = f"{n.extra['facility']['metro']['name']} ({n.extra['facility']['metro']['code']})".ljust(14)
+#      az = n.extra['facility']['code'].ljust(4)
+      state = n.state
+#      image = n.image.id
+#
+#      crd = n.extra['facility']['address']['coordinates']
+#      coordinates = f"{round(float(crd['latitude']), 3)},{round(float(crd['latitude']), 3)}"
+
+      print(f"{name}  {public_ip} {state}")
 
 
 def eqnx_list(driver, project):
