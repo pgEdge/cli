@@ -76,13 +76,16 @@ def create(db=None, User=None, Passwd=None, Id=None, pg=None):
   else:
     rc3 = util.echo_cmd(nc + "install " + spock_comp + " -d " + str(db))
 
+  cmd = "CREATE EXTENSION snowflake"
+  rc4 = util.echo_cmd(ncb +  '"psql -q -c \\"' + cmd + '\\" ' + str(db) + '"')
+
   rm_data = os.getenv("isRM_DATA", "False")
   if rm_data == "True":
     util.message("Removing data directory at your request")
     util.echo_cmd(nc + "stop")
     util.echo_cmd("rm -r data")
 
-  rcs = rc1 + rc2 + rc3
+  rcs = rc1 + rc2 + rc3 + rc4
   if rcs == 0:
     status = "success"
   else:

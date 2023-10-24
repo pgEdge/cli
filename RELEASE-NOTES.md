@@ -2,6 +2,9 @@
 
 ## done for 24.005 on 2023-10-25 ###########
 
+### Minor fixes and supporting enhancements:
+  + 'CREATE EXTENSION snpwflake' after install --no-restart"
+
 
 ## done for 24.004 on 2023-10-24 ###########
 ### New Features:
