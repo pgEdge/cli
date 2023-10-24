@@ -85,9 +85,10 @@ INSERT INTO categories VALUES (9,  87, 'Management & Monitoring', 'Manage/Monito
 -- ## HUB ################################
 INSERT INTO projects VALUES ('hub', 'app', 0, 0, 'hub', 0, 'https://github.com/pgedge/nodectl','',0,'','','');
 INSERT INTO releases VALUES ('hub', 1, 'hub', '', '', 'hidden', '', 1, '', '', '');
-INSERT INTO versions VALUES ('hub', '24.004', '',  1, '20231028', '', '', '');
+INSERT INTO versions VALUES ('hub', '24.005', '',  1, '20231031', '', '', '');
+INSERT INTO versions VALUES ('hub', '24.004', '',  0, '20231024', '', '', '');
 INSERT INTO versions VALUES ('hub', '24.003', '',  0, '20231023', '', '', '');
-INSERT INTO versions VALUES ('hub', '24.002', '',  0, '20231021', '', '', '');
+INSERT INTO versions VALUES ('hub', '24.002', '',  0, '20231020', '', '', '');
 INSERT INTO versions VALUES ('hub', '24.001', '',  0, '20231017', '', '', '');
 INSERT INTO versions VALUES ('hub', '23.134', '',  0, '20231013', '', '', '');
 
@@ -299,7 +300,7 @@ INSERT INTO versions VALUES ('badger', '11.8', '', 0, '20220408', '', '', '');
 INSERT INTO projects VALUES ('pgedge', 'pge', 0, 0, 'hub', 3, 'http://pgedge.org',
   'pgedge',  0, 'pgedge.png', 'Multi-Active Global Postgres Clusters', 'http://pgedge.com');
 INSERT INTO releases VALUES ('pgedge', 1, 'pgedge',  'pgEdge', '', 'prod', '', 1, 'pgEdge Platform', '', '');
-INSERT INTO versions VALUES ('pgedge', '2-07',  '', 1, '20231028', '', '', '');
+INSERT INTO versions VALUES ('pgedge', '2-07',  '', 1, '20231024', '', '', '');
 INSERT INTO versions VALUES ('pgedge', '2-6',   '', 0, '20231017', '', '', '');
 INSERT INTO versions VALUES ('pgedge', '2-5',   '', 0, '20230927', '', '', '');
 
