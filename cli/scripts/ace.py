@@ -449,14 +449,19 @@ def table_diff(
     max_cpu_ratio=MAX_CPU_RATIO,
     output="json",
     nodes="all",
+    diff_file=None
 ):
     """Efficiently compare tables across cluster using checksums and blocks of rows."""
 
+    if not diff_file:
+        try:
+            block_rows = int(os.environ.get("ACE_BLOCK_ROWS", block_rows))
+        except Exception:
+            util.exit_message("Invalid values for ACE_BLOCK_ROWS")
     try:
-        block_rows = int(os.environ.get("ACE_BLOCK_ROWS", block_rows))
         max_cpu_ratio = int(os.environ.get("ACE_MAX_CPU_RATIO", max_cpu_ratio))
     except Exception:
-        util.exit_message("Invalid values for ACE_BLOCK_ROWS or ACE_MAX_CPU_RATIO")
+        util.exit_message("Invalid values for ACE_BLOCK_ROWS")
 
     # Capping max block size here to prevent the hash function from taking forever
     if block_rows > MAX_ALLOWED_BLOCK_SIZE:
@@ -563,12 +568,24 @@ def table_diff(
 
     row_count = 0
     total_rows = 0
+    offsets = []
 
-    for conn in conn_list:
-        rows = get_row_count(conn, l_schema, l_table)
-        total_rows += rows
-        if rows > row_count:
-            row_count = rows
+    diff_json = None
+
+    if not diff_file:
+        for conn in conn_list:
+            rows = get_row_count(conn, l_schema, l_table)
+            total_rows += rows
+            if rows > row_count:
+                row_count = rows
+    else:
+        diff_json = json.loads(open(diff_file, "r").read())
+        block_rows = diff_json["block_size"]
+
+        for diff in diff_json["diffs"]:
+            offsets.append(diff["offset"])
+        
+        row_count = block_rows * len(offsets)
 
     total_blocks = row_count // block_rows
     total_blocks = total_blocks if total_blocks > 0 else 1
@@ -585,7 +602,8 @@ def table_diff(
     We go up to the max rows among all nodes because we want our set difference logic
     to capture diffs even if rows are absent in one node
     """
-    offsets = [x for x in range(0, row_count + 1, block_rows)]
+    if not diff_file:
+        offsets = [x for x in range(0, row_count + 1, block_rows)]
 
     cols_list = cols.split(",")
 
@@ -712,13 +730,13 @@ def write_diffs_json(block_rows):
     dirname = os.path.join("diffs", dirname)
     os.mkdir(dirname)
 
-    filename = "diff.json"
+    filename = os.path.join(dirname, "diff.json")
 
     with open(filename, "w") as f:
         f.write(json.dumps(output_json, default=str))
 
     util.message(
-        f"Diffs written out to" f" {util.set_colour(dirname + '/' + filename, 'blue')}",
+        f"Diffs written out to" f" {util.set_colour(filename, 'blue')}",
         p_state="info",
     )
 
