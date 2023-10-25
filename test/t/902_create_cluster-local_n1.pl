@@ -16,8 +16,9 @@ use contains;
 my $username = "lcusr";
 my $password = "password";
 my $database = "lcdb";
-my $version = "17";
-my $spock = "3.1";
+my $inst_version = "17";
+my $cmd_version = "pg17";
+my $spock = "3.2";
 my $cluster = "demo";
 my $repset = "demo-repset";
 my $n1 = "~/work/nodectl/test/pgedge/cluster/demo/n1";
@@ -33,7 +34,7 @@ my $n2 = "~/work/nodectl/test/pgedge/cluster/demo/n2";
 # the database is named lcdb (default), and it is owned by lcdb (default).
 # 
 
-my $cmd = qq(./nodectl cluster local-create $cluster 2 -U $username -P $password -d $database --PG $version);
+my $cmd = qq(./nodectl cluster local-create $cluster 2 -U $username -P $password -d $database --pg $inst_version);
 print("cmd = $cmd\n");
 my ($success, $error_message, $full_buf, $stdout_buf, $stderr_buf)= IPC::Cmd::run(command => $cmd, verbose => 0);
 
@@ -54,23 +55,23 @@ my $homedir = $out->[0]->{"home"};
 print("The home directory is {$homedir}\n");
 
 # We can retrieve the port number from nodectl in json form...
-my $json2 = `$n1/pgedge/nc --json info pg16`;
+my $json2 = `$n1/pgedge/nc --json info $cmd_version`;
 print("This is also from node 1: = $json2");
 my $out2 = decode_json($json2);
 my $port = $out2->[0]->{"port"};
 print("The port number is {$port}\n");
 
-my $cmd29 = qq($homedir/$version/bin/psql -t -h 127.0.0.1 -p $port -d $database -c "SELECT * FROM pg_available_extensions WHERE name = 'spock'");
+my $cmd29 = qq($homedir/$cmd_version/bin/psql -t -h 127.0.0.1 -p $port -d $database -c "SELECT * FROM pg_available_extensions WHERE name = 'spock'");
 print("cmd29 = $cmd29\n");
 my($success29, $error_message29, $full_buf29, $stdout_buf29, $stderr_buf29)= IPC::Cmd::run(command => $cmd29, verbose => 0);
 print("stdout_buf on node 1: = @$stdout_buf29\n");
 
-print("If the word test is in our search string (@$stdout_buf29) we've confirmed replication is working as expected; if it isn't
+print("If the version is in our search string (@$stdout_buf29) we've confirmed replication is working as expected; if it isn't
         there, this test will fail!\n");
 
 # Test for the search_term in a buffer.
 
-if (contains(@$stdout_buf29[0], "3.1"))
+if (contains(@$stdout_buf29[0], "$spock"))
 
 {
     exit(0);

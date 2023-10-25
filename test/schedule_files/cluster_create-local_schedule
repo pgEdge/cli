@@ -38,4 +38,4 @@ t/9505_spock_repset-list-tables.pl
 t/9506_spock_node-list.pl
 t/9507_spock_repset-alter.pl
 t/9509_spock_repset-remove-table.pl
-t/9998__remove_pgedge.pl
+t/9998_remove_pgedge.pl

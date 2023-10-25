@@ -23,7 +23,7 @@ my $password = "password";
 my $database = "lcdb";
 my $inst_version = "--pg 17";
 my $version = "pg17";
-my $spock = "3.1";
+my $spock = "3.2";
 my $cluster = "demo";
 my $repset = "demo-repset";
 my $n1 = "~/work/nodectl/test/pgedge/cluster/demo/n1";
@@ -98,7 +98,7 @@ print("stdout_buf5 = @$stdout_buf5\n");
 print("stdout_buf5 = @$stdout_buf5\n");
 print("We just installed pgedge/spock in $n1.\n");
 
-if(contains(@$stdout_buf5[0], "3.2"))
+if(contains(@$stdout_buf5[0], "$spock"))
 
 {
     exit(0);

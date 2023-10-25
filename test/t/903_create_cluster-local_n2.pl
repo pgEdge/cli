@@ -15,8 +15,9 @@ use contains;
 my $username = "lcusr";
 my $password = "password";
 my $database = "lcdb";
-my $version = "17";
-my $spock = "3.1";
+my $inst_version = "17";
+my $cmd_version = "pg17";
+my $spock = "3.2";
 my $cluster = "demo";
 my $repset = "demo-repset";
 my $n1 = "~/work/nodectl/test/pgedge/cluster/demo/n1";
@@ -32,23 +33,23 @@ my $homedir2 = $out3->[0]->{"home"};
 print("The home directory is {$homedir2}\n");
 
 # We can retrieve the port number from nodectl in json form...
-my $json4 = `$n2/pgedge/nc --json info pg16`;
+my $json4 = `$n2/pgedge/nc --json info $cmd_version`;
 print("This is also from node 2: = $json4");
 my $out4 = decode_json($json4);
 my $port2 = $out4->[0]->{"port"};
 print("The port number is {$port2}\n");
 
-my $cmd30 = qq($homedir2/$version/bin/psql -t -h 127.0.0.1 -p $port2 -d $database -c "SELECT * FROM pg_available_extensions WHERE name = 'spock'");
+my $cmd30 = qq($homedir2/$cmd_version/bin/psql -t -h 127.0.0.1 -p $port2 -d $database -c "SELECT * FROM pg_available_extensions WHERE name = 'spock'");
 print("cmd30 = $cmd30\n");
 my($success30, $error_message30, $full_buf30, $stdout_buf30, $stderr_buf30)= IPC::Cmd::run(command => $cmd30, verbose => 0);
 print("stdout_buf on node 2: = @$stdout_buf30\n");
 
-print("If the word test is in our search string (@$stdout_buf30) we've confirmed replication is working as expected; if it isn't
+print("If the version is in our search string (@$stdout_buf30) we've confirmed replication is working as expected; if it isn't
         there, this test will fail!\n");
 
 # Test for the search_term in a buffer.
 
-if (contains(@$stdout_buf30[0], "3.1"))
+if (contains(@$stdout_buf30[0], "$spock"))
 
 {
     exit(0);
