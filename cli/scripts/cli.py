@@ -309,6 +309,8 @@ def install_comp(p_app, p_ver=0, p_rver=None, p_re_install=False):
   if state == "NotInstalled" or p_re_install:
     if p_ver ==  0:
       ver = meta.get_latest_ver_plat(p_app)
+      if ver == "-1":
+        util.exit_message(f"{p_app} not avaialble on {util.get_pf()} platform", 1)
     else:
       ver = p_ver
 
