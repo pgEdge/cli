@@ -1,5 +1,5 @@
 #####################################################
-#  Copyright 2022-2024 PGEDGE  All rights reserved. #
+#  Copyright 2022-2023 PGEDGE  All rights reserved. #
 #####################################################
 
 import os, sys, random, json, socket, datetime
@@ -107,20 +107,49 @@ def create(db=None, User=None, Passwd=None, Id=None, pg=None):
   return
 
 
-def set_guc(guc_name, guc_value, reload=False, replace=True, pg=None):
+def set_guc(guc_name, guc_value, db, reload=False, replace=True, pg=None):
   """ Set GUC """
   pg_v = util.get_pg_v(pg)
+  rc = 0
+  try:
+    con = util.get_pg_connection(pg_v, db, util.get_user())
+    con.transaction()
+    cur = con.cursor()
 
-  util.change_pgconf_keyval(pg_v, guc_name, str(guc_value), replace)
+    if replace==True:
+      sql = f"SET {guc_name}={guc_value};"
+    else:
+      sql1 = f"show {guc_name};"
+      cur.execute(sql1)
+      data = cur.fetchone()
+      val = data[0]
+      sql = f"SET {guc_name}={val},{guc_value};"
+  
+    cur.execute(sql)
+    con.commit()
+  except Exception as e:
+    util.print_exception(e)
+    con.rollback()
+    rc = 1
 
   if reload==True:
     rc1 = util.echo_cmd(f"./nc reload {pg_v}")
-    return rc1
+    rc = rc + rc1
+  
+  return rc
 
 
 def show_guc(guc_name, pg=None):
   """ Show GUC """
-  pass
+  pg_v = util.get_pg_v(pg)
+  if guc_name=="all" or guc_name=="*":
+    guc_name="%"
+  elif "*" in guc_name:
+    guc_name=guc_name.replace("*","%")
+    
+  sql = f"SELECT name, setting, pending_restart FROM pg_settings WHERE name LIKE '{guc_name}'"
+  util.run_psyco_sql(pg_v, 'postgres', sql)
+  sys.exit(0)
 
 
 def dump(object, source_dsn, file='/tmp/db_0.sql', schema_only=False, pg=None):
@@ -199,7 +228,7 @@ def restore(object, target_dsn, file='/tmp/db_0.sql', pg=None):
 
 
 def migrate(object, source_dsn, target_dsn, schema_only=False, pg=None):
-  """ Coming Soon! Migrate a database, schema, object from a source_dsn to the target_dsn 
+  """ Migrate a database, schema, object from a source_dsn to the target_dsn 
   
     object: database.schema.object where schema and object can contain wildcard '*'
     source_dsn: host=x, port=x, username=x, password=x, database=x (in any order)

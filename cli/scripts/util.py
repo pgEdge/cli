@@ -181,7 +181,7 @@ def get_seq_list(seq, db, pg_v):
     sql = (
         "SELECT sequence_schema || '.' || sequence_name as schema_seq \n"
         + "  FROM information_schema.sequences \n"
-        + " AND sequence_schema NOT IN ('spock','pg_catalog','information_schema')"
+        + " WHERE sequence_schema NOT IN ('spock','pg_catalog','information_schema','snowflake')"
     )
 
     if w_schema:

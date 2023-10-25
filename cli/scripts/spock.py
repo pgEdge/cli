@@ -81,6 +81,9 @@ Create a spock node
            get_eq("node_name", node_name, ", ") + \
            get_eq("dsn",       dsn,       ")")
   util.run_psyco_sql(pg_v, db, sql)
+  if node_name[0] == 'n' and node_name[1].isdigit():
+    cmd=f"db set-guc snowflake.node_id {node_name[1]} {db}"
+    rc = os.system(nc + cmd)
   sys.exit(0)
 
 
@@ -476,6 +479,31 @@ def repset_remove_table(replication_set, table, db, pg=None):
   sys.exit(0)
 
 
+def sequence_convert(sequence, db, type='snowflake', pg=None):
+  """
+  Convert sequence to snowflake sequence.
+  """
+
+  pg_v = util.get_pg_v(pg)
+  seqs = util.get_seq_list(sequence, db, pg_v)
+  con = util.get_pg_connection(pg_v, db, util.get_user())
+
+  for sequence in seqs:
+    seq = str(sequence[0])
+    sql=f"SELECT spock.convert_sequence_to_snowflake('{seq}')"
+    util.message(f"Converting sequence {seq} to {type} sequence.")
+    try:
+      con.transaction()
+      cur = con.cursor()
+      cur.execute(sql)
+      con.commit()
+    except Exception as e:
+      util.print_exception(e, "warning")
+      con.rollback()
+    
+  sys.exit(0)
+
+
 def replicate_ddl(replication_sets, sql_command, db, pg=None):
   """Replicate DDL through replication set(s).
   
@@ -630,6 +658,7 @@ if __name__ == '__main__':
       'sub-wait-for-sync':       sub_wait_for_sync,
       'table-wait-for-sync':     table_wait_for_sync,
       'replicate-ddl':           replicate_ddl,
+      'sequence-convert':        sequence_convert,
       'health-check':            health_check,
       'metrics-check':           metrics_check,
       'set-readonly':            set_readonly
