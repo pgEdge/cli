@@ -689,6 +689,8 @@ def table_diff(
     run_time = util.round_timedelta(datetime.now() - start_time).total_seconds()
     run_time_str = f"{run_time:.2f}"
 
+    print()
+
     util.message(
         f"TOTAL ROWS CHECKED = {total_rows}\nRUN TIME = {run_time_str} seconds",
         p_state="info",
@@ -715,7 +717,10 @@ def write_diffs_json(block_rows):
     with open(filename, "w") as f:
         f.write(json.dumps(output_json, default=str))
 
-    util.message(f"Diffs written out to {dirname}/{filename}", p_state="info")
+    util.message(
+        f"Diffs written out to" f" {util.set_colour(dirname + '/' + filename, 'blue')}",
+        p_state="info",
+    )
 
 
 # TODO: Come up with better naming convention for diff files
@@ -774,7 +779,7 @@ def write_diffs_csv():
         subprocess.check_output(cmd, shell=True)
 
         util.message(
-            f"DIFFS BETWEEN {n1} AND {n2}: {diff_file_name}",
+            f"DIFFS BETWEEN {util.set_colour(n1, 'blue')} AND {util.set_colour(n2, 'blue')}: {diff_file_name}",
             p_state="info",
         )
 

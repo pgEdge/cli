@@ -1158,6 +1158,25 @@ def message(p_msg, p_state="info", p_isJSON=None):
     return
 
 
+def set_colour(message, colour):
+    if colour == "red":
+        return bcolours.FAIL + message + bcolours.ENDC
+    elif colour == "green":
+        return bcolours.OKGREEN + message + bcolours.ENDC
+    elif colour == "yellow":
+        return bcolours.YELLOW + message + bcolours.ENDC
+    elif colour == "blue":
+        return bcolours.OKBLUE + message + bcolours.ENDC
+    elif colour == "purple":
+        return bcolours.OKPURPLE + message + bcolours.ENDC
+    elif colour == "cyan":
+        return bcolours.OKCYAN + message + bcolours.ENDC
+    elif colour == "white":
+        return bcolours.BOLD + message + bcolours.ENDC
+    else:
+        return message
+
+
 def verify(p_json):
     try:
         c = cL.cursor()
