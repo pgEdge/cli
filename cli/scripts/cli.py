@@ -851,17 +851,22 @@ def check_status(p_comp, p_mode):
 
 
 def retrieve_remote():
+  versions_sql = "versions.sql"
+  if util.MY_VERSION.startswith("24."):
+      versions_sql = "versions24.sql"
+  util.set_value("GLOBAL", "VERSIONS", versions_sql)
+
   if not os.path.exists(backup_dir):
     os.mkdir(backup_dir)
   if not os.path.exists(backup_target_dir):
     os.mkdir(backup_target_dir)
-  recent_version_sql = os.path.join(MY_HOME, 'conf', 'versions.sql')
+  recent_version_sql = os.path.join(MY_HOME, 'conf', versions_sql)
   recent_local_db = os.path.join(MY_HOME, 'conf', 'db_local.db')
   if os.path.exists(recent_local_db):
     copy2(recent_local_db, backup_target_dir)
   if os.path.exists(recent_version_sql):
     copy2(recent_version_sql, backup_target_dir)
-  remote_file = util.get_versions_sql()
+  remote_file = versions_sql
   msg = "Retrieving the remote list of latest component versions (" + remote_file + ") ..."
   my_logger.info(msg)
   if isJSON:
@@ -875,18 +880,19 @@ def retrieve_remote():
   msg=""
 
   sql_file = "conf" + os.sep + remote_file
-  if remote_file == "versions.sql":
-    if not util.http_get_file(isJSON, remote_file + ".sha512", REPO, "conf", False, msg):
-      exit_cleanly(1)
-    msg = "Validating checksum file..."
-    my_logger.info(msg)
-    if isJSON:
-      print('[{"status":"wip","msg":"'+msg+'"}]')
-    else:
-      if not isSILENT:
-        print(msg)
-    if not validate_checksum(sql_file, sql_file + ".sha512"):
-      exit_cleanly(1)
+
+  if not util.http_get_file(isJSON, remote_file + ".sha512", REPO, "conf", False, msg):
+    exit_cleanly(1)
+  msg = "Validating checksum file..."
+  my_logger.info(msg)
+  if isJSON:
+    print('[{"status":"wip","msg":"'+msg+'"}]')
+  else:
+    if not isSILENT:
+      print(msg)
+  if not validate_checksum(sql_file, sql_file + ".sha512"):
+    exit_cleanly(1)
+
   msg = "Updating local repository with remote entries..."
   my_logger.info(msg)
   if isJSON:
