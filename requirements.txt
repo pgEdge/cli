@@ -4,6 +4,7 @@ paramiko>=3.3.1
 psycopg>=3.1.12
 psycopg-binary>=3.1.12
 psutil>=5.9.5
+supervisor>=4.2.5
 
 ## MACHINE ##########
 apache-libcloud>=3.8.0
