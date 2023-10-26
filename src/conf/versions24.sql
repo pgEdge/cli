@@ -235,8 +235,10 @@ INSERT INTO projects VALUES ('spock', 'pge', 4, 0, 'hub', 1, 'https://github.com
   'spock', 1, 'spock.png', 'Logical & Multi-Master Replication', 'https://github.com/pgedge/spock/#spock');
 INSERT INTO releases VALUES ('spock31-pg15', 4, 'spock', 'Spock', '', 'prod', '', 1, 'pgEdge Community', '', '');
 INSERT INTO releases VALUES ('spock31-pg16', 4, 'spock', 'Spock', '', 'prod', '', 1, 'pgEdge Community', '', '');
-INSERT INTO versions VALUES ('spock31-pg15', '3.1.7-1', 'el9, arm9', 1, '20230927', 'pg15', '', '');
-INSERT INTO versions VALUES ('spock31-pg16', '3.1.7-1', 'el9, arm9', 1, '20230927', 'pg16', '', '');
+INSERT INTO versions VALUES ('spock31-pg15', '3.1.8-1', 'el9, arm9', 1, '20231031', 'pg15', '', '');
+INSERT INTO versions VALUES ('spock31-pg16', '3.1.8-1', 'el9, arm9', 1, '20231031', 'pg16', '', '');
+INSERT INTO versions VALUES ('spock31-pg15', '3.1.7-1', 'el9, arm9', 0, '20230927', 'pg15', '', '');
+INSERT INTO versions VALUES ('spock31-pg16', '3.1.7-1', 'el9, arm9', 0, '20230927', 'pg16', '', '');
 
 INSERT INTO projects VALUES ('snowflake', 'pge', 4, 0, 'hub', 1, 'https://github.com/pgedge/snowflake/tags',
   'snowflake', 1, 'snowflake.png', 'Snowflake Sequences', 'https://github.com/pgedge/snowflake/');
