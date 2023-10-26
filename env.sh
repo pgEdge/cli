@@ -8,6 +8,7 @@ spock31V=3.1.7-1
 catV=1.1.1
 foslotsV=1a-1
 snwflkV=1.1-1
+vectorV=0.5.1-1
 
 pgedgeV=2-07
 
@@ -30,7 +31,6 @@ esfdwV=0.11.2
 bqfdwV=1.9
 
 citusV=11.2.0-1
-vectorV=0.5.0-1
 
 oraclefdwV=2.6.0-1
 inclV=21.6
