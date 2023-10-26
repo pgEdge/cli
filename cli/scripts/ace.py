@@ -445,12 +445,23 @@ def compare_checksums(
 def table_diff(
     cluster_name,
     table_name,
-    block_rows=1000,
+    block_rows=10000,
     max_cpu_ratio=MAX_CPU_RATIO,
-    output="csv",
+    output="json",
     nodes="all",
+    diff_file=None
 ):
     """Efficiently compare tables across cluster using checksums and blocks of rows."""
+
+    if not diff_file:
+        try:
+            block_rows = int(os.environ.get("ACE_BLOCK_ROWS", block_rows))
+        except Exception:
+            util.exit_message("Invalid values for ACE_BLOCK_ROWS")
+    try:
+        max_cpu_ratio = int(os.environ.get("ACE_MAX_CPU_RATIO", max_cpu_ratio))
+    except Exception:
+        util.exit_message("Invalid values for ACE_BLOCK_ROWS")
 
     # Capping max block size here to prevent the hash function from taking forever
     if block_rows > MAX_ALLOWED_BLOCK_SIZE:
@@ -557,12 +568,24 @@ def table_diff(
 
     row_count = 0
     total_rows = 0
+    offsets = []
 
-    for conn in conn_list:
-        rows = get_row_count(conn, l_schema, l_table)
-        total_rows += rows
-        if rows > row_count:
-            row_count = rows
+    diff_json = None
+
+    if not diff_file:
+        for conn in conn_list:
+            rows = get_row_count(conn, l_schema, l_table)
+            total_rows += rows
+            if rows > row_count:
+                row_count = rows
+    else:
+        diff_json = json.loads(open(diff_file, "r").read())
+        block_rows = diff_json["block_size"]
+
+        for diff in diff_json["diffs"]:
+            offsets.append(diff["offset"])
+        
+        row_count = block_rows * len(offsets)
 
     total_blocks = row_count // block_rows
     total_blocks = total_blocks if total_blocks > 0 else 1
@@ -579,7 +602,8 @@ def table_diff(
     We go up to the max rows among all nodes because we want our set difference logic
     to capture diffs even if rows are absent in one node
     """
-    offsets = [x for x in range(0, row_count + 1, block_rows)]
+    if not diff_file:
+        offsets = [x for x in range(0, row_count + 1, block_rows)]
 
     cols_list = cols.split(",")
 
@@ -669,6 +693,8 @@ def table_diff(
                 p_state="warning",
             )
 
+        print()
+
         if output == "json":
             write_diffs_json(block_rows)
 
@@ -678,9 +704,14 @@ def table_diff(
     else:
         util.message("TABLES MATCH OK\n", p_state="success")
 
-    run_time = datetime.now() - start_time
+    run_time = util.round_timedelta(datetime.now() - start_time).total_seconds()
+    run_time_str = f"{run_time:.2f}"
+
+    print()
+
     util.message(
-        f"TOTAL ROWS CHECKED = {total_rows}. RUN TIME = {run_time}", p_state="info"
+        f"TOTAL ROWS CHECKED = {total_rows}\nRUN TIME = {run_time_str} seconds",
+        p_state="info",
     )
 
 
@@ -691,13 +722,23 @@ def write_diffs_json(block_rows):
     output_json["block_size"] = block_rows
     output_json["diffs"] = [cur_entry for cur_entry in queue]
 
-    ts = datetime.now().strftime("%Y%m%d%H%M%S")
-    filename = "diff_" + ts + ".json"
+    dirname = datetime.now().astimezone(None).strftime("%Y-%m-%d_%H:%M:%S")
+
+    if not os.path.exists("diffs"):
+        os.mkdir("diffs")
+
+    dirname = os.path.join("diffs", dirname)
+    os.mkdir(dirname)
+
+    filename = os.path.join(dirname, "diff.json")
 
     with open(filename, "w") as f:
         f.write(json.dumps(output_json, default=str))
 
-    util.message(f"Diffs written out to {filename}", p_state="info")
+    util.message(
+        f"Diffs written out to" f" {util.set_colour(filename, 'blue')}",
+        p_state="info",
+    )
 
 
 # TODO: Come up with better naming convention for diff files
@@ -705,6 +746,14 @@ def write_diffs_csv():
     import pandas as pd
 
     seen_nodepairs = {}
+
+    dirname = datetime.now().astimezone(None).strftime("%Y-%m-%d_%H:%M:%S")
+
+    if not os.path.exists("diffs"):
+        os.mkdir("diffs")
+
+    dirname = os.path.join("diffs", dirname)
+    os.mkdir(dirname)
 
     for entry in queue:
         diff_list = entry["diffs"]
@@ -714,8 +763,15 @@ def write_diffs_csv():
 
         for diff_json in diff_list:
             node1, node2 = diff_json.keys()
-            t1_write_path = node1 + "_X_" + node2 + "_" + node1 + ".csv"
-            t2_write_path = node1 + "_X_" + node2 + "_" + node2 + ".csv"
+            node_pair_str = f"{node1}__{node2}"
+            node_pair_dir = os.path.join(dirname, node_pair_str)
+
+            # Create directory for node pair if it doesn't exist
+            if not os.path.exists(node_pair_dir):
+                os.mkdir(node_pair_dir)
+
+            t1_write_path = os.path.join(node_pair_dir, node1 + ".csv")
+            t2_write_path = os.path.join(node_pair_dir, node2 + ".csv")
 
             df1 = pd.DataFrame.from_dict(diff_json[node1])
             df2 = pd.DataFrame.from_dict(diff_json[node2])
@@ -732,14 +788,16 @@ def write_diffs_csv():
 
     for node_pair in seen_nodepairs.keys():
         n1, n2 = node_pair.split(",")
-        diff_file_name = n1 + "_X_" + n2 + ".diff"
-        t1_write_path = n1 + "_X_" + n2 + "_" + n1 + ".csv"
-        t2_write_path = n1 + "_X_" + n2 + "_" + n2 + ".csv"
+        node_pair_str = f"{n1}__{n2}"
+        diff_file_name = os.path.join(dirname, f"{node_pair_str}/out.diff")
+
+        t1_write_path = os.path.join(dirname, node_pair_str, n1 + ".csv")
+        t2_write_path = os.path.join(dirname, node_pair_str, n2 + ".csv")
         cmd = f"diff -u {t1_write_path} {t2_write_path} | ydiff > {diff_file_name}"
         subprocess.check_output(cmd, shell=True)
 
         util.message(
-            f"Diffs between {n1} and {n2} have been written out to {diff_file_name}",
+            f"DIFFS BETWEEN {util.set_colour(n1, 'blue')} AND {util.set_colour(n2, 'blue')}: {diff_file_name}",
             p_state="info",
         )
 
@@ -770,6 +828,8 @@ def table_repair(cluster_name, diff_file, source_of_truth, table_name, dry_run=F
         util.exit_message(
             f"Source of truth node {source_of_truth} not present in cluster"
         )
+
+    start_time = datetime.now()
 
     conn_list = []
     try:
@@ -832,7 +892,7 @@ def table_repair(cluster_name, diff_file, source_of_truth, table_name, dry_run=F
     true_df[key] = true_df[key].astype(str)
 
     # Remove the key column from the list of columns
-    true_df = true_df[[c for c in true_df if c not in [key]]]
+    # true_df = true_df[[c for c in true_df if c not in [key]]]
     for conn in conn_list:
         # Unpack true_df into (key, row) tuples
         true_rows = true_df.to_records(index=False)
@@ -856,13 +916,13 @@ def table_repair(cluster_name, diff_file, source_of_truth, table_name, dry_run=F
 
     cols_list = cols.split(",")
     # Remove the key column from the list of columns
-    cols_list.remove(key)
+    # cols_list.remove(key)
 
     """
     Here we are constructing an UPDATE query from true_rows and applying it to all nodes
     """
     update_sql = f"""
-    INSERT INTO {table_name} ({','.join(cols_list)})
+    INSERT INTO {table_name}
     VALUES ({','.join(['%s'] * len(cols_list))})
     ON CONFLICT ({key}) DO UPDATE SET
     """
@@ -883,9 +943,17 @@ def table_repair(cluster_name, diff_file, source_of_truth, table_name, dry_run=F
             print(update_sql, true_rows)
             util.exit_message("Error in repair():" + str(e), 1)
 
+    run_time = util.round_timedelta(datetime.now() - start_time).total_seconds()
+    run_time_str = f"{run_time:.2f}"
+
     util.message(
         f"Successfully applied diffs to {table_name} in cluster {cluster_name}",
         p_state="success",
+    )
+
+    util.message(
+        f"\nTOTAL ROWS UPSERTED = {len(true_rows)}\nRUN TIME = {run_time_str} seconds",
+        p_state="info",
     )
 
 
@@ -898,4 +966,3 @@ if __name__ == "__main__":
             "table-repair": table_repair,
         }
     )
-
