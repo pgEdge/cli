@@ -78,19 +78,19 @@ def config_linux(p_comp, p_systemsvc, p_svc_user, p_start, p_start_log,
   fh.close()
 
   util.run_sudo("mv " + unit_file + " " + sys_svc_file)
-  return(util.run_sudo("systemctl enable " + p_systemsvc))
+  return(util.echo_cmd("sudo systemctl enable " + p_systemsvc))
 
 
 def start_linux(p_systemsvc):
-  return (util.run_sudo("systemctl start " + p_systemsvc))
+  return (util.echo_cmd("sudo systemctl start " + p_systemsvc))
 
 
 def stop_linux(p_systemsvc):
-  return (util.run_sudo("systemctl stop  " + p_systemsvc))
+  return (util.echo_cmd("sudo systemctl stop  " + p_systemsvc))
 
 
 def reload_linux(p_systemsvc):
-  return (util.run_sudo("systemctl reload " + p_systemsvc))
+  return (util.echo_cmd("sudo systemctl reload " + p_systemsvc))
 
 
 def remove_linux(p_systemsvc, p_pgver):
@@ -98,7 +98,7 @@ def remove_linux(p_systemsvc, p_pgver):
   pg_bin_dir = os.path.join(my_home, p_pgver, 'bin')
   #util.remove_symlinks("/usr/bin", pg_bin_dir)
 
-  util.run_sudo("systemctl disable " + p_systemsvc)
-  util.run_sudo("rm -f " + os.path.join(util.get_systemd_dir(), p_systemsvc + ".service"))
+  util.echo_cmd("sudo systemctl disable " + p_systemsvc)
+  util.echo_cmd("sudo rm -f " + os.path.join(util.get_systemd_dir(), p_systemsvc + ".service"))
   return(0)
 

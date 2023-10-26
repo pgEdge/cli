@@ -22,6 +22,6 @@ datadir = util.get_column('datadir', pgver)
 
 pg_ctl = os.path.join(homedir, "bin", "pg_ctl")
 parms = ' reload -D "' + datadir + '"'
-rc = util.system(pg_ctl + parms)
+rc = util.echo_cmd(pg_ctl + parms)
 
 sys.exit(rc)

@@ -7,6 +7,7 @@
   + 'CREATE EXTENSION snowflake' after install --no-restart
   + better messaging for unsupported pg binaries on a platform
   + fix './nc update' when in the 24.xxx stream
+  + better instrument 'reload pgXX' when running w/ or wo/ systemd
 
   * start dev on 23.135 to include snowflake for pg15 & pg16
   * check rehup/reload with set db.set_guc()
