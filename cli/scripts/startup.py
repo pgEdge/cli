@@ -89,8 +89,23 @@ def stop_linux(p_systemsvc):
   return (util.echo_cmd("sudo systemctl stop  " + p_systemsvc))
 
 
-def reload_linux(p_systemsvc):
-  return (util.echo_cmd("sudo systemctl reload " + p_systemsvc))
+def reload_linux(p_systemsvc=None):
+  if p_systemsvc is None:
+    return (util.echo_cmd("sudo systemctl daemon-reload"))
+  else:
+    return (util.echo_cmd("sudo systemctl reload " + p_systemsvc))
+
+
+def enable_linux(p_systemsvc):
+  return (util.echo_cmd("sudo systemctl enable " + p_systemsvc))
+
+
+def disable_linux(p_systemsvc):
+  return (util.echo_cmd("sudo systemctl disable " + p_systemsvc))
+
+
+def status_linux(p_systemsvc):
+  return (util.echo_cmd("sudo systemctl status " + p_systemsvc))
 
 
 def remove_linux(p_systemsvc, p_pgver):
