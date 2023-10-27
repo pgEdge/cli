@@ -1,4 +1,4 @@
 import os, sys, time
 import util, startup
 
-startup.start_linux("etcd")
+startup.start_linux("pgcat")
