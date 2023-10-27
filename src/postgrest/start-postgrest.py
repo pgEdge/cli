@@ -1,8 +1,6 @@
-
 import os, sys, time
-import util
+import util, startup
 
-os.system("sudo systemctl start postgrest")
-
+startup.start_linux("postgrest")
 time.sleep(3)
-os.system("sudo systemctl status postgrest --lines 25 --full --no-pager")
+startup.status_linux("postgrest --lines 25 --full --no-pager")

@@ -1,5 +1,4 @@
-
 import os, sys
-import util
+import util, startup
 
-os.system("sudo systemctl stop postgrest")
+startup.stop_linux("postgrest")
