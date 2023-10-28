@@ -15,11 +15,11 @@ def get_driver(provider="eqnx"):
     sect = util.load_ini(f"{HOME}/mach.ini", prvdr)
 
     if prvdr == "eqnx":
-       drvr =  get_cld_drvr(Provider.EQUINIXMETAL, sect['api_token'])
+        drvr =  get_cld_drvr(Provider.EQUINIXMETAL, sect['api_token'])
     elif prvdr in ("aws"):
-       drvr =  get_cld_drvr(Provider.EC2, sect['access_key_id'], sect['secret_access_key'])
+        drvr =  get_cld_drvr(Provider.EC2, sect['access_key_id'], sect['secret_access_key'])
     else:
-       util.exit_message(f"Invalid get-driver() provider ({prvdr})", 1)
+        util.exit_message(f"Invalid provider '{prvdr}'")
 
     return(prvdr, drvr, sect)
 
@@ -45,7 +45,7 @@ def get_location(location):
     return(None)
 
 
-def create(name, location, provider="eqnx", size=None, image=None, project=None):
+def create(provider, name, location, size=None, image=None, keyname=None, project=None):
     prvdr, driver, sect = get_driver(provider)
 
     if prvdr == "eqnx":
@@ -63,17 +63,19 @@ def create(name, location, provider="eqnx", size=None, image=None, project=None)
             size = sect['size']
         if image == None:
             image = sect['image']
+        if keyname == None:
+            keyname = sect['keyname']
         if project:
             util.exit_message("'project' is not a valid AWS parm", 1)
 
-        create_node_aws(name, location, size, image)
+        create_node_aws(name, location, size, image, keyname)
 
     else:
-        util.exit_message(f"Invalid node-create({prvdr}) provider")
+        util.exit_message(f"Invalid provider '{prvdr}' (create)")
 
 
-def create_node_aws(name, region, size, image):
-    prvdr, driver, section = get_driver()
+def create_node_aws(name, region, size, image, keyname):
+    prvdr, driver, section = get_driver("aws")
 
     sizes = driver.list_sizes()
     sz = None
@@ -83,19 +85,25 @@ def create_node_aws(name, region, size, image):
             break
 
     if sz == None:
-        util.exit_message(f"Invalid size {size}")
+        util.exit_message(f"Invalid size '{size}'")
 
     images = driver.list_images()
+    im = None
+    for i in images:
+        if i.id == image:
+            im = i
+            break
 
-    image = images[0]
+    if im == None:
+        util.exit_message(f"Invalid image '{image}'")
 
-    node = driver.create_node(
-      name=name,
-      image=image,
-      size=sz,
-      ex_keyname="xyz"
-#      ex_securitygroup=SECURITY_GROUP_NAMES,
-)
+    try:
+        node = driver.create_node(name=name, image=im, size=sz,
+                ex_keyname=keyname)
+#               ex_securitygroup=SECURITY_GROUP_NAMES
+    except Exception as e:
+        print(str(e))
+        return(None)
 
 
 def create_node_eqnx(name, location, size, image, project):
@@ -133,7 +141,7 @@ def list(provider="eqnx"):
     elif prvdr == "aws":
         aws_list(driver)
     else:
-        util.exit_message(f"Invalid list({prvdr}) provider")
+        util.exit_message(f"Invalid provider '{prvdr}' (list)")
 
 
 def aws_list(driver):
