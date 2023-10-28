@@ -45,6 +45,26 @@ def get_location(location):
     return(None)
 
 
+def get_size(driver, p_size):
+    sizes = driver.list_sizes()
+    sz = None
+    for s in sizes:
+        if s.id == p_size:
+            return(s)
+
+    util.exit_message(f"Invalid size '{size}'")
+
+
+def get_image(driver, p_image):
+    images = driver.list_images()
+    im = None
+    for i in images:
+        if i.id == p_image:
+            return(i)
+
+    util.exit_message(f"Invalid image '{image}'")
+
+
 def create(provider, name, location, size=None, image=None, keyname=None, project=None):
     prvdr, driver, sect = get_driver(provider)
 
@@ -76,26 +96,8 @@ def create(provider, name, location, size=None, image=None, keyname=None, projec
 
 def create_node_aws(name, region, size, image, keyname):
     prvdr, driver, section = get_driver("aws")
-
-    sizes = driver.list_sizes()
-    sz = None
-    for s in sizes:
-        if s.id == size:
-            sz = s
-            break
-
-    if sz == None:
-        util.exit_message(f"Invalid size '{size}'")
-
-    images = driver.list_images()
-    im = None
-    for i in images:
-        if i.id == image:
-            im = i
-            break
-
-    if im == None:
-        util.exit_message(f"Invalid image '{image}'")
+    sz = get_size(driver, size)
+    im = get_image(driver, image)
 
     try:
         node = driver.create_node(name=name, image=im, size=sz,
@@ -107,13 +109,14 @@ def create_node_aws(name, region, size, image, keyname):
 
 
 def create_node_eqnx(name, location, size, image, project):
-    prvdr, driver, section = get_driver()
+    prvdr, driver, section = get_driver("eqnx")
+    sz = get_size(driver, size)
+    im = get_image(driver, image)
+
     loct = get_location(location)
-    if loct == None:
-        util.exit_message("Invalid location", 1)
 
     try:
-        node = driver.create_node(name, size, image, loct.id, project)
+        node = driver.create_node(name=name, image=im, size=sz, location=loct, project=project)
     except e as Exception:
         util.exit_message(str(e), 1)
 
