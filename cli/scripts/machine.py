@@ -118,8 +118,9 @@ def create_node_aws(name, region, size, image, keyname):
                 ex_keyname=keyname)
 #               ex_securitygroup=SECURITY_GROUP_NAMES
     except Exception as e:
-        print(str(e))
-        return(None)
+        util.exit_message(str(e), 1)
+
+    return
 
 
 def create_node_eqnx(name, location, size, image, project):
@@ -134,7 +135,7 @@ def create_node_eqnx(name, location, size, image, project):
     except e as Exception:
         util.exit_message(str(e), 1)
 
-    return node.uuid
+    return
 
 
 def cluster_nodes(node_names, cluster_name, node_ips=None):
