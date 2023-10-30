@@ -1,3 +1,5 @@
+# If you are using Perl for scripting
+#
 # These are sample variables and a test case that you can run at the command line with the command: perl t/test.pl
 # 
 # Before using environment variables, either set them with an EXPORT statement at the command line:
