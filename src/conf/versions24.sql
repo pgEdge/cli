@@ -197,8 +197,10 @@ INSERT INTO projects VALUES ('readonly', 'ext', 4, 0, 'hub',0, 'https://github.c
   'readonly', 1, 'readonly.png', 'Support READ-ONLY Databases', 'https://github.com/pgedge/readonly');
 INSERT INTO releases VALUES ('readonly-pg15', 10, 'readonly', 'pgReadOnly', '', 'prod', '', 1, 'POSTGRES', '', '');
 INSERT INTO releases VALUES ('readonly-pg16', 10, 'readonly', 'pgReadOnly', '', 'prod', '', 1, 'POSTGRES', '', '');
-INSERT INTO versions VALUES ('readonly-pg15', '1.1.0-1', 'el9, arm9', 1, '20230929', 'pg15', '', '');
-INSERT INTO versions VALUES ('readonly-pg16', '1.1.0-1', 'el9, arm9', 1, '20230929', 'pg16', '', '');
+INSERT INTO versions VALUES ('readonly-pg15', '1.1.1-1', 'el9, arm9', 1, '20231031', 'pg15', '', '');
+INSERT INTO versions VALUES ('readonly-pg16', '1.1.1-1', 'el9, arm9', 1, '20231031', 'pg16', '', '');
+INSERT INTO versions VALUES ('readonly-pg15', '1.1.0-1', 'el9, arm9', 0, '20230929', 'pg15', '', '');
+INSERT INTO versions VALUES ('readonly-pg16', '1.1.0-1', 'el9, arm9', 0, '20230929', 'pg16', '', '');
 
 INSERT INTO projects VALUES ('timescaledb', 'ext', 4, 0, 'hub',0, 'https://github.com/timescale/timescaledb/releases',
   'timescaledb', 1, 'timescaledb.png', 'Timeseries Extension', 'https://github.com/timescaledb/timescaledb');
