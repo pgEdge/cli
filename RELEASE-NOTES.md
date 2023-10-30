@@ -5,11 +5,13 @@
   * include snowflake for pg15 & pg16
   * bump pgvector to v0.5.1 for pg15 & pg16
   * 'CREATE EXTENSION snowflake' after install --no-restart
-  * added the '--pause' option to 'install pgegde'
+  * added the '--pause' option to 'install pgegde' (pgedge-2-07)
   * update pgcat, etcd from 'test' to 'prod' status
 
 
 ## done for 24.005 on 2023-10-31 ###########
+### New Features:
+  + MACHINE: 2nd pass includes support for basic AWS & EQNX functionality
 
 ### Minor fixes and supporting enhancements:
   * bump readonly to 1.1.1 for fixes and reduced verbosity
@@ -23,8 +25,6 @@
 
 
 ## done for 24.004 on 2023-10-24 ###########
-### New Features:
-  + MACHINE: 2nd pass includes support for basic AWS & EQNX functionality
 
 ### Minor fixes and supporting enhancements:
   + deployment problems caused by cady and ibrar and tej.  :-)
