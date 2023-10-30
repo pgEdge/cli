@@ -449,7 +449,7 @@ def table_diff(
     max_cpu_ratio=MAX_CPU_RATIO,
     output="json",
     nodes="all",
-    diff_file=None
+    diff_file=None,
 ):
     """Efficiently compare tables across cluster using checksums and blocks of rows."""
 
@@ -584,16 +584,17 @@ def table_diff(
 
         for diff in diff_json["diffs"]:
             offsets.append(diff["offset"])
-        
+
         row_count = block_rows * len(offsets)
+        total_rows = row_count
 
     total_blocks = row_count // block_rows
     total_blocks = total_blocks if total_blocks > 0 else 1
     cpus = cpu_count()
     max_procs = int(cpus * max_cpu_ratio * 2) if cpus > 1 else 1
-    procs = (
-        max_procs if total_blocks > max_procs else total_blocks
-    )  # if we don't have enough blocks to keep all CPUs busy, use fewer processes
+
+    # If we don't have enough blocks to keep all CPUs busy, use fewer processes
+    procs = max_procs if total_blocks > max_procs else total_blocks
 
     start_time = datetime.now()
 
@@ -802,6 +803,198 @@ def write_diffs_csv():
         )
 
 
+def table_rerun(cluster_name, diff_file, table_name):
+    if not os.path.exists(diff_file):
+        util.exit_message(f"Diff file {diff_file} not found")
+
+    util.check_cluster_exists(cluster_name)
+    util.message(f"Cluster {cluster_name} exists", p_state="success")
+
+    nm_lst = table_name.split(".")
+    if len(nm_lst) != 2:
+        util.exit_message(f"TableName {table_name} must be of form 'schema.table_name'")
+    l_schema = nm_lst[0]
+    l_table = nm_lst[1]
+
+    il, db, pg, count, usr, passwd, os_usr, cert, cluster_nodes = cluster.load_json(
+        cluster_name
+    )
+
+    conn_list = {}
+
+    try:
+        for nd in cluster_nodes:
+            conn_list[nd["nodename"]] = psycopg.connect(
+                dbname=db,
+                user=usr,
+                password=passwd,
+                host=nd["ip"],
+                port=nd.get("port", 5432),
+            )
+    except Exception as e:
+        util.exit_message("Error in diff_tbls() Getting Connections:" + str(e), 1)
+
+    util.message("Connections successful to nodes in cluster", p_state="success")
+
+    cols = None
+    key = None
+
+    for node, conn in conn_list.items():
+        curr_cols = get_cols(conn, l_schema, l_table)
+        curr_key = get_key(conn, l_schema, l_table)
+
+        if not curr_cols:
+            util.exit_message(f"Invalid table name '{table_name}'")
+        if not curr_key:
+            util.exit_message(f"No primary key found for '{table_name}'")
+
+        if (not cols) and (not key):
+            cols = curr_cols
+            key = curr_key
+            continue
+
+        if (curr_cols != cols) or (curr_key != key):
+            util.exit_message("Table schemas don't match")
+
+        cols = curr_cols
+        key = curr_key
+
+    util.message(f"Table {table_name} is comparable across nodes", p_state="success")
+
+    diff_json = json.loads(open(diff_file, "r").read())
+
+    """
+    We first need to identify the tuples we need to recheck.
+    For that, we iterate through the diffs and get the primary key values.
+    However, if the primary key is a composite key, we need to get all the columns,
+    and then use all of them to extract the respective tuples from the database
+
+    We need to collect a maximal set of rows for each pair of nodes. E.g., if we have
+    7 rows in node A and 5 rows in node B, we need to collect a union of both those
+    sets of rows. This is because we want to capture the case where a row is missing
+    and the case where a row is present but has different values.
+
+    Our data structure that captures this is a dictionary of the form:
+    {
+        "node1/node2": [[key1, key2, key3], [key3, key4, key5] ...],
+        "node1/node3": [[key1, key2, key3], [key3, key4, key5] ...],
+        "node2/node3": [[key1, key2, key3], [key3, key4, key5] ...]
+    }
+    """
+
+    diff_values = {}
+    simple_primary_key = True
+
+    if len(key.split(",")) > 1:
+        # We have a composite key situation here
+        key_cols = key.split(",")
+        simple_primary_key = False
+
+        for diff in diff_json["diffs"]:
+            for d in diff["diffs"]:
+                node_pair = "/".join(d.keys())
+                if node_pair not in diff_values:
+                    diff_values[node_pair] = set()
+                for node in d.keys():
+                    for row in d[node]:
+                        diff_values[node_pair].add(tuple(row[col] for col in key_cols))
+    else:
+        # We have a single column primary key
+        for diff in diff_json["diffs"]:
+            for d in diff["diffs"]:
+                node_pair = "/".join(d.keys())
+                if node_pair not in diff_values:
+                    diff_values[node_pair] = set()
+                for node in d.keys():
+                    for row in d[node]:
+                        diff_values[node_pair].add(row[key])
+
+    # Transform the set of tuples into a list of tuples
+    for node_pair in diff_values.keys():
+        diff_values[node_pair] = list(diff_values[node_pair])
+
+    def run_query(cur, query):
+        cur.execute(query)
+        results = cur.fetchall()
+        return results
+
+    diff_rerun = {}
+
+    for node_pair_key, values in diff_values.items():
+        node1, node2 = node_pair_key.split("/")
+
+        node1_cur = conn_list[node1].cursor()
+        node2_cur = conn_list[node2].cursor()
+
+        node1_set = OrderedSet()
+        node2_set = OrderedSet()
+
+        if simple_primary_key:
+            for index in values:
+                sql = f"""
+                SELECT *
+                FROM {table_name}
+                WHERE {key} = '{index}';
+                """
+
+                with ThreadPoolExecutor(max_workers=2) as executor:
+                    futures = [
+                        executor.submit(run_query, node1_cur, sql),
+                        executor.submit(run_query, node2_cur, sql),
+                    ]
+
+                    t1_result, t2_result = [f.result() for f in futures]
+                    node1.add(t1_result)
+                    node2.add(t2_result)
+        else:
+            for indices in values:
+                sql = f"""
+                SELECT *
+                FROM {table_name}
+                WHERE
+                """
+
+                ctr = 0
+                # XXX: What about ordering?
+                for k in key.split(","):
+                    sql += f" {k} = '{indices[ctr]}' AND"
+                    ctr += 1
+
+                sql = sql[:-3] + ";"
+
+                with ThreadPoolExecutor(max_workers=2) as executor:
+                    futures = [
+                        executor.submit(run_query, node1_cur, sql),
+                        executor.submit(run_query, node2_cur, sql),
+                    ]
+
+                    t1_result, t2_result = [f.result() for f in futures]
+                    node1_set.add(t1_result[0])
+                    node2_set.add(t2_result[0])
+
+        node1_diff = node1_set - node2_set
+        node2_diff = node2_set - node1_set
+
+        if len(node1_diff) > 0 or len(node2_diff) > 0:
+            diff_rerun[node_pair_key] = {
+                node1: list(node1_diff),
+                node2: list(node2_diff),
+            }
+
+    dirname = datetime.now().astimezone(None).strftime("%Y-%m-%d_%H:%M:%S")
+
+    if not os.path.exists("diffs"):
+        os.mkdir("diffs")
+
+    dirname = os.path.join("diffs", dirname)
+    os.mkdir(dirname)
+
+    filename = os.path.join(dirname, "diff.json")
+
+    with open(filename, "w") as f:
+        f.write(json.dumps(diff_rerun, default=str))
+
+
 def table_repair(cluster_name, diff_file, source_of_truth, table_name, dry_run=False):
     import pandas as pd
 
@@ -964,5 +1157,6 @@ if __name__ == "__main__":
             "diff-schemas": diff_schemas,
             "diff-spock": diff_spock,
             "table-repair": table_repair,
+            "table-rerun": table_rerun,
         }
     )
