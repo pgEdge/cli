@@ -172,7 +172,7 @@ def aws_node_list(driver):
             public_ip = "".ljust(15)
         state = n.state
 
-        print(f"{name}  {public_ip} {state}")
+        print(f"aws  {name}  {public_ip} {state}")
 
 #        size = n.size.id
 #        ram_disk =str(round(n.size.ram / 1024)) + "GB," + str(n.size.disk) + "GB"
@@ -203,7 +203,13 @@ def eqnx_node_list(driver, project):
       crd = n.extra['facility']['address']['coordinates']
       coordinates = f"{round(float(crd['latitude']), 3)},{round(float(crd['latitude']), 3)}"
 
-      print(f"{name}  {public_ip} {state}  {country}  {metro}  {az}  {coordinates}  {size}  {ram_disk}  {image}")
+      print(f"eqnx  {name}  {public_ip} {state}  {country}  {metro}  {az}  {coordinates}  {size}  {ram_disk}  {image}")
+
+
+def provider_list():
+    print("eqnx  Equinix Metal")
+    print("aws   Amazon Web Services")
+    
 
 
 if __name__ == '__main__':
@@ -211,5 +217,6 @@ if __name__ == '__main__':
     'node-list':       node_list,
     'node-create':     node_create,
     'node-destroy':    node_destroy,
+    'provider-list':   provider_list,
     'location-list':   location_list,
   })
