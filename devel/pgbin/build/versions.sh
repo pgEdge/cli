@@ -30,7 +30,7 @@ foslotsBldV=1
 snwflkV=1.1
 snwflkBldV=1
 
-readonlyFullV=1.1.0
+readonlyFullV=1.1.1
 readonlyShortV=
 readonlyBuildV=1
 

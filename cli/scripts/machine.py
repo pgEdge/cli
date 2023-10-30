@@ -15,11 +15,11 @@ def get_driver(provider="eqnx"):
     sect = util.load_ini(f"{HOME}/mach.ini", prvdr)
 
     if prvdr == "eqnx":
-       drvr =  get_cld_drvr(Provider.EQUINIXMETAL, sect['api_token'])
+        drvr =  get_cld_drvr(Provider.EQUINIXMETAL, sect['api_token'])
     elif prvdr in ("aws"):
-       drvr =  get_cld_drvr(Provider.EC2, sect['access_key_id'], sect['secret_access_key'])
+        drvr =  get_cld_drvr(Provider.EC2, sect['access_key_id'], sect['secret_access_key'])
     else:
-       util.exit_message(f"Invalid get-driver() provider ({prvdr})", 1)
+        util.exit_message(f"Invalid provider '{prvdr}'")
 
     return(prvdr, drvr, sect)
 
@@ -45,7 +45,41 @@ def get_location(location):
     return(None)
 
 
-def create(name, location, provider="eqnx", size=None, image=None, project=None):
+def get_size(driver, p_size):
+    sizes = driver.list_sizes()
+    sz = None
+    for s in sizes:
+        if s.id == p_size:
+            return(s)
+
+    util.exit_message(f"Invalid size '{size}'")
+
+
+def get_image(driver, p_image):
+    images = driver.list_images()
+    im = None
+    for i in images:
+        if i.id == p_image:
+            return(i)
+
+    util.exit_message(f"Invalid image '{image}'")
+
+
+def node_destroy(provider, name):
+    prvdr, driver, section = get_driver(provider)
+
+    nodes = driver.list_nodes()
+    for n in nodes:
+        if name == n.name:
+            util.message(f"Destroying {provider} node {name}")
+            if driver.destroy_node(n):
+                return(0)
+
+    util.exit_message(f"{provider} node {name} not found", 1)
+    return
+
+
+def node_create(provider, name, location, size=None, image=None, keyname=None, project=None):
     prvdr, driver, sect = get_driver(provider)
 
     if prvdr == "eqnx":
@@ -63,53 +97,45 @@ def create(name, location, provider="eqnx", size=None, image=None, project=None)
             size = sect['size']
         if image == None:
             image = sect['image']
+        if keyname == None:
+            keyname = sect['keyname']
         if project:
             util.exit_message("'project' is not a valid AWS parm", 1)
 
-        create_node_aws(name, location, size, image)
+        create_node_aws(name, location, size, image, keyname)
 
     else:
-        util.exit_message(f"Invalid node-create({prvdr}) provider")
+        util.exit_message(f"Invalid provider '{prvdr}' (create)")
 
 
-def create_node_aws(name, region, size, image):
-    prvdr, driver, section = get_driver()
+def create_node_aws(name, region, size, image, keyname):
+    prvdr, driver, section = get_driver("aws")
+    sz = get_size(driver, size)
+    im = get_image(driver, image)
 
-    sizes = driver.list_sizes()
-    sz = None
-    for s in sizes:
-        if s.id == size:
-            sz = s
-            break
+    try:
+        node = driver.create_node(name=name, image=im, size=sz,
+                ex_keyname=keyname)
+#               ex_securitygroup=SECURITY_GROUP_NAMES
+    except Exception as e:
+        util.exit_message(str(e), 1)
 
-    if sz == None:
-        util.exit_message(f"Invalid size {size}")
-
-    images = driver.list_images()
-
-    image = images[0]
-
-    node = driver.create_node(
-      name=name,
-      image=image,
-      size=sz,
-      ex_keyname="xyz"
-#      ex_securitygroup=SECURITY_GROUP_NAMES,
-)
+    return
 
 
 def create_node_eqnx(name, location, size, image, project):
-    prvdr, driver, section = get_driver()
+    prvdr, driver, section = get_driver("eqnx")
+    sz = get_size(driver, size)
+    im = get_image(driver, image)
+
     loct = get_location(location)
-    if loct == None:
-        util.exit_message("Invalid location", 1)
 
     try:
-        node = driver.create_node(name, size, image, loct.id, project)
+        node = driver.create_node(name=name, image=im, size=sz, location=loct, project=project)
     except e as Exception:
         util.exit_message(str(e), 1)
 
-    return node.uuid
+    return
 
 
 def cluster_nodes(node_names, cluster_name, node_ips=None):
@@ -124,38 +150,44 @@ def location_list(project):
         print(f"{l.name.ljust(15)} {l.id}")
 
 
-def list(provider="eqnx"):
+def node_list(provider="eqnx"):
     """List nodes."""
     prvdr, driver, sect = get_driver(provider)
 
     if prvdr == "eqnx":
-        eqnx_list(driver, sect['project'])
+        eqnx_node_list(driver, sect['project'])
     elif prvdr == "aws":
-        aws_list(driver)
+        aws_node_list(driver)
     else:
-        util.exit_message(f"Invalid list({prvdr}) provider")
+        util.exit_message(f"Invalid provider '{prvdr}' (list)")
 
 
-def aws_list(driver):
+def aws_node_list(driver):
     nodes = driver.list_nodes()
     for n in nodes:
-      name = n.name.ljust(7)
-      public_ip = n.public_ips[0].ljust(15)
-#      size = n.size.id
-#      ram_disk =str(round(n.size.ram / 1024)) + "GB," + str(n.size.disk) + "GB"
-#      country = n.extra['facility']['metro']['country']
-#      metro = f"{n.extra['facility']['metro']['name']} ({n.extra['facility']['metro']['code']})".ljust(14)
-#      az = n.extra['facility']['code'].ljust(4)
-      state = n.state
-#      image = n.image.id
+        name = n.name.ljust(7)
+        try:
+            public_ip = n.public_ips[0].ljust(15)
+        except Exception as e:
+            public_ip = "".ljust(15)
+        state = n.state
+
+        print(f"aws  {name}  {public_ip} {state}")
+
+#        size = n.size.id
+#        ram_disk =str(round(n.size.ram / 1024)) + "GB," + str(n.size.disk) + "GB"
+#        country = n.extra['facility']['metro']['country']
+#        metro = f"{n.extra['facility']['metro']['name']} ({n.extra['facility']['metro']['code']})".ljust(14)
+#        az = n.extra['facility']['code'].ljust(4)
+#        image = n.image.id
 #
-#      crd = n.extra['facility']['address']['coordinates']
-#      coordinates = f"{round(float(crd['latitude']), 3)},{round(float(crd['latitude']), 3)}"
+#        crd = n.extra['facility']['address']['coordinates']
+#        coordinates = f"{round(float(crd['latitude']), 3)},{round(float(crd['latitude']), 3)}"
 
-      print(f"{name}  {public_ip} {state}")
+    return
 
 
-def eqnx_list(driver, project):
+def eqnx_node_list(driver, project):
     nodes = driver.list_nodes(project)
     for n in nodes:
       name = n.name.ljust(7)
@@ -171,12 +203,20 @@ def eqnx_list(driver, project):
       crd = n.extra['facility']['address']['coordinates']
       coordinates = f"{round(float(crd['latitude']), 3)},{round(float(crd['latitude']), 3)}"
 
-      print(f"{name}  {public_ip} {state}  {country}  {metro}  {az}  {coordinates}  {size}  {ram_disk}  {image}")
+      print(f"eqnx  {name}  {public_ip} {state}  {country}  {metro}  {az}  {coordinates}  {size}  {ram_disk}  {image}")
+
+
+def provider_list():
+    print("eqnx  Equinix Metal")
+    print("aws   Amazon Web Services")
+    
 
 
 if __name__ == '__main__':
   fire.Fire({
-    'list':       list,
-    'create':     create,
+    'node-list':       node_list,
+    'node-create':     node_create,
+    'node-destroy':    node_destroy,
+    'provider-list':   provider_list,
     'location-list':   location_list,
   })
