@@ -65,7 +65,21 @@ def get_image(driver, p_image):
     util.exit_message(f"Invalid image '{image}'")
 
 
-def create(provider, name, location, size=None, image=None, keyname=None, project=None):
+def node_destroy(provider, name):
+    prvdr, driver, section = get_driver(provider)
+
+    nodes = driver.list_nodes()
+    for n in nodes:
+        if name == n.name:
+            util.message(f"Destroying {provider} node {name}")
+            if driver.destroy_node(n):
+                return(0)
+
+    util.exit_message(f"{provider} node {name} not found", 1)
+    return
+
+
+def node_create(provider, name, location, size=None, image=None, keyname=None, project=None):
     prvdr, driver, sect = get_driver(provider)
 
     if prvdr == "eqnx":
@@ -135,38 +149,44 @@ def location_list(project):
         print(f"{l.name.ljust(15)} {l.id}")
 
 
-def list(provider="eqnx"):
+def node_list(provider="eqnx"):
     """List nodes."""
     prvdr, driver, sect = get_driver(provider)
 
     if prvdr == "eqnx":
-        eqnx_list(driver, sect['project'])
+        eqnx_node_list(driver, sect['project'])
     elif prvdr == "aws":
-        aws_list(driver)
+        aws_node_list(driver)
     else:
         util.exit_message(f"Invalid provider '{prvdr}' (list)")
 
 
-def aws_list(driver):
+def aws_node_list(driver):
     nodes = driver.list_nodes()
     for n in nodes:
-      name = n.name.ljust(7)
-      public_ip = n.public_ips[0].ljust(15)
-#      size = n.size.id
-#      ram_disk =str(round(n.size.ram / 1024)) + "GB," + str(n.size.disk) + "GB"
-#      country = n.extra['facility']['metro']['country']
-#      metro = f"{n.extra['facility']['metro']['name']} ({n.extra['facility']['metro']['code']})".ljust(14)
-#      az = n.extra['facility']['code'].ljust(4)
-      state = n.state
-#      image = n.image.id
+        name = n.name.ljust(7)
+        try:
+            public_ip = n.public_ips[0].ljust(15)
+        except Exception as e:
+            public_ip = "".ljust(15)
+        state = n.state
+
+        print(f"{name}  {public_ip} {state}")
+
+#        size = n.size.id
+#        ram_disk =str(round(n.size.ram / 1024)) + "GB," + str(n.size.disk) + "GB"
+#        country = n.extra['facility']['metro']['country']
+#        metro = f"{n.extra['facility']['metro']['name']} ({n.extra['facility']['metro']['code']})".ljust(14)
+#        az = n.extra['facility']['code'].ljust(4)
+#        image = n.image.id
 #
-#      crd = n.extra['facility']['address']['coordinates']
-#      coordinates = f"{round(float(crd['latitude']), 3)},{round(float(crd['latitude']), 3)}"
+#        crd = n.extra['facility']['address']['coordinates']
+#        coordinates = f"{round(float(crd['latitude']), 3)},{round(float(crd['latitude']), 3)}"
 
-      print(f"{name}  {public_ip} {state}")
+    return
 
 
-def eqnx_list(driver, project):
+def eqnx_node_list(driver, project):
     nodes = driver.list_nodes(project)
     for n in nodes:
       name = n.name.ljust(7)
@@ -187,7 +207,8 @@ def eqnx_list(driver, project):
 
 if __name__ == '__main__':
   fire.Fire({
-    'list':       list,
-    'create':     create,
+    'node-list':       node_list,
+    'node-create':     node_create,
+    'node-destroy':    node_destroy,
     'location-list':   location_list,
   })
