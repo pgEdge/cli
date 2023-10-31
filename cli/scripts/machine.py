@@ -8,30 +8,24 @@ import fire, libcloud, util
 
 from libcloud.compute.types import Provider
 
-
-def get_driver(provider="eqnx"):
+def get_driver(provider="eqnx", location=None):
     prvdr = provider.lower()
     HOME = os.getenv("HOME")
     sect = util.load_ini(f"{HOME}/mach.ini", prvdr)
 
-    if prvdr == "eqnx":
-        drvr =  get_cld_drvr(Provider.EQUINIXMETAL, sect['api_token'])
-    elif prvdr in ("aws"):
-        drvr =  get_cld_drvr(Provider.EC2, sect['access_key_id'], sect['secret_access_key'])
-    else:
-        util.exit_message(f"Invalid provider '{prvdr}'")
-
-    return(prvdr, drvr, sect)
-
-
-def get_cld_drvr(provider, p1=None, p2=None):
     try:
-        cls = libcloud.compute.providers.get_driver(provider)
-        drvr = cls(p1, p2)
-    except e as Exception:
+        if prvdr == "eqnx":
+            cls = libcloud.compute.providers.get_driver(Provider.EQUINIXMETAL)
+            drvr =  cls(sect['api_token'])
+        elif prvdr in ("aws"):
+            cls = libcloud.compute.providers.get_driver(Provider.EC2)
+            drvr = cls(sect['access_key_id'], sect['secret_access_key'], region=location)
+        else:
+            util.exit_message(f"Invalid provider '{prvdr}'")
+    except Exception as e:
         util.exit_message(str(e), 1)
 
-    return(drvr)
+    return(prvdr, drvr, sect)
 
 
 def get_location(location):
@@ -56,17 +50,20 @@ def get_size(driver, p_size):
 
 
 def get_image(driver, p_image):
-    images = driver.list_images()
+    try:
+        images = driver.list_images( ex_image_ids={p_image})
+    except Exception as e:
+        util.exit_message(str(e), 1)
     im = None
     for i in images:
         if i.id == p_image:
             return(i)
 
-    util.exit_message(f"Invalid image '{image}'")
+    util.exit_message(f"Invalid image '{p_image}'")
 
 
-def node_destroy(provider, name):
-    prvdr, driver, section = get_driver(provider)
+def node_destroy(provider, name, location):
+    prvdr, driver, section = get_driver(provider, location)
 
     nodes = driver.list_nodes()
     for n in nodes:
@@ -80,7 +77,7 @@ def node_destroy(provider, name):
 
 
 def node_create(provider, name, location, size=None, image=None, keyname=None, project=None):
-    prvdr, driver, sect = get_driver(provider)
+    prvdr, driver, sect = get_driver(provider, location)
 
     if prvdr == "eqnx":
         if size == None:
@@ -109,7 +106,7 @@ def node_create(provider, name, location, size=None, image=None, keyname=None, p
 
 
 def create_node_aws(name, region, size, image, keyname):
-    prvdr, driver, section = get_driver("aws")
+    prvdr, driver, section = get_driver("aws", region)
     sz = get_size(driver, size)
     im = get_image(driver, image)
 
@@ -142,24 +139,24 @@ def cluster_nodes(node_names, cluster_name, node_ips=None):
     pass
 
 
-def location_list(project):
-    driver, section = get_driver()
+def location_list(provider, location=None, project=None):
+    prvdr, driver, sect = get_driver(provider, location)
 
     locations = driver.list_locations()
     for l in locations:
         print(f"{l.name.ljust(15)} {l.id}")
 
 
-def node_list(provider="eqnx"):
+def node_list(provider, location=None):
     """List nodes."""
-    prvdr, driver, sect = get_driver(provider)
+    prvdr, driver, sect = get_driver(provider, location)
 
     if prvdr == "eqnx":
         eqnx_node_list(driver, sect['project'])
     elif prvdr == "aws":
         aws_node_list(driver)
     else:
-        util.exit_message(f"Invalid provider '{prvdr}' (list)")
+        util.exit_message(f"Invalid provider '{prvdr}' (node-list)")
 
 
 def aws_node_list(driver):
@@ -171,20 +168,11 @@ def aws_node_list(driver):
         except Exception as e:
             public_ip = "".ljust(15)
         state = n.state
-        size = n.extra['instance_type']
+        location = n.extra['availability']
+        size = n.extra['instance_type'].ljust(12)
         key_name = n.extra['key_name']
 
-        print(f"aws   {name}  {public_ip}  {state}  {size}  {key_name}")
-
-#        size = n.size.id
-#        ram_disk =str(round(n.size.ram / 1024)) + "GB," + str(n.size.disk) + "GB"
-#        country = n.extra['facility']['metro']['country']
-#        metro = f"{n.extra['facility']['metro']['name']} ({n.extra['facility']['metro']['code']})".ljust(14)
-#        az = n.extra['facility']['code'].ljust(4)
-#        image = n.image.id
-#
-#        crd = n.extra['facility']['address']['coordinates']
-#        coordinates = f"{round(float(crd['latitude']), 3)},{round(float(crd['latitude']), 3)}"
+        print(f"aws   {name}  {public_ip}  {state}  {location}  {size}  {key_name}")
 
     return
 
