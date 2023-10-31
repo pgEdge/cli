@@ -7,7 +7,8 @@ services:
       context: "."
       dockerfile: Dockerfile.el9
     environment:
-      - NODE=n1
+      - HOSTNAME=n1
+      - PEER_HOSTNAME=n2
     ports:
       - '15432:5432'
     volumes:
@@ -19,7 +20,8 @@ services:
       context: "."
       dockerfile: Dockerfile.el9
     environment:
-      - NODE=n2
+      - HOSTNAME=n2
+      - PEER_HOSTNAME=n1
     ports:
       - '15433:5432'
     volumes:
@@ -27,6 +29,6 @@ services:
 
 volumes:
   n1:
-    driver: local
+    driver: overlay2
   n2:
-    driver: local
+    driver: overlay2
