@@ -1,27 +1,26 @@
 # pgEdge Platform Release Notes #############
 
-## done for 23.135 on 2023-10-31
-  * bump readonly to 1.1.1 for fixes and reduced verbosity
-  * include snowflake for pg15 & pg16
-  * bump pgvector to v0.5.1 for pg15 & pg16
-  * 'CREATE EXTENSION snowflake' after install --no-restart
-  * added the '--pause' option to 'install pgegde' (pgedge-2-07)
-  * update pgcat, etcd from 'test' to 'prod' status
 
-
-## done for 24.005 on 2023-10-31 ###########
+## done for 24.005 on 2023-11-01 ###########
 ### New Features:
   + MACHINE: 2nd pass includes support for basic AWS & EQNX functionality
 
 ### Minor fixes and supporting enhancements:
-  * bump readonly to 1.1.1 for fixes and reduced verbosity
-  + bump pgvector to v0.5.1 for pg15 & pg16
-  + 'CREATE EXTENSION snowflake' after install --no-restart
+  * bump readonly to 1.1.1, vector to 1.1.1, & spock31 to 3.1.8
+  + 'CREATE EXTENSION snowflake' after install --no-restart (pgedge-2-07)
   + better messaging for unsupported pg binaries on a platform
   + fix './nc update' when in the 24.xxx stream
   + better instrument 'reload pgXX' when running w/ or wo/ systemd
 
-  * check rehup/reload with set db.set_guc()
+## included in 23.135 so far
+  * include snowflake for pg15 & pg16
+  * 'CREATE EXTENSION snowflake' after install --no-restart
+  * added the '--pause' option to 'install pgegde' (pgedge-2-07)
+
+## done for 23.134 on 2023-10-31
+  * bump readonly to v1.1.1 for fixes and reduced verbosity
+  * bump pgvector to v0.5.1 for latest community fixes
+  * bump spock31 to v3.1.8 for latest stable fixes
 
 
 ## done for 24.004 on 2023-10-24 ###########
