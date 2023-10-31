@@ -463,6 +463,9 @@ def table_diff(
     except Exception:
         util.exit_message("Invalid values for ACE_BLOCK_ROWS")
 
+    if max_cpu_ratio > 1 or max_cpu_ratio < 0:
+        util.exit_message("Invalid values for ACE_MAX_CPU_RATIO or --max_cpu_ratio")
+
     # Capping max block size here to prevent the hash function from taking forever
     if block_rows > MAX_ALLOWED_BLOCK_SIZE:
         util.exit_message(f"Desired block row size is > {MAX_ALLOWED_BLOCK_SIZE}")
