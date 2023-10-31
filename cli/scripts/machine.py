@@ -1,4 +1,4 @@
-
+import json
 #####################################################
 #  Copyright 2022-2024 PGEDGE  All rights reserved. #
 #####################################################
@@ -171,8 +171,10 @@ def aws_node_list(driver):
         except Exception as e:
             public_ip = "".ljust(15)
         state = n.state
+        size = n.extra['instance_type']
+        key_name = n.extra['key_name']
 
-        print(f"aws  {name}  {public_ip} {state}")
+        print(f"aws   {name}  {public_ip}  {state}  {size}  {key_name}")
 
 #        size = n.size.id
 #        ram_disk =str(round(n.size.ram / 1024)) + "GB," + str(n.size.disk) + "GB"
