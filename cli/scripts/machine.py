@@ -167,7 +167,7 @@ def aws_node_list(driver):
             public_ip = n.public_ips[0].ljust(15)
         except Exception as e:
             public_ip = "".ljust(15)
-        state = n.state
+        state = n.state.ljust(10)
         location = n.extra['availability']
         size = n.extra['instance_type'].ljust(12)
         key_name = n.extra['key_name']
@@ -199,7 +199,25 @@ def eqnx_node_list(driver, project):
 def provider_list():
     print("eqnx  Equinix Metal")
     print("aws   Amazon Web Services")
-    
+
+
+def firewall_list(zone="external"):
+    util.echo_cmd(f"sudo firewall-cmd --list-sources --zone={zone}")
+    util.echo_cmd(f"sudo firewall-cmd --list-ports --zone={zone}")
+
+def firewall_set(sources, ports="5432, 5433", zone="external"):
+    l_srcs = sources.split(",")
+    l_prts = ports.split(",")
+
+    for s in l_srcs:
+        s = s.strip()
+        print(s)
+
+    for p in l_prts:
+        p = p.strip()
+        print(p)
+
+
 
 
 if __name__ == '__main__':
@@ -209,4 +227,6 @@ if __name__ == '__main__':
     'node-destroy':    node_destroy,
     'provider-list':   provider_list,
     'location-list':   location_list,
+    'firewall-list':   firewall_list,
+    'firewall-set':    firewall_set
   })
