@@ -21,7 +21,7 @@ then
   ./nodectl spock repset-create demo_replication_set demo
   PGEDGE=`host $PEER_HOSTNAME | awk '{print $NF}'`
   OUTPUT=""
-  while [ ! $OUTPUT == *$HOSTNAME* ]
+  while [[ ! $OUTPUT == *$HOSTNAME* ]]
   do
     EXPORT OUTPUT=$(psql -h $PGEDGE  demo -c "SELECT node_name FROM spock.node")
     sleep 1
