@@ -4,8 +4,10 @@
 ## done for 24.005 on 2023-11-01 ###########
 ### New Features:
   + MACHINE: 2nd pass includes support for basic AWS & EQNX functionality
+  + FIREWALL: new support for firewalld configuration
 
 ### Minor fixes and supporting enhancements:
+  + cleanup requirements.txt
   + 1st pass at --ent components
   + refactor --extension, --showduplicates & --test
   * bump readonly to 1.1.1, vector to 1.1.1, & spock31 to 3.1.8

@@ -336,7 +336,7 @@ def debug_lvl():
         return 0
 
 
-def echo_cmd(cmd, sleep_secs=0, host="", usr="", key=""):
+def echo_cmd(cmd, echo=True, sleep_secs=0, host="", usr="", key=""):
     if host > "":
         ssh_cmd = "ssh -o StrictHostKeyChecking=no -q -t "
         if usr > "":
@@ -353,7 +353,8 @@ def echo_cmd(cmd, sleep_secs=0, host="", usr="", key=""):
     isSilent = os.getenv("isSilent", "False")
     if isSilent == "False":
         s_cmd = scrub_passwd(cmd)
-        message("#  " + str(s_cmd))
+        if echo:
+          message("#  " + str(s_cmd))
 
     rc = os.system(str(cmd))
     if rc == 0:
@@ -593,7 +594,10 @@ def run_cmd(p_cmd, p_display=False):
         print("  " + cmd)
 
     rc = os.system(sys.executable + " -u " + cmd)
-    return rc
+    if rc == 0:
+        return 0
+
+    return 1
 
 
 def run_sql_cmd(p_pg, p_sql, p_display=False):
