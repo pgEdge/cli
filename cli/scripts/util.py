@@ -13,6 +13,11 @@ import shutil, filecmp, traceback, time, subprocess, getpass
 import tarfile
 from log_helpers import bcolours, characters
 
+isTEST = False
+isENT = False
+isSHOWDUPS = False
+isEXTENSIONS = False
+
 try:
     import psycopg
 except Exception as e:

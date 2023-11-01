@@ -73,8 +73,8 @@ mode_list_advanced = ['kill', 'config', 'init', 'clean', 'useradd', 'spock', 'do
 
 mode_list = ["start", "stop", "restart", "status", "list", "info", "help", 
              "install", "remove", "--pg", "--start", "--no-restart", "--no-preload",
-             "--help", "--json", "--jsonp", "--test", "--extensions", "--svcs",
-             "--list", "--old", "--showduplicates", "-y", "-t", "--pause",
+             "--help", "--json", "--jsonp", "--svcs",
+             "--list", "-y", "-t", "--pause",
              "--verbose", "--country", "-v", "--debug", "--debug2"] + \
              fire_list + mode_list_advanced
 
@@ -1265,27 +1265,36 @@ while i < len(args):
       break
   i += 1
 
+if "--ent" in args:
+  util.isENT = True
+  args.remove("--ent")
+
+if "--test" in args:
+  util.isTEST = True
+  args.remove("--test")
+
+if "--tent" in args:
+  print("DEBUG TENT")
+  util.isTEST = True
+  util.isENT = True
+  args.remove("--tent")
+
+
 isSTART = False
 if "--start" in args:
   isSTART = True
   os.environ['isSTART'] = "True"
   args.remove("--start")
 
-isTEST = False
-if "--test" in args:
-  isTEST = True
-  args.remove("--test")
-
 if util.get_stage() == "test":
-  isTEST = True
+  util.isTEST = True
 
-isSHOWDUPS = False
 if "--old" in args:
-  isSHOWDUPS = True
+  util.isSHOWDUPS = True
   args.remove("--old")
-if "--showduplicates" in args:
-  isSHOWDUPS = True
-  args.remove("--showduplicates")
+if "--show-duplicates" in args:
+  util.isSHOWDUPS = True
+  args.remove("--show-duplicates")
 
 isSVCS = False
 if "--svcs" in args and 'list' in args:
@@ -1331,9 +1340,8 @@ if "--silent" in args:
   os.environ['isSilent'] = "True"
   args.remove("--silent")
 
-isEXTENSIONS = False
 if "--extensions" in args:
-  isEXTENSIONS = True
+  util.isEXTENSIONS = True
   args.remove("--extensions")
 
 if len(args) == 1:
@@ -1709,7 +1717,7 @@ try:
 
   ## LIST #########################################################
   if (p_mode == 'list'):
-    meta.get_list(isSHOWDUPS, isEXTENSIONS, isJSON, isTEST, False, p_comp=p_comp)
+    meta.get_list(isJSON, p_comp=p_comp)
 
 
   ## REMOVE ##################################################
@@ -1893,7 +1901,7 @@ try:
 
         stage = str(row[5])
         if stage == 'test':
-          if not isTEST:
+          if not util.isTEST:
             continue
 
         if stage in ('bring-own', 'included', 'soon'):
@@ -1928,7 +1936,7 @@ try:
       else:
         if not isSILENT:
           print("---------- Components available to install or update ------------")
-          meta.get_list(isSHOWDUPS, isEXTENSIONS, isJSON, isTEST, False, p_comp=p_comp)
+          meta.get_list(isJSON, p_comp=p_comp)
     except Exception as e:
       fatal_sql_error(e, sql, "UPDATE in mainline")
 
@@ -2002,7 +2010,7 @@ try:
   if (p_mode == 'upgrade'):
     if p_comp == 'all':
       updates_comp = []
-      comp_list = meta.get_list(False,False, False, False, False, p_return=True)
+      comp_list = meta.get_list(False, p_return=True)
       for c in comp_list:
         if c.get("updates")==1:
           updates_comp.append(c)

@@ -163,13 +163,13 @@ INSERT INTO versions VALUES ('plprofiler-pg16', '4.2.2-1', 'arm9, el9', 0, '2023
 
 INSERT INTO projects VALUES ('postgrest', 'pge', 11, 3000, 'hub', 0, 'https://github.com/postgrest/postgrest/tags',
   'postgrest', 0, 'postgrest.png', 'a RESTful API', 'https://postgrest.org');
-INSERT INTO releases VALUES ('postgrest', 9, 'postgrest', 'PostgREST', '', 'test', '', 1, 'MIT', '', '');
+INSERT INTO releases VALUES ('postgrest', 9, 'postgrest', 'PostgREST', '', 'ent', '', 1, 'MIT', '', '');
 INSERT INTO versions VALUES ('postgrest', '11.2.0-1', 'el9, arm9', 1, '20230927', '', '', 'https://postgrest.org');
 INSERT INTO versions VALUES ('postgrest', '11.1.0-1', 'el9, arm9', 0, '20230629', '', '', 'https://postgrest.org');
 
 INSERT INTO projects VALUES ('prompgexp', 'pge', 11, 9187, 'golang', 0, 'https://github.com/prometheus-community/postgres_exporter/tags',
   'prompgexp', 0, 'prometheus.png', 'Prometheus PG Exporter', 'https://github.com/prometheus-community/postgres_exporter');
-INSERT INTO releases VALUES ('prompgexp', 9, 'prompgexp', 'Prometheus PG Exporter', '', 'test', '', 1, 'Apache', '', '');
+INSERT INTO releases VALUES ('prompgexp', 9, 'prompgexp', 'Prometheus PG Exporter', '', 'ent', '', 1, 'Apache', '', '');
 INSERT INTO versions VALUES ('prompgexp', '0.11.1', '', 1, '20220720', '', '', 'https://github.com/prometheus-community/postgres_exporter');
 
 INSERT INTO projects VALUES ('audit', 'ext', 4, 0, 'hub', 0, 'https://github.com/pgaudit/pgaudit/releases',
@@ -317,28 +317,28 @@ INSERT INTO versions VALUES ('nclibs', '1.0', '', 1, '20231021', '', '', '');
 
 INSERT INTO projects VALUES ('pgcat', 'pge', 11, 5433, 'hub', 3, 'https://github.com/pgedge/pgcat/tags',
   'cat',  0, 'pgcat.png', 'Connection Pooler', 'https://github.com/pgedge/pgcat');
-INSERT INTO releases VALUES ('pgcat', 2, 'pgcat',  'pgCat', '', 'prod', '', 1, 'MIT', '', '');
-INSERT INTO versions VALUES ('pgcat', '1.1.1', 'el9, arm9', 0, '20230829', '', '', '');
+INSERT INTO releases VALUES ('pgcat', 2, 'pgcat',  'pgCat', '', 'ent', '', 1, 'MIT', '', '');
+INSERT INTO versions VALUES ('pgcat', '1.1.1', 'el9, arm9', 1, '20230829', '', '', '');
 
 INSERT INTO projects VALUES ('backrest', 'pge', 11, 0, 'hub', 3, 'http://pgbackrest.org',
   'backrest',  0, 'backrest.png', 'Backup & Restore', 'http://pgbackrest.org');
-INSERT INTO releases VALUES ('backrest', 2, 'backrest',  'pgBackRest', '', 'prod', '', 1, 'MIT', '', '');
-INSERT INTO versions VALUES ('backrest', '2.47-1', 'el9, arm9', 0, '20230803', '', '', '');
+INSERT INTO releases VALUES ('backrest', 2, 'backrest',  'pgBackRest', '', 'ent', '', 1, 'MIT', '', '');
+INSERT INTO versions VALUES ('backrest', '2.47-1', 'el9, arm9', 1, '20230803', '', '', '');
 
-INSERT INTO projects VALUES ('firewalld', 'app', 11, 0, '', 4, 'https://firewalls.org',
+INSERT INTO projects VALUES ('firewalld', 'app', 11, 0, '', 4, 'https://firewalld.org',
   'firewalld', 0, 'firewalld.png', 'HA', 'https://github.com/firewalld/firewalld');
-INSERT INTO releases VALUES ('firewalld', 1, 'firewalld', 'Firewalld', '', 'prod', '', 1, 'POSTGRES', '', '');
-INSERT INTO versions VALUES ('firewalld', '1.2', '', 0, '20231103', '', '', '');
+INSERT INTO releases VALUES ('firewalld', 1, 'firewalld', 'Firewalld', '', 'ent', '', 1, 'POSTGRES', '', '');
+INSERT INTO versions VALUES ('firewalld', '1.2', '', 1, '20231103', '', '', '');
 
 INSERT INTO projects VALUES ('staz', 'app', 11, 0, '', 4, 'https://github.com/pgedge/staz/tags',
   'staz', 0, 'patroni.png', 'HA', 'https://github.com/pgedge/staz');
-INSERT INTO releases VALUES ('staz', 1, 'staz', 'Spock 3 AZ', '', 'prod', '', 1, 'POSTGRES', '', '');
-INSERT INTO versions VALUES ('staz', '3.1.2.2', '', 0, '20231021', '', '', '');
+INSERT INTO releases VALUES ('staz', 1, 'staz', 'Spock 3 AZ', '', 'ent', '', 1, 'POSTGRES', '', '');
+INSERT INTO versions VALUES ('staz', '3.1.2.2', '', 1, '20231021', '', '', '');
 
 INSERT INTO projects VALUES ('etcd', 'app', 11, 0, 'hub', 4, 'https://github.com/etcd-io/etcd/tags',
   'etcd', 0, 'etcd.png', 'HA', 'https://github.com/etcd-io/etcd');
-INSERT INTO releases VALUES ('etcd', 1, 'etcd', 'Etcd', '', 'prod', '', 1, 'POSTGRES', '', '');
-INSERT INTO versions VALUES ('etcd', '3.5.9', 'el9, arm9', 0, '20231013', '', '', '');
+INSERT INTO releases VALUES ('etcd', 1, 'etcd', 'Etcd', '', 'ent', '', 1, 'POSTGRES', '', '');
+INSERT INTO versions VALUES ('etcd', '3.5.9', 'el9, arm9', 1, '20231013', '', '', '');
 
 INSERT INTO projects VALUES ('ddlx', 'ext',     4, 0, 'hub', 0, 'https://github.com/lacanoid/pgddl/releases', 'ddlx',  1, 'ddlx.png', 'DDL Extractor', 'https://github.com/lacanoid/pgddl#ddl-extractor-functions--for-postgresql');
 INSERT INTO releases VALUES ('ddlx-pg13', 2, 'ddlx', 'DDLeXtact', '', 'prod','',  0, 'POSTGRES', '', '');

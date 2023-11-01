@@ -428,20 +428,23 @@ def get_platform_specific_version(p_comp, p_ver):
 
 
 ## get list of installed & available components ###############################
-def get_list(p_isOLD, p_isExtensions, p_isJSON, p_isTEST, p_showLATEST, p_comp=None, p_return=False):
-  # r_sup_plat = util.like_pf("r.sup_plat")
+def get_list(p_isJSON, p_comp=None, p_return=False):
+
   r_sup_plat = "1 = 1"
 
-  if p_isOLD:
+  if util.SHOWDUPS:
     exclude_comp = ""
   else:
     exclude_comp = " AND v.component NOT IN (SELECT component FROM components)"
 
-  if p_isTEST:
-    exclude_comp = exclude_comp + " AND r.stage in ('test', 'prod')"
-  else:
-    exclude_comp = exclude_comp + " AND r.stage = 'prod'"
+  my_in = "'prod'"
+  if util.isTEST:
+    my_in = my_in + ", 'test'"
+  if util.isENT:
+    my_in = my_in + ", 'ent'"
 
+  exclude_comp = exclude_comp + f" AND r.stage in ({my_in})"
+  
   parent_comp_condition = ""
   installed_category_conditions = " AND p.category > 0 "
   available_category_conditions = " AND p.category > 0 AND p.is_extension = 0"
@@ -612,7 +615,7 @@ def get_list(p_isOLD, p_isExtensions, p_isJSON, p_isTEST, p_showLATEST, p_comp=N
 
         if date_diff <= 30:
           compDict['is_new'] = 1
-        if p_showLATEST and date_diff > 30:
+        if util.showLATEST and date_diff > 30:
           continue
       except Exception as e:
         pass
@@ -671,7 +674,7 @@ def get_list(p_isOLD, p_isExtensions, p_isJSON, p_isTEST, p_showLATEST, p_comp=N
       print(json.dumps(jsonList, sort_keys=True, indent=2))
     else:
       if len(jsonList) >= 1:
-        if p_showLATEST:
+        if util.showLATEST:
           print("New components released in the last 30 days.")
         print(api.format_data_to_table(jsonList, keys, headers))
 
