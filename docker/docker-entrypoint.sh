@@ -20,7 +20,12 @@ then
   ./nodectl spock node-create $HOSTNAME "host=`hostname -I` user=pgedge dbname=demo" demo
   ./nodectl spock repset-create demo_replication_set demo
   PGEDGE=`host $PEER_HOSTNAME | awk '{print $NF}'`
-  sleep 15
+  OUTPUT=""
+  while [ ! $OUTPUT == *$HOSTNAME* ]
+  do
+    EXPORT OUTPUT=$(psql -h $PGEDGE  demo -c "SELECT node_name FROM spock.node")
+    sleep 1
+  done
   echo "Setup to go from `hostname -I` to $PGEDGE"
   ./nodectl spock sub-create sub_$HOSTNAME$PEER_HOSTNAME "host=$PGEDGE port=5432 user=pgedge dbname=demo" demo
 

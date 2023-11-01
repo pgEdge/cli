@@ -8,6 +8,5 @@ RUN dnf -y  --allowerasing install bzip2 epel-release  \
 RUN useradd -m pgedge -s /bin/bash
 RUN echo pgedge:asdf | chpasswd
 RUN echo "pgedge ALL = NOPASSWD: ALL" >/etc/sudoers.d/pgedge
-COPY fake-systemctl /usr/local/bin/systemctl
 USER pgedge
 CMD /docker-entrypoint.sh
