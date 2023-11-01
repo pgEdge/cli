@@ -24,9 +24,9 @@ then
 
   while :
   do
-    mapfile -t node_array < <(psql -t $DBNAME -h $PEER_HOSTNAME -c "SELECT node_name FROM spock.node;")
+    mapfile -t node_array < <(psql -A -t $DBNAME -h $PEER_HOSTNAME -c "SELECT node_name FROM spock.node;")
     for element in "${node_array[@]}"; do
-      if [ $element = "$PEER_HOSTNAME" ]; then
+      if [[ "$element" == "$PEER_HOSTNAME" ]]; then
           break 2
       fi
     done
