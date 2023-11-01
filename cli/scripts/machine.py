@@ -201,41 +201,6 @@ def provider_list():
     print("aws   Amazon Web Services")
 
 
-def firewalld_list(zone="external"):
-    util.echo_cmd(f"sudo firewall-cmd --list-sources --zone={zone}")
-    util.echo_cmd(f"sudo firewall-cmd --list-ports --zone={zone}")
-
-
-def firewalld_add(sources, ports, zone="external"):
-    print(f"firewalld_add {sources} {ports}")
-    firewalld_action("add", sources, ports, zone)
-
-
-def firewalld_remove(sources, ports, zone="external"):
-    firewalld_action("remove", sources, ports, zone)
-
-
-def firewalld_action(action, sources, ports, zone):
-
-    sources = str(sources)
-    l_srcs = sources.split(" ")
-
-    ports = str(ports)
-    l_prts = ports.split(" ")
-
-    for s in l_srcs:
-        s = s.strip()
-        if s >  "":
-            util.echo_cmd(f"sudo firewall-cmd --{action}-source={s}  --zone={zone}")
-
-    for p in l_prts:
-        p = p.strip()
-        if p > "":
-            util.echo_cmd(f"sudo firewall-cmd --{action}-port={p}/tcp  --zone={zone}")
-
-    util.echo_cmd(f"sudo firewall-cmd --runtime-to-permanent")
-
-
 if __name__ == '__main__':
   fire.Fire({
     'node-list':       node_list,
@@ -243,7 +208,4 @@ if __name__ == '__main__':
     'node-destroy':    node_destroy,
     'provider-list':   provider_list,
     'location-list':   location_list,
-    'firewalld-list':   firewalld_list,
-    'firewalld-add':    firewalld_add,
-    'firewalld-remove': firewalld_remove
   })
