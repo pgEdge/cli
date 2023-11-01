@@ -1,12 +1,11 @@
 FROM rockylinux:9.2
-COPY docker-entrypoint.sh /
-RUN chmod +x docker-entrypoint.sh
 RUN dnf -y  --allowerasing install bzip2 epel-release  \
     curl sudo procps vim unzip python3   \
     openssh-server openssh-clients dnsutils
-
 RUN useradd -m pgedge -s /bin/bash
 RUN echo pgedge:asdf | chpasswd
 RUN echo "pgedge ALL = NOPASSWD: ALL" >/etc/sudoers.d/pgedge
+COPY docker-entrypoint.sh /
+RUN chmod +x docker-entrypoint.sh
 USER pgedge
 CMD /docker-entrypoint.sh
