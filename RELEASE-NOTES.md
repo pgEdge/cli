@@ -6,6 +6,8 @@
   + MACHINE: 2nd pass includes support for basic AWS & EQNX functionality
 
 ### Minor fixes and supporting enhancements:
+  + 1st pass at --ent components
+  + refactor --extension, --showduplicates & --test
   * bump readonly to 1.1.1, vector to 1.1.1, & spock31 to 3.1.8
   + 'CREATE EXTENSION snowflake' after install --no-restart (pgedge-2-07)
   + better messaging for unsupported pg binaries on a platform
