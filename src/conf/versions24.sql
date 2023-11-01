@@ -85,7 +85,7 @@ INSERT INTO categories VALUES (9,  87, 'Management & Monitoring', 'Manage/Monito
 -- ## HUB ################################
 INSERT INTO projects VALUES ('hub', 'app', 0, 0, 'hub', 0, 'https://github.com/pgedge/nodectl','',0,'','','');
 INSERT INTO releases VALUES ('hub', 1, 'hub', '', '', 'hidden', '', 1, '', '', '');
-INSERT INTO versions VALUES ('hub', '24.005', '',  1, '20231031', '', '', '');
+INSERT INTO versions VALUES ('hub', '24.005', '',  1, '20231103', '', '', '');
 INSERT INTO versions VALUES ('hub', '24.004', '',  0, '20231024', '', '', '');
 INSERT INTO versions VALUES ('hub', '24.003', '',  0, '20231023', '', '', '');
 INSERT INTO versions VALUES ('hub', '24.002', '',  0, '20231020', '', '', '');
@@ -318,18 +318,22 @@ INSERT INTO versions VALUES ('nclibs', '1.0', '', 1, '20231021', '', '', '');
 INSERT INTO projects VALUES ('pgcat', 'pge', 11, 5433, 'hub', 3, 'https://github.com/pgedge/pgcat/tags',
   'cat',  0, 'pgcat.png', 'Connection Pooler', 'https://github.com/pgedge/pgcat');
 INSERT INTO releases VALUES ('pgcat', 2, 'pgcat',  'pgCat', '', 'prod', '', 1, 'MIT', '', '');
-INSERT INTO versions VALUES ('pgcat', '1.1.1', 'el9, arm9', 1, '20230829', '', '', '');
+INSERT INTO versions VALUES ('pgcat', '1.1.1', 'el9, arm9', 0, '20230829', '', '', '');
 
 INSERT INTO projects VALUES ('backrest', 'pge', 11, 0, 'hub', 3, 'http://pgbackrest.org',
   'backrest',  0, 'backrest.png', 'Backup & Restore', 'http://pgbackrest.org');
 INSERT INTO releases VALUES ('backrest', 2, 'backrest',  'pgBackRest', '', 'prod', '', 1, 'MIT', '', '');
-INSERT INTO versions VALUES ('backrest', '2.47-1', 'el9, arm9', 1, '20230803', '', '', '');
-INSERT INTO versions VALUES ('backrest', '2.46-1', 'el9, arm9', 0, '20230524', '', '', '');
+INSERT INTO versions VALUES ('backrest', '2.47-1', 'el9, arm9', 0, '20230803', '', '', '');
+
+INSERT INTO projects VALUES ('firewalld', 'app', 11, 0, '', 4, 'https://firewalls.org',
+  'firewalld', 0, 'firewalld.png', 'HA', 'https://github.com/firewalld/firewalld');
+INSERT INTO releases VALUES ('firewalld', 1, 'firewalld', 'Firewalld', '', 'prod', '', 1, 'POSTGRES', '', '');
+INSERT INTO versions VALUES ('firewalld', '1.2', '', 0, '20231103', '', '', '');
 
 INSERT INTO projects VALUES ('staz', 'app', 11, 0, '', 4, 'https://github.com/pgedge/staz/tags',
   'staz', 0, 'patroni.png', 'HA', 'https://github.com/pgedge/staz');
 INSERT INTO releases VALUES ('staz', 1, 'staz', 'Spock 3 AZ', '', 'prod', '', 1, 'POSTGRES', '', '');
-INSERT INTO versions VALUES ('staz', '3.1.2.2', '', 1, '20231021', '', '', '');
+INSERT INTO versions VALUES ('staz', '3.1.2.2', '', 0, '20231021', '', '', '');
 
 INSERT INTO projects VALUES ('etcd', 'app', 11, 0, 'hub', 4, 'https://github.com/etcd-io/etcd/tags',
   'etcd', 0, 'etcd.png', 'HA', 'https://github.com/etcd-io/etcd');

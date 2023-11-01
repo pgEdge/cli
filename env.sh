@@ -5,7 +5,8 @@ hubV=24.005
 
 spock32V=3.2dev5-1
 spock31V=3.1.8-1
-catV=1.1.1
+
+
 foslotsV=1a-1
 snwflkV=1.1-1
 vectorV=0.5.1-1
@@ -19,12 +20,14 @@ P14=14.9-1
 P13=13.12-1
 P12=12.16-1
 
+catV=1.1.1
+firwldV=1.2
 postgrestV=11.2.0-1
 prompgexpV=0.11.1
 backrestV=2.47-1
-curlV=2.1.1-1
 readonlyV=1.1.1-1
 
+curlV=2.1.1-1
 citusV=11.2.0-1
 
 oraclefdwV=2.6.0-1
