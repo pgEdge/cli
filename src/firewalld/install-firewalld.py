@@ -1,8 +1,7 @@
-import os
 
 import util
 
-if os.getenv("isAutoStart", "") == "True":
-  os.system("./nc init bouncer")
-  os.system("./nc start bouncer")
+comp="firewalld"
+
+util.echo_cmd(f"sudo dnf -y install {comp}")
 

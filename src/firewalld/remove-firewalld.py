@@ -1,14 +1,7 @@
-import os
-import component, util, startup 
 
-comp = "bouncer"
-autostart =  util.get_column("autostart", comp)
-if autostart == "on":
-  os.system("sudo systemctl stop    bouncer")
-  os.system("sudo systemctl disable bouncer")
+import util
 
-  sysd_dir = util.get_systemd_dir()
-  os.system("sudo rm -f " + sysd_dir + os.sep + "bouncer.service")
+comp="firewalld"
 
-  os.system("sudo systemctl daemon-reload")
+util.echo_cmd(f"sudo dnf -y remove {comp}")
 

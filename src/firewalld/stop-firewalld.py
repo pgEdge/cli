@@ -1,4 +1,6 @@
-import component
+import util 
 
-component.stop_comp('bouncer')
+comp = "firewalld"
+
+util.echo_cmd(f"sudo systemctl stop {comp}")
 
