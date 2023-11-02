@@ -17,8 +17,8 @@ use contains;
 my $username = "lcusr";
 my $password = "password";
 my $database = "lcdb";
-my $version = "pg16";
-my $spock = "3.1";
+my $version = "pg17";
+my $spock = "3.2";
 my $cluster = "demo";
 my $repset = "demo-repset";
 my $n1 = "~/work/nodectl/test/pgedge/cluster/demo/n1";
@@ -32,7 +32,7 @@ my $homedir = $out->[0]->{"home"};
 print("The home directory of n1 is {$homedir}\n");
 
 # We can retrieve the port number from nodectl in json form...
-my $json2 = `$n1/pgedge/nc --json info pg16`;
+my $json2 = `$n1/pgedge/nc --json info $version`;
 #print("my json = $json2");
 my $out2 = decode_json($json2);
 my $port = $out2->[0]->{"port"};
@@ -46,7 +46,7 @@ my $homedir2 = $out3->[0]->{"home"};
 print("The home directory of n2 is {$homedir2}\n");
 
 # We can retrieve the port number from nodectl in json form...
-my $json4 = `$n2/pgedge/nc --json info pg16`;
+my $json4 = `$n2/pgedge/nc --json info $version`;
 #print("my json = $json4");
 my $out4 = decode_json($json4);
 my $port2 = $out4->[0]->{"port"};
