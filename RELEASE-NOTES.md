@@ -5,6 +5,7 @@
 ### New Features:
   + MACHINE: 2nd pass includes support for basic AWS & EQNX functionality
   + FIREWALL: new support for firewalld configuration
+  + Support for PyCharm IDE for making development easier
 
 ### Minor fixes and supporting enhancements:
   + cleanup requirements.txt
