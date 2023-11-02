@@ -1,6 +1,11 @@
 # pgEdge Platform Release Notes #############
 
 
+## done so far for 24.006 on 2023-11-02 ###########
+  + 1st pass at OSX support for dev
+  + 1st pass at creating multicloud clusters leveraging new MACHINE & FIREWALL CLI's
+
+
 ## done for 24.005 on 2023-11-01 ###########
 ### New Features:
   + MACHINE: 2nd pass includes support for basic AWS & EQNX functionality
