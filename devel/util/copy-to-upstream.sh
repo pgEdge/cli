@@ -1,7 +1,7 @@
 #!/bin/bash
 cd "$(dirname "$0")"
 
-# copy-to-s3
+export BUCKET=s3://pgedge-upstream
 
 if [ "$1" == "" ]; then
   echo "The outDir parameter must be specified"
