@@ -4,7 +4,7 @@
 
 import sys, os
 if sys.version_info < (3, 6):
-  print("We require Python 3.6+ (3.9+ for advanced functionality)")
+  print("We require Python 3.6+ (3.9+ for advanced spock functionality)")
   sys.exit(1)
 
 IS_64BITS = sys.maxsize > 2**32

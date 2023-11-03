@@ -786,4 +786,4 @@ def fatal_error(err, sql, func):
 
 
 ## MAINLINE ################################################################
-con = sqlite3.connect(os.getenv("MY_LITE"), check_same_thread=False)
+con = sqlite3.connect(util.MY_LITE, check_same_thread=False)
