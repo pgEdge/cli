@@ -53,9 +53,14 @@ import logging
 import logging.handlers
 from semantic_version import Version
 
-if not util.is_writable(os.path.join(os.getenv('MY_HOME'), 'conf')):
-  print("You must run as administrator/root.")
-  exit()
+my_conf = os.path.join(util.MY_HOME, 'conf')
+if not util.is_writable(my_conf):
+  rc = os.system(f"sudo mkdir -P {my_conf}")
+  if rc == 0:
+    pass
+  else:
+    print(f"Unable to write to '{my_conf}' directory")
+    os.exit()
 
 if util.get_value("GLOBAL", "PLATFORM", "") in ("", "posix", "windoze"):
   util.set_value("GLOBAL", "PLATFORM", util.get_default_pf())
@@ -97,10 +102,10 @@ installed_comp_list = []
 global check_sum_match
 check_sum_match = True
 
-backup_dir = os.path.join(os.getenv('MY_HOME'), 'conf', 'backup')
+backup_dir = os.path.join(util.MY_HOME, 'conf', 'backup')
 backup_target_dir = os.path.join(backup_dir, time.strftime("%Y%m%d%H%M"))
 
-pid_file = os.path.join(os.getenv('MY_HOME'), 'conf', 'cli.pid')
+pid_file = os.path.join(util.MY_HOME, 'conf', 'cli.pid')
 
 ISJSON = os.environ.get("ISJSON", "False")
 
@@ -1075,9 +1080,9 @@ def update_if_needed():
 ## Initialize Globals ##############################################
 REPO=util.get_value('GLOBAL', 'REPO')
 
-os.chdir(MY_HOME)
+os.chdir(util.MY_HOME)
 
-db_local = os.getenv("MY_LITE")
+db_local = util.MY_LITE
 
 connL = sqlite3.connect(db_local)
 
@@ -1112,8 +1117,6 @@ full_cmd_line = " ".join(args[1:])
 ## validate inputs ###########################################
 if len(args) == 1:
   api.info(False, MY_HOME, REPO)
-  print(" ")
-  print(get_help_text())
   exit_cleanly(0)
 
 if ((args[1] == "--version") or (args[1] == "-v")):
