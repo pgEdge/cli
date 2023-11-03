@@ -13,6 +13,11 @@ import shutil, filecmp, traceback, time, subprocess, getpass
 import tarfile
 from log_helpers import bcolours, characters
 
+MY_CMD = os.getenv("MY_CMD")
+MY_HOME = os.getenv("MY_HOME", ".." + os.sep + "..")
+MY_LITE = os.getenv("MY_LITE")
+pid_file = os.path.join(MY_HOME, "conf", "cli.pid")
+
 isTEST = False
 isENT = False
 isSHOWDUPS = False
@@ -50,10 +55,6 @@ if os.path.exists(platform_lib_path):
 import clilog
 
 my_logger = logging.getLogger("cli_logger")
-MY_CMD = os.getenv("MY_CMD")
-MY_HOME = os.getenv("MY_HOME", ".." + os.sep + "..")
-pid_file = os.path.join(MY_HOME, "conf", "cli.pid")
-
 
 def load_ini(file_nm, section):
     try:
@@ -3515,5 +3516,4 @@ def delete_shortlink_osx(short_link):
 
 
 ## MAINLINE ################################################################
-my_lite = os.getenv("MY_LITE")
-cL = sqlite3.connect(my_lite, check_same_thread=False)
+cL = sqlite3.connect(MY_LITE, check_same_thread=False)

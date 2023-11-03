@@ -2,9 +2,9 @@
 #  Copyright 2022-2024 PGEDGE  All rights reserved. #
 #####################################################
 
-import sys
+import sys, os
 if sys.version_info < (3, 6):
-  print("Currently we run on Python 3.6+")
+  print("We require Python 3.6+ (3.9+ for advanced functionality)")
   sys.exit(1)
 
 IS_64BITS = sys.maxsize > 2**32
@@ -12,7 +12,13 @@ if not IS_64BITS:
   print("This is a 32bit machine and we are 64bit.")
   sys.exit(1)
 
-import os
+MY_HOME = os.getenv('MY_HOME', None)
+MY_CMD =  os.getenv('MY_CMD', None)
+MY_LITE = os.getenv('MY_LITE', None)
+if not (MY_HOME and MY_CMD and MY_LITE):
+  print("Required Envs not set (MY_HOME, MY_CMD, MY_LITE)")
+  sys.exit(1)
+
 import socket
 import subprocess
 import time
@@ -30,8 +36,6 @@ import io
 import errno
 import traceback
 
-MY_HOME = os.getenv('MY_HOME')
-MY_CMD =  os.getenv('MY_CMD')
 
 ## Our own library files ##########################################
 sys.path.append(os.path.join(os.path.dirname(__file__), 'lib'))
