@@ -13,9 +13,10 @@ import shutil, filecmp, traceback, time, subprocess, getpass
 import tarfile
 from log_helpers import bcolours, characters
 
-MY_CMD = os.getenv("MY_CMD")
-MY_HOME = os.getenv("MY_HOME", ".." + os.sep + "..")
-MY_LITE = os.getenv("MY_LITE")
+MY_CMD = os.getenv("MY_CMD", None)
+MY_HOME = os.getenv("MY_HOME", None)
+MY_LITE = os.getenv("MY_LITE", None)
+
 pid_file = os.path.join(MY_HOME, "conf", "cli.pid")
 
 isTEST = False
