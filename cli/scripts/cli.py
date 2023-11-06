@@ -1281,7 +1281,6 @@ if "--test" in args:
   args.remove("--test")
 
 if "--tent" in args:
-  print("DEBUG TENT")
   util.isTEST = True
   util.isENT = True
   args.remove("--tent")

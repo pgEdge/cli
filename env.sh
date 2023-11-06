@@ -22,6 +22,7 @@ P12=12.16-1
 
 catV=1.1.1
 firwldV=1.2
+adminV=7-1
 postgrestV=11.2.0-1
 prompgexpV=0.11.1
 backrestV=2.47-1

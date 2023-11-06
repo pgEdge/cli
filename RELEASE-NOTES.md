@@ -1,10 +1,11 @@
 # pgEdge Platform Release Notes #############
 
 
-## done so far for 24.006 on 2023-11-03 ###########
+## done so far for 24.006 on 2023-11-06 ###########
   + able to now run PyCharm IDE/debugger on cli.py
   + rework/refactor our container strategy to lose dependency on systemctl
-  + 1st pass at OSX support for dev
+  + refactor install pgadmin4 web to support el9, httpd & configuring firewalld
+  + another pass at OSX support for dev
   + 1st pass at creating multicloud clusters leveraging new MACHINE & FIREWALL CLI's  
 
 

@@ -432,7 +432,7 @@ def get_list(p_isJSON, p_comp=None, p_return=False):
 
   r_sup_plat = "1 = 1"
 
-  if util.SHOWDUPS:
+  if util.isSHOWDUPS:
     exclude_comp = ""
   else:
     exclude_comp = " AND v.component NOT IN (SELECT component FROM components)"
@@ -452,7 +452,7 @@ def get_list(p_isJSON, p_comp=None, p_return=False):
 
   extra_extensions = "('')"
 
-  if p_isExtensions:
+  if util.isEXTENSIONS: 
     installed_category_conditions = " AND ((p.is_extension = 1) OR (c.component in " + extra_extensions + "))"
     available_category_conditions = " AND ((p.is_extension = 1) OR (v.component in " + extra_extensions + "))"
     if p_comp != "all":
@@ -510,7 +510,7 @@ def get_list(p_isJSON, p_comp=None, p_return=False):
 
   if os.getenv('isSVCS', "") == "True":
     sql = svcs + "\n ORDER BY 1, 3, 4, 6"
-  elif p_isExtensions:
+  elif util.isEXTENSIONS:
     sql = installed + "\n UNION \n" + available + "\n ORDER BY 1, 3, 4, 6"
   else:
     sql = installed + "\n UNION \n" + available + "\n UNION \n" + extensions + "\n ORDER BY 1, 3, 4, 6"
@@ -615,8 +615,6 @@ def get_list(p_isJSON, p_comp=None, p_return=False):
 
         if date_diff <= 30:
           compDict['is_new'] = 1
-        if util.showLATEST and date_diff > 30:
-          continue
       except Exception as e:
         pass
 
@@ -674,8 +672,6 @@ def get_list(p_isJSON, p_comp=None, p_return=False):
       print(json.dumps(jsonList, sort_keys=True, indent=2))
     else:
       if len(jsonList) >= 1:
-        if util.showLATEST:
-          print("New components released in the last 30 days.")
         print(api.format_data_to_table(jsonList, keys, headers))
 
   except Exception as e:

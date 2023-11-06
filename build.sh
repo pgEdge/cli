@@ -492,6 +492,7 @@ initPG () {
     initC "etcd"      "etcd"      "$etcdV"     "$outPlat" "etcd"              "" "" "nil"
     initC "firewalld" "firewalld" "$firwldV"   ""         "firewalld"         "" "" "nil"
     initC "pgcat"     "pgcat"     "$catV"      "$outPlat" "postgres/pgcat"    "" "" "nil"
+    initC "pgadmin4"  "pgadmin4"  "$adminV"    ""         "postgres/pgadmin4" "" "" "Y"
   fi
 
   return
