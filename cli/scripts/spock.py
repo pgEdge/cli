@@ -82,7 +82,7 @@ Create a spock node
            get_eq("dsn",       dsn,       ")")
   util.run_psyco_sql(pg_v, db, sql)
   if node_name[0] == 'n' and node_name[1].isdigit():
-    cmd=f"db set-guc snowflake.node_id {node_name[1]} {db}"
+    cmd=f"db set-guc snowflake.node {node_name[1]}"
     rc = os.system(nc + cmd)
   sys.exit(0)
 
