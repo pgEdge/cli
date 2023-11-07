@@ -14,7 +14,7 @@ import fire
 import cluster
 import psycopg
 from datetime import datetime
-from multiprocessing import Manager, cpu_count, Value, Queue
+from multiprocessing import Manager, cpu_count, Value, Lock
 from ordered_set import OrderedSet
 from itertools import combinations
 from mpire import WorkerPool
@@ -25,7 +25,9 @@ l_dir = "/tmp"
 # Shared variables needed by multiprocessing
 queue = Manager().list()
 result_queue = Manager().list()
+diff_dict = Manager().dict()
 row_diff_count = Value("I", 0)
+lock = Lock()
 
 # Set max number of rows up to which
 # diff-tables will work
@@ -417,13 +419,27 @@ def compare_checksums(
             t1_diff = t1_set - t2_set
             t2_diff = t2_set - t1_set
 
-            if len(t1_diff) > 0 or len(t2_diff) > 0:
-                block_result["diffs"].append(
-                    {
-                        host1: [dict(zip(cols, row)) for row in t1_diff],
-                        host2: [dict(zip(cols, row)) for row in t2_diff],
-                    }
-                )
+            node_pair_key = f"{host1}/{host2}"
+
+            if node_pair_key not in diff_dict:
+                diff_dict[node_pair_key] = {}
+
+            with lock:
+                if len(t1_diff) > 0 or len(t2_diff) > 0:
+                    temp_dict = {}
+                    if host1 in diff_dict[node_pair_key]:
+                        temp_dict[host1] = diff_dict[node_pair_key][host1]
+                    else:
+                        temp_dict[host1] = []
+                    if host2 in diff_dict[node_pair_key]:
+                        temp_dict[host2] = diff_dict[node_pair_key][host2]
+                    else:
+                        temp_dict[host2] = []
+
+                    temp_dict[host1] += [dict(zip(cols, row)) for row in t1_diff]
+                    temp_dict[host2] += [dict(zip(cols, row)) for row in t2_diff]
+
+                    diff_dict[node_pair_key] = temp_dict
 
             with row_diff_count.get_lock():
                 row_diff_count.value += max(len(t1_diff), len(t2_diff))
@@ -720,12 +736,6 @@ def table_diff(
 
 
 def write_diffs_json(block_rows):
-    output_json = {}
-
-    output_json["total_diffs"] = row_diff_count.value
-    output_json["block_size"] = block_rows
-    output_json["diffs"] = [cur_entry for cur_entry in queue]
-
     dirname = datetime.now().astimezone(None).strftime("%Y-%m-%d_%H:%M:%S")
 
     if not os.path.exists("diffs"):
@@ -737,7 +747,7 @@ def write_diffs_json(block_rows):
     filename = os.path.join(dirname, "diff.json")
 
     with open(filename, "w") as f:
-        f.write(json.dumps(output_json, default=str))
+        f.write(json.dumps(dict(diff_dict), default=str))
 
     util.message(
         f"Diffs written out to" f" {util.set_colour(filename, 'blue')}",
@@ -801,7 +811,8 @@ def write_diffs_csv():
         subprocess.check_output(cmd, shell=True)
 
         util.message(
-            f"DIFFS BETWEEN {util.set_colour(n1, 'blue')} AND {util.set_colour(n2, 'blue')}: {diff_file_name}",
+            f"DIFFS BETWEEN {util.set_colour(n1, 'blue')}"
+            f"AND {util.set_colour(n2, 'blue')}: {diff_file_name}",
             p_state="info",
         )
 
@@ -893,28 +904,32 @@ def table_rerun(cluster_name, diff_file, table_name):
         key_cols = key.split(",")
         simple_primary_key = False
 
-        for diff in diff_json["diffs"]:
-            for d in diff["diffs"]:
-                node_pair = "/".join(d.keys())
-                if node_pair not in diff_values:
-                    diff_values[node_pair] = set()
-                for node in d.keys():
-                    for row in d[node]:
-                        diff_values[node_pair].add(tuple(row[col] for col in key_cols))
+        node_pairs = diff_json.keys()
+
+        for node_pair in node_pairs:
+            if node_pair not in diff_values:
+                diff_values[node_pair] = set()
+
+            for node in node_pair.split("/"):
+                for row in diff_json[node_pair][node]:
+                    diff_values[node_pair].add(tuple(row[col] for col in key_cols))
     else:
         # We have a single column primary key
-        for diff in diff_json["diffs"]:
-            for d in diff["diffs"]:
-                node_pair = "/".join(d.keys())
-                if node_pair not in diff_values:
-                    diff_values[node_pair] = set()
-                for node in d.keys():
-                    for row in d[node]:
-                        diff_values[node_pair].add(row[key])
+        node_pairs = diff_json.keys()
+
+        for node_pair in node_pairs:
+            if node_pair not in diff_values:
+                diff_values[node_pair] = set()
+
+            for node in node_pair.split("/"):
+                for row in diff_json[node_pair][node]:
+                    diff_values[node_pair].add(row[key])
 
     # Transform the set of tuples into a list of tuples
     for node_pair in diff_values.keys():
         diff_values[node_pair] = list(diff_values[node_pair])
+
+    cols_list = cols.split(",")
 
     def run_query(cur, query):
         cur.execute(query)
@@ -932,6 +947,7 @@ def table_rerun(cluster_name, diff_file, table_name):
         node1_set = OrderedSet()
         node2_set = OrderedSet()
 
+        # XXX: This needs further testing
         if simple_primary_key:
             for index in values:
                 sql = f"""
@@ -980,8 +996,8 @@ def table_rerun(cluster_name, diff_file, table_name):
 
         if len(node1_diff) > 0 or len(node2_diff) > 0:
             diff_rerun[node_pair_key] = {
-                node1: list(node1_diff),
-                node2: list(node2_diff),
+                node1: [dict(zip(cols_list, row)) for row in node1_diff],
+                node2: [dict(zip(cols_list, row)) for row in node2_diff],
             }
 
     dirname = datetime.now().astimezone(None).strftime("%Y-%m-%d_%H:%M:%S")
@@ -1136,7 +1152,6 @@ def table_repair(cluster_name, diff_file, source_of_truth, table_name, dry_run=F
             conn.commit()
             cur.close()
         except Exception as e:
-            print(update_sql, true_rows)
             util.exit_message("Error in repair():" + str(e), 1)
 
     run_time = util.round_timedelta(datetime.now() - start_time).total_seconds()

@@ -2,24 +2,41 @@
 #  Copyright 2022-2024 PGEDGE  All rights reserved. #
 #####################################################
 
-MY_VERSION = "24.005"
-
-from subprocess import Popen, PIPE, STDOUT
-from datetime import datetime, timedelta
-
-import os, sys, socket, platform, sqlite3, getpass, signal
-import hashlib, glob, random, json, uuid, logging, tempfile
-import shutil, filecmp, traceback, time, subprocess, getpass
+import os
+import sys
+import socket
+import sqlite3
+import signal
+import hashlib
+import random
+import json
+import uuid
+import logging
+import tempfile
+import shutil
+import traceback
+import time
+import subprocess
 import tarfile
-from log_helpers import bcolours, characters
+from subprocess import Popen, PIPE, STDOUT
+from datetime import date, datetime, timedelta
+import platform
+
+from urllib import request as urllib2
 
 try:
     import psycopg
-except Exception as e:
-    ## Psycopg is only needed for advanced functionality
+except ImportError:
+    # Psycopg is only needed for advanced functionality
     pass
 
-import api, meta, ini
+from log_helpers import bcolours, characters
+import api
+import meta
+import ini
+import clilog
+
+MY_VERSION = "24.005"
 
 ONE_DAY = 86400
 ONE_WEEK = ONE_DAY * 7
@@ -30,7 +47,6 @@ bad_os_warn = False
 isPy3 = True
 PIP = "pip3"
 PYTHON = "python3"
-from urllib import request as urllib2
 
 scripts_lib_path = os.path.join(os.path.dirname(__file__), "lib")
 if scripts_lib_path not in sys.path:
@@ -42,10 +58,10 @@ if os.path.exists(platform_lib_path):
     if platform_lib_path not in sys.path:
         sys.path.append(platform_lib_path)
 
-import clilog
 
 my_logger = logging.getLogger("cli_logger")
 MY_CMD = os.getenv("MY_CMD")
+
 MY_HOME = os.getenv("MY_HOME", ".." + os.sep + "..")
 pid_file = os.path.join(MY_HOME, "conf", "cli.pid")
 
@@ -64,7 +80,7 @@ def load_ini(file_nm, section):
 
 
 def run_psyco_sql(pg_v, db, cmd, usr=None):
-    if usr == None:
+    if usr is None:
         usr = get_user()
 
     if is_verbose():
