@@ -2,6 +2,7 @@
 
 
 ## done so far for 24.007 on 2023-11-08 ###########
+  + fix get/set guc (cady)
 
 
 ## done for 24.006 on 2023-11-07 ###########
