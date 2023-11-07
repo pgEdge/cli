@@ -67,6 +67,8 @@ def node_destroy(provider, name, location):
 
     nodes = driver.list_nodes()
     for n in nodes:
+        if n.state in ("terminated", "unknown"):
+           continue
         if name == n.name:
             util.message(f"Destroying {provider} node {name}")
             if driver.destroy_node(n):
