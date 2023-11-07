@@ -1,6 +1,9 @@
 # pgEdge Platform Release Notes #############
 
 
+## done so far for 24.007 on 2023-11-08 ###########
+
+
 ## done for 24.006 on 2023-11-07 ###########
   + bump pg15 & pg16 to latests from community
   + refactor to be able to run PyCharm IDE/debugger on cli.py

@@ -85,7 +85,8 @@ INSERT INTO categories VALUES (9,  87, 'Management & Monitoring', 'Manage/Monito
 -- ## HUB ################################
 INSERT INTO projects VALUES ('hub', 'app', 0, 0, 'hub', 0, 'https://github.com/pgedge/nodectl','',0,'','','');
 INSERT INTO releases VALUES ('hub', 1, 'hub', '', '', 'hidden', '', 1, '', '', '');
-INSERT INTO versions VALUES ('hub', '24.006', '',  1, '20231108', '', '', '');
+INSERT INTO versions VALUES ('hub', '24.007', '',  1, '20231114', '', '', '');
+INSERT INTO versions VALUES ('hub', '24.006', '',  0, '20231107', '', '', '');
 INSERT INTO versions VALUES ('hub', '24.005', '',  0, '20231101', '', '', '');
 INSERT INTO versions VALUES ('hub', '24.004', '',  0, '20231024', '', '', '');
 INSERT INTO versions VALUES ('hub', '24.003', '',  0, '20231023', '', '', '');
@@ -274,7 +275,7 @@ INSERT INTO versions VALUES ('postgis-pg16', '3.4.0-1', 'el9, arm9', 1, '2023091
 INSERT INTO projects VALUES ('pgadmin4', 'app', 11, 443, '', 1, 'https://www.pgadmin.org/news/',
   'pgadmin4', 0, 'pgadmin.png', 'PostgreSQL Tools', 'https://pgadmin.org');
 INSERT INTO releases VALUES ('pgadmin4', 2, 'pgadmin4', 'pgAdmin 4', '', 'ent', '', 1, 'POSTGRES', '', '');
-INSERT INTO versions VALUES ('pgadmin4', '7-1', '', 1, '20231108', '', '', '');
+INSERT INTO versions VALUES ('pgadmin4', '7-1', '', 1, '20231107', '', '', '');
 
 INSERT INTO projects VALUES ('bulkload', 'ext', 4, 0, 'hub', 5, 'https://github.com/ossc-db/pg_bulkload/releases',
   'bulkload', 1, 'bulkload.png', 'High Speed Data Loading', 'https://github.com/ossc-db/pg_bulkload');
