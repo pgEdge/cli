@@ -49,6 +49,8 @@ def get_size(driver, p_size):
     util.exit_message(f"Invalid size '{size}'")
 
 
+
+
 def get_image(driver, p_image):
     try:
         images = driver.list_images( ex_image_ids={p_image})
@@ -63,6 +65,8 @@ def get_image(driver, p_image):
 
 
 def node_destroy(provider, name, location):
+    """Destroy a node."""
+
     prvdr, driver, section = get_driver(provider, location)
 
     nodes = driver.list_nodes()
@@ -79,6 +83,8 @@ def node_destroy(provider, name, location):
 
 
 def node_create(provider, name, location, size=None, image=None, keyname=None, project=None):
+    """Create a node."""
+
     prvdr, driver, sect = get_driver(provider, location)
 
     if prvdr == "eqnx":
@@ -137,11 +143,39 @@ def create_node_eqnx(name, location, size, image, project):
     return
 
 
+def node_start():
+    """Start a node."""
+    pass
+
+
+def node_stop():
+    """Stop a node."""
+    pass
+
+
+def node_reboot():
+    """Reboot a node."""
+    pass
+
+
 def cluster_nodes(node_names, cluster_name, node_ips=None):
     pass
 
 
-def location_list(provider, location=None, project=None):
+def size_list(provider, location=None):
+    """List available node sizes."""
+
+    prvdr, driver, sect = get_driver(provider, location)
+
+    sizes = driver.list_sizes()
+    sz = None
+    for s in sizes:
+        print(f"{s.name.ljust(18)}  {str(round(s.ram / 1024)).rjust(6)}  {str(s.disk).rjust(6)}  {str(s.bandwidth).rjust(6)}  {str(round(s.price, 1)).rjust(5)}")
+
+
+def location_list(provider, location=None):
+    """List available locations."""
+
     prvdr, driver, sect = get_driver(provider, location)
 
     locations = driver.list_locations()
@@ -199,15 +233,21 @@ def eqnx_node_list(driver, project):
 
 
 def provider_list():
+    """List supported cloud providers."""
+
     print("eqnx  Equinix Metal")
     print("aws   Amazon Web Services")
 
 
 if __name__ == '__main__':
   fire.Fire({
-    'node-list':       node_list,
     'node-create':     node_create,
+    'node-start':      node_start,
+    'node-stop':       node_stop,
+    'node-reboot':     node_reboot,
     'node-destroy':    node_destroy,
+    'node-list':       node_list,
     'provider-list':   provider_list,
     'location-list':   location_list,
+    'size-list':       size_list,
   })
