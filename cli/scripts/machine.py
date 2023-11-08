@@ -67,22 +67,50 @@ def get_image(provider, conn, p_image):
     util.exit_message(f"Invalid image '{p_image}'")
 
 
-def node_destroy(provider, name, location):
-    """Destroy a node."""
-
-    prvdr, conn, section = get_connection(provider, location)
+def get_node(conn, name):
 
     nodes = conn.list_nodes()
     for n in nodes:
         if n.state in ("terminated", "unknown"):
            continue
         if name == n.name:
-            util.message(f"Destroying node '{provider}:{name}:{location}' ({n.public_ips[0]})")
-            rc = conn.destroy_node(n)
-            return(rc)
+            return(n)
+
+    return(None)
+
+
+def node_destroy(provider, name, location):
+    """Destroy a node."""
+    return(node_action("destroy", provider, name, location))
+
+
+def node_action(action, provider, name, location):
+    prvdr, conn, section = get_connection(provider, location)
+
+    nd = get_node(conn, name)
+    if nd:
+        try:
+            if action == "destroy":
+                util.message(f"Destroying node '{provider}:{name}:{location}'")
+                rc = conn.destroy_node(nd)
+            elif action == "stop":
+                util.message(f"Stopping node '{provider}:{name}:{location}'")
+                rc = conn.stop_node(nd)
+            elif action == "start":
+                util.message(f"Starting node '{provider}:{name}:{location}'")
+                rc = conn.start_node(nd)
+            elif action == "reboot":
+                util.message(f"Rebooting node '{provider}:{name}:{location}'")
+                rc = conn.reboot_node(nd)
+            else:
+                util.exit_message(f"Invalid action '{action}'")
+
+        except Exception as e:
+            util.exit_message(str(e), 1)
+
+        return (rc)
 
     util.exit_message(f"Node '{provider}:{name}:{location}' not found", 1)
-    return
 
 
 def is_node_unique(name, prvdr, conn, sect):
@@ -160,19 +188,19 @@ def create_node_eqnx(name, location, size, image, project):
     return
 
 
-def node_start():
+def node_start(provider, name, location):
     """Start a node."""
-    pass
+    return(node_action("start", provider, name, location))
 
 
-def node_stop():
+def node_stop(provider, name, location):
     """Stop a node."""
-    pass
+    return(node_action("stop", provider, name, location))
 
 
-def node_reboot():
+def node_reboot(provider, name, location):
     """Reboot a node."""
-    pass
+    return(node_action("reboot", provider, name, location))
 
 
 def cluster_nodes(node_names, cluster_name, node_ips=None):
@@ -215,17 +243,17 @@ def node_list(provider, location=None):
 def aws_node_list(conn):
     nodes = conn.list_nodes()
     for n in nodes:
-        name = n.name.ljust(7)
+        name = n.name.ljust(16)
         try:
             public_ip = n.public_ips[0].ljust(15)
         except Exception as e:
             public_ip = "".ljust(15)
-        state = n.state.ljust(10)
-        location = n.extra['availability']
-        size = n.extra['instance_type'].ljust(12)
-        key_name = n.extra['key_name']
+        status = n.state.ljust(10)
+        location = n.extra['availability'].ljust(15)
+        size = n.extra['instance_type'].ljust(15)
+        ##key_name = n.extra['key_name']
 
-        print(f"aws   {name}  {public_ip}  {state}  {location}  {size}  {key_name}")
+        print(f"aws   {name}  {public_ip}  {status}  {location}  {size}")
 
     return
 
@@ -233,20 +261,21 @@ def aws_node_list(conn):
 def eqnx_node_list(conn, project):
     nodes = conn.list_nodes(project)
     for n in nodes:
-      name = n.name.ljust(7)
+      name = n.name.ljust(16)
       public_ip = n.public_ips[0].ljust(15)
-      size = n.size.id
-      ram_disk =str(round(n.size.ram / 1024)) + "GB," + str(n.size.disk) + "GB"
-      country = n.extra['facility']['metro']['country']
-      metro = f"{n.extra['facility']['metro']['name']} ({n.extra['facility']['metro']['code']})".ljust(14)
-      az = n.extra['facility']['code'].ljust(4)
-      state = n.state
-      image = n.image.id
+      size = str(n.size.id).ljust(15)
+      ##ram_disk =str(round(n.size.ram / 1024)) + "GB," + str(n.size.disk) + "GB"
+      country = str(n.extra['facility']['metro']['country']).lower()
+      ##metro = f"{n.extra['facility']['metro']['name']} ({n.extra['facility']['metro']['code']})".ljust(14)
+      az = n.extra['facility']['code']
+      location = str(f"{country}-{az}").ljust(15)
+      status = n.state.ljust(10)
+      ##image = n.image.id
 
       crd = n.extra['facility']['address']['coordinates']
-      coordinates = f"{round(float(crd['latitude']), 3)},{round(float(crd['latitude']), 3)}"
+      ##coordinates = f"{round(float(crd['latitude']), 3)},{round(float(crd['latitude']), 3)}"
 
-      print(f"eqnx  {name}  {public_ip} {state}  {country}  {metro}  {az}  {coordinates}  {size}  {ram_disk}  {image}")
+      print(f"eqnx  {name}  {public_ip}  {status}  {location}  {size}")
 
 
 def provider_list():

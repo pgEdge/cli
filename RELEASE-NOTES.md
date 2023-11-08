@@ -5,7 +5,7 @@
   + fix get/set guc (cady)
   + 3rd pass at MACHINE includes:
     - equinixmetal fixes to LibCloud for size_list crash
-    - size_list(), node_start(), node_stop(), node_reboot()
+    - size_list(), node_list(), node_start(), node_stop(), node_reboot()
   + background apps only supported on EL9
   + add error message when './nc list' is empty
 
