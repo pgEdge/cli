@@ -50,12 +50,15 @@ def get_size(driver, p_size):
 
 
 
-
-def get_image(driver, p_image):
+def get_image(provider, driver, p_image):
     try:
-        images = driver.list_images( ex_image_ids={p_image})
+        if provider == "aws":
+            images = driver.list_images(ex_image_ids={p_image})
+        else:
+            images = driver.list_images()
     except Exception as e:
         util.exit_message(str(e), 1)
+
     im = None
     for i in images:
         if i.id == p_image:
@@ -116,12 +119,10 @@ def node_create(provider, name, location, size=None, image=None, keyname=None, p
 def create_node_aws(name, region, size, image, keyname):
     prvdr, driver, section = get_driver("aws", region)
     sz = get_size(driver, size)
-    im = get_image(driver, image)
+    im = get_image("aws", driver, image)
 
     try:
-        node = driver.create_node(name=name, image=im, size=sz,
-                ex_keyname=keyname)
-#               ex_securitygroup=SECURITY_GROUP_NAMES
+        node = driver.create_node(name=name, image=im, size=sz, ex_keyname=keyname)
     except Exception as e:
         util.exit_message(str(e), 1)
 
@@ -131,13 +132,13 @@ def create_node_aws(name, region, size, image, keyname):
 def create_node_eqnx(name, location, size, image, project):
     prvdr, driver, section = get_driver("eqnx")
     sz = get_size(driver, size)
-    im = get_image(driver, image)
+    im = get_image("eqnx", driver, image)
 
     loct = get_location(location)
 
     try:
-        node = driver.create_node(name=name, image=im, size=sz, location=loct, project=project)
-    except e as Exception:
+        node = driver.create_node(name=name, image=im, size=sz, location=loct, ex_project_id=project)
+    except Exception as e:
         util.exit_message(str(e), 1)
 
     return
