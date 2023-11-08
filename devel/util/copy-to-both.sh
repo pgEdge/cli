@@ -1,17 +1,7 @@
 #!/bin/bash
 cd "$(dirname "$0")"
 
-set -x
+./copy-to-upstream.sh $1
 
-export BUCKET=s3://pgedge-upstream
-./copy-to-s3.sh $1
-rc=$?
-if [ ! "$rc" == "0" ]; then
-  exit $rc
-fi
-
-export BUCKET=s3://pgedge-download
-./copy-to-s3.sh $1
-rc=$?
-exit $rc
+./copy-to-download.sh $1
 

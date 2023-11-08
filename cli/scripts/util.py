@@ -2,24 +2,54 @@
 #  Copyright 2022-2024 PGEDGE  All rights reserved. #
 #####################################################
 
-MY_VERSION = "24.005"
-
+import os
+import sys
+import socket
+import sqlite3
+import signal
+import hashlib
+import random
+import json
+import uuid
+import logging
+import tempfile
+import shutil
+import traceback
+import time
+import subprocess
+import getpass
+import filecmp
+import tarfile
 from subprocess import Popen, PIPE, STDOUT
 from datetime import datetime, timedelta
+import platform
 
-import os, sys, socket, platform, sqlite3, getpass, signal
-import hashlib, glob, random, json, uuid, logging, tempfile
-import shutil, filecmp, traceback, time, subprocess, getpass
-import tarfile
-from log_helpers import bcolours, characters
+from urllib import request as urllib2
 
 try:
     import psycopg
-except Exception as e:
-    ## Psycopg is only needed for advanced functionality
+except ImportError:
+    # Psycopg is only needed for advanced functionality
     pass
 
-import api, meta, ini
+from log_helpers import bcolours, characters
+import api
+import meta
+import ini
+import clilog
+
+MY_VERSION = "24.007"
+
+MY_CMD = os.getenv("MY_CMD", None)
+MY_HOME = os.getenv("MY_HOME", None)
+MY_LITE = os.getenv("MY_LITE", None)
+
+pid_file = os.path.join(MY_HOME, "conf", "cli.pid")
+
+isTEST = False
+isENT = False
+isSHOWDUPS = False
+isEXTENSIONS = False
 
 ONE_DAY = 86400
 ONE_WEEK = ONE_DAY * 7
@@ -30,7 +60,6 @@ bad_os_warn = False
 isPy3 = True
 PIP = "pip3"
 PYTHON = "python3"
-from urllib import request as urllib2
 
 scripts_lib_path = os.path.join(os.path.dirname(__file__), "lib")
 if scripts_lib_path not in sys.path:
@@ -42,13 +71,16 @@ if os.path.exists(platform_lib_path):
     if platform_lib_path not in sys.path:
         sys.path.append(platform_lib_path)
 
-import clilog
 
 my_logger = logging.getLogger("cli_logger")
+<<<<<<< HEAD
 MY_CMD = os.getenv("MY_CMD")
+
 MY_HOME = os.getenv("MY_HOME", ".." + os.sep + "..")
 pid_file = os.path.join(MY_HOME, "conf", "cli.pid")
 
+=======
+>>>>>>> main
 
 def load_ini(file_nm, section):
     try:
@@ -64,7 +96,7 @@ def load_ini(file_nm, section):
 
 
 def run_psyco_sql(pg_v, db, cmd, usr=None):
-    if usr == None:
+    if usr is None:
         usr = get_user()
 
     if is_verbose():
@@ -331,7 +363,7 @@ def debug_lvl():
         return 0
 
 
-def echo_cmd(cmd, sleep_secs=0, host="", usr="", key=""):
+def echo_cmd(cmd, echo=True, sleep_secs=0, host="", usr="", key=""):
     if host > "":
         ssh_cmd = "ssh -o StrictHostKeyChecking=no -q -t "
         if usr > "":
@@ -348,7 +380,8 @@ def echo_cmd(cmd, sleep_secs=0, host="", usr="", key=""):
     isSilent = os.getenv("isSilent", "False")
     if isSilent == "False":
         s_cmd = scrub_passwd(cmd)
-        message("#  " + str(s_cmd))
+        if echo:
+          message("#  " + str(s_cmd))
 
     rc = os.system(str(cmd))
     if rc == 0:
@@ -588,7 +621,10 @@ def run_cmd(p_cmd, p_display=False):
         print("  " + cmd)
 
     rc = os.system(sys.executable + " -u " + cmd)
-    return rc
+    if rc == 0:
+        return 0
+
+    return 1
 
 
 def run_sql_cmd(p_pg, p_sql, p_display=False):
@@ -3506,5 +3542,4 @@ def delete_shortlink_osx(short_link):
 
 
 ## MAINLINE ################################################################
-my_lite = os.getenv("MY_LITE")
-cL = sqlite3.connect(my_lite, check_same_thread=False)
+cL = sqlite3.connect(MY_LITE, check_same_thread=False)

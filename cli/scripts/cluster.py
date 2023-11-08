@@ -8,6 +8,11 @@ import pgbench, northwind
 
 base_dir = "cluster"
 
+def remote_create(node_size, provider_locations):
+  """Create a hybrid multi-cloud pgEdge cluster."""
+  pass
+
+
 
 def log_old_vals(p_run_sums, p_nc, p_db, p_pg, p_host, p_usr, p_key):
   for tbl_col in p_run_sums:
@@ -346,12 +351,13 @@ def app_remove(cluster_name, app_name):
 
 if __name__ == '__main__':
   fire.Fire({
-    'local-create':   local_create,
-    'local-destroy':  local_destroy,
-    'remote-init':    remote_init,
-    'remote-reset':   remote_reset,
+    'remote-create':     remote_create,
+    'remote-init':       remote_init,
+    'remote-reset':      remote_reset,
     'remote-import-def': remote_import_def,
-    'command':        command,
-    'app-install':    app_install,
-    'app-remove':     app_remove
+    'local-create':      local_create,
+    'local-destroy':     local_destroy,
+    'command':           command,
+    'app-install':       app_install,
+    'app-remove':        app_remove
   })

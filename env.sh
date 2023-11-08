@@ -1,11 +1,12 @@
 
 bundle=pgedge
 api=nodectl
-hubV=24.005
+hubV=24.007
 
 spock32V=3.2dev5-1
 spock31V=3.1.8-1
-catV=1.1.1
+
+
 foslotsV=1a-1
 snwflkV=1.1-1
 vectorV=0.5.1-1
@@ -13,18 +14,21 @@ vectorV=0.5.1-1
 pgedgeV=2-07
 
 P17=17devel-2
-P16=16.0-2
-P15=15.4-3
-P14=14.9-1
-P13=13.12-1
-P12=12.16-1
+P16=16.1-1
+P15=15.5-1
+P14=14.10-1
+P13=13.13-1
+P12=12.17-1
 
+catV=1.1.1
+firwldV=1.2
+adminV=7-1
 postgrestV=11.2.0-1
 prompgexpV=0.11.1
 backrestV=2.47-1
-curlV=2.1.1-1
 readonlyV=1.1.1-1
 
+curlV=2.1.1-1
 citusV=11.2.0-1
 
 oraclefdwV=2.6.0-1

@@ -107,37 +107,12 @@ def create(db=None, User=None, Passwd=None, Id=None, pg=None):
   return
 
 
-def set_guc(guc_name, guc_value, db, reload=False, replace=True, pg=None):
+def set_guc(guc_name, guc_value, replace=True, pg=None):
   """ Set GUC """
   pg_v = util.get_pg_v(pg)
-  rc = 0
-  try:
-    con = util.get_pg_connection(pg_v, db, util.get_user())
-    con.transaction()
-    cur = con.cursor()
 
-    if replace==True:
-      sql = f"SET {guc_name}={guc_value};"
-    else:
-      sql1 = f"show {guc_name};"
-      cur.execute(sql1)
-      data = cur.fetchone()
-      val = data[0]
-      sql = f"SET {guc_name}={val},{guc_value};"
-  
-    cur.execute(sql)
-    con.commit()
-  except Exception as e:
-    util.print_exception(e)
-    con.rollback()
-    rc = 1
-
-  if reload==True:
-    rc1 = util.echo_cmd(f"./nc reload {pg_v}")
-    rc = rc + rc1
-  
-  return rc
-
+  util.change_pgconf_keyval(pg_v, guc_name, str(guc_value), replace)
+  util.echo_cmd(f"./nc reload {pg_v}")
 
 def show_guc(guc_name, pg=None):
   """ Show GUC """

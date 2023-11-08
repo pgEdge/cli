@@ -486,11 +486,13 @@ initPG () {
       fi
     fi
 
-    initC "pgedge"   "pgedge"   "$pgedgeV"   ""         "postgres/pgedge"   "" "" "Y"
-    initC "backrest" "backrest" "$backrestV" "$outPlat" "postgres/backrest" "" "" "nil"
-    initC "staz"     "staz"     "$stazV"     ""         "postgres/staz"     "" "" "nil"
-    initC "etcd"     "etcd"     "$etcdV"     "$outPlat" "etcd"              "" "" "nil"
-    initC "pgcat"    "pgcat"    "$catV"      "$outPlat" "postgres/pgcat"    "" "" "nil"
+    initC "pgedge"    "pgedge"    "$pgedgeV"   ""         "postgres/pgedge"   "" "" "Y"
+    initC "backrest"  "backrest"  "$backrestV" "$outPlat" "postgres/backrest" "" "" "nil"
+    initC "staz"      "staz"      "$stazV"     ""         "postgres/staz"     "" "" "nil"
+    initC "etcd"      "etcd"      "$etcdV"     "$outPlat" "etcd"              "" "" "nil"
+    initC "firewalld" "firewalld" "$firwldV"   ""         "firewalld"         "" "" "nil"
+    initC "pgcat"     "pgcat"     "$catV"      "$outPlat" "postgres/pgcat"    "" "" "nil"
+    initC "pgadmin4"  "pgadmin4"  "$adminV"    ""         "postgres/pgadmin4" "" "" "Y"
   fi
 
   return
@@ -515,23 +517,24 @@ setupOutdir () {
 }
 
 
-###############################    MAINLINE   #########################################
+##########################    MAINLINE   ####################################
 osName=`uname`
 verSQL="versions24.sql"
 
-PLATFORM=`cat /etc/os-release | grep PLATFORM_ID | cut -d: -f2 | tr -d '\"'`
-if [ "$PLATFORM" == "el8" ]; then
-  isEL="True"
-  isEL8="True"
-  isEL9="False"
-elif [ "$PLATFORM" == "el9" ]; then
-  isEL="True"
-  isEL8="False"
-  isEL9="True"
-else
-  isEL8="False"
-  isEL9="False"
-  isEL="False"
+isEL8="False"
+isEL9="False"
+isEL="False"
+if [ -f /etc/os-release ]; then
+  PLATFORM=`cat /etc/os-release | grep PLATFORM_ID | cut -d: -f2 | tr -d '\"'`
+  if [ "$PLATFORM" == "el8" ]; then
+    isEL="True"
+    isEL8="True"
+    isEL9="False"
+  elif [ "$PLATFORM" == "el9" ]; then
+    isEL="True"
+    isEL8="False"
+    isEL9="True"
+  fi 
 fi
 
 ## process command line paramaters #######

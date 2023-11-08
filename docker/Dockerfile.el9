@@ -1,13 +1,11 @@
 FROM rockylinux:9.2
-RUN yum install epel-release -y
-RUN yum install curl sudo procps vim unzip lbzip2 -y --allowerasing
-RUN yum install python3 -y
-RUN yum install openssh-server openssh-clients dnsutils -y
+RUN dnf -y  --allowerasing install bzip2 epel-release  \
+    curl sudo procps vim unzip python3 nc  \
+    openssh-server openssh-clients dnsutils
 RUN useradd -m pgedge -s /bin/bash
-RUN echo pgedge:asdf |chpasswd
+RUN echo pgedge:asdf | chpasswd
 RUN echo "pgedge ALL = NOPASSWD: ALL" >/etc/sudoers.d/pgedge
-COPY pgedgekey.zip /home/pgedge/
-COPY fake-systemctl /usr/local/bin/systemctl
-COPY bootstrap.sh /usr/local/bin/
-COPY forever.sh /usr/local/bin/
-ENTRYPOINT /usr/local/bin/forever.sh
+COPY docker-entrypoint.sh /
+RUN chmod +x docker-entrypoint.sh
+USER pgedge
+CMD /docker-entrypoint.sh
