@@ -6,6 +6,7 @@
   + 3rd pass at MACHINE includes:
     - equinixmetal fixes to LibCloud for size_list crash
     - size_list(), node_start(), node_stop(), node_reboot()
+  + background apps only support on EL9
 
 
 ## done for 24.006 on 2023-11-07 ###########
