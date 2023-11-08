@@ -665,6 +665,9 @@ def get_list(p_isJSON, p_comp=None, p_return=False):
       compDict['parent'] = parent
       jsonList.append(compDict)
 
+    if not jsonList:
+      util.exit_message(f"No installable components available on '{util.get_el_ver()}'")
+
     if p_return:
       return jsonList
 
