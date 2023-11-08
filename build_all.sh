@@ -81,7 +81,6 @@ fi
 echo "############### Build Package Manager ###################"
 rm -f $OUT/hub-$hubV*
 rm -f $OUT/$bundle-$api-$hubV*
-$CLI/dbg_cleanup.sh
 ./build.sh -X posix -c $bundle-$api -N $hubV
 
 buildALL $majorV $minorV

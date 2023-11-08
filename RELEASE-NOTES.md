@@ -1,29 +1,52 @@
 # pgEdge Platform Release Notes #############
 
-## done for 23.135 on 2023-10-31
-  * include snowflake for pg15 & pg16
-  * bump pgvector to v0.5.1 for pg15 & pg16
-  * 'CREATE EXTENSION snowflake' after install --no-restart
-  * added the '--pause' option to 'install pgegde'
-  * update pgcat, etcd from 'test' to 'prod' status
+
+## done so far for 24.007 on 2023-11-08 ###########
+  + fix get/set guc (cady)
+  + 3rd pass at MACHINE includes:
+    - equinixmetal fixes to LibCloud for size_list crash
+    - size_list(), node_start(), node_stop(), node_reboot()
+  + background apps only supported on EL9
+  + add error message when './nc list' is empty
 
 
+## done for 24.006 on 2023-11-07 ###########
+  + bump pg15 & pg16 to latests from community
+  + refactor to be able to run PyCharm IDE/debugger on cli.py
+  + rework container strategy to lose dependency on systemctl
+  + refactor install pgadmin4 web to support el9, httpd & configuring firewalld
+  + another pass at OSX support for dev
+  + 1st pass at creating multicloud clusters leveraging new MACHINE & FIREWALL CLI's  
 
-## done for 24.005 on 2023-10-31 ###########
+
+## done for 24.005 on 2023-11-01 ###########
+### New Features:
+  + MACHINE: 2nd pass includes support for basic AWS & EQNX functionality
+  + FIREWALL: new support for firewalld configuration
+  + Support for PyCharm IDE for making development easier
 
 ### Minor fixes and supporting enhancements:
-  + bump pgvector to v0.5.1 for pg15 & pg16
-  + 'CREATE EXTENSION snowflake' after install --no-restart
+  + cleanup requirements.txt
+  + 1st pass at --ent components
+  + refactor --extension, --showduplicates & --test
+  * bump readonly to 1.1.1, vector to 1.1.1, & spock31 to 3.1.8
+  + 'CREATE EXTENSION snowflake' after install --no-restart (pgedge-2-07)
   + better messaging for unsupported pg binaries on a platform
   + fix './nc update' when in the 24.xxx stream
   + better instrument 'reload pgXX' when running w/ or wo/ systemd
 
-  * check rehup/reload with set db.set_guc()
+## included in 23.135 so far
+  * include snowflake for pg15 & pg16
+  * 'CREATE EXTENSION snowflake' after install --no-restart
+  * added the '--pause' option to 'install pgegde' (pgedge-2-07)
+
+## done for 23.134 on 2023-10-31
+  * bump readonly to v1.1.1 for fixes and reduced verbosity
+  * bump pgvector to v0.5.1 for latest community fixes
+  * bump spock31 to v3.1.8 for latest stable fixes
 
 
 ## done for 24.004 on 2023-10-24 ###########
-### New Features:
-  + MACHINE: 2nd pass includes support for basic AWS & EQNX functionality
 
 ### Minor fixes and supporting enhancements:
   + deployment problems caused by cady and ibrar and tej.  :-)

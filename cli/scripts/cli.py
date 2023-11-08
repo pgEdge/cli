@@ -2,9 +2,9 @@
 #  Copyright 2022-2024 PGEDGE  All rights reserved. #
 #####################################################
 
-import sys
+import sys, os
 if sys.version_info < (3, 6):
-  print("Currently we run on Python 3.6+")
+  print("We require Python 3.6+ (3.9+ for advanced spock functionality)")
   sys.exit(1)
 
 IS_64BITS = sys.maxsize > 2**32
@@ -12,7 +12,13 @@ if not IS_64BITS:
   print("This is a 32bit machine and we are 64bit.")
   sys.exit(1)
 
-import os
+MY_HOME = os.getenv('MY_HOME', None)
+MY_CMD =  os.getenv('MY_CMD', None)
+MY_LITE = os.getenv('MY_LITE', None)
+if not (MY_HOME and MY_CMD and MY_LITE):
+  print("Required Envs not set (MY_HOME, MY_CMD, MY_LITE)")
+  sys.exit(1)
+
 import socket
 import subprocess
 import time
@@ -30,8 +36,6 @@ import io
 import errno
 import traceback
 
-MY_HOME = os.getenv('MY_HOME')
-MY_CMD =  os.getenv('MY_CMD')
 
 ## Our own library files ##########################################
 sys.path.append(os.path.join(os.path.dirname(__file__), 'lib'))
@@ -49,9 +53,14 @@ import logging
 import logging.handlers
 from semantic_version import Version
 
-if not util.is_writable(os.path.join(os.getenv('MY_HOME'), 'conf')):
-  print("You must run as administrator/root.")
-  exit()
+my_conf = os.path.join(util.MY_HOME, 'conf')
+if not util.is_writable(my_conf):
+  rc = os.system(f"sudo mkdir -P {my_conf}")
+  if rc == 0:
+    pass
+  else:
+    print(f"Unable to write to '{my_conf}' directory")
+    os.exit()
 
 if util.get_value("GLOBAL", "PLATFORM", "") in ("", "posix", "windoze"):
   util.set_value("GLOBAL", "PLATFORM", util.get_default_pf())
@@ -64,7 +73,7 @@ ansi_escape = re.compile(r'\x1b[^m]*m')
 dep9 = util.get_depend()
 
 fire_list = ["service", "um", "spock", "cluster", "staz", "ace",
-             "secure", "db", "app", "machine"]
+             "secure", "db", "app", "machine", "firewall"]
 
 mode_list_advanced = ['kill', 'config', 'init', 'clean', 'useradd', 'spock', 'downgrade',
                       'pgbin', 'psql', 'pg_isready', 'cluster', 'staz', 'ace', 'enable', 'upgrade',
@@ -73,8 +82,8 @@ mode_list_advanced = ['kill', 'config', 'init', 'clean', 'useradd', 'spock', 'do
 
 mode_list = ["start", "stop", "restart", "status", "list", "info", "help", 
              "install", "remove", "--pg", "--start", "--no-restart", "--no-preload",
-             "--help", "--json", "--jsonp", "--test", "--extensions", "--svcs",
-             "--list", "--old", "--showduplicates", "-y", "-t", "--pause",
+             "--help", "--json", "--jsonp", "--svcs",
+             "--list", "-y", "-t", "--pause",
              "--verbose", "--country", "-v", "--debug", "--debug2"] + \
              fire_list + mode_list_advanced
 
@@ -93,10 +102,10 @@ installed_comp_list = []
 global check_sum_match
 check_sum_match = True
 
-backup_dir = os.path.join(os.getenv('MY_HOME'), 'conf', 'backup')
+backup_dir = os.path.join(util.MY_HOME, 'conf', 'backup')
 backup_target_dir = os.path.join(backup_dir, time.strftime("%Y%m%d%H%M"))
 
-pid_file = os.path.join(os.getenv('MY_HOME'), 'conf', 'cli.pid')
+pid_file = os.path.join(util.MY_HOME, 'conf', 'cli.pid')
 
 ISJSON = os.environ.get("ISJSON", "False")
 
@@ -106,7 +115,11 @@ ISJSON = os.environ.get("ISJSON", "False")
 ###################################################################
 
 def fire_away(p_mode, p_args):
-  cmd = "python3 hub/scripts/" + p_mode + ".py"
+  py_file = f"{p_mode}.py"
+  if os.path.exists(py_file):
+    cmd = f"python3 {py_file}"
+  else:
+    cmd = f"python3 hub/scripts/{py_file}"
 
   for n in range(2, len(p_args)):
     parm = p_args[n]
@@ -1067,9 +1080,9 @@ def update_if_needed():
 ## Initialize Globals ##############################################
 REPO=util.get_value('GLOBAL', 'REPO')
 
-os.chdir(MY_HOME)
+os.chdir(util.MY_HOME)
 
-db_local = os.getenv("MY_LITE")
+db_local = util.MY_LITE
 
 connL = sqlite3.connect(db_local)
 
@@ -1104,8 +1117,6 @@ full_cmd_line = " ".join(args[1:])
 ## validate inputs ###########################################
 if len(args) == 1:
   api.info(False, MY_HOME, REPO)
-  print(" ")
-  print(get_help_text())
   exit_cleanly(0)
 
 if ((args[1] == "--version") or (args[1] == "-v")):
@@ -1261,27 +1272,35 @@ while i < len(args):
       break
   i += 1
 
+if "--ent" in args:
+  util.isENT = True
+  args.remove("--ent")
+
+if "--test" in args:
+  util.isTEST = True
+  args.remove("--test")
+
+if "--tent" in args:
+  util.isTEST = True
+  util.isENT = True
+  args.remove("--tent")
+
+
 isSTART = False
 if "--start" in args:
   isSTART = True
   os.environ['isSTART'] = "True"
   args.remove("--start")
 
-isTEST = False
-if "--test" in args:
-  isTEST = True
-  args.remove("--test")
-
 if util.get_stage() == "test":
-  isTEST = True
+  util.isTEST = True
 
-isSHOWDUPS = False
 if "--old" in args:
-  isSHOWDUPS = True
+  util.isSHOWDUPS = True
   args.remove("--old")
-if "--showduplicates" in args:
-  isSHOWDUPS = True
-  args.remove("--showduplicates")
+if "--show-duplicates" in args:
+  util.isSHOWDUPS = True
+  args.remove("--show-duplicates")
 
 isSVCS = False
 if "--svcs" in args and 'list' in args:
@@ -1327,9 +1346,8 @@ if "--silent" in args:
   os.environ['isSilent'] = "True"
   args.remove("--silent")
 
-isEXTENSIONS = False
 if "--extensions" in args:
-  isEXTENSIONS = True
+  util.isEXTENSIONS = True
   args.remove("--extensions")
 
 if len(args) == 1:
@@ -1705,7 +1723,7 @@ try:
 
   ## LIST #########################################################
   if (p_mode == 'list'):
-    meta.get_list(isSHOWDUPS, isEXTENSIONS, isJSON, isTEST, False, p_comp=p_comp)
+    meta.get_list(isJSON, p_comp=p_comp)
 
 
   ## REMOVE ##################################################
@@ -1889,7 +1907,7 @@ try:
 
         stage = str(row[5])
         if stage == 'test':
-          if not isTEST:
+          if not util.isTEST:
             continue
 
         if stage in ('bring-own', 'included', 'soon'):
@@ -1924,7 +1942,7 @@ try:
       else:
         if not isSILENT:
           print("---------- Components available to install or update ------------")
-          meta.get_list(isSHOWDUPS, isEXTENSIONS, isJSON, isTEST, False, p_comp=p_comp)
+          meta.get_list(isJSON, p_comp=p_comp)
     except Exception as e:
       fatal_sql_error(e, sql, "UPDATE in mainline")
 
@@ -1998,7 +2016,7 @@ try:
   if (p_mode == 'upgrade'):
     if p_comp == 'all':
       updates_comp = []
-      comp_list = meta.get_list(False,False, False, False, False, p_return=True)
+      comp_list = meta.get_list(False, p_return=True)
       for c in comp_list:
         if c.get("updates")==1:
           updates_comp.append(c)
