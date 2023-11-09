@@ -4,9 +4,11 @@ import json
 #####################################################
 
 import os, sys
-import fire, libcloud, util
-
+import fire, libcloud
 from libcloud.compute.types import Provider
+
+import util
+
 
 def get_connection(provider="eqnx", location=None):
     prvdr = provider.lower()
