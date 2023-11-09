@@ -71,16 +71,8 @@ if os.path.exists(platform_lib_path):
     if platform_lib_path not in sys.path:
         sys.path.append(platform_lib_path)
 
-
 my_logger = logging.getLogger("cli_logger")
-<<<<<<< HEAD
-MY_CMD = os.getenv("MY_CMD")
 
-MY_HOME = os.getenv("MY_HOME", ".." + os.sep + "..")
-pid_file = os.path.join(MY_HOME, "conf", "cli.pid")
-
-=======
->>>>>>> main
 
 def load_ini(file_nm, section):
     try:

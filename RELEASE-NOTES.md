@@ -2,10 +2,14 @@
 
 
 ## done so far for 24.007 on 2023-11-08 ###########
-  + fix get/set guc (cady)
+### New Features:
+  + ACE: table re-run only compares delta rows
   + 3rd pass at MACHINE includes:
     - equinixmetal fixes to LibCloud for size_list crash
-    - size_list(), node_start(), node_stop(), node_reboot()
+    - size_list(), node_list(), node_start(), node_stop(), node_reboot()
+
+### Fixes and minor enhancements:
+  + fix get/set guc (cady)
   + background apps only supported on EL9
   + add error message when './nc list' is empty
 
@@ -25,7 +29,7 @@
   + FIREWALL: new support for firewalld configuration
   + Support for PyCharm IDE for making development easier
 
-### Minor fixes and supporting enhancements:
+### Fixes and minor enhancements:
   + cleanup requirements.txt
   + 1st pass at --ent components
   + refactor --extension, --showduplicates & --test
@@ -48,7 +52,7 @@
 
 ## done for 24.004 on 2023-10-24 ###########
 
-### Minor fixes and supporting enhancements:
+### Fixes and minor enhancements:
   + deployment problems caused by cady and ibrar and tej.  :-)
   + fixes to se3cure.py (cady)
   + default 'install pgedge' to '--pg 17' (denis)
@@ -58,7 +62,7 @@
 ### New Features:
   + MACHINE: 2nd pass includes support for configuring remote firewalls
 
-### Minor fixes and supporting enhancements:
+### Fixes and minor enhancements:
   + added the '--pause' option to 'install pgegde'
 
 ## done for 24.002 on 2023-10-21
