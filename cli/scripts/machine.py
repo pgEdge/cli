@@ -1,9 +1,8 @@
-import json
 #####################################################
 #  Copyright 2022-2024 PGEDGE  All rights reserved. #
 #####################################################
 
-import os, sys
+import os, sys, json
 import fire, libcloud
 from libcloud.compute.types import Provider
 
@@ -83,7 +82,8 @@ def get_node(conn, name):
 
 def node_destroy(provider, name, location):
     """Destroy a node."""
-    return(node_action("destroy", provider, name, location))
+    node_action("destroy", provider, name, location)
+    return
 
 
 def node_action(action, provider, name, location):
@@ -159,7 +159,9 @@ def node_create(provider, name, location, size=None, image=None, keyname=None, p
         create_node_aws(name, location, size, image, keyname)
 
     else:
-        util.exit_message(f"Invalid provider '{prvdr}' (create)")
+        util.exit_message(f"Invalid provider '{prvdr}' (create_node)")
+
+    return
 
 
 def create_node_aws(name, region, size, image, keyname):
@@ -192,17 +194,20 @@ def create_node_eqnx(name, location, size, image, project):
 
 def node_start(provider, name, location):
     """Start a node."""
-    return(node_action("start", provider, name, location))
+    node_action("start", provider, name, location)
+    return
 
 
 def node_stop(provider, name, location):
     """Stop a node."""
-    return(node_action("stop", provider, name, location))
+    node_action("stop", provider, name, location)
+    return
 
 
 def node_reboot(provider, name, location):
     """Reboot a node."""
-    return(node_action("reboot", provider, name, location))
+    node_action("reboot", provider, name, location)
+    return
 
 
 def cluster_nodes(node_names, cluster_name, node_ips=None):
@@ -211,7 +216,6 @@ def cluster_nodes(node_names, cluster_name, node_ips=None):
 
 def size_list(provider, location=None):
     """List available node sizes."""
-
     prvdr, conn, sect = get_connection(provider, location)
 
     sizes = conn.list_sizes()
@@ -222,7 +226,6 @@ def size_list(provider, location=None):
 
 def location_list(provider, location=None):
     """List available locations."""
-
     prvdr, conn, sect = get_connection(provider, location)
 
     locations = conn.list_locations()
@@ -244,6 +247,7 @@ def node_list(provider, location=None):
 
 def aws_node_list(conn):
     nodes = conn.list_nodes()
+
     for n in nodes:
         name = n.name.ljust(16)
         try:
@@ -262,6 +266,7 @@ def aws_node_list(conn):
 
 def eqnx_node_list(conn, project):
     nodes = conn.list_nodes(project)
+
     for n in nodes:
       name = n.name.ljust(16)
       public_ip = n.public_ips[0].ljust(15)
@@ -282,10 +287,9 @@ def eqnx_node_list(conn, project):
 
 def provider_list():
     """List supported cloud providers."""
-
     print("eqnx  Equinix Metal")
     print("aws   Amazon Web Services")
-
+    return
 
 if __name__ == '__main__':
   fire.Fire({
