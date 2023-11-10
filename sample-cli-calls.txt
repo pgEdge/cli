@@ -1,0 +1,5 @@
+./nc machine node-create aws t10 us-east-1
+
+./nc cluster-nodes cl1 "['aws', 'aws']" "[t9e, t10]" "['us-east-1', 'us-east-1']"
+
+

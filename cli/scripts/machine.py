@@ -152,13 +152,13 @@ def is_node_unique(name, prvdr, conn, sect):
     return(True)
 
 
-def node_create(provider, name, location, size=None, image=None, keyname=None, project=None):
+def node_create(provider, metro, name, size=None, image=None, keyname=None, project=None):
     """Create a node."""
 
-    prvdr, conn, sect = get_connection(provider, location)
+    prvdr, conn, sect = get_connection(provider, metro)
 
     if not is_node_unique(name, prvdr, conn, sect):
-        util.exit_message(f"Node '{name}' already exists in '{prvdr}:{location}'")
+        util.exit_message(f"Node '{name}' already exists in '{prvdr}:{metro}'")
 
     if prvdr == "eqnx":
         if size == None:
@@ -168,13 +168,15 @@ def node_create(provider, name, location, size=None, image=None, keyname=None, p
         if project == None:
             project = sect['project']
 
-        create_node_eqnx(name, location, size, image, project)
+        create_node_eqnx(name, metro, size, image, project)
 
     elif prvdr == "aws":
         if size == None:
             size = sect['size']
         if image == None:
-            image = sect['image']
+            my_image = f"image-{metro}"
+            print(sect)
+            image = sect[my_image]
         if keyname == None:
             keyname = sect['keyname']
         if project:
@@ -237,7 +239,7 @@ def node_reboot(provider, name, metro):
 def cluster_nodes(cluster_name, providers, node_names, metros):
     """Create a Cluster definition json file from a set of nodes."""
 
-    util.message(f"# cluster_nodes(cluster_name={cluster_name}, providers={providers}, metros={metros}, node_names={node_names})")
+    util.message(f"\n# cluster-nodes(cluster_name={cluster_name}, providers={providers}, metros={metros}, node_names={node_names})")
 
     if not isinstance(providers, list) or len(providers) < 2:
         util.exit_message(f"providers parm '{providers}' must be a square bracketed list with two or more elements", 1)
@@ -258,7 +260,7 @@ def cluster_nodes(cluster_name, providers, node_names, metros):
     node_kount = len(providers)
     i = 0
     while i < node_kount:
-        util.message(f"## {providers[i]}, {metros[i]}, {node_names[i]}")
+        util.message(f"\n## {providers[i]}, {metros[i]}, {node_names[i]}")
         prvdr, conn, section = get_connection(providers[i], metros[i])
 
         name, public_ip, status, metro, size = get_node_values(providers[i], metros[i], node_names[i])
