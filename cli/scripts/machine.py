@@ -9,7 +9,7 @@ from libcloud.compute.types import Provider
 import util
 
 
-def get_connection(provider="eqnx", location=None):
+def get_connection(provider="eqnx", metro=None):
     prvdr = provider.lower()
     HOME = os.getenv("HOME")
     sect = util.load_ini(f"{HOME}/mach.ini", prvdr)
@@ -20,7 +20,7 @@ def get_connection(provider="eqnx", location=None):
             conn =  Driver(sect['api_token'])
         elif prvdr in ("aws"):
             Driver = libcloud.compute.providers.get_driver(Provider.EC2)
-            conn = Driver(sect['access_key_id'], sect['secret_access_key'], region=location)
+            conn = Driver(sect['access_key_id'], sect['secret_access_key'], region=metro)
         else:
             util.exit_message(f"Invalid provider '{prvdr}'")
     except Exception as e:
@@ -68,8 +68,32 @@ def get_image(provider, conn, p_image):
     util.exit_message(f"Invalid image '{p_image}'")
 
 
-def get_node(conn, name):
+def get_node_values(provider, metro, name):
+    prvdr, conn, section = get_connection(provider, metro)
+    nd = get_node(conn, name)
+    if not nd:
+        return None, None, None, None, None
+    try:
+        name = str(nd.name)
+        public_ip = str(nd.public_ips[0])
+        status = str(nd.state)
+        location = None
+        size = None
+        if provider == "eqnx":
+            country = str(nd.extra['facility']['metro']['country']).lower()
+            az = str(nd.extra['facility']['code'])
+            location = str(f"{country}-{az}")
+            size = str(nd.size.id)
+        else:
+            location = nd.extra['availability']
+            size = nd.extra['instance_type']
+    except Exception as e:
+        util.exit_message(str(e), 1)
 
+    return(name, public_ip, status, location, size)
+
+
+def get_node(conn, name):
     nodes = conn.list_nodes()
     for n in nodes:
         if n.state in ("terminated", "unknown"):
@@ -80,9 +104,9 @@ def get_node(conn, name):
     return(None)
 
 
-def node_destroy(provider, name, location):
+def node_destroy(provider, name, metro):
     """Destroy a node."""
-    node_action("destroy", provider, name, location)
+    node_action("destroy", provider, name, metro)
     return
 
 
@@ -192,26 +216,65 @@ def create_node_eqnx(name, location, size, image, project):
     return
 
 
-def node_start(provider, name, location):
+def node_start(provider, name, metro):
     """Start a node."""
-    node_action("start", provider, name, location)
+    node_action("start", provider, name, metro)
     return
 
 
-def node_stop(provider, name, location):
+def node_stop(provider, name, metro):
     """Stop a node."""
-    node_action("stop", provider, name, location)
+    node_action("stop", provider, name, metro)
     return
 
 
-def node_reboot(provider, name, location):
+def node_reboot(provider, name, metro):
     """Reboot a node."""
-    node_action("reboot", provider, name, location)
+    node_action("reboot", provider, name, metro)
     return
 
 
-def cluster_nodes(node_names, cluster_name, node_ips=None):
-    pass
+def cluster_nodes(cluster_name, providers, node_names, metros):
+    """Create a Cluster definition json file from a set of nodes."""
+
+    util.message(f"# cluster_nodes(cluster_name={cluster_name}, providers={providers}, metros={metros}, node_names={node_names})")
+
+    if not isinstance(providers, list) or len(providers) < 2:
+        util.exit_message(f"providers parm '{providers}' must be a square bracketed list with two or more elements", 1)
+
+    if not isinstance(metros, list) or len(metros) < 2:
+        util.exit_message(f"metros parm '{metros}' must be a square bracketed list with two or more elements", 1)
+
+    if not isinstance(node_names, list) or len(node_names) < 2:
+        util.exit_message(f"node_names parm '{node_names}' must be a square bracketed list with two or more elements", 1)
+
+    if (not len(providers) == len(metros)) or (not len(providers) == len(node_names)):
+        s1 = f"providers({len(providers)}), metros({len(metros)}), and node_names({len(node_names)})"
+        util.exit_message(f"{s1} parms must have same number of elements")
+
+    if len(node_names) != len(set(node_names)):
+        util.exit_message(f"node_names ({node_names}) must be unique")
+
+    node_kount = len(providers)
+    i = 0
+    while i < node_kount:
+        util.message(f"## {providers[i]}, {metros[i]}, {node_names[i]}")
+        prvdr, conn, section = get_connection(providers[i], metros[i])
+
+        name, public_ip, status, metro, size = get_node_values(providers[i], metros[i], node_names[i])
+        if not name:
+            util.exit_message(f"Node ({providers[i]}, {metros[i]}, {node_names[i]}) not available")
+
+        util.message(f"### {name}, {public_ip}, {status}, {metro}, {size}")
+
+        i = i + 1
+
+
+
+    #n1 = get_node(providers[0], locations[0], node_names[0])
+    #n2 = get_node(providers[1], locations[1], node_names[1])
+    return
+
 
 
 def size_list(provider, location=None):
@@ -299,6 +362,7 @@ if __name__ == '__main__':
     'node-reboot':     node_reboot,
     'node-destroy':    node_destroy,
     'node-list':       node_list,
+    'cluster-nodes':   cluster_nodes,
     'provider-list':   provider_list,
     'location-list':   location_list,
     'size-list':       size_list,
