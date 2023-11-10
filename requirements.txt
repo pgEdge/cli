@@ -1,13 +1,18 @@
 requests>=2.31.0
-awscli>=1.29.49
 paramiko>=3.3.1
 psycopg>=3.1.12
 psycopg-binary>=3.1.12
 psutil>=5.9.6
 supervisor>=4.2.5
+ansible-core>=2.15.6
 
 ## MACHINE ##########
-apache-libcloud>=3.8.0
+apache-libcloud==3.8.0
+# apache-libcloud dependencies
+requests>=2.31
+certifi>=2023.7.22
+charset_normalizer>=3.3.2
+
 
 ## ACE ##############
 tqdm>=4.66.1
@@ -19,7 +24,6 @@ pandas>=2.1.1
 cdiff>=1.0
 # patroni dependencies
 urllib3>=1.19.1,!=1.21
-boto3>=1.28.76
 PyYAML>=6.0.1
 python-etcd>=0.4.5,<0.5
 click>=4.1
