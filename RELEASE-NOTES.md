@@ -12,6 +12,7 @@
   + fix get/set guc (cady)
   + background apps only supported on EL9
   + add error message when './nc list' is empty
+  + filter out pre_reqs on './nc list'
 
 
 ## done for 24.006 on 2023-11-07 ###########

@@ -2577,7 +2577,14 @@ def get_arch():
 def get_el_os():
     rel_file = "/etc/redhat-release"
     if os.path.exists(rel_file):
-        os.system(f"cat {rel_file}")
+        rc = os.system('grep "platform:el9" /etc/os-release > /dev/null 2>&1')
+        if rc == 0:
+            return("EL9")
+
+        rc = os.system('grep "platform:el8" /etc/os-release > /dev/null 2>&1')
+        if rc == 0:
+            return("EL8")
+
         return("EL")
 
     return(None)

@@ -256,8 +256,6 @@ def status (p_json, p_comp, p_ver, p_state, p_port, p_kount):
 
 def info(p_json, p_home, p_repo, print_flag=True):
 
-  print(f"DEBUG {util.get_el_os()}")
-
   cloud_name, cloud_platform, instance_id, flavor, region, az, private_ip = util.get_cloud_info()
 
   p_user = util.get_user()

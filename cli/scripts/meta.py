@@ -44,7 +44,7 @@ def get_stage(p_comp):
     if data:
       return(str(data[0]))
   except Exception as e:
-    fatal_error(e, sql, "meta.check_pre_reqs()")
+    fatal_error(e, sql, "meta.get_stage()")
 
   return("")
 
@@ -467,7 +467,7 @@ def get_list(p_isJSON, p_comp=None, p_return=False):
     "       coalesce((select release_date from versions where c.component = component and c.version = version),'20200101'), \n" + \
     "       c.install_dt, r.disp_name, \n" + \
     "       coalesce((select release_date from versions where c.component = component and is_current = 1),'20200101'), \n" + \
-    "       r.is_available, r.available_ver \n" + \
+    "       r.is_available, r.available_ver, '' as pre_reqs \n" + \
     "  FROM components c, releases r, projects p, categories g \n" + \
     " WHERE c.component = r.component AND r.project = p.project \n" + \
     "   AND p.category = g.category \n"  + \
@@ -478,7 +478,7 @@ def get_list(p_isJSON, p_comp=None, p_return=False):
     "       r.stage, v.is_current, '', p.is_extension, v.parent as parent, v.release_date, '', \n" + \
     "       r.disp_name, \n" + \
     "       coalesce((select release_date from versions where v.component = component and is_current = 1),'20200101'), \n" + \
-    "       r.is_available, r.available_ver \n" + \
+    "       r.is_available, r.available_ver, v.pre_reqs \n" + \
     "  FROM versions v, releases r, projects p, categories c \n" + \
     " WHERE v.component = r.component AND r.project = p.project \n" + \
     "   AND p.category = c.category AND v.is_current = 1 \n" + \
@@ -490,7 +490,7 @@ def get_list(p_isJSON, p_comp=None, p_return=False):
     "       r.stage, v.is_current, '', p.is_extension, v.parent as parent, v.release_date, '', \n" + \
     "       r.disp_name, \n" + \
     "       coalesce((select release_date from versions where v.component = component and is_current = 1),'20200101'), \n" + \
-    "       r.is_available, r.available_ver \n" + \
+    "       r.is_available, r.available_ver, v.pre_reqs \n" + \
     "  FROM versions v, releases r, projects p, categories c \n" + \
     " WHERE v.component = r.component AND r.project = p.project \n" + \
     "   AND p.category = c.category AND ((v.is_current = 2) or ((p.project = 'pg') AND (v.is_current =1)))"
@@ -500,7 +500,7 @@ def get_list(p_isJSON, p_comp=None, p_return=False):
     "       r.stage, v.is_current, '', p.is_extension, v.parent as parent, v.release_date, '', \n" + \
     "       r.disp_name,  \n" + \
     "       coalesce((select release_date from versions where v.component = component and is_current = 1),'20200101'), \n" + \
-    "       r.is_available, r.available_ver \n" + \
+    "       r.is_available, r.available_ver, v.pre_reqs \n" + \
     "  FROM versions v, releases r, projects p, categories c \n" + \
     " WHERE v.component = r.component AND r.project = p.project \n" + \
     "   AND p.is_extension = 1 AND p.category = c.category \n" + \
@@ -520,8 +520,8 @@ def get_list(p_isJSON, p_comp=None, p_return=False):
     c.execute(sql)
     data = c.fetchall()
 
-    headers = ['Category','Component', 'Version', 'ReleaseDt', 'Stage', 'Status', 'Updates']
-    keys    = ['short_cat_desc', 'component', 'version', 'release_date', 'stage', 'status', 'current_version']
+    headers = ['Category','Component', 'Version', 'ReleaseDt', 'Stage', 'Status', 'Updates', 'PreReqs']
+    keys    = ['short_cat_desc', 'component', 'version', 'release_date', 'stage', 'status', 'current_version', 'pre_reqs']
 
     jsonList = []
     kount = 0
@@ -645,6 +645,12 @@ def get_list(p_isJSON, p_comp=None, p_return=False):
         if current_version == version:
           current_version = ""
 
+      pre_reqs = str(row[18])
+      if pre_reqs > '':
+          el_v = util.get_el_os()
+          if not el_v in pre_reqs:
+              continue
+
       compDict['category'] = category
       compDict['category_desc'] = category_desc
       compDict['short_cat_desc'] = short_cat_desc
@@ -663,6 +669,7 @@ def get_list(p_isJSON, p_comp=None, p_return=False):
       compDict['is_current'] = is_current
       compDict['current_version'] = current_version
       compDict['parent'] = parent
+      compDict['pre_reqs'] = pre_reqs
       jsonList.append(compDict)
 
     if not jsonList:
