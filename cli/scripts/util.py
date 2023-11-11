@@ -565,6 +565,9 @@ def is_systemctl():
 
 
 def remove_symlinks(p_link_dir, p_target_dir):
+    ## disabled because it dangerously doesn't work
+    return
+
     cmd = (
         "ls  -l "
         + p_link_dir
@@ -572,9 +575,7 @@ def remove_symlinks(p_link_dir, p_target_dir):
         + p_target_dir
         + ' | cut -c50- | cut -d" " -f1'
     )
-    print("DEBUG cmd: " + str(cmd))
     links = getoutput(cmd)
-    print("DEBUG links: " + str(links))
 
     for link in links.splitlines():
         lnk = str(link).strip()

@@ -646,9 +646,11 @@ def get_list(p_isJSON, p_comp=None, p_return=False):
           current_version = ""
 
       pre_reqs = str(row[18])
-      if pre_reqs > '':
+      if "EL9" in pre_reqs:
           el_v = util.get_el_os()
-          if not el_v in pre_reqs:
+          if el_v == "EL9":
+              pass
+          else:
               continue
 
       compDict['category'] = category
