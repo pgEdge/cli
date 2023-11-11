@@ -2574,6 +2574,16 @@ def get_arch():
     return get_el_ver()
 
 
+def get_el_os():
+    rel_file = "/etc/redhat-release"
+    if os.path.exists(rel_file):
+        os.system(f"cat {rel_file}")
+        return("EL")
+
+    return(None)
+
+
+
 def get_el_ver():
     if platform.system() == "Darwin":
         ## message("# WARNING! OSX is only for client functionality such as CLUSTER & ACE commands.")
