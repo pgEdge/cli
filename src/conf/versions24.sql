@@ -180,29 +180,29 @@ INSERT INTO versions VALUES ('prompgexp', '0.11.1', '', 1, '20220720', '', 'EL9'
 
 INSERT INTO projects VALUES ('audit', 'ext', 4, 0, 'hub', 0, 'https://github.com/pgaudit/pgaudit/releases',
   'audit', 1, 'audit.png', 'Audit Logging', 'https://github.com/pgaudit/pgaudit');
-INSERT INTO releases VALUES ('audit-pg15', 10, 'audit', 'pgAudit', '', 'prod', '', 1, 'POSTGRES', '', '');
-INSERT INTO releases VALUES ('audit-pg16', 10, 'audit', 'pgAudit', '', 'prod', '', 1, 'POSTGRES', '', '');
+INSERT INTO releases VALUES ('audit-pg15', 10, 'audit', 'pgAudit', '', 'ent', '', 1, 'POSTGRES', '', '');
+INSERT INTO releases VALUES ('audit-pg16', 10, 'audit', 'pgAudit', '', 'ent', '', 1, 'POSTGRES', '', '');
 INSERT INTO versions VALUES ('audit-pg15', '1.7.0-1', 'arm9, el9', 1, '20221013', 'pg15', '', 'https://github.com/pgaudit/pgaudit/releases/tag/1.7.0');
 INSERT INTO versions VALUES ('audit-pg16', '16.0-1', 'arm9, el9', 1, '20230914', 'pg16', '', 'https://github.com/pgaudit/pgaudit/releases/tag/16.0');
 
 INSERT INTO projects VALUES ('hintplan', 'ext', 4, 0, 'hub', 0, 'https://github.com/ossc-db/pg_hint_plan/tags',
   'hintplan', 1, 'hintplan.png', 'Execution Plan Hints', 'https://github.com/ossc-db/pg_hint_plan');
-INSERT INTO releases VALUES ('hintplan-pg15', 10, 'hintplan', 'pgHintPlan', '', 'prod', '', 1, 'POSTGRES', '', '');
-INSERT INTO releases VALUES ('hintplan-pg16', 10, 'hintplan', 'pgHintPlan', '', 'prod', '', 1, 'POSTGRES', '', '');
+INSERT INTO releases VALUES ('hintplan-pg15', 10, 'hintplan', 'pgHintPlan', '', 'ent', '', 1, 'POSTGRES', '', '');
+INSERT INTO releases VALUES ('hintplan-pg16', 10, 'hintplan', 'pgHintPlan', '', 'ent', '', 1, 'POSTGRES', '', '');
 INSERT INTO versions VALUES ('hintplan-pg15', '1.5.1-1', 'arm9, el9', 1, '20230927', 'pg15', '', 'https://github.com/pghintplan/pghintplan/releases/tag/1.5.1');
 INSERT INTO versions VALUES ('hintplan-pg16', '1.6.0-1', 'arm9, el9', 1, '20230927', 'pg16', '', 'https://github.com/pghintplan/pghintplan/releases/tag/1.6.0');
 
 INSERT INTO projects VALUES ('foslots', 'ext', 4, 0, 'hub',0, 'https://github.com/pgedge/foslots/tags',
   'foslots', 1, 'foslots.png', 'Failover Slots', 'https://github.com/pgedge/foslots');
-INSERT INTO releases VALUES ('foslots-pg15', 10, 'foslots', 'FO Slots', '', 'prod', '', 1, 'POSTGRES', '', '');
-INSERT INTO releases VALUES ('foslots-pg16', 10, 'foslots', 'FO Slots', '', 'prod', '', 1, 'POSTGRES', '', '');
+INSERT INTO releases VALUES ('foslots-pg15', 10, 'foslots', 'FO Slots', '', 'ent', '', 1, 'POSTGRES', '', '');
+INSERT INTO releases VALUES ('foslots-pg16', 10, 'foslots', 'FO Slots', '', 'ent', '', 1, 'POSTGRES', '', '');
 INSERT INTO versions VALUES ('foslots-pg15', '1a-1', 'el9, arm9', 1, '20230929', 'pg15', '', '');
 INSERT INTO versions VALUES ('foslots-pg16', '1a-1', 'el9, arm9', 1, '20230929', 'pg16', '', '');
 
 INSERT INTO projects VALUES ('readonly', 'ext', 4, 0, 'hub',0, 'https://github.com/pgedge/readonly/tags',
   'readonly', 1, 'readonly.png', 'Support READ-ONLY Databases', 'https://github.com/pgedge/readonly');
-INSERT INTO releases VALUES ('readonly-pg15', 10, 'readonly', 'pgReadOnly', '', 'prod', '', 1, 'POSTGRES', '', '');
-INSERT INTO releases VALUES ('readonly-pg16', 10, 'readonly', 'pgReadOnly', '', 'prod', '', 1, 'POSTGRES', '', '');
+INSERT INTO releases VALUES ('readonly-pg15', 10, 'readonly', 'pgReadOnly', '', 'ent', '', 1, 'POSTGRES', '', '');
+INSERT INTO releases VALUES ('readonly-pg16', 10, 'readonly', 'pgReadOnly', '', 'ent', '', 1, 'POSTGRES', '', '');
 INSERT INTO versions VALUES ('readonly-pg15', '1.1.1-1', 'el9, arm9', 1, '20231031', 'pg15', '', '');
 INSERT INTO versions VALUES ('readonly-pg16', '1.1.1-1', 'el9, arm9', 1, '20231031', 'pg16', '', '');
 INSERT INTO versions VALUES ('readonly-pg15', '1.1.0-1', 'el9, arm9', 0, '20230929', 'pg15', '', '');
@@ -210,7 +210,7 @@ INSERT INTO versions VALUES ('readonly-pg16', '1.1.0-1', 'el9, arm9', 0, '202309
 
 INSERT INTO projects VALUES ('timescaledb', 'ext', 4, 0, 'hub',0, 'https://github.com/timescale/timescaledb/releases',
   'timescaledb', 1, 'timescaledb.png', 'Timeseries Extension', 'https://github.com/timescaledb/timescaledb');
-INSERT INTO releases VALUES ('timescaledb-pg15', 10, 'timescaledb', 'TimescaleDB', '', 'prod', '', 1, 'POSTGRES', '', '');
+INSERT INTO releases VALUES ('timescaledb-pg15', 10, 'timescaledb', 'TimescaleDB', '', 'test', '', 1, 'POSTGRES', '', '');
 INSERT INTO versions VALUES ('timescaledb-pg15', '2.11.2-1', 'el9, arm9', 1, '20230914', 'pg15', '', '');
 INSERT INTO versions VALUES ('timescaledb-pg15', '2.11.0-1', 'el9, arm9', 0, '20230524', 'pg15', '', '');
 
@@ -221,6 +221,13 @@ INSERT INTO releases VALUES ('curl-pg16', 10, 'curl', 'pgCron', '', 'prod', '', 
 INSERT INTO versions VALUES ('curl-pg15', '2.1.1-1',  'el9, arm9', 1, '20230630', 'pg15', '', '');
 INSERT INTO versions VALUES ('curl-pg16', '2.1.1-1',  'el9, arm9', 1, '20230630', 'pg16', '', '');
 INSERT INTO versions VALUES ('curl-pg15', '1.0.27-1', 'el9, arm9', 0, '20230215', 'pg15', '', '');
+
+INSERT INTO projects VALUES ('citus', 'pge', 4, 0, 'hub',0, 'https://github.com/citusdata/citus/releases',
+  'citus', 1, 'citus.png', 'Sharded Postgres', 'https://github.com/citusdata/citus');
+INSERT INTO releases VALUES ('citus-pg15', 10, 'citus', 'Citus', '', 'ent', '', 1, 'AGPLv3', '', '');
+INSERT INTO releases VALUES ('citus-pg16', 10, 'citus', 'Citus', '', 'ent', '', 1, 'AGPLv3', '', '');
+INSERT INTO versions VALUES ('citus-pg15', '12.1.0-1', 'el9, arm9', 1, '20231112', 'pg15', 'EL9', '');
+INSERT INTO versions VALUES ('citus-pg16', '12.1.0-1', 'el9, arm9', 1, '20231112', 'pg16', 'EL9', '');
 
 INSERT INTO projects VALUES ('cron', 'ext', 4, 0, 'hub',0, 'https://github.com/citusdata/pg_cron/releases',
   'cron', 1, 'cron.png', 'Background Job Scheduler', 'https://github.com/citusdata/pg_cron');

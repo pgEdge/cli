@@ -29,7 +29,7 @@ backrestV=2.47-1
 readonlyV=1.1.1-1
 
 curlV=2.1.1-1
-citusV=11.2.0-1
+citusV=12.1.0-1
 
 oraclefdwV=2.6.0-1
 inclV=21.6
