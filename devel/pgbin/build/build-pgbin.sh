@@ -173,8 +173,13 @@ function buildPostgres {
 
 	conf="--disable-rpath $pgOPT"
 	echo "OS=$OS"
-	if [ $OS == "osx" ] || [ $OS == "el8" ]; then
+	if [ $OS == "osx" ]; then
 		conf="$conf --without-python --without-perl"
+        elif [ $OS == "el8" ]; then
+		conf="$conf --without-python --without-perl"
+		conf="$conf --with-libxslt --with-libxml"
+		conf="$conf --with-uuid=ossp --with-gssapi --with-ldap --with-pam --enable-debug --enable-dtrace"
+		conf="$conf --with-openssl --with-systemd --enable-tap-tests"
 	else
 		conf="$conf  --with-libxslt --with-libxml"
 		conf="$conf --with-uuid=ossp --with-gssapi --with-ldap --with-pam --enable-debug --enable-dtrace"

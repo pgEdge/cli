@@ -564,7 +564,6 @@ def get_list(p_isJSON, p_comp=None, p_return=False):
 
       is_current = str(row[8])
       if is_current == "0" and status in ("", "NotInstalled"):
-        if not p_isOLD:
           continue
 
       current_version = get_current_version(comp)

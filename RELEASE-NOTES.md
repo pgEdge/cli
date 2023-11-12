@@ -13,6 +13,7 @@
   + background apps only supported on EL9
   + add error message when './nc list' is empty
   + filter out pre_reqs on './nc list'
+  + bump pg12/13/14/15 on el8-amd architecture to latest releases
 
 
 ## done for 24.006 on 2023-11-07 ###########

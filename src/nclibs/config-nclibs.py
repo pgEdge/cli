@@ -14,10 +14,13 @@ arch = platform.machine()
 platf = "unsupported"
 if platform.system() == "Linux":
   if os.path.exists("/etc/redhat-release"):
-    if arch == "aarch64":
-      platf = "el9-arm"
+    if util.get_el_os() == "EL9":
+      if arch == "aarch64":
+        platf = "el9-arm"
+      else:
+        platf = "el9-amd"
     else:
-      platf = "el9-amd"
+      platf = "el8-amd"
   else:
     f = "/etc/os-release"
     if os.path.exists(f):

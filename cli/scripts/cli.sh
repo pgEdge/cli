@@ -42,7 +42,12 @@ if [ `uname` == "Linux" ]; then
     if [ `arch` == "aarch64" ]; then
       array[2]="$LIB/el9-arm"
     else
-      array[2]="$LIB/el9-amd"
+      PLATFORM=`cat /etc/os-release | grep PLATFORM_ID | cut -d: -f2 | tr -d '\"'`
+      if [ "$PLATFORM" == "el9" ]; then
+        array[2]="$LIB/el9-amd"
+      else
+        array[2]="$LIB/el8-amd"
+      fi
     fi
   else
     if [ -f "/etc/os-release" ]; then

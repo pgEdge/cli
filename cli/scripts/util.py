@@ -2625,7 +2625,7 @@ def warn_bad_os(el_ver):
         return ()
     else:
         bad_os_warn = True
-        message("# WARNING! Change to EL9 or Ubuntu 22.04 for advanced functionality.")
+        message("# WARNING! Upgrade to pg14+ on EL9 or Ubuntu 22.04 for Spock multi-master functionality.")
 
 
 def is_el8():
