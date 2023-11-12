@@ -15,6 +15,7 @@
   + add error message when './nc list' is empty
   + filter out pre_reqs on './nc list'
   + bump pg12/13/14/15 on el8-amd architecture to latest releases
+  + bump pglogical (for test only) to 2.4.4 for pg15 & now also pg16
 
 
 ## done for 24.006 on 2023-11-07 ###########

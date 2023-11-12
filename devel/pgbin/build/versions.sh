@@ -127,7 +127,7 @@ bulkloadFullV=3.1.19
 bulkloadShortV=
 bulkloadBuildV=1
 
-pgLogicalFullV=2.4.3
+pgLogicalFullV=2.4.4
 pgLogicalShortV=
 pgLogicalBuildV=1
 
