@@ -1,16 +1,17 @@
 # pgEdge Platform Release Notes #############
 
 
-## done so far for 24.007 on 2023-11-08 ###########
+## done so far for 24.007 on 2023-11-12 ###########
 ### New Features:
   + ACE: table re-run only compares delta rows
-  + 3rd pass at MACHINE includes:
-    - equinixmetal fixes to LibCloud for size_list crash
-    - size_list(), node_list(), node_start(), node_stop(), node_reboot()
+  + MACHINE: 3rd pass includes:
+    - equinixmetal fixes to LibCloud 3.1.8+ for size_list() & node_create()
+    - size_list(), node_list(), node_start(), node_stop(), node_reboot(), node_create()
+  + CITUS: bump to 12.1 and now avail for pg15/pg16
 
 ### Fixes and minor enhancements:
   + fix get/set guc (cady)
-  + background apps only supported on EL9
+  + complex und apps only supported on EL9
   + add error message when './nc list' is empty
   + filter out pre_reqs on './nc list'
   + bump pg12/13/14/15 on el8-amd architecture to latest releases
