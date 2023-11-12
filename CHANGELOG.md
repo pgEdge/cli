@@ -9,13 +9,14 @@
     - size_list(), node_list(), node_start(), node_stop(), node_reboot(), node_create()
   + CITUS: bump to 12.1 and now avail for pg15/pg16
 
-### Fixes and minor enhancements:
+### Fixes and minor changes:
   + fix get/set guc (cady)
   + complex und apps only supported on EL9
   + add error message when './nc list' is empty
   + filter out pre_reqs on './nc list'
   + bump pg12/13/14/15 on el8-amd architecture to latest releases
   + bump pglogical (for test only) to 2.4.4 for pg15 & now also pg16
+  + bump cron to 1.6.2 for pg15 & pg16
 
 
 ## done for 24.006 on 2023-11-07 ###########

@@ -148,7 +148,7 @@ timescaledbFullV=2.11.2
 timescaledbShortV=
 timescaledbBuildV=1
 
-cronFullV=1.6.0
+cronFullV=1.6.2
 cronShortV=
 cronBuildV=1
 

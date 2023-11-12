@@ -233,9 +233,10 @@ INSERT INTO projects VALUES ('cron', 'ext', 4, 0, 'hub',0, 'https://github.com/c
   'cron', 1, 'cron.png', 'Background Job Scheduler', 'https://github.com/citusdata/pg_cron');
 INSERT INTO releases VALUES ('cron-pg15', 10, 'cron', 'pgCron', '', 'prod', '', 1, 'POSTGRES', '', '');
 INSERT INTO releases VALUES ('cron-pg16', 10, 'cron', 'pgCron', '', 'prod', '', 1, 'POSTGRES', '', '');
-INSERT INTO versions VALUES ('cron-pg15', '1.6.0-1', 'el9, arm9', 1, '20230914', 'pg15', '', '');
-INSERT INTO versions VALUES ('cron-pg16', '1.6.0-1', 'el9, arm9', 1, '20230914', 'pg16', '', '');
-INSERT INTO versions VALUES ('cron-pg15', '1.5.2-1', 'el9, arm9', 0, '20230422', 'pg15', '', '');
+INSERT INTO versions VALUES ('cron-pg15', '1.6.2-1', 'el9, arm9', 1, '20231112', 'pg15', '', '');
+INSERT INTO versions VALUES ('cron-pg16', '1.6.2-1', 'el9, arm9', 1, '20231112', 'pg16', '', '');
+INSERT INTO versions VALUES ('cron-pg15', '1.6.0-1', 'el9, arm9', 0, '20230914', 'pg15', '', '');
+INSERT INTO versions VALUES ('cron-pg16', '1.6.0-1', 'el9, arm9', 0, '20230914', 'pg16', '', '');
 
 INSERT INTO projects VALUES ('vector', 'pge', 4, 0, 'hub', 1, 'https://github.com/pgedge/vector/tags',
   'vector', 1, 'vector.png', 'Vector & Embeddings', 'https://github.com/pgedge/vector/#vector');
