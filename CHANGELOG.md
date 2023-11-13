@@ -7,7 +7,8 @@
   + MACHINE: 3rd pass includes:
     - equinixmetal fixes to LibCloud 3.1.8+ for size_list() & node_create()
     - size_list(), node_list(), node_start(), node_stop(), node_reboot(), node_create()
-  + CITUS: bump to 12.1 and now avail for pg15/pg16
+  + CITUS: bump to 12.1 and make avaialble for pg16 
+  + PLDEBUGGER: bump to 1.6 and make available for pg16
 
 ### Fixes and minor changes:
   + fix get/set guc (cady)

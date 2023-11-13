@@ -57,7 +57,7 @@ audit16V=16.0-1
 postgisV=3.4.0-1
 
 pljavaV=1.6.4-1
-debuggerV=1.5-1
+debuggerV=1.6-1
 cronV=1.6.2-1
 
 HUB="$PWD"

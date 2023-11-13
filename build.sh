@@ -459,27 +459,27 @@ initPG () {
       initC "hintplan-pg$pgM"   "hintplan"   "$hint15V"    "$outPlat" "postgres/hintplan"  "" "" "nil"
 
       initC "timescaledb-pg$pgM" "timescaledb" "$timescaleV" "$outPlat" "postgres/timescale" "" "" "nil"
-      initC "pldebugger-pg$pgM" "pldebugger" "$debuggerV" "$outPlat" "postgres/pldebugger" "" "" "nil"
       initC "curl-pg$pgM"  "curl"    "$curlV"       "$outPlat" "postgres/curl"   "" "" "nil"
     fi
 
     if [ "$pgM" == "15" ] || [ "$pgM" == "16" ]; then
 
-      initC "pglogical-pg$pgM"  "pglogical"  "$logicalV"   "$outPlat" "postgres/logical"   "" "" "nil"
-      initC "citus-pg$pgM"      "citus"      "$citusV"     "$outPlat" "postgres/citus"     "" "" "nil"
-      initC "spock31-pg$pgM"    "spock31"    "$spock31V"   "$outPlat" "postgres/spock31"   "" "" "nil"
-      initC "hypopg-pg$pgM"     "hypopg"     "$hypoV"      "$outPlat" "postgres/hypopg"    "" "" "nil"
-      initC "pljava-pg$pgM"     "pljava"     "$pljavaV"    "$outPlat" "postgres/pljava"    "" "" "nil"
-      initC "curl-pg$pgM"       "curl"       "$curlV"      "$outPlat" "postgres/curl"      "" "" "nil"
-      initC "orafce-pg$pgM"     "orafce"     "$orafceV"    "$outPlat" "postgres/orafce"    "" "" "nil"
-      initC "vector-pg$pgM"     "vector"     "$vectorV"    "$outPlat" "postgres/vector"    "" "" "nil"
-      initC "plprofiler-pg$pgM" "plprofiler" "$profV"      "$outPlat" "postgres/profiler"  "" "" "nil"
-      initC "postgis-pg$pgM"    "postgis"    "$postgisV"   "$outPlat" "postgres/postgis"   "" "" "nil"
-      initC "cron-pg$pgM"       "cron"       "$cronV"      "$outPlat" "postgres/cron"      "" "" "nil"
-      initC "partman-pg$pgM"    "partman"    "$partmanV"   "$outPlat" "postgres/partman"   "" "" "nil"
-      initC "plv8-pg$pgM"       "plv8"       "$v8V"        "$outPlat" "postgres/plv8"      "" "" "nil"
-      initC "foslots-pg$pgM"    "foslots"    "$foslotsV"   "$outPlat" "postgres/foslots"   "" "" "nil"
-      initC "readonly-pg$pgM"   "readonly"   "$readonlyV"  "$outPlat" "postgres/readonly"  "" "" "nil"
+      initC "pldebugger-pg$pgM" "pldebugger" "$debuggerV"  "$outPlat" "postgres/pldebugger" "" "" "nil"
+      initC "pglogical-pg$pgM"  "pglogical"  "$logicalV"   "$outPlat" "postgres/logical"    "" "" "nil"
+      initC "citus-pg$pgM"      "citus"      "$citusV"     "$outPlat" "postgres/citus"      "" "" "nil"
+      initC "spock31-pg$pgM"    "spock31"    "$spock31V"   "$outPlat" "postgres/spock31"    "" "" "nil"
+      initC "hypopg-pg$pgM"     "hypopg"     "$hypoV"      "$outPlat" "postgres/hypopg"     "" "" "nil"
+      initC "pljava-pg$pgM"     "pljava"     "$pljavaV"    "$outPlat" "postgres/pljava"     "" "" "nil"
+      initC "curl-pg$pgM"       "curl"       "$curlV"      "$outPlat" "postgres/curl"       "" "" "nil"
+      initC "orafce-pg$pgM"     "orafce"     "$orafceV"    "$outPlat" "postgres/orafce"     "" "" "nil"
+      initC "vector-pg$pgM"     "vector"     "$vectorV"    "$outPlat" "postgres/vector"     "" "" "nil"
+      initC "plprofiler-pg$pgM" "plprofiler" "$profV"      "$outPlat" "postgres/profiler"   "" "" "nil"
+      initC "postgis-pg$pgM"    "postgis"    "$postgisV"   "$outPlat" "postgres/postgis"    "" "" "nil"
+      initC "cron-pg$pgM"       "cron"       "$cronV"      "$outPlat" "postgres/cron"       "" "" "nil"
+      initC "partman-pg$pgM"    "partman"    "$partmanV"   "$outPlat" "postgres/partman"    "" "" "nil"
+      initC "plv8-pg$pgM"       "plv8"       "$v8V"        "$outPlat" "postgres/plv8"       "" "" "nil"
+      initC "foslots-pg$pgM"    "foslots"    "$foslotsV"   "$outPlat" "postgres/foslots"    "" "" "nil"
+      initC "readonly-pg$pgM"   "readonly"   "$readonlyV"  "$outPlat" "postgres/readonly"   "" "" "nil"
       if [ `arch` != "aarch64" ]; then
         initC "oraclefdw-pg$pgM"  "oraclefdw"  "$oraclefdwV" "$outPlat" "postgres/oraclefdw" "" "" "nil"
       fi

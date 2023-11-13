@@ -156,7 +156,10 @@ INSERT INTO versions VALUES ('pljava-pg16', '1.6.4-1',  'arm9, el9',  0, '202306
 INSERT INTO projects VALUES ('pldebugger', 'dev', 4, 0, 'hub', 0, 'https://github.com/EnterpriseDB/pldebugger/tags',
   'pldebugger', 1, 'debugger.png', 'Stored Procedure Debugger', 'https://github.com/EnterpriseDB/pldebugger');
 INSERT INTO releases VALUES ('pldebugger-pg15', 2, 'pldebugger', 'PL/Debugger', '', 'prod', '', 1, 'POSTGRES', '', '');
-INSERT INTO versions VALUES ('pldebugger-pg15', '1.5-1',  'arm9, el9',  1, '20220720', 'pg15', '', '');
+INSERT INTO releases VALUES ('pldebugger-pg16', 2, 'pldebugger', 'PL/Debugger', '', 'prod', '', 1, 'POSTGRES', '', '');
+INSERT INTO versions VALUES ('pldebugger-pg15', '1.6-1',  'arm9, el9',  1, '20231112', 'pg15', '', '');
+INSERT INTO versions VALUES ('pldebugger-pg16', '1.6-1',  'arm9, el9',  1, '20231112', 'pg16', '', '');
+INSERT INTO versions VALUES ('pldebugger-pg15', '1.5-1',  'arm9, el9',  0, '20220720', 'pg15', '', '');
 
 INSERT INTO projects VALUES ('plprofiler', 'dev', 4, 0, 'hub', 7, 'https://github.com/bigsql/plprofiler/tags',
   'plprofiler', 1, 'plprofiler.png', 'Stored Procedure Profiler', 'https://github.com/bigsql/plprofiler#plprofiler');
