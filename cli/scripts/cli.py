@@ -75,9 +75,11 @@ dep9 = util.get_depend()
 fire_list = ["service", "um", "spock", "cluster", "staz", "ace",
              "secure", "db", "app", "machine", "firewall"]
 
+native_list = ["backrest", "supervisor", "ansible", "patroni"]
+
 mode_list_advanced = ['kill', 'config', 'init', 'clean', 'useradd', 'spock', 'downgrade',
                       'pgbin', 'psql', 'pg_isready', 'cluster', 'staz', 'ace', 'enable', 'upgrade',
-                      'secure', 'db', 'app', 'update', 'disable', 'tune', 'backrest',
+                      'secure', 'db', 'app', 'update', 'disable', 'tune',
                       'get', 'top', 'set', 'unset', 'reload']
 
 mode_list = ["start", "stop", "restart", "status", "list", "info", "help", 
@@ -85,17 +87,17 @@ mode_list = ["start", "stop", "restart", "status", "list", "info", "help",
              "--help", "--json", "--jsonp", "--svcs",
              "--list", "-y", "-t", "--pause",
              "--verbose", "--country", "-v", "--debug", "--debug2"] + \
-             fire_list + mode_list_advanced
+             fire_list + native_list + mode_list_advanced
 
 mode_list
 
 ignore_comp_list = [ "get", "set", "unset", "pgbin", "psql", "pg_isready",
-                     "service", "useradd", "backrest", "change-pgconf"] + fire_list
+                     "service", "useradd", "backrest", "change-pgconf"] + fire_list + native_list
 
 no_log_commands = ['status', 'info', 'list', 'top', 'get', 'metrics-check']
 
 lock_commands = ["install", "remove", "update", "upgrade", "downgrade",
-                 "backrest", "service"] + fire_list
+                 "backrest", "service"] + fire_list + native_list
 
 my_depend = []
 installed_comp_list = []
@@ -1518,9 +1520,37 @@ try:
     sys.exit(1)
 
 
-  ## FIRE AWAY ###############################################################
+  ## FIRE LIST ###############################################################
   if p_mode in fire_list:
     fire_away(p_mode, args)
+
+
+  ## BACKREST ##########################################
+  if p_mode == 'backrest':
+    if len(args) == 2:
+      cmd = "help"
+    else:
+      cmd = ""
+      for n in range(2, len(args)):
+        cmd = cmd + " " + args[n]
+    util.run_backrest(cmd)
+    exit_cleanly(0)
+
+
+  ## NATIVE LIST #############################################################
+  if p_mode in native_list:
+    if p_mode == 'ansible':
+      if len(args) == 2:
+        cmd = "--help"
+      else:
+        cmd = ""
+        for n in range(2, len(args)):
+          cmd = cmd + " " + args[n]
+
+      rc = util.echo_cmd(f"ansible {cmd}")
+      exit_cleanly(rc)
+
+    util.exit_message(f"'{p_mode}' command not supported")
 
 
   ## TOP #####################################################################
@@ -2094,18 +2124,6 @@ try:
     else:
       print("ERROR: The UNSET command must have 2 parameters.")
       exit_cleanly(1)
-    exit_cleanly(0)
-
-
-  ## BACKREST ##########################################
-  if p_mode == 'backrest':
-    if len(args) == 2:
-      cmd = "help"
-    else:
-      cmd = ""
-      for n in range(2, len(args)):
-        cmd = cmd + " " + args[n]
-    util.run_backrest(cmd)
     exit_cleanly(0)
 
   ## CHANGE-PGCONF #####################################

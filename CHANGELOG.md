@@ -9,6 +9,7 @@
     - size_list(), node_list(), node_start(), node_stop(), node_reboot(), node_create()
   + CITUS: bump to 12.1 and make avaialble for pg16 
   + PLDEBUGGER: bump to 1.6 and make available for pg16
+  + ANSIBLE: add native command line support
 
 ### Fixes and minor changes:
   + fix get/set guc (cady)

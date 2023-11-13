@@ -67,6 +67,10 @@ elif [ `uname` == "Darwin" ]; then
   array[2]="$LIB/osx"
 fi
 
+if [ -d $LIB/el9-amd/bin ]; then
+  export PATH=$LIB/el9-amd/bin:$PATH
+fi
+
 export PYTHONPATH=$(printf "%s:" ${array[@]})
 ##echo PYTHONPATH=$PYTHONPATH
 for var in "$@"
