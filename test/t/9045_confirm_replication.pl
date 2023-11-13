@@ -72,7 +72,7 @@ print("If the word test is in our search string (@$stdout_buf29) we've confirmed
 
 # Test for the search_term in a buffer.
 
-if (contains(@$stdout_buf29[0], "test"))
+if (contains(@$full_buf29[0], "test"))
 
 {
     exit(0);

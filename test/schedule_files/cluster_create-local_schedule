@@ -8,7 +8,7 @@
 
 # The first script (020) creates the pgedge directory; call this script after each cleanup script:
 
-t/020_nodectl_install_pgedge.pl
+t/020cf_nodectl_install_pgedge.pl
 t/902_create_cluster-local_n1.pl
 t/903_create_cluster-local_n2.pl
 

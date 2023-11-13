@@ -14,21 +14,17 @@ use contains;
 
 # Our parameters are:
 
-my $cmd99 = qq(whoami);
-print("cmd99 = $cmd99\n");
-my ($success99, $error_message99, $full_buf99, $stdout_buf99, $stderr_buf99)= IPC::Cmd::run(command => $cmd99, verbose => 0);
-print("stdout_buf99 = @$stdout_buf99\n");
-
-my $repuser = "@$stdout_buf99[0]";
-my $username = "lcusr";
-my $password = "password";
-my $database = "lcdb";
-my $version = "pg17";
-my $spock = "3.1";
-my $cluster = "demo";
-my $repset = "demo-repset";
-my $n1 = "~/work/nodectl/test/pgedge/cluster/demo/n1";
-my $n2 = "~/work/nodectl/test/pgedge/cluster/demo/n2";
+our $repuser = `whoami`;
+our $username = "$ENV{EDGE_USERNAME}";
+our $password = "$ENV{EDGE_PASSWORD}";
+our $database = "$ENV{EDGE_DB}";
+our $inst_version = "$ENV{EDGE_INST_VERSION}";
+our $cmd_version = "$ENV{EDGE_COMPONENT}";
+our $spock = "$ENV{EDGE_SPOCK}";
+our $cluster = "$ENV{EDGE_CLUSTER}";
+our $repset = "$ENV{EDGE_REPSET}";
+our $n1 = "$ENV{EDGE_N1}";
+our $n2 = "$ENV{EDGE_N2}";
 
 # We can retrieve the home directory from nodectl in json form... 
 my $json = `$n2/pgedge/nc --json info`;
@@ -38,7 +34,7 @@ my $homedir = $out->[0]->{"home"};
 print("The home directory is {$homedir}\n");
 
 # We can retrieve the port number from nodectl in json form...
-my $json2 = `$n2/pgedge/nc --json info $version`;
+my $json2 = `$n2/pgedge/nc --json info $ENV{EDGE_COMPONENT}`;
 #print("my json = $json2");
 my $out2 = decode_json($json2);
 my $port = $out2->[0]->{"port"};

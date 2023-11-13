@@ -67,7 +67,7 @@ my $cmd10 = qq($homedir2/nodectl spock health-check);
 print("cmd10 = $cmd10\n");
 my($success10, $error_message10, $full_buf10, $stdout_buf10, $stderr_buf10)= IPC::Cmd::run(command => $cmd10, verbose => 0);
 
-if(contains(@$stdout_buf10[0], "false"))
+if(contains(@$stdout_buf10[0], "True"))
 
 {
     exit(0);

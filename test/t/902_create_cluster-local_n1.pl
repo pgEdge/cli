@@ -13,16 +13,17 @@ use contains;
 
 # Our parameters are:
 
-my $username = "lcusr";
-my $password = "password";
-my $database = "lcdb";
-my $inst_version = "17";
-my $cmd_version = "pg17";
-my $spock = "3.2";
-my $cluster = "demo";
-my $repset = "demo-repset";
-my $n1 = "~/work/nodectl/test/pgedge/cluster/demo/n1";
-my $n2 = "~/work/nodectl/test/pgedge/cluster/demo/n2";
+our $username = "$ENV{EDGE_USERNAME}";
+our $password = "$ENV{EDGE_PASSWORD}";
+our $database = "$ENV{EDGE_DB}";
+our $inst_version = "$ENV{EDGE_INST_VERSION}";
+our $cmd_version = "$ENV{EDGE_COMPONENT}";
+our $spock = "$ENV{EDGE_SPOCK}";
+our $cluster = "$ENV{EDGE_CLUSTER}";
+our $repset = "$ENV{EDGE_REPSET}";
+our $n1 = "$ENV{EDGE_N1}";
+our $n2 = "$ENV{EDGE_N2}";
+
 
 #
 # Move into the pgedge directory.
