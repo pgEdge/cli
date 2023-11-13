@@ -252,6 +252,7 @@ INSERT INTO versions VALUES ('vector-pg16', '0.5.0-1', 'el9, arm9', 0, '20230914
 
 INSERT INTO projects VALUES ('spock', 'pge', 4, 0, 'hub', 1, 'https://github.com/pgedge/spock/tags',
   'spock', 1, 'spock.png', 'Logical & Multi-Master Replication', 'https://github.com/pgedge/spock/#spock');
+INSERT INTO releases VALUES ('spock31-pg14', 4, 'spock', 'Spock', '', 'prod', '', 1, 'pgEdge Community', '', '');
 INSERT INTO releases VALUES ('spock31-pg15', 4, 'spock', 'Spock', '', 'prod', '', 1, 'pgEdge Community', '', '');
 INSERT INTO releases VALUES ('spock31-pg16', 4, 'spock', 'Spock', '', 'prod', '', 1, 'pgEdge Community', '', '');
 INSERT INTO versions VALUES ('spock31-pg15', '3.1.8-1', 'el9, arm9', 1, '20231031', 'pg15', '', '');
@@ -268,10 +269,12 @@ INSERT INTO versions VALUES ('snowflake-pg15', '1.1-1', 'el9, arm9', 1, '2023101
 INSERT INTO versions VALUES ('snowflake-pg16', '1.1-1', 'el9, arm9', 1, '20231017', 'pg16', '', '');
 INSERT INTO versions VALUES ('snowflake-pg17', '1.1-1', 'el9, arm9', 1, '20231017', 'pg17', '', '');
 
+INSERT INTO releases VALUES ('spock32-pg14', 4, 'spock', 'Spock', '', 'test', '', 1, 'pgEdge Community', '', '');
 INSERT INTO releases VALUES ('spock32-pg15', 4, 'spock', 'Spock', '', 'test', '', 1, 'pgEdge Community', '', '');
 INSERT INTO releases VALUES ('spock32-pg16', 4, 'spock', 'Spock', '', 'test', '', 1, 'pgEdge Community', '', '');
 INSERT INTO releases VALUES ('spock32-pg17', 4, 'spock', 'Spock', '', 'test', '', 1, 'pgEdge Community', '', '');
-INSERT INTO versions VALUES ('spock32-pg17', '3.2dev5-1', 'el9, arm9', 1, '20231021', 'pg17', '', '');
+INSERT INTO versions VALUES ('spock32-pg17', '3.2dev6-1', 'el9, arm9', 1, '20231113', 'pg17', '', '');
+INSERT INTO versions VALUES ('spock32-pg17', '3.2dev5-1', 'el9, arm9', 0, '20231021', 'pg17', '', '');
 
 INSERT INTO projects VALUES ('pglogical', 'ext', 4, 0, 'hub', 1, 'https://github.com/2ndQuadrant/pglogical/releases',
   'pglogical', 1, 'spock.png', 'Logical Replication', 'https://github.com/2ndQuadrant/pglogical');

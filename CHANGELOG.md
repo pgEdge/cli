@@ -10,6 +10,7 @@
   + CITUS: bump to 12.1 and make avaialble for pg16 
   + PLDEBUGGER: bump to 1.6 and make available for pg16
   + ANSIBLE: add native command line support
+  + SPOCK32: bump to 3.2dev6 for pg14 support & can compile against unpatched postgres
 
 ### Fixes and minor changes:
   + fix get/set guc (cady)
