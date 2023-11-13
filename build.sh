@@ -461,7 +461,6 @@ initPG () {
       initC "timescaledb-pg$pgM" "timescaledb" "$timescaleV" "$outPlat" "postgres/timescale" "" "" "nil"
       initC "pldebugger-pg$pgM" "pldebugger" "$debuggerV" "$outPlat" "postgres/pldebugger" "" "" "nil"
       initC "curl-pg$pgM"  "curl"    "$curlV"       "$outPlat" "postgres/curl"   "" "" "nil"
-      initC "hypopg-pg$pgM"  "hypopg"    "$hypoV"      "$outPlat" "postgres/hypopg"  "" "" "nil"
     fi
 
     if [ "$pgM" == "15" ] || [ "$pgM" == "16" ]; then
