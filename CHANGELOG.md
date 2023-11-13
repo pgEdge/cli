@@ -1,7 +1,10 @@
 # pgEdge Platform Release Notes #############
 
 
-## done so far for 24.007 on 2023-11-12 ###########
+## done so far for 24.008 on 2023-11-13 ###########
+
+
+## done for 24.007 on 2023-11-13 ###########
 ### New Features:
   + ACE: table re-run only compares delta rows
   + MACHINE: 3rd pass includes:
