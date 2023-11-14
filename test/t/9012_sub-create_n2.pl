@@ -12,21 +12,19 @@ use contains;
 
 # Our parameters are:
 
-my $cmd99 = qq(whoami);
-print("cmd99 = $cmd99\n");
-my ($success99, $error_message99, $full_buf99, $stdout_buf99, $stderr_buf99)= IPC::Cmd::run(command => $cmd99, verbose => 0);
-print("stdout_buf99 = @$stdout_buf99\n");
+our $repuser = `whoami`;
+our $username = "$ENV{EDGE_USERNAME}";
+our $password = "$ENV{EDGE_PASSWORD}";
+our $database = "$ENV{EDGE_DB}";
+our $inst_version = "$ENV{EDGE_INST_VERSION}";
+our $cmd_version = "$ENV{EDGE_COMPONENT}";
+our $spock = "$ENV{EDGE_SPOCK}";
+our $cluster = "$ENV{EDGE_CLUSTER}";
+our $repset = "$ENV{EDGE_REPSET}";
+our $n1 = "$ENV{EDGE_N1}";
+our $n2 = "$ENV{EDGE_N2}";
+our $n3 = "$ENV{EDGE_N3}";
 
-my $repuser = "@$stdout_buf99[0]";
-my $username = "lcusr";
-my $password = "password";
-my $database = "lcdb";
-my $version = "pg17";
-my $spock = "3.2";
-my $cluster = "demo";
-my $repset = "demo-repset";
-my $n1 = "~/work/nodectl/test/pgedge/cluster/demo/n1";
-my $n2 = "~/work/nodectl/test/pgedge/cluster/demo/n2";
 
 # We can retrieve the home directory for node 1 from nodectl in json form... 
 my $json = `$n1/pgedge/nc --json info`;
@@ -36,7 +34,7 @@ my $homedir1 = $out->[0]->{"home"};
 print("The home directory of node 1 is {$homedir1}\n");
 
 # We can retrieve the port number for node 1 from nodectl in json form...
-my $json2 = `$n1/pgedge/nc --json info $version`;
+my $json2 = `$n1/pgedge/nc --json info $cmd_version`;
 #print("my json = $json2");
 my $out2 = decode_json($json2);
 my $port1 = $out2->[0]->{"port"};
@@ -51,7 +49,7 @@ my $homedir2 = $out3->[0]->{"home"};
 print("The home directory of node 2 is {$homedir2}\n");
 
 # We can retrieve the port number for node 2 from nodectl in json form...
-my $json4 = `$n2/pgedge/nc --json info $version`;
+my $json4 = `$n2/pgedge/nc --json info $cmd_version`;
 print("my json = $json4");
 my $out4 = decode_json($json4);
 my $port2 = $out4->[0]->{"port"};
@@ -69,7 +67,7 @@ print("stdout_buf12 = @$stdout_buf12\n");
 
 # Then, we connect with psql and confirm that the subscription exists.
 
-my $cmd7 = qq($homedir2/$version/bin/psql -t -h 127.0.0.1 -p $port2 -d $database -c "SELECT * FROM spock.subscription");
+my $cmd7 = qq($homedir2/$cmd_version/bin/psql -t -h 127.0.0.1 -p $port2 -d $database -c "SELECT * FROM spock.subscription");
 print("cmd7 = $cmd7\n");
 my($success7, $error_message7, $full_buf7, $stdout_buf7, $stderr_buf7)= IPC::Cmd::run(command => $cmd7, verbose => 0);
 

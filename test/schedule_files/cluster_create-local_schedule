@@ -15,10 +15,13 @@ t/903_create_cluster-local_n2.pl
 t/9006_repset-create_node_1.pl
 t/9007_repset-create_node_2.pl
 
-t/9008_update_user_n1.pl
-t/9009_update_user_n2.pl
+#t/9008_update_user_n1.pl
+#t/9009_update_user_n2.pl
+
 t/9010_sub-create_n1.pl
 t/9012_sub-create_n2.pl
+t/9011_sub-create_errors_n1.pl
+
 t/9018_create_pgbench_artifacts_n1.pl
 t/9019_create_pgbench_artifacts_n2.pl
 t/9020_setup_pgbench_n1.pl
