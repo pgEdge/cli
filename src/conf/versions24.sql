@@ -274,7 +274,8 @@ INSERT INTO releases VALUES ('spock32-pg14', 4, 'spock', 'Spock', '', 'test', ''
 INSERT INTO releases VALUES ('spock32-pg15', 4, 'spock', 'Spock', '', 'test', '', 1, 'pgEdge Community', '', '');
 INSERT INTO releases VALUES ('spock32-pg16', 4, 'spock', 'Spock', '', 'test', '', 1, 'pgEdge Community', '', '');
 INSERT INTO releases VALUES ('spock32-pg17', 4, 'spock', 'Spock', '', 'test', '', 1, 'pgEdge Community', '', '');
-INSERT INTO versions VALUES ('spock32-pg17', '3.2dev6-1', 'el9, arm9', 1, '20231113', 'pg17', '', '');
+INSERT INTO versions VALUES ('spock32-pg17', '3.2dev7-1', 'el9, arm9', 1, '20231115', 'pg17', '', '');
+INSERT INTO versions VALUES ('spock32-pg17', '3.2dev6-1', 'el9, arm9', 0, '20231113', 'pg17', '', '');
 INSERT INTO versions VALUES ('spock32-pg17', '3.2dev5-1', 'el9, arm9', 0, '20231021', 'pg17', '', '');
 
 INSERT INTO projects VALUES ('pglogical', 'ext', 4, 0, 'hub', 1, 'https://github.com/2ndQuadrant/pglogical/releases',
