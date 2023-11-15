@@ -1,6 +1,10 @@
 # pgEdge Platform Release Notes #############
 
 
+## done so far for 24.009 on 2023-11-30 ###########
+
+
+
 ## done for 24.008 on 2023-11-15 ###########
   + SPOCK32: bump to 3.2dev7 for prelim paraleel_slots testing on pg17
 
