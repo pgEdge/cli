@@ -1,4 +1,4 @@
-import sys, os, psycopg
+import sys, os, psycopg, json
 from dotenv import load_dotenv
 
 ## Utility Functions
@@ -31,12 +31,13 @@ def exit_message(p_msg, p_rc=1):
 
 
 ## Run functions on both nodes
-def run_cmd(msg, cmd, node_path):  
+def run_cmd(msg, cmd, node_path):
+    print(cmd)  
     rc = os.system(f"{node_path}/pgedge/nodectl {cmd}")
     if rc != 0:
        exit_message(f"Failed on step: {msg}",1)
 
-
+'''
 ## Get two psql connections
 def get_pg_connection():
   port_n1, port_n2, host_n1, host_n2, db, usr, pw, repuser, pgv, repo = get_settings()
@@ -46,33 +47,37 @@ def get_pg_connection():
   except Exception as e:
     exit_message(e)
   return(con1, con2)
+'''
 
+ 
+## Get two psql connections
+def get_pg_con(host,dbname,port,pw,usr):
+  #port, port_n2, host_n1, host_n2, db, usr, pw, repuser, pgv, repo = get_settings()
+  try:
+    con1 = psycopg.connect(dbname=dbname, user=usr, host=host, port=port, password=pw, autocommit=False)
+    #con2 = psycopg.connect(dbname=db, user=repuser, host=host_n2, port=port_n2, password=pw, autocommit=False)
+  except Exception as e:
+    exit_message(e)
+  return(con1)
 
 ## Run psql on both nodes
-def run_psql(cmd1, cmd2=None):
-    ret2=None
-    con1, con2 = get_pg_connection()  
+def run_psql(cmd1,con1):
+    #con1 = get_pg_connection()  
     try:
         cur1 = con1.cursor()
         cur1.execute(cmd1)
-        ret1 = cur1.fetchall()
+        print(json.dumps(cur1.fetchall()))
+        ret1 = 0
         cur1.close()
     except Exception as e:
         exit_message(e)
-    if cmd2!=None:
-        try:
-            cur2 = con2.cursor()
-            cur2.execute(cmd2)
-            ret2 = cur2.fetchall()
-            cur2.close()
-        except Exception as e:
-            exit_message(e)
+    
     try:
         con1.close()
-        con2.close()
+        #con2.close()
     except Exception as e:
         pass
-    return ret1, ret2
+    return ret1
 
 
 def cleanup_sub(db):
@@ -84,10 +89,32 @@ def cleanup_sub(db):
         if "sub_n2n1" in str(ret_n2):
             cmd2 = f"spock sub-drop sub_n2n1 {db}"
         run_cmd("Drop Subs",cmd1,cmd2)
+        
+        
+def contains(haystack, needle):
+    print(f'haystack = ({haystack})')
+    print(f'needle = ({needle})')
+    
+    if haystack is None or needle is None or len(haystack) == 0 or len(needle) == 0:
+        return 0
 
-
+    if haystack.find(needle) != -1:
+        print('Haystack and needle both have content, and our value is found - this case correctly returns true')
+        return 1
+    else:
+        print('Haystack and needle both have content, but our value is not found - returning 0 as it should')
+        return 0
+        
+        
+        
+        
+        
+'''
 def needle_in_haystack(haystack, needle):
     if needle in str(haystack):
+    print("pass")
         exit_message("Pass", p_rc=0)
     else:
         exit_message("Fail", p_rc=1)
+'''
+

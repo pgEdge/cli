@@ -16,6 +16,9 @@ db=os.getenv("EDGE_DB","demo")
 host=os.getenv("EDGE_HOST","localhost")
 repuser=os.getenv("EDGE_REPUSER","pgedge")
 
+print(repo)
+print(cluster_dir)
+
 ## Build Cluster
 print("Creating node directories")
 for i in range(1,num_nodes+1):
