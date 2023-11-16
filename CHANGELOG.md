@@ -2,6 +2,8 @@
 
 
 ## done so far for 24.009 on 2023-11-30 ###########
+  + lots of tweaks to CLI --help
+  + document regression tests using cluster local-create, northwind, & ace
 
 
 

@@ -1,13 +1,13 @@
 ## SYNOPSIS
-    ./nodectl spock repset-add-seq SET_NAME DB RELATION <flags>
+    ./nodectl spock repset-add-seq REPLICATION_SET SEQUENCE DB <flags>
  
 ## DESCRIPTION
     Add a sequence to a replication set.
  
 ## POSITIONAL ARGUMENTS
-    SET_NAME
+    REPLICATION_SET
+    SEQUENCE
     DB
-    RELATION
  
 ## FLAGS
     -s, --synchronize_data=SYNCHRONIZE_DATA

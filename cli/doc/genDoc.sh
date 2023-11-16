@@ -34,8 +34,11 @@ $nc spock repset-add-table  --help
 $nc spock repset-remove-table --help
 $nc spock repset-add-seq    --help
 $nc spock repset-remove-seq --help
-$nc spock repset-alter-seq  --help
 $nc spock repset-list-tables  --help
+$nc spock repset-add-partition --help
+$nc spock repset-remove-partition --help
+$nc spock replicate-ddl     --help
+$nc spock sequence-convert  --help
 $nc spock sub-create        --help
 $nc spock sub-drop          --help
 $nc spock sub-alter-interface --help
@@ -45,7 +48,6 @@ $nc spock sub-add-repset    --help
 $nc spock sub-remove-repset --help
 $nc spock sub-show-status   --help
 $nc spock sub-show-table    --help
-$nc spock sub-sync          --help
 $nc spock sub-resync-table  --help
 $nc spock sub-wait-for-sync --help
 $nc spock table-wait-for-sync --help
@@ -55,6 +57,11 @@ $nc spock set-readonly      --help
 
 $nc db --help
 $nc db create               --help
+$nc db set-guc              --help
+$nc db show-guc             --help
+$nc db dump                 --help
+$nc db restore              --help
+$nc db migrate              --help
 
 $nc cluster --help
 $nc cluster local-create      --help
@@ -80,7 +87,9 @@ $nc secure create-cluster     --help
 $nc secure destroy-cluster    --help
 
 $nc ace --help
-$nc ace diff-tables         --help
+$nc ace table-diff          --help
+$nc ace table-repair        --help
+$nc ace table-rerun         --help
 $nc ace diff-schemas        --help
 $nc ace diff-spock          --help
 

@@ -11,9 +11,6 @@
 ## FLAGS
     --pg=PG
         Default: 16
-    -a, --app=APP
-        Type: Optional[]
-        Default: None
     --port1=PORT1
         Default: 6432
     -U, --User=USER

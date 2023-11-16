@@ -2,7 +2,10 @@
     ./nodectl secure cluster-status CLUSTER_ID <flags>
  
 ## DESCRIPTION
-    Return info on a cluster in a pgEdge Cloud Account
+    Returns cluster status in a pgEdge Cloud Account
+[ Requires ./nocdectl secure config ]
+  CLUSTER_ID - the pgEdge Cloud Cluster ID
+  PROFILE - profile name of pgEdge Cloud Account for NodeCTL to use
  
 ## POSITIONAL ARGUMENTS
     CLUSTER_ID

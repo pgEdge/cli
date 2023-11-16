@@ -2,7 +2,9 @@
     ./nodectl spock node-drop NODE_NAME DB <flags>
  
 ## DESCRIPTION
-    Remove a spock node.
+    Drop spock node
+    NODE_NAME - name of an existing node
+    DB - database
  
 ## POSITIONAL ARGUMENTS
     NODE_NAME

@@ -3,7 +3,7 @@
  
 ## COMMANDS
     COMMAND is one of the following:
-     config              # Login nodeCtl with a pgEdge Cloud Account
+     config              # Connect nodeCtl with a pgEdge Cloud Account
      list-cloud-acct     # List all cloud account ids in a pgEdge Cloud Account
      list-clusters       # List all clusters in a pgEdge Cloud Account
      cluster-status      # Return info on a cluster in a pgEdge Cloud Account

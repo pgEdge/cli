@@ -16,7 +16,8 @@
      repset-remove-table # Remove table from replication set.
      repset-add-seq      # Add a sequence to a replication set.
      repset-remove-seq   # Remove a sequence from a replication set.
-     repset-alter-seq    # Change a replication set sequence.
+     repset-add-partition# Add a partition to a replication set.
+     repset-remove-partition# Remove a partition from a replication set.
      repset-list-tables  # List tables in replication sets.
      sub-create          # Create a subscription.
      sub-drop            # Delete a subscription.
@@ -27,10 +28,11 @@
      sub-remove-repset   # Drop a replication set from a subscription.
      sub-show-status     # Display the status of the subcription.
      sub-show-table      # Show subscription tables.
-     sub-sync            # Pause until a subscription is synchronized.
      sub-resync-table    # Resynchronize a table.
      sub-wait-for-sync   # Pause until the subscription is synchronized.
      table-wait-for-sync # Pause until a table finishes synchronizing.
+     replicate-ddl       # Replicate DDL through replication set(s).
+     sequence-convert    # Convert sequence to snowflake sequence.
      health-check        # Check if PG instance is accepting connections.
      metrics-check       # Retrieve advanced DB & OS metrics.
      set-readonly        # Turn PG read-only mode on or off.
