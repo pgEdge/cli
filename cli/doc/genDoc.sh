@@ -93,4 +93,16 @@ $nc ace table-rerun         --help
 $nc ace diff-schemas        --help
 $nc ace diff-spock          --help
 
+$nc machine --help
+$nc machine node-create     --help
+$nc machine node-start      --help
+$nc machine node-stop       --help
+$nc machine node-reboot     --help
+$nc machine node-destroy    --help
+$nc machine node-list       --help
+$nc machine cluster-nodes   --help
+$nc machine provider-list   --help
+$nc machine location-list   --help
+$nc machine size-list       --help
+
 unset pgeMdDir
