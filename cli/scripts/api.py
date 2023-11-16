@@ -394,7 +394,7 @@ def info(p_json, p_home, p_repo, print_flag=True):
   if java_ver > "":
     langs = langs + " | Java v" + java_ver
 
-  util.validate_distutils_click(False)
+  ## util.validate_distutils_click(False)
 
   if glibcV <= ' ':
     glibc_v_display = ''

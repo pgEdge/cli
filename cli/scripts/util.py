@@ -74,6 +74,10 @@ if os.path.exists(platform_lib_path):
 my_logger = logging.getLogger("cli_logger")
 
 
+def copytree(cmd):
+    os.system("cp -r {cmd}")
+
+
 def load_ini(file_nm, section):
     try:
         text = open(file_nm, "r").read()
@@ -566,23 +570,6 @@ def is_systemctl():
 
 def remove_symlinks(p_link_dir, p_target_dir):
     ## disabled because it dangerously doesn't work
-    return
-
-    cmd = (
-        "ls  -l "
-        + p_link_dir
-        + ' | grep "\->" | grep '
-        + p_target_dir
-        + ' | cut -c50- | cut -d" " -f1'
-    )
-    links = getoutput(cmd)
-
-    for link in links.splitlines():
-        lnk = str(link).strip()
-        cmd = "sudo rm " + str(p_link_dir) + os.sep + str(lnk)
-        message(cmd, "info")
-        os.system(cmd)
-
     return
 
 
@@ -1629,7 +1616,7 @@ def remember_pgpassword(
     ## pre-pend the new
     escaped_passwd = p_passwd
     escaped_passwd = escaped_passwd.replace("\\", "\\\\")
-    escaped_passwd = escaped_passwd.replace(":", "\:")
+    escaped_passwd = escaped_passwd.replace(":", "\\:")
 
     prt_db_usr_pwd = p_port + ":" + p_db + ":" + p_user + ":" + escaped_passwd
     s_host = p_host + ":" + prt_db_usr_pwd
@@ -1991,7 +1978,7 @@ def get_cpu_cores():
 
     if get_platform() == "Linux":
         cpu_cores = int(
-            getoutput("egrep -c 'processor([[:space:]]+):.*' /proc/cpuinfo")
+            getoutput("grep -E -c 'processor([[:space:]]+):.*' /proc/cpuinfo")
         )
     elif get_platform() == "Darwin":
         cpu_cores = int(getoutput("/usr/sbin/sysctl hw.physicalcpu | awk '{print $2}'"))
@@ -3334,22 +3321,6 @@ def create_manifest(ext_comp, parent_comp, upgrade=None):
         pass
 
     return True
-
-
-def validate_distutils_click(isFatal=True):
-    try:
-        from distutils.dir_util import copy_tree
-    except:
-        msg = (
-            "Missing distutils, try something like"
-            + "\n $ sudo apt-get install python3-distutils"
-        )
-        if isFatal:
-            fatal_error(msg)
-        else:
-            print("WARNING: " + msg)
-
-    return
 
 
 def copy_extension_files(ext_comp, parent_comp, upgrade=None):
