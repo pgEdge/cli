@@ -1,6 +1,9 @@
 # pgEdge Platform Release Notes #############
 
 
+## done so far for 24.011 on 2023-11-30 ###########
+
+
 ## done for 24.010 on 2023-11-17 ###########
   + small fixes to work cleanly on Fedora 39 & python 3.12
   + regenerate and cleanup --help 

@@ -38,7 +38,7 @@ import meta
 import ini
 import clilog
 
-MY_VERSION = "24.010"
+MY_VERSION = "24.011"
 
 MY_CMD = os.getenv("MY_CMD", None)
 MY_HOME = os.getenv("MY_HOME", None)
