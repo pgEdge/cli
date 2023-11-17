@@ -616,7 +616,7 @@ def unpack_comp(p_app, p_old_ver, p_new_ver):
       parent = util.get_parent_component(p_app,0)
       if not os.path.exists(os.path.join(backup_target_dir, parent)):
         my_logger.info("backing up the parent component %s " % parent)
-        util.copytree(os.path.join(MY_HOME, parent), os.path.join(backup_target_dir, parent))
+        util.copytree(f"{os.path.join(MY_HOME, parent)}  {os.path.join(backup_target_dir, parent)}")
       manifest_file_name = p_app + ".manifest"
       manifest_file_path = os.path.join(MY_HOME, "conf", manifest_file_name)
       my_logger.info("backing up current manifest file " + manifest_file_path)
@@ -650,7 +650,7 @@ def unpack_comp(p_app, p_old_ver, p_new_ver):
         os.mkdir(backup_target_dir)
       if not os.path.exists(os.path.join(backup_target_dir, p_app)):
         my_logger.info("backing up the old version of %s " % p_app)
-        util.copytree(os.path.join(MY_HOME, p_app), os.path.join(backup_target_dir, p_app))
+        util.copytree(f"{os.path.join(MY_HOME, p_app)}  {os.path.join(backup_target_dir, p_app)}")
 
       msg = p_app + " upgrade staged for completion."
       my_logger.info(msg)
@@ -665,7 +665,7 @@ def unpack_comp(p_app, p_old_ver, p_new_ver):
         os.rename(p_app, p_app+"_old")
         my_logger.info("copying the new files to folder %s" % p_app)
 
-        util.copytree(os.path.join(MY_HOME, new_comp_dir, p_app), os.path.join(MY_HOME, p_app))
+        util.copytree(f"{os.path.join(MY_HOME, new_comp_dir, p_app)}  {os.path.join(MY_HOME, p_app)}")
 
         my_logger.info("Restoring the conf and extension files if any")
         util.restore_conf_ext_files(os.path.join(MY_HOME, p_app+"_old"), os.path.join(MY_HOME, p_app))

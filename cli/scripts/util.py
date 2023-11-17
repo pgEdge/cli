@@ -75,7 +75,7 @@ my_logger = logging.getLogger("cli_logger")
 
 
 def copytree(cmd):
-    os.system("cp -r {cmd}")
+    os.system(f"cp -r {cmd}")
 
 
 def load_ini(file_nm, section):

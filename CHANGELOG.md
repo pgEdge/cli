@@ -1,7 +1,7 @@
 # pgEdge Platform Release Notes #############
 
 
-## done for 24.009 on 2023-11-17 ###########
+## done for 24.010 on 2023-11-17 ###########
   + small fixes to work cleanly on Fedora 39 & python 3.12
   + regenerate and cleanup --help 
   + document regression tests using cluster local-create, northwind, & ace
