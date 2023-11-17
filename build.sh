@@ -428,7 +428,7 @@ initPG () {
   writeSettRow "GLOBAL" "STAGE" "prod"
   writeSettRow "GLOBAL" "AUTOSTART" "off"
 
-  initC "nclibs"  "nclibs"  "1.0"  "" "nclibs"         "" "" "Y"
+  initC "nclibs"  "nclibs"  "$nclibsV"  "" "nclibs"         "" "" "Y"
 
   if [ "$outPlat" == "osx" ]; then
     return

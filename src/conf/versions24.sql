@@ -341,7 +341,8 @@ INSERT INTO versions VALUES ('pgedge', '2-5',   '', 0, '20230927', '', '', '');
 INSERT INTO projects VALUES ('nclibs', 'pge', 0, 0, 'hub', 3, 'https://github.com/pgedge/nodectl',
   'nclibs',  0, 'nclibs.png', 'nclibs', 'https://github.com/pgedge/nodectl');
 INSERT INTO releases VALUES ('nclibs', 2, 'nclibs',  'nodectl Libs', '', 'prod', '', 1, '', '', '');
-INSERT INTO versions VALUES ('nclibs', '1.0', '', 1, '20231021', '', '', '');
+INSERT INTO versions VALUES ('nclibs', '1.1', '', 1, '20231130', '', '', '');
+INSERT INTO versions VALUES ('nclibs', '1.0', '', 0, '20231021', '', '', '');
 
 INSERT INTO projects VALUES ('pgcat', 'pge', 11, 5433, 'hub', 3, 'https://github.com/pgedge/pgcat/tags',
   'cat',  0, 'pgcat.png', 'Connection Pooler', 'https://github.com/pgedge/pgcat');
