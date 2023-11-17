@@ -5,7 +5,7 @@
 import os, sys, sqlite3, platform
 import util
 
-MY_HOME = os.getenv('MY_HOME', '')
+MY_HOME = os.getenv("MY_HOME", "")
 NC = MY_HOME + "/nodectl"
 
 rc = 0
@@ -13,54 +13,54 @@ rc = 0
 
 ################ run_sql() #######################################
 def run_sql(cmd):
-  global rc 
-  try:
-    c = cL.cursor()
-    c.execute(cmd)
-    cL.commit()
-    c.close()
-  except Exception as e:
-    if "duplicate column" not in str(e.args[0]):
-      print ("")
-      print ("ERROR: " + str(e.args[0]))
-      print (cmd)
-    rc = 1
+    global rc
+    try:
+        c = cL.cursor()
+        c.execute(cmd)
+        cL.commit()
+        c.close()
+    except Exception as e:
+        if "duplicate column" not in str(e.args[0]):
+            print("")
+            print("ERROR: " + str(e.args[0]))
+            print(cmd)
+        rc = 1
 
 
 def mainline():
-  ## need from_version & to_version
-  if len(sys.argv) == 3:
-    p_from_ver = sys.argv[1]
-    p_to_ver = sys.argv[2]
-  else:
-    print ("ERROR: Invalid number of parameters, try: ")
-    print ("         python update-hub.py from_version  to_version")
-    sys.exit(1)
+    ## need from_version & to_version
+    if len(sys.argv) == 3:
+        p_from_ver = sys.argv[1]
+        p_to_ver = sys.argv[2]
+    else:
+        print("ERROR: Invalid number of parameters, try: ")
+        print("         python update-hub.py from_version  to_version")
+        sys.exit(1)
 
-  print ("")
-  print ("Running update-hub from v" + p_from_ver + " to v" + p_to_ver)
+    print("")
+    print("Running update-hub from v" + p_from_ver + " to v" + p_to_ver)
 
-  if p_from_ver >= p_to_ver:
-    print ("Nothing to do.")
-    sys.exit(0)
+    if p_from_ver >= p_to_ver:
+        print("Nothing to do.")
+        sys.exit(0)
 
-  if (p_from_ver < "24.010") and (p_to_ver >= "24.011"):
-    util.echo_cmd(NC + " remove nclibs")
-    util.echo_cmd(NC + " install nclibs")
+    if (p_from_ver < "24.010") and (p_to_ver >= "24.011"):
+        util.echo_cmd(NC + " remove nclibs")
+        util.echo_cmd(NC + " install nclibs")
 
-  sys.exit(rc)
-  return
+    sys.exit(rc)
+    return
 
 
 ###################################################################
 #  MAINLINE
 ###################################################################
-if MY_HOME == '':
-  print ("ERROR: Missing MY_HOME envionment variable")
-  sys.exit(1)
+if MY_HOME == "":
+    print("ERROR: Missing MY_HOME envionment variable")
+    sys.exit(1)
 
 ## gotta have a sqlite database to (possibly) update
 cL = sqlite3.connect(os.getenv("MY_LITE"))
 
-if __name__ == '__main__':
-   mainline()
+if __name__ == "__main__":
+    mainline()

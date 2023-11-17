@@ -1,5 +1,6 @@
 import util, fire
 
+
 def list(zone="external"):
     rc1 = util.echo_cmd(f"sudo firewall-cmd --list-sources --zone={zone}", echo=False)
     rc2 = util.echo_cmd(f"sudo firewall-cmd --list-ports --zone={zone}", echo=False)
@@ -15,7 +16,6 @@ def remove(sources, ports, zone="external"):
 
 
 def action(action, sources, ports, zone):
-
     sources = str(sources)
     l_srcs = sources.split(" ")
 
@@ -24,20 +24,20 @@ def action(action, sources, ports, zone):
 
     for s in l_srcs:
         s = s.strip()
-        if s >  "":
-            util.echo_cmd(f"sudo firewall-cmd --{action}-source={s}  --zone={zone}", echo=True)
+        if s > "":
+            util.echo_cmd(
+                f"sudo firewall-cmd --{action}-source={s}  --zone={zone}", echo=True
+            )
 
     for p in l_prts:
         p = p.strip()
         if p > "":
-            util.echo_cmd(f"sudo firewall-cmd --{action}-port={p}/tcp  --zone={zone}", echo=True)
+            util.echo_cmd(
+                f"sudo firewall-cmd --{action}-port={p}/tcp  --zone={zone}", echo=True
+            )
 
     util.echo_cmd(f"sudo firewall-cmd --runtime-to-permanent", echo=True)
 
 
-if __name__ == '__main__':
-  fire.Fire({
-    'list':   list,
-    'add':    add,
-    'remove': remove
-  })
+if __name__ == "__main__":
+    fire.Fire({"list": list, "add": add, "remove": remove})

@@ -377,7 +377,7 @@ def echo_cmd(cmd, echo=True, sleep_secs=0, host="", usr="", key=""):
     if isSilent == "False":
         s_cmd = scrub_passwd(cmd)
         if echo:
-          message("#  " + str(s_cmd))
+            message("#  " + str(s_cmd))
 
     rc = os.system(str(cmd))
     if rc == 0:
@@ -2567,16 +2567,15 @@ def get_el_os():
     if os.path.exists(rel_file):
         rc = os.system('grep "platform:el9" /etc/os-release > /dev/null 2>&1')
         if rc == 0:
-            return("EL9")
+            return "EL9"
 
         rc = os.system('grep "platform:el8" /etc/os-release > /dev/null 2>&1')
         if rc == 0:
-            return("EL8")
+            return "EL8"
 
-        return("EL")
+        return "EL"
 
-    return(None)
-
+    return None
 
 
 def get_el_ver():
@@ -2612,7 +2611,9 @@ def warn_bad_os(el_ver):
         return ()
     else:
         bad_os_warn = True
-        message("# WARNING! Upgrade to pg14+ on EL9 or Ubuntu 22.04 for Spock multi-master functionality.")
+        message(
+            "# WARNING! Upgrade to pg14+ on EL9 or Ubuntu 22.04 for Spock multi-master functionality."
+        )
 
 
 def is_el8():

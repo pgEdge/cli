@@ -13,8 +13,10 @@ base_dir = "patroni-cluster"
 patroni_dir = "/usr/local/patroni/"
 
 # These commands are used to refresh the etcd database and set the proper permissions.
-ETCD_DATA     = f"/var/lib/etcd"
-ETCD_CLEANUP  = f"rm -rf {ETCD_DATA}/*; mkdir -p {ETCD_DATA}; chown -R etcd:etcd {ETCD_DATA}; "
+ETCD_DATA = f"/var/lib/etcd"
+ETCD_CLEANUP = (
+    f"rm -rf {ETCD_DATA}/*; mkdir -p {ETCD_DATA}; chown -R etcd:etcd {ETCD_DATA}; "
+)
 ETCD_CLEANUP += f"rm -rf {ETCD_DATA}/postgresql/*; mkdir -p {ETCD_DATA}/postgresql; chown -R etcd:etcd {ETCD_DATA}/postgresql; "
 ETCD_CLEANUP += f"chmod 700 {ETCD_DATA}/postgresql;"
 
@@ -93,30 +95,39 @@ recovery_conf:
     trigger_file: /tmp/trigger
 """
 
+
 def etcd_conf(cluster, nodes):
     for i, node in enumerate(nodes):
-        etcd_yaml = ETCD_YAML.replace("IP_NODE", node['local_ip'])
-        etcd_yaml = etcd_yaml.replace("NODE_NAME", node['name'])
-        
+        etcd_yaml = ETCD_YAML.replace("IP_NODE", node["local_ip"])
+        etcd_yaml = etcd_yaml.replace("NODE_NAME", node["name"])
+
         if i == 0:
             # Node 1 configuration
             initial_cluster = f"{node['name']}=http://{node['local_ip']}:2380"
             initial_cluster_state = "new"
         else:
             # Nodes 2 and 3 configuration
-            initial_cluster = ",".join([f"{n['name']}=http://{n['local_ip']}:2380" for n in nodes[:i+1]])
+            initial_cluster = ",".join(
+                [f"{n['name']}=http://{n['local_ip']}:2380" for n in nodes[: i + 1]]
+            )
             initial_cluster_state = "existing"
-        
+
         etcd_yaml = etcd_yaml.replace("INITIAL_CLUSTER", initial_cluster)
         etcd_yaml = etcd_yaml.replace("STATE", initial_cluster_state)
-        
-        echo_cmd(f"sudo sh -c \"echo '{etcd_yaml}' > /etc/etcd/etcd.yaml\"", node['ip'], cluster)
+
+        echo_cmd(
+            f"sudo sh -c \"echo '{etcd_yaml}' > /etc/etcd/etcd.yaml\"",
+            node["ip"],
+            cluster,
+        )
         print(etcd_yaml)
 
 
 def echo_cmd(command, host, cluster, fail=1, max_retries=1):
     for _ in range(max_retries):
-        rc = util.echo_cmd(f"{command}", host=host, usr=cluster["os_user"], key=cluster["ssh_key"])
+        rc = util.echo_cmd(
+            f"{command}", host=host, usr=cluster["os_user"], key=cluster["ssh_key"]
+        )
         if rc == 0:
             return "OK"
         max_retries -= 1
@@ -128,7 +139,8 @@ def echo_cmd(command, host, cluster, fail=1, max_retries=1):
                 util.exit_message("Command failed...", 1)
                 return 1
     return 0
- 
+
+
 def create_local_json(config):
     cluster_name = config["cluster"]["cluster"]
     num_nodes = config["cluster"]["count"]
@@ -169,6 +181,7 @@ def create_local_json(config):
     except Exception as e:
         util.exit_message("Unable to create JSON file: " + str(e), 1)
 
+
 def load_json(cluster_name):
     cluster_dir = base_dir + os.sep + cluster_name
     cluster_file = cluster_dir + os.sep + cluster_name + ".json"
@@ -196,12 +209,12 @@ def reset_remote(cluster_name):
 
     util.message("\n## Ensure that PG is stopped.")
     for nd in cj["nodes"]:
-        ndpath = cluster["path"] + nd['name'] + "/"
+        ndpath = cluster["path"] + nd["name"] + "/"
         cmd = ndpath + "/nodectl stop 2> /dev/null"
         echo_cmd(f"{cmd}", nd["ip"], cluster)
 
-def check_cluster(cluster_name):
 
+def check_cluster(cluster_name):
     cj = load_json(cluster_name)
     cluster = cj["cluster"]
 
@@ -213,24 +226,26 @@ def check_cluster(cluster_name):
             data_path = f"{cluster['path']}/{nd['name']}/pgedge/data/pg16"
 
             # Check if PostgreSQL is installed in bin_path
-            rc = echo_cmd(f"{bin_path}/postgres --version", nd['ip'], cluster, 0)
+            rc = echo_cmd(f"{bin_path}/postgres --version", nd["ip"], cluster, 0)
             if rc == 1:
                 util.exit_message(f"No PostgreSQL installation found in {bin_path}")
 
             # Check for ETCD installation
-            rc = echo_cmd(f"etcdctl version", nd['ip'], cluster, 0)
+            rc = echo_cmd(f"etcdctl version", nd["ip"], cluster, 0)
             if rc == 1:
                 util.exit_message(f"No ETCD installation found in $PATH")
 
             # Check for Patroni installation
-            rc = echo_cmd(f"{patroni_dir}/patronictl.py version", nd['ip'], cluster, 0)
+            rc = echo_cmd(f"{patroni_dir}/patronictl.py version", nd["ip"], cluster, 0)
             if rc == 1:
                 util.exit_message(f"No Patroni installation found in {patroni_dir}")
 
             cmd_check_data_dir = f"[ -d {data_path} ] || echo '' exit 1"
-            rc = echo_cmd(cmd_check_data_dir, nd['ip'], cluster, 0)
+            rc = echo_cmd(cmd_check_data_dir, nd["ip"], cluster, 0)
             if rc == 1:
-                util.exit_message(f"Data directory not found at {data_path} for the primary node")
+                util.exit_message(
+                    f"Data directory not found at {data_path} for the primary node"
+                )
         else:
             util.message(f"\nchecking ssh'ing to replica {nd['name']} - {nd['ip']}")
             cmd = f"ssh -o StrictHostKeyChecking=no -q -t {cj['cluster']['os_user']}@{nd['ip']} -i {cj['cluster']['ssh_key']} 'hostname'"
@@ -243,7 +258,7 @@ def init_remote(cluster_name, app=None):
     """Initialize a patroni-cluster from json definition file of existing nodes."""
     util.message(f"## Loading cluster '{cluster_name}' json definition file")
     cj = load_json(cluster_name)
-    cluster= cj["cluster"]
+    cluster = cj["cluster"]
     nodes = cj["nodes"]
 
     print_information(cj)
@@ -252,6 +267,7 @@ def init_remote(cluster_name, app=None):
 
     configure_etcd(cluster, nodes)
     configure_patroni(cluster, nodes)
+
 
 def print_config(cluster_name):
     """Print patroni-cluster json definition file information."""
@@ -262,14 +278,14 @@ def print_config(cluster_name):
 def print_information(config):
     # HAProxy Info
     print(("#" * 70))
-    print("#       HAProxy: ver 1.1.0" )
-    print("#            IP: "  + config["HAProxy"]["ip"])
-    print("#      Local IP: "  + config["HAProxy"]["local_ip"])
-    print("#      Username: "  + config["HAProxy"]["username"])
-    print("#  SSH Key Path: "  + config["HAProxy"]["ssh_key_path"])
+    print("#       HAProxy: ver 1.1.0")
+    print("#            IP: " + config["HAProxy"]["ip"])
+    print("#      Local IP: " + config["HAProxy"]["local_ip"])
+    print("#      Username: " + config["HAProxy"]["username"])
+    print("#  SSH Key Path: " + config["HAProxy"]["ssh_key_path"])
     print("# ")
     print(("*" * 70))
-    
+
     # Cluster Info
     print("#        Cluster Name: " + config["cluster"]["cluster"])
     print("#         Create Date: " + config["cluster"]["create_dt"])
@@ -282,7 +298,7 @@ def print_information(config):
     print("#          Node Count: " + config["cluster"]["count"])
     print("# ")
     print(("#" * 70))
-    
+
     # Nodes Info
     nodes = config.get("nodes", [])
     nodes_data = []
@@ -298,7 +314,8 @@ def print_information(config):
 
     print(tabulate(nodes_data, headers="keys", tablefmt="pipe"))
     print(("#" * 70))
-   
+
+
 def install_pgedge(cluster_name):
     """Install pgedge on cluster from json definition file nodes."""
     cj = load_json(cluster_name)
@@ -327,8 +344,8 @@ def install_pgedge(cluster_name):
 
         cmd1 = f"mkdir -p {ndpath}; cd {ndpath}; "
         cmd2 = f"python3 -c '$(curl -fsSL {REPO}/install24.py)'"
-        echo_cmd(f"{cmd1}{cmd2}",ndip, cluster);
- 
+        echo_cmd(f"{cmd1}{cmd2}", ndip, cluster)
+
         nc = f"{ndpath}/pgedge/nodectl"  # Fixed path here
         parms = (
             f" -U {cluster['db_user']} "
@@ -337,7 +354,7 @@ def install_pgedge(cluster_name):
             f"-p {ndport} "
             f"--pg {cluster['pg_ver']}"
         )
-        echo_cmd(f"{nc} install pgedge{parms}",ndip, cluster);
+        echo_cmd(f"{nc} install pgedge{parms}", ndip, cluster)
         util.message("#")
 
 
@@ -350,9 +367,10 @@ def nodectl_command(cluster_name, node, cmd, args=None):
     for nd in cj["nodes"]:
         if node == "all" or node == nd["name"]:
             knt = knt + 1
-            echo_cmd(nd["path"] + "/pgedge/nodectl" + cmd, nd['ip'], cluster);
+            echo_cmd(nd["path"] + "/pgedge/nodectl" + cmd, nd["ip"], cluster)
     if knt == 0:
         util.message(f"# nothing to do")
+
 
 def etcd_command(cluster_name, node, cmd, args=None):
     """Run 'etcdctl' command on a node."""
@@ -363,9 +381,10 @@ def etcd_command(cluster_name, node, cmd, args=None):
     for nd in cj["nodes"]:
         if node == "all" or node == nd["name"]:
             knt = knt + 1
-            echo_cmd(f"etcdctl " + cmd, nd['ip'], cluster);
+            echo_cmd(f"etcdctl " + cmd, nd["ip"], cluster)
     if knt == 0:
         util.message(f"# nothing to do")
+
 
 def patroni_command(cluster_name, node, cmd, args=None):
     """Run 'patronictl' command on a node"""
@@ -377,13 +396,14 @@ def patroni_command(cluster_name, node, cmd, args=None):
     for nd in cj["nodes"]:
         if node == "all" or node == nd["name"]:
             knt = knt + 1
-            echo_cmd(f"patronictl " + cmd, nd['ip'], cluster);
+            echo_cmd(f"patronictl " + cmd, nd["ip"], cluster)
     if knt == 0:
         util.message(f"# nothing to do")
 
+
 def configure_etcd(cluster, nodes):
-    node_ips = [node['local_ip'] for node in nodes]
-    node_names = [node['name'] for node in nodes]
+    node_ips = [node["local_ip"] for node in nodes]
+    node_names = [node["name"] for node in nodes]
 
     print(("#" * 70))
     print("#       Configuring etcd on all nodes")
@@ -391,12 +411,12 @@ def configure_etcd(cluster, nodes):
 
     util.message("\n# generating etcd.yaml files\n")
     etcd_conf(cluster, nodes)
-    
+
     util.message("# reset etcd on all nodes\n")
     for nd in nodes:
         cmd_stop_etcd = "sudo systemctl stop etcd"
         cmd_cleanup_etcd = f"{cmd_stop_etcd}; sudo sh -c '{ETCD_CLEANUP}'"
-        echo_cmd(cmd_cleanup_etcd, nd['ip'], cluster)
+        echo_cmd(cmd_cleanup_etcd, nd["ip"], cluster)
 
     util.message("# setting up etcd on all nodes\n")
 
@@ -404,19 +424,19 @@ def configure_etcd(cluster, nodes):
         if i > 0:
             cmd_start_etcd = "sudo systemctl start etcd"
             cmd_etcd_member = f"etcdctl member add {node_names[i]} --peer-urls=http://{node_ips[i]}:2380"
-            echo_cmd(cmd_etcd_member, nodes[0]['ip'], cluster)
-            echo_cmd(cmd_start_etcd, nodes[i]['ip'], cluster)
+            echo_cmd(cmd_etcd_member, nodes[0]["ip"], cluster)
+            echo_cmd(cmd_start_etcd, nodes[i]["ip"], cluster)
             time.sleep(3)  # Sleep for a few seconds for the first node
-        
+
         if i == 0:
             cmd_start_etcd = "sudo systemctl start etcd"
-            echo_cmd(cmd_start_etcd, nodes[0]['ip'], cluster)
+            echo_cmd(cmd_start_etcd, nodes[0]["ip"], cluster)
 
         cmd_member_list = "etcdctl endpoint status --write-out=table"
-        echo_cmd(cmd_member_list, node['ip'], cluster)
+        echo_cmd(cmd_member_list, node["ip"], cluster)
 
     cmd_member_list = "etcdctl member list"
-    echo_cmd(cmd_member_list, nodes[0]['ip'], cluster)
+    echo_cmd(cmd_member_list, nodes[0]["ip"], cluster)
 
 
 def configure_patroni(cluster, nodes):
@@ -429,7 +449,7 @@ def configure_patroni(cluster, nodes):
     reload_cmd = "sudo systemctl daemon-reload"
 
     for i, node in enumerate(nodes):
-        echo_cmd(stop_cmd, node['ip'], cluster)
+        echo_cmd(stop_cmd, node["ip"], cluster)
 
     for node in nodes:
         # Determine whether the node is primary or replica
@@ -437,11 +457,11 @@ def configure_patroni(cluster, nodes):
 
         # Define placeholders and replacements
         replacements = {
-            "IP_NODE": node['local_ip'],
-            "NODE_NAME": node['name'],
+            "IP_NODE": node["local_ip"],
+            "NODE_NAME": node["name"],
             "PGDATA": f"{cluster['path']}/{node['name']}/pgedge/data/pg16",
             "PGBIN": f"{cluster['path']}/{node['name']}/pgedge/pg16/bin/",
-            "PGARCHIVE": f"{cluster['path']}/{node['name']}/pgedge/pg16/archive/"
+            "PGARCHIVE": f"{cluster['path']}/{node['name']}/pgedge/pg16/archive/",
         }
 
         # Create Patroni YAML
@@ -453,17 +473,18 @@ def configure_patroni(cluster, nodes):
 
         # Write Patroni YAML to file
         cmd = f"sudo sh -c 'echo \"{patroni_yaml}\" >> /etc/patroni/patroni.yaml'"
-        echo_cmd(cmd, node['ip'], cluster)
+        echo_cmd(cmd, node["ip"], cluster)
         print(patroni_yaml)
 
         # If not primary, remove PGDATA directory
         if not is_primary:
             cmd = f"rm -rf {cluster['path']}/{node['name']}/pgedge/data/pg16"
-            echo_cmd(cmd, node['ip'], cluster)
+            echo_cmd(cmd, node["ip"], cluster)
 
         # Reload and start PostgreSQL
-        echo_cmd(reload_cmd, node['ip'], cluster)
-        echo_cmd(start_cmd, node['ip'], cluster)
+        echo_cmd(reload_cmd, node["ip"], cluster)
+        echo_cmd(start_cmd, node["ip"], cluster)
+
 
 if __name__ == "__main__":
     fire.Fire(
@@ -474,6 +495,6 @@ if __name__ == "__main__":
             "nodectl-command": nodectl_command,
             "patroni-command": patroni_command,
             "etcd-command": etcd_command,
-            "print_config": print_config
+            "print_config": print_config,
         }
     )
