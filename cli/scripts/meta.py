@@ -477,7 +477,7 @@ def get_platform_specific_version(p_comp, p_ver):
         if data is None:
             return "-1"
     except Exception as e:
-        fatal__error(e, sql, "meta.get_platform_specific_version()")
+        fatal_error(e, sql, "meta.get_platform_specific_version()")
     version = str(data[0])
     platform = str(data[1])
     if platform == "":

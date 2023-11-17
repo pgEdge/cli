@@ -49,7 +49,7 @@ def get_size(conn, p_size):
         if s.id == p_size:
             return s
 
-    util.exit_message(f"Invalid size '{size}'")
+    util.exit_message(f"Invalid size '{p_size}'")
 
 
 def get_image(provider, conn, p_image):
@@ -142,7 +142,7 @@ def node_action(action, provider, name, location):
 
 def is_node_unique(name, prvdr, conn, sect):
     if prvdr == "eqnx":
-        nodes.conn.list_nodes(sect["project"])
+        nodes = conn.list_nodes(sect["project"])
     else:
         nodes = conn.list_nodes()
 
@@ -185,7 +185,7 @@ def node_create(
         if project:
             util.exit_message("'project' is not a valid AWS parm", 1)
 
-        create_node_aws(name, location, size, image, keyname)
+        create_node_aws(name, metro, size, image, keyname)
 
     else:
         util.exit_message(f"Invalid provider '{prvdr}' (create_node)")

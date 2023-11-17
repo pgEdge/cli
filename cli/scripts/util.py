@@ -627,99 +627,6 @@ def run_sql_cmd(p_pg, p_sql, p_display=False):
     return rc
 
 
-def install_extension(p_pg, p_ext):
-    ## install an extension without configuring it.  Used for the POWA family
-    ## and possible future group installs
-    install_comp(p_ext + "-" + p_pg)
-
-
-## Install Component ######################################################
-def install_comp(p_app, p_ver=0, p_rver=None, p_re_install=False):
-    if p_ver is None:
-        p_ver = 0
-
-    if p_rver:
-        parent = get_parent_component(p_app, p_rver)
-    else:
-        parent = get_parent_component(p_app, p_ver)
-
-    if parent != "":
-        parent_state = get_comp_state(parent)
-        if parent_state == "NotInstalled":
-            errmsg = "{0} has to be installed before installing {1}".format(
-                parent, p_app
-            )
-            message(errmsg, "error")
-            return 1
-
-    state = get_comp_state(p_app)
-    if state == "NotInstalled" or p_re_install:
-        pass
-    else:
-        message(p_app + " is already installed", "error")
-        return 1
-
-    if p_ver == 0:
-        ver = meta.get_latest_ver_plat(p_app)
-    else:
-        ver = p_ver
-
-    message("")
-    if meta.check_pre_reqs(p_app, ver):
-        pass
-    else:
-        return 1
-
-    base_name = p_app + "-" + ver
-    conf_cache = "conf" + os.sep + "cache"
-    file = base_name + ".tar.bz2"
-    bz2_file = conf_cache + os.sep + file
-    message("starting download")
-
-    if os.path.exists(bz2_file) and is_downloaded(base_name, p_app):
-        msg = "File is already downloaded."
-        my_logger.info(msg)
-        if os.getenv("isJson", None):
-            json_dict["status"] = "complete"
-            msg = json.dumps([json_dict])
-        if not isSILENT:
-            print(msg)
-    elif not retrieve_comp(base_name, p_app):
-        return 1
-
-    message("\nUnpacking " + file)
-    full_file = "conf" + os.sep + "cache" + os.sep + file
-
-    if platform.system() in ("Linux", "Darwin"):
-        return posix_unpack(full_file)
-
-    tarFileObj = ProgressTarExtract(full_file)
-    tarFileObj.component_name = p_app
-    tarFileObj.file_name = file
-
-    tar = tarfile.open(fileobj=tarFileObj, mode="r:bz2")
-
-    try:
-        tar.extractall(path=".")
-    except KeyboardInterrupt as e:
-        temp_tar_dir = os.path.join(MY_HOME, p_app)
-        util.delete_dir(temp_tar_dir)
-        msg = "Unpacking cancelled for file %s" % file
-        my_logger.error(msg)
-        message("unpack cancelled")
-        return 0
-    except Exception as e:
-        temp_tar_dir = os.path.join(MY_HOME, p_app)
-        delete_dir(temp_tar_dir)
-        message("Unpacking failed for file %s" % str(e), "error")
-        my_logger.error(traceback.format_exc())
-        return 1
-
-    tar.close
-    message("Unpack complete")
-    return 0
-
-
 ## use lbzip2 when available for dramatic speedups when unzipping an archive
 def posix_unpack(file_nm):
     rc = os.system("lbzip2 --version > /dev/null 2>&1")
@@ -730,44 +637,6 @@ def posix_unpack(file_nm):
         return 1
 
     return echo_cmd(f"tar -xf {file_nm}")
-
-
-## Download tarball component and verify against checksum ###############
-def retrieve_comp(p_base_name, component_name=None):
-    conf_cache = "conf" + os.sep + "cache"
-    bz2_file = p_base_name + ".tar.bz2"
-    checksum_file = bz2_file + ".sha512"
-
-    repo = get_value("GLOBAL", "REPO")
-    isJson = os.getenv("isJson", None)
-    display_status = True
-    if not http_get_file(
-        isJson, bz2_file, repo, conf_cache, display_status, "", component_name
-    ):
-        return False
-
-    msg = "Preparing to unpack " + p_base_name
-    if not http_get_file(
-        isJson, checksum_file, repo, conf_cache, False, msg, component_name
-    ):
-        return False
-
-    return validate_checksum(
-        conf_cache + os.sep + bz2_file, conf_cache + os.sep + checksum_file
-    )
-
-
-def validate_checksum(p_file_name, p_checksum_file_name):
-    checksum_from_file = util.get_file_checksum(p_file_name)
-    checksum_from_remote_file = util.read_file_string(p_checksum_file_name).rstrip()
-    checksum_from_remote = checksum_from_remote_file.split()[0]
-    global check_sum_match
-    check_sum_match = False
-    if checksum_from_remote == checksum_from_file:
-        return True
-    else:
-        message("SHA512 CheckSum Mismatch", "error")
-        return check_sum_match
 
 
 def restart_postgres(p_pg):
@@ -962,7 +831,6 @@ def dirlist(p_isJSON, p_path):
 def fatal_error(p_msg):
     msg = "ERROR: " + p_msg
     if os.getenv("isJson", None):
-        sys.stdout = previous_stdout
         jsonMsg = {}
         jsonMsg["status"] = "error"
         jsonMsg["msg"] = msg
@@ -2185,7 +2053,7 @@ def is_port_assigned(p_port, p_comp):
     return True
 
 
-def get_avail_port(p_prompt, p_def_port, p_comp="", p_interactive=False, isJSON=False):
+def get_avail_port(p_prompt, p_def_port, p_comp="", isJSON=False):
     def_port = int(p_def_port)
 
     ## iterate to first non-busy port
@@ -2196,12 +2064,7 @@ def get_avail_port(p_prompt, p_def_port, p_comp="", p_interactive=False, isJSON=
     err_msg = "Port must be between 1000 and 9999, try again."
 
     while True:
-        if p_interactive:
-            s_port = raw_input(p_prompt + "[" + str(def_port) + "]? ")
-            if s_port == "":
-                s_port = str(def_port)
-        else:
-            s_port = str(def_port)
+        s_port = str(def_port)
 
         if s_port.isdigit() == False:
             print(err_msg)
@@ -2230,14 +2093,11 @@ def delete_dir(p_dir):
     return rc
 
 
-def system(p_cmd, is_admin=False, is_display=False):
+def system(p_cmd, is_display=False):
     if is_display:
         print("\n$  " + p_cmd)
 
-    if is_admin:
-        rc = runas_win_admin(p_cmd)
-    else:
-        rc = os.system(p_cmd)
+    rc = os.system(p_cmd)
 
     if is_display:
         if str(rc) == "0":
@@ -3258,12 +3118,12 @@ def wait_pg_ready(pg_v, max_tries=10):
     for n in range(1, max_tries):
         time.sleep(1)
         if is_pg_ready(pg_v):
-            messsage(f"{pg_v} is ready {n}")
-            return true
+            message(f"{pg_v} is ready {n}", "info")
+            return True
         else:
-            messsage(f"{pg_v} is not ready {n}")
+            message(f"{pg_v} is not ready {n}", "info")
 
-    return false
+    return False
 
 
 ## Get Component category ######################################################
@@ -3333,34 +3193,6 @@ def copy_extension_files(ext_comp, parent_comp, upgrade=None):
 
     cmd = "cp -r " + COMP_DIR + "/. " + PARENT_DIR
     os.system(cmd)
-    return True
-
-    ## leaving the old code for now below ####
-
-    validate_distutils_click()
-    from distutils.dir_util import copy_tree
-
-    PARENT_DIR = os.path.join(MY_HOME, parent_comp)
-    COMP_DIR = os.path.join(MY_HOME, ext_comp)
-
-    if upgrade:
-        COMP_DIR = os.path.join(COMP_DIR + "_new", ext_comp)
-    comp_dir_list = os.listdir(COMP_DIR)
-
-    for l in comp_dir_list:
-        source = os.path.join(COMP_DIR, l)
-        try:
-            if os.path.isdir(source):
-                target = os.path.join(PARENT_DIR, l)
-                copy_tree(source, target, preserve_symlinks=True)
-            else:
-                shutil.copy(source, PARENT_DIR)
-        except Exception as e:
-            my_logger.error("Failed to copy " + str(e))
-            my_logger.error(traceback.format_exc())
-            print(str(e))
-            pass
-
     return True
 
 

@@ -2285,15 +2285,7 @@ try:
                     "current_version",
                 ]
                 print(api.format_data_to_table(updates_comp, keys, headers))
-                if not isYES:
-                    try:
-                        p_update = raw_input(
-                            "These component(s) will be updated. Do you want to continue? (y/n):"
-                        )
-                        if p_update.strip().lower() == "y":
-                            isYES = True
-                    except Exception as e:
-                        isYES = False
+                isYES = False
             upgrade_flag = 1
             if isYES:
                 for comp in updates_comp:
