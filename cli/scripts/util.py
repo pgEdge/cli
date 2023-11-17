@@ -1118,7 +1118,7 @@ def get_anonymous_info():
 
 ## abruptly terminate with a codified message
 def exit_message(p_msg, p_rc=1, p_isJSON=None):
-    if p_isJSON == None:
+    if p_isJSON is None:
         isJSON = os.getenv("isJson", "False")
         if isJSON == "True":
             p_isJSON = True
@@ -1135,10 +1135,10 @@ def exit_message(p_msg, p_rc=1, p_isJSON=None):
 
 ## print codified message to stdout & logfile
 def message(p_msg, p_state="info", p_isJSON=None):
-    if p_isJSON == None:
+    if p_isJSON is None:
         p_isJSON = os.getenv("isJson")
 
-    if p_msg == None:
+    if p_msg is None:
         return
 
     log_level = p_state.lower()
@@ -1522,7 +1522,7 @@ def get_con(p_args):
 
     if arg[0] == "postgres":
         pwd = retrieve_pgpassword(arg[1], arg[2], arg[3], arg[4])
-        if pwd == None:
+        if pwd is None:
             message("not found", "error")
         else:
             message(pwd)
@@ -1535,7 +1535,7 @@ def get_con(p_args):
 
 def retrieve_pgpassword(p_host="localhost", p_port="5432", p_db="*", p_user="postgres"):
     pw_file = get_pgpass_file()
-    if pw_file == None:
+    if pw_file is None:
         return None
 
     if os.path.isfile(pw_file):
@@ -1603,7 +1603,7 @@ def remember_pgpassword(
     p_ver="pg15",
 ):
     pw_file = get_pgpass_file()
-    if pw_file == None:
+    if pw_file is None:
         return None
 
     if os.path.isfile(pw_file):
@@ -2375,15 +2375,15 @@ def exec_sql(cmd):
 ##################################################################
 def show_metrics(p_home, p_port, p_data, p_log, p_pid):
     return
-    if not p_home == None:
+    if not p_home is None:
         print("  --homedir " + str(p_home))
-    if not p_port == None:
+    if not p_port is None:
         print("  --port    " + str(p_port))
-    if not p_data == None:
+    if not p_data is None:
         print("  --datadir " + p_data)
-    if not p_log == None:
+    if not p_log is None:
         print("  --logfile " + p_log)
-    if not p_pid == None:
+    if not p_pid is None:
         print("  --pidfile " + p_pid)
 
 
@@ -2481,7 +2481,7 @@ def read_file_string(p_filename, action=None):
         f.close()
         return filedata
     except IOError as e:
-        if action == None:
+        if action is None:
             print(e)
         return ""
 
@@ -2800,7 +2800,7 @@ def make_uri(in_name):
 
 
 def launch_daemon(arglist, p_logfile_name):
-    if p_logfile_name == None:
+    if p_logfile_name is None:
         f_logfile = os.devnull
     else:
         f_logfile = p_logfile_name
