@@ -286,7 +286,16 @@ def size_list(provider, location=None):
     sizes = conn.list_sizes()
     sz = None
     for s in sizes:
-        print(f"{s.name.ljust(18)}  {str(round(s.ram / 1024)).rjust(6)}  {str(s.disk).rjust(6)}  {str(s.bandwidth).rjust(6)}  {str(round(s.price, 1)).rjust(5)}")
+        price = s.price
+        if price == None:
+            price = 0
+        ram = s.ram
+        if ram == None:
+            ram = 0
+        bandwidth = s.bandwidth
+        if bandwidth == None or str(bandwidth) == "0":
+            bandwidth = ""
+        print(f"{str(s.id).ljust(35)} {str(round(ram / 1024)).rjust(6)}  {str(s.disk).rjust(6)} {str(bandwidth).rjust(6)} {str(round(price, 1)).rjust(5)}")
 
 
 def location_list(provider, location=None):
