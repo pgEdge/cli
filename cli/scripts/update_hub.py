@@ -44,7 +44,7 @@ def mainline():
     print ("Nothing to do.")
     sys.exit(0)
 
-  if (p_from_ver < "23.127") and (p_to_ver >= "23.127"):
+  if (p_from_ver < "24.010") and (p_to_ver >= "24.011"):
     util.echo_cmd(NC + " remove nclibs")
     util.echo_cmd(NC + " install nclibs")
 
