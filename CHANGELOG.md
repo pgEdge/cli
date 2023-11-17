@@ -1,11 +1,11 @@
 # pgEdge Platform Release Notes #############
 
 
-## done so far for 24.009 on 2023-11-30 ###########
-  + lots of tweaks to CLI --help
+## done for 24.009 on 2023-11-17 ###########
+  + small fixes to work cleanly on Fedora 39 & python 3.12
+  + regenerate and cleanup --help 
   + document regression tests using cluster local-create, northwind, & ace
   + MACHINE: doc & more improvements
-  + fix to work cleanly on Fedora 39 & python 3.12
 
 
 
