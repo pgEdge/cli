@@ -2,10 +2,11 @@
 
 
 ## done so far for 24.011 on 2023-11-30 ###########
+  + small fixes for Amazon Linux 2023 test support
 
 
 ## done for 24.010 on 2023-11-17 ###########
-  + small fixes to work cleanly on Fedora 39 & python 3.12
+  + small fixes for Fedora 39 & python 3.12 test support
   + regenerate and cleanup --help 
   + document regression tests using cluster local-create, northwind, & ace
   + MACHINE: doc & more improvements

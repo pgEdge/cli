@@ -10,27 +10,31 @@ thisDir = os.path.dirname(os.path.realpath(__file__))
 os.chdir(thisDir)
 
 arch = platform.machine()
+if arch == "aarch64":
+  plat_os = "arm"
+else:
+  plat_os = "amd"
 
 platf = "unsupported"
 if platform.system() == "Linux":
   if os.path.exists("/etc/redhat-release"):
     if util.get_el_os() == "EL9":
-      if arch == "aarch64":
-        platf = "el9-arm"
-      else:
-        platf = "el9-amd"
+      platf = f"el9-{plat_os}"
     else:
-      platf = "el8-amd"
+      platf = f"el8-amd"
+  elif os.path.exists("/etc/amazon-linux-release"):
+    f = "/etc/amazon-linux-release"
+    rc = os.system(f"grep 2023 {f}")
+    if rc == 0:
+      platf = f"el9-{plat_os}"
+    else:
+      platf = f"el8-amd"
   else:
     f = "/etc/os-release"
     if os.path.exists(f):
-      with open(f,'r') as text_file:
-        text_data = text_file.read()
-        if text_data.find("22.04"):
-          if arch == "aarch64":
-            platf = "ubu22-arm"
-          else:
-            platf = "ubu22-amd"
+      rc = os.system(f"grep '22.04' {f}")
+      if rc == 0:
+        platf = f"ubu22-{plat_os}"
 elif platform.system() == "Darwin":
   platf = "osx"
 
