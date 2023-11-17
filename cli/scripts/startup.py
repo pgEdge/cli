@@ -7,7 +7,7 @@ import util
 
 
 def user_exists(p_user):
-  user_data = util.getoutput ("cat /etc/passwd | egrep '^%s:' ; true" % p_user)
+  user_data = util.getoutput ("cat /etc/passwd | grep -E '^%s:' ; true" % p_user)
 
   if user_data:
     u = user_data.split(":")

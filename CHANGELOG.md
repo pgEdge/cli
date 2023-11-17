@@ -5,6 +5,7 @@
   + lots of tweaks to CLI --help
   + document regression tests using cluster local-create, northwind, & ace
   + MACHINE: doc & more improvements
+  + fix to work cleanly on Fedora 39 & python 3.12
 
 
 

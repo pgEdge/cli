@@ -30,7 +30,7 @@ import sqlite3
 import time
 import json
 import glob
-from shutil import copy2, copytree
+from shutil import copy2
 import re
 import io
 import errno
@@ -616,7 +616,7 @@ def unpack_comp(p_app, p_old_ver, p_new_ver):
       parent = util.get_parent_component(p_app,0)
       if not os.path.exists(os.path.join(backup_target_dir, parent)):
         my_logger.info("backing up the parent component %s " % parent)
-        copytree(os.path.join(MY_HOME, parent), os.path.join(backup_target_dir, parent))
+        util.copytree(os.path.join(MY_HOME, parent), os.path.join(backup_target_dir, parent))
       manifest_file_name = p_app + ".manifest"
       manifest_file_path = os.path.join(MY_HOME, "conf", manifest_file_name)
       my_logger.info("backing up current manifest file " + manifest_file_path)
@@ -650,11 +650,7 @@ def unpack_comp(p_app, p_old_ver, p_new_ver):
         os.mkdir(backup_target_dir)
       if not os.path.exists(os.path.join(backup_target_dir, p_app)):
         my_logger.info("backing up the old version of %s " % p_app)
-
-        #copytree is throwing errors in linux, windows is unsupported for now
-        cmd = "cp -r " + os.path.join(MY_HOME, p_app) + "  " + os.path.join(backup_target_dir, p_app)
-        os.system(cmd)
-        ##copytree(os.path.join(MY_HOME, p_app), os.path.join(backup_target_dir, p_app))
+        util.copytree(os.path.join(MY_HOME, p_app), os.path.join(backup_target_dir, p_app))
 
       msg = p_app + " upgrade staged for completion."
       my_logger.info(msg)
@@ -669,9 +665,7 @@ def unpack_comp(p_app, p_old_ver, p_new_ver):
         os.rename(p_app, p_app+"_old")
         my_logger.info("copying the new files to folder %s" % p_app)
 
-        ##copytree not working well on Linux, use OS specific command instead"
-        ##copytree(os.path.join(MY_HOME, new_comp_dir, p_app), os.path.join(MY_HOME, p_app))
-        os.system("cp -r " + os.path.join(MY_HOME, new_comp_dir, p_app) + "  " + os.path.join(MY_HOME, p_app))
+        util.copytree(os.path.join(MY_HOME, new_comp_dir, p_app), os.path.join(MY_HOME, p_app))
 
         my_logger.info("Restoring the conf and extension files if any")
         util.restore_conf_ext_files(os.path.join(MY_HOME, p_app+"_old"), os.path.join(MY_HOME, p_app))
@@ -1055,26 +1049,6 @@ def fire_api(prog):
   return
 
 
-def update_if_needed():
-  if os.getenv("NC_NO_AUTO_UPDATE") == "1":
-    return
-
-  [last_update_utc, xx, yy ] = util.read_hosts("localhost")
-  if last_update_utc == None:
-    delta_secs = util.ONE_WEEK + 1
-  else:
-    last_upd_utc = datetime.datetime.strptime(
-        last_update_utc, "%Y-%m-%d %H:%M:%S")
-    delta_dt = datetime.datetime.utcnow() - last_upd_utc
-    delta_secs = delta_dt.seconds
-
-  if delta_secs < util.ONE_WEEK:
-    return
-
-  ## print("DEBUG: an update is recommended")
-  return
-
-
 ####################################################################
 ########                    MAINLINE                      ##########
 ####################################################################
@@ -1428,9 +1402,6 @@ try:
 
   if len(p_comp_list) >= 1:
     p_comp = p_comp_list[0]
-
-  if p_mode != "update":
-    update_if_needed()
 
 
   ## PG_ISREADY #################################################################
