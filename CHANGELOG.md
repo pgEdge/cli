@@ -4,6 +4,8 @@
 ## done so far for 24.011 as of 2023-11-17 ###########
   + small fixes for Amazon Linux 2023 test support
   + bump NCLIBS to 1.1
+  + use 'black' for inital code cleanup
+  + begin 'flake8' manual code cleanups
 
 
 ## done for 24.010 on 2023-11-17 ###########

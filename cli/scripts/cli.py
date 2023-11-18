@@ -1,6 +1,6 @@
-#####################################################
+
 #  Copyright 2022-2024 PGEDGE  All rights reserved. #
-#####################################################
+
 
 import sys, os
 
@@ -20,25 +20,13 @@ if not (MY_HOME and MY_CMD and MY_LITE):
     print("Required Envs not set (MY_HOME, MY_CMD, MY_LITE)")
     sys.exit(1)
 
-import socket
-import subprocess
-import time
-import datetime
-import hashlib
-import platform
-import tarfile
-import sqlite3
-import time
-import json
-import glob
+import time, datetime, platform, tarfile, sqlite3, time
+import json, glob, re, io, traceback, logging, logging.handlers
 from shutil import copy2
-import re
-import io
-import errno
-import traceback
+from semantic_version import Version
 
 
-## Our own library files ##########################################
+# Our own library files ##########################################
 sys.path.append(os.path.join(os.path.dirname(__file__), "lib"))
 
 this_platform_system = str(platform.system())
@@ -48,10 +36,7 @@ if os.path.exists(platform_lib_path):
     if platform_lib_path not in sys.path:
         sys.path.append(platform_lib_path)
 
-import util, api, update_hub, startup, meta, component
-import logging
-import logging.handlers
-from semantic_version import Version
+import util, api, startup, meta, component
 
 my_conf = os.path.join(util.MY_HOME, "conf")
 if not util.is_writable(my_conf):
@@ -192,11 +177,6 @@ pid_file = os.path.join(util.MY_HOME, "conf", "cli.pid")
 ISJSON = os.environ.get("ISJSON", "False")
 
 
-###################################################################
-## Subroutines ####################################################
-###################################################################
-
-
 def fire_away(p_mode, p_args):
     py_file = f"{p_mode}.py"
     if os.path.exists(py_file):
@@ -228,7 +208,7 @@ def get_next_arg(p_arg):
     return next_arg
 
 
-## is there a dependency violation if component where removed ####
+# is there a dependency violation if component where removed ####
 def is_depend_violation(p_comp, p_remove_list):
     data = meta.get_dependent_components(p_comp)
 
@@ -258,7 +238,7 @@ def is_depend_violation(p_comp, p_remove_list):
     return True
 
 
-## run external scripts #######################################
+# run external scripts #######################################
 def run_script(componentName, scriptName, scriptParm):
     if componentName not in installed_comp_list:
         return
@@ -287,7 +267,7 @@ def run_script(componentName, scriptName, scriptParm):
     return
 
 
-## Get Dependency List #########################################
+# Get Dependency List #########################################
 def get_depend_list(p_list, p_display=True):
     if p_list == ["all"]:
         if p_mode in ("install"):
@@ -355,7 +335,7 @@ def is_downloaded(p_comp, component_name=None):
     )
 
 
-## Get Component Number ####################################################
+# Get Component Number ####################################################
 def get_comp_num(p_app):
     ndx = 0
     for comp in dep9:
@@ -385,7 +365,7 @@ class ProgressTarExtract(io.FileIO):
         return io.FileIO.read(self, size)
 
 
-## Install Component ######################################################
+# Install Component ######################################################
 def install_comp(p_app, p_ver=0, p_rver=None, p_re_install=False):
     if p_ver is None:
         p_ver = 0
@@ -510,7 +490,6 @@ def install_comp(p_app, p_ver=0, p_rver=None, p_re_install=False):
         return 1
 
 
-## Downgrade Component ####################################################
 def downgrade_component(p_comp):
     present_version = meta.get_version(p_comp)
     present_state = util.get_comp_state(p_comp)
@@ -519,7 +498,6 @@ def downgrade_component(p_comp):
     return 1
 
 
-## Upgrade Component #####################################################
 def upgrade_component(p_comp):
     present_version = meta.get_version(p_comp)
     if not present_version:
@@ -791,7 +769,7 @@ def unpack_comp(p_app, p_old_ver, p_new_ver):
             if p_app in ("hub"):
                 copy2(os.path.join(MY_HOME, MY_CMD), backup_target_dir)
                 os.rename(new_comp_dir, "hub_new")
-                ## run the update_hub script in the _new directory
+                # run the update_hub script in the _new directory
                 upd_hub_cmd = (
                     sys.executable
                     + " hub_new"
@@ -841,7 +819,6 @@ def unpack_comp(p_app, p_old_ver, p_new_ver):
     return return_value
 
 
-## Delete Component #######################################################
 def remove_comp(p_comp):
     msg = p_comp + " removing"
     my_logger.info(msg)
@@ -862,7 +839,6 @@ def remove_comp(p_comp):
     return 0
 
 
-## List component dependencies recursively ###############################
 def list_depend_recur(p_app):
     for i in dep9:
         if i[0] == p_app:
@@ -872,7 +848,6 @@ def list_depend_recur(p_app):
     return my_depend
 
 
-## Update component state ###############################################
 def update_component_state(p_app, p_mode, p_ver=None):
     new_state = "Disabled"
     if p_mode == "enable":
@@ -936,7 +911,6 @@ def update_component_state(p_app, p_mode, p_ver=None):
     return
 
 
-## Check component state & status ##########################################
 def check_comp(p_comp, p_port, p_kount, check_status=False):
     ver = meta.get_ver_plat(p_comp)
     app_state = util.get_comp_state(p_comp)
