@@ -2,41 +2,22 @@
 #  Copyright 2022-2024 PGEDGE  All rights reserved. #
 
 
-import os
-import sys
-import socket
-import sqlite3
-import signal
-import hashlib
-import random
-import json
-import uuid
-import logging
-import tempfile
-import shutil
-import traceback
-import time
-import subprocess
-import getpass
-import filecmp
-import tarfile
+import os, sys, socket, sqlite3, signal, hashlib, random, json, tarfile, uuid
+import logging, tempfile, shutil, traceback, time, platform
+import subprocess, getpass, filecmp
+
 from subprocess import Popen, PIPE, STDOUT
 from datetime import datetime, timedelta
-import platform
-
 from urllib import request as urllib2
 
 try:
     import psycopg
 except ImportError:
-    # Psycopg is only needed for advanced functionality
+    # Psycopg is only used for advanced functionality
     pass
 
 from log_helpers import bcolours, characters
-import api
-import meta
-import ini
-import clilog
+import api, meta, ini
 
 MY_VERSION = "24.011"
 
@@ -115,7 +96,7 @@ def run_psyco_sql(pg_v, db, cmd, usr=None):
         try:
             cur.close()
             con.close()
-        except Exception as e:
+        except Exception:
             pass
 
     except Exception as e:
@@ -180,7 +161,7 @@ def get_table_list(table, db, pg_v):
         try:
             cur.close()
             con.close()
-        except Exception as e:
+        except Exception:
             pass
 
     except Exception as e:
@@ -228,7 +209,7 @@ def get_seq_list(seq, db, pg_v):
         try:
             cur.close()
             con.close()
-        except Exception as e:
+        except Exception:
             pass
 
     except Exception as e:
@@ -280,42 +261,42 @@ def get_cloud_info():
         ).stdout
         ciq_j = json.loads(ciq)
 
-    except Exception as e:
+    except Exception:
         return ("", "", "", "", "", "", "")
 
     try:
         cloud_name = ciq_j["v1"]["cloud-name"]
-    except Exception as e:
+    except Exception:
         cloud_name = ""
 
     try:
         platform = ciq_j["v1"]["platform"]
-    except Exception as e:
+    except Exception:
         platform = ""
 
     try:
         region = ciq_j["v1"]["region"]
-    except Exception as e:
+    except Exception:
         region = ""
 
     try:
         availability_zone = ciq_j["v1"]["availability-zone"]
-    except Exception as e:
+    except Exception:
         availability_zone = ""
 
     try:
         instance_id = ciq_j["v1"]["instance-id"]
-    except Exception as e:
+    except Exception:
         instance_id = ""
 
     try:
         instance_type = ciq_j["ds"]["meta-data"]["instance-type"]
-    except Exception as e:
+    except Exception:
         instance_type = ""
 
     try:
         local_ipv4 = ciq_j["ds"]["meta-data"]["local-ipv4"]
-    except Exception as e:
+    except Exception:
         local_ipv4 = ""
 
     return (
@@ -420,7 +401,7 @@ def is_empty_writable_dir(p_dir):
         with open(test_file, "w") as file:
             file.write("hello!")
             file.close()
-    except Exception as e:
+    except Exception:
         # directory is not writeable
         return 3
     os.system("rm -f " + test_file)
@@ -854,7 +835,7 @@ def getoutput(p_cmd):
         try:
             out = commands.getoutput(p_cmd)
             return out.strip()
-        except Exception as e:
+        except Exception:
             return ""
 
     from subprocess import check_output
@@ -862,7 +843,7 @@ def getoutput(p_cmd):
     try:
         out = check_output(p_cmd, shell=True)
         return out.strip().decode("ascii")
-    except Exception as e:
+    except Exception:
         return ""
 
 
@@ -1335,7 +1316,7 @@ def read_env_file(component):
             env = dict((line.split("=", 1) for line in lines))
             for e in env:
                 os.environ[e] = env[e]
-        except Exception as e:
+        except Exception:
             my_logger.error(traceback.format_exc())
             pass
 
@@ -1938,7 +1919,7 @@ def get_email_address(p_email=""):
                 print("Email mis-match, try again.")
                 print(" ")
                 continue
-    except KeyboardInterrupt as e:
+    except KeyboardInterrupt:
         sys.exit(1)
 
     return email1
@@ -1965,12 +1946,11 @@ def get_superuser_passwd(p_user="Superuser"):
             if pg_pass1 == pg_pass2:
                 break
             else:
-                print(" ")
-                print("Password mis-match, try again.")
-                print(" ")
+                print("\nPassword mis-match, try again.\n")
                 continue
-    except KeyboardInterrupt as e:
+    except KeyboardInterrupt:
         sys.exit(1)
+
     return pg_pass1
 
 
@@ -2007,7 +1987,7 @@ def write_pgenv_file(
             file.write("export TERM=vt100\n")
         file.close()
         os.chmod(env_file, 0o755)
-    except IOError as e:
+    except IOError:
         return 1
 
     message(" ")
@@ -2451,7 +2431,7 @@ def get_os():
         if rel_file > "" and os.path.exists(rel_file):
             return get_el_ver()
 
-    except Exception as e:
+    except Exception:
         pass
 
     return "???"
@@ -2548,7 +2528,7 @@ def get_host():
     else:
         try:
             host = getoutput("hostname")
-        except Exception as e:
+        except Exception:
             host = "127.0.0.1"
     return host
 
@@ -2629,9 +2609,9 @@ def http_is_file(p_url):
     try:
         req = urllib2.Request(p_url, None, http_headers())
         u = urllib2.urlopen(req, timeout=10)
-    except KeyboardInterrupt as e:
+    except KeyboardInterrupt:
         sys.exit(1)
-    except Exception as e:
+    except Exception:
         return 1
 
     return 0
@@ -2656,7 +2636,7 @@ def get_url(url):
         req = urllib.request.Request(url)
         with urllib.request.urlopen(req, timeout=0.05) as response:
             the_page = response.read()
-    except Exception as e:
+    except Exception:
         return ""
 
     return the_page.decode("utf-8").replace("\n", "")
@@ -2798,7 +2778,7 @@ def http_get_file(
         delete_file(file_name_partial)
         file_exists = False
         return False
-    except KeyboardInterrupt as e:
+    except KeyboardInterrupt:
         if p_json:
             json_dict.clear()
             if component_name is not None:
