@@ -2,7 +2,10 @@
 
 
 ## done so far for 24.011 as of 2023-11-17 ###########
-  + small fixes for Amazon Linux 2023 test support
+  + Tested on Latest Linux Release (likely works on many more):
+    - Fedora Core 39 w Python 3.12
+    - Ubuntu 23.04 w Python 3.11
+    - Amazon Linux 2023
   + bump NCLIBS to 1.1
   + use 'black' for inital code cleanup
   + begin 'flake8' manual code cleanups
