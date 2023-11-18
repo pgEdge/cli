@@ -1,7 +1,7 @@
 #!/bin/bash
 cd "$(dirname "$0")"
 
-pgSrc=$SRC/postgresql
+pgSrc=$SOURCE/postgresql
 binBld=/opt/pgbin-build/builds
 source ./versions.sh
 

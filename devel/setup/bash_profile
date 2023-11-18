@@ -10,7 +10,7 @@ export IN=$DEV/in
 export OUT=$DEV/out
 export HIST=$DEV/history
 export NC=$DEV/nodectl
-export SRC=$IN/sources
+export SOURCE=$IN/sources
 export BLD=/opt/pgbin-build/pgbin/bin
 export PFD=$DEV/platform-doc
 

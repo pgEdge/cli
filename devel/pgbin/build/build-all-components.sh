@@ -7,7 +7,7 @@ source versions.sh
 function build {
   pgbin="--with-pgbin /opt/pgcomponent/pg$pgV"
   pgver="--with-pgver $3"
-  src="$SRC/$1-$2.tar.gz"
+  src="$SOURCE/$1-$2.tar.gz"
   echo ""
   echo "###################################"
   cmd="./build-component.sh --build-$1 $src $pgbin $pgver $copyBin $4"
