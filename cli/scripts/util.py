@@ -1,6 +1,6 @@
-#####################################################
+
 #  Copyright 2022-2024 PGEDGE  All rights reserved. #
-#####################################################
+
 
 import os
 import sys
@@ -408,11 +408,11 @@ def exit_exception(e):
 
 def is_empty_writable_dir(p_dir):
     if not os.path.isdir(p_dir):
-        ## directory does not exist
+        # directory does not exist
         return 1
 
     if os.listdir(p_dir):
-        ## directory is not empty
+        # directory is not empty
         return 2
 
     test_file = p_dir + "/test_file.txt"
@@ -421,11 +421,11 @@ def is_empty_writable_dir(p_dir):
             file.write("hello!")
             file.close()
     except Exception as e:
-        ## directory is not writeable
+        # directory is not writeable
         return 3
     os.system("rm -f " + test_file)
 
-    ## directory is empty & writeable
+    # directory is empty & writeable
     return 0
 
 
@@ -483,8 +483,8 @@ def get_glibc_version():
     if get_platform() != "Linux":
         return ""
 
-    ## the 'ldd --version' command gives back the glibc version on the last word
-    ##   of the first line
+    # the 'ldd --version' command gives back the glibc version on the last word
+    #   of the first line
     glibcV = getoutput("ldd --version | head -1 | grep -oE '[^ ]+$'")
 
     return glibcV
@@ -569,7 +569,7 @@ def is_systemctl():
 
 
 def remove_symlinks(p_link_dir, p_target_dir):
-    ## disabled because it dangerously doesn't work
+    # disabled because it dangerously didn't work
     return
 
 
@@ -627,7 +627,7 @@ def run_sql_cmd(p_pg, p_sql, p_display=False):
     return rc
 
 
-## use lbzip2 when available for dramatic speedups when unzipping an archive
+# use lbzip2 when available for dramatic speedups when unzipping an archive
 def posix_unpack(file_nm):
     rc = os.system("lbzip2 --version > /dev/null 2>&1")
     if rc == 0:
@@ -779,7 +779,6 @@ def get_parent_dir_path(p_path):
     return parent_path
 
 
-## directory listing ##########################################
 def dirlist(p_isJSON, p_path):
     import glob
 
@@ -827,7 +826,6 @@ def dirlist(p_isJSON, p_path):
     return 0
 
 
-## terminate abruptly #########################################
 def fatal_error(p_msg):
     msg = "ERROR: " + p_msg
     if os.getenv("isJson", None):
@@ -868,7 +866,6 @@ def getoutput(p_cmd):
         return ""
 
 
-## is this a Linux SystemD platform ############################
 def is_systemd():
     if get_platform() != "Linux":
         return False
@@ -879,7 +876,6 @@ def is_systemd():
     ) or (os.path.isfile("/bin/systemctl") and os.access("/bin/systemctl", os.X_OK))
 
 
-## run as SUDO ################################################
 def run_sudo(p_cmd, p_display=True, p_isJSON=False):
     if p_cmd.startswith("sudo "):
         cmd = p_cmd
@@ -900,7 +896,6 @@ def run_sh_cmd(p_cmd, p_display=True, p_isJSON=False):
     return rc
 
 
-# Find the appropriate systemd directory (system service) #####
 def get_systemd_dir():
     systemd_dir = "/usr/lib/systemd/system"
     if os.path.isdir(systemd_dir):
@@ -949,7 +944,6 @@ def delete_service_win(svcName):
     return True
 
 
-## is this component PostgreSQL ##################################
 def is_postgres(p_comp):
     pgXX = ["pg11", "pg12", "pg13", "pg14", "pg15", "pg16", "pg17"]
     if p_comp in pgXX:
@@ -958,7 +952,6 @@ def is_postgres(p_comp):
     return False
 
 
-## get the owner of the file/directory
 def get_owner_name(p_path=None):
     file_path = p_path
     if not p_path:
@@ -972,7 +965,7 @@ def get_owner_name(p_path=None):
     return ownername
 
 
-## anonymous data from the INFO command
+# anonymous data from the INFO command
 def get_anonymous_info():
     jsonInfo = api.info(True, "", "", False)
     platform = jsonInfo["platform"]
@@ -984,7 +977,7 @@ def get_anonymous_info():
     return anon
 
 
-## abruptly terminate with a codified message
+# abruptly terminate with a codified message
 def exit_message(p_msg, p_rc=1, p_isJSON=None):
     if p_isJSON is None:
         isJSON = os.getenv("isJson", "False")
@@ -1001,7 +994,7 @@ def exit_message(p_msg, p_rc=1, p_isJSON=None):
     sys.exit(p_rc)
 
 
-## print codified message to stdout & logfile
+# print codified message to stdout & logfile
 def message(p_msg, p_state="info", p_isJSON=None):
     if p_isJSON is None:
         p_isJSON = os.getenv("isJson")
@@ -1435,10 +1428,10 @@ def retrieve_pgpassword(p_host="localhost", p_port="5432", p_db="*", p_user="pos
         if user != "*" and user != p_user and p_user != "*":
             continue
 
-        ## we've got a match
+        # we've got a match
         return pwd
 
-    ## we looped through the file and never found a match
+    # we looped through the file and never found a match
     return None
 
 
@@ -1450,7 +1443,7 @@ def change_pgpassword(
     p_user="postgres",
     p_ver="pg15",
 ):
-    ## try and login with the old password and set the new one
+    # try and login with the old password and set the new one
     rc = run_sql_cmd(
         p_ver, "ALTER role " + p_user + " PASSWORD '" + p_passwd + "'", False
     )
@@ -1481,7 +1474,7 @@ def remember_pgpassword(
 
     file = open(pw_file, "w")
 
-    ## pre-pend the new
+    # pre-pend the new
     escaped_passwd = p_passwd
     escaped_passwd = escaped_passwd.replace("\\", "\\\\")
     escaped_passwd = escaped_passwd.replace(":", "\\:")
@@ -1494,7 +1487,7 @@ def remember_pgpassword(
         s_host2 = "127.0.0.1:" + prt_db_usr_pwd
         file.write(s_host2 + "\n")
 
-    ## append the old (skipping duplicate & blank lines)
+    # append the old (skipping duplicate & blank lines)
     if s_pw > "":
         lines = s_pw.split("\n")
         for line in lines:
@@ -1513,13 +1506,11 @@ def remember_pgpassword(
     return pw_file
 
 
-## get full pathname of postgresql.conf file ##############################
 def get_pgconf_filename(p_pgver):
     pg_data = get_column("datadir", p_pgver)
     return pg_data + os.sep + "postgresql.conf"
 
 
-## get the postgresql.conf file into a string #############################
 def get_pgconf(p_pgver):
     config_file = get_pgconf_filename(p_pgver)
 
@@ -1534,7 +1525,6 @@ def get_pgconf(p_pgver):
     return read_file_string(config_file)
 
 
-## write a postgresql.conf string back to a file ##########################
 def put_pgconf(p_pgver, p_conf):
     config_file = get_pgconf_filename(p_pgver)
 
@@ -1556,7 +1546,7 @@ def remove_pgconf_keyval(p_pgver, p_key, p_val=""):
         if line.startswith(p_key):
             print("  old: " + line)
             if p_val == "":
-                ## skip over this line and continue processing the rest of the file
+                # skip over this line and continue processing the rest of the file
                 continue
             else:
                 new_line = remove_line_val(line, p_val)
@@ -1694,7 +1684,6 @@ def change_pgconf_keyval(p_pgver, p_key, p_val, p_replace=False):
     return True
 
 
-## process changes to postgresql.conf file ######################################
 def update_postgresql_conf(p_pgver, p_port, is_new=True, update_listen_addr=True):
     set_column("port", p_pgver, str(p_port))
 
@@ -1820,12 +1809,6 @@ def update_postgresql_conf(p_pgver, p_port, is_new=True, update_listen_addr=True
 
         elif is_new and line.startswith("#password_encryption = "):
             ns = ns + "\n" + "password_encryption = scram-sha-256"
-
-        ##elif is_new and line.startswith("#unix_socket_directories = "):
-        ##  ns = ns + "\n" + "unix_socket_directories = '/tmp'"
-        ##
-        ##elif is_new and line.startswith("#unix_socket_permissions = "):
-        ##  ns = ns + "\n" + "unix_socket_permissions = 0777"
 
         else:
             if ns == "":
@@ -2020,7 +2003,7 @@ def write_pgenv_file(
         )
         file.write("fi \n")
         if os.path.exists("/etc/lsb-release"):
-            ## ubuntu xterm incompatible with el8 xterm key mappings
+            # ubuntu xterm incompatible with el8 xterm key mappings
             file.write("export TERM=vt100\n")
         file.close()
         os.chmod(env_file, 0o755)
@@ -2028,9 +2011,6 @@ def write_pgenv_file(
         return 1
 
     message(" ")
-    ##message ("to load this postgres into your environment, " + source + " the env file: ")
-    ##message ("    " + env_file)
-    ##message (" ")
     return 0
 
 
@@ -2056,7 +2036,7 @@ def is_port_assigned(p_port, p_comp):
 def get_avail_port(p_prompt, p_def_port, p_comp="", isJSON=False):
     def_port = int(p_def_port)
 
-    ## iterate to first non-busy port
+    # iterate to first non-busy port
     while is_socket_busy(def_port, p_comp):
         def_port = def_port + 1
         continue
@@ -2108,9 +2088,6 @@ def system(p_cmd, is_display=False):
     return rc
 
 
-####################################################################
-# round to scale & show integers without the ".0"
-####################################################################
 def pretty_rounder(p_num, p_scale):
     rounded = round(p_num, p_scale)
     if not (rounded % 1):
@@ -2122,9 +2099,6 @@ def get_version():
     return MY_VERSION
 
 
-####################################################################
-# retrieve project dependencies
-####################################################################
 def get_depend():
     dep = []
     try:
@@ -2157,15 +2131,12 @@ def get_depend():
     return dep
 
 
-##################################################################
-# Run the sql statements in a command file
-##################################################################
 def process_sql_file(p_file, p_json):
     isSilent = os.environ.get("isSilent", None)
 
     rc = True
 
-    ## verify the hub version ##################
+    # verify the hub version ##################
     file = open(p_file, "r")
     cmd = ""
     for line in file:
@@ -2201,7 +2172,7 @@ def process_sql_file(p_file, p_json):
             print('[{"status":"completed","has_updates":0}]')
         return False
 
-    ## process the file ##########################
+    # process the file ##########################
     file = open(p_file, "r")
     cmd = ""
     for line in file:
@@ -2217,9 +2188,6 @@ def process_sql_file(p_file, p_json):
     return True
 
 
-##################################################################
-# execute a sql command & commit it
-##################################################################
 def exec_sql(cmd):
     try:
         c = cL.cursor()
@@ -2230,9 +2198,6 @@ def exec_sql(cmd):
         fatal_sql_error(e, cmd, "exec_sql()")
 
 
-##################################################################
-# Print key server metrics
-##################################################################
 def show_metrics(p_home, p_port, p_data, p_log, p_pid):
     return
     if not p_home is None:
@@ -2247,9 +2212,6 @@ def show_metrics(p_home, p_port, p_data, p_log, p_pid):
         print("  --pidfile " + p_pid)
 
 
-####################################################################################
-# Retrieve the string value of a column from Components table
-####################################################################################
 def get_column(p_column, p_comp, p_env=""):
     try:
         c = cL.cursor()
@@ -2277,9 +2239,6 @@ def get_column(p_column, p_comp, p_env=""):
     return col_val
 
 
-####################################################################################
-# Update the value of a column for Components table
-####################################################################################
 def set_column(p_column, p_comp, p_value):
     try:
         c = cL.cursor()
@@ -2317,9 +2276,6 @@ def fatal_sql_error(err, sql, func):
     sys.exit(1)
 
 
-####################################################################################
-# Return the SHA512 checksum of a file
-####################################################################################
 def get_file_checksum(p_filename):
     BLOCKSIZE = 65536
     hasher = hashlib.sha512()
@@ -2331,9 +2287,6 @@ def get_file_checksum(p_filename):
     return hasher.hexdigest()
 
 
-####################################################################################
-# Read contents of a small file directly into a string
-####################################################################################
 def read_file_string(p_filename, action=None):
     try:
         f = open(p_filename, "r")
@@ -2346,18 +2299,12 @@ def read_file_string(p_filename, action=None):
         return ""
 
 
-####################################################################################
-# Write contents of string into file
-####################################################################################
 def write_string_file(p_stringname, p_filename):
     f = open(p_filename, "w")
     f.write(p_stringname)
     f.close()
 
 
-####################################################################################
-# search and replace simple strings on a file, in-place
-####################################################################################
 def replace(p_olddata, p_newdata, p_filename, p_quiet=False):
     filestring = read_file_string(p_filename)
     if not p_quiet:
@@ -2375,18 +2322,12 @@ def replace(p_olddata, p_newdata, p_filename, p_quiet=False):
     return
 
 
-####################################################################################
-# get pid of a running process which cannot create it's own pidfile
-####################################################################################
 def get_pid(name):
     from subprocess import check_output
 
     return check_output(["pidof", name])
 
 
-####################################################################################
-# abruptly terminate a process id
-####################################################################################
 def kill_pid(pid):
     if pid < 1:
         return
@@ -2411,9 +2352,6 @@ def is_pid_running(p_pid):
     return psutil.pid_exists(int(p_pid))
 
 
-####################################################################################
-# return the OS platform (Linux, Darwin)
-####################################################################################
 def get_platform():
     return str(platform.system())
 
@@ -2440,7 +2378,7 @@ def get_el_os():
 
 def get_el_ver():
     if platform.system() == "Darwin":
-        ## message("# WARNING! OSX is only for client functionality such as CLUSTER & ACE commands.")
+        # message("# WARNING! OSX is only for client functionality such as CLUSTER & ACE commands.")
         return "osx"
 
     elv = os.getenv("ELV", None)
@@ -2488,9 +2426,6 @@ def is_el8():
     return False
 
 
-####################################################################################
-# returns the OS
-####################################################################################
 def get_os():
     if platform.system() == "Darwin":
         arch = getoutput("arch")
@@ -2502,22 +2437,18 @@ def get_os():
     try:
         rel_file = ""
         if os.path.exists("/etc/redhat-release"):
-            ## el
+            # el
             rel_file = "/etc/redhat-release"
         elif os.path.exists("/etc/system-release"):
-            ## amazon linux
+            # amazon linux
             rel_file = "/etc/system-release"
         elif os.path.exists("/etc/lsb-release"):
-            ## ubuntu
+            # ubuntu
             rel_file = "/etc/lsb-release"
         else:
             rel_file = "/etc/os-release"
 
         if rel_file > "" and os.path.exists(rel_file):
-            ##cpuinfo = read_file_string("/proc/cpuinfo")
-            ##if "CPU architecture" in cpuinfo:
-            ##  return "arm"
-            ##else:
             return get_el_ver()
 
     except Exception as e:
@@ -2533,17 +2464,11 @@ def get_pkg_mgr():
     return "yum"
 
 
-####################################################################################
-# return if the user has admin rights
-####################################################################################
 def has_admin_rights():
     status = True
     return status
 
 
-####################################################################################
-# return the default platform based on the OS
-####################################################################################
 def get_default_pf():
     if get_platform() == "Darwin":
         return "osx"
@@ -2551,16 +2476,10 @@ def get_default_pf():
     return "el8"
 
 
-####################################################################################
-# return the platform
-####################################################################################
 def get_pf():
     return get_os()
 
 
-####################################################################################
-# build up a LIKE clause for a SQL fragment appropriate for the platform
-####################################################################################
 def like_pf(p_col):
     pf = get_pf()
     OR = " OR "
@@ -2571,17 +2490,11 @@ def like_pf(p_col):
     return clause
 
 
-####################################################################################
-# check if the current platform is in the list of component platforms
-####################################################################################
 def has_platform(p_platform):
     pf = get_pf()
     return p_platform.find(pf)
 
 
-####################################################################################
-# set the env variables
-####################################################################################
 def set_lang_path():
     perl_home = MY_HOME + os.sep + "perl5" + os.sep + "perl"
     if os.path.exists(perl_home):
@@ -2620,9 +2533,6 @@ def set_lang_path():
         os.environ["PATH"] = java_home + os.sep + "bin" + os.pathsep + path
 
 
-####################################################################################
-# return the OS user name
-####################################################################################
 def get_user():
     return getpass.getuser()
 
@@ -2671,9 +2581,6 @@ def launch_daemon(arglist, p_logfile_name):
     return 0
 
 
-####################################################################################
-# delete a file (if it exists)
-####################################################################################
 def delete_file(p_file_name):
     if os.path.isfile(p_file_name):
         os.remove(p_file_name)
@@ -2755,7 +2662,7 @@ def get_url(url):
     return the_page.decode("utf-8").replace("\n", "")
 
 
-## retrieve a remote file via http #################################################
+# retrieve a remote file via http #################################################
 def http_get_file(
     p_json, p_file_name, p_url, p_out_dir, p_display_status, p_msg, component_name=None
 ):
@@ -2953,7 +2860,7 @@ def is_writable(path):
     return True
 
 
-## is running with Admin/Root priv's #########################################
+# is running with Admin/Root priv's #########################################
 def is_admin():
     rc = getoutput("id -u")
 
@@ -2998,7 +2905,7 @@ def print_error(p_error):
     return
 
 
-## Get Component Datadir ###################################################
+# Get Component Datadir ###################################################
 def get_comp_datadir(p_comp):
     try:
         c = cL.cursor()
@@ -3014,7 +2921,7 @@ def get_comp_datadir(p_comp):
     return str(data[0])
 
 
-## Get postgres components installed
+# Get postgres components installed
 def get_installed_postgres_components():
     try:
         c = cL.cursor()
@@ -3027,7 +2934,7 @@ def get_installed_postgres_components():
     return None
 
 
-## Get parent component for extension
+# Get parent component for extension
 def get_parent_component(p_ext, p_ver):
     try:
         c = cL.cursor()
@@ -3043,7 +2950,6 @@ def get_parent_component(p_ext, p_ver):
     return str(data[0])
 
 
-## Get Component State #####################################################
 def get_comp_state(p_comp):
     try:
         c = cL.cursor()
@@ -3057,7 +2963,6 @@ def get_comp_state(p_comp):
     return str(data[0])
 
 
-## Get Component Port ######################################################
 def get_comp_port(p_comp):
     try:
         c = cL.cursor()
@@ -3071,7 +2976,6 @@ def get_comp_port(p_comp):
     return str(data[0])
 
 
-## Get Component PID File###################################################
 def get_comp_pidfile(p_comp):
     try:
         c = cL.cursor()
@@ -3085,7 +2989,6 @@ def get_comp_pidfile(p_comp):
     return str(data[0])
 
 
-# Check if the port is in use
 def is_socket_busy(p_port, p_comp=""):
     if p_comp > "":
         is_ready_file = "pg_isready"
@@ -3126,7 +3029,6 @@ def wait_pg_ready(pg_v, max_tries=10):
     return False
 
 
-## Get Component category ######################################################
 def get_comp_category(p_comp):
     try:
         c = cL.cursor()
@@ -3185,7 +3087,7 @@ def create_manifest(ext_comp, parent_comp, upgrade=None):
 
 
 def copy_extension_files(ext_comp, parent_comp, upgrade=None):
-    ## always overlay these files ##
+    # always overlay these files ##
     PARENT_DIR = os.path.join(MY_HOME, parent_comp)
     COMP_DIR = os.path.join(MY_HOME, ext_comp)
     if upgrade:
@@ -3196,7 +3098,6 @@ def copy_extension_files(ext_comp, parent_comp, upgrade=None):
     return True
 
 
-# Check and delete the files mentioned in the manifest file
 def delete_extension_files(manifest_file, upgrade=None):
     my_logger.info("# checking for extension files.")
     try:
@@ -3234,7 +3135,7 @@ def delete_extension_files(manifest_file, upgrade=None):
     return True
 
 
-## Get file size in readable format
+# Get file size in readable format
 def get_file_size(file_size, precision=1):
     suffixes = ["B", "KB", "MB", "GB", "TB"]
     suffixIndex = 0
@@ -3355,5 +3256,5 @@ def delete_shortlink_osx(short_link):
         os.system("killall Dock")
 
 
-## MAINLINE ################################################################
+# MAINLINE ################################################################
 cL = sqlite3.connect(MY_LITE, check_same_thread=False)
