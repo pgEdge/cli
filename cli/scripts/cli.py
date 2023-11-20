@@ -127,7 +127,6 @@ mode_list = (
         "-t",
         "--pause",
         "--verbose",
-        "--country",
         "-v",
         "--debug",
         "--debug2",
@@ -1313,10 +1312,9 @@ p_user = ""
 p_passwd = ""
 p_host_name = ""
 
-if "--country" in args:
-    skip_me = get_next_arg("--country")
-    args.remove("--country")
-    args.remove(skip_me)
+if "--deprecate-nc" in args:
+    args.remove("--deprecate-nc")
+    util.message(f"'nc' & 'nodectl' commands deprecated in favor of 'ctl'", "warning")
 
 isVERBOSE = False
 if "--verbose" in args:
