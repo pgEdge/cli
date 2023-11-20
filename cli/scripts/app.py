@@ -16,7 +16,6 @@ def pgbench_install(db, replication_set=None, pg=None):
         cur = con.cursor()
         pgbench_cmd = '"pgbench --initialize --scale=1 ' + str(db) + '"'
         util.echo_cmd(f"./nc pgbin " + str(pg) + " " + pgbench_cmd)
-        ##os.system(f"{pg_v}{os.sep}bin{os.sep}pgbench -i {db}")
         cur.execute(
             "ALTER TABLE pgbench_accounts ALTER COLUMN abalance SET (LOG_OLD_VALUE=true)"
         )
@@ -42,7 +41,6 @@ def pgbench_run(db, Rate, Time, pg=None):
     pg = pg_v.replace("pg", "")
     pgbench_cmd = f'"pgbench -R {Rate} -T {Time} -n {db}"'
     util.echo_cmd(f"./nc pgbin " + str(pg) + " " + pgbench_cmd)
-    ##os.system(f"{pg_v}{os.sep}bin{os.sep}pgbench -R {Rate} -T {Time} -n {db}")
 
 
 def pgbench_validate(db, pg=None):
@@ -78,18 +76,12 @@ def pgbench_remove(db, pg=None):
     util.exit_message(f"Dropped pgBench tables from database: {db}", 0)
 
 
-def northwind_install(db, replication_set=None, country=None, pg=None):
+def northwind_install(db, replication_set=None, pg=None):
     """Install northwind data, Alter tables, and add to repsets"""
     pg_v = util.get_pg_v(pg)
 
     sql_file = f"hub{os.sep}scripts{os.sep}sql{os.sep}northwind.sql"
     os.system(f"./nodectl psql -f {sql_file} {db}")
-
-    if country:
-        if country != "US" or country != "USA":
-            out_of_country = "USA"
-        else:
-            out_of_country = "UK"
 
     usr = util.get_user()
     try:
@@ -101,11 +93,6 @@ def northwind_install(db, replication_set=None, country=None, pg=None):
         cur.execute(
             "ALTER TABLE northwind.products ALTER COLUMN units_on_order SET (LOG_OLD_VALUE=true)"
         )
-        if country:
-            cur.execute(
-                f"UPDATE northwind.employees SET birth_date = NULL, address = NULL, city = NULL, region = NULL, \
-                postal_code = NULL, home_phone = NULL, extension = NULL WHERE country = '{out_of_country}'"
-            )
         con.commit()
         cur.close()
     except Exception as e:
@@ -114,18 +101,6 @@ def northwind_install(db, replication_set=None, country=None, pg=None):
     if replication_set:
         os.system(
             f"./nodectl spock repset-add-table {replication_set} 'northwind.*' {db}"
-        )
-    if country:
-        os.system(
-            f"./nodectl spock repset-remove-table {replication_set} 'northwind.employees' {db}"
-        )
-        os.system(f"./nodectl spock repset-create {replication_set}_eu {db}")
-        os.system(f"./nodectl spock repset-create {replication_set}_us {db}")
-        os.system(
-            f"./nodectl spock repset-add-table {replication_set}_us 'northwind.employees' {db}"
-        )
-        os.system(
-            f"./nodectl spock repset-add-table {replication_set}_eu 'northwind.employees' {db} --columns='employee_id, last_name, first_name, title, title_of_courtesy, hire_date, country, photo, notes, reports_to, photo_path'"
         )
 
 
