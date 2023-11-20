@@ -445,7 +445,6 @@ def compare_checksums(
                 row_diff_count.value += max(len(t1_diff), len(t2_diff))
 
             if row_diff_count.value >= MAX_DIFF_ROWS:
-                queue.append(block_result)
                 result_queue.append(MAX_DIFF_EXCEEDED)
                 return
             else:
@@ -453,9 +452,6 @@ def compare_checksums(
 
         else:
             result_queue.append(BLOCK_OK)
-
-    if len(block_result["diffs"]) > 0:
-        queue.append(block_result)
 
 
 def table_diff(
@@ -693,23 +689,13 @@ def table_diff(
         in the cluster
         """
 
-        diff_count = {}
-        for entry in queue:
-            diff_list = entry["diffs"]
-
-            if not diff_list:
-                continue
-
-            for diff_json in diff_list:
-                node1, node2 = diff_json.keys()
-                diff_count[node1 + "_" + node2] = diff_count.get(
-                    node1 + "_" + node2, 0
-                ) + max(len(diff_json[node1]), len(diff_json[node2]))
-
-        for key in diff_count.keys():
-            node1, node2 = key.split("_")
+        for node_pair in diff_dict.keys():
+            node1, node2 = node_pair.split("/")
+            diff_count = max(
+                len(diff_dict[node_pair][node1]), len(diff_dict[node_pair][node2])
+            )
             util.message(
-                f"FOUND {diff_count[key]} DIFFS BETWEEN {node1} AND {node2}",
+                f"FOUND {diff_count} DIFFS BETWEEN {node1} AND {node2}",
                 p_state="warning",
             )
 
