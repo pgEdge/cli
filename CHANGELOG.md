@@ -4,6 +4,7 @@
 ## done so far for 24.01-1 as of 2023-11-20 ###########
 ### New Features:
   + SPOCK32: dev7 --> 3.2.0 on pg14, pg15, pg16 & pg17
+  + BACKREST: upgrade to 2.48 and support pg14/15/16
   + TEST: on newer Linux Releases (likely works on many more):
     - Fedora Core 39 w Python 3.12
     - Ubuntu 23.04 w Python 3.11

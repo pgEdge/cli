@@ -233,7 +233,6 @@ initDir () {
     mv $myNewDir/src.tar.gz $myNewDir/$pComponent-src.tar.gz
   fi
 
-  ##rm -f $myNewDir/*INSTALL*
   rm -f $myNewDir/logs/*
 
   rm -rf $myNewDir/manual

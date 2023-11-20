@@ -353,7 +353,8 @@ INSERT INTO versions VALUES ('pgcat', '1.1.1', 'el9, arm9', 1, '20230829', '', '
 INSERT INTO projects VALUES ('backrest', 'pge', 11, 0, 'hub', 3, 'http://pgbackrest.org',
   'backrest',  0, 'backrest.png', 'Backup & Restore', 'http://pgbackrest.org');
 INSERT INTO releases VALUES ('backrest', 2, 'backrest',  'pgBackRest', '', 'ent', '', 1, 'MIT', '', '');
-INSERT INTO versions VALUES ('backrest', '2.47-1', 'el9, arm9', 1, '20230803', '', 'EL9', '');
+INSERT INTO versions VALUES ('backrest', '2.48-1', 'el9, arm9', 1, '20231120', '', 'EL9', '');
+INSERT INTO versions VALUES ('backrest', '2.47-1', 'el9, arm9', 0, '20230803', '', 'EL9', '');
 
 INSERT INTO projects VALUES ('firewalld', 'app', 11, 0, '', 4, 'https://firewalld.org',
   'firewalld', 0, 'firewalld.png', 'HA', 'https://github.com/firewalld/firewalld');
