@@ -1,11 +1,11 @@
 
-grep el8 /etc/os-release
+grep el9 /etc/os-release
 rc=$?
 
 if [ "$rc" == "0" ]; then
   echo 'pass'
 else
-  echo 'Error: Must be EL8'
+  echo 'Error: Must be EL9'
   exit 1
 fi
 
