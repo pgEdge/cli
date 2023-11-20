@@ -11,6 +11,7 @@
     - Amazon Linux 2023
 
 ### Fixes and minor changes:
+  + introducing 'ctl' to replace 'nc' & 'nodectl'
   + bump NCLIBS to 1.1
   + use 'black' for inital code cleanup
   + begin 'flake8' manual code cleanups

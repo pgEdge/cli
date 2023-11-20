@@ -402,7 +402,7 @@ def info(p_json, p_home, p_repo, print_flag=True):
     glibc_v_display = ' glibc-' + glibcV + '-'
 
   print(bold_start + ("#" * 70) + bold_end)
-  print(bold_start + "#     NodeCtl: " + bold_end + "v" + ver + "  " + p_home)
+  print(bold_start + "#         Ctl: " + bold_end + "v" + ver + "  " + p_home)
   print(bold_start + "# User & Host: " + bold_end + p_user + \
     admin_display + "  " + host_display + "  " + host_ip)
   print(bold_start + "#          OS: " + bold_end + os2.rstrip() + " " + glibc_v_display + os_arch)

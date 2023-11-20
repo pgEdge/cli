@@ -552,6 +552,7 @@ do
 
             cp $CLI/cli.sh ./$api
             ln -s $api nc
+            ln -s $api ctl
 
             if [ "$outDir" == "posix" ]; then
               OS="???"
