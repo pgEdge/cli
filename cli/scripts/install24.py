@@ -61,15 +61,15 @@ if os.path.exists("pgedge"):
         print("ERROR: Cannot install over a non-empty 'pgedge' directory.")
         sys.exit(1)
 
-my_file = "pgedge-nodectl-" + VER + ".tar.bz2"
+my_file = "pgedge-ctl-" + VER + ".tar.bz2"
 download_n_unpack(my_file, REPO, "CLI " + VER + " ...", True)
 
-cmd = "pgedge" + os.sep + "nodectl "
+cmd = "pgedge" + os.sep + "ctl "
 os.system(cmd + "set GLOBAL REPO " + REPO)
 os.system(cmd + "update --silent")
 os.system(cmd + "info")
-os.system(cmd + "install nclibs")
+os.system(cmd + "install ctlibs")
 
-print("\npgedge/nodectl installed.\n")
+print("\npgedge/ctl installed.\n")
 
 sys.exit(0)

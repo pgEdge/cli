@@ -1,12 +1,12 @@
-# pgEdge NodeCtl : Command Line Interface
+# pgEdge CTL : Command & Control Interface
 
 
 # Summary
-NODECTL is the pgEdge Command Line Interface (CLI) for managing components. 
+CTL is the pgEdge Command & Control Interface (CLI) for managing components. 
 It is licensed under the pgEdge Community License 1.0
 
 # Configuring the Python Environment for Dev/Test
-In order to run the Python code, a suitable POSIX environment is required. 
+In order to run the Python code, Linux or OSX is required. 
 Python version 3.9 and later are currently supported. It is recommended that
 a Python Virtual Environment is setup for this purpose, rather than using
 the system Python environment. On Linux and Mac systems, the process is 
@@ -28,7 +28,7 @@ $ pip install --upgrade pip
 The modules are `um`, `service`, `spock`, `cluster`, `db`, `secure`, and `ace`.  
 
 ## Synopsis
-    ./nodectl <module> <command> [parameters] [options] 
+    ./ctl <module> <command> [parameters] [options] 
 
 ## `um` Update Manager commands
 ```

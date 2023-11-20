@@ -427,7 +427,7 @@ initPG () {
   writeSettRow "GLOBAL" "STAGE" "prod"
   writeSettRow "GLOBAL" "AUTOSTART" "off"
 
-  initC "nclibs"  "nclibs"  "$nclibsV"  "" "nclibs"         "" "" "Y"
+  initC "ctlibs"  "ctlibs"  "$ctlibsV"  "" "ctlibs"         "" "" "Y"
 
   if [ "$outPlat" == "osx" ]; then
     return
@@ -552,7 +552,7 @@ do
 
             cp $CLI/cli.sh ./$api
             ln -s $api nc
-            ln -s $api ctl
+            ln -s $api nodectl
 
             if [ "$outDir" == "posix" ]; then
               OS="???"

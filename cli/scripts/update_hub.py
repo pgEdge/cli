@@ -45,8 +45,8 @@ def mainline():
         sys.exit(0)
 
     if (p_from_ver < "24.010") and (p_to_ver >= "24.011"):
-        util.echo_cmd(NC + " remove nclibs")
-        util.echo_cmd(NC + " install nclibs")
+        util.echo_cmd(NC + " remove ctlibs")
+        util.echo_cmd(NC + " install ctlibs")
 
     sys.exit(rc)
     return

@@ -5,14 +5,13 @@
 ### New Features:
   + SPOCK32: dev7 --> 3.2.0 on pg14, pg15, pg16 & pg17
   + BACKREST: upgrade to 2.48 and support pg14/15/16
+  + CTL: 'nc' & 'nodectl' are now aliases for 'ctl'
   + TEST: on newer Linux Releases (likely works on many more):
     - Fedora Core 39 w Python 3.12
     - Ubuntu 23.04 w Python 3.11
     - Amazon Linux 2023
 
 ### Fixes and minor changes:
-  + introducing 'ctl' to replace 'nc' & 'nodectl'
-  + bump NCLIBS to 1.1
   + use 'black' for inital code cleanup
   + begin 'flake8' manual code cleanups
 
