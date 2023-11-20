@@ -1,11 +1,15 @@
 # pgEdge Platform Release Notes #############
 
 
-## done so far for 24.011 as of 2023-11-17 ###########
-  + Tested on Latest Linux Release (likely works on many more):
+## done so far for 24.01-1 as of 2023-11-20 ###########
+### New Features:
+  + SPOCK32: dev7 --> 3.2.0 on pg14, pg15, pg16 & pg17
+  + TEST: on newer Linux Releases (likely works on many more):
     - Fedora Core 39 w Python 3.12
     - Ubuntu 23.04 w Python 3.11
     - Amazon Linux 2023
+
+### Fixes and minor changes:
   + bump NCLIBS to 1.1
   + use 'black' for inital code cleanup
   + begin 'flake8' manual code cleanups
@@ -13,7 +17,7 @@
 
 ## done for 24.010 on 2023-11-17 ###########
   + small fixes for Fedora 39 & python 3.12 test support
-  + regenerate and cleanup --help 
+  + regenerate and cleanup doc
   + document regression tests using cluster local-create, northwind, & ace
   + MACHINE: doc & more improvements
 

@@ -1,7 +1,7 @@
 
 bundle=pgedge
 api=nodectl
-hubV=24.011
+hubV=24.01-1
 nclibsV=1.1
 
 spock32V=3.2.0-1
