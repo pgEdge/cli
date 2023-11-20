@@ -19,36 +19,19 @@ host=os.getenv("EDGE_HOST","localhost")
 repuser=os.getenv("EDGE_REPUSER","pgedge")
 repset=os.getenv("EDGE_REPSET","demo-repset")
 
-for i in range(1,num_nodes+1):
+i=1
+while i<=num_nodes:
+	print("Node-Drop")
+	cmd= f"spock node-drop n{i} {db}"
+	res=util_test.run_cmd("node drop",cmd,f"{cluster_dir}/n{i}")
+	haystack=res.stdout
+	needle=os.getenv("EDGE_NODE_DROP","node_drop")
+	print("needle is",needle)
+	##Get Needle in Haystack
+	res=util_test.contains(haystack,needle)
+	port += 1
+	i += 1
 
-##Drop Node
-  
-  print("Node Drop")
-  cmd_spock=f"~/work/nodectl/test/pgedge/cluster/demo/n{i}/pgedge/nodectl spock node-drop n{i} {db}"
-  #util_test.run_cmd("Node Drop",cmd_spock,f"{cluster_dir}/n{i}")
-  result = subprocess.run(cmd_spock, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
-    
-    # Print the output
-  print("Output of cmd_spock:")
-  print("Result of stdout=",result.stdout)
-
- # Check if there were any errors
-  if result.returncode != 0:
-   print("Error occurred:")
-   print(result.stderr)
-   sys.exit(1)
-   
-  ## Needle and Haystack check 
-   ##Get Needle in Haystack
-   
-  haystack=result.stdout
-  needle = os.getenv("EDGE_NODE_DROP")
-  result = util_test.contains(haystack, needle)
-  print("Result:", result)	
-
-   
-
-  port=port+1
  
 
 

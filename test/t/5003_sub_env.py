@@ -34,29 +34,13 @@ for i in range(c,num_nodes+1):
 			else:
 				#print("b4 cmd",i,j,port)
 				port+=1
-				cmd = f"~/work/nodectl/test/pgedge/cluster/demo/n{i}/pgedge/nodectl spock sub-create sub_n{i}n{j} 'host={host} port={port} user={repuser} dbname={db}' {db}"
-				#util_test.run_cmd("Create Subscriptions",cmd,f"{cluster_dir}/n{i}")
-				#print("After cmd",i,j,port)
-				print(cmd)
-				#util_test.run_cmd("Create Subscriptions",cmd,f"{cluster_dir}/n{i}")
-				#print("After cmd",i,j,port)
-				
-				result1 = subprocess.run(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
-# Check if there were any errors
-				if result1.returncode != 0:
-					print("Error occurred:",result1.stderr)
-					sys.exit(1)	
-
-# Print the output
-
-				print("Result of stdout=",result1.stdout)
-				haystack=result1.stdout
-				needle=os.getenv("EDGE_SUB_CHECK")
-
-# Check if the needle is present in the haystack
-				result = util_test.contains(haystack, needle)
-				print("Result:", result)
-
+				cmd = f"spock sub-create sub_n{i}n{j} 'host={host} port={port} user={repuser} dbname={db}' {db}"
+				res=util_test.run_cmd("Create Subscriptions",cmd,f"{cluster_dir}/n{i}")
+				haystack=res.stdout
+				needle=os.getenv("EDGE_SUB_CHECK","sub_create")
+				print("needle is",needle)
+				##Get Needle in Haystack
+				res=util_test.contains(haystack,needle)
 				
 	port=port1-1
 	#print(port)

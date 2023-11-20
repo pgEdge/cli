@@ -19,38 +19,19 @@ db = os.getenv("EDGE_DB", "demo")
 host = os.getenv("EDGE_HOST", "localhost")
 repuser = os.getenv("EDGE_REPUSER", "pgedge")
 repset = os.getenv("EDGE_REPSET", "demo-repset")
-
-for i in range(1, num_nodes + 1):
-    # Drop Node
-    print("Repset-Drop")
-    cmd_spock = f"~/work/nodectl/test/pgedge/cluster/demo/n{i}/pgedge/nodectl spock repset-drop {repset} {db}"
-
-    # Execute the command and capture the output
-    result = subprocess.run(cmd_spock, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
-
-    # Print the output
-    print("Output of cmd_spock:")
-    print("Result of stdout=", result.stdout)
-    
-
-# Check if there were any errors
-    if result.returncode != 0:
-        print("Error occurred:")
-        print(result.stderr)
-        sys.exit(1)
-
-    # Needle and Haystack check
-    haystack = result.stdout
-    needle = os.getenv("EDGE_REP_DROP")
-
-    # Check if the needle is present in the haystack
-    result = util_test.contains(haystack, needle)
-    print("Result:", result)
-
-    print(i)
-    port += 1
-    i += 1
-    print(i)
+i=1
+while i<=num_nodes:
+	print("Repset-Drop")
+	cmd= f"spock repset-drop {repset} {db}"
+	res=util_test.run_cmd("Create Subscriptions",cmd,f"{cluster_dir}/n{i}")
+	haystack=res.stdout
+	needle=os.getenv("EDGE_REP_DROP","repset_drop")
+	print("needle is",needle)
+	##Get Needle in Haystack
+	res=util_test.contains(haystack,needle)
+	port += 1
+	i += 1
+   
 
 util_test.exit_message(f"Pass - {os.path.basename(__file__)}", 0)
 

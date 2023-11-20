@@ -1,4 +1,4 @@
-import sys, os, psycopg, json
+import sys, os, psycopg, json,subprocess
 from dotenv import load_dotenv
 
 ## Utility Functions
@@ -33,10 +33,13 @@ def exit_message(p_msg, p_rc=1):
 ## Run functions on both nodes
 def run_cmd(msg, cmd, node_path):
     print(cmd)  
-    rc = os.system(f"{node_path}/pgedge/nodectl {cmd}")
-    if rc != 0:
-       exit_message(f"Failed on step: {msg}",1)
-
+    result = subprocess.run(f"{node_path}/pgedge/nodectl {cmd}", shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+    # Check if there were any errors
+    if result.returncode != 0:
+        print("Error occurred:")
+        print(result.stderr)
+        exit_message(f"Failed on step: {msg}",1)
+    return result 
 '''
 ## Get two psql connections
 def get_pg_connection():
