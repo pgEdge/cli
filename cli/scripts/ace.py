@@ -1029,17 +1029,15 @@ def table_repair(cluster_name, diff_file, source_of_truth, table_name, dry_run=F
 
     start_time = datetime.now()
 
-    conn_list = []
+    conns = {}
     try:
         for nd in cluster_nodes:
-            conn_list.append(
-                psycopg.connect(
-                    dbname=db,
-                    user=usr,
-                    password=passwd,
-                    host=nd["ip"],
-                    port=nd.get("port", 5432),
-                )
+            conns[nd["nodename"]] = psycopg.connect(
+                dbname=db,
+                user=usr,
+                password=passwd,
+                host=nd["ip"],
+                port=nd.get("port", 5432),
             )
 
     except Exception as e:
@@ -1050,7 +1048,7 @@ def table_repair(cluster_name, diff_file, source_of_truth, table_name, dry_run=F
     cols = None
     key = None
 
-    for conn in conn_list:
+    for conn in conns.values():
         curr_cols = get_cols(conn, l_schema, l_table)
         curr_key = get_key(conn, l_schema, l_table)
 
@@ -1090,7 +1088,44 @@ def table_repair(cluster_name, diff_file, source_of_truth, table_name, dry_run=F
         }
     }
 
-    true_rows extracts all rows from the source of truth node and dedupes them
+    true_rows extracts all rows from the source of truth node across all node diffs
+    and dedupes them.
+    We use true_rows if the node_pair does not contain the source of truth node.
+    This case can happen only when another node has the same rows as the source of
+    truth node, but the third node has some differences. The proof of this is trivial,
+    and is left as an exercise to the reader.
+
+    Strategy for repair:
+    1.  Extract all rows from source of truth node across all node_pairs
+        and store them in true_rows.
+    2.  Check to see if the node_pair has the source of truth node.
+        If yes, then use rows from the source of truth node in the node_pair.
+        Otherwise, use true_rows obtained in step 1. At the end of this step,
+        true_rows either has node-specific diffs or all diffs--as computed in step 1.
+    3.  We could have four different situations when checking true_rows
+        against other nodes:
+        a.  Rows are present in source of truth node but not in other nodes.
+        b.  Rows are present in source of truth node and in other nodes but have
+            different values.
+        c.  Rows are present in other nodes but not in source of truth node.
+        d.  Both source of truth node and the other node have rows, but some need to be
+            inserted, some deleted and some updated.
+
+    4.  Here is how we handle each of these situations:
+        a.  We simply insert the rows into the other nodes.
+        b.  We update the rows in the other nodes with the values from the source of
+            truth node.
+        c.  We delete the rows from the other nodes.
+        d.  We insert/update/delete rows in the other nodes as needed.
+
+    5.  But how do we know which rows to insert/update/delete? We need to do some
+        set operations to figure this out. We will call the source of truth node
+        as the ST node and the other node as the 'D' (divergent) node. We perform
+        these set operations using the primary key of the table.
+        a.  Rows to insert in D node: ST node - D node
+        b.  Rows to update in D node: ST node intersection D node
+        c.  Rows to delete in D node: D node - ST node
+
     """
 
     true_rows = [
@@ -1103,18 +1138,14 @@ def table_repair(cluster_name, diff_file, source_of_truth, table_name, dry_run=F
     true_df = pd.concat([true_df, pd.DataFrame(true_rows)], ignore_index=True)
     true_df.drop_duplicates(inplace=True)
 
+    # XXX: Does this work with composite keys?
     true_df[key] = true_df[key].astype(str)
 
-    # Remove the key column from the list of columns
-    # true_df = true_df[[c for c in true_df if c not in [key]]]
-    for conn in conn_list:
-        # Unpack true_df into (key, row) tuples
-        true_rows = true_df.to_records(index=False)
-
-    true_rows = [tuple(str(x) for x in row) for row in true_rows]
+    true_rows = [tuple(str(x) for x in row) for row in true_df.to_records(index=False)]
 
     print()
 
+    # XXX: Fix dry run later
     nodes_to_repair = ",".join(
         [nd["nodename"] for nd in cluster_nodes if nd["nodename"] != source_of_truth]
     )
@@ -1129,32 +1160,134 @@ def table_repair(cluster_name, diff_file, source_of_truth, table_name, dry_run=F
         return
 
     cols_list = cols.split(",")
-    # Remove the key column from the list of columns
-    # cols_list.remove(key)
+    simple_primary_key = True
+    keys_list = []
 
-    """
-    Here we are constructing an UPDATE query from true_rows and applying it to all nodes
-    """
-    update_sql = f"""
-    INSERT INTO {table_name}
-    VALUES ({','.join(['%s'] * len(cols_list))})
-    ON CONFLICT ({key}) DO UPDATE SET
-    """
+    if len(key.split(",")) > 1:
+        simple_primary_key = False
+        keys_list = key.split(",")
 
-    for col in cols_list:
-        update_sql += f"{col} = EXCLUDED.{col}, "
+    for node_pair in diff_json.keys():
+        node1, node2 = node_pair.split("/")
 
-    update_sql = update_sql[:-2] + ";"
+        true_rows = (
+            [entry for entry in diff_json[node_pair][source_of_truth]]
+            if source_of_truth in [node1, node2]
+            else true_rows
+        )
 
-    # Apply the diffs to all nodes in the cluster
-    for conn in conn_list:
-        try:
-            cur = conn.cursor()
-            cur.executemany(update_sql, true_rows)
-            conn.commit()
-            cur.close()
-        except Exception as e:
-            util.exit_message("Error in repair():" + str(e), 1)
+        divergent_rows = []
+        divergent_node = None
+
+        if node1 == source_of_truth:
+            divergent_rows = [
+                tuple(str(x) for x in row.values())
+                for row in diff_json[node_pair][node2]
+            ]
+            divergent_node = node2
+        elif node2 == source_of_truth:
+            divergent_rows = [
+                tuple(str(x) for x in row.values())
+                for row in diff_json[node_pair][node1]
+            ]
+            divergent_node = node1
+        else:
+            # XXX: Expensive much?
+            if true_rows == diff_json[node_pair][node1]:
+                divergent_rows = [
+                    tuple(str(x) for x in row.values())
+                    for row in diff_json[node_pair][node2]
+                ]
+                divergent_node = node2
+            else:
+                divergent_rows = [
+                    tuple(str(x) for x in row.values())
+                    for row in diff_json[node_pair][node1]
+                ]
+                divergent_node = node1
+
+        true_set = OrderedSet(true_rows)
+        divergent_set = OrderedSet(divergent_rows)
+
+        rows_to_insert = true_set - divergent_set
+        rows_to_update = true_set & divergent_set
+        rows_to_delete = divergent_set - true_set
+        rows_to_upsert = rows_to_insert | rows_to_update
+        rows_to_upsert_list = list(rows_to_upsert)
+
+        # Convert rows_to_delete back to json
+        rows_to_delete_json = [dict(zip(cols_list, row)) for row in rows_to_delete]
+        filtered_rows_to_delete = []
+
+        print(rows_to_upsert_list)
+
+        for entry in rows_to_delete_json:
+            entry_tuple = tuple(x for x in entry.values())
+            print(entry_tuple)
+            if entry_tuple in rows_to_upsert_list:
+                print("yes")
+                continue
+            filtered_rows_to_delete.append(entry)
+
+        delete_keys = []
+
+        if rows_to_delete:
+            if simple_primary_key:
+                delete_keys = [row[key] for row in filtered_rows_to_delete]
+            else:
+                delete_keys = [
+                    tuple(row[col] for col in keys_list)
+                    for row in filtered_rows_to_delete
+                ]
+
+        """
+        Here we are constructing an UPSERT query from true_rows and
+        applying it to all nodes
+        """
+        update_sql = f"""
+        INSERT INTO {table_name}
+        VALUES ({','.join(['%s'] * len(cols_list))})
+        ON CONFLICT ({key}) DO UPDATE SET
+        """
+
+        for col in cols_list:
+            update_sql += f"{col} = EXCLUDED.{col}, "
+
+        update_sql = update_sql[:-2] + ";"
+
+        delete_sql = None
+
+        if simple_primary_key:
+            delete_sql = f"""
+            DELETE FROM {table_name}
+            WHERE {key} = '%s';
+            """
+        else:
+            delete_sql = f"""
+            DELETE FROM {table_name}
+            WHERE
+            """
+
+            for k in keys_list:
+                delete_sql += f" {k} = '%s' AND"
+
+            delete_sql = delete_sql[:-3] + ";"
+
+        conn = conns[divergent_node]
+        cur = conn.cursor()
+
+        if rows_to_upsert:
+            # Performing the upsert
+            cur.executemany(update_sql, rows_to_upsert)
+
+        if delete_keys:
+            # Performing the deletes
+            if len(delete_keys) > 0:
+                cur.executemany(delete_sql, delete_keys)
+
+        cur.close()
+        conn.commit()
+        conn.close()
 
     run_time = util.round_timedelta(datetime.now() - start_time).total_seconds()
     run_time_str = f"{run_time:.2f}"
@@ -1165,7 +1298,8 @@ def table_repair(cluster_name, diff_file, source_of_truth, table_name, dry_run=F
     )
 
     util.message(
-        f"\nTOTAL ROWS UPSERTED = {len(true_rows)}\nRUN TIME = {run_time_str} seconds",
+        f"\nTOTAL ROWS UPSERTED = {len(true_rows)}\n"
+        f"TOTAL ROWS DELETED = {len(delete_keys)}\nRUN TIME = {run_time_str} seconds",
         p_state="info",
     )
 
