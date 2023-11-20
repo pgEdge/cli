@@ -1,14 +1,14 @@
 from __future__ import print_function, division
- 
+
 ####################################################################
 ######          Copyright (c)  2022-2023 PGEDGE             ##########
 ####################################################################
 
 import os, sys, util
 
-MY_HOME = os.getenv('MY_HOME', '')
+MY_HOME = os.getenv("MY_HOME", "")
 
-sys.path.append(os.path.join(MY_HOME, 'hub', 'scripts', 'lib'))
+sys.path.append(os.path.join(MY_HOME, "hub", "scripts", "lib"))
 
 from PgInstance import PgInstance
 import json
