@@ -3,17 +3,28 @@
 
 ## done so far for 24.01-1 as of 2023-11-20 ###########
 ### New Features:
-  + SPOCK32: dev7 --> 3.2.0 on pg14, pg15, pg16 & pg17
-  + BACKREST: upgrade to 2.48 and support pg14/15/16
-  + CTL: 'nc' & 'nodectl' are now aliases for 'ctl'
-  + TEST: on newer Linux Releases (likely works on many more):
-    - Fedora Core 39 w Python 3.12
-    - Ubuntu 23.04 w Python 3.11
-    - Amazon Linux 2023
+  + SPOCK32: 
+    - support for pg14 on EL9
+    - support for limited feature set against core/unpatched pg14+
+    - dev7 --> 3.2.0 on pg14, pg15, pg16 & pg17
 
-### Fixes and minor changes:
-  + use 'black' for inital code cleanup
-  + begin 'flake8' manual code cleanups
+  + PG14:
+    - now available on EL9 
+    - still on EL8 too
+
+  + BACKREST:
+    - support pg14/15/16
+    - upgrade to 2.48
+
+  + CTL: 'nc' & 'nodectl' are now aliases for 'ctl'
+
+  + DEV/TEST:
+    - test on Fedora Core 39 w Python 3.12
+    - test on Ubuntu 23.04 w Python 3.11
+    - test on Amazon Linux 2023
+    - code cleanups:
+      + any coding style, as long as it's 'black'
+      + use 'flake8' incrementally
 
 
 ## done for 24.010 on 2023-11-17 ###########
