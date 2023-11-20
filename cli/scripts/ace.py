@@ -1076,11 +1076,27 @@ def table_repair(cluster_name, diff_file, source_of_truth, table_name, dry_run=F
         diff_json = json.load(f)
 
     true_df = pd.DataFrame()
+
+    """
+    The structure of the diff_json is as follows:
+    {
+        "node1/node2": {
+            "node1": [row1, row2, row3],
+            "node2": [row1, row2, row3]
+        },
+        "node1/node3": {
+            "node1": [row1, row2, row3],
+            "node3": [row1, row2, row3]
+        }
+    }
+
+    true_rows extracts all rows from the source of truth node and dedupes them
+    """
+
     true_rows = [
         entry
-        for diff in diff_json["diffs"]
-        for d in diff["diffs"]
-        for entry in d.get(source_of_truth, [])
+        for node_pair in diff_json.keys()
+        for entry in diff_json[node_pair].get(source_of_truth, [])
     ]
 
     # Collect all rows from our source of truth node and dedupe
