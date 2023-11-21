@@ -861,6 +861,8 @@ def table_rerun(cluster_name, diff_file, table_name):
 
     util.message(f"Table {table_name} is comparable across nodes", p_state="success")
 
+    start_time = datetime.now()
+
     diff_json = json.loads(open(diff_file, "r").read())
 
     """
@@ -933,7 +935,6 @@ def table_rerun(cluster_name, diff_file, table_name):
         node1_set = OrderedSet()
         node2_set = OrderedSet()
 
-        # XXX: This needs further testing
         if simple_primary_key:
             for index in values:
                 sql = f"""
@@ -949,8 +950,8 @@ def table_rerun(cluster_name, diff_file, table_name):
                     ]
 
                     t1_result, t2_result = [f.result() for f in futures]
-                    node1.add(t1_result)
-                    node2.add(t2_result)
+                    node1_set.add(t1_result[0])
+                    node2_set.add(t2_result[0])
         else:
             for indices in values:
                 sql = f"""
@@ -998,6 +999,16 @@ def table_rerun(cluster_name, diff_file, table_name):
 
     with open(filename, "w") as f:
         f.write(json.dumps(diff_rerun, default=str))
+
+    print()
+
+    util.message(
+        f"New diffs, if any, written out to {util.set_colour(filename, 'blue')}"
+    )
+
+    print()
+
+    util.message("RUN TIME = " + str(util.round_timedelta(datetime.now() - start_time)))
 
 
 def table_repair(cluster_name, diff_file, source_of_truth, table_name, dry_run=False):
@@ -1140,9 +1151,6 @@ def table_repair(cluster_name, diff_file, source_of_truth, table_name, dry_run=F
     true_df.drop_duplicates(inplace=True)
 
     if not true_df.empty:
-        # XXX: Does this work with composite keys?
-        true_df[key] = true_df[key].astype(str)
-
         # Convert them to a list of tuples after deduping
         true_rows = [
             tuple(str(x) for x in row) for row in true_df.to_records(index=False)
