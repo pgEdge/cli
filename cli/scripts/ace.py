@@ -1128,6 +1128,7 @@ def table_repair(cluster_name, diff_file, source_of_truth, table_name, dry_run=F
 
     """
 
+    # Gather all rows from source of truth node across all node pairs
     true_rows = [
         entry
         for node_pair in diff_json.keys()
@@ -1141,6 +1142,7 @@ def table_repair(cluster_name, diff_file, source_of_truth, table_name, dry_run=F
     # XXX: Does this work with composite keys?
     true_df[key] = true_df[key].astype(str)
 
+    # Convert them to a list of tuples after deduping
     true_rows = [tuple(str(x) for x in row) for row in true_df.to_records(index=False)]
 
     print()
@@ -1171,7 +1173,10 @@ def table_repair(cluster_name, diff_file, source_of_truth, table_name, dry_run=F
         node1, node2 = node_pair.split("/")
 
         true_rows = (
-            [entry for entry in diff_json[node_pair][source_of_truth]]
+            [
+                tuple(str(x) for x in entry)
+                for entry in diff_json[node_pair][source_of_truth]
+            ]
             if source_of_truth in [node1, node2]
             else true_rows
         )
@@ -1209,24 +1214,42 @@ def table_repair(cluster_name, diff_file, source_of_truth, table_name, dry_run=F
         true_set = OrderedSet(true_rows)
         divergent_set = OrderedSet(divergent_rows)
 
-        rows_to_insert = true_set - divergent_set
-        rows_to_update = true_set & divergent_set
+        rows_to_insert = true_set - divergent_set  # Set difference
+        rows_to_update = true_set & divergent_set  # Set intersection
         rows_to_delete = divergent_set - true_set
-        rows_to_upsert = rows_to_insert | rows_to_update
-        rows_to_upsert_list = list(rows_to_upsert)
+        rows_to_upsert = rows_to_insert | rows_to_update  # Set union
 
-        # Convert rows_to_delete back to json
-        rows_to_delete_json = [dict(zip(cols_list, row)) for row in rows_to_delete]
+        rows_to_upsert_json = []
+        rows_to_delete_json = []
+
+        if rows_to_upsert:
+            rows_to_upsert_json = [dict(zip(cols_list, row)) for row in rows_to_upsert]
+        if rows_to_delete:
+            rows_to_delete_json = [dict(zip(cols_list, row)) for row in rows_to_delete]
+
         filtered_rows_to_delete = []
 
-        print(rows_to_upsert_list)
+        upsert_lookup = {}
+
+        """
+        We need to construct a lookup table for the upserts.
+        This is because we need to delete only those rows from
+        the divergent node that are not a prt of the upserts
+        """
+        for row in rows_to_upsert_json:
+            if simple_primary_key:
+                upsert_lookup[row[key]] = 1
+            else:
+                upsert_lookup[tuple(row[col] for col in keys_list)] = 1
 
         for entry in rows_to_delete_json:
-            entry_tuple = tuple(x for x in entry.values())
-            print(entry_tuple)
-            if entry_tuple in rows_to_upsert_list:
-                print("yes")
-                continue
+            if simple_primary_key:
+                if entry[key] in upsert_lookup:
+                    continue
+            else:
+                if tuple(entry[col] for col in keys_list) in upsert_lookup:
+                    continue
+
             filtered_rows_to_delete.append(entry)
 
         delete_keys = []
@@ -1277,17 +1300,16 @@ def table_repair(cluster_name, diff_file, source_of_truth, table_name, dry_run=F
         cur = conn.cursor()
 
         if rows_to_upsert:
+            upsert_tuples = [tuple(row.values()) for row in rows_to_upsert_json]
+            print(update_sql, upsert_tuples)
+
             # Performing the upsert
-            cur.executemany(update_sql, rows_to_upsert)
+            cur.executemany(update_sql, upsert_tuples)
 
         if delete_keys:
             # Performing the deletes
             if len(delete_keys) > 0:
                 cur.executemany(delete_sql, delete_keys)
-
-        cur.close()
-        conn.commit()
-        conn.close()
 
     run_time = util.round_timedelta(datetime.now() - start_time).total_seconds()
     run_time_str = f"{run_time:.2f}"
