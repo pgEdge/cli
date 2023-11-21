@@ -1139,11 +1139,14 @@ def table_repair(cluster_name, diff_file, source_of_truth, table_name, dry_run=F
     true_df = pd.concat([true_df, pd.DataFrame(true_rows)], ignore_index=True)
     true_df.drop_duplicates(inplace=True)
 
-    # XXX: Does this work with composite keys?
-    true_df[key] = true_df[key].astype(str)
+    if not true_df.empty:
+        # XXX: Does this work with composite keys?
+        true_df[key] = true_df[key].astype(str)
 
-    # Convert them to a list of tuples after deduping
-    true_rows = [tuple(str(x) for x in row) for row in true_df.to_records(index=False)]
+        # Convert them to a list of tuples after deduping
+        true_rows = [
+            tuple(str(x) for x in row) for row in true_df.to_records(index=False)
+        ]
 
     print()
 
@@ -1174,7 +1177,7 @@ def table_repair(cluster_name, diff_file, source_of_truth, table_name, dry_run=F
 
         true_rows = (
             [
-                tuple(str(x) for x in entry)
+                tuple(str(x) for x in entry.values())
                 for entry in diff_json[node_pair][source_of_truth]
             ]
             if source_of_truth in [node1, node2]
@@ -1256,12 +1259,12 @@ def table_repair(cluster_name, diff_file, source_of_truth, table_name, dry_run=F
 
         if rows_to_delete:
             if simple_primary_key:
-                delete_keys = [row[key] for row in filtered_rows_to_delete]
+                delete_keys = tuple((row[key],) for row in filtered_rows_to_delete)
             else:
-                delete_keys = [
+                delete_keys = tuple(
                     tuple(row[col] for col in keys_list)
                     for row in filtered_rows_to_delete
-                ]
+                )
 
         """
         Here we are constructing an UPSERT query from true_rows and
@@ -1283,7 +1286,7 @@ def table_repair(cluster_name, diff_file, source_of_truth, table_name, dry_run=F
         if simple_primary_key:
             delete_sql = f"""
             DELETE FROM {table_name}
-            WHERE {key} = '%s';
+            WHERE {key} = %s;
             """
         else:
             delete_sql = f"""
@@ -1292,7 +1295,7 @@ def table_repair(cluster_name, diff_file, source_of_truth, table_name, dry_run=F
             """
 
             for k in keys_list:
-                delete_sql += f" {k} = '%s' AND"
+                delete_sql += f" {k} = %s AND"
 
             delete_sql = delete_sql[:-3] + ";"
 
@@ -1301,7 +1304,6 @@ def table_repair(cluster_name, diff_file, source_of_truth, table_name, dry_run=F
 
         if rows_to_upsert:
             upsert_tuples = [tuple(row.values()) for row in rows_to_upsert_json]
-            print(update_sql, upsert_tuples)
 
             # Performing the upsert
             cur.executemany(update_sql, upsert_tuples)
@@ -1310,6 +1312,8 @@ def table_repair(cluster_name, diff_file, source_of_truth, table_name, dry_run=F
             # Performing the deletes
             if len(delete_keys) > 0:
                 cur.executemany(delete_sql, delete_keys)
+
+        conn.commit()
 
     run_time = util.round_timedelta(datetime.now() - start_time).total_seconds()
     run_time_str = f"{run_time:.2f}"
