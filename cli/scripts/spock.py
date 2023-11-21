@@ -2,14 +2,14 @@
 #  Copyright 2022-2024 PGEDGE  All rights reserved. #
 #####################################################
 
-import sys, os, json, subprocess, time
-import util, meta, api, fire, psycopg
+import sys, os, subprocess, time
+import util, fire, psycopg
 
 nc = "./nodectl "
 
 isAutoStart = str(os.getenv("isAutoStart", "False"))
 
-## force use of PGPASSWORD from ~/.pgpass
+#  force use of PGPASSWORD from ~/.pgpass
 os.environ["PGPASSWORD"] = ""
 
 
@@ -41,10 +41,10 @@ def change_pg_pwd(pwd_file, db="*", user="postgres", host="localhost", pg=None):
 
 
 def get_eq(parm, val, sufx, set=False):
-    if set == False:
-        colon_equal = str(parm) + " := '" + str(val) + "'" + str(sufx)
-    else:
+    if set:
         colon_equal = str(parm) + " := '{" + str(val) + "}'" + str(sufx)
+    else:
+        colon_equal = str(parm) + " := '" + str(val) + "'" + str(sufx)
     return colon_equal
 
 
@@ -91,7 +91,7 @@ def node_create(node_name, dsn, db, pg=None):
     util.run_psyco_sql(pg_v, db, sql)
     if node_name[0] == "n" and node_name[1].isdigit():
         cmd = f"db set-guc snowflake.node {node_name[1]}"
-        rc = os.system(nc + cmd)
+        os.system(nc + cmd)
     sys.exit(0)
 
 
@@ -128,7 +128,8 @@ UPDATE spock.node
 
     rc = 0
     try:
-        con.transaction()
+        con = util.get_pg_connection(pg_v, "postgres", util.get_user())
+        cur = con.cursor(row_factory=psycopg.rows.dict_row)
         cur.execute(sql, [location_nm, country, state, lattitude, longitude])
         con.commit()
     except Exception as e:
@@ -238,9 +239,9 @@ def repset_add_partition(parent_table, db, partition=None, row_filter=None, pg=N
     util.exit_message("Not implemented yet.")
     pg_v = util.get_pg_v(pg)
     sql = "SELECT spock.repset_add_partition(" + get_eq("parent", parent_table, "")
-    if partition != None:
+    if partition:
         sql = sql + "," + get_eq("partition", partition, "")
-    if row_filter != None:
+    if row_filter:
         sql = sql + "," + get_eq("row_filter", row_filter, "")
     sql = sql + ")"
     util.run_psyco_sql(pg_v, db, sql)
@@ -252,7 +253,7 @@ def repset_remove_partition(parent_table, db, partition=None, pg=None):
     util.exit_message("Not implemented yet.")
     pg_v = util.get_pg_v(pg)
     sql = "SELECT spock.repset_remove_partition(" + get_eq("parent", parent_table, "")
-    if partition != None:
+    if partition:
         sql = sql + "," + get_eq("partition", partition, "")
     sql = sql + ")"
     util.run_psyco_sql(pg_v, db, sql)
@@ -423,6 +424,8 @@ def sub_remove_repset(subscription_name, replication_set, db, pg=None):
 
 def table_wait_for_sync(subscription_name, relation, db, pg=None):
     """Pause until a table finishes synchronizing."""
+    pg_v = util.get_pg_v(pg)
+
     sql = (
         "SELECT spock.table_wait_for_sync("
         + get_eq("subscription_name", subscription_name, ", ")
@@ -475,7 +478,7 @@ def get_pii_cols(db, schema=None, pg=None):
 
     pg_v = util.get_pg_v(pg)
 
-    if schema == None:
+    if schema is None:
         schema = "public"
     sql = (
         "SELECT pii_table, pii_column FROM spock.pii WHERE pii_schema='"
@@ -524,10 +527,10 @@ def repset_add_table(
             + get_eq("synchronize_data", synchronize_data, ", ")
         )
 
-        if columns != None and len(tbls) == 1:
+        if columns and len(tbls) == 1:
             sql = sql + get_eq("columns", ",".join(columns), ", ", True)
 
-        if row_filter != None and len(tbls) == 1:
+        if row_filter and len(tbls) == 1:
             sql = sql + get_eq("row_filter", row_filter, ", ")
 
         sql = sql + get_eq("include_partitions", include_partitions, ") ")
@@ -614,7 +617,7 @@ def metrics_check(db, pg=None):
     """Retrieve advanced DB & OS metrics."""
     try:
         import psutil
-    except ImportError as e:
+    except ImportError:
         util.exit_message("Missing or bad psutil module", 1)
 
     pg_v = util.get_pg_v(pg)
@@ -649,7 +652,7 @@ def metrics_check(db, pg=None):
             disk_used = str(dfh[2])
             disk_avail = str(dfh[3])
             disk_used_pct = float(util.remove_suffix("%", str(dfh[4])))
-    except Exception as e:
+    except Exception:
         try:
             dfh = str(subprocess.check_output("df -h | grep '/$'", shell=True)).split()
             if len(dfh) >= 5:
@@ -658,7 +661,7 @@ def metrics_check(db, pg=None):
                 disk_used = str(dfh[2])
                 disk_avail = str(dfh[3])
                 disk_used_pct = float(util.remove_suffix("%", str(dfh[4])))
-        except Exception as e:
+        except Exception:
             pass
 
     try:
@@ -671,7 +674,8 @@ def metrics_check(db, pg=None):
         readonly = str(data[0])
         cur.close()
     except Exception as e:
-        util.exit_exception(e)
+        util.print_exception(e, "warning")
+        con.rollback()
 
     mtrc_dict = {
         "pg_isready": rc,
@@ -688,7 +692,7 @@ def metrics_check(db, pg=None):
             "mount_point": disk_mount_pt,
         },
     }
-    if rc == False:
+    if rc is False:
         return util.json_dumps(mtrc_dict)
 
     try:
@@ -719,7 +723,7 @@ def metrics_check(db, pg=None):
             )
         cur.close()
 
-    except Exception as e:
+    except Exception:
         pass
 
     return util.json_dumps(mtrc_dict)
