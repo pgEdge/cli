@@ -1,7 +1,5 @@
  
-####################################################################
-######          Copyright (c)  2022-2023 PGEDGE           #########
-####################################################################
+#         Copyright (c)  2022-2024 PGEDGE          #
 
 import platform, os, sys, subprocess, shutil
 import util
@@ -43,7 +41,7 @@ if platf == "unsupported":
   sys.exit(0)
 
 url  = util.get_value("GLOBAL", "REPO")
-file = f"nclibs-{platf}.tar.bz2"
+file = f"ctlibs-{platf}.tar.bz2"
 
 if util.download_file(url, file):
   if util.unpack_file(file):
