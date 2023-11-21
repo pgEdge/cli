@@ -111,7 +111,7 @@ def create(db=None, User=None, Passwd=None, Id=None, pg=None):
     return
 
 
-def set_guc(guc_name, guc_value, replace=True, pg=None):
+def guc_set(guc_name, guc_value, replace=True, pg=None):
     """Set GUC"""
     pg_v = util.get_pg_v(pg)
 
@@ -119,7 +119,7 @@ def set_guc(guc_name, guc_value, replace=True, pg=None):
     util.echo_cmd(f"./nc reload {pg_v}")
 
 
-def show_guc(guc_name, pg=None):
+def guc_show(guc_name, pg=None):
     """Show GUC"""
     pg_v = util.get_pg_v(pg)
     if guc_name == "all" or guc_name == "*":
@@ -229,8 +229,8 @@ if __name__ == "__main__":
     fire.Fire(
         {
             "create": create,
-            "set-guc": set_guc,
-            "show-guc": show_guc,
+            "guc-set": guc_set,
+            "guc-show": guc_show,
             "dump": dump,
             "restore": restore,
             "migrate": migrate,

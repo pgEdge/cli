@@ -90,7 +90,7 @@ def node_create(node_name, dsn, db, pg=None):
     )
     util.run_psyco_sql(pg_v, db, sql)
     if node_name[0] == "n" and node_name[1].isdigit():
-        cmd = f"db set-guc snowflake.node {node_name[1]}"
+        cmd = f"db guc-set snowflake.node {node_name[1]}"
         os.system(nc + cmd)
     sys.exit(0)
 
