@@ -1,8 +1,11 @@
 # pgEdge Platform Release Notes #############
 
 
-## done so far for 24.01-1 as of 2023-11-20 ###########
+## done so far for 24.01-1 as of 2023-11-21 ###########
 ### New Features:
+  + ACE:
+    - table-repair can now handle missing, divergent and extra records.
+
   + SPOCK32: 
     - support for pg14 on EL9
     - support for limited feature set against core/unpatched pg14+
