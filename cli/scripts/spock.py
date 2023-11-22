@@ -1,11 +1,11 @@
-#####################################################
+
 #  Copyright 2022-2024 PGEDGE  All rights reserved. #
-#####################################################
+
 
 import sys, os, subprocess, time
 import util, fire, psycopg
 
-nc = "./nodectl "
+nc = "./ctl "
 
 isAutoStart = str(os.getenv("isAutoStart", "False"))
 

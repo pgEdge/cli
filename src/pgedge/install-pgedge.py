@@ -2,7 +2,7 @@ import util, db
 import os, sys, random, time
 
 thisDir = os.path.dirname(os.path.realpath(__file__))
-nc = "./nodectl "
+ctl = "./ctl "
 
 pgN = os.getenv("pgN", "")
 if pgN == "":
@@ -22,7 +22,7 @@ isDebug = str(os.getenv("pgeDebug", "0"))
 def error_exit(p_msg, p_rc=1):
     util.message("ERROR: " + p_msg)
     if isDebug == "0":
-        os.system(nc + "remove pgedge")
+        os.system(ctl + "remove pgedge")
 
     sys.exit(p_rc)
 
@@ -125,7 +125,7 @@ except Exception as e:
 
 check_pre_reqs()
 
-osSys(nc + "install " + pgV)
+osSys(ctl + "install " + pgV)
 
 if util.is_empty_writable_dir("/data") == 0:
     util.message("## symlink empty local data directory to empty /data ###")
@@ -133,14 +133,14 @@ if util.is_empty_writable_dir("/data") == 0:
 
 if isAutoStart == "True":
     util.message("\n## init & config autostart  ###############")
-    osSys(nc + "init " + pgV + " --svcuser=" + svcuser)
-    osSys(nc + "config " + pgV + " --autostart=on")
+    osSys(ctl + "init " + pgV + " --svcuser=" + svcuser)
+    osSys(ctl + "config " + pgV + " --autostart=on")
 else:
-    osSys(nc + "init " + pgV)
+    osSys(ctl + "init " + pgV)
 
-osSys(nc + "config " + pgV + " --port=" + str(prt))
+osSys(ctl + "config " + pgV + " --port=" + str(prt))
 
-osSys(nc + "start " + pgV)
+osSys(ctl + "start " + pgV)
 time.sleep(pause)
 
 db.create(db1, usr, passwd, None, pgN)
@@ -149,12 +149,12 @@ time.sleep(pause)
 
 if withPOSTGREST == "True":
     util.message("  ")
-    osSys(nc + "install postgrest")
+    osSys(ctl + "install postgrest")
 
 if withBACKREST == "True":
     util.message("  ")
-    osSys(nc + "install backrest")
+    osSys(ctl + "install backrest")
 
 if withCAT == "True":
     util.message("  ")
-    osSys(nc + "install pgcat")
+    osSys(ctl + "install pgcat")

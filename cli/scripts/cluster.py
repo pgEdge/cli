@@ -161,7 +161,7 @@ def remote_reset(cluster_name):
 
     util.message("\n## Ensure that PG is stopped.")
     for nd in nodes:
-        cmd = nd["path"] + "/nodectl stop 2> /dev/null"
+        cmd = nd["path"] + "/ctl stop 2> /dev/null"
         util.echo_cmd(cmd, host=nd["ip"], usr=os_user, key=key)
 
     util.message(f"\n## Ensure that pgEdge root directory is gone")
@@ -310,7 +310,7 @@ def ssh_install_pgedge(cluster_name, passwd):
         cmd2 = f'python3 -c "\$(curl -fsSL {REPO}/{install_py})"'
         util.echo_cmd(cmd0 + cmd1 + cmd2, host=n["ip"], usr=os_user, key=ssh_key)
 
-        nc = ndpath + "/pgedge/nodectl "
+        nc = ndpath + "/pgedge/ctl "
         parms = (
             " -U "
             + str(db_user)
@@ -367,7 +367,7 @@ def lc_destroy1(cluster_name):
 
 
 def command(cluster_name, node, cmd, args=None):
-    """Run './nodectl' commands on one or 'all' nodes."""
+    """Run './ctl' commands on one or 'all' nodes."""
 
     il, db, pg, count, db_user, db_passwd, os_user, ssh_key, nodes = load_json(
         cluster_name
@@ -378,7 +378,7 @@ def command(cluster_name, node, cmd, args=None):
         if node == "all" or node == nd["nodename"]:
             knt = knt + 1
             rc = util.echo_cmd(
-                nd["path"] + "/pgedge/nodectl " + cmd,
+                nd["path"] + "/pgedge/ctl " + cmd,
                 host=nd["ip"],
                 usr=os_user,
                 key=ssh_key,

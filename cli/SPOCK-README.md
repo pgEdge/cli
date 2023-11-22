@@ -1,8 +1,8 @@
-# PGEDGE NODECTL SPOCK 
+# PGEDGE CTL SPOCK 
 Logical and Multi-Master PostgreSQL node configuration
 
 ## Synopsis
-    ./nodectl spock <command> [parameters] [options] 
+    ./ctl spock <command> [parameters] [options] 
 
 [**node-create**](doc/spock-node-create.md)     - Name this spock node<br>
 [**node-drop**](doc/spock-node-drop.md)         - Drop this spock node from the cluster<br>

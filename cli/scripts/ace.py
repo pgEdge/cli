@@ -186,7 +186,7 @@ def diff_schemas(cluster_name, node1, node2, schema_name):
     """Compare Postgres schemas on different cluster nodes"""
     if not os.path.isfile("/usr/local/bin/csvdiff"):
         util.message("Installing the required 'csvdiff' component.")
-        os.system("./nodectl install csvdiff")
+        os.system("./ctl install csvdiff")
 
     util.message(f"## Validating cluster {cluster_name} exists")
     util.check_cluster_exists(cluster_name)

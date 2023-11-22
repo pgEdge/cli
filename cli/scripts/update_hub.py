@@ -1,17 +1,16 @@
-#####################################################
+
 #  Copyright 2022-2024 PGEDGE  All rights reserved. #
-#####################################################
 
 import os, sys, sqlite3, platform
 import util
 
 MY_HOME = os.getenv("MY_HOME", "")
-NC = MY_HOME + "/nodectl"
+CTL = MY_HOME + "/ctl"
 
 rc = 0
 
 
-################ run_sql() #######################################
+
 def run_sql(cmd):
     global rc
     try:
@@ -28,7 +27,7 @@ def run_sql(cmd):
 
 
 def mainline():
-    ## need from_version & to_version
+    # need from_version & to_version
     if len(sys.argv) == 3:
         p_from_ver = sys.argv[1]
         p_to_ver = sys.argv[2]
@@ -44,22 +43,20 @@ def mainline():
         print("Nothing to do.")
         sys.exit(0)
 
-    if (p_from_ver < "24.010") and (p_to_ver >= "24.011"):
-        util.echo_cmd(NC + " remove ctlibs")
-        util.echo_cmd(NC + " install ctlibs")
+    if (p_from_ver < "24.010") and (p_to_ver >= "24.01.1"):
+        util.echo_cmd(CTL + " remove ctlibs")
+        util.echo_cmd(CTL + " install ctlibs")
 
     sys.exit(rc)
     return
 
 
-###################################################################
-#  MAINLINE
-###################################################################
+#  MAINLINE ###########################
 if MY_HOME == "":
     print("ERROR: Missing MY_HOME envionment variable")
     sys.exit(1)
 
-## gotta have a sqlite database to (possibly) update
+# gotta have a sqlite database to (possibly) update
 cL = sqlite3.connect(os.getenv("MY_LITE"))
 
 if __name__ == "__main__":

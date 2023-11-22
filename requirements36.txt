@@ -1,4 +1,0 @@
-paramiko>=3.3.1
-psutil>=5.9.6
-click>=4.1
-

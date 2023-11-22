@@ -1,10 +1,10 @@
 # pgEdge Platform Release Notes #############
 
 
-## done so far for 24.01-1 as of 2023-11-21 ###########
+## done so far for 24.01-1 as of 2023-11-22 ###########
 ### New Features:
   + ACE:
-    - table-repair can now handle missing, divergent and extra records.
+    - table-repair can now handle missing, divergent and extra rows
 
   + SPOCK32: 
     - support for pg14 on EL9
@@ -23,7 +23,7 @@
 
   + DEV/TEST:
     - test on Fedora Core 39 w Python 3.12
-    - test on Ubuntu 23.04 w Python 3.11
+    - test on Ubuntu 23.10 w Python 3.11
     - test on Amazon Linux 2023
     - code cleanups:
       + any coding style, as long as it's 'black'

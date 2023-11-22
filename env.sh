@@ -12,7 +12,7 @@ foslotsV=1a-1
 snwflkV=1.1-1
 vectorV=0.5.1-1
 
-pgedgeV=2-07
+pgedgeV=2.08
 
 P17=17devel-2
 P16=16.1-1

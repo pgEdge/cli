@@ -210,7 +210,7 @@ def reset_remote(cluster_name):
     util.message("\n## Ensure that PG is stopped.")
     for nd in cj["nodes"]:
         ndpath = cluster["path"] + nd["name"] + "/"
-        cmd = ndpath + "/nodectl stop 2> /dev/null"
+        cmd = ndpath + "/ctl stop 2> /dev/null"
         echo_cmd(f"{cmd}", nd["ip"], cluster)
 
 
@@ -346,7 +346,7 @@ def install_pgedge(cluster_name):
         cmd2 = f"python3 -c '$(curl -fsSL {REPO}/install24.py)'"
         echo_cmd(f"{cmd1}{cmd2}", ndip, cluster)
 
-        nc = f"{ndpath}/pgedge/nodectl"  # Fixed path here
+        nc = f"{ndpath}/pgedge/ctl"  # Fixed path here
         parms = (
             f" -U {cluster['db_user']} "
             f"-P '{cluster['db_init_passwd']}' "
@@ -358,8 +358,8 @@ def install_pgedge(cluster_name):
         util.message("#")
 
 
-def nodectl_command(cluster_name, node, cmd, args=None):
-    """Run 'nodectl' commands on one or 'all' nodes."""
+def ctl_command(cluster_name, node, cmd, args=None):
+    """Run 'ctl' commands on one or 'all' nodes."""
     cj = load_json(cluster_name)
     cluster = cj["cluster"]
 
@@ -367,7 +367,7 @@ def nodectl_command(cluster_name, node, cmd, args=None):
     for nd in cj["nodes"]:
         if node == "all" or node == nd["name"]:
             knt = knt + 1
-            echo_cmd(nd["path"] + "/pgedge/nodectl" + cmd, nd["ip"], cluster)
+            echo_cmd(nd["path"] + "/pgedge/ctl" + cmd, nd["ip"], cluster)
     if knt == 0:
         util.message(f"# nothing to do")
 
@@ -492,7 +492,7 @@ if __name__ == "__main__":
             "init-remote": init_remote,
             "reset-remote": reset_remote,
             "install-pgedge": install_pgedge,
-            "nodectl-command": nodectl_command,
+            "ctl-command": ctl_command,
             "patroni-command": patroni_command,
             "etcd-command": etcd_command,
             "print_config": print_config,

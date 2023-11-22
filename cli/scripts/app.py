@@ -1,6 +1,6 @@
-#####################################################
+
 #  Copyright 2022-2024 PGEDGE  All rights reserved. #
-#####################################################
+
 
 import sys, os, json, time, logging, datetime, random, time
 import util, spock, meta, api, fire
@@ -15,7 +15,7 @@ def pgbench_install(db, replication_set=None, pg=None):
         con = util.get_pg_connection(pg_v, db, usr)
         cur = con.cursor()
         pgbench_cmd = '"pgbench --initialize --scale=1 ' + str(db) + '"'
-        util.echo_cmd(f"./nc pgbin " + str(pg) + " " + pgbench_cmd)
+        util.echo_cmd(f"./ctl pgbin " + str(pg) + " " + pgbench_cmd)
         cur.execute(
             "ALTER TABLE pgbench_accounts ALTER COLUMN abalance SET (LOG_OLD_VALUE=true)"
         )
@@ -31,7 +31,7 @@ def pgbench_install(db, replication_set=None, pg=None):
         util.exit_exception(e)
     if replication_set:
         os.system(
-            f"./nodectl spock repset-add-table {replication_set} 'pgbench_*' {db}"
+            f"./ctl spock repset-add-table {replication_set} 'pgbench_*' {db}"
         )
 
 
@@ -40,7 +40,7 @@ def pgbench_run(db, Rate, Time, pg=None):
     pg_v = util.get_pg_v(pg)
     pg = pg_v.replace("pg", "")
     pgbench_cmd = f'"pgbench -R {Rate} -T {Time} -n {db}"'
-    util.echo_cmd(f"./nc pgbin " + str(pg) + " " + pgbench_cmd)
+    util.echo_cmd(f"./ctl pgbin " + str(pg) + " " + pgbench_cmd)
 
 
 def pgbench_validate(db, pg=None):
@@ -81,7 +81,7 @@ def northwind_install(db, replication_set=None, pg=None):
     pg_v = util.get_pg_v(pg)
 
     sql_file = f"hub{os.sep}scripts{os.sep}sql{os.sep}northwind.sql"
-    os.system(f"./nodectl psql -f {sql_file} {db}")
+    os.system(f"./ctl psql -f {sql_file} {db}")
 
     usr = util.get_user()
     try:
@@ -100,7 +100,7 @@ def northwind_install(db, replication_set=None, pg=None):
 
     if replication_set:
         os.system(
-            f"./nodectl spock repset-add-table {replication_set} 'northwind.*' {db}"
+            f"./ctl spock repset-add-table {replication_set} 'northwind.*' {db}"
         )
 
 

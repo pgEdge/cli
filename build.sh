@@ -550,9 +550,12 @@ do
             setupOutdir
             OS_TYPE="POSIX"
 
-            cp $CLI/cli.sh ./$api
-            ln -s $api nc
-            ln -s $api nodectl
+
+	    depnc=deprecate-nc.sh
+            cp $CLI/cli.sh ./ctl
+	    cp $CLI/$depnc .
+            ln -s $depnc nc
+            ln -s $depnc nodectl
 
             if [ "$outDir" == "posix" ]; then
               OS="???"

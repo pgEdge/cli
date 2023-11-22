@@ -1,8 +1,8 @@
-# PGEDGE NODECTL ACE
+# PGEDGE CTL ACE
 Anti Chaos Engine for a pgEdge SPOCK cluster
 
 ## Synopsis
-    ./nodectl ace  <command> [parameters] [options]   
+    ./ctl ace  <command> [parameters] [options]   
 
 [**diff-tables**](doc/ace-diff-tables.md)     - Compare tables on different cluster nodes<br>
 [**diff-schemas**](doc/ace-diff-schemas.md)   - Compare schemas on different cluster nodes<br>

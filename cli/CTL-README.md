@@ -1,5 +1,5 @@
-# PGEDGE NODECTL CLI
-NODECTL is the pgEdge Command Line Interface (CLI).  It is a cross-platform 
+# PGEDGE CTL CLI
+CTL is the pgEdge Command Line Interface (CLI).  It is a cross-platform 
 tool to manage your PostgreSQL eco-system of components.  The modules are 
 UM, SERVICE, SPOCK, and CLUSTER.
 

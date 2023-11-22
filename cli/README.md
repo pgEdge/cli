@@ -1,17 +1,17 @@
-# PGEDGE NODECTL CLI
-NODECTL is the pgEdge Command Line Interface (CLI).  It is a cross-platform 
+# PGEDGE CTL CLI
+CTL is the pgEdge Command & Control Line Interface (CLI).  It is a cross-platform 
 tool to manage your PostgreSQL eco-system of components.  The modules are 
 UM, SERVICE, SPOCK, CLUSTER, & ACE.
 
 We are licensed under the pgEdge Community License v1.0
 
 ## Synopsis
-    ./nodectl <module> <command> [parameters] [options] 
+    ./ctl <module> <command> [parameters] [options] 
 
 ## um - Update Manager commands
 [**list**](doc/um-list.md) - Display available/installed components<br>
-[**update**](doc/um-update.md)  - Retrieve new list of components & update nodectl<br>
-[**install**](doc/um-install.md) - Install a component (eg pg15, spock, postgis, etc)<br>
+[**update**](doc/um-update.md)  - Retrieve new list of components & update ctl<br>
+[**install**](doc/um-install.md) - Install a component (eg pg16, spock32, postgis, ...)<br>
 [**remove**](doc/um-remove.md) - Un-install component<br>
 [**upgrade**](doc/um-upgrade.md) - Perform an upgrade of a component<br>
 [**clean**](doc/um-clean.md) - Delete downloaded component files from local cache<br>

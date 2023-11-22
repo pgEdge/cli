@@ -1,8 +1,8 @@
-# PGEDGE NODECTL SERVICE CONTROLLER
+# PGEDGE CTL SERVICE CONTROLLER
 Service control commands function similar to SYSTEMCTL, except they are cross-platform and work in sandbox mode.
 
 ## Synopsis
-    ./nodectl service <command> [parameters] [options] 
+    ./ctl service <command> [parameters] [options] 
 
 [**start**](doc/service-start.md)             - Start server components<br>
 [**stop**](doc/service-stop.md)               - Stop server components<br>

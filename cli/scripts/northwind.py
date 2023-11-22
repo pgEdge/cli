@@ -59,7 +59,7 @@ def install(cluster_name, factor=1):
         except Exception as e:
             port = "5432"
         host = nd["ip"]
-        nc = nd["path"] + "/pgedge/nodectl "
+        nc = nd["path"] + "/pgedge/ctl "
         my_home = nd["path"] + "/pgedge"
         setup_node(
             nodename,
@@ -82,7 +82,7 @@ def install(cluster_name, factor=1):
         except Exception as e:
             pubport = "5432"
         pub_ip_port = "host=" + str(pub["ip"]) + " port=" + pubport
-        spk = pub["path"] + "/pgedge/nodectl spock "
+        spk = pub["path"] + "/pgedge/ctl spock "
         host = pub["ip"]
 
         for sub in nodes:
@@ -120,7 +120,7 @@ def remove(cluster_name):
 
     rc2 = 0
     for pub in nodes:
-        app = pub["path"] + "/pgedge/nodectl app "
+        app = pub["path"] + "/pgedge/ctl app "
         host = pub["ip"]
         print("")
         rc1 = util.echo_cmd(
