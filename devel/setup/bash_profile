@@ -1,4 +1,4 @@
-# PGEDGE NODECTL for ~/.bash... ############################################################
+# PGEDGE CTL for ~/.bash... ############################################################
 alias bp="cd ~/dev/nodectl; . ./bp.sh"
 alias ver24="vi ~/dev/nodectl/src/conf/versions24.sql"
 
@@ -9,6 +9,7 @@ export DEV=$HOME/dev
 export IN=$DEV/in
 export OUT=$DEV/out
 export HIST=$DEV/history
+export CT=$DEV/nodectl
 export NC=$DEV/nodectl
 export SOURCE=$IN/sources
 export BLD=/opt/pgbin-build/pgbin/bin
