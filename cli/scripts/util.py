@@ -433,9 +433,9 @@ def remove_suffix(p_suffix, p_str):
 
 def shuffle_string(p_input):
     # deterministic shuffle of a string
-    l = list(p_input)
-    random.Random(123).shuffle(l)
-    shuffled = "".join(l)
+    ll = list(p_input)
+    random.Random(123).shuffle(ll)
+    shuffled = "".join(ll)
     return shuffled
 
 
@@ -446,7 +446,7 @@ def scrub_passwd(p_cmd):
     key_wd = ""
 
     for i in ll:
-        if ((i == "PASSWORD") or (i == "-P")) and (flag == False):
+        if ((i == "PASSWORD") or (i == "-P")) and (flag is False):
             flag = True
             key_wd = str(i)
             continue
@@ -568,7 +568,7 @@ def cmd_system(p_sys_cmd, p_display=True):
 
     cmd = MY_HOME + os.sep + "ctl " + str(p_sys_cmd)
 
-    if p_display == True:
+    if p_display:
         print("\n## " + str(cmd))
 
     rc = os.system(cmd)
@@ -917,7 +917,7 @@ def delete_service_win(svcName):
     try:
         win32serviceutil.QueryServiceStatus(svcName)
         is_service_installed = True
-    except:
+    except Exception:
         is_service_installed = False
     if is_service_installed:
         sc_path = os.getenv("SYSTEMROOT", "") + os.sep + "System32" + os.sep + "sc"
@@ -2180,15 +2180,15 @@ def exec_sql(cmd):
 
 def show_metrics(p_home, p_port, p_data, p_log, p_pid):
     return
-    if not p_home is None:
+    if p_home:
         print("  --homedir " + str(p_home))
-    if not p_port is None:
+    if p_port:
         print("  --port    " + str(p_port))
-    if not p_data is None:
+    if p_data:
         print("  --datadir " + p_data)
-    if not p_log is None:
+    if p_log:
         print("  --logfile " + p_log)
-    if not p_pid is None:
+    if p_pid:
         print("  --pidfile " + p_pid)
 
 
@@ -2677,7 +2677,6 @@ def http_get_file(
         log_msg = "Downloading file %s " % log_file_name
         is_checksum = False
         if p_file_name.find("sha512") >= 0:
-            is_checksum = True
             log_file_name = p_file_name.replace(".tar.bz2.sha512", "")
             log_msg = "Downloading checksum for %s " % log_file_name
         if p_display_status:
@@ -2835,7 +2834,7 @@ def is_writable(path):
     try:
         testfile = tempfile.TemporaryFile(dir=path)
         testfile.close()
-    except (IOError, OSError) as err:
+    except (IOError, OSError):
         return False
     return True
 
@@ -3215,7 +3214,7 @@ def recursively_copy_old_files(dcmp, diff_files=[], ignore=None):
 def restore_conf_ext_files(src, dst, ignore=None):
     if os.path.isdir(dst):
         diff = filecmp.dircmp(src, dst)
-        extension_files_list = recursively_copy_old_files(diff, ignore=ignore)
+        recursively_copy_old_files(diff, ignore=ignore)
     return True
 
 
