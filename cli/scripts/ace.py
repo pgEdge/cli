@@ -1180,6 +1180,9 @@ def table_repair(cluster_name, diff_file, source_of_truth, table_name, dry_run=F
         simple_primary_key = False
         keys_list = key.split(",")
 
+    total_upserted = 0
+    total_deleted = 0
+
     for node_pair in diff_json.keys():
         node1, node2 = node_pair.split("/")
 
@@ -1263,6 +1266,9 @@ def table_repair(cluster_name, diff_file, source_of_truth, table_name, dry_run=F
 
             filtered_rows_to_delete.append(entry)
 
+        total_upserted += len(rows_to_upsert_json)
+        total_deleted += len(filtered_rows_to_delete)
+
         delete_keys = []
 
         if rows_to_delete:
@@ -1332,8 +1338,8 @@ def table_repair(cluster_name, diff_file, source_of_truth, table_name, dry_run=F
     )
 
     util.message(
-        f"\nTOTAL ROWS UPSERTED = {len(true_rows)}\n"
-        f"TOTAL ROWS DELETED = {len(delete_keys)}\nRUN TIME = {run_time_str} seconds",
+        f"\nTOTAL ROWS UPSERTED = {total_upserted}\n"
+        f"TOTAL ROWS DELETED = {total_deleted}\nRUN TIME = {run_time_str} seconds",
         p_state="info",
     )
 
