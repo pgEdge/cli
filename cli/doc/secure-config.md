@@ -1,5 +1,5 @@
 ## SYNOPSIS
-    ./nodectl secure config CLIENT_ID CLIENT_SECRET <flags>
+    ./ctl secure config CLIENT_ID CLIENT_SECRET <flags>
  
 ## DESCRIPTION
     Connect NodeCtl with a pgEdge Cloud Account

@@ -1,5 +1,5 @@
 ## SYNOPSIS
-    ./nodectl spock COMMAND
+    ./ctl spock COMMAND
  
 ## COMMANDS
     COMMAND is one of the following:

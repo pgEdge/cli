@@ -1,5 +1,5 @@
 ## SYNOPSIS
-    ./nodectl service config COMPONENT
+    ./ctl service config COMPONENT
  
 ## DESCRIPTION
     Config a component

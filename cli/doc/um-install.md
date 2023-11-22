@@ -1,5 +1,5 @@
 ## SYNOPSIS
-    ./nodectl um install COMPONENT
+    ./ctl um install COMPONENT
  
 ## DESCRIPTION
     Install a component

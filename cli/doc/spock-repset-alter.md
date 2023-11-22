@@ -1,5 +1,5 @@
 ## SYNOPSIS
-    ./nodectl spock repset-alter SET_NAME DB <flags>
+    ./ctl spock repset-alter SET_NAME DB <flags>
  
 ## DESCRIPTION
     Modify a replication set.

@@ -1,5 +1,5 @@
 ## SYNOPSIS
-    ./nodectl spock repset-drop SET_NAME DB <flags>
+    ./ctl spock repset-drop SET_NAME DB <flags>
  
 ## DESCRIPTION
     Remove a replication set.

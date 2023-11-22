@@ -1,5 +1,5 @@
 ## SYNOPSIS
-    ./nodectl service stop <flags>
+    ./ctl service stop <flags>
  
 ## DESCRIPTION
     Stop server components

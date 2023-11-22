@@ -1,5 +1,5 @@
 ## SYNOPSIS
-    ./nodectl spock set-readonly <flags>
+    ./ctl spock set-readonly <flags>
  
 ## DESCRIPTION
     Turn PG read-only mode 'on' or 'off'.

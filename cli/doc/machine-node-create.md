@@ -1,5 +1,5 @@
 ## SYNOPSIS
-    ./nodectl machine node-create PROVIDER METRO NAME <flags>
+    ./ctl machine node-create PROVIDER METRO NAME <flags>
  
 ## DESCRIPTION
     Create a node.

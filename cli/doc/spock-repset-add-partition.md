@@ -1,5 +1,5 @@
 ## SYNOPSIS
-    ./nodectl spock repset-add-partition PARENT_TABLE DB <flags>
+    ./ctl spock repset-add-partition PARENT_TABLE DB <flags>
  
 ## DESCRIPTION
     Add a partition to a replication set.

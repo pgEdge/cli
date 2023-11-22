@@ -1,5 +1,5 @@
 export pgeMdDir=$NC/cli/doc
-nc=../../out/posix/nc
+nc=../../out/posix/ctl
 
 $nc um --help
 $nc um list                 --help

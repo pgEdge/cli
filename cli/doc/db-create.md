@@ -1,5 +1,5 @@
 ## SYNOPSIS
-    ./nodectl db create <flags>
+    ./ctl db create <flags>
  
 ## DESCRIPTION
     Usage:

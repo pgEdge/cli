@@ -1,5 +1,5 @@
 ## SYNOPSIS
-    ./nodectl service enable COMPONENT
+    ./ctl service enable COMPONENT
  
 ## DESCRIPTION
     Enable a component

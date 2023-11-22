@@ -1,5 +1,5 @@
 ## SYNOPSIS
-    ./nodectl service status <flags>
+    ./ctl service status <flags>
  
 ## DESCRIPTION
     Display running status of installed server components

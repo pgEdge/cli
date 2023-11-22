@@ -1,5 +1,5 @@
 ## SYNOPSIS
-    ./nodectl spock replicate-ddl REPLICATION_SETS SQL_COMMAND DB <flags>
+    ./ctl spock replicate-ddl REPLICATION_SETS SQL_COMMAND DB <flags>
  
 ## DESCRIPTION
     Replicate DDL statement through replication set(s)

@@ -1,5 +1,5 @@
 ## SYNOPSIS
-    ./nodectl machine node-destroy PROVIDER NAME METRO
+    ./ctl machine node-destroy PROVIDER NAME METRO
  
 ## DESCRIPTION
     Destroy a node.

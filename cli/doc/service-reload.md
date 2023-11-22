@@ -1,5 +1,5 @@
 ## SYNOPSIS
-    ./nodectl service reload COMPONENT
+    ./ctl service reload COMPONENT
  
 ## DESCRIPTION
     Reload server configuration files (without a restart)

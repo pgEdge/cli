@@ -1,5 +1,5 @@
 ## SYNOPSIS
-    ./nodectl spock repset-remove-partition PARENT_TABLE DB <flags>
+    ./ctl spock repset-remove-partition PARENT_TABLE DB <flags>
  
 ## DESCRIPTION
     Remove a partition from a replication set.

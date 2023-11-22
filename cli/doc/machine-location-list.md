@@ -1,5 +1,5 @@
 ## SYNOPSIS
-    ./nodectl machine location-list PROVIDER <flags>
+    ./ctl machine location-list PROVIDER <flags>
  
 ## DESCRIPTION
     List available locations.

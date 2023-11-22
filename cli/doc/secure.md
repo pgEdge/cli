@@ -1,5 +1,5 @@
 ## SYNOPSIS
-    ./nodectl secure COMMAND
+    ./ctl secure COMMAND
  
 ## COMMANDS
     COMMAND is one of the following:

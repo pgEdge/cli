@@ -1,5 +1,5 @@
 ## SYNOPSIS
-    ./nodectl service init COMPONENT
+    ./ctl service init COMPONENT
  
 ## DESCRIPTION
     Initialize a component

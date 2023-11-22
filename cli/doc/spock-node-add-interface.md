@@ -1,5 +1,5 @@
 ## SYNOPSIS
-    ./nodectl spock node-add-interface NODE_NAME INTERFACE_NAME DSN DB <flags>
+    ./ctl spock node-add-interface NODE_NAME INTERFACE_NAME DSN DB <flags>
  
 ## DESCRIPTION
     Add a new node interface.

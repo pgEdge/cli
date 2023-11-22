@@ -1,5 +1,5 @@
 ## SYNOPSIS
-    ./nodectl um list -
+    ./ctl um list -
  
 ## DESCRIPTION
     Display available/installed components

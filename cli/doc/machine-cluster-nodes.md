@@ -1,5 +1,5 @@
 ## SYNOPSIS
-    ./nodectl machine cluster-nodes CLUSTER_NAME PROVIDERS NODE_NAMES METROS
+    ./ctl machine cluster-nodes CLUSTER_NAME PROVIDERS NODE_NAMES METROS
  
 ## DESCRIPTION
     Create a Cluster definition json file from a set of nodes.

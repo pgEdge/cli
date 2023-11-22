@@ -1,5 +1,5 @@
 ## SYNOPSIS
-    ./nodectl machine node-stop PROVIDER NAME METRO
+    ./ctl machine node-stop PROVIDER NAME METRO
  
 ## DESCRIPTION
     Stop a node.

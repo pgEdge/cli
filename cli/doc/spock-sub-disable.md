@@ -1,5 +1,5 @@
 ## SYNOPSIS
-    ./nodectl spock sub-disable SUBSCRIPTION_NAME DB <flags>
+    ./ctl spock sub-disable SUBSCRIPTION_NAME DB <flags>
  
 ## DESCRIPTION
     Put a subscription on hold and disconnect from provider.

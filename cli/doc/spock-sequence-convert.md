@@ -1,5 +1,5 @@
 ## SYNOPSIS
-    ./nodectl spock sequence-convert SEQUENCE DB <flags>
+    ./ctl spock sequence-convert SEQUENCE DB <flags>
  
 ## DESCRIPTION
     Convert sequence to snowflake sequence.

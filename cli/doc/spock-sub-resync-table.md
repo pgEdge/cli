@@ -1,5 +1,5 @@
 ## SYNOPSIS
-    ./nodectl spock sub-resync-table SUBSCRIPTION_NAME RELATION DB <flags>
+    ./ctl spock sub-resync-table SUBSCRIPTION_NAME RELATION DB <flags>
  
 ## DESCRIPTION
     Resynchronize a table.

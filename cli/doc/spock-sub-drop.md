@@ -1,5 +1,5 @@
 ## SYNOPSIS
-    ./nodectl spock sub-drop SUBSCRIPTION_NAME DB <flags>
+    ./ctl spock sub-drop SUBSCRIPTION_NAME DB <flags>
  
 ## DESCRIPTION
     Delete a subscription.

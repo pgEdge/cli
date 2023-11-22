@@ -1,5 +1,5 @@
 ## SYNOPSIS
-    ./nodectl service COMMAND
+    ./ctl service COMMAND
  
 ## COMMANDS
     COMMAND is one of the following:

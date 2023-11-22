@@ -1,5 +1,5 @@
 ## SYNOPSIS
-    ./nodectl db restore OBJECT TARGET_DSN <flags>
+    ./ctl db restore OBJECT TARGET_DSN <flags>
  
 ## DESCRIPTION
     object: database.schema.object where schema and object can contain wildcard '*'

@@ -1,5 +1,5 @@
 ## SYNOPSIS
-    ./nodectl spock node-list DB <flags>
+    ./ctl spock node-list DB <flags>
  
 ## DESCRIPTION
     Display node table.

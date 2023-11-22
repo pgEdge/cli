@@ -1,5 +1,5 @@
 ## SYNOPSIS
-    ./nodectl machine size-list PROVIDER <flags>
+    ./ctl machine size-list PROVIDER <flags>
  
 ## DESCRIPTION
     List available node sizes.

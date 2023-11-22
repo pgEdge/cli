@@ -1,9 +1,9 @@
 ## SYNOPSIS
-    ./nodectl secure list-clusters <flags>
+    ./ctl secure list-clusters <flags>
  
 ## DESCRIPTION
     List all clusters in a pgEdge Cloud Account
-[ Requires ./nocdectl secure config ]
+[ Requires ./ctl secure config ]
   PROFILE - profile name of pgEdge Cloud Account for NodeCTL to use
  
 ## FLAGS

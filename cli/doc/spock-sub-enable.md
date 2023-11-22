@@ -1,5 +1,5 @@
 ## SYNOPSIS
-    ./nodectl spock sub-enable SUBSCRIPTION_NAME DB <flags>
+    ./ctl spock sub-enable SUBSCRIPTION_NAME DB <flags>
  
 ## DESCRIPTION
     Make a subscription live.

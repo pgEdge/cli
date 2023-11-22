@@ -1,5 +1,5 @@
 ## SYNOPSIS
-    ./nodectl um update -
+    ./ctl um update -
  
 ## DESCRIPTION
-    Update nodectl with a new list of available components
+    Update with a new list of available components

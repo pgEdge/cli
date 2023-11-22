@@ -1,5 +1,5 @@
 ## SYNOPSIS
-    ./nodectl spock repset-remove-table REPLICATION_SET TABLE DB <flags>
+    ./ctl spock repset-remove-table REPLICATION_SET TABLE DB <flags>
  
 ## DESCRIPTION
     Remove table from replication set.

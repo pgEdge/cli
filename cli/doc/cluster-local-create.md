@@ -1,5 +1,5 @@
 ## SYNOPSIS
-    ./nodectl cluster local-create CLUSTER_NAME NUM_NODES <flags>
+    ./ctl cluster local-create CLUSTER_NAME NUM_NODES <flags>
  
 ## DESCRIPTION
     Create a localhost test cluster of N pgEdge nodes on different ports.

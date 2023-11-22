@@ -1,5 +1,5 @@
 ## SYNOPSIS
-    ./nodectl service start <flags>
+    ./ctl service start <flags>
  
 ## DESCRIPTION
     Start server components

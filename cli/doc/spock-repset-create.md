@@ -1,5 +1,5 @@
 ## SYNOPSIS
-    ./nodectl spock repset-create SET_NAME DB <flags>
+    ./ctl spock repset-create SET_NAME DB <flags>
  
 ## DESCRIPTION
     Define a replication set.

@@ -1,5 +1,5 @@
 ## SYNOPSIS
-    ./nodectl service restart COMPONENT
+    ./ctl service restart COMPONENT
  
 ## DESCRIPTION
     Stop & then start server components

@@ -227,37 +227,37 @@ def _SynopsisSection(component, actions_grouped_by_kind, spec, metadata,
     sfx = str(cc_lst[1])
   txt = text
 
-  prfx = "nodectl"
+  prfx = "ctl"
   if "spock.py" in txt:
-    txt = txt.replace("spock.py", "./nodectl spock")
+    txt = txt.replace("spock.py", "./ctl spock")
     prfx = "spock"
 
   elif "um.py" in txt:
-    txt = txt.replace("um.py", "./nodectl um")
+    txt = txt.replace("um.py", "./ctl um")
     prfx = "um"
 
   elif "service.py" in txt:
-    txt = txt.replace("service.py", "./nodectl service")
+    txt = txt.replace("service.py", "./ctl service")
     prfx = "service"
 
   elif "cluster.py" in txt:
-    txt = txt.replace("cluster.py", "./nodectl cluster")
+    txt = txt.replace("cluster.py", "./ctl cluster")
     prfx = "cluster"
 
   elif "ace.py" in txt:
-    txt = txt.replace("ace.py", "./nodectl ace")
+    txt = txt.replace("ace.py", "./ctl ace")
     prfx = "ace"
 
   elif "secure.py" in txt:
-    txt = txt.replace("secure.py", "./nodectl secure")
+    txt = txt.replace("secure.py", "./ctl secure")
     prfx = "secure"
 
   elif "db.py" in txt:
-    txt = txt.replace("db.py", "./nodectl db")
+    txt = txt.replace("db.py", "./ctl db")
     prfx = "db"
 
   elif "machine.py" in txt:
-    txt = txt.replace("machine.py", "./nodectl machine")
+    txt = txt.replace("machine.py", "./ctl machine")
     prfx = "machine"
 
   if sfx > "":

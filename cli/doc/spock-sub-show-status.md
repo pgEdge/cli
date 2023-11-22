@@ -1,5 +1,5 @@
 ## SYNOPSIS
-    ./nodectl spock sub-show-status SUBSCRIPTION_NAME DB <flags>
+    ./ctl spock sub-show-status SUBSCRIPTION_NAME DB <flags>
  
 ## DESCRIPTION
     Display the status of the subcription.

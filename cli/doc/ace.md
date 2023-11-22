@@ -1,5 +1,5 @@
 ## SYNOPSIS
-    ./nodectl ace COMMAND
+    ./ctl ace COMMAND
  
 ## COMMANDS
     COMMAND is one of the following:

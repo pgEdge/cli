@@ -1,5 +1,5 @@
 ## SYNOPSIS
-    ./nodectl machine COMMAND
+    ./ctl machine COMMAND
  
 ## COMMANDS
     COMMAND is one of the following:

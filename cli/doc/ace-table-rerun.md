@@ -1,5 +1,5 @@
 ## SYNOPSIS
-    ./nodectl ace table-rerun CLUSTER_NAME DIFF_FILE TABLE_NAME
+    ./ctl ace table-rerun CLUSTER_NAME DIFF_FILE TABLE_NAME
  
 ## POSITIONAL ARGUMENTS
     CLUSTER_NAME

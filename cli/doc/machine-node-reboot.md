@@ -1,5 +1,5 @@
 ## SYNOPSIS
-    ./nodectl machine node-reboot PROVIDER NAME METRO
+    ./ctl machine node-reboot PROVIDER NAME METRO
  
 ## DESCRIPTION
     Reboot a node.

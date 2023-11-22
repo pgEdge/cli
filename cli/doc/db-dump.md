@@ -1,5 +1,5 @@
 ## SYNOPSIS
-    ./nodectl db dump OBJECT SOURCE_DSN <flags>
+    ./ctl db dump OBJECT SOURCE_DSN <flags>
  
 ## DESCRIPTION
     object: database or database.schema.object where schema and object can contain wildcard '*'

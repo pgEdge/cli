@@ -1,5 +1,5 @@
 ## SYNOPSIS
-    ./nodectl spock sub-show-table SUBSCRIPTION_NAME RELATION DB <flags>
+    ./ctl spock sub-show-table SUBSCRIPTION_NAME RELATION DB <flags>
  
 ## DESCRIPTION
     Show subscription tables.

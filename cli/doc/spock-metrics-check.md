@@ -1,5 +1,5 @@
 ## SYNOPSIS
-    ./nodectl spock metrics-check DB <flags>
+    ./ctl spock metrics-check DB <flags>
  
 ## DESCRIPTION
     Retrieve advanced DB & OS metrics.

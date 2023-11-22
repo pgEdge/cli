@@ -1,5 +1,5 @@
 ## SYNOPSIS
-    ./nodectl spock repset-list-tables SCHEMA DB <flags>
+    ./ctl spock repset-list-tables SCHEMA DB <flags>
  
 ## DESCRIPTION
     List tables in replication sets.

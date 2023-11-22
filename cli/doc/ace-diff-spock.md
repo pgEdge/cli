@@ -1,5 +1,5 @@
 ## SYNOPSIS
-    ./nodectl ace diff-spock CLUSTER_NAME NODE1 NODE2
+    ./ctl ace diff-spock CLUSTER_NAME NODE1 NODE2
  
 ## DESCRIPTION
     Compare spock meta data setup on different cluster nodes

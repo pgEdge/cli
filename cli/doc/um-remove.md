@@ -1,5 +1,5 @@
 ## SYNOPSIS
-    ./nodectl um remove COMPONENT
+    ./ctl um remove COMPONENT
  
 ## DESCRIPTION
     Uninstall a component

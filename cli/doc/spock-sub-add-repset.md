@@ -1,5 +1,5 @@
 ## SYNOPSIS
-    ./nodectl spock sub-add-repset SUBSCRIPTION_NAME REPLICATION_SET DB <flags>
+    ./ctl spock sub-add-repset SUBSCRIPTION_NAME REPLICATION_SET DB <flags>
  
 ## DESCRIPTION
     Add a replication set to a subscription.

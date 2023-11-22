@@ -1,5 +1,5 @@
 ## SYNOPSIS
-    ./nodectl spock node-drop NODE_NAME DB <flags>
+    ./ctl spock node-drop NODE_NAME DB <flags>
  
 ## DESCRIPTION
     Drop spock node

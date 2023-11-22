@@ -1,5 +1,5 @@
 ## SYNOPSIS
-    ./nodectl machine node-list PROVIDER <flags>
+    ./ctl machine node-list PROVIDER <flags>
  
 ## DESCRIPTION
     List nodes.
