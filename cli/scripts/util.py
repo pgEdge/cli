@@ -2608,7 +2608,7 @@ def unpack_file(p_file):
 def http_is_file(p_url):
     try:
         req = urllib2.Request(p_url, None, http_headers())
-        u = urllib2.urlopen(req, timeout=10)
+        
     except KeyboardInterrupt:
         sys.exit(1)
     except Exception:
@@ -2675,7 +2675,6 @@ def http_get_file(
         file_exists = True
         log_file_name = p_file_name.replace(".tar.bz2", "")
         log_msg = "Downloading file %s " % log_file_name
-        is_checksum = False
         if p_file_name.find("sha512") >= 0:
             log_file_name = p_file_name.replace(".tar.bz2.sha512", "")
             log_msg = "Downloading checksum for %s " % log_file_name
