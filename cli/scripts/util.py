@@ -2677,7 +2677,6 @@ def http_get_file(
         log_msg = "Downloading file %s " % log_file_name
         is_checksum = False
         if p_file_name.find("sha512") >= 0:
-            is_checksum = True
             log_file_name = p_file_name.replace(".tar.bz2.sha512", "")
             log_msg = "Downloading checksum for %s " % log_file_name
         if p_display_status:
