@@ -2835,7 +2835,7 @@ def is_writable(path):
     try:
         testfile = tempfile.TemporaryFile(dir=path)
         testfile.close()
-    except (IOError, OSError) as err:
+    except (IOError, OSError):
         return False
     return True
 
