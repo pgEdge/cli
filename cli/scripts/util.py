@@ -2408,7 +2408,6 @@ def is_el8():
 
 def get_os():
     if platform.system() == "Darwin":
-        arch = getoutput("arch")
         return "osx"
 
     if platform.system() != "Linux":
@@ -2607,8 +2606,7 @@ def unpack_file(p_file):
 
 def http_is_file(p_url):
     try:
-        pass
-        #req = urllib2.Request(p_url, None, http_headers())
+        req = urllib2.Request(p_url, None, http_headers())
     except KeyboardInterrupt:
         sys.exit(1)
     except Exception:
