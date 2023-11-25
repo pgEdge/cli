@@ -2180,15 +2180,15 @@ def exec_sql(cmd):
 
 def show_metrics(p_home, p_port, p_data, p_log, p_pid):
     return
-    if not p_home is None:
+    if p_home:
         print("  --homedir " + str(p_home))
-    if not p_port is None:
+    if p_port:
         print("  --port    " + str(p_port))
-    if not p_data is None:
+    if p_data:
         print("  --datadir " + p_data)
-    if not p_log is None:
+    if p_log:
         print("  --logfile " + p_log)
-    if not p_pid is None:
+    if p_pid:
         print("  --pidfile " + p_pid)
 
 
