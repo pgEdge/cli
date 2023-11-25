@@ -74,7 +74,7 @@ def fix_schema(diff_file, sql1, sql2):
     newtable = False
     with open(diff_file) as diff_list:
         for i in diff_list.readlines():
-            if re.search("\,", i):
+            if re.search(r"\\,", i):
                 # TODO: Fix this
                 # linenum = i.split(",")[0]
                 pass
