@@ -2397,9 +2397,6 @@ def warn_bad_os(el_ver):
 def is_el8():
     if platform.system() != "Linux":
         return False
-
-    glibc_v = get_glibc_version()
-
     if get_glibc_version() < "2.34":
         return True
 
