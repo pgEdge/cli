@@ -528,30 +528,29 @@ def format_data_to_table(data,
 
     # Create a tuple pair of key and the associated column width for it
     key_width_pair = zip(keys, column_widths)
-    key_length =  len(keys)
-
+    key_length =len(keys)
     str_format = ('%-*s ' * len(keys)).strip() + '\n'
     formatted_data = ''
 
     for element in data:
         data_to_format = []
-        s=0
+        s = 0
         key_width_pair = zip(keys, column_widths)
         # Create a tuple that will be used for the formatting in
         # width, value format
         for pair in key_width_pair:
             dataStr = str(element[pair[0]])
             spaces = " " * ((int(float(pair[1])) - len(dataStr))-2)
-            if s<key_length-1:
+            if s < key_length - 1:
                 spaces = spaces + " |"
 
             if dataStr in header.values():
-                if s==0:
+                if s == 0:
                     dataStr = table_header_style + dataStr
                 dataStr = dataStr + spaces
-                if s==key_length-1:
+                if s == key_length - 1:
                     dataStr = dataStr +  bold_end
-                s=s+1
+                s = s + 1
             elif (error_key and error_msg_column):
                 if pair[0] in error_msg_column and element.get(error_key[0]) == error_key[1]:
                     dataStr = error_start + dataStr + bold_end
