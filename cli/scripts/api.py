@@ -517,8 +517,8 @@ def format_data_to_table(data,
         # Create a list of dictionary from the keys and the header and
         # insert it at the beginning of the list. Do the same for the
         # divider and insert below the header.
-        #header_divider = dict(zip(keys, header_divider))
-        #data.insert(0, header_divider)
+        # header_divider = dict(zip(keys, header_divider))
+        # data.insert(0, header_divider)
         header = dict(zip(keys, header))
         data.insert(0, header)
 
