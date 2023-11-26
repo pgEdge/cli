@@ -1,8 +1,7 @@
-#####################################################
-#  Copyright 2022-2024 PGEDGE  All rights reserved. #
-#####################################################
 
-import os, sys, random, json, socket, datetime
+#  Copyright 2022-2024 PGEDGE  All rights reserved. #
+
+import os, json, datetime
 import util, fire, meta
 import pgbench, northwind
 
@@ -61,7 +60,7 @@ def create_local_json(cluster_name, db, num_nodes, usr, passwd, pg, port1):
     try:
         text_file.write(json.dumps(cluster_json, indent=2))
         text_file.close()
-    except:
+    except Exception:
         util.exit_message("Unable to create JSON file", 1)
 
 
@@ -87,7 +86,7 @@ def create_remote_json(
     try:
         text_file.write(json.dumps(cluster_json, indent=2))
         text_file.close()
-    except:
+    except Exception:
         util.exit_message("Unable to create JSON file", 1)
 
 
@@ -140,7 +139,7 @@ def remote_import_def(cluster_name, json_file_name):
 
     try:
         with open(json_file_name) as f:
-            j_clus = json.load(f)
+            json.load(f)
     except FileNotFoundError:
         util.exit_message(f"file '{json_file_name}' not found")
     except Exception as e:
@@ -164,7 +163,7 @@ def remote_reset(cluster_name):
         cmd = nd["path"] + "/ctl stop 2> /dev/null"
         util.echo_cmd(cmd, host=nd["ip"], usr=os_user, key=key)
 
-    util.message(f"\n## Ensure that pgEdge root directory is gone")
+    util.message("\n## Ensure that pgEdge root directory is gone")
     for nd in nodes:
         cmd = "rm -rf " + nd["path"]
         util.echo_cmd(cmd, host=nd["ip"], usr=os_user, key=key)
@@ -176,7 +175,7 @@ def remote_init(cluster_name):
     util.message(f"## Loading cluster '{cluster_name}' json definition file")
     cj = get_cluster_json(cluster_name)
 
-    util.message(f"\n## Checking node count")
+    util.message("\n## Checking node count")
     try:
         kount = cj["count"]
         nodes = cj["nodes"]
@@ -188,7 +187,7 @@ def remote_init(cluster_name):
         util.exit_message(f"error parsing config file\n{str(e)}")
     util.message(f"### Node count = {kount}")
 
-    util.message(f"\n## Checking ssh'ing to each node")
+    util.message("\n## Checking ssh'ing to each node")
     for nd in cj["nodes"]:
         rc = util.echo_cmd(
             usr=cj["os_user"], host=nd["ip"], key=cj["ssh_key"], cmd="hostname"
@@ -222,12 +221,12 @@ def local_create(
 
     try:
         num_nodes = int(num_nodes)
-    except Exception as e:
+    except Exception:
         util.exit_message("num_nodes parameter is not an integer", 1)
 
     try:
         port1 = int(port1)
-    except Exception as e:
+    except Exception:
         util.exit_message("port1 parameter is not an integer", 1)
 
     kount = meta.get_installed_count()
@@ -239,9 +238,7 @@ def local_create(
     if num_nodes < 1:
         util.exit_message("num-nodes must be >= 1", 1)
 
-    usr = util.get_user()
-
-    ## increment port1 to the first available port from it's initial value
+    #  increment port1 to the first available port from it's initial value
     n = port1
     while util.is_socket_busy(n):
         util.message(f"# port {n} is busy")
@@ -260,10 +257,6 @@ def local_create(
     Passwd = os.getenv("pgePasswd", Passwd)
 
     create_local_json(cluster_name, db, num_nodes, User, Passwd, pg, port1)
-
-    pg_v = "pg" + str(pg)
-
-    nd_port = port1
 
     ssh_install_pgedge(cluster_name, Passwd)
 
@@ -286,7 +279,7 @@ def ssh_install_pgedge(cluster_name, passwd):
         ndip = n["ip"]
         try:
             ndport = str(n["port"])
-        except Exception as e:
+        except Exception:
             ndport = "5432"
 
         REPO = os.getenv("REPO", "")
@@ -307,7 +300,7 @@ def ssh_install_pgedge(cluster_name, passwd):
 
         cmd0 = f"export REPO={REPO}; "
         cmd1 = f"mkdir -p {ndpath}; cd {ndpath}; "
-        cmd2 = f'python3 -c "\$(curl -fsSL {REPO}/{install_py})"'
+        cmd2 = f'python3 -c "\\$(curl -fsSL {REPO}/{install_py})"'
         util.echo_cmd(cmd0 + cmd1 + cmd2, host=n["ip"], usr=os_user, key=ssh_key)
 
         nc = ndpath + "/pgedge/ctl "
@@ -323,7 +316,7 @@ def ssh_install_pgedge(cluster_name, passwd):
             + " --pg "
             + str(pg)
         )
-        rc = util.echo_cmd(
+        util.echo_cmd(
             nc + " install pgedge" + parms, host=n["ip"], usr=os_user, key=ssh_key
         )
         util.message("#")
@@ -356,7 +349,7 @@ def lc_destroy1(cluster_name):
 
     try:
         is_localhost = cfg["is_localhost"]
-    except Exception as e:
+    except Exception:
         is_localhost = "False"
 
     if is_localhost == "True":
@@ -385,7 +378,7 @@ def command(cluster_name, node, cmd, args=None):
             )
 
     if knt == 0:
-        util.message(f"# nothing to do")
+        util.message("# nothing to do")
 
     return rc
 
