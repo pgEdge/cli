@@ -479,13 +479,15 @@ def info_component(p_comp_dict, p_kount):
           bold_start +   "  IsInstalled: " + bold_end + is_installed)
 
 
-def format_data_to_table(data,
+def format_data_to_table(
+                    data,
                     keys,
                     header=None,
                     error_key=None,
                     error_msg_column=None,
                     sort_by_key=None,
-                    sort_order_reverse=False):
+                    sort_order_reverse=False
+):
     """Takes a list of dictionaries, formats the data, and returns
     the formatted data as a text table.
 
