@@ -554,10 +554,9 @@ def format_data_to_table(data,
                 s=s+1
             elif (error_key and error_msg_column):
                 if pair[0] in error_msg_column and element.get(error_key[0]) == error_key[1]:
-                  dataStr = error_start + dataStr + bold_end
+                    dataStr = error_start + dataStr + bold_end
 
             data_to_format.append(pair[1])
             data_to_format.append(dataStr)
         formatted_data += str_format % tuple(data_to_format)
     return formatted_data
-
