@@ -1,7 +1,7 @@
 # pgEdge Platform Release Notes #############
 
 
-## done so far for 24.01-1 as of 2023-11-22 ###########
+## done so far for 24.01-1 as of 2023-11-26 ###########
 ### New Features:
   + ACE:
     - table-repair can now handle missing, divergent and extra rows
@@ -28,6 +28,7 @@
     - code cleanups:
       + any coding style, as long as it's 'black'
       + use 'flake8' incrementally
+    - exclude use of urlllib3 v1.26.18 (does not work on OSX)
 
 
 ## done for 24.010 on 2023-11-17 ###########
