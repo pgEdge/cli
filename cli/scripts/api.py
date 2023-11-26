@@ -408,11 +408,10 @@ def info(p_json, p_home, p_repo, print_flag=True):
   print(bold_start + "#          OS: " + bold_end + os2.rstrip() + " " + glibc_v_display + os_arch)
   print(bold_start + "#     Machine: " + bold_end + mem + ", " + cores + " vCPU, " + cpu)
   if instance_id > "" and not cloud_name == "unknown":
-    print(bold_start + "#  Cloud Info: " + bold_end +\
+      print(bold_start + "#  Cloud Info: " + bold_end +\
       f"{cloud_name}  {cloud_platform}  {instance_id}  {flavor}  {az}")
 
   print(bold_start + "#       Langs: " + bold_end + langs)
-
   print(bold_start + "#    Repo URL: " + bold_end + p_repo)
 
   if not last_update_local:
@@ -427,8 +426,10 @@ def info_component(p_comp_dict, p_kount):
 
     print(bold_start + "     Project: " + bold_end + p_comp_dict['project'] + " (" + p_comp_dict['project_url'] + ")")
 
-    print(bold_start + "   Component: " + bold_end + p_comp_dict['component'] +
-            " " + p_comp_dict['version'] + " (" + p_comp_dict['proj_description'] + ")")
+    print(
+            bold_start + "   Component: " + bold_end + p_comp_dict['component'] +
+            " " + p_comp_dict['version'] + " (" + p_comp_dict['proj_description'] + ")"
+    )
 
     if p_comp_dict['port'] > 1:
         print(bold_start + "        port: " + bold_end + str(p_comp_dict['port']))
