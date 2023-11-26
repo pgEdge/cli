@@ -20,7 +20,7 @@ this_platform_system = str(platform.system())
 platform_lib_path = os.path.join(scripts_lib_path, this_platform_system)
 if os.path.exists(platform_lib_path):
     if platform_lib_path not in sys.path:
-    sys.path.append(platform_lib_path)
+        sys.path.append(platform_lib_path)
 
 python_exe = sys.executable
 python_ver = platform.python_version()
