@@ -460,23 +460,25 @@ def info_component(p_comp_dict, p_kount):
     if 'connections' in p_comp_dict:
         print(bold_start + " connections: " + bold_end + p_comp_dict['connections'])
 
-    print(bold_start + "Release Date: " + bold_end + p_comp_dict['release_date'] + \
-          bold_start + "  Stage: " + bold_end + p_comp_dict['stage'])
+    print(
+            bold_start + "Release Date: " + bold_end + p_comp_dict['release_date'] +
+            bold_start + "  Stage: " + bold_end + p_comp_dict['stage']
+    )
 
     if p_comp_dict['platform'] > "":
-      print(bold_start + "Supported On: " + bold_end + "[" + p_comp_dict['platform'] + "]")
+        print(bold_start + "Supported On: " + bold_end + "[" + p_comp_dict['platform'] + "]")
 
     if p_comp_dict['pre_reqs'] > "":
-      print(bold_start + "   Pre Req's: " + bold_end + p_comp_dict['pre_reqs'])
+        print(bold_start + "   Pre Req's: " + bold_end + p_comp_dict['pre_reqs'])
 
-    print(bold_start +   "     License: " + bold_end + p_comp_dict['license'])
+    print(bold_start + "     License: " + bold_end + p_comp_dict['license'])
 
     is_installed = str(p_comp_dict['is_installed'])
     if str(is_installed) == "0":
-       is_installed = "NO"
+        is_installed = "NO"
 
     print(
-          bold_start + "   IsCurrent: " + bold_end + str(p_comp_dict['is_current']) + 
+          bold_start + "   IsCurrent: " + bold_end + str(p_comp_dict['is_current']) +
           bold_start + "  IsInstalled: " + bold_end + is_installed
     )
 
