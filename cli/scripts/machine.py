@@ -239,7 +239,7 @@ def node_reboot(provider, name, metro):
     return
 
 
-def cluster_nodes(cluster_name, providers, node_names, metros):
+def cluster_nodes(cluster_name, providers, metros, node_names):
     """Create a Cluster definition json file from a set of nodes."""
 
     util.message(

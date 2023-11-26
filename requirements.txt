@@ -8,7 +8,6 @@ ansible-core>=2.15.6
 
 ## MACHINE ##########
 apache-libcloud==3.8.0
-# apache-libcloud dependencies
 requests>=2.31
 certifi>=2023.7.22
 charset_normalizer>=3.3.2
@@ -22,8 +21,8 @@ pandas>=2.1.1
 
 ## STAZ #############
 cdiff>=1.0
-# patroni dependencies
-urllib3>=1.19.1,!=1.21
+#urllib3>=1.19.1,!=1.21 ## this is the dependency from patroni
+urllib3>=1.26.17,!=1.26.18  ## v1.26.18 does not work on OSX
 PyYAML>=6.0.1
 python-etcd>=0.4.5,<0.5
 click>=4.1
