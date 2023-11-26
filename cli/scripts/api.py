@@ -475,8 +475,10 @@ def info_component(p_comp_dict, p_kount):
     if str(is_installed) == "0":
        is_installed = "NO"
 
-    print(bold_start +   "   IsCurrent: " + bold_end + str(p_comp_dict['is_current']) + \
-          bold_start +   "  IsInstalled: " + bold_end + is_installed)
+    print(
+          bold_start + "   IsCurrent: " + bold_end + str(p_comp_dict['is_current']) + 
+          bold_start + "  IsInstalled: " + bold_end + is_installed
+    )
 
 
 def format_data_to_table(
