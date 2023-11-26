@@ -548,9 +548,9 @@ def format_data_to_table(data,
             if dataStr in header.values():
                 if s==0:
                     dataStr = table_header_style + dataStr
-                dataStr = dataStr + spaces
+                dataStr += spaces
                 if s==key_length-1:
-                    dataStr = dataStr + bold_end
+                    dataStr += bold_end
                 s=s+1
             elif (error_key and error_msg_column):
                 if pair[0] in error_msg_column and element.get(error_key[0]) == error_key[1]:
