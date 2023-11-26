@@ -3,6 +3,7 @@
 #####################################################
 
 import json, os, platform, subprocess, sys, time
+import util
 from datetime import datetime, timedelta
 from operator import itemgetter
 
@@ -11,17 +12,15 @@ isPy3 = True
 try:
     from colorama import init
     init()
-except ImportError as e:
+except ImportError:
     pass
 
 scripts_lib_path = os.path.join(os.path.dirname(__file__), 'lib')
 this_platform_system = str(platform.system())
 platform_lib_path = os.path.join(scripts_lib_path, this_platform_system)
 if os.path.exists(platform_lib_path):
-  if platform_lib_path not in sys.path:
+    if platform_lib_path not in sys.path:
     sys.path.append(platform_lib_path)
-
-import util
 
 python_exe = sys.executable
 python_ver = platform.python_version()
