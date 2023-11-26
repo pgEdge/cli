@@ -528,7 +528,7 @@ def format_data_to_table(data,
 
     # Create a tuple pair of key and the associated column width for it
     key_width_pair = zip(keys, column_widths)
-    key_length =len(keys)
+    key_length = len(keys)
     str_format = ('%-*s ' * len(keys)).strip() + '\n'
     formatted_data = ''
 
@@ -549,7 +549,7 @@ def format_data_to_table(data,
                     dataStr = table_header_style + dataStr
                 dataStr = dataStr + spaces
                 if s == key_length - 1:
-                    dataStr = dataStr +  bold_end
+                    dataStr = dataStr + bold_end
                 s = s + 1
             elif (error_key and error_msg_column):
                 if pair[0] in error_msg_column and element.get(error_key[0]) == error_key[1]:
