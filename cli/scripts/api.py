@@ -416,8 +416,7 @@ def info(p_json, p_home, p_repo, print_flag=True):
   print(bold_start + "#    Repo URL: " + bold_end + p_repo)
 
   if not last_update_local:
-    last_update_local="None"
-
+      last_update_local = "None"
   print(bold_start + "# Last Update: " + bold_end + str(last_update_local))
   print(bold_start + ("#" * 70) + bold_end)
 
@@ -426,9 +425,10 @@ def info_component(p_comp_dict, p_kount):
     if p_kount > 1:
         print(bold_start + ("-" * 90) + bold_end)
 
-    print(bold_start + "     Project: " + bold_end + p_comp_dict['project'] + " (" + p_comp_dict['project_url'] + ")" )
+    print(bold_start + "     Project: " + bold_end + p_comp_dict['project'] + " (" + p_comp_dict['project_url'] + ")")
 
-    print(bold_start + "   Component: " + bold_end + p_comp_dict['component'] + " " + p_comp_dict['version'] + " (" + p_comp_dict['proj_description'] + ")")
+    print(bold_start + "   Component: " + bold_end + p_comp_dict['component'] +
+            " " + p_comp_dict['version'] + " (" + p_comp_dict['proj_description'] + ")")
 
     if p_comp_dict['port'] > 1:
         print(bold_start + "        port: " + bold_end + str(p_comp_dict['port']))
@@ -436,7 +436,7 @@ def info_component(p_comp_dict, p_kount):
     if p_comp_dict['datadir'] > "":
         print(bold_start + "     datadir: " + bold_end + p_comp_dict['datadir'])
 
-    if p_comp_dict['logdir']  > "":
+    if p_comp_dict['logdir'] > "":
         print(bold_start + "      logdir: " + bold_end + p_comp_dict['logdir'])
 
     if p_comp_dict['autostart'] == "on":
@@ -445,9 +445,11 @@ def info_component(p_comp_dict, p_kount):
     if p_comp_dict['svcuser'] > "" and util.get_platform() == "Linux":
         print(bold_start + "     svcuser: " + bold_end + p_comp_dict['svcuser'])
 
-    if (('status' in p_comp_dict)  and ('up_time' in p_comp_dict)):
-        print(bold_start + "      status: " + bold_end + p_comp_dict['status'] + \
-              bold_start + " for " + bold_end + p_comp_dict['up_time'])
+    if (('status' in p_comp_dict) and ('up_time' in p_comp_dict)):
+        print(
+                bold_start + "      status: " + bold_end + p_comp_dict['status'] +
+                bold_start + " for " + bold_end + p_comp_dict['up_time']
+        )
     else:
         if 'status' in p_comp_dict:
             print(bold_start + "      status: " + bold_end + p_comp_dict['status'])
