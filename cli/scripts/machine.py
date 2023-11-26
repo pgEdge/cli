@@ -1,12 +1,12 @@
-#####################################################
-#  Copyright 2022-2024 PGEDGE  All rights reserved. #
-#####################################################
 
-import os, sys, json
-import fire, libcloud
+#  Copyright 2022-2024 PGEDGE  All rights reserved. #
+
+import os
+
+import libcloud
 from libcloud.compute.types import Provider
 
-import util
+import util, fire
 
 
 def get_connection(provider="eqnx", metro=None):
@@ -35,16 +35,15 @@ def get_location(location):
     prvdr, conn, section = get_connection()
 
     locations = conn.list_locations()
-    for l in locations:
-        if l.name.lower() == location.lower():
-            return l
+    for ll in locations:
+        if ll.name.lower() == location.lower():
+            return ll
 
     return None
 
 
 def get_size(conn, p_size):
     sizes = conn.list_sizes()
-    sz = None
     for s in sizes:
         if s.id == p_size:
             return s
@@ -61,7 +60,6 @@ def get_image(provider, conn, p_image):
     except Exception as e:
         util.exit_message(str(e), 1)
 
-    im = None
     for i in images:
         if i.id == p_image:
             return i
@@ -164,23 +162,23 @@ def node_create(
         util.exit_message(f"Node '{name}' already exists in '{prvdr}:{metro}'")
 
     if prvdr == "eqnx":
-        if size == None:
+        if size is None:
             size = sect["size"]
-        if image == None:
+        if image is None:
             image = sect["image"]
-        if project == None:
+        if project is None:
             project = sect["project"]
 
         create_node_eqnx(name, metro, size, image, project)
 
     elif prvdr == "aws":
-        if size == None:
+        if size is None:
             size = sect["size"]
-        if image == None:
+        if image is None:
             my_image = f"image-{metro}"
             print(sect)
             image = sect[my_image]
-        if keyname == None:
+        if keyname is None:
             keyname = sect["keyname"]
         if project:
             util.exit_message("'project' is not a valid AWS parm", 1)
@@ -199,7 +197,7 @@ def create_node_aws(name, region, size, image, keyname):
     im = get_image("aws", conn, image)
 
     try:
-        node = conn.create_node(name=name, image=im, size=sz, ex_keyname=keyname)
+        conn.create_node(name=name, image=im, size=sz, ex_keyname=keyname)
     except Exception as e:
         util.exit_message(str(e), 1)
 
@@ -214,7 +212,7 @@ def create_node_eqnx(name, location, size, image, project):
     loct = get_location(location)
 
     try:
-        node = conn.create_node(
+        conn.create_node(
             name=name, image=im, size=sz, location=loct, ex_project_id=project
         )
     except Exception as e:
@@ -301,19 +299,19 @@ def size_list(provider, location=None):
     prvdr, conn, sect = get_connection(provider, location)
 
     sizes = conn.list_sizes()
-    sz = None
     for s in sizes:
         price = s.price
-        if price == None:
+        if price is None:
             price = 0
         ram = s.ram
-        if ram == None:
+        if ram is None:
             ram = 0
         bandwidth = s.bandwidth
-        if bandwidth == None or str(bandwidth) == "0":
+        if bandwidth is None or str(bandwidth) == "0":
             bandwidth = ""
         print(
-            f"{str(s.id).ljust(35)} {str(round(ram / 1024)).rjust(6)}  {str(s.disk).rjust(6)} {str(bandwidth).rjust(6)} {str(round(price, 1)).rjust(5)}"
+            f"{str(s.id).ljust(35)} {str(round(ram / 1024)).rjust(6)}  {str(s.disk).rjust(6)}  \
+              {str(bandwidth).rjust(6)} {str(round(price, 1)).rjust(5)}"
         )
 
 
@@ -322,8 +320,8 @@ def location_list(provider, location=None):
     prvdr, conn, sect = get_connection(provider, location)
 
     locations = conn.list_locations()
-    for l in locations:
-        print(f"{l.name.ljust(15)} {l.id}")
+    for ll in locations:
+        print(f"{ll.name.ljust(15)} {ll.id}")
 
 
 def node_list(provider, location=None):
@@ -345,12 +343,12 @@ def aws_node_list(conn):
         name = n.name.ljust(16)
         try:
             public_ip = n.public_ips[0].ljust(15)
-        except Exception as e:
+        except Exception:
             public_ip = "".ljust(15)
         status = n.state.ljust(10)
         location = n.extra["availability"].ljust(15)
         size = n.extra["instance_type"].ljust(15)
-        ##key_name = n.extra['key_name']
+        # key_name = n.extra['key_name']
 
         print(f"aws   {name}  {public_ip}  {status}  {location}  {size}")
 
@@ -364,16 +362,16 @@ def eqnx_node_list(conn, project):
         name = n.name.ljust(16)
         public_ip = n.public_ips[0].ljust(15)
         size = str(n.size.id).ljust(15)
-        ##ram_disk =str(round(n.size.ram / 1024)) + "GB," + str(n.size.disk) + "GB"
+        # ram_disk =str(round(n.size.ram / 1024)) + "GB," + str(n.size.disk) + "GB"
         country = str(n.extra["facility"]["metro"]["country"]).lower()
-        ##metro = f"{n.extra['facility']['metro']['name']} ({n.extra['facility']['metro']['code']})".ljust(14)
+        # metro = f"{n.extra['facility']['metro']['name']} ({n.extra['facility']['metro']['code']})".ljust(14)
         az = n.extra["facility"]["code"]
         location = str(f"{country}-{az}").ljust(15)
         status = n.state.ljust(10)
-        ##image = n.image.id
+        # image = n.image.id
 
-        crd = n.extra["facility"]["address"]["coordinates"]
-        ##coordinates = f"{round(float(crd['latitude']), 3)},{round(float(crd['latitude']), 3)}"
+        # crd = n.extra["facility"]["address"]["coordinates"]
+        # coordinates = f"{round(float(crd['latitude']), 3)},{round(float(crd['latitude']), 3)}"
 
         print(f"eqnx  {name}  {public_ip}  {status}  {location}  {size}")
 
