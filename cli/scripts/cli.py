@@ -1112,7 +1112,7 @@ def get_help_text():
     new_s = ""
     for line in lines:
         fmtd_line = api.format_help(line)
-        if  fmtd_line:
+        if fmtd_line:
             new_s = new_s + api.format_help(line) + "\n"
 
     return new_s
@@ -1226,6 +1226,7 @@ while True:
     try:
         args.remove("")
     except:
+        pass
         break
 full_cmd_line = " ".join(args[1:])
 
