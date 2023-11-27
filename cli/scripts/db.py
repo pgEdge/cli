@@ -2,8 +2,8 @@
 #  Copyright 2022-2023 PGEDGE  All rights reserved. #
 #####################################################
 
-import os, sys, random, json, socket, datetime
-import util, fire, meta, subprocess
+import os, sys,
+import util, fire
 
 
 def create(db=None, User=None, Passwd=None, Id=None, pg=None):
@@ -20,19 +20,19 @@ def create(db=None, User=None, Passwd=None, Id=None, pg=None):
 
     """
 
-    if db == None:
+    if db is None:
         db = os.getenv("pgName", None)
 
-    if User == None:
+    if User is None:
         User = os.getenv("pgeUser", None)
 
-    ## one way or another, the user that creates the db will have a password
-    if Passwd == None:
+    # one way or another, the user that creates the db will have a password
+    if Passwd is None:
         Passwd = os.getenv("pgePasswd", None)
-        if Passwd == None:
+        if Passwd is None:
             Passwd = util.get_random_password()
 
-    if pg == None:
+    if pg is None:
         pg_v = util.get_pg_v(pg)
         pg = pg_v[2:]
 
@@ -167,7 +167,7 @@ def dump(object, source_dsn, file="/tmp/db_0.sql", schema_only=False, pg=None):
     else:
         cmd = f"{cmd} {object} -N spock -N pg_catalog "
 
-    if schema_only == True:
+    if schema_only is True:
         cmd = f"{cmd} --schema-only"
 
     cmd = f'{cmd} --clean -f {file} "'
