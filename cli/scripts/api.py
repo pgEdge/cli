@@ -122,60 +122,60 @@ def top(display=True, isJson=False):
     if not display:
         return
 
-  processes = sorted(procs, key=lambda p: p['cpu_percent'], reverse=True)
+    processes = sorted(procs, key=lambda p: p['cpu_percent'], reverse=True)
 
-  network_usage = psutil.net_io_counters()
-  jsonDict['kb_sent'] = network_usage.bytes_sent / 1024
-  jsonDict['kb_recv'] = network_usage.bytes_recv / 1024
+    network_usage = psutil.net_io_counters()
+    jsonDict['kb_sent'] = network_usage.bytes_sent / 1024
+    jsonDict['kb_recv'] = network_usage.bytes_recv / 1024
 
-  cpu = psutil.cpu_times_percent(percpu=False)
-  iowait = ""
-  if util.get_platform() == "Linux":
-    jsonDict['iowait'] = str(cpu.iowait)
-    iowait = "," + str(cpu.iowait).rjust(5) + "%wa"
+    cpu = psutil.cpu_times_percent(percpu=False)
+    iowait = ""
+    if util.get_platform() == "Linux":
+        jsonDict['iowait'] = str(cpu.iowait)
+        iowait = "," + str(cpu.iowait).rjust(5) + "%wa"
 
-  jsonDict['current_timestamp'] = current_timestamp
-  jsonDict['cpu_user'] = str(cpu.user)
-  jsonDict['cpu_system'] = str(cpu.system)
-  jsonDict['cpu_idle'] = str(cpu.idle)
-  if not isJson:
-    print("CPU(s):" + str(cpu.user).rjust(5) + "%us," + \
-      str(cpu.system).rjust(5) + "%sy," + str(cpu.idle).rjust(5) + "%id" + iowait)
+    jsonDict['current_timestamp'] = current_timestamp
+    jsonDict['cpu_user'] = str(cpu.user)
+    jsonDict['cpu_system'] = str(cpu.system)
+    jsonDict['cpu_idle'] = str(cpu.idle)
+    if not isJson:
+        print("CPU(s):" + str(cpu.user).rjust(5) + "%us," + \
+        str(cpu.system).rjust(5) + "%sy," + str(cpu.idle).rjust(5) + "%id" + iowait)
 
-  disk = psutil.disk_io_counters(perdisk=False)
-  read_kb = disk.read_bytes / 1024
-  write_kb = disk.write_bytes / 1024
-  jsonDict['kb_read']  = str(read_kb)
-  jsonDict['kb_write']  = str(write_kb)
-  if not isJson:
-    print("DISK: kB_read " + str(read_kb) + ", kB_written " + str(write_kb))
+    disk = psutil.disk_io_counters(perdisk=False)
+    read_kb = disk.read_bytes / 1024
+    write_kb = disk.write_bytes / 1024
+    jsonDict['kb_read']  = str(read_kb)
+    jsonDict['kb_write']  = str(write_kb)
+    if not isJson:
+        print("DISK: kB_read " + str(read_kb) + ", kB_written " + str(write_kb))
 
-  uptime = datetime.now() - datetime.fromtimestamp(psutil.boot_time())
-  str_uptime = str(uptime).split('.')[0]
-  line = ""
-  uname_len = 8
-  av1, av2, av3 = os.getloadavg()
-  str_loadavg = "%.2f %.2f %.2f  " % (av1, av2, av3)
-  line = bold_start + "Load average: " + bold_end + str_loadavg
-  jsonDict['load_avg']  = str(str_loadavg)
-  line = line + bold_start + "Uptime:" + bold_end + " " + str_uptime
-  jsonDict['uptime']  = str(str_uptime)
-  if not isJson:
-    print(line)
+    uptime = datetime.now() - datetime.fromtimestamp(psutil.boot_time())
+    str_uptime = str(uptime).split('.')[0]
+    line = ""
+    uname_len = 8
+    av1, av2, av3 = os.getloadavg()
+    str_loadavg = "%.2f %.2f %.2f  " % (av1, av2, av3)
+    line = bold_start + "Load average: " + bold_end + str_loadavg
+    jsonDict['load_avg']  = str(str_loadavg)
+    line = line + bold_start + "Uptime:" + bold_end + " " + str_uptime
+    jsonDict['uptime']  = str(str_uptime)
+    if not isJson:
+        print(line)
 
-  i = 0
-  my_pid = os.getpid()
-  if not isJson:
-    print("")
-    print(bold_start + "    PID " + "USER".ljust(uname_len) + "   %CPU %MEM      TIME+ COMMAND" + bold_end)
+    i = 0
+    my_pid = os.getpid()
+    if not isJson:
+        print("")
+        print(bold_start + "    PID " + "USER".ljust(uname_len) + "   %CPU %MEM      TIME+ COMMAND" + bold_end)
 
-  jsonList = []
-  for pp in processes:
-    if pp['pid'] == my_pid:
-      continue
+    jsonList = []
+    for pp in processes:
+        if pp['pid'] == my_pid:
+            continue
     i += 1
     if i > 10:
-      break
+        break
 
     # TIME+ column shows process CPU cumulative time and it
     # is expressed as: "mm:ss.ms"
