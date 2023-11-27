@@ -1225,7 +1225,7 @@ if is_colon:
 while True:
     try:
         args.remove("")
-    except:
+    except Exception:
         break
 full_cmd_line = " ".join(args[1:])
 
@@ -1470,7 +1470,7 @@ if len(args) == 1:
 arg = 1
 p_mode = args[1]
 
-if (p_mode in no_log_commands) and (isJSON == True):
+if (p_mode in no_log_commands) and (isJSON is True):
     pass
 elif (
     p_mode in ("service", "spock", "um", "cluster", "staz")
@@ -2046,7 +2046,7 @@ try:
             print(" ")
 
         try:
-            l = connL.cursor()
+            ll = connL.cursor()
             rel_date = (
                 "substr(cast(release_date as text), 1, 4) "
                 + " || '-' || substr(cast(release_date as text), 5, 2) "
@@ -2088,9 +2088,9 @@ try:
                 + "ORDER BY 4, 8, 1, 2"
             )
 
-            l.execute(sql)
-            rows = l.fetchall()
-            l.close()
+            ll.execute(sql)
+            rows = ll.fetchall()
+            ll.close()
 
             hasUpdates = 0
             hub_update = 0
