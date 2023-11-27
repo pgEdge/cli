@@ -3,6 +3,13 @@
 
 
 import sys, os
+import datetime, platform, tarfile, sqlite3, time
+import json, glob, re, io, traceback, logging, logging.handlers
+from shutil import copy2
+from semantic_version import Version
+  
+import clilog
+
 
 if sys.version_info < (3, 6):
     print("We require Python 3.6+ (3.9+ for advanced spock functionality)")
@@ -19,11 +26,6 @@ MY_LITE = os.getenv("MY_LITE", None)
 if not (MY_HOME and MY_CMD and MY_LITE):
     print("Required Envs not set (MY_HOME, MY_CMD, MY_LITE)")
     sys.exit(1)
-
-import time, datetime, platform, tarfile, sqlite3, time
-import json, glob, re, io, traceback, logging, logging.handlers
-from shutil import copy2
-from semantic_version import Version
 
 
 # Our own library files ##########################################
@@ -50,7 +52,7 @@ if not util.is_writable(my_conf):
 if util.get_value("GLOBAL", "PLATFORM", "") in ("", "posix", "windoze"):
     util.set_value("GLOBAL", "PLATFORM", util.get_default_pf())
 
-import clilog
+
 
 my_logger = logging.getLogger("cli_logger")
 
@@ -360,7 +362,7 @@ class ProgressTarExtract(io.FileIO):
     def read(self, size):
         if not os.path.isfile(pid_file):
             raise KeyboardInterrupt("No lock file exists.")
-        percentage = self.tell() * 100 / self._total_size
+        
         return io.FileIO.read(self, size)
 
 
@@ -441,7 +443,7 @@ def install_comp(p_app, p_ver=0, p_rver=None, p_re_install=False):
 
         try:
             tar.extractall(path=".")
-        except KeyboardInterrupt as e:
+        except KeyboardInterrupt:
             temp_tar_dir = os.path.join(MY_HOME, p_app)
             util.delete_dir(temp_tar_dir)
             msg = "Unpacking cancelled for file %s" % file
