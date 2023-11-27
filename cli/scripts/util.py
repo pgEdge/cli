@@ -990,7 +990,6 @@ def message(p_msg, p_state="info", p_isJSON=None):
         prefix = "WARNING: "
     elif log_level == "alert":
         print(bcolours.YELLOW + p_msg + bcolours.ENDC)
-        prefix = "ALERT: "
     elif log_level == "debug":
         my_logger.debug(p_msg)
     elif log_level == "success":
@@ -1091,7 +1090,6 @@ def utc_to_local(dt):
     import time
 
     dt_obj = datetime.strptime(dt, "%Y-%m-%d %H:%M:%S")
-    time_stamp = time.mktime(dt_obj.timetuple())
     now_timestamp = time.time()
     offset = datetime.fromtimestamp(now_timestamp) - datetime.utcfromtimestamp(
         now_timestamp
@@ -1120,8 +1118,6 @@ def get_uuid():
 
 def update_hosts(p_host, p_unique_id, updated=False):
     last_update_utc = datetime.utcnow()
-
-    current_time = last_update_utc
 
     if p_unique_id:
         unique_id = p_unique_id
