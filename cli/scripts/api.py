@@ -249,7 +249,7 @@ def status (p_json, p_comp, p_ver, p_state, p_port, p_kount):
   app_ver = p_comp + "-" + p_ver
   app_ver = app_ver + (' ' * (35 - len(app_ver)))
 
-  if p_state in ("Running", "Stopped") and int(p_port)>1:
+  if p_state in ("Running", "Stopped") and int(p_port) > 1:
     on_port = " on port " + p_port
   else:
     on_port = ""
@@ -260,22 +260,21 @@ def status (p_json, p_comp, p_ver, p_state, p_port, p_kount):
 
 
 def info(p_json, p_home, p_repo, print_flag=True):
+    cloud_name, cloud_platform, instance_id, flavor, region, az, private_ip = util.get_cloud_info()
+    
+    p_user = util.get_user()
+    p_is_admin = util.is_admin()
+    pip_ver = get_pip_ver()
+    os_arch = util.get_arch()
 
-  cloud_name, cloud_platform, instance_id, flavor, region, az, private_ip = util.get_cloud_info()
-
-  p_user = util.get_user()
-  p_is_admin = util.is_admin()
-  pip_ver = get_pip_ver()
-  os_arch = util.get_arch()
-
-  this_os = ""
-  this_uname = str(platform.system())[0:7]
-  if private_ip > "":
-    host_ip = private_ip
-  else:
-    host_ip = util.get_host_ip()
-  wmic_path = os.getenv("SYSTEMROOT", "") + os.sep + "System32" + os.sep + "wbem" + os.sep + "wmic"
-  host_display = util.get_host_short()
+    this_os = ""
+    this_uname = str(platform.system())[0:7]
+    if private_ip > "":
+        host_ip = private_ip
+    else:
+        host_ip = util.get_host_ip()
+    wmic_path = os.getenv("SYSTEMROOT", "") + os.sep + "System32" + os.sep + "wbem" + os.sep + "wmic"
+    host_display = util.get_host_short()
 
   ## Check the OS & Resources ########################################
   plat = util.get_os()
