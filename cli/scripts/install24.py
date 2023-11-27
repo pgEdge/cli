@@ -3,6 +3,9 @@
 #####################################################
 
 import sys, os
+import tarfile
+from urllib import request as urllib2
+
 
 VER = "24.01-1"
 REPO = os.getenv("REPO", "https://pgedge-upstream.s3.amazonaws.com/REPO")
@@ -13,10 +16,6 @@ if sys.version_info < (3, 6):
 
 if sys.version_info < (3, 9):
     print("WARNING: Advanced functionality requires Python 3.9+")
-
-from urllib import request as urllib2
-
-import tarfile, platform
 
 
 def download_n_unpack(p_file, p_url, p_download_msg, p_del_download):
@@ -39,7 +38,7 @@ def download_n_unpack(p_file, p_url, p_download_msg, p_del_download):
         tar = tarfile.open(p_file)
         tar.extractall(path=".")
         tar.close()
-        if p_del_download == True:
+        if p_del_download is True:
             os.remove(p_file)
     except Exception as e:
         print("ERROR: Unable to unpack \n" + str(e))
