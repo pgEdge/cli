@@ -102,25 +102,25 @@ def check_output_wmic (p_cmds):
 
 
 def top(display=True, isJson=False):
-  try:
-    import psutil
-  except ImportError as e:
-    util.exit_message("Missing psutil module", 1)
-
-  current_timestamp = int(time.mktime(datetime.utcnow().timetuple()))
-  jsonDict = {}
-  procs = []
-  for p in psutil.process_iter():
     try:
-      p = p.as_dict(attrs=
-        ['pid', 'username', 'cpu_percent', 'memory_percent', 'cpu_times', 'name'])
-    except (psutil.NoSuchProcess, IOError, OSError) as e:
-      pass
-    else:
-      procs.append(p)
+        import psutil
+    except ImportError:
+        util.exit_message("Missing psutil module", 1)
 
-  if not display:
-    return
+    current_timestamp = int(time.mktime(datetime.utcnow().timetuple()))
+    jsonDict = {}
+    procs = []
+    for p in psutil.process_iter():
+        try:
+            p = p.as_dict(attrs=
+                ['pid', 'username', 'cpu_percent', 'memory_percent', 'cpu_times', 'name'])
+        except (psutil.NoSuchProcess, IOError, OSError):
+            pass
+        else:
+            procs.append(p)
+
+    if not display:
+        return
 
   processes = sorted(procs, key=lambda p: p['cpu_percent'], reverse=True)
 
