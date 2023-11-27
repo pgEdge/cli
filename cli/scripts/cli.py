@@ -10,8 +10,6 @@ from semantic_version import Version
 import clilog
 import util, api, startup, meta, component
 
-
-
 if sys.version_info < (3, 6):
     print("We require Python 3.6+ (3.9+ for advanced spock functionality)")
     sys.exit(1)
@@ -50,7 +48,6 @@ if not util.is_writable(my_conf):
 
 if util.get_value("GLOBAL", "PLATFORM", "") in ("", "posix", "windoze"):
     util.set_value("GLOBAL", "PLATFORM", util.get_default_pf())
-
 
 
 my_logger = logging.getLogger("cli_logger")
