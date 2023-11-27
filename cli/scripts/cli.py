@@ -356,7 +356,6 @@ class ProgressTarExtract(io.FileIO):
     def read(self, size):
         if not os.path.isfile(pid_file):
             raise KeyboardInterrupt("No lock file exists.")
-        
         return io.FileIO.read(self, size)
 
 
