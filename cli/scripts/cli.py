@@ -1226,11 +1226,10 @@ while True:
     try:
         args.remove("")
     except:
-        pass
         break
 full_cmd_line = " ".join(args[1:])
 
-## validate inputs ###########################################
+# validate inputs ###########################################
 if len(args) == 1:
     api.info(False, MY_HOME, REPO)
     exit_cleanly(0)
@@ -1250,7 +1249,7 @@ if (args[1] == "help") or (args[1] == "--help"):
     print(get_help_text())
     exit_cleanly(0)
 
-## process global parameters #################
+# process global parameters #################
 os.environ["isPreload"] = "True"
 if "--no-preload" in args:
     args.remove("--no-preload")
