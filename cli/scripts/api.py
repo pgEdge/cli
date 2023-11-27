@@ -144,10 +144,10 @@ def top(display=True, isJson=False):
         )
 
     disk = psutil.disk_io_counters(perdisk=False)
-    read_kb= disk.read_bytes / 1024
-    write_kb= disk.write_bytes / 1024
-    jsonDict['kb_read']  = str(read_kb)
-    jsonDict['kb_write']  = str(write_kb)
+    read_kb = disk.read_bytes / 1024
+    write_kb = disk.write_bytes / 1024
+    jsonDict['kb_read'] = str(read_kb)
+    jsonDict['kb_write'] = str(write_kb)
     if not isJson:
         print("DISK: kB_read " + str(read_kb) + ", kB_written " + str(write_kb))
 
@@ -158,9 +158,9 @@ def top(display=True, isJson=False):
     av1, av2, av3 = os.getloadavg()
     str_loadavg = "%.2f %.2f %.2f  " % (av1, av2, av3)
     line = bold_start + "Load average: " + bold_end + str_loadavg
-    jsonDict['load_avg']  = str(str_loadavg)
+    jsonDict['load_avg'] = str(str_loadavg)
     line = line + bold_start + "Uptime:" + bold_end + " " + str_uptime
-    jsonDict['uptime']  = str(str_uptime)
+    jsonDict['uptime'] = str(str_uptime)
     if not isJson:
         print(line)
 
@@ -192,16 +192,16 @@ def top(display=True, isJson=False):
         pp['username'] = username
         pp['ctime'] = ctime
         pp['cpu_percent'] = float(pp['cpu_percent'])
-        pp['memory_percent'] = float(round(pp['memory_percent'],1))
+        pp['memory_percent'] = float(round(pp['memory_percent'], 1))
         jsonList.append(pp)
     else:
- 
-      print( str(pp['pid']).rjust(7) + " " + \
-            username.ljust(uname_len) + " " + \
-            str(pp['cpu_percent']).rjust(6) + " " + \
-            str(round(pp['memory_percent'],1)).rjust(4) + " " + \
-            str(ctime).rjust(10) + " " + \
-            pp['name'] )
+        print(str(pp['pid']).rjust(7) + " " + \
+                username.ljust(uname_len) + " " + \
+                str(pp['cpu_percent']).rjust(6) + " " + \
+                str(round(pp['memory_percent'], 1)).rjust(4) + " " + \
+                str(ctime).rjust(10) + " " + \
+                pp['name']
+        )
     if isJson:
         jsonDict['top'] = jsonList
         print ( json.dumps([jsonDict]) )
