@@ -211,11 +211,11 @@ def top(display=True, isJson=False):
 
 
 def list(p_json, p_cat, p_comp, p_ver, p_port, p_status, p_kount):
-  lst = " "
-  if p_kount > 1:
-    lst = ","
-  if p_json:
-    lst = lst + \
+    lst = " "
+    if p_kount > 1:
+        lst = ","
+    if p_json:
+        lst = lst + \
       '{"category": "' + p_cat.rstrip() + '",' + \
       ' "component": "' + p_comp.rstrip() + '",' + \
       ' "version": "' + p_ver.rstrip() + '",' + \
@@ -224,20 +224,20 @@ def list(p_json, p_cat, p_comp, p_ver, p_port, p_status, p_kount):
     print(lst)
     return
 
-  print (p_comp + "  " +  p_ver + "  " + p_port + "  " + p_status)
+print(p_comp + "  " + p_ver + "  " + p_port + "  " + p_status)
 
 
 def status (p_json, p_comp, p_ver, p_state, p_port, p_kount):
-  status = " "
-  if p_kount > 1:
-    status = ","
-  if p_json:
-    jsonStatus = {}
-    jsonStatus['component'] = p_comp
-    jsonStatus['version'] = p_ver
-    jsonStatus['state'] = p_state
+    status = " "
+    if p_kount > 1:
+        status = ","
+    if p_json:
+        jsonStatus = {}
+        jsonStatus['component'] = p_comp
+        jsonStatus['version'] = p_ver
+        jsonStatus['state'] = p_state
     if p_port!="" and int(p_port)>1:
-      jsonStatus['port'] = p_port
+        jsonStatus['port'] = p_port
     category = util.get_comp_category(p_comp)
     if category:
       jsonStatus['category'] = category
