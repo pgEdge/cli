@@ -195,11 +195,11 @@ def top(display=True, isJson=False):
         pp['memory_percent'] = float(round(pp['memory_percent'], 1))
         jsonList.append(pp)
     else:
-        print(str(pp['pid']).rjust(7) + " " + \
-                username.ljust(uname_len) + " " + \
-                str(pp['cpu_percent']).rjust(6) + " " + \
-                str(round(pp['memory_percent'], 1)).rjust(4) + " " + \
-                str(ctime).rjust(10) + " " + \
+        print(str(pp['pid']).rjust(7) + " " +
+                username.ljust(uname_len) + " " +
+                str(pp['cpu_percent']).rjust(6) + " " +
+                str(round(pp['memory_percent'], 1)).rjust(4) + " " +
+                str(ctime).rjust(10) + " " +
                 pp['name']
         )
     if isJson:
