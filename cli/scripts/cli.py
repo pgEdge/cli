@@ -486,8 +486,6 @@ def install_comp(p_app, p_ver=0, p_rver=None, p_re_install=False):
 
 def downgrade_component(p_comp):
     present_version = meta.get_version(p_comp)
-    present_state = util.get_comp_state(p_comp)
-    server_port = util.get_comp_port(p_comp)
     print("Downgrade " + p_comp + " v" + present_version)
     return 1
 
@@ -580,7 +578,6 @@ def upgrade_component(p_comp):
     if not p_comp == "hub":
         for dc in dependent_components:
             d_comp = str(dc[0])
-            d_comp_present_state = util.get_comp_state(d_comp)
             d_comp_server_port = util.get_comp_port(d_comp)
             d_comp_server_running = False
             if d_comp_server_port > "1":
@@ -628,8 +625,6 @@ def upgrade_component(p_comp):
 
 
 def unpack_comp(p_app, p_old_ver, p_new_ver):
-    state = util.get_comp_state(p_app)
-
     base_name = p_app + "-" + meta.get_latest_ver_plat(p_app, p_new_ver)
 
     file = base_name + ".tar.bz2"
