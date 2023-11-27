@@ -26,6 +26,7 @@ python_exe = sys.executable
 python_ver = platform.python_version()
 
 class bcolors:
+   
 
     HEADER = '\033[95m'
     OKBLUE = '\033[94m'
@@ -37,6 +38,7 @@ class bcolors:
     UNDERLINE = '\033[4m'
     BACKGROUND = '\033[42m'
     ITALIC = '\033[3m'
+
 
 bold_start = bcolors.BOLD
 bold_end = bcolors.ENDC
