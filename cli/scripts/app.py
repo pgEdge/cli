@@ -2,7 +2,7 @@
 #  Copyright 2022-2024 PGEDGE  All rights reserved. #
 
 
-import sys, os, datetime, random, time
+import os, datetime, random, time
 import util, fire
 
 
@@ -125,7 +125,6 @@ def northwind_run(db, offset, Rate=2, Time=10, pg=None):
     start_t = time.time()
     while True:
         k = k + 1
-        run_t = time.time() - start_t
         expected_t = (k / Rate) + start_t
 
         current_t = time.time()
