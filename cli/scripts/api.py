@@ -205,9 +205,9 @@ def top(display=True, isJson=False):
         )
     if isJson:
         jsonDict['top'] = jsonList
-        print (json.dumps([jsonDict]))
+        print(json.dumps([jsonDict]))
     else:
-        print( "" )
+        print("")
 
 
 def list(p_json, p_cat, p_comp, p_ver, p_port, p_status, p_kount):
