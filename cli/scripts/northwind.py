@@ -5,7 +5,7 @@
 # (The northwind database originates from microsoft : http://northwinddatabase.codeplex.com/license)
 # Microsoft Public License (Ms-PL)
 
-import util, cluster, os, sys
+import util, cluster,sys
 
 g_tables = "northwind.*"
 
@@ -56,7 +56,7 @@ def install(cluster_name, factor=1):
         nodename = nd["nodename"]
         try:
             port = str(nd["port"])
-        except Exception as e:
+        except Exception:
             port = "5432"
         host = nd["ip"]
         nc = nd["path"] + "/pgedge/ctl "
@@ -79,7 +79,7 @@ def install(cluster_name, factor=1):
     for pub in nodes:
         try:
             pubport = str(pub["port"])
-        except Exception as e:
+        except Exception:
             pubport = "5432"
         pub_ip_port = "host=" + str(pub["ip"]) + " port=" + pubport
         spk = pub["path"] + "/pgedge/ctl spock "
@@ -88,7 +88,7 @@ def install(cluster_name, factor=1):
         for sub in nodes:
             try:
                 subport = str(sub["port"])
-            except Exception as e:
+            except Exception:
                 subport = "5432"
             sub_ip_port = "host=" + str(sub["ip"]) + " port=" + subport
 
