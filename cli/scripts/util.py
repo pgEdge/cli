@@ -993,14 +993,12 @@ def message(p_msg, p_state="info", p_isJSON=None):
         prefix = "ALERT: "
     elif log_level == "debug":
         my_logger.debug(p_msg)
-        prefix = "DEBUG: "
     elif log_level == "success":
         print(bcolours.OKGREEN + characters.TICK + " " + p_msg + bcolours.ENDC)
     elif log_level == "info":
         print(p_msg)
     else:
         my_logger.info(p_msg)
-        
     if p_isJSON:
         msg = p_msg.replace("\n", "")
         if msg.strip() > "":
