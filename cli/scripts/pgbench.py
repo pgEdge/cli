@@ -7,7 +7,7 @@ import util, cluster
 
 
 def setup_node(node_nm, port, nc, num_nodes, db, pg, host, os_user, ssh_key):
-    #pgb = nc + " pgbin "
+    # pgb = nc + " pgbin "
     spk = nc + " spock "
     app = nc + " app "
 
