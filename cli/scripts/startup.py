@@ -18,7 +18,7 @@ def user_exists(p_user):
     return 0
 
 
-## Create a system user for running specific system services
+# Create a system user for running specific system services
 def useradd_linux(p_user):
     util.message("Creating the user " + p_user)
     if not util.get_platform() == "Linux":
@@ -29,7 +29,7 @@ def useradd_linux(p_user):
         util.message("Must be ROOT to run USERADD", "error")
         return 1
 
-    ## make sure the user exists....
+    # make sure the user exists....
     util.run_sudo("useradd -m " + p_user)
 
     return 0
@@ -56,7 +56,7 @@ def config_linux(
 
     util.message(p_comp + " config autostart " + sys_svc_file)
 
-    ## systemD ################################
+    # systemD ################################
     unit_file = tempfile.mktemp(".service")
     fh = open(unit_file, "w")
     fh.write("[Unit]\n")
@@ -102,8 +102,7 @@ def reload_linux(p_systemsvc):
 
 
 def remove_linux(p_systemsvc, p_pgver):
-    my_home = os.getenv("MY_HOME")
-    pg_bin_dir = os.path.join(my_home, p_pgver, "bin")
+    # my_home = os.getenv("MY_HOME")
     # util.remove_symlinks("/usr/bin", pg_bin_dir)
 
     util.echo_cmd("sudo systemctl disable " + p_systemsvc)

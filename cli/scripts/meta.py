@@ -4,7 +4,7 @@
 
 import sys, os, sqlite3, json
 from semantic_version import Version
-from pprint import pprint
+
 
 import api, util
 import datetime
@@ -186,7 +186,7 @@ def check_release(p_wild):
 #  expand the prefix into the full component name
 #############################################################################
 def wildcard_component(p_component):
-    ## Trim slashes for dweeb convenience
+    # Trim slashes for dweeb convenience
     p_comp = p_component.replace("/", "")
 
     comp = check_release(p_comp)
@@ -197,7 +197,7 @@ def wildcard_component(p_component):
     if comp > "":
         return comp
 
-    ## check if only a single version of PG is installed ###
+    # check if only a single version of PG is installed ###
     pg_ver = ""
     data = []
     sql = (
@@ -216,7 +216,7 @@ def wildcard_component(p_component):
     else:
         return p_comp
 
-    ## if only single version of PG installed, see if we match with that suffix
+    # if only single version of PG installed, see if we match with that suffix
     comp = check_release("%" + p_comp + "%-" + pg_ver)
     if comp > "":
         return comp
@@ -230,13 +230,13 @@ def wildcard_component(p_component):
 #############################################################################
 def wildcard_version(p_comp, p_ver):
     try:
-        ## for an exact match then don't try the wildcard
+        # for an exact match then don't try the wildcard
         sql = "SELECT count(*) FROM versions WHERE component = ? AND version = ?"
         c = con.cursor()
         c.execute(sql, [p_comp, p_ver])
         data = c.fetchone()
         if data[0] == 1:
-            ## return the parm that was passed into this function
+            # return the parm that was passed into this function
             return p_ver
 
         sql = (
@@ -248,13 +248,13 @@ def wildcard_version(p_comp, p_ver):
         c.execute(sql, [p_comp, p_ver + "%"])
         data = c.fetchone()
         if data is None:
-            ## return the parm that was passed into this function
+            # return the parm that was passed into this function
             return p_ver
 
     except Exception as e:
         fatal_error(e, sql, "wildcard_version")
 
-    ## return the full version number from the sql statement
+    # return the full version number from the sql statement
     return str(data[1])
 
 
@@ -408,7 +408,7 @@ def update_component_version(p_app, p_version):
     return
 
 
-## Get Component Version & Platform ########################################
+# Get Component Version & Platform ########################################
 def get_ver_plat(p_comp):
     try:
         c = con.cursor()
@@ -426,7 +426,7 @@ def get_ver_plat(p_comp):
     return version + "-" + platform
 
 
-## Get latest current version & platform ###################################
+# Get latest current version & platform ###################################
 def get_latest_ver_plat(p_comp, p_new_ver=""):
     try:
         c = con.cursor()
@@ -461,7 +461,7 @@ def get_latest_ver_plat(p_comp, p_new_ver=""):
     return ver_plat
 
 
-## Get platform specific version for component ###############################
+# Get platform specific version for component ###############################
 def get_platform_specific_version(p_comp, p_ver):
     try:
         c = con.cursor()
@@ -485,7 +485,7 @@ def get_platform_specific_version(p_comp, p_ver):
     return version + "-" + util.get_pf()
 
 
-## get list of installed & available components ###############################
+# get list of installed & available components ###############################
 def get_list(p_isJSON, p_comp=None, p_return=False):
     r_sup_plat = "1 = 1"
 
@@ -502,7 +502,6 @@ def get_list(p_isJSON, p_comp=None, p_return=False):
 
     exclude_comp = exclude_comp + f" AND r.stage in ({my_in})"
 
-    parent_comp_condition = ""
     installed_category_conditions = " AND p.category > 0 "
     available_category_conditions = " AND p.category > 0 AND p.is_extension = 0"
     ext_component = ""
@@ -653,7 +652,7 @@ def get_list(p_isJSON, p_comp=None, p_return=False):
                 status = "Installed"
             else:
                 status = str(row[6])
-            if status == "NotInstalled" and p_isJSON == False:
+            if status == "NotInstalled" and p_isJSON is False:
                 status = ""
 
             is_available = str(row[16])
@@ -719,7 +718,7 @@ def get_list(p_isJSON, p_comp=None, p_return=False):
 
                 if date_diff <= 30:
                     compDict["is_new"] = 1
-            except Exception as e:
+            except Exception:
                 pass
 
             if util.is_postgres(comp):
@@ -741,7 +740,7 @@ def get_list(p_isJSON, p_comp=None, p_return=False):
                     date_diff = (today_date - insDate).days
                     if date_diff <= 30:
                         compDict["is_updated"] = 1
-                except Exception as e:
+                except Exception :
                     pass
 
             available_ver = str(row[17])
@@ -799,7 +798,7 @@ def get_list(p_isJSON, p_comp=None, p_return=False):
     sys.exit(0)
 
 
-## Check if component required for platform #########
+# Check if component required for platform #########
 def is_dependent_platform(p_comp):
     try:
         c = con.cursor()
@@ -816,7 +815,7 @@ def is_dependent_platform(p_comp):
     return False
 
 
-## get component version ############################
+# get component version ############################
 def get_version(p_comp):
     try:
         c = con.cursor()
@@ -830,7 +829,7 @@ def get_version(p_comp):
     return str(data[0])
 
 
-## Get Current Version ###################################################
+# Get Current Version ###################################################
 def get_current_version(p_comp):
     try:
         c = con.cursor()
@@ -909,5 +908,5 @@ def fatal_error(err, sql, func):
     sys.exit(1)
 
 
-## MAINLINE ################################################################
+# MAINLINE ################################################################
 con = sqlite3.connect(os.getenv("MY_LITE"), check_same_thread=False)

@@ -77,7 +77,6 @@ postgresql:
       username: postgres
       password: mysupersecretpassword
   parameters:
-  
   pg_hba:
     - local all all trust
     - host all all 0.0.0.0/0 trust
@@ -220,7 +219,7 @@ def check_cluster(cluster_name):
 
     for nd in cj["nodes"]:
         is_primary = nd["primary"]
-        if is_primary == True:
+        if is_primary is True:
             util.message("\n## checking primary node has all module installed")
             bin_path = f"{cluster['path']}/{nd['name']}/pgedge/pg16/bin"
             data_path = f"{cluster['path']}/{nd['name']}/pgedge/data/pg16"

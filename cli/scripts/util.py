@@ -2147,7 +2147,7 @@ def process_sql_file(p_file, p_json):
             cmd = ""
     file.close()
 
-    if rc == False:
+    if rc is False:
         if p_json:
             print('[{"status":"completed","has_updates":0}]')
         return False

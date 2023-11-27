@@ -1605,7 +1605,7 @@ try:
         else:
             sys.exit(1)
 
-    ## PGBIN #######################################################################
+    # PGBIN #######################################################################
     if p_mode == "pgbin":
         if len(args) != 4:
             util.exit_message(
@@ -1654,11 +1654,11 @@ try:
 
         sys.exit(1)
 
-    ## FIRE LIST ###############################################################
+    # FIRE LIST ###############################################################
     if p_mode in fire_list:
         fire_away(p_mode, args)
 
-    ## BACKREST ##########################################
+    # BACKREST ##########################################
     if p_mode == "backrest":
         if len(args) == 2:
             cmd = "help"
@@ -1669,7 +1669,7 @@ try:
         util.run_backrest(cmd)
         exit_cleanly(0)
 
-    ## NATIVE LIST #############################################################
+    # NATIVE LIST #############################################################
     if p_mode in native_list:
         if p_mode == "ansible":
             if len(args) == 2:
@@ -1684,7 +1684,7 @@ try:
 
         util.exit_message(f"'{p_mode}' command not supported")
 
-    ## TOP #####################################################################
+    # TOP #####################################################################
     if p_mode == "top":
         try:
             api.top(display=False)
@@ -1695,11 +1695,11 @@ try:
             while True:
                 api.top(display=True)
                 time.sleep(1)
-        except KeyboardInterrupt as e:
+        except KeyboardInterrupt:
             pass
         exit_cleanly(0)
 
-    ## INFO ####################################################################
+    # INFO ####################################################################
     if p_mode == "info":
         if p_comp == "all" and info_arg == 0:
             api.info(isJSON, MY_HOME, REPO)
@@ -1727,7 +1727,7 @@ try:
                     )
                     c.execute(sql)
                     data = c.fetchone()
-                    if not data is None:
+                    if data:
                         is_installed = 1
                         datadir = str(data[0])
                         logdir = str(data[1])
@@ -1860,7 +1860,7 @@ try:
 
                         if date_diff <= 30:
                             compDict["is_new"] = 1
-                    except Exception as e:
+                    except Exception:
                         pass
 
                     compDict["install_date"] = install_date
@@ -1893,13 +1893,13 @@ try:
                 fatal_sql_error(e, sql, "INFO")
         exit_cleanly(0)
 
-    ## STATUS ####################################################
+    # STATUS ####################################################
     if p_mode == "status":
         for c in p_comp_list:
             check_status(c, p_mode)
         exit_cleanly(0)
 
-    ## CLEAN ####################################################
+    # CLEAN ####################################################
     if p_mode == "clean":
         conf_cache = MY_HOME + os.sep + "conf" + os.sep + "cache" + os.sep + "*"
         files = glob.glob(conf_cache)
@@ -1907,11 +1907,11 @@ try:
             os.remove(f)
         exit_cleanly(0)
 
-    ## LIST #########################################################
+    # LIST #########################################################
     if p_mode == "list":
         meta.get_list(isJSON, p_comp=p_comp)
 
-    ## REMOVE ##################################################
+    # REMOVE ##################################################
     if p_mode == "remove":
         if p_comp == "all":
             msg = "You must specify component to remove."
@@ -1961,7 +1961,7 @@ try:
 
         exit_cleanly(0)
 
-    ## INSTALL ################################################
+    # INSTALL ################################################
     if p_mode == "install":
         if p_comp == "all":
             msg = "You must specify component to install."
@@ -1997,11 +1997,11 @@ try:
                 parent = util.get_parent_component(c, 0)
             if status == 1 and (c in p_comp_list or p_comp_list[0] == "all"):
                 if isExt:
-                    ## just run the CREATE EXTENSION sql command without reboot or change preloads
+                    # just run the CREATE EXTENSION sql command without reboot or change preloads
                     os.environ["isPreload"] = "False"
                     util.create_extension(parent, c, False)
                 else:
-                    ## already installed
+                    # already installed
                     pass
             elif status != 1:
                 installed_comp_list.append(c)
@@ -2038,7 +2038,7 @@ try:
 
     script_name = ""
 
-    ## UPDATE ###################################################
+    # UPDATE ###################################################
     if p_mode == "update":
         retrieve_remote()
 
@@ -2159,7 +2159,7 @@ try:
         except Exception as e:
             fatal_sql_error(e, sql, "UPDATE in mainline")
 
-    ## ENABLE, DISABLE ###########################################
+    # ENABLE, DISABLE ###########################################
     if p_mode == "enable" or p_mode == "disable":
         if p_comp == "all":
             msg = "You must " + p_mode + " one component at a time"
@@ -2168,15 +2168,15 @@ try:
         script_name = p_mode + "-" + p_comp
         sys.exit(run_script(p_comp, script_name, extra_args))
 
-    ## CONFIG, INIT, RELOAD ##################################
+    # CONFIG, INIT, RELOAD ##################################
     if p_mode in ["config", "init", "reload"]:
         script_name = p_mode + "-" + p_comp
         sys.exit(run_script(p_comp, script_name, extra_args))
 
-    ## STOP component(s) #########################################
+    # STOP component(s) #########################################
     if (p_mode == "stop") or (p_mode == "kill") or (p_mode == "restart"):
         if p_comp == "all":
-            ## iterate through components in reverse list order
+            # iterate through components in reverse list order
             for comp in reversed(dep9):
                 script_name = "stop-" + comp[0]
                 run_script(comp[0], script_name, p_mode)
@@ -2184,12 +2184,12 @@ try:
             script_name = "stop-" + p_comp
             run_script(p_comp, script_name, p_mode)
 
-    ## START, RESTART ############################################
+    # START, RESTART ############################################
     if (p_mode == "start") or (p_mode == "restart"):
         if p_comp == "all":
-            ## Iterate through components in primary list order.
-            ## Components with a port of "1" are client components that
-            ## are only launched when explicitely started
+            # Iterate through components in primary list order.
+            # Components with a port of "1" are client components that
+            # are only launched when explicitely started
             for comp in dep9:
                 if util.is_server(comp[0]):
                     script_name = "start-" + comp[0]
@@ -2211,7 +2211,7 @@ try:
             script_name = "start-" + p_comp
             run_script(p_comp, script_name, p_mode)
 
-    ## DOWNGRADE ################################################
+    # DOWNGRADE ################################################
     if p_mode == "downgrade":
         rc = downgrade_component(p_comp)
         if rc == 1:
@@ -2219,7 +2219,7 @@ try:
             print(msg)
             my_logger.info(msg)
 
-    ## UPGRADE ##################################################
+    # UPGRADE ##################################################
     if p_mode == "upgrade":
         if p_comp == "all":
             updates_comp = []
@@ -2265,12 +2265,12 @@ try:
                 print(msg)
                 my_logger.info(msg)
 
-    ## VERIFY #############################################
+    # VERIFY #############################################
     if p_mode == "verify":
         util.verify(isJSON)
         exit_cleanly(0)
 
-    ## SET #################################################
+    # SET #################################################
     if p_mode == "set":
         if len(args) == 5:
             if args[2] == "con":
@@ -2283,7 +2283,7 @@ try:
 
         exit_cleanly(0)
 
-    ## GET ################################################
+    # GET ################################################
     if p_mode == "get":
         if len(args) == 4:
             if args[2] == "con":
@@ -2296,7 +2296,7 @@ try:
 
         exit_cleanly(0)
 
-    ## UNSET ##############################################
+    # UNSET ##############################################
     if p_mode == "unset":
         if len(args) == 4:
             util.unset_value(args[2], args[3])
@@ -2305,7 +2305,7 @@ try:
             exit_cleanly(1)
         exit_cleanly(0)
 
-    ## CHANGE-PGCONF #####################################
+    # CHANGE-PGCONF #####################################
     if p_mode == "change-pgconf":
         if (len(args)) < 5 or (len(args) > 6):
             print(
@@ -2327,7 +2327,7 @@ try:
 
         exit_cleanly(util.change_pgconf_keyval(pgV, args[3], args[4], isReplace))
 
-    ## USERADD ############################################
+    # USERADD ############################################
     if p_mode == "useradd":
         if len(args) == 3:
             exit_cleanly(startup.useradd_linux(args[2]))
@@ -2335,7 +2335,7 @@ try:
             print("ERROR: The USERADD command must have 1 parameter (svcuser).")
             exit_cleanly(1)
 
-    ## TUNE ###############################################
+    # TUNE ###############################################
     if p_mode == "tune":
         if len(args) == 3:
             exit_cleanly(util.tune_postgresql_conf(args[2]))
