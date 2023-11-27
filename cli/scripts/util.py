@@ -446,7 +446,7 @@ def scrub_passwd(p_cmd):
     key_wd = ""
 
     for i in ll:
-        if ((i == "PASSWORD") or (i == "-P")) and (flag == False):
+        if ((i == "PASSWORD") or (i == "-P")) and (flag is False):
             flag = True
             key_wd = str(i)
             continue
@@ -568,7 +568,7 @@ def cmd_system(p_sys_cmd, p_display=True):
 
     cmd = MY_HOME + os.sep + "nodectl " + str(p_sys_cmd)
 
-    if p_display == True:
+    if p_display is True:
         print("\n## " + str(cmd))
 
     rc = os.system(cmd)
@@ -632,7 +632,7 @@ def create_extension(p_pg, p_ext, p_reboot=False, p_extension="", p_cascade=Fals
     isPreload = os.getenv("isPreload")
 
     if p_ext > " " and isPreload == "True":
-        rc = change_pgconf_keyval(p_pg, "shared_preload_libraries", p_ext)
+       # rc = change_pgconf_keyval(p_pg, "shared_preload_libraries", p_ext)
 
     isRestart = os.getenv("isRestart")
     if p_reboot and isRestart == "True":
@@ -723,8 +723,7 @@ def decrypt(ciphertext, key):
     except ImportError as e:
         exit_message(str(e), 1, False)
 
-    padding_string = b"}"
-
+    
     ciphertext = base64.b64decode(ciphertext)
     iv = ciphertext[: AES.block_size]
     cipher = AES.new(pad(key), AES.MODE_CFB, iv)
@@ -1003,8 +1002,7 @@ def message(p_msg, p_state="info", p_isJSON=None):
         print(p_msg)
     else:
         my_logger.info(p_msg)
-        prefix = ""
-
+        
     if p_isJSON:
         msg = p_msg.replace("\n", "")
         if msg.strip() > "":
