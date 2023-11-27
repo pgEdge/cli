@@ -1041,7 +1041,7 @@ def retrieve_remote():
         exit_cleanly(1)
 
 
-## Download tarball component and verify against checksum ###############
+# Download tarball component and verify against checksum ###############
 def retrieve_comp(p_base_name, component_name=None):
     conf_cache = "conf" + os.sep + "cache"
     bz2_file = p_base_name + ".tar.bz2"
@@ -1112,7 +1112,7 @@ def get_help_text():
     new_s = ""
     for line in lines:
         fmtd_line = api.format_help(line)
-        if not fmtd_line == None:
+        if  fmtd_line:
             new_s = new_s + api.format_help(line) + "\n"
 
     return new_s
@@ -1140,7 +1140,7 @@ def fatal_sql_error(err, sql, func):
 def exit_cleanly(p_rc):
     try:
         connL.close()
-    except Exception as e:
+    except Exception:
         pass
     sys.exit(p_rc)
 
@@ -1151,9 +1151,9 @@ def cli_lock():
         ret = os.read(fd, 12)
         pid = ret.decode()
         os.close(fd)
-    except IOError as e:
+    except IOError:
         return False
-    except OSError as e:
+    except OSError:
         return False
 
     if not pid:
@@ -1161,7 +1161,7 @@ def cli_lock():
 
     try:
         os.kill(int(pid), 0)
-    except OSError as e:
+    except OSError:
         return False
 
     return False
@@ -1189,11 +1189,10 @@ def fire_api(prog):
     return
 
 
-####################################################################
-########                    MAINLINE                      ##########
+#                    MAINLINE                      ##########
 ####################################################################
 
-## Initialize Globals ##############################################
+# Initialize Globals ##############################################
 REPO = util.get_value("GLOBAL", "REPO")
 
 os.chdir(util.MY_HOME)
@@ -1204,7 +1203,7 @@ connL = sqlite3.connect(db_local)
 
 args = sys.argv
 
-## process multiple commands seperated by ' : ' ###############
+# process multiple commands seperated by ' : ' ###############
 cmd = ""
 is_colon = False
 x = 1
@@ -1222,7 +1221,7 @@ if is_colon:
     util.cmd_system(cmd)
     exit_cleanly(0)
 
-## eliminate empty parameters ################################
+# eliminate empty parameters ################################
 while True:
     try:
         args.remove("")
