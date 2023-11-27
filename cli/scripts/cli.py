@@ -676,7 +676,7 @@ def unpack_comp(p_app, p_old_ver, p_new_ver):
         new_comp_dir = p_app + "_update"
     try:
         tar.extractall(path=new_comp_dir)
-    except KeyboardInterrupt as e:
+    except KeyboardInterrupt:
         util.delete_dir(new_comp_dir)
         msg = "Unpacking cancelled for file %s" % file
         if isJSON:
@@ -944,7 +944,7 @@ def check_comp(p_comp, p_port, p_kount, check_status=False):
     return
 
 
-## Check component state #################################################
+# Check component state #################################################
 def check_status(p_comp, p_mode):
     if p_comp in ["all", "*"]:
         try:
