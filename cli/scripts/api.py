@@ -138,12 +138,14 @@ def top(display=True, isJson=False):
     jsonDict['cpu_system'] = str(cpu.system)
     jsonDict['cpu_idle'] = str(cpu.idle)
     if not isJson:
-        print("CPU(s):" + str(cpu.user).rjust(5) + "%us," + \
-        str(cpu.system).rjust(5) + "%sy," + str(cpu.idle).rjust(5) + "%id" + iowait)
+        print(
+                "CPU(s):" + str(cpu.user).rjust(5) + "%us," +
+                str(cpu.system).rjust(5) + "%sy," + str(cpu.idle).rjust(5) + "%id" + iowait
+        )
 
     disk = psutil.disk_io_counters(perdisk=False)
-    read_kb = disk.read_bytes / 1024
-    write_kb = disk.write_bytes / 1024
+    read_kb= disk.read_bytes / 1024
+    write_kb= disk.write_bytes / 1024
     jsonDict['kb_read']  = str(read_kb)
     jsonDict['kb_write']  = str(write_kb)
     if not isJson:
