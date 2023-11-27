@@ -5,7 +5,7 @@
 # (The northwind database originates from microsoft : http://northwinddatabase.codeplex.com/license)
 # Microsoft Public License (Ms-PL)
 
-import util, cluster,sys
+import util, cluster, sys
 
 g_tables = "northwind.*"
 
