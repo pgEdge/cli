@@ -433,9 +433,9 @@ def remove_suffix(p_suffix, p_str):
 
 def shuffle_string(p_input):
     # deterministic shuffle of a string
-    l = list(p_input)
-    random.Random(123).shuffle(l)
-    shuffled = "".join(l)
+    ll = list(p_input)
+    random.Random(123).shuffle(ll)
+    shuffled = "".join(ll)
     return shuffled
 
 
@@ -721,7 +721,6 @@ def decrypt(ciphertext, key):
     except ImportError as e:
         exit_message(str(e), 1, False)
 
-    
     ciphertext = base64.b64decode(ciphertext)
     iv = ciphertext[: AES.block_size]
     cipher = AES.new(pad(key), AES.MODE_CFB, iv)
@@ -914,7 +913,7 @@ def delete_service_win(svcName):
     try:
         win32serviceutil.QueryServiceStatus(svcName)
         is_service_installed = True
-    except:
+    except Exception:
         is_service_installed = False
     if is_service_installed:
         sc_path = os.getenv("SYSTEMROOT", "") + os.sep + "System32" + os.sep + "sc"
@@ -984,10 +983,8 @@ def message(p_msg, p_state="info", p_isJSON=None):
 
     if log_level == "error":
         print(bcolours.FAIL + characters.CROSS + " " + p_msg + bcolours.ENDC)
-        prefix = "ERROR: "
     elif log_level == "warning":
         print(bcolours.YELLOW + characters.WARNING + " " + p_msg + bcolours.ENDC)
-        prefix = "WARNING: "
     elif log_level == "alert":
         print(bcolours.YELLOW + p_msg + bcolours.ENDC)
     elif log_level == "debug":
@@ -1511,7 +1508,6 @@ def remove_pgconf_keyval(p_pgver, p_key, p_val=""):
 
     ns = ""
     new_line = ""
-    old_val_quoted = ""
     lines = s.split("\n")
     for line in lines:
         if line.startswith(p_key):
@@ -1620,8 +1616,6 @@ def change_pgconf_keyval(p_pgver, p_key, p_val, p_replace=False):
     ns = ""
     new_line = ""
     boolFoundLine = False
-    old_val_quoted = ""
-
     lines = s.split("\n")
     for line in lines:
         if line.startswith(p_key) or line.startswith("#" + p_key):
@@ -1950,7 +1944,6 @@ def write_pgenv_file(
     pg_bin_path = os.path.join(p_pghome, "bin")
 
     export = "export "
-    source = "source"
     newpath = export + "PATH=" + pg_bin_path + ":$PATH"
     env_file = p_pghome + os.sep + p_pgver + ".env"
 
@@ -2016,7 +2009,7 @@ def get_avail_port(p_prompt, p_def_port, p_comp="", isJSON=False):
     while True:
         s_port = str(def_port)
 
-        if s_port.isdigit() == False:
+        if s_port.isdigit() is False:
             print(err_msg)
             continue
 
@@ -2593,7 +2586,8 @@ def unpack_file(p_file):
 
 def http_is_file(p_url):
     try:
-        req = urllib2.Request(p_url, None, http_headers())
+        pass
+    # req = urllib2.Request(p_url, None, http_headers())
     except KeyboardInterrupt:
         sys.exit(1)
     except Exception:
