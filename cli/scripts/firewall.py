@@ -2,16 +2,19 @@ import util, fire
 
 
 def list(zone="external"):
+    """List firewalld external zone sources"""
     rc1 = util.echo_cmd(f"sudo firewall-cmd --list-sources --zone={zone}", echo=False)
     rc2 = util.echo_cmd(f"sudo firewall-cmd --list-ports --zone={zone}", echo=False)
 
 
 def add(sources, ports, zone="external"):
+    """Add firewalld configuration for source IP addresses and ports"""
     print(f"{sources} {ports}")
     action("add", sources, ports, zone)
 
 
 def remove(sources, ports, zone="external"):
+    """Remove firewalld configuration for source IP addresses and ports"""
     action("remove", sources, ports, zone)
 
 
