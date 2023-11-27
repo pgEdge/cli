@@ -49,44 +49,45 @@ error_start = bcolors.FAIL
 
 
 def format_help(p_input):
-  inp = str(p_input)
-  inp_lst = inp.split()
+    inp = str(p_input)
+    inp_lst = inp.split()
 
-  p_1st = None
-  if inp_lst:
-    p_1st = str(inp_lst[0])
+    p_1st = None
+    if inp_lst:
+        p_1st = str(inp_lst[0])
 
-  if p_1st in ("#", "##", "###"):
-    skip_len = len(p_1st) + 1
-    inp = inp[skip_len:]
-    inp = inp.replace("`", "")
-    inp = bold_start + str(inp.upper()) + bold_end
+    if p_1st in ("#", "##", "###"):
+        skip_len = len(p_1st) + 1
+        inp = inp[skip_len:]
+        inp = inp.replace("`", "")
+        inp = bold_start + str(inp.upper()) + bold_end
 
-  elif inp == "```":
-    return(None)
+    elif inp == "```":
+        return(None)
 
-  else:
-    inp = inp.replace(" # ", italic_start + " # ")
-    inp = "  " + inp + " " + italic_end
+    else:
+        inp = inp.replace(" # ", italic_start + " # ")
+        inp = "  " + inp + " " + italic_end
 
-  return(inp)
+    return(inp)
 
 
 def get_pip_ver():
-  try:
-    import pip
-    return(pip.__version__)
-  except ImportError as e:
-    pass
-  return("None")
+    try:
+        import pip
+        return(pip.__version__)
+    except ImportError:
+        pass
+    return("None")
 
 
-def cli_unicode(p_str,p_encoding,errors="ignore"):
-  return str(p_str)
+def cli_unicode(p_str, p_encoding, errors="ignore"):
+    return str(p_str)
+
 
 try:
     test_unicode = unicode("test")
-except NameError as e:
+except NameError:
     unicode = cli_unicode
 
 
