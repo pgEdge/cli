@@ -201,11 +201,11 @@ def top(display=True, isJson=False):
             str(round(pp['memory_percent'],1)).rjust(4) + " " + \
             str(ctime).rjust(10) + " " + \
             pp['name'] )
-  if isJson:
-      jsonDict['top'] = jsonList
-      print ( json.dumps([jsonDict]) )
-  else:
-    print( "" )
+    if isJson:
+        jsonDict['top'] = jsonList
+        print ( json.dumps([jsonDict]) )
+    else:
+        print( "" )
 
 
 def list(p_json, p_cat, p_comp, p_ver, p_port, p_status, p_kount):
