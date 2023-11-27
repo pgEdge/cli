@@ -7,8 +7,9 @@ import datetime, platform, tarfile, sqlite3, time
 import json, glob, re, io, traceback, logging, logging.handlers
 from shutil import copy2
 from semantic_version import Version
-  
 import clilog
+import util, api, startup, meta, component
+
 
 
 if sys.version_info < (3, 6):
@@ -38,8 +39,6 @@ if os.path.exists(platform_lib_path):
     if platform_lib_path not in sys.path:
         sys.path.append(platform_lib_path)
 
-import util, api, startup, meta, component
-
 my_conf = os.path.join(util.MY_HOME, "conf")
 if not util.is_writable(my_conf):
     rc = os.system(f"sudo mkdir -P {my_conf}")
@@ -55,9 +54,7 @@ if util.get_value("GLOBAL", "PLATFORM", "") in ("", "posix", "windoze"):
 
 
 my_logger = logging.getLogger("cli_logger")
-
 ansi_escape = re.compile(r"\x1b[^m]*m")
-
 dep9 = util.get_depend()
 
 fire_list = [
