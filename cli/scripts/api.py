@@ -112,8 +112,7 @@ def top(display=True, isJson=False):
     procs = []
     for p in psutil.process_iter():
         try:
-            p = p.as_dict(attrs=
-                ['pid', 'username', 'cpu_percent', 'memory_percent', 'cpu_times', 'name'])
+            p = p.as_dict(attrs=['pid', 'username', 'cpu_percent', 'memory_percent', 'cpu_times', 'name'])
         except (psutil.NoSuchProcess, IOError, OSError):
             pass
         else:
