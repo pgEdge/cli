@@ -28,7 +28,7 @@ def get_access_token(profile="Default", client_id=None, client_secret=None):
             access_token = response.json()["access_token"]
         else:
             util.exit_message(f"Unable to get token")
-    except:
+    except Exception:
         util.exit_message(f"Unable to get token")
     return access_token
 
@@ -190,7 +190,7 @@ def get_cluster_id(cluster_name):
         ) as f:
             parsed_json = json.load(f)
             cluster_id = parsed_json["id"]
-    except:
+    except Exception:
         util.exit_message(f"Cannot find cluster, you may need to import-cluster", 1)
     util.exit_message(cluster_id, 0)
 
@@ -211,7 +211,7 @@ def get_node_id(cluster_name, node_name):
             for n in parsed_json["nodes"]:
                 if n["name"] == node_name:
                     node_id = n["id"]
-    except:
+    except Exception:
         util.exit_message(f"Cannot find node, you may need to import-cluster", 1)
     util.exit_message(node_id, 0)
 
