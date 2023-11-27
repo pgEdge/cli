@@ -1559,7 +1559,7 @@ try:
     if len(p_comp_list) >= 1:
         p_comp = p_comp_list[0]
 
-    ## PG_ISREADY #################################################################
+    # PG_ISREADY #################################################################
     if p_mode == "pg_isready":
         pg_v = util.get_pg_v(None)
         cmd = "./nc pgbin " + pg_v.replace("pg", "") + " pg_isready"
@@ -1569,7 +1569,7 @@ try:
         else:
             sys.exit(1)
 
-    ## PSQL #######################################################################
+    # PSQL #######################################################################
     psql_bad_msg = 'Two args required, try: psql "sql command" database'
     if p_mode == "psql":
         if len(args) == 5:
@@ -1584,7 +1584,7 @@ try:
             util.exit_message(psql_bad_msg)
 
         if sql_cmd == "-i":
-            ## leave us at the interactive psql prompt
+            # leave us at the interactive psql prompt
             sql_cmd = ""
         elif c_or_f in ("-f", "-c"):
             sql_cmd = f'{c_or_f} "' + sql_cmd + '" '
