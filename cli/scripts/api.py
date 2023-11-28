@@ -10,33 +10,36 @@ isPy3 = True
 
 try:
     from colorama import init
+
     init()
 except ImportError as e:
     pass
 
-scripts_lib_path = os.path.join(os.path.dirname(__file__), 'lib')
+scripts_lib_path = os.path.join(os.path.dirname(__file__), "lib")
 this_platform_system = str(platform.system())
 platform_lib_path = os.path.join(scripts_lib_path, this_platform_system)
 if os.path.exists(platform_lib_path):
-  if platform_lib_path not in sys.path:
-    sys.path.append(platform_lib_path)
+    if platform_lib_path not in sys.path:
+        sys.path.append(platform_lib_path)
 
 import util
 
 python_exe = sys.executable
 python_ver = platform.python_version()
 
+
 class bcolors:
-    HEADER = '\033[95m'
-    OKBLUE = '\033[94m'
-    OKGREEN = '\033[92m'
-    WARNING = '\033[93m'
-    FAIL = '\033[91m'
-    ENDC = '\033[0m'
-    BOLD = '\033[1m'
-    UNDERLINE = '\033[4m'
-    BACKGROUND = '\033[42m'
-    ITALIC = '\033[3m'
+    HEADER = "\033[95m"
+    OKBLUE = "\033[94m"
+    OKGREEN = "\033[92m"
+    WARNING = "\033[93m"
+    FAIL = "\033[91m"
+    ENDC = "\033[0m"
+    BOLD = "\033[1m"
+    UNDERLINE = "\033[4m"
+    BACKGROUND = "\033[42m"
+    ITALIC = "\033[3m"
+
 
 bold_start = bcolors.BOLD
 bold_end = bcolors.ENDC
@@ -47,40 +50,42 @@ error_start = bcolors.FAIL
 
 
 def format_help(p_input):
-  inp = str(p_input)
-  inp_lst = inp.split()
+    inp = str(p_input)
+    inp_lst = inp.split()
 
-  p_1st = None
-  if inp_lst:
-    p_1st = str(inp_lst[0])
+    p_1st = None
+    if inp_lst:
+        p_1st = str(inp_lst[0])
 
-  if p_1st in ("#", "##", "###"):
-    skip_len = len(p_1st) + 1
-    inp = inp[skip_len:]
-    inp = inp.replace("`", "")
-    inp = bold_start + str(inp.upper()) + bold_end
+    if p_1st in ("#", "##", "###"):
+        skip_len = len(p_1st) + 1
+        inp = inp[skip_len:]
+        inp = inp.replace("`", "")
+        inp = bold_start + str(inp.upper()) + bold_end
 
-  elif inp == "```":
-    return(None)
+    elif inp == "```":
+        return None
 
-  else:
-    inp = inp.replace(" # ", italic_start + " # ")
-    inp = "  " + inp + " " + italic_end
+    else:
+        inp = inp.replace(" # ", italic_start + " # ")
+        inp = "  " + inp + " " + italic_end
 
-  return(inp)
+    return inp
 
 
 def get_pip_ver():
-  try:
-    import pip
-    return(pip.__version__)
-  except ImportError as e:
-    pass
-  return("None")
+    try:
+        import pip
+
+        return pip.__version__
+    except ImportError as e:
+        pass
+    return "None"
 
 
-def cli_unicode(p_str,p_encoding,errors="ignore"):
-  return str(p_str)
+def cli_unicode(p_str, p_encoding, errors="ignore"):
+    return str(p_str)
+
 
 try:
     test_unicode = unicode("test")
@@ -88,404 +93,544 @@ except NameError as e:
     unicode = cli_unicode
 
 
-def check_output_wmic (p_cmds):
-  out1 = subprocess.check_output(p_cmds)
-  try:
-    out2 = str(out1, 'utf-8')
-  except:
-    out2 = str(out1)
-  out3 = out2.strip().split("\n")[1]
-  return(out3)
+def check_output_wmic(p_cmds):
+    out1 = subprocess.check_output(p_cmds)
+    try:
+        out2 = str(out1, "utf-8")
+    except:
+        out2 = str(out1)
+    out3 = out2.strip().split("\n")[1]
+    return out3
 
 
 def top(display=True, isJson=False):
-  try:
-    import psutil
-  except ImportError as e:
-    util.exit_message("Missing psutil module", 1)
-
-  current_timestamp = int(time.mktime(datetime.utcnow().timetuple()))
-  jsonDict = {}
-  procs = []
-  for p in psutil.process_iter():
     try:
-      p = p.as_dict(attrs=
-        ['pid', 'username', 'cpu_percent', 'memory_percent', 'cpu_times', 'name'])
-    except (psutil.NoSuchProcess, IOError, OSError) as e:
-      pass
-    else:
-      procs.append(p)
+        import psutil
+    except ImportError as e:
+        util.exit_message("Missing psutil module", 1)
 
-  if not display:
-    return
+    current_timestamp = int(time.mktime(datetime.utcnow().timetuple()))
+    jsonDict = {}
+    procs = []
+    for p in psutil.process_iter():
+        try:
+            p = p.as_dict(
+                attrs=[
+                    "pid",
+                    "username",
+                    "cpu_percent",
+                    "memory_percent",
+                    "cpu_times",
+                    "name",
+                ]
+            )
+        except (psutil.NoSuchProcess, IOError, OSError) as e:
+            pass
+        else:
+            procs.append(p)
 
-  processes = sorted(procs, key=lambda p: p['cpu_percent'], reverse=True)
+    if not display:
+        return
 
-  network_usage = psutil.net_io_counters()
-  jsonDict['kb_sent'] = network_usage.bytes_sent / 1024
-  jsonDict['kb_recv'] = network_usage.bytes_recv / 1024
+    processes = sorted(procs, key=lambda p: p["cpu_percent"], reverse=True)
 
-  cpu = psutil.cpu_times_percent(percpu=False)
-  iowait = ""
-  if util.get_platform() == "Linux":
-    jsonDict['iowait'] = str(cpu.iowait)
-    iowait = "," + str(cpu.iowait).rjust(5) + "%wa"
+    network_usage = psutil.net_io_counters()
+    jsonDict["kb_sent"] = network_usage.bytes_sent / 1024
+    jsonDict["kb_recv"] = network_usage.bytes_recv / 1024
 
-  jsonDict['current_timestamp'] = current_timestamp
-  jsonDict['cpu_user'] = str(cpu.user)
-  jsonDict['cpu_system'] = str(cpu.system)
-  jsonDict['cpu_idle'] = str(cpu.idle)
-  if not isJson:
-    print("CPU(s):" + str(cpu.user).rjust(5) + "%us," + \
-      str(cpu.system).rjust(5) + "%sy," + str(cpu.idle).rjust(5) + "%id" + iowait)
+    cpu = psutil.cpu_times_percent(percpu=False)
+    iowait = ""
+    if util.get_platform() == "Linux":
+        jsonDict["iowait"] = str(cpu.iowait)
+        iowait = "," + str(cpu.iowait).rjust(5) + "%wa"
 
-  disk = psutil.disk_io_counters(perdisk=False)
-  read_kb = disk.read_bytes / 1024
-  write_kb = disk.write_bytes / 1024
-  jsonDict['kb_read']  = str(read_kb)
-  jsonDict['kb_write']  = str(write_kb)
-  if not isJson:
-    print("DISK: kB_read " + str(read_kb) + ", kB_written " + str(write_kb))
+    jsonDict["current_timestamp"] = current_timestamp
+    jsonDict["cpu_user"] = str(cpu.user)
+    jsonDict["cpu_system"] = str(cpu.system)
+    jsonDict["cpu_idle"] = str(cpu.idle)
+    if not isJson:
+        print(
+            "CPU(s):"
+            + str(cpu.user).rjust(5)
+            + "%us,"
+            + str(cpu.system).rjust(5)
+            + "%sy,"
+            + str(cpu.idle).rjust(5)
+            + "%id"
+            + iowait
+        )
 
-  uptime = datetime.now() - datetime.fromtimestamp(psutil.boot_time())
-  str_uptime = str(uptime).split('.')[0]
-  line = ""
-  uname_len = 8
-  av1, av2, av3 = os.getloadavg()
-  str_loadavg = "%.2f %.2f %.2f  " % (av1, av2, av3)
-  line = bold_start + "Load average: " + bold_end + str_loadavg
-  jsonDict['load_avg']  = str(str_loadavg)
-  line = line + bold_start + "Uptime:" + bold_end + " " + str_uptime
-  jsonDict['uptime']  = str(str_uptime)
-  if not isJson:
-    print(line)
+    disk = psutil.disk_io_counters(perdisk=False)
+    read_kb = disk.read_bytes / 1024
+    write_kb = disk.write_bytes / 1024
+    jsonDict["kb_read"] = str(read_kb)
+    jsonDict["kb_write"] = str(write_kb)
+    if not isJson:
+        print("DISK: kB_read " + str(read_kb) + ", kB_written " + str(write_kb))
 
-  i = 0
-  my_pid = os.getpid()
-  if not isJson:
-    print("")
-    print(bold_start + "    PID " + "USER".ljust(uname_len) + "   %CPU %MEM      TIME+ COMMAND" + bold_end)
+    uptime = datetime.now() - datetime.fromtimestamp(psutil.boot_time())
+    str_uptime = str(uptime).split(".")[0]
+    line = ""
+    uname_len = 8
+    av1, av2, av3 = os.getloadavg()
+    str_loadavg = "%.2f %.2f %.2f  " % (av1, av2, av3)
+    line = bold_start + "Load average: " + bold_end + str_loadavg
+    jsonDict["load_avg"] = str(str_loadavg)
+    line = line + bold_start + "Uptime:" + bold_end + " " + str_uptime
+    jsonDict["uptime"] = str(str_uptime)
+    if not isJson:
+        print(line)
 
-  jsonList = []
-  for pp in processes:
-    if pp['pid'] == my_pid:
-      continue
-    i += 1
-    if i > 10:
-      break
+    i = 0
+    my_pid = os.getpid()
+    if not isJson:
+        print("")
+        print(
+            bold_start
+            + "    PID "
+            + "USER".ljust(uname_len)
+            + "   %CPU %MEM      TIME+ COMMAND"
+            + bold_end
+        )
 
-    # TIME+ column shows process CPU cumulative time and it
-    # is expressed as: "mm:ss.ms"
+    jsonList = []
+    for pp in processes:
+        if pp["pid"] == my_pid:
+            continue
+        i += 1
+        if i > 10:
+            break
 
-    ctime = timedelta(seconds=sum(pp['cpu_times']))
-    ctime_mm = str(ctime.seconds // 60 % 60)
-    ctime_ss = str(int(ctime.seconds % 60)).zfill(2)
-    ctime_ms = str(ctime.microseconds)[:2].ljust(2, str(0))
-    ctime = "{0}:{1}.{2}".format(ctime_mm, ctime_ss, ctime_ms)
+        # TIME+ column shows process CPU cumulative time and it
+        # is expressed as: "mm:ss.ms"
 
-    username = pp['username'][:uname_len]
+        ctime = timedelta(seconds=sum(pp["cpu_times"]))
+        ctime_mm = str(ctime.seconds // 60 % 60)
+        ctime_ss = str(int(ctime.seconds % 60)).zfill(2)
+        ctime_ms = str(ctime.microseconds)[:2].ljust(2, str(0))
+        ctime = "{0}:{1}.{2}".format(ctime_mm, ctime_ss, ctime_ms)
+
+        username = pp["username"][:uname_len]
+        if isJson:
+            pp["username"] = username
+            pp["ctime"] = ctime
+            pp["cpu_percent"] = float(pp["cpu_percent"])
+            pp["memory_percent"] = float(round(pp["memory_percent"], 1))
+            jsonList.append(pp)
+        else:
+            print(
+                str(pp["pid"]).rjust(7)
+                + " "
+                + username.ljust(uname_len)
+                + " "
+                + str(pp["cpu_percent"]).rjust(6)
+                + " "
+                + str(round(pp["memory_percent"], 1)).rjust(4)
+                + " "
+                + str(ctime).rjust(10)
+                + " "
+                + pp["name"]
+            )
     if isJson:
-        pp['username'] = username
-        pp['ctime'] = ctime
-        pp['cpu_percent'] = float(pp['cpu_percent'])
-        pp['memory_percent'] = float(round(pp['memory_percent'],1))
-        jsonList.append(pp)
+        jsonDict["top"] = jsonList
+        print(json.dumps([jsonDict]))
     else:
- 
-      print( str(pp['pid']).rjust(7) + " " + \
-            username.ljust(uname_len) + " " + \
-            str(pp['cpu_percent']).rjust(6) + " " + \
-            str(round(pp['memory_percent'],1)).rjust(4) + " " + \
-            str(ctime).rjust(10) + " " + \
-            pp['name'] )
-  if isJson:
-      jsonDict['top'] = jsonList
-      print ( json.dumps([jsonDict]) )
-  else:
-    print( "" )
+        print("")
 
 
 def list(p_json, p_cat, p_comp, p_ver, p_port, p_status, p_kount):
-  lst = " "
-  if p_kount > 1:
-    lst = ","
-  if p_json:
-    lst = lst + \
-      '{"category": "' + p_cat.rstrip() + '",' + \
-      ' "component": "' + p_comp.rstrip() + '",' + \
-      ' "version": "' + p_ver.rstrip() + '",' + \
-      ' "port": "' + p_port.rstrip() + '",' + \
-      ' "status": "' + p_status.rstrip() + '"}'
-    print(lst)
-    return
+    lst = " "
+    if p_kount > 1:
+        lst = ","
+    if p_json:
+        lst = (
+            lst
+            + '{"category": "'
+            + p_cat.rstrip()
+            + '",'
+            + ' "component": "'
+            + p_comp.rstrip()
+            + '",'
+            + ' "version": "'
+            + p_ver.rstrip()
+            + '",'
+            + ' "port": "'
+            + p_port.rstrip()
+            + '",'
+            + ' "status": "'
+            + p_status.rstrip()
+            + '"}'
+        )
+        print(lst)
+        return
 
-  print (p_comp + "  " +  p_ver + "  " + p_port + "  " + p_status)
+    print(p_comp + "  " + p_ver + "  " + p_port + "  " + p_status)
 
 
-def status (p_json, p_comp, p_ver, p_state, p_port, p_kount):
-  status = " "
-  if p_kount > 1:
-    status = ","
-  if p_json:
-    jsonStatus = {}
-    jsonStatus['component'] = p_comp
-    jsonStatus['version'] = p_ver
-    jsonStatus['state'] = p_state
-    if p_port!="" and int(p_port)>1:
-      jsonStatus['port'] = p_port
-    category = util.get_comp_category(p_comp)
-    if category:
-      jsonStatus['category'] = category
-    elif p_comp.startswith == "pgdg":
-      jsonStatus['category'] = 1
-    print(status + json.dumps(jsonStatus))
-    return
+def status(p_json, p_comp, p_ver, p_state, p_port, p_kount):
+    status = " "
+    if p_kount > 1:
+        status = ","
+    if p_json:
+        jsonStatus = {}
+        jsonStatus["component"] = p_comp
+        jsonStatus["version"] = p_ver
+        jsonStatus["state"] = p_state
+        if p_port != "" and int(p_port) > 1:
+            jsonStatus["port"] = p_port
+        category = util.get_comp_category(p_comp)
+        if category:
+            jsonStatus["category"] = category
+        elif p_comp.startswith == "pgdg":
+            jsonStatus["category"] = 1
+        print(status + json.dumps(jsonStatus))
+        return
 
-  app_ver = p_comp + "-" + p_ver
-  app_ver = app_ver + (' ' * (35 - len(app_ver)))
+    app_ver = p_comp + "-" + p_ver
+    app_ver = app_ver + (" " * (35 - len(app_ver)))
 
-  if p_state in ("Running", "Stopped") and int(p_port)>1:
-    on_port = " on port " + p_port
-  else:
-    on_port = ""
+    if p_state in ("Running", "Stopped") and int(p_port) > 1:
+        on_port = " on port " + p_port
+    else:
+        on_port = ""
 
-  #print(app_ver + "(" + p_state + on_port + ")")
-  print(p_comp + " " + p_state.lower() + on_port)
-
+    # print(app_ver + "(" + p_state + on_port + ")")
+    print(p_comp + " " + p_state.lower() + on_port)
 
 
 def info(p_json, p_home, p_repo, print_flag=True):
+    (
+        cloud_name,
+        cloud_platform,
+        instance_id,
+        flavor,
+        region,
+        az,
+        private_ip,
+    ) = util.get_cloud_info()
 
-  cloud_name, cloud_platform, instance_id, flavor, region, az, private_ip = util.get_cloud_info()
+    p_user = util.get_user()
+    p_is_admin = util.is_admin()
+    pip_ver = get_pip_ver()
+    os_arch = util.get_arch()
 
-  p_user = util.get_user()
-  p_is_admin = util.is_admin()
-  pip_ver = get_pip_ver()
-  os_arch = util.get_arch()
-
-  this_os = ""
-  this_uname = str(platform.system())[0:7]
-  if private_ip > "":
-    host_ip = private_ip
-  else:
-    host_ip = util.get_host_ip()
-  wmic_path = os.getenv("SYSTEMROOT", "") + os.sep + "System32" + os.sep + "wbem" + os.sep + "wmic"
-  host_display = util.get_host_short()
-
-  ## Check the OS & Resources ########################################
-  plat = util.get_os()
-  glibcV = util.get_glibc_version()
-
-  os_major_ver = ""
-  java_major_ver = ""
-  java_ver = ""
-
-  if this_uname == "Darwin":
-    mem_mb = util.get_mem_mb()
-    system_memory_in_kbytes = mem_mb * 1024
-    system_memory_in_gb = mem_mb / 1024.0
-    system_cpu_cores = util.get_cpu_cores()
-    cpu_model=util.getoutput("/usr/sbin/sysctl -n machdep.cpu.brand_string")
-    prod_name = util.getoutput("sw_vers -productName")
-    prod_version = util.getoutput("sw_vers -productVersion")
-    this_os = prod_name + " " + prod_version
-  elif this_uname == "Linux":
-    mem_mb = util.get_mem_mb()
-    system_memory_in_kbytes = mem_mb * 1024
-    system_memory_in_gb = mem_mb / 1024.0
-    system_cpu_cores = util.get_cpu_cores()
-    cpu_model=util.getoutput("grep 'model name' /proc/cpuinfo | head -1 | cut -d':' -f2")
-    os_major_ver = util.getoutput("cat /etc/os-release | grep VERSION_ID | cut -d= -f2 | tr -d '\"'")
-    if cpu_model == "":
-      cpu_model="ARM"
-    if os.path.exists("/etc/redhat-release"):
-      this_os = util.getoutput("cat /etc/redhat-release")
-    elif os.path.exists("/etc/system-release"):
-      this_os = util.getoutput("cat /etc/system-release")
-    elif os.path.exists("/etc/lsb-release"):
-      this_os = util.getoutput("cat /etc/lsb-release | grep DISTRIB_DESCRIPTION | cut -d= -f2 | tr -d '\"'")
-    elif os.path.exists("/etc/os-release"):
-      this_os = util.getoutput("cat /etc/os-release | grep PRETTY_NAME | cut -d= -f2 | tr -d '\"'")
-    [java_major_ver, java_ver] = util.get_java_ver()
-
-  if system_memory_in_gb > 0.6:
-    round_mem = round(system_memory_in_gb)
-  else:
-    round_mem = round(system_memory_in_gb, 1)
-
-  mem = str(round_mem) + " GB"
-
-  cores = str(system_cpu_cores)
-
-  cpu = cpu_model.strip()
-  cpu = cpu.replace("(R)", "")
-  cpu = cpu.replace("(TM)", "")
-  cpu = cpu.replace(" CPU ", " ")
-
-  os2 = this_os.replace(" release ", " ")
-  os2 = os2.replace(" (Final)", "")
-  os2 = os2.replace(" (Core)", "")
-
-  ver = util.get_version()
-  [last_update_utc, last_update_local, unique_id] = util.read_hosts('localhost')
-  if last_update_local:
-    last_upd_dt = datetime.strptime(last_update_local, "%Y-%m-%d %H:%M:%S")
-    time_diff = int(util.timedelta_total_seconds(datetime.now() - last_upd_dt))
-    last_update_readable = util.get_readable_time_diff(str(time_diff), precision=2)
-
-  versions_sql = util.get_versions_sql()
-  perl_ver = util.get_perl_ver()
-
-  os_pkg_mgr = util.get_pkg_mgr()
-
-  if p_json:
-    infoJsonArray = []
-    infoJson = {}
-    infoJson['version'] = ver
-    infoJson['home'] = p_home
-    infoJson['user'] = p_user
-    infoJson['host'] = host_display
-    infoJson['host_short'] = util.get_host_short()
-    infoJson['host_long'] = util.get_host()
-    infoJson['host_ip'] = host_ip
-    infoJson['os'] = unicode(str(os2),sys.getdefaultencoding(),errors='ignore').strip()
-    infoJson['os_pkg_mgr'] = os_pkg_mgr
-    infoJson['os_major_ver'] = os_major_ver
-    infoJson['platform'] = unicode(str(plat),sys.getdefaultencoding(),errors='ignore').strip()
-    infoJson['arch'] = os_arch
-    infoJson['mem'] = round_mem
-    infoJson['cores'] = system_cpu_cores
-    infoJson['cpu'] = cpu
-    infoJson['last_update_utc'] = last_update_utc
-    if last_update_local:
-      infoJson['last_update_readable'] = last_update_readable
-    infoJson['unique_id'] = unique_id
-    infoJson['repo'] = p_repo
-    infoJson['versions_sql'] = versions_sql
-    infoJson['system_memory_in_kb'] = system_memory_in_kbytes
-    infoJson['python_ver'] = python_ver
-    infoJson['python_exe'] = python_exe
-    if pip_ver != 'None':
-      infoJson['pip_ver'] = pip_ver
-    infoJson['perl_ver'] = perl_ver
-    infoJson['java_ver'] = java_ver
-    infoJson['java_major_ver'] = java_major_ver
-    infoJson['glibc_ver'] = glibcV
-    infoJson['region'] = region
-    infoJson['az'] = az
-    infoJson['instance_id'] = instance_id
-    infoJson['flavor'] = flavor
-    infoJson['private_ip'] = private_ip
-    infoJsonArray.append(infoJson)
-    if print_flag:
-      print(json.dumps(infoJsonArray, sort_keys=True, indent=2))
-      return
+    this_os = ""
+    this_uname = str(platform.system())[0:7]
+    if private_ip > "":
+        host_ip = private_ip
     else:
-      return infoJson
+        host_ip = util.get_host_ip()
+    wmic_path = (
+        os.getenv("SYSTEMROOT", "")
+        + os.sep
+        + "System32"
+        + os.sep
+        + "wbem"
+        + os.sep
+        + "wmic"
+    )
+    host_display = util.get_host_short()
 
-  if p_is_admin:
-    admin_display = " (Admin)"
-  else:
-    admin_display = ""
+    ## Check the OS & Resources ########################################
+    plat = util.get_os()
+    glibcV = util.get_glibc_version()
 
-  langs = "Python v" + python_ver
-  if perl_ver > "":
-    langs = langs + " | Perl v" + perl_ver
-  if java_ver > "":
-    langs = langs + " | Java v" + java_ver
+    os_major_ver = ""
+    java_major_ver = ""
+    java_ver = ""
 
-  ## util.validate_distutils_click(False)
+    if this_uname == "Darwin":
+        mem_mb = util.get_mem_mb()
+        system_memory_in_kbytes = mem_mb * 1024
+        system_memory_in_gb = mem_mb / 1024.0
+        system_cpu_cores = util.get_cpu_cores()
+        cpu_model = util.getoutput("/usr/sbin/sysctl -n machdep.cpu.brand_string")
+        prod_name = util.getoutput("sw_vers -productName")
+        prod_version = util.getoutput("sw_vers -productVersion")
+        this_os = prod_name + " " + prod_version
+    elif this_uname == "Linux":
+        mem_mb = util.get_mem_mb()
+        system_memory_in_kbytes = mem_mb * 1024
+        system_memory_in_gb = mem_mb / 1024.0
+        system_cpu_cores = util.get_cpu_cores()
+        cpu_model = util.getoutput(
+            "grep 'model name' /proc/cpuinfo | head -1 | cut -d':' -f2"
+        )
+        os_major_ver = util.getoutput(
+            "cat /etc/os-release | grep VERSION_ID | cut -d= -f2 | tr -d '\"'"
+        )
+        if cpu_model == "":
+            cpu_model = "ARM"
+        if os.path.exists("/etc/redhat-release"):
+            this_os = util.getoutput("cat /etc/redhat-release")
+        elif os.path.exists("/etc/system-release"):
+            this_os = util.getoutput("cat /etc/system-release")
+        elif os.path.exists("/etc/lsb-release"):
+            this_os = util.getoutput(
+                "cat /etc/lsb-release | grep DISTRIB_DESCRIPTION | cut -d= -f2 | tr -d '\"'"
+            )
+        elif os.path.exists("/etc/os-release"):
+            this_os = util.getoutput(
+                "cat /etc/os-release | grep PRETTY_NAME | cut -d= -f2 | tr -d '\"'"
+            )
+        [java_major_ver, java_ver] = util.get_java_ver()
 
-  if glibcV <= ' ':
-    glibc_v_display = ''
-  else:
-    glibc_v_display = ' glibc-' + glibcV + '-'
+    if system_memory_in_gb > 0.6:
+        round_mem = round(system_memory_in_gb)
+    else:
+        round_mem = round(system_memory_in_gb, 1)
 
-  print(bold_start + ("#" * 70) + bold_end)
-  print(bold_start + "#  pgEdge CTL: " + bold_end + "v" + ver + "  " + p_home)
-  print(bold_start + "# User & Host: " + bold_end + p_user + \
-    admin_display + "  " + host_display + "  " + host_ip)
-  print(bold_start + "#          OS: " + bold_end + os2.rstrip() + " " + glibc_v_display + os_arch)
-  print(bold_start + "#     Machine: " + bold_end + mem + ", " + cores + " vCPU, " + cpu)
-  if instance_id > "" and not cloud_name == "unknown":
-    print(bold_start + "#  Cloud Info: " + bold_end +\
-      f"{cloud_name}  {cloud_platform}  {instance_id}  {flavor}  {az}")
+    mem = str(round_mem) + " GB"
 
-  print(bold_start + "#       Langs: " + bold_end + langs)
+    cores = str(system_cpu_cores)
 
-  print(bold_start + "#    Repo URL: " + bold_end + p_repo)
+    cpu = cpu_model.strip()
+    cpu = cpu.replace("(R)", "")
+    cpu = cpu.replace("(TM)", "")
+    cpu = cpu.replace(" CPU ", " ")
 
-  if not last_update_local:
-    last_update_local="None"
+    os2 = this_os.replace(" release ", " ")
+    os2 = os2.replace(" (Final)", "")
+    os2 = os2.replace(" (Core)", "")
 
-  print(bold_start + "# Last Update: " + bold_end + str(last_update_local))
-  print(bold_start + ("#" * 70) + bold_end)
+    ver = util.get_version()
+    [last_update_utc, last_update_local, unique_id] = util.read_hosts("localhost")
+    if last_update_local:
+        last_upd_dt = datetime.strptime(last_update_local, "%Y-%m-%d %H:%M:%S")
+        time_diff = int(util.timedelta_total_seconds(datetime.now() - last_upd_dt))
+        last_update_readable = util.get_readable_time_diff(str(time_diff), precision=2)
+
+    versions_sql = util.get_versions_sql()
+    perl_ver = util.get_perl_ver()
+
+    os_pkg_mgr = util.get_pkg_mgr()
+
+    if p_json:
+        infoJsonArray = []
+        infoJson = {}
+        infoJson["version"] = ver
+        infoJson["home"] = p_home
+        infoJson["user"] = p_user
+        infoJson["host"] = host_display
+        infoJson["host_short"] = util.get_host_short()
+        infoJson["host_long"] = util.get_host()
+        infoJson["host_ip"] = host_ip
+        infoJson["os"] = unicode(
+            str(os2), sys.getdefaultencoding(), errors="ignore"
+        ).strip()
+        infoJson["os_pkg_mgr"] = os_pkg_mgr
+        infoJson["os_major_ver"] = os_major_ver
+        infoJson["platform"] = unicode(
+            str(plat), sys.getdefaultencoding(), errors="ignore"
+        ).strip()
+        infoJson["arch"] = os_arch
+        infoJson["mem"] = round_mem
+        infoJson["cores"] = system_cpu_cores
+        infoJson["cpu"] = cpu
+        infoJson["last_update_utc"] = last_update_utc
+        if last_update_local:
+            infoJson["last_update_readable"] = last_update_readable
+        infoJson["unique_id"] = unique_id
+        infoJson["repo"] = p_repo
+        infoJson["versions_sql"] = versions_sql
+        infoJson["system_memory_in_kb"] = system_memory_in_kbytes
+        infoJson["python_ver"] = python_ver
+        infoJson["python_exe"] = python_exe
+        if pip_ver != "None":
+            infoJson["pip_ver"] = pip_ver
+        infoJson["perl_ver"] = perl_ver
+        infoJson["java_ver"] = java_ver
+        infoJson["java_major_ver"] = java_major_ver
+        infoJson["glibc_ver"] = glibcV
+        infoJson["region"] = region
+        infoJson["az"] = az
+        infoJson["instance_id"] = instance_id
+        infoJson["flavor"] = flavor
+        infoJson["private_ip"] = private_ip
+        infoJsonArray.append(infoJson)
+        if print_flag:
+            print(json.dumps(infoJsonArray, sort_keys=True, indent=2))
+            return
+        else:
+            return infoJson
+
+    if p_is_admin:
+        admin_display = " (Admin)"
+    else:
+        admin_display = ""
+
+    langs = "Python v" + python_ver
+    if perl_ver > "":
+        langs = langs + " | Perl v" + perl_ver
+    if java_ver > "":
+        langs = langs + " | Java v" + java_ver
+
+    ## util.validate_distutils_click(False)
+
+    if glibcV <= " ":
+        glibc_v_display = ""
+    else:
+        glibc_v_display = " glibc-" + glibcV + "-"
+
+    print(bold_start + ("#" * 70) + bold_end)
+    print(bold_start + "#  pgEdge CTL: " + bold_end + "v" + ver + "  " + p_home)
+    print(
+        bold_start
+        + "# User & Host: "
+        + bold_end
+        + p_user
+        + admin_display
+        + "  "
+        + host_display
+        + "  "
+        + host_ip
+    )
+    print(
+        bold_start
+        + "#          OS: "
+        + bold_end
+        + os2.rstrip()
+        + " "
+        + glibc_v_display
+        + os_arch
+    )
+    print(
+        bold_start + "#     Machine: " + bold_end + mem + ", " + cores + " vCPU, " + cpu
+    )
+    if instance_id > "" and not cloud_name == "unknown":
+        print(
+            bold_start
+            + "#  Cloud Info: "
+            + bold_end
+            + f"{cloud_name}  {cloud_platform}  {instance_id}  {flavor}  {az}"
+        )
+
+    print(bold_start + "#       Langs: " + bold_end + langs)
+
+    print(bold_start + "#    Repo URL: " + bold_end + p_repo)
+
+    if not last_update_local:
+        last_update_local = "None"
+
+    print(bold_start + "# Last Update: " + bold_end + str(last_update_local))
+    print(bold_start + ("#" * 70) + bold_end)
 
 
 def info_component(p_comp_dict, p_kount):
     if p_kount > 1:
         print(bold_start + ("-" * 90) + bold_end)
 
-    print(bold_start + "     Project: " + bold_end + p_comp_dict['project'] + " (" + p_comp_dict['project_url'] + ")" )
+    print(
+        bold_start
+        + "     Project: "
+        + bold_end
+        + p_comp_dict["project"]
+        + " ("
+        + p_comp_dict["project_url"]
+        + ")"
+    )
 
-    print(bold_start + "   Component: " + bold_end + p_comp_dict['component'] + " " + p_comp_dict['version'] + " (" + p_comp_dict['proj_description'] + ")")
+    print(
+        bold_start
+        + "   Component: "
+        + bold_end
+        + p_comp_dict["component"]
+        + " "
+        + p_comp_dict["version"]
+        + " ("
+        + p_comp_dict["proj_description"]
+        + ")"
+    )
 
-    if p_comp_dict['port'] > 1:
-        print(bold_start + "        port: " + bold_end + str(p_comp_dict['port']))
+    if p_comp_dict["port"] > 1:
+        print(bold_start + "        port: " + bold_end + str(p_comp_dict["port"]))
 
-    if p_comp_dict['datadir'] > "":
-        print(bold_start + "     datadir: " + bold_end + p_comp_dict['datadir'])
+    if p_comp_dict["datadir"] > "":
+        print(bold_start + "     datadir: " + bold_end + p_comp_dict["datadir"])
 
-    if p_comp_dict['logdir']  > "":
-        print(bold_start + "      logdir: " + bold_end + p_comp_dict['logdir'])
+    if p_comp_dict["logdir"] > "":
+        print(bold_start + "      logdir: " + bold_end + p_comp_dict["logdir"])
 
-    if p_comp_dict['autostart'] == "on":
-        print(bold_start + "   autostart: " + bold_end + p_comp_dict['autostart'])
+    if p_comp_dict["autostart"] == "on":
+        print(bold_start + "   autostart: " + bold_end + p_comp_dict["autostart"])
 
-    if p_comp_dict['svcuser'] > "" and util.get_platform() == "Linux":
-        print(bold_start + "     svcuser: " + bold_end + p_comp_dict['svcuser'])
+    if p_comp_dict["svcuser"] > "" and util.get_platform() == "Linux":
+        print(bold_start + "     svcuser: " + bold_end + p_comp_dict["svcuser"])
 
-    if (('status' in p_comp_dict)  and ('up_time' in p_comp_dict)):
-        print(bold_start + "      status: " + bold_end + p_comp_dict['status'] + \
-              bold_start + " for " + bold_end + p_comp_dict['up_time'])
+    if ("status" in p_comp_dict) and ("up_time" in p_comp_dict):
+        print(
+            bold_start
+            + "      status: "
+            + bold_end
+            + p_comp_dict["status"]
+            + bold_start
+            + " for "
+            + bold_end
+            + p_comp_dict["up_time"]
+        )
     else:
-        if 'status' in p_comp_dict:
-            print(bold_start + "      status: " + bold_end + p_comp_dict['status'])
-        if 'up_time' in p_comp_dict:
-            print(bold_start + "    up since: " + bold_end + p_comp_dict['up_time'])
+        if "status" in p_comp_dict:
+            print(bold_start + "      status: " + bold_end + p_comp_dict["status"])
+        if "up_time" in p_comp_dict:
+            print(bold_start + "    up since: " + bold_end + p_comp_dict["up_time"])
 
-    if 'data_size' in p_comp_dict:
-        print(bold_start + "   data size: " + bold_end + p_comp_dict['data_size'])
+    if "data_size" in p_comp_dict:
+        print(bold_start + "   data size: " + bold_end + p_comp_dict["data_size"])
 
-    if 'connections' in p_comp_dict:
-        print(bold_start + " connections: " + bold_end + p_comp_dict['connections'])
+    if "connections" in p_comp_dict:
+        print(bold_start + " connections: " + bold_end + p_comp_dict["connections"])
 
-    print(bold_start + "Release Date: " + bold_end + p_comp_dict['release_date'] + \
-          bold_start + "  Stage: " + bold_end + p_comp_dict['stage'])
+    print(
+        bold_start
+        + "Release Date: "
+        + bold_end
+        + p_comp_dict["release_date"]
+        + bold_start
+        + "  Stage: "
+        + bold_end
+        + p_comp_dict["stage"]
+    )
 
-    if p_comp_dict['platform'] > "":
-      print(bold_start + "Supported On: " + bold_end + "[" + p_comp_dict['platform'] + "]")
+    if p_comp_dict["platform"] > "":
+        print(
+            bold_start
+            + "Supported On: "
+            + bold_end
+            + "["
+            + p_comp_dict["platform"]
+            + "]"
+        )
 
-    if p_comp_dict['pre_reqs'] > "":
-      print(bold_start + "   Pre Req's: " + bold_end + p_comp_dict['pre_reqs'])
+    if p_comp_dict["pre_reqs"] > "":
+        print(bold_start + "   Pre Req's: " + bold_end + p_comp_dict["pre_reqs"])
 
-    print(bold_start +   "     License: " + bold_end + p_comp_dict['license'])
+    print(bold_start + "     License: " + bold_end + p_comp_dict["license"])
 
-    is_installed = str(p_comp_dict['is_installed'])
+    is_installed = str(p_comp_dict["is_installed"])
     if str(is_installed) == "0":
-       is_installed = "NO"
+        is_installed = "NO"
 
-    print(bold_start +   "   IsCurrent: " + bold_end + str(p_comp_dict['is_current']) + \
-          bold_start +   "  IsInstalled: " + bold_end + is_installed)
+    print(
+        bold_start
+        + "   IsCurrent: "
+        + bold_end
+        + str(p_comp_dict["is_current"])
+        + bold_start
+        + "  IsInstalled: "
+        + bold_end
+        + is_installed
+    )
 
 
-def format_data_to_table(data,
-                    keys,
-                    header=None,
-                    error_key=None,
-                    error_msg_column=None,
-                    sort_by_key=None,
-                    sort_order_reverse=False):
+def format_data_to_table(
+    data,
+    keys,
+    header=None,
+    error_key=None,
+    error_msg_column=None,
+    sort_by_key=None,
+    sort_order_reverse=False,
+):
     """Takes a list of dictionaries, formats the data, and returns
     the formatted data as a text table.
 
@@ -502,9 +647,7 @@ def format_data_to_table(data,
     # Sort the data if a sort key is specified (default sort order
     # is ascending)
     if sort_by_key:
-        data = sorted(data,
-                      key=itemgetter(sort_by_key),
-                      reverse=sort_order_reverse)
+        data = sorted(data, key=itemgetter(sort_by_key), reverse=sort_order_reverse)
 
     # If header is not empty, add header to data
     if header:
@@ -512,52 +655,54 @@ def format_data_to_table(data,
         # on that length
         header_divider = []
         for name in header:
-            header_divider.append('-' * len(name))
+            header_divider.append("-" * len(name))
 
         # Create a list of dictionary from the keys and the header and
         # insert it at the beginning of the list. Do the same for the
         # divider and insert below the header.
-        #header_divider = dict(zip(keys, header_divider))
-        #data.insert(0, header_divider)
+        # header_divider = dict(zip(keys, header_divider))
+        # data.insert(0, header_divider)
         header = dict(zip(keys, header))
         data.insert(0, header)
 
     column_widths = []
     for key in keys:
-        column_widths.append(max(len(str(column[key])) for column in data)+2)
+        column_widths.append(max(len(str(column[key])) for column in data) + 2)
 
     # Create a tuple pair of key and the associated column width for it
     key_width_pair = zip(keys, column_widths)
-    key_length =  len(keys)
+    key_length = len(keys)
 
-    str_format = ('%-*s ' * len(keys)).strip() + '\n'
-    formatted_data = ''
+    str_format = ("%-*s " * len(keys)).strip() + "\n"
+    formatted_data = ""
 
     for element in data:
         data_to_format = []
-        s=0
+        s = 0
         key_width_pair = zip(keys, column_widths)
         # Create a tuple that will be used for the formatting in
         # width, value format
         for pair in key_width_pair:
             dataStr = str(element[pair[0]])
-            spaces = " " * ((int(float(pair[1])) - len(dataStr))-2)
-            if s<key_length-1:
+            spaces = " " * ((int(float(pair[1])) - len(dataStr)) - 2)
+            if s < key_length - 1:
                 spaces = spaces + " |"
 
             if dataStr in header.values():
-                if s==0:
+                if s == 0:
                     dataStr = table_header_style + dataStr
                 dataStr = dataStr + spaces
-                if s==key_length-1:
+                if s == key_length - 1:
                     dataStr = dataStr + bold_end
-                s=s+1
-            elif (error_key and error_msg_column):
-                if pair[0] in error_msg_column and element.get(error_key[0]) == error_key[1]:
-                  dataStr = error_start + dataStr + bold_end
+                s = s + 1
+            elif error_key and error_msg_column:
+                if (
+                    pair[0] in error_msg_column
+                    and element.get(error_key[0]) == error_key[1]
+                ):
+                    dataStr = error_start + dataStr + bold_end
 
             data_to_format.append(pair[1])
             data_to_format.append(dataStr)
         formatted_data += str_format % tuple(data_to_format)
     return formatted_data
-
