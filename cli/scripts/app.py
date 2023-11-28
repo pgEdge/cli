@@ -1,3 +1,4 @@
+
 #  Copyright 2022-2024 PGEDGE  All rights reserved. #
 
 
@@ -29,7 +30,9 @@ def pgbench_install(db, replication_set=None, pg=None):
     except Exception as e:
         util.exit_exception(e)
     if replication_set:
-        os.system(f"./ctl spock repset-add-table {replication_set} 'pgbench_*' {db}")
+        os.system(
+            f"./ctl spock repset-add-table {replication_set} 'pgbench_*' {db}"
+        )
 
 
 def pgbench_run(db, Rate, Time, pg=None):
@@ -96,7 +99,9 @@ def northwind_install(db, replication_set=None, pg=None):
         util.exit_exception(e)
 
     if replication_set:
-        os.system(f"./ctl spock repset-add-table {replication_set} 'northwind.*' {db}")
+        os.system(
+            f"./ctl spock repset-add-table {replication_set} 'northwind.*' {db}"
+        )
 
 
 def northwind_run(db, offset, Rate=2, Time=10, pg=None):

@@ -740,7 +740,7 @@ def get_list(p_isJSON, p_comp=None, p_return=False):
                     date_diff = (today_date - insDate).days
                     if date_diff <= 30:
                         compDict["is_updated"] = 1
-                except Exception:
+                except Exception :
                     pass
 
             available_ver = str(row[17])
