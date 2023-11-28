@@ -1,8 +1,8 @@
-# pgEdge CTL : Command & Control Interface
+# pgEdge NodeCtl : Command Line Interface (CLI) for pgEdge
 
 
 # Summary
-CTL is the pgEdge Command & Control Interface (CLI) for managing components. 
+NodeCtl is the pgEdge Command Line Interface (CLI) for managing components. 
 It is licensed under the pgEdge Community License 1.0
 
 # Configuring the Python Environment for Dev/Test
@@ -24,7 +24,7 @@ Some of the components used by NodeCtl require a very recent version of pip, so 
 
 $ pip install --upgrade pip
 
-# CLI Modules 
+# CTL Modules 
 The modules are `um`, `service`, `spock`, `cluster`, `db`, `secure`, and `ace`.  
 
 ## Synopsis
