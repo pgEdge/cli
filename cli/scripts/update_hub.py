@@ -1,4 +1,3 @@
-
 #  Copyright 2022-2024 PGEDGE  All rights reserved. #
 
 import os, sys, sqlite3, platform
@@ -8,7 +7,6 @@ MY_HOME = os.getenv("MY_HOME", "")
 CTL = MY_HOME + "/ctl"
 
 rc = 0
-
 
 
 def run_sql(cmd):
