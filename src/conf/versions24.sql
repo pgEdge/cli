@@ -85,7 +85,7 @@ INSERT INTO categories VALUES (9,  87, 'Management & Monitoring', 'Manage/Monito
 -- ## HUB ################################
 INSERT INTO projects VALUES ('hub', 'app', 0, 0, 'hub', 0, 'https://github.com/pgedge/nodectl','',0,'','','');
 INSERT INTO releases VALUES ('hub', 1, 'hub', '', '', 'hidden', '', 1, '', '', '');
-INSERT INTO versions VALUES ('hub', '24.01-1', '',  1, '20231128', '', '', '');
+INSERT INTO versions VALUES ('hub', '24.01-1', '',  1, '20231129', '', '', '');
 INSERT INTO versions VALUES ('hub', '24.010',  '',  0, '20231117', '', '', '');
 INSERT INTO versions VALUES ('hub', '24.009',  '',  0, '20231117', '', '', '');
 INSERT INTO versions VALUES ('hub', '24.008',  '',  0, '20231115', '', '', '');
@@ -116,7 +116,7 @@ INSERT INTO versions VALUES ('pg13', '13.11-1', 'el8', 0, '20230511','', '', '')
 
 INSERT INTO releases VALUES ('pg14', 1, 'pg', '', '', 'prod', 
   '<font size=-1>New in <a href=https://www.postgresql.org/docs/14/release-14.html>2021</a></font>', 1, 'POSTGRES', '', '');
-INSERT INTO versions VALUES ('pg14', '14.10-1', 'el8, el9, arm9', 1, '20231128','', '', '');
+INSERT INTO versions VALUES ('pg14', '14.10-1', 'el8, el9, arm9', 1, '20231129', '','','');
 
 INSERT INTO releases VALUES ('pg15', 2, 'pg', '', '', 'prod', 
   '<font size=-1>New in <a href=https://www.postgresql.org/docs/15/release-15.html>2022</a></font>', 1, 'POSTGRES', '', '');
@@ -275,10 +275,10 @@ INSERT INTO releases VALUES ('spock32-pg14', 4, 'spock', 'Spock', '', 'prod', ''
 INSERT INTO releases VALUES ('spock32-pg15', 4, 'spock', 'Spock', '', 'prod', '', 1, 'pgEdge Community', '', '');
 INSERT INTO releases VALUES ('spock32-pg16', 4, 'spock', 'Spock', '', 'prod', '', 1, 'pgEdge Community', '', '');
 INSERT INTO releases VALUES ('spock32-pg17', 4, 'spock', 'Spock', '', 'prod', '', 1, 'pgEdge Community', '', '');
-INSERT INTO versions VALUES ('spock32-pg14', '3.2.0-1', 'el9, arm9', 1, '20231118', 'pg14', '', '');
-INSERT INTO versions VALUES ('spock32-pg15', '3.2.0-1', 'el9, arm9', 1, '20231118', 'pg15', '', '');
-INSERT INTO versions VALUES ('spock32-pg16', '3.2.0-1', 'el9, arm9', 1, '20231118', 'pg16', '', '');
-INSERT INTO versions VALUES ('spock32-pg17', '3.2.0-1', 'el9, arm9', 1, '20231118', 'pg17', '', '');
+INSERT INTO versions VALUES ('spock32-pg14', '3.2.1-1', 'el9, arm9', 1, '20231129', 'pg14', '', '');
+INSERT INTO versions VALUES ('spock32-pg15', '3.2.1-1', 'el9, arm9', 1, '20231129', 'pg15', '', '');
+INSERT INTO versions VALUES ('spock32-pg16', '3.2.1-1', 'el9, arm9', 1, '20231129', 'pg16', '', '');
+INSERT INTO versions VALUES ('spock32-pg17', '3.2.1-1', 'el9, arm9', 1, '20231129', 'pg17', '', '');
 
 INSERT INTO projects VALUES ('pglogical', 'ext', 4, 0, 'hub', 1, 'https://github.com/2ndQuadrant/pglogical/releases',
   'pglogical', 1, 'spock.png', 'Logical Replication', 'https://github.com/2ndQuadrant/pglogical');
@@ -339,7 +339,7 @@ INSERT INTO versions VALUES ('pgedge', '2-07',  '', 0, '20231024', '', '', '');
 INSERT INTO projects VALUES ('ctlibs', 'pge', 0, 0, 'hub', 3, 'https://github.com/pgedge/nodectl',
   'ctlibs',  0, 'ctlibs.png', 'ctlibs', 'https://github.com/pgedge/nodectl');
 INSERT INTO releases VALUES ('ctlibs', 2, 'ctlibs',  'nodectl Libs', '', 'prod', '', 1, '', '', '');
-INSERT INTO versions VALUES ('ctlibs', '1.1', '', 1, '20231128', '', '', '');
+INSERT INTO versions VALUES ('ctlibs', '1.1', '', 1, '20231129', '', '', '');
 
 INSERT INTO projects VALUES ('nclibs', 'pge', 0, 0, 'hub', 3, 'https://github.com/pgedge/nodectl',
   'nclibs',  0, 'nclibs.png', 'nclibs', 'https://github.com/pgedge/nodectl');
@@ -354,7 +354,7 @@ INSERT INTO versions VALUES ('pgcat', '1.1.1', 'el9, arm9', 1, '20230829', '', '
 INSERT INTO projects VALUES ('backrest', 'pge', 11, 0, 'hub', 3, 'http://pgbackrest.org',
   'backrest',  0, 'backrest.png', 'Backup & Restore', 'http://pgbackrest.org');
 INSERT INTO releases VALUES ('backrest', 2, 'backrest',  'pgBackRest', '', 'ent', '', 1, 'MIT', '', '');
-INSERT INTO versions VALUES ('backrest', '2.48-1', 'el9, arm9', 1, '20231128', '', 'EL9', '');
+INSERT INTO versions VALUES ('backrest', '2.48-1', 'el9, arm9', 1, '20231129', '', 'EL9', '');
 INSERT INTO versions VALUES ('backrest', '2.47-1', 'el9, arm9', 0, '20230803', '', 'EL9', '');
 
 INSERT INTO projects VALUES ('firewalld', 'app', 11, 0, '', 4, 'https://firewalld.org',

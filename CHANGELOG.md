@@ -9,7 +9,8 @@
   + SPOCK32: 
     - support for pg14 on EL9
     - support for limited feature set against core/unpatched pg14+
-    - dev7 --> 3.2.0 on pg14, pg15, pg16 & pg17
+    - 3.2.1 on pg14, pg15, pg16 & pg17
+    - pg14 version is compiled against unpatched postgresql
 
   + PG14:
     - now available on EL9 
