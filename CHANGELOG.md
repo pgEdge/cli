@@ -1,6 +1,6 @@
 # pgEdge Platform Release Notes #############
 
-## done or 24.01-1 as of 2023-11-30 ###########
+## done for 24.01-1 on 2023-11-30 ###########
   + PGEDGE:
     - 'install pgedge' now defaults to spock32 for pg14 thru pg17
 
