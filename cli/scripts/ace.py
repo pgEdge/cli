@@ -1180,8 +1180,8 @@ def table_repair(cluster_name, diff_file, source_of_truth, table_name, dry_run=F
         simple_primary_key = False
         keys_list = key.split(",")
 
-    total_upserted = 0
-    total_deleted = 0
+    total_upserted = {}
+    total_deleted = {}
 
     for node_pair in diff_json.keys():
         node1, node2 = node_pair.split("/")
@@ -1211,27 +1211,33 @@ def table_repair(cluster_name, diff_file, source_of_truth, table_name, dry_run=F
             ]
             divergent_node = node1
         else:
-            # XXX: Expensive much?
-            if true_rows == diff_json[node_pair][node1]:
-                divergent_rows = [
-                    tuple(str(x) for x in row.values())
-                    for row in diff_json[node_pair][node2]
-                ]
-                divergent_node = node2
-            else:
-                divergent_rows = [
-                    tuple(str(x) for x in row.values())
-                    for row in diff_json[node_pair][node1]
-                ]
-                divergent_node = node1
+            """
+            It's possible that only one node or both nodes have divergent rows.
+            Instead of attempting to fix one or both nodes here and then
+            skipping them later, it's probably best to ignore all differences
+            between divergent nodes and continue with the next node pair.
+            """
+            continue
+
+            # # XXX: Expensive much?
+            # if true_rows == diff_json[node_pair][node1]:
+            #    divergent_rows = [
+            #        tuple(str(x) for x in row.values())
+            #        for row in diff_json[node_pair][node2]
+            #    ]
+            #    divergent_node = node2
+            # else:
+            #    divergent_rows = [
+            #        tuple(str(x) for x in row.values())
+            #        for row in diff_json[node_pair][node1]
+            #    ]
+            #    divergent_node = node1
 
         true_set = OrderedSet(true_rows)
         divergent_set = OrderedSet(divergent_rows)
 
-        rows_to_insert = true_set - divergent_set  # Set difference
-        rows_to_update = true_set & divergent_set  # Set intersection
+        rows_to_upsert = true_set - divergent_set  # Set difference
         rows_to_delete = divergent_set - true_set
-        rows_to_upsert = rows_to_insert | rows_to_update  # Set union
 
         rows_to_upsert_json = []
         rows_to_delete_json = []
@@ -1248,7 +1254,7 @@ def table_repair(cluster_name, diff_file, source_of_truth, table_name, dry_run=F
         """
         We need to construct a lookup table for the upserts.
         This is because we need to delete only those rows from
-        the divergent node that are not a prt of the upserts
+        the divergent node that are not a part of the upserts
         """
         for row in rows_to_upsert_json:
             if simple_primary_key:
@@ -1266,8 +1272,11 @@ def table_repair(cluster_name, diff_file, source_of_truth, table_name, dry_run=F
 
             filtered_rows_to_delete.append(entry)
 
-        total_upserted += len(rows_to_upsert_json)
-        total_deleted += len(filtered_rows_to_delete)
+        if divergent_node not in total_upserted:
+            total_upserted[divergent_node] = len(rows_to_upsert_json)
+
+        if divergent_node not in total_deleted:
+            total_deleted[divergent_node] = len(filtered_rows_to_delete)
 
         delete_keys = []
 
@@ -1333,13 +1342,30 @@ def table_repair(cluster_name, diff_file, source_of_truth, table_name, dry_run=F
     run_time_str = f"{run_time:.2f}"
 
     util.message(
-        f"Successfully applied diffs to {table_name} in cluster {cluster_name}",
+        f"Successfully applied diffs to {table_name} in cluster {cluster_name}\n",
         p_state="success",
     )
 
+    util.message("*** SUMMARY ***\n", p_state="info")
+
+    for node in total_upserted.keys():
+        util.message(
+            f"{node} UPSERTED = {total_upserted[node]} rows",
+            p_state="info",
+        )
+
+    print()
+
+    for node in total_deleted.keys():
+        util.message(
+            f"{node} DELETED = {total_deleted[node]} rows",
+            p_state="info",
+        )
+
+    print()
+
     util.message(
-        f"\nTOTAL ROWS UPSERTED = {total_upserted}\n"
-        f"TOTAL ROWS DELETED = {total_deleted}\nRUN TIME = {run_time_str} seconds",
+        f"RUN TIME = {run_time_str} seconds",
         p_state="info",
     )
 
