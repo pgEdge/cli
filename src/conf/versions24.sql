@@ -85,17 +85,7 @@ INSERT INTO categories VALUES (9,  87, 'Management & Monitoring', 'Manage/Monito
 -- ## HUB ################################
 INSERT INTO projects VALUES ('hub', 'app', 0, 0, 'hub', 0, 'https://github.com/pgedge/nodectl','',0,'','','');
 INSERT INTO releases VALUES ('hub', 1, 'hub', '', '', 'hidden', '', 1, '', '', '');
-INSERT INTO versions VALUES ('hub', '24.01-1', '',  1, '20231129', '', '', '');
-INSERT INTO versions VALUES ('hub', '24.010',  '',  0, '20231117', '', '', '');
-INSERT INTO versions VALUES ('hub', '24.009',  '',  0, '20231117', '', '', '');
-INSERT INTO versions VALUES ('hub', '24.008',  '',  0, '20231115', '', '', '');
-INSERT INTO versions VALUES ('hub', '24.007',  '',  0, '20231113', '', '', '');
-INSERT INTO versions VALUES ('hub', '24.006',  '',  0, '20231107', '', '', '');
-INSERT INTO versions VALUES ('hub', '24.005',  '',  0, '20231101', '', '', '');
-INSERT INTO versions VALUES ('hub', '24.004',  '',  0, '20231024', '', '', '');
-INSERT INTO versions VALUES ('hub', '24.003',  '',  0, '20231023', '', '', '');
-INSERT INTO versions VALUES ('hub', '24.002',  '',  0, '20231020', '', '', '');
-INSERT INTO versions VALUES ('hub', '24.001',  '',  0, '20231017', '', '', '');
+INSERT INTO versions VALUES ('hub', '24.01-1', '',  1, '20231130', '', '', '');
 INSERT INTO versions VALUES ('hub', '23.134',  '',  0, '20231013', '', '', '');
 
 -- ##
@@ -275,10 +265,10 @@ INSERT INTO releases VALUES ('spock32-pg14', 4, 'spock', 'Spock', '', 'prod', ''
 INSERT INTO releases VALUES ('spock32-pg15', 4, 'spock', 'Spock', '', 'prod', '', 1, 'pgEdge Community', '', '');
 INSERT INTO releases VALUES ('spock32-pg16', 4, 'spock', 'Spock', '', 'prod', '', 1, 'pgEdge Community', '', '');
 INSERT INTO releases VALUES ('spock32-pg17', 4, 'spock', 'Spock', '', 'prod', '', 1, 'pgEdge Community', '', '');
-INSERT INTO versions VALUES ('spock32-pg14', '3.2.1-1', 'el9, arm9', 1, '20231129', 'pg14', '', '');
-INSERT INTO versions VALUES ('spock32-pg15', '3.2.1-1', 'el9, arm9', 1, '20231129', 'pg15', '', '');
-INSERT INTO versions VALUES ('spock32-pg16', '3.2.1-1', 'el9, arm9', 1, '20231129', 'pg16', '', '');
-INSERT INTO versions VALUES ('spock32-pg17', '3.2.1-1', 'el9, arm9', 1, '20231129', 'pg17', '', '');
+INSERT INTO versions VALUES ('spock32-pg14', '3.2.1-1', 'el9, arm9', 1, '20231130', 'pg14', '', '');
+INSERT INTO versions VALUES ('spock32-pg15', '3.2.1-1', 'el9, arm9', 1, '20231130', 'pg15', '', '');
+INSERT INTO versions VALUES ('spock32-pg16', '3.2.1-1', 'el9, arm9', 1, '20231130', 'pg16', '', '');
+INSERT INTO versions VALUES ('spock32-pg17', '3.2.1-1', 'el9, arm9', 1, '20231130', 'pg17', '', '');
 
 INSERT INTO projects VALUES ('pglogical', 'ext', 4, 0, 'hub', 1, 'https://github.com/2ndQuadrant/pglogical/releases',
   'pglogical', 1, 'spock.png', 'Logical Replication', 'https://github.com/2ndQuadrant/pglogical');
@@ -333,13 +323,13 @@ INSERT INTO versions VALUES ('badger', '11.8', '', 0, '20220408', '', '', '');
 INSERT INTO projects VALUES ('pgedge', 'pge', 0, 0, 'hub', 3, 'http://pgedge.org',
   'pgedge',  0, 'pgedge.png', 'Multi-Active Global Postgres Clusters', 'http://pgedge.com');
 INSERT INTO releases VALUES ('pgedge', 1, 'pgedge',  'pgEdge', '', 'prod', '', 1, 'pgEdge Platform', '', '');
-INSERT INTO versions VALUES ('pgedge', '2.08',  '', 1, '20231122', '', '', '');
+INSERT INTO versions VALUES ('pgedge', '2.08',  '', 1, '20231130', '', '', '');
 INSERT INTO versions VALUES ('pgedge', '2-07',  '', 0, '20231024', '', '', '');
 
 INSERT INTO projects VALUES ('ctlibs', 'pge', 0, 0, 'hub', 3, 'https://github.com/pgedge/nodectl',
   'ctlibs',  0, 'ctlibs.png', 'ctlibs', 'https://github.com/pgedge/nodectl');
 INSERT INTO releases VALUES ('ctlibs', 2, 'ctlibs',  'nodectl Libs', '', 'prod', '', 1, '', '', '');
-INSERT INTO versions VALUES ('ctlibs', '1.1', '', 1, '20231129', '', '', '');
+INSERT INTO versions VALUES ('ctlibs', '1.1', '', 1, '20231130', '', '', '');
 
 INSERT INTO projects VALUES ('nclibs', 'pge', 0, 0, 'hub', 3, 'https://github.com/pgedge/nodectl',
   'nclibs',  0, 'nclibs.png', 'nclibs', 'https://github.com/pgedge/nodectl');
@@ -354,7 +344,7 @@ INSERT INTO versions VALUES ('pgcat', '1.1.1', 'el9, arm9', 1, '20230829', '', '
 INSERT INTO projects VALUES ('backrest', 'pge', 11, 0, 'hub', 3, 'http://pgbackrest.org',
   'backrest',  0, 'backrest.png', 'Backup & Restore', 'http://pgbackrest.org');
 INSERT INTO releases VALUES ('backrest', 2, 'backrest',  'pgBackRest', '', 'ent', '', 1, 'MIT', '', '');
-INSERT INTO versions VALUES ('backrest', '2.48-1', 'el9, arm9', 1, '20231129', '', 'EL9', '');
+INSERT INTO versions VALUES ('backrest', '2.48-1', 'el9, arm9', 1, '20231130', '', 'EL9', '');
 INSERT INTO versions VALUES ('backrest', '2.47-1', 'el9, arm9', 0, '20230803', '', 'EL9', '');
 
 INSERT INTO projects VALUES ('firewalld', 'app', 11, 0, '', 4, 'https://firewalld.org',

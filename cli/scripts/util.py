@@ -34,7 +34,7 @@ isEXTENSIONS = False
 
 ONE_DAY = 86400
 ONE_WEEK = ONE_DAY * 7
-DEFAULT_PG = "17"
+DEFAULT_PG = "16"
 
 bad_os_warn = False
 

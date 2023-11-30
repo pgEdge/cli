@@ -1,8 +1,9 @@
 # pgEdge Platform Release Notes #############
 
+## done or 24.01-1 as of 2023-11-30 ###########
+  + PGEDGE:
+    - 'install pgedge' now defaults to spock32 for pg14 thru pg17
 
-## done so far for 24.01-1 as of 2023-11-28 ###########
-### New Features:
   + ACE:
     - table-repair can now handle missing, divergent and extra rows
 
@@ -39,13 +40,11 @@
   + MACHINE: doc & more improvements
 
 
-
 ## done for 24.008 on 2023-11-15 ###########
   + SPOCK32: bump to 3.2dev7 for prelim paralell_slots testing on pg17
 
 
 ## done for 24.007 on 2023-11-13 ###########
-### New Features:
   + ACE: table re-run only compares delta rows
   + MACHINE: 3rd pass includes:
     - equinixmetal fixes to LibCloud 3.1.8+ for size_list() & node_create()
