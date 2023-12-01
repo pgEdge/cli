@@ -1,5 +1,5 @@
 import util, db
-import os, sys, random, time
+import os, sys, time
 
 thisDir = os.path.dirname(os.path.realpath(__file__))
 ctl = "./ctl "
@@ -107,7 +107,7 @@ def check_pre_reqs():
             error_exit("Must specify a -P passwd when specifying a -U usr")
 
 
-## MAINLINE #####################################################3
+# MAINLINE #####################################################3
 
 svcuser = util.get_user()
 
@@ -120,7 +120,7 @@ passwd = os.getenv("pgePasswd", None)
 prt = 0
 try:
     prt = int(os.getenv("pgePort", "5432"))
-except Exception as e:
+except Exception:
     error_exit("Port " + os.getenv("pgePort") + " is not an integer")
 
 check_pre_reqs()
