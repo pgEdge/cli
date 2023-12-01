@@ -255,9 +255,11 @@ INSERT INTO versions VALUES ('spock31-pg16', '3.1.7-1', 'el9, arm9', 0, '2023092
 
 INSERT INTO projects VALUES ('snowflake', 'pge', 4, 0, 'hub', 1, 'https://github.com/pgedge/snowflake/tags',
   'snowflake', 1, 'snowflake.png', 'Snowflake Sequences', 'https://github.com/pgedge/snowflake/');
+INSERT INTO releases VALUES ('snowflake-pg14', 4, 'snowflake', 'Snowflake', '', 'prod', '', 1, 'POSTGRES', '', '');
 INSERT INTO releases VALUES ('snowflake-pg15', 4, 'snowflake', 'Snowflake', '', 'prod', '', 1, 'POSTGRES', '', '');
 INSERT INTO releases VALUES ('snowflake-pg16', 4, 'snowflake', 'Snowflake', '', 'prod', '', 1, 'POSTGRES', '', '');
 INSERT INTO releases VALUES ('snowflake-pg17', 4, 'snowflake', 'Snowflake', '', 'prod', '', 1, 'POSTGRES', '', '');
+INSERT INTO versions VALUES ('snowflake-pg14', '1.1-1', 'el9, arm9', 1, '20231202', 'pg14', '', '');
 INSERT INTO versions VALUES ('snowflake-pg15', '1.1-1', 'el9, arm9', 1, '20231017', 'pg15', '', '');
 INSERT INTO versions VALUES ('snowflake-pg16', '1.1-1', 'el9, arm9', 1, '20231017', 'pg16', '', '');
 INSERT INTO versions VALUES ('snowflake-pg17', '1.1-1', 'el9, arm9', 1, '20231017', 'pg17', '', '');

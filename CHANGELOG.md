@@ -1,5 +1,11 @@
 # pgEdge Platform Release Notes #############
 
+## done for 24.01-2 on 2023-12-02 ###########
+  + PG14:
+    - snowflake now supports pg14
+    - 'install pgedge --pg 14' now supported
+
+
 ## done for 24.01-1 on 2023-11-30 ###########
   + PGEDGE:
     - 'install pgedge' now defaults to spock32 for pg14 thru pg17
