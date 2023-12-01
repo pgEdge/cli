@@ -74,7 +74,7 @@ def fix_schema(diff_file, sql1, sql2):
     newtable = False
     with open(diff_file) as diff_list:
         for i in diff_list.readlines():
-            if re.search("\,", i):
+            if re.search(r"\\,", i):
                 # TODO: Fix this
                 # linenum = i.split(",")[0]
                 pass
@@ -745,8 +745,6 @@ def write_diffs_json(block_rows):
 def write_diffs_csv():
     import pandas as pd
 
-    seen_nodepairs = {}
-
     dirname = datetime.now().astimezone(None).strftime("%Y-%m-%d_%H:%M:%S")
 
     if not os.path.exists("diffs"):
@@ -755,50 +753,34 @@ def write_diffs_csv():
     dirname = os.path.join("diffs", dirname)
     os.mkdir(dirname)
 
-    for entry in queue:
-        diff_list = entry["diffs"]
+    for node_pair in diff_dict.keys():
+        node1, node2 = node_pair.split("/")
+        node_pair_str = f"{node1}__{node2}"
+        node_pair_dir = os.path.join(dirname, node_pair_str)
 
-        if not diff_list:
-            continue
+        # Create directory for node pair if it doesn't exist
+        if not os.path.exists(node_pair_dir):
+            os.mkdir(node_pair_dir)
 
-        for diff_json in diff_list:
-            node1, node2 = diff_json.keys()
-            node_pair_str = f"{node1}__{node2}"
-            node_pair_dir = os.path.join(dirname, node_pair_str)
+        t1_write_path = os.path.join(node_pair_dir, node1 + ".csv")
+        t2_write_path = os.path.join(node_pair_dir, node2 + ".csv")
 
-            # Create directory for node pair if it doesn't exist
-            if not os.path.exists(node_pair_dir):
-                os.mkdir(node_pair_dir)
+        df1 = pd.DataFrame.from_dict(diff_dict[node_pair][node1])
+        df2 = pd.DataFrame.from_dict(diff_dict[node_pair][node2])
 
-            t1_write_path = os.path.join(node_pair_dir, node1 + ".csv")
-            t2_write_path = os.path.join(node_pair_dir, node2 + ".csv")
-
-            df1 = pd.DataFrame.from_dict(diff_json[node1])
-            df2 = pd.DataFrame.from_dict(diff_json[node2])
-
-            lookup_str = node1 + "," + node2
-
-            if lookup_str in seen_nodepairs:
-                df1.to_csv(t1_write_path, mode="a", header=False, index=False)
-                df2.to_csv(t2_write_path, mode="a", header=False, index=False)
-            else:
-                seen_nodepairs[lookup_str] = 1
-                df1.to_csv(t1_write_path, header=True, index=False)
-                df2.to_csv(t2_write_path, header=True, index=False)
-
-    for node_pair in seen_nodepairs.keys():
-        n1, n2 = node_pair.split(",")
-        node_pair_str = f"{n1}__{n2}"
+        df1.to_csv(t1_write_path, header=True, index=False)
+        df2.to_csv(t2_write_path, header=True, index=False)
         diff_file_name = os.path.join(dirname, f"{node_pair_str}/out.diff")
 
-        t1_write_path = os.path.join(dirname, node_pair_str, n1 + ".csv")
-        t2_write_path = os.path.join(dirname, node_pair_str, n2 + ".csv")
+        t1_write_path = os.path.join(dirname, node_pair_str, node1 + ".csv")
+        t2_write_path = os.path.join(dirname, node_pair_str, node2 + ".csv")
+
         cmd = f"diff -u {t1_write_path} {t2_write_path} | ydiff > {diff_file_name}"
         subprocess.check_output(cmd, shell=True)
 
         util.message(
-            f"DIFFS BETWEEN {util.set_colour(n1, 'blue')}"
-            f"AND {util.set_colour(n2, 'blue')}: {diff_file_name}",
+            f"DIFFS BETWEEN {util.set_colour(node1, 'blue')}"
+            f" AND {util.set_colour(node2, 'blue')}: {diff_file_name}",
             p_state="info",
         )
 
@@ -1180,8 +1162,8 @@ def table_repair(cluster_name, diff_file, source_of_truth, table_name, dry_run=F
         simple_primary_key = False
         keys_list = key.split(",")
 
-    total_upserted = 0
-    total_deleted = 0
+    total_upserted = {}
+    total_deleted = {}
 
     for node_pair in diff_json.keys():
         node1, node2 = node_pair.split("/")
@@ -1211,27 +1193,33 @@ def table_repair(cluster_name, diff_file, source_of_truth, table_name, dry_run=F
             ]
             divergent_node = node1
         else:
-            # XXX: Expensive much?
-            if true_rows == diff_json[node_pair][node1]:
-                divergent_rows = [
-                    tuple(str(x) for x in row.values())
-                    for row in diff_json[node_pair][node2]
-                ]
-                divergent_node = node2
-            else:
-                divergent_rows = [
-                    tuple(str(x) for x in row.values())
-                    for row in diff_json[node_pair][node1]
-                ]
-                divergent_node = node1
+            """
+            It's possible that only one node or both nodes have divergent rows.
+            Instead of attempting to fix one or both nodes here and then
+            skipping them later, it's probably best to ignore all differences
+            between divergent nodes and continue with the next node pair.
+            """
+            continue
+
+            # # XXX: Expensive much?
+            # if true_rows == diff_json[node_pair][node1]:
+            #    divergent_rows = [
+            #        tuple(str(x) for x in row.values())
+            #        for row in diff_json[node_pair][node2]
+            #    ]
+            #    divergent_node = node2
+            # else:
+            #    divergent_rows = [
+            #        tuple(str(x) for x in row.values())
+            #        for row in diff_json[node_pair][node1]
+            #    ]
+            #    divergent_node = node1
 
         true_set = OrderedSet(true_rows)
         divergent_set = OrderedSet(divergent_rows)
 
-        rows_to_insert = true_set - divergent_set  # Set difference
-        rows_to_update = true_set & divergent_set  # Set intersection
+        rows_to_upsert = true_set - divergent_set  # Set difference
         rows_to_delete = divergent_set - true_set
-        rows_to_upsert = rows_to_insert | rows_to_update  # Set union
 
         rows_to_upsert_json = []
         rows_to_delete_json = []
@@ -1248,7 +1236,7 @@ def table_repair(cluster_name, diff_file, source_of_truth, table_name, dry_run=F
         """
         We need to construct a lookup table for the upserts.
         This is because we need to delete only those rows from
-        the divergent node that are not a prt of the upserts
+        the divergent node that are not a part of the upserts
         """
         for row in rows_to_upsert_json:
             if simple_primary_key:
@@ -1266,8 +1254,11 @@ def table_repair(cluster_name, diff_file, source_of_truth, table_name, dry_run=F
 
             filtered_rows_to_delete.append(entry)
 
-        total_upserted += len(rows_to_upsert_json)
-        total_deleted += len(filtered_rows_to_delete)
+        if divergent_node not in total_upserted:
+            total_upserted[divergent_node] = len(rows_to_upsert_json)
+
+        if divergent_node not in total_deleted:
+            total_deleted[divergent_node] = len(filtered_rows_to_delete)
 
         delete_keys = []
 
@@ -1333,13 +1324,30 @@ def table_repair(cluster_name, diff_file, source_of_truth, table_name, dry_run=F
     run_time_str = f"{run_time:.2f}"
 
     util.message(
-        f"Successfully applied diffs to {table_name} in cluster {cluster_name}",
+        f"Successfully applied diffs to {table_name} in cluster {cluster_name}\n",
         p_state="success",
     )
 
+    util.message("*** SUMMARY ***\n", p_state="info")
+
+    for node in total_upserted.keys():
+        util.message(
+            f"{node} UPSERTED = {total_upserted[node]} rows",
+            p_state="info",
+        )
+
+    print()
+
+    for node in total_deleted.keys():
+        util.message(
+            f"{node} DELETED = {total_deleted[node]} rows",
+            p_state="info",
+        )
+
+    print()
+
     util.message(
-        f"\nTOTAL ROWS UPSERTED = {total_upserted}\n"
-        f"TOTAL ROWS DELETED = {total_deleted}\nRUN TIME = {run_time_str} seconds",
+        f"RUN TIME = {run_time_str} seconds",
         p_state="info",
     )
 

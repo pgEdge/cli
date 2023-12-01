@@ -5,6 +5,9 @@
     - snowflake now supports pg14
     - 'install pgedge --pg 14' now supported
 
+  + ACE:
+    - fixes and improvements to table-repair
+
 
 ## done for 24.01-1 on 2023-11-30 ###########
   + PGEDGE:
