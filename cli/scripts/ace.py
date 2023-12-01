@@ -745,8 +745,6 @@ def write_diffs_json(block_rows):
 def write_diffs_csv():
     import pandas as pd
 
-    seen_nodepairs = {}
-
     dirname = datetime.now().astimezone(None).strftime("%Y-%m-%d_%H:%M:%S")
 
     if not os.path.exists("diffs"):
@@ -755,50 +753,34 @@ def write_diffs_csv():
     dirname = os.path.join("diffs", dirname)
     os.mkdir(dirname)
 
-    for entry in queue:
-        diff_list = entry["diffs"]
+    for node_pair in diff_dict.keys():
+        node1, node2 = node_pair.split("/")
+        node_pair_str = f"{node1}__{node2}"
+        node_pair_dir = os.path.join(dirname, node_pair_str)
 
-        if not diff_list:
-            continue
+        # Create directory for node pair if it doesn't exist
+        if not os.path.exists(node_pair_dir):
+            os.mkdir(node_pair_dir)
 
-        for diff_json in diff_list:
-            node1, node2 = diff_json.keys()
-            node_pair_str = f"{node1}__{node2}"
-            node_pair_dir = os.path.join(dirname, node_pair_str)
+        t1_write_path = os.path.join(node_pair_dir, node1 + ".csv")
+        t2_write_path = os.path.join(node_pair_dir, node2 + ".csv")
 
-            # Create directory for node pair if it doesn't exist
-            if not os.path.exists(node_pair_dir):
-                os.mkdir(node_pair_dir)
+        df1 = pd.DataFrame.from_dict(diff_dict[node_pair][node1])
+        df2 = pd.DataFrame.from_dict(diff_dict[node_pair][node2])
 
-            t1_write_path = os.path.join(node_pair_dir, node1 + ".csv")
-            t2_write_path = os.path.join(node_pair_dir, node2 + ".csv")
-
-            df1 = pd.DataFrame.from_dict(diff_json[node1])
-            df2 = pd.DataFrame.from_dict(diff_json[node2])
-
-            lookup_str = node1 + "," + node2
-
-            if lookup_str in seen_nodepairs:
-                df1.to_csv(t1_write_path, mode="a", header=False, index=False)
-                df2.to_csv(t2_write_path, mode="a", header=False, index=False)
-            else:
-                seen_nodepairs[lookup_str] = 1
-                df1.to_csv(t1_write_path, header=True, index=False)
-                df2.to_csv(t2_write_path, header=True, index=False)
-
-    for node_pair in seen_nodepairs.keys():
-        n1, n2 = node_pair.split(",")
-        node_pair_str = f"{n1}__{n2}"
+        df1.to_csv(t1_write_path, header=True, index=False)
+        df2.to_csv(t2_write_path, header=True, index=False)
         diff_file_name = os.path.join(dirname, f"{node_pair_str}/out.diff")
 
-        t1_write_path = os.path.join(dirname, node_pair_str, n1 + ".csv")
-        t2_write_path = os.path.join(dirname, node_pair_str, n2 + ".csv")
+        t1_write_path = os.path.join(dirname, node_pair_str, node1 + ".csv")
+        t2_write_path = os.path.join(dirname, node_pair_str, node2 + ".csv")
+
         cmd = f"diff -u {t1_write_path} {t2_write_path} | ydiff > {diff_file_name}"
         subprocess.check_output(cmd, shell=True)
 
         util.message(
-            f"DIFFS BETWEEN {util.set_colour(n1, 'blue')}"
-            f"AND {util.set_colour(n2, 'blue')}: {diff_file_name}",
+            f"DIFFS BETWEEN {util.set_colour(node1, 'blue')}"
+            f" AND {util.set_colour(node2, 'blue')}: {diff_file_name}",
             p_state="info",
         )
 
