@@ -1343,7 +1343,7 @@ if "--pause" in args:
 
 if "--pg" in args:
     pgn = str(get_next_arg("--pg"))
-    if pgn >= "15" and pgn <= "17":
+    if pgn >= "14" and pgn <= "17":
         os.environ["pgN"] = pgn
         args.remove("--pg")
         args.remove(pgn)
