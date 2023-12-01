@@ -691,9 +691,9 @@ def format_data_to_table(
             if dataStr in header.values():
                 if s == 0:
                     dataStr = table_header_style + dataStr
-                dataStr += spaces
+                dataStr = dataStr + spaces
                 if s == key_length - 1:
-                    dataStr += bold_end
+                    dataStr = dataStr + bold_end
                 s = s + 1
             elif error_key and error_msg_column:
                 if (

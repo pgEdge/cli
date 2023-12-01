@@ -579,6 +579,11 @@ if [[ $buildFoSlots == "true" ]]; then
 fi
 
 if [[ $buildSpock32 == "true" ]]; then
+	if [ "$pgVer" == "14" ]; then
+		export NO_LOG_OLD_VALUE=1
+		echo "NO_LOG_OLD_VALUE=1"
+
+	fi
 	buildComp spock32  "" "$spock32V" "$spockBld32V" "$Source"
 fi
 

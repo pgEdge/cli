@@ -1,15 +1,17 @@
 # pgEdge Platform Release Notes #############
 
+## done for 24.01-1 on 2023-11-30 ###########
+  + PGEDGE:
+    - 'install pgedge' now defaults to spock32 for pg14 thru pg17
 
-## done so far for 24.01-1 as of 2023-11-26 ###########
-### New Features:
   + ACE:
     - table-repair can now handle missing, divergent and extra rows
 
   + SPOCK32: 
     - support for pg14 on EL9
     - support for limited feature set against core/unpatched pg14+
-    - dev7 --> 3.2.0 on pg14, pg15, pg16 & pg17
+    - 3.2.1 on pg14, pg15, pg16 & pg17
+    - pg14 version is compiled against unpatched postgresql
 
   + PG14:
     - now available on EL9 
@@ -26,7 +28,7 @@
     - test on Ubuntu 23.10 w Python 3.11
     - test on Amazon Linux 2023
     - code cleanups:
-      + any coding style, as long as it's 'black'
+      + use 'black' coding style consistently
       + use 'flake8' incrementally
     - exclude use of urlllib3 v1.26.18 (does not work on OSX)
 
@@ -38,13 +40,11 @@
   + MACHINE: doc & more improvements
 
 
-
 ## done for 24.008 on 2023-11-15 ###########
   + SPOCK32: bump to 3.2dev7 for prelim paralell_slots testing on pg17
 
 
 ## done for 24.007 on 2023-11-13 ###########
-### New Features:
   + ACE: table re-run only compares delta rows
   + MACHINE: 3rd pass includes:
     - equinixmetal fixes to LibCloud 3.1.8+ for size_list() & node_create()
