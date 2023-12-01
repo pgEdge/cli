@@ -1,10 +1,10 @@
-#####################################################
+
 #  Copyright 2022-2024 PGEDGE  All rights reserved. #
-#####################################################
+
 
 import sys, os
 
-VER = "24.01-1"
+VER = "24.01-2"
 REPO = os.getenv("REPO", "https://pgedge-upstream.s3.amazonaws.com/REPO")
 
 if sys.version_info < (3, 6):
@@ -46,9 +46,7 @@ def download_n_unpack(p_file, p_url, p_download_msg, p_del_download):
         sys.exit(1)
 
 
-#############################################
-# MAINLINE
-#############################################
+# MAINLINE ##################################
 
 IS_64BITS = sys.maxsize > 2**32
 if not IS_64BITS:
