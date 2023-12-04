@@ -8,11 +8,6 @@ import pgbench, northwind
 base_dir = "cluster"
 
 
-def remote_create(node_size, provider_locations):
-    """Create a hybrid multi-cloud pgEdge cluster."""
-    pass
-
-
 def log_old_vals(p_run_sums, p_nc, p_db, p_pg, p_host, p_usr, p_key):
     for tbl_col in p_run_sums:
         tbl_col_lst = tbl_col.split(".")
@@ -146,7 +141,6 @@ def remote_import_def(cluster_name, json_file_name):
         util.exit_message(
             f"Unable to parse file '{json_file_name}' into json object.\n  {e.msg}"
         )
-
     cluster_dir = f"cluster/{cluster_name}"
 
     util.echo_cmd(f"mkdir -p {cluster_dir}")
@@ -198,6 +192,7 @@ def remote_init(cluster_name):
             util.exit_message("cannot ssh to node")
 
     ssh_install_pgedge(cluster_name, cj["db_init_passwd"])
+    ssh_cross_wire_pgedge(cluster_name)
 
 
 def local_create(
@@ -259,6 +254,7 @@ def local_create(
     create_local_json(cluster_name, db, num_nodes, User, Passwd, pg, port1)
 
     ssh_install_pgedge(cluster_name, Passwd)
+    ssh_cross_wire_pgedge(cluster_name)
 
 
 def print_install_hdr(cluster_name, db, pg, db_user, count):
@@ -297,7 +293,7 @@ def ssh_install_pgedge(cluster_name, passwd):
         util.message(
             f"########                node={ndnm}, host={ndip}, path={ndpath} REPO={REPO}\n"
         )
-
+        
         cmd0 = f"export REPO={REPO}; "
         cmd1 = f"mkdir -p {ndpath}; cd {ndpath}; "
         cmd2 = f'python3 -c "\\$(curl -fsSL {REPO}/{install_py})"'
@@ -321,6 +317,32 @@ def ssh_install_pgedge(cluster_name, passwd):
         )
         util.message("#")
 
+
+def ssh_cross_wire_pgedge(cluster_name):
+    il, db, pg, count, db_user, db_passwd, os_user, ssh_key, nodes = load_json(
+        cluster_name
+    )
+    for prov_n in nodes:
+        ndnm = prov_n["nodename"]
+        ndpath = prov_n["path"]
+        nc = ndpath + "/pgedge/ctl "
+        ndip = prov_n["ip"]
+        try:
+            ndport = str(prov_n["port"])
+        except Exception:
+            ndport = "5432"
+        print(f"{nc} spock node-create {ndnm} 'host={ndip} user={os_user} dbname={db} port={ndport}' {db}")
+        print(f"{nc} spock repset-create {db}_repset {db}")
+        for sub_n in nodes:
+            sub_ndnm = sub_n["nodename"]
+            if sub_ndnm != ndnm:
+                sub_ndip = sub_n["ip"]
+                try:
+                    sub_ndport = str(sub_n["port"])
+                except Exception:
+                    sub_ndport = "5432"
+                print(f"{nc} spock sub-create sub_{ndnm}{sub_ndnm} 'host={sub_ndip} user={os_user} dbname={db} port={sub_ndport}' {db}")
+        
 
 def local_destroy(cluster_name):
     """Stop and then nuke a localhost cluster."""
@@ -385,21 +407,38 @@ def command(cluster_name, node, cmd, args=None):
 
 def app_install(cluster_name, app_name, factor=1):
     """Install test application [ pgbench | northwind ]."""
-
+    il, db, pg, count, db_user, db_passwd, os_user, ssh_key, nodes = load_json(
+            cluster_name
+        )
     if app_name == "pgbench":
-        pgbench.install(cluster_name, factor)
+        for n in nodes:
+            ndpath = n["path"]
+            ndip = n["ip"]
+            util.echo_cmd(f"{ndpath}/pgedge/ctl app pgbench-install {db} {factor} default", host=ndip, usr=os_user, key=ssh_key)
     elif app_name == "northwind":
-        northwind.install(cluster_name, factor)
+        for n in nodes:
+            ndpath = n["path"]
+            ndip = n["ip"]
+            util.echo_cmd(f"{ndpath}/pgedge/ctl app northwind-install {db} default", host=ndip, usr=os_user, key=ssh_key)
     else:
         util.exit_message(f"Invalid app_name '{app_name}'.")
 
 
 def app_remove(cluster_name, app_name):
     """Remove test application from cluster."""
+    il, db, pg, count, db_user, db_passwd, os_user, ssh_key, nodes = load_json(
+            cluster_name
+        )
     if app_name == "pgbench":
-        pgbench.remove(cluster_name)
+         for n in nodes:
+            ndpath = n["path"]
+            ndip = n["ip"]
+            util.echo_cmd(f"{ndpath}/pgedge/ctl app pgbench-remove {db}", host=ndip, usr=os_user, key=ssh_key)
     elif app_name == "northwind":
-        northwind.remove(cluster_name)
+         for n in nodes:
+            ndpath = n["path"]
+            ndip = n["ip"]
+            util.echo_cmd(f"{ndpath}/pgedge/ctl app northwind-remove {db}", host=ndip, usr=os_user, key=ssh_key)
     else:
         util.exit_message("Invalid application name.")
 
@@ -407,7 +446,6 @@ def app_remove(cluster_name, app_name):
 if __name__ == "__main__":
     fire.Fire(
         {
-            "remote-create": remote_create,
             "remote-init": remote_init,
             "remote-reset": remote_reset,
             "remote-import-def": remote_import_def,
