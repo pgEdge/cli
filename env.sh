@@ -4,7 +4,7 @@ api=ctl
 hubV=24.01-2
 ctlibsV=1.1
 
-spock32V=3.2.1-1
+spock32V=3.2.2-1
 spock31V=3.1.8-1
 
 

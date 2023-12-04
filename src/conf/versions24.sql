@@ -85,7 +85,7 @@ INSERT INTO categories VALUES (9,  87, 'Management & Monitoring', 'Manage/Monito
 -- ## HUB ################################
 INSERT INTO projects VALUES ('hub', 'app', 0, 0, 'hub', 0, 'https://github.com/pgedge/nodectl','',0,'','','');
 INSERT INTO releases VALUES ('hub', 1, 'hub', '', '', 'hidden', '', 1, '', '', '');
-INSERT INTO versions VALUES ('hub', '24.01-2', '',  1, '20231202', '', '', '');
+INSERT INTO versions VALUES ('hub', '24.01-2', '',  1, '20231204', '', '', '');
 INSERT INTO versions VALUES ('hub', '24.01-1', '',  0, '20231130', '', '', '');
 INSERT INTO versions VALUES ('hub', '23.134',  '',  0, '20231013', '', '', '');
 
@@ -259,7 +259,7 @@ INSERT INTO releases VALUES ('snowflake-pg14', 4, 'snowflake', 'Snowflake', '', 
 INSERT INTO releases VALUES ('snowflake-pg15', 4, 'snowflake', 'Snowflake', '', 'prod', '', 1, 'POSTGRES', '', '');
 INSERT INTO releases VALUES ('snowflake-pg16', 4, 'snowflake', 'Snowflake', '', 'prod', '', 1, 'POSTGRES', '', '');
 INSERT INTO releases VALUES ('snowflake-pg17', 4, 'snowflake', 'Snowflake', '', 'prod', '', 1, 'POSTGRES', '', '');
-INSERT INTO versions VALUES ('snowflake-pg14', '1.1-1', 'el9, arm9', 1, '20231202', 'pg14', '', '');
+INSERT INTO versions VALUES ('snowflake-pg14', '1.1-1', 'el9, arm9', 1, '20231204', 'pg14', '', '');
 INSERT INTO versions VALUES ('snowflake-pg15', '1.1-1', 'el9, arm9', 1, '20231017', 'pg15', '', '');
 INSERT INTO versions VALUES ('snowflake-pg16', '1.1-1', 'el9, arm9', 1, '20231017', 'pg16', '', '');
 INSERT INTO versions VALUES ('snowflake-pg17', '1.1-1', 'el9, arm9', 1, '20231017', 'pg17', '', '');
@@ -268,10 +268,14 @@ INSERT INTO releases VALUES ('spock32-pg14', 4, 'spock', 'Spock', '', 'prod', ''
 INSERT INTO releases VALUES ('spock32-pg15', 4, 'spock', 'Spock', '', 'prod', '', 1, 'pgEdge Community', '', '');
 INSERT INTO releases VALUES ('spock32-pg16', 4, 'spock', 'Spock', '', 'prod', '', 1, 'pgEdge Community', '', '');
 INSERT INTO releases VALUES ('spock32-pg17', 4, 'spock', 'Spock', '', 'prod', '', 1, 'pgEdge Community', '', '');
-INSERT INTO versions VALUES ('spock32-pg14', '3.2.1-1', 'el9, arm9', 1, '20231130', 'pg14', '', '');
-INSERT INTO versions VALUES ('spock32-pg15', '3.2.1-1', 'el9, arm9', 1, '20231130', 'pg15', '', '');
-INSERT INTO versions VALUES ('spock32-pg16', '3.2.1-1', 'el9, arm9', 1, '20231130', 'pg16', '', '');
-INSERT INTO versions VALUES ('spock32-pg17', '3.2.1-1', 'el9, arm9', 1, '20231130', 'pg17', '', '');
+INSERT INTO versions VALUES ('spock32-pg14', '3.2.2-1', 'el9, arm9', 1, '20231204', 'pg14', '', '');
+INSERT INTO versions VALUES ('spock32-pg15', '3.2.2-1', 'el9, arm9', 1, '20231204', 'pg15', '', '');
+INSERT INTO versions VALUES ('spock32-pg16', '3.2.2-1', 'el9, arm9', 1, '20231204', 'pg16', '', '');
+INSERT INTO versions VALUES ('spock32-pg17', '3.2.2-1', 'el9, arm9', 1, '20231204', 'pg17', '', '');
+INSERT INTO versions VALUES ('spock32-pg14', '3.2.1-1', 'el9, arm9', 0, '20231130', 'pg14', '', '');
+INSERT INTO versions VALUES ('spock32-pg15', '3.2.1-1', 'el9, arm9', 0, '20231130', 'pg15', '', '');
+INSERT INTO versions VALUES ('spock32-pg16', '3.2.1-1', 'el9, arm9', 0, '20231130', 'pg16', '', '');
+INSERT INTO versions VALUES ('spock32-pg17', '3.2.1-1', 'el9, arm9', 0, '20231130', 'pg17', '', '');
 
 INSERT INTO projects VALUES ('pglogical', 'ext', 4, 0, 'hub', 1, 'https://github.com/2ndQuadrant/pglogical/releases',
   'pglogical', 1, 'spock.png', 'Logical Replication', 'https://github.com/2ndQuadrant/pglogical');

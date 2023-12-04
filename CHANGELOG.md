@@ -1,12 +1,18 @@
 # pgEdge Platform Release Notes #############
 
-## done for 24.01-2 on 2023-12-02 ###########
+## done for 24.01-2 on 2023-12-04 ###########
+  + CTL:
+    - comment out nc & nodectl deprecation warning (for now)
+
   + PG14:
     - snowflake now supports pg14
     - 'install pgedge --pg 14' now supported
 
   + ACE:
     - fixes and improvements to table-repair
+
+  + SPOCK32: 
+    - v3.2.2 regression fix for missing transactions in corner cases
 
 
 ## done for 24.01-1 on 2023-11-30 ###########
