@@ -1314,7 +1314,7 @@ p_host_name = ""
 
 if "--deprecate-nc" in args:
     args.remove("--deprecate-nc")
-    util.message(f"'nc' & 'nodectl' commands deprecated in favor of 'ctl'", "warning")
+    # util.message(f"'nc' & 'nodectl' commands deprecated in favor of 'ctl'", "warning")
 
 isVERBOSE = False
 if "--verbose" in args:
