@@ -1,6 +1,10 @@
 # pgEdge Platform Release Notes #############
 
-## done for 24.01-2 on 2023-12-04 ###########
+## done for 24.1.3 on 2023-12-05 ###########
+  + CTL:
+    - fix nc & nodectl regression when called from a different directory
+
+## done for 24.1.2 on 2023-12-04 ###########
   + CTL:
     - comment out nc & nodectl deprecation warning (for now)
 
@@ -15,7 +19,7 @@
     - v3.2.2 regression fix for missing transactions in corner cases
 
 
-## done for 24.01-1 on 2023-11-30 ###########
+## done for 24.1.1 on 2023-11-30 ###########
   + PGEDGE:
     - 'install pgedge' now defaults to spock32 for pg14 thru pg17
 
