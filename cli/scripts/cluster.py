@@ -2,7 +2,7 @@
 #  Copyright 2022-2024 PGEDGE  All rights reserved. #
 
 import os, json, datetime
-import util, fire, meta
+import util, fire, meta, time
 import pgbench, northwind
 
 base_dir = "cluster"
@@ -322,26 +322,46 @@ def ssh_cross_wire_pgedge(cluster_name):
     il, db, pg, count, db_user, db_passwd, os_user, ssh_key, nodes = load_json(
         cluster_name
     )
+    sub_array=[]
     for prov_n in nodes:
         ndnm = prov_n["nodename"]
         ndpath = prov_n["path"]
         nc = ndpath + "/pgedge/ctl "
         ndip = prov_n["ip"]
+        if "private_ip" in prov_n:
+            ndip_private = prov_n["private_ip"]
+        else:
+            ndip_private = ndip
         try:
             ndport = str(prov_n["port"])
         except Exception:
             ndport = "5432"
-        print(f"{nc} spock node-create {ndnm} 'host={ndip} user={os_user} dbname={db} port={ndport}' {db}")
-        print(f"{nc} spock repset-create {db}_repset {db}")
+        cmd1 = f"{nc} spock node-create {ndnm} 'host={ndip_private} user={os_user} dbname={db} port={ndport}' {db}"
+        util.echo_cmd(cmd1, host=ndip, usr=os_user, key=ssh_key)
+        cmd2 = f"{nc} spock repset-create {db}_repset {db}"
+        util.echo_cmd(cmd2, host=ndip, usr=os_user, key=ssh_key)
         for sub_n in nodes:
             sub_ndnm = sub_n["nodename"]
             if sub_ndnm != ndnm:
                 sub_ndip = sub_n["ip"]
+                if "private_ip" in sub_n:
+                    sub_ndip_private = sub_n["private_ip"]
+                else:
+                    sub_ndip_private = sub_ndip
                 try:
                     sub_ndport = str(sub_n["port"])
                 except Exception:
                     sub_ndport = "5432"
-                print(f"{nc} spock sub-create sub_{ndnm}{sub_ndnm} 'host={sub_ndip} user={os_user} dbname={db} port={sub_ndport}' {db}")
+                cmd = f"{nc} spock sub-create sub_{ndnm}{sub_ndnm} 'host={sub_ndip_private} user={os_user} dbname={db} port={sub_ndport}' {db}"
+                sub_array.append([cmd,ndip])
+    ## To Do: Check Nodes have been created
+    print(f"{nc} spock node-list {db}") ##, host=ndip, usr=os_user, key=ssh_key)
+    time.sleep(10)
+    for n in sub_array:
+        cmd = n[0]
+        nip = n[1]
+        util.echo_cmd(cmd, host=nip, usr=os_user, key=ssh_key)
+                
         
 
 def local_destroy(cluster_name):
