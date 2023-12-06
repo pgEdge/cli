@@ -22,12 +22,16 @@ ls
 sleep 2
 
 flags="--acl public-read --storage-class STANDARD --recursive"
-cmd="aws --region $REGION s3 cp . $BUCKET/REPO $flags"
-echo $cmd
-sleep 3
+BR=$BUCKET/REPO
+set -x
 
-$cmd
+aws --region $REGION s3 cp . $BR $flags
+sleep 1
+
+aws --region $REGION s3 cp $BR/versions24.sql $BR/versions.sql
+sleep 1
+aws --region $REGION s3 cp $BR/versions24.sql.sha512 $BR/versions.sql.sha512
+
 rc=$?
-echo "rc=($rc)"
 exit $rc
 

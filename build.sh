@@ -545,9 +545,10 @@ do
 
 	    depnc=deprecate-nc.sh
             cp $CLI/cli.sh ./ctl
-	    cp $CLI/$depnc .
-            ln -s $depnc nc
-            ln -s $depnc nodectl
+	    cp $CLI/$depnc ./nc
+	    cp $CLI/$depnc ./nodectl 
+            ## ln -s $depnc nc
+            ## ln -s $depnc nodectl
 
             if [ "$outDir" == "posix" ]; then
               OS="???"

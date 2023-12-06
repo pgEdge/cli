@@ -1,6 +1,17 @@
 # pgEdge Platform Release Notes #############
 
-## done for 24.01-2 on 2023-12-02 ###########
+## done for 24.1.4 so far as of 2023-12-06 ###########
+  + CTL:
+    - progress on upgrading from v23.x (still need to replace install.py from install24.py)
+
+## done for 24.1.3 on 2023-12-05 ###########
+  + CTL:
+    - fix nc & nodectl regression when called from a different directory
+
+## done for 24.1.2 on 2023-12-04 ###########
+  + CTL:
+    - comment out nc & nodectl deprecation warning (for now)
+
   + PG14:
     - snowflake now supports pg14
     - 'install pgedge --pg 14' now supported
@@ -8,10 +19,13 @@
   + ACE:
     - fixes and improvements to table-repair
 
+  + SPOCK32: 
+    - v3.2.2 regression fix for missing transactions in corner cases
 
-## done for 24.01-1 on 2023-11-30 ###########
+
+## done for 24.1.1 on 2023-11-30 ###########
   + PGEDGE:
-    - 'install pgedge' now defaults to spock32 for pg14 thru pg17
+    - 'install pgedge' now defaults to spock32 for pg14, pg15 & pg16
 
   + ACE:
     - table-repair can now handle missing, divergent and extra rows
@@ -42,18 +56,18 @@
     - exclude use of urlllib3 v1.26.18 (does not work on OSX)
 
 
-## done for 24.010 on 2023-11-17 ###########
+## done for 24.0.10 on 2023-11-17 ###########
   + small fixes for Fedora 39 & python 3.12 test support
   + regenerate and cleanup doc
   + document regression tests using cluster local-create, northwind, & ace
   + MACHINE: doc & more improvements
 
 
-## done for 24.008 on 2023-11-15 ###########
+## done for 24.0.8 on 2023-11-15 ###########
   + SPOCK32: bump to 3.2dev7 for prelim paralell_slots testing on pg17
 
 
-## done for 24.007 on 2023-11-13 ###########
+## done for 24.0.7 on 2023-11-13 ###########
   + ACE: table re-run only compares delta rows
   + MACHINE: 3rd pass includes:
     - equinixmetal fixes to LibCloud 3.1.8+ for size_list() & node_create()
@@ -73,7 +87,7 @@
   + bump cron to 1.6.2 for pg15 & pg16
 
 
-## done for 24.006 on 2023-11-07 ###########
+## done for 24.0.6 on 2023-11-07 ###########
   + bump pg15 & pg16 to latests from community
   + refactor to be able to run PyCharm IDE/debugger on cli.py
   + rework container strategy to lose dependency on systemctl
@@ -82,7 +96,7 @@
   + 1st pass at creating multicloud clusters leveraging new MACHINE & FIREWALL CLI's  
 
 
-## done for 24.005 on 2023-11-01 ###########
+## done for 24.0.5 on 2023-11-01 ###########
 ### New Features:
   + MACHINE: 2nd pass includes support for basic AWS & EQNX functionality
   + FIREWALL: new support for firewalld configuration
@@ -98,18 +112,7 @@
   + fix './nc update' when in the 24.xxx stream
   + better instrument 'reload pgXX' when running w/ or wo/ systemd
 
-## included in 23.135 so far
-  * include snowflake for pg15 & pg16
-  * 'CREATE EXTENSION snowflake' after install --no-restart
-  * added the '--pause' option to 'install pgegde' (pgedge-2-07)
-
-## done for 23.134 on 2023-10-31
-  * bump readonly to v1.1.1 for fixes and reduced verbosity
-  * bump pgvector to v0.5.1 for latest community fixes
-  * bump spock31 to v3.1.8 for latest stable fixes
-
-
-## done for 24.004 on 2023-10-24 ###########
+## done for 24.0.4 on 2023-10-24 ###########
 
 ### Fixes and minor enhancements:
   + deployment problems caused by cady and ibrar and tej.  :-)
@@ -117,14 +120,14 @@
   + default 'install pgedge' to '--pg 17' (denis)
   + default INSTALL_PY to 'install24.py' if "-upstream" is in REPO (denis)
 
-## done for 24.003 on 2023-10-23 ############
+## done for 24.0.3 on 2023-10-23 ############
 ### New Features:
   + MACHINE: 2nd pass includes support for configuring remote firewalls
 
 ### Fixes and minor enhancements:
   + added the '--pause' option to 'install pgegde'
 
-## done for 24.002 on 2023-10-21
+## done for 24.0.2 on 2023-10-21
 ### New Features:
   + SNOWFLAKE: New extension to support snowflake sequences (jan)
   + SPOCK: 3.2dev5 readonly(asifr/affan) & snowflake migration (jan)
@@ -148,12 +151,22 @@
   - refactor for easier debugging (denis)
 
 
-## done for 24.001 on 2023-10-17
+## done for 24.0.1 on 2023-10-17
   - begin dev for 2024 Edition
   - bump spock to 3.2dev3 and add support for pg15-pg17
   - add support for snowflake 1.1 to pg15-pg17
   - install snowflake in pgedge2-6
 
+
+## included in 23.135 so far
+  * include snowflake for pg15 & pg16
+  * 'CREATE EXTENSION snowflake' after install --no-restart
+  * added the '--pause' option to 'install pgegde' (pgedge-2-07)
+
+## done for 23.134 on 2023-10-31
+  * bump readonly to v1.1.1 for fixes and reduced verbosity
+  * bump pgvector to v0.5.1 for latest community fixes
+  * bump spock31 to v3.1.8 for latest stable fixes
 
 ## done for 23.134 on 2023-10-13
   - new ACE functionality for table repair (tej)
