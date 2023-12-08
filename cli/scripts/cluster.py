@@ -194,12 +194,12 @@ def remote_reset(cluster_name):
     util.message("\n## Ensure that PG is stopped.")
     for nd in nodes:
         cmd = nd["path"] + "/ctl stop 2> /dev/null"
-        util.echo_cmd(cmd, host=nd["ip"], usr=os_user, key=key)
+        util.echo_cmd(cmd, host=nd["ip"], usr=nd["os_user"], key=nd["ssh_key"])
 
     util.message("\n## Ensure that pgEdge root directory is gone")
     for nd in nodes:
         cmd = "rm -rf " + nd["path"]
-        util.echo_cmd(cmd, host=nd["ip"], usr=os_user, key=key)
+        util.echo_cmd(cmd, host=nd["ip"], usr=nd["os_user"], key=nd["ssh_key"])
 
 
 def remote_init(cluster_name):
@@ -308,7 +308,7 @@ def ssh_install_pgedge(cluster_name, passwd):
         cluster_name
     )
     for n in nodes:
-        print_install_hdr(cluster_name, db, pg, db_user, count)
+        print_install_hdr(cluster_name, db, pg, db_user, len(nodes))
         ndnm = n["nodename"]
         ndpath = n["path"]
         ndip = n["ip"]
@@ -336,7 +336,7 @@ def ssh_install_pgedge(cluster_name, passwd):
         cmd0 = f"export REPO={REPO}; "
         cmd1 = f"mkdir -p {ndpath}; cd {ndpath}; "
         cmd2 = f'python3 -c "\\$(curl -fsSL {REPO}/{install_py})"'
-        util.echo_cmd(cmd0 + cmd1 + cmd2, host=n["ip"], usr=os_user, key=ssh_key)
+        util.echo_cmd(cmd0 + cmd1 + cmd2, host=n["ip"], usr=n["os_user"], key=n["ssh_key"])
 
         nc = ndpath + "/pgedge/ctl "
         parms = (
@@ -352,7 +352,7 @@ def ssh_install_pgedge(cluster_name, passwd):
             + str(pg)
         )
         util.echo_cmd(
-            nc + " install pgedge" + parms, host=n["ip"], usr=os_user, key=ssh_key
+            nc + " install pgedge" + parms, host=n["ip"], usr=n["os_user"], key=n["ssh_key"]
         )
         util.message("#")
 
@@ -367,6 +367,8 @@ def ssh_cross_wire_pgedge(cluster_name):
         ndpath = prov_n["path"]
         nc = ndpath + "/pgedge/ctl"
         ndip = prov_n["ip"]
+        os_user = prov_n["os_user"]
+        ssh_key = prov_n["ssh_key"]
         if "private_ip" in prov_n:
             ndip_private = prov_n["private_ip"]
         else:
@@ -392,13 +394,15 @@ def ssh_cross_wire_pgedge(cluster_name):
                 except Exception:
                     sub_ndport = "5432"
                 cmd = f"{nc} spock sub-create sub_{ndnm}{sub_ndnm} 'host={sub_ndip_private} user={os_user} dbname={db} port={sub_ndport}' {db}"
-                sub_array.append([cmd,ndip])
+                sub_array.append([cmd,ndip,os_user,ssh_key])
     ## To Do: Check Nodes have been created
     print(f"{nc} spock node-list {db}") ##, host=ndip, usr=os_user, key=ssh_key)
     time.sleep(10)
     for n in sub_array:
         cmd = n[0]
         nip = n[1]
+        os_user = n[2]
+        ssh_key = n[3]
         util.echo_cmd(cmd, host=nip, usr=os_user, key=ssh_key)
                 
         
@@ -454,8 +458,8 @@ def command(cluster_name, node, cmd, args=None):
             rc = util.echo_cmd(
                 nd["path"] + "/pgedge/ctl " + cmd,
                 host=nd["ip"],
-                usr=os_user,
-                key=ssh_key,
+                usr=nd["os_user"],
+                key=nd["ssh_key"],
             )
 
     if knt == 0:
@@ -473,12 +477,12 @@ def app_install(cluster_name, app_name, factor=1):
         for n in nodes:
             ndpath = n["path"]
             ndip = n["ip"]
-            util.echo_cmd(f"{ndpath}/pgedge/ctl app pgbench-install {db} {factor} default", host=ndip, usr=os_user, key=ssh_key)
+            util.echo_cmd(f"{ndpath}/pgedge/ctl app pgbench-install {db} {factor} default", host=ndip, usr=n["os_user"], key=n["ssh_key"])
     elif app_name == "northwind":
         for n in nodes:
             ndpath = n["path"]
             ndip = n["ip"]
-            util.echo_cmd(f"{ndpath}/pgedge/ctl app northwind-install {db} default", host=ndip, usr=os_user, key=ssh_key)
+            util.echo_cmd(f"{ndpath}/pgedge/ctl app northwind-install {db} default", host=ndip, usr=n["os_user"], key=n["ssh_key"])
     else:
         util.exit_message(f"Invalid app_name '{app_name}'.")
 
@@ -492,12 +496,12 @@ def app_remove(cluster_name, app_name):
          for n in nodes:
             ndpath = n["path"]
             ndip = n["ip"]
-            util.echo_cmd(f"{ndpath}/pgedge/ctl app pgbench-remove {db}", host=ndip, usr=os_user, key=ssh_key)
+            util.echo_cmd(f"{ndpath}/pgedge/ctl app pgbench-remove {db}", host=ndip, usr=n["os_user"], key=n["ssh_key"])
     elif app_name == "northwind":
          for n in nodes:
             ndpath = n["path"]
             ndip = n["ip"]
-            util.echo_cmd(f"{ndpath}/pgedge/ctl app northwind-remove {db}", host=ndip, usr=os_user, key=ssh_key)
+            util.echo_cmd(f"{ndpath}/pgedge/ctl app northwind-remove {db}", host=ndip, usr=n["os_user"], key=n["ssh_key"])
     else:
         util.exit_message("Invalid application name.")
 
