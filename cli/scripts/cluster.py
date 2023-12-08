@@ -88,24 +88,63 @@ def create_remote_json(
 def load_json(cluster_name):
     parsed_json = get_cluster_json(cluster_name)
 
-    is_local = parsed_json["is_localhost"]
-    db_name = parsed_json["db_name"]
-    pg = parsed_json["pg_ver"]
-    count = parsed_json["count"]
-    db_user = parsed_json["db_user"]
-    db_passwd = parsed_json["db_init_passwd"]
-    os_user = parsed_json["os_user"]
-    ssh_key = parsed_json["ssh_key"]
+    db = parsed_json["database"]["name"]
+    pg = parsed_json["database"]["pg_version"]
+    user = parsed_json["database"]["username"]
+    db_passwd = parsed_json["database"]["password"]
+    node=[]
+
+    if "remote" in parsed_json["node_groups"]:
+        for group in parsed_json["node_groups"]["remote"]:
+            if "remote" in parsed_json:
+                for n in group["nodes"]:
+                    n.update(parsed_json["remote"])
+                    node.append(n)
+            else:
+                util.exit_message("remote info missing from JSON", 1)
+
+    if "aws" in parsed_json["node_groups"]:
+        for group in parsed_json["node_groups"]["aws"]:
+            if "aws" in parsed_json:
+                for n in group["nodes"]:
+                    n.update(parsed_json["aws"])
+                    node.append(n)
+            else:
+                util.exit_message("aws info missing from JSON", 1)
+
+    if "azure" in parsed_json["node_groups"]:
+        for group in parsed_json["node_groups"]["azure"]:
+            if "remote" in parsed_json:
+                for n in group["nodes"]:
+                    n.update(parsed_json["azure"])
+                    node.append(n)
+            else:
+                util.exit_message("azure info missing from JSON", 1)           
+
+    if "gcp" in parsed_json["node_groups"]:
+        for group in parsed_json["node_groups"]["gcp"]:
+            if "remote" in parsed_json:
+                for n in group["nodes"]:
+                    n.update(parsed_json["gcp"])
+                    node.append(n)        
+            else:
+                util.exit_message("gcp info missing from JSON", 1)      
+
+    if "localhost" in parsed_json["node_groups"]:
+        for group in parsed_json["node_groups"]["localhost"]:
+            if "remote" in parsed_json:
+                for n in group["nodes"]:
+                    n.update(parsed_json["localhost"])
+                    node.append(n)  
+            else:
+                util.exit_message("localhost info missing from JSON", 1)
+       
     return (
-        is_local,
-        db_name,
+        db,
         pg,
-        count,
-        db_user,
+        user,
         db_passwd,
-        os_user,
-        ssh_key,
-        parsed_json["nodes"],
+        node
     )
 
 
@@ -150,7 +189,7 @@ def remote_import_def(cluster_name, json_file_name):
 
 def remote_reset(cluster_name):
     """Reset a test cluster from json definition file of existing nodes."""
-    il, db, pg, count, user, db_passwd, os_user, key, nodes = load_json(cluster_name)
+    db, pg, user, db_passwd, nodes = load_json(cluster_name)
 
     util.message("\n## Ensure that PG is stopped.")
     for nd in nodes:
@@ -265,7 +304,7 @@ def print_install_hdr(cluster_name, db, pg, db_user, count):
 
 
 def ssh_install_pgedge(cluster_name, passwd):
-    il, db, pg, count, db_user, db_passwd, os_user, ssh_key, nodes = load_json(
+    db, pg, db_user, db_passwd, nodes = load_json(
         cluster_name
     )
     for n in nodes:
@@ -319,14 +358,14 @@ def ssh_install_pgedge(cluster_name, passwd):
 
 
 def ssh_cross_wire_pgedge(cluster_name):
-    il, db, pg, count, db_user, db_passwd, os_user, ssh_key, nodes = load_json(
+    db, pg, db_user, db_passwd, nodes = load_json(
         cluster_name
     )
     sub_array=[]
     for prov_n in nodes:
         ndnm = prov_n["nodename"]
         ndpath = prov_n["path"]
-        nc = ndpath + "/pgedge/ctl "
+        nc = ndpath + "/pgedge/ctl"
         ndip = prov_n["ip"]
         if "private_ip" in prov_n:
             ndip_private = prov_n["private_ip"]
@@ -404,7 +443,7 @@ def lc_destroy1(cluster_name):
 def command(cluster_name, node, cmd, args=None):
     """Run './ctl' commands on one or 'all' nodes."""
 
-    il, db, pg, count, db_user, db_passwd, os_user, ssh_key, nodes = load_json(
+    db, pg, db_user, db_passwd, nodes = load_json(
         cluster_name
     )
     rc = 0
@@ -427,7 +466,7 @@ def command(cluster_name, node, cmd, args=None):
 
 def app_install(cluster_name, app_name, factor=1):
     """Install test application [ pgbench | northwind ]."""
-    il, db, pg, count, db_user, db_passwd, os_user, ssh_key, nodes = load_json(
+    db, pg, db_user, db_passwd, nodes = load_json(
             cluster_name
         )
     if app_name == "pgbench":
@@ -446,7 +485,7 @@ def app_install(cluster_name, app_name, factor=1):
 
 def app_remove(cluster_name, app_name):
     """Remove test application from cluster."""
-    il, db, pg, count, db_user, db_passwd, os_user, ssh_key, nodes = load_json(
+    db, pg, db_user, db_passwd, nodes = load_json(
             cluster_name
         )
     if app_name == "pgbench":
