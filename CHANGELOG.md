@@ -1,12 +1,15 @@
 # pgEdge Platform Release Notes #############
 
-## done for 24.1.4 so far as of 2023-12-06 ###########
+## done for 24.1.4 so far as of 2023-12-09 ###########
   + CTL:
     - progress on upgrading from v23.x (still need to replace install.py from install24.py)
+    - drop support for pg17devel (replace with spock3x & wait for 17beta1)
+
 
 ## done for 24.1.3 on 2023-12-05 ###########
   + CTL:
     - fix nc & nodectl regression when called from a different directory
+
 
 ## done for 24.1.2 on 2023-12-04 ###########
   + CTL:
