@@ -5,6 +5,10 @@
     - progress on upgrading from v23.x (still need to replace install.py from install24.py)
     - drop support for pg17devel (replace with spock3x & wait for 17beta1)
 
+  + DOCKER:
+    - use latest RockyLinux 9 image (rather than 9.2)
+    - drop fakectl notes at bottom of README
+
 
 ## done for 24.1.3 on 2023-12-05 ###########
   + CTL:
