@@ -21,23 +21,33 @@ def log_old_vals(p_run_sums, p_nc, p_db, p_pg, p_host, p_usr, p_key):
 
 
 def create_local_json(cluster_name, db, num_nodes, usr, passwd, pg, port1):
+    """Create a json config file for a local cluster."""
     cluster_dir = base_dir + os.sep + cluster_name
     text_file = open(cluster_dir + os.sep + cluster_name + ".json", "w")
     cluster_json = {}
-    cluster_json["cluster"] = cluster_name
-    cluster_json["is_localhost"] = "True"
-    cluster_json["create_dt"] = datetime.date.today().isoformat()
-    cluster_json["db_name"] = db
-    cluster_json["db_user"] = usr
-    cluster_json["db_init_passwd"] = passwd
-    cluster_json["os_user"] = util.get_user()
-    cluster_json["ssh_key"] = ""
-    cluster_json["pg_ver"] = pg
-    cluster_json["count"] = num_nodes
-    cluster_json["nodes"] = []
+    cluster_json["name"] = cluster_name
+    cluster_json["style"] = "localhost"
+    cluster_json["create_date"] = datetime.date.today().isoformat()
+
+    local_json = {}
+    local_json["os_user"] = util.get_user()
+    local_json["ssh_key"] = ""
+    cluster_json["localhost"] = local_json
+
+    database_json = {}
+    database_json["username"] = usr
+    database_json["password"] = passwd
+    database_json["pg_version"] = pg
+    database_json["name"] = db
+    cluster_json["database"] = database_json
+
+    
+    local_nodes = {"localhost": []}
     for n in range(1, num_nodes + 1):
+        node_array = {"nodes": []}
         node_json = {}
-        node_json["nodename"] = "n" + str(n)
+        node_json["name"] = "n" + str(n)
+        node_json["is_active"] = True
         node_json["ip"] = "127.0.0.1"
         node_json["port"] = port1
         node_json["path"] = (
@@ -50,8 +60,10 @@ def create_local_json(cluster_name, db, num_nodes, usr, passwd, pg, port1):
             + "n"
             + str(n)
         )
-        cluster_json["nodes"].append(node_json)
+        node_array["nodes"].append(node_json)
+        local_nodes["localhost"].append(node_array)
         port1 = port1 + 1
+    cluster_json["node_groups"] = local_nodes
     try:
         text_file.write(json.dumps(cluster_json, indent=2))
         text_file.close()
@@ -60,24 +72,45 @@ def create_local_json(cluster_name, db, num_nodes, usr, passwd, pg, port1):
 
 
 def create_remote_json(
-    cluster_name, db, num_nodes, usr, passwd, pg, create_dt, id, nodes
+    cluster_name, db, num_nodes, usr, passwd, pg, port
 ):
+    """Create a template for a json config file for a remote cluster."""
     cluster_dir = base_dir + os.sep + cluster_name
     os.system("mkdir -p " + cluster_dir)
     text_file = open(cluster_dir + os.sep + cluster_name + ".json", "w")
+
     cluster_json = {}
-    cluster_json["cluster"] = cluster_name
-    cluster_json["id"] = id
-    cluster_json["is_localhost"] = "False"
-    cluster_json["create_dt"] = create_dt
-    cluster_json["db_name"] = db
-    cluster_json["db_user"] = usr
-    cluster_json["db_init_passwd"] = passwd
-    cluster_json["os_user"] = usr
-    cluster_json["ssh_key"] = ""
-    cluster_json["pg_ver"] = pg
-    cluster_json["count"] = num_nodes
-    cluster_json["nodes"] = nodes
+    cluster_json["name"] = cluster_name
+    cluster_json["style"] = "remote"
+    cluster_json["create_date"] = datetime.date.today().isoformat()
+
+    remote_json = {}
+    remote_json["os_user"] = ""
+    remote_json["ssh_key"] = ""
+    cluster_json["remote"] = remote_json
+
+    database_json = {}
+    database_json["username"] = usr
+    database_json["password"] = passwd
+    database_json["pg_version"] = pg
+    database_json["name"] = db
+    cluster_json["database"] = database_json
+
+    remote_nodes = {"remote": []}
+    for n in range(1, num_nodes + 1):
+        node_array = {"region": ""}
+        node_array.update({"availability_zones": ""})
+        node_array.update({"instance_type": ""})
+        node_array.update({"nodes": []})
+        node_json = {}
+        node_json["name"] = "n" + str(n)
+        node_json["is_active"] = True
+        node_json["ip"] = ""
+        node_json["port"] = port
+        node_json["path"] = ""
+        node_array["nodes"].append(node_json)
+        remote_nodes["remote"].append(node_array)
+    cluster_json["node_groups"] = remote_nodes
     try:
         text_file.write(json.dumps(cluster_json, indent=2))
         text_file.close()
@@ -207,18 +240,6 @@ def remote_init(cluster_name):
 
     util.message(f"## Loading cluster '{cluster_name}' json definition file")
     cj = get_cluster_json(cluster_name)
-
-    util.message("\n## Checking node count")
-    try:
-        kount = cj["count"]
-        nodes = cj["nodes"]
-        if len(nodes) != kount:
-            util.exit_message(
-                f"Invalid node count '{kount}' versus actual nodes '{len(nodes)}'"
-            )
-    except Exception as e:
-        util.exit_message(f"error parsing config file\n{str(e)}")
-    util.message(f"### Node count = {kount}")
 
     util.message("\n## Checking ssh'ing to each node")
     for nd in cj["nodes"]:
@@ -509,6 +530,8 @@ def app_remove(cluster_name, app_name):
 if __name__ == "__main__":
     fire.Fire(
         {
+            "define-localhost": create_local_json,
+            "define-remote": create_remote_json,
             "remote-init": remote_init,
             "remote-reset": remote_reset,
             "remote-import-def": remote_import_def,
@@ -517,5 +540,6 @@ if __name__ == "__main__":
             "command": command,
             "app-install": app_install,
             "app-remove": app_remove,
+            
         }
     )
