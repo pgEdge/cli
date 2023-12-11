@@ -262,9 +262,9 @@ INSERT INTO versions VALUES ('snowflake-pg16', '1.1-1', 'el9, arm9', 1, '2023101
 INSERT INTO releases VALUES ('spock32-pg14', 4, 'spock', 'Spock', '', 'prod', '', 1, 'pgEdge Community', '', '');
 INSERT INTO releases VALUES ('spock32-pg15', 4, 'spock', 'Spock', '', 'prod', '', 1, 'pgEdge Community', '', '');
 INSERT INTO releases VALUES ('spock32-pg16', 4, 'spock', 'Spock', '', 'prod', '', 1, 'pgEdge Community', '', '');
-INSERT INTO versions VALUES ('spock32-pg14', '3.2.2-1', 'el9, arm9', 1, '20231204', 'pg14', '', '');
-INSERT INTO versions VALUES ('spock32-pg15', '3.2.2-1', 'el9, arm9', 1, '20231204', 'pg15', '', '');
-INSERT INTO versions VALUES ('spock32-pg16', '3.2.2-1', 'el9, arm9', 1, '20231204', 'pg16', '', '');
+INSERT INTO versions VALUES ('spock32-pg14', '3.2.2-1', 'el8, el9, arm9', 1, '20231204', 'pg14', '', '');
+INSERT INTO versions VALUES ('spock32-pg15', '3.2.2-1', 'el8, el9, arm9', 1, '20231204', 'pg15', '', '');
+INSERT INTO versions VALUES ('spock32-pg16', '3.2.2-1', 'el8, el9, arm9', 1, '20231204', 'pg16', '', '');
 INSERT INTO versions VALUES ('spock32-pg14', '3.2.1-1', 'el9, arm9', 0, '20231130', 'pg14', '', '');
 INSERT INTO versions VALUES ('spock32-pg15', '3.2.1-1', 'el9, arm9', 0, '20231130', 'pg15', '', '');
 INSERT INTO versions VALUES ('spock32-pg16', '3.2.1-1', 'el9, arm9', 0, '20231130', 'pg16', '', '');

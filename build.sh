@@ -438,12 +438,12 @@ initPG () {
   supplementalPG "$pgComp"
   zipDir "$pgComp" "$pgV" "$outPlat" "Enabled"
 
-  if [ "$isEL9" == "True" ]; then
+  if [ "$pgM" \> "13" ] && [ "$pgM" \< "18" ]; then
+    initC "snowflake-pg$pgM"  "snowflake"  "$snwflkV"    "$outPlat" "postgres/snowflake" "" "" "nil"
+    initC "spock32-pg$pgM"    "spock32"    "$spock32V"   "$outPlat" "postgres/spock32"   "" "" "nil"
+  fi
 
-    if [ "$pgM" \> "13" ] && [ "$pgM" \< "18" ]; then
-      initC "snowflake-pg$pgM"  "snowflake"  "$snwflkV"    "$outPlat" "postgres/snowflake" "" "" "nil"
-      initC "spock32-pg$pgM"    "spock32"    "$spock32V"   "$outPlat" "postgres/spock32"   "" "" "nil"
-    fi
+  if [ "$isEL9" == "True" ]; then
 
     if [ "$pgM" == "16" ]; then
       initC "audit-pg$pgM"      "audit"      "$audit16V"   "$outPlat" "postgres/audit"     "" "" "nil"
@@ -480,15 +480,15 @@ initPG () {
         initC "oraclefdw-pg$pgM"  "oraclefdw"  "$oraclefdwV" "$outPlat" "postgres/oraclefdw" "" "" "nil"
       fi
     fi
-
-    initC "pgedge"    "pgedge"    "$pgedgeV"   ""         "postgres/pgedge"   "" "" "Y"
-    initC "backrest"  "backrest"  "$backrestV" "$outPlat" "postgres/backrest" "" "" "nil"
-    initC "staz"      "staz"      "$stazV"     ""         "postgres/staz"     "" "" "nil"
-    initC "etcd"      "etcd"      "$etcdV"     "$outPlat" "etcd"              "" "" "nil"
-    initC "firewalld" "firewalld" "$firwldV"   ""         "firewalld"         "" "" "nil"
-    initC "pgcat"     "pgcat"     "$catV"      "$outPlat" "postgres/pgcat"    "" "" "nil"
-    initC "pgadmin4"  "pgadmin4"  "$adminV"    ""         "postgres/pgadmin4" "" "" "Y"
   fi
+
+  initC "pgedge"    "pgedge"    "$pgedgeV"   ""         "postgres/pgedge"   "" "" "Y"
+  #initC "backrest"  "backrest"  "$backrestV" "$outPlat" "postgres/backrest" "" "" "nil"
+  initC "staz"      "staz"      "$stazV"     ""         "postgres/staz"     "" "" "nil"
+  #initC "etcd"      "etcd"      "$etcdV"     "$outPlat" "etcd"              "" "" "nil"
+  initC "firewalld" "firewalld" "$firwldV"   ""         "firewalld"         "" "" "nil"
+  #initC "pgcat"     "pgcat"     "$catV"      "$outPlat" "postgres/pgcat"    "" "" "nil"
+  initC "pgadmin4"  "pgadmin4"  "$adminV"    ""         "postgres/pgadmin4" "" "" "Y"
 
   return
 
