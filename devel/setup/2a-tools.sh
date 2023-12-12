@@ -38,6 +38,7 @@ if [ $uname == 'Linux' ]; then
     sudo cpan FindBin
     sudo cpan IPC::Run
     sudo $yum epel-release
+    sudo $yum install lbzip2
 
     if [ "$short_hostname" == "test" ]; then
       echo "Goodbye TEST Setup!"
