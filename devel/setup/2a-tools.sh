@@ -68,13 +68,6 @@ if [ $uname == 'Linux' ]; then
       sudo $yum unixODBC-devel protobuf-c-devel libyaml-devel
       sudo $yum lz4-devel libzstd-devel krb5-devel
       sudo $yum java-17-openjdk-devel
-      if [ "$PLATFORM" == "el8" ]; then
-        sudo $yum python39 python39-devel
-	sudo yum remove -y python3
-      else
-	sudo $yum python3-devel
-        sudo yum remove -y python3-pip
-      fi 
       sudo $yum clang
       if [ "$PLATFORM" == "el9" ]; then
         sudo $yum geos-devel proj-devel gdal

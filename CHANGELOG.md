@@ -1,6 +1,10 @@
 # pgEdge Platform Release Notes #############
 
 ## done for 24.1.4 so far as of 2023-12-09 ###########
+  + EL8/SLE-15:
+    - support advanced functionality for EL8 on am64 for pgedge 14/15/16 & python36
+    - test on Open Suse SLE 15.5 with standard  Python36
+
   + CTL:
     - progress on upgrading from v23.x (still need to replace install.py from install24.py)
     - drop support for pg17devel (replace with spock3x & wait for 17beta1)
