@@ -23,6 +23,6 @@ cp $NC/devel/util/in/pull-s3.sh .
 chmod 755 *.sh
 
 
-cp $IN/nclibs/*.bz2  $OUT/.
+cp $IN/ctlibs/*.bz2  $OUT/.
 
 
