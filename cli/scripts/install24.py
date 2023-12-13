@@ -7,12 +7,9 @@ import sys, os
 VER = "24.1.4"
 REPO = os.getenv("REPO", "https://pgedge-upstream.s3.amazonaws.com/REPO")
 
-if sys.version_info < (3, 6):
-    print("ERROR: Requires Python 3.6 or greater")
-    sys.exit(1)
-
 if sys.version_info < (3, 9):
-    print("WARNING: Advanced functionality requires Python 3.9+")
+    print("ERROR: Requires Python 3.9 or greater")
+    sys.exit(1)
 
 from urllib import request as urllib2
 
