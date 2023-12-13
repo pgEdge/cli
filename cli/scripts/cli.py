@@ -180,10 +180,11 @@ ISJSON = os.environ.get("ISJSON", "False")
 
 def fire_away(p_mode, p_args):
     py_file = f"{p_mode}.py"
+    py3 = sys.executable
     if os.path.exists(py_file):
-        cmd = f"python3 {py_file}"
+        cmd = f"{py3} {py_file}"
     else:
-        cmd = f"python3 hub/scripts/{py_file}"
+        cmd = f"{py3} hub/scripts/{py_file}"
 
     for n in range(2, len(p_args)):
         parm = p_args[n]
