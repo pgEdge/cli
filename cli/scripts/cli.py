@@ -71,7 +71,7 @@ fire_list = [
     "db",
     "app",
     "machine",
-    "firewall",
+    "firewalld",
 ]
 
 native_list = ["backrest", "supervisor", "ansible", "patroni"]
