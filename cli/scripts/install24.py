@@ -8,8 +8,11 @@ VER = "24.1.4"
 REPO = os.getenv("REPO", "https://pgedge-upstream.s3.amazonaws.com/REPO")
 
 if sys.version_info < (3, 9):
-    print("ERROR: Requires Python 3.9 or greater")
+    maj = sys.version_info.major
+    min = sys.version_info.minor
+    print(f"ERROR: Python 3.9 is minimally required (found Python {maj}.{min})")
     sys.exit(1)
+
 
 from urllib import request as urllib2
 

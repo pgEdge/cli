@@ -38,10 +38,6 @@ DEFAULT_PG = "16"
 
 bad_os_warn = False
 
-isPy3 = True
-PIP = "pip3"
-PYTHON = "python3"
-
 scripts_lib_path = os.path.join(os.path.dirname(__file__), "lib")
 if scripts_lib_path not in sys.path:
     sys.path.append(scripts_lib_path)
@@ -2665,10 +2661,7 @@ def http_get_file(
         req = urllib2.Request(file_url, None, http_headers())
         u = urllib2.urlopen(req, timeout=10)
         meta = u.info()
-        if isPy3:
-            file_size = int(meta.get_all("Content-Length")[0])
-        else:
-            file_size = int(meta.getheaders("Content-Length")[0])
+        file_size = int(meta.get_all("Content-Length")[0])
 
         block_sz = 8192
         f = open(file_name_partial, "wb")

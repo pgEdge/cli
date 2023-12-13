@@ -5,12 +5,14 @@
 import sys, os
 
 if sys.version_info < (3, 9):
-    print("We require Python 3.9+")
+    maj = sys.version_info.major
+    min = sys.version_info.minor
+    print(f"ERROR: Python 3.9 is minimally required (found Python {maj}.{min})")
     sys.exit(1)
 
 IS_64BITS = sys.maxsize > 2**32
 if not IS_64BITS:
-    print("This is a 32bit machine and we are 64bit.")
+    print("ERROR: This is a 32bit machine and we are 64bit.")
     sys.exit(1)
 
 MY_HOME = os.getenv("MY_HOME", None)
