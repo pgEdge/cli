@@ -79,9 +79,11 @@ optional="$2"
 if [ "$majorV" == "12" ]; then
   pgV=$pg12V
   pgBuildV=$pg12BuildV
+
 elif [ "$majorV" == "13" ]; then
   pgV=$pg13V
   pgBuildV=$pg13BuildV
+
 elif [ "$majorV" == "14" ]; then
   pgV=$pg14V
   pgBuildV=$pg14BuildV
@@ -90,32 +92,26 @@ elif [ "$majorV" == "15" ]; then
   pgV=$pg15V
   pgBuildV=$pg15BuildV
 
-  if [ "$isEL9" == "yes" ]; then
-    p1=pg15-005-log_old_value.diff
-    p2=pg15-010-allow_logical_decoding_on_standbys.patch
-    p3=pg15-012-hidden_columns.diff
-    export_patches "$p1" "$p2" "$p3"
-  fi
+  p1=pg15-005-log_old_value.diff
+  p2=pg15-010-allow_logical_decoding_on_standbys.patch
+  p3=pg15-012-hidden_columns.diff
+  export_patches "$p1" "$p2" "$p3"
 
 elif [ "$majorV" == "16" ]; then
   pgV=$pg16V
   pgBuildV=$pg16BuildV
 
-  if [ "$isEL9" == "yes" ]; then
-    p1=pg16-005-log_old_value.diff
-    p2=pg16-012-hidden_columns.diff
-    export_patches "$p1" "$p2"
-  fi
+  p1=pg16-005-log_old_value.diff
+  p2=pg16-012-hidden_columns.diff
+  export_patches "$p1" "$p2"
 
 elif [ "$majorV" == "17" ]; then
   pgV=$pg17V
   pgBuildV=$pg17BuildV
 
-  if [ "$isEL9" == "yes" ]; then
-    p1=pg17-005-log_old_value.diff
-    p2=pg17-012-hidden_columns-v3.diff
-    export_patches "$p1" "$p2"
-  fi
+  p1=pg17-005-log_old_value.diff
+  p2=pg17-012-hidden_columns-v3.diff
+  export_patches "$p1" "$p2"
 
 fi
 
