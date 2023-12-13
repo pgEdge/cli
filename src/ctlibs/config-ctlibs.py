@@ -33,11 +33,16 @@ if platform.system() == "Linux":
       rc = os.system(f"grep '22.04' {f}")
       if rc == 0:
         platf = f"ubu22-{plat_os}"
+      else:
+        rc = os.system(f"grep 'Leap 15' {f}")
+        if rc == 0:
+          platf = f"el8-{plat_os}"
+
 elif platform.system() == "Darwin":
   platf = "osx"
 
 if platf == "unsupported":
-  util.message("nclibs not available for platform")
+  util.message("ctlibs not available for platform")
   sys.exit(0)
 
 url  = util.get_value("GLOBAL", "REPO")
