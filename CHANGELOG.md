@@ -1,6 +1,9 @@
 # pgEdge Platform Release Notes #############
 
-## done for 24.1.4 so far as of 2023-12-13 ###########
+## done for 24.1.4 so far as of 2023-12-14 ###########
+  + CLUSTER:
+    - rework cluster-init json for compat with enterprise cloud
+
   + EL8/SLE-15 for AMD64:
     - require python3.9 (default is python3.6 & it is no longer supported)
     - support advanced functionality for EL8 on am64 for pgedge 14/15/16
