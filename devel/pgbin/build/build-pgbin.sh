@@ -166,7 +166,6 @@ function buildPostgres {
 	fi
 
 	mkdir -p $baseDir/$workDir/logs
-	#buildLocation="$baseDir/$workDir/build/pg$pgShortV-$pgSrcV-$pgBldV-$OS"
 	buildLocation="$baseDir/$workDir/build/$bndlPrfx-$pgSrcV-$pgBldV-$OS"
 	echo "# buildLocation = $buildLocation"
 	arch=`arch`
@@ -175,17 +174,11 @@ function buildPostgres {
 	echo "OS=$OS"
 	if [ $OS == "osx" ]; then
 		conf="$conf --without-python --without-perl"
-        elif [ $OS == "el8" ]; then
-		conf="$conf --without-python --without-perl"
-		conf="$conf --with-libxslt --with-libxml"
-		conf="$conf --with-uuid=ossp --with-gssapi --with-ldap --with-pam --enable-debug --enable-dtrace"
-		conf="$conf --with-openssl --with-systemd --enable-tap-tests"
-	else
-		conf="$conf  --with-libxslt --with-libxml"
+        else
+		conf="$conf  --with-libxslt --with-libxml --with-perl --with-python PYTHON=/usr/bin/python3.9"
 		conf="$conf --with-uuid=ossp --with-gssapi --with-ldap --with-pam --enable-debug --enable-dtrace"
 		conf="$conf --with-llvm LLVM_CONFIG=/usr/bin/llvm-config-64 --with-openssl --with-systemd --enable-tap-tests"
-		conf="$conf --with-python PYTHON=/usr/bin/python3.9"
-	fi
+        fi
 
 	gcc --version
 	echo "#  @`date`  $conf"

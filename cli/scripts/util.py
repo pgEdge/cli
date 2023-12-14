@@ -36,12 +36,6 @@ ONE_DAY = 86400
 ONE_WEEK = ONE_DAY * 7
 DEFAULT_PG = "16"
 
-bad_os_warn = False
-
-isPy3 = True
-PIP = "pip3"
-PYTHON = "python3"
-
 scripts_lib_path = os.path.join(os.path.dirname(__file__), "lib")
 if scripts_lib_path not in sys.path:
     sys.path.append(scripts_lib_path)
@@ -2358,12 +2352,10 @@ def get_el_os():
 
 def get_el_ver():
     if platform.system() == "Darwin":
-        # message("# WARNING! OSX is only for client functionality such as CLUSTER & ACE commands.")
         return "osx"
 
     elv = os.getenv("ELV", None)
     if elv:
-        warn_bad_os(str(elv))
         return str(elv)
 
     glibc_v = get_glibc_version()
@@ -2372,26 +2364,12 @@ def get_el_ver():
         if glibc_v >= "2.34":
             return "arm9"
         else:
-            warn_bad_os("arm")
             return "arm"
     else:
         if glibc_v >= "2.34":
             return "el9"
         else:
-            warn_bad_os("el8")
             return "el8"
-
-
-def warn_bad_os(el_ver):
-    global bad_os_warn
-
-    if bad_os_warn:
-        return ()
-    else:
-        bad_os_warn = True
-        message(
-            "# WARNING! Upgrade to pg14+ on EL9 or Ubuntu 22.04 for Spock multi-master functionality."
-        )
 
 
 def is_el8():
@@ -2665,10 +2643,7 @@ def http_get_file(
         req = urllib2.Request(file_url, None, http_headers())
         u = urllib2.urlopen(req, timeout=10)
         meta = u.info()
-        if isPy3:
-            file_size = int(meta.get_all("Content-Length")[0])
-        else:
-            file_size = int(meta.getheaders("Content-Length")[0])
+        file_size = int(meta.get_all("Content-Length")[0])
 
         block_sz = 8192
         f = open(file_name_partial, "wb")

@@ -1,4 +1,4 @@
-FROM rockylinux:9.2
+FROM rockylinux:9
 
 LABEL maintainer="NODECTL team"
 
@@ -7,7 +7,7 @@ SHELL ["/bin/bash", "-c"]
 USER root
 
 RUN dnf update -y \
-    && dnf install -y wget curl git sudo python3-devel \
+    && dnf install -y wget curl git sudo \
     && dnf clean all \
     && rm -rf /var/cache/yum
 
@@ -19,7 +19,7 @@ WORKDIR /home/build
 
 RUN git clone https://github.com/pgedge/nodectl 
 WORKDIR nodectl/devel/setup
-RUN ./1-initial.sh  \
+RUN ./1-nodectl.sh  \
     && dnf clean all \
     && rm -rf /var/cache/yum
 

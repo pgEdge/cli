@@ -122,11 +122,6 @@ INSERT INTO versions VALUES ('pg16', '16.1-1',    'el9, arm9', 1, '20231109','',
 INSERT INTO versions VALUES ('pg16', '16.0-2',    'el9, arm9', 0, '20231021','', '', '');
 INSERT INTO versions VALUES ('pg16', '16.0-1',    'el9, arm9', 0, '20230914','', '', '');
 
-INSERT INTO releases VALUES ('pg17', 2, 'pg', '', '', 'test', 
-  '<font size=-1>New in <a href=https://www.postgresql.org/docs/17/release-17.html>2024!</a></font>', 1, 'POSTGRES', '', '');
-INSERT INTO versions VALUES ('pg17', '17devel-2', 'el9, arm9', 1, '20231021','', '', '');
-INSERT INTO versions VALUES ('pg17', '17devel-1', 'el9',       0, '20230927','', '', '');
-
 INSERT INTO projects VALUES ('orafce', 'ext', 4, 0, 'hub', 0, 'https://github.com/orafce/orafce/releases',
   'orafce', 1, 'larry.png', 'Ora Built-in Packages', 'https://github.com/orafce/orafce#orafce---oracles-compatibility-functions-and-packages');
 INSERT INTO releases VALUES ('orafce-pg15', 2, 'orafce', 'OraFCE', '', 'prod', '', 1, 'POSTGRES', '', '');
@@ -260,24 +255,19 @@ INSERT INTO projects VALUES ('snowflake', 'pge', 4, 0, 'hub', 1, 'https://github
 INSERT INTO releases VALUES ('snowflake-pg14', 4, 'snowflake', 'Snowflake', '', 'prod', '', 1, 'POSTGRES', '', '');
 INSERT INTO releases VALUES ('snowflake-pg15', 4, 'snowflake', 'Snowflake', '', 'prod', '', 1, 'POSTGRES', '', '');
 INSERT INTO releases VALUES ('snowflake-pg16', 4, 'snowflake', 'Snowflake', '', 'prod', '', 1, 'POSTGRES', '', '');
-INSERT INTO releases VALUES ('snowflake-pg17', 4, 'snowflake', 'Snowflake', '', 'prod', '', 1, 'POSTGRES', '', '');
-INSERT INTO versions VALUES ('snowflake-pg14', '1.1-1', 'el9, arm9', 1, '20231204', 'pg14', '', '');
-INSERT INTO versions VALUES ('snowflake-pg15', '1.1-1', 'el9, arm9', 1, '20231017', 'pg15', '', '');
-INSERT INTO versions VALUES ('snowflake-pg16', '1.1-1', 'el9, arm9', 1, '20231017', 'pg16', '', '');
-INSERT INTO versions VALUES ('snowflake-pg17', '1.1-1', 'el9, arm9', 1, '20231017', 'pg17', '', '');
+INSERT INTO versions VALUES ('snowflake-pg14', '1.1-1', 'el8, el9, arm9', 1, '20231204', 'pg14', '', '');
+INSERT INTO versions VALUES ('snowflake-pg15', '1.1-1', 'el8, el9, arm9', 1, '20231017', 'pg15', '', '');
+INSERT INTO versions VALUES ('snowflake-pg16', '1.1-1', 'el8, el9, arm9', 1, '20231017', 'pg16', '', '');
 
 INSERT INTO releases VALUES ('spock32-pg14', 4, 'spock', 'Spock', '', 'prod', '', 1, 'pgEdge Community', '', '');
 INSERT INTO releases VALUES ('spock32-pg15', 4, 'spock', 'Spock', '', 'prod', '', 1, 'pgEdge Community', '', '');
 INSERT INTO releases VALUES ('spock32-pg16', 4, 'spock', 'Spock', '', 'prod', '', 1, 'pgEdge Community', '', '');
-INSERT INTO releases VALUES ('spock32-pg17', 4, 'spock', 'Spock', '', 'prod', '', 1, 'pgEdge Community', '', '');
-INSERT INTO versions VALUES ('spock32-pg14', '3.2.2-1', 'el9, arm9', 1, '20231204', 'pg14', '', '');
-INSERT INTO versions VALUES ('spock32-pg15', '3.2.2-1', 'el9, arm9', 1, '20231204', 'pg15', '', '');
-INSERT INTO versions VALUES ('spock32-pg16', '3.2.2-1', 'el9, arm9', 1, '20231204', 'pg16', '', '');
-INSERT INTO versions VALUES ('spock32-pg17', '3.2.2-1', 'el9, arm9', 1, '20231204', 'pg17', '', '');
+INSERT INTO versions VALUES ('spock32-pg14', '3.2.2-1', 'el8, el9, arm9', 1, '20231204', 'pg14', '', '');
+INSERT INTO versions VALUES ('spock32-pg15', '3.2.2-1', 'el8, el9, arm9', 1, '20231204', 'pg15', '', '');
+INSERT INTO versions VALUES ('spock32-pg16', '3.2.2-1', 'el8, el9, arm9', 1, '20231204', 'pg16', '', '');
 INSERT INTO versions VALUES ('spock32-pg14', '3.2.1-1', 'el9, arm9', 0, '20231130', 'pg14', '', '');
 INSERT INTO versions VALUES ('spock32-pg15', '3.2.1-1', 'el9, arm9', 0, '20231130', 'pg15', '', '');
 INSERT INTO versions VALUES ('spock32-pg16', '3.2.1-1', 'el9, arm9', 0, '20231130', 'pg16', '', '');
-INSERT INTO versions VALUES ('spock32-pg17', '3.2.1-1', 'el9, arm9', 0, '20231130', 'pg17', '', '');
 
 INSERT INTO projects VALUES ('pglogical', 'ext', 4, 0, 'hub', 1, 'https://github.com/2ndQuadrant/pglogical/releases',
   'pglogical', 1, 'spock.png', 'Logical Replication', 'https://github.com/2ndQuadrant/pglogical');

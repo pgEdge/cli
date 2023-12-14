@@ -1,4 +1,4 @@
-FROM rockylinux:9.2
+FROM rockylinux:9
 RUN dnf -y  --allowerasing install bzip2 epel-release  \
     curl sudo procps vim unzip python3 nc  \
     openssh-server openssh-clients dnsutils

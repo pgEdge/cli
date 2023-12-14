@@ -4,13 +4,15 @@
 
 import sys, os
 
-if sys.version_info < (3, 6):
-    print("We require Python 3.6+ (3.9+ for advanced spock functionality)")
+if sys.version_info < (3, 9):
+    maj = sys.version_info.major
+    min = sys.version_info.minor
+    print(f"ERROR: Python 3.9 is minimally required (found Python {maj}.{min})")
     sys.exit(1)
 
 IS_64BITS = sys.maxsize > 2**32
 if not IS_64BITS:
-    print("This is a 32bit machine and we are 64bit.")
+    print("ERROR: This is a 32bit machine and we are 64bit.")
     sys.exit(1)
 
 MY_HOME = os.getenv("MY_HOME", None)
@@ -69,7 +71,7 @@ fire_list = [
     "db",
     "app",
     "machine",
-    "firewall",
+    "firewalld",
 ]
 
 native_list = ["backrest", "supervisor", "ansible", "patroni"]
@@ -178,10 +180,11 @@ ISJSON = os.environ.get("ISJSON", "False")
 
 def fire_away(p_mode, p_args):
     py_file = f"{p_mode}.py"
+    py3 = sys.executable
     if os.path.exists(py_file):
-        cmd = f"python3 {py_file}"
+        cmd = f"{py3} {py_file}"
     else:
-        cmd = f"python3 hub/scripts/{py_file}"
+        cmd = f"{py3} hub/scripts/{py_file}"
 
     for n in range(2, len(p_args)):
         parm = p_args[n]

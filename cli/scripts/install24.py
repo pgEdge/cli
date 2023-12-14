@@ -7,13 +7,6 @@ import sys, os
 VER = "24.1.4"
 REPO = os.getenv("REPO", "https://pgedge-upstream.s3.amazonaws.com/REPO")
 
-if sys.version_info < (3, 6):
-    print("ERROR: Requires Python 3.6 or greater")
-    sys.exit(1)
-
-if sys.version_info < (3, 9):
-    print("WARNING: Advanced functionality requires Python 3.9+")
-
 from urllib import request as urllib2
 
 import tarfile, platform
@@ -36,8 +29,12 @@ def download_n_unpack(p_file, p_url, p_download_msg, p_del_download):
 
     print("Unpacking ...")
     try:
+        # Use 'data' filter if available, but revert to Python 3.11 behavior ('fully_trusted') 
+        #   if this feature is not available:
         tar = tarfile.open(p_file)
-        tar.extractall(path=".")
+        tar.extraction_filter = getattr(tarfile, 'data_filter',
+                                       (lambda member, path: member))
+        tar.extractall()
         tar.close()
         if p_del_download == True:
             os.remove(p_file)

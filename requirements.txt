@@ -1,33 +1,30 @@
-requests>=2.31.0
+requests>=2.27
 paramiko>=3.3.1
-psycopg>=3.1.12
-psycopg-binary>=3.1.12
+psycopg>=3.1
+psycopg-binary>=3.0
 psutil>=5.9.6
 supervisor>=4.2.5
-ansible-core>=2.15.6
 
 ## MACHINE ##########
-apache-libcloud==3.8.0
-requests>=2.31
-certifi>=2023.7.22
-charset_normalizer>=3.3.2
+apache-libcloud>=3.8
+certifi>=3.0
+charset_normalizer>=2.0
 
 
 ## ACE ##############
-tqdm>=4.66.1
-ordered-set>=4.1.0
+tqdm>=4.64
+ordered-set>=4.0
 mpire>=2.8.0
-pandas>=2.1.1
+pandas>=1.1.5
 
 ## STAZ #############
 cdiff>=1.0
-#urllib3>=1.19.1,!=1.21 ## this is the dependency from patroni
-urllib3>=1.26.17,!=1.26.18  ## v1.26.18 does not work on OSX
-PyYAML>=6.0.1
+urllib3>=1.25.4,!=1.26.18
+PyYAML>=3.10,<5.5
 python-etcd>=0.4.5,<0.5
 click>=4.1
-prettytable>=3.9.0
+prettytable>=2.5
 python-dateutil>=2.8.2
-cryptography>=41.0.5
+cryptography>=40.0.2
 ydiff>=1.2
 

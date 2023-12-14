@@ -1,12 +1,25 @@
 # pgEdge Platform Release Notes #############
 
-## done for 24.1.4 so far as of 2023-12-06 ###########
+## done for 24.1.4 so far as of 2023-12-13 ###########
+  + EL8/SLE-15 for AMD64:
+    - require python3.9 (default is python3.6 & it is no longer supported)
+    - support advanced functionality for EL8 on am64 for pgedge 14/15/16
+    - test on Rocky Linux 8 & Open Suse LEAP 15.5
+
   + CTL:
+    - fix security warning when using tar.extract_all() by using data_filter when available
     - progress on upgrading from v23.x (still need to replace install.py from install24.py)
+    - drop support for pg17devel (replace with spock3x & wait for 17beta1)
+
+  + DOCKER:
+    - use latest RockyLinux 9 image (rather than 9.2)
+    - drop fakectl notes at bottom of README
+
 
 ## done for 24.1.3 on 2023-12-05 ###########
   + CTL:
     - fix nc & nodectl regression when called from a different directory
+
 
 ## done for 24.1.2 on 2023-12-04 ###########
   + CTL:

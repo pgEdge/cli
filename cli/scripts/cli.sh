@@ -80,11 +80,14 @@ do
   fi
 done
 
-pyver=`python3 --version > /dev/null 2>&1`
-rc=$?
-if [ $rc == 0 ];then
-  export PYTHON=python3
+if [ -f /usr/bin/python3.9 ]; then
+  export PYTHON=/usr/bin/python3.9
 else
+  export PYTHON=/usr/bin/python3
+fi
+pyver=`$PYTHON --version > /dev/null 2>&1`
+rc=$?
+if [ $rc != 0 ];then
   echo "ERROR: missing python3"
   exit 1
 fi
