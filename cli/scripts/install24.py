@@ -29,8 +29,12 @@ def download_n_unpack(p_file, p_url, p_download_msg, p_del_download):
 
     print("Unpacking ...")
     try:
+        # Use 'data' filter if available, but revert to Python 3.11 behavior ('fully_trusted') 
+        #   if this feature is not available:
         tar = tarfile.open(p_file)
-        tar.extractall(path=".")
+        tar.extraction_filter = getattr(tarfile, 'data_filter',
+                                       (lambda member, path: member))
+        tar.extractall()
         tar.close()
         if p_del_download == True:
             os.remove(p_file)

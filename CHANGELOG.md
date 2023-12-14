@@ -7,6 +7,7 @@
     - test on Rocky Linux 8 & Open Suse LEAP 15.5
 
   + CTL:
+    - fix security warning when using tar.extract_all() by using data_filter when available
     - progress on upgrading from v23.x (still need to replace install.py from install24.py)
     - drop support for pg17devel (replace with spock3x & wait for 17beta1)
 
