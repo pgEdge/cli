@@ -6,7 +6,7 @@ import sys, os, json, time, logging, datetime, random, time
 import util, spock, meta, api, fire
 
 
-def pgbench_install(db, replication_set=None, pg=None):
+def pgbench_install(db, scale=1, replication_set=None, pg=None):
     """Initialize pgBench data, Alter Tables, and add to replication_set"""
     pg_v = util.get_pg_v(pg)
     pg = pg_v.replace("pg", "")
@@ -14,7 +14,7 @@ def pgbench_install(db, replication_set=None, pg=None):
     try:
         con = util.get_pg_connection(pg_v, db, usr)
         cur = con.cursor()
-        pgbench_cmd = '"pgbench --initialize --scale=1 ' + str(db) + '"'
+        pgbench_cmd = '"pgbench --initialize --scale={scale} ' + str(db) + '"'
         util.echo_cmd(f"./ctl pgbin " + str(pg) + " " + pgbench_cmd)
         cur.execute(
             "ALTER TABLE pgbench_accounts ALTER COLUMN abalance SET (LOG_OLD_VALUE=true)"
