@@ -1,7 +1,7 @@
 # PGEDGE NodeCtl Project
 
 
-## Creating a build environment on el9
+## Creating a build environment on el8 or el9
 
 ### 1.) Create a directory named ~/dev
 
