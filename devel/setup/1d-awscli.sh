@@ -2,7 +2,7 @@
 cd ~
 
 flags="--upgrade --user --no-warn-script-location"
-pip3 install $flags awscli
+pip3.9 install $flags awscli
 mkdir -p ~/.aws
 cd ~/.aws
 touch config
