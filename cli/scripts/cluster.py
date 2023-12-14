@@ -10,6 +10,7 @@ base_dir = "cluster"
 
 def create_local_json(cluster_name, db, num_nodes, usr, passwd, pg, port1):
     """Create a json config file for a local cluster."""
+
     cluster_dir = base_dir + os.sep + cluster_name
     text_file = open(cluster_dir + os.sep + cluster_name + ".json", "w")
     cluster_json = {}
@@ -36,7 +37,7 @@ def create_local_json(cluster_name, db, num_nodes, usr, passwd, pg, port1):
         node_json = {}
         node_json["name"] = "n" + str(n)
         node_json["is_active"] = True
-        node_json["ip"] = "127.0.0.1"
+        node_json["ip_address"] = "127.0.0.1"
         node_json["port"] = port1
         node_json["path"] = (
             os.getcwd()
@@ -63,6 +64,7 @@ def create_remote_json(
     cluster_name, db, num_nodes, usr, passwd, pg, port
 ):
     """Create a template for a json config file for a remote cluster."""
+
     cluster_dir = base_dir + os.sep + cluster_name
     os.system("mkdir -p " + cluster_dir)
     text_file = open(cluster_dir + os.sep + cluster_name + ".json", "w")
@@ -93,7 +95,7 @@ def create_remote_json(
         node_json = {}
         node_json["name"] = "n" + str(n)
         node_json["is_active"] = True
-        node_json["ip"] = ""
+        node_json["ip_address"] = ""
         node_json["port"] = port
         node_json["path"] = ""
         node_array["nodes"].append(node_json)
@@ -107,6 +109,8 @@ def create_remote_json(
 
 
 def load_json(cluster_name):
+    """Load a json config file for a cluster."""
+
     parsed_json = get_cluster_json(cluster_name)
 
     db = parsed_json["database"]["name"]
@@ -135,7 +139,7 @@ def load_json(cluster_name):
 
     if "azure" in parsed_json["node_groups"]:
         for group in parsed_json["node_groups"]["azure"]:
-            if "remote" in parsed_json:
+            if "azure" in parsed_json:
                 for n in group["nodes"]:
                     n.update(parsed_json["azure"])
                     node.append(n)
@@ -144,7 +148,7 @@ def load_json(cluster_name):
 
     if "gcp" in parsed_json["node_groups"]:
         for group in parsed_json["node_groups"]["gcp"]:
-            if "remote" in parsed_json:
+            if "gcp" in parsed_json:
                 for n in group["nodes"]:
                     n.update(parsed_json["gcp"])
                     node.append(n)        
@@ -153,7 +157,7 @@ def load_json(cluster_name):
 
     if "localhost" in parsed_json["node_groups"]:
         for group in parsed_json["node_groups"]["localhost"]:
-            if "remote" in parsed_json:
+            if "localhost" in parsed_json:
                 for n in group["nodes"]:
                     n.update(parsed_json["localhost"])
                     node.append(n)  
@@ -191,16 +195,17 @@ def get_cluster_json(cluster_name):
 
 def remove(cluster_name):
     """Remove a test cluster from json definition file of existing nodes."""
+
     db, pg, user, db_passwd, nodes = load_json(cluster_name)
 
     util.message("\n## Ensure that PG is stopped.")
     for nd in nodes:
-        cmd = nd["path"] + "/ctl stop 2> /dev/null"
+        cmd = nd["path"] + os.sep + "ctl stop 2> " + os.sep + "dev" + os.sep + "null"
         util.echo_cmd(cmd, host=nd["ip_address"], usr=nd["os_user"], key=nd["ssh_key"])
 
     util.message("\n## Ensure that pgEdge root directory is gone")
     for nd in nodes:
-        cmd = "rm -rf " + nd["path"]
+        cmd = f"rm -rf " + nd["path"] + os.sep + "pgedge"
         util.echo_cmd(cmd, host=nd["ip_address"], usr=nd["os_user"], key=nd["ssh_key"])
 
 
@@ -297,6 +302,8 @@ def print_install_hdr(cluster_name, db, pg, db_user, count):
 
 
 def ssh_install_pgedge(cluster_name, db, pg, db_user, db_passwd, nodes):
+    """Install pgEdge on every node in a cluster."""
+
     for n in nodes:
         print_install_hdr(cluster_name, db, pg, db_user, len(nodes))
         ndnm = n["name"]
@@ -328,7 +335,7 @@ def ssh_install_pgedge(cluster_name, db, pg, db_user, db_passwd, nodes):
         cmd2 = f'python3 -c "\\$(curl -fsSL {REPO}/{install_py})"'
         util.echo_cmd(cmd0 + cmd1 + cmd2, host=n["ip_address"], usr=n["os_user"], key=n["ssh_key"])
 
-        nc = ndpath + "/pgedge/ctl "
+        nc = ndpath + os.sep + "pgedge" + os.sep + "ctl "
         parms = (
             " -U "
             + str(db_user)
@@ -348,11 +355,13 @@ def ssh_install_pgedge(cluster_name, db, pg, db_user, db_passwd, nodes):
 
 
 def ssh_cross_wire_pgedge(cluster_name, db, pg, db_user, db_passwd, nodes):
+    """Create nodes, repsets, and subs on every node in a cluster."""
+
     sub_array=[]
     for prov_n in nodes:
         ndnm = prov_n["name"]
         ndpath = prov_n["path"]
-        nc = ndpath + "/pgedge/ctl"
+        nc = ndpath + os.sep + "pgedge" + os.sep + "ctl"
         ndip = prov_n["ip_address"]
         os_user = prov_n["os_user"]
         ssh_key = prov_n["ssh_key"]
@@ -414,20 +423,14 @@ def local_destroy(cluster_name):
 
 
 def lc_destroy1(cluster_name):
-    cluster_dir = base_dir + "/" + str(cluster_name)
+    cluster_dir = base_dir + os.sep + str(cluster_name)
 
     cfg = get_cluster_json(cluster_name)
-
-    try:
-        is_localhost = cfg["is_localhost"]
-    except Exception:
-        is_localhost = "False"
-
-    if is_localhost == "True":
+    if "localhost" in cfg:
         command(cluster_name, "all", "stop")
         util.echo_cmd("rm -rf " + cluster_dir)
     else:
-        util.message(f"Cluster '{cluster_name}' is not a localhost cluster")
+        util.message(f"Cluster '{cluster_name}' is not a localhost cluster")        
 
 
 def command(cluster_name, node, cmd, args=None):
@@ -442,7 +445,7 @@ def command(cluster_name, node, cmd, args=None):
         if node == "all" or node == nd["name"]:
             knt = knt + 1
             rc = util.echo_cmd(
-                nd["path"] + "/pgedge/ctl " + cmd,
+                nd["path"] + os.sep + "pgedge" + os.sep + "ctl " + cmd,
                 host=nd["ip_address"],
                 usr=nd["os_user"],
                 key=nd["ssh_key"],
@@ -459,16 +462,17 @@ def app_install(cluster_name, app_name, factor=1):
     db, pg, db_user, db_passwd, nodes = load_json(
             cluster_name
         )
+    ctl =  os.sep + "pgedge" + os.sep + "ctl"
     if app_name == "pgbench":
         for n in nodes:
             ndpath = n["path"]
             ndip = n["ip_address"]
-            util.echo_cmd(f"{ndpath}/pgedge/ctl app pgbench-install {db} {factor} default", host=ndip, usr=n["os_user"], key=n["ssh_key"])
+            util.echo_cmd(f"{ndpath}{ctl} app pgbench-install {db} {factor} default", host=ndip, usr=n["os_user"], key=n["ssh_key"])
     elif app_name == "northwind":
         for n in nodes:
             ndpath = n["path"]
             ndip = n["ip_address"]
-            util.echo_cmd(f"{ndpath}/pgedge/ctl app northwind-install {db} default", host=ndip, usr=n["os_user"], key=n["ssh_key"])
+            util.echo_cmd(f"{ndpath}{ctl} app northwind-install {db} default", host=ndip, usr=n["os_user"], key=n["ssh_key"])
     else:
         util.exit_message(f"Invalid app_name '{app_name}'.")
 
@@ -478,16 +482,17 @@ def app_remove(cluster_name, app_name):
     db, pg, db_user, db_passwd, nodes = load_json(
             cluster_name
         )
+    ctl =  os.sep + "pgedge" + os.sep + "ctl"
     if app_name == "pgbench":
          for n in nodes:
             ndpath = n["path"]
             ndip = n["ip_address"]
-            util.echo_cmd(f"{ndpath}/pgedge/ctl app pgbench-remove {db}", host=ndip, usr=n["os_user"], key=n["ssh_key"])
+            util.echo_cmd(f"{ndpath}{ctl} app pgbench-remove {db}", host=ndip, usr=n["os_user"], key=n["ssh_key"])
     elif app_name == "northwind":
          for n in nodes:
             ndpath = n["path"]
             ndip = n["ip_address"]
-            util.echo_cmd(f"{ndpath}/pgedge/ctl app northwind-remove {db}", host=ndip, usr=n["os_user"], key=n["ssh_key"])
+            util.echo_cmd(f"{ndpath}{ctl} app northwind-remove {db}", host=ndip, usr=n["os_user"], key=n["ssh_key"])
     else:
         util.exit_message("Invalid application name.")
 
