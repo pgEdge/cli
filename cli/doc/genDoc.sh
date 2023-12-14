@@ -105,4 +105,9 @@ $nc machine provider-list   --help
 $nc machine location-list   --help
 $nc machine size-list       --help
 
+$nc firewalld --help
+$nc firewalld list          --help
+$nc firewalld add           --help
+$nc firewalld remove        --help
+
 unset pgeMdDir

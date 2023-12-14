@@ -260,6 +260,10 @@ def _SynopsisSection(component, actions_grouped_by_kind, spec, metadata,
     txt = txt.replace("machine.py", "./ctl machine")
     prfx = "machine"
 
+  elif "firewalld.py" in txt:
+    txt = txt.replace("firewalld.py", "./ctl firewalld")
+    prfx = "firewalld"
+
   if sfx > "":
     MD_FILE = prfx + "-" + sfx + ".md"
   else:
