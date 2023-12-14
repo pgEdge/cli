@@ -8,18 +8,6 @@ import pgbench, northwind
 base_dir = "cluster"
 
 
-def log_old_vals(p_run_sums, p_nc, p_db, p_pg, p_host, p_usr, p_key):
-    for tbl_col in p_run_sums:
-        tbl_col_lst = tbl_col.split(".")
-        tbl = tbl_col_lst[0] + "." + tbl_col_lst[1]
-        col = tbl_col_lst[2]
-
-        cmd = (
-            "ALTER TABLE " + tbl + " ALTER COLUMN " + col + " SET (LOG_OLD_VALUE=true)"
-        )
-        util.psql_cmd(cmd, p_nc, p_db, p_pg, p_host, p_usr, p_key)
-
-
 def create_local_json(cluster_name, db, num_nodes, usr, passwd, pg, port1):
     """Create a json config file for a local cluster."""
     cluster_dir = base_dir + os.sep + cluster_name
@@ -201,58 +189,39 @@ def get_cluster_json(cluster_name):
     return parsed_json
 
 
-def remote_import_def(cluster_name, json_file_name):
-    """Import a cluster definition file so we can work with it like a pgEdge cluster."""
-
-    try:
-        with open(json_file_name) as f:
-            json.load(f)
-    except FileNotFoundError:
-        util.exit_message(f"file '{json_file_name}' not found")
-    except Exception as e:
-        util.exit_message(
-            f"Unable to parse file '{json_file_name}' into json object.\n  {e.msg}"
-        )
-    cluster_dir = f"cluster/{cluster_name}"
-
-    util.echo_cmd(f"mkdir -p {cluster_dir}")
-
-    util.echo_cmd(f"cp {json_file_name} {cluster_dir}/{cluster_name}.json")
-
-
-def remote_reset(cluster_name):
-    """Reset a test cluster from json definition file of existing nodes."""
+def remove(cluster_name):
+    """Remove a test cluster from json definition file of existing nodes."""
     db, pg, user, db_passwd, nodes = load_json(cluster_name)
 
     util.message("\n## Ensure that PG is stopped.")
     for nd in nodes:
         cmd = nd["path"] + "/ctl stop 2> /dev/null"
-        util.echo_cmd(cmd, host=nd["ip"], usr=nd["os_user"], key=nd["ssh_key"])
+        util.echo_cmd(cmd, host=nd["ip_address"], usr=nd["os_user"], key=nd["ssh_key"])
 
     util.message("\n## Ensure that pgEdge root directory is gone")
     for nd in nodes:
         cmd = "rm -rf " + nd["path"]
-        util.echo_cmd(cmd, host=nd["ip"], usr=nd["os_user"], key=nd["ssh_key"])
+        util.echo_cmd(cmd, host=nd["ip_address"], usr=nd["os_user"], key=nd["ssh_key"])
 
 
-def remote_init(cluster_name):
-    """Initialize a test cluster from json definition file of existing nodes."""
+def init(cluster_name):
+    """Initialize a cluster from json definition file of existing nodes."""
 
     util.message(f"## Loading cluster '{cluster_name}' json definition file")
-    cj = get_cluster_json(cluster_name)
+    db, pg, user, db_passwd, nodes = load_json(cluster_name)
 
     util.message("\n## Checking ssh'ing to each node")
-    for nd in cj["nodes"]:
+    for nd in nodes:
         rc = util.echo_cmd(
-            usr=cj["os_user"], host=nd["ip"], key=cj["ssh_key"], cmd="hostname"
+            usr=nd["os_user"], host=nd["ip_address"], key=nd["ssh_key"], cmd="hostname"
         )
         if rc == 0:
             print("OK")
         else:
             util.exit_message("cannot ssh to node")
 
-    ssh_install_pgedge(cluster_name, cj["db_init_passwd"])
-    ssh_cross_wire_pgedge(cluster_name)
+    ssh_install_pgedge(cluster_name, db, pg, user, db_passwd, nodes)
+    ssh_cross_wire_pgedge(cluster_name, db, pg, user, db_passwd, nodes)
 
 
 def local_create(
@@ -312,9 +281,12 @@ def local_create(
     Passwd = os.getenv("pgePasswd", Passwd)
 
     create_local_json(cluster_name, db, num_nodes, User, Passwd, pg, port1)
+    db, pg, db_user, db_passwd, nodes = load_json(
+        cluster_name
+    )
 
-    ssh_install_pgedge(cluster_name, Passwd)
-    ssh_cross_wire_pgedge(cluster_name)
+    ssh_install_pgedge(cluster_name, db, pg, db_user, db_passwd, nodes)
+    ssh_cross_wire_pgedge(cluster_name, db, pg, db_user, db_passwd, nodes)
 
 
 def print_install_hdr(cluster_name, db, pg, db_user, count):
@@ -324,15 +296,12 @@ def print_install_hdr(cluster_name, db, pg, db_user, count):
     )
 
 
-def ssh_install_pgedge(cluster_name, passwd):
-    db, pg, db_user, db_passwd, nodes = load_json(
-        cluster_name
-    )
+def ssh_install_pgedge(cluster_name, db, pg, db_user, db_passwd, nodes):
     for n in nodes:
         print_install_hdr(cluster_name, db, pg, db_user, len(nodes))
-        ndnm = n["nodename"]
+        ndnm = n["name"]
         ndpath = n["path"]
-        ndip = n["ip"]
+        ndip = n["ip_address"]
         try:
             ndport = str(n["port"])
         except Exception:
@@ -357,14 +326,14 @@ def ssh_install_pgedge(cluster_name, passwd):
         cmd0 = f"export REPO={REPO}; "
         cmd1 = f"mkdir -p {ndpath}; cd {ndpath}; "
         cmd2 = f'python3 -c "\\$(curl -fsSL {REPO}/{install_py})"'
-        util.echo_cmd(cmd0 + cmd1 + cmd2, host=n["ip"], usr=n["os_user"], key=n["ssh_key"])
+        util.echo_cmd(cmd0 + cmd1 + cmd2, host=n["ip_address"], usr=n["os_user"], key=n["ssh_key"])
 
         nc = ndpath + "/pgedge/ctl "
         parms = (
             " -U "
             + str(db_user)
             + " -P "
-            + str(passwd)
+            + str(db_passwd)
             + " -d "
             + str(db)
             + " -p "
@@ -373,25 +342,22 @@ def ssh_install_pgedge(cluster_name, passwd):
             + str(pg)
         )
         util.echo_cmd(
-            nc + " install pgedge" + parms, host=n["ip"], usr=n["os_user"], key=n["ssh_key"]
+            nc + " install pgedge" + parms, host=n["ip_address"], usr=n["os_user"], key=n["ssh_key"]
         )
         util.message("#")
 
 
-def ssh_cross_wire_pgedge(cluster_name):
-    db, pg, db_user, db_passwd, nodes = load_json(
-        cluster_name
-    )
+def ssh_cross_wire_pgedge(cluster_name, db, pg, db_user, db_passwd, nodes):
     sub_array=[]
     for prov_n in nodes:
-        ndnm = prov_n["nodename"]
+        ndnm = prov_n["name"]
         ndpath = prov_n["path"]
         nc = ndpath + "/pgedge/ctl"
-        ndip = prov_n["ip"]
+        ndip = prov_n["ip_address"]
         os_user = prov_n["os_user"]
         ssh_key = prov_n["ssh_key"]
-        if "private_ip" in prov_n:
-            ndip_private = prov_n["private_ip"]
+        if "ip_address_private" in prov_n and prov_n["ip_address_private"] != "":
+            ndip_private = prov_n["ip_address_private"]
         else:
             ndip_private = ndip
         try:
@@ -403,11 +369,11 @@ def ssh_cross_wire_pgedge(cluster_name):
         cmd2 = f"{nc} spock repset-create {db}_repset {db}"
         util.echo_cmd(cmd2, host=ndip, usr=os_user, key=ssh_key)
         for sub_n in nodes:
-            sub_ndnm = sub_n["nodename"]
+            sub_ndnm = sub_n["name"]
             if sub_ndnm != ndnm:
-                sub_ndip = sub_n["ip"]
-                if "private_ip" in sub_n:
-                    sub_ndip_private = sub_n["private_ip"]
+                sub_ndip = sub_n["ip_address"]
+                if "ip_address_private" in sub_n and sub_n["ip_address_private"] != "":
+                    sub_ndip_private = sub_n["ip_address_private"]
                 else:
                     sub_ndip_private = sub_ndip
                 try:
@@ -425,8 +391,7 @@ def ssh_cross_wire_pgedge(cluster_name):
         os_user = n[2]
         ssh_key = n[3]
         util.echo_cmd(cmd, host=nip, usr=os_user, key=ssh_key)
-                
-        
+
 
 def local_destroy(cluster_name):
     """Stop and then nuke a localhost cluster."""
@@ -474,11 +439,11 @@ def command(cluster_name, node, cmd, args=None):
     rc = 0
     knt = 0
     for nd in nodes:
-        if node == "all" or node == nd["nodename"]:
+        if node == "all" or node == nd["name"]:
             knt = knt + 1
             rc = util.echo_cmd(
                 nd["path"] + "/pgedge/ctl " + cmd,
-                host=nd["ip"],
+                host=nd["ip_address"],
                 usr=nd["os_user"],
                 key=nd["ssh_key"],
             )
@@ -497,12 +462,12 @@ def app_install(cluster_name, app_name, factor=1):
     if app_name == "pgbench":
         for n in nodes:
             ndpath = n["path"]
-            ndip = n["ip"]
+            ndip = n["ip_address"]
             util.echo_cmd(f"{ndpath}/pgedge/ctl app pgbench-install {db} {factor} default", host=ndip, usr=n["os_user"], key=n["ssh_key"])
     elif app_name == "northwind":
         for n in nodes:
             ndpath = n["path"]
-            ndip = n["ip"]
+            ndip = n["ip_address"]
             util.echo_cmd(f"{ndpath}/pgedge/ctl app northwind-install {db} default", host=ndip, usr=n["os_user"], key=n["ssh_key"])
     else:
         util.exit_message(f"Invalid app_name '{app_name}'.")
@@ -516,12 +481,12 @@ def app_remove(cluster_name, app_name):
     if app_name == "pgbench":
          for n in nodes:
             ndpath = n["path"]
-            ndip = n["ip"]
+            ndip = n["ip_address"]
             util.echo_cmd(f"{ndpath}/pgedge/ctl app pgbench-remove {db}", host=ndip, usr=n["os_user"], key=n["ssh_key"])
     elif app_name == "northwind":
          for n in nodes:
             ndpath = n["path"]
-            ndip = n["ip"]
+            ndip = n["ip_address"]
             util.echo_cmd(f"{ndpath}/pgedge/ctl app northwind-remove {db}", host=ndip, usr=n["os_user"], key=n["ssh_key"])
     else:
         util.exit_message("Invalid application name.")
@@ -532,14 +497,12 @@ if __name__ == "__main__":
         {
             "define-localhost": create_local_json,
             "define-remote": create_remote_json,
-            "remote-init": remote_init,
-            "remote-reset": remote_reset,
-            "remote-import-def": remote_import_def,
             "local-create": local_create,
             "local-destroy": local_destroy,
+            "init": init,
+            "remove": remove,
             "command": command,
             "app-install": app_install,
-            "app-remove": app_remove,
-            
+            "app-remove": app_remove
         }
     )
