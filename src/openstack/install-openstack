@@ -21,7 +21,7 @@ sudo systemctl enable network
 sudo systemctl start network
 
 sudo dnf config-manager --enable PowerTools
-sudo dnf install -y centos-release-openstack-ussuri
+sudo dnf install -y centos-release-openstack-bobcat
 sudo dnf update -y
 
 sudo dnf install -y openstack-packstack
