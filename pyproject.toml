@@ -1,3 +1,7 @@
-[flake8]
+
+[tool.flake8]
 extend-ignore = E203, E401
 max-line-length = 132
+
+
+
