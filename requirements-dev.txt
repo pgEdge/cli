@@ -1,3 +1,1 @@
-ruff
-black
-behave
+ruff>=0.1.8
