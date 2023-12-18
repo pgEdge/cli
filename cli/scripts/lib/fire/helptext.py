@@ -227,47 +227,32 @@ def _SynopsisSection(component, actions_grouped_by_kind, spec, metadata,
     sfx = str(cc_lst[1])
   txt = text
 
-  prfx = "ctl"
+  prfx = "pgedge"
   if "spock.py" in txt:
-    txt = txt.replace("spock.py", "./ctl spock")
     prfx = "spock"
-
   elif "um.py" in txt:
-    txt = txt.replace("um.py", "./ctl um")
     prfx = "um"
-
   elif "service.py" in txt:
-    txt = txt.replace("service.py", "./ctl service")
     prfx = "service"
-
   elif "cluster.py" in txt:
-    txt = txt.replace("cluster.py", "./ctl cluster")
     prfx = "cluster"
-
   elif "ace.py" in txt:
-    txt = txt.replace("ace.py", "./ctl ace")
     prfx = "ace"
-
   elif "secure.py" in txt:
-    txt = txt.replace("secure.py", "./ctl secure")
     prfx = "secure"
-
   elif "db.py" in txt:
-    txt = txt.replace("db.py", "./ctl db")
     prfx = "db"
-
-  elif "machine.py" in txt:
-    txt = txt.replace("machine.py", "./ctl machine")
-    prfx = "machine"
-
+  elif "cloud.py" in txt:
+    prfx = "cloud"
   elif "firewalld.py" in txt:
-    txt = txt.replace("firewalld.py", "./ctl firewalld")
     prfx = "firewalld"
 
+  txt = txt.replace(f"{prfx}.py", f"./ctl {prfx}")
+
   if sfx > "":
-    MD_FILE = prfx + "-" + sfx + ".md"
+    MD_FILE = f"{prfx}-{sfx}.md"
   else:
-    MD_FILE = prfx + ".md"
+    MD_FILE = f"{prfx}.md"
 
   print_hdr("SYNOPSIS", txt)
 

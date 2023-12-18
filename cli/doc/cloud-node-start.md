@@ -1,5 +1,5 @@
 ## SYNOPSIS
-    ./ctl machine node-start PROVIDER NAME METRO
+    ./ctl cloud node-start PROVIDER NAME METRO
  
 ## DESCRIPTION
     Start a node.

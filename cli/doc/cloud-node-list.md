@@ -1,5 +1,5 @@
 ## SYNOPSIS
-    ./ctl machine node-list PROVIDER <flags>
+    ./ctl cloud node-list PROVIDER <flags>
  
 ## DESCRIPTION
     List nodes.

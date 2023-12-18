@@ -1,5 +1,5 @@
 ## SYNOPSIS
-    ./ctl machine provider-list -
+    ./ctl cloud provider-list -
  
 ## DESCRIPTION
     List supported cloud providers.

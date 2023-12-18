@@ -1,5 +1,5 @@
 ## SYNOPSIS
-    ./ctl machine location-list PROVIDER <flags>
+    ./ctl cloud location-list PROVIDER <flags>
  
 ## DESCRIPTION
     List available locations.

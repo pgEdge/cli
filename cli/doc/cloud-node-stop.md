@@ -1,8 +1,8 @@
 ## SYNOPSIS
-    ./ctl machine node-reboot PROVIDER NAME METRO
+    ./ctl cloud node-stop PROVIDER NAME METRO
  
 ## DESCRIPTION
-    Reboot a node.
+    Stop a node.
  
 ## POSITIONAL ARGUMENTS
     PROVIDER

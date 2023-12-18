@@ -1,5 +1,5 @@
 ## SYNOPSIS
-    ./ctl machine size-list PROVIDER <flags>
+    ./ctl cloud size-list PROVIDER <flags>
  
 ## DESCRIPTION
     List available node sizes.

@@ -1,5 +1,5 @@
 ## SYNOPSIS
-    ./ctl machine node-create PROVIDER METRO NAME <flags>
+    ./ctl cloud node-create PROVIDER METRO NAME <flags>
  
 ## DESCRIPTION
     Create a node.

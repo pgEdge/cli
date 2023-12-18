@@ -1,5 +1,5 @@
 ## SYNOPSIS
-    ./ctl machine COMMAND
+    ./ctl cloud COMMAND
  
 ## COMMANDS
     COMMAND is one of the following:

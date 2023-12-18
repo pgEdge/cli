@@ -1,8 +1,8 @@
 ## SYNOPSIS
-    ./ctl machine node-destroy PROVIDER NAME METRO
+    ./ctl cloud node-reboot PROVIDER NAME METRO
  
 ## DESCRIPTION
-    Destroy a node.
+    Reboot a node.
  
 ## POSITIONAL ARGUMENTS
     PROVIDER

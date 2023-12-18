@@ -1,8 +1,8 @@
 ## SYNOPSIS
-    ./ctl machine node-stop PROVIDER NAME METRO
+    ./ctl cloud node-destroy PROVIDER NAME METRO
  
 ## DESCRIPTION
-    Stop a node.
+    Destroy a node.
  
 ## POSITIONAL ARGUMENTS
     PROVIDER
