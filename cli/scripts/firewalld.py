@@ -3,8 +3,8 @@ import util, fire
 
 def list(zone="external"):
     """List firewalld external zone sources"""
-    rc1 = util.echo_cmd(f"sudo firewall-cmd --list-sources --zone={zone}", echo=False)
-    rc2 = util.echo_cmd(f"sudo firewall-cmd --list-ports --zone={zone}", echo=False)
+    util.echo_cmd(f"sudo firewall-cmd --list-sources --zone={zone}", echo=False)
+    util.echo_cmd(f"sudo firewall-cmd --list-ports --zone={zone}", echo=False)
 
 
 def add(sources, ports, zone="external"):
@@ -39,7 +39,7 @@ def action(action, sources, ports, zone):
                 f"sudo firewall-cmd --{action}-port={p}/tcp  --zone={zone}", echo=True
             )
 
-    util.echo_cmd(f"sudo firewall-cmd --runtime-to-permanent", echo=True)
+    util.echo_cmd("sudo firewall-cmd --runtime-to-permanent", echo=True)
 
 
 if __name__ == "__main__":
