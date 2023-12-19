@@ -20,6 +20,7 @@
     - progress on upgrading from v23.x (still need to replace install.py from install24.py)
     - drop support for pg17devel (replace with spock3x & wait for 17beta1)
     - use ruff (rather than flake8 & black)
+    - start replacing psutil w/ pure python version, pypsutil
 
   + DOCKER:
     - use latest RockyLinux 9 image (rather than 9.2)

@@ -3,6 +3,7 @@ paramiko>=3.3.1
 psycopg>=3.1
 psycopg-binary>=3.1
 psutil>=5.9.6
+pypsutil>=0.2.0
 supervisor>=4.2.5
 
 ## MACHINE ##########
