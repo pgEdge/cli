@@ -5,8 +5,8 @@
     - rework cluster-init json for compat with enterprise cloud
 
   + EL8/SLE-15 for AMD64:
-    - require python3.9 (default is python3.6 & it is no longer supported)
-    - support advanced functionality for EL8 on am64 for pgedge 14/15/16
+    - require python39 be added so we can use it over the default (unsupported) python36
+    - support spock & snowflake for EL8 on am64 for pg 14/15/16
     - test on Rocky Linux 8 & Open Suse LEAP 15.5
 
   + CTL:

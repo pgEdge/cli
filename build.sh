@@ -480,15 +480,15 @@ initPG () {
         initC "oraclefdw-pg$pgM"  "oraclefdw"  "$oraclefdwV" "$outPlat" "postgres/oraclefdw" "" "" "nil"
       fi
     fi
-  fi
 
-  initC "pgedge"    "pgedge"    "$pgedgeV"   ""         "postgres/pgedge"   "" "" "Y"
-  #initC "backrest"  "backrest"  "$backrestV" "$outPlat" "postgres/backrest" "" "" "nil"
-  initC "staz"      "staz"      "$stazV"     ""         "postgres/staz"     "" "" "nil"
-  #initC "etcd"      "etcd"      "$etcdV"     "$outPlat" "etcd"              "" "" "nil"
-  initC "firewalld" "firewalld" "$firwldV"   ""         "firewalld"         "" "" "nil"
-  #initC "pgcat"     "pgcat"     "$catV"      "$outPlat" "postgres/pgcat"    "" "" "nil"
-  initC "pgadmin4"  "pgadmin4"  "$adminV"    ""         "postgres/pgadmin4" "" "" "Y"
+    initC "pgedge"    "pgedge"    "$pgedgeV"   ""         "postgres/pgedge"   "" "" "Y"
+    initC "backrest"  "backrest"  "$backrestV" "$outPlat" "postgres/backrest" "" "" "nil"
+    initC "staz"      "staz"      "$stazV"     ""         "postgres/staz"     "" "" "nil"
+    initC "etcd"      "etcd"      "$etcdV"     "$outPlat" "etcd"              "" "" "nil"
+    initC "firewalld" "firewalld" "$firwldV"   ""         "firewalld"         "" "" "nil"
+    initC "pgcat"     "pgcat"     "$catV"      "$outPlat" "postgres/pgcat"    "" "" "nil"
+    initC "pgadmin4"  "pgadmin4"  "$adminV"    ""         "postgres/pgadmin4" "" "" "Y"
+  fi
 
   return
 
