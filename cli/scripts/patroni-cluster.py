@@ -13,7 +13,7 @@ base_dir = "patroni-cluster"
 patroni_dir = "/usr/local/patroni/"
 
 # These commands are used to refresh the etcd database and set the proper permissions.
-ETCD_DATA = f"/var/lib/etcd"
+ETCD_DATA = "/var/lib/etcd"
 ETCD_CLEANUP = (
     f"rm -rf {ETCD_DATA}/*; mkdir -p {ETCD_DATA}; chown -R etcd:etcd {ETCD_DATA}; "
 )
@@ -77,7 +77,6 @@ postgresql:
       username: postgres
       password: mysupersecretpassword
   parameters:
-  
   pg_hba:
     - local all all trust
     - host all all 0.0.0.0/0 trust
@@ -220,7 +219,7 @@ def check_cluster(cluster_name):
 
     for nd in cj["nodes"]:
         is_primary = nd["primary"]
-        if is_primary == True:
+        if is_primary is True:
             util.message("\n## checking primary node has all module installed")
             bin_path = f"{cluster['path']}/{nd['name']}/pgedge/pg16/bin"
             data_path = f"{cluster['path']}/{nd['name']}/pgedge/data/pg16"
@@ -231,9 +230,9 @@ def check_cluster(cluster_name):
                 util.exit_message(f"No PostgreSQL installation found in {bin_path}")
 
             # Check for ETCD installation
-            rc = echo_cmd(f"etcdctl version", nd["ip"], cluster, 0)
+            rc = echo_cmd("etcdctl version", nd["ip"], cluster, 0)
             if rc == 1:
-                util.exit_message(f"No ETCD installation found in $PATH")
+                util.exit_message("No ETCD installation found in $PATH")
 
             # Check for Patroni installation
             rc = echo_cmd(f"{patroni_dir}/patronictl.py version", nd["ip"], cluster, 0)
@@ -369,7 +368,7 @@ def ctl_command(cluster_name, node, cmd, args=None):
             knt = knt + 1
             echo_cmd(nd["path"] + "/pgedge/ctl" + cmd, nd["ip"], cluster)
     if knt == 0:
-        util.message(f"# nothing to do")
+        util.message("# nothing to do")
 
 
 def etcd_command(cluster_name, node, cmd, args=None):
@@ -381,9 +380,9 @@ def etcd_command(cluster_name, node, cmd, args=None):
     for nd in cj["nodes"]:
         if node == "all" or node == nd["name"]:
             knt = knt + 1
-            echo_cmd(f"etcdctl " + cmd, nd["ip"], cluster)
+            echo_cmd("etcdctl " + cmd, nd["ip"], cluster)
     if knt == 0:
-        util.message(f"# nothing to do")
+        util.message("# nothing to do")
 
 
 def patroni_command(cluster_name, node, cmd, args=None):
@@ -396,9 +395,9 @@ def patroni_command(cluster_name, node, cmd, args=None):
     for nd in cj["nodes"]:
         if node == "all" or node == nd["name"]:
             knt = knt + 1
-            echo_cmd(f"patronictl " + cmd, nd["ip"], cluster)
+            echo_cmd("patronictl " + cmd, nd["ip"], cluster)
     if knt == 0:
-        util.message(f"# nothing to do")
+        util.message("# nothing to do")
 
 
 def configure_etcd(cluster, nodes):

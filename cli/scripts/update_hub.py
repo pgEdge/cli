@@ -1,7 +1,7 @@
 
 #  Copyright 2022-2024 PGEDGE  All rights reserved. #
 
-import os, sys, sqlite3, platform
+import os, sys, sqlite3
 import util
 
 MY_HOME = os.getenv("MY_HOME", "")

@@ -12,7 +12,7 @@ try:
     from colorama import init
 
     init()
-except ImportError as e:
+except ImportError:
     pass
 
 scripts_lib_path = os.path.join(os.path.dirname(__file__), "lib")
@@ -78,7 +78,7 @@ def get_pip_ver():
         import pip
 
         return pip.__version__
-    except ImportError as e:
+    except ImportError:
         pass
     return "None"
 
@@ -89,7 +89,7 @@ def cli_unicode(p_str, p_encoding, errors="ignore"):
 
 try:
     test_unicode = unicode("test")
-except NameError as e:
+except NameError:
     unicode = cli_unicode
 
 
@@ -97,7 +97,7 @@ def check_output_wmic(p_cmds):
     out1 = subprocess.check_output(p_cmds)
     try:
         out2 = str(out1, "utf-8")
-    except:
+    except Exception:
         out2 = str(out1)
     out3 = out2.strip().split("\n")[1]
     return out3
@@ -106,7 +106,7 @@ def check_output_wmic(p_cmds):
 def top(display=True, isJson=False):
     try:
         import psutil
-    except ImportError as e:
+    except ImportError:
         util.exit_message("Missing psutil module", 1)
 
     current_timestamp = int(time.mktime(datetime.utcnow().timetuple()))
@@ -124,7 +124,7 @@ def top(display=True, isJson=False):
                     "name",
                 ]
             )
-        except (psutil.NoSuchProcess, IOError, OSError) as e:
+        except (psutil.NoSuchProcess, IOError, OSError):
             pass
         else:
             procs.append(p)
@@ -331,7 +331,7 @@ def info(p_json, p_home, p_repo, print_flag=True):
     )
     host_display = util.get_host_short()
 
-    ## Check the OS & Resources ########################################
+    # Check the OS & Resources ########################################
     plat = util.get_os()
     glibcV = util.get_glibc_version()
 
@@ -465,7 +465,7 @@ def info(p_json, p_home, p_repo, print_flag=True):
     if java_ver > "":
         langs = langs + " | Java v" + java_ver
 
-    ## util.validate_distutils_click(False)
+    # util.validate_distutils_click(False)
 
     if glibcV <= " ":
         glibc_v_display = ""
