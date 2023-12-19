@@ -4,6 +4,12 @@
   + CLUSTER:
     - rework cluster-init json for compat with enterprise cloud
 
+  + CLOUD:
+    - leverage apache-libcloud module from pypy
+    - rename machine.py --> cloud.py
+    - patch libcloud with a fix from equinixmetal (metros) & from us (ram TB)
+    - include our patched libcloud 3.8.0 in our lib directory (& remove from requirements.txt)
+
   + EL8/SLE-15 for AMD64:
     - require python39 be added so we can use it over the default (unsupported) python36
     - support spock & snowflake for EL8 on am64 for pg 14/15/16
