@@ -68,16 +68,19 @@ do
   fi
 done
 
-if [ -f /usr/bin/python3.9 ]; then
-  export PYTHON=/usr/bin/python3.9
-else
-  export PYTHON=/usr/bin/python3
-fi
-pyver=`$PYTHON --version > /dev/null 2>&1`
+v=`python3 --version | cut -d' ' -f2 | cut -d'.' -f1 -f2`
 rc=$?
 if [ $rc != 0 ];then
   echo "ERROR: missing python3"
   exit 1
+fi
+
+if [ $v == "3.9" ] || [ $v == "3.10" ] || [ $v == "3.11" ] || [ $v == "3.12" ]; then
+  export PYTHON=python3
+elif [ -f /usr/bin/python3.9 ]; then
+  export PYTHON=/usr/bin/python3.9
+else
+  export PYTHON=python3
 fi
 
 $PYTHON -u "$MY_HOME/hub/scripts/cli.py" "$@"
