@@ -68,7 +68,7 @@ do
   fi
 done
 
-v=`python3 --version | cut -d' ' -f2 | cut -d'.' -f1 -f2`
+v=`python3 --version | cut -d' ' -f2 | cut -d'.' -f1,2`
 rc=$?
 if [ $rc != 0 ];then
   echo "ERROR: missing python3"
