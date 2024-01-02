@@ -1,5 +1,9 @@
 # pgEdge Platform Release Notes #############
 
+## done for 24.1.5 as of 2024-01-02 ###########
+  - opened up for development
+
+
 ## done for 24.1.4 on 2024-01-02 ###########
   + CLUSTER:
     - rework cluster-init json for compat with enterprise cloud
