@@ -1,6 +1,6 @@
 # pgEdge Platform Release Notes #############
 
-## done for 24.1.4 so far as of 2023-12-14 ###########
+## done for 24.1.4 so far as of 2024-01-02 ###########
   + CLUSTER:
     - rework cluster-init json for compat with enterprise cloud
 
@@ -17,10 +17,9 @@
 
   + CTL:
     - fix security warning when using tar.extract_all() by using data_filter when available
-    - progress on upgrading from v23.x (still need to replace install.py from install24.py)
+    - v 23.x is no more.  v24.x is always used & install.py is a symlink to install24.py
     - drop support for pg17devel (replace with spock3x & wait for 17beta1)
     - use ruff (rather than flake8 & black)
-    - start replacing psutil w/ pure python version, pypsutil
 
   + DOCKER:
     - use latest RockyLinux 9 image (rather than 9.2)

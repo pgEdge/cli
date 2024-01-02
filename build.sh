@@ -547,8 +547,6 @@ do
             cp $CLI/cli.sh ./ctl
 	    cp $CLI/$depnc ./nc
 	    cp $CLI/$depnc ./nodectl 
-            ## ln -s $depnc nc
-            ## ln -s $depnc nodectl
 
             if [ "$outDir" == "posix" ]; then
               OS="???"
@@ -566,6 +564,7 @@ do
           fi
           writeSettRow "GLOBAL" "PLATFORM" "$plat"
           if [ "$plat" == "posix" ]; then
+            checkCmd "cp $CLI/install.py $OUT/."
             checkCmd "cp $CLI/install24.py $OUT/."
           fi;;
 

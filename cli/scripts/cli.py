@@ -995,9 +995,7 @@ def check_status(p_comp, p_mode):
 
 
 def retrieve_remote():
-    versions_sql = "versions.sql"
-    if util.MY_VERSION.startswith("24."):
-        versions_sql = "versions24.sql"
+    versions_sql = "versions24.sql"
     util.set_value("GLOBAL", "VERSIONS", versions_sql)
 
     if not os.path.exists(backup_dir):
