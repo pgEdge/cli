@@ -47,7 +47,7 @@ if not util.is_writable(my_conf):
         pass
     else:
         print(f"Unable to write to '{my_conf}' directory")
-        os.exit()
+        sys.exit(1)
 
 if util.get_value("GLOBAL", "PLATFORM", "") in ("", "posix", "windoze"):
     util.set_value("GLOBAL", "PLATFORM", util.get_default_pf())
