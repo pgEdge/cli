@@ -481,6 +481,9 @@ initPG () {
       fi
     fi
 
+  fi
+
+  if [ "$pgM" == "14" ] || [ "$pgM" == "15" ] || [ "$pgM" == "16" ]; then
     initC "pgedge"    "pgedge"    "$pgedgeV"   ""         "postgres/pgedge"   "" "" "Y"
     initC "backrest"  "backrest"  "$backrestV" "$outPlat" "postgres/backrest" "" "" "nil"
     initC "staz"      "staz"      "$stazV"     ""         "postgres/staz"     "" "" "nil"
