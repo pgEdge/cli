@@ -70,7 +70,6 @@ fire_list = [
     "secure",
     "db",
     "app",
-    "cloud",
     "firewalld",
 ]
 

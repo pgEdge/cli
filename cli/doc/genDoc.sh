@@ -107,20 +107,6 @@ $nc ace diff-schemas        --help
 $nc ace diff-spock          --help
 }
 
-cloud () {
-$nc cloud --help
-$nc cloud node-create     --help
-$nc cloud node-start      --help
-$nc cloud node-stop       --help
-$nc cloud node-reboot     --help
-$nc cloud node-destroy    --help
-$nc cloud node-list       --help
-$nc cloud cluster-nodes   --help
-$nc cloud provider-list   --help
-$nc cloud location-list   --help
-$nc cloud size-list       --help
-}
-
 firewalld () {
 $nc firewalld --help
 $nc firewalld list          --help
@@ -143,7 +129,6 @@ if [ $m == "all" ]; then
   cluster
   secure
   ace
-  cloud
   firewalld
 elif [ $m == "um" ]; then
   um
@@ -159,8 +144,6 @@ elif [ $m == "secure" ]; then
   secure
 elif [ $m == "ace" ]; then
   ace
-elif [ $m == "cloud" ]; then
-  cloud
 elif [ $m == "firewalld" ]; then
   firewalld
 else
