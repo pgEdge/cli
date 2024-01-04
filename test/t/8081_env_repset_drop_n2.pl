@@ -1,7 +1,7 @@
 # This is part of a complex test case; after creating a two node cluster on the localhost, 
 # the test case executes the commands in the Getting Started Guide at the pgEdge website.
 #
-# In this case, we'll drop the repset on node1.
+# In this case, we'll drop the repset on node2.
  
 
 
@@ -17,30 +17,18 @@ use edge;
 no warnings 'uninitialized';
 
 # Our parameters are:
-
+#pgedge home directory for n2
+my $homedir2="$ENV{EDGE_CLUSTER_DIR}/n2/pgedge";
+#increment 1 to the default port for use with node n2
+my $myport2 = $ENV{'EDGE_START_PORT'} + 1;
 print("whoami = $ENV{EDGE_REPUSER}\n");
 
-# We can retrieve the home directory from nodectl in json form... 
+print("The home directory is $homedir2\n"); 
 
-my $json = `$ENV{EDGE_N2}/pgedge/nc --json info`;
-#print("my json = $json");
-my $out = decode_json($json);
-$ENV{EDGE_HOMEDIR2} = $out->[0]->{"home"};
-
-print("The home directory is $ENV{EDGE_HOMEDIR2}\n"); 
-
-# We can retrieve the port number from nodectl in json form...
-
-my $json2 = `$ENV{EDGE_N2}/pgedge/nc --json info $ENV{EDGE_VERSION}`;
-#print("my json = $json2");
-my $out2 = decode_json($json2);
-$ENV{EDGE_PORT2} = $out2->[0]->{"port"};
-
-print("The port number is $ENV{EDGE_PORT2}\n");
+print("The port number is $myport2\n");
 
 
-
-my $cmd3 = qq($ENV{EDGE_HOMEDIR2}/nodectl spock repset-drop $ENV{EDGE_REPSET} $ENV{EDGE_DB});
+my $cmd3 = qq($homedir2/nodectl spock repset-drop demo-repset $ENV{EDGE_DB});
 print("cmd3 = $cmd3\n");
 my ($success3, $error_message3, $full_buf3, $stdout_buf3, $stderr_buf3)= IPC::Cmd::run(command => $cmd3, verbose => 0);
 

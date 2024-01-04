@@ -1,10 +1,10 @@
 # This is part of a complex test case; after creating a two node cluster on the localhost, 
 # the test case executes the commands in the Getting Started Guide at the pgEdge website.
 #
-# In this case, we'll drop the repset on node1.
- 
+# In this case, we'll drop the node 1.
 
- 
+
+
 use strict;
 use warnings;
 use File::Which;
@@ -14,8 +14,6 @@ use JSON;
 use lib './t/lib';
 use contains;
 use edge;
-no warnings 'uninitialized';
-
 # Our parameters are:
 #pgedge home directory for n1
 my $homedir1="$ENV{EDGE_CLUSTER_DIR}/n1/pgedge";
@@ -23,17 +21,16 @@ print("whoami = $ENV{EDGE_REPUSER}\n");
 
 print("The home directory is $homedir1\n"); 
 
-print("The port number is $ENV{EDGE_START_PORT}\n");
+# Drop n1 node
 
-my $cmd3 = qq($homedir1/nodectl spock repset-drop demo-repset $ENV{EDGE_DB});
-print("cmd3 = $cmd3\n");
-my ($success3, $error_message3, $full_buf3, $stdout_buf3, $stderr_buf3)= IPC::Cmd::run(command => $cmd3, verbose => 0);
+my $cmd2 = qq($homedir1/nodectl spock node-drop n1 $ENV{EDGE_DB});
+print("cmd2 = $cmd2\n");
+my ($success2, $error_message2, $full_buf2, $stdout_buf2, $stderr_buf2)= IPC::Cmd::run(command => $cmd2, verbose => 0);
+#print("stdout_buf2 = @$stdout_buf2\n");
 
-print("success3 = $success3\n");
-#print("stdout_buf3 = @$stdout_buf3\n");
 
-  
- if(contains(@$stdout_buf3[0], "repset_drop"))
+
+if(contains(@$stdout_buf2[0], "node_drop"))
 
 {
     exit(0);
@@ -42,14 +39,4 @@ else
 {
     exit(1);
 }
-
-
-
-
-
-
-
-
-
-
 

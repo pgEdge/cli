@@ -17,7 +17,7 @@ t/8070_env_update_false_n1.pl
 t/8071_env_sub_n1n2_update_false.pl
 t/8072_env_update_false_n2.pl
 t/8073_env_sub_n2n1_update_false.pl
-t/8074_env_update_replication_check.pl8
+t/8074_env_update_replication_check.pl
 ##
 # cleanup scripts
 ##

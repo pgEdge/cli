@@ -16,35 +16,23 @@ use contains;
 use edge;
 use List::MoreUtils qw(pairwise);
 no warnings 'uninitialized';
-
+ 
 # Our parameters are:
-
+#pgedge home directory for n1
+my $homedir1="$ENV{EDGE_CLUSTER_DIR}/n1/pgedge";
 
 print("whoami = $ENV{EDGE_REPUSER}\n");
 
+print("The home directory is $homedir1\n"); 
 
-# We can retrieve the home directory from nodectl in json form... 
-
-my $json = `$ENV{EDGE_N1}/pgedge/nc --json info`;
-# print("my json = $json");
-my $out = decode_json($json);
-$ENV{EDGE_HOMEDIR1} = $out->[0]->{"home"};
-print("The home directory is $ENV{EDGE_HOMEDIR1}\n"); 
-
-# We can retrieve the port number from nodectl in json form...
-
-my $json1 = `$ENV{EDGE_N1}/pgedge/nc --json info $ENV{EDGE_VERSION}`;
-# print("my json = $json1");
-my $out1 = decode_json($json1);
- $ENV{EDGE_PORT1} = $out1->[0]->{"port"};
-print("The port number is $ENV{EDGE_PORT1}\n");
+print("The port number is $ENV{EDGE_START_PORT}\n");
 
 
      print ("-"x150,"\n");
 
      # Dropping public.foo Table
 
-     my $cmd6 = qq($ENV{EDGE_HOMEDIR1}/$ENV{EDGE_VERSION}/bin/psql -t -h $ENV{EDGE_HOST} -p $ENV{EDGE_PORT1} -d $ENV{EDGE_DB} -c "DROP TABLE $ENV{EDGE_TABLE} CASCADE");
+     my $cmd6 = qq($homedir1/$ENV{EDGE_COMPONENT}/bin/psql -t -h $ENV{EDGE_HOST} -p $ENV{EDGE_START_PORT} -d $ENV{EDGE_DB} -c "DROP TABLE public.foo CASCADE");
      print("cmd6 = $cmd6\n");
      my($success6, $error_message6, $full_buf6, $stdout_buf6, $stderr_buf6)= IPC::Cmd::run(command => $cmd6, verbose => 0);
      #print("full6 = @$full_buf6\n");
@@ -54,7 +42,7 @@ print("The port number is $ENV{EDGE_PORT1}\n");
       print("stdout_buf6 = @$stdout_buf6\n");
     
 
-     my $cmd7 = qq($ENV{EDGE_HOMEDIR1}/$ENV{EDGE_VERSION}/bin/psql -t -h $ENV{EDGE_HOST} -p $ENV{EDGE_PORT1} -d $ENV{EDGE_DB} -c "SELECT * FROM spock.tables");
+     my $cmd7 = qq($homedir1/$ENV{EDGE_COMPONENT}/bin/psql -t -h $ENV{EDGE_HOST} -p $ENV{EDGE_START_PORT} -d $ENV{EDGE_DB} -c "SELECT * FROM spock.tables");
      #print("cmd7 = $cmd7\n");
      my ($success7, $error_message7, $full_buf7, $stdout_buf7, $stderr_buf7)= IPC::Cmd::run(command => $cmd7, verbose => 0);
 
