@@ -2,8 +2,9 @@
 
 ## done for 24.1.5 as of 2024-01-04 ###########
   - remove support for spock31
+  - bump spock32 to v3.2.4
   - improve pg14 with spock32 patches
-  - opened up for development
+  - 1st pass at replacing 'cloud' w/ 'multicloud'
 
 
 ## done for 24.1.4 on 2024-01-02 ###########
