@@ -429,7 +429,7 @@ function buildTimeScaleDBComponent {
         packageComponent $componentBundle
 }
 
-TEMP=`getopt -l no-tar, copy-bin,no-copy-bin,with-pgver:,with-pgbin:,build-curl:,build-hypopg:,build-postgis:,build-oraclefdw:,build-orafce:,build-audit:,build-partman:,build-pldebugger:,build-pljava:,build-plv8:,build-plprofiler:,build-backrest:,build-spock31:,build-spock32:,build-snowflake:,build-foslots:,build-pglogical:,build-hintplan:,build-timescaledb:,build-readonly:,build-cron:,build-citus:,build-vector: -- "$@"`
+TEMP=`getopt -l no-tar, copy-bin,no-copy-bin,with-pgver:,with-pgbin:,build-curl:,build-hypopg:,build-postgis:,build-oraclefdw:,build-orafce:,build-audit:,build-partman:,build-pldebugger:,build-pljava:,build-plv8:,build-plprofiler:,build-backrest:,build-spock32:,build-snowflake:,build-foslots:,build-pglogical:,build-hintplan:,build-timescaledb:,build-readonly:,build-cron:,build-citus:,build-vector: -- "$@"`
 
 if [ $? != 0 ] ; then
 	echo "Required parameters missing, Terminating..."
@@ -466,7 +466,6 @@ while true; do
     --build-repack ) buildRepack=true; Source=$2; shift; shift ;;
     --build-pglogical ) buildPgLogical=true; Source=$2; shift; shift ;;
     --build-snowflake ) buildSnowflake=true; Source=$2; shift; shift ;;
-    --build-spock31 ) buildSpock31=true; Source=$2; shift; shift ;;
     --build-spock32 ) buildSpock32=true; Source=$2; shift; shift ;;
     --build-foslots ) buildFoSlots=true; Source=$2; shift; shift ;;
     --build-hintplan ) buildHintPlan=true; Source=$2; shift; shift ;;
@@ -570,20 +569,16 @@ if [[ $buildSnowflake == "true" ]]; then
 	buildComp snowflake  "" "$snwflkV" "$snwflkBldV" "$Source"
 fi
 
-if [[ $buildSpock31 == "true" ]]; then
-	buildComp spock31  "" "$spock31V" "$spockBld31V" "$Source"
-fi
-
 if [[ $buildFoSlots == "true" ]]; then
 	buildComp foslots  "" "$foslotsV" "$foslotsBldV" "$Source"
 fi
 
 if [[ $buildSpock32 == "true" ]]; then
-	if [ "$pgVer" == "14" ]; then
-		export NO_LOG_OLD_VALUE=1
-		echo "NO_LOG_OLD_VALUE=1"
-
-	fi
+	## if [ "$pgVer" == "14" ]; then
+	##	export NO_LOG_OLD_VALUE=1
+	##	echo "NO_LOG_OLD_VALUE=1"
+	##
+	## fi
 	buildComp spock32  "" "$spock32V" "$spockBld32V" "$Source"
 fi
 

@@ -44,10 +44,6 @@ if [ "$1" == "plv8" ]; then
   build plv8 $plv8FullV $2 plv8
 fi
 
-if [ "$1" == "pgtop" ]; then
-  build pgtop $pgtopFullV $2 pgtop
-fi
-
 if [ "$1" == "pldebugger" ]; then
   build pldebugger $debugFullV $2 pldebugger
 fi
@@ -74,10 +70,6 @@ fi
 
 if [ "$1" == "backrest" ]; then
   build backrest $backrestFullV $2 backrest
-fi
-
-if [ "$1" == "background" ]; then
-  build background $bckgrndFullV $2 background
 fi
 
 if [ "$1" == "citus" ]; then
@@ -128,10 +120,6 @@ if [ "$1" == "orafce" ]; then
   build orafce $orafceFullV $2 orafce
 fi
 
-if [ "$1" == "fixeddecimal" ]; then
-  build fixeddecimal $fdFullV $2 fixeddecimal
-fi
-
 if [ "$1" == "curl" ]; then
   build curl $curlFullV $2 curl
 fi
@@ -150,10 +138,6 @@ fi
 
 if [ "$1" == "snowflake" ]; then
   build snowflake $snwflkV $2  snowflake
-fi
-
-if [ "$1" == "spock31" ]; then
-  build spock31 $spock31V $2  spock31
 fi
 
 if [ "$1" == "spock32" ]; then

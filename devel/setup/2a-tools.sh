@@ -54,7 +54,7 @@ if [ $uname == 'Linux' ]; then
         sudo dnf config-manager --set-enabled crb
       fi
       sudo dnf -y groupinstall 'development tools'
-      sudo $yum zlib-devel bzip2-devel lbzip2 \
+      sudo dnf -y --nobest install zlib-devel bzip2-devel lbzip2 \
         openssl-devel libxslt-devel libevent-devel c-ares-devel \
         perl-ExtUtils-Embed pam-devel openldap-devel boost-devel 
       sudo dnf -y remove curl

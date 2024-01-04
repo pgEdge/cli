@@ -88,6 +88,11 @@ elif [ "$majorV" == "14" ]; then
   pgV=$pg14V
   pgBuildV=$pg14BuildV
 
+  p1=pg14-005-log_old_value.diff
+  p2=pg14-010-allow_logical_decoding_on_standbys.diff
+  p3=pg14-012-hidden_columns.diff
+  export_patches "$p1" "$p2" "$p3"
+
 elif [ "$majorV" == "15" ]; then
   pgV=$pg15V
   pgBuildV=$pg15BuildV
