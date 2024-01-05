@@ -1,12 +1,7 @@
 #!/bin/bash
 cd "$(dirname "$0")"
 
-this_dir=`pwd`
-
-uname=`uname`
-uname=${uname:0:7}
-hostname=`hostname`
-short_hostname=${hostname:0:4}
+source common.env
 
 echo " "
 echo "########## 2a-tools.sh ######################"
@@ -15,7 +10,6 @@ echo " full hostname = $hostname"
 echo "short hostname = $short_hostname"
 
 if [ $uname == 'Linux' ]; then
-  owner_group="$USER:$USER"
   yum --version > /dev/null 2>&1
   rc=$?
   if [ "$rc" == "0" ]; then
@@ -95,17 +89,7 @@ elif [ $uname == 'Darwin' ]; then
     /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
   fi
   brew install pkg-config krb5 wget curl readline lz4 openssl@1.1 openldap ossp-uuid
-
-else
-  echo "$uname is unsupported"
-  exit 1
 fi
-
-sudo mkdir -p /opt/pgbin-build
-sudo mkdir -p /opt/pgbin-build/pgbin/bin
-sudo chown -R $owner_group /opt/pgbin-build
-sudo mkdir -p /opt/pgcomponent
-sudo chown $owner_group /opt/pgcomponent
 
 cd ~/dev
 mkdir -p out

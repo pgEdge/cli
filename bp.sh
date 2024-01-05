@@ -19,7 +19,6 @@ if [ -d $outp ]; then
   sleep 2
   sudo rm -rf $outp/data/*
   sudo rm -rf $outp
-  sudo rm -rf /data
 fi
 
 sudo rm -rf /var/lib/pgbackrest
