@@ -23,7 +23,7 @@ print("The home directory is $homedir1\n");
 
 # Drop n1 node
 
-my $cmd2 = qq($homedir1/nodectl spock node-drop n1 $ENV{EDGE_DB});
+my $cmd2 = qq($homedir1/$ENV{EDGE_CLI} spock node-drop n1 $ENV{EDGE_DB});
 print("cmd2 = $cmd2\n");
 my ($success2, $error_message2, $full_buf2, $stdout_buf2, $stderr_buf2)= IPC::Cmd::run(command => $cmd2, verbose => 0);
 #print("stdout_buf2 = @$stdout_buf2\n");

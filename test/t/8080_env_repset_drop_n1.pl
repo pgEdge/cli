@@ -25,7 +25,7 @@ print("The home directory is $homedir1\n");
 
 print("The port number is $ENV{EDGE_START_PORT}\n");
 
-my $cmd3 = qq($homedir1/nodectl spock repset-drop demo-repset $ENV{EDGE_DB});
+my $cmd3 = qq($homedir1/$ENV{EDGE_CLI} spock repset-drop demo-repset $ENV{EDGE_DB});
 print("cmd3 = $cmd3\n");
 my ($success3, $error_message3, $full_buf3, $stdout_buf3, $stderr_buf3)= IPC::Cmd::run(command => $cmd3, verbose => 0);
 
