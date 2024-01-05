@@ -3,8 +3,8 @@
 spock32V=3.2.4
 spockBld32V=1
 
-pg17V=17devel
-pg17BuildV=2
+pg17V=17devel2
+pg17BuildV=1
 
 pg16V=16.1
 pg16BuildV=1
@@ -43,7 +43,7 @@ odbcFullV=13.01
 odbcShortV=
 odbcBuildV=1
 
-backrestFullV=2.48
+backrestFullV=2.49
 backrestShortV=
 backrestBuildV=1
 

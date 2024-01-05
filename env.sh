@@ -25,7 +25,7 @@ firwldV=1.2
 adminV=7-1
 postgrestV=11.2.0-1
 prompgexpV=0.11.1
-backrestV=2.48-1
+backrestV=2.49-1
 readonlyV=1.1.1-1
 
 curlV=2.1.1-1
