@@ -9,6 +9,11 @@ if [ "$BLD" == "" ]; then
 fi
 
 sudo mkdir -p /opt/pgbin-build
+rc=$?
+if [ "$rc" != "0" ]; then
+  exit 1
+fi
+
 sudo mkdir -p /opt/pgbin-build/pgbin/bin
 sudo chown -R $owner_group /opt/pgbin-build
 sudo mkdir -p /opt/pgcomponent
@@ -20,5 +25,5 @@ if [ "$rc" != "0" ]; then
   exit 1
 fi
 
-cp -pv $NC/devel/pgbin/build/*.sh .
+cp -pv $CT/devel/pgbin/build/*.sh .
 
