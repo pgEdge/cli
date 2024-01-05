@@ -1,6 +1,7 @@
 # pgEdge Platform Release Notes #############
 
 ## done so far for 24.1.5 as of 2024-01-05 ###########
+  - bring back pg17 on el9
   - bump etcd to 3.5.11
   - bump backrest to 2.49
   - include el8 builds for pgcat, etcd & backrest
