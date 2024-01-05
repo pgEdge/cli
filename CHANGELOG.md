@@ -1,7 +1,7 @@
 # pgEdge Platform Release Notes #############
 
 ## done so far for 24.1.5 as of 2024-01-05 ###########
-  - bump spock32 to v3.2.4
+  - bump spock32 to v3.2.4 & remove spock31 support
   - bring back el9 version of pg17, snowflake-pg17 & spock32-pg17
   - bump pgadmin4 to 8.x
   - bump etcd to 3.5.11
@@ -10,7 +10,6 @@
   - devel builds of pg14 thru pg17 all include log_old_values patch
   - verify SELinux not active when trying to --autostart a 'pgedge install'
   - fix error handling on file priv's in cli.py
-  - remove support for spock31
   - improve pg14 with spock32 patches
   - 1st pass at replacing 'cloud' w/ 'multicloud'
   
