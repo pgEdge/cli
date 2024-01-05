@@ -311,6 +311,7 @@ INSERT INTO versions VALUES ('badger', '11.8', '', 0, '20220408', '', '', '');
 INSERT INTO projects VALUES ('pgedge', 'pge', 0, 0, 'hub', 3, 'http://pgedge.org',
   'pgedge',  0, 'pgedge.png', 'Multi-Active Global Postgres Clusters', 'http://pgedge.com');
 INSERT INTO releases VALUES ('pgedge', 1, 'pgedge',  'pgEdge', '', 'prod', '', 1, 'pgEdge Platform', '', '');
+INSERT INTO versions VALUES ('pgedge', '2.09',  '', 1, '20240115', '', '', '');
 INSERT INTO versions VALUES ('pgedge', '2.08',  '', 1, '20231130', '', '', '');
 INSERT INTO versions VALUES ('pgedge', '2-07',  '', 0, '20231024', '', '', '');
 
@@ -343,12 +344,13 @@ INSERT INTO versions VALUES ('firewalld', '1.2', '', 1, '20231101', '', 'EL9', '
 INSERT INTO projects VALUES ('staz', 'app', 11, 0, '', 4, 'https://github.com/pgedge/staz/tags',
   'staz', 0, 'patroni.png', 'HA', 'https://github.com/pgedge/staz');
 INSERT INTO releases VALUES ('staz', 1, 'staz', 'Spock 3 AZ', '', 'ent', '', 1, 'pgEdge Community', '', '');
-INSERT INTO versions VALUES ('staz', '3.1.2.2', '', 1, '20231021', '', 'EL9', '');
+INSERT INTO versions VALUES ('staz', '3.1.2.2', '', 1, '20231021', '', '', '');
 
 INSERT INTO projects VALUES ('etcd', 'app', 11, 0, 'hub', 4, 'https://github.com/etcd-io/etcd/tags',
   'etcd', 0, 'etcd.png', 'HA', 'https://github.com/etcd-io/etcd');
 INSERT INTO releases VALUES ('etcd', 1, 'etcd', 'Etcd', '', 'ent', '', 1, 'POSTGRES', '', '');
-INSERT INTO versions VALUES ('etcd', '3.5.9', 'el9, arm9', 1, '20231013', '', 'EL9', '');
+INSERT INTO versions VALUES ('etcd', '3.5.11', 'el8, el9, arm9', 1, '20240115', '', '', '');
+INSERT INTO versions VALUES ('etcd', '3.5.9', 'el9, arm9',       0, '20231013', '', '', '');
 
 INSERT INTO projects VALUES ('ddlx', 'ext',     4, 0, 'hub', 0, 'https://github.com/lacanoid/pgddl/releases', 'ddlx',  1, 'ddlx.png', 'DDL Extractor', 'https://github.com/lacanoid/pgddl#ddl-extractor-functions--for-postgresql');
 INSERT INTO releases VALUES ('ddlx-pg13', 2, 'ddlx', 'DDLeXtact', '', 'prod','',  0, 'POSTGRES', '', '');

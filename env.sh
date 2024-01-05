@@ -11,7 +11,7 @@ foslotsV=1a-1
 snwflkV=1.1-1
 vectorV=0.5.1-1
 
-pgedgeV=2.08
+pgedgeV=2.09
 
 P17=17devel-2
 P16=16.1-1
@@ -49,7 +49,7 @@ hint15V=1.5.1-1
 hint16V=1.6.0-1
 
 stazV=3.1.2.2
-etcdV=3.5.9
+etcdV=3.5.11
 
 audit15V=1.7.0-1
 audit16V=16.0-1
