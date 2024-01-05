@@ -28,7 +28,7 @@ print("The port number is $ENV{EDGE_START_PORT}\n");
 
 
 
-my $cmd5 = qq($homedir1/nodectl spock repset-create --replicate_truncate=False demo-repset $ENV{EDGE_DB});
+my $cmd5 = qq($homedir1/$ENV{EDGE_CLI} spock repset-create --replicate_truncate=False demo-repset $ENV{EDGE_DB});
 print("cmd5 = $cmd5\n");
 my ($success5, $error_message5, $full_buf5, $stdout_buf5, $stderr_buf5)= IPC::Cmd::run(command => $cmd5, verbose => 0);
 print("stdout_buf5 = @$stdout_buf5\n");
@@ -108,7 +108,7 @@ else
   #
   # Listing repset tables 
   #
-    my $json3 = `$homedir1/nc spock repset-list-tables public $ENV{EDGE_DB}`;
+    my $json3 = `$homedir1/$ENV{EDGE_CLI} spock repset-list-tables public $ENV{EDGE_DB}`;
    print("my json3 = $json3");
    my $out3 = decode_json($json3);
    $ENV{EDGE_SETNAME} = $out3->[0]->{"set_name"};
@@ -120,7 +120,7 @@ else
 if($ENV{EDEGE_SETNAME} eq ""){
   
   
-       my $cmd8 = qq($homedir1/nodectl spock repset-add-table demo-repset public.foo $ENV{EDGE_DB});
+       my $cmd8 = qq($homedir1/$ENV{EDGE_CLI} spock repset-add-table demo-repset public.foo $ENV{EDGE_DB});
     
      print("cmd8 = $cmd8\n");
      my($success8, $error_message8, $full_buf8, $stdout_buf8, $stderr_buf8)= IPC::Cmd::run(command => $cmd8, verbose => 0);

@@ -25,14 +25,14 @@ print("The port number of node 2 is $myport2\n");
 
 # Then, create the subscription on node 1:
 
-my $cmd11 = qq($homedir2/nodectl spock sub-create sub_n2n1 'host=$ENV{EDGE_HOST} port=$ENV{EDGE_START_PORT} user=$ENV{EDGE_REPUSER} dbname=$ENV{EDGE_DB}' $ENV{EDGE_DB});
+my $cmd11 = qq($homedir2/$ENV{EDGE_CLI} spock sub-create sub_n2n1 'host=$ENV{EDGE_HOST} port=$ENV{EDGE_START_PORT} user=$ENV{EDGE_REPUSER} dbname=$ENV{EDGE_DB}' $ENV{EDGE_DB});
 print("cmd11 = $cmd11\n");
 my($success11, $error_message11, $full_buf11, $stdout_buf11, $stderr_buf11)= IPC::Cmd::run(command => $cmd11, verbose => 0);
 print("stdout_buf11 = @$stdout_buf11\n");
 
  # Adding repset (demo-repset) to the subscripton sub_n1n2
 
-    my $cmd4 = qq($homedir2/nodectl spock sub-add-repset sub_n2n1 demo-repset $ENV{EDGE_DB});
+    my $cmd4 = qq($homedir2/$ENV{EDGE_CLI} spock sub-add-repset sub_n2n1 demo-repset $ENV{EDGE_DB});
     print("cmd4 = $cmd4\n");    
     my ($success4, $error_message4, $full_buf4, $stdout_buf4, $stderr_buf4)= IPC::Cmd::run(command => $cmd4, verbose => 0);
 

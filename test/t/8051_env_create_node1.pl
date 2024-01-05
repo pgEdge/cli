@@ -28,7 +28,7 @@ print("The port number is $ENV{EDGE_START_PORT}\n");
 #
 ## Check for n1 node existence
 
-my $json3 = `$ENV{EDGE_CLUSTER_DIR}/n1/pgedge/nc spock node-list  $ENV{EDGE_DB}`;
+my $json3 = `$homedir1/$ENV{EDGE_CLI} spock node-list  $ENV{EDGE_DB}`;
    #print("my json3 = $json3");
 my $out3 = decode_json($json3);
   $ENV{EDGE_NODE1_NAME} = $out3->[0]->{"node_name"};
@@ -38,7 +38,7 @@ if($ENV{EDGE_NODE1_NAME} eq "")
 
    {
    
-my $cmd2 = qq($homedir1/nodectl spock node-create n1 'host=$ENV{EDGE_HOST} port=$ENV{EDGE_START_PORT} user=$ENV{EDGE_REPUSER} dbname=$ENV{EDGE_DB}' $ENV{EDGE_DB});
+my $cmd2 = qq($homedir1/$ENV{EDGE_CLI} spock node-create n1 'host=$ENV{EDGE_HOST} port=$ENV{EDGE_START_PORT} user=$ENV{EDGE_REPUSER} dbname=$ENV{EDGE_DB}' $ENV{EDGE_DB});
 print("cmd2 = $cmd2\n");
 my ($success2, $error_message2, $full_buf2, $stdout_buf2, $stderr_buf2)= IPC::Cmd::run(command => $cmd2, verbose => 0);
 

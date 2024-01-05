@@ -53,7 +53,7 @@ print("stdout_buf3 = @$stdout_buf3\n");
 chdir("./../../../../");
 # Install PostgreSQL.
 
-my $cmd4 = qq($homedir1/nodectl install pgedge -U $ENV{EDGE_USERNAME} -P $ENV{EDGE_PASSWORD} -d $ENV{EDGE_DB} -p $ENV{EDGE_START_PORT});
+my $cmd4 = qq($homedir1/$ENV{EDGE_CLI} install pgedge -U $ENV{EDGE_USERNAME} -P $ENV{EDGE_PASSWORD} -d $ENV{EDGE_DB} -p $ENV{EDGE_START_PORT} --pg $ENV{EDGE_INST_VERSION});
 print("cmd4 = $cmd4\n");
 my ($success4, $error_message4, $full_buf4, $stdout_buf4, $stderr_buf4)= IPC::Cmd::run(command => $cmd4, verbose => 0);
 
