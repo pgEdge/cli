@@ -454,6 +454,21 @@ def scrub_passwd(p_cmd):
     return new_s
 
 
+def is_selinux_active(): 
+    if get_platform() != "Linux":
+        return(False)
+
+    rc = os.system("getenforce > /dev/null 2>&1")
+    if rc != 0:
+        return(False)
+
+    status = getoutput("getenforce")
+    if status.lower() == "disabled":
+        return(False)
+
+    return(True)
+   
+
 def get_glibc_version():
     if get_platform() != "Linux":
         return ""

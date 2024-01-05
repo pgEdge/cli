@@ -56,6 +56,12 @@ def check_pre_reqs():
         if util.get_glibc_version() < "2.28":
             error_exit("Linux has unsupported (older) version of glibc")
 
+        if isAutoStart == "True":
+            util.message("  Verify SELinux is not active")
+            if util.is_selinux_active():
+               error_exit("SELinux must not be active for --autostart mode")
+    
+
     util.message("  Verify Python 3.9+")
     p3_minor_ver = util.get_python_minor_version()
     if p3_minor_ver < 9:
