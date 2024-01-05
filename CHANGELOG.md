@@ -1,6 +1,11 @@
 # pgEdge Platform Release Notes #############
 
-## done for 24.1.5 as of 2024-01-04 ###########
+## done so far for 24.1.5 as of 2024-01-05 ###########
+  - bump etcd to 3.5.11
+  - bump backrest to 2.49
+  - include el8 builds for pgcat, etcd & backrest
+  - devel builds of pg14 thru pg17 all include log_old_values patch
+  - verify SELinux not active when trying to --autostart a 'pgedge install'
   - fix error handling on file priv's in cli.py
   - remove support for spock31
   - bump spock32 to v3.2.4
