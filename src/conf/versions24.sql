@@ -235,29 +235,27 @@ INSERT INTO versions VALUES ('vector-pg16', '0.5.1-1', 'el9, arm9', 1, '20231031
 INSERT INTO versions VALUES ('vector-pg15', '0.5.0-1', 'el9, arm9', 0, '20230914', 'pg15', '', '');
 INSERT INTO versions VALUES ('vector-pg16', '0.5.0-1', 'el9, arm9', 0, '20230914', 'pg16', '', '');
 
-INSERT INTO projects VALUES ('spock', 'pge', 4, 0, 'hub', 1, 'https://github.com/pgedge/spock/tags',
-  'spock', 1, 'spock.png', 'Logical & Multi-Master Replication', 'https://github.com/pgedge/spock/#spock');
-INSERT INTO releases VALUES ('spock31-pg14', 4, 'spock', 'Spock', '', 'test', '', 1, 'pgEdge Community', '', '');
-INSERT INTO releases VALUES ('spock31-pg15', 4, 'spock', 'Spock', '', 'test', '', 1, 'pgEdge Community', '', '');
-INSERT INTO releases VALUES ('spock31-pg16', 4, 'spock', 'Spock', '', 'test', '', 1, 'pgEdge Community', '', '');
-INSERT INTO versions VALUES ('spock31-pg15', '3.1.8-1', 'el9, arm9', 0, '20231031', 'pg15', '', '');
-INSERT INTO versions VALUES ('spock31-pg16', '3.1.8-1', 'el9, arm9', 0, '20231031', 'pg16', '', '');
-
 INSERT INTO projects VALUES ('snowflake', 'pge', 4, 0, 'hub', 1, 'https://github.com/pgedge/snowflake/tags',
   'snowflake', 1, 'snowflake.png', 'Snowflake Sequences', 'https://github.com/pgedge/snowflake/');
 INSERT INTO releases VALUES ('snowflake-pg14', 4, 'snowflake', 'Snowflake', '', 'prod', '', 1, 'POSTGRES', '', '');
 INSERT INTO releases VALUES ('snowflake-pg15', 4, 'snowflake', 'Snowflake', '', 'prod', '', 1, 'POSTGRES', '', '');
 INSERT INTO releases VALUES ('snowflake-pg16', 4, 'snowflake', 'Snowflake', '', 'prod', '', 1, 'POSTGRES', '', '');
+INSERT INTO releases VALUES ('snowflake-pg17', 4, 'snowflake', 'Snowflake', '', 'test', '', 1, 'POSTGRES', '', '');
 INSERT INTO versions VALUES ('snowflake-pg14', '1.1-1', 'el8, el9, arm9', 1, '20231204', 'pg14', '', '');
 INSERT INTO versions VALUES ('snowflake-pg15', '1.1-1', 'el8, el9, arm9', 1, '20231017', 'pg15', '', '');
 INSERT INTO versions VALUES ('snowflake-pg16', '1.1-1', 'el8, el9, arm9', 1, '20231017', 'pg16', '', '');
+INSERT INTO versions VALUES ('snowflake-pg17', '1.1-1', 'el9',            1, '20240115', 'pg17', '', '');
 
+INSERT INTO projects VALUES ('spock', 'pge', 4, 0, 'hub', 1, 'https://github.com/pgedge/spock/tags',
+  'spock', 1, 'spock.png', 'Logical & Multi-Master Replication', 'https://github.com/pgedge/spock/#spock');
 INSERT INTO releases VALUES ('spock32-pg14', 4, 'spock', 'Spock', '', 'prod', '', 1, 'pgEdge Community', '', '');
 INSERT INTO releases VALUES ('spock32-pg15', 4, 'spock', 'Spock', '', 'prod', '', 1, 'pgEdge Community', '', '');
 INSERT INTO releases VALUES ('spock32-pg16', 4, 'spock', 'Spock', '', 'prod', '', 1, 'pgEdge Community', '', '');
+INSERT INTO releases VALUES ('spock32-pg17', 4, 'spock', 'Spock', '', 'test', '', 1, 'pgEdge Community', '', '');
 INSERT INTO versions VALUES ('spock32-pg14', '3.2.4-1', 'el8, el9, arm9', 1, '20240115', 'pg14', '', '');
 INSERT INTO versions VALUES ('spock32-pg15', '3.2.4-1', 'el8, el9, arm9', 1, '20240115', 'pg15', '', '');
 INSERT INTO versions VALUES ('spock32-pg16', '3.2.4-1', 'el8, el9, arm9', 1, '20240115', 'pg16', '', '');
+INSERT INTO versions VALUES ('spock32-pg17', '3.2.4-1', 'el9',            1, '20240115', 'pg17', '', '');
 INSERT INTO versions VALUES ('spock32-pg14', '3.2.2-1', 'el8, el9, arm9', 0, '20231204', 'pg14', '', '');
 INSERT INTO versions VALUES ('spock32-pg15', '3.2.2-1', 'el8, el9, arm9', 0, '20231204', 'pg15', '', '');
 INSERT INTO versions VALUES ('spock32-pg16', '3.2.2-1', 'el8, el9, arm9', 0, '20231204', 'pg16', '', '');
@@ -280,7 +278,8 @@ INSERT INTO versions VALUES ('postgis-pg16', '3.4.0-1', 'el9, arm9', 1, '2023091
 INSERT INTO projects VALUES ('pgadmin4', 'app', 11, 443, '', 1, 'https://www.pgadmin.org/news/',
   'pgadmin4', 0, 'pgadmin.png', 'PostgreSQL Tools', 'https://pgadmin.org');
 INSERT INTO releases VALUES ('pgadmin4', 2, 'pgadmin4', 'pgAdmin 4', '', 'ent', '', 1, 'POSTGRES', '', '');
-INSERT INTO versions VALUES ('pgadmin4', '7-1', '', 1, '20231107', '', 'EL9', '');
+INSERT INTO versions VALUES ('pgadmin4', '8.x', '', 1, '20240115', '', '', '');
+INSERT INTO versions VALUES ('pgadmin4', '7-1', '', 0, '20231107', '', '', '');
 
 INSERT INTO projects VALUES ('bulkload', 'ext', 4, 0, 'hub', 5, 'https://github.com/ossc-db/pg_bulkload/releases',
   'bulkload', 1, 'bulkload.png', 'High Speed Data Loading', 'https://github.com/ossc-db/pg_bulkload');

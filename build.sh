@@ -194,7 +194,6 @@ initDir () {
 
   copy-pgXX "snowflake"
   copy-pgXX "orafce"
-  copy-pgXX "spock31"
   copy-pgXX "spock32"
   copy-pgXX "curl"
   copy-pgXX "pglogical"
@@ -463,7 +462,6 @@ initPG () {
       initC "pldebugger-pg$pgM" "pldebugger" "$debuggerV"  "$outPlat" "postgres/pldebugger" "" "" "nil"
       initC "pglogical-pg$pgM"  "pglogical"  "$logicalV"   "$outPlat" "postgres/logical"    "" "" "nil"
       initC "citus-pg$pgM"      "citus"      "$citusV"     "$outPlat" "postgres/citus"      "" "" "nil"
-      initC "spock31-pg$pgM"    "spock31"    "$spock31V"   "$outPlat" "postgres/spock31"    "" "" "nil"
       initC "hypopg-pg$pgM"     "hypopg"     "$hypoV"      "$outPlat" "postgres/hypopg"     "" "" "nil"
       initC "pljava-pg$pgM"     "pljava"     "$pljavaV"    "$outPlat" "postgres/pljava"     "" "" "nil"
       initC "curl-pg$pgM"       "curl"       "$curlV"      "$outPlat" "postgres/curl"       "" "" "nil"

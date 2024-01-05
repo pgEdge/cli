@@ -1,7 +1,9 @@
 # pgEdge Platform Release Notes #############
 
 ## done so far for 24.1.5 as of 2024-01-05 ###########
-  - bring back pg17 on el9
+  - bump spock32 to v3.2.4
+  - bring back el9 version of pg17, snowflake-pg17 & spock32-pg17
+  - bump pgadmin4 to 8.x
   - bump etcd to 3.5.11
   - bump backrest to 2.49
   - include el8 builds for pgcat, etcd & backrest
@@ -9,7 +11,6 @@
   - verify SELinux not active when trying to --autostart a 'pgedge install'
   - fix error handling on file priv's in cli.py
   - remove support for spock31
-  - bump spock32 to v3.2.4
   - improve pg14 with spock32 patches
   - 1st pass at replacing 'cloud' w/ 'multicloud'
   
