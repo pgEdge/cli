@@ -69,15 +69,8 @@ downBuild () {
 
   echoCmd "cd $1"
 
-  if [ "$pgV" == "15" ]; then
-    patchFromSpock main patches/pg15-005-log_old_value.diff
-    patchFromSpock main patches/pg15-010-allow_logical_decoding_on_standbys.patch
-  elif [ "$pgV" == "16" ]; then
-    patchFromSpock main  patches/pg16-005-log_old_value.diff
-  elif [ "$pgV" == "17" ]; then
-    patchFromSpock main patches/pg17-005-log_old_value.diff
-    #patchFromSpock main patches/pg17-009-hidden_columns.diff
-    #patchFromSpock main patches/pg17-010-hidden_columns_v2.diff
+  if [ "$pgV" == "14" ] || [ "$pgV" == "15" ] || [ "$pgV" == "16" ] || [ "$pgV" == "17" ]; then
+    patchFromSpock main patches/pg$pgV-005-log_old_value.diff
   fi
 
   makeInstall
