@@ -15,7 +15,6 @@ export BLD=/opt/pgbin-build/pgbin/bin
 export PFD=$DEV/platform-doc
 
 export DEVEL=$CT/devel
-export PSX=$CT/out/posix
 export PG=$DEVEL/pg
 export CLI=$CT/cli/scripts
 export REPO=http://localhost:8000
