@@ -1,5 +1,9 @@
 # pgEdge Platform Release Notes #############
 
+## done for 24.1.6 as of 2024-01-08 ###########
+  - remove ruff.toml broken link at runtime from hub/scripts
+
+
 ## done for 24.1.5 on 2024-01-08 ###########
   - bump spock32 to v3.2.4 & remove spock31 support
   - bring back el9 version of pg17, snowflake-pg17 & spock32-pg17

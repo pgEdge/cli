@@ -308,6 +308,7 @@ finalizeOutput () {
   checkCmd "cp -r $CLI/../doc hub/."
   checkCmd "cp $CLI/../README.md  hub/doc/."
   checkCmd "rm -f hub/scripts/*.pyc"
+  checkCmd "rm -f hub/scripts/ruff.toml"
   zipDir "hub" "$hubV" "" "Enabled"
 
   checkCmd "cp conf/$verSQL ."
