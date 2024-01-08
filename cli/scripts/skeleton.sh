@@ -1,4 +1,12 @@
+#!/bin/bash
 
+isEL8="False"
+if [ -f /etc/os-release ]; then
+  PLATFORM=`cat /etc/os-release | grep PLATFORM_ID | cut -d: -f2 | tr -d '\"'`
+  if [ "$PLATFORM" == "el8" ]; then
+    isEL8="True"
+  fi
+fi
 
 function install_pgedge {
   ./ctl install $pgV; 
@@ -12,6 +20,9 @@ function install_pgedge {
 function test16 {
   pgV=pg16
   install_pgedge
+  if [ "$isEL8" == "True" ]; then
+    return
+  fi
 
   ./ctl install hypopg-$pgV        -d demo
   ./ctl install orafce-$pgV        -d demo
@@ -31,6 +42,9 @@ function test15 {
   pgV=pg15
   install_pgedge
   ./ctl install foslots-$pgV       -d demo
+  if [ "$isEL8" == "True" ]; then
+    return
+  fi
 
   ./ctl install hypopg-$pgV        -d demo
 

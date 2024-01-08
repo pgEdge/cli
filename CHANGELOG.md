@@ -3,16 +3,17 @@
 ## done for 24.1.5 on 2024-01-08 ###########
   - bump spock32 to v3.2.4 & remove spock31 support
   - bring back el9 version of pg17, snowflake-pg17 & spock32-pg17
+  - bring skeleton.sh tests up to snuff for pg14/15/16 & el8 consideration
+  - foslots and readonly for pg14/15/16 & el8
   - bump pgadmin4 to 8.x
-  - bump etcd to 3.5.11
-  - bump backrest to 2.49
+  - bump etcd to 3.5.11 & include for el8
+  - bump backrest to 2.49 & include for el8
   - include el8 builds for pgcat, etcd & backrest
   - devel builds of pg14 thru pg17 all include log_old_values patch
   - verify SELinux not active when trying to --autostart a 'pgedge install'
   - fix error handling on file priv's in cli.py
   - improve pg14 with spock32 patches
   - 1st pass at replacing 'cloud' w/ 'multicloud'
-  
 
 
 ## done for 24.1.4 on 2024-01-02 ###########
