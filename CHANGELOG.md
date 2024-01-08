@@ -1,6 +1,6 @@
 # pgEdge Platform Release Notes #############
 
-## done so far for 24.1.5 as of 2024-01-05 ###########
+## done for 24.1.5 on 2024-01-08 ###########
   - bump spock32 to v3.2.4 & remove spock31 support
   - bring back el9 version of pg17, snowflake-pg17 & spock32-pg17
   - bump pgadmin4 to 8.x

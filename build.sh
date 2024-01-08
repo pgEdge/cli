@@ -449,6 +449,11 @@ initPG () {
       initC "hintplan-pg$pgM"   "hintplan"   "$hint16V"    "$outPlat" "postgres/hintplan"  "" "" "nil"
     fi
 
+    if [ "$pgM" == "14" ]; then
+      initC "foslots-pg$pgM"    "foslots"    "$foslotsV"   "$outPlat" "postgres/foslots"    "" "" "nil"
+      initC "readonly-pg$pgM"   "readonly"   "$readonlyV"  "$outPlat" "postgres/readonly"   "" "" "nil"
+    fi
+
     if [ "$pgM" == "15" ]; then
       initC "audit-pg$pgM"      "audit"      "$audit15V"   "$outPlat" "postgres/audit"     "" "" "nil"
       initC "hintplan-pg$pgM"   "hintplan"   "$hint15V"    "$outPlat" "postgres/hintplan"  "" "" "nil"
