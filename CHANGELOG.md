@@ -2,6 +2,7 @@
 
 ## done for 24.1.6 as of 2024-01-08 ###########
   - remove ruff.toml broken link at runtime from hub/scripts
+  - quite down install ctllibs for ubu22, al2023 & sle15
 
 
 ## done for 24.1.5 on 2024-01-08 ###########
