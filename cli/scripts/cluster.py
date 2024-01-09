@@ -24,10 +24,12 @@ def create_local_json(cluster_name, db, num_nodes, usr, passwd, pg, port1):
     cluster_json["localhost"] = local_json
 
     database_json = {}
-    database_json["username"] = usr
-    database_json["password"] = passwd
     database_json["pg_version"] = pg
-    database_json["name"] = db
+    db_json = {}
+    db_json["username"] = usr
+    db_json["password"] = passwd
+    db_json["name"] = db
+    database_json["databases"]=db_json
     cluster_json["database"] = database_json
 
     
@@ -113,12 +115,13 @@ def load_json(cluster_name):
 
     parsed_json = get_cluster_json(cluster_name)
 
-    db = parsed_json["database"]["name"]
     pg = parsed_json["database"]["pg_version"]
-    user = parsed_json["database"]["username"]
-    db_passwd = parsed_json["database"]["password"]
+    
+    db=[]
+    for databases in parsed_json["database"]["databases"]:
+        db.append(databases)
+    
     node=[]
-
     if "remote" in parsed_json["node_groups"]:
         for group in parsed_json["node_groups"]["remote"]:
             if "remote" in parsed_json:
@@ -167,8 +170,6 @@ def load_json(cluster_name):
     return (
         db,
         pg,
-        user,
-        db_passwd,
         node
     )
 
@@ -196,7 +197,7 @@ def get_cluster_json(cluster_name):
 def remove(cluster_name):
     """Remove a test cluster from json definition file of existing nodes."""
 
-    db, pg, user, db_passwd, nodes = load_json(cluster_name)
+    db, pg, nodes = load_json(cluster_name)
 
     util.message("\n## Ensure that PG is stopped.")
     for nd in nodes:
@@ -213,7 +214,7 @@ def init(cluster_name):
     """Initialize a cluster from json definition file of existing nodes."""
 
     util.message(f"## Loading cluster '{cluster_name}' json definition file")
-    db, pg, user, db_passwd, nodes = load_json(cluster_name)
+    db, pg, nodes = load_json(cluster_name)
 
     util.message("\n## Checking ssh'ing to each node")
     for nd in nodes:
@@ -225,8 +226,12 @@ def init(cluster_name):
         else:
             util.exit_message("cannot ssh to node")
 
-    ssh_install_pgedge(cluster_name, db, pg, user, db_passwd, nodes)
-    ssh_cross_wire_pgedge(cluster_name, db, pg, user, db_passwd, nodes)
+    ssh_install_pgedge(cluster_name, db[0]["name"], pg, db[0]["username"], db[0]["password"], nodes)
+    ssh_cross_wire_pgedge(cluster_name, db[0]["name"], pg, db[0]["username"], db[0]["password"], nodes)
+    if len(db) > 1:
+        for database in db[1:]:
+            create_spock_db(nodes,database)
+            ssh_cross_wire_pgedge(cluster_name, database["name"], pg, database["username"], database["password"], nodes)        
 
 
 def local_create(
@@ -286,13 +291,17 @@ def local_create(
     Passwd = os.getenv("pgePasswd", Passwd)
 
     create_local_json(cluster_name, db, num_nodes, User, Passwd, pg, port1)
-    db, pg, db_user, db_passwd, nodes = load_json(
+    db, pg, nodes = load_json(
         cluster_name
     )
 
-    ssh_install_pgedge(cluster_name, db, pg, db_user, db_passwd, nodes)
-    ssh_cross_wire_pgedge(cluster_name, db, pg, db_user, db_passwd, nodes)
-
+    ssh_install_pgedge(cluster_name, db[0]["name"], pg, db[0]["username"], db[0]["password"], nodes)
+    ssh_cross_wire_pgedge(cluster_name, db[0]["name"], pg, db[0]["username"], db[0]["password"], nodes)
+    if len(db) > 1:
+        for database in db[1:]:
+            create_spock_db(nodes,database)
+            ssh_cross_wire_pgedge(cluster_name, database["name"], pg, database["username"], database["password"], nodes)        
+    
 
 def print_install_hdr(cluster_name, db, pg, db_user, count):
     util.message("#")
@@ -352,6 +361,13 @@ def ssh_install_pgedge(cluster_name, db, pg, db_user, db_passwd, nodes):
             nc + " install pgedge" + parms, host=n["ip_address"], usr=n["os_user"], key=n["ssh_key"]
         )
         util.message("#")
+
+
+def create_spock_db(nodes,db):
+    for n in nodes:
+            nc = n["path"] + os.sep + "pgedge" + os.sep + "ctl "
+            cmd = nc + " db create -U " + db["username"] + " -d " + db["name"] + " -p " + db["password"]
+            util.echo_cmd(cmd, host=n["ip_address"], usr=n["os_user"], key=n["ssh_key"])
 
 
 def ssh_cross_wire_pgedge(cluster_name, db, pg, db_user, db_passwd, nodes):
@@ -436,7 +452,7 @@ def lc_destroy1(cluster_name):
 def command(cluster_name, node, cmd, args=None):
     """Run './ctl' commands on one or 'all' nodes."""
 
-    db, pg, db_user, db_passwd, nodes = load_json(
+    db, pg, nodes = load_json(
         cluster_name
     )
     rc = 0
@@ -459,7 +475,7 @@ def command(cluster_name, node, cmd, args=None):
 
 def app_install(cluster_name, app_name, factor=1):
     """Install test application [ pgbench | northwind ]."""
-    db, pg, db_user, db_passwd, nodes = load_json(
+    db, pg, nodes = load_json(
             cluster_name
         )
     ctl =  os.sep + "pgedge" + os.sep + "ctl"
@@ -479,7 +495,7 @@ def app_install(cluster_name, app_name, factor=1):
 
 def app_remove(cluster_name, app_name):
     """Remove test application from cluster."""
-    db, pg, db_user, db_passwd, nodes = load_json(
+    db, pg, nodes = load_json(
             cluster_name
         )
     ctl =  os.sep + "pgedge" + os.sep + "ctl"
