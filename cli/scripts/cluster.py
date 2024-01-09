@@ -23,15 +23,14 @@ def create_local_json(cluster_name, db, num_nodes, usr, passwd, pg, port1):
     local_json["ssh_key"] = ""
     cluster_json["localhost"] = local_json
 
-    database_json = {}
+    database_json = {"databases": []}
     database_json["pg_version"] = pg
     db_json = {}
     db_json["username"] = usr
     db_json["password"] = passwd
     db_json["name"] = db
-    database_json["databases"]=db_json
+    database_json["databases"].append(db_json)
     cluster_json["database"] = database_json
-
     
     local_nodes = {"localhost": []}
     for n in range(1, num_nodes + 1):
@@ -81,11 +80,13 @@ def create_remote_json(
     remote_json["ssh_key"] = ""
     cluster_json["remote"] = remote_json
 
-    database_json = {}
-    database_json["username"] = usr
-    database_json["password"] = passwd
+    database_json = {"databases": []}
     database_json["pg_version"] = pg
-    database_json["name"] = db
+    db_json = {}
+    db_json["username"] = usr
+    db_json["password"] = passwd
+    db_json["name"] = db
+    database_json["databases"].append(db_json)
     cluster_json["database"] = database_json
 
     remote_nodes = {"remote": []}
