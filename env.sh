@@ -1,32 +1,31 @@
 
 bundle=pgedge
 api=ctl
-hubV=24.1.4
+hubV=24.1.6
 ctlibsV=1.1
 
-spock32V=3.2.2-1
-spock31V=3.1.8-1
+spock32V=3.2.4-1
 
 
 foslotsV=1a-1
 snwflkV=1.1-1
 vectorV=0.5.1-1
 
-pgedgeV=2.08
+pgedgeV=2.09
 
-P17=17devel-2
+P17=17devel-1
 P16=16.1-1
 P15=15.5-1
-P14=14.10-1
+P14=14.10-2
 P13=13.13-1
 P12=12.17-1
 
 catV=1.1.1
 firwldV=1.2
-adminV=7-1
+adminV=8.x
 postgrestV=11.2.0-1
 prompgexpV=0.11.1
-backrestV=2.48-1
+backrestV=2.49-1
 readonlyV=1.1.1-1
 
 curlV=2.1.1-1
@@ -50,7 +49,7 @@ hint15V=1.5.1-1
 hint16V=1.6.0-1
 
 stazV=3.1.2.2
-etcdV=3.5.9
+etcdV=3.5.11
 
 audit15V=1.7.0-1
 audit16V=16.0-1

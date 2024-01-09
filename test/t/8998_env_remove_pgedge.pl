@@ -32,9 +32,9 @@ my ($success4, $error_message4, $full_buf4, $stdout_buf4, $stderr_buf4)= IPC::Cm
 print("I'm removing the .pgpass file with the following command: = $cmd4\n");
 print("stdout_buf = @$stdout_buf4\n");
 print ("The pgpass file should be gone now.\n");
-print ("We're checking to see if the $ENV{EDGE_N1} directory still exists.\n");
+print ("We're checking to see if the $ENV{EDGE_CLUSTER_DIR} directory still exists.\n");
 
-if(defined($ENV{EDGE_N1}) && length($ENV{EDGE_N1}) > 0)
+if(defined($ENV{EDGE_CLUSTER_DIR}) && length($ENV{EDGE_CLUSTER_DIR}) > 0)
 {
     exit(0);
 }

@@ -11,14 +11,14 @@ if [ ! "$rc" == "0" ]; then
   exit 1
 fi
 
-pull=$NC/devel/util/in/pull-s3.sh
-if [ "$NC" == "" ] || [ ! -f "$pull" ]; then
+pull=$DEVEL/util/in/pull-s3.sh
+if [ "$CT" == "" ] || [ ! -f "$pull" ]; then
   echo "ERROR: missing pull file \"$pull\""
   exit 1
 fi
 
 cd $IN
-cp $NC/devel/util/in/pull-s3.sh .
+cp $DEVEL/util/in/pull-s3.sh .
 ./pull-s3.sh
 chmod 755 *.sh
 

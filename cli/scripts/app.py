@@ -14,7 +14,7 @@ def pgbench_install(db, scale=1, replication_set=None, pg=None):
     try:
         con = util.get_pg_connection(pg_v, db, usr)
         cur = con.cursor()
-        pgbench_cmd = '"pgbench --initialize --scale={scale} ' + str(db) + '"'
+        pgbench_cmd = '"pgbench --initialize --scale=' + str(scale) + ' ' + str(db) + '"'
         util.echo_cmd(f"./ctl pgbin " + str(pg) + " " + pgbench_cmd)
         cur.execute(
             "ALTER TABLE pgbench_accounts ALTER COLUMN abalance SET (LOG_OLD_VALUE=true)"

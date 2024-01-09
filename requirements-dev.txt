@@ -1,5 +1,2 @@
-pep8
-flake8
-pylint
-black
-behave
+ruff>=0.1.8
+grip>=4.6.2

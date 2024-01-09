@@ -5,7 +5,7 @@ else
   bf=~/.bash_profile
 fi
 
-grep NC $bf > /dev/null 2>&1
+grep CT $bf > /dev/null 2>&1
 rc=$?
 if [ "$rc" == "0" ]; then
   echo "Your $bf appears to already be configured for NodeCtl"

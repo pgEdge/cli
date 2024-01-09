@@ -17,40 +17,28 @@ use edge;
 no warnings 'uninitialized';
 
 # Our parameters are:
-
+#pgedge home directory for n1
+my $homedir1="$ENV{EDGE_CLUSTER_DIR}/n1/pgedge";
 print("whoami = $ENV{EDGE_REPUSER}\n");
 
+print("The home directory is $homedir1\n"); 
 
-# We can retrieve the home directory from nodectl in json form... 
-
-my $json = `$ENV{EDGE_N1}/pgedge/nc --json info`;
-my $out = decode_json($json);
-$ENV{EDGE_HOMEDIR1} = $out->[0]->{"home"};
-print("The home directory is $ENV{EDGE_HOMEDIR1}\n"); 
-
-# We can retrieve the port number from nodectl in json form...
-my $json2 = `$ENV{EDGE_N1}/pgedge/nc --json info $ENV{EDGE_VERSION}`;
-#print("my json = $json2");
-my $out2 = decode_json($json2);
-$ENV{EDGE_PORT1} = $out2->[0]->{"port"};
- print("The port number is $ENV{EDGE_PORT1}\n");
-
+print("The port number is $ENV{EDGE_START_PORT}\n");
 
 #
 ## Check for n1 node existence
 
-my $json3 = `$ENV{EDGE_N1}/pgedge/nc spock node-list  $ENV{EDGE_DB}`;
+my $json3 = `$homedir1/$ENV{EDGE_CLI} spock node-list  $ENV{EDGE_DB}`;
    #print("my json3 = $json3");
 my $out3 = decode_json($json3);
   $ENV{EDGE_NODE1_NAME} = $out3->[0]->{"node_name"};
    print("The node_name is = $ENV{EDGE_NODE1_NAME}\n");
-   
-   
+      
 if($ENV{EDGE_NODE1_NAME} eq "")
 
    {
    
-my $cmd2 = qq($ENV{EDGE_HOMEDIR1}/nodectl spock node-create n1 'host=$ENV{EDGE_HOST} port=$ENV{EDGE_PORT1} user=$ENV{EDGE_REPUSER} dbname=$ENV{EDGE_DB}' $ENV{EDGE_DB});
+my $cmd2 = qq($homedir1/$ENV{EDGE_CLI} spock node-create n1 'host=$ENV{EDGE_HOST} port=$ENV{EDGE_START_PORT} user=$ENV{EDGE_REPUSER} dbname=$ENV{EDGE_DB}' $ENV{EDGE_DB});
 print("cmd2 = $cmd2\n");
 my ($success2, $error_message2, $full_buf2, $stdout_buf2, $stderr_buf2)= IPC::Cmd::run(command => $cmd2, verbose => 0);
 

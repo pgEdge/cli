@@ -22,7 +22,7 @@ if platform.system() == "Linux":
       platf = f"el8-amd"
   elif os.path.exists("/etc/amazon-linux-release"):
     f = "/etc/amazon-linux-release"
-    rc = os.system(f"grep 2023 {f}")
+    rc = os.system(f"grep 2023 {f} > /dev/null 2>&1")
     if rc == 0:
       platf = f"el9-{plat_os}"
     else:
@@ -30,11 +30,11 @@ if platform.system() == "Linux":
   else:
     f = "/etc/os-release"
     if os.path.exists(f):
-      rc = os.system(f"grep '22.04' {f}")
+      rc = os.system(f"grep '22.04' {f} > /dev/null 2>&1")
       if rc == 0:
         platf = f"ubu22-{plat_os}"
       else:
-        rc = os.system(f"grep 'Leap 15' {f}")
+        rc = os.system(f"grep 'Leap 15' {f} > /dev/null 2>&1")
         if rc == 0:
           platf = f"el8-{plat_os}"
 

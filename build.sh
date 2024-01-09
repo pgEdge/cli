@@ -194,7 +194,6 @@ initDir () {
 
   copy-pgXX "snowflake"
   copy-pgXX "orafce"
-  copy-pgXX "spock31"
   copy-pgXX "spock32"
   copy-pgXX "curl"
   copy-pgXX "pglogical"
@@ -302,13 +301,14 @@ writeFileChecksum () {
 
 finalizeOutput () {
   writeCompRow "hub"  "hub" "$hubV" "" "0" "Enabled" "nil"
-  checkCmd "cp -r $NC/docker ."
+  checkCmd "cp -r $CT/docker ."
   checkCmd "cp -r $SRC/hub ."
   checkCmd "mkdir -p hub/scripts"
   checkCmd "cp -r $CLI/* hub/scripts/."
   checkCmd "cp -r $CLI/../doc hub/."
   checkCmd "cp $CLI/../README.md  hub/doc/."
   checkCmd "rm -f hub/scripts/*.pyc"
+  checkCmd "rm -f hub/scripts/ruff.toml"
   zipDir "hub" "$hubV" "" "Enabled"
 
   checkCmd "cp conf/$verSQL ."
@@ -443,6 +443,11 @@ initPG () {
     initC "spock32-pg$pgM"    "spock32"    "$spock32V"   "$outPlat" "postgres/spock32"   "" "" "nil"
   fi
 
+  if [ "$pgM" == "14" ] || [ "$pgM" == "15" ] || [ "$pgM" == "16" ]; then
+    initC "foslots-pg$pgM"    "foslots"    "$foslotsV"   "$outPlat" "postgres/foslots"    "" "" "nil"
+    initC "readonly-pg$pgM"   "readonly"   "$readonlyV"  "$outPlat" "postgres/readonly"   "" "" "nil"
+  fi
+
   if [ "$isEL9" == "True" ]; then
 
     if [ "$pgM" == "16" ]; then
@@ -463,7 +468,6 @@ initPG () {
       initC "pldebugger-pg$pgM" "pldebugger" "$debuggerV"  "$outPlat" "postgres/pldebugger" "" "" "nil"
       initC "pglogical-pg$pgM"  "pglogical"  "$logicalV"   "$outPlat" "postgres/logical"    "" "" "nil"
       initC "citus-pg$pgM"      "citus"      "$citusV"     "$outPlat" "postgres/citus"      "" "" "nil"
-      initC "spock31-pg$pgM"    "spock31"    "$spock31V"   "$outPlat" "postgres/spock31"    "" "" "nil"
       initC "hypopg-pg$pgM"     "hypopg"     "$hypoV"      "$outPlat" "postgres/hypopg"     "" "" "nil"
       initC "pljava-pg$pgM"     "pljava"     "$pljavaV"    "$outPlat" "postgres/pljava"     "" "" "nil"
       initC "curl-pg$pgM"       "curl"       "$curlV"      "$outPlat" "postgres/curl"       "" "" "nil"
@@ -480,15 +484,18 @@ initPG () {
         initC "oraclefdw-pg$pgM"  "oraclefdw"  "$oraclefdwV" "$outPlat" "postgres/oraclefdw" "" "" "nil"
       fi
     fi
+
   fi
 
-  initC "pgedge"    "pgedge"    "$pgedgeV"   ""         "postgres/pgedge"   "" "" "Y"
-  #initC "backrest"  "backrest"  "$backrestV" "$outPlat" "postgres/backrest" "" "" "nil"
-  initC "staz"      "staz"      "$stazV"     ""         "postgres/staz"     "" "" "nil"
-  #initC "etcd"      "etcd"      "$etcdV"     "$outPlat" "etcd"              "" "" "nil"
-  initC "firewalld" "firewalld" "$firwldV"   ""         "firewalld"         "" "" "nil"
-  #initC "pgcat"     "pgcat"     "$catV"      "$outPlat" "postgres/pgcat"    "" "" "nil"
-  initC "pgadmin4"  "pgadmin4"  "$adminV"    ""         "postgres/pgadmin4" "" "" "Y"
+  if [ "$pgM" == "14" ] || [ "$pgM" == "15" ] || [ "$pgM" == "16" ] || [ "$pgM" == "17" ]; then
+    initC "pgedge"    "pgedge"    "$pgedgeV"   ""         "postgres/pgedge"   "" "" "Y"
+    initC "backrest"  "backrest"  "$backrestV" "$outPlat" "postgres/backrest" "" "" "nil"
+    initC "staz"      "staz"      "$stazV"     ""         "postgres/staz"     "" "" "nil"
+    initC "etcd"      "etcd"      "$etcdV"     "$outPlat" "etcd"              "" "" "nil"
+    initC "firewalld" "firewalld" "$firwldV"   ""         "firewalld"         "" "" "nil"
+    initC "pgcat"     "pgcat"     "$catV"      "$outPlat" "postgres/pgcat"    "" "" "nil"
+    initC "pgadmin4"  "pgadmin4"  "$adminV"    ""         "postgres/pgadmin4" "" "" "Y"
+  fi
 
   return
 
@@ -547,8 +554,6 @@ do
             cp $CLI/cli.sh ./ctl
 	    cp $CLI/$depnc ./nc
 	    cp $CLI/$depnc ./nodectl 
-            ## ln -s $depnc nc
-            ## ln -s $depnc nodectl
 
             if [ "$outDir" == "posix" ]; then
               OS="???"
@@ -566,6 +571,7 @@ do
           fi
           writeSettRow "GLOBAL" "PLATFORM" "$plat"
           if [ "$plat" == "posix" ]; then
+            checkCmd "cp $CLI/install.py $OUT/."
             checkCmd "cp $CLI/install24.py $OUT/."
           fi;;
 

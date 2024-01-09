@@ -2,16 +2,16 @@
 #  Copyright 2022-2024 PGEDGE  All rights reserved. #
 #####################################################
 
-import os, sys, random, json, socket, datetime
-import util, fire, meta, subprocess, requests
-import pgbench, northwind, cluster, configparser
+import os, json
+import util, fire, requests
+import cluster, configparser
 
 cluster_dir = "cluster"
 home_dir = os.getenv("HOME")
 
 
 def get_access_token(profile="Default", client_id=None, client_secret=None):
-    ## Use pgEdge Cloud API to get access token
+    # Use pgEdge Cloud API to get access token
     access_token = None
     auth_json = {}
     if client_id is None:
@@ -27,14 +27,14 @@ def get_access_token(profile="Default", client_id=None, client_secret=None):
         if str(response.status_code) == "200":
             access_token = response.json()["access_token"]
         else:
-            util.exit_message(f"Unable to get token")
-    except:
-        util.exit_message(f"Unable to get token")
+            util.exit_message("Unable to get token")
+    except Exception:
+        util.exit_message("Unable to get token")
     return access_token
 
 
 def get_pgedge(cmd, profile="Default"):
-    ## Call GET to pgEdge API
+    # Call GET to pgEdge API
     access = get_access_token(profile)
     url = "https://api.pgedge.com/" + cmd
     header = {}
@@ -47,7 +47,7 @@ def get_pgedge(cmd, profile="Default"):
 
 
 def post_pgedge(cmd, data, profile="Default"):
-    ## Call POST to pgEdge API
+    # Call POST to pgEdge API
     access = get_access_token(profile)
     url = "https://api.pgedge.com/" + cmd
     header = {}
@@ -60,7 +60,7 @@ def post_pgedge(cmd, data, profile="Default"):
 
 
 def delete_pgedge(cmd, profile="Default"):
-    ## Call DELETE to pgEdge API
+    # Call DELETE to pgEdge API
     access = get_access_token(profile)
     url = "https://api.pgedge.com/" + cmd
     header = {}
@@ -82,15 +82,15 @@ def config(client_id, client_secret, profile="Default"):
       PROFILE - profile for NodeCTL to use with this pgEdge Cloud Account
     """
     try:
-        ## Create Creds File
+        # Create Creds File
         os.system(f"mkdir -p {home_dir}{os.sep}.pgedge")
         config = configparser.ConfigParser()
         config["DEFAULT"] = {"client_id": client_id, "client_secret": client_secret}
         with open(f"{home_dir}{os.sep}.pgedge{os.sep}config", "w") as configfile:
             config.write(configfile)
         get_access_token(profile, client_id, client_secret)
-    except:
-        util.exit_message(f"Unable to create creds file", 1)
+    except Exception:
+        util.exit_message("Unable to create creds file", 1)
     util.exit_message(f"Configured nodeCtl Secure with profile {profile}", 0)
 
 
@@ -190,8 +190,8 @@ def get_cluster_id(cluster_name):
         ) as f:
             parsed_json = json.load(f)
             cluster_id = parsed_json["id"]
-    except:
-        util.exit_message(f"Cannot find cluster, you may need to import-cluster", 1)
+    except Exception:
+        util.exit_message("Cannot find cluster, you may need to import-cluster", 1)
     util.exit_message(cluster_id, 0)
 
 
@@ -211,8 +211,8 @@ def get_node_id(cluster_name, node_name):
             for n in parsed_json["nodes"]:
                 if n["name"] == node_name:
                     node_id = n["id"]
-    except:
-        util.exit_message(f"Cannot find node, you may need to import-cluster", 1)
+    except Exception:
+        util.exit_message("Cannot find node, you may need to import-cluster", 1)
     util.exit_message(node_id, 0)
 
 
@@ -243,7 +243,7 @@ def destroy_cluster(cluster_id, profile="Default"):
       CLUSTER_ID - the pgEdge Cloud Cluster ID
       PROFILE - profile name of pgEdge Cloud Account for NodeCTL to use
     """
-    response = delete_pgedge(f"clusters/{cluster_id}", profile)
+    delete_pgedge(f"clusters/{cluster_id}", profile)
     util.exit_message(f"Deleting Cluster with id {cluster_id}", 0)
 
 

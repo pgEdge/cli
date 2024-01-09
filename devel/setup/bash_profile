@@ -10,16 +10,13 @@ export IN=$DEV/in
 export OUT=$DEV/out
 export HIST=$DEV/history
 export CT=$DEV/nodectl
-export NC=$DEV/nodectl
 export SOURCE=$IN/sources
 export BLD=/opt/pgbin-build/pgbin/bin
 export PFD=$DEV/platform-doc
 
-export NC_NO_AUTO_UPDATE=1
-export DEVEL=$NC/devel
-export PSX=$NC/out/posix
+export DEVEL=$CT/devel
 export PG=$DEVEL/pg
-export CLI=$NC/cli/scripts
+export CLI=$CT/cli/scripts
 export REPO=http://localhost:8000
 
 export JAVA_HOME=/etc/alternatives/jre_17_openjdk

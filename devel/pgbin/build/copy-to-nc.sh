@@ -1,7 +1,7 @@
 #!/bin/bash
 cd "$(dirname "$0")"
 
-dir=$NC/devel/pgbin/build
+dir=$DEVEL/pgbin/build
 cp -p *.sh $dir/.
-cd $NC 
+cd $CT 
 git diff

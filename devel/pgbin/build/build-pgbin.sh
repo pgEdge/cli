@@ -107,10 +107,12 @@ function checkPostgres {
 			pgShortV="14"
 			bndlPrfx=pg14
 			pgOPT="--with-lz4"
+
 		elif [[ "${pgSrcV/rc}" =~ ^13.* ]]; then
 			pgShortV="13"
 			bndlPrfx=pg13
 			pgOPT=""
+
 		elif [[ "${pgSrcV/rc}" =~ ^12.* ]]; then
 			pgShortV="12"
 			bndlPrfx=pg12
@@ -159,7 +161,9 @@ function buildPostgres {
 	echo "# buildPOSTGRES"	
 	cd $baseDir/$workDir/$pgSrcDir
 
-	if [ "$pgShortV" == "15" ] || [ "$pgShortV" == "16" ] || [ "$pgShortV" == "17" ]; then
+        pgS="$pgShortV"
+
+	if [ $pgS == "14" ] || [ $pgS == "15" ] || [ $pgS == "16" ] || [ $pgS == "17" ]; then
 		patcher "$DIFF1"
 		patcher "$DIFF2"
 		patcher "$DIFF3"

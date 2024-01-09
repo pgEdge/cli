@@ -1,15 +1,46 @@
 # pgEdge Platform Release Notes #############
 
-## done for 24.1.4 so far as of 2023-12-13 ###########
+## done for 24.1.6 as of 2024-01-08 ###########
+  - remove ruff.toml broken link at runtime from hub/scripts
+  - quite down install ctllibs for ubu22, al2023 & sle15
+
+
+## done for 24.1.5 on 2024-01-08 ###########
+  - bump spock32 to v3.2.4 & remove spock31 support
+  - bring back el9 version of pg17, snowflake-pg17 & spock32-pg17
+  - bring skeleton.sh tests up to snuff for pg14/15/16 & el8 consideration
+  - foslots and readonly for pg14/15/16 & el8
+  - bump pgadmin4 to 8.x
+  - bump etcd to 3.5.11 & include for el8
+  - bump backrest to 2.49 & include for el8
+  - include el8 builds for pgcat, etcd & backrest
+  - devel builds of pg14 thru pg17 all include log_old_values patch
+  - verify SELinux not active when trying to --autostart a 'pgedge install'
+  - fix error handling on file priv's in cli.py
+  - improve pg14 with spock32 patches
+  - 1st pass at replacing 'cloud' w/ 'multicloud'
+
+
+## done for 24.1.4 on 2024-01-02 ###########
+  + CLUSTER:
+    - rework cluster-init json for compat with enterprise cloud
+
+  + CLOUD:
+    - leverage apache-libcloud module from pypy
+    - rename machine.py --> cloud.py
+    - patch libcloud with a fix from equinixmetal (metros) & from us (ram TB)
+    - include our patched libcloud 3.8.0 in our lib directory (& remove from requirements.txt)
+
   + EL8/SLE-15 for AMD64:
-    - require python3.9 (default is python3.6 & it is no longer supported)
-    - support advanced functionality for EL8 on am64 for pgedge 14/15/16
+    - require python39 be added so we can use it over the default (unsupported) python36
+    - support spock & snowflake for EL8 on am64 for pg 14/15/16
     - test on Rocky Linux 8 & Open Suse LEAP 15.5
 
   + CTL:
     - fix security warning when using tar.extract_all() by using data_filter when available
-    - progress on upgrading from v23.x (still need to replace install.py from install24.py)
+    - v 23.x is no more.  v24.x is always used & install.py is a symlink to install24.py
     - drop support for pg17devel (replace with spock3x & wait for 17beta1)
+    - use ruff (rather than flake8 & black)
 
   + DOCKER:
     - use latest RockyLinux 9 image (rather than 9.2)

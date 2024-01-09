@@ -12,7 +12,7 @@ try:
     from colorama import init
 
     init()
-except ImportError as e:
+except ImportError:
     pass
 
 scripts_lib_path = os.path.join(os.path.dirname(__file__), "lib")
@@ -78,7 +78,7 @@ def get_pip_ver():
         import pip
 
         return pip.__version__
-    except ImportError as e:
+    except ImportError:
         pass
     return "None"
 
@@ -89,7 +89,7 @@ def cli_unicode(p_str, p_encoding, errors="ignore"):
 
 try:
     test_unicode = unicode("test")
-except NameError as e:
+except NameError:
     unicode = cli_unicode
 
 
@@ -97,48 +97,52 @@ def check_output_wmic(p_cmds):
     out1 = subprocess.check_output(p_cmds)
     try:
         out2 = str(out1, "utf-8")
-    except:
+    except Exception:
         out2 = str(out1)
     out3 = out2.strip().split("\n")[1]
     return out3
 
 
 def top(display=True, isJson=False):
-    try:
-        import psutil
-    except ImportError as e:
-        util.exit_message("Missing psutil module", 1)
+    import pypsutil
 
     current_timestamp = int(time.mktime(datetime.utcnow().timetuple()))
     jsonDict = {}
     procs = []
-    for p in psutil.process_iter():
-        try:
-            p = p.as_dict(
-                attrs=[
-                    "pid",
-                    "username",
-                    "cpu_percent",
-                    "memory_percent",
-                    "cpu_times",
-                    "name",
-                ]
-            )
-        except (psutil.NoSuchProcess, IOError, OSError) as e:
-            pass
-        else:
-            procs.append(p)
+
+    for p in pypsutil.process_iter():
+        print(f"{p.pid: <7}  {p.username(): <10}  {p.memory_percent():.2f}  {p.name()}")
+
+    return
+
+    # TODO:
+        
+    #    try:
+    #        p = p(
+    #            attrs=[
+    #                "pid",
+    #                "username",
+    #                "cpu_percent",
+    #                "memory_percent",
+    #                "cpu_times",
+    #                "name",
+    #            ]
+    #        )
+    #    except (pypsutil.NoSuchProcess, IOError, OSError):
+    #        pass
+    #    else:
+    #        procs.append(p)
 
     if not display:
         return
 
     processes = sorted(procs, key=lambda p: p["cpu_percent"], reverse=True)
 
-    network_usage = psutil.net_io_counters()
+    network_usage = pypsutil.net_io_counters()
     jsonDict["kb_sent"] = network_usage.bytes_sent / 1024
     jsonDict["kb_recv"] = network_usage.bytes_recv / 1024
 
-    cpu = psutil.cpu_times_percent(percpu=False)
+    cpu = pypsutil.cpu_times_percent(percpu=False)
     iowait = ""
     if util.get_platform() == "Linux":
         jsonDict["iowait"] = str(cpu.iowait)
@@ -160,7 +164,7 @@ def top(display=True, isJson=False):
             + iowait
         )
 
-    disk = psutil.disk_io_counters(perdisk=False)
+    disk = pypsutil.disk_io_counters(perdisk=False)
     read_kb = disk.read_bytes / 1024
     write_kb = disk.write_bytes / 1024
     jsonDict["kb_read"] = str(read_kb)
@@ -168,7 +172,7 @@ def top(display=True, isJson=False):
     if not isJson:
         print("DISK: kB_read " + str(read_kb) + ", kB_written " + str(write_kb))
 
-    uptime = datetime.now() - datetime.fromtimestamp(psutil.boot_time())
+    uptime = datetime.now() - datetime.fromtimestamp(pypsutil.boot_time())
     str_uptime = str(uptime).split(".")[0]
     line = ""
     uname_len = 8
@@ -331,7 +335,7 @@ def info(p_json, p_home, p_repo, print_flag=True):
     )
     host_display = util.get_host_short()
 
-    ## Check the OS & Resources ########################################
+    # Check the OS & Resources ########################################
     plat = util.get_os()
     glibcV = util.get_glibc_version()
 
@@ -465,7 +469,7 @@ def info(p_json, p_home, p_repo, print_flag=True):
     if java_ver > "":
         langs = langs + " | Java v" + java_ver
 
-    ## util.validate_distutils_click(False)
+    # util.validate_distutils_click(False)
 
     if glibcV <= " ":
         glibc_v_display = ""

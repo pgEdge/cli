@@ -1,12 +1,7 @@
 #!/bin/bash
 cd "$(dirname "$0")"
 
-this_dir=`pwd`
-
-uname=`uname`
-uname=${uname:0:7}
-hostname=`hostname`
-short_hostname=${hostname:0:4}
+source common.env
 
 echo " "
 echo "########## 2a-tools.sh ######################"
@@ -15,7 +10,6 @@ echo " full hostname = $hostname"
 echo "short hostname = $short_hostname"
 
 if [ $uname == 'Linux' ]; then
-  owner_group="$USER:$USER"
   yum --version > /dev/null 2>&1
   rc=$?
   if [ "$rc" == "0" ]; then
@@ -38,7 +32,6 @@ if [ $uname == 'Linux' ]; then
     sudo cpan FindBin
     sudo cpan IPC::Run
     sudo $yum epel-release
-    sudo $yum install lbzip2
 
     if [ "$short_hostname" == "test" ]; then
       echo "Goodbye TEST Setup!"
@@ -55,7 +48,7 @@ if [ $uname == 'Linux' ]; then
         sudo dnf config-manager --set-enabled crb
       fi
       sudo dnf -y groupinstall 'development tools'
-      sudo $yum zlib-devel bzip2-devel \
+      sudo dnf -y --nobest install zlib-devel bzip2-devel lbzip2 \
         openssl-devel libxslt-devel libevent-devel c-ares-devel \
         perl-ExtUtils-Embed pam-devel openldap-devel boost-devel 
       sudo dnf -y remove curl
@@ -68,6 +61,11 @@ if [ $uname == 'Linux' ]; then
       sudo $yum unixODBC-devel protobuf-c-devel libyaml-devel
       sudo $yum lz4-devel libzstd-devel krb5-devel
       sudo $yum java-17-openjdk-devel
+      if [ "$PLATFORM" == "el8" ]; then
+        sudo $yum python39 python39-devel
+      else
+	sudo $yum python3-devel
+      fi 
       sudo $yum clang
       if [ "$PLATFORM" == "el9" ]; then
         sudo $yum geos-devel proj-devel gdal
@@ -91,17 +89,7 @@ elif [ $uname == 'Darwin' ]; then
     /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
   fi
   brew install pkg-config krb5 wget curl readline lz4 openssl@1.1 openldap ossp-uuid
-
-else
-  echo "$uname is unsupported"
-  exit 1
 fi
-
-sudo mkdir -p /opt/pgbin-build
-sudo mkdir -p /opt/pgbin-build/pgbin/bin
-sudo chown -R $owner_group /opt/pgbin-build
-sudo mkdir -p /opt/pgcomponent
-sudo chown $owner_group /opt/pgcomponent
 
 cd ~/dev
 mkdir -p out

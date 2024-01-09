@@ -37,38 +37,26 @@ array[0]="$MY_HOME/hub/scripts"
 LIB="$MY_HOME/hub/scripts/lib"
 array[1]="$LIB"
 
-if [ `uname` == "Linux" ]; then
-  if [ -f "/etc/redhat-release" ]; then
-    if [ `arch` == "aarch64" ]; then
-      array[2]="$LIB/el9-arm"
-    else
-      PLATFORM=`cat /etc/os-release | grep PLATFORM_ID | cut -d: -f2 | tr -d '\"'`
-      if [ "$PLATFORM" == "el9" ]; then
-        array[2]="$LIB/el9-amd"
-      else
-        array[2]="$LIB/el8-amd"
-      fi
-    fi
-  else
-    if [ -f "/etc/os-release" ]; then
-      grep "22.04" /etc/os-release > /dev/null 2>&1
-      rc=$?
-      if [ $rc == "0" ]; then
-        if [ `arch` == "aarch64" ]; then
-          array[2]="$LIB/ubu22-arm"
-        else
-          array[2]="$LIB/ubu22-amd"
-        fi
-      fi
-    fi
-  fi
-elif [ `uname` == "Darwin" ]; then
-  ## universal binaries for x86_64 & arm64
-  array[2]="$LIB/osx"
+lib="None"
+if [ -d "$LIB/el9-arm" ]; then
+  lib="$LIB/el9-arm"
+elif [ -d "$LIB/el9-amd" ]; then
+  lib="$LIB/el9-amd"
+elif [ -d "$LIB/el8-amd" ]; then
+  lib="$LIB/el8-amd"
+elif [ -d "$LIB/osx" ]; then
+  lib="$LIB/osx"
+elif [ -d "$LIB/ubu22-arm" ]; then
+  lib="$LIB/ubu22-arm"
+elif [ -d "$LIB/ubu22-amd" ]; then
+  lib="$LIB/ubu22-amd"
 fi
 
-if [ -d $LIB/el9-amd/bin ]; then
-  export PATH=$LIB/el9-amd/bin:$PATH
+if [ ! "$lib" == "None" ]; then
+  array[2]="$lib"
+  if [ -d "$lib/bin" ]; then
+    export PATH=$lib/bin:$PATH
+  fi
 fi
 
 export PYTHONPATH=$(printf "%s:" ${array[@]})
@@ -80,16 +68,19 @@ do
   fi
 done
 
-if [ -f /usr/bin/python3.9 ]; then
-  export PYTHON=/usr/bin/python3.9
-else
-  export PYTHON=/usr/bin/python3
-fi
-pyver=`$PYTHON --version > /dev/null 2>&1`
+v=`python3 --version | cut -d' ' -f2 | cut -d'.' -f1,2`
 rc=$?
 if [ $rc != 0 ];then
   echo "ERROR: missing python3"
   exit 1
+fi
+
+if [ $v == "3.9" ] || [ $v == "3.10" ] || [ $v == "3.11" ] || [ $v == "3.12" ]; then
+  export PYTHON=python3
+elif [ -f /usr/bin/python3.9 ]; then
+  export PYTHON=/usr/bin/python3.9
+else
+  export PYTHON=python3
 fi
 
 $PYTHON -u "$MY_HOME/hub/scripts/cli.py" "$@"

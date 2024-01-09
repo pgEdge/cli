@@ -47,7 +47,7 @@ if not util.is_writable(my_conf):
         pass
     else:
         print(f"Unable to write to '{my_conf}' directory")
-        os.exit()
+        sys.exit(1)
 
 if util.get_value("GLOBAL", "PLATFORM", "") in ("", "posix", "windoze"):
     util.set_value("GLOBAL", "PLATFORM", util.get_default_pf())
@@ -70,7 +70,6 @@ fire_list = [
     "secure",
     "db",
     "app",
-    "machine",
     "firewalld",
 ]
 
@@ -444,7 +443,7 @@ def install_comp(p_app, p_ver=0, p_rver=None, p_re_install=False):
 
         try:
             tar.extractall(path=".")
-        except KeyboardInterrupt as e:
+        except KeyboardInterrupt:
             temp_tar_dir = os.path.join(MY_HOME, p_app)
             util.delete_dir(temp_tar_dir)
             msg = "Unpacking cancelled for file %s" % file
@@ -995,9 +994,7 @@ def check_status(p_comp, p_mode):
 
 
 def retrieve_remote():
-    versions_sql = "versions.sql"
-    if util.MY_VERSION.startswith("24."):
-        versions_sql = "versions24.sql"
+    versions_sql = "versions24.sql"
     util.set_value("GLOBAL", "VERSIONS", versions_sql)
 
     if not os.path.exists(backup_dir):
@@ -1153,7 +1150,7 @@ def fatal_sql_error(err, sql, func):
 def exit_cleanly(p_rc):
     try:
         connL.close()
-    except Exception as e:
+    except Exception:
         pass
     sys.exit(p_rc)
 
@@ -1164,9 +1161,9 @@ def cli_lock():
         ret = os.read(fd, 12)
         pid = ret.decode()
         os.close(fd)
-    except IOError as e:
+    except IOError:
         return False
-    except OSError as e:
+    except OSError:
         return False
 
     if not pid:
@@ -1174,7 +1171,7 @@ def cli_lock():
 
     try:
         os.kill(int(pid), 0)
-    except OSError as e:
+    except OSError:
         return False
 
     return False
@@ -1239,7 +1236,7 @@ if is_colon:
 while True:
     try:
         args.remove("")
-    except:
+    except Exception:
         break
 full_cmd_line = " ".join(args[1:])
 
@@ -1709,7 +1706,7 @@ try:
             while True:
                 api.top(display=True)
                 time.sleep(1)
-        except KeyboardInterrupt as e:
+        except KeyboardInterrupt:
             pass
         exit_cleanly(0)
 
@@ -1874,7 +1871,7 @@ try:
 
                         if date_diff <= 30:
                             compDict["is_new"] = 1
-                    except Exception as e:
+                    except Exception:
                         pass
 
                     compDict["install_date"] = install_date

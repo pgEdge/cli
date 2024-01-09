@@ -1,7 +1,7 @@
 # This is part of a complex test case; after creating a two node cluster on the localhost, 
 # the test case executes the commands in the Getting Started Guide at the pgEdge website.
 #
-# In this case, we'll register node 1 and create the repset on that node.
+# In this case, we'll register node 2 and create the repset on that node.
 # After creating the repset, we'll query the spock.replication_set_table to see if the repset exists. 
 
 
@@ -19,29 +19,18 @@ use List::MoreUtils qw(pairwise);
 no warnings 'uninitialized';
 
 # Our parameters are:
-
+#pgedge home directory for n2
+my $homedir2="$ENV{EDGE_CLUSTER_DIR}/n2/pgedge";
+#increment 1 to the default port for use with node n2
+my $myport2 = $ENV{'EDGE_START_PORT'} + 1;
 print("whoami = $ENV{EDGE_REPUSER}\n");
 
+print("The home directory is $homedir2\n"); 
 
-# We can retrieve the home directory from nodectl in json form... 
-
-my $json = `$ENV{EDGE_N2}/pgedge/nc --json info`;
-# print("my json = $json");
-my $out = decode_json($json);
-
-$ENV{EDGE_HOMEDIR2} = $out->[0]->{"home"};
-print("The home directory is $ENV{EDGE_HOMEDIR2}\n"); 
-
-# We can retrieve the port number from nodectl in json form...
-my $json1 = `$ENV{EDGE_N2}/pgedge/nc --json info $ENV{EDGE_VERSION}`;
-# print("my json = $json1");
-my $out1 = decode_json($json1);
-$ENV{EDGE_PORT2} = $out1->[0]->{"port"};
-print("The port number is $ENV{EDGE_PORT2}\n");
+print("The port number is $myport2\n");
 
 
-
-my $cmd5 = qq($ENV{EDGE_HOMEDIR2}/nodectl spock repset-create --replicate_delete=False $ENV{EDGE_REPSET} $ENV{EDGE_DB});
+my $cmd5 = qq($homedir2/$ENV{EDGE_CLI} spock repset-create demo-repset $ENV{EDGE_DB} --replicate_delete=False);
 print("cmd5 = $cmd5\n");
 my ($success5, $error_message5, $full_buf5, $stdout_buf5, $stderr_buf5)= IPC::Cmd::run(command => $cmd5, verbose => 0);
 print("stdout_buf5 = @$stdout_buf5\n");
@@ -60,25 +49,22 @@ print("="x100,"\n");
 
 ##Table validation
 
-my $dbh = DBI->connect("dbi:Pg:dbname=$ENV{EDGE_DB};host=$ENV{EDGE_HOST};port= $ENV{EDGE_PORT2}",$ENV{EDGE_USERNAME},$ENV{EDGE_PASSWORD});
+my $dbh = DBI->connect("dbi:Pg:dbname=$ENV{EDGE_DB};host=$ENV{EDGE_HOST};port= $myport2",$ENV{EDGE_USERNAME},$ENV{EDGE_PASSWORD});
 
 
-
-my $table_exists = $dbh->table_info(undef, 'public', $ENV{EDGE_TABLE}, 'TABLE')->fetch;
+my $table_exists = $dbh->table_info(undef, 'public', 'foo', 'TABLE')->fetch;
 
 if ($table_exists) {
-    print "Table '$ENV{EDGE_TABLE}' already exists in the database.\n";
+    print "Table 'foo' already exists in the database.\n";
     
     print("\n");
 } 
 
 else
 {
-# Creating public.$ENV{EDGE_TABLE} Table
+# Creating public.foo Table
 
-
- 
-    my $cmd6 = qq($ENV{EDGE_HOMEDIR2}/$ENV{EDGE_VERSION}/bin/psql -t -h $ENV{EDGE_HOST} -p $ENV{EDGE_PORT2} -d $ENV{EDGE_DB} -c "CREATE TABLE $ENV{EDGE_TABLE} (col1 INT PRIMARY KEY)");
+    my $cmd6 = qq($homedir2/$ENV{EDGE_COMPONENT}/bin/psql -t -h $ENV{EDGE_HOST} -p $myport2 -d $ENV{EDGE_DB} -c "CREATE TABLE foo (col1 INT PRIMARY KEY)");
     
     print("cmd6 = $cmd6\n");
     
@@ -93,9 +79,9 @@ else
    print ("-"x100,"\n"); 
    
   
-     # Inserting into public.$ENV{EDGE_TABLE} table
+     # Inserting into public.foo table
 
-   my $cmd7 = qq($ENV{EDGE_HOMEDIR2}/$ENV{EDGE_VERSION}/bin/psql -t -h $ENV{EDGE_HOST} -p $ENV{EDGE_PORT2} -d $ENV{EDGE_DB} -c "INSERT INTO $ENV{EDGE_TABLE} select generate_series(1,10)");
+   my $cmd7 = qq($homedir2/$ENV{EDGE_COMPONENT}/bin/psql -t -h $ENV{EDGE_HOST} -p $myport2 -d $ENV{EDGE_DB} -c "INSERT INTO foo select generate_series(1,10)");
 
    print("cmd7 = $cmd7\n");
    my($success7, $error_message7, $full_buf7, $stdout_buf7, $stderr_buf7)= IPC::Cmd::run(command => $cmd7, verbose => 0);
@@ -111,7 +97,7 @@ else
     
   #checking repset
   
-  my $cmd9 = qq($ENV{EDGE_HOMEDIR2}/$ENV{EDGE_VERSION}/bin/psql -t -h $ENV{EDGE_HOST} -p $ENV{EDGE_PORT2} -d $ENV{EDGE_DB} -c "SELECT * FROM spock.replication_set where set_name='$ENV{EDGE_REPSET}'");
+  my $cmd9 = qq($homedir2/$ENV{EDGE_COMPONENT}/bin/psql -t -h $ENV{EDGE_HOST} -p $myport2 -d $ENV{EDGE_DB} -c "SELECT * FROM spock.replication_set where set_name='demo-repset'");
    print("cmd9 = $cmd9\n");
    my($success9, $error_message9, $full_buf9, $stdout_buf9, $stderr_buf9)= IPC::Cmd::run(command => $cmd9, verbose => 0);
    print("stdout_buf9= @$stdout_buf9\n");
@@ -121,7 +107,7 @@ else
   #
   # Listing repset tables 
   #
-    my $json3 = `$ENV{EDGE_N2}/pgedge/nc spock repset-list-tables $ENV{EDGE_SCHEMA} $ENV{EDGE_DB}`;
+    my $json3 = `$ENV{EDGE_CLUSTER_DIR}/n2/pgedge/$ENV{EDGE_CLI} spock repset-list-tables public $ENV{EDGE_DB}`;
    print("my json3 = $json3");
    my $out3 = decode_json($json3);
    $ENV{EDGE_SETNAME} = $out3->[0]->{"set_name"};
@@ -133,7 +119,7 @@ else
 if($ENV{EDEGE_SETNAME} eq ""){
   
   
-       my $cmd8 = qq($ENV{EDGE_HOMEDIR2}/nodectl spock repset-add-table $ENV{EDGE_REPSET} $ENV{EDGE_SCHEMA}.$ENV{EDGE_TABLE} $ENV{EDGE_DB});
+       my $cmd8 = qq($homedir2/$ENV{EDGE_CLI} spock repset-add-table demo-repset public.foo $ENV{EDGE_DB});
     
      print("cmd8 = $cmd8\n");
      my($success8, $error_message8, $full_buf8, $stdout_buf8, $stderr_buf8)= IPC::Cmd::run(command => $cmd8, verbose => 0);
@@ -148,7 +134,7 @@ if($ENV{EDEGE_SETNAME} eq ""){
 
 
 else {
-   print ("Table $ENV{EDGE_TABLE} is already added to $ENV{EDGE_REPSET}\n");
+   print ("Table foo is already added to demo-repset\n");
     
    
 }
@@ -157,7 +143,7 @@ print("="x100,"\n");
 
 # Then, use the info to connect to psql and test for the existence of the replication set.
 
-my $cmd10 = qq($ENV{EDGE_HOMEDIR2}/$ENV{EDGE_VERSION}/bin/psql -t -h $ENV{EDGE_HOST} -p $ENV{EDGE_PORT2} -d $ENV{EDGE_DB} -c "SELECT * FROM spock.replication_set");
+my $cmd10 = qq($homedir2/$ENV{EDGE_COMPONENT}/bin/psql -t -h $ENV{EDGE_HOST} -p $myport2 -d $ENV{EDGE_DB} -c "SELECT * FROM spock.replication_set");
 print("cmd10 = $cmd10\n");
 my($success10, $error_message10, $full_buf10, $stdout_buf10, $stderr_buf10)= IPC::Cmd::run(command => $cmd10, verbose => 0);
 #print("stdout_buf10 = @$stdout_buf10\n");

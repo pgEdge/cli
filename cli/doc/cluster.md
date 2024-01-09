@@ -3,12 +3,12 @@
  
 ## COMMANDS
     COMMAND is one of the following:
-     remote-create       # Create a hybrid multi-cloud pgEdge cluster.
-     remote-init         # Initialize a test cluster from json definition file of existing nodes.
-     remote-reset        # Reset a test cluster from json definition file of existing nodes.
-     remote-import-def   # Import a cluster definition file so we can work with it like a pgEdge cluster.
+     define-localhost    # Create a json config file for a local cluster.
+     define-remote       # Create a template for a json config file for a remote cluster.
      local-create        # Create a localhost test cluster of N pgEdge nodes on different ports.
      local-destroy       # Stop and then nuke a localhost cluster.
+     init                # Initialize a cluster from json definition file of existing nodes.
+     remove              # Remove a test cluster from json definition file of existing nodes.
      command             # Run ./ctl commands on one or all nodes.
      app-install         # Install test application [ pgbench | northwind ].
      app-remove          # Remove test application from cluster.
