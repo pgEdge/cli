@@ -236,7 +236,6 @@ def repset_remove_seq(set_name, relation, db, pg=None):
 
 def repset_add_partition(parent_table, db, partition=None, row_filter=None, pg=None):
     """Add a partition to a replication set."""
-    util.exit_message("Not implemented yet.")
     pg_v = util.get_pg_v(pg)
     sql = "SELECT spock.repset_add_partition(" + get_eq("parent", parent_table, "")
     if partition:
@@ -250,7 +249,6 @@ def repset_add_partition(parent_table, db, partition=None, row_filter=None, pg=N
 
 def repset_remove_partition(parent_table, db, partition=None, pg=None):
     """Remove a partition from a replication set."""
-    util.exit_message("Not implemented yet.")
     pg_v = util.get_pg_v(pg)
     sql = "SELECT spock.repset_remove_partition(" + get_eq("parent", parent_table, "")
     if partition:
