@@ -1523,6 +1523,33 @@ def put_pgconf(p_pgver, p_conf):
     return
 
 
+def get_pgconf_filename_auto(p_pgver):
+    pg_data = get_column("datadir", p_pgver)
+    return pg_data + os.sep + "postgresql.auto.conf"
+
+
+def get_pgconf_auto(p_pgver):
+    config_file = get_pgconf_filename_auto(p_pgver)
+
+    if not os.path.isfile(config_file):
+        print("ERROR: Cannot locate file '" + str(config_file) + "'")
+        return ""
+
+    if not os.access(config_file, os.W_OK):
+        print("ERROR: Write permission denied on '" + str(config_file) + "'")
+        return ""
+
+    return read_file_string(config_file)
+
+
+def put_pgconf_auto(p_pgver, p_conf):
+    config_file = get_pgconf_filename_auto(p_pgver)
+
+    write_string_file(p_conf, config_file)
+
+    return
+
+
 def remove_pgconf_keyval(p_pgver, p_key, p_val=""):
     s = get_pgconf(p_pgver)
     if s == "":
@@ -1670,6 +1697,49 @@ def change_pgconf_keyval(p_pgver, p_key, p_val, p_replace=False):
     message("  new: " + new_line)
 
     put_pgconf(p_pgver, ns)
+
+    return True
+
+
+def change_pgconf_keyval_auto(p_pgver, p_key, p_val, p_replace=False):
+    s = get_pgconf_auto(p_pgver)
+    if s == "":
+        return False
+
+    ns = ""
+    new_line = ""
+    boolFoundLine = False
+    old_val_quoted = ""
+
+    lines = s.split("\n")
+    for line in lines:
+        if line.startswith(p_key) or line.startswith("#" + p_key):
+            boolFoundLine = True
+            old_line = line
+
+            if p_replace:
+                old_line = p_key + " = ''"
+
+            old_tokens = get_val_tokens(old_line)
+            new_line = assemble_line_val(old_line, old_tokens, p_val)
+
+            ns = ns + "\n" + new_line
+        else:
+            if ns == "":
+                ns = line
+            else:
+                ns = ns + "\n" + line
+
+    if not boolFoundLine:
+        if p_val.isnumeric():
+            new_line = p_key + " = " + str(p_val)
+        else:
+            new_line = p_key + " = '" + str(p_val) + "'"
+        ns = ns + "\n" + new_line + "\n"
+
+    message("  new: " + new_line)
+
+    put_pgconf_auto(p_pgver, ns)
 
     return True
 

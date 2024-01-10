@@ -110,7 +110,7 @@ def guc_set(guc_name, guc_value, replace=True, pg=None):
     """Set GUC"""
     pg_v = util.get_pg_v(pg)
 
-    util.change_pgconf_keyval(pg_v, guc_name, str(guc_value), replace)
+    util.change_pgconf_keyval_auto(pg_v, guc_name, str(guc_value), replace)
     util.echo_cmd(f"./nc reload {pg_v}")
 
 
