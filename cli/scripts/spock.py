@@ -323,7 +323,6 @@ def repset_add_partition(parent_table, db, partition=None, row_filter=None, pg=N
         :param row_filter: The row filtering expression. 
         Example: 'my_id = 1001'
     """
-    util.exit_message("Not implemented yet.")
     pg_v = util.get_pg_v(pg)
     sql = "SELECT spock.repset_add_partition(" + get_eq("parent", parent_table, "")
     if partition:
