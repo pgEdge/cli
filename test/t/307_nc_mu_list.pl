@@ -11,33 +11,20 @@ use File::Which;
 use IPC::Cmd qw(run);
 use Try::Tiny;
 use JSON;
+use lib './t/lib';
+use contains;
+
+my $homedir = "$ENV{EDGE_CLUSTER_DIR}/n1/pgedge";
+my $cli = "$ENV{EDGE_CLI}";
 
 
-#
-# Move into the pgedge directory
-#
+my $cmd1 = qq($homedir/$cli mu list);
+print("cmd1 = $cmd1\n");
+my ($success1, $error_message1, $full_buf1, $stdout_buf1, $stderr_buf1)= IPC::Cmd::run(command => $cmd1, verbose => 0);
 
-chdir ("./pgedge");
-
-#
-# We are now exercising the error message for a bad command entry; a successful run returns 0.
-#
-
-my $cmd3 = qq(./nc mu list);
-print("cmd3 = $cmd3\n");
-my ($success3, $error_message3, $full_buf3, $stdout_buf3, $stderr_buf3)= IPC::Cmd::run(command => $cmd3, verbose => 0);
-
-print("success3 = $success3\n");
-print("error_message3 = $error_message3\n");
-print("full_buf3 = @$full_buf3\n");
-print("stdout_buf3 = @$stdout_buf3\n");
-print("stderr_buf3 = @$stderr_buf3\n");
-
-if (defined($error_message3))
-{
-    exit(0);
-}
-else
+if(!(contains(@$full_buf1[0], "Invalid")))
 {
     exit(1);
 }
+
+exit(0);

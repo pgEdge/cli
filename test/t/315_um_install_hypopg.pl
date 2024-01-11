@@ -10,79 +10,47 @@ use IPC::Cmd qw(run);
 use Try::Tiny;
 use JSON;
 
+use lib './t/lib';
+use contains;
+
+
 # Our parameters are:
 
-my $username = "lcusr";
-my $password = "password";
-my $database = "lcdb";
-my $version = "pg16";
 
-#
-# Move into the pgedge directory.
-#
- chdir("./pgedge");
+#my $username = $ENV{EDGE_USERNAME};
+#my $password = $ENV{EDGE_PASSWORD};
+#my $database = $ENV{EDGE_DB};
+my $port = $ENV{EDGE_START_PORT};
+my $pgversion = $ENV{EDGE_COMPONENT};
+my $homedir="$ENV{EDGE_CLUSTER_DIR}/n1/pgedge";
+my $cli = $ENV{EDGE_CLI};
+my $component = "hypopg-$pgversion";
+my $exitcode = 0;  
 
-#
-# First, we install hypopg with the command ./nc um install hypopg-pg16
-# 
 
-my $cmd = qq(./nc um install hypopg-pg16);
+my $cmd = qq($homedir/$cli um install $component);
 print("cmd = $cmd\n");
 my ($success, $error_message, $full_buf, $stdout_buf, $stderr_buf)= IPC::Cmd::run(command => $cmd, verbose => 0);
 
-print("success = $success");
+print("success = $success\n");
 print("stdout_buf = @$stdout_buf\n");
 
-my $value = $success;
-
-#
-# Then, we retrieve the port number from nodectl in json form... this is to catch cases where more than one copy of 
-# Postgres is running.
-#
-my $json = `./nc --json info`;
-print("my json = $json");
-my $out = decode_json($json);
-my $homedir = $out->[0]->{"home"};
-
-print("The home directory is {$homedir}\n"); 
-
-#
-# Then, we retrieve the port number from nodectl in json form... this is to catch cases where more than one copy of 
-# Postgres is running.
-#
-my $json2 = `./nc --json info pg16`;
-print("my json = $json2");
-my $out2 = decode_json($json2);
-my $port = $out2->[0]->{"port"};
-
-print("The port number is {$port}\n");
-
-#
-# Then, we use the port number from the previous section to connect to psql and test for the existence of the extension.
-#
-
-my $cmd5 = qq($homedir/$version/bin/psql -t -h 127.0.0.1 -p $port -d $database -c "SELECT * FROM pg_available_extensions WHERE name='hypopg'");
-print("cmd5 = $cmd5\n");
-my($success5, $error_message5, $full_buf5, $stdout_buf5, $stderr_buf5)= IPC::Cmd::run(command => $cmd5, verbose => 0);
-
-print("success5 = $success5\n");
-print("stdout_buf5 = @$stdout_buf5\n");
-
-#
-# Test
-#
-
-print("success = $success\n");
-print("If the word CREATE is in @$full_buf5 we've installed hypopg!\n");
-
-my $substring = "CREATE";
-if(index($stdout_buf, $substring) == -1)
-
+my $cmd2 = qq($homedir/$cli um list);
+print("cmd = $cmd2\n");
+my ($success2, $error_message2, $full_buf2, $stdout_buf2, $stderr_buf2)= IPC::Cmd::run(command => $cmd2, verbose => 0);
+#print("stdout : @$full_buf \n");
+if (defined($success2)) 
 {
-    exit(0);
-}
+    if (!(is_umlist_component_installed($stdout_buf2, $component)))
+    {
+        print("$component not installed. Setting exit code to 1\n");
+        $exitcode = 1;
+    }
+} 
 else
 {
-    exit(1);
+    print("$cmd2 not executed successfully. Full buffer: @$full_buf2\n");
+    $exitcode = 1;
 }
 
+exit($exitcode);
