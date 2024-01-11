@@ -1446,10 +1446,8 @@ def repset_diff(
 
     tables = cur.fetchall()
 
-    """
-    [('public.t1',), ('public.pgbench_history',), ('public.pgbench_tellers',), ('public.pgbench_accounts',), ('public.pgbench_branches',)]
-    Co
-    """
+    if not tables:
+        util.exit_message(f"Repset {repset_name} not found")
 
     # Convert fetched rows into a list of strings
     tables = [table[0] for table in tables]
