@@ -484,7 +484,7 @@ def table_diff(
 
     if output not in ["csv", "json"]:
         util.exit_message(
-            "Diff-tables currently supports only csv and json output formats"
+            "table-diff currently supports only csv and json output formats"
         )
 
     bad_br = True
@@ -510,11 +510,11 @@ def table_diff(
 
     if len(node_list) > 3:
         util.exit_message(
-            "diff-tables currently supports up to a three-way table comparison"
+            "table-diff currently supports up to a three-way table comparison"
         )
 
     if nodes != "all" and len(node_list) == 1:
-        util.exit_message("diff-tables needs at least two nodes to compare")
+        util.exit_message("table-diff needs at least two nodes to compare")
 
     util.check_cluster_exists(cluster_name)
     util.message(f"Cluster {cluster_name} exists", p_state="success")
@@ -552,7 +552,7 @@ def table_diff(
                 conn_list.append(psql_conn)
 
     except Exception as e:
-        util.exit_message("Error in diff_tbls() Getting Connections:" + str(e), 1)
+        util.exit_message("Error in table_diff() Getting Connections:" + str(e), 1)
 
     util.message("Connections successful to nodes in cluster", p_state="success")
 
@@ -1201,20 +1201,6 @@ def table_repair(cluster_name, diff_file, source_of_truth, table_name, dry_run=F
             """
             continue
 
-            # # XXX: Expensive much?
-            # if true_rows == diff_json[node_pair][node1]:
-            #    divergent_rows = [
-            #        tuple(str(x) for x in row.values())
-            #        for row in diff_json[node_pair][node2]
-            #    ]
-            #    divergent_node = node2
-            # else:
-            #    divergent_rows = [
-            #        tuple(str(x) for x in row.values())
-            #        for row in diff_json[node_pair][node1]
-            #    ]
-            #    divergent_node = node1
-
         true_set = OrderedSet(true_rows)
         divergent_set = OrderedSet(divergent_rows)
 
@@ -1352,6 +1338,125 @@ def table_repair(cluster_name, diff_file, source_of_truth, table_name, dry_run=F
     )
 
 
+def repset_diff(
+    cluster_name,
+    repset_name,
+    block_rows=10000,
+    max_cpu_ratio=MAX_CPU_RATIO,
+    output="json",
+    nodes="all",
+):
+    """Efficiently compare tables across cluster using checksums and blocks of rows."""
+
+    # TODO: Use a more specific exception here
+    try:
+        block_rows = int(os.environ.get("ACE_BLOCK_ROWS", block_rows))
+    except Exception:
+        util.exit_message("Invalid values for ACE_BLOCK_ROWS")
+    try:
+        max_cpu_ratio = int(os.environ.get("ACE_MAX_CPU_RATIO", max_cpu_ratio))
+    except Exception:
+        util.exit_message("Invalid values for ACE_BLOCK_ROWS")
+
+    if max_cpu_ratio > 1 or max_cpu_ratio < 0:
+        util.exit_message("Invalid values for ACE_MAX_CPU_RATIO or --max_cpu_ratio")
+
+    # Capping max block size here to prevent the hash function from taking forever
+    if block_rows > MAX_ALLOWED_BLOCK_SIZE:
+        util.exit_message(f"Desired block row size is > {MAX_ALLOWED_BLOCK_SIZE}")
+
+    if output not in ["csv", "json"]:
+        util.exit_message(
+            "Diff-tables currently supports only csv and json output formats"
+        )
+
+    bad_br = True
+    try:
+        b_r = int(block_rows)
+        if b_r >= 1000:
+            bad_br = False
+    except ValueError:
+        pass
+    if bad_br:
+        util.exit_message(f"block_rows param '{block_rows}' must be integer >= 1000")
+
+    node_list = []
+
+    try:
+        if nodes != "all":
+            node_list = [s.strip() for s in nodes.split(",")]
+    except ValueError as e:
+        util.exit_message(
+            f'Nodes should be a comma-separated list of nodenames. \
+                E.g., --nodes="n1,n2". Error: {e}'
+        )
+
+    if len(node_list) > 3:
+        util.exit_message(
+            "diff-tables currently supports up to a three-way table comparison"
+        )
+
+    if nodes != "all" and len(node_list) == 1:
+        util.exit_message("diff-tables needs at least two nodes to compare")
+
+    util.check_cluster_exists(cluster_name)
+    util.message(f"Cluster {cluster_name} exists", p_state="success")
+
+    il, db, pg, count, usr, passwd, os_usr, cert, cluster_nodes = cluster.load_json(
+        cluster_name
+    )
+
+    if nodes != "all" and len(node_list) > 1:
+        for n in node_list:
+            if not any(filter(lambda x: x["nodename"] == n, cluster_nodes)):
+                util.exit_message("Specified nodenames not present in cluster")
+
+    conn_list = []
+
+    try:
+        for nd in cluster_nodes:
+            if nodes == "all":
+                node_list.append(nd["nodename"])
+
+            if (node_list and nd["nodename"] in node_list) or (not node_list):
+                psql_conn = psycopg.connect(
+                    dbname=db,
+                    user=usr,
+                    password=passwd,
+                    host=nd["ip"],
+                    port=nd.get("port", 5432),
+                )
+                conn_list.append(psql_conn)
+
+    except Exception as e:
+        util.exit_message("Error in diff_tbls() Getting Connections:" + str(e), 1)
+
+    util.message("Connections successful to nodes in cluster", p_state="success")
+
+    sql = (
+        "SELECT concat_ws('.', nspname, relname) FROM spock.tables where set_name = %s;"
+    )
+
+    # Connecting to any one of the nodes in the cluster should suffice
+    conn = conn_list[0]
+    cur = conn.cursor()
+
+    # No need to sanitise repset_name here since psycopg does it for us
+    cur.execute(sql, (repset_name,))
+
+    tables = cur.fetchall()
+
+    if not tables:
+        util.exit_message(f"Repset {repset_name} not found")
+
+    # Convert fetched rows into a list of strings
+    tables = [table[0] for table in tables]
+
+    for table in tables:
+        util.message(f"\n\nCHECKING TABLE {table}...\n", p_state="info")
+        table_diff(cluster_name, table)
+
+
 if __name__ == "__main__":
     fire.Fire(
         {
@@ -1360,5 +1465,6 @@ if __name__ == "__main__":
             "diff-spock": diff_spock,
             "table-repair": table_repair,
             "table-rerun": table_rerun,
+            "repset-diff": repset_diff,
         }
     )
