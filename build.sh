@@ -132,9 +132,9 @@ initDir () {
 
   if [ "$pStatus" == "NotInstalled" ] && [ ! "$zipOut" == "off" ]; then
      if [ "$pExt" == "" ]; then
-       fileNm=$OUT/$pComponent-$pPreNum.tar.bz2
+       fileNm=$OUT/$pComponent-$pPreNum.tgz
      else
-       fileNm=$OUT/$pComponent-$pPreNum-$pExt.tar.bz2
+       fileNm=$OUT/$pComponent-$pPreNum-$pExt.tgz
      fi
      if [ -f "$fileNm" ]; then
        return
@@ -161,19 +161,18 @@ initDir () {
   else
     myOrigDir=$pComponent-$pCompNum
   fi
-  myOrigFile=$myOrigDir.tar.bz2
+  myOrigFile=$myOrigDir.tgz
 
   if [ "$pStageSubDir" == "nil" ]; then
     thisDir=$IN
   else
     thisDir=$IN/$pStageSubDir
   fi
- 
+
   if [ ! -d "$thisDir/$myOrigDir" ]; then
     origFile=$thisDir/$myOrigFile
     if [ -f $origFile ]; then
       checkCmd "tar -xf $origFile"      
-      ## pbzip2 -dc $origFile | tar x
       rc=`echo $?`
       if [ $rc -ne 0 ]; then
         fatalError "can't unzip"
@@ -271,16 +270,16 @@ zipDir () {
   else
     baseName=$pComponent-$pNum-$pPlat
   fi
-  myTarball=$baseName.tar.bz2
+  myTarball=$baseName.tgz
   myChecksum=$myTarball.sha512
 
   if [ ! -f "$OUT/$myTarball" ] && [ ! -f "$OUT/$myChecksum" ]; then
     echo "COMPONENT = '$baseName' '$pStatus'"
     options=""
     if [ "$osName" == "Linux" ]; then
-      options="--owner=0 --group=0"
+      options="--owner=0 --group=0 -I pigz"
     fi
-    checkCmd "tar $options -cjf $myTarball $pComponent"
+    checkCmd "tar $options -cf $myTarball $pComponent"
     writeFileChecksum $myTarball
   fi
 
@@ -317,8 +316,6 @@ finalizeOutput () {
   checkCmd "cd $HUB"
 
   if [ ! "$zipOut" == "off" ] &&  [ ! "$zipOut" == "" ]; then
-    set -x
-
     zipExtension="tgz"
     options=""
     if [ "$osName" == "Linux" ]; then
@@ -344,7 +341,6 @@ finalizeOutput () {
       fi
     fi
   fi
-  echo "END FINALIZE ###########################"
 }
 
 

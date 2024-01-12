@@ -37,7 +37,7 @@ Usage:
 $scriptName [OPTIONS]
 
 Required Options:
-	-a      Target build location, the final tar.bz2 would be placed here
+	-a      Target build location, the final tarball is placed here
 	-t      PostgreSQL Source tar ball.
 
 Optional:
@@ -395,11 +395,9 @@ function createBundle {
 
 	cd $baseDir/$workDir/build
 
-	##Tar="pg$pgShortV-$pgSrcV-$pgBldV-$OS"
 	Tar="$bndlPrfx-$pgSrcV-$pgBldV-$OS"
 
-	##Cmd="tar -cjf $Tar.tar.bz2 $Tar pg$pgShortV-$pgSrcV-$pgBldV-$OS" 
-	Cmd="tar -cjf $Tar.tar.bz2 $Tar $bndlPrfx-$pgSrcV-$pgBldV-$OS" 
+	Cmd="tar -I pigz -cf $Tar.tgz $Tar $bndlPrfx-$pgSrcV-$pgBldV-$OS"
 
 	tar_log=$baseDir/$workDir/logs/tar.log
         $Cmd >> $tar_log 2>&1
@@ -410,15 +408,15 @@ function createBundle {
 		return 1
 	else
 		mkdir -p $archiveDir/$workDir
-		mv "$Tar.tar.bz2" $archiveDir/$workDir/
+		mv "$Tar.tgz" $archiveDir/$workDir/
 
 		cd /opt/pgcomponent
 		pgCompDir="pg$pgShortV"
         	rm -rf $pgCompDir
 		mkdir $pgCompDir 
-		tar -xf "$archiveDir/$workDir/$Tar.tar.bz2" --strip-components=1 -C $pgCompDir
+		tar -xf "$archiveDir/$workDir/$Tar.tgz" --strip-components=1 -C $pgCompDir
 	fi
-	tarFile="$archiveDir/$workDir/$Tar.tar.bz2"
+	tarFile="$archiveDir/$workDir/$Tar.tgz"
 	if [ "$optional" == "-c" ]; then
 		##cmd="cp -p $tarFile $IN/postgres/pg$pgShortV/."
 		cmd="cp -p $tarFile $IN/postgres/$bndlPrfx/."

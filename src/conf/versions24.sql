@@ -85,7 +85,8 @@ INSERT INTO categories VALUES (9,  87, 'Management & Monitoring', 'Manage/Monito
 -- ## HUB ################################
 INSERT INTO projects VALUES ('hub', 'app', 0, 0, 'hub', 0, 'https://github.com/pgedge/nodectl','',0,'','','');
 INSERT INTO releases VALUES ('hub', 1, 'hub', '', '', 'hidden', '', 1, '', '', '');
-INSERT INTO versions VALUES ('hub', '24.1.5',  '',  1, '20240108', '', '', '');
+INSERT INTO versions VALUES ('hub', '24.1.6',  '',  1, '20240131', '', '', '');
+INSERT INTO versions VALUES ('hub', '24.1.5',  '',  0, '20240108', '', '', '');
 INSERT INTO versions VALUES ('hub', '24.1.4',  '',  0, '20240102', '', '', '');
 INSERT INTO versions VALUES ('hub', '24.1.3',  '',  0, '20231205', '', '', '');
 
@@ -279,7 +280,7 @@ INSERT INTO versions VALUES ('postgis-pg16', '3.4.0-1', 'el9, arm9', 1, '2023091
 
 INSERT INTO projects VALUES ('pgadmin4', 'app', 11, 443, '', 1, 'https://www.pgadmin.org/news/',
   'pgadmin4', 0, 'pgadmin.png', 'PostgreSQL Tools', 'https://pgadmin.org');
-INSERT INTO releases VALUES ('pgadmin4', 2, 'pgadmin4', 'pgAdmin 4', '', 'ent', '', 1, 'POSTGRES', '', '');
+INSERT INTO releases VALUES ('pgadmin4', 2, 'pgadmin4', 'pgAdmin 4', '', 'test', '', 1, 'POSTGRES', '', '');
 INSERT INTO versions VALUES ('pgadmin4', '8.x', '', 1, '20240108', '', '', '');
 INSERT INTO versions VALUES ('pgadmin4', '7-1', '', 0, '20231107', '', '', '');
 
@@ -323,7 +324,8 @@ INSERT INTO versions VALUES ('pgedge', '2-07',  '', 0, '20231024', '', '', '');
 INSERT INTO projects VALUES ('ctlibs', 'pge', 0, 0, 'hub', 3, 'https://github.com/pgedge/nodectl',
   'ctlibs',  0, 'ctlibs.png', 'ctlibs', 'https://github.com/pgedge/nodectl');
 INSERT INTO releases VALUES ('ctlibs', 2, 'ctlibs',  'nodectl Libs', '', 'prod', '', 1, '', '', '');
-INSERT INTO versions VALUES ('ctlibs', '1.1', '', 1, '20231130', '', '', '');
+INSERT INTO versions VALUES ('ctlibs', '1.2', '', 1, '20240131', '', '', '');
+INSERT INTO versions VALUES ('ctlibs', '1.1', '', 0, '20231130', '', '', '');
 
 INSERT INTO projects VALUES ('nclibs', 'pge', 0, 0, 'hub', 3, 'https://github.com/pgedge/nodectl',
   'nclibs',  0, 'nclibs.png', 'nclibs', 'https://github.com/pgedge/nodectl');

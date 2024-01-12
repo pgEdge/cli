@@ -91,21 +91,21 @@ function cleanUpComponentDir {
 
 
 function  packageComponent {
-	bundle="$targetDir/$workDir/$componentBundle.tar.bz2"
+	bundle="$targetDir/$workDir/$componentBundle.tgz"
 	echo "$bundle"
 
 	cd "$baseDir/$workDir/build/"
-	tar -cjf "$componentBundle.tar.bz2" $componentBundle
+	tar -I pigz -cf "$componentBundle.tgz" $componentBundle
 	rm -rf "$targetDir/$workDir"
 	mkdir -p "$targetDir/$workDir"
-	mv "$componentBundle.tar.bz2" "$targetDir/$workDir/"
+	mv "$componentBundle.tgz" "$targetDir/$workDir/"
 
 	if [ "$copyBin" == "true" ]; then
 		cp -pv $bundle $IN/postgres/$compDir/.
 	elif [ "$noTar" == "true" ]; then
 		echo "NO TAR"
 		cd $targetDir/$workDir/
-		tar -xvf $componentBundle.tar.bz2
+		tar -I pigz -xf $componentBundle.tgz
 		echo "cd $targetDir/$workDir/$componentBundle/lib/postgresql"
 	fi
 

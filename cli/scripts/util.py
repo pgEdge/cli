@@ -1088,7 +1088,7 @@ def round_timedelta(dt):
 
 def verify_comp(p_comp_ver_plat):
     base = get_value("GLOBAL", "REPO") + "/" + p_comp_ver_plat
-    url_file = base + ".tar.bz2"
+    url_file = base + ".tgz"
     rc1 = http_is_file(url_file)
 
     url_checksum = url_file + ".sha512"
@@ -2733,11 +2733,11 @@ def http_get_file(
         block_sz = 8192
         f = open(file_name_partial, "wb")
         file_exists = True
-        log_file_name = p_file_name.replace(".tar.bz2", "")
+        log_file_name = p_file_name.replace(".tgz", "")
         log_msg = "Downloading file %s " % log_file_name
         is_checksum = False
         if p_file_name.find("sha512") >= 0:
-            log_file_name = p_file_name.replace(".tar.bz2.sha512", "")
+            log_file_name = p_file_name.replace(".tgz.sha512", "")
             log_msg = "Downloading checksum for %s " % log_file_name
         if p_display_status:
             my_logger.info(log_msg)
@@ -2746,7 +2746,6 @@ def http_get_file(
             if (
                 not p_file_name.endswith(".txt")
                 and not p_file_name.startswith("install.py")
-                and not p_file_name.startswith("oscg-io")
                 and not os.path.isfile(pid_file)
             ):
                 raise KeyboardInterrupt("No lock file exists.")

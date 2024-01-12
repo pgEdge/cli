@@ -316,12 +316,12 @@ def get_depend_list(p_list, p_display=True):
 # Check if component is already downloaded
 def is_downloaded(p_comp, component_name=None):
     conf_cache = "conf" + os.sep + "cache"
-    bz2_file = p_comp + ".tar.bz2"
-    checksum_file = bz2_file + ".sha512"
+    zip_file = p_comp + ".tgz"
+    checksum_file = zip_file + ".sha512"
 
     if os.path.isfile(conf_cache + os.sep + checksum_file):
         if validate_checksum(
-            conf_cache + os.sep + bz2_file, conf_cache + os.sep + checksum_file
+            conf_cache + os.sep + zip_file, conf_cache + os.sep + checksum_file
         ):
             return True
 
@@ -332,7 +332,7 @@ def is_downloaded(p_comp, component_name=None):
         return False
 
     return validate_checksum(
-        conf_cache + os.sep + bz2_file, conf_cache + os.sep + checksum_file
+        conf_cache + os.sep + zip_file, conf_cache + os.sep + checksum_file
     )
 
 
@@ -408,8 +408,8 @@ def install_comp(p_app, p_ver=0, p_rver=None, p_re_install=False):
 
         base_name = p_app + "-" + ver
         conf_cache = "conf" + os.sep + "cache"
-        file = base_name + ".tar.bz2"
-        bz2_file = conf_cache + os.sep + file
+        file = base_name + ".tgz"
+        zip_file = conf_cache + os.sep + file
         json_dict = {}
         json_dict["component"] = p_app
         json_dict["file"] = file
@@ -418,7 +418,7 @@ def install_comp(p_app, p_ver=0, p_rver=None, p_re_install=False):
             json_dict["status"] = "start"
             print(json.dumps([json_dict]))
 
-        if os.path.exists(bz2_file) and is_downloaded(base_name, p_app):
+        if os.path.exists(zip_file) and is_downloaded(base_name, p_app):
             msg = "File is already downloaded."
             my_logger.info(msg)
             if isJSON:
@@ -439,7 +439,7 @@ def install_comp(p_app, p_ver=0, p_rver=None, p_re_install=False):
         tarFileObj.component_name = p_app
         tarFileObj.file_name = file
 
-        tar = tarfile.open(fileobj=tarFileObj, mode="r:bz2")
+        tar = tarfile.open(fileobj=tarFileObj, mode="r")
 
         try:
             tar.extractall(path=".")
@@ -639,10 +639,10 @@ def unpack_comp(p_app, p_old_ver, p_new_ver):
 
     base_name = p_app + "-" + meta.get_latest_ver_plat(p_app, p_new_ver)
 
-    file = base_name + ".tar.bz2"
-    bz2_file = os.path.join(MY_HOME, "conf", "cache", file)
+    file = base_name + ".tgz"
+    zip_file = os.path.join(MY_HOME, "conf", "cache", file)
 
-    if os.path.exists(bz2_file) and is_downloaded(base_name, p_app):
+    if os.path.exists(zip_file) and is_downloaded(base_name, p_app):
         msg = "File is already downloaded."
         my_logger.info(msg)
         if isJSON:
@@ -659,7 +659,7 @@ def unpack_comp(p_app, p_old_ver, p_new_ver):
     msg = " Unpacking " + p_app + "(" + p_new_ver + ") over (" + p_old_ver + ")"
     my_logger.info(msg)
 
-    file = base_name + ".tar.bz2"
+    file = base_name + ".tgz"
 
     if isJSON:
         print(
@@ -680,7 +680,7 @@ def unpack_comp(p_app, p_old_ver, p_new_ver):
     tarFileObj = ProgressTarExtract("conf" + os.sep + "cache" + os.sep + file)
     tarFileObj.component_name = p_app
     tarFileObj.file_name = file
-    tar = tarfile.open(fileobj=tarFileObj, mode="r:bz2")
+    tar = tarfile.open(fileobj=tarFileObj, mode="r")
 
     new_comp_dir = p_app + "_new"
     old_comp_dir = p_app + "_old"
@@ -1054,8 +1054,8 @@ def retrieve_remote():
 ## Download tarball component and verify against checksum ###############
 def retrieve_comp(p_base_name, component_name=None):
     conf_cache = "conf" + os.sep + "cache"
-    bz2_file = p_base_name + ".tar.bz2"
-    checksum_file = bz2_file + ".sha512"
+    zip_file = p_base_name + ".tgz"
+    checksum_file = zip_file + ".sha512"
     global download_count
     download_count += 1
 
@@ -1065,7 +1065,7 @@ def retrieve_comp(p_base_name, component_name=None):
     if isSILENT:
         display_status = False
     if not util.http_get_file(
-        isJSON, bz2_file, REPO, conf_cache, display_status, msg, component_name
+        isJSON, zip_file, REPO, conf_cache, display_status, msg, component_name
     ):
         return False
 
@@ -1076,7 +1076,7 @@ def retrieve_comp(p_base_name, component_name=None):
         return False
 
     return validate_checksum(
-        conf_cache + os.sep + bz2_file, conf_cache + os.sep + checksum_file
+        conf_cache + os.sep + zip_file, conf_cache + os.sep + checksum_file
     )
 
 
