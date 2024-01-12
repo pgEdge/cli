@@ -1,6 +1,9 @@
 # pgEdge Platform Release Notes #############
 
-## done for 24.1.6 as of 2024-01-10 ###########
+## done for 24.1.6 as of 2024-01-12 ###########
+  - add support for multiple spock db's (PR #70 Cady)
+  - add support to ACE for repset-diff (PR #72 Hayee)
+  - lots of new doc & unit testings (PR #71, 73 - QA Group)
   - fix two things for SLES & OpenSuse LEAP support
     + remove ruff.toml broken link at runtime from hub/scripts
     + make sure we properly support SLES 15 & not just OpenSuse LEAP 15
