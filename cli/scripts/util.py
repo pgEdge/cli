@@ -617,16 +617,14 @@ def run_sql_cmd(p_pg, p_sql, p_display=False):
     return rc
 
 
-# use lbzip2 when available for dramatic speedups when unzipping an archive
 def posix_unpack(file_nm):
-    rc = os.system("lbzip2 --version > /dev/null 2>&1")
+    rc = os.system("pigz --version > /dev/null 2>&1")
     if rc == 0:
-        rc = os.system(f"lbzip2 -dc {file_nm} | tar xf -")
-        if rc == 0:
-            return rc
-        return 1
+        flags = "-I pigz"
+    else:
+        flagz = ""
 
-    return echo_cmd(f"tar -xf {file_nm}")
+    return echo_cmd(f"tar {flags} -xf {file_nm}")
 
 
 def restart_postgres(p_pg):
