@@ -1,6 +1,7 @@
-# This test case removes hypopg with the command:
-# ./nc um remove hypopg-pg16
+# This test case removes postgis with the command:
+# ./nc um remove postgis-pgV
 #
+
 
 use strict;
 use warnings;
@@ -15,12 +16,13 @@ use contains;
 
 # Our parameters are:
 
+
 my $port = $ENV{EDGE_START_PORT};
 my $pgversion = $ENV{EDGE_COMPONENT};
 my $homedir="$ENV{EDGE_CLUSTER_DIR}/n1/pgedge";
 my $cli = $ENV{EDGE_CLI};
-my $component = "hypopg-$pgversion";
-my $exitcode = 1;
+my $component = "postgis-$pgversion";
+my $exitcode = 0;
 
 my $cmd = qq($homedir/$cli um remove $component);
 print("cmd = $cmd\n");
@@ -50,3 +52,4 @@ else
 } 
 
 exit($exitcode);
+

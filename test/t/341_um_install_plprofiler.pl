@@ -1,10 +1,10 @@
-# This test case removes hypopg with the command:
-# ./nc um remove hypopg-pg16
+# This test case installs plprofiler with the commands:
+# ./nc um install plprofiler-pgV
 #
+
 
 use strict;
 use warnings;
-
 use File::Which;
 use IPC::Cmd qw(run);
 use Try::Tiny;
@@ -19,10 +19,11 @@ my $port = $ENV{EDGE_START_PORT};
 my $pgversion = $ENV{EDGE_COMPONENT};
 my $homedir="$ENV{EDGE_CLUSTER_DIR}/n1/pgedge";
 my $cli = $ENV{EDGE_CLI};
-my $component = "hypopg-$pgversion";
-my $exitcode = 1;
+my $component = "plprofiler-$pgversion";
+my $exitcode = 0;  
 
-my $cmd = qq($homedir/$cli um remove $component);
+
+my $cmd = qq($homedir/$cli um install $component);
 print("cmd = $cmd\n");
 my ($success, $error_message, $full_buf, $stdout_buf, $stderr_buf)= IPC::Cmd::run(command => $cmd, verbose => 0);
 
@@ -35,18 +36,17 @@ my ($success2, $error_message2, $full_buf2, $stdout_buf2, $stderr_buf2)= IPC::Cm
 #print("stdout : @$full_buf \n");
 if (defined($success2)) 
 {
-    if (is_umlist_component_installed($stdout_buf2, $component)) {
-        print("$component is still Installed. Failure\n");
+    if (!(is_umlist_component_installed($stdout_buf2, $component)))
+    {
+        print("$component not installed. Setting exit code to 1\n");
         $exitcode = 1;
-    } else {
-        print("$component uninstalled successfully\n");
-        $exitcode = 0;
     }
 } 
 else
 {
-    print("$cmd2 not executed successfully. full buffer :  @$full_buf\n");
+    print("$cmd2 not executed successfully. Full buffer: @$full_buf2\n");
     $exitcode = 1;
-} 
+}
 
 exit($exitcode);
+

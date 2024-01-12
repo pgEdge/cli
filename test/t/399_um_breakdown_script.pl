@@ -12,31 +12,22 @@ use IPC::Cmd qw(run);
 use Try::Tiny;
 use JSON;
 
-#
-# Move into the pgedge directory
-#
-chdir ("./pgedge");
 
-#
-# Get the location of the data directory and home directory before removing pgEdge; store them in $datadir and $home.
-#
+my $username = $ENV{EDGE_USERNAME};
+my $password = $ENV{EDGE_PASSWORD};
+my $database = $ENV{EDGE_DB};
+my $port = $ENV{EDGE_START_PORT};
+my $pgversion = $ENV{EDGE_COMPONENT};
+my $homedir="$ENV{EDGE_CLUSTER_DIR}/n1/pgedge";
+my $datadir="$homedir/data/$pgversion";
+my $cli = $ENV{EDGE_CLI};
 
-my $out = decode_json(`./nc --json info`);
-my $home = $out->[0]->{"home"};
-print("the home directory is = {$home}\n");
-
-my $out1 = decode_json(`./nc --json info pg16`);
-my $datadir = $out1->[0]->{"datadir"};
-print("the data directory is = {$datadir}\n");
-
-print("datadir = $datadir\n");
-print("home = $home\n");
 
 #
 # Then, use nodectl to remove the Postgres installation.
 #
 
-my $cmd = qq(./nodectl remove pgedge);
+my $cmd = qq($homedir/$cli remove $pgversion);
 print("cmd = $cmd\n");
 my ($success, $error_message, $full_buf, $stdout_buf, $stderr_buf)= IPC::Cmd::run(command => $cmd, verbose => 0);
 
@@ -46,27 +37,38 @@ my ($success, $error_message, $full_buf, $stdout_buf, $stderr_buf)= IPC::Cmd::ru
 
 print("success = $success\n");
 # print("error_message = $error_message\n");
-print("full_buf = @$full_buf\n");
+#print("full_buf = @$full_buf\n");
 print("stdout_buf = @$stdout_buf\n");
 print("stderr_buf = @$stderr_buf\n");
 
 #
-# Then, remove the data directory and the contents of the pgedge directory; then the pgedge directory is deleted.
+# Then, remove the data directory 
 #
+if(defined($success)){
+    print("Removing the data directory: $datadir \n");
+        if (File::Path::remove_tree($datadir)) {
+            print("Data directory $datadir removed successfully\n");
+        } else {
+            return 1;
+        }
 
-File::Path::remove_tree($datadir);
-
-my $result = system("rm -rf $home");
+}
+else {
+    print("Unable to : $cmd \n @$full_buf \n");
+    return 1;
+}
+#my $result = system("rm -rf $home");
 
 #
 # Then, we remove the ~/.pgpass file.
+# TODO : This should ideally just remove the entries added by regression suite
 #
 
 my $cmd1 = qq(sudo rm ~/.pgpass);
-print("cmd1 = $cmd1");
+print("cmd1 = $cmd1\n");
 my ($success1, $error_message1, $full_buf1, $stdout_buf1, $stderr_buf1)= IPC::Cmd::run(command => $cmd1, verbose => 0);
 
-if (defined($success))
+if (defined($success1))
 {
     exit(0);
 }

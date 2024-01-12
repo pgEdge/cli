@@ -58,6 +58,26 @@ sub contains
     }
 }
 
+# This function takes an input of the standard output buffer of the ctl um list command 
+# and traverses through each row to find both the component name (passed as paraemter) and  
+# the word Installed in the same line. Returns 1 if its able to find both (indicating the component is installed)
+# otherwise 0.
+
+sub is_umlist_component_installed {
+    my ($stdout_ref, $component) = @_;
+
+    for my $line (split /\r?\n/, join("\n", @$stdout_ref)) {
+        #print "Line : $line\n"; # Print each line with line number
+
+        if ($line =~ /\b$component\b/i && $line =~ /\bInstalled\b/) {
+            print("$component is listed as installed.\n");
+            return 1; # True, both component and "Installed" found in the same line
+        }
+    }
+    print("$component is NOT Installed\n");
+    return 0; # False, either component or "Installed" not found in the same line
+}
+
 # This 1 at the end is required, even though it looks like an accident :)
 1;
 
