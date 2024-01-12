@@ -56,7 +56,7 @@ if os.path.exists("pgedge"):
         print("ERROR: Cannot install over a non-empty 'pgedge' directory.")
         sys.exit(1)
 
-my_file = "pgedge-ctl-" + VER + ".tar.bz2"
+my_file = "pgedge-ctl-" + VER + ".tgz"
 download_n_unpack(my_file, REPO, "CLI " + VER + " ...", True)
 
 cmd = "pgedge" + os.sep + "ctl "

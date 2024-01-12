@@ -317,12 +317,14 @@ finalizeOutput () {
   checkCmd "cd $HUB"
 
   if [ ! "$zipOut" == "off" ] &&  [ ! "$zipOut" == "" ]; then
-    zipExtension="tar.bz2"
+    set -x
+
+    zipExtension="tgz"
     options=""
     if [ "$osName" == "Linux" ]; then
       options="--owner=0 --group=0"
     fi
-    zipCommand="tar $options -cjf"
+    zipCommand="tar $options -czf"
     zipCompressProg=""
 
     zipOutFile="$zipOut-$NUM-$plat.$zipExtension"
@@ -342,6 +344,7 @@ finalizeOutput () {
       fi
     fi
   fi
+  echo "END FINALIZE ###########################"
 }
 
 
