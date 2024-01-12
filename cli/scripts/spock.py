@@ -49,7 +49,23 @@ def get_eq(parm, val, sufx, set=False):
 
 
 def node_add_interface(node_name, interface_name, dsn, db, pg=None):
-    """Add a new node interface."""
+    """Add a new node interface.
+    
+        Add an additional interface to a spock node. \n
+        Example: spock node-add-interface n1 n1_2 'host=10.1.2.5 user=pgedge dbname=demo' demo
+        :param node_name: The name of the node. 
+        Should reference the node already created in this database. 
+        Example: n1
+        :param interface_name: The interface name to add to the node.
+        The interface created by default matches the node name, add a new interface with a unique name.
+        Example: n1_2
+        :param dsn: The additional connection string to the node.
+        The user in this string should equal the OS user. 
+        This connection string should be reachable from outside and match the one used later in the sub-create command. 
+        Example: 'host=10.1.2.5 port= 5432 user=pgedge dbname=demo'
+        :param db: The name of the database. 
+        Example: demo
+    """
     pg_v = util.get_pg_v(pg)
     sql = (
         "SELECT spock.node_add_interface("
@@ -62,7 +78,17 @@ def node_add_interface(node_name, interface_name, dsn, db, pg=None):
 
 
 def node_drop_interface(node_name, interface_name, db, pg=None):
-    """Delete a node interface."""
+    """Delete a node interface.
+
+        Drop an interface from a spock node. \n
+        Example: spock node-drop-interface n1 n1_2 demo
+        :param node_name: The name of the node.  
+        Example: n1
+        :param interface_name: The interface name to remove from the node.
+        Example: n1_2
+        :param db: The name of the database. 
+        Example: demo
+    """
     pg_v = util.get_pg_v(pg)
     sql = (
         "SELECT spock.node_drop_interface("
@@ -74,13 +100,20 @@ def node_drop_interface(node_name, interface_name, db, pg=None):
 
 
 def node_create(node_name, dsn, db, pg=None):
-    """
-      Define a node for spock.
+    """Define a node for spock.
 
-    Create a spock node
-        NODE_NAME - name of the new node, only one node is allowed per database
-        DSN - connection string to the node, for nodes that are supposed to be providers, this should be reachable from outside
-        DB - database
+        Create a spock node. \n
+        Example: spock node-create n1 'host=10.1.2.5 user=pgedge dbname=demo' demo
+        :param node_name: The name of the node. 
+        Only one node is allowed per database, and each node in a cluster must have a unique name. 
+        To use snowflake, use the convention n1,n2, etc.
+        Example: n1
+        :param dsn: The connection string to the node.
+        The user in this string should equal the OS user. 
+        This connection string should be reachable from outside and match the one used later in the sub-create command. 
+        Example: 'host=10.1.2.5 port= 5432 user=pgedge dbname=demo'
+        :param db: The name of the database. 
+        Example: demo
     """
     pg_v = util.get_pg_v(pg)
     sql = (
@@ -96,12 +129,14 @@ def node_create(node_name, dsn, db, pg=None):
 
 
 def node_drop(node_name, db, pg=None):
-    """
-      Remove a spock node.
+    """Remove a spock node.
 
-    Drop spock node
-        NODE_NAME - name of an existing node
-        DB - database
+        Drop a spock node. \n
+        Example: spock node-drop n1 demo
+        :param node_name: The name of the node.
+        Example: n1
+        :param db: The name of the database. 
+        Example: demo
     """
     pg_v = util.get_pg_v(pg)
     sql = "SELECT spock.node_drop(" + get_eq("node_name", node_name, ")")
@@ -141,7 +176,13 @@ UPDATE spock.node
 
 
 def node_list(db, pg=None):
-    """Display node table."""
+    """Display node table. 
+        
+        List all nodes registered in a database. If replication is configured correctly, this will list all nodes in the cluster. \n
+        Example: spock node-list demo
+        :param db: The name of the database. 
+        Example: demo
+    """
     pg_v = util.get_pg_v(pg)
     sql = """
 SELECT node_id, node_name FROM spock.node ORDER BY node_name
@@ -159,7 +200,20 @@ def repset_create(
     replicate_truncate=True,
     pg=None,
 ):
-    """Define a replication set."""
+    """Define a replication set.
+
+        Create a replication set. \n
+        Example: spock repset-create demo_repset demo
+        :param set_name: The name of the replication set. 
+        Example: demo_repset
+        :param db: The name of the database. 
+        Example: demo
+        :param replicate_insert: For tables in this replication set, replicate inserts. 
+        :param replicate_update: For tables in this replication set, replicate updates.
+        :param replicate_delete: For tables in this replication set, replicate deletes.
+        :param replicate_truncate: For tables in this replication set, replicate truncate.
+        
+    """
     pg_v = util.get_pg_v(pg)
     sql = (
         "SELECT spock.repset_create("
@@ -182,7 +236,19 @@ def repset_alter(
     replicate_truncate=True,
     pg=None,
 ):
-    """Modify a replication set."""
+    """Modify a replication set.
+
+        Alter a replication set. \n
+        Example: spock repset-alter demo_repset demo --replicate_truncate=False
+        :param set_name: The name of the replication set. 
+        Example: demo_repset
+        :param db: The name of the database. 
+        Example: demo
+        :param replicate_insert: For tables in this replication set, replicate inserts. 
+        :param replicate_update: For tables in this replication set, replicate updates.
+        :param replicate_delete: For tables in this replication set, replicate deletes.
+        :param replicate_truncate: For tables in this replication set, replicate truncate.
+    """
     pg_v = util.get_pg_v(pg)
     sql = (
         "SELECT spock.repset_alter("
@@ -197,7 +263,16 @@ def repset_alter(
 
 
 def repset_drop(set_name, db, pg=None):
-    """Remove a replication set."""
+    """Remove a replication set.
+
+        Drop a replication set. \n
+        Example: spock repset-drop demo_repset demo
+        :param set_name: The name of the replication set. 
+        Example: demo_repset
+        :param db: The name of the database. 
+        Example: demo
+
+    """
     pg_v = util.get_pg_v(pg)
     sql = "SELECT spock.repset_drop(" + get_eq("set_name", set_name, ")")
     util.run_psyco_sql(pg_v, db, sql)
@@ -235,8 +310,19 @@ def repset_remove_seq(set_name, relation, db, pg=None):
 
 
 def repset_add_partition(parent_table, db, partition=None, row_filter=None, pg=None):
-    """Add a partition to a replication set."""
-    util.exit_message("Not implemented yet.")
+    """Add a partition to a replication set.
+
+        Add a partition to the same replication set that the parent table is a part of. \n
+        Example: spock repset-add-partition mytable demo --partition=mytable_202012
+        :param parent_table: The name of the parent table.
+        Example: mytable
+        :param db: The name of the database. 
+        Example: demo
+        :param partition: The name of the partition. If none is provided, it will add all unreplicated partitions to the replication set.
+        Example: mytable_202012
+        :param row_filter: The row filtering expression. 
+        Example: 'my_id = 1001'
+    """
     pg_v = util.get_pg_v(pg)
     sql = "SELECT spock.repset_add_partition(" + get_eq("parent", parent_table, "")
     if partition:
@@ -249,8 +335,17 @@ def repset_add_partition(parent_table, db, partition=None, row_filter=None, pg=N
 
 
 def repset_remove_partition(parent_table, db, partition=None, pg=None):
-    """Remove a partition from a replication set."""
-    util.exit_message("Not implemented yet.")
+    """Remove a partition from a replication set.
+
+        Remove a partition from the replication set that the parent table is a part of. \n
+        Example: spock repset-remove-partition mytable demo --partition=mytable_202012
+        :param parent_table: The name of the parent table.
+        Example: mytable
+        :param db: The name of the database. 
+        Example: demo
+        :param partition: The name of the partition. If none is provided, it will remove all replicated partitions from the replication set.
+        Example: mytable_202012
+    """
     pg_v = util.get_pg_v(pg)
     sql = "SELECT spock.repset_remove_partition(" + get_eq("parent", parent_table, "")
     if partition:
@@ -261,7 +356,15 @@ def repset_remove_partition(parent_table, db, partition=None, pg=None):
 
 
 def repset_list_tables(schema, db, pg=None):
-    """List tables in replication sets."""
+    """List tables in replication sets.
+
+        List all tables in all replication sets. \n
+        Example: spock repset-list-tables '*' demo 
+        :param schema: The name of the schema to list tables from. To list tables matching a pattern use single quotes and * as a wildcard.
+        Examples: '*', mytable, 'my*'
+        :param db: The name of the database. 
+        Example: demo
+    """
     pg_v = util.get_pg_v(pg)
 
     sql = "SELECT * FROM spock.tables"
@@ -284,7 +387,25 @@ def sub_create(
     apply_delay=0,
     pg=None,
 ):
-    """Create a subscription."""
+    """Create a subscription.
+
+        Create a subscription. \n
+        Example: spock sub-create sub_n2n1 'host=10.1.2.5 port=5432 user=pgedge dbname=demo' demo
+        :param subscription_name: The name of the subscription. Each subscription in a cluster must have a unique name.
+        Example: sub_n2n1
+        :param provider_dsn: The connection string to the node that this node will subscribe to.
+        The user in this string should equal the OS user. 
+        This connection string should be reachable from this node and match the one used previously in the node-create command. 
+        Example: 'host=10.1.2.5 port= 5432 user=pgedge dbname=demo'
+        :param db: The name of the database. 
+        Example: demo
+        :param replication_sets: An array of replication sets to automatically include in this subscription. 
+        Example: 'demo_repset,default,default_insert_only,ddl_sql'
+        :param synchronize_structure: Synchronize structure on subscription create. If some objects already exist in this database then the create of the subscription will fail.
+        :param synchronize_data: Synchronize data on subscription create.
+        :param forward_origins: For multimaster, this should be kept at the default. For replicating everything written to a node, transactions replicated to it included, this can be set to 'all'. 
+        :param apply_delay: The amount of time to delay the replication.
+    """
     pg_v = util.get_pg_v(pg)
     sql = (
         "SELECT spock.sub_create("
@@ -307,7 +428,15 @@ def sub_create(
 
 
 def sub_drop(subscription_name, db, pg=None):
-    """Delete a subscription."""
+    """Delete a subscription.
+        
+        Drop a subscription. \n
+        Example: spock sub-drop sub_n2n1 demo
+        :param subscription_name: The name of the subscription.
+        Example: sub_n2n1
+        :param db: The name of the database. 
+        Example: demo
+    """
     pg_v = util.get_pg_v(pg)
     sql = "SELECT spock.sub_drop(" + get_eq("subscription_name", subscription_name, ")")
     util.run_psyco_sql(pg_v, db, sql)
@@ -315,7 +444,16 @@ def sub_drop(subscription_name, db, pg=None):
 
 
 def sub_enable(subscription_name, db, immediate=False, pg=None):
-    """Make a subscription live."""
+    """Make a subscription live.
+
+        Enable a subscription. \n
+        Example: spock sub-enable sub_n2n1 demo
+        :param subscription_name: The name of the subscription.
+        Example: sub_n2n1
+        :param db: The name of the database. 
+        Example: demo
+        :param immediate: If False, sub will start after the current transaction. 
+    """
     pg_v = util.get_pg_v(pg)
     sql = (
         "SELECT spock.sub_enable("
@@ -327,7 +465,16 @@ def sub_enable(subscription_name, db, immediate=False, pg=None):
 
 
 def sub_disable(subscription_name, db, immediate=False, pg=None):
-    """Put a subscription on hold and disconnect from provider."""
+    """Put a subscription on hold and disconnect from provider.
+   
+        Disable a subscription by putting it on hold and disconnect from provider. \n
+        Example: spock sub-disable sub_n2n1 demo
+        :param subscription_name: The name of the subscription.
+        Example: sub_n2n1
+        :param db: The name of the database. 
+        Example: demo
+        :param immediate: If False, sub will stop after the current transaction. 
+    """
     pg_v = util.get_pg_v(pg)
     sql = (
         "SELECT spock.sub_disable("
@@ -339,7 +486,18 @@ def sub_disable(subscription_name, db, immediate=False, pg=None):
 
 
 def sub_alter_interface(subscription_name, interface_name, db, pg=None):
-    """Modify an interface to a subscription."""
+    """Modify an interface to a subscription.
+
+        Alter the subscription to use a different interface when connecting to the provider node. \n
+        Example: spock sub-alter-interface sub_n2n1 n1_2 demo
+        :param subscription_name: The name of the subscription. 
+        Example: sub_n2n1
+        :param interface_name: The interface name to add to the node.
+        Should match an interface name already created on the provider node.
+        Example: n1_2
+        :param db: The name of the database. 
+        Example: demo
+    """
     pg_v = util.get_pg_v(pg)
     sql = (
         "SELECT spock.sub_alter_interface("
@@ -351,8 +509,15 @@ def sub_alter_interface(subscription_name, interface_name, db, pg=None):
 
 
 def sub_show_status(subscription_name, db, pg=None):
-    """Display the status of the subcription."""
+    """Display the status of the subscription.
 
+        Show the status and basic information of a subscription. \n
+        Example: spock sub-show-status sub_n2n1 demo
+        :param subscription_name: The name of the subscription. 
+        Example: sub_n2n1
+        :param db: The name of the database. 
+        Example: demo
+    """
     pg_v = util.get_pg_v(pg)
 
     sql = "SELECT spock.sub_show_status("
@@ -365,8 +530,17 @@ def sub_show_status(subscription_name, db, pg=None):
 
 
 def sub_show_table(subscription_name, relation, db, pg=None):
-    """Show subscription tables."""
-
+    """Show subscription tables.
+        
+        Shows synchronization status of a table. \n
+        Example: spock sub-show-table sub_n2n1 mytable demo
+        :param subscription_name: The name of the subscription. 
+        Example: sub_n2n1
+        :param relation: Table name. 
+        Example: mytable
+        :param db: The name of the database. 
+        Example: demo
+    """
     pg_v = util.get_pg_v(pg)
 
     sql = (
@@ -382,7 +556,18 @@ def sub_show_table(subscription_name, relation, db, pg=None):
 
 
 def sub_resync_table(subscription_name, relation, db, truncate=False, pg=None):
-    """Resynchronize a table."""
+    """Resynchronize a table.
+    
+        Resynchronize one existing table. \n
+        Example: spock sub-resync-table sub_n2n1 mytable demo
+        :param subscription_name: The name of the subscription. 
+        Example: sub_n2n1
+        :param relation: Table name. 
+        Example: mytable
+        :param db: The name of the database. 
+        Example: demo
+        :param truncate: WARNING: If this is set to True, the function will truncate the table immediately, and only then begin synchronising it, so it will be empty while being synced.
+    """
     pg_v = util.get_pg_v(pg)
     sql = (
         "SELECT spock.sub_resync_table("
@@ -395,8 +580,17 @@ def sub_resync_table(subscription_name, relation, db, truncate=False, pg=None):
 
 
 def sub_add_repset(subscription_name, replication_set, db, pg=None):
-    """Add a replication set to a subscription."""
+    """Add a replication set to a subscription.
 
+        Add a replication set to a subscription. \n
+        Example: spock sub-add-repset sub_n2n1 demo_repset demo
+        :param subscription_name: The name of the subscription. 
+        Example: sub_n2n1
+        :param replication_set: Name of a replication set. 
+        Example: demo_repset
+        :param db: The name of the database. 
+        Example: demo
+    """
     pg_v = util.get_pg_v(pg)
 
     sql = (
@@ -410,8 +604,17 @@ def sub_add_repset(subscription_name, replication_set, db, pg=None):
 
 
 def sub_remove_repset(subscription_name, replication_set, db, pg=None):
-    """Drop a replication set from a subscription."""
+    """Drop a replication set from a subscription.
 
+        Remove a replication set from a subscription. \n
+        Example: spock sub-remove-repset sub_n2n1 demo_repset demo
+        :param subscription_name: The name of the subscription. 
+        Example: sub_n2n1
+        :param replication_set: Name of a replication set. 
+        Example: demo_repset
+        :param db: The name of the database. 
+        Example: demo
+    """
     pg_v = util.get_pg_v(pg)
     sql = (
         "SELECT spock.sub_remove_repset("
@@ -423,7 +626,17 @@ def sub_remove_repset(subscription_name, replication_set, db, pg=None):
 
 
 def table_wait_for_sync(subscription_name, relation, db, pg=None):
-    """Pause until a table finishes synchronizing."""
+    """Pause until a table finishes synchronizing.
+    
+        Pause until a table finishes synchronizing. \n
+        Example: spock table-wait-for-sync sub_n2n1 mytable demo
+        :param subscription_name: The name of the subscription. 
+        Example: sub_n2n1
+        :param relation: The name of a table. 
+        Example: mytable
+        :param db: The name of the database. 
+        Example: demo
+    """
     pg_v = util.get_pg_v(pg)
 
     sql = (
@@ -436,7 +649,15 @@ def table_wait_for_sync(subscription_name, relation, db, pg=None):
 
 
 def sub_wait_for_sync(subscription_name, db, pg=None):
-    """Pause until the subscription is synchronized."""
+    """Pause until the subscription is synchronized.
+        
+        Wait for a subscription to finish synchronization after a sub create or sub sync command. \n
+        Example: spock sub-wait-for-sync sub_n2n1 demo
+        :param subscription_name: The name of the subscription. 
+        Example: sub_n2n1
+        :param db: The name of the database. 
+        Example: demo
+    """
 
     pg_v = util.get_pg_v(pg)
 
@@ -500,20 +721,23 @@ def repset_add_table(
     include_partitions=True,
     pg=None,
 ):
-    """
-      Add table(s) to replication set.
+    """Add table(s) to a replication set.
 
-    Add a table or tables to replication set
-      REPLICATION_SET - name of the existing replication set
-      RELATION - name or name pattern of the table(s) to be added to the set
-        e.g. '*' for all tables, 'public.*' for all tables in public schema
-      DB - database name
-      SYNCHRONIZE_DATA - synchronized table data on all related subscribers
-      COLUMNS - list of columns to replicate
-      ROW_FILTER - row filtering expression
-      INCLUDE_PARTITIONS - include all partitions in replication
+        Add a table or tables to a replication set. \n
+        Example: spock repset-add-table demo_repset 'public.*' demo
+        :param replication_set: The replication set name.
+        Example: demo_repset
+        :param table: The name of the table(s) to add. To add all tables matching a pattern use single quotes and * as a wildcard.
+        Examples: '*', mytable, 'public.*'
+        :param db: The name of the database. 
+        Example: demo
+        :param synchronize_data: Synchronized table data on all related subscribers.
+        :param columns: list of columns to replicate.
+        Example: 'my_id, col_1, col_2'
+        :param row_filter: Row filtering expression.
+        Example: 'my_id = 1001'
+        :param include_partitions: include all partitions in replication.
     """
-
     pg_v = util.get_pg_v(pg)
     tbls = util.get_table_list(table, db, pg_v)
     con = util.get_pg_connection(pg_v, db, util.get_user())
@@ -549,7 +773,17 @@ def repset_add_table(
 
 
 def repset_remove_table(replication_set, table, db, pg=None):
-    """Remove table from replication set."""
+    """Remove table from replication set.
+    
+        Remove a table from a replication set. \n
+        Example: spock repset-remove-table demo_repset public.mytable demo
+        :param replication_set: The replication set name.
+        Example: demo_repset
+        :param table: The name of the table to remove. 
+        Examples:  public.mytable
+        :param db: The name of the database. 
+        Example: demo
+    """
     pg_v = util.get_pg_v(pg)
     sql = (
         "SELECT spock.repset_remove_table("
@@ -561,10 +795,15 @@ def repset_remove_table(replication_set, table, db, pg=None):
 
 
 def sequence_convert(sequence, db, type="snowflake", pg=None):
+    """Convert sequence to snowflake sequence.
+        
+        Convert sequence(s) to snowflake sequences. \n
+        Example: spock sequence-convert 'public.*' demo 
+        :param sequence: The sequence name. To convert all sequences matching a pattern use single quotes and * as a wildcard.
+        Examples: '*', myseq, 'public.*'
+        :param db: The name of the database. 
+        Example: demo
     """
-    Convert sequence to snowflake sequence.
-    """
-
     pg_v = util.get_pg_v(pg)
     seqs = util.get_seq_list(sequence, db, pg_v)
     con = util.get_pg_connection(pg_v, db, util.get_user())
@@ -588,10 +827,14 @@ def sequence_convert(sequence, db, type="snowflake", pg=None):
 def replicate_ddl(replication_sets, sql_command, db, pg=None):
     """Replicate DDL through replication set(s).
 
-    Replicate DDL statement through replication set(s)
-    REPLICATION_SETS - name of one or more replication sets, eg. default or [default,ddl_sql]
-    SQL_COMMAND - DDL or other SQL command, NOTE: must specify schema
-    DB - database name
+        Replicate DDL statement through replication set(s) \n
+        Example: spock replicate-ddl demo_repset "CREATE TABLE public.mytable (a INT PRIMARY KEY, b INT)" demo
+        :param replication_sets: One or more replication sets to replicate the ddl command to.
+        Example: demo_repset, 'demo_repset,default'
+        :param sql_command: The SQL command to replicate. Use schema and object name. 
+        Example: "CREATE TABLE public.mytable (a INT PRIMARY KEY, b INT)"
+        :param db: The name of the database. 
+        Example: demo 
     """
     pg_v = util.get_pg_v(pg)
     sql = "SELECT spock.replicate_ddl(" + get_eq("command", sql_command, ", ")
@@ -767,3 +1010,4 @@ if __name__ == "__main__":
             "set-readonly": set_readonly,
         }
     )
+
