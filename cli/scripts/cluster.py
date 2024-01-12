@@ -9,7 +9,18 @@ base_dir = "cluster"
 
 
 def create_local_json(cluster_name, db, num_nodes, usr, passwd, pg, port1):
-    """Create a json config file for a local cluster."""
+    """Create a json config file for a local cluster.
+    
+       Create a JSON configuration file that defines a local cluster. \n
+       Example: cluster define-localhost demo lcdb 3 lcusr lcpasswd 16 5432
+       :param cluster_name: The name of the cluster. A directory with this same name will be created in the cluster directory, and the JSON file will have the same name.
+       :param db: The database name.
+       :param num_nodes: The number of nodes in the cluster.
+       :param usr: The username of the superuser created for this database.
+       :param passwd: The password for the above user.
+       :param pg: The postgres version of the database.
+       :param port1: The starting port for this cluster. For local clusters, each node will have a port increasing by 1 from this port number. 
+    """
 
     cluster_dir = base_dir + os.sep + cluster_name
     text_file = open(cluster_dir + os.sep + cluster_name + ".json", "w")
@@ -23,13 +34,14 @@ def create_local_json(cluster_name, db, num_nodes, usr, passwd, pg, port1):
     local_json["ssh_key"] = ""
     cluster_json["localhost"] = local_json
 
-    database_json = {}
-    database_json["username"] = usr
-    database_json["password"] = passwd
+    database_json = {"databases": []}
     database_json["pg_version"] = pg
-    database_json["name"] = db
+    db_json = {}
+    db_json["username"] = usr
+    db_json["password"] = passwd
+    db_json["name"] = db
+    database_json["databases"].append(db_json)
     cluster_json["database"] = database_json
-
     
     local_nodes = {"localhost": []}
     for n in range(1, num_nodes + 1):
@@ -63,7 +75,18 @@ def create_local_json(cluster_name, db, num_nodes, usr, passwd, pg, port1):
 def create_remote_json(
     cluster_name, db, num_nodes, usr, passwd, pg, port
 ):
-    """Create a template for a json config file for a remote cluster."""
+    """Create a template for a json config file for a remote cluster.
+    
+       Create a JSON configuration file template that can be modified to fully define a remote cluster. \n
+       Example: cluster define-remote demo lcdb 3 lcusr lcpasswd 16 5432
+       :param cluster_name: The name of the cluster. A directory with this same name will be created in the cluster directory, and the JSON file will have the same name.
+       :param db: The database name.
+       :param num_nodes: The number of nodes in the cluster.
+       :param usr: The username of the superuser created for this database.
+       :param passwd: The password for the above user.
+       :param pg: The postgres version of the database.
+       :param port1: The port number for the database. 
+    """
 
     cluster_dir = base_dir + os.sep + cluster_name
     os.system("mkdir -p " + cluster_dir)
@@ -79,11 +102,13 @@ def create_remote_json(
     remote_json["ssh_key"] = ""
     cluster_json["remote"] = remote_json
 
-    database_json = {}
-    database_json["username"] = usr
-    database_json["password"] = passwd
+    database_json = {"databases": []}
     database_json["pg_version"] = pg
-    database_json["name"] = db
+    db_json = {}
+    db_json["username"] = usr
+    db_json["password"] = passwd
+    db_json["name"] = db
+    database_json["databases"].append(db_json)
     cluster_json["database"] = database_json
 
     remote_nodes = {"remote": []}
@@ -113,12 +138,13 @@ def load_json(cluster_name):
 
     parsed_json = get_cluster_json(cluster_name)
 
-    db = parsed_json["database"]["name"]
     pg = parsed_json["database"]["pg_version"]
-    user = parsed_json["database"]["username"]
-    db_passwd = parsed_json["database"]["password"]
+    
+    db=[]
+    for databases in parsed_json["database"]["databases"]:
+        db.append(databases)
+    
     node=[]
-
     if "remote" in parsed_json["node_groups"]:
         for group in parsed_json["node_groups"]["remote"]:
             if "remote" in parsed_json:
@@ -167,8 +193,6 @@ def load_json(cluster_name):
     return (
         db,
         pg,
-        user,
-        db_passwd,
         node
     )
 
@@ -194,9 +218,14 @@ def get_cluster_json(cluster_name):
 
 
 def remove(cluster_name):
-    """Remove a test cluster from json definition file of existing nodes."""
-
-    db, pg, user, db_passwd, nodes = load_json(cluster_name)
+    """Remove a test cluster from json definition file of existing nodes.
+    
+       Remove a cluster. This will stop postgres on each node, and then remove the pgedge directory on each node.
+       This command requires a JSON file with the same name as the cluster to be in the cluster/<cluster_name>. \n 
+       Example: cluster remove demo 
+       :param cluster_name: The name of the cluster. 
+    """
+    db, pg, nodes = load_json(cluster_name)
 
     util.message("\n## Ensure that PG is stopped.")
     for nd in nodes:
@@ -210,10 +239,17 @@ def remove(cluster_name):
 
 
 def init(cluster_name):
-    """Initialize a cluster from json definition file of existing nodes."""
+    """Initialize a cluster from json definition file of existing nodes.
+    
+       Install pgedge on each node, create the initial database, install spock, and create all spock nodes and subscriptions. 
+       Additional databases will be created with all spock nodes and subscriptions if defined in the json file.
+       This command requires a JSON file with the same name as the cluster to be in the cluster/<cluster_name>. \n 
+       Example: cluster init demo 
+       :param cluster_name: The name of the cluster. 
+    """
 
     util.message(f"## Loading cluster '{cluster_name}' json definition file")
-    db, pg, user, db_passwd, nodes = load_json(cluster_name)
+    db, pg, nodes = load_json(cluster_name)
 
     util.message("\n## Checking ssh'ing to each node")
     for nd in nodes:
@@ -225,8 +261,12 @@ def init(cluster_name):
         else:
             util.exit_message("cannot ssh to node")
 
-    ssh_install_pgedge(cluster_name, db, pg, user, db_passwd, nodes)
-    ssh_cross_wire_pgedge(cluster_name, db, pg, user, db_passwd, nodes)
+    ssh_install_pgedge(cluster_name, db[0]["name"], pg, db[0]["username"], db[0]["password"], nodes)
+    ssh_cross_wire_pgedge(cluster_name, db[0]["name"], pg, db[0]["username"], db[0]["password"], nodes)
+    if len(db) > 1:
+        for database in db[1:]:
+            create_spock_db(nodes,database)
+            ssh_cross_wire_pgedge(cluster_name, database["name"], pg, database["username"], database["password"], nodes)        
 
 
 def local_create(
@@ -238,8 +278,18 @@ def local_create(
     Passwd="lcpasswd",
     db="lcdb",
 ):
-    """Create a localhost test cluster of N pgEdge nodes on different ports."""
-
+    """Create a localhost test cluster of N pgEdge nodes on different ports.
+    
+       Create a local cluster. Each node will be located in the cluster/<cluster_name>/<node_name> directory. Each database will have a different port. \n
+       Example: cluster local-create demo 3 lcusr lcpasswd 16 6432 lcdb
+       :param cluster_name: The name of the cluster. 
+       :param num_nodes: The number of nodes in the cluster.
+       :param usr: The username of the superuser created for this database.
+       :param passwd: The password for the above user.
+       :param pg: The postgreSQL version of the database.
+       :param port1: The starting port for this cluster. For local clusters, each node will have a port increasing by 1 from this port number. 
+       :param db: The database name.
+    """
     util.message("# verifying passwordless ssh...")
     if util.is_password_less_ssh():
         pass
@@ -286,13 +336,17 @@ def local_create(
     Passwd = os.getenv("pgePasswd", Passwd)
 
     create_local_json(cluster_name, db, num_nodes, User, Passwd, pg, port1)
-    db, pg, db_user, db_passwd, nodes = load_json(
+    db, pg, nodes = load_json(
         cluster_name
     )
 
-    ssh_install_pgedge(cluster_name, db, pg, db_user, db_passwd, nodes)
-    ssh_cross_wire_pgedge(cluster_name, db, pg, db_user, db_passwd, nodes)
-
+    ssh_install_pgedge(cluster_name, db[0]["name"], pg, db[0]["username"], db[0]["password"], nodes)
+    ssh_cross_wire_pgedge(cluster_name, db[0]["name"], pg, db[0]["username"], db[0]["password"], nodes)
+    if len(db) > 1:
+        for database in db[1:]:
+            create_spock_db(nodes,database)
+            ssh_cross_wire_pgedge(cluster_name, database["name"], pg, database["username"], database["password"], nodes)        
+    
 
 def print_install_hdr(cluster_name, db, pg, db_user, count):
     util.message("#")
@@ -354,6 +408,13 @@ def ssh_install_pgedge(cluster_name, db, pg, db_user, db_passwd, nodes):
         util.message("#")
 
 
+def create_spock_db(nodes,db):
+    for n in nodes:
+            nc = n["path"] + os.sep + "pgedge" + os.sep + "ctl "
+            cmd = nc + " db create -U " + db["username"] + " -d " + db["name"] + " -p " + db["password"]
+            util.echo_cmd(cmd, host=n["ip_address"], usr=n["os_user"], key=n["ssh_key"])
+
+
 def ssh_cross_wire_pgedge(cluster_name, db, pg, db_user, db_passwd, nodes):
     """Create nodes, repsets, and subs on every node in a cluster."""
 
@@ -403,7 +464,12 @@ def ssh_cross_wire_pgedge(cluster_name, db, pg, db_user, db_passwd, nodes):
 
 
 def local_destroy(cluster_name):
-    """Stop and then nuke a localhost cluster."""
+    """Stop and then nuke a localhost cluster.
+    
+       Destroy a local cluster. This will stop postgres on each node, and then remove the pgedge directory for each node in a local cluster. \n
+       Example: cluster local-destroy demo
+       :param cluster_name: The name of the cluster. 
+    """
 
     if not os.path.exists(base_dir):
         util.exit_message("no cluster directory: " + str(base_dir), 1)
@@ -434,9 +500,18 @@ def lc_destroy1(cluster_name):
 
 
 def command(cluster_name, node, cmd, args=None):
-    """Run './ctl' commands on one or 'all' nodes."""
+    """Run './ctl' commands on one or 'all' nodes.
+    
+       Run './ctl' commands on one or all of the nodes in a cluster. 
+       This command requires a JSON file with the same name as the cluster to be in the cluster/<cluster_name>. \n 
+       Example: cluster command demo n1 "status"
+       Example: cluster command demo all "spock repset-add-table default '*' lcdb"
+       :param cluster_name: The name of the cluster.
+       :param node: The node to run the command on. Can be the node name or all.
+       :param cmd: The command to run on every node, excluding the beginning './ctl' 
+    """
 
-    db, pg, db_user, db_passwd, nodes = load_json(
+    db, pg, nodes = load_json(
         cluster_name
     )
     rc = 0
@@ -458,8 +533,16 @@ def command(cluster_name, node, cmd, args=None):
 
 
 def app_install(cluster_name, app_name, factor=1):
-    """Install test application [ pgbench | northwind ]."""
-    db, pg, db_user, db_passwd, nodes = load_json(
+    """Install test application [ pgbench | northwind ].
+    
+       Install a test application on all of the nodes in a cluster. 
+       This command requires a JSON file with the same name as the cluster to be in the cluster/<cluster_name>. \n 
+       Example: cluster app-install pgbench
+       :param cluster_name: The name of the cluster.
+       :param node: The application name, pgbench or northwind.
+       :param factor: The scale flag for pgbench.
+    """
+    db, pg, nodes = load_json(
             cluster_name
         )
     ctl =  os.sep + "pgedge" + os.sep + "ctl"
@@ -478,8 +561,15 @@ def app_install(cluster_name, app_name, factor=1):
 
 
 def app_remove(cluster_name, app_name):
-    """Remove test application from cluster."""
-    db, pg, db_user, db_passwd, nodes = load_json(
+    """Remove test application from cluster.
+    
+       Remove a test application from all of the nodes in a cluster. 
+       This command requires a JSON file with the same name as the cluster to be in the cluster/<cluster_name>. \n 
+       Example: cluster app-remove pgbench
+       :param cluster_name: The name of the cluster.
+       :param node: The application name, pgbench or northwind.
+    """
+    db, pg, nodes = load_json(
             cluster_name
         )
     ctl =  os.sep + "pgedge" + os.sep + "ctl"
