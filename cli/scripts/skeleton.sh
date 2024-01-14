@@ -17,55 +17,48 @@ function install_pgedge {
 }
 
 
-function test16 {
-  pgV=pg16
-  install_pgedge
-  if [ "$isEL8" == "True" ]; then
-    return
-  fi
-
+## extensions common to pg15 & pg16
+function test_common_exts {
   ./ctl install hypopg-$pgV        -d demo
   ./ctl install orafce-$pgV        -d demo
   ./ctl install curl-$pgV          -d demo
   ./ctl install cron-$pgV
+  ./ctl install partman-$pgV       -d demo
   ./ctl install postgis-$pgV       -d demo
   ./ctl install vector-$pgV        -d demo
   ./ctl install audit-$pgV         -d demo
-  ./ctl install plv8-$pgV          -d demo
   ./ctl install hintplan-$pgV      -d demo
+  ./ctl install plv8-$pgV          -d demo
+  ./ctl install timescaledb-$pgV   -d demo
 
+  ## extensions that dont always play nice with others
   # ./ctl install plprofiler-$pgV
+  # ./ctl install pldebugger-$pgV    -d demo
+  # ./ctl install citus-$pgV         -d demo
+}
+
+
+function test16 {
+  install_pgedge
+
+  if [ "$isEL8" == "True" ]; then
+    return
+  fi
+
+  test_common_exts
 }
 
 
 function test15 {
-  pgV=pg15
   install_pgedge
   ./ctl install foslots-$pgV       -d demo
   if [ "$isEL8" == "True" ]; then
     return
   fi
 
-  ./ctl install hypopg-$pgV        -d demo
-
-  ./ctl install orafce-$pgV        -d demo
-  ./ctl install curl-$pgV          -d demo
-  ./ctl install partman-$pgV       -d demo
-  ./ctl install cron-$pgV
-  ./ctl install postgis-$pgV       -d demo
-  ./ctl install hintplan-$pgV      -d demo
-  ./ctl install vector-$pgV        -d demo
-  ./ctl install plv8-$pgV          -d demo
-  ./ctl install timescaledb-$pgV   -d demo
-
-  #./ctl install pldebugger-$pgV    -d demo
-  #./ctl install plprofiler-$pgV
+  test_common_exts
 
   #./ctl install decoderbufs-$pgV   -d demo
-
-  #./ctl install citus-$pgV         -d demo
-  #./ctl install bulkload-$pg V     -d demo
-  #./ctl install repack-$pgV        -d demo
   #./ctl install mysqlfdw-$pgV      -d demo
   #./ctl install mongofdw-$pgV      -d demo
   #./ctl install oraclefdw-$pgV     -d demo
@@ -75,25 +68,25 @@ function test15 {
 
 
 function test14 {
-  pgV=pg14
   install_pgedge
   ./ctl install foslots-$pgV       -d demo
 }
 
 
 cd ../..
+pgV="$1"
 
-if [ "$1" == "16" ]; then
+if [ "$pgV" == "16" ]; then
   test16
   exit 0
 fi
 
-if [ "$1" == "15" ]; then
+if [ "$pgV" == "15" ]; then
   test15
   exit 0
 fi
 
-if [ "$1" == "14" ]; then
+if [ "$pgV" == "14" ]; then
   test14
   exit 0
 fi

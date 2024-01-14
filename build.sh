@@ -207,7 +207,7 @@ initDir () {
   ##copy-pgXX "mysqlfdw"  
   ##copy-pgXX "mongofdw"  
   ##copy-pgXX "decoderbufs"  
-  copy-pgXX "oraclefdw"  
+  ##copy-pgXX "oraclefdw"  
   ##copy-pgXX "tdsfdw"  
   copy-pgXX "cron"
   copy-pgXX "readonly"
@@ -217,7 +217,7 @@ initDir () {
   ##copy-pgXX "multicorn2"
   ##copy-pgXX "esfdw"
   ##copy-pgXX "bqfdw"
-  ##copy-pgXX "pljava"
+  copy-pgXX "pljava"
   copy-pgXX "plv8"
   copy-pgXX "hintplan"
   copy-pgXX "timescaledb"
@@ -457,9 +457,6 @@ initPG () {
     if [ "$pgM" == "15" ]; then
       initC "audit-pg$pgM"      "audit"      "$audit15V"   "$outPlat" "postgres/audit"     "" "" "nil"
       initC "hintplan-pg$pgM"   "hintplan"   "$hint15V"    "$outPlat" "postgres/hintplan"  "" "" "nil"
-
-      initC "timescaledb-pg$pgM" "timescaledb" "$timescaleV" "$outPlat" "postgres/timescale" "" "" "nil"
-      initC "curl-pg$pgM"  "curl"    "$curlV"       "$outPlat" "postgres/curl"   "" "" "nil"
     fi
 
     if [ "$pgM" == "15" ] || [ "$pgM" == "16" ]; then
@@ -468,7 +465,7 @@ initPG () {
       initC "pglogical-pg$pgM"  "pglogical"  "$logicalV"   "$outPlat" "postgres/logical"    "" "" "nil"
       initC "citus-pg$pgM"      "citus"      "$citusV"     "$outPlat" "postgres/citus"      "" "" "nil"
       initC "hypopg-pg$pgM"     "hypopg"     "$hypoV"      "$outPlat" "postgres/hypopg"     "" "" "nil"
-      initC "pljava-pg$pgM"     "pljava"     "$pljavaV"    "$outPlat" "postgres/pljava"     "" "" "nil"
+      ##initC "pljava-pg$pgM"     "pljava"     "$pljavaV"    "$outPlat" "postgres/pljava"     "" "" "nil"
       initC "curl-pg$pgM"       "curl"       "$curlV"      "$outPlat" "postgres/curl"       "" "" "nil"
       initC "orafce-pg$pgM"     "orafce"     "$orafceV"    "$outPlat" "postgres/orafce"     "" "" "nil"
       initC "vector-pg$pgM"     "vector"     "$vectorV"    "$outPlat" "postgres/vector"     "" "" "nil"
@@ -476,10 +473,11 @@ initPG () {
       initC "postgis-pg$pgM"    "postgis"    "$postgisV"   "$outPlat" "postgres/postgis"    "" "" "nil"
       initC "cron-pg$pgM"       "cron"       "$cronV"      "$outPlat" "postgres/cron"       "" "" "nil"
       initC "partman-pg$pgM"    "partman"    "$partmanV"   "$outPlat" "postgres/partman"    "" "" "nil"
-      initC "plv8-pg$pgM"       "plv8"       "$v8V"        "$outPlat" "postgres/plv8"       "" "" "nil"
-      if [ `arch` != "aarch64" ]; then
-        initC "oraclefdw-pg$pgM"  "oraclefdw"  "$oraclefdwV" "$outPlat" "postgres/oraclefdw" "" "" "nil"
-      fi
+      initC "timescaledb-pg$pgM" "timescaledb" "$timescaleV" "$outPlat" "postgres/timescale" "" "" "nil"
+      ##initC "plv8-pg$pgM"       "plv8"       "$v8V"        "$outPlat" "postgres/plv8"       "" "" "nil"
+      ##if [ `arch` != "aarch64" ]; then
+      ##  initC "oraclefdw-pg$pgM"  "oraclefdw"  "$oraclefdwV" "$outPlat" "postgres/oraclefdw" "" "" "nil"
+      ##fi
     fi
 
   fi

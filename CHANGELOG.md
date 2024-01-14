@@ -1,6 +1,12 @@
 # pgEdge Platform Release Notes #############
 
-## done for 24.1.6 as of 2024-01-12 ###########
+## done for 24.1.6 as of 2024-01-14 ###########
+  - bump timescaledb from 2.11.2 to 2.13.1
+  - add pg16 support for timescaledb
+  - bump plv8 from 3.2.0 to 3.2.1
+  - bump partman from 4.7.4 to 5.0.1
+  - bump postgis from 3.4.0 to 3.4.1
+  - bump citus from 12.1.0 to 12.1.1
   - add support for multiple spock db's (PR #70 Cady)
   - add support to ACE for repset-diff (PR #72 Tej)
   - lots of new doc & unit testings (PR #71, 73 - Hayee)

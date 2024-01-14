@@ -252,8 +252,8 @@ function buildComp {
         cd "$baseDir/$workDir"
         rm -rf $comp
         mkdir $comp 
-        cmd="tar -xf $src --strip-components=1 -C $comp"
-        ##echo "# $cmd"
+        cmd="tar -xzf $src --strip-components=1 -C $comp"
+        echo "# $cmd"
         $cmd
         cd $comp
 
@@ -278,10 +278,10 @@ function buildComp {
             export PYTHON_OVERRIDE=python3.9
         fi
 
-        echo "# $make ..."
-        USE_PGXS=1 $make >> $make_log 2>&1
+        echo "#  @`date`  make -j $CORES"
+        USE_PGXS=1 $make -j $CORES >> $make_log 2>&1
         if [[ $? -eq 0 ]]; then
-                echo "# make install..."
+                echo "#  @`date`  make install..."
                 USE_PGXS=1 $make_install > $install_log 2>&1
                 if [[ $? -ne 0 ]]; then
                         echo " "
@@ -411,8 +411,10 @@ function buildTimeScaleDBComponent {
 
 	cd build
         make_log=$baseDir/$workDir/logs/timescaledb_make.log
-        USE_PGXS=1 make -d > $make_log 2>&1
+        echo "#  @`date`  make -j $CORES"
+        USE_PGXS=1 make -j $CORES -d > $make_log 2>&1
         if [[ $? -eq 0 ]]; then
+                echo "#  @`date`  make install"
                 USE_PGXS=1 make install > $baseDir/$workDir/logs/timescaledb_install.log 2>&1
                 if [[ $? -ne 0 ]]; then
                         echo "timescaledb install failed, check logs for details."

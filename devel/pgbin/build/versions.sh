@@ -51,7 +51,7 @@ multicorn2FullV=2.4
 multicorn2ShortV=
 multicorn2BuildV=1
 
-citusFullV=12.1.0
+citusFullV=12.1.1
 citusShortV=
 citusBuildV=1
 
@@ -63,7 +63,7 @@ hypopgFullV=1.4.0
 hypopgShortV=
 hypopgBuildV=1
 
-postgisFullV=3.4.0
+postgisFullV=3.4.1
 postgisShortV=
 postgisBuildV=1
 
@@ -95,7 +95,7 @@ plProfilerFullVersion=4.2.4
 plProfilerShortVersion=
 plprofilerBuildV=1
 
-plv8FullV=3.2.0
+plv8FullV=3.2.1
 plv8ShortV=
 plv8BuildV=1
 
@@ -116,23 +116,15 @@ auditFull16V=16.0
 auditShortV=
 auditBuildV=1
 
-pljavaFullV=1.6.4
+pljavaFullV=1.6.6
 pljavaShortV=
 pljavaBuildV=1
-
-bulkloadFullV=3.1.19
-bulkloadShortV=
-bulkloadBuildV=1
 
 pgLogicalFullV=2.4.4
 pgLogicalShortV=
 pgLogicalBuildV=1
 
-repackFullV=1.4.8
-repackShortV=
-repackBuildV=1
-
-partmanFullV=4.7.4
+partmanFullV=5.0.1
 partmanShortV=
 partmanBuildV=1
 
@@ -141,7 +133,7 @@ hintplan15V=1.5.1
 hintplanShortV=
 hintplanBuildV=1
 
-timescaledbFullV=2.11.2
+timescaledbFullV=2.13.1
 timescaledbShortV=
 timescaledbBuildV=1
 
@@ -169,8 +161,8 @@ OS=`uname -s`
 OS=${OS:0:7}
 if [[ "$OS" == "Linux" ]]; then
   CORES=`egrep -c 'processor([[:space:]]+):.*' /proc/cpuinfo`
-  if [ "$CORES" -gt "24" ]; then
-    CORES=24
+  if [ "$CORES" -gt "16" ]; then
+    CORES=16
   fi
   if [[ "$ARCH" == "aarch64" ]]; then
     OS=arm
