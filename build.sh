@@ -442,7 +442,7 @@ initPG () {
     initC "spock32-pg$pgM"    "spock32"    "$spock32V"   "$outPlat" "postgres/spock32"   "" "" "nil"
   fi
 
-  if [ "$pgM" == "14" ] || [ "$pgM" == "15" ] || [ "$pgM" == "16" ]; then
+  if [ "$pgM" \> "13" ] && [ "$pgM" \< "17" ]; then
     initC "foslots-pg$pgM"    "foslots"    "$foslotsV"   "$outPlat" "postgres/foslots"    "" "" "nil"
     initC "readonly-pg$pgM"   "readonly"   "$readonlyV"  "$outPlat" "postgres/readonly"   "" "" "nil"
   fi
@@ -477,8 +477,6 @@ initPG () {
       initC "cron-pg$pgM"       "cron"       "$cronV"      "$outPlat" "postgres/cron"       "" "" "nil"
       initC "partman-pg$pgM"    "partman"    "$partmanV"   "$outPlat" "postgres/partman"    "" "" "nil"
       initC "plv8-pg$pgM"       "plv8"       "$v8V"        "$outPlat" "postgres/plv8"       "" "" "nil"
-      initC "foslots-pg$pgM"    "foslots"    "$foslotsV"   "$outPlat" "postgres/foslots"    "" "" "nil"
-      initC "readonly-pg$pgM"   "readonly"   "$readonlyV"  "$outPlat" "postgres/readonly"   "" "" "nil"
       if [ `arch` != "aarch64" ]; then
         initC "oraclefdw-pg$pgM"  "oraclefdw"  "$oraclefdwV" "$outPlat" "postgres/oraclefdw" "" "" "nil"
       fi
@@ -486,15 +484,13 @@ initPG () {
 
   fi
 
-  if [ "$pgM" == "14" ] || [ "$pgM" == "15" ] || [ "$pgM" == "16" ] || [ "$pgM" == "17" ]; then
-    initC "pgedge"    "pgedge"    "$pgedgeV"   ""         "postgres/pgedge"   "" "" "Y"
-    initC "backrest"  "backrest"  "$backrestV" "$outPlat" "postgres/backrest" "" "" "nil"
-    initC "staz"      "staz"      "$stazV"     ""         "postgres/staz"     "" "" "nil"
-    initC "etcd"      "etcd"      "$etcdV"     "$outPlat" "etcd"              "" "" "nil"
-    initC "firewalld" "firewalld" "$firwldV"   ""         "firewalld"         "" "" "nil"
-    initC "pgcat"     "pgcat"     "$catV"      "$outPlat" "postgres/pgcat"    "" "" "nil"
-    initC "pgadmin4"  "pgadmin4"  "$adminV"    ""         "postgres/pgadmin4" "" "" "Y"
-  fi
+  initC "pgedge"    "pgedge"    "$pgedgeV"   ""         "postgres/pgedge"   "" "" "Y"
+  initC "backrest"  "backrest"  "$backrestV" "$outPlat" "postgres/backrest" "" "" "nil"
+  initC "staz"      "staz"      "$stazV"     ""         "postgres/staz"     "" "" "nil"
+  initC "etcd"      "etcd"      "$etcdV"     "$outPlat" "etcd"              "" "" "nil"
+  initC "firewalld" "firewalld" "$firwldV"   ""         "firewalld"         "" "" "nil"
+  initC "pgcat"     "pgcat"     "$catV"      "$outPlat" "postgres/pgcat"    "" "" "nil"
+  initC "pgadmin4"  "pgadmin4"  "$adminV"    ""         "postgres/pgadmin4" "" "" "Y"
 
   return
 
