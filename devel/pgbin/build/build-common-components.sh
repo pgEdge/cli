@@ -32,5 +32,7 @@ bcc timescale
 bcc plprofiler
 bcc pldebugger
 bcc citus
+bcc pglogical
+bcc timescaledb
 
 exit 0

@@ -35,7 +35,7 @@ decoderbufsFullV=1.7.0
 decoderbufsShortV=
 decoderbufsBuildV=1
 
-curlFullV=2.1.1
+curlFullV=2.2.2
 curlShortV=
 curlBuildV=1
 

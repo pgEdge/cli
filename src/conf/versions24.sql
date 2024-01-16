@@ -210,8 +210,8 @@ INSERT INTO projects VALUES ('curl', 'ext', 4, 0, 'hub',0, 'https://github.com/p
   'curl', 1, 'curl.png', 'Invoke JSON Services', 'https://github.com/pg_curl/pg_curl');
 INSERT INTO releases VALUES ('curl-pg15', 10, 'curl', 'pgCron', '', 'prod', '', 1, 'POSTGRES', '', '');
 INSERT INTO releases VALUES ('curl-pg16', 10, 'curl', 'pgCron', '', 'prod', '', 1, 'POSTGRES', '', '');
-INSERT INTO versions VALUES ('curl-pg15', '2.1.1-1',  'el9, arm9', 1, '20230630', 'pg15', '', '');
-INSERT INTO versions VALUES ('curl-pg16', '2.1.1-1',  'el9, arm9', 1, '20230630', 'pg16', '', '');
+INSERT INTO versions VALUES ('curl-pg15', '2.2.2-1',  'el9, arm9', 1, '20240131', 'pg15', '', '');
+INSERT INTO versions VALUES ('curl-pg16', '2.2.2-1',  'el9, arm9', 1, '20240131', 'pg16', '', '');
 
 INSERT INTO projects VALUES ('citus', 'pge', 4, 0, 'hub',0, 'https://github.com/citusdata/citus/releases',
   'citus', 1, 'citus.png', 'Sharded Postgres', 'https://github.com/citusdata/citus');

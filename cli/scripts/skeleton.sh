@@ -39,6 +39,7 @@ function test_common_exts {
   #./ctl install pljava-$pgV        -d demo
 
   ## extensions that dont always play nice with others
+  # ./ctl install pglogical-$pgV     -d demo
   # ./ctl install plprofiler-$pgV
   # ./ctl install pldebugger-$pgV    -d demo
   # ./ctl install citus-$pgV         -d demo

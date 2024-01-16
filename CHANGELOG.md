@@ -1,6 +1,7 @@
 # pgEdge Platform Release Notes #############
 
 ## done for 24.1.6 as of 2024-01-14 ###########
+  - bump pg_curl from 2.1.1 to 2.2.2
   - improve build automation across platforms
   - bump timescaledb from 2.11.2 to 2.13.1
   - add pg16 support for timescaledb

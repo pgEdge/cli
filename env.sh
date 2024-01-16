@@ -28,7 +28,7 @@ prompgexpV=0.11.1
 backrestV=2.49-1
 readonlyV=1.1.1-1
 
-curlV=2.1.1-1
+curlV=2.2.2-1
 citusV=12.1.1-1
 
 oraclefdwV=2.6.0-1
