@@ -16,13 +16,9 @@ use contains;
 
 # Our parameters are:
 
-
-#my $username = $ENV{EDGE_USERNAME};
-#my $password = $ENV{EDGE_PASSWORD};
-#my $database = $ENV{EDGE_DB};
 my $port = $ENV{EDGE_START_PORT};
 my $pgversion = $ENV{EDGE_COMPONENT};
-my $homedir="$ENV{EDGE_CLUSTER_DIR}/n1/pgedge";
+my $homedir = "$ENV{EDGE_HOME_DIR}/nc/pgedge";
 my $cli = $ENV{EDGE_CLI};
 my $component = "hypopg-$pgversion";
 my $exitcode = 0;  

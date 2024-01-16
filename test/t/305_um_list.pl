@@ -10,7 +10,7 @@ use JSON;
 use lib './t/lib';
 use contains;
 
-my $homedir = "$ENV{EDGE_CLUSTER_DIR}/n1/pgedge";
+my $homedir = "$ENV{EDGE_HOME_DIR}/nc/pgedge";
 my $pgversion = "$ENV{EDGE_COMPONENT}";
 my $cli = "$ENV{EDGE_CLI}";
 

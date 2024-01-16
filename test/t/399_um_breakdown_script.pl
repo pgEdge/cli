@@ -18,7 +18,7 @@ my $password = $ENV{EDGE_PASSWORD};
 my $database = $ENV{EDGE_DB};
 my $port = $ENV{EDGE_START_PORT};
 my $pgversion = $ENV{EDGE_COMPONENT};
-my $homedir="$ENV{EDGE_CLUSTER_DIR}/n1/pgedge";
+my $homedir = "$ENV{EDGE_HOME_DIR}/nc/pgedge";
 my $datadir="$homedir/data/$pgversion";
 my $cli = $ENV{EDGE_CLI};
 
@@ -63,7 +63,8 @@ else {
 # Then, we remove the ~/.pgpass file.
 # TODO : This should ideally just remove the entries added by regression suite
 #
-
+# TODO : Move this removal to a destroyTestWorkspace file that would run in the end
+# of last schedule
 my $cmd1 = qq(sudo rm ~/.pgpass);
 print("cmd1 = $cmd1\n");
 my ($success1, $error_message1, $full_buf1, $stdout_buf1, $stderr_buf1)= IPC::Cmd::run(command => $cmd1, verbose => 0);
