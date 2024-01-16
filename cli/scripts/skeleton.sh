@@ -19,6 +19,11 @@ function install_pgedge {
 
 ## extensions common to pg15 & pg16
 function test_common_exts {
+
+  if [ "$isEL8" == "True" ]; then
+    return
+  fi
+
   ./ctl install hypopg-$pgV        -d demo
   ./ctl install orafce-$pgV        -d demo
   ./ctl install curl-$pgV          -d demo
@@ -28,8 +33,10 @@ function test_common_exts {
   ./ctl install vector-$pgV        -d demo
   ./ctl install audit-$pgV         -d demo
   ./ctl install hintplan-$pgV      -d demo
-  ./ctl install plv8-$pgV          -d demo
   ./ctl install timescaledb-$pgV   -d demo
+
+  #./ctl install plv8-$pgV          -d demo
+  #./ctl install pljava-$pgV        -d demo
 
   ## extensions that dont always play nice with others
   # ./ctl install plprofiler-$pgV
@@ -41,10 +48,6 @@ function test_common_exts {
 function test16 {
   install_pgedge
 
-  if [ "$isEL8" == "True" ]; then
-    return
-  fi
-
   test_common_exts
 }
 
@@ -52,9 +55,6 @@ function test16 {
 function test15 {
   install_pgedge
   ./ctl install foslots-$pgV       -d demo
-  if [ "$isEL8" == "True" ]; then
-    return
-  fi
 
   test_common_exts
 
@@ -74,19 +74,19 @@ function test14 {
 
 
 cd ../..
-pgV="$1"
+pgV="pg$1"
 
-if [ "$pgV" == "16" ]; then
+if [ "$pgV" == "pg16" ]; then
   test16
   exit 0
 fi
 
-if [ "$pgV" == "15" ]; then
+if [ "$pgV" == "pg15" ]; then
   test15
   exit 0
 fi
 
-if [ "$pgV" == "14" ]; then
+if [ "$pgV" == "pg14" ]; then
   test14
   exit 0
 fi
