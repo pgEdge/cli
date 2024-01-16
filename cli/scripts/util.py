@@ -622,7 +622,7 @@ def posix_unpack(file_nm):
     if rc == 0:
         flags = "-I pigz"
     else:
-        flagz = ""
+        flags = ""
 
     return echo_cmd(f"tar {flags} -xf {file_nm}")
 
