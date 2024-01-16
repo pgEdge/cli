@@ -148,22 +148,22 @@ function updateSharedLibs {
 	lib64=/usr/lib64
 	shared_lib=$buildLocation/lib
         if [ "$comp" == "mongofdw" ]; then
-          cp -Pv $lib64/libmongo*.so* $shared_lib/.
-          cp -Pv $lib64/libbson*.so*  $shared_lib/.
-          cp -Pv $lib64/libicu*.so*   $shared_lib/.
+          cp -P $lib64/libmongo*.so* $shared_lib/.
+          cp -P $lib64/libbson*.so*  $shared_lib/.
+          cp -P $lib64/libicu*.so*   $shared_lib/.
         elif [ "$comp" == "mysqlfdw" ]; then
-          cp -Pv $lib64/mysql/libmysqlclient.* $shared_lib/.
+          cp -P $lib64/mysql/libmysqlclient.* $shared_lib/.
 	elif [ "$comp" == "decoderbufs" ]; then
-          cp -Pv $lib64/libproto*.so* $shared_lib/.
+          cp -P $lib64/libproto*.so* $shared_lib/.
 	elif [ "$comp" == "postgis" ]; then
-          cp -Pv $lib64/libprotobuf*.so* $shared_lib/.
-          cp -Pv $lib64/libgeos*.so*  $shared_lib/.
-          cp -Pv $lib64/libgdal*.so*  $shared_lib/.
-          cp -Pv $lib64/libproj*.so*  $shared_lib/.
-          cp -Pv $lib64/libtiff*.so*  $shared_lib/.
-          cp -Pv $lib64/libwebp.so*  $shared_lib/.
-          cp -Pv $lib64/libjbig.so*  $shared_lib/.
-          cp -Pv $lib64/libjpeg.so*  $shared_lib/.
+          cp -P $lib64/libprotobuf*.so* $shared_lib/.
+          cp -P $lib64/libgeos*.so*  $shared_lib/.
+          cp -P $lib64/libgdal*.so*  $shared_lib/.
+          cp -P $lib64/libproj*.so*  $shared_lib/.
+          cp -P $lib64/libtiff*.so*  $shared_lib/.
+          cp -P $lib64/libwebp.so*  $shared_lib/.
+          cp -P $lib64/libjbig.so*  $shared_lib/.
+          cp -P $lib64/libjpeg.so*  $shared_lib/.
         fi
 }
 
