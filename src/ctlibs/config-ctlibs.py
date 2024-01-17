@@ -34,9 +34,13 @@ if platform.system() == "Linux":
       if rc == 0:
         platf = f"ubu22-{plat_os}"
       else:
-        rc = os.system(f"grep 'Leap 15' {f} > /dev/null 2>&1")
+        rc = os.system(f"grep 'leap:15' {f} > /dev/null 2>&1")
         if rc == 0:
           platf = f"el8-{plat_os}"
+        else:
+          rc = os.system(f"grep 'sles:15' {f} > /dev/null 2>&1")
+          if rc == 0:
+            platf = f"el8-{plat_os}"
 
 elif platform.system() == "Darwin":
   platf = "osx"
