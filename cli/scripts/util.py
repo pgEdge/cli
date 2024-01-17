@@ -25,6 +25,10 @@ MY_CMD = os.getenv("MY_CMD", None)
 MY_HOME = os.getenv("MY_HOME", None)
 MY_LITE = os.getenv("MY_LITE", None)
 
+isJSON=False
+if os.environ.get("isJson", "False") == "True":
+    isJSON=True
+
 pid_file = os.path.join(MY_HOME, "conf", "cli.pid")
 
 isTEST = False
@@ -985,7 +989,8 @@ def exit_message(p_msg, p_rc=1, p_isJSON=None):
 # print codified message to stdout & logfile
 def message(p_msg, p_state="info", p_isJSON=None):
     if p_isJSON is None:
-        p_isJSON = os.getenv("isJson")
+        ##p_isJSON = os.getenv("isJson")
+        p_isJSON = isJSON
 
     if p_msg is None:
         return
@@ -3291,6 +3296,79 @@ def delete_shortlink_osx(short_link):
         os.system(cmd)
         os.system("killall Dock")
 
+def exit_cleanly(p_rc, conn):
+    try:
+        conn.close()
+    except Exception:
+        pass
+    sys.exit(p_rc)
+
+
+def get_comp_lists(p_mode, arg, args, ignore_comp_list, p_host, connL):
+    p_comp_list = []
+    extra_args = ""
+    p_version = ""
+    requested_p_version = ""
+    info_arg = 0
+    try:
+        if p_mode in ignore_comp_list:
+            pass
+        else:
+            for i in range((arg + 1), len(args)):
+                if p_host > "":
+                    break
+                if p_mode in ("update", "cancel"):
+                    print_error("No additional parameters allowed.")
+                    exit_cleanly(1, connL)
+                comp1 = meta.wildcard_component(args[i])
+                if meta.is_component(comp1):
+                    p_comp_list.append(comp1)
+                    if p_mode == "info" and args[i] == "all":
+                        info_arg = 1
+                        p_version = "all"
+                else:
+                    if p_mode in ("config", "init", "provision") and len(p_comp_list) == 1:
+                        if str(args[i]) > "":
+                            extra_args = extra_args + '"' + str(args[i]) + '" '
+                    elif (
+                        p_mode in ("info", "download", "install", "update")
+                        and len(p_comp_list) == 1
+                        and info_arg == 0
+                    ):
+                        if p_mode == "info":
+                            p_version = args[i]
+                        else:
+                            ver1 = meta.wildcard_version(p_comp_list[0], args[i])
+                            p_version = meta.get_platform_specific_version(
+                                p_comp_list[0], ver1
+                            )
+                            if p_version == "-1":
+                                print_error(
+                                    "Invalid component version parameter  (" + ver1 + ")"
+                                )
+                                exit_cleanly(1, connL)
+                                requested_p_version = ver1
+                            info_arg = 1
+                    elif p_mode in ignore_comp_list:
+                        pass
+                    else:
+                        exit_message(
+                            "Invalid component parameter (" + args[i] + ")", 1, isJSON
+                        )
+
+        if len(p_comp_list) == 0:
+            if p_mode == "download":
+                print_error("No component parameter specified.")
+                exit_cleanly(1, connL)
+            p_comp_list.append("all")
+
+        if len(p_comp_list) >= 1:
+            p_comp = p_comp_list[0]
+    except Exception as e:
+        exit_message(str(e), 1, isJSON)
+        exit_cleanly(1, connL)
+
+    return info_arg, p_comp_list, p_comp, p_version, requested_p_version, extra_args
 
 # MAINLINE ################################################################
 cL = sqlite3.connect(MY_LITE, check_same_thread=False)

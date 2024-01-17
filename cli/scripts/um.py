@@ -1,5 +1,8 @@
 import os
-import fire
+import fire, meta, util
+
+isJSON = util.isJSON
+
 
 
 def run_cmd(p_cmd, p_comp=None):
@@ -10,15 +13,13 @@ def run_cmd(p_cmd, p_comp=None):
     return rc
 
 
-def list():
+def list(component=None):
     """Display available/installed components"""
-
-    run_cmd("list")
+    meta.get_list(isJSON, component)
 
 
 def update():
     """Update with a new list of available components"""
-
     run_cmd("update")
 
 
@@ -48,8 +49,11 @@ def downgrade(component):
 
 def clean():
     """Delete downloaded component files from local cache"""
-
-    run_cmd("clean")
+    conf_cache = MY_HOME + os.sep + "conf" + os.sep + "cache" + os.sep + "*"
+    files = glob.glob(conf_cache)
+    for f in files:
+        os.remove(f)
+    util.exit_cleanly(0)
 
 
 if __name__ == "__main__":

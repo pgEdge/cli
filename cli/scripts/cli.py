@@ -174,8 +174,7 @@ backup_target_dir = os.path.join(backup_dir, time.strftime("%Y%m%d%H%M"))
 
 pid_file = os.path.join(util.MY_HOME, "conf", "cli.pid")
 
-ISJSON = os.environ.get("ISJSON", "False")
-
+isJSON = util.isJSON
 
 def fire_away(p_mode, p_args):
     py_file = f"{p_mode}.py"
@@ -956,43 +955,6 @@ def check_comp(p_comp, p_port, p_kount, check_status=False):
     return
 
 
-## Check component state #################################################
-def check_status(p_comp, p_mode):
-    if p_comp in ["all", "*"]:
-        try:
-            c = connL.cursor()
-            sql = "SELECT component, port, autostart, pidfile FROM components"
-            c.execute(sql)
-            data = c.fetchall()
-            kount = 0
-            if isJSON:
-                print("[")
-            for row in data:
-                comp = row[0]
-                port = row[1]
-                autostart = row[2]
-                pidfile = row[3]
-                if str(pidfile) != "None" and str(pidfile) > "":
-                    kount = kount + 1
-                    component.check_pid_status(comp, pidfile, kount, isJSON)
-                    continue
-                if (port > 1) or (p_mode == "list") or (autostart == "on"):
-                    kount = kount + 1
-                    check_comp(comp, str(port), kount)
-            if isJSON:
-                print("]")
-        except Exception as e:
-            fatal_sql_error(e, sql, "check_status()")
-    else:
-        pidfile = util.get_comp_pidfile(p_comp)
-        if pidfile != "None" and pidfile > "":
-            component.check_pid_status(p_comp, pidfile, 0, isJSON)
-        else:
-            port = util.get_comp_port(p_comp)
-            check_comp(p_comp, port, 0)
-    return
-
-
 def retrieve_remote():
     versions_sql = "versions24.sql"
     util.set_value("GLOBAL", "VERSIONS", versions_sql)
@@ -1274,6 +1236,7 @@ if "--no-restart" in args:
     os.environ["isRestart"] = "False"
 
 isJSON = False
+os.environ["isJson"] = "False"
 if "--json" in args:
     isJSON = True
     args.remove("--json")
@@ -1510,860 +1473,788 @@ if p_mode in lock_commands:
     pid_fd.write(str(os.getpid()))
     pid_fd.close()
 
-p_comp_list = []
-extra_args = ""
-p_version = ""
-requested_p_version = ""
-info_arg = 0
-try:
-    if p_mode in ignore_comp_list:
-        pass
+info_arg, p_comp_list, p_comp, requested_p_version, extra_args = util.get_comp_lists(p_mode, arg, args, ignore_comp_list, p_host, connL)
+
+## PG_ISREADY #################################################################
+if p_mode == "pg_isready":
+    pg_v = util.get_pg_v(None)
+    cmd = "./nc pgbin " + pg_v.replace("pg", "") + " pg_isready"
+    rc = os.system(cmd)
+    if rc == 0:
+        sys.exit(0)
     else:
-        for i in range((arg + 1), len(args)):
-            if p_host > "":
-                break
-            if p_mode in ("update", "cancel"):
-                util.print_error("No additional parameters allowed.")
-                exit_cleanly(1)
-            comp1 = meta.wildcard_component(args[i])
-            if meta.is_component(comp1):
-                p_comp_list.append(comp1)
-                if p_mode == "info" and args[i] == "all":
-                    info_arg = 1
-                    p_version = "all"
-            else:
-                if p_mode in ("config", "init", "provision") and len(p_comp_list) == 1:
-                    if str(args[i]) > "":
-                        extra_args = extra_args + '"' + str(args[i]) + '" '
-                elif (
-                    p_mode in ("info", "download", "install", "update")
-                    and len(p_comp_list) == 1
-                    and info_arg == 0
-                ):
-                    if p_mode == "info":
-                        p_version = args[i]
-                    else:
-                        ver1 = meta.wildcard_version(p_comp_list[0], args[i])
-                        p_version = meta.get_platform_specific_version(
-                            p_comp_list[0], ver1
-                        )
-                        if p_version == "-1":
-                            util.print_error(
-                                "Invalid component version parameter  (" + ver1 + ")"
-                            )
-                            exit_cleanly(1)
-                            requested_p_version = ver1
-                        info_arg = 1
-                elif p_mode in ignore_comp_list:
-                    pass
-                else:
-                    util.exit_message(
-                        "Invalid component parameter (" + args[i] + ")", 1, isJSON
-                    )
-
-    if len(p_comp_list) == 0:
-        if p_mode == "download":
-            util.print_error("No component parameter specified.")
-            exit_cleanly(1)
-        p_comp_list.append("all")
-
-    if len(p_comp_list) >= 1:
-        p_comp = p_comp_list[0]
-
-    ## PG_ISREADY #################################################################
-    if p_mode == "pg_isready":
-        pg_v = util.get_pg_v(None)
-        cmd = "./nc pgbin " + pg_v.replace("pg", "") + " pg_isready"
-        rc = os.system(cmd)
-        if rc == 0:
-            sys.exit(0)
-        else:
-            sys.exit(1)
-
-    ## PSQL #######################################################################
-    psql_bad_msg = 'Two args required, try: psql "sql command" database'
-    if p_mode == "psql":
-        if len(args) == 5:
-            c_or_f = str(args[2])
-            sql_cmd = str(args[3])
-            db = str(args[4])
-        elif len(args) == 4:
-            c_or_f = "-c"
-            sql_cmd = str(args[2])
-            db = str(args[3])
-        else:
-            util.exit_message(psql_bad_msg)
-
-        if sql_cmd == "-i":
-            ## leave us at the interactive psql prompt
-            sql_cmd = ""
-        elif c_or_f in ("-f", "-c"):
-            sql_cmd = f'{c_or_f} "' + sql_cmd + '" '
-        else:
-            util.exit_message(psql_bad_msg)
-
-        pg_v = util.get_pg_v(None)
-
-        cmd = "./nc pgbin " + pg_v.replace("pg", "") + " 'psql " + sql_cmd + db + "'"
-
-        if isVERBOSE:
-            print(f"pg_v={pg_v}, sql_cmd={sql_cmd}, db={db}")
-            print(f"cmd={cmd}")
-
-        rc = os.system(cmd)
-        if rc == 0:
-            sys.exit(0)
-        else:
-            sys.exit(1)
-
-    ## PGBIN #######################################################################
-    if p_mode == "pgbin":
-        if len(args) != 4:
-            util.exit_message(
-                'invalid command, try: pgbin 15 "any valid command in pg15/bin"',
-                1,
-                isJSON,
-            )
-
-        pg_v = str(args[2])
-        cmd_full = str(args[3])
-        cmd_a = str(args[3]).split()
-        cmd0 = cmd_a[0]
-
-        if not pg_v.isnumeric():
-            util.exit_message(
-                "'" + pg_v + "' must be a numeric value for an installed pg version",
-                1,
-                isJSON,
-            )
-
-        pg_dir = "pg" + pg_v
-        pg_bin = pg_dir + "/bin/"
-        if not os.path.isdir(pg_dir):
-            util.exit_message(f"postgres directory '{pg_dir}' not found", 1)
-
-        cmd1 = pg_bin + cmd0
-        if not os.path.exists(cmd1):
-            util.exit_message("'" + cmd1 + "' not a valid pgbin command", 1, isJSON)
-
-        cmd_parms = util.remove_suffix(";", cmd_full)
-        cmd_parms = util.remove_prefix(cmd0, cmd_parms)
-        cmd_parms_arr = cmd_parms.split(";")
-        if len(cmd_parms_arr) > 1:
-            util.exit_message(
-                "command params must not contain an embedded semi-colon", 1, isJSON
-            )
-
-        port = util.get_comp_port(pg_dir)
-        final_safe_cmd = cmd1 + " " + cmd_parms + " --port=" + str(port)
-        if isVERBOSE:
-            print(final_safe_cmd)
-
-        rc = os.system(final_safe_cmd)
-        if rc == 0:
-            sys.exit(0)
-
         sys.exit(1)
 
-    ## FIRE LIST ###############################################################
-    if p_mode in fire_list:
-        fire_away(p_mode, args)
+## PSQL #######################################################################
+psql_bad_msg = 'Two args required, try: psql "sql command" database'
+if p_mode == "psql":
+    if len(args) == 5:
+        c_or_f = str(args[2])
+        sql_cmd = str(args[3])
+        db = str(args[4])
+    elif len(args) == 4:
+        c_or_f = "-c"
+        sql_cmd = str(args[2])
+        db = str(args[3])
+    else:
+        util.exit_message(psql_bad_msg)
 
-    ## BACKREST ##########################################
-    if p_mode == "backrest":
+    if sql_cmd == "-i":
+        ## leave us at the interactive psql prompt
+        sql_cmd = ""
+    elif c_or_f in ("-f", "-c"):
+        sql_cmd = f'{c_or_f} "' + sql_cmd + '" '
+    else:
+        util.exit_message(psql_bad_msg)
+
+    pg_v = util.get_pg_v(None)
+
+    cmd = "./nc pgbin " + pg_v.replace("pg", "") + " 'psql " + sql_cmd + db + "'"
+
+    if isVERBOSE:
+        print(f"pg_v={pg_v}, sql_cmd={sql_cmd}, db={db}")
+        print(f"cmd={cmd}")
+
+    rc = os.system(cmd)
+    if rc == 0:
+        sys.exit(0)
+    else:
+        sys.exit(1)
+
+## PGBIN #######################################################################
+if p_mode == "pgbin":
+    if len(args) != 4:
+        util.exit_message(
+            'invalid command, try: pgbin 15 "any valid command in pg15/bin"',
+            1,
+            isJSON,
+        )
+
+    pg_v = str(args[2])
+    cmd_full = str(args[3])
+    cmd_a = str(args[3]).split()
+    cmd0 = cmd_a[0]
+
+    if not pg_v.isnumeric():
+        util.exit_message(
+            "'" + pg_v + "' must be a numeric value for an installed pg version",
+            1,
+            isJSON,
+        )
+
+    pg_dir = "pg" + pg_v
+    pg_bin = pg_dir + "/bin/"
+    if not os.path.isdir(pg_dir):
+        util.exit_message(f"postgres directory '{pg_dir}' not found", 1)
+
+    cmd1 = pg_bin + cmd0
+    if not os.path.exists(cmd1):
+        util.exit_message("'" + cmd1 + "' not a valid pgbin command", 1, isJSON)
+
+    cmd_parms = util.remove_suffix(";", cmd_full)
+    cmd_parms = util.remove_prefix(cmd0, cmd_parms)
+    cmd_parms_arr = cmd_parms.split(";")
+    if len(cmd_parms_arr) > 1:
+        util.exit_message(
+            "command params must not contain an embedded semi-colon", 1, isJSON
+        )
+
+    port = util.get_comp_port(pg_dir)
+    final_safe_cmd = cmd1 + " " + cmd_parms + " --port=" + str(port)
+    if isVERBOSE:
+        print(final_safe_cmd)
+
+    rc = os.system(final_safe_cmd)
+    if rc == 0:
+        sys.exit(0)
+
+    sys.exit(1)
+
+## FIRE LIST ###############################################################
+if p_mode in fire_list:
+    fire_away(p_mode, args)
+
+## BACKREST ##########################################
+if p_mode == "backrest":
+    if len(args) == 2:
+        cmd = "help"
+    else:
+        cmd = ""
+        for n in range(2, len(args)):
+            cmd = cmd + " " + args[n]
+    util.run_backrest(cmd)
+    exit_cleanly(0)
+
+## NATIVE LIST #############################################################
+if p_mode in native_list:
+    if p_mode == "ansible":
         if len(args) == 2:
-            cmd = "help"
+            cmd = "--help"
         else:
             cmd = ""
             for n in range(2, len(args)):
                 cmd = cmd + " " + args[n]
-        util.run_backrest(cmd)
-        exit_cleanly(0)
 
-    ## NATIVE LIST #############################################################
-    if p_mode in native_list:
-        if p_mode == "ansible":
-            if len(args) == 2:
-                cmd = "--help"
-            else:
-                cmd = ""
-                for n in range(2, len(args)):
-                    cmd = cmd + " " + args[n]
+        rc = util.echo_cmd(f"ansible {cmd}")
+        exit_cleanly(rc)
 
-            rc = util.echo_cmd(f"ansible {cmd}")
-            exit_cleanly(rc)
+    util.exit_message(f"'{p_mode}' command not supported")
 
-        util.exit_message(f"'{p_mode}' command not supported")
+## TOP #####################################################################
+if p_mode == "top":
+    try:
+        api.top(display=False)
+        if isJSON:
+            time.sleep(0.5)
+            api.top(display=True, isJson=isJSON)
+            exit_cleanly(0)
+        while True:
+            api.top(display=True)
+            time.sleep(1)
+    except KeyboardInterrupt:
+        pass
+    exit_cleanly(0)
 
-    ## TOP #####################################################################
-    if p_mode == "top":
+## INFO ####################################################################
+if p_mode == "info":
+    if p_comp == "all" and info_arg == 0:
+        api.info(isJSON, MY_HOME, REPO)
+    else:
         try:
-            api.top(display=False)
-            if isJSON:
-                time.sleep(0.5)
-                api.top(display=True, isJson=isJSON)
-                exit_cleanly(0)
-            while True:
-                api.top(display=True)
-                time.sleep(1)
-        except KeyboardInterrupt:
-            pass
-        exit_cleanly(0)
-
-    ## INFO ####################################################################
-    if p_mode == "info":
-        if p_comp == "all" and info_arg == 0:
-            api.info(isJSON, MY_HOME, REPO)
-        else:
-            try:
-                c = connL.cursor()
-                datadir = ""
-                logdir = ""
-                svcname = ""
-                svcuser = ""
-                port = 0
-                is_installed = 0
-                autostart = ""
-                version = ""
-                install_dt = ""
-                if p_comp != "all":
-                    sql = (
-                        "SELECT coalesce(c.datadir,''), coalesce(c.logdir,''), \n"
-                        "       coalesce(c.svcname,''), coalesce(c.svcuser,''), \n"
-                        "       c.port, c.autostart, c.version, c.install_dt, \n"
-                        + "       coalesce((select release_date from versions where c.component = component and c.version = version),'20160101') "
-                        + "  FROM components c WHERE c.component = '"
-                        + p_comp
-                        + "'"
-                    )
-                    c.execute(sql)
-                    data = c.fetchone()
-                    if not data is None:
-                        is_installed = 1
-                        datadir = str(data[0])
-                        logdir = str(data[1])
-                        svcname = str(data[2])
-                        svcuser = str(data[3])
-                        port = int(data[4])
-                        autostart = str(data[5])
-                        version = str(data[6])
-                        install_dt = str(data[7])
-                        ins_release_dt = str(data[8])
-
+            c = connL.cursor()
+            datadir = ""
+            logdir = ""
+            svcname = ""
+            svcuser = ""
+            port = 0
+            is_installed = 0
+            autostart = ""
+            version = ""
+            install_dt = ""
+            if p_comp != "all":
                 sql = (
-                    "SELECT c.category, c.description, p.project, r.component, v.version, \n"
-                    + "       v.platform, p.sources_url, p.project_url, v.is_current, \n"
-                    + "       "
-                    + str(is_installed)
-                    + " as is_installed, r.stage, \n"
-                    + "       '', v.release_date, p.is_extension, \n"
-                    + "       r.disp_name, v.pre_reqs, r.license, p.description, \n"
-                    + "       r.is_available, r.available_ver \n"
-                    + "  FROM projects p, releases r, versions v, categories c \n"
-                    + " WHERE r.project = p.project AND v.component = r.component \n"
-                    + "   AND "
-                    + util.like_pf("v.platform")
-                    + " \n"
-                    + "   AND p.category = c.category"
+                    "SELECT coalesce(c.datadir,''), coalesce(c.logdir,''), \n"
+                    "       coalesce(c.svcname,''), coalesce(c.svcuser,''), \n"
+                    "       c.port, c.autostart, c.version, c.install_dt, \n"
+                    + "       coalesce((select release_date from versions where c.component = component and c.version = version),'20160101') "
+                    + "  FROM components c WHERE c.component = '"
+                    + p_comp
+                    + "'"
                 )
-
-                if p_comp != "all":
-                    sql = sql + " AND r.component = '" + p_comp + "'"
-
-                if p_version != "" and p_version != "all":
-                    sql = sql + " and v.version = '" + p_version + "'"
-
-                sql = (
-                    sql
-                    + "\n ORDER BY v.is_current desc,is_installed, c.category, p.project, r.component desc, v.version desc "
-                )
-
-                if p_version == "":
-                    sql = sql + " limit 1"
-
                 c.execute(sql)
-                data = c.fetchall()
+                data = c.fetchone()
+                if not data is None:
+                    is_installed = 1
+                    datadir = str(data[0])
+                    logdir = str(data[1])
+                    svcname = str(data[2])
+                    svcuser = str(data[3])
+                    port = int(data[4])
+                    autostart = str(data[5])
+                    version = str(data[6])
+                    install_dt = str(data[7])
+                    ins_release_dt = str(data[8])
 
-                compJson = []
-                kount = 0
-                for row in data:
-                    kount = kount + 1
-                    cat = row[0]
-                    cat_desc = row[1]
-                    proj = row[2]
-                    comp = row[3]
-                    ver = row[4]
-                    plat = row[5]
-                    sources_url = row[6]
-                    project_url = row[7]
-                    is_current = row[8]
-                    is_installed = row[9]
-                    stage = row[10]
-                    sup_plat = row[11]
-                    rel_dt = str(row[12])
-                    is_extension = row[13]
-                    disp_name = row[14]
-                    pre_reqs = row[15]
-                    license = row[16]
-                    proj_description = row[17]
-                    is_available = row[18]
-                    available_ver = row[19]
-                    if len(rel_dt) == 8:
-                        release_date = rel_dt[:4] + "-" + rel_dt[4:6] + "-" + rel_dt[6:]
-                    else:
-                        release_date = rel_dt
-                    if len(install_dt) >= 8:
-                        install_date = (
-                            install_dt[0:4]
-                            + "-"
-                            + install_dt[5:7]
-                            + "-"
-                            + install_dt[8:10]
-                        )
-                    else:
-                        install_date = install_dt
-                    compDict = {}
-                    compDict["is_available"] = is_available
-                    compDict["available_ver"] = available_ver
-                    compDict["category"] = cat
-                    compDict["project"] = proj
-                    compDict["component"] = comp
-                    compDict["platform"] = plat
-                    compDict["sources_url"] = sources_url
-                    compDict["proj_description"] = proj_description
-                    compDict["project_url"] = project_url
-                    compDict["is_installed"] = is_installed
-                    compDict["is_extension"] = is_extension
-                    compDict["disp_name"] = disp_name
-                    compDict["pre_reqs"] = pre_reqs
-                    compDict["license"] = license
-                    current_version = meta.get_current_version(comp)
-                    compDict["version"] = ver
-                    if is_installed == 1:
-                        compDict["ins_release_dt"] = (
-                            ins_release_dt[:4]
-                            + "-"
-                            + ins_release_dt[4:6]
-                            + "-"
-                            + ins_release_dt[6:]
-                        )
-                        compDict["version"] = version
-                        is_update_available = 0
-                        cv = Version.coerce(current_version)
-                        iv = Version.coerce(version)
-                        if cv > iv:
-                            is_update_available = 1
-                        if current_version == version:
-                            is_current = 1
-                        elif is_update_available == 1:
-                            compDict["current_version"] = current_version
-                    compDict["is_current"] = is_current
-                    compDict["stage"] = stage
-                    compDict["sup_plat"] = sup_plat
-                    compDict["release_date"] = release_date
-
-                    compDict["is_new"] = 0
-
-                    try:
-                        rd = datetime.datetime.strptime(release_date, "%Y-%m-%d")
-                        today_date = datetime.datetime.today()
-                        date_diff = (today_date - rd).days
-
-                        if date_diff <= 30:
-                            compDict["is_new"] = 1
-                    except Exception:
-                        pass
-
-                    compDict["install_date"] = install_date
-                    compDict["datadir"] = datadir
-                    compDict["logdir"] = logdir
-                    compDict["svcname"] = svcname
-                    compDict["svcuser"] = svcuser
-                    compDict["port"] = port
-                    compDict["autostart"] = autostart
-                    if is_installed == 1 and port > 0:
-                        is_running = check_comp(comp, port, 0, True)
-                        if is_running == "NotInitialized":
-                            compDict["available_port"] = util.get_avail_port(
-                                "PG Port", port, comp, isJSON=True
-                            )
-                            compDict["available_datadir"] = os.path.join(
-                                MY_HOME, "data", comp
-                            )
-                            compDict["port"] = 0
-                        compDict["status"] = is_running
-                        compDict["current_logfile"] = ""
-
-                    compJson.append(compDict)
-
-                    if not isJSON:
-                        api.info_component(compDict, kount)
-                if isJSON:
-                    print(json.dumps(compJson, sort_keys=True, indent=2))
-            except Exception as e:
-                fatal_sql_error(e, sql, "INFO")
-        exit_cleanly(0)
-
-    ## STATUS ####################################################
-    if p_mode == "status":
-        for c in p_comp_list:
-            check_status(c, p_mode)
-        exit_cleanly(0)
-
-    ## CLEAN ####################################################
-    if p_mode == "clean":
-        conf_cache = MY_HOME + os.sep + "conf" + os.sep + "cache" + os.sep + "*"
-        files = glob.glob(conf_cache)
-        for f in files:
-            os.remove(f)
-        exit_cleanly(0)
-
-    ## LIST #########################################################
-    if p_mode == "list":
-        meta.get_list(isJSON, p_comp=p_comp)
-
-    ## REMOVE ##################################################
-    if p_mode == "remove":
-        if p_comp == "all":
-            msg = "You must specify component to remove."
-            my_logger.error(msg)
-            return_code = 1
-            if isJSON:
-                return_code = 0
-                msg = '[{"status":"error","msg":"' + msg + '"}]'
-            util.exit_message(msg, return_code)
-
-        for c in p_comp_list:
-            if c not in installed_comp_list:
-                msg = c + " is not installed."
-                print(msg)
-                continue
-
-            if is_depend_violation(c, p_comp_list):
-                exit_cleanly(1)
-
-            server_port = util.get_comp_port(c)
-
-            server_running = False
-            if server_port > "1":
-                server_running = util.is_socket_busy(int(server_port), c)
-
-            if server_running:
-                run_script(c, "stop-" + c, "stop")
-                time.sleep(5)
-
-            remove_comp(c)
-
-            extensions_list = meta.get_installed_extensions_list(c)
-            for ext in extensions_list:
-                update_component_state(ext, p_mode)
-
-            update_component_state(c, p_mode)
-            comment = "Successfully removed the component."
-            if isJSON:
-                msg = (
-                    '[{"status":"complete","msg":"'
-                    + comment
-                    + '","component":"'
-                    + c
-                    + '"}]'
-                )
-                print(msg)
-
-        exit_cleanly(0)
-
-    ## INSTALL ################################################
-    if p_mode == "install":
-        if p_comp == "all":
-            msg = "You must specify component to install."
-            my_logger.error(msg)
-            return_code = 1
-            if isJSON:
-                return_code = 0
-                msg = '[{"status":"error","msg":"' + msg + '"}]'
-            util.exit_message(msg, return_code)
-
-        if meta.get_stage(p_comp) == "included":
-            util.exit_message(
-                "this component is already included in our postgres binaries", 0
+            sql = (
+                "SELECT c.category, c.description, p.project, r.component, v.version, \n"
+                + "       v.platform, p.sources_url, p.project_url, v.is_current, \n"
+                + "       "
+                + str(is_installed)
+                + " as is_installed, r.stage, \n"
+                + "       '', v.release_date, p.is_extension, \n"
+                + "       r.disp_name, v.pre_reqs, r.license, p.description, \n"
+                + "       r.is_available, r.available_ver \n"
+                + "  FROM projects p, releases r, versions v, categories c \n"
+                + " WHERE r.project = p.project AND v.component = r.component \n"
+                + "   AND "
+                + util.like_pf("v.platform")
+                + " \n"
+                + "   AND p.category = c.category"
             )
 
-        util.message("\n########### Installing " + p_comp + " ###############")
+            if p_comp != "all":
+                sql = sql + " AND r.component = '" + p_comp + "'"
 
-        deplist = get_depend_list(p_comp_list)
-        component_installed = False
-        dependent_components = []
-        installed_commponents = []
-        dependencies = [p for p in deplist if p not in p_comp_list]
-        for c in deplist:
-            if requested_p_version and c in p_comp_list:
-                status = install_comp(c, p_version, p_rver=requested_p_version)
-                p_version = requested_p_version
+            if p_version != "" and p_version != "all":
+                sql = sql + " and v.version = '" + p_version + "'"
+
+            sql = (
+                sql
+                + "\n ORDER BY v.is_current desc,is_installed, c.category, p.project, r.component desc, v.version desc "
+            )
+
+            if p_version == "":
+                sql = sql + " limit 1"
+
+            c.execute(sql)
+            data = c.fetchall()
+
+            compJson = []
+            kount = 0
+            for row in data:
+                kount = kount + 1
+                cat = row[0]
+                cat_desc = row[1]
+                proj = row[2]
+                comp = row[3]
+                ver = row[4]
+                plat = row[5]
+                sources_url = row[6]
+                project_url = row[7]
+                is_current = row[8]
+                is_installed = row[9]
+                stage = row[10]
+                sup_plat = row[11]
+                rel_dt = str(row[12])
+                is_extension = row[13]
+                disp_name = row[14]
+                pre_reqs = row[15]
+                license = row[16]
+                proj_description = row[17]
+                is_available = row[18]
+                available_ver = row[19]
+                if len(rel_dt) == 8:
+                    release_date = rel_dt[:4] + "-" + rel_dt[4:6] + "-" + rel_dt[6:]
+                else:
+                    release_date = rel_dt
+                if len(install_dt) >= 8:
+                    install_date = (
+                        install_dt[0:4]
+                        + "-"
+                        + install_dt[5:7]
+                        + "-"
+                        + install_dt[8:10]
+                    )
+                else:
+                    install_date = install_dt
+                compDict = {}
+                compDict["is_available"] = is_available
+                compDict["available_ver"] = available_ver
+                compDict["category"] = cat
+                compDict["project"] = proj
+                compDict["component"] = comp
+                compDict["platform"] = plat
+                compDict["sources_url"] = sources_url
+                compDict["proj_description"] = proj_description
+                compDict["project_url"] = project_url
+                compDict["is_installed"] = is_installed
+                compDict["is_extension"] = is_extension
+                compDict["disp_name"] = disp_name
+                compDict["pre_reqs"] = pre_reqs
+                compDict["license"] = license
+                current_version = meta.get_current_version(comp)
+                compDict["version"] = ver
+                if is_installed == 1:
+                    compDict["ins_release_dt"] = (
+                        ins_release_dt[:4]
+                        + "-"
+                        + ins_release_dt[4:6]
+                        + "-"
+                        + ins_release_dt[6:]
+                    )
+                    compDict["version"] = version
+                    is_update_available = 0
+                    cv = Version.coerce(current_version)
+                    iv = Version.coerce(version)
+                    if cv > iv:
+                        is_update_available = 1
+                    if current_version == version:
+                        is_current = 1
+                    elif is_update_available == 1:
+                        compDict["current_version"] = current_version
+                compDict["is_current"] = is_current
+                compDict["stage"] = stage
+                compDict["sup_plat"] = sup_plat
+                compDict["release_date"] = release_date
+
+                compDict["is_new"] = 0
+
+                try:
+                    rd = datetime.datetime.strptime(release_date, "%Y-%m-%d")
+                    today_date = datetime.datetime.today()
+                    date_diff = (today_date - rd).days
+
+                    if date_diff <= 30:
+                        compDict["is_new"] = 1
+                except Exception:
+                    pass
+
+                compDict["install_date"] = install_date
+                compDict["datadir"] = datadir
+                compDict["logdir"] = logdir
+                compDict["svcname"] = svcname
+                compDict["svcuser"] = svcuser
+                compDict["port"] = port
+                compDict["autostart"] = autostart
+                if is_installed == 1 and port > 0:
+                    is_running = check_comp(comp, port, 0, True)
+                    if is_running == "NotInitialized":
+                        compDict["available_port"] = util.get_avail_port(
+                            "PG Port", port, comp, isJSON=True
+                        )
+                        compDict["available_datadir"] = os.path.join(
+                            MY_HOME, "data", comp
+                        )
+                        compDict["port"] = 0
+                    compDict["status"] = is_running
+                    compDict["current_logfile"] = ""
+
+                compJson.append(compDict)
+
+                if not isJSON:
+                    api.info_component(compDict, kount)
+            if isJSON:
+                print(json.dumps(compJson, sort_keys=True, indent=2))
+        except Exception as e:
+            fatal_sql_error(e, sql, "INFO")
+    exit_cleanly(0)
+
+## STATUS ####################################################
+if p_mode == "status":
+    for c in p_comp_list:
+        check_status(c, "status")
+    exit_cleanly(0)
+
+## CLEAN ####################################################
+if p_mode == "clean":
+    args.insert(0,p_mode)
+    fire_away("um", args)
+
+## LIST #########################################################
+if p_mode == "list":
+    args.insert(0,p_mode)
+    fire_away("um", args)
+
+## REMOVE ##################################################
+if p_mode == "remove":
+    if p_comp == "all":
+        msg = "You must specify component to remove."
+        my_logger.error(msg)
+        return_code = 1
+        if isJSON:
+            return_code = 0
+            msg = '[{"status":"error","msg":"' + msg + '"}]'
+        util.exit_message(msg, return_code)
+
+    for c in p_comp_list:
+        if c not in installed_comp_list:
+            msg = c + " is not installed."
+            print(msg)
+            continue
+
+        if is_depend_violation(c, p_comp_list):
+            exit_cleanly(1)
+
+        server_port = util.get_comp_port(c)
+
+        server_running = False
+        if server_port > "1":
+            server_running = util.is_socket_busy(int(server_port), c)
+
+        if server_running:
+            run_script(c, "stop-" + c, "stop")
+            time.sleep(5)
+
+        remove_comp(c)
+
+        extensions_list = meta.get_installed_extensions_list(c)
+        for ext in extensions_list:
+            update_component_state(ext, p_mode)
+
+        update_component_state(c, p_mode)
+        comment = "Successfully removed the component."
+        if isJSON:
+            msg = (
+                '[{"status":"complete","msg":"'
+                + comment
+                + '","component":"'
+                + c
+                + '"}]'
+            )
+            print(msg)
+
+    exit_cleanly(0)
+
+## INSTALL ################################################
+if p_mode == "install":
+    if p_comp == "all":
+        msg = "You must specify component to install."
+        my_logger.error(msg)
+        return_code = 1
+        if isJSON:
+            return_code = 0
+            msg = '[{"status":"error","msg":"' + msg + '"}]'
+        util.exit_message(msg, return_code)
+
+    if meta.get_stage(p_comp) == "included":
+        util.exit_message(
+            "this component is already included in our postgres binaries", 0
+        )
+
+    util.message("\n########### Installing " + p_comp + " ###############")
+
+    deplist = get_depend_list(p_comp_list)
+    component_installed = False
+    dependent_components = []
+    installed_commponents = []
+    dependencies = [p for p in deplist if p not in p_comp_list]
+    for c in deplist:
+        if requested_p_version and c in p_comp_list:
+            status = install_comp(c, p_version, p_rver=requested_p_version)
+            p_version = requested_p_version
+        else:
+            p_version = None
+            status = install_comp(c)
+        update_component_state(c, p_mode, p_version)
+        isExt = meta.is_extension(c)
+        if isExt:
+            parent = util.get_parent_component(c, 0)
+        if status == 1 and (c in p_comp_list or p_comp_list[0] == "all"):
+            if isExt:
+                ## just run the CREATE EXTENSION sql command without reboot or change preloads
+                os.environ["isPreload"] = "False"
+                util.create_extension(parent, c, False)
             else:
-                p_version = None
-                status = install_comp(c)
-            update_component_state(c, p_mode, p_version)
+                ## already installed
+                pass
+        elif status != 1:
+            installed_comp_list.append(c)
             isExt = meta.is_extension(c)
             if isExt:
-                parent = util.get_parent_component(c, 0)
-            if status == 1 and (c in p_comp_list or p_comp_list[0] == "all"):
+                util.create_manifest(c, parent)
+                util.copy_extension_files(c, parent)
+            script_name = "install-" + c
+            run_script(c, script_name, meta.get_current_version(c))
+            if isJSON:
+                json_dict = {}
+                json_dict["state"] = "install"
+                json_dict["status"] = "complete"
+                json_dict["msg"] = "Successfully installed the component."
+                json_dict["component"] = c
+                msg = json.dumps([json_dict])
+                print(msg)
+            if c in p_comp_list or p_comp_list[0] == "all":
+                component_installed = True
+                installed_commponents.append(c)
                 if isExt:
-                    ## just run the CREATE EXTENSION sql command without reboot or change preloads
-                    os.environ["isPreload"] = "False"
-                    util.create_extension(parent, c, False)
-                else:
-                    ## already installed
-                    pass
-            elif status != 1:
-                installed_comp_list.append(c)
-                isExt = meta.is_extension(c)
-                if isExt:
-                    util.create_manifest(c, parent)
-                    util.copy_extension_files(c, parent)
-                script_name = "install-" + c
-                run_script(c, script_name, meta.get_current_version(c))
-                if isJSON:
-                    json_dict = {}
-                    json_dict["state"] = "install"
-                    json_dict["status"] = "complete"
-                    json_dict["msg"] = "Successfully installed the component."
-                    json_dict["component"] = c
-                    msg = json.dumps([json_dict])
-                    print(msg)
-                if c in p_comp_list or p_comp_list[0] == "all":
-                    component_installed = True
-                    installed_commponents.append(c)
-                    if isExt:
-                        util.delete_dir(os.path.join(MY_HOME, c))
-                else:
-                    dependent_components.append(c)
+                    util.delete_dir(os.path.join(MY_HOME, c))
+            else:
+                dependent_components.append(c)
 
-        exit_cleanly(0)
+    exit_cleanly(0)
 
-    # Verify data & log directories ############################
-    data_home = MY_HOME + os.sep + "data"
-    if not os.path.exists(data_home):
-        os.mkdir(data_home)
-        data_logs = data_home + os.sep + "logs"
-        os.mkdir(data_logs)
+# Verify data & log directories ############################
+data_home = MY_HOME + os.sep + "data"
+if not os.path.exists(data_home):
+    os.mkdir(data_home)
+    data_logs = data_home + os.sep + "logs"
+    os.mkdir(data_logs)
 
-    script_name = ""
+script_name = ""
 
-    ## UPDATE ###################################################
-    if p_mode == "update":
-        retrieve_remote()
+## UPDATE ###################################################
+if p_mode == "update":
+    retrieve_remote()
 
-        if not isJSON:
-            print(" ")
+    if not isJSON:
+        print(" ")
 
-        try:
-            l = connL.cursor()
-            rel_date = (
-                "substr(cast(release_date as text), 1, 4) "
-                + " || '-' || substr(cast(release_date as text), 5, 2) "
-                + " ||  '-' || substr(cast(release_date as text), 7, 2)"
-            )
-            days_since_release = "julianday('now') - julianday(" + rel_date + ")"
-            sql = (
-                " SELECT v.component, v.version, v.platform, 'not installed' as status, \n"
-                + "        "
-                + rel_date
-                + " as rel_date, r.stage, c.description, c.category\n"
-                + "   FROM versions v, releases r, projects p, categories c \n"
-                + "  WHERE v.component = r.component AND r.project = p.project \n"
-                + "    AND p.category = c.category \n"
-                + "    AND is_current = 1 \n"
-                + "    AND "
-                + days_since_release
-                + " <= 31 \n"
-                + "    AND "
-                + util.like_pf("platform")
-                + " \n"
-                + "    AND v.component NOT IN (SELECT component FROM components) \n"
-                + "UNION ALL \n"
-                + " SELECT v.component, v.version, v.platform, 'installed', \n"
-                + "        "
-                + rel_date
-                + " as rel_date, r.stage, c.description, c.category \n"
-                + "   FROM versions v, releases r, projects p, categories c \n"
-                + "  WHERE v.component = r.component  AND r.project = p.project \n"
-                + "    AND p.category = c.category \n"
-                + "    AND is_current = 1 \n"
-                + "    AND "
-                + days_since_release
-                + " <= 31 \n"
-                + "    AND "
-                + util.like_pf("platform")
-                + " \n"
-                + "    AND v.component IN (SELECT component FROM components) \n"
-                + "ORDER BY 4, 8, 1, 2"
-            )
+    try:
+        l = connL.cursor()
+        rel_date = (
+            "substr(cast(release_date as text), 1, 4) "
+            + " || '-' || substr(cast(release_date as text), 5, 2) "
+            + " ||  '-' || substr(cast(release_date as text), 7, 2)"
+        )
+        days_since_release = "julianday('now') - julianday(" + rel_date + ")"
+        sql = (
+            " SELECT v.component, v.version, v.platform, 'not installed' as status, \n"
+            + "        "
+            + rel_date
+            + " as rel_date, r.stage, c.description, c.category\n"
+            + "   FROM versions v, releases r, projects p, categories c \n"
+            + "  WHERE v.component = r.component AND r.project = p.project \n"
+            + "    AND p.category = c.category \n"
+            + "    AND is_current = 1 \n"
+            + "    AND "
+            + days_since_release
+            + " <= 31 \n"
+            + "    AND "
+            + util.like_pf("platform")
+            + " \n"
+            + "    AND v.component NOT IN (SELECT component FROM components) \n"
+            + "UNION ALL \n"
+            + " SELECT v.component, v.version, v.platform, 'installed', \n"
+            + "        "
+            + rel_date
+            + " as rel_date, r.stage, c.description, c.category \n"
+            + "   FROM versions v, releases r, projects p, categories c \n"
+            + "  WHERE v.component = r.component  AND r.project = p.project \n"
+            + "    AND p.category = c.category \n"
+            + "    AND is_current = 1 \n"
+            + "    AND "
+            + days_since_release
+            + " <= 31 \n"
+            + "    AND "
+            + util.like_pf("platform")
+            + " \n"
+            + "    AND v.component IN (SELECT component FROM components) \n"
+            + "ORDER BY 4, 8, 1, 2"
+        )
 
-            l.execute(sql)
-            rows = l.fetchall()
-            l.close()
+        l.execute(sql)
+        rows = l.fetchall()
+        l.close()
 
-            hasUpdates = 0
-            hub_update = 0
-            kount = 0
-            jsonList = []
+        hasUpdates = 0
+        hub_update = 0
+        kount = 0
+        jsonList = []
 
-            for row in rows:
-                compDict = {}
+        for row in rows:
+            compDict = {}
 
-                compDict["category"] = str(row[6])
-                compDict["component"] = str(row[0])
-                compDict["version"] = str(row[1])
-                compDict["rel_date"] = str(row[4])
-                compDict["status"] = str(row[3])
+            compDict["category"] = str(row[6])
+            compDict["component"] = str(row[0])
+            compDict["version"] = str(row[1])
+            compDict["rel_date"] = str(row[4])
+            compDict["status"] = str(row[3])
 
-                stage = str(row[5])
-                if stage == "test":
-                    if not util.isTEST:
-                        continue
-
-                if stage in ("bring-own", "included", "soon"):
+            stage = str(row[5])
+            if stage == "test":
+                if not util.isTEST:
                     continue
 
-                if str(row[0]) == "hub":
-                    hub_update = 1
-                else:
-                    hasUpdates = 1
-                    kount = kount + 1
-                    jsonList.append(compDict)
+            if stage in ("bring-own", "included", "soon"):
+                continue
 
-            if not isJSON and not isSILENT:
-                if kount >= 1:
-                    print(
-                        "--- New components & extensions released in the last 30 days ---"
-                    )
-                    headers = [
-                        "Category",
-                        "Component",
-                        "Version",
-                        "ReleaseDt",
-                        "Status",
-                    ]
-                    keys = ["category", "component", "version", "rel_date", "status"]
-                    print(api.format_data_to_table(jsonList, keys, headers))
-                else:
-                    print("--- No new components released in last 30 days ---")
-                print(" ")
-
-            if hub_update == 1:
-                rc = upgrade_component("hub")
-                hub_update = 0
-
-            [last_update_utc, last_update_local, unique_id] = util.read_hosts(
-                "localhost"
-            )
-            util.update_hosts("localhost", unique_id, True)
-
-            if isJSON:
-                print('[{"status":"completed","has_updates":' + str(hasUpdates) + "}]")
+            if str(row[0]) == "hub":
+                hub_update = 1
             else:
-                if not isSILENT:
-                    print(
-                        "---------- Components available to install or update ------------"
-                    )
-                    meta.get_list(isJSON, p_comp=p_comp)
-        except Exception as e:
-            fatal_sql_error(e, sql, "UPDATE in mainline")
+                hasUpdates = 1
+                kount = kount + 1
+                jsonList.append(compDict)
 
-    ## ENABLE, DISABLE ###########################################
-    if p_mode == "enable" or p_mode == "disable":
-        if p_comp == "all":
-            msg = "You must " + p_mode + " one component at a time"
-            util.exit_message(msg, 1, isJSON)
-        update_component_state(p_comp, p_mode)
-        script_name = p_mode + "-" + p_comp
-        sys.exit(run_script(p_comp, script_name, extra_args))
-
-    ## CONFIG, INIT, RELOAD ##################################
-    if p_mode in ["config", "init", "reload"]:
-        script_name = p_mode + "-" + p_comp
-        sys.exit(run_script(p_comp, script_name, extra_args))
-
-    ## STOP component(s) #########################################
-    if (p_mode == "stop") or (p_mode == "kill") or (p_mode == "restart"):
-        if p_comp == "all":
-            ## iterate through components in reverse list order
-            for comp in reversed(dep9):
-                script_name = "stop-" + comp[0]
-                run_script(comp[0], script_name, p_mode)
-        else:
-            script_name = "stop-" + p_comp
-            run_script(p_comp, script_name, p_mode)
-
-    ## START, RESTART ############################################
-    if (p_mode == "start") or (p_mode == "restart"):
-        if p_comp == "all":
-            ## Iterate through components in primary list order.
-            ## Components with a port of "1" are client components that
-            ## are only launched when explicitely started
-            for comp in dep9:
-                if util.is_server(comp[0]):
-                    script_name = "start-" + comp[0]
-                    run_script(comp[0], script_name, p_mode)
-        else:
-            present_state = util.get_comp_state(p_comp)
-            if present_state == "NotInstalled":
-                msg = "Component '" + p_comp + "' is not installed."
-                my_logger.info(msg)
-                util.exit_message(msg, 0)
-            if not util.is_server(p_comp):
-                if isJSON:
-                    msg = "'" + p_comp + "' component cannot be started."
-                    my_logger.error(msg)
-                    util.print_error(msg)
-                    exit_cleanly(1)
-            if not present_state == "Enabled":
-                update_component_state(p_comp, "enable")
-            script_name = "start-" + p_comp
-            run_script(p_comp, script_name, p_mode)
-
-    ## DOWNGRADE ################################################
-    if p_mode == "downgrade":
-        rc = downgrade_component(p_comp)
-        if rc == 1:
-            msg = "Nothing to downgrade."
-            print(msg)
-            my_logger.info(msg)
-
-    ## UPGRADE ##################################################
-    if p_mode == "upgrade":
-        if p_comp == "all":
-            updates_comp = []
-            comp_list = meta.get_list(False, p_return=True)
-            for c in comp_list:
-                if c.get("updates") == 1:
-                    updates_comp.append(c)
-            updates_cnt = len(updates_comp)
-            if not isJSON and updates_cnt > 0:
+        if not isJSON and not isSILENT:
+            if kount >= 1:
+                print(
+                    "--- New components & extensions released in the last 30 days ---"
+                )
                 headers = [
                     "Category",
                     "Component",
                     "Version",
                     "ReleaseDt",
                     "Status",
-                    "Updates",
                 ]
-                keys = [
-                    "category_desc",
-                    "component",
-                    "version",
-                    "release_date",
-                    "status",
-                    "current_version",
-                ]
-                print(api.format_data_to_table(updates_comp, keys, headers))
-                isYES = False
-            upgrade_flag = 1
-            if isYES:
-                for comp in updates_comp:
-                    rc = upgrade_component(comp.get("component"))
-                    if rc == 0:
-                        upgrade_flag = 0
-            if upgrade_flag == 1 and updates_cnt == 0:
-                msg = "All components are already upgraded to the latest version."
-                print(msg)
-                my_logger.info(msg)
-        else:
-            rc = upgrade_component(p_comp)
-
-            if rc == 1:
-                msg = "Nothing to upgrade."
-                print(msg)
-                my_logger.info(msg)
-
-    ## VERIFY #############################################
-    if p_mode == "verify":
-        util.verify(isJSON)
-        exit_cleanly(0)
-
-    ## SET #################################################
-    if p_mode == "set":
-        if len(args) == 5:
-            if args[2] == "con":
-                util.set_con(args[3], args[4])
+                keys = ["category", "component", "version", "rel_date", "status"]
+                print(api.format_data_to_table(jsonList, keys, headers))
             else:
-                util.set_value(args[2], args[3], args[4])
+                print("--- No new components released in last 30 days ---")
+            print(" ")
+
+        if hub_update == 1:
+            rc = upgrade_component("hub")
+            hub_update = 0
+
+        [last_update_utc, last_update_local, unique_id] = util.read_hosts(
+            "localhost"
+        )
+        util.update_hosts("localhost", unique_id, True)
+
+        if isJSON:
+            print('[{"status":"completed","has_updates":' + str(hasUpdates) + "}]")
         else:
-            print("ERROR: The SET command must have 3 parameters.")
-            exit_cleanly(1)
+            if not isSILENT:
+                print(
+                    "---------- Components available to install or update ------------"
+                )
+                meta.get_list(isJSON, p_comp=p_comp)
+    except Exception as e:
+        fatal_sql_error(e, sql, "UPDATE in mainline")
 
-        exit_cleanly(0)
+## ENABLE, DISABLE ###########################################
+if p_mode == "enable" or p_mode == "disable":
+    if p_comp == "all":
+        msg = "You must " + p_mode + " one component at a time"
+        util.exit_message(msg, 1, isJSON)
+    update_component_state(p_comp, p_mode)
+    script_name = p_mode + "-" + p_comp
+    sys.exit(run_script(p_comp, script_name, extra_args))
 
-    ## GET ################################################
-    if p_mode == "get":
-        if len(args) == 4:
-            if args[2] == "con":
-                util.get_con(args[3])
-            else:
-                print(util.get_value(args[2], args[3]))
+## CONFIG, INIT, RELOAD ##################################
+if p_mode in ["config", "init", "reload"]:
+    script_name = p_mode + "-" + p_comp
+    sys.exit(run_script(p_comp, script_name, extra_args))
+
+## STOP component(s) #########################################
+if (p_mode == "stop") or (p_mode == "kill") or (p_mode == "restart"):
+    if p_comp == "all":
+        ## iterate through components in reverse list order
+        for comp in reversed(dep9):
+            script_name = "stop-" + comp[0]
+            run_script(comp[0], script_name, p_mode)
+    else:
+        script_name = "stop-" + p_comp
+        run_script(p_comp, script_name, p_mode)
+
+## START, RESTART ############################################
+if (p_mode == "start") or (p_mode == "restart"):
+    if p_comp == "all":
+        ## Iterate through components in primary list order.
+        ## Components with a port of "1" are client components that
+        ## are only launched when explicitely started
+        for comp in dep9:
+            if util.is_server(comp[0]):
+                script_name = "start-" + comp[0]
+                run_script(comp[0], script_name, p_mode)
+    else:
+        present_state = util.get_comp_state(p_comp)
+        if present_state == "NotInstalled":
+            msg = "Component '" + p_comp + "' is not installed."
+            my_logger.info(msg)
+            util.exit_message(msg, 0)
+        if not util.is_server(p_comp):
+            if isJSON:
+                msg = "'" + p_comp + "' component cannot be started."
+                my_logger.error(msg)
+                util.print_error(msg)
+                exit_cleanly(1)
+        if not present_state == "Enabled":
+            update_component_state(p_comp, "enable")
+        script_name = "start-" + p_comp
+        run_script(p_comp, script_name, p_mode)
+
+## DOWNGRADE ################################################
+if p_mode == "downgrade":
+    rc = downgrade_component(p_comp)
+    if rc == 1:
+        msg = "Nothing to downgrade."
+        print(msg)
+        my_logger.info(msg)
+
+## UPGRADE ##################################################
+if p_mode == "upgrade":
+    if p_comp == "all":
+        updates_comp = []
+        comp_list = meta.get_list(False, p_return=True)
+        for c in comp_list:
+            if c.get("updates") == 1:
+                updates_comp.append(c)
+        updates_cnt = len(updates_comp)
+        if not isJSON and updates_cnt > 0:
+            headers = [
+                "Category",
+                "Component",
+                "Version",
+                "ReleaseDt",
+                "Status",
+                "Updates",
+            ]
+            keys = [
+                "category_desc",
+                "component",
+                "version",
+                "release_date",
+                "status",
+                "current_version",
+            ]
+            print(api.format_data_to_table(updates_comp, keys, headers))
+            isYES = False
+        upgrade_flag = 1
+        if isYES:
+            for comp in updates_comp:
+                rc = upgrade_component(comp.get("component"))
+                if rc == 0:
+                    upgrade_flag = 0
+        if upgrade_flag == 1 and updates_cnt == 0:
+            msg = "All components are already upgraded to the latest version."
+            print(msg)
+            my_logger.info(msg)
+    else:
+        rc = upgrade_component(p_comp)
+
+        if rc == 1:
+            msg = "Nothing to upgrade."
+            print(msg)
+            my_logger.info(msg)
+
+## VERIFY #############################################
+if p_mode == "verify":
+    util.verify(isJSON)
+    exit_cleanly(0)
+
+## SET #################################################
+if p_mode == "set":
+    if len(args) == 5:
+        if args[2] == "con":
+            util.set_con(args[3], args[4])
         else:
-            print("ERROR: The GET command must have 2 parameters.")
-            exit_cleanly(1)
+            util.set_value(args[2], args[3], args[4])
+    else:
+        print("ERROR: The SET command must have 3 parameters.")
+        exit_cleanly(1)
 
-        exit_cleanly(0)
+    exit_cleanly(0)
 
-    ## UNSET ##############################################
-    if p_mode == "unset":
-        if len(args) == 4:
-            util.unset_value(args[2], args[3])
+## GET ################################################
+if p_mode == "get":
+    if len(args) == 4:
+        if args[2] == "con":
+            util.get_con(args[3])
         else:
-            print("ERROR: The UNSET command must have 2 parameters.")
-            exit_cleanly(1)
-        exit_cleanly(0)
+            print(util.get_value(args[2], args[3]))
+    else:
+        print("ERROR: The GET command must have 2 parameters.")
+        exit_cleanly(1)
 
-    ## CHANGE-PGCONF #####################################
-    if p_mode == "change-pgconf":
-        if (len(args)) < 5 or (len(args) > 6):
-            print(
-                "ERROR: The CHANGE-PGCONF command must have 3 or 4 parameters: pgver key value [isReplace=True]."
-            )
-            exit_cleanly(1)
+    exit_cleanly(0)
 
-        isReplace = True
-        if len(args) == 6:
-            if (args[5] == "False") or (args[5] == "false"):
-                isReplace = False
+## UNSET ##############################################
+if p_mode == "unset":
+    if len(args) == 4:
+        util.unset_value(args[2], args[3])
+    else:
+        print("ERROR: The UNSET command must have 2 parameters.")
+        exit_cleanly(1)
+    exit_cleanly(0)
 
-        pgV = args[2]
-        if meta.is_present("components", "component", pgV, "one"):
-            pass
-        else:
-            print("ERROR: " + pgV + " is not installed")
-            exit_cleanly(1)
+## CHANGE-PGCONF #####################################
+if p_mode == "change-pgconf":
+    if (len(args)) < 5 or (len(args) > 6):
+        print(
+            "ERROR: The CHANGE-PGCONF command must have 3 or 4 parameters: pgver key value [isReplace=True]."
+        )
+        exit_cleanly(1)
 
-        exit_cleanly(util.change_pgconf_keyval(pgV, args[3], args[4], isReplace))
+    isReplace = True
+    if len(args) == 6:
+        if (args[5] == "False") or (args[5] == "false"):
+            isReplace = False
 
-    ## USERADD ############################################
-    if p_mode == "useradd":
-        if len(args) == 3:
-            exit_cleanly(startup.useradd_linux(args[2]))
-        else:
-            print("ERROR: The USERADD command must have 1 parameter (svcuser).")
-            exit_cleanly(1)
+    pgV = args[2]
+    if meta.is_present("components", "component", pgV, "one"):
+        pass
+    else:
+        print("ERROR: " + pgV + " is not installed")
+        exit_cleanly(1)
 
-    ## TUNE ###############################################
-    if p_mode == "tune":
-        if len(args) == 3:
-            exit_cleanly(util.tune_postgresql_conf(args[2]))
-        else:
-            print("ERROR: The TUNE command must have 1 parameter (pgver).")
-            exit_cleanly(1)
+    exit_cleanly(util.change_pgconf_keyval(pgV, args[3], args[4], isReplace))
 
+## USERADD ############################################
+if p_mode == "useradd":
+    if len(args) == 3:
+        exit_cleanly(startup.useradd_linux(args[2]))
+    else:
+        print("ERROR: The USERADD command must have 1 parameter (svcuser).")
+        exit_cleanly(1)
 
-except Exception as e:
-    msg = str(e)
-    my_logger.error(traceback.format_exc())
-    if isJSON:
-        json_dict = {}
-        json_dict["state"] = "error"
-        json_dict["msg"] = msg
-        msg = json.dumps([json_dict])
-    print(msg)
-    exit_cleanly(1)
+## TUNE ###############################################
+if p_mode == "tune":
+    if len(args) == 3:
+        exit_cleanly(util.tune_postgresql_conf(args[2]))
+    else:
+        print("ERROR: The TUNE command must have 1 parameter (pgver).")
+        exit_cleanly(1)
 
 exit_cleanly(0)

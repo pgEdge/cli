@@ -1,5 +1,62 @@
-import os
-import fire
+import os, sys
+import fire, util, component, meta
+import time, datetime, platform, tarfile, sqlite3, time
+
+## Initialize Globals ##############################################
+REPO = util.get_value("GLOBAL", "REPO")
+
+os.chdir(util.MY_HOME)
+
+db_local = util.MY_LITE
+
+connL = sqlite3.connect(db_local)
+
+isJSON = util.isJSON
+
+def exit_cleanly(p_rc):
+    try:
+        connL.close()
+    except Exception:
+        pass
+    sys.exit(p_rc)
+
+
+## Check component state #################################################
+def check_status(p_comp, p_mode):
+    if p_comp in ["all", "*"]:
+        try:
+            c = connL.cursor()
+            sql = "SELECT component, port, autostart, pidfile FROM components"
+            c.execute(sql)
+            data = c.fetchall()
+            kount = 0
+            if isJSON:
+                print("[")
+            for row in data:
+                comp = row[0]
+                port = row[1]
+                autostart = row[2]
+                pidfile = row[3]
+                if str(pidfile) != "None" and str(pidfile) > "":
+                    kount = kount + 1
+                    component.check_pid_status(comp, pidfile, kount, isJSON)
+                    continue
+                if (port > 1) or (p_mode == "list") or (autostart == "on"):
+                    kount = kount + 1
+                    cli.check_comp(comp, str(port), kount)
+            if isJSON:
+                print("]")
+        except Exception as e:
+            util.fatal_sql_error(e, sql, "check_status()")
+    else:
+        pidfile = util.get_comp_pidfile(p_comp)
+        if pidfile != "None" and pidfile > "":
+            component.check_pid_status(p_comp, pidfile, 0, isJSON)
+        else:
+            port = util.get_comp_port(p_comp)
+            cli.check_comp(p_comp, port, 0)
+    return
+
 
 
 def run_cmd(p_cmd, p_comp):
@@ -24,8 +81,13 @@ def stop(component=None):
 
 def status(component=None):
     """Display running status of installed server components"""
-
-    run_cmd("status", component)
+    init_comp_list=[]
+    if component is not None:
+        init_comp_list=component.split()
+    info_arg, p_comp_list, p_comp, requested_p_version, extra_args = util.get_comp_lists("status", [], init_comp_list, [], "", connL)
+    for c in p_comp_list:
+        check_status(c, "status")
+    exit_cleanly(0)
 
 
 def restart(component):
