@@ -22,7 +22,3 @@ cp $DEVEL/util/in/pull-s3.sh .
 ./pull-s3.sh
 chmod 755 *.sh
 
-
-cp $IN/ctlibs/*.bz2  $OUT/.
-
-
