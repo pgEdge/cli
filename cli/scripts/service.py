@@ -84,7 +84,7 @@ def status(component=None):
     init_comp_list=[]
     if component is not None:
         init_comp_list=component.split()
-    info_arg, p_comp_list, p_comp, requested_p_version, extra_args = util.get_comp_lists("status", [], init_comp_list, [], "", connL)
+    info_arg, p_comp_list, p_comp, p_version, requested_p_version, extra_args = util.get_comp_lists("status", -1, init_comp_list, [], "", connL)
     for c in p_comp_list:
         check_status(c, "status")
     exit_cleanly(0)

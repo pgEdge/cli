@@ -1360,17 +1360,22 @@ while i < len(args):
             break
     i += 1
 
+
 if "--ent" in args:
-    util.isENT = True
+    isENT = True
+    os.environ["isEnt"] = "True"
     args.remove("--ent")
 
 if "--test" in args:
     util.isTEST = True
+    os.environ["isTest"] = "True"
     args.remove("--test")
 
 if "--tent" in args:
     util.isTEST = True
     util.isENT = True
+    os.environ["isEnt"] = "True"
+    os.environ["isTest"] = "True"
     args.remove("--tent")
 
 

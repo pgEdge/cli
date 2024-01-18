@@ -32,7 +32,11 @@ if os.environ.get("isJson", "False") == "True":
 pid_file = os.path.join(MY_HOME, "conf", "cli.pid")
 
 isTEST = False
+if os.environ.get("isTest", "False") == "True":
+    isTEST=True
 isENT = False
+if os.environ.get("isEnt", "False") == "True":
+    isENT=True
 isSHOWDUPS = False
 isEXTENSIONS = False
 
