@@ -1,6 +1,7 @@
 # pgEdge Platform Release Notes #############
 
 ## done for 24.1.6 as of 2024-01-18 ###########
+  - lots of new doc & unit testings (PR #71, 73, 74 - Hayee)
   - refactor of UM and SERVICE (Cady)
   - eliminate bzip2 requirements in favor of standard gzip and optionally pigz 
   - bump pg_curl from 2.1.1 to 2.2.2
@@ -13,7 +14,6 @@
   - bump citus from 12.1.0 to 12.1.1
   - add support for multiple spock db's (PR #70 Cady)
   - add support to ACE for repset-diff (PR #72 Tej)
-  - lots of new doc & unit testings (PR #71, 73 - Hayee)
   - fix two things for SLES & OpenSuse LEAP support
     + remove ruff.toml broken link at runtime from hub/scripts
     + make sure we properly support SLES 15 & not just OpenSuse LEAP 15
