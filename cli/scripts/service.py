@@ -43,7 +43,7 @@ def check_status(p_comp, p_mode):
                     continue
                 if (port > 1) or (p_mode == "list") or (autostart == "on"):
                     kount = kount + 1
-                    cli.check_comp(comp, str(port), kount)
+                    util.check_comp(comp, str(port), kount)
             if isJSON:
                 print("]")
         except Exception as e:
@@ -54,7 +54,7 @@ def check_status(p_comp, p_mode):
             component.check_pid_status(p_comp, pidfile, 0, isJSON)
         else:
             port = util.get_comp_port(p_comp)
-            cli.check_comp(p_comp, port, 0)
+            util.check_comp(p_comp, port, 0)
     return
 
 
@@ -84,7 +84,7 @@ def status(component=None):
     init_comp_list=[]
     if component is not None:
         init_comp_list=component.split()
-    info_arg, p_comp_list, p_comp, p_version, requested_p_version, extra_args = util.get_comp_lists("status", -1, init_comp_list, [], "", connL)
+    info_arg, p_comp_list, p_comp, p_version, requested_p_version, extra_args = util.get_comp_lists("status", 0, init_comp_list, [], "", connL)
     for c in p_comp_list:
         check_status(c, "status")
     exit_cleanly(0)
