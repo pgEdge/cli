@@ -1473,7 +1473,8 @@ if p_mode in lock_commands:
     pid_fd.write(str(os.getpid()))
     pid_fd.close()
 
-info_arg, p_comp_list, p_comp, requested_p_version, extra_args = util.get_comp_lists(p_mode, arg, args, ignore_comp_list, p_host, connL)
+info_arg, p_comp_list, p_comp, p_version, requested_p_version, extra_args = \
+    util.get_comp_lists(p_mode, arg, args, ignore_comp_list, p_host, connL)
 
 ## PG_ISREADY #################################################################
 if p_mode == "pg_isready":
