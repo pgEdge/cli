@@ -78,6 +78,40 @@ sub is_umlist_component_installed {
     return 0; # False, either component or "Installed" not found in the same line
 }
 
+# This function runs a shell command passed through its first parameter e.g. ctl commands, psql commands
+# and returns various err/out buffers. Incase of an issue it prints the various buffers to help with debugging.
+# This function helps avoid redundant code (checking for success/buffers and debug prints). 
+
+sub run_command {
+    my ($cmd) = @_;
+    my ($success, $error_message, $full_buf, $stdout_buf, $stderr_buf) = IPC::Cmd::run(command => $cmd, verbose => 0);
+
+    if (!defined($success)) {
+        print "Error executing command: $error_message\n";
+        print "Full Buffer output: @$full_buf\n";
+        print "Stdout Buffer output: @$stdout_buf\n";
+        print "Stderr Buffer output: @$stderr_buf\n";
+    }
+
+    return ($success, $error_message, $full_buf, $stdout_buf, $stderr_buf);
+}
+
+# This function is similar to the run_command and executes a command passed in its first parameter e.g. ctl commands, psql commands
+# and returns various err/out buffers. Incase of an issue it however also performs an exit 1. 
+# This function helps avoid redundant code (checking for success/buffers and exiting accordingly). 
+
+sub run_command_and_exit_iferr {
+    my ($cmd) = @_;
+    my ($success, $error_message, $full_buf, $stdout_buf, $stderr_buf) = run_command($cmd);
+
+    if (!$success) {
+        print "Exiting due to command failure: $cmd\n";
+        exit(1);
+    }
+
+    return ($success, $error_message, $full_buf, $stdout_buf, $stderr_buf);
+}
+
 # This 1 at the end is required, even though it looks like an accident :)
 1;
 

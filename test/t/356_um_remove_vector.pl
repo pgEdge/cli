@@ -19,7 +19,7 @@ use contains;
 
 my $port = $ENV{EDGE_START_PORT};
 my $pgversion = $ENV{EDGE_COMPONENT};
-my $homedir="$ENV{EDGE_CLUSTER_DIR}/n1/pgedge";
+my $homedir = "$ENV{EDGE_HOME_DIR}/nc/pgedge";
 my $cli = $ENV{EDGE_CLI};
 my $component = "vector-$pgversion";
 my $exitcode = 0;
