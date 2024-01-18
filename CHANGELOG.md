@@ -1,6 +1,8 @@
 # pgEdge Platform Release Notes #############
 
-## done for 24.1.6 as of 2024-01-14 ###########
+## done for 24.1.6 as of 2024-01-18 ###########
+  - refactor of UM and SERVICE (Cady)
+  - eliminate bzip2 requirements in favor of standard gzip and optionally pigz 
   - bump pg_curl from 2.1.1 to 2.2.2
   - improve build automation across platforms
   - bump timescaledb from 2.11.2 to 2.13.1
@@ -15,7 +17,7 @@
   - fix two things for SLES & OpenSuse LEAP support
     + remove ruff.toml broken link at runtime from hub/scripts
     + make sure we properly support SLES 15 & not just OpenSuse LEAP 15
-  - quite down install ctllibs for ubu22, al2023 & LEAP/sle15
+  - quite down install ctlibs for ubu22, al2023 & LEAP/sle15
   - start using .tgz files in REPO to elimnate need for BZIP2 to be installed 
 
 

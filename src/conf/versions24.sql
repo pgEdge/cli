@@ -201,8 +201,8 @@ INSERT INTO versions VALUES ('readonly-pg16', '1.1.1-1', 'el8, el9, arm9', 1, '2
 
 INSERT INTO projects VALUES ('timescaledb', 'ext', 4, 0, 'hub',0, 'https://github.com/timescale/timescaledb/releases',
   'timescaledb', 1, 'timescaledb.png', 'Timeseries Extension', 'https://github.com/timescaledb/timescaledb');
-INSERT INTO releases VALUES ('timescaledb-pg15', 10, 'timescaledb', 'TimescaleDB', '', 'prod', '', 1, 'POSTGRES', '', '');
-INSERT INTO releases VALUES ('timescaledb-pg16', 10, 'timescaledb', 'TimescaleDB', '', 'prod', '', 1, 'POSTGRES', '', '');
+INSERT INTO releases VALUES ('timescaledb-pg15', 10, 'timescaledb', 'TimescaleDB', '', 'test', '', 1, 'POSTGRES', '', '');
+INSERT INTO releases VALUES ('timescaledb-pg16', 10, 'timescaledb', 'TimescaleDB', '', 'test', '', 1, 'POSTGRES', '', '');
 INSERT INTO versions VALUES ('timescaledb-pg15', '2.13.1-1', 'el9, arm9', 1, '20240131', 'pg15', '', '');
 INSERT INTO versions VALUES ('timescaledb-pg16', '2.13.1-1', 'el9, arm9', 1, '20240131', 'pg16', '', '');
 
@@ -215,8 +215,8 @@ INSERT INTO versions VALUES ('curl-pg16', '2.2.2-1',  'el9, arm9', 1, '20240131'
 
 INSERT INTO projects VALUES ('citus', 'pge', 4, 0, 'hub',0, 'https://github.com/citusdata/citus/releases',
   'citus', 1, 'citus.png', 'Sharded Postgres', 'https://github.com/citusdata/citus');
-INSERT INTO releases VALUES ('citus-pg15', 10, 'citus', 'Citus', '', 'ent', '', 1, 'AGPLv3', '', '');
-INSERT INTO releases VALUES ('citus-pg16', 10, 'citus', 'Citus', '', 'ent', '', 1, 'AGPLv3', '', '');
+INSERT INTO releases VALUES ('citus-pg15', 10, 'citus', 'Citus', '', 'test', '', 1, 'AGPLv3', '', '');
+INSERT INTO releases VALUES ('citus-pg16', 10, 'citus', 'Citus', '', 'test', '', 1, 'AGPLv3', '', '');
 INSERT INTO versions VALUES ('citus-pg15', '12.1.1-1', 'el9, arm9', 1, '20240131', 'pg15', '', '');
 INSERT INTO versions VALUES ('citus-pg16', '12.1.1-1', 'el9, arm9', 1, '20240131', 'pg16', '', '');
 
@@ -315,7 +315,7 @@ INSERT INTO versions VALUES ('nclibs', '1.0', '', 0, '20231021', '', '', '');
 
 INSERT INTO projects VALUES ('pgcat', 'pge', 11, 5433, 'hub', 3, 'https://github.com/pgedge/pgcat/tags',
   'cat',  0, 'pgcat.png', 'Connection Pooler', 'https://github.com/pgedge/pgcat');
-INSERT INTO releases VALUES ('pgcat', 2, 'pgcat',  'pgCat', '', 'ent', '', 1, 'MIT', '', '');
+INSERT INTO releases VALUES ('pgcat', 2, 'pgcat',  'pgCat', '', 'prod', '', 1, 'MIT', '', '');
 INSERT INTO versions VALUES ('pgcat', '1.1.1', 'el8, el9, arm9', 1, '20240108', '', '', '');
 
 INSERT INTO projects VALUES ('backrest', 'pge', 11, 0, 'hub', 3, 'http://pgbackrest.org',
