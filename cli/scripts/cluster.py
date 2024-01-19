@@ -229,7 +229,7 @@ def remove(cluster_name):
 
     util.message("\n## Ensure that PG is stopped.")
     for nd in nodes:
-        cmd = nd["path"] + os.sep + "ctl stop 2> " + os.sep + "dev" + os.sep + "null"
+        cmd = nd["path"] + os.sep + "pgedge stop 2> " + os.sep + "dev" + os.sep + "null"
         util.echo_cmd(cmd, host=nd["ip_address"], usr=nd["os_user"], key=nd["ssh_key"])
 
     util.message("\n## Ensure that pgEdge root directory is gone")
@@ -389,7 +389,7 @@ def ssh_install_pgedge(cluster_name, db, pg, db_user, db_passwd, nodes):
         cmd2 = f'python3 -c "\\$(curl -fsSL {REPO}/{install_py})"'
         util.echo_cmd(cmd0 + cmd1 + cmd2, host=n["ip_address"], usr=n["os_user"], key=n["ssh_key"])
 
-        nc = ndpath + os.sep + "pgedge" + os.sep + "ctl "
+        nc = ndpath + os.sep + "pgedge" + os.sep + "pgedge "
         parms = (
             " -U "
             + str(db_user)
@@ -410,7 +410,7 @@ def ssh_install_pgedge(cluster_name, db, pg, db_user, db_passwd, nodes):
 
 def create_spock_db(nodes,db):
     for n in nodes:
-            nc = n["path"] + os.sep + "pgedge" + os.sep + "ctl "
+            nc = n["path"] + os.sep + "pgedge" + os.sep + "pgedge "
             cmd = nc + " db create -U " + db["username"] + " -d " + db["name"] + " -p " + db["password"]
             util.echo_cmd(cmd, host=n["ip_address"], usr=n["os_user"], key=n["ssh_key"])
 
@@ -422,7 +422,7 @@ def ssh_cross_wire_pgedge(cluster_name, db, pg, db_user, db_passwd, nodes):
     for prov_n in nodes:
         ndnm = prov_n["name"]
         ndpath = prov_n["path"]
-        nc = ndpath + os.sep + "pgedge" + os.sep + "ctl"
+        nc = ndpath + os.sep + "pgedge" + os.sep + "pgedge"
         ndip = prov_n["ip_address"]
         os_user = prov_n["os_user"]
         ssh_key = prov_n["ssh_key"]
@@ -500,15 +500,15 @@ def lc_destroy1(cluster_name):
 
 
 def command(cluster_name, node, cmd, args=None):
-    """Run './ctl' commands on one or 'all' nodes.
+    """Run './pgedge' commands on one or 'all' nodes.
     
-       Run './ctl' commands on one or all of the nodes in a cluster. 
+       Run './pgedge' commands on one or all of the nodes in a cluster. 
        This command requires a JSON file with the same name as the cluster to be in the cluster/<cluster_name>. \n 
        Example: cluster command demo n1 "status"
        Example: cluster command demo all "spock repset-add-table default '*' lcdb"
        :param cluster_name: The name of the cluster.
        :param node: The node to run the command on. Can be the node name or all.
-       :param cmd: The command to run on every node, excluding the beginning './ctl' 
+       :param cmd: The command to run on every node, excluding the beginning './pgedge' 
     """
 
     db, pg, nodes = load_json(
@@ -520,7 +520,7 @@ def command(cluster_name, node, cmd, args=None):
         if node == "all" or node == nd["name"]:
             knt = knt + 1
             rc = util.echo_cmd(
-                nd["path"] + os.sep + "pgedge" + os.sep + "ctl " + cmd,
+                nd["path"] + os.sep + "pgedge" + os.sep + "pgedge " + cmd,
                 host=nd["ip_address"],
                 usr=nd["os_user"],
                 key=nd["ssh_key"],
@@ -545,7 +545,7 @@ def app_install(cluster_name, app_name, factor=1):
     db, pg, nodes = load_json(
             cluster_name
         )
-    ctl =  os.sep + "pgedge" + os.sep + "ctl"
+    ctl =  os.sep + "pgedge" + os.sep + "pgedge"
     if app_name == "pgbench":
         for n in nodes:
             ndpath = n["path"]
@@ -572,7 +572,7 @@ def app_remove(cluster_name, app_name):
     db, pg, nodes = load_json(
             cluster_name
         )
-    ctl =  os.sep + "pgedge" + os.sep + "ctl"
+    ctl =  os.sep + "pgedge" + os.sep + "pgedge"
     if app_name == "pgbench":
          for n in nodes:
             ndpath = n["path"]

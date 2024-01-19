@@ -36,7 +36,7 @@ def create(db=None, User=None, Passwd=None, Id=None, pg=None):
         pg_v = util.get_pg_v(pg)
         pg = pg_v[2:]
 
-    nc = "./ctl "
+    nc = "./pgedge "
     ncb = nc + "pgbin " + str(pg) + " "
 
     privs = ""
@@ -137,7 +137,7 @@ def dump(object, source_dsn, file="/tmp/db_0.sql", schema_only=False, pg=None):
     """
     pg_v = util.get_pg_v(pg)
 
-    cmd = f'./ctl pgbin {pg_v} "pg_dump '
+    cmd = f'./pgedge pgbin {pg_v} "pg_dump '
 
     if "=" in source_dsn:
         if "," in source_dsn:
@@ -182,7 +182,7 @@ def restore(object, target_dsn, file="/tmp/db_0.sql", pg=None):
     file = "/tmp/db_1.sql"
 
     pg_v = util.get_pg_v(pg)
-    cmd = f'./ctl pgbin {pg_v} "psql '
+    cmd = f'./pgedge pgbin {pg_v} "psql '
 
     if "=" in target_dsn:
         if "," in target_dsn:
