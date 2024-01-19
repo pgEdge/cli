@@ -50,7 +50,7 @@ def remove_comp(p_comp):
 
 
 def run_cmd(p_cmd, p_comp=None):
-    nc_cmd = "./ctl " + p_cmd
+    nc_cmd = "./pgedge " + p_cmd
     if p_comp:
         nc_cmd = nc_cmd + " " + p_comp
     rc = os.system(nc_cmd)

@@ -583,7 +583,7 @@ def cmd_system(p_sys_cmd, p_display=True):
     if p_sys_cmd.strip() == "":
         return 0
 
-    cmd = MY_HOME + os.sep + "ctl " + str(p_sys_cmd)
+    cmd = MY_HOME + os.sep + "pgedge " + str(p_sys_cmd)
 
     if p_display:
         print("\n## " + str(cmd))

@@ -98,7 +98,7 @@ def list_cloud_acct(profile="Default"):
     """List all cloud account ids in a pgEdge Cloud Account
 
     List all cloud account ids in a pgEdge Cloud Account
-    [ Requires ./ctl secure config ]
+    [ Requires ./pgedge secure config ]
       PROFILE - profile name of pgEdge Cloud Account for NodeCTL to use
     """
     response = get_pgedge("cloud-accounts", profile)
@@ -109,7 +109,7 @@ def list_clusters(profile="Default"):
     """List all clusters in a pgEdge Cloud Account
 
     List all clusters in a pgEdge Cloud Account
-    [ Requires ./ctl secure config ]
+    [ Requires ./pgedge secure config ]
       PROFILE - profile name of pgEdge Cloud Account for NodeCTL to use
     """
     response = get_pgedge("clusters", profile)
@@ -120,7 +120,7 @@ def cluster_status(cluster_id, profile="Default"):
     """Return info on a cluster in a pgEdge Cloud Account
 
     Returns cluster status in a pgEdge Cloud Account
-    [ Requires ./ctl secure config ]
+    [ Requires ./pgedge secure config ]
       CLUSTER_ID - the pgEdge Cloud Cluster ID
       PROFILE - profile name of pgEdge Cloud Account for NodeCTL to use
     """
@@ -134,7 +134,7 @@ def list_nodes(cluster_id, profile="Default"):
     """List all nodes in a pgEdge Cloud Account cluster
 
     List all nodes in a cluster in a pgEdge Cloud Account
-    [ Requires ./ctl secure config ]
+    [ Requires ./pgedge secure config ]
       CLUSTER_ID - the pgEdge Cloud Cluster ID
       PROFILE - profile name of pgEdge Cloud Account for NodeCTL to use
     """
@@ -145,11 +145,11 @@ def list_nodes(cluster_id, profile="Default"):
 def import_cluster_def(cluster_id, profile="Default"):
     """Enable nodeCtl cluster commands on a pgEdge Cloud Cluster
 
-    Import information on a pgEdge Cloud Cluster into a json file for ./ctl cluster
-    [ Requires ./ctl secure config ]
+    Import information on a pgEdge Cloud Cluster into a json file for ./pgedge cluster
+    [ Requires ./pgedge secure config ]
       CLUSTER_ID - the pgEdge Cloud Cluster ID
       PROFILE - profile name of pgEdge Cloud Account for NodeCTL to use
-    [ Requires ssh connection to then use ./ctl cluster commands ]
+    [ Requires ssh connection to then use ./pgedge cluster commands ]
     """
     cluster_def = get_pgedge(f"clusters/{cluster_id}", profile)
     cluster_name = cluster_def["name"].lower()
@@ -181,7 +181,7 @@ def get_cluster_id(cluster_name):
     """Return the cluster id based on a cluster display name
 
     Return the cluster id based on a cluster display name
-    [ Requires ./ctl secure import-cluster-def ]
+    [ Requires ./pgedge secure import-cluster-def ]
       CLUSTER_NAME - the display name of the pgEdge Cloud Cluster
     """
     try:
@@ -199,7 +199,7 @@ def get_node_id(cluster_name, node_name):
     """Return the node id based on cluster and node display name
 
     Return the cluster id based on a cluster display name
-    [ Requires ./ctl secure import-cluster-def ]
+    [ Requires ./pgedge secure import-cluster-def ]
       CLUSTER_NAME - the display name of the pgEdge Cloud Cluster
       NODE_NAME - the display name of the pgEdge Cloud Node
     """
@@ -220,7 +220,7 @@ def create_cluster(cluster_name, profile="Default"):
     """Create a new Cloud Cluster based on json file
 
     Create a new cluster in a pgEdge Cloud Account
-    [ Requires ./ctl secure config ]
+    [ Requires ./pgedge secure config ]
       CLUSTER_NAME - the name of the json file and display name of the to be created cluster
       PROFILE - profile name of pgEdge Cloud Account for NodeCTL to use
     See documentation for sample json files
@@ -239,7 +239,7 @@ def destroy_cluster(cluster_id, profile="Default"):
     """Delete a pgEdge Cloud Cluster
 
     Delete a cluster in a pgEdge Cloud Account
-    [ Requires ./ctl secure config ]
+    [ Requires ./pgedge secure config ]
       CLUSTER_ID - the pgEdge Cloud Cluster ID
       PROFILE - profile name of pgEdge Cloud Account for NodeCTL to use
     """

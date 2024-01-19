@@ -1,6 +1,6 @@
 
 bundle=pgedge
-api=ctl
+api=pgedge
 hubV=24.1.6
 ctlibsV=1.2
 

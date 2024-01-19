@@ -5,7 +5,7 @@
 import sys, os, subprocess, time
 import util, fire, psycopg
 
-nc = "./ctl "
+nc = "./pgedge "
 
 isAutoStart = str(os.getenv("isAutoStart", "False"))
 
