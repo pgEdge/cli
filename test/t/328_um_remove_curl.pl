@@ -19,7 +19,7 @@ use contains;
 
 my $port = $ENV{EDGE_START_PORT};
 my $pgversion = $ENV{EDGE_COMPONENT};
-my $homedir = "$ENV{EDGE_HOME_DIR}/nc/pgedge";
+my $homedir = "$ENV{EDGE_HOME_DIR}";
 my $cli = $ENV{EDGE_CLI};
 my $component = "curl-$pgversion";
 my $exitcode = 0;

@@ -70,10 +70,6 @@ if (File::Path::remove_tree($datadir1)) {
 }
 
 
-# removing the pgpass file that was created in 8000 test
-my $cmd4 = qq(rm ~/.pgpass);
-print("cmd = $cmd4\n");
-run_command($cmd4);
 if ($exitcode==3)
 {
     exit (0);
@@ -82,23 +78,3 @@ else
 {
     exit(1);
 }
-
-=pod
-# pgpass enhancement in future that only removes the entry rather than whole file
-# Check if .pgpass file exists
-if (-e "~/.pgpass") {
-    # Create a temporary file to store modified content
-    my $tempFile = "/tmp/pgpass_temp";
-    
-    # Read the content of .pgpass file, remove the matching entry, and write to the temporary file
-    run_command_and_exit_iferr(qq(grep -v "$pgpassEntry" ~/.pgpass > $tempFile));
-
-    # Move the temporary file back to .pgpass
-    run_command_and_exit_iferr(qq(mv $tempFile ~/.pgpass));
-
-    print("Entry removed from .pgpass file\n");
-}
-else {
-    print(".pgpass file not found\n");
-}
-=cut

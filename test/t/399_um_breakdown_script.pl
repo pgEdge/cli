@@ -18,7 +18,7 @@ my $password = $ENV{EDGE_PASSWORD};
 my $database = $ENV{EDGE_DB};
 my $port = $ENV{EDGE_START_PORT};
 my $pgversion = $ENV{EDGE_COMPONENT};
-my $homedir = "$ENV{EDGE_HOME_DIR}/nc/pgedge";
+my $homedir = "$ENV{EDGE_HOME_DIR}";
 my $datadir="$homedir/data/$pgversion";
 my $cli = $ENV{EDGE_CLI};
 

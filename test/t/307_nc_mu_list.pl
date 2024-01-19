@@ -14,7 +14,7 @@ use JSON;
 use lib './t/lib';
 use contains;
 
-my $homedir = "$ENV{EDGE_HOME_DIR}/nc/pgedge";
+my $homedir = "$ENV{EDGE_HOME_DIR}";
 my $cli = "$ENV{EDGE_CLI}";
 
 
