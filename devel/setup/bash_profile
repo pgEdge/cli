@@ -1,6 +1,9 @@
 # PGEDGE CLI for ~/.bash... ############################################################
-alias bp="cd ~/dev/nodectl; . ./bp.sh"
-alias ver24="vi ~/dev/nodectl/src/conf/versions24.sql"
+alias bp="cd ~/dev/cli; . ./bp.sh"
+alias ver24="vi ~/dev/cli/src/conf/versions24.sql"
+
+export REGION=us-east-2
+export BUCKET=s3://pgedge-upstream
 
 export DEV=$HOME/dev
 export IN=$DEV/in
@@ -8,19 +11,16 @@ export OUT=$DEV/out
 export HIST=$DEV/history
 export PGE=$DEV/cli
 export SOURCE=$IN/sources
-export BLD=/opt/pgbin-build/pgbin/bin
 export PFD=$DEV/platform-doc
 
 export DEVEL=$PGE/devel
+export PSX=$PGE/out/posix
+export PG=$DEVEL/pg
 export CLI=$PGE/cli/scripts
 export REPO=http://localhost:8000
 
-
-export PGB=/opt/pgbin-build
-export PG=$DEVEL/pg
-export REGION=us-east-2
-export BUCKET=s3://pgedge-upstream
-
+export PGB=/opt-pgbin/build
+export BLD=$PGB/pgbin/bin
 
 export JAVA_HOME=/etc/alternatives/jre_17_openjdk
 export PATH=/usr/local/bin:$JAVA_HOME/bin:/opt/apache-maven-3.9.2/bin:$PATH
