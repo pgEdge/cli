@@ -19,6 +19,7 @@ no warnings 'uninitialized';
 # Our parameters are:
 #pgedge home directory for n1
 my $homedir1="$ENV{EDGE_CLUSTER_DIR}/n1/pgedge";
+my $exitcode = 0;
 print("whoami = $ENV{EDGE_REPUSER}\n");
 
 print("The home directory is $homedir1\n"); 
@@ -35,17 +36,26 @@ my $out3 = decode_json($json3);
    print("The node_name is = $ENV{EDGE_NODE1_NAME}\n");
       
 if($ENV{EDGE_NODE1_NAME} eq "")
+{   
+   my $cmd2 = qq($homedir1/$ENV{EDGE_CLI} spock node-create n1 'host=$ENV{EDGE_HOST} port=$ENV{EDGE_START_PORT} user=$ENV{EDGE_REPUSER} dbname=$ENV{EDGE_DB}' $ENV{EDGE_DB});
+   print("cmd2 = $cmd2\n");
+   my ($success2, $error_message2, $full_buf2, $stdout_buf2, $stderr_buf2)= IPC::Cmd::run(command => $cmd2, verbose => 0);
+   print("stdout_buf2 = @$stdout_buf2\n");
+}
+else 
+{ 
+ print("Node $ENV{EDGE_NODE1_NAME} already exists\n");
+ $exitcode = 1;
+}
 
-   {
-   
-my $cmd2 = qq($homedir1/$ENV{EDGE_CLI} spock node-create n1 'host=$ENV{EDGE_HOST} port=$ENV{EDGE_START_PORT} user=$ENV{EDGE_REPUSER} dbname=$ENV{EDGE_DB}' $ENV{EDGE_DB});
-print("cmd2 = $cmd2\n");
-my ($success2, $error_message2, $full_buf2, $stdout_buf2, $stderr_buf2)= IPC::Cmd::run(command => $cmd2, verbose => 0);
+my $json4 = `$homedir1/$ENV{EDGE_CLI} spock node-list  $ENV{EDGE_DB}`;
+   #print("my json3 = $json3");
+my $out4 = decode_json($json4);
+  $ENV{EDGE_NODE1_NAME} = $out4->[0]->{"node_name"};
+   print("The node_name is = $ENV{EDGE_NODE1_NAME}\n");
+      
 
-print("stdout_buf2 = @$stdout_buf2\n");
-
-if(contains(@$stdout_buf2[0], "node_create"))
-
+if($ENV{EDGE_NODE1_NAME} eq "n1" && $exitcode==0)
 {
     exit(0);
 }
@@ -53,13 +63,9 @@ else
 {
     exit(1);
 }
-}
 
-else {
- 
- print("Node $ENV{EDGE_NODE1_NAME} already exists\n");
 
-}
+
 
 
 
