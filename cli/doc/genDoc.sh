@@ -1,5 +1,5 @@
-export pgeMdDir=$NC/cli/doc
-nc=../../out/posix/ctl
+export pgeMdDir=$PGE/cli/doc
+nc=../../out/posix/pgedge
 
 um () {
 $nc um --help
@@ -83,19 +83,19 @@ $nc cluster app-install       --help
 $nc cluster app-remove        --help
 }
 
-secure () {
-$nc secure --help
-$nc secure config             --help
-$nc secure list-cloud-acct    --help
-$nc secure list-clusters      --help
-$nc secure cluster-status     --help
-$nc secure list-nodes         --help
-$nc secure import-cluster-def --help
-$nc secure get-cluster-id     --help
-$nc secure get-node-id        --help
-$nc secure push-metrics       --help
-$nc secure create-cluster     --help
-$nc secure destroy-cluster    --help
+cloud () {
+$nc cloud --help
+$nc cloud config             --help
+$nc cloud list-linked-accts  --help
+$nc cloud list-clusters      --help
+$nc cloud cluster-status     --help
+$nc cloud list-nodes         --help
+$nc cloud import-cluster-def --help
+$nc cloud get-cluster-id     --help
+$nc cloud get-node-id        --help
+$nc cloud push-metrics       --help
+$nc cloud create-cluster     --help
+$nc cloud destroy-cluster    --help
 }
 
 ace () {
@@ -127,7 +127,7 @@ if [ $m == "all" ]; then
   spock
   db
   cluster
-  secure
+  cloud
   ace
   firewalld
 elif [ $m == "um" ]; then
@@ -140,8 +140,8 @@ elif [ $m == "db" ]; then
   db
 elif [ $m == "cluster" ]; then
   cluster
-elif [ $m == "secure" ]; then
-  secure
+elif [ $m == "cloud" ]; then
+  cloud
 elif [ $m == "ace" ]; then
   ace
 elif [ $m == "firewalld" ]; then

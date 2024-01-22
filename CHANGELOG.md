@@ -1,6 +1,7 @@
 # pgEdge Platform Release Notes #############
 
-## done for 24.1.6 as of 2024-01-20 ###########
+## done for 24.1.6 as of 2024-01-22 ###########
+  - rename 'secure' module to 'cloud'
   - seperate out 'pgbin-build' from 'nodectl' & rename it to 'cli'
   - lots of new doc & unit testings (PR #71, 73, 74 - Hayee)
   - refactor of UM and SERVICE (Cady)
