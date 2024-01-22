@@ -7,22 +7,26 @@ echo "## Remove pgedge ################################################"
 cd ..
 
 if [ -d "pg16" ]; then
-  ./nc remove pg16
+  ./pgedge remove pg16
 fi
 
 if [ -d "pg15" ]; then
-  ./nc remove pg15
+  ./pgedge remove pg15
+fi
+
+if [ -d "pg14" ]; then
+  ./pgedge remove pg14
 fi
 
 if [ -d "postgrest" ]; then
-  ./nc remove postgrest
+  ./pgedge remove postgrest
 fi
 
 if [ -d "backrest" ]; then
-  ./nc remove backrest
+  ./pgedge remove backrest
 fi
 
-if [ -d "bouncer" ]; then
-  ./nc remove bouncer
+if [ -d "pgcat" ]; then
+  ./pgedge remove pgcat
 fi 
 

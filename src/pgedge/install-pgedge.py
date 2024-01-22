@@ -2,7 +2,7 @@ import util, db
 import os, sys, time
 
 thisDir = os.path.dirname(os.path.realpath(__file__))
-ctl = "./ctl "
+ctl = "./pgedge "
 
 pgN = os.getenv("pgN", "")
 if pgN == "":
