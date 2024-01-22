@@ -34,9 +34,7 @@ def remove_comp(p_comp):
     msg = p_comp + " removing"
     util.message(msg, "info", isJSON)
     script_name = "remove-" + p_comp
-    print("script name")
     if os.path.isdir(p_comp):
-        print("running remove script")
         util.run_script(p_comp, script_name, "")
         util.delete_dir(p_comp)
     if meta.is_extension(p_comp):
@@ -78,12 +76,9 @@ def remove(component):
     installed_comp_list = meta.get_component_list()
     init_comp_list=[]
     p_comp=component
-    print("in um remove" + p_comp)
     if p_comp is not None:
         init_comp_list=component.split()
     info_arg, p_comp_list, p_comp, p_version, requested_p_version, extra_args = util.get_comp_lists("remove", -1, init_comp_list, [], "", connL)
-    print("after util " + p_comp)
-    print(p_comp_list)
     if p_comp == "all":
         msg = "You must specify component to remove."
         util.exit_message(msg, 1, isJSON)

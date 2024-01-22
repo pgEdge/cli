@@ -13,13 +13,6 @@ connL = sqlite3.connect(db_local)
 
 isJSON = util.isJSON
 
-def exit_cleanly(p_rc):
-    try:
-        connL.close()
-    except Exception:
-        pass
-    sys.exit(p_rc)
-
 
 ## Check component state #################################################
 def check_status(p_comp, p_mode):
@@ -87,7 +80,7 @@ def status(component=None):
     info_arg, p_comp_list, p_comp, p_version, requested_p_version, extra_args = util.get_comp_lists("status", 0, init_comp_list, [], "", connL)
     for c in p_comp_list:
         check_status(c, "status")
-    exit_cleanly(0)
+    util.exit_cleanly(0,connL)
 
 
 def restart(component):

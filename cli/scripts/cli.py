@@ -2123,4 +2123,4 @@ if p_mode == "tune":
         print("ERROR: The TUNE command must have 1 parameter (pgver).")
         exit_cleanly(1)
 
-exit_cleanly(0)
+util.exit_cleanly(0,connL)

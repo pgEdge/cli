@@ -3298,7 +3298,6 @@ def delete_shortlink_osx(short_link):
     if os.path.exists(short_link_path):
         os.system(cmd)
         os.system("killall Dock")
-
 def exit_cleanly(p_rc, conn=None):
     if conn:
         try:
@@ -3383,7 +3382,7 @@ def check_comp(p_comp, p_port, p_kount, check_status=False):
         api.status(isJSON, p_comp, ver, app_state, p_port, p_kount)
         return
 
-    if ((p_port == "0") or (p_port == "1")) and util.get_column(
+    if ((p_port == "0") or (p_port == "1")) and get_column(
         "autostart", p_comp
     ) != "on":
         api.status(isJSON, p_comp, ver, "Installed", "", p_kount)
@@ -3428,7 +3427,6 @@ def run_script(componentName, scriptName, scriptParm):
 
     cmd = ""
     scriptFile = os.path.join(MY_HOME, componentDir, scriptName)
-    print("in run- " + scriptFile)
     if os.path.isfile(scriptFile):
         cmd = "bash"
     else:
@@ -3437,7 +3435,6 @@ def run_script(componentName, scriptName, scriptParm):
 
     rc = 0
     compState = get_comp_state(componentName)
-    print("in run - " + compState)
     if compState == "Enabled" and os.path.isfile(scriptFile):
         run = cmd + " " + scriptFile + " " + scriptParm
         rc = os.system(run)
@@ -3508,9 +3505,8 @@ def update_component_state(p_app, p_mode, p_ver=None):
         fatal_sql_error(e, sql, "update_component_state()")
 
     msg = p_app + " " + new_state
-    message(msg, "info", isJSON)
+    message(msg, "debug", isJSON)
     return
-
 
 # MAINLINE ################################################################
 cL = sqlite3.connect(MY_LITE, check_same_thread=False)
