@@ -300,7 +300,7 @@ writeFileChecksum () {
 
 finalizeOutput () {
   writeCompRow "hub"  "hub" "$hubV" "" "0" "Enabled" "nil"
-  checkCmd "cp -r $CT/docker ."
+  checkCmd "cp -r $PGE/docker ."
   checkCmd "cp -r $SRC/hub ."
   checkCmd "mkdir -p hub/scripts"
   checkCmd "cp -r $CLI/* hub/scripts/."
