@@ -32,7 +32,11 @@ if os.environ.get("isJson", "False") == "True":
 pid_file = os.path.join(MY_HOME, "conf", "cli.pid")
 
 isTEST = False
+if os.environ.get("isTest", "False") == "True":
+    isTEST=True
 isENT = False
+if os.environ.get("isEnt", "False") == "True":
+    isENT=True
 isSHOWDUPS = False
 isEXTENSIONS = False
 
@@ -989,7 +993,6 @@ def exit_message(p_msg, p_rc=1, p_isJSON=None):
 # print codified message to stdout & logfile
 def message(p_msg, p_state="info", p_isJSON=None):
     if p_isJSON is None:
-        ##p_isJSON = os.getenv("isJson")
         p_isJSON = isJSON
 
     if p_msg is None:
@@ -3295,12 +3298,12 @@ def delete_shortlink_osx(short_link):
     if os.path.exists(short_link_path):
         os.system(cmd)
         os.system("killall Dock")
-
-def exit_cleanly(p_rc, conn):
-    try:
-        conn.close()
-    except Exception:
-        pass
+def exit_cleanly(p_rc, conn=None):
+    if conn:
+        try:
+            conn.close()
+        except Exception:
+            pass
     sys.exit(p_rc)
 
 
@@ -3369,6 +3372,141 @@ def get_comp_lists(p_mode, arg, args, ignore_comp_list, p_host, connL):
         exit_cleanly(1, connL)
 
     return info_arg, p_comp_list, p_comp, p_version, requested_p_version, extra_args
+
+
+def check_comp(p_comp, p_port, p_kount, check_status=False):
+    ver = meta.get_ver_plat(p_comp)
+    app_state = get_comp_state(p_comp)
+
+    if app_state in ("Disabled", "NotInstalled"):
+        api.status(isJSON, p_comp, ver, app_state, p_port, p_kount)
+        return
+
+    if ((p_port == "0") or (p_port == "1")) and get_column(
+        "autostart", p_comp
+    ) != "on":
+        api.status(isJSON, p_comp, ver, "Installed", "", p_kount)
+        return
+
+    is_pg = is_postgres(p_comp)
+    if is_pg or p_comp in ("pgdevops"):
+        if is_pg:
+            read_env_file(p_comp)
+        app_datadir = get_comp_datadir(p_comp)
+        if app_datadir == "":
+            if check_status:
+                return "NotInitialized"
+            api.status(isJSON, p_comp, ver, "Not Initialized", "", p_kount)
+            return
+
+    status = "Stopped"
+    comp_svcname = get_column("svcname", p_comp)
+    if (
+        get_platform() != "Darwin"
+        and comp_svcname != ""
+        and get_column("autostart", p_comp) == "on"
+    ):
+        status = get_service_status(comp_svcname)
+    elif is_socket_busy(int(p_port), p_comp):
+        status = "Running"
+    else:
+        status = "Stopped"
+    if check_status:
+        return status
+    api.status(isJSON, p_comp, ver, status, p_port, p_kount)
+
+    return
+
+# run external scripts #######################################
+def run_script(componentName, scriptName, scriptParm):
+    installed_comp_list = meta.get_component_list()
+    if componentName not in installed_comp_list:
+        return
+
+    componentDir = componentName
+
+    cmd = ""
+    scriptFile = os.path.join(MY_HOME, componentDir, scriptName)
+    if os.path.isfile(scriptFile):
+        cmd = "bash"
+    else:
+        cmd = sys.executable + " -u"
+        scriptFile = scriptFile + ".py"
+
+    rc = 0
+    compState = get_comp_state(componentName)
+    if compState == "Enabled" and os.path.isfile(scriptFile):
+        run = cmd + " " + scriptFile + " " + scriptParm
+        rc = os.system(run)
+
+    if rc != 0:
+        print("Error running " + scriptName)
+        exit_cleanly(1)
+
+    return
+
+
+def update_component_state(p_app, p_mode, p_ver=None):
+    db_local = MY_LITE
+    connL = sqlite3.connect(db_local)
+
+    new_state = "Disabled"
+    if p_mode == "enable":
+        new_state = "Enabled"
+    elif p_mode == "install":
+        new_state = "Enabled"
+    elif p_mode == "remove":
+        new_state = "NotInstalled"
+
+    current_state = get_comp_state(p_app)
+    ver = ""
+
+    if current_state == new_state:
+        return
+
+    if p_mode == "disable" or p_mode == "remove":
+        run_script(p_app, "stop-" + p_app, "kill")
+
+    try:
+        c = connL.cursor()
+
+        if p_mode in ("enable", "disable"):
+            ver = meta.get_version(p_app)
+            sql = "UPDATE components SET status = ? WHERE component = ?"
+            c.execute(sql, [new_state, p_app])
+
+        if p_mode == "remove":
+            ver = meta.get_version(p_app)
+            sql = "DELETE FROM components WHERE component = ?"
+            c.execute(sql, [p_app])
+
+        if p_mode == "install":
+            sql = (
+                "INSERT INTO components (component, project, version, platform, port, status) "
+                + "SELECT v.component, r.project, v.version, "
+                + " CASE WHEN v.platform='' THEN '' ELSE '"
+                + get_pf()
+                + "' END, p.port, 'Enabled' "
+                + "  FROM versions v, releases r, projects p "
+                + " WHERE v.component = ? "
+                + "   AND v.component = r.component "
+                + "   AND r.project = p.project "
+                + "   AND v.version = ? "
+            )
+            if p_ver:
+                ver = p_ver
+            else:
+                ver = meta.get_current_version(p_app)
+            c.execute(sql, [p_app, ver])
+
+        connL.commit()
+        c.close()
+    except Exception as e:
+        fatal_sql_error(e, sql, "update_component_state()")
+
+    msg = p_app + " " + new_state
+    message(msg, "debug", isJSON)
+    return
 
 # MAINLINE ################################################################
 cL = sqlite3.connect(MY_LITE, check_same_thread=False)

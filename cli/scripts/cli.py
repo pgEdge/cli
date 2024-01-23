@@ -208,36 +208,6 @@ def get_next_arg(p_arg):
     return next_arg
 
 
-# is there a dependency violation if component where removed ####
-def is_depend_violation(p_comp, p_remove_list):
-    data = meta.get_dependent_components(p_comp)
-
-    kount = 0
-    vv = []
-    for i in data:
-        if str(i[0]) in p_remove_list:
-            continue
-        kount = kount + 1
-        vv.append(str(i[0]))
-
-    if kount == 0:
-        return False
-
-    errMsg = "Failed to remove " + p_comp + "(" + str(vv) + " is depending on this)."
-    if isJSON:
-        dict_error = {}
-        dict_error["status"] = "error"
-        dict_error["msg"] = errMsg
-        msg = json.dumps([dict_error])
-    else:
-        msg = "ERROR-DEPENDENCY-LIST: " + str(vv)
-
-    my_logger.error(errMsg)
-
-    print(msg)
-    return True
-
-
 # run external scripts #######################################
 def run_script(componentName, scriptName, scriptParm):
     if componentName not in installed_comp_list:
@@ -819,26 +789,6 @@ def unpack_comp(p_app, p_old_ver, p_new_ver):
     return return_value
 
 
-def remove_comp(p_comp):
-    msg = p_comp + " removing"
-    my_logger.info(msg)
-    if isJSON:
-        msg = '[{"status":"wip","msg":"' + msg + '","component":"' + p_comp + '"}]'
-    print(msg)
-    script_name = "remove-" + p_comp
-    if os.path.isdir(p_comp):
-        run_script(c, script_name, "")
-        util.delete_dir(p_comp)
-    if meta.is_extension(p_comp):
-        run_script(meta.get_extension_parent(p_comp), script_name, "")
-        manifest_file_name = p_comp + ".manifest"
-        manifest_file_path = os.path.join(MY_HOME, "conf", manifest_file_name)
-        util.delete_extension_files(manifest_file_path)
-        my_logger.info("deleted manifest file : " + manifest_file_name)
-        os.remove(manifest_file_path)
-    return 0
-
-
 def list_depend_recur(p_app):
     for i in dep9:
         if i[0] == p_app:
@@ -907,50 +857,6 @@ def update_component_state(p_app, p_mode, p_ver=None):
     my_logger.info(msg)
     if isJSON:
         msg = '[{"status":"wip","msg":"' + msg + '"}]'
-
-    return
-
-
-def check_comp(p_comp, p_port, p_kount, check_status=False):
-    ver = meta.get_ver_plat(p_comp)
-    app_state = util.get_comp_state(p_comp)
-
-    if app_state in ("Disabled", "NotInstalled"):
-        api.status(isJSON, p_comp, ver, app_state, p_port, p_kount)
-        return
-
-    if ((p_port == "0") or (p_port == "1")) and util.get_column(
-        "autostart", p_comp
-    ) != "on":
-        api.status(isJSON, p_comp, ver, "Installed", "", p_kount)
-        return
-
-    is_pg = util.is_postgres(p_comp)
-    if is_pg or p_comp in ("pgdevops"):
-        if is_pg:
-            util.read_env_file(p_comp)
-        app_datadir = util.get_comp_datadir(p_comp)
-        if app_datadir == "":
-            if check_status:
-                return "NotInitialized"
-            api.status(isJSON, p_comp, ver, "Not Initialized", "", p_kount)
-            return
-
-    status = "Stopped"
-    comp_svcname = util.get_column("svcname", p_comp)
-    if (
-        util.get_platform() != "Darwin"
-        and comp_svcname != ""
-        and util.get_column("autostart", p_comp) == "on"
-    ):
-        status = util.get_service_status(comp_svcname)
-    elif util.is_socket_busy(int(p_port), p_comp):
-        status = "Running"
-    else:
-        status = "Stopped"
-    if check_status:
-        return status
-    api.status(isJSON, p_comp, ver, status, p_port, p_kount)
 
     return
 
@@ -1360,17 +1266,22 @@ while i < len(args):
             break
     i += 1
 
+
 if "--ent" in args:
-    util.isENT = True
+    isENT = True
+    os.environ["isEnt"] = "True"
     args.remove("--ent")
 
 if "--test" in args:
     util.isTEST = True
+    os.environ["isTest"] = "True"
     args.remove("--test")
 
 if "--tent" in args:
     util.isTEST = True
     util.isENT = True
+    os.environ["isEnt"] = "True"
+    os.environ["isTest"] = "True"
     args.remove("--tent")
 
 
@@ -1788,7 +1699,7 @@ if p_mode == "info":
                 compDict["port"] = port
                 compDict["autostart"] = autostart
                 if is_installed == 1 and port > 0:
-                    is_running = check_comp(comp, port, 0, True)
+                    is_running = util.check_comp(comp, port, 0, True)
                     if is_running == "NotInitialized":
                         compDict["available_port"] = util.get_avail_port(
                             "PG Port", port, comp, isJSON=True
@@ -1812,9 +1723,8 @@ if p_mode == "info":
 
 ## STATUS ####################################################
 if p_mode == "status":
-    for c in p_comp_list:
-        check_status(c, "status")
-    exit_cleanly(0)
+    args.insert(0,p_mode)
+    fire_away("service", args)
 
 ## CLEAN ####################################################
 if p_mode == "clean":
@@ -1828,53 +1738,8 @@ if p_mode == "list":
 
 ## REMOVE ##################################################
 if p_mode == "remove":
-    if p_comp == "all":
-        msg = "You must specify component to remove."
-        my_logger.error(msg)
-        return_code = 1
-        if isJSON:
-            return_code = 0
-            msg = '[{"status":"error","msg":"' + msg + '"}]'
-        util.exit_message(msg, return_code)
-
-    for c in p_comp_list:
-        if c not in installed_comp_list:
-            msg = c + " is not installed."
-            print(msg)
-            continue
-
-        if is_depend_violation(c, p_comp_list):
-            exit_cleanly(1)
-
-        server_port = util.get_comp_port(c)
-
-        server_running = False
-        if server_port > "1":
-            server_running = util.is_socket_busy(int(server_port), c)
-
-        if server_running:
-            run_script(c, "stop-" + c, "stop")
-            time.sleep(5)
-
-        remove_comp(c)
-
-        extensions_list = meta.get_installed_extensions_list(c)
-        for ext in extensions_list:
-            update_component_state(ext, p_mode)
-
-        update_component_state(c, p_mode)
-        comment = "Successfully removed the component."
-        if isJSON:
-            msg = (
-                '[{"status":"complete","msg":"'
-                + comment
-                + '","component":"'
-                + c
-                + '"}]'
-            )
-            print(msg)
-
-    exit_cleanly(0)
+    args.insert(0,p_mode)
+    fire_away("um", args)
 
 ## INSTALL ################################################
 if p_mode == "install":
@@ -2258,4 +2123,4 @@ if p_mode == "tune":
         print("ERROR: The TUNE command must have 1 parameter (pgver).")
         exit_cleanly(1)
 
-exit_cleanly(0)
+util.exit_cleanly(0,connL)
