@@ -75,6 +75,8 @@ fire_list = [
 
 native_list = ["backrest", "supervisor", "ansible", "patroni"]
 
+group_components_list = ["pgedge"]
+
 mode_list_advanced = [
     "kill",
     "config",
