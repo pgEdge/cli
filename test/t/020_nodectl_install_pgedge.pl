@@ -30,8 +30,8 @@ sub handle_error_and_exit {
     }
 }
 
-my $ncdir = "$ENV{EDGE_HOME_DIR}/nc";
-my $homedir = "$ncdir/pgedge";
+my $ncdir = "$ENV{NC_DIR}";
+my $homedir = "$ENV{EDGE_HOME_DIR}";
 
 print "whoami = $ENV{EDGE_REPUSER}\n";
 
