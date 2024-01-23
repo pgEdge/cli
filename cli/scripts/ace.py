@@ -13,6 +13,7 @@ import util
 import fire
 import cluster
 import psycopg
+from psycopg.rows import dict_row
 from datetime import datetime
 from multiprocessing import Manager, cpu_count, Value, Lock
 from ordered_set import OrderedSet
@@ -206,12 +207,13 @@ def diff_schemas(cluster_name, node1, node2, schema_name):
         combined_json = {**database, **node}
         cluster_nodes.append(combined_json)
 
-    util.message(f"## db={db}, user={cluster_nodes[0]['usr']}\n")
+    sql1, sql2 = "", ""
+
     for nd in cluster_nodes:
         if nd["name"] == node1:
-            sql1 = write_pg_dump(nd["ip_address"], db, "con1", l_schema)
+            sql1 = write_pg_dump(nd["ip_address"], nd["db_name"], "con1", l_schema)
         if nd["name"] == node2:
-            sql2 = write_pg_dump(nd["ip_address"], db, "con2", l_schema)
+            sql2 = write_pg_dump(nd["ip_address"], nd["db_name"], "con2", l_schema)
 
     cmd = "diff " + sql1 + "  " + sql2 + " > /tmp/diff.txt"
     util.message("\n## Running # " + cmd + "\n")
@@ -243,11 +245,28 @@ def diff_spock(cluster_name, node1, node2):
         combined_json = {**database, **node}
         cluster_nodes.append(combined_json)
 
+    conn_list = {}
+
+    try:
+        for nd in cluster_nodes:
+            psql_conn = psycopg.connect(
+                dbname=nd["db_name"],
+                user=nd["username"],
+                password=nd["password"],
+                host=nd["ip_address"],
+                port=nd.get("port", 5432),
+                row_factory=dict_row,
+            )
+            conn_list[nd["name"]] = psql_conn
+
+    except Exception as e:
+        util.exit_message("Error in table_diff() Getting Connections:" + str(e), 1)
+
     compare_spock = []
-    pg_v = pg
     print("\n")
 
     for cluster_node in cluster_nodes:
+        cur = conn_list[cluster_node["name"]].cursor()
         if cluster_node["name"] not in [node1, node2]:
             continue
         diff_spock = {}
@@ -262,7 +281,10 @@ def diff_spock(cluster_name, node1, node2):
            FROM spock.node n LEFT OUTER JOIN spock.subscription s
            ON s.sub_target=n.node_id WHERE s.sub_name IS NOT NULL;
         """
-        node_info = util.run_psyco_sql(pg_v, db, sql, cluster_node["ip_address"])
+
+        cur.execute(sql)
+        node_info = cur.fetchall()
+
         print("  " + node_info[0]["node_name"])
         diff_spock["node"] = node_info[0]["node_name"]
 
@@ -295,7 +317,9 @@ def diff_spock(cluster_name, node1, node2):
         SELECT set_name, string_agg(relname,'   ') as relname
         FROM spock.tables GROUP BY set_name ORDER BY set_name;
         """
-        table_info = util.run_psyco_sql(pg_v, db, sql, cluster_node["ip"])
+
+        cur.execute(sql)
+        table_info = cur.fetchall()
         diff_spock["rep_set_info"] = []
         prCyan("Tables in RepSets:")
         if table_info == []:
@@ -304,8 +328,8 @@ def diff_spock(cluster_name, node1, node2):
             if table["set_name"] is None:
                 print(" - Not in a replication set")
                 hints.append(
-                    "Hint: Tables not in replication set might not have primary keys, \
-                        or you need to run repset-add-table"
+                    "Hint: Tables not in replication set might not have primary keys,"
+                    " or you need to run repset-add-table"
                 )
             else:
                 print(" - " + table["set_name"])
@@ -979,6 +1003,7 @@ def table_rerun(cluster_name, diff_file, table_name):
                     sql += f" {k} = '{indices[ctr]}' AND"
                     ctr += 1
 
+                # Get rid of the last "AND" and add a semicolon
                 sql = sql[:-3] + ";"
 
                 with ThreadPoolExecutor(max_workers=2) as executor:
