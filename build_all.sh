@@ -80,8 +80,8 @@ fi
 
 echo "############### Build Package Manager ###################"
 rm -f $OUT/hub-$hubV*
-rm -f $OUT/$bundle-$api-$hubV*
-./build.sh -X posix -c $bundle-$api -N $hubV
+rm -f $OUT/$bundle-cli-$hubV*
+./build.sh -X posix -c $bundle-cli -N $hubV
 
 buildALL $majorV $minorV
 

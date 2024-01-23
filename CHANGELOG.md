@@ -1,6 +1,9 @@
 # pgEdge Platform Release Notes #############
 
-## done for 24.1.6 as of 2024-01-22 ###########
+## done for 24.1.6 as of 2024-01-23 ###########
+  - deprecate 'ctl' for 'pgedge' as CLI name
+  - ACE fixes for json config changes (PR #81 Tej)
+  - More UM refactoring (PR #79 & #80 Cady)
   - 'ent' modules are now simply marked 'prod'
   - rename 'secure' module to 'cloud'
   - seperate out 'pgbin-build' from 'nodectl' & rename it to 'cli'
