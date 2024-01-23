@@ -35,7 +35,7 @@ Clone the NodeCTL git repo into `work`
 
 `sudo yum install perl-cpan`
 `sudo dnf install perl-File-Which`
-`sudo dnf install perl-Try-Tiny perl-JSON`
+`sudo dnf install perl-Try-Tiny perl-JSON perl-List-MoreUtils perl-DBD-Pg`
 
 Review the environment variables in the `t/lib/config.env` file and make any adjustments required; then source the environment variables:
 
