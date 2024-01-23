@@ -70,13 +70,10 @@ if (File::Path::remove_tree($datadir1)) {
 }
 
 
-<<<<<<< HEAD
-=======
 # removing the pgpass file that was created in 8000 test
-my $cmd4 = qq(rm ~/.pgpass);
-print("cmd = $cmd4\n");
-run_command($cmd4);
->>>>>>> REL24_1
+#my $cmd4 = qq(rm ~/.pgpass);
+#print("cmd = $cmd4\n");
+#run_command($cmd4);
 if ($exitcode==3)
 {
     exit (0);
@@ -85,8 +82,6 @@ else
 {
     exit(1);
 }
-<<<<<<< HEAD
-=======
 
 =pod
 # pgpass enhancement in future that only removes the entry rather than whole file
@@ -107,4 +102,3 @@ else {
     print(".pgpass file not found\n");
 }
 =cut
->>>>>>> REL24_1

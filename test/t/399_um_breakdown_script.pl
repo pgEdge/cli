@@ -18,11 +18,7 @@ my $password = $ENV{EDGE_PASSWORD};
 my $database = $ENV{EDGE_DB};
 my $port = $ENV{EDGE_START_PORT};
 my $pgversion = $ENV{EDGE_COMPONENT};
-<<<<<<< HEAD
 my $homedir = "$ENV{EDGE_HOME_DIR}";
-=======
-my $homedir = "$ENV{EDGE_HOME_DIR}/nc/pgedge";
->>>>>>> REL24_1
 my $datadir="$homedir/data/$pgversion";
 my $cli = $ENV{EDGE_CLI};
 
