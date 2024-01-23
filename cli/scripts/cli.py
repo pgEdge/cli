@@ -67,7 +67,7 @@ fire_list = [
     "cluster",
     "staz",
     "ace",
-    "secure",
+    "cloud",
     "db",
     "app",
     "firewalld",
@@ -91,7 +91,7 @@ mode_list_advanced = [
     "ace",
     "enable",
     "upgrade",
-    "secure",
+    "cloud",
     "db",
     "app",
     "update",
@@ -1277,7 +1277,7 @@ p_host_name = ""
 
 if "--deprecate-nc" in args:
     args.remove("--deprecate-nc")
-    # util.message(f"'nc' & 'nodectl' commands deprecated in favor of 'ctl'", "warning")
+    # util.message(f"'nc', 'nodectl', & 'ctl' commands deprecated in favor of 'pgedge'", "warning")
 
 isVERBOSE = False
 if "--verbose" in args:

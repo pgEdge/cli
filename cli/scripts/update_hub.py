@@ -5,7 +5,7 @@ import os, sys, sqlite3
 import util
 
 MY_HOME = os.getenv("MY_HOME", "")
-CTL = MY_HOME + "/ctl"
+CTL = MY_HOME + "/pgedge"
 
 rc = 0
 

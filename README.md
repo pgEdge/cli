@@ -1,8 +1,8 @@
-# pgEdge NodeCtl : Command Line Interface (CLI) for pgEdge
+# The Command Line Interface (CLI) for pgEdge
 
 
 # Summary
-NodeCtl is the pgEdge Command Line Interface (CLI) for managing components. 
+This is the pgEdge Command Line Interface (CLI) for managing components. 
 It is licensed under the pgEdge Community License 1.0
 
 # Configuring the Python Environment for Dev/Test
@@ -20,20 +20,20 @@ Now activate the virtual environment:
 
 $ source venv/bin/activate
 
-Some of the components used by NodeCtl require a very recent version of pip, so update that to the latest:
+Some of our components require a very recent version of pip, so update that to the latest:
 
 $ pip install --upgrade pip
 
-# CTL Modules 
+# Modules 
 The modules are `um`, `service`, `spock`, `cluster`, `db`, `secure`, and `ace`.  
 
 ## Synopsis
-    ./ctl <module> <command> [parameters] [options] 
+    ./pgedge <module> <command> [parameters] [options] 
 
 ## `um` Update Manager commands
 ```
 list                Display available/installed components
-update              Retrieve new list of latest components & update nodectl
+update              Retrieve new list of latest components & update cli
 install             Install a component (eg pg15, spock, postgis)
 remove              Un-install component
 upgrade             Perform an upgrade of a component
@@ -100,19 +100,19 @@ local-destroy       Stop and then nuke a cluster
 remote-init         Initialize pgEdge on a remote cluster that you create & manage yourself
 remote-reset        Reset pgEdge on a remote cluster
 remote-import-def   Import a json cluster defintion file
-command             Run nodectl command on one or all nodes of a cluster
+command             Run cli command on one or all nodes of a cluster
 app-install         Install an application such as NorthWind or pgBench
 app-remove          Remove an application
 ```
 
 ## `secure` Interact with pgEdge Cloud services
 ```
-config              Login nodeCtl with a pgEdge Cloud Account
+config              Login cli with a pgEdge Cloud Account
 list-cloud-acct     List all cloud account ids in a pgEdge Cloud Account
 list-clusters       List all clusters in a pgEdge Cloud Account
 cluster-status      Return info on a cluster in a pgEdge Cloud Account
 list-nodes          List all nodes in a pgEdge Cloud Account cluster
-import-cluster-def  Enable nodeCtl cluster commands on a pgEdge Cloud Cluster
+import-cluster-def  Enable cluster commands on a pgEdge Cloud Cluster
 get-cluster-id      Return the cluster id based on a cluster display name
 get-node-id         Return the node id based on cluster and node display name
 push-metrics        Coming Soon: push pgEdge Metrics to a specified target
