@@ -21,7 +21,7 @@ pandas>=1.1.5
 cdiff>=1.0
 urllib3>=1.25.4,!=1.26.18
 PyYAML>=3.10,<5.5; sys_platform == 'linux'
-PyYAML; sys_platform == 'darwin'
+PyYAML>=6.0; sys_platform == 'darwin'
 python-etcd>=0.4.5,<0.5
 click>=4.1
 prettytable>=2.5
