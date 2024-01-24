@@ -863,7 +863,7 @@ def update_component_state(p_app, p_mode, p_ver=None):
 
 
 def retrieve_remote():
-    versions_sql = "versions24.sql"
+    versions_sql = "versions.sql"
     util.set_value("GLOBAL", "VERSIONS", versions_sql)
 
     if not os.path.exists(backup_dir):

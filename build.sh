@@ -507,14 +507,14 @@ setupOutdir () {
   conf="$SRC/conf"
 
   cp $conf/db_local.db  conf/.
-  cp $conf/versions24.sql  conf/.
-  sqlite3 conf/db_local.db < conf/versions24.sql
+  cp $conf/versions.sql  conf/.
+  sqlite3 conf/db_local.db < conf/versions.sql
 }
 
 
 ##########################    MAINLINE   ####################################
 osName=`uname`
-verSQL="versions24.sql"
+verSQL="versions.sql"
 
 isEL8="False"
 isEL9="False"
@@ -566,7 +566,6 @@ do
           writeSettRow "GLOBAL" "PLATFORM" "$plat"
           if [ "$plat" == "posix" ]; then
             checkCmd "cp $CLI/install.py $OUT/."
-            checkCmd "cp $CLI/install24.py $OUT/."
           fi;;
 
       R)  writeSettRow "GLOBAL" "REPO" "$repo" "-v";;

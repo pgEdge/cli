@@ -1,6 +1,7 @@
 # pgEdge Platform Release Notes #############
 
 ## done for 24.1.6 as of 2024-01-24 ###########
+  - drop the '24' in versions24.sql & install24.py
   - fold in the multicloud POC from multicloud-cli project
   - use newer 'PyYAML', add 'ansible', drop 'supervisor' in 'ctlibs'
   - deprecate 'ctl' for 'pgedge' as CLI name

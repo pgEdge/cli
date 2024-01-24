@@ -1,6 +1,6 @@
 # PGEDGE CLI for ~/.bash... ############################################################
 alias bp="cd ~/dev/cli; . ./bp.sh"
-alias ver24="vi ~/dev/cli/src/conf/versions24.sql"
+alias ver="vi ~/dev/cli/src/conf/versions.sql"
 
 export REGION=us-east-2
 export BUCKET=s3://pgedge-upstream
