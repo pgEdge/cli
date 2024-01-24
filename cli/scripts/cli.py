@@ -71,6 +71,7 @@ fire_list = [
     "db",
     "app",
     "firewalld",
+    "multicloud"
 ]
 
 native_list = ["backrest", "ansible", "patroni"]
