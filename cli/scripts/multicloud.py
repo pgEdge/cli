@@ -329,36 +329,44 @@ def list_sizes(provider, region=None, project=None, json=False):
     print(p)
 
 
-def list_locations(provider, region=None, project=None, json=False):
-    """List available locations."""
-    conn, sect, region, airport, project = get_connection(provider, region, project)
+def list_zones(provider=None, airport=None, region=None, project=None, json=False):
+    """List availability zones."""
 
-    ll = []
-    locations = conn.list_locations()
-    for l in locations:
-        ll.append([provider, region, l.name])
-
-    if json:
-      util.output_json(ll)
-      return
+    wr = "is_active = 'Y'"
+    if provider:
+        wr = wr + f" AND provider= '{provider}'"
+    if airport:
+        wr = wr + f" AND airport = '{airport}'"
+    cols = "provider, airport, region, parent, zones"
+    try:
+        cursor = cL.cursor()
+        cursor.execute(f"SELECT {cols} FROM airport_regions WHERE {wr} ORDER BY 1,2,3,4")
+        data = cursor.fetchall()
+    except Exception as e:
+        util.exit_message(str(e), 1)
+    lz = []
+    for d in data:
+        lz.append([str(d[0]), str(d[1]), str(d[2]), str(d[3]), str(d[4])])
 
     p = PrettyTable()
-    p.field_names = ["Provider", "Region", "Location"]
-    p.align["Location"] = "l"
-    p.add_rows(ll)
+    p.field_names = ["Provider", "Airport", "Region", "Parent", "Zones"]
+    p.align["Region"] = "l"
+    p.align["Parent"] = "l"
+    p.align["Zones"] = "l"
+    p.add_rows(lz)
     print(p)
 
     return
 
 
 def list_nodes(provider, region=None, project=None, json=False):
-    """List nodes."""
+    """List virtual machines."""
     conn, sect, region, airport, project = get_connection(provider, region, project)
 
     nl = []
-    if provider in ("eqn", "equinixmetal"):
+    if provider == "eqn":
         nl = eqn_node_list(conn, region, project, json)
-    elif provider in ("aws", "ec2"):
+    elif provider == "aws":
         nl = aws_node_list(conn, region, project, json)
     else:
         util.exit_message(f"Invalid provider '{provider}' (list_nodes)")
@@ -368,7 +376,7 @@ def list_nodes(provider, region=None, project=None, json=False):
       return
 
     p = PrettyTable()
-    p.field_names = ["Provider", "Airport", "Node", "Status", "Size", "Country", "Region", "Location", "Public IP", "Private IP"]
+    p.field_names = ["Provider", "Airport", "Node", "Status", "Size", "Country", "Region", "Zone", "Public IP", "Private IP"]
     p.align["Node"] = "l"
     p.align["Size"] = "l"
     p.align["Public IP"] = "l"
@@ -398,12 +406,12 @@ def aws_node_list(conn, region, project, json):
         except Exception:
             private_ip = ""
         status = n.state
-        location = n.extra["availability"]
+        zone = n.extra["availability"]
         size = n.extra["instance_type"]
         country = region[:2]
         key_name = n.extra['key_name']
         airport = get_airport("aws", region)
-        nl.append(["aws", airport, node, status, size, country, region, location, public_ip, private_ip])
+        nl.append(["aws", airport, node, status, size, country, region, zone, public_ip, private_ip])
 
     return(nl)
 
@@ -445,7 +453,7 @@ def list_providers(json=False):
 
 
 def list_airport_regions(geo=None, country=None, airport=None, provider=None, json=False):
-   """List Airport Codes & corresponding Provider Regions"""
+   """List airport codes & corresponding provider regions."""
 
    al = airport_list(geo, country, airport, provider, json)
    p = PrettyTable()
@@ -602,8 +610,8 @@ if __name__ == "__main__":
         {
             "list-providers": list_providers,
             "list-airport-regions":  list_airport_regions,
+            "list-zones":     list_zones,
             "list-nodes":     list_nodes,
-            "list-locations": list_locations,
             "list-sizes":     list_sizes,
             "create-node":    create_node,
             "start-node":     start_node,
