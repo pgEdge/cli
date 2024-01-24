@@ -1,14 +1,14 @@
 requests>=2.27
 paramiko>=3.3.1
-psycopg>=3.1
-psycopg-binary>=3.1
+psycopg>=3.1.17
+psycopg-binary>=3.1.17
 psutil>=5.9.6
 pypsutil>=0.2.0
-supervisor>=4.2.5
 
-## MACHINE ##########
+## MULTICLOUD #######
 certifi>=3.0
 charset_normalizer>=2.0
+ansible>=8.7
 
 
 ## ACE ##############
@@ -20,8 +20,7 @@ pandas>=1.1.5
 ## STAZ #############
 cdiff>=1.0
 urllib3>=1.25.4,!=1.26.18
-PyYAML>=3.10,<5.5; sys_platform == 'linux'
-PyYAML>=6.0; sys_platform == 'darwin'
+PyYAML>=6.0
 python-etcd>=0.4.5,<0.5
 click>=4.1
 prettytable>=2.5

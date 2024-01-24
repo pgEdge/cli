@@ -73,7 +73,7 @@ fire_list = [
     "firewalld",
 ]
 
-native_list = ["backrest", "supervisor", "ansible", "patroni"]
+native_list = ["backrest", "ansible", "patroni"]
 
 mode_list_advanced = [
     "kill",

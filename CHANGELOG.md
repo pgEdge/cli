@@ -1,7 +1,7 @@
 # pgEdge Platform Release Notes #############
 
-## done for 24.1.6 as of 2024-01-23 ###########
-  - use newer PYYAML on OSX (removes github security warning)
+## done for 24.1.6 as of 2024-01-24 ###########
+  - use newer 'PyYAML', add 'ansible', drop 'supervisor' in 'ctlibs'
   - deprecate 'ctl' for 'pgedge' as CLI name
   - ACE fixes for json config changes (PR #81 Tej)
   - More UM refactoring (PR #79 & #80 Cady)
