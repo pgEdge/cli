@@ -2,7 +2,7 @@
 
 #  Copyright 2023-2024 PGEDGE  All rights reserved. #
 
-import os, sys, configparser
+import os, sys, configparser, sqlite3
 
 os.chdir(os.path.dirname(__file__))
 sys.path.append(os.path.join(os.path.dirname(__file__), "lib"))
@@ -11,12 +11,23 @@ import fire
 import libcloud
 import util
 
-#import termcolor
+import termcolor
 from libcloud.compute.types import Provider
 from prettytable import PrettyTable
 
+CONFIG = f"{os.getenv('HOME')}/.multicloud.conf"
+
+PROVIDERS = \
+    [
+        ["eqn", "equinixmetal", "Equinix Metal"],
+        ["aws", "ec2",          "Amazon Web Services"],
+        ["azr", "azure",        "Microsoft Azure"],
+        ["gcp", "gce",          "Google Cloud Platform"],
+    ]
+
+
 def get_location(provider, location):
-    conn, section, region, airport, project = util.get_connection(provider)
+    conn, section, region, airport, project = get_connection(provider)
 
     locations = conn.list_locations()
     for ll in locations:
@@ -52,7 +63,7 @@ def get_image(provider, conn, p_image):
 
 
 def get_node_values(provider, region, name):
-    conn, section, region, airport, project = util.get_connection(provider, region)
+    conn, section, region, airport, project = get_connection(provider, region)
     nd = get_node(conn, name)
     if not nd:
         return None, None, None, None, None
@@ -94,7 +105,7 @@ def destroy_node(provider, name, region):
 
 
 def node_action(action, provider, region, name):
-    conn, section, region, airport, project = util.get_connection(provider, region)
+    conn, section, region, airport, project = get_connection(provider, region)
 
     nd = get_node(conn, name)
     if nd:
@@ -139,7 +150,7 @@ def create_node(
 ):
     """Create a node."""
 
-    conn, sect, region, airport, project = util.get_connection(provider, region, project)
+    conn, sect, region, airport, project = get_connection(provider, region, project)
 
     if not is_node_unique(name, provider, conn, sect):
         util.exit_message(f"Node '{name}' already exists in '{provider}:{region}'")
@@ -174,7 +185,7 @@ def create_node(
 
 
 def create_node_aws(name, region, size, image, ssh_key):
-    conn, section, region, airport, project = util.get_connection("ec2", region)
+    conn, section, region, airport, project = get_connection("ec2", region)
     sz = get_size(conn, size)
     im = get_image("aws", conn, image)
 
@@ -188,7 +199,7 @@ def create_node_aws(name, region, size, image, ssh_key):
 
 
 def create_node_eqn(name, location, size, image, project):
-    conn, section, region, airport, project = util.get_connection("equinixmetal")
+    conn, section, region, airport, project = get_connection("equinixmetal")
     sz = get_size(conn, size)
     im = get_image("eqn", conn, image)
     loct = get_location("eqn", location)
@@ -257,7 +268,7 @@ def cluster_nodes(cluster_name, providers, regions, node_names):
     i = 0
     while i < node_kount:
         util.message(f"\n## {providers[i]}, {regions[i]}, {node_names[i]}")
-        conn, section, region, airport, project = util.get_connection(providers[i], regions[i])
+        conn, section, region, airport, project = get_connection(providers[i], regions[i])
 
         name, public_ip, status, region, size = get_node_values(
             providers[i], regions[i], node_names[i]
@@ -276,7 +287,7 @@ def cluster_nodes(cluster_name, providers, regions, node_names):
 
 def list_sizes(provider, region=None, project=None, json=False):
     """List available node sizes."""
-    conn, sect, region, airport, project = util.get_connection(provider, region, project)
+    conn, sect, region, airport, project = get_connection(provider, region, project)
 
     if region is None:
         region = ""
@@ -320,7 +331,7 @@ def list_sizes(provider, region=None, project=None, json=False):
 
 def list_locations(provider, region=None, project=None, json=False):
     """List available locations."""
-    conn, sect, region, airport, project = util.get_connection(provider, region, project)
+    conn, sect, region, airport, project = get_connection(provider, region, project)
 
     ll = []
     locations = conn.list_locations()
@@ -342,7 +353,7 @@ def list_locations(provider, region=None, project=None, json=False):
 
 def list_nodes(provider, region=None, project=None, json=False):
     """List nodes."""
-    conn, sect, region, airport, project = util.get_connection(provider, region, project)
+    conn, sect, region, airport, project = get_connection(provider, region, project)
 
     nl = []
     if provider in ("eqn", "equinixmetal"):
@@ -362,6 +373,7 @@ def list_nodes(provider, region=None, project=None, json=False):
     p.align["Size"] = "l"
     p.align["Public IP"] = "l"
     p.align["Private IP"] = "l"
+    p.align["Region"] = "l"
     p.add_rows(nl)
     print(p)
 
@@ -390,7 +402,7 @@ def aws_node_list(conn, region, project, json):
         size = n.extra["instance_type"]
         country = region[:2]
         key_name = n.extra['key_name']
-        airport = util.get_airport("aws", region)
+        airport = get_airport("aws", region)
         nl.append(["aws", airport, node, status, size, country, region, location, public_ip, private_ip])
 
     return(nl)
@@ -406,9 +418,8 @@ def eqn_node_list(conn, region, project, json):
         private_ip = n.private_ips[0]
         size = str(n.size.id)
         country = str(n.extra["facility"]["metro"]["country"]).lower()
-        region = f"{n.extra['facility']['region']['name']}"
-        # code = f"{n.extra['facility']['region']['code']}"
-        airport = util.get_airport("eqn", region)
+        region = f"{n.extra['facility']['metro']['name']}"
+        airport = get_airport("eqn", region)
         location = n.extra["facility"]["code"]
         status = n.state
         nl.append(["eqn", airport, node, status, size, country, region, location, public_ip, private_ip])
@@ -420,12 +431,12 @@ def list_providers(json=False):
     """List supported cloud providers."""
 
     if json:
-        util.output_json(util.PROVIDERS)
+        util.output_json(PROVIDERS)
         return
 
     p = PrettyTable()
     p.field_names = ["Provider", "Libcloud Name", "Description"]
-    p.add_rows(util.PROVIDERS)
+    p.add_rows(PROVIDERS)
     p.align["Libcloud Name"] = "l"
     p.align["Description"] = "l"
     print(p)
@@ -433,28 +444,164 @@ def list_providers(json=False):
     return
 
 
-def list_airports(geo=None, country=None, airport=None, provider=None, json=False):
-   """List Airport Region Aliases"""
+def list_airport_regions(geo=None, country=None, airport=None, provider=None, json=False):
+   """List Airport Codes & corresponding Provider Regions"""
 
-   al = util.airport_list(geo, country, airport, provider, json)
+   al = airport_list(geo, country, airport, provider, json)
    p = PrettyTable()
-   p.field_names = ["Geo", "Country", "Airport", "Area", "Lattitude", "Longitude", "Provider", "Region", "Parent", "Locations"]
+   p.field_names = ["Geo", "Country", "Airport", "Area", "Lattitude", "Longitude", "Provider", "Region", "Parent", "Zones"]
    p.float_format = ".4"
    p.align["Lattitude"] = "r"
    p.align["Longitude"] = "r"
    p.align["Area"] = "l"
    p.align["Region"] = "l"
    p.align["Parent"] = "l"
-   p.align["Locations"] = "l"
+   p.align["Zones"] = "l"
    p.add_rows(al)
    print(p)
 
+def load_config(section):
+    # make section an alias
+    if section == "equinixmetal":
+        section = "eqn"
+    elif section == "ec2":
+        section = "aws"
+
+    if not os.path.exists(CONFIG):
+        util.exit_message(f"config file {CONFIG} missing")
+    try:
+        config = configparser.ConfigParser()
+        rc = config.read(CONFIG)
+        sect = config[section]
+        return(sect)
+    except Exception:
+        util.exit_message(f"missing section '{section}' in config file '{CONFIG}'")
+
+    return None
+
+
+def get_connection(provider="equinixmetal", region=None, project=None):
+    sect = load_config(provider)
+
+    # convert provider to libcloud from an alias
+    if provider == "aws":
+        provider = "ec2"
+    elif provider == "eqn":
+        provider = "equinixmetal"
+
+    try:
+        Driver = libcloud.compute.providers.get_driver(provider)
+        if provider in ("equinixmetal"):
+            p1 = sect["api_token"]
+            conn = Driver(p1)
+            if not project:
+                project = sect["project"]
+        elif provider in ("ec2"):
+            p1 = sect["access_key_id"]
+            p2 = sect["secret_access_key"]
+            if not region:
+                region = sect["region"]
+            conn = Driver(p1, p2, region=region )
+        else:
+            util.exit_message(f"Invalid provider '{provider}'")
+    except Exception as e:
+        util.exit_message(str(e), 1)
+
+    airport = get_airport(provider, region)
+
+    return (conn, sect, region, airport, project)
+
+
+def output_json(tbl):
+    print(tbl)
+
+    return
+
+
+def is_region(region):
+    try:
+        cursor = cL.cursor()
+        cursor.execute(f"SELECT count(*) FROM airport_regions WHERE region = '{region}'")
+        data = cursor.fetchone()
+        if data[0] > 0:
+            return(True)
+    except Exception as e:
+        util.exit_message(f"is_region({region}) ERROR:\n {str(e)}", 1)
+
+    return(False)
+
+
+def is_parent(parent):
+    try:
+        cursor = cL.cursor()
+        cursor.execute(f"SELECT count(*) FROM airport_regions WHERE parent = '{parent}'")
+        data = cursor.fetchone()
+        if data[0] > 0:
+            return(True)
+    except Exception as e:
+        util.exit_message(f"is_parent({parent}) ERROR:\n {str(e)}", 1)
+
+    return(False)
+
+
+def is_airport(airport):
+    try:
+        cursor = cL.cursor()
+        cursor.execute(f"SELECT count(*) FROM airports WHERE airport = '{airport}'")
+        data = cursor.fetchone()
+        if data[0] > 0:
+            return(True)
+    except Exception as e:
+        util.exit_message(f"is_airport({airport}) ERROR:\n {str(e)}", 1)
+
+    return(False)
+
+
+def get_airport(provider, region):
+    try:
+        cursor = cL.cursor()
+        cursor.execute(f"SELECT airport FROM airport_regions WHERE provider = '{provider}' AND region = '{region}'")
+        data = cursor.fetchone()
+        if data:
+            return(str(data[0]))
+    except Exception as e:
+        util.exit_message(f"get_airport({provider}:{region}) ERROR:\n {str(e)}", 1)
+
+    return(None)
+
+
+def airport_list(geo=None, country=None, airport=None, provider=None, json=False):
+    wr = "1 = 1"
+    if geo:
+        wr = wr + f" AND geo = '{geo}'"
+    if country:
+        wr = wr + f" AND country = '{country}'"
+    if airport:
+        wr = wr + f" AND airport = '{airport}'"
+    if provider:
+        wr = wr + f" AND provider= '{provider}'"
+    cols = "geo, country, airport, airport_area, lattitude, longitude, provider, region, parent, zones"
+    try:
+        cursor = cL.cursor()
+        cursor.execute(f"SELECT {cols} FROM v_airports WHERE {wr}")
+        data = cursor.fetchall()
+    except Exception as e:
+        util.exit_message(str(e), 1)
+    al = []
+    for d in data:
+        al.append([str(d[0]), str(d[1]), str(d[2]), str(d[3]), d[4],
+                   d[5], str(d[6]), str(d[7]), str(d[8]), str(d[9])])
+    return (al)
+
+
+# MAINLINE ################################################################
+cL = sqlite3.connect(util.MY_LITE, check_same_thread=False)
 
 if __name__ == "__main__":
     fire.Fire(
         {
             "list-providers": list_providers,
-            "list-airports":  list_airports,
+            "list-airport-regions":  list_airport_regions,
             "list-nodes":     list_nodes,
             "list-locations": list_locations,
             "list-sizes":     list_sizes,

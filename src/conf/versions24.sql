@@ -521,7 +521,7 @@ CREATE TABLE airport_regions  (
   airport       TEXT  NOT NULL REFERENCES airports(airport),
   region        TEXT  NOT NULL,
   parent        TEXT  NOT NULL,
-  locations     TEXT  NOT NULL,
+  zones         TEXT  NOT NULL,
   is_active     TEXT  NOT NULL,
   PRIMARY KEY (provider, airport)
 );
@@ -688,7 +688,7 @@ INSERT INTO airport_regions VALUES ('azr', 'cbr', 'australiacentral',   '', 'a,b
 
 CREATE VIEW v_airports AS
 SELECT g.geo, c.country, a.airport, a.airport_area, a.lattitude, a.longitude,
-       ar.provider, ar.region, ar.parent, m.locations
+       ar.provider, ar.region, ar.parent, ar.zones
   FROM geos g, countries c, airport_regions ar, airports a
  WHERE g.geo = c.geo 
    AND c.country = a.country 
