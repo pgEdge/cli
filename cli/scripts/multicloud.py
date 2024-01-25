@@ -75,16 +75,15 @@ def get_node_values(provider, region, name):
         size = None
         if provider in ("eqn", "equinixmetal"):
             country = str(nd.extra["facility"]["metro"]["country"]).lower()
-            az = str(nd.extra["facility"]["code"])
-            location = str(f"{country}-{az}")
+            zone = str(nd.extra["facility"]["code"])
             size = str(nd.size.id)
         else:
-            location = nd.extra["availability"]
+            zone = nd.extra["availability"]
             size = nd.extra["instance_type"]
     except Exception as e:
         util.exit_message(str(e), 1)
 
-    return (name, public_ip, status, location, size)
+    return (name, public_ip, status, zone, size)
 
 
 def get_node(conn, name):
@@ -565,6 +564,19 @@ def is_airport(airport):
     return(False)
 
 
+def get_region(provider, airport):
+    try:
+        cursor = cL.cursor()
+        cursor.execute(f"SELECT region  FROM airport_regions WHERE provider = '{provider}' AND airport = '{airport}'")
+        data = cursor.fetchone()
+        if data:
+            return(str(data[0]))
+    except Exception as e:
+        util.exit_message(f"get_region({provider}:{airport}) ERROR:\n {str(e)}")
+
+    return(None)
+
+
 def get_airport(provider, region):
     try:
         cursor = cL.cursor()
@@ -602,6 +614,32 @@ def airport_list(geo=None, country=None, airport=None, provider=None, json=False
     return (al)
 
 
+def cluster_create(nodes):
+    nl = str(nodes).split(",")
+    if len(nl) < 2:
+        util.exit_message("Must be a comma seperated list of 'provider:airport:node_name' triplets")
+
+    print(nl)
+    for n in nl:
+        ns = n.strip()
+        nsl = ns.split(":")
+        if len(nsl) != 3:
+            util.exit_message(f"cannot parse '{ns}' into provider:airport:node_name")
+        provider = nsl[0]
+        airport = nsl[1]
+        region = get_region(provider, airport)
+        if region is None:
+            util.exit_message(f"invalid provider:airport combo '{provider}:{airport}'")
+        node_name = nsl[2]
+        name, public_ip, status, zone, size = get_node_values(provider, region, node_name)
+        if name is None:
+            util.exit_message(f"node {node_name} not found for {provider}:{airport}")
+
+        print(f"'{ns}'")
+
+    return 
+
+
 # MAINLINE ################################################################
 cL = sqlite3.connect(util.MY_LITE, check_same_thread=False)
 
@@ -618,5 +656,6 @@ if __name__ == "__main__":
             "stop-node":      stop_node,
             "reboot-node":    reboot_node,
             "destroy-node":   destroy_node,
+            "cluster-create": cluster_create,
         }
     )
