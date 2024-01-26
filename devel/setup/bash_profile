@@ -17,9 +17,9 @@ export DEVEL=$PGE/devel
 export PSX=$PGE/out/posix
 export PG=$DEVEL/pg
 export CLI=$PGE/cli/scripts
-export REPO=http://localhost:8000
+export REPO=https://pgedge-upstream.s3.amazonaws.com/REPO
 
-export PGB=/opt-pgbin/build
+export PGB=/opt/pgbin-build
 export BLD=$PGB/pgbin/bin
 
 export JAVA_HOME=/etc/alternatives/jre_17_openjdk

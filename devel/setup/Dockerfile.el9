@@ -1,6 +1,6 @@
 FROM rockylinux:9
 
-LABEL maintainer="NODECTL team"
+LABEL maintainer="CLI Team"
 
 SHELL ["/bin/bash", "-c"]
 
@@ -17,9 +17,9 @@ RUN useradd build  -U -m -d /home/build  \
 USER build
 WORKDIR /home/build
 
-RUN git clone https://github.com/pgedge/nodectl 
-WORKDIR nodectl/devel/setup
-RUN ./1-nodectl.sh  \
+RUN git clone https://github.com/pgedge/cli
+WORKDIR cli/devel/setup
+RUN ./1-cli.sh  \
     && dnf clean all \
     && rm -rf /var/cache/yum
 
