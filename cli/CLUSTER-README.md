@@ -1,8 +1,8 @@
-# PGEDGE NODECTL CLUSTER CONTROLLER
+# CLI for Custer control
 Installation and configuration of a pgEdge SPOCK cluster
 
 ## Synopsis
-    ./nodectl cluster <command> [parameters] [options]   
+    ./pgedge cluster <command> [parameters] [options]   
 
 [**local-create**](doc/cluster-local-create.md)   - Create a localhost test cluster of N pgEdge nodes on different ports.<br>
 [**local-destroy**](doc/cluster-local-destroy.md) - Stop and then nuke a localhost cluster.<br>
