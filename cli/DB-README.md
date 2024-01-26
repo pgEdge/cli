@@ -1,1 +1,1 @@
-# DB
+# CLI for Postgres DB commands
