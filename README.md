@@ -16,7 +16,7 @@ It is licensed under the pgEdge Community License 1.0
 4.) configure your ~/.aws/config credentials
 
 
-Check out our [CLI commands](https://github.com/pgedge/cli/README.md) overview and details.
+# Check out our [CLI commands](https://github.com/pgEdge/cli/tree/REL24_1/cli#readme) overview and details.
 
 # Modules 
 The modules are `um`, `service`, `spock`, `cluster`, `db`, `cloud`, and `ace`.  
