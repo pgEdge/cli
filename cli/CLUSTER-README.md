@@ -1,4 +1,4 @@
-# CLI for Custer control
+# CLI for Cluster control
 Installation and configuration of a pgEdge SPOCK cluster
 
 ## Synopsis
