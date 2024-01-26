@@ -14,5 +14,11 @@ We are licensed under the [pgEdge Community License](https://www.pgedge.com/comm
 
 ## [spock](SPOCK-README.md) - Logical and multi-Active PostgreSQL node configuration
 
+## [ace](ACE-README.md) - The Anti-Chaos Engine to help prove your active-active nodes are in sync.
+
+## [db](DB-README.md) - Configure and control Postgres Databases
+
 ## [cluster](CLUSTER-README.md) - Create and control a local cluster 
+
+## [multicloud](MULTICLOUD-README.md) - for rapidly assembling Multicloud test clusters
 
