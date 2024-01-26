@@ -1,4 +1,4 @@
-# CLI UPDATE MANAGER
+# CLI for Update Manager
 Update Manager is similar in function to YUM & APT.  It is consistent across platforms & also works in sandbox mode.
 
 ## Synopsis
