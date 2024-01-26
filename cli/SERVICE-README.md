@@ -1,5 +1,5 @@
-# PGEDGE CTL SERVICE CONTROLLER
-Service control commands function similar to SYSTEMCTL, except they are cross-platform and work in sandbox mode.
+# CLI for Service Control
+Service control commands function similar to SYSTEMCTL, except they are cross-platform and also work in sandbox mode.
 
 ## Synopsis
     ./ctl service <command> [parameters] [options] 
