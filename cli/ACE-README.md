@@ -1,8 +1,8 @@
-# PGEDGE CTL ACE
+# CLI for ACE
 Anti Chaos Engine for a pgEdge SPOCK cluster
 
 ## Synopsis
-    ./ctl ace  <command> [parameters] [options]   
+    ./pgedge ace  <command> [parameters] [options]   
 
 [**diff-tables**](doc/ace-diff-tables.md)     - Compare tables on different cluster nodes<br>
 [**diff-schemas**](doc/ace-diff-schemas.md)   - Compare schemas on different cluster nodes<br>
