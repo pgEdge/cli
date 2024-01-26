@@ -16,5 +16,5 @@ It is licensed under the [pgEdge Community License](https://www.pgedge.com/commu
 4.) configure your ~/.aws/config credentials
 
 
-# Check out our [CLI Commands](https://github.com/pgEdge/cli/tree/REL24_1/cli#readme) overview and details.
+# Check out our [CLI Commands](https://github.com/pgEdge/cli/tree/REL24_1/cli/README.md) overview and details.
 
