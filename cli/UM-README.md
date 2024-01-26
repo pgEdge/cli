@@ -1,8 +1,8 @@
-# PGEDGE CTL UPDATE MANAGER
+# CLI UPDATE MANAGER
 Update Manager is similar in function to YUM & APT.  It is consistent across platforms & also works in sandbox mode.
 
 ## Synopsis
-    ./ctl um <command> [parameters] [options] 
+    ./pgedge um <command> [parameters] [options] 
 
 [**list**](doc/um-list.md) - Display available/installed components<br>
 [**update**](doc/um-update.md)  - Retrieve new list of components & update ctl<br>
