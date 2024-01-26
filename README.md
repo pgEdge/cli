@@ -5,27 +5,20 @@
 This is the pgEdge Command Line Interface (CLI) for managing components. 
 It is licensed under the pgEdge Community License 1.0
 
-# Configuring the Python Environment for Dev/Test
-In order to run the Python code, Linux or OSX is required. 
-Python version 3.9 and later are currently supported. It is recommended that
-a Python Virtual Environment is setup for this purpose, rather than using
-the system Python environment. On Linux and Mac systems, the process is 
-simple as follows:
+# To setup a CLI development environment on EL8 or EL9:
 
-Create a virtual environment in an appropriate directory. The last argument is the name of the environment; that can be changed as desired:
+1.) Clone this repo
 
-$ python3 -m venv venv
+2.) cd cli/devel/setup
 
-Now activate the virtual environment:
+3.) run `./1-cli.sh`
 
-$ source venv/bin/activate
+4.) configure your ~/.aws/config credentials
 
-Some of our components require a very recent version of pip, so update that to the latest:
 
-$ pip install --upgrade pip
 
 # Modules 
-The modules are `um`, `service`, `spock`, `cluster`, `db`, `secure`, and `ace`.  
+The modules are `um`, `service`, `spock`, `cluster`, `db`, `cloud`, and `ace`.  
 
 ## Synopsis
     ./pgedge <module> <command> [parameters] [options] 
@@ -105,7 +98,7 @@ app-install         Install an application such as NorthWind or pgBench
 app-remove          Remove an application
 ```
 
-## `secure` Interact with pgEdge Cloud services
+## `cloud` Interact with pgEdge Cloud services
 ```
 config              Login cli with a pgEdge Cloud Account
 list-cloud-acct     List all cloud account ids in a pgEdge Cloud Account
