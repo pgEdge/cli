@@ -1,12 +1,12 @@
-# PGEDGE CTL CLI
-CTL is the pgEdge Command Line Interface (CLI).  It is a cross-platform 
+# pgEdge CLI
+This is the pgEdge Command Line Interface (CLI).  It is a cross-platform 
 tool to manage your PostgreSQL eco-system of components.  The modules are 
-UM, SERVICE, SPOCK, and CLUSTER.
+UM, SERVICE, SPOCK, ACE, MULTICLOUD, and CLUSTER.
 
-We are licensed under the [pgEdge Community License 1.0](PGEDGE-COMMUNITY-LICENSE.md)
+We are licensed under the [pgEdge Community License](https://www.pgedge.com/communitylicense)
 
 ## Synopsis
-    ./nodectl <module> <command> [parameters] [options] 
+    ./pgedge <module> <command> [parameters] [options] 
 
 ## [um](UM-README.md) - Update Manager commands
 
