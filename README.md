@@ -1,7 +1,7 @@
 # The Command Line Interface (CLI) for pgEdge
 
 This is the pgEdge Command Line Interface (CLI) for managing components. 
-It is licensed under the [pgEdge Community License](https://www.pgedge.com/communitylicense)
+Take a look at our [pgEdge Lab](https://github.com/pgEdge/pgedge/blob/main/README.md) for tips and example CLI commands.
 
 # Using the CLI to control a pgEdge cluster
 
