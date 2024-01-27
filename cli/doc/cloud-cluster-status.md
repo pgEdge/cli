@@ -1,5 +1,5 @@
 ## SYNOPSIS
-    ./ctl cloud cluster-status CLUSTER_ID <flags>
+    ./pgedge cloud cluster-status CLUSTER_ID <flags>
  
 ## DESCRIPTION
     Returns cluster status in a pgEdge Cloud Account

@@ -1,5 +1,5 @@
 ## SYNOPSIS
-    ./ctl db create <flags>
+    ./pgedge db create <flags>
  
 ## DESCRIPTION
     Usage:

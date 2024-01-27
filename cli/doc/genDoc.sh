@@ -1,5 +1,5 @@
 export pgeMdDir=$PGE/cli/doc
-nc=../../out/posix/pgedge
+export nc=../../out/posix/pgedge
 
 um () {
 $nc um --help
@@ -64,8 +64,8 @@ $nc spock set-readonly      --help
 db () {
 $nc db --help
 $nc db create               --help
-$nc db set-guc              --help
-$nc db show-guc             --help
+$nc db guc-set              --help
+$nc db guc-show             --help
 $nc db dump                 --help
 $nc db restore              --help
 $nc db migrate              --help
@@ -114,6 +114,21 @@ $nc firewalld add           --help
 $nc firewalld remove        --help
 }
 
+multicloud () {
+$nc multicloud list-providers       --help
+$nc multicloud list-airport-regions --help
+$nc multicloud list-zones           --help
+$nc multicloud list-nodes           --help
+$nc multicloud list-sizes           --help
+$nc multicloud create-node          --help
+$nc multicloud start-node           --help
+$nc multicloud stop-node            --help
+$nc multicloud reboot-node          --help
+$nc multicloud destroy-node         --help
+$nc multicloud cluster-create       --help
+}
+
+
 ############## MAINLINE ############################
 if [ $# -ne 1 ]; then
   echo "ERROR: must be one 'module' parameter"
@@ -129,6 +144,7 @@ if [ $m == "all" ]; then
   cluster
   cloud
   ace
+  multicloud
   firewalld
 elif [ $m == "um" ]; then
   um
@@ -144,6 +160,8 @@ elif [ $m == "cloud" ]; then
   cloud
 elif [ $m == "ace" ]; then
   ace
+elif [ $m == "multicloud" ]; then
+  multicloud
 elif [ $m == "firewalld" ]; then
   firewalld
 else

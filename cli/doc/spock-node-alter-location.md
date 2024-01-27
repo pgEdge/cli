@@ -1,5 +1,5 @@
 ## SYNOPSIS
-    ./ctl spock node-alter-location NODE_NAME LOCATION DB <flags>
+    ./pgedge spock node-alter-location NODE_NAME LOCATION DB <flags>
  
 ## DESCRIPTION
     Set location details for spock node.

@@ -1,5 +1,5 @@
 ## SYNOPSIS
-    ./ctl cluster COMMAND
+    ./pgedge cluster COMMAND
  
 ## COMMANDS
     COMMAND is one of the following:
@@ -9,6 +9,6 @@
      local-destroy       # Stop and then nuke a localhost cluster.
      init                # Initialize a cluster from json definition file of existing nodes.
      remove              # Remove a test cluster from json definition file of existing nodes.
-     command             # Run ./ctl commands on one or all nodes.
+     command             # Run ./pgedge commands on one or all nodes.
      app-install         # Install test application [ pgbench | northwind ].
      app-remove          # Remove test application from cluster.

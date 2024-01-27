@@ -1,5 +1,5 @@
 ## SYNOPSIS
-    ./ctl cloud COMMAND
+    ./pgedge cloud COMMAND
  
 ## COMMANDS
     COMMAND is one of the following:

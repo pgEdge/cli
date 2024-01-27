@@ -1,5 +1,5 @@
 ## SYNOPSIS
-    ./ctl service COMMAND
+    ./pgedge service COMMAND
  
 ## COMMANDS
     COMMAND is one of the following:

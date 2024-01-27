@@ -1,5 +1,5 @@
 ## SYNOPSIS
-    ./ctl service config COMPONENT
+    ./pgedge service config COMPONENT
  
 ## DESCRIPTION
     Config a component

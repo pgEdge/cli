@@ -1,5 +1,5 @@
 ## SYNOPSIS
-    ./ctl service start <flags>
+    ./pgedge service start <flags>
  
 ## DESCRIPTION
     Start server components

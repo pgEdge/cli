@@ -1,5 +1,5 @@
 ## SYNOPSIS
-    ./ctl service reload COMPONENT
+    ./pgedge service reload COMPONENT
  
 ## DESCRIPTION
     Reload server configuration files (without a restart)

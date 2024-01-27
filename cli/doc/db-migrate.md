@@ -1,5 +1,5 @@
 ## SYNOPSIS
-    ./ctl db migrate OBJECT SOURCE_DSN TARGET_DSN <flags>
+    ./pgedge db migrate OBJECT SOURCE_DSN TARGET_DSN <flags>
  
 ## DESCRIPTION
     object: database.schema.object where schema and object can contain wildcard '*'

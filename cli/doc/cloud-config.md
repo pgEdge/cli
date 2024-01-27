@@ -1,5 +1,5 @@
 ## SYNOPSIS
-    ./ctl cloud config CLIENT_ID CLIENT_SECRET <flags>
+    ./pgedge cloud config CLIENT_ID CLIENT_SECRET <flags>
  
 ## DESCRIPTION
     Connect with a pgEdge Cloud Account

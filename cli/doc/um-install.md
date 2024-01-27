@@ -1,5 +1,5 @@
 ## SYNOPSIS
-    ./ctl um install COMPONENT
+    ./pgedge um install COMPONENT
  
 ## DESCRIPTION
     Install a component

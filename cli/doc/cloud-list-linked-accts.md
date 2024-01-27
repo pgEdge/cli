@@ -1,5 +1,5 @@
 ## SYNOPSIS
-    ./ctl cloud list-linked-accts <flags>
+    ./pgedge cloud list-linked-accts <flags>
  
 ## DESCRIPTION
     List all cloud account ids in a pgEdge Cloud Account

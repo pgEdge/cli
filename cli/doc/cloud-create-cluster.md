@@ -1,5 +1,5 @@
 ## SYNOPSIS
-    ./ctl cloud create-cluster CLUSTER_NAME <flags>
+    ./pgedge cloud create-cluster CLUSTER_NAME <flags>
  
 ## DESCRIPTION
     Create a new cluster in a pgEdge Cloud Account

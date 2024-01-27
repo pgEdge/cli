@@ -1,5 +1,5 @@
 ## SYNOPSIS
-    ./ctl spock metrics-check DB <flags>
+    ./pgedge spock metrics-check DB <flags>
  
 ## DESCRIPTION
     Retrieve advanced DB & OS metrics.

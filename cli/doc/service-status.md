@@ -1,5 +1,5 @@
 ## SYNOPSIS
-    ./ctl service status <flags>
+    ./pgedge service status <flags>
  
 ## DESCRIPTION
     Display running status of installed server components

@@ -1,5 +1,5 @@
 ## SYNOPSIS
-    ./ctl firewalld add SOURCES PORTS <flags>
+    ./pgedge firewalld add SOURCES PORTS <flags>
  
 ## DESCRIPTION
     Add firewalld configuration for source IP addresses and ports

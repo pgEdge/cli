@@ -1,5 +1,5 @@
 ## SYNOPSIS
-    ./ctl spock repset-add-seq REPLICATION_SET SEQUENCE DB <flags>
+    ./pgedge spock repset-add-seq REPLICATION_SET SEQUENCE DB <flags>
  
 ## DESCRIPTION
     Add a sequence to a replication set.

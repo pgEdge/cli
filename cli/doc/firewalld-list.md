@@ -1,5 +1,5 @@
 ## SYNOPSIS
-    ./ctl firewalld list <flags>
+    ./pgedge firewalld list <flags>
  
 ## DESCRIPTION
     List firewalld external zone sources

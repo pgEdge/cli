@@ -1,5 +1,5 @@
 ## SYNOPSIS
-    ./ctl service restart COMPONENT
+    ./pgedge service restart COMPONENT
  
 ## DESCRIPTION
     Stop & then start server components

@@ -1,5 +1,5 @@
 ## SYNOPSIS
-    ./ctl um remove COMPONENT
+    ./pgedge um remove COMPONENT
  
 ## DESCRIPTION
     Uninstall a component

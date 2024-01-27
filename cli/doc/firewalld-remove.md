@@ -1,5 +1,5 @@
 ## SYNOPSIS
-    ./ctl firewalld remove SOURCES PORTS <flags>
+    ./pgedge firewalld remove SOURCES PORTS <flags>
  
 ## DESCRIPTION
     Remove firewalld configuration for source IP addresses and ports

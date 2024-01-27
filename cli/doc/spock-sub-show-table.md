@@ -1,13 +1,18 @@
 ## SYNOPSIS
-    ./ctl spock sub-show-table SUBSCRIPTION_NAME RELATION DB <flags>
+    ./pgedge spock sub-show-table SUBSCRIPTION_NAME RELATION DB <flags>
  
 ## DESCRIPTION
-    Show subscription tables.
+    Shows synchronization status of a table. 
+
+Example: spock sub-show-table sub_n2n1 mytable demo
  
 ## POSITIONAL ARGUMENTS
     SUBSCRIPTION_NAME
+        The name of the subscription. Example: sub_n2n1
     RELATION
+        Table name. Example: mytable
     DB
+        The name of the database. Example: demo
  
 ## FLAGS
     -p, --pg=PG

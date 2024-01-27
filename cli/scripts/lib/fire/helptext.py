@@ -238,16 +238,16 @@ def _SynopsisSection(component, actions_grouped_by_kind, spec, metadata,
     prfx = "cluster"
   elif "ace.py" in txt:
     prfx = "ace"
-  elif "secure.py" in txt:
-    prfx = "secure"
   elif "db.py" in txt:
     prfx = "db"
-  elif "cloud.py" in txt:
-    prfx = "cloud"
+  elif "multicloud.py" in txt:
+    prfx = "multicloud"
   elif "firewalld.py" in txt:
     prfx = "firewalld"
+  elif "cloud.py" in txt:
+    prfx = "cloud"
 
-  txt = txt.replace(f"{prfx}.py", f"./ctl {prfx}")
+  txt = txt.replace(f"{prfx}.py", f"./pgedge {prfx}")
 
   if sfx > "":
     MD_FILE = f"{prfx}-{sfx}.md"

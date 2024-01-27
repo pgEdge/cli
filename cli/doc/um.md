@@ -1,5 +1,5 @@
 ## SYNOPSIS
-    ./ctl um COMMAND
+    ./pgedge um COMMAND
  
 ## COMMANDS
     COMMAND is one of the following:

@@ -1,5 +1,5 @@
 ## SYNOPSIS
-    ./ctl db COMMAND
+    ./pgedge db COMMAND
  
 ## COMMANDS
     COMMAND is one of the following:

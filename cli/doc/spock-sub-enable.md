@@ -1,16 +1,21 @@
 ## SYNOPSIS
-    ./ctl spock sub-enable SUBSCRIPTION_NAME DB <flags>
+    ./pgedge spock sub-enable SUBSCRIPTION_NAME DB <flags>
  
 ## DESCRIPTION
-    Make a subscription live.
+    Enable a subscription. 
+
+Example: spock sub-enable sub_n2n1 demo
  
 ## POSITIONAL ARGUMENTS
     SUBSCRIPTION_NAME
+        The name of the subscription. Example: sub_n2n1
     DB
+        The name of the database. Example: demo
  
 ## FLAGS
     -i, --immediate=IMMEDIATE
         Default: False
+        If False, sub will start after the current transaction.
     -p, --pg=PG
         Type: Optional[]
         Default: None

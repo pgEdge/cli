@@ -1,5 +1,5 @@
 ## SYNOPSIS
-    ./ctl cloud list-nodes CLUSTER_ID <flags>
+    ./pgedge cloud list-nodes CLUSTER_ID <flags>
  
 ## DESCRIPTION
     List all nodes in a cluster in a pgEdge Cloud Account

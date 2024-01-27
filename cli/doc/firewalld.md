@@ -1,5 +1,5 @@
 ## SYNOPSIS
-    ./ctl firewalld COMMAND
+    ./pgedge firewalld COMMAND
  
 ## COMMANDS
     COMMAND is one of the following:

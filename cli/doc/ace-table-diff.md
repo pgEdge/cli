@@ -1,5 +1,5 @@
 ## SYNOPSIS
-    ./ctl ace table-diff CLUSTER_NAME TABLE_NAME <flags>
+    ./pgedge ace table-diff CLUSTER_NAME TABLE_NAME <flags>
  
 ## DESCRIPTION
     Efficiently compare tables across cluster using checksums and blocks of rows.

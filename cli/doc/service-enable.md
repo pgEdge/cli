@@ -1,5 +1,5 @@
 ## SYNOPSIS
-    ./ctl service enable COMPONENT
+    ./pgedge service enable COMPONENT
  
 ## DESCRIPTION
     Enable a component

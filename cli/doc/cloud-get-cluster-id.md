@@ -1,5 +1,5 @@
 ## SYNOPSIS
-    ./ctl cloud get-cluster-id CLUSTER_NAME
+    ./pgedge cloud get-cluster-id CLUSTER_NAME
  
 ## DESCRIPTION
     Return the cluster id based on a cluster display name

@@ -1,8 +1,11 @@
 ## SYNOPSIS
-    ./ctl cluster local-destroy CLUSTER_NAME
+    ./pgedge cluster local-destroy CLUSTER_NAME
  
 ## DESCRIPTION
-    Stop and then nuke a localhost cluster.
+    Destroy a local cluster. This will stop postgres on each node, and then remove the pgedge directory for each node in a local cluster. 
+
+Example: cluster local-destroy demo
  
 ## POSITIONAL ARGUMENTS
     CLUSTER_NAME
+        The name of the cluster.

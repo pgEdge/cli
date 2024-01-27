@@ -1,5 +1,5 @@
 ## SYNOPSIS
-    ./ctl cloud import-cluster-def CLUSTER_ID <flags>
+    ./pgedge cloud import-cluster-def CLUSTER_ID <flags>
  
 ## DESCRIPTION
     Import information on a pgEdge Cloud Cluster into a json file for ./pgedge cluster

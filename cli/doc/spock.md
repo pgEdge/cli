@@ -1,5 +1,5 @@
 ## SYNOPSIS
-    ./ctl spock COMMAND
+    ./pgedge spock COMMAND
  
 ## COMMANDS
     COMMAND is one of the following:
@@ -12,7 +12,7 @@
      repset-create       # Define a replication set.
      repset-alter        # Modify a replication set.
      repset-drop         # Remove a replication set.
-     repset-add-table    # Add table(s) to replication set.
+     repset-add-table    # Add table(s) to a replication set.
      repset-remove-table # Remove table from replication set.
      repset-add-seq      # Add a sequence to a replication set.
      repset-remove-seq   # Remove a sequence from a replication set.
@@ -26,7 +26,7 @@
      sub-disable         # Put a subscription on hold and disconnect from provider.
      sub-add-repset      # Add a replication set to a subscription.
      sub-remove-repset   # Drop a replication set from a subscription.
-     sub-show-status     # Display the status of the subcription.
+     sub-show-status     # Display the status of the subscription.
      sub-show-table      # Show subscription tables.
      sub-resync-table    # Resynchronize a table.
      sub-wait-for-sync   # Pause until the subscription is synchronized.

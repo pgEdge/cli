@@ -1,5 +1,5 @@
 ## SYNOPSIS
-    ./nodectl db show-guc GUC_NAME <flags>
+    ./pgedge db guc-show GUC_NAME <flags>
  
 ## DESCRIPTION
     Show GUC

@@ -1,5 +1,5 @@
 ## SYNOPSIS
-    ./ctl ace table-rerun CLUSTER_NAME DIFF_FILE TABLE_NAME
+    ./pgedge ace table-rerun CLUSTER_NAME DIFF_FILE TABLE_NAME
  
 ## POSITIONAL ARGUMENTS
     CLUSTER_NAME

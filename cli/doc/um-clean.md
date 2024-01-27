@@ -1,5 +1,5 @@
 ## SYNOPSIS
-    ./ctl um clean -
+    ./pgedge um clean -
  
 ## DESCRIPTION
     Delete downloaded component files from local cache

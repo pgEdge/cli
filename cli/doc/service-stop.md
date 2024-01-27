@@ -1,5 +1,5 @@
 ## SYNOPSIS
-    ./ctl service stop <flags>
+    ./pgedge service stop <flags>
  
 ## DESCRIPTION
     Stop server components

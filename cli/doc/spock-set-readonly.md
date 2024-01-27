@@ -1,5 +1,5 @@
 ## SYNOPSIS
-    ./ctl spock set-readonly <flags>
+    ./pgedge spock set-readonly <flags>
  
 ## DESCRIPTION
     Turn PG read-only mode 'on' or 'off'.

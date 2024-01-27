@@ -1,5 +1,5 @@
 ## SYNOPSIS
-    ./ctl service disable COMPONENT
+    ./pgedge service disable COMPONENT
  
 ## DESCRIPTION
     Disable a server component from starting automatically

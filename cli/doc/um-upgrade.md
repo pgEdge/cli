@@ -1,5 +1,5 @@
 ## SYNOPSIS
-    ./ctl um upgrade COMPONENT
+    ./pgedge um upgrade COMPONENT
  
 ## DESCRIPTION
     Perform an upgrade  to a newer version of a component

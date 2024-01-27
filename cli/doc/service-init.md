@@ -1,5 +1,5 @@
 ## SYNOPSIS
-    ./ctl service init COMPONENT
+    ./pgedge service init COMPONENT
  
 ## DESCRIPTION
     Initialize a component

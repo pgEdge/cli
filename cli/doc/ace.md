@@ -1,5 +1,5 @@
 ## SYNOPSIS
-    ./ctl ace COMMAND
+    ./pgedge ace COMMAND
  
 ## COMMANDS
     COMMAND is one of the following:
@@ -8,3 +8,4 @@
      diff-spock          # Compare spock meta data setup on different cluster nodes
      table-repair
      table-rerun
+     repset-diff         # Efficiently compare tables across cluster using checksums and blocks of rows.

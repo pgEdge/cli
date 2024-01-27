@@ -1,5 +1,5 @@
 ## SYNOPSIS
-    ./ctl cloud destroy-cluster CLUSTER_ID <flags>
+    ./pgedge cloud destroy-cluster CLUSTER_ID <flags>
  
 ## DESCRIPTION
     Delete a cluster in a pgEdge Cloud Account

@@ -1,5 +1,5 @@
 ## SYNOPSIS
-    ./ctl cloud list-clusters <flags>
+    ./pgedge cloud list-clusters <flags>
  
 ## DESCRIPTION
     List all clusters in a pgEdge Cloud Account
