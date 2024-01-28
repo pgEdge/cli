@@ -1,7 +1,7 @@
 
 set -x
 
-grep /etc/os-release el8
+grep el8 /etc/os-release
 rc=$?
 if [ "$rc" == "0" ]; then
   ./1a-python39.sh
