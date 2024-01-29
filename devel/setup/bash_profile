@@ -20,7 +20,7 @@ export CLI=$PGE/cli/scripts
 export REPO=https://pgedge-upstream.s3.amazonaws.com/REPO
 
 export PGB=/opt/pgbin-build
-export BLD=$PGB/pgbin/bin
+export BLD=$PGB/pgbin/bld
 
 export JAVA_HOME=/etc/alternatives/jre_17_openjdk
 export PATH=/usr/local/bin:$JAVA_HOME/bin:/opt/apache-maven-3.9.2/bin:$PATH
