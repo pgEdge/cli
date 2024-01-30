@@ -1,6 +1,6 @@
 # This test case runs the command:
-# ./nc service reload pg16
-#
+# ./nc service reload pgV
+# and then validates the reload.
 
 use strict;
 use warnings;
@@ -12,24 +12,19 @@ use JSON;
 use lib './t/lib';
 use contains;
 
-#
-# Move into the pgedge directory.
-#
- chdir("./pgedge");
+my $homedir = "$ENV{EDGE_HOME_DIR}";
+my $cli = $ENV{EDGE_CLI};
+my $pgversion = $ENV{EDGE_COMPONENT};
 
 #
 # First, we use nodectl to service reload to pg16; FIXME - add a test for the change to the state of the component.
 # 
 
-my $cmd = qq(./nc service reload pg16);
+my $cmd = qq($homedir/$cli service reload $pgversion);
 print("cmd = $cmd\n");
-my ($success, $error_message, $full_buf, $stdout_buf, $stderr_buf)= IPC::Cmd::run(command => $cmd, verbose => 0);
-
-print("full_buf = @$full_buf\n");
-print("stdout_buf = @$stdout_buf\n");
+my ($stdout_buf)= (run_command_and_exit_iferr ($cmd))[3];
 
 if(contains(@$stdout_buf[0], "reloading"))
-
 {
     exit(0);
 }
@@ -37,5 +32,3 @@ else
 {
     exit(1);
 }
-
-

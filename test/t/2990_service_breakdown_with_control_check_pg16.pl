@@ -1,8 +1,7 @@
-# This test case cleans up after the test: 200_setup_script.pl.  
-# The test exercises: ./nodectl remove pgedge
-# We remove the PG installation
-#
-
+# This test case does the purge for clusters created through 020/300/8000a/8001a. 
+# It wont be used in the 2000 schedule and instead 
+# will be used to cleanup the entire testing sandbox.
+# TODO : modify this to do the necessary nodectl purge of the nc/n1/n2/n3 clusters
 use strict;
 use warnings;
 
