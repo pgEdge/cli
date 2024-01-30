@@ -83,7 +83,7 @@ INSERT INTO categories VALUES (3,  80, 'Database Developers', 'Developers');
 INSERT INTO categories VALUES (9,  87, 'Management & Monitoring', 'Manage/Monitor');
 
 -- ## HUB ################################
-INSERT INTO projects VALUES ('hub', 'app', 0, 0, 'hub', 0, 'https://github.com/pgedge/nodectl','',0,'','','');
+INSERT INTO projects VALUES ('hub', 'app', 0, 0, 'hub', 0, 'https://github.com/pgedge/cli','',0,'','','');
 INSERT INTO releases VALUES ('hub', 1, 'hub', '', '', 'hidden', '', 1, '', '', '');
 INSERT INTO versions VALUES ('hub', '24.1.7',  '',  1, '20240212', '', '', '');
 INSERT INTO versions VALUES ('hub', '24.1.6',  '',  0, '20240130', '', '', '');
@@ -303,16 +303,11 @@ INSERT INTO projects VALUES ('group-pgedge', 'pge', 0, 0, 'hub', 3, 'http://pged
 INSERT INTO releases VALUES ('group-pgedge', 1, 'group-pgedge',  'pgEdge', '', 'prod', '', 1, 'pgEdge Platform', '', '');
 INSERT INTO versions VALUES ('group-pgedge', '2.10',  '', 1, '20240130', '', '', '');
 
-INSERT INTO projects VALUES ('ctlibs', 'pge', 0, 0, 'hub', 3, 'https://github.com/pgedge/nodectl',
-  'ctlibs',  0, 'ctlibs.png', 'ctlibs', 'https://github.com/pgedge/nodectl');
+INSERT INTO projects VALUES ('ctlibs', 'pge', 0, 0, 'hub', 3, 'https://github.com/pgedge/cli',
+  'ctlibs',  0, 'ctlibs.png', 'ctlibs', 'https://github.com/pgedge/cli');
 INSERT INTO releases VALUES ('ctlibs', 2, 'ctlibs',  'nodectl Libs', '', 'prod', '', 1, '', '', '');
 INSERT INTO versions VALUES ('ctlibs', '1.2', '', 1, '20240130', '', '', '');
 INSERT INTO versions VALUES ('ctlibs', '1.1', '', 0, '20231130', '', '', '');
-
-INSERT INTO projects VALUES ('nclibs', 'pge', 0, 0, 'hub', 3, 'https://github.com/pgedge/nodectl',
-  'nclibs',  0, 'nclibs.png', 'nclibs', 'https://github.com/pgedge/nodectl');
-INSERT INTO releases VALUES ('nclibs', 2, 'nclibs',  'nodectl Libs', '', 'prod', '', 1, '', '', '');
-INSERT INTO versions VALUES ('nclibs', '1.0', '', 0, '20231021', '', '', '');
 
 INSERT INTO projects VALUES ('pgcat', 'pge', 11, 5433, 'hub', 3, 'https://github.com/pgedge/pgcat/tags',
   'cat',  0, 'pgcat.png', 'Connection Pooler', 'https://github.com/pgedge/pgcat');
@@ -339,16 +334,6 @@ INSERT INTO projects VALUES ('etcd', 'app', 11, 0, 'hub', 4, 'https://github.com
   'etcd', 0, 'etcd.png', 'HA', 'https://github.com/etcd-io/etcd');
 INSERT INTO releases VALUES ('etcd', 1, 'etcd', 'Etcd', '', 'prod', '', 1, 'POSTGRES', '', '');
 INSERT INTO versions VALUES ('etcd', '3.5.11', 'el8, el9, arm9', 1, '20240108', '', '', '');
-INSERT INTO versions VALUES ('etcd', '3.5.9', 'el9, arm9',       0, '20231013', '', '', '');
-
-INSERT INTO projects VALUES ('ddlx', 'ext',     4, 0, 'hub', 0, 'https://github.com/lacanoid/pgddl/releases', 'ddlx',  1, 'ddlx.png', 'DDL Extractor', 'https://github.com/lacanoid/pgddl#ddl-extractor-functions--for-postgresql');
-INSERT INTO releases VALUES ('ddlx-pg13', 2, 'ddlx', 'DDLeXtact', '', 'prod','',  0, 'POSTGRES', '', '');
-INSERT INTO versions VALUES ('ddlx-pg13', '0.17-1', 'amd', 0, '2.210911', 'pg13', '', '');
-
-INSERT INTO projects VALUES ('multicorn2', 'ext', 4, 0, 'hub', 0, 'https://github.com/pgsql-io/multicorn2/tags',
-  'multicorn2', 1, 'multicorn.png', 'Python FDW Library', 'http://multicorn2.org');
-INSERT INTO releases VALUES ('multicorn2-pg15', 1, 'multicorn2', 'Multicorn2', '', 'test','',  1, 'POSTGRES', '', '');
-INSERT INTO versions VALUES ('multicorn2-pg15', '2.4-1', 'arm, el8', 0, '20220909', 'pg15', '', '');
 
 -- MULTICLOUD METADATA ------------------------------------------------------
 
