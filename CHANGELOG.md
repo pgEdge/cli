@@ -1,6 +1,7 @@
 # pgEdge Platform Release Notes #############
 
 ## done for 24.1.7 as of 2024-01-30 ###########
+  - bump pgvector from 0.5.1 to [0.6.0](https://github.com/pgvector/pgvector/blob/master/CHANGELOG.md)
   - improve ACE doc 
 
 
