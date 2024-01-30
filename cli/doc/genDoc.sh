@@ -101,10 +101,11 @@ $nc cloud destroy-cluster    --help
 ace () {
 $nc ace --help
 $nc ace table-diff          --help
+$nc ace diff-schema         --help
+$nc ace diff-spock          --help
 $nc ace table-repair        --help
 $nc ace table-rerun         --help
-$nc ace diff-schemas        --help
-$nc ace diff-spock          --help
+$nc ace repset-diff         --help
 }
 
 firewalld () {

@@ -1,7 +1,7 @@
 # pgEdge Platform Release Notes #############
 
 ## done for 24.1.7 as of 2024-01-30 ###########
-  - open for dev
+  - improve ACE doc 
 
 
 ## done for 24.1.6 on 2024-01-30 ###########

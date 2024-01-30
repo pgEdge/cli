@@ -503,7 +503,7 @@ def table_diff(
     nodes="all",
     diff_file=None,
 ):
-    """Efficiently compare tables across cluster using checksums and blocks of rows."""
+    """Efficiently compare tables across cluster using checksums and blocks of rows"""
 
     if not diff_file:
         try:
@@ -832,6 +832,8 @@ def write_diffs_csv():
 
 
 def table_rerun(cluster_name, diff_file, table_name):
+    """Re-run differences on the results of a recent table-diff"""
+
     if not os.path.exists(diff_file):
         util.exit_message(f"Diff file {diff_file} not found")
 
@@ -1047,6 +1049,7 @@ def table_rerun(cluster_name, diff_file, table_name):
 
 
 def table_repair(cluster_name, diff_file, source_of_truth, table_name, dry_run=False):
+    """Apply changes from a table-diff source of truth to destination table"""
     import pandas as pd
 
     # Check if diff_file exists on disk
@@ -1405,7 +1408,7 @@ def repset_diff(
     output="json",
     nodes="all",
 ):
-    """Efficiently compare tables across cluster using checksums and blocks of rows."""
+    """Loop thru a replication-sets tables and run table-diff on them"""
 
     # TODO: Use a more specific exception here
     try:

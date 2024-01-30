@@ -1,12 +1,12 @@
 ## SYNOPSIS
-    ./pgedge ace table-diff CLUSTER_NAME TABLE_NAME <flags>
+    ./pgedge ace repset-diff CLUSTER_NAME REPSET_NAME <flags>
  
 ## DESCRIPTION
-    Efficiently compare tables across cluster using checksums and blocks of rows
+    Loop thru a replication-sets tables and run table-diff on them
  
 ## POSITIONAL ARGUMENTS
     CLUSTER_NAME
-    TABLE_NAME
+    REPSET_NAME
  
 ## FLAGS
     -b, --block_rows=BLOCK_ROWS
@@ -17,6 +17,3 @@
         Default: json
     -n, --nodes=NODES
         Default: all
-    -d, --diff_file=DIFF_FILE
-        Type: Optional[]
-        Default: None
