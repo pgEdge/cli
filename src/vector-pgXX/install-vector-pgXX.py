@@ -5,5 +5,5 @@
 
 import util
 
-util.create_extension("pgXX", "vector", True)
+util.create_extension("pgXX", "", True, "vector")
 
