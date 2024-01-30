@@ -504,14 +504,12 @@ def get_1st_ip():
     return ip
 
 
-def run_backrest(p_cmd):
-    backrest = os.path.join(MY_HOME, "backrest", "bin", "pgbackrest")
-    if not os.path.isfile(backrest):
-        message("backrest not installed", "error")
+def run_native(component, bin_path, cmd):
+    if not os.path.isfile(bin_path):
+        message(f"{component} not installed, missing '{bin_path}'", "error")
         return
 
-    os.system(backrest + " " + p_cmd)
-    return
+    return(echo_cmd(bin_path + " " + cmd))
 
 
 def sysdate():

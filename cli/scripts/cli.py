@@ -74,7 +74,7 @@ fire_list = [
     "multicloud"
 ]
 
-native_list = ["backrest", "ansible", "patroni"]
+native_list = ["backrest", "ansible", "patroni", "etcd"]
 
 mode_list_advanced = [
     "kill",
@@ -150,7 +150,6 @@ ignore_comp_list = (
         "pg_isready",
         "service",
         "useradd",
-        "backrest",
         "change-pgconf",
     ]
     + fire_list
@@ -160,7 +159,7 @@ ignore_comp_list = (
 no_log_commands = ["status", "info", "list", "top", "get", "metrics-check"]
 
 lock_commands = (
-    ["install", "remove", "update", "upgrade", "downgrade", "backrest", "service"]
+    ["install", "remove", "update", "upgrade", "downgrade", "service"]
     + fire_list
     + native_list
 )
@@ -1487,31 +1486,25 @@ if p_mode == "pgbin":
 if p_mode in fire_list:
     fire_away(p_mode, args)
 
-## BACKREST ##########################################
-if p_mode == "backrest":
-    if len(args) == 2:
-        cmd = "help"
-    else:
-        cmd = ""
-        for n in range(2, len(args)):
-            cmd = cmd + " " + args[n]
-    util.run_backrest(cmd)
-    exit_cleanly(0)
-
-## NATIVE LIST #############################################################
+## NATIVE_LIST #######################################
 if p_mode in native_list:
-    if p_mode == "ansible":
-        if len(args) == 2:
-            cmd = "--help"
-        else:
-            cmd = ""
-            for n in range(2, len(args)):
-                cmd = cmd + " " + args[n]
+    cmd = ""
+    for n in range(2, len(args)):
+        cmd = cmd + " " + args[n]
 
-        rc = util.echo_cmd(f"ansible {cmd}")
-        exit_cleanly(rc)
+    bin_path = ""
+    if p_mode == "backrest":
+       bin_path = os.path.join(MY_HOME, "backrest", "bin", "pgbackrest")
+    elif p_mode == "etcd":
+       bin_path = "/usr/local/bin/etcd"
+    elif p_mode == "ansible":
+       bin_path = "/usr/local/bin/ansible"
+    elif p_mode == "patroni":
+       bin_path = os.path.join(MY_HOME, "patroni", "bin", "patroni")
 
-    util.exit_message(f"'{p_mode}' command not supported")
+    util.run_native(p_mode, bin_path, cmd)
+
+    exit_cleanly(0)
 
 ## TOP #####################################################################
 if p_mode == "top":
