@@ -232,8 +232,10 @@ INSERT INTO projects VALUES ('vector', 'pge', 4, 0, 'hub', 1, 'https://github.co
   'vector', 1, 'vector.png', 'Vector & Embeddings', 'https://github.com/pgedge/vector/#vector');
 INSERT INTO releases VALUES ('vector-pg15', 4, 'vector', 'pgVector', '', 'prod', '', 1, 'pgEdge Community', '', '');
 INSERT INTO releases VALUES ('vector-pg16', 4, 'vector', 'pgVector', '', 'prod', '', 1, 'pgEdge Community', '', '');
-INSERT INTO versions VALUES ('vector-pg15', '0.5.1-1', 'el9, arm9', 1, '20231031', 'pg15', '', '');
-INSERT INTO versions VALUES ('vector-pg16', '0.5.1-1', 'el9, arm9', 1, '20231031', 'pg16', '', '');
+INSERT INTO versions VALUES ('vector-pg15', '0.6.0-1', 'el9, arm9', 1, '20240210', 'pg15', '', '');
+INSERT INTO versions VALUES ('vector-pg16', '0.6.0-1', 'el9, arm9', 1, '20240210', 'pg16', '', '');
+INSERT INTO versions VALUES ('vector-pg15', '0.5.1-1', 'el9, arm9', 0, '20231031', 'pg15', '', '');
+INSERT INTO versions VALUES ('vector-pg16', '0.5.1-1', 'el9, arm9', 0, '20231031', 'pg16', '', '');
 
 INSERT INTO projects VALUES ('snowflake', 'pge', 4, 0, 'hub', 1, 'https://github.com/pgedge/snowflake/tags',
   'snowflake', 1, 'snowflake.png', 'Snowflake Sequences', 'https://github.com/pgedge/snowflake/');

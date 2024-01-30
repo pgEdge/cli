@@ -1,9 +1,7 @@
- 
 ####################################################################
-######          Copyright (c)  2022-2024 pgEdge           ##########
+######          Copyright (c)  2022-2024 PGEDGE           ##########
 ####################################################################
 
 import util
 
-util.create_extension("pgXX", "vector", True)
-
+util.remove_pgconf_keyval("pgXX", "shared_preload_libraries", "vector")

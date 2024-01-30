@@ -9,7 +9,7 @@ spock32V=3.2.4-1
 
 foslotsV=1a-1
 snwflkV=1.1-1
-vectorV=0.5.1-1
+vectorV=0.6.0-1
 
 grp_pgeV=2.10
 
