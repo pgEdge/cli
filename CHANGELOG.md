@@ -2,7 +2,9 @@
 
 ## done for 24.1.7 as of 2024-01-30 ###########
   - bump pgvector from 0.5.1 to [0.6.0](https://github.com/pgvector/pgvector/blob/master/CHANGELOG.md)
-  - improve ACE doc 
+  - improve [DB doc](https://github.com/pgEdge/cli/blob/REL24_1/cli/DB-README.md)
+  - improve [ACE doc](https://github.com/pgEdge/cli/blob/REL24_1/cli/ACE-README.md) 
+  
 
 
 ## done for 24.1.6 on 2024-01-30 ###########
