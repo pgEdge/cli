@@ -4,7 +4,6 @@ Secure CLI Interface to pgEdge Cloud
 ## Synopsis
     ./ctl cloud  <command> [parameters] [options]   
 
-COMMANDS
 [**config**](doc/cloud-config.md)                         - Login with a pgEdge Cloud Account<br>
 [**list-linked-accts**](doc/cloud-list-linked-accts.md)   - List all cloud account ids in a pgEdge Cloud Account<br>
 [**list-clusters**](doc/cloud-list-clusters.md)           - List all clusters in a pgEdge Cloud Account<br>
