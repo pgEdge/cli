@@ -1,6 +1,10 @@
 # pgEdge Platform Release Notes #############
 
-## done for 24.1.6 as of 2024-01-28 ###########
+## done for 24.1.7 as of 2024-01-30 ###########
+  - open for dev
+
+
+## done for 24.1.6 on 2024-01-30 ###########
   - work on build automation
   - lots of work updating doc
   - a cleaned up, simplified and documented CLI 'devel/setup' process

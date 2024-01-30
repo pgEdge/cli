@@ -85,7 +85,7 @@ INSERT INTO categories VALUES (9,  87, 'Management & Monitoring', 'Manage/Monito
 -- ## HUB ################################
 INSERT INTO projects VALUES ('hub', 'app', 0, 0, 'hub', 0, 'https://github.com/pgedge/nodectl','',0,'','','');
 INSERT INTO releases VALUES ('hub', 1, 'hub', '', '', 'hidden', '', 1, '', '', '');
-INSERT INTO versions VALUES ('hub', '24.1.6',  '',  1, '20240131', '', '', '');
+INSERT INTO versions VALUES ('hub', '24.1.6',  '',  1, '20240130', '', '', '');
 INSERT INTO versions VALUES ('hub', '24.1.5',  '',  0, '20240108', '', '', '');
 INSERT INTO versions VALUES ('hub', '24.1.4',  '',  0, '20240102', '', '', '');
 INSERT INTO versions VALUES ('hub', '24.1.3',  '',  0, '20231205', '', '', '');
@@ -129,8 +129,8 @@ INSERT INTO projects VALUES ('plv8', 'dev', 4, 0, 'hub', 0, 'https://github.com/
   'plv8',   1, 'v8.png', 'Javascript Stored Procedures', 'https://github.com/plv8/plv8');
 INSERT INTO releases VALUES ('plv8-pg15', 4, 'plv8', 'PL/V8', '', 'prod', '', 1, 'POSTGRES', '', '');
 INSERT INTO releases VALUES ('plv8-pg16', 4, 'plv8', 'PL/V8', '', 'prod', '', 1, 'POSTGRES', '', '');
-INSERT INTO versions VALUES ('plv8-pg15', '3.2.1-1', 'arm9, el9', 1, '20240131', 'pg15', '', '');
-INSERT INTO versions VALUES ('plv8-pg16', '3.2.1-1', 'arm9, el9', 1, '20240131', 'pg16', '', '');
+INSERT INTO versions VALUES ('plv8-pg15', '3.2.1-1', 'arm9, el9', 1, '20240130', 'pg15', '', '');
+INSERT INTO versions VALUES ('plv8-pg16', '3.2.1-1', 'arm9, el9', 1, '20240130', 'pg16', '', '');
 
 INSERT INTO projects VALUES ('pljava', 'dev', 4, 0, 'hub', 0, 'https://github.com/tada/pljava/releases', 
   'pljava', 1, 'pljava.png', 'Java Stored Procedures', 'https://github.com/tada/pljava');
@@ -203,22 +203,22 @@ INSERT INTO projects VALUES ('timescaledb', 'ext', 4, 0, 'hub',0, 'https://githu
   'timescaledb', 1, 'timescaledb.png', 'Timeseries Extension', 'https://github.com/timescaledb/timescaledb');
 INSERT INTO releases VALUES ('timescaledb-pg15', 10, 'timescaledb', 'TimescaleDB', '', 'test', '', 1, 'POSTGRES', '', '');
 INSERT INTO releases VALUES ('timescaledb-pg16', 10, 'timescaledb', 'TimescaleDB', '', 'test', '', 1, 'POSTGRES', '', '');
-INSERT INTO versions VALUES ('timescaledb-pg15', '2.13.1-1', 'el9, arm9', 1, '20240131', 'pg15', '', '');
-INSERT INTO versions VALUES ('timescaledb-pg16', '2.13.1-1', 'el9, arm9', 1, '20240131', 'pg16', '', '');
+INSERT INTO versions VALUES ('timescaledb-pg15', '2.13.1-1', 'el9, arm9', 1, '20240130', 'pg15', '', '');
+INSERT INTO versions VALUES ('timescaledb-pg16', '2.13.1-1', 'el9, arm9', 1, '20240130', 'pg16', '', '');
 
 INSERT INTO projects VALUES ('curl', 'ext', 4, 0, 'hub',0, 'https://github.com/pg_curl/pg_curl/releases',
   'curl', 1, 'curl.png', 'Invoke JSON Services', 'https://github.com/pg_curl/pg_curl');
 INSERT INTO releases VALUES ('curl-pg15', 10, 'curl', 'pgCron', '', 'prod', '', 1, 'POSTGRES', '', '');
 INSERT INTO releases VALUES ('curl-pg16', 10, 'curl', 'pgCron', '', 'prod', '', 1, 'POSTGRES', '', '');
-INSERT INTO versions VALUES ('curl-pg15', '2.2.2-1',  'el9, arm9', 1, '20240131', 'pg15', '', '');
-INSERT INTO versions VALUES ('curl-pg16', '2.2.2-1',  'el9, arm9', 1, '20240131', 'pg16', '', '');
+INSERT INTO versions VALUES ('curl-pg15', '2.2.2-1',  'el9, arm9', 1, '20240130', 'pg15', '', '');
+INSERT INTO versions VALUES ('curl-pg16', '2.2.2-1',  'el9, arm9', 1, '20240130', 'pg16', '', '');
 
 INSERT INTO projects VALUES ('citus', 'pge', 4, 0, 'hub',0, 'https://github.com/citusdata/citus/releases',
   'citus', 1, 'citus.png', 'Sharded Postgres', 'https://github.com/citusdata/citus');
 INSERT INTO releases VALUES ('citus-pg15', 10, 'citus', 'Citus', '', 'test', '', 1, 'AGPLv3', '', '');
 INSERT INTO releases VALUES ('citus-pg16', 10, 'citus', 'Citus', '', 'test', '', 1, 'AGPLv3', '', '');
-INSERT INTO versions VALUES ('citus-pg15', '12.1.1-1', 'el9, arm9', 1, '20240131', 'pg15', '', '');
-INSERT INTO versions VALUES ('citus-pg16', '12.1.1-1', 'el9, arm9', 1, '20240131', 'pg16', '', '');
+INSERT INTO versions VALUES ('citus-pg15', '12.1.1-1', 'el9, arm9', 1, '20240130', 'pg15', '', '');
+INSERT INTO versions VALUES ('citus-pg16', '12.1.1-1', 'el9, arm9', 1, '20240130', 'pg16', '', '');
 
 INSERT INTO projects VALUES ('cron', 'ext', 4, 0, 'hub',0, 'https://github.com/citusdata/pg_cron/releases',
   'cron', 1, 'cron.png', 'Background Job Scheduler', 'https://github.com/citusdata/pg_cron');
@@ -267,8 +267,8 @@ INSERT INTO projects VALUES ('postgis', 'ext', 4, 1, 'hub', 3, 'http://postgis.n
   'postgis', 1, 'postgis.png', 'Spatial Extensions', 'http://postgis.net');
 INSERT INTO releases VALUES ('postgis-pg15', 3, 'postgis', 'PostGIS', '', 'prod', '', 1, 'GPLv2', '', '');
 INSERT INTO releases VALUES ('postgis-pg16', 3, 'postgis', 'PostGIS', '', 'prod', '', 1, 'GPLv2', '', '');
-INSERT INTO versions VALUES ('postgis-pg15', '3.4.1-1', 'el9, arm9', 1, '20240131', 'pg15', '', 'https://git.osgeo.org/gitea/postgis/postgis/raw/tag/3.4.1/NEWS');
-INSERT INTO versions VALUES ('postgis-pg16', '3.4.1-1', 'el9, arm9', 1, '20240131', 'pg16', '', 'https://git.osgeo.org/gitea/postgis/postgis/raw/tag/3.4.1/NEWS');
+INSERT INTO versions VALUES ('postgis-pg15', '3.4.1-1', 'el9, arm9', 1, '20240130', 'pg15', '', 'https://git.osgeo.org/gitea/postgis/postgis/raw/tag/3.4.1/NEWS');
+INSERT INTO versions VALUES ('postgis-pg16', '3.4.1-1', 'el9, arm9', 1, '20240130', 'pg16', '', 'https://git.osgeo.org/gitea/postgis/postgis/raw/tag/3.4.1/NEWS');
 
 INSERT INTO projects VALUES ('pgadmin4', 'app', 11, 443, '', 1, 'https://www.pgadmin.org/news/',
   'pgadmin4', 0, 'pgadmin.png', 'PostgreSQL Tools', 'https://pgadmin.org');
@@ -280,8 +280,8 @@ INSERT INTO projects VALUES ('partman', 'ext', 4, 0, 'hub', 4, 'https://github.c
   'partman', 1, 'partman.png', 'Partition Management', 'https://github.com/pgpartman/pg_partman#pg-partition-manager');
 INSERT INTO releases VALUES ('partman-pg15', 6, 'partman', 'pgPartman',   '', 'prod', '', 1, 'POSTGRES', '', '');
 INSERT INTO releases VALUES ('partman-pg16', 6, 'partman', 'pgPartman',   '', 'prod', '', 1, 'POSTGRES', '', '');
-INSERT INTO versions VALUES ('partman-pg15', '5.0.1-1',  'arm9, el9', 1, '20240131', 'pg15', '', '');
-INSERT INTO versions VALUES ('partman-pg16', '5.0.1-1',  'arm9, el9', 1, '20240131', 'pg16', '', '');
+INSERT INTO versions VALUES ('partman-pg15', '5.0.1-1',  'arm9, el9', 1, '20240130', 'pg15', '', '');
+INSERT INTO versions VALUES ('partman-pg16', '5.0.1-1',  'arm9, el9', 1, '20240130', 'pg16', '', '');
 
 INSERT INTO projects VALUES ('hypopg', 'ext', 4, 0, 'hub', 8, 'https://github.com/HypoPG/hypopg/releases',
   'hypopg', 1, 'whatif.png', 'Hypothetical Indexes', 'https://hypopg.readthedocs.io/en/latest/');
@@ -298,12 +298,12 @@ INSERT INTO versions VALUES ('badger', '11.8', '', 0, '20220408', '', '', '');
 INSERT INTO projects VALUES ('group-pgedge', 'pge', 0, 0, 'hub', 3, 'http://pgedge.com',
   'group-pgedge',  0, 'pgedge.png', 'Multi-Active Global Postgres Clusters', 'http://pgedge.com');
 INSERT INTO releases VALUES ('group-pgedge', 1, 'group-pgedge',  'pgEdge', '', 'prod', '', 1, 'pgEdge Platform', '', '');
-INSERT INTO versions VALUES ('group-pgedge', '2.10',  '', 1, '20240131', '', '', '');
+INSERT INTO versions VALUES ('group-pgedge', '2.10',  '', 1, '20240130', '', '', '');
 
 INSERT INTO projects VALUES ('ctlibs', 'pge', 0, 0, 'hub', 3, 'https://github.com/pgedge/nodectl',
   'ctlibs',  0, 'ctlibs.png', 'ctlibs', 'https://github.com/pgedge/nodectl');
 INSERT INTO releases VALUES ('ctlibs', 2, 'ctlibs',  'nodectl Libs', '', 'prod', '', 1, '', '', '');
-INSERT INTO versions VALUES ('ctlibs', '1.2', '', 1, '20240131', '', '', '');
+INSERT INTO versions VALUES ('ctlibs', '1.2', '', 1, '20240130', '', '', '');
 INSERT INTO versions VALUES ('ctlibs', '1.1', '', 0, '20231130', '', '', '');
 
 INSERT INTO projects VALUES ('nclibs', 'pge', 0, 0, 'hub', 3, 'https://github.com/pgedge/nodectl',
