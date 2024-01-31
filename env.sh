@@ -11,7 +11,7 @@ foslotsV=1a-1
 snwflkV=1.1-1
 vectorV=0.6.0-1
 
-grp_pgeV=2.10
+grp_pgeV=2.11
 
 P17=17devel-1
 P16=16.1-1

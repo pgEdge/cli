@@ -71,10 +71,16 @@ def check_pre_reqs():
     if util.is_admin():
         error_exit("You must install as non-root user with passwordless sudo privleges")
 
-    util.message(f"  Verify port {prt} availability")
-    while util.is_socket_busy(prt):
-        prt = prt + 1
-        util.message(f"  Verify port {prt} availability")
+    if os.getenv("pgePort", "") == "":
+        util.message(f"  Verify default port {prt} availability")
+        while util.is_socket_busy(prt):
+            prt = prt + 1
+            util.message(f"  Verify default port {prt} availability")
+    else:
+        util.message(f"  Verify specific port {prt} availability")
+        if util.is_socket_busy(prt):
+           error_exit("Port {prt} is unavailable")
+
     util.message(f"  Using port {prt}")
 
     data_dir = "data/" + pgV

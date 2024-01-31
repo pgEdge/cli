@@ -233,8 +233,8 @@ INSERT INTO projects VALUES ('vector', 'pge', 4, 0, 'hub', 1, 'https://github.co
   'vector', 1, 'vector.png', 'Vector & Embeddings', 'https://github.com/pgedge/vector/#vector');
 INSERT INTO releases VALUES ('vector-pg15', 4, 'vector', 'pgVector', '', 'prod', '', 1, 'pgEdge Community', '', '');
 INSERT INTO releases VALUES ('vector-pg16', 4, 'vector', 'pgVector', '', 'prod', '', 1, 'pgEdge Community', '', '');
-INSERT INTO versions VALUES ('vector-pg15', '0.6.0-1', 'el9, arm9', 1, '20240210', 'pg15', '', '');
-INSERT INTO versions VALUES ('vector-pg16', '0.6.0-1', 'el9, arm9', 1, '20240210', 'pg16', '', '');
+INSERT INTO versions VALUES ('vector-pg15', '0.6.0-1', 'el9, arm9', 1, '20240131', 'pg15', '', '');
+INSERT INTO versions VALUES ('vector-pg16', '0.6.0-1', 'el9, arm9', 1, '20240131', 'pg16', '', '');
 INSERT INTO versions VALUES ('vector-pg15', '0.5.1-1', 'el9, arm9', 0, '20231031', 'pg15', '', '');
 INSERT INTO versions VALUES ('vector-pg16', '0.5.1-1', 'el9, arm9', 0, '20231031', 'pg16', '', '');
 
@@ -303,7 +303,8 @@ INSERT INTO versions VALUES ('badger', '11.8', '', 0, '20220408', '', '', '');
 INSERT INTO projects VALUES ('group-pgedge', 'pge', 0, 0, 'hub', 3, 'http://pgedge.com',
   'group-pgedge',  0, 'pgedge.png', 'Multi-Active Global Postgres Clusters', 'http://pgedge.com');
 INSERT INTO releases VALUES ('group-pgedge', 1, 'group-pgedge',  'pgEdge', '', 'prod', '', 1, 'pgEdge Platform', '', '');
-INSERT INTO versions VALUES ('group-pgedge', '2.10',  '', 1, '20240130', '', '', '');
+INSERT INTO versions VALUES ('group-pgedge', '2.11',  '', 1, '20240212', '', '', '');
+INSERT INTO versions VALUES ('group-pgedge', '2.10',  '', 0, '20240130', '', '', '');
 
 INSERT INTO projects VALUES ('ctlibs', 'pge', 0, 0, 'hub', 3, 'https://github.com/pgedge/cli',
   'ctlibs',  0, 'ctlibs.png', 'ctlibs', 'https://github.com/pgedge/cli');
