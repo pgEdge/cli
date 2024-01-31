@@ -38,7 +38,7 @@ if os.path.exists(platform_lib_path):
     if platform_lib_path not in sys.path:
         sys.path.append(platform_lib_path)
 
-import util, api, startup, meta, component
+import util, api, startup, meta
 
 my_conf = os.path.join(util.MY_HOME, "conf")
 if not util.is_writable(my_conf):

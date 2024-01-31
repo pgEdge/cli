@@ -342,7 +342,7 @@ def install_pgedge(cluster_name):
             REPO = "https://pgedge-upstream.s3.amazonaws.com/REPO"
 
         cmd1 = f"mkdir -p {ndpath}; cd {ndpath}; "
-        cmd2 = f"python3 -c '$(curl -fsSL {REPO}/install24.py)'"
+        cmd2 = f"python3 -c '$(curl -fsSL {REPO}/install.py)'"
         echo_cmd(f"{cmd1}{cmd2}", ndip, cluster)
 
         nc = f"{ndpath}/pgedge/pgedge"  # Fixed path here

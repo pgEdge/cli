@@ -2,6 +2,7 @@
 
 ## done for 24.1.8 on 2024-02-01 ###########
   - deprecate docker folder in favor of pgedge-docker repo
+  - remove unused .py files & use -upstream/install.py by default
 
 ## done for 24.1.7 on 2024-01-31 ###########
   - build spock-3.2.5beta1 el9 test version for wip_auto_ddl functional testing

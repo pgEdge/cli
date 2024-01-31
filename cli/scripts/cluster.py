@@ -3,7 +3,6 @@
 
 import os, json, datetime
 import util, fire, meta, time
-import pgbench, northwind
 
 base_dir = "cluster"
 
@@ -370,15 +369,10 @@ def ssh_install_pgedge(cluster_name, db, pg, db_user, db_passwd, nodes):
 
         REPO = os.getenv("REPO", "")
         if REPO == "":
-            REPO = "https://pgedge-download.s3.amazonaws.com/REPO"
+            REPO = "https://pgedge-upstream.s3.amazonaws.com/REPO"
             os.environ["REPO"] = REPO
 
-        install_py = os.getenv("INSTALL_PY", "")
-        if install_py == "":
-            if "-upstream" in REPO:
-                install_py = "install24.py"
-            else:
-                install_py = "install.py"
+        install_py = "install.py"
 
         util.message(
             f"########                node={ndnm}, host={ndip}, path={ndpath} REPO={REPO}\n"
