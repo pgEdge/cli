@@ -1759,9 +1759,8 @@ if p_mode == "install":
     installed_commponents = []
     dependencies = [p for p in deplist if p not in p_comp_list]
     for c in deplist:
-        if requested_p_version and c in p_comp_list:
-            status = install_comp(c, p_version, p_rver=requested_p_version)
-            p_version = requested_p_version
+        if p_version and c in p_comp_list:
+            status = install_comp(c, p_version)
         else:
             p_version = None
             status = install_comp(c)
