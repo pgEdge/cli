@@ -1,5 +1,8 @@
 # pgEdge Labs Release Notes #############
 
+## done for 24.1.8 on 2024-02-01 ###########
+  - open for dev
+
 ## done for 24.1.7 on 2024-01-31 ###########
   - build spock-3.2.5beta1 el9 test version for wip_auto_ddl functional testing
   - add util.run_native() for supporting backrest, patroni, ansible and etcd CLI's

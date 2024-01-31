@@ -4,7 +4,7 @@
 
 import sys, os
 
-VER = "24.1.7"
+VER = "24.1.8"
 REPO = os.getenv("REPO", "https://pgedge-upstream.s3.amazonaws.com/REPO")
 
 from urllib import request as urllib2
