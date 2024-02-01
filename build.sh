@@ -543,9 +543,10 @@ do
             OS_TYPE="POSIX"
 
 
-	    depnc=deprecate-nc.sh
-            cp $CLI/cli.sh        ./pgedge
+            cp $CLI/sh/cli.sh     ./pgedge
             cp $CLI/sh/setup.sh   ./setup
+
+	    depnc=sh/deprecate-nc.sh
 	    cp $CLI/$depnc        ./nc
 	    cp $CLI/$depnc        ./nodectl 
 	    cp $CLI/$depnc        ./ctl 

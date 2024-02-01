@@ -3,7 +3,7 @@ cd "$(dirname "$0")"
 
 cmd="./pgedge setup pgedge"
 
-if [$# -eq 0]; 
+if [ "$#" == "0" ]; then
    $cmd --help
 else
    $cmd "$@"
