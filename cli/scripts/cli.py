@@ -65,13 +65,13 @@ fire_list = [
     "um",
     "spock",
     "cluster",
-    "staz",
     "ace",
     "cloud",
     "db",
     "app",
     "firewalld",
-    "multicloud"
+    "multicloud",
+    "setup"
 ]
 
 native_list = ["backrest", "ansible", "patroni", "etcd"]

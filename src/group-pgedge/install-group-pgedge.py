@@ -79,7 +79,7 @@ def check_pre_reqs():
     else:
         util.message(f"  Verify specific port {prt} availability")
         if util.is_socket_busy(prt):
-           error_exit("Port {prt} is unavailable")
+           error_exit(f"Port {prt} is unavailable")
 
     util.message(f"  Using port {prt}")
 

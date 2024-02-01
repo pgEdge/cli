@@ -544,10 +544,11 @@ do
 
 
 	    depnc=deprecate-nc.sh
-            cp $CLI/cli.sh ./pgedge
-	    cp $CLI/$depnc ./nc
-	    cp $CLI/$depnc ./nodectl 
-	    cp $CLI/$depnc ./ctl 
+            cp $CLI/cli.sh        ./pgedge
+            cp $CLI/sh/setup.sh   ./setup
+	    cp $CLI/$depnc        ./nc
+	    cp $CLI/$depnc        ./nodectl 
+	    cp $CLI/$depnc        ./ctl 
 
             if [ "$outDir" == "posix" ]; then
               OS="???"
