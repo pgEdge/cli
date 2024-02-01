@@ -526,7 +526,7 @@ def command(cluster_name, node, cmd, args=None):
     return rc
 
 
-def app_install(cluster_name, app_name, factor=1):
+def app_install(cluster_name, app_name, database_name=None, factor=1):
     """Install test application [ pgbench | northwind ].
     
        Install a test application on all of the nodes in a cluster. 
@@ -539,12 +539,21 @@ def app_install(cluster_name, app_name, factor=1):
     db, pg, nodes = load_json(
             cluster_name
         )
+    db_name=None
+    if database_name is None:
+        db_name=db[0]["name"]
+    else:
+        for i in db:
+            if i["name"]==database_name:
+                db_name=database_name
+    if db_name is None:
+        util.exit_message(f"Could not find information on db {database_name}")
     ctl =  os.sep + "pgedge" + os.sep + "pgedge"
     if app_name == "pgbench":
         for n in nodes:
             ndpath = n["path"]
             ndip = n["ip_address"]
-            util.echo_cmd(f"{ndpath}{ctl} app pgbench-install {db} {factor} default", host=ndip, usr=n["os_user"], key=n["ssh_key"])
+            util.echo_cmd(f"{ndpath}{ctl} app pgbench-install {db_name} {factor} default", host=ndip, usr=n["os_user"], key=n["ssh_key"])
     elif app_name == "northwind":
         for n in nodes:
             ndpath = n["path"]
@@ -554,7 +563,7 @@ def app_install(cluster_name, app_name, factor=1):
         util.exit_message(f"Invalid app_name '{app_name}'.")
 
 
-def app_remove(cluster_name, app_name):
+def app_remove(cluster_name, app_name, database_name=None):
     """Remove test application from cluster.
     
        Remove a test application from all of the nodes in a cluster. 
@@ -566,12 +575,21 @@ def app_remove(cluster_name, app_name):
     db, pg, nodes = load_json(
             cluster_name
         )
+    db_name=None
+    if database_name is None:
+        db_name=db[0]["name"]
+    else:
+        for i in db:
+            if i["name"]==database_name:
+                db_name=database_name
+    if db_name is None:
+        util.exit_message(f"Could not find information on db {database_name}")
     ctl =  os.sep + "pgedge" + os.sep + "pgedge"
     if app_name == "pgbench":
          for n in nodes:
             ndpath = n["path"]
             ndip = n["ip_address"]
-            util.echo_cmd(f"{ndpath}{ctl} app pgbench-remove {db}", host=ndip, usr=n["os_user"], key=n["ssh_key"])
+            util.echo_cmd(f"{ndpath}{ctl} app pgbench-remove {db_name}", host=ndip, usr=n["os_user"], key=n["ssh_key"])
     elif app_name == "northwind":
          for n in nodes:
             ndpath = n["path"]
