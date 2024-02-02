@@ -13,6 +13,17 @@ connL = sqlite3.connect(db_local)
 
 isJSON = util.isJSON
 
+def check_pid_status(p_comp, p_pidfile, p_kount=0, p_json=False):
+    port = util.get_comp_port(p_comp)
+    if os.path.isfile(p_pidfile):
+        ver = meta.get_ver_plat(p_comp)
+        rc = os.system("pgrep --pidfile " + p_pidfile + " > /dev/null 2>&1")
+        if rc == 0:
+            api.status(p_json, p_comp, ver, "Running", port, p_kount)
+        else:
+            api.status(p_json, p_comp, ver, "Stopped", port, p_kount)
+    else:
+        api.status(p_json, p_comp, "", "Stopped", port, p_kount)
 
 ## Check component state #################################################
 def check_status(p_comp, p_mode):
@@ -32,7 +43,7 @@ def check_status(p_comp, p_mode):
                 pidfile = row[3]
                 if str(pidfile) != "None" and str(pidfile) > "":
                     kount = kount + 1
-                    component.check_pid_status(comp, pidfile, kount, isJSON)
+                    check_pid_status(comp, pidfile, kount, isJSON)
                     continue
                 if (port > 1) or (p_mode == "list") or (autostart == "on"):
                     kount = kount + 1
@@ -44,7 +55,7 @@ def check_status(p_comp, p_mode):
     else:
         pidfile = util.get_comp_pidfile(p_comp)
         if pidfile != "None" and pidfile > "":
-            component.check_pid_status(p_comp, pidfile, 0, isJSON)
+            check_pid_status(p_comp, pidfile, 0, isJSON)
         else:
             port = util.get_comp_port(p_comp)
             util.check_comp(p_comp, port, 0)
