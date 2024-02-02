@@ -1,38 +1,37 @@
-# This test case runs the command:
-# ./nodectl service enable pg16
+# This is a negative test case runs the command:
+# ./nodectl service enable pg10
 #
 
 use strict;
 use warnings;
 
+use strict;
+use warnings;
 use File::Which;
 use IPC::Cmd qw(run);
 use Try::Tiny;
 use JSON;
+use lib './t/lib';
+use contains;
 
-#
-# Move into the pgedge directory.
-#
- chdir("./pgedge");
+my $homedir = "$ENV{EDGE_HOME_DIR}";
+my $cli = $ENV{EDGE_CLI};
 
-#
-# First, we use nodectl to enable pg16; FIXME - add a test for the change to the state of the component.
-# 
 
-my $cmd = qq(./nodectl service enable pg16);
+# Checks for service enable providing a component name that is invalid. 
+
+my $cmd = qq($homedir/$cli service enable pg10);
 print("cmd = $cmd\n");
-my ($success, $error_message, $full_buf, $stdout_buf, $stderr_buf)= IPC::Cmd::run(command => $cmd, verbose => 0);
-
-print("full_buf = @$full_buf\n");
+my ($stdout_buf)= (run_command_and_exit_iferr ($cmd))[3];
 print("stdout_buf = @$stdout_buf\n");
-print("stderr_buf = @$stderr_buf\n");
 
-if (defined($success))
-{
+# Check if the command errored out with the expected message
+if (contains(@$stdout_buf[0], "Invalid component parameter"))
+ {
     exit(0);
-}
-else
-{
+ }
+ else
+ {
     exit(1);
-}
+ }
 

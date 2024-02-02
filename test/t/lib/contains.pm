@@ -112,6 +112,39 @@ sub run_command_and_exit_iferr {
     return ($success, $error_message, $full_buf, $stdout_buf, $stderr_buf);
 }
 
+
+use JSON;
+
+# Retrieves the value of a specified attribute for a given component from a JSON array.
+# Takes an JSON-encoded string (e.g. output of ctl info --json), The value of the "component" 
+# attribute to match (e.g. pg16) and the name of the attribute (e.g. status) whose value is to be retrieved.  
+# Returns the value of the specified attribute for the matching component, or -1
+#  if the component or attribute is not found.
+#
+
+
+sub get_json_component_attribute_value {
+    my ($json_str, $component, $attribute) = @_;
+
+    my $json = eval { decode_json($json_str) };
+    if ($@) {
+        warn "JSON Decoding Error: $@\n";
+        return '';
+    }
+
+    foreach my $item (@$json) {
+        if ($item->{component} eq $component || exists $item->{$attribute}) {
+            my $value = $item->{$attribute};
+            return defined $value ? $value : '';
+        }
+    }
+
+    return -1; # Indicates that either the component or attribute was not found
+}
+
+
+
+
 # This 1 at the end is required, even though it looks like an accident :)
 1;
 

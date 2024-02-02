@@ -1,3 +1,104 @@
+# This test case runs the command:
+# ./nc service disable pgV
+# and performs the necessary validation before and after.
+
+# Test 'service disable' disables a pgV service that cannot be started until enabled. 
+# TODO : This test currently fails as service disable doesn't actually disable the service at the service (systemctl)
+# level and that you can start the service again (without enabling it) even though it shows the service status to be
+# disabled. 
+use strict;
+use warnings;
+
+use File::Which;
+use IPC::Cmd qw(run);
+use Try::Tiny;
+use JSON;
+use lib './t/lib';
+use contains;
+
+my $homedir = "$ENV{EDGE_HOME_DIR}";
+my $cli = $ENV{EDGE_CLI};
+my $pgversion = $ENV{EDGE_COMPONENT};
+my $isDisabled = 0;
+#
+# We use nodectl to service disable pgV
+# 
+
+# Checking service status (which at this point in the schedule should be a running service)
+my $cmd0 = qq($homedir/$cli service status $pgversion);
+print("cmd = $cmd0\n");
+my ($stdout_buf)= (run_command_and_exit_iferr ($cmd0))[3];
+print("stdout_buf : @$stdout_buf \n");
+ 
+# Check if the pgV service is running so we can disable it 
+if (contains(@$stdout_buf[0], "running on port"))
+ {
+    # disable the service
+    my $cmd = qq($homedir/$cli service disable $pgversion);
+    print("cmd = $cmd\n");
+    my ($stdout_buf)= (run_command_and_exit_iferr ($cmd))[3];
+    print("stdout_buf : @$stdout_buf \n");
+    # if service disable was successful, it would have stopping pgV in its stdout buffer 
+    if(contains(@$stdout_buf[0], "stopping"))
+    {
+        print("$pgversion stopped \n");
+        print("Check if service status shows disabled status \n");
+        $stdout_buf = (run_command_and_exit_iferr (qq($homedir/$cli service status $pgversion)))[3];
+        # confirm the service status to be disabled
+        if(contains(@$stdout_buf, "disabled"))
+        {
+            print("service status returns service status as disabled\n");
+            $isDisabled = 1;
+        }
+        else
+        {
+            print("service status does NOT return status as disabled\n");
+            $isDisabled = 0;
+        }
+
+    }
+    else
+    {
+        print("Could not disable $pgversion\n");
+        $isDisabled = 0;
+    }
+}
+else 
+{
+    print("$pgversion not running. Exiting with failure\n");
+    exit(1);
+}
+
+# Now attempt to start a disabled service, that should fail however the disable functionality is yet to be fully implemented
+# so this scenario below will be able to start the service (which at this point would be a test case failure)
+if ($isDisabled)
+{
+    my $cmd1 = qq($homedir/$cli service start $pgversion);
+    print("cmd = $cmd1\n");
+    my ($stdout_buf1)= (run_command_and_exit_iferr ($cmd1))[3];
+    print("stdout_buf : @$stdout_buf1");
+    # TODO : At present, nodectl is able to start a disabled service and therefore this test fails
+    if (contains(@$stdout_buf1,"starting on port"))
+    {
+        print("nodectl is able to start a disabled service. Exiting with failure");
+        exit(1);
+    }
+    else
+    {
+        print("nodectl is unable to start a disabled service. Success");
+        exit(0);
+    }
+
+}
+else
+{
+    print("nodectl was not able to disable the service successfully. Exiting with failure");
+    exit(1);
+} 
+
+
+
+=pod
 use strict;
 use warnings;
 
@@ -72,7 +173,7 @@ foreach $comp (@$out2){
 
         print("full_buf3 = @$full_buf3\n");
         print ("-"x65,"\n");  
-          
+    =cut      
 =head
 if(contains(@$stdout_buf3[0], "starting"))
 
@@ -85,6 +186,7 @@ else
     exit(1);
 }
 =cut
+=pod
        }
 
        
@@ -115,4 +217,4 @@ else
     }
 }
 
-
+=cut
