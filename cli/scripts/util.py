@@ -1000,30 +1000,77 @@ def message(p_msg, p_state="info", p_isJSON=None):
 
     if p_msg is None:
         return
+    
+    jsn_msg = None
 
     log_level = p_state.lower()
+    if int(os.getenv('MY_DEBUG_LEVEL', '-1')) == -1:
+        cur_level = 20
+    else:
+        cur_level = 10
 
     if log_level == "error":
-        print(bcolours.FAIL + characters.CROSS + " " + p_msg + bcolours.ENDC)
-        prefix = "ERROR: "
+        log_level_num=40
+        my_logger.error(p_msg)
+        if log_level_num>=cur_level:
+            if not p_isJSON:
+                print(bcolours.FAIL + characters.CROSS + " " + p_msg + bcolours.ENDC)
+                return
+            else:
+                jsn_msg=p_msg
     elif log_level == "warning":
-        print(bcolours.YELLOW + characters.WARNING + " " + p_msg + bcolours.ENDC)
-        prefix = "WARNING: "
+        log_level_num=30
+        my_logger.warning(p_msg)
+        if log_level_num>=cur_level:
+            if not p_isJSON:
+                print(bcolours.YELLOW + characters.WARNING + " " + p_msg + bcolours.ENDC)
+                return
+            else:
+                jsn_msg=p_msg
     elif log_level == "alert":
-        print(bcolours.YELLOW + p_msg + bcolours.ENDC)
-        prefix = "ALERT: "
+        log_level_num=20
+        my_logger.alert(p_msg)
+        if log_level_num>=cur_level:
+            if not p_isJSON:
+                print(bcolours.YELLOW + p_msg + bcolours.ENDC)
+                return
+            else:
+                jsn_msg=p_msg
     elif log_level == "debug":
+        log_level_num=10
         my_logger.debug(p_msg)
-        prefix = "DEBUG: "
+        if log_level_num>=cur_level:
+            if not p_isJSON:
+                print(bcolours.YELLOW + p_msg + bcolours.ENDC)
+                return
+            else:
+                jsn_msg=p_msg
     elif log_level == "success":
-        print(bcolours.OKGREEN + characters.TICK + " " + p_msg + bcolours.ENDC)
+        log_level_num=20
+        my_logger.success(p_msg)
+        if log_level_num>=cur_level:
+            if not p_isJSON:
+                print(bcolours.OKGREEN + characters.TICK + " " + p_msg + bcolours.ENDC)
+                return
+            else:
+                jsn_msg=p_msg
     elif log_level == "info":
-        print(p_msg)
-    else:
+        log_level_num=20
         my_logger.info(p_msg)
-        prefix = ""
+        if log_level_num>=cur_level:
+            if not p_isJSON:
+                print(p_msg)
+                return
+            else:
+                jsn_msg=p_msg
+    else:
+        if not p_isJSON:
+            print(p_msg)
+            return
+        else:
+            jsn_msg=p_msg
 
-    if p_isJSON:
+    if jsn_msg != None:
         msg = p_msg.replace("\n", "")
         if msg.strip() > "":
             json_dict = {}
@@ -3311,6 +3358,9 @@ def exit_cleanly(p_rc, conn=None):
 
 
 def get_comp_lists(p_mode, arg, args, ignore_comp_list, p_host, connL):
+    isJSON=False
+    if os.environ.get("isJson", "False") == "True":
+        isJSON=True
     p_comp_list = []
     extra_args = ""
     p_version = ""
