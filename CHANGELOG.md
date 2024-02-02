@@ -1,6 +1,7 @@
 # pgEdge Labs Release Notes #############
 
 ## done for 24.1.8 on 2024-02-01 ###########
+  - remove unused 'Id' parm from db.create()
   - specifying '-p port' parm for 'install pgedge' is enforced
   - deprecate docker folder in favor of pgedge-docker repo
   - remove unused .py files & use -upstream/install.py by default

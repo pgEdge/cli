@@ -1,22 +1,19 @@
 #####################################################
-#  Copyright 2022-2023 PGEDGE  All rights reserved. #
+#  Copyright 2022-2024 PGEDGE  All rights reserved. #
 #####################################################
 
 import os, sys
 import util, fire
 
 
-def create(db=None, User=None, Passwd=None, Id=None, pg=None):
+def create(db=None, User=None, Passwd=None, pg=None):
     """
     Create a pg db with spock installed into it.
 
 
      Usage:
-         To create a superuser than has access to the whole cluster of db's
+         To create a database owned by a specific user
             db create -d <db> -U <usr> -P <passwd>
-
-         to create an admin user that owns a specifc tennant database
-            db create -I <id>  [-P <passwd>]
 
     """
 
@@ -40,14 +37,10 @@ def create(db=None, User=None, Passwd=None, Id=None, pg=None):
     ncb = nc + "pgbin " + str(pg) + " "
 
     privs = ""
-    if Id:
-        privs = "NOSUPERUSER NOCREATEDB NOCREATEROLE NOINHERIT LOGIN"
-        User = "admin_" + str(Id)
-        db = "db_" + str(Id)
-    elif User and db:
+    if User and db:
         privs = "SUPERUSER CREATEDB CREATEROLE INHERIT LOGIN"
     else:
-        util.exit_message("db_create() must have parms of (-I) or (-U -d)")
+        util.exit_message("db.create() must have parms of -User & -db")
 
     cmd = "CREATE ROLE " + User + " PASSWORD '" + Passwd + "' " + privs
     rc1 = util.echo_cmd(ncb + '"psql -q -c \\"' + cmd + '\\" postgres"')
@@ -99,9 +92,6 @@ def create(db=None, User=None, Passwd=None, Id=None, pg=None):
     user_json["user"] = User
     user_json["passwd"] = Passwd
     return_json["users"].append(user_json)
-
-    if Id:
-        print(util.json_dumps(return_json))
 
     return
 

@@ -155,7 +155,7 @@ osSys(ctl + "config " + pgV + " --port=" + str(prt))
 osSys(ctl + "start " + pgV)
 time.sleep(pause)
 
-db.create(db1, usr, passwd, None, pgN)
+db.create(db1, usr, passwd, pgN)
 
 time.sleep(pause)
 
