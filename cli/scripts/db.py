@@ -6,7 +6,7 @@ import os, sys
 import util, fire
 
 
-def create(db=None, User=None, Passwd=None, pg=None):
+def create(db=None, User=None, Passwd=None, pg=None, spock="latest"):
     """
     Create a pg db with spock installed into it.
 
@@ -59,14 +59,21 @@ def create(db=None, User=None, Passwd=None, pg=None):
 
     util.echo_cmd(nc + "install snowflake --no-restart")
 
-    spock_comp = "spock32-pg" + str(pg)
-
-    st8 = util.get_comp_state(spock_comp)
-    if st8 in ("Installed", "Enabled"):
-        cmd = "CREATE EXTENSION spock"
-        rc3 = util.echo_cmd(ncb + '"psql -q -c \\"' + cmd + '\\" ' + str(db) + '"')
+    if spock == "latest":
+       major_ver = "32"
+       minor_ver = ""
     else:
-        rc3 = util.echo_cmd(nc + "install " + spock_comp + " -d " + str(db))
+       major_ver, minor_ver = util.check_spock_ver(spock)
+
+    if major_ver:
+        spock_comp = f"spock{major_ver}-pg{pg} {minor_ver}"
+
+        st8 = util.get_comp_state(spock_comp)
+        if st8 in ("Installed", "Enabled"):
+            cmd = "CREATE EXTENSION spock"
+            rc3 = util.echo_cmd(ncb + '"psql -q -c \\"' + cmd + '\\" ' + str(db) + '"')
+        else:
+            rc3 = util.echo_cmd(nc + "install " + spock_comp + " -d " + str(db))
 
     cmd = "CREATE EXTENSION snowflake"
     rc4 = util.echo_cmd(ncb + '"psql -q -c \\"' + cmd + '\\" ' + str(db) + '"')

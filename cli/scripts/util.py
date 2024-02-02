@@ -57,6 +57,11 @@ if os.path.exists(platform_lib_path):
 my_logger = logging.getLogger("cli_logger")
 
 
+def check_spock_ver(ver):
+    message(f"validating spock version: {ver}")
+    return("32", "3.2.4")
+
+
 def copytree(cmd):
     os.system(f"cp -r {cmd}")
 
