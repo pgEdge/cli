@@ -55,9 +55,9 @@ def run_cmd(p_cmd, p_comp=None):
     return rc
 
 
-def list(component=None):
+def list():
     """Display available/installed components"""
-    meta.get_list(isJSON, component)
+    meta.get_list(isJSON, "all")
 
 
 def update():
