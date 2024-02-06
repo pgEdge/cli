@@ -397,11 +397,11 @@ def compare_checksums(shared_objects, worker_state, pkey1, pkey2):
     where_clause = ""
 
     if pkey1:
-        where_clause += f"{p_key} >= {pkey1}"
+        where_clause += f"({p_key}) >= {pkey1}"
     if pkey2:
         if where_clause:
             where_clause += " AND "
-        where_clause += f"{p_key} < {pkey2}"
+        where_clause += f"({p_key}) < {pkey2}"
 
     hash_sql += where_clause + ") t;"
 
@@ -492,7 +492,7 @@ def compare_checksums(shared_objects, worker_state, pkey1, pkey2):
 def table_diff(
     cluster_name,
     table_name,
-    block_rows=2,
+    block_rows=1000,
     max_cpu_ratio=MAX_CPU_RATIO,
     output="json",
     nodes="all",
@@ -500,11 +500,11 @@ def table_diff(
 ):
     """Efficiently compare tables across cluster using checksums and blocks of rows."""
 
-    # if not diff_file:
-    #    try:
-    #        block_rows = int(os.environ.get("ACE_BLOCK_ROWS", block_rows))
-    #    except Exception:
-    #        util.exit_message("Invalid values for ACE_BLOCK_ROWS")
+    if not diff_file:
+        try:
+            block_rows = int(os.environ.get("ACE_BLOCK_ROWS", block_rows))
+        except Exception:
+            util.exit_message("Invalid values for ACE_BLOCK_ROWS")
     try:
         max_cpu_ratio = int(os.environ.get("ACE_MAX_CPU_RATIO", max_cpu_ratio))
     except Exception:
@@ -522,15 +522,15 @@ def table_diff(
             "table-diff currently supports only csv and json output formats"
         )
 
-    # bad_br = True
-    # try:
-    #    b_r = int(block_rows)
-    #    if b_r >= 1000:
-    #        bad_br = False
-    # except ValueError:
-    #    pass
-    # if bad_br:
-    #    util.exit_message(f"block_rows param '{block_rows}' must be integer >= 1000")
+    bad_br = True
+    try:
+        b_r = int(block_rows)
+        if b_r >= 1000:
+            bad_br = False
+    except ValueError:
+        pass
+    if bad_br:
+        util.exit_message(f"block_rows param '{block_rows}' must be integer >= 1000")
 
     node_list = []
 
@@ -622,6 +622,10 @@ def table_diff(
 
     util.message(f"Table {table_name} is comparable across nodes", p_state="success")
 
+    simple_primary_key = True
+    if len(key.split(",")) > 1:
+        simple_primary_key = False
+
     row_count = 0
     total_rows = 0
     offsets = []
@@ -662,21 +666,27 @@ def table_diff(
         cur = conn.cursor()
         cur.execute(pkey_sql)
         rows = cur.fetchmany(block_rows)
-        pkey_offsets.append((None, rows[0][0]))
-        prev_min_offset = rows[0][0]
-        prev_max_offset = rows[-1][0]
+
+        if simple_primary_key:
+            rows[:] = [x[0] for x in rows]
+
+        pkey_offsets.append((None, rows[0]))
+        prev_min_offset = rows[0]
+        prev_max_offset = rows[-1]
 
         while rows:
             rows = cur.fetchmany(block_rows)
+            if simple_primary_key:
+                rows[:] = [x[0] for x in rows]
             if not rows:
                 if prev_max_offset != prev_min_offset:
                     pkey_offsets.append((prev_min_offset, prev_max_offset))
                 pkey_offsets.append((prev_max_offset, None))
                 break
-            curr_min_offset = rows[0][0]
+            curr_min_offset = rows[0]
             pkey_offsets.append((prev_min_offset, curr_min_offset))
             prev_min_offset = curr_min_offset
-            prev_max_offset = rows[-1][0]
+            prev_max_offset = rows[-1]
 
         cur.close()
         return pkey_offsets
@@ -685,8 +695,6 @@ def table_diff(
         get_pkey_offsets, conn_with_max_rows, pkey_sql, block_rows
     )
     pkey_offsets = future.result()
-
-    print(pkey_offsets)
 
     total_blocks = row_count // block_rows
     total_blocks = total_blocks if total_blocks > 0 else 1
@@ -1049,8 +1057,10 @@ def table_rerun(cluster_name, diff_file, table_name):
                     ]
 
                     t1_result, t2_result = [f.result() for f in futures]
-                    node1_set.add(t1_result[0])
-                    node2_set.add(t2_result[0])
+                    if t1_result:
+                        node1_set.add(t1_result[0])
+                    if t2_result:
+                        node2_set.add(t2_result[0])
 
         node1_diff = node1_set - node2_set
         node2_diff = node2_set - node1_set
