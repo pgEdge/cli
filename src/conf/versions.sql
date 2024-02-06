@@ -99,11 +99,13 @@ INSERT INTO projects VALUES ('pg', 'pge', 1, 5432, 'hub', 1, 'https://github.com
 
 INSERT INTO releases VALUES ('pg12', 3, 'pg', 'PostgreSQL', '', 'prod',
   '<font size=-1>New in <a href=https://www.postgresql.org/docs/12/release-12.html>2019</a></font>', 1, 'POSTGRES', '', '');
-INSERT INTO versions VALUES ('pg12', '12.17-1', 'el8', 1, '20231109', '', '', '');
+INSERT INTO versions VALUES ('pg12', '12.18-1', 'el8', 1, '20240208', '', '', '');
+INSERT INTO versions VALUES ('pg12', '12.17-1', 'el8', 0, '20231109', '', '', '');
 
 INSERT INTO releases VALUES ('pg13', 2, 'pg', '', '', 'prod',
   '<font size=-1>New in <a href=https://www.postgresql.org/docs/13/release-13.html>2020</a></font>', 1, 'POSTGRES', '', '');
-INSERT INTO versions VALUES ('pg13', '13.13-1', 'el8', 1, '20231109','', '', '');
+INSERT INTO versions VALUES ('pg13', '13.14-1', 'el8', 1, '20240208','', '', '');
+INSERT INTO versions VALUES ('pg13', '13.13-1', 'el8', 0, '20231109','', '', '');
 
 INSERT INTO releases VALUES ('pg14', 1, 'pg', '', '', 'prod', 
   '<font size=-1>New in <a href=https://www.postgresql.org/docs/14/release-14.html>2021</a></font>', 1, 'POSTGRES', '', '');
