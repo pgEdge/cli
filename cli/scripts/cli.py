@@ -1384,7 +1384,7 @@ if p_mode in lock_commands:
     pid_fd.write(str(os.getpid()))
     pid_fd.close()
 
-info_arg, p_comp_list, p_comp, p_version, requested_p_version, extra_args = \
+info_arg, p_comp_list, p_comp, p_version, extra_args = \
     util.get_comp_lists(p_mode, arg, args, ignore_comp_list, p_host, connL)
 
 ## PG_ISREADY #################################################################
@@ -1934,55 +1934,28 @@ if p_mode == "update":
 
 ## ENABLE, DISABLE ###########################################
 if p_mode == "enable" or p_mode == "disable":
-    if p_comp == "all":
-        msg = "You must " + p_mode + " one component at a time"
-        util.exit_message(msg, 1, isJSON)
-    update_component_state(p_comp, p_mode)
-    script_name = p_mode + "-" + p_comp
-    sys.exit(run_script(p_comp, script_name, extra_args))
+    args.insert(0,p_mode)
+    fire_away("service", args)
 
 ## CONFIG, INIT, RELOAD ##################################
 if p_mode in ["config", "init", "reload"]:
     script_name = p_mode + "-" + p_comp
     sys.exit(run_script(p_comp, script_name, extra_args))
 
-## STOP component(s) #########################################
-if (p_mode == "stop") or (p_mode == "kill") or (p_mode == "restart"):
-    if p_comp == "all":
-        ## iterate through components in reverse list order
-        for comp in reversed(dep9):
-            script_name = "stop-" + comp[0]
-            run_script(comp[0], script_name, p_mode)
-    else:
-        script_name = "stop-" + p_comp
-        run_script(p_comp, script_name, p_mode)
+## STOP component(s) #####################################
+if (p_mode == "stop") or (p_mode == "kill"):
+    args.insert(0,p_mode)
+    fire_away("service", args)
 
-## START, RESTART ############################################
-if (p_mode == "start") or (p_mode == "restart"):
-    if p_comp == "all":
-        ## Iterate through components in primary list order.
-        ## Components with a port of "1" are client components that
-        ## are only launched when explicitely started
-        for comp in dep9:
-            if util.is_server(comp[0]):
-                script_name = "start-" + comp[0]
-                run_script(comp[0], script_name, p_mode)
-    else:
-        present_state = util.get_comp_state(p_comp)
-        if present_state == "NotInstalled":
-            msg = "Component '" + p_comp + "' is not installed."
-            my_logger.info(msg)
-            util.exit_message(msg, 0)
-        if not util.is_server(p_comp):
-            if isJSON:
-                msg = "'" + p_comp + "' component cannot be started."
-                my_logger.error(msg)
-                util.print_error(msg)
-                exit_cleanly(1)
-        if not present_state == "Enabled":
-            update_component_state(p_comp, "enable")
-        script_name = "start-" + p_comp
-        run_script(p_comp, script_name, p_mode)
+## START #################################################
+if (p_mode == "start"):
+    args.insert(0,p_mode)
+    fire_away("service", args)
+
+## RESTART ###############################################
+if (p_mode == "restart"):
+    args.insert(0,p_mode)
+    fire_away("service", args)
 
 ## DOWNGRADE ################################################
 if p_mode == "downgrade":
