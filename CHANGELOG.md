@@ -1,5 +1,14 @@
 # pgEdge Labs Release Notes #############
 
+
+
+## scheduled for 24.1.9 on 2024-02-07 ###########
+  - enhance ACE with functionality to handle row offset mismatches (Tej)
+  - first pass at doc for using Auto DDL functionality (Cady)
+  - introduce 'setup pgedge' as documented way to install pgedge AND be able to pin the spock version (Denis)
+  - fix regression is 'service.py' including 'component' that was removed (Denis)
+
+
 ## done for 24.1.8 on 2024-02-06 ###########
   - build spock-3.2.5beta2 el9 test version  for auto_ddl
     + Add tables with PK to default repset, while removing it from insert_only (if added there)

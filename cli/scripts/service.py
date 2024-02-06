@@ -1,5 +1,5 @@
 import os, sys
-import fire, util, meta
+import fire, util, meta, api
 import time, datetime, platform, tarfile, sqlite3, time
 
 ## Initialize Globals ##############################################
