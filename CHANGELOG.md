@@ -5,8 +5,8 @@
     + Add tables with PK to default repset, while removing it from insert_only (if added there)
     + synchronize tables
     + Added INFO/LOG messages.
-  - regession fix and more refactoring for um and service (PR #84 Cady)
-  - many more regression test improvements (Hayee and team)
+  - regession fix and more refactoring for um, service and logging (PR #84 Cady)
+  - many more regression test improvements (PR #83... QA)
   - start work on new 'setup pgedge' with online help
   - remove unused 'Id' parm from db.create()
   - specifying '-p port' parm for 'install pgedge' is enforced
