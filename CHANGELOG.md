@@ -3,6 +3,7 @@
 
 
 ## scheduled for 24.1.9 on 2024-02-07 ###########
+  - bump pg minor versions to 16.2, 15.11, .....
   - enhance ACE with functionality to handle row offset mismatches (Tej)
   - first pass at doc for using Auto DDL functionality (Cady)
   - introduce 'setup pgedge' as documented way to install pgedge AND be able to pin the spock version (Denis)

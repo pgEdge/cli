@@ -107,15 +107,18 @@ INSERT INTO versions VALUES ('pg13', '13.13-1', 'el8', 1, '20231109','', '', '')
 
 INSERT INTO releases VALUES ('pg14', 1, 'pg', '', '', 'prod', 
   '<font size=-1>New in <a href=https://www.postgresql.org/docs/14/release-14.html>2021</a></font>', 1, 'POSTGRES', '', '');
-INSERT INTO versions VALUES ('pg14', '14.10-2', 'el8, el9, arm9', 1, '20240108', '','','');
+INSERT INTO versions VALUES ('pg14', '14.11-1', 'el8, el9, arm9', 1, '20240208', '','','');
+INSERT INTO versions VALUES ('pg14', '14.10-2', 'el8, el9, arm9', 0, '20240108', '','','');
 
 INSERT INTO releases VALUES ('pg15', 2, 'pg', '', '', 'prod', 
   '<font size=-1>New in <a href=https://www.postgresql.org/docs/15/release-15.html>2022</a></font>', 1, 'POSTGRES', '', '');
-INSERT INTO versions VALUES ('pg15', '15.5-1',  'el8, el9, arm9', 1, '20231109','', '', '');
+INSERT INTO versions VALUES ('pg15', '15.6-1',  'el8, el9, arm9', 1, '20240208','', '', '');
+INSERT INTO versions VALUES ('pg15', '15.5-1',  'el8, el9, arm9', 0, '20231109','', '', '');
 
 INSERT INTO releases VALUES ('pg16', 2, 'pg', '', '', 'prod', 
   '<font size=-1>New in <a href=https://www.postgresql.org/docs/16/release-16.html>2023!</a></font>', 1, 'POSTGRES', '', '');
-INSERT INTO versions VALUES ('pg16', '16.1-1',  'el8, el9, arm9', 1, '20231109','', '', '');
+INSERT INTO versions VALUES ('pg16', '16.2-1',  'el8, el9, arm9', 1, '20240208','', '', '');
+INSERT INTO versions VALUES ('pg16', '16.1-1',  'el8, el9, arm9', 0, '20231109','', '', '');
 
 INSERT INTO releases VALUES ('pg17', 2, 'pg', '', '', 'test', 
   '<font size=-1>New in <a href=https://www.postgresql.org/docs/17/release-17.html>2024!</a></font>', 1, 'POSTGRES', '', '');
