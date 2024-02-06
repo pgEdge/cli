@@ -73,14 +73,49 @@ def run_cmd(p_cmd, p_comp):
 
 def start(component=None):
     """Start server components"""
-
-    run_cmd("start", component)
+    dep9 = util.get_depend()
+    init_comp_list=[]
+    if component is not None:
+        init_comp_list=component.split()
+    info_arg, p_comp_list, p_comp, p_version, extra_args = util.get_comp_lists("status", -1, init_comp_list, [], "", connL)
+    if p_comp == "all":
+        ## Iterate through components in primary list order.
+        ## Components with a port of "1" are client components that
+        ## are only launched when explicitely started
+        for comp in dep9:
+            if util.is_server(comp[0]):
+                script_name = "start-" + comp[0]
+                util.run_script(comp[0], script_name, "start")
+    else:
+        present_state = util.get_comp_state(p_comp)
+        if present_state == "NotInstalled":
+            msg = "Component '" + p_comp + "' is not installed."
+            util.exit_message(msg, 0)
+        if not util.is_server(p_comp):
+            msg = "'" + p_comp + "' component cannot be started."
+            util.exit_message(msg, 0)
+            util.exit_cleanly(1,connL)
+        if not present_state == "Enabled":
+            util.update_component_state(p_comp, "enable")
+        script_name = "start-" + p_comp
+        util.run_script(p_comp, script_name, "start")
 
 
 def stop(component=None):
     """Stop server components"""
-
-    run_cmd("stop", component)
+    dep9 = util.get_depend()
+    init_comp_list=[]
+    if component is not None:
+        init_comp_list=component.split()
+    info_arg, p_comp_list, p_comp, p_version, extra_args = util.get_comp_lists("status", -1, init_comp_list, [], "", connL)
+    if p_comp == "all":
+        ## iterate through components in reverse list order
+        for comp in reversed(dep9):
+            script_name = "stop-" + comp[0]
+            util.run_script(comp[0], script_name, "stop")
+    else:
+        script_name = "stop-" + p_comp
+        util.run_script(p_comp, script_name, "stop")
 
 
 def status(component=None):
@@ -88,16 +123,48 @@ def status(component=None):
     init_comp_list=[]
     if component is not None:
         init_comp_list=component.split()
-    info_arg, p_comp_list, p_comp, p_version, requested_p_version, extra_args = util.get_comp_lists("status", 0, init_comp_list, [], "", connL)
+    info_arg, p_comp_list, p_comp, p_version, extra_args = util.get_comp_lists("status", -1, init_comp_list, [], "", connL)
     for c in p_comp_list:
         check_status(c, "status")
     util.exit_cleanly(0,connL)
 
 
-def restart(component):
+def restart(component=None):
     """Stop & then start server components"""
-
-    run_cmd("restart", component)
+    dep9 = util.get_depend()
+    init_comp_list=[]
+    if component is not None:
+        init_comp_list=component.split()
+    info_arg, p_comp_list, p_comp, p_version, extra_args = util.get_comp_lists("status", -1, init_comp_list, [], "", connL)
+    if p_comp == "all":
+        ## iterate through components in reverse list order
+        for comp in reversed(dep9):
+            script_name = "stop-" + comp[0]
+            util.run_script(comp[0], script_name, "stop")
+    else:
+        script_name = "stop-" + p_comp
+        util.run_script(p_comp, script_name, "stop")
+    if p_comp == "all":
+        ## Iterate through components in primary list order.
+        ## Components with a port of "1" are client components that
+        ## are only launched when explicitely started
+        for comp in dep9:
+            if util.is_server(comp[0]):
+                script_name = "start-" + comp[0]
+                util.run_script(comp[0], script_name, "start")
+    else:
+        present_state = util.get_comp_state(p_comp)
+        if present_state == "NotInstalled":
+            msg = "Component '" + p_comp + "' is not installed."
+            util.exit_message(msg, 0)
+        if not util.is_server(p_comp):
+            msg = "'" + p_comp + "' component cannot be started."
+            util.exit_message(msg, 0)
+            util.exit_cleanly(1,connL)
+        if not present_state == "Enabled":
+            util.update_component_state(p_comp, "enable")
+        script_name = "start-" + p_comp
+        util.run_script(p_comp, script_name, "start")
 
 
 def reload(component):
@@ -106,16 +173,32 @@ def reload(component):
     run_cmd("reload", component)
 
 
-def enable(component):
+def enable(component=None):
     """Enable a component"""
+    init_comp_list=[]
+    if component is not None:
+        init_comp_list=component.split()
+    info_arg, p_comp_list, p_comp, p_version, extra_args = util.get_comp_lists("status", -1, init_comp_list, [], "", connL)
+    if p_comp == "all":
+        msg = "You must enable one component at a time"
+        util.exit_message(msg, 1, isJSON)
+    util.update_component_state(p_comp, "enable")
+    script_name = "enable-" + p_comp
+    sys.exit(util.run_script(p_comp, script_name, extra_args))
 
-    run_cmd("enable", component)
 
-
-def disable(component):
+def disable(component=None):
     """Disable a server component from starting automatically"""
-
-    run_cmd("disable", component)
+    init_comp_list=[]
+    if component is not None:
+        init_comp_list=component.split()
+    info_arg, p_comp_list, p_comp, p_version, extra_args = util.get_comp_lists("status", -1, init_comp_list, [], "", connL)
+    if p_comp == "all":
+        msg = "You must disable one component at a time"
+        util.exit_message(msg, 1, isJSON)
+    util.update_component_state(p_comp, "disable")
+    script_name = "disable-" + p_comp
+    sys.exit(util.run_script(p_comp, script_name, extra_args))
 
 
 def config(component):

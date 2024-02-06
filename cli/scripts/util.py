@@ -3364,7 +3364,6 @@ def get_comp_lists(p_mode, arg, args, ignore_comp_list, p_host, connL):
     p_comp_list = []
     extra_args = ""
     p_version = ""
-    requested_p_version = ""
     info_arg = 0
     try:
         if p_mode in ignore_comp_list:
@@ -3403,7 +3402,6 @@ def get_comp_lists(p_mode, arg, args, ignore_comp_list, p_host, connL):
                                     "Invalid component version parameter  (" + ver1 + ")"
                                 )
                                 exit_cleanly(1, connL)
-                                requested_p_version = ver1
                             info_arg = 1
                     elif p_mode in ignore_comp_list:
                         pass
@@ -3424,7 +3422,7 @@ def get_comp_lists(p_mode, arg, args, ignore_comp_list, p_host, connL):
         exit_message(str(e), 1, isJSON)
         exit_cleanly(1, connL)
 
-    return info_arg, p_comp_list, p_comp, p_version, requested_p_version, extra_args
+    return info_arg, p_comp_list, p_comp, p_version, extra_args
 
 
 def check_comp(p_comp, p_port, p_kount, check_status=False):

@@ -78,7 +78,7 @@ def remove(component):
     p_comp=component
     if p_comp is not None:
         init_comp_list=component.split()
-    info_arg, p_comp_list, p_comp, p_version, requested_p_version, extra_args = util.get_comp_lists("remove", -1, init_comp_list, [], "", connL)
+    info_arg, p_comp_list, p_comp, p_version, extra_args = util.get_comp_lists("remove", -1, init_comp_list, [], "", connL)
     if p_comp == "all":
         msg = "You must specify component to remove."
         util.exit_message(msg, 1, isJSON)
