@@ -85,7 +85,7 @@ INSERT INTO categories VALUES (9,  87, 'Management & Monitoring', 'Manage/Monito
 -- ## HUB ################################
 INSERT INTO projects VALUES ('hub', 'app', 0, 0, 'hub', 0, 'https://github.com/pgedge/cli','',0,'','','');
 INSERT INTO releases VALUES ('hub', 1, 'hub', '', '', 'hidden', '', 1, '', '', '');
-INSERT INTO versions VALUES ('hub', '24.1.8',  '',  1, '20240212', '', '', '');
+INSERT INTO versions VALUES ('hub', '24.1.8',  '',  1, '20240206', '', '', '');
 INSERT INTO versions VALUES ('hub', '24.1.7',  '',  0, '20240131', '', '', '');
 INSERT INTO versions VALUES ('hub', '24.1.6',  '',  0, '20240130', '', '', '');
 INSERT INTO versions VALUES ('hub', '24.1.5',  '',  0, '20240108', '', '', '');
@@ -258,7 +258,7 @@ INSERT INTO releases VALUES ('spock32-pg17', 4, 'spock', 'Spock', '', 'test', ''
 INSERT INTO versions VALUES ('spock32-pg14', '3.2.4-1', 'el8, el9, arm9', 1, '20240108', 'pg14', '', '');
 INSERT INTO versions VALUES ('spock32-pg15', '3.2.4-1', 'el8, el9, arm9', 1, '20240108', 'pg15', '', '');
 INSERT INTO versions VALUES ('spock32-pg16', '3.2.4-1', 'el8, el9, arm9', 1, '20240108', 'pg16', '', '');
-INSERT INTO versions VALUES ('spock32-pg16', '3.2.5beta1-1', 'el9',       0, '20240131', 'pg16', '', '');
+INSERT INTO versions VALUES ('spock32-pg16', '3.2.5beta2-1', 'el9',       0, '20240206', 'pg16', '', '');
 INSERT INTO versions VALUES ('spock32-pg17', '3.2.4-1', 'el9',            1, '20240108', 'pg17', '', '');
 
 INSERT INTO projects VALUES ('pglogical', 'ext', 4, 0, 'hub', 1, 'https://github.com/2ndQuadrant/pglogical/releases',
@@ -303,7 +303,7 @@ INSERT INTO versions VALUES ('badger', '11.8', '', 0, '20220408', '', '', '');
 INSERT INTO projects VALUES ('group-pgedge', 'pge', 0, 0, 'hub', 3, 'http://pgedge.com',
   'group-pgedge',  0, 'pgedge.png', 'Multi-Active Global Postgres Clusters', 'http://pgedge.com');
 INSERT INTO releases VALUES ('group-pgedge', 1, 'group-pgedge',  'pgEdge', '', 'prod', '', 1, 'pgEdge Platform', '', '');
-INSERT INTO versions VALUES ('group-pgedge', '2.11',  '', 1, '20240212', '', '', '');
+INSERT INTO versions VALUES ('group-pgedge', '2.11',  '', 1, '20240206', '', '', '');
 INSERT INTO versions VALUES ('group-pgedge', '2.10',  '', 0, '20240130', '', '', '');
 
 INSERT INTO projects VALUES ('ctlibs', 'pge', 0, 0, 'hub', 3, 'https://github.com/pgedge/cli',
