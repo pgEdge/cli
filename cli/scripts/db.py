@@ -55,25 +55,26 @@ def create(db=None, User=None, Passwd=None, pg=None, spock="latest"):
     cmd = "createdb '" + db + "' --owner='" + User + "'"
     rc2 = util.echo_cmd(ncb + '"' + cmd + '"')
 
-    util.echo_cmd(nc + "tune pg" + str(pg))
+    util.echo_cmd(f"{nc} tune pg{pg}")
 
-    util.echo_cmd(nc + "install snowflake --no-restart")
+    util.echo_cmd(f"{nc} install snowflake-pg{pg} --no-restart")
 
     if spock == "latest":
        major_ver = "32"
-       minor_ver = ""
+       ver = ""
     else:
-       major_ver, minor_ver = util.check_spock_ver(spock)
+       major_ver = f"{spock[:1]}{spock[2:3:1]}"
+       ver = spock
 
-    if major_ver:
-        spock_comp = f"spock{major_ver}-pg{pg} {minor_ver}"
+    spock_comp = f"spock{major_ver}-pg{pg} {ver}"
+    print(f"DEBUG spock_comp = '{spock_comp}'")
 
-        st8 = util.get_comp_state(spock_comp)
-        if st8 in ("Installed", "Enabled"):
-            cmd = "CREATE EXTENSION spock"
-            rc3 = util.echo_cmd(ncb + '"psql -q -c \\"' + cmd + '\\" ' + str(db) + '"')
-        else:
-            rc3 = util.echo_cmd(nc + "install " + spock_comp + " -d " + str(db))
+    st8 = util.get_comp_state(spock_comp)
+    if st8 in ("Installed", "Enabled"):
+        cmd = "CREATE EXTENSION spock"
+        rc3 = util.echo_cmd(ncb + '"psql -q -c \\"' + cmd + '\\" ' + str(db) + '"')
+    else:
+        rc3 = util.echo_cmd(nc + "install " + spock_comp + " -d " + str(db))
 
     cmd = "CREATE EXTENSION snowflake"
     rc4 = util.echo_cmd(ncb + '"psql -q -c \\"' + cmd + '\\" ' + str(db) + '"')

@@ -57,9 +57,20 @@ if os.path.exists(platform_lib_path):
 my_logger = logging.getLogger("cli_logger")
 
 
-def check_spock_ver(ver):
-    message(f"validating spock version: {ver}")
-    return("32", "3.2.4")
+def get_num_spocks(ver):
+    try:
+        c = cL.cursor()
+        sql = (
+              f"SELECT count(*) FROM versions\n "
+            + f" WHERE component LIKE 'spock%' AND version LIKE '{ver}%'\n"
+            + f"   AND platform LIKE '%{get_el_ver()}%'"
+        )
+        c.execute(sql)
+        data = c.fetchone()
+    except Exception as e:
+        fatal_sql_error(e, sql, "get_num_spocks()")
+
+    return(data[0]) 
 
 
 def copytree(cmd):
