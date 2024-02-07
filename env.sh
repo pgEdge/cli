@@ -4,7 +4,7 @@ api=pgedge
 hubV=24.1.9
 ctlibsV=1.2
 
-spock32V=3.2.5beta2-1
+spock32V=3.2.5rc1-1
 
 
 foslotsV=1a-1

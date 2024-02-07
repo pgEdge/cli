@@ -2,14 +2,13 @@
 
 
 
-## scheduled for 24.1.9 on 2024-02-07 ###########
-  - more refactoring for service commands and logging (PR #85 Cady)
-  - second pass at './setup pgedge'
-  - bump pg minor versions to 16.2, 15.11, .....
+## done for 24.1.9 on 2024-02-07 ###########
+  - build spock-3.2.5rc1 el9 test version for auto_ddl
   - enhance ACE with functionality to handle row offset mismatches ( PR #86 Tej)
-  - first pass at doc for using Auto DDL functionality (Cady)
-  - introduce 'setup pgedge' as documented way to install pgedge AND be able to pin the spock version
-  - fix regression is 'service.py' including 'component' that was removed
+  - bump pg minor versions to 16.2, 15.11, .....
+  - more refactoring for service commands and logging (PR #85 Cady)
+  - fix regression in 'service.py' including 'component' that was removed
+  - 3rd pass at 'setup pgedge' as documented way to install pgedge AND be able to pin the spock version
 
 
 ## done for 24.1.8 on 2024-02-06 ###########
