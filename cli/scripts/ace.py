@@ -379,11 +379,7 @@ def init_db_connection(shared_objects, worker_state):
         worker_state[node["name"]] = psycopg.connect(conn_str).cursor()
 
 
-def compare_checksums(
-    shared_objects,
-    worker_state,
-    offset,
-):
+def compare_checksums(shared_objects, worker_state, pkey1, pkey2):
     global row_diff_count
 
     if row_diff_count.value >= MAX_DIFF_ROWS:
@@ -391,31 +387,30 @@ def compare_checksums(
 
     p_key = shared_objects["p_key"]
     table_name = shared_objects["table_name"]
-    block_rows = shared_objects["block_rows"]
     node_list = shared_objects["node_list"]
     cols = shared_objects["cols_list"]
 
     hash_sql = f"""
     SELECT md5(cast(array_agg(t.* ORDER BY {p_key}) AS text))
-    FROM (SELECT *
-            FROM {table_name}
-            ORDER BY {p_key}
-            OFFSET {offset}
-            LIMIT {block_rows}) t;
-    """
+    FROM (SELECT * FROM {table_name} WHERE """
 
-    block_sql = f"""
-    SELECT *
-    FROM {table_name}
-    ORDER BY {p_key}
-    OFFSET {offset}
-    LIMIT {block_rows}
-    """
+    where_clause = ""
+
+    if pkey1:
+        where_clause += f"({p_key}) >= {pkey1}"
+    if pkey2:
+        if where_clause:
+            where_clause += " AND "
+        where_clause += f"({p_key}) < {pkey2}"
+
+    hash_sql += where_clause + ") t;"
+
+    block_sql = f"SELECT * FROM {table_name} WHERE " + where_clause + ";"
 
     node_pairs = combinations(node_list, 2)
 
     block_result = {}
-    block_result["offset"] = offset
+    block_result["offset"] = f"{pkey1}-{pkey2}"
     block_result["diffs"] = []
 
     for node_pair in node_pairs:
@@ -497,7 +492,7 @@ def compare_checksums(
 def table_diff(
     cluster_name,
     table_name,
-    block_rows=10000,
+    block_rows=1000,
     max_cpu_ratio=MAX_CPU_RATIO,
     output="json",
     nodes="all",
@@ -513,7 +508,7 @@ def table_diff(
     try:
         max_cpu_ratio = int(os.environ.get("ACE_MAX_CPU_RATIO", max_cpu_ratio))
     except Exception:
-        util.exit_message("Invalid values for ACE_BLOCK_ROWS")
+        util.exit_message("Invalid values for ACE_MAX_CPU_RATIO")
 
     if max_cpu_ratio > 1 or max_cpu_ratio < 0:
         util.exit_message("Invalid values for ACE_MAX_CPU_RATIO or --max_cpu_ratio")
@@ -627,11 +622,16 @@ def table_diff(
 
     util.message(f"Table {table_name} is comparable across nodes", p_state="success")
 
+    simple_primary_key = True
+    if len(key.split(",")) > 1:
+        simple_primary_key = False
+
     row_count = 0
     total_rows = 0
     offsets = []
 
     diff_json = None
+    conn_with_max_rows = None
 
     if not diff_file:
         for conn in conn_list:
@@ -639,6 +639,7 @@ def table_diff(
             total_rows += rows
             if rows > row_count:
                 row_count = rows
+                conn_with_max_rows = conn
     else:
         diff_json = json.loads(open(diff_file, "r").read())
         block_rows = diff_json["block_size"]
@@ -648,6 +649,52 @@ def table_diff(
 
         row_count = block_rows * len(offsets)
         total_rows = row_count
+
+    pkey_offsets = []
+
+    # Use conn_with_max_rows to get the first and last primary key values
+    # of every block row. Repeat until we no longer have any more rows.
+    # Store results in pkey_offsets.
+
+    # TODO: Test for composite keys
+    pkey_sql = f"""
+    SELECT {key} FROM {table_name} ORDER BY {key};
+    """
+
+    def get_pkey_offsets(conn, pkey_sql, block_rows):
+        pkey_offsets = []
+        cur = conn.cursor()
+        cur.execute(pkey_sql)
+        rows = cur.fetchmany(block_rows)
+
+        if simple_primary_key:
+            rows[:] = [x[0] for x in rows]
+
+        pkey_offsets.append((None, rows[0]))
+        prev_min_offset = rows[0]
+        prev_max_offset = rows[-1]
+
+        while rows:
+            rows = cur.fetchmany(block_rows)
+            if simple_primary_key:
+                rows[:] = [x[0] for x in rows]
+            if not rows:
+                if prev_max_offset != prev_min_offset:
+                    pkey_offsets.append((prev_min_offset, prev_max_offset))
+                pkey_offsets.append((prev_max_offset, None))
+                break
+            curr_min_offset = rows[0]
+            pkey_offsets.append((prev_min_offset, curr_min_offset))
+            prev_min_offset = curr_min_offset
+            prev_max_offset = rows[-1]
+
+        cur.close()
+        return pkey_offsets
+
+    future = ThreadPoolExecutor().submit(
+        get_pkey_offsets, conn_with_max_rows, pkey_sql, block_rows
+    )
+    pkey_offsets = future.result()
 
     total_blocks = row_count // block_rows
     total_blocks = total_blocks if total_blocks > 0 else 1
@@ -689,10 +736,10 @@ def table_diff(
     ) as pool:
         pool.map_unordered(
             compare_checksums,
-            offsets,
+            pkey_offsets,
             worker_init=init_db_connection,
             progress_bar=True,
-            iterable_len=len(offsets),
+            iterable_len=len(pkey_offsets),
         )
 
     mismatch = False
@@ -1012,8 +1059,10 @@ def table_rerun(cluster_name, diff_file, table_name):
                     ]
 
                     t1_result, t2_result = [f.result() for f in futures]
-                    node1_set.add(t1_result[0])
-                    node2_set.add(t2_result[0])
+                    if t1_result:
+                        node1_set.add(t1_result[0])
+                    if t2_result:
+                        node2_set.add(t2_result[0])
 
         node1_diff = node1_set - node2_set
         node2_diff = node2_set - node1_set
