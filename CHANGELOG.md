@@ -1,6 +1,11 @@
 # pgEdge Labs Release Notes #############
 
 
+## planned for 24.2.1 on 2024-02-12 ###########
+  - spock-3.2.5 GA & default in -upstream
+  - fix bug when installing by version # where metadata & config are not run
+  - Update spock README with info on DDL Replication
+
 
 ## done for 24.1.9 on 2024-02-07 ###########
   - build spock-3.2.5rc1 el9 test version for auto_ddl

@@ -19,7 +19,7 @@ except ImportError:
 from log_helpers import bcolours, characters
 import api, meta, ini
 
-MY_VERSION = "24.1.9"
+MY_VERSION = "24.2.1"
 
 MY_CMD = os.getenv("MY_CMD", None)
 MY_HOME = os.getenv("MY_HOME", None)
