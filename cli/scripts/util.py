@@ -57,6 +57,15 @@ if os.path.exists(platform_lib_path):
 my_logger = logging.getLogger("cli_logger")
 
 
+def trim_plat(ver):
+  if not ver:
+    return(None)
+  v1 = ver.replace("-el9", "")
+  v2 = v1.replace("-arm9", "")
+  v3 = v2.replace("-el8", "")
+  return v3
+
+
 def get_num_spocks(ver):
     try:
         c = cL.cursor()

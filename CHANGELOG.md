@@ -2,8 +2,11 @@
 
 
 ## planned for 24.2.1 on 2024-02-12 ###########
+  - fix bug installing specific component versions where metadata updates & config not run
+  - 'setup pgedge' fully supports pinning pg version &/or spock version
+
+  still to do:
   - spock-3.2.5 GA & default in -upstream
-  - fix bug when installing by version # where metadata & config are not run
   - Update spock README with info on DDL Replication
 
 
@@ -13,7 +16,8 @@
   - bump pg minor versions to 16.2, 15.11, .....
   - more refactoring for service commands and logging (PR #85 Cady)
   - fix regression in 'service.py' including 'component' that was removed
-  - 3rd pass at 'setup pgedge' as documented way to install pgedge AND be able to pin the spock version
+  - 3rd pass at 'setup pgedge' as documented way to install pgedge AND 
+     be able to pin the spock version
 
 
 ## done for 24.1.8 on 2024-02-06 ###########

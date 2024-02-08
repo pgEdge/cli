@@ -1764,6 +1764,7 @@ if p_mode == "install":
         else:
             p_version = None
             status = install_comp(c)
+        p_version = util.trim_plat(p_version)
         update_component_state(c, p_mode, p_version)
         isExt = meta.is_extension(c)
         if isExt:
