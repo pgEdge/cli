@@ -67,7 +67,6 @@ def create(db=None, User=None, Passwd=None, pg=None, spock="latest"):
        ver = spock
 
     spock_comp = f"spock{major_ver}-pg{pg} {ver}"
-    print(f"DEBUG spock_comp = '{spock_comp}'")
 
     st8 = util.get_comp_state(spock_comp)
     if st8 in ("Installed", "Enabled"):
