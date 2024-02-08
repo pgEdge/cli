@@ -1,5 +1,5 @@
 import os, time
-import component, util, startup 
+import util
 
 comp = "postgrest"
 

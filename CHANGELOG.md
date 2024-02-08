@@ -3,9 +3,13 @@
 
 ## planned for 24.2.1 on 2024-02-12 ###########
   - fix bug installing specific component versions where metadata updates & config not run
-  - 'setup pgedge' fully supports pinning pg version &/or spock version
+  - bump postgrest from 11.2.0 to 12.0.2 (& also remove dependency on deprecated component.py)
+  - bump backrest from 2.49 to 2.50
+  - bump orafce from 4.5.0 to 4.9.2
 
   still to do:
+  - bump plv8 and fix compile
+  - 'setup pgedge' fully supports pinning pg version &/or spock version
   - spock-3.2.5 GA & default in -upstream
   - Update spock README with info on DDL Replication
 

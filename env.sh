@@ -23,9 +23,9 @@ P12=12.18-1
 catV=1.1.1
 firwldV=1.2
 adminV=8.x
-postgrestV=11.2.0-1
+postgrestV=12.0.2-1
 prompgexpV=0.11.1
-backrestV=2.49-1
+backrestV=2.50-1
 readonlyV=1.1.1-1
 
 curlV=2.2.2-1
@@ -33,7 +33,7 @@ citusV=12.1.1-1
 
 oraclefdwV=2.6.0-1
 inclV=21.6
-orafceV=4.5.0-1
+orafceV=4.9.2-1
 ora2pgV=23.1
 v8V=3.2.1-1
 

@@ -131,15 +131,17 @@ INSERT INTO projects VALUES ('orafce', 'ext', 4, 0, 'hub', 0, 'https://github.co
   'orafce', 1, 'larry.png', 'Ora Built-in Packages', 'https://github.com/orafce/orafce#orafce---oracles-compatibility-functions-and-packages');
 INSERT INTO releases VALUES ('orafce-pg15', 2, 'orafce', 'OraFCE', '', 'prod', '', 1, 'POSTGRES', '', '');
 INSERT INTO releases VALUES ('orafce-pg16', 2, 'orafce', 'OraFCE', '', 'prod', '', 1, 'POSTGRES', '', '');
-INSERT INTO versions VALUES ('orafce-pg15', '4.5.0-1',   'arm9, el9', 1, '20230914', 'pg15', '', '');
-INSERT INTO versions VALUES ('orafce-pg16', '4.5.0-1',   'arm9, el9', 1, '20230914', 'pg16', '', '');
+INSERT INTO versions VALUES ('orafce-pg15', '4.9.2-1',   'arm9, el9', 1, '20240212', 'pg15', '', '');
+INSERT INTO versions VALUES ('orafce-pg16', '4.9.2-1',   'arm9, el9', 1, '20240212', 'pg16', '', '');
+INSERT INTO versions VALUES ('orafce-pg15', '4.5.0-1',   'arm9, el9', 0, '20230914', 'pg15', '', '');
+INSERT INTO versions VALUES ('orafce-pg16', '4.5.0-1',   'arm9, el9', 0, '20230914', 'pg16', '', '');
 
 INSERT INTO projects VALUES ('plv8', 'dev', 4, 0, 'hub', 0, 'https://github.com/plv8/plv8/tags',
   'plv8',   1, 'v8.png', 'Javascript Stored Procedures', 'https://github.com/plv8/plv8');
 INSERT INTO releases VALUES ('plv8-pg15', 4, 'plv8', 'PL/V8', '', 'prod', '', 1, 'POSTGRES', '', '');
 INSERT INTO releases VALUES ('plv8-pg16', 4, 'plv8', 'PL/V8', '', 'prod', '', 1, 'POSTGRES', '', '');
-INSERT INTO versions VALUES ('plv8-pg15', '3.2.1-1', 'arm9, el9', 1, '20240130', 'pg15', '', '');
-INSERT INTO versions VALUES ('plv8-pg16', '3.2.1-1', 'arm9, el9', 1, '20240130', 'pg16', '', '');
+INSERT INTO versions VALUES ('plv8-pg15', '3.2.1-1', 'arm9, el9', 0, '20240130', 'pg15', '', '');
+INSERT INTO versions VALUES ('plv8-pg16', '3.2.1-1', 'arm9, el9', 0, '20240130', 'pg16', '', '');
 
 INSERT INTO projects VALUES ('pljava', 'dev', 4, 0, 'hub', 0, 'https://github.com/tada/pljava/releases', 
   'pljava', 1, 'pljava.png', 'Java Stored Procedures', 'https://github.com/tada/pljava');
@@ -154,7 +156,6 @@ INSERT INTO releases VALUES ('pldebugger-pg15', 2, 'pldebugger', 'PL/Debugger', 
 INSERT INTO releases VALUES ('pldebugger-pg16', 2, 'pldebugger', 'PL/Debugger', '', 'prod', '', 1, 'POSTGRES', '', '');
 INSERT INTO versions VALUES ('pldebugger-pg15', '1.6-1',  'arm9, el9',  1, '20231112', 'pg15', '', '');
 INSERT INTO versions VALUES ('pldebugger-pg16', '1.6-1',  'arm9, el9',  1, '20231112', 'pg16', '', '');
-INSERT INTO versions VALUES ('pldebugger-pg15', '1.5-1',  'arm9, el9',  0, '20220720', 'pg15', '', '');
 
 INSERT INTO projects VALUES ('plprofiler', 'dev', 4, 0, 'hub', 7, 'https://github.com/bigsql/plprofiler/tags',
   'plprofiler', 1, 'plprofiler.png', 'Stored Procedure Profiler', 'https://github.com/bigsql/plprofiler#plprofiler');
@@ -162,14 +163,11 @@ INSERT INTO releases VALUES ('plprofiler-pg15', 0, 'plprofiler',    'PL/Profiler
 INSERT INTO releases VALUES ('plprofiler-pg16', 0, 'plprofiler',    'PL/Profiler',  '', 'prod', '', 1, 'POSTGRES', '', '');
 INSERT INTO versions VALUES ('plprofiler-pg15', '4.2.4-1', 'arm9, el9', 1, '20230914', 'pg15', '', '');
 INSERT INTO versions VALUES ('plprofiler-pg16', '4.2.4-1', 'arm9, el9', 1, '20230914', 'pg16', '', '');
-INSERT INTO versions VALUES ('plprofiler-pg15', '4.2.2-1', 'arm9, el9', 0, '20230731', 'pg15', '', '');
-INSERT INTO versions VALUES ('plprofiler-pg16', '4.2.2-1', 'arm9, el9', 0, '20230731', 'pg16', '', '');
 
 INSERT INTO projects VALUES ('postgrest', 'pge', 11, 3000, 'hub', 0, 'https://github.com/postgrest/postgrest/tags',
   'postgrest', 0, 'postgrest.png', 'a RESTful API', 'https://postgrest.org');
 INSERT INTO releases VALUES ('postgrest', 9, 'postgrest', 'PostgREST', '', 'prod', '', 1, 'MIT', '', '');
-INSERT INTO versions VALUES ('postgrest', '11.2.0-1', 'el9, arm9', 1, '20230927', '', 'EL9', 'https://postgrest.org');
-INSERT INTO versions VALUES ('postgrest', '11.1.0-1', 'el9, arm9', 0, '20230629', '', 'EL9', 'https://postgrest.org');
+INSERT INTO versions VALUES ('postgrest', '12.0.2-1', 'el9, arm9', 1, '20240212', '', 'EL9', 'https://postgrest.org');
 
 INSERT INTO projects VALUES ('prompgexp', 'pge', 11, 9187, 'golang', 0, 'https://github.com/prometheus-community/postgres_exporter/tags',
   'prompgexp', 0, 'prometheus.png', 'Prometheus PG Exporter', 'https://github.com/prometheus-community/postgres_exporter');
@@ -327,8 +325,8 @@ INSERT INTO versions VALUES ('pgcat', '1.1.1', 'el8, el9, arm9', 1, '20240108', 
 INSERT INTO projects VALUES ('backrest', 'pge', 11, 0, 'hub', 3, 'http://pgbackrest.org',
   'backrest',  0, 'backrest.png', 'Backup & Restore', 'http://pgbackrest.org');
 INSERT INTO releases VALUES ('backrest', 2, 'backrest',  'pgBackRest', '', 'prod', '', 1, 'MIT', '', '');
-INSERT INTO versions VALUES ('backrest', '2.49-1', 'el8, el9, arm9', 1, '20240108', '', '', '');
-INSERT INTO versions VALUES ('backrest', '2.48-1', 'el9, arm9',      0, '20231130', '', '', '');
+INSERT INTO versions VALUES ('backrest', '2.50-1', 'el8, el9, arm9', 1, '20240212', '', '', '');
+INSERT INTO versions VALUES ('backrest', '2.49-1', 'el8, el9, arm9', 0, '20240108', '', '', '');
 
 INSERT INTO projects VALUES ('firewalld', 'app', 11, 0, '', 4, 'https://firewalld.org',
   'firewalld', 0, 'firewalld.png', 'HA', 'https://github.com/firewalld/firewalld');

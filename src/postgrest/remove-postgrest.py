@@ -1,5 +1,5 @@
 import os
-import component, util, startup 
+import util 
 
 comp = "postgrest"
 autostart =  util.get_column("autostart", comp)
