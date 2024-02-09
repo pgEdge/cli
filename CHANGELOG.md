@@ -4,15 +4,16 @@
 ## planned for 24.2.1 on 2024-02-12 ###########
   - fix db create when spock already on the cluster (multiple db's)
   - fix bug installing specific component versions where metadata updates & config not run
+  - getting ready for spock33 private beta
   - bump postgrest from 11.2.0 to 12.0.2 (& also remove dependency on deprecated component.py)
   - bump backrest from 2.49 to 2.50
   - bump orafce from 4.5.0 to 4.9.2
 
   still to do:
+  - fix spock32 low level regression tests
+  - spock-3.2.5 GA & default in -upstream
   - bump plv8 and fix compile
   - 'setup pgedge' fully supports pinning pg version &/or spock version
-  - spock-3.2.5 GA & default in -upstream
-  - Update spock README with info on DDL Replication
 
 
 ## done for 24.1.9 on 2024-02-07 ###########

@@ -20,6 +20,8 @@ from log_helpers import bcolours, characters
 import api, meta, ini
 
 MY_VERSION = "24.2.1"
+DEFAULT_PG = "16"
+DEFAULT_SPOCK = "32"
 
 MY_CMD = os.getenv("MY_CMD", None)
 MY_HOME = os.getenv("MY_HOME", None)
@@ -42,7 +44,6 @@ isEXTENSIONS = False
 
 ONE_DAY = 86400
 ONE_WEEK = ONE_DAY * 7
-DEFAULT_PG = "16"
 
 scripts_lib_path = os.path.join(os.path.dirname(__file__), "lib")
 if scripts_lib_path not in sys.path:

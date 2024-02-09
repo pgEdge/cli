@@ -187,6 +187,8 @@ def check_release(p_wild):
 def wildcard_component(p_component):
     # Trim slashes for dweeb convenience
     p_comp = p_component.replace("/", "")
+    if p_comp == "spock":
+        p_comp = util.DEFAULT_SPOCK
 
     comp = check_release(p_comp)
     if comp > "":

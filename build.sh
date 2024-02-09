@@ -194,6 +194,7 @@ initDir () {
   copy-pgXX "snowflake"
   copy-pgXX "orafce"
   copy-pgXX "spock32"
+  copy-pgXX "spock33"
   copy-pgXX "curl"
   copy-pgXX "pglogical"
   ##copy-pgXX "anon"
@@ -452,6 +453,7 @@ initPG () {
     if [ "$pgM" == "16" ]; then
       initC "audit-pg$pgM"      "audit"      "$audit16V"   "$outPlat" "postgres/audit"     "" "" "nil"
       initC "hintplan-pg$pgM"   "hintplan"   "$hint16V"    "$outPlat" "postgres/hintplan"  "" "" "nil"
+      initC "spock33-pg$pgM"    "spock33"    "$spock33V"   "$outPlat" "postgres/spock33"   "" "" "nil"
     fi
 
     if [ "$pgM" == "15" ]; then

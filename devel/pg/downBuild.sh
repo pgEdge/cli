@@ -1,6 +1,8 @@
 
 ## set -x
 
+SPOCK_REPO=spock-private
+
 v12=12.18
 v13=13.14
 v14=14.11
@@ -39,14 +41,14 @@ patchFromSpock () {
   patch=$2
 
   echoCmd "cd contrib"
-  if [ ! -d spock-private ]; then
-    echoCmd "git clone https://github.com/pgedge/spock-private"
+  if [ ! -d $SPOCK_REPO ]; then
+    echoCmd "git clone https://github.com/pgedge/$SPOCK_REPO"
   fi
-  echoCmd "cd spock-private"
+  echoCmd "cd $SPOCK_REPO"
   echoCmd "git checkout $branch"
   echoCmd "git pull"
   echoCmd "cd ../.."
-  echoCmd "patch -p1 -i contrib/spock-private/$patch"
+  echoCmd "patch -p1 -i contrib/$SPOCK_REPO/$patch"
 
   sleep 2
 }
@@ -71,6 +73,11 @@ downBuild () {
 
   if [ "$pgV" == "14" ] || [ "$pgV" == "15" ] || [ "$pgV" == "16" ] || [ "$pgV" == "17" ]; then
     patchFromSpock main patches/pg$pgV-005-log_old_value.diff
+  fi
+
+  if [ "$pgV" == "16" ]; then
+    patchFromSpock main patches/pg$pgV-012-hidden_columns.diff
+    patchFromSpock main patches/pg$pgV-015-delta_apply_function.diff
   fi
 
   makeInstall
