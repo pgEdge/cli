@@ -476,8 +476,13 @@ def info(p_json, p_home, p_repo, print_flag=True):
     else:
         glibc_v_display = " glibc-" + glibcV + "-"
 
+    isTTY = os.getenv("pgeTTY")
+    if isTTY == "False":
+       tty = " (non-interactive) "
+    else:
+       tty = "  "
     print(bold_start + ("#" * 70) + bold_end)
-    print(bold_start + "#  pgEdge CLI: " + bold_end + "v" + ver + "  " + p_home)
+    print(bold_start + "#  pgEdge CLI: " + bold_end + "v" + ver + tty + p_home)
     print(
         bold_start
         + "# User & Host: "

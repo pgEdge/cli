@@ -6,6 +6,7 @@
   - fix bug installing specific component versions where metadata updates & config not run
   - getting ready for spock33 private beta
   - display deprecation warning when 'nc', 'nodectl' or 'ctl' aliases used for 'pgedge' CLI name
+  - passing '--no-tty' to any CLI forces non-interactive mode (most are non-interactive anyway)
   - bump postgrest from 11.2.0 to 12.0.2 (& also remove dependency on deprecated component.py)
   - bump backrest from 2.49 to 2.50
   - bump orafce from 4.5.0 to 4.9.2
