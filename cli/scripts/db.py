@@ -66,13 +66,14 @@ def create(db=None, User=None, Passwd=None, pg=None, spock="latest"):
        major_ver = f"{spock[:1]}{spock[2:3:1]}"
        ver = spock
 
-    spock_comp = f"spock{major_ver}-pg{pg} {ver}"
-
+    spock_comp = f"spock{major_ver}-pg{pg}"
     st8 = util.get_comp_state(spock_comp)
+
     if st8 in ("Installed", "Enabled"):
         cmd = "CREATE EXTENSION spock"
         rc3 = util.echo_cmd(ncb + '"psql -q -c \\"' + cmd + '\\" ' + str(db) + '"')
     else:
+        spock_comp = f"spock{major_ver}-pg{pg} {ver}"
         rc3 = util.echo_cmd(nc + "install " + spock_comp + " -d " + str(db))
 
     cmd = "CREATE EXTENSION snowflake"
