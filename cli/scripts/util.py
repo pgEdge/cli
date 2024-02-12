@@ -1,10 +1,25 @@
-
 #  Copyright 2022-2024 PGEDGE  All rights reserved. #
 
 
-import os, sys, socket, sqlite3, signal, hashlib, random, json, tarfile, uuid
-import logging, tempfile, shutil, traceback, time, platform
-import subprocess, getpass, filecmp
+import os
+import sys
+import socket
+import sqlite3
+import signal
+import hashlib
+import random
+import json
+import tarfile
+import uuid
+import logging
+import tempfile
+import shutil
+import traceback
+import time
+import platform
+import subprocess
+import getpass
+import filecmp
 
 from subprocess import Popen, PIPE, STDOUT
 from datetime import datetime, timedelta
@@ -27,18 +42,18 @@ MY_CMD = os.getenv("MY_CMD", None)
 MY_HOME = os.getenv("MY_HOME", None)
 MY_LITE = os.getenv("MY_LITE", None)
 
-isJSON=False
+isJSON = False
 if os.environ.get("isJson", "False") == "True":
-    isJSON=True
+    isJSON = True
 
 pid_file = os.path.join(MY_HOME, "conf", "cli.pid")
 
 isTEST = False
 if os.environ.get("isTest", "False") == "True":
-    isTEST=True
+    isTEST = True
 isENT = False
 if os.environ.get("isEnt", "False") == "True":
-    isENT=True
+    isENT = True
 isSHOWDUPS = False
 isEXTENSIONS = False
 
@@ -59,19 +74,19 @@ my_logger = logging.getLogger("cli_logger")
 
 
 def trim_plat(ver):
-  if not ver:
-    return(None)
-  v1 = ver.replace("-el9", "")
-  v2 = v1.replace("-arm9", "")
-  v3 = v2.replace("-el8", "")
-  return v3
+    if not ver:
+        return None
+    v1 = ver.replace("-el9", "")
+    v2 = v1.replace("-arm9", "")
+    v3 = v2.replace("-el8", "")
+    return v3
 
 
 def get_num_spocks(ver):
     try:
         c = cL.cursor()
         sql = (
-              f"SELECT count(*) FROM versions\n "
+            f"SELECT count(*) FROM versions\n "
             + f" WHERE component LIKE 'spock%' AND version LIKE '{ver}%'\n"
             + f"   AND platform LIKE '%{get_el_ver()}%'"
         )
@@ -80,7 +95,7 @@ def get_num_spocks(ver):
     except Exception as e:
         fatal_sql_error(e, sql, "get_num_spocks()")
 
-    return(data[0]) 
+    return data[0]
 
 
 def copytree(cmd):
@@ -488,20 +503,20 @@ def scrub_passwd(p_cmd):
     return new_s
 
 
-def is_selinux_active(): 
+def is_selinux_active():
     if get_platform() != "Linux":
-        return(False)
+        return False
 
     rc = os.system("getenforce > /dev/null 2>&1")
     if rc != 0:
-        return(False)
+        return False
 
     status = getoutput("getenforce")
     if status.lower() == "disabled":
-        return(False)
+        return False
 
-    return(True)
-   
+    return True
+
 
 def get_glibc_version():
     if get_platform() != "Linux":
@@ -515,7 +530,8 @@ def get_glibc_version():
 
 
 def get_random_password(p_length=12):
-    import string, random
+    import string
+    import random
 
     passwd_chars = string.ascii_letters + string.digits + "~!@()_+-{}|"
     passwd = []
@@ -535,7 +551,7 @@ def run_native(component, bin_path, cmd):
         message(f"{component} not installed, missing '{bin_path}'", "error")
         return
 
-    return(echo_cmd(bin_path + " " + cmd))
+    return echo_cmd(bin_path + " " + cmd)
 
 
 def sysdate():
@@ -1021,75 +1037,77 @@ def message(p_msg, p_state="info", p_isJSON=None):
 
     if p_msg is None:
         return
-    
+
     jsn_msg = None
 
     log_level = p_state.lower()
-    if int(os.getenv('MY_DEBUG_LEVEL', '-1')) == -1:
+    if int(os.getenv("MY_DEBUG_LEVEL", "-1")) == -1:
         cur_level = 20
     else:
         cur_level = 10
 
     if log_level == "error":
-        log_level_num=40
+        log_level_num = 40
         my_logger.error(p_msg)
-        if log_level_num>=cur_level:
+        if log_level_num >= cur_level:
             if not p_isJSON:
                 print(bcolours.FAIL + characters.CROSS + " " + p_msg + bcolours.ENDC)
                 return
             else:
-                jsn_msg=p_msg
+                jsn_msg = p_msg
     elif log_level == "warning":
-        log_level_num=30
+        log_level_num = 30
         my_logger.warning(p_msg)
-        if log_level_num>=cur_level:
+        if log_level_num >= cur_level:
             if not p_isJSON:
-                print(bcolours.YELLOW + characters.WARNING + " " + p_msg + bcolours.ENDC)
+                print(
+                    bcolours.YELLOW + characters.WARNING + " " + p_msg + bcolours.ENDC
+                )
                 return
             else:
-                jsn_msg=p_msg
+                jsn_msg = p_msg
     elif log_level == "alert":
-        log_level_num=20
+        log_level_num = 20
         my_logger.alert(p_msg)
-        if log_level_num>=cur_level:
+        if log_level_num >= cur_level:
             if not p_isJSON:
                 print(bcolours.YELLOW + p_msg + bcolours.ENDC)
                 return
             else:
-                jsn_msg=p_msg
+                jsn_msg = p_msg
     elif log_level == "debug":
-        log_level_num=10
+        log_level_num = 10
         my_logger.debug(p_msg)
-        if log_level_num>=cur_level:
+        if log_level_num >= cur_level:
             if not p_isJSON:
                 print(bcolours.YELLOW + p_msg + bcolours.ENDC)
                 return
             else:
-                jsn_msg=p_msg
+                jsn_msg = p_msg
     elif log_level == "success":
-        log_level_num=20
-        my_logger.success(p_msg)
-        if log_level_num>=cur_level:
+        log_level_num = 20
+        my_logger.info(p_msg)
+        if log_level_num >= cur_level:
             if not p_isJSON:
                 print(bcolours.OKGREEN + characters.TICK + " " + p_msg + bcolours.ENDC)
                 return
             else:
-                jsn_msg=p_msg
+                jsn_msg = p_msg
     elif log_level == "info":
-        log_level_num=20
+        log_level_num = 20
         my_logger.info(p_msg)
-        if log_level_num>=cur_level:
+        if log_level_num >= cur_level:
             if not p_isJSON:
                 print(p_msg)
                 return
             else:
-                jsn_msg=p_msg
+                jsn_msg = p_msg
     else:
         if not p_isJSON:
             print(p_msg)
             return
         else:
-            jsn_msg=p_msg
+            jsn_msg = p_msg
 
     if jsn_msg != None:
         msg = p_msg.replace("\n", "")
@@ -3369,6 +3387,8 @@ def delete_shortlink_osx(short_link):
     if os.path.exists(short_link_path):
         os.system(cmd)
         os.system("killall Dock")
+
+
 def exit_cleanly(p_rc, conn=None):
     if conn:
         try:
@@ -3379,9 +3399,9 @@ def exit_cleanly(p_rc, conn=None):
 
 
 def get_comp_lists(p_mode, arg, args, ignore_comp_list, p_host, connL):
-    isJSON=False
+    isJSON = False
     if os.environ.get("isJson", "False") == "True":
-        isJSON=True
+        isJSON = True
     p_comp_list = []
     extra_args = ""
     p_version = ""
@@ -3403,7 +3423,10 @@ def get_comp_lists(p_mode, arg, args, ignore_comp_list, p_host, connL):
                         info_arg = 1
                         p_version = "all"
                 else:
-                    if p_mode in ("config", "init", "provision") and len(p_comp_list) == 1:
+                    if (
+                        p_mode in ("config", "init", "provision")
+                        and len(p_comp_list) == 1
+                    ):
                         if str(args[i]) > "":
                             extra_args = extra_args + '"' + str(args[i]) + '" '
                     elif (
@@ -3420,7 +3443,9 @@ def get_comp_lists(p_mode, arg, args, ignore_comp_list, p_host, connL):
                             )
                             if p_version == "-1":
                                 print_error(
-                                    "Invalid component version parameter  (" + ver1 + ")"
+                                    "Invalid component version parameter  ("
+                                    + ver1
+                                    + ")"
                                 )
                                 exit_cleanly(1, connL)
                             info_arg = 1
@@ -3454,9 +3479,7 @@ def check_comp(p_comp, p_port, p_kount, check_status=False):
         api.status(isJSON, p_comp, ver, app_state, p_port, p_kount)
         return
 
-    if ((p_port == "0") or (p_port == "1")) and get_column(
-        "autostart", p_comp
-    ) != "on":
+    if ((p_port == "0") or (p_port == "1")) and get_column("autostart", p_comp) != "on":
         api.status(isJSON, p_comp, ver, "Installed", "", p_kount)
         return
 
@@ -3488,6 +3511,7 @@ def check_comp(p_comp, p_port, p_kount, check_status=False):
     api.status(isJSON, p_comp, ver, status, p_port, p_kount)
 
     return
+
 
 # run external scripts #######################################
 def run_script(componentName, scriptName, scriptParm):
@@ -3579,6 +3603,7 @@ def update_component_state(p_app, p_mode, p_ver=None):
     msg = p_app + " " + new_state
     message(msg, "debug", isJSON)
     return
+
 
 # MAINLINE ################################################################
 cL = sqlite3.connect(MY_LITE, check_same_thread=False)
