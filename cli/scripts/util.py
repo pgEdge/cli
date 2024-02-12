@@ -3,7 +3,7 @@
 
 
 import os, sys, socket, sqlite3, signal, hashlib, random, json, tarfile, uuid
-import logging, tempfile, shutil, traceback, time, platform
+import logging, logging.handlers, tempfile, shutil, traceback, time, platform
 import subprocess, getpass, filecmp
 
 from subprocess import Popen, PIPE, STDOUT
@@ -55,8 +55,49 @@ if os.path.exists(platform_lib_path):
     if platform_lib_path not in sys.path:
         sys.path.append(platform_lib_path)
 
-my_logger = logging.getLogger("cli_logger")
+################ Logging Configuration ############
+# Custom Logging
+COMMAND = 15
+DEBUG2 = 9
 
+# Custom loglevel functions
+def debug2(self, message, *args, **kws):
+    # Yes, logger takes its '*args' as 'args'.
+    if self.isEnabledFor(DEBUG2):
+        self._log(DEBUG2, message, args, **kws)
+
+
+def command(self, message, *args, **kws):
+    # Yes, logger takes its '*args' as 'args'.
+    if self.isEnabledFor(COMMAND):
+        self._log(COMMAND, message, args, **kws)
+
+my_logger = logging.getLogger()
+LOG_FILENAME = os.getenv('MY_LOGS')
+if not LOG_FILENAME:
+   MY_HOME = os.getenv("MY_HOME")
+   LOG_FILENAME = os.path.join(MY_HOME,"logs","cli_log.out")
+LOG_DIRECTORY = os.path.split(LOG_FILENAME)[0]
+LOG_LEVEL = int(os.getenv('MY_DEBUG_LEVEL', '-1'))
+if LOG_LEVEL is None or LOG_LEVEL == -1:
+    LOG_LEVEL = COMMAND
+
+if not os.path.isdir(LOG_DIRECTORY):
+    os.mkdir(LOG_DIRECTORY)
+
+logging.addLevelName(COMMAND, "COMMAND")
+logging.Logger.command = command
+
+logging.addLevelName(DEBUG2, "DEBUG2")
+logging.Logger.debug2 = debug2
+
+my_logger.setLevel(LOG_LEVEL)
+handler = logging.handlers.RotatingFileHandler(
+                  LOG_FILENAME, maxBytes=10*1024*1024, backupCount=5)
+formatter = logging.Formatter('%(asctime)s [%(levelname)s] : %(message)s',
+                                  datefmt='%Y-%m-%d %H:%M:%S')
+handler.setFormatter(formatter)
+my_logger.addHandler(handler)
 
 def trim_plat(ver):
   if not ver:

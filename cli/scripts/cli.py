@@ -39,6 +39,7 @@ if os.path.exists(platform_lib_path):
         sys.path.append(platform_lib_path)
 
 import util, api, startup, meta
+my_logger=util.my_logger
 
 my_conf = os.path.join(util.MY_HOME, "conf")
 if not util.is_writable(my_conf):
@@ -51,10 +52,6 @@ if not util.is_writable(my_conf):
 
 if util.get_value("GLOBAL", "PLATFORM", "") in ("", "posix", "windoze"):
     util.set_value("GLOBAL", "PLATFORM", util.get_default_pf())
-
-import clilog
-
-my_logger = logging.getLogger("cli_logger")
 
 ansi_escape = re.compile(r"\x1b[^m]*m")
 
