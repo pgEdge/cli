@@ -1,21 +1,25 @@
 # pgEdge Labs Release Notes #############
 
 
-## planned for 24.2.1 on 2024-02-12 ###########
+## planned for 24.2.2 on 2024-02-19 ###########
+  still to do:
+    - bump plv8 and fix compile
+    - 'setup pgedge' fully supports pinning pg &/or spock versions & wizard
+    - spock33 v3.3.0dev1
+
+
+## done for 24.2.1 on 2024-02-12 ###########
+  - bump spock32 to v3.2.6 with auto-dll fixes and regression fixes
+  - bump pg16 to v16.2-2 (now includes patch with new delta apply functionality to be used in spock33)
+  - fixes to avoid duplicate logging (Cady)
   - fix db create when spock already on the cluster (multiple db's)
   - fix bug installing specific component versions where metadata updates & config not run
-  - getting ready for spock33 private beta
+  - getting ready for spock33 private beta (default spock now explicitely 32 now that there is more than one)
   - display deprecation warning when 'nc', 'nodectl' or 'ctl' aliases used for 'pgedge' CLI name
   - passing '--no-tty' to any CLI forces non-interactive mode (most are non-interactive anyway)
   - bump postgrest from 11.2.0 to 12.0.2 (& also remove dependency on deprecated component.py)
   - bump backrest from 2.49 to 2.50
   - bump orafce from 4.5.0 to 4.9.2
-
-  still to do:
-  - fix spock32 low level regression tests
-  - spock-3.2.5 GA & default in -upstream
-  - bump plv8 and fix compile
-  - 'setup pgedge' fully supports pinning pg version &/or spock version
 
 
 ## done for 24.1.9 on 2024-02-07 ###########

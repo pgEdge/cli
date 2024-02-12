@@ -438,7 +438,7 @@ initPG () {
   supplementalPG "$pgComp"
   zipDir "$pgComp" "$pgV" "$outPlat" "Enabled"
 
-  if [ "$pgM" \> "15" ] && [ "$pgM" \< "17" ]; then
+  if [ "$pgM" \> "13" ] && [ "$pgM" \< "18" ]; then
     initC "snowflake-pg$pgM"  "snowflake"  "$snwflkV"    "$outPlat" "postgres/snowflake" "" "" "nil"
     initC "spock32-pg$pgM"    "spock32"    "$spock32V"   "$outPlat" "postgres/spock32"   "" "" "nil"
   fi
