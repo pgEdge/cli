@@ -1,12 +1,11 @@
 #  Copyright 2024-2024 PGEDGE  All rights reserved. #
 
-import os, sys
+import os, sys, time
 
-os.chdir(os.path.dirname(__file__))
+os.chdir(os.getenv("MY_HOME"))
 sys.path.append(os.path.join(os.path.dirname(__file__), "lib"))
 
-import fire
-import util
+import fire, util, db
 
 
 def osSys(cmd, fatal_exit=True):
@@ -123,21 +122,21 @@ def parse_pg(pg):
    return(pg_major, pg_minor)
 
 
-def pgedge(User=None, Passwd=None, db=None, port=None, pg=None, spock=None, autostart=False):
+def setup_pgedge(User=None, Passwd=None, dbName=None, port=None, pg=None, spock=None, autostart=False):
     """Install pgEdge node (including Postgres, spock, snowflake-sequences and ...)
 
        Install pgEdge node (including Postgres, spock, & snowflake-sequences)
        Example: setup pgedge "user" "passwd" "test" --pg 16
        :param User: The database user that will own the db
        :param Passwd: The password for the newly created db user 
-       :param db: The database name
+       :param dbName: The database name
        :param port: Defaults to 5432 if not specified
        :param pg: Default to latest prod version of pg, such as 16.  May be pinned to a specific pg version such as 16.1
        :param pg: Defaults to latest prod version of spock, such as 3.2.  May be pinned to a specific spock version such as 3.2.4
        :param autostart: Defaults to False
     """
 
-    ## print(f"setup.pgedge({User}, {Passwd}, {db}, {port}, {pg}, {spock})\n")
+    ## print(f"setup.pgedge({User}, {Passwd}, {dbName}, {port}, {pg}, {spock})\n")
 
     if not User:
         User = os.getenv("pgeUser", None)
@@ -145,11 +144,11 @@ def pgedge(User=None, Passwd=None, db=None, port=None, pg=None, spock=None, auto
     if not Passwd:
         Passwd = os.getenv("pgePasswd", None)
 
-    if not db:
-        db = os.getenv("pgName", None)
+    if not dbName:
+        dbName = os.getenv("pgName", None)
 
-    if (User is None) or (Passwd is None) or (db is None):
-        util.exit_message("Must specify User, Passwd & db")
+    if (User is None) or (Passwd is None) or (dbName is None):
+        util.exit_message("Must specify User, Passwd & dbName")
 
     if not port:
         port = os.getenv("pgePort", "5432")
@@ -160,8 +159,35 @@ def pgedge(User=None, Passwd=None, db=None, port=None, pg=None, spock=None, auto
     pg_major, pg_minor = parse_pg(pg)
 
 
-    check_pre_reqs(User, Passwd, db, port, pg_major, pg_minor, spock, autostart)
+    check_pre_reqs(User, Passwd, dbName, port, pg_major, pg_minor, spock, autostart)
+
+    pause = 4
+    pg_ver = f"pg{pg_major}"
+    ctl = "./pgedge"
+
+    if pg_minor:
+        pg_ver = f"pg{pg_major} {pg_minor}"
+    osSys(f"{ctl} install {pg_ver}")
+
+    if util.is_empty_writable_dir("/data") == 0:
+        util.message("## symlink empty local data directory to empty /data ###")
+        osSys("rm -rf data; ln -s /data data")
+
+    if autostart:
+        util.message("\n## init & config autostart  ###############")
+        osSys(f"{ctl} init pg{pg_major} --svcuser={util.get_user()}")
+        osSys(f"{ctl} config pg{pg_major} --autostart=on")
+    else:
+        osSys(f"{ctl} init pg{pg_major}")
+
+    osSys(f"{ctl} config pg{pg_major} --port={port}")
+
+    osSys(f"{ctl} start pg{pg_major}")
+    time.sleep(pause)
+
+    db.create(dbName, User, Passwd, pg_major)
+    time.sleep(pause)
 
 
 if __name__ == "__main__":
-    fire.Fire(pgedge)
+    fire.Fire(setup_pgedge)
