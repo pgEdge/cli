@@ -1,0 +1,28 @@
+[Unit]
+Description=pgBackRest Backup Service
+After=network.target
+
+[Service]
+Type=simple
+User=ibrar
+Group=ibrar
+WorkingDirectory=/home/ibrar/dev/cli/out/posix
+
+# Start the patroni process
+ExecStart=/usr/bin/backrest.py --config=/etc/pgbackrest/backrest.json --user=ibrar --stanza=pg16
+
+# Send HUP to reload from patroni.yml
+ExecReload=/bin/kill -s HUP $MAINPID
+
+# Only kill the patroni process, not its children, so it will gracefully stop postgres
+KillMode=process
+
+# Give a reasonable amount of time for the server to start up/shut down
+TimeoutSec=300
+
+# Restart the service if it crashed
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target
+
