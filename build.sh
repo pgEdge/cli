@@ -550,7 +550,6 @@ do
 
 
             cp $CLI/sh/cli.sh     ./pgedge
-            cp $CLI/sh/setup.sh   ./setup
 
 	    depnc=sh/deprecate-nc.sh
 	    cp $CLI/$depnc        ./nc

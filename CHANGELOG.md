@@ -1,12 +1,12 @@
 # pgEdge Labs Release Notes #############
 
 
-## planned for 24.2.2 on 2024-02-19 ###########
-  - fix bug in util.num_spocks() to eliminate dups on setup
+## done for 24.2.2 planned for 2024-02-19 ###########
+  - 'setup pgedge' fully supports using flags syntax & pinning pg &/or spock versions
+  - fix ACE duplicate debugging statements (Cady and Tej)
 
   still to do:
     - bump plv8 and fix compile
-    - 'setup pgedge' fully supports pinning pg &/or spock versions & wizard
     - spock33 v3.3.0dev1
 
 

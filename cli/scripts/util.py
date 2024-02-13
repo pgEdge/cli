@@ -124,21 +124,57 @@ def trim_plat(ver):
     return v3
 
 
-def get_num_spocks(pg, ver):
+def num_pg_minors(pg_minor, is_display=False):
+    ## print(f"util.num_pg_minors({pg_minor})")
     try:
         c = cL.cursor()
         sql = (
-            f"SELECT count(*) FROM versions\n "
+            f"SELECT component, version, release_date, is_current FROM versions\n "
+            + f" WHERE component LIKE 'pg%' AND version LIKE '{pg_minor}%'\n"
+            + f"   AND platform LIKE '%{get_el_ver()}%'"
+        )
+    
+        c.execute(sql)
+        data = c.fetchall()
+        c.close()
+
+        kount = 0
+        for d in data:
+          kount = kount + 1
+          if is_display:
+             if kount == 1:
+                message(f"    Component    Version  Released  IsCurrent")
+             message(f"    {str(d[0]).ljust(12)} {str(d[1]).ljust(8)} {d[2]}  {d[3]}")
+    except Exception as e:
+        fatal_sql_error(e, sql, "num_pg_minors()")
+
+    return(kount)
+
+
+def num_spocks(pg, ver, is_display=False):
+    try:
+        c = cL.cursor()
+        sql = (
+            f"SELECT component, version, release_date, is_current FROM versions\n "
             + f" WHERE component LIKE 'spock%{pg}' AND version LIKE '{ver}%'\n"
             + f"   AND platform LIKE '%{get_el_ver()}%'"
         )
-       
+      
         c.execute(sql)
-        data = c.fetchone()
-    except Exception as e:
-        fatal_sql_error(e, sql, "get_num_spocks()")
+        data = c.fetchall()
+        c.close()
 
-    return data[0]
+        kount = 0
+        for d in data:
+          kount = kount + 1
+          if is_display:
+             if kount == 1:
+                message(f"    Component    Version  Released  IsCurrent")
+             message(f"    {str(d[0]).ljust(12)} {str(d[1]).ljust(8)} {d[2]}  {d[3]}")
+    except Exception as e:
+        fatal_sql_error(e, sql, "num_spocks()")
+
+    return(kount)
 
 
 def copytree(cmd):

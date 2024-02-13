@@ -23,9 +23,11 @@ def osSys(cmd, fatal_exit=True):
     return
 
 
-def check_pre_reqs(User, Passwd, db, port, pg, spock, autostart):
+def check_pre_reqs(User, Passwd, db, port, pg_major, pg_minor, spock, autostart):
+    ## print(f"setup.check_pre_reqs({User}, {Passwd}, {db}, {port}, {pg_major}, {pg_minor}, {spock})\n")
 
     util.message("#### Checking for Pre-Req's #########################")
+
     platf = util.get_platform()
 
     util.message("  Verify Linux")
@@ -57,13 +59,19 @@ def check_pre_reqs(User, Passwd, db, port, pg, spock, autostart):
 
     util.message(f"  Using port {port}")
 
-    util.message(f"  Verify pg version {pg}")
-    if pg == "latest":
-        pg = util.DEFAULT_PG
-    if str(pg) < "14" or str(pg) > "17":
-        util.exit_message(f"pg must be between 14, 15, 16 or 17")
+    util.message(f"  Verify pg major version {pg_major}")
+    valid_pg = ["14", "15", "16", "17"]
+    if pg_major not in valid_pg:
+        util.exit_message(f"pg {pg_major} must be in {valid_pg}")
+    if pg_minor:
+       util.message(f"  Verify pg minor version {pg_minor}")
+       num_pg_mins = util.num_pg_minors(pg_minor, True)
+       if num_pg_mins == 0:
+           util.exit_message(f"No available version of pg like '{pg_minor}*'")
+       elif num_pg_mins > 1:
+           util.exit_message(f"{num_pg_mins} versions available matching '{pg_minor}*'")
 
-    data_dir = f"data/pg{pg}"
+    data_dir = f"data/pg{pg_major}"
     util.message("  Verify empty data directory '" + data_dir + "'")
     if os.path.exists(data_dir):
         dir = os.listdir(data_dir)
@@ -93,34 +101,67 @@ def check_pre_reqs(User, Passwd, db, port, pg, spock, autostart):
                 "The password must not contain {',', \"'\", \", @, or a space"
             )
 
-    if spock != "latest":
-       util.message(f"  Verify spock {spock} is valid and unique")
-       ns = util.get_num_spocks(pg, spock)
+    if spock:
+       util.message(f"  Verify spock '{spock}' is valid and unique")
+       ns = util.num_spocks(pg_major, spock, True)
        if ns == 0:
            util.exit_message(f"No available version of spock like '{spock}*'")
        elif ns > 1:
            util.exit_message(f"More than 1 spock version available matching '{spock}*'")
 
 
+def parse_pg(pg):
+   if pg is None:
+     return(None, None)
 
-def pgedge(User, Passwd, db, port=5432, pg="16", spock="latest", autostart=False):
+   pg_major = str(pg)
+   pg_minor = None
+   if "." in pg:
+     pg_minor = str(pg)
+     pg_major = str(pg)[:2]
+   
+   return(pg_major, pg_minor)
+
+
+def pgedge(User=None, Passwd=None, db=None, port=None, pg=None, spock=None, autostart=False):
     """Install pgEdge node (including Postgres, spock, snowflake-sequences and ...)
 
-       Install pgEdge node (including Postgres, spock, snowflake-sequences and ...)
+       Install pgEdge node (including Postgres, spock, & snowflake-sequences)
        Example: setup pgedge "user" "passwd" "test" --pg 16
        :param User: The database user that will own the db
        :param Passwd: The password for the newly created db user 
        :param db: The database name
+       :param port: Defaults to 5432 if not specified
+       :param pg: Default to latest prod version of pg, such as 16.  May be pinned to a specific pg version such as 16.1
+       :param pg: Defaults to latest prod version of spock, such as 3.2.  May be pinned to a specific spock version such as 3.2.4
+       :param autostart: Defaults to False
     """
 
-    print(f"DEBUG {User}, {Passwd}, {db}, {port}, {pg}, {spock}\n")
+    ## print(f"setup.pgedge({User}, {Passwd}, {db}, {port}, {pg}, {spock})\n")
 
-    check_pre_reqs(User, Passwd, db, port, pg, spock, autostart)
+    if not User:
+        User = os.getenv("pgeUser", None)
+
+    if not Passwd:
+        Passwd = os.getenv("pgePasswd", None)
+
+    if not db:
+        db = os.getenv("pgName", None)
+
+    if (User is None) or (Passwd is None) or (db is None):
+        util.exit_message("Must specify User, Passwd & db")
+
+    if not port:
+        port = os.getenv("pgePort", "5432")
+
+    if not pg:
+        pg = os.getenv("pgN", util.DEFAULT_PG)
+
+    pg_major, pg_minor = parse_pg(pg)
+
+
+    check_pre_reqs(User, Passwd, db, port, pg_major, pg_minor, spock, autostart)
 
 
 if __name__ == "__main__":
-    fire.Fire(
-        {
-            "pgedge":         pgedge,
-        }
-    )
+    fire.Fire(pgedge)
