@@ -185,7 +185,7 @@ def setup_pgedge(User=None, Passwd=None, dbName=None, port=None, pg=None, spock=
     osSys(f"{ctl} start pg{pg_major}")
     time.sleep(pause)
 
-    db.create(dbName, User, Passwd, pg_major)
+    db.create(dbName, User, Passwd, pg_major, spock)
     time.sleep(pause)
 
 

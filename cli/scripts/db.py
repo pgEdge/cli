@@ -6,7 +6,7 @@ import os, sys
 import util, fire
 
 
-def create(db=None, User=None, Passwd=None, pg=None, spock="latest"):
+def create(db=None, User=None, Passwd=None, pg=None, spock=None):
     """
     Create a pg db with spock installed into it.
 
@@ -59,7 +59,7 @@ def create(db=None, User=None, Passwd=None, pg=None, spock="latest"):
 
     util.echo_cmd(f"{nc} install snowflake-pg{pg} --no-restart")
 
-    if spock == "latest":
+    if spock is None:
        major_ver = "32"
        ver = ""
     else:
