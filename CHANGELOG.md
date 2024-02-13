@@ -3,6 +3,7 @@
 
 ## done for 24.2.2 planned for 2024-02-19 ###########
   - 'setup pgedge' fully supports using flags syntax & pinning pg &/or spock versions
+  - deprecation warning for 'install pgegdge'
   - fix ACE duplicate debugging statements (Cady and Tej)
 
   still to do:

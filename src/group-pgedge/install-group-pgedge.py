@@ -121,6 +121,8 @@ def check_pre_reqs():
 
 # MAINLINE #####################################################3
 
+util.message("'./pgedge install pgedge' is deprecated!!   Use './pgedge setup' instead.", "warning")
+
 svcuser = util.get_user()
 
 db1 = os.getenv("pgName", "")

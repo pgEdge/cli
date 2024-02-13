@@ -132,7 +132,7 @@ def setup_pgedge(User=None, Passwd=None, dbName=None, port=None, pg=None, spock=
        :param dbName: The database name
        :param port: Defaults to 5432 if not specified
        :param pg: Default to latest prod version of pg, such as 16.  May be pinned to a specific pg version such as 16.1
-       :param pg: Defaults to latest prod version of spock, such as 3.2.  May be pinned to a specific spock version such as 3.2.4
+       :param spock: Defaults to latest prod version of spock, such as 3.2.  May be pinned to a specific spock version such as 3.2.4
        :param autostart: Defaults to False
     """
 

@@ -316,7 +316,8 @@ INSERT INTO versions VALUES ('badger', '11.8', '', 0, '20220408', '', '', '');
 INSERT INTO projects VALUES ('group-pgedge', 'pge', 0, 0, 'hub', 3, 'http://pgedge.com',
   'group-pgedge',  0, 'pgedge.png', 'Multi-Active Global Postgres Clusters', 'http://pgedge.com');
 INSERT INTO releases VALUES ('group-pgedge', 1, 'group-pgedge',  'pgEdge', '', 'prod', '', 1, 'pgEdge Platform', '', '');
-INSERT INTO versions VALUES ('group-pgedge', '2.11',  '', 1, '20240206', '', '', '');
+INSERT INTO versions VALUES ('group-pgedge', '2.12',  '', 1, '20240219', '', '', '');
+INSERT INTO versions VALUES ('group-pgedge', '2.11',  '', 0, '20240206', '', '', '');
 INSERT INTO versions VALUES ('group-pgedge', '2.10',  '', 0, '20240130', '', '', '');
 
 INSERT INTO projects VALUES ('ctlibs', 'pge', 0, 0, 'hub', 3, 'https://github.com/pgedge/cli',
