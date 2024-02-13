@@ -95,7 +95,7 @@ def check_pre_reqs(User, Passwd, db, port, pg, spock, autostart):
 
     if spock != "latest":
        util.message(f"  Verify spock {spock} is valid and unique")
-       ns = util.get_num_spocks(spock)
+       ns = util.get_num_spocks(pg, spock)
        if ns == 0:
            util.exit_message(f"No available version of spock like '{spock}*'")
        elif ns > 1:

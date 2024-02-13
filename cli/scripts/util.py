@@ -124,14 +124,15 @@ def trim_plat(ver):
     return v3
 
 
-def get_num_spocks(ver):
+def get_num_spocks(pg, ver):
     try:
         c = cL.cursor()
         sql = (
             f"SELECT count(*) FROM versions\n "
-            + f" WHERE component LIKE 'spock%' AND version LIKE '{ver}%'\n"
+            + f" WHERE component LIKE 'spock%{pg}' AND version LIKE '{ver}%'\n"
             + f"   AND platform LIKE '%{get_el_ver()}%'"
         )
+       
         c.execute(sql)
         data = c.fetchone()
     except Exception as e:

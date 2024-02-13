@@ -2,6 +2,8 @@
 
 
 ## planned for 24.2.2 on 2024-02-19 ###########
+  - fix bug in util.num_spocks() to eliminate dups on setup
+
   still to do:
     - bump plv8 and fix compile
     - 'setup pgedge' fully supports pinning pg &/or spock versions & wizard
