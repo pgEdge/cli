@@ -23,7 +23,7 @@ def osSys(cmd, fatal_exit=True):
 
 
 def check_pre_reqs(User, Passwd, db, port, pg_major, pg_minor, spock, autostart):
-    # util.message(f"setup.check_pre_reqs({User}, {db}, {port}, {pg_major}, {pg_minor}, {spock})", "debug")
+    util.message(f"setup.check_pre_reqs({User}, {db}, {port}, {pg_major}, {pg_minor}, {spock})", "debug")
 
     util.message("#### Checking for Pre-Req's #########################")
 
@@ -113,7 +113,9 @@ def parse_pg(pg):
    if pg is None:
      return(None, None)
 
-   pg_major = str(pg)
+   pg = str(pg)
+
+   pg_major = pg
    pg_minor = None
    if "." in pg:
      pg_minor = str(pg)
@@ -122,21 +124,22 @@ def parse_pg(pg):
    return(pg_major, pg_minor)
 
 
-def setup_pgedge(User=None, Passwd=None, dbName=None, port=None, pg=None, spock=None, autostart=False):
-    """Install pgEdge node (including Postgres, spock, snowflake-sequences and ...)
+def setup_pgedge(User=None, Passwd=None, dbName=None, port=None, pg_ver=None, spock_ver=None, autostart=False):
+    """Install pgEdge node (including postgres, spock, and snowflake-sequences)
 
-       Install pgEdge node (including Postgres, spock, & snowflake-sequences)
-       Example: setup pgedge "user" "passwd" "test" --pg 16
-       :param User: The database user that will own the db
-       :param Passwd: The password for the newly created db user 
-       :param dbName: The database name
+       Install pgEdge node (including postgres, spock, and snowflake-sequences)
+
+       Example: ./pgedge setup -U user -P passwd -d test --pg_ver 16
+       :param User: The database user that will own the db (required)
+       :param Passwd: The password for the newly created db user (required)
+       :param dbName: The database name (required)
        :param port: Defaults to 5432 if not specified
-       :param pg: Default to latest prod version of pg, such as 16.  May be pinned to a specific pg version such as 16.1
-       :param spock: Defaults to latest prod version of spock, such as 3.2.  May be pinned to a specific spock version such as 3.2.4
+       :param pg_ver: Defaults to latest prod version of pg, such as 16.  May be pinned to a specific pg version such as 16.1
+       :param spock_ver: Defaults to latest prod version of spock, such as 3.2.  May be pinned to a specific spock version such as 3.2.4
        :param autostart: Defaults to False
     """
 
-    # util.message(f"setup.pgedge({User}, {dbName}, {port}, {pg}, {spock}, {autostart}", "debug")
+    util.message(f"setup.pgedge({User}, {dbName}, {port}, {pg_ver}, {spock_ver}, {autostart}", "debug")
 
     if not User:
         User = os.getenv("pgeUser", None)
@@ -153,10 +156,10 @@ def setup_pgedge(User=None, Passwd=None, dbName=None, port=None, pg=None, spock=
     if not port:
         port = os.getenv("pgePort", "5432")
 
-    if not pg:
-        pg = os.getenv("pgN", util.DEFAULT_PG)
+    if not pg_ver:
+        pg_ver = os.getenv("pgN", util.DEFAULT_PG)
 
-    pg_major, pg_minor = parse_pg(pg)
+    pg_major, pg_minor = parse_pg(pg_ver)
 
     if not autostart:
         autos = os.getenv("isAutoStart")
@@ -165,15 +168,15 @@ def setup_pgedge(User=None, Passwd=None, dbName=None, port=None, pg=None, spock=
         else:
            autostart = False 
 
-    check_pre_reqs(User, Passwd, dbName, port, pg_major, pg_minor, spock, autostart)
+    check_pre_reqs(User, Passwd, dbName, port, pg_major, pg_minor, spock_ver, autostart)
 
     pause = 4
-    pg_ver = f"pg{pg_major}"
+    pg_full = f"pg{pg_major}"
     ctl = "./pgedge"
 
     if pg_minor:
-        pg_ver = f"pg{pg_major} {pg_minor}"
-    osSys(f"{ctl} install {pg_ver}")
+        pg_full = f"pg{pg_major} {pg_minor}"
+    osSys(f"{ctl} install {pg_full}")
 
     if util.is_empty_writable_dir("/data") == 0:
         util.message("## symlink empty local data directory to empty /data ###")
@@ -191,7 +194,7 @@ def setup_pgedge(User=None, Passwd=None, dbName=None, port=None, pg=None, spock=
     osSys(f"{ctl} start pg{pg_major}")
     time.sleep(pause)
 
-    db.create(dbName, User, Passwd, pg_major, spock)
+    db.create(dbName, User, Passwd, pg_major, spock_ver)
     time.sleep(pause)
 
 
