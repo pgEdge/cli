@@ -23,7 +23,7 @@ def osSys(cmd, fatal_exit=True):
 
 
 def check_pre_reqs(User, Passwd, db, port, pg_major, pg_minor, spock, autostart):
-    ## print(f"setup.check_pre_reqs({User}, {Passwd}, {db}, {port}, {pg_major}, {pg_minor}, {spock})\n")
+    # util.message(f"setup.check_pre_reqs({User}, {db}, {port}, {pg_major}, {pg_minor}, {spock})", "debug")
 
     util.message("#### Checking for Pre-Req's #########################")
 
@@ -136,7 +136,7 @@ def setup_pgedge(User=None, Passwd=None, dbName=None, port=None, pg=None, spock=
        :param autostart: Defaults to False
     """
 
-    ## print(f"setup.pgedge({User}, {Passwd}, {dbName}, {port}, {pg}, {spock})\n")
+    # util.message(f"setup.pgedge({User}, {dbName}, {port}, {pg}, {spock}, {autostart}", "debug")
 
     if not User:
         User = os.getenv("pgeUser", None)
@@ -158,6 +158,12 @@ def setup_pgedge(User=None, Passwd=None, dbName=None, port=None, pg=None, spock=
 
     pg_major, pg_minor = parse_pg(pg)
 
+    if not autostart:
+        autos = os.getenv("isAutoStart")
+        if autos == "True":
+           autostart = True
+        else:
+           autostart = False 
 
     check_pre_reqs(User, Passwd, dbName, port, pg_major, pg_minor, spock, autostart)
 
