@@ -490,7 +490,7 @@ initPG () {
 
   initC "group-pgedge" "group-pgedge" "$grp_pgeV"  ""         "group-pgedge"      "" "" "Y"
   initC "backrest"     "backrest"     "$backrestV" "$outPlat" "postgres/backrest" "" "" "nil"
-  initC "staz"         "staz"         "$stazV"     ""         "postgres/staz"     "" "" "nil"
+  initC "patroni"      "patroni"      "$patroniV"  ""         "postgres/patroni"  "" "" "nil"
   initC "etcd"         "etcd"         "$etcdV"     "$outPlat" "etcd"              "" "" "nil"
   initC "firewalld"    "firewalld"    "$firwldV"   ""         "firewalld"         "" "" "nil"
   initC "pgcat"        "pgcat"        "$catV"      "$outPlat" "postgres/pgcat"    "" "" "nil"
