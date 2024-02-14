@@ -2,12 +2,13 @@
 
 
 ## done for 24.2.2 planned for 2024-02-19 ###########
+  - add plv8 support forpg16 on el9 & arm9
+  - fix deprecation warnings where still using 'nc' instead of 'pgedge'
   - 'setup pgedge' fully supports using flags syntax & pinning pg &/or spock versions
   - deprecation warning for 'install pgegdge'
   - fix ACE duplicate debugging statements (Cady and Tej)
 
   still to do:
-    - bump plv8 and fix compile
     - spock33 v3.3.0dev1
 
 

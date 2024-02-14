@@ -15,7 +15,7 @@ my_home=`cd "$config_bin"; pwd`
 export MY_HOME="$my_home"
 export MY_LOGS=$MY_HOME/logs/cli_log.out
 export MY_LITE=$MY_HOME/conf/db_local.db
-export MY_CMD=nc
+export MY_CMD=pgedge
 
 cd "$MY_HOME"
 
