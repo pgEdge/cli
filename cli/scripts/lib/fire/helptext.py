@@ -227,6 +227,7 @@ def _SynopsisSection(component, actions_grouped_by_kind, spec, metadata,
     sfx = str(cc_lst[1])
   txt = text
 
+  # # BEGIN PGEDGE MODS ########################################
   prfx = "pgedge"
   if "spock.py" in txt:
     prfx = "spock"
@@ -244,8 +245,8 @@ def _SynopsisSection(component, actions_grouped_by_kind, spec, metadata,
     prfx = "multicloud"
   elif "firewalld.py" in txt:
     prfx = "firewalld"
-  elif "cloud.py" in txt:
-    prfx = "cloud"
+  elif "setup.py" in txt:
+    prfx = "setup"
 
   txt = txt.replace(f"{prfx}.py", f"./pgedge {prfx}")
 
@@ -253,6 +254,8 @@ def _SynopsisSection(component, actions_grouped_by_kind, spec, metadata,
     MD_FILE = f"{prfx}-{sfx}.md"
   else:
     MD_FILE = f"{prfx}.md"
+
+  # # END PGEDGE MODS ########################################
 
   print_hdr("SYNOPSIS", txt)
 
@@ -646,7 +649,19 @@ def _CreateFlagItem(flag, docstring_info, spec, required=False,
       part for part in (arg_type, arg_default, description) if part
   )
 
-  return _CreateItem(flag_string, description, indent=SUBSECTION_INDENTATION)
+  # # BEGIN PGEDGE MODS ########################################
+  # ### ignore certain description lines
+  descript2 = ""
+  for line in description.splitlines():
+     if line.startswith("Type: ") or line.startswith("Default: "):
+        pass
+     else:
+        descript2 = descript2 + line + "\n"
+
+  return _CreateItem(flag_string, descript2, indent=SUBSECTION_INDENTATION)
+  # return _CreateItem(flag_string, description, indent=SUBSECTION_INDENTATION)
+
+  # ## END PGEGDE MODS ########################################
 
 
 def _GetArgType(arg, spec):

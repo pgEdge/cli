@@ -1,15 +1,13 @@
 # pgEdge Labs Release Notes #############
 
 
-## done for 24.2.2 planned for 2024-02-19 ###########
-  - add plv8 support forpg16 on el9 & arm9
+## done for 24.2.2 on 2024-02-14 ###########
+  - add plv8 support for pg16 on el9 & arm9
   - fix deprecation warnings where still using 'nc' instead of 'pgedge'
   - 'setup pgedge' fully supports using flags syntax & pinning pg &/or spock versions
   - deprecation warning for 'install pgegdge'
-  - fix ACE duplicate debugging statements (Cady and Tej)
-
-  still to do:
-    - spock33 v3.3.0dev1
+  - fix ACE success messages in util.py (Cady)
+  - ignore --help description lines starting with ('Type: ' & 'Default: ')
 
 
 ## done for 24.2.1 on 2024-02-12 ###########
