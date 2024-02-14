@@ -74,6 +74,7 @@ if os.path.exists(platform_lib_path):
 ################ Logging Configuration ############
 # Custom Logging
 COMMAND = 15
+DEBUG = 10
 DEBUG2 = 9
 
 # Custom loglevel functions
@@ -94,9 +95,18 @@ if not LOG_FILENAME:
    MY_HOME = os.getenv("MY_HOME")
    LOG_FILENAME = os.path.join(MY_HOME,"logs","cli_log.out")
 LOG_DIRECTORY = os.path.split(LOG_FILENAME)[0]
-LOG_LEVEL = int(os.getenv('MY_DEBUG_LEVEL', '-1'))
-if LOG_LEVEL is None or LOG_LEVEL == -1:
+
+isDebug=0
+pgeDebug = int(os.getenv('pgeDebug', '0'))
+if pgeDebug == 1:
+    LOG_LEVEL = DEBUG
+    isDebug = 1
+elif pgeDebug == 2:
+    LOG_LEVEL = DEBUG2
+    isDebug = 2
+else:
     LOG_LEVEL = COMMAND
+    isDebug = 0
 
 if not os.path.isdir(LOG_DIRECTORY):
     os.mkdir(LOG_DIRECTORY)
@@ -1120,10 +1130,7 @@ def message(p_msg, p_state="info", p_isJSON=None):
     jsn_msg = None
 
     log_level = p_state.lower()
-    if int(os.getenv("MY_DEBUG_LEVEL", "-1")) == -1:
-        cur_level = 20
-    else:
-        cur_level = 10
+    cur_level = logging.root.level
 
     if log_level == "error":
         log_level_num = 40

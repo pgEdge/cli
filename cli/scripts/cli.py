@@ -1152,6 +1152,7 @@ if "--jsonp" in args:
     args.remove("--jsonp")
     os.environ["isPretty"] = "True"
 
+isDEBUG = 0
 if "--debug" in args:
     args.remove("--debug")
     my_logger.info("Enabling DEBUG mode")
