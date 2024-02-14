@@ -16,5 +16,5 @@ Example: spock sub-remove-repset sub_n2n1 demo_repset demo
  
 ## FLAGS
     -p, --pg=PG
-        Type: Optional[]
-        Default: None
+    
+    

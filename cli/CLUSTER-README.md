@@ -2,22 +2,17 @@
 Installation and configuration of a pgEdge SPOCK cluster
 
 ## Synopsis
-    ./pgedge cluster <command> [parameters] [options]   
+    ./pgedge cluster <command> [parameters]
 
+[**define-localhost**](doc/cluster-define-localhost.md)  - Create a json config file for a local cluster.<br>
+[**define-remote**](doc/cluster-define-remote.md)        - Create a template for a json config file for a remote cluster.<br>
 [**local-create**](doc/cluster-local-create.md)   - Create a localhost test cluster of N pgEdge nodes on different ports.<br>
 [**local-destroy**](doc/cluster-local-destroy.md) - Stop and then nuke a localhost cluster.<br>
-[**remote-init**](doc/cluster-remote-init.md)     - Configure a test SSH cluster from a JSON cluster definition file.<br>
-[**remote-reset**](doc/cluster-remote-reset.md)   - Reset a test SSH cluster.<br>
-[**remote-import-def**](doc/cluster-remote-import-def.md)  - Import a cluster definition file so we can work with it like a pgEdge cluster.<br>
+[**init**](doc/cluster-init.md)     - Initialize a cluster from json definition file of existing nodes.<br>
+[**remove**](doc/cluster-remove.md)   - Remove a test cluster from json definition file of existing nodes.<br>
 [**command**](doc/cluster-command.md)             - Run `nodectl` command on one or all nodes of a cluster.<br>
 [**app-install**](doc/cluster-app-install.md)     - Install an application such as NorthWind or pgBench.<br>
 [**app-remove**](doc/cluster-app-remove.md)       - Remove an application.<br>
-
-## Options
-    --json             # Turn on JSON output
-    --debug            # Turn on debug logging
-    --silent           # Less noisy
-    --verbose or -v    # More noisy
 
 ## Example cluster.json file
 ```

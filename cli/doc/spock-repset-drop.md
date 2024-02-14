@@ -14,5 +14,5 @@ Example: spock repset-drop demo_repset demo
  
 ## FLAGS
     -p, --pg=PG
-        Type: Optional[]
-        Default: None
+    
+    

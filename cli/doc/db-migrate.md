@@ -14,7 +14,8 @@ schema_only: do not include data in the pg_dump
  
 ## FLAGS
     -s, --schema_only=SCHEMA_ONLY
-        Default: False
+    
+    
     -p, --pg=PG
-        Type: Optional[]
-        Default: None
+    
+    

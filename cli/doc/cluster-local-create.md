@@ -14,15 +14,17 @@ Example: cluster local-create demo 3 lcusr lcpasswd 16 6432 lcdb
  
 ## FLAGS
     --pg=PG
-        Default: 16
         The postgreSQL version of the database.
+    
     --port1=PORT1
-        Default: 6432
         The starting port for this cluster. For local clusters, each node will have a port increasing by 1 from this port number.
+    
     -U, --User=USER
-        Default: lcusr
+    
+    
     -P, --Passwd=PASSWD
-        Default: lcpasswd
+    
+    
     -d, --db=DB
-        Default: lcdb
         The database name.
+    

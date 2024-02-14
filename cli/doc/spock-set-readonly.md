@@ -6,7 +6,8 @@
  
 ## FLAGS
     -r, --readonly=READONLY
-        Default: off
+    
+    
     -p, --pg=PG
-        Type: Optional[]
-        Default: None
+    
+    

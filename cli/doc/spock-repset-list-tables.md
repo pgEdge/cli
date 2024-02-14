@@ -14,5 +14,5 @@ Example: spock repset-list-tables '*' demo
  
 ## FLAGS
     -p, --pg=PG
-        Type: Optional[]
-        Default: None
+    
+    

@@ -14,5 +14,5 @@ Example: spock node-drop n1 demo
  
 ## FLAGS
     -p, --pg=PG
-        Type: Optional[]
-        Default: None
+    
+    

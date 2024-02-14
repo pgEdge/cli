@@ -11,7 +11,8 @@
  
 ## FLAGS
     -s, --synchronize_data=SYNCHRONIZE_DATA
-        Default: False
+    
+    
     -p, --pg=PG
-        Type: Optional[]
-        Default: None
+    
+    

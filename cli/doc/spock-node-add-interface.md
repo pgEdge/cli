@@ -18,5 +18,5 @@ Example: spock node-add-interface n1 n1_2 'host=10.1.2.5 user=pgedge dbname=demo
  
 ## FLAGS
     -p, --pg=PG
-        Type: Optional[]
-        Default: None
+    
+    

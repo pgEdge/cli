@@ -13,9 +13,11 @@ schema_only: do not include data in the pg_dump
  
 ## FLAGS
     -f, --file=FILE
-        Default: /tmp/db_0.sql
+    
+    
     -s, --schema_only=SCHEMA_ONLY
-        Default: False
+    
+    
     -p, --pg=PG
-        Type: Optional[]
-        Default: None
+    
+    

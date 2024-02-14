@@ -14,5 +14,5 @@ Example: spock sub-show-status sub_n2n1 demo
  
 ## FLAGS
     -p, --pg=PG
-        Type: Optional[]
-        Default: None
+    
+    

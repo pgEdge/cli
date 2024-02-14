@@ -1,8 +1,10 @@
 ## SYNOPSIS
-    ./pgedge service restart COMPONENT
+    ./pgedge service restart <flags>
  
 ## DESCRIPTION
     Stop & then start server components
  
-## POSITIONAL ARGUMENTS
-    COMPONENT
+## FLAGS
+    -c, --component=COMPONENT
+    
+    

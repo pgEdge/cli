@@ -1,8 +1,10 @@
 ## SYNOPSIS
-    ./pgedge service disable COMPONENT
+    ./pgedge service disable <flags>
  
 ## DESCRIPTION
     Disable a server component from starting automatically
  
-## POSITIONAL ARGUMENTS
-    COMPONENT
+## FLAGS
+    -c, --component=COMPONENT
+    
+    

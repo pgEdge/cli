@@ -10,7 +10,8 @@
  
 ## FLAGS
     -r, --replace=REPLACE
-        Default: True
+    
+    
     -p, --pg=PG
-        Type: Optional[]
-        Default: None
+    
+    

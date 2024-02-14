@@ -16,5 +16,5 @@ Example: spock sub-show-table sub_n2n1 mytable demo
  
 ## FLAGS
     -p, --pg=PG
-        Type: Optional[]
-        Default: None
+    
+    

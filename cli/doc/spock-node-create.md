@@ -16,5 +16,5 @@ Example: spock node-create n1 'host=10.1.2.5 user=pgedge dbname=demo' demo
  
 ## FLAGS
     -p, --pg=PG
-        Type: Optional[]
-        Default: None
+    
+    

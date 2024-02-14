@@ -14,7 +14,8 @@ Example: spock sequence-convert 'public.*' demo
  
 ## FLAGS
     -t, --type=TYPE
-        Default: snowflake
+    
+    
     -p, --pg=PG
-        Type: Optional[]
-        Default: None
+    
+    

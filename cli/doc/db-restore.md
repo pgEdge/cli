@@ -12,7 +12,8 @@ file: location and file name for dump
  
 ## FLAGS
     -f, --file=FILE
-        Default: /tmp/db_0.sql
+    
+    
     -p, --pg=PG
-        Type: Optional[]
-        Default: None
+    
+    

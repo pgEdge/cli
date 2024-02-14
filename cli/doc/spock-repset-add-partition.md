@@ -14,13 +14,11 @@ Example: spock repset-add-partition mytable demo --partition=mytable_202012
  
 ## FLAGS
     --partition=PARTITION
-        Type: Optional[]
-        Default: None
         The name of the partition. If none is provided, it will add all unreplicated partitions to the replication set. Example: mytable_202012
+    
     -r, --row_filter=ROW_FILTER
-        Type: Optional[]
-        Default: None
         The row filtering expression. Example: my_id = 1001
+    
     --pg=PG
-        Type: Optional[]
-        Default: None
+    
+    

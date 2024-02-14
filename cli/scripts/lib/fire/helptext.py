@@ -243,6 +243,8 @@ def _SynopsisSection(component, actions_grouped_by_kind, spec, metadata,
     prfx = "db"
   elif "multicloud.py" in txt:
     prfx = "multicloud"
+  elif "cloud.py" in txt:
+    prfx = "cloud"
   elif "firewalld.py" in txt:
     prfx = "firewalld"
   elif "setup.py" in txt:
@@ -657,6 +659,9 @@ def _CreateFlagItem(flag, docstring_info, spec, required=False,
         pass
      else:
         descript2 = descript2 + line + "\n"
+
+  if descript2 == "":
+      descript2 = "\n"
 
   return _CreateItem(flag_string, descript2, indent=SUBSECTION_INDENTATION)
   # return _CreateItem(flag_string, description, indent=SUBSECTION_INDENTATION)

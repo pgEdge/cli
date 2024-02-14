@@ -13,6 +13,9 @@ Example: cluster app-install pgbench
     APP_NAME
  
 ## FLAGS
+    -d, --database_name=DATABASE_NAME
+    
+    
     -f, --factor=FACTOR
-        Default: 1
         The scale flag for pgbench.
+    

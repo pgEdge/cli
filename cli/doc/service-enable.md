@@ -1,8 +1,10 @@
 ## SYNOPSIS
-    ./pgedge service enable COMPONENT
+    ./pgedge service enable <flags>
  
 ## DESCRIPTION
     Enable a component
  
-## POSITIONAL ARGUMENTS
-    COMPONENT
+## FLAGS
+    -c, --component=COMPONENT
+    
+    

@@ -16,5 +16,5 @@ Example: spock repset-remove-table demo_repset public.mytable demo
  
 ## FLAGS
     -p, --pg=PG
-        Type: Optional[]
-        Default: None
+    
+    

@@ -17,18 +17,19 @@ Example: spock sub-create sub_n2n1 'host=10.1.2.5 port=5432 user=pgedge dbname=d
 ## FLAGS
     -r, --replication_sets=REPLICATION_SETS
         An array of replication sets to automatically include in this subscription. Example: demo_repset,default,default_insert_only,ddl_sql
+    
     --synchronize_structure=SYNCHRONIZE_STRUCTURE
-        Default: False
         Synchronize structure on subscription create. If some objects already exist in this database then the create of the subscription will fail.
+    
     --synchronize_data=SYNCHRONIZE_DATA
-        Default: False
         Synchronize data on subscription create.
+    
     -f, --forward_origins=FORWARD_ORIGINS
-        Default: 
         For multimaster, this should be kept at the default. For replicating everything written to a node, transactions replicated to it included, this can be set to all.
+    
     -a, --apply_delay=APPLY_DELAY
-        Default: 0
         The amount of time to delay the replication.
+    
     -p, --pg=PG
-        Type: Optional[]
-        Default: None
+    
+    

@@ -10,4 +10,5 @@
  
 ## FLAGS
     -z, --zone=ZONE
-        Default: external
+    
+    

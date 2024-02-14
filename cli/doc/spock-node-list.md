@@ -12,5 +12,5 @@ Example: spock node-list demo
  
 ## FLAGS
     -p, --pg=PG
-        Type: Optional[]
-        Default: None
+    
+    

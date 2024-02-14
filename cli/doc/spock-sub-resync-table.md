@@ -16,8 +16,8 @@ Example: spock sub-resync-table sub_n2n1 mytable demo
  
 ## FLAGS
     -t, --truncate=TRUNCATE
-        Default: False
         WARNING: If this is set to True, the function will truncate the table immediately, and only then begin synchronising it, so it will be empty while being synced.
+    
     -p, --pg=PG
-        Type: Optional[]
-        Default: None
+    
+    

@@ -18,5 +18,5 @@ Example: cluster command demo all spock repset-add-table default * lcdb
  
 ## FLAGS
     -a, --args=ARGS
-        Type: Optional[]
-        Default: None
+    
+    

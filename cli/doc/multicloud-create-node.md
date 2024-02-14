@@ -11,16 +11,17 @@
  
 ## FLAGS
     --size=SIZE
-        Type: Optional[]
-        Default: None
+    
+    
     -i, --image=IMAGE
-        Type: Optional[]
-        Default: None
+    
+    
     --ssh_key=SSH_KEY
-        Type: Optional[]
-        Default: None
+    
+    
     -p, --project=PROJECT
-        Type: Optional[]
-        Default: None
+    
+    
     -j, --json=JSON
-        Default: False
+    
+    

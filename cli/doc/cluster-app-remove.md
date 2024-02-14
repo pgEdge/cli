@@ -1,5 +1,5 @@
 ## SYNOPSIS
-    ./pgedge cluster app-remove CLUSTER_NAME APP_NAME
+    ./pgedge cluster app-remove CLUSTER_NAME APP_NAME <flags>
  
 ## DESCRIPTION
     Remove a test application from all of the nodes in a cluster. 
@@ -11,3 +11,8 @@ Example: cluster app-remove pgbench
     CLUSTER_NAME
         The name of the cluster.
     APP_NAME
+ 
+## FLAGS
+    -d, --database_name=DATABASE_NAME
+    
+    

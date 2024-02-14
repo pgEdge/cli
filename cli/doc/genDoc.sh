@@ -73,11 +73,12 @@ $nc db migrate              --help
 
 cluster () {
 $nc cluster --help
+$nc cluster define-localhost  --help
+$nc cluster define-remote     --help
 $nc cluster local-create      --help
 $nc cluster local-destroy     --help
-$nc cluster remote-init       --help
-$nc cluster remote-reset      --help
-$nc cluster remote-import-def --help
+$nc cluster init              --help
+$nc cluster remove            --help
 $nc cluster command           --help
 $nc cluster app-install       --help
 $nc cluster app-remove        --help
@@ -101,7 +102,7 @@ $nc cloud destroy-cluster    --help
 ace () {
 $nc ace --help
 $nc ace table-diff          --help
-$nc ace diff-schema         --help
+$nc ace diff-schemas        --help
 $nc ace diff-spock          --help
 $nc ace table-repair        --help
 $nc ace table-rerun         --help
@@ -116,6 +117,7 @@ $nc firewalld remove        --help
 }
 
 multicloud () {
+$nc multicloud --help
 $nc multicloud list-providers       --help
 $nc multicloud list-airport-regions --help
 $nc multicloud list-zones           --help
@@ -127,6 +129,10 @@ $nc multicloud stop-node            --help
 $nc multicloud reboot-node          --help
 $nc multicloud destroy-node         --help
 $nc multicloud cluster-create       --help
+}
+
+setup () {
+  $nc setup --help
 }
 
 
@@ -147,6 +153,7 @@ if [ $m == "all" ]; then
   ace
   multicloud
   firewalld
+  setup
 elif [ $m == "um" ]; then
   um
 elif [ $m == "service" ]; then
@@ -165,6 +172,8 @@ elif [ $m == "multicloud" ]; then
   multicloud
 elif [ $m == "firewalld" ]; then
   firewalld
+elif [ $m == "setup" ]; then
+  setup     
 else
   echo "ERROR: $m is not a valid module"
   exit 1

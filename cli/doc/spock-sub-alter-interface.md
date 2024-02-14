@@ -16,5 +16,5 @@ Example: spock sub-alter-interface sub_n2n1 n1_2 demo
  
 ## FLAGS
     -p, --pg=PG
-        Type: Optional[]
-        Default: None
+    
+    

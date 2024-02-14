@@ -16,19 +16,17 @@ Example: spock repset-add-table demo_repset 'public.*' demo
  
 ## FLAGS
     -s, --synchronize_data=SYNCHRONIZE_DATA
-        Default: False
         Synchronized table data on all related subscribers.
+    
     -c, --columns=COLUMNS
-        Type: Optional[]
-        Default: None
         list of columns to replicate. Example: my_id, col_1, col_2
+    
     -r, --row_filter=ROW_FILTER
-        Type: Optional[]
-        Default: None
         Row filtering expression. Example: my_id = 1001
+    
     -i, --include_partitions=INCLUDE_PARTITIONS
-        Default: True
         include all partitions in replication.
+    
     -p, --pg=PG
-        Type: Optional[]
-        Default: None
+    
+    

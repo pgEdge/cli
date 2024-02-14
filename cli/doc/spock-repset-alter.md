@@ -14,17 +14,17 @@ Example: spock repset-alter demo_repset demo --replicate_truncate=False
  
 ## FLAGS
     --replicate_insert=REPLICATE_INSERT
-        Default: True
         For tables in this replication set, replicate inserts.
+    
     --replicate_update=REPLICATE_UPDATE
-        Default: True
         For tables in this replication set, replicate updates.
+    
     --replicate_delete=REPLICATE_DELETE
-        Default: True
         For tables in this replication set, replicate deletes.
+    
     --replicate_truncate=REPLICATE_TRUNCATE
-        Default: True
         For tables in this replication set, replicate truncate.
+    
     -p, --pg=PG
-        Type: Optional[]
-        Default: None
+    
+    

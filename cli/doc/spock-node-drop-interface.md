@@ -16,5 +16,5 @@ Example: spock node-drop-interface n1 n1_2 demo
  
 ## FLAGS
     -p, --pg=PG
-        Type: Optional[]
-        Default: None
+    
+    

@@ -14,5 +14,5 @@ Example: spock sub-drop sub_n2n1 demo
  
 ## FLAGS
     -p, --pg=PG
-        Type: Optional[]
-        Default: None
+    
+    
