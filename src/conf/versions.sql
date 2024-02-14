@@ -85,7 +85,7 @@ INSERT INTO categories VALUES (9,  87, 'Management & Monitoring', 'Manage/Monito
 -- ## HUB ################################
 INSERT INTO projects VALUES ('hub', 'app', 0, 0, 'hub', 0, 'https://github.com/pgedge/cli','',0,'','','');
 INSERT INTO releases VALUES ('hub', 1, 'hub', '', '', 'hidden', '', 1, '', '', '');
-INSERT INTO versions VALUES ('hub', '24.2.2',  '',  1, '20240219', '', '', '');
+INSERT INTO versions VALUES ('hub', '24.2.2',  '',  1, '20240214', '', '', '');
 INSERT INTO versions VALUES ('hub', '24.2.1',  '',  0, '20240212', '', '', '');
 INSERT INTO versions VALUES ('hub', '24.1.9',  '',  0, '20240207', '', '', '');
 INSERT INTO versions VALUES ('hub', '24.1.8',  '',  0, '20240206', '', '', '');
@@ -140,10 +140,8 @@ INSERT INTO versions VALUES ('orafce-pg16', '4.5.0-1',   'arm9, el9', 0, '202309
 
 INSERT INTO projects VALUES ('plv8', 'dev', 4, 0, 'hub', 0, 'https://github.com/plv8/plv8/tags',
   'plv8',   1, 'v8.png', 'Javascript Stored Procedures', 'https://github.com/plv8/plv8');
-INSERT INTO releases VALUES ('plv8-pg15', 4, 'plv8', 'PL/V8', '', 'prod', '', 1, 'POSTGRES', '', '');
 INSERT INTO releases VALUES ('plv8-pg16', 4, 'plv8', 'PL/V8', '', 'prod', '', 1, 'POSTGRES', '', '');
-INSERT INTO versions VALUES ('plv8-pg15', '3.2.1-1', 'arm9, el9', 0, '20240130', 'pg15', '', '');
-INSERT INTO versions VALUES ('plv8-pg16', '3.2.1-1', 'arm9, el9', 0, '20240130', 'pg16', '', '');
+INSERT INTO versions VALUES ('plv8-pg16', '3.2.2-1', 'arm9, el9', 1, '20240214', 'pg16', '', '');
 
 INSERT INTO projects VALUES ('pljava', 'dev', 4, 0, 'hub', 0, 'https://github.com/tada/pljava/releases', 
   'pljava', 1, 'pljava.png', 'Java Stored Procedures', 'https://github.com/tada/pljava');
@@ -316,7 +314,7 @@ INSERT INTO versions VALUES ('badger', '11.8', '', 0, '20220408', '', '', '');
 INSERT INTO projects VALUES ('group-pgedge', 'pge', 0, 0, 'hub', 3, 'http://pgedge.com',
   'group-pgedge',  0, 'pgedge.png', 'Multi-Active Global Postgres Clusters', 'http://pgedge.com');
 INSERT INTO releases VALUES ('group-pgedge', 1, 'group-pgedge',  'pgEdge', '', 'prod', '', 1, 'pgEdge Platform', '', '');
-INSERT INTO versions VALUES ('group-pgedge', '2.12',  '', 1, '20240219', '', '', '');
+INSERT INTO versions VALUES ('group-pgedge', '2.12',  '', 1, '20240214', '', '', '');
 INSERT INTO versions VALUES ('group-pgedge', '2.11',  '', 0, '20240206', '', '', '');
 INSERT INTO versions VALUES ('group-pgedge', '2.10',  '', 0, '20240130', '', '', '');
 

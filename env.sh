@@ -35,7 +35,7 @@ oraclefdwV=2.6.0-1
 inclV=21.6
 orafceV=4.9.2-1
 ora2pgV=23.1
-v8V=3.2.1-1
+v8V=3.2.2-1
 
 hypoV=1.4.0-1
 timescaleV=2.13.1-1
