@@ -1,5 +1,10 @@
 # pgEdge Labs Release Notes #############
 
+## planned for 24.2.3 on 2024-02-19 ############
+  - remove staz and replace w pgedge-patroni
+  - new version of backrest that support full, incremental and pitr
+  - spock v3.3.0dev1
+
 
 ## done for 24.2.2 on 2024-02-14 ###########
   - add plv8 support for pg16 on el9 & arm9
