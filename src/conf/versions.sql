@@ -167,8 +167,8 @@ INSERT INTO versions VALUES ('plprofiler-pg16', '4.2.4-1', 'arm9, el9', 1, '2023
 
 INSERT INTO projects VALUES ('postgrest', 'pge', 11, 3000, 'hub', 0, 'https://github.com/postgrest/postgrest/tags',
   'postgrest', 0, 'postgrest.png', 'a RESTful API', 'https://postgrest.org');
-INSERT INTO releases VALUES ('postgrest', 9, 'postgrest', 'PostgREST', '', 'prod', '', 1, 'MIT', '', '');
-INSERT INTO versions VALUES ('postgrest', '12.0.2-1', 'el9, arm9', 1, '20240212', '', 'EL9', 'https://postgrest.org');
+INSERT INTO releases VALUES ('postgrest', 9, 'postgrest', 'PostgREST', '', 'test', '', 1, 'MIT', '', '');
+INSERT INTO versions VALUES ('postgrest', '12.0.2-1', 'el9, arm9', 0, '20240212', '', 'EL9', 'https://postgrest.org');
 
 INSERT INTO projects VALUES ('prompgexp', 'pge', 11, 9187, 'golang', 0, 'https://github.com/prometheus-community/postgres_exporter/tags',
   'prompgexp', 0, 'prometheus.png', 'Prometheus PG Exporter', 'https://github.com/prometheus-community/postgres_exporter');
