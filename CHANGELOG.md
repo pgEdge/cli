@@ -1,9 +1,14 @@
 # pgEdge Labs Release Notes #############
 
-## planned for 24.2.3 on 2024-02-19 ############
-  - deprecate postgREST and add basic support for pREST
-  - remove staz and replace w pgedge-patroni
+## done for 24.2.3 planned on 2024-02-19 ############
+  - remove staz 
+  - deprecate postgREST
+  - add support for our pgedge patroni v3.2.1
+  - installing patroni auto installs golang and etcd
+
+  still to do:
   - new version of backrest that support full, incremental and pitr
+  - add basic support for pREST
   - spock v3.3.0dev1
 
 
