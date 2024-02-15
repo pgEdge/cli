@@ -349,7 +349,8 @@ INSERT INTO versions VALUES ('patroni', '3.2.1', '', 1, '20240219', '', '', '');
 INSERT INTO projects VALUES ('etcd', 'app', 11, 0, 'hub', 4, 'https://github.com/etcd-io/etcd/tags',
   'etcd', 0, 'etcd.png', 'HA', 'https://github.com/etcd-io/etcd');
 INSERT INTO releases VALUES ('etcd', 1, 'etcd', 'Etcd', '', 'prod', '', 1, 'POSTGRES', '', '');
-INSERT INTO versions VALUES ('etcd', '3.5.11', 'el8, el9, arm9', 1, '20240108', '', '', '');
+INSERT INTO versions VALUES ('etcd', '3.5.12', 'el8, el9, arm9', 1, '20240219', '', '', '');
+INSERT INTO versions VALUES ('etcd', '3.5.11', 'el8, el9, arm9', 0, '20240108', '', '', '');
 
 -- MULTICLOUD METADATA ------------------------------------------------------
 

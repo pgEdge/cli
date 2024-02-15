@@ -1,7 +1,6 @@
 #!/bin/bash
 cd "$(dirname "$0")"
 
-set -x
 sudo rm -rf /usr/local/patroni
 sudo mkdir /usr/local/patroni
 sudo cp -rf *  /usr/local/patroni/

@@ -49,7 +49,7 @@ hint15V=1.5.1-1
 hint16V=1.6.0-1
 
 patroniV=3.2.1  
-etcdV=3.5.11
+etcdV=3.5.12
 
 audit15V=1.7.0-1
 audit16V=16.0-1

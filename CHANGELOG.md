@@ -1,10 +1,12 @@
 # pgEdge Labs Release Notes #############
 
 ## done for 24.2.3 planned on 2024-02-19 ############
+  - add support for our pgedge patroni v3.2.1
+  - 'install patroni' now pulls in 'etcd' as a dependency
+  - bump etcd to 3.5.12
+  - 'install etcd' now also install golang & haproxy by default
   - remove staz 
   - deprecate postgREST
-  - add support for our pgedge patroni v3.2.1
-  - installing patroni auto installs golang and etcd
 
   still to do:
   - new version of backrest that support full, incremental and pitr
