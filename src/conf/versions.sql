@@ -165,6 +165,11 @@ INSERT INTO releases VALUES ('plprofiler-pg16', 0, 'plprofiler',    'PL/Profiler
 INSERT INTO versions VALUES ('plprofiler-pg15', '4.2.4-1', 'arm9, el9', 1, '20230914', 'pg15', '', '');
 INSERT INTO versions VALUES ('plprofiler-pg16', '4.2.4-1', 'arm9, el9', 1, '20230914', 'pg16', '', '');
 
+INSERT INTO projects VALUES ('prest', 'pge', 11, 3000, 'hub', 0, 'https://github.com/prest/prest/release',
+  'prest', 0, 'prest.png', 'a RESTful API', 'https://prest.org');
+INSERT INTO releases VALUES ('prest', 9, 'prest', 'pREST', '', 'prod', '', 1, 'MIT', '', '');
+INSERT INTO versions VALUES ('prest', '1.4.2', 'el8, el9, arm9', 1, '20240219', '', '', '');
+
 INSERT INTO projects VALUES ('postgrest', 'pge', 11, 3000, 'hub', 0, 'https://github.com/postgrest/postgrest/tags',
   'postgrest', 0, 'postgrest.png', 'a RESTful API', 'https://postgrest.org');
 INSERT INTO releases VALUES ('postgrest', 9, 'postgrest', 'PostgREST', '', 'test', '', 1, 'MIT', '', '');

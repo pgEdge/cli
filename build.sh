@@ -484,11 +484,12 @@ initPG () {
       ##fi
     fi
 
-    initC "postgrest"    "postgrest"    "$postgrestV" "$outPlat" "postgres/postgrest" "" "" "nil"
+    ## initC "postgrest"    "postgrest"    "$postgrestV" "$outPlat" "postgres/postgrest" "" "" "nil"
 
   fi
 
   initC "group-pgedge" "group-pgedge" "$grp_pgeV"  ""         "group-pgedge"      "" "" "Y"
+  initC "prest"        "prest"        "$prestV"    "$outPlat" "pREST"             "" "" "nil"
   initC "backrest"     "backrest"     "$backrestV" "$outPlat" "postgres/backrest" "" "" "nil"
   initC "patroni"      "patroni"      "$patroniV"  ""         "postgres/patroni"  "" "" "nil"
   initC "etcd"         "etcd"         "$etcdV"     "$outPlat" "etcd"              "" "" "nil"
