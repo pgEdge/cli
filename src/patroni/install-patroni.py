@@ -4,6 +4,7 @@
 
 import os
 import socket
+import subprocess
 
 class Util:
     @staticmethod
@@ -40,18 +41,27 @@ class PatroniSetup:
         use_
     """
 
-    @staticmethod
-    def create_symlink():
-        thisDir = os.path.dirname(os.path.realpath(__file__))
-        Util.message("\n## creating '/usr/local/ptroni.py symlink' ########")
-        source_path = f"{thisDir}/out/posix/staz/patroni.py"
-        target_path = "/usr/local/patroni.py"
+  @staticmethod
+  def create_symlink():
+    thisDir = os.getcwd()  # Get the current working directory
+    print("\n## Creating '/usr/local/patroni.py' symlink ##")
+    source_path = os.path.join(thisDir, "out/posix/patroni/patroni.py")
+    target_path = "/usr/local/patroni.py"
 
-        try:
-            os.symlink(source_path, target_path)
-            print(f"Symlink created: {target_path} -> {source_path}")
-        except OSError as e:
-            print(f"Failed to create symlink: {e}")
+    # Construct the ln command with sudo
+    command = ["sudo", "ln", "-sf", source_path, target_path]
+
+    try:
+        # Execute the command
+        subprocess.run(command, check=True)
+        print(f"Symlink successfully created from {source_path} to {target_path}")
+    except subprocess.CalledProcessError:
+        print("Failed to create the symlink. Command execution error.")
+    except Exception as e:
+        print(f"An unexpected error occurred: {e}")
+
+if __name__ == "__main__":
+    create_symlink()
 
     @staticmethod
     def write_patroni_yaml():
