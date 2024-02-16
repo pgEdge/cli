@@ -28,6 +28,7 @@ postgrestV=12.0.2-1
 prompgexpV=0.11.1
 backrestV=2.50-2
 readonlyV=1.1.1-1
+wal2jV=2.5.1-1
 
 curlV=2.2.2-1
 citusV=12.1.1-1
@@ -49,7 +50,7 @@ repackV=1.4.8-1
 hint15V=1.5.1-1
 hint16V=1.6.0-1
 
-patroniV=3.2.1  
+patroniV=3.2.1-1
 etcdV=3.5.12
 
 audit15V=1.7.0-1

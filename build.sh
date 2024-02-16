@@ -213,6 +213,7 @@ initDir () {
   copy-pgXX "cron"
   copy-pgXX "readonly"
   copy-pgXX "foslots"
+  copy-pgXX "wal2json"
   copy-pgXX "citus"
   copy-pgXX "vector"
   ##copy-pgXX "multicorn2"
@@ -466,6 +467,7 @@ initPG () {
 
     if [ "$pgM" == "15" ] || [ "$pgM" == "16" ]; then
 
+      initC "wal2json-pg$pgM"   "wal2json"   "$wal2jV"     "$outPlat" "postgres/wal2json"   "" "" "nil"
       initC "pldebugger-pg$pgM" "pldebugger" "$debuggerV"  "$outPlat" "postgres/pldebugger" "" "" "nil"
       initC "pglogical-pg$pgM"  "pglogical"  "$logicalV"   "$outPlat" "postgres/logical"    "" "" "nil"
       initC "citus-pg$pgM"      "citus"      "$citusV"     "$outPlat" "postgres/citus"      "" "" "nil"
@@ -491,7 +493,7 @@ initPG () {
   initC "group-pgedge" "group-pgedge" "$grp_pgeV"  ""         "group-pgedge"      "" "" "Y"
   initC "prest"        "prest"        "$prestV"    "$outPlat" "pREST"             "" "" "nil"
   initC "backrest"     "backrest"     "$backrestV" "$outPlat" "postgres/backrest" "" "" "nil"
-  initC "patroni"      "patroni"      "$patroniV"  ""         "postgres/patroni"  "" "" "nil"
+  initC "patroni"      "patroni"      "$patroniV"  ""         "patroni"           "" "" "nil"
   initC "etcd"         "etcd"         "$etcdV"     "$outPlat" "etcd"              "" "" "nil"
   initC "firewalld"    "firewalld"    "$firwldV"   ""         "firewalld"         "" "" "nil"
   initC "pgcat"        "pgcat"        "$catV"      "$outPlat" "postgres/pgcat"    "" "" "nil"
