@@ -11,19 +11,6 @@ Group=pgedge
 # Read in configuration file if it exists, otherwise proceed
 EnvironmentFile=-/etc/patroni_env.conf
 
-# The default is the user's home directory, and if you want to change it, you must provide an absolute path.
-# WorkingDirectory=/home/sameuser
-
-# Where to send early-startup messages from the server
-# This is normally controlled by the global default set by systemd
-#StandardOutput=syslog
-
-# Pre-commands to start watchdog device
-# Uncomment if watchdog is part of your patroni setup
-#ExecStartPre=-/usr/bin/sudo /sbin/modprobe softdog
-#ExecStartPre=-/usr/bin/sudo /bin/chown postgres /dev/watchdog
-
-# Start the patroni process
 ExecStart=/usr/local/patroni/patroni.py /etc/patroni/patroni.yaml
 
 # Send HUP to reload from patroni.yml
