@@ -15,7 +15,7 @@ def osSys(p_input, p_display=True):
 
 def exit_rm_backrest(msg):
     util.message(f"{msg}", "error")
-    osSys("./nc remove backrest")
+    osSys("./pgedge remove backrest")
     sys.exit(1)
 
 
@@ -84,8 +84,15 @@ aCmd = "pgbackrest " + stanza + " archive-push %p"
 util.change_pgconf_keyval(pgV, "archive_command", aCmd, p_replace=True)
 util.change_pgconf_keyval(pgV, "archive_mode", "on", p_replace=True)
 
-osSys("../nc restart " + pgV)
+osSys("../pgedge restart " + pgV)
 time.sleep(3)
 
 osSys("pgbackrest stanza-create " + stanza)
 osSys("pgbackrest check " + stanza)
+
+util.message("\n## creating '/usr/bin/backrest.py' ########")
+osSys("sudo cp  backrest.py /usr/bin/")
+
+util.message("\n## creating '/etc/pgbackrest/backrest.json' ########")
+osSys("sudo cp  backrest.json /etc/pgbackrest/")
+

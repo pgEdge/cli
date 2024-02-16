@@ -1,0 +1,20 @@
+{
+  "jobs": [
+    {
+      "type": "full",
+      "schedule": {
+        "daily": {
+          "time": "01:00"
+        },
+        "weekly": {
+          "days": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
+        }
+      }
+    },
+    {
+      "type": "incr",
+      "interval": 60
+    }
+  ]
+}
+
