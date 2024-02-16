@@ -104,12 +104,26 @@ def create(db=None, User=None, Passwd=None, pg=None, spock=None):
     return
 
 
-def guc_set(guc_name, guc_value, replace=True, pg=None):
+def guc_set(guc_name, guc_value, pg=None):
     """Set GUC"""
     pg_v = util.get_pg_v(pg)
 
-    util.change_pgconf_keyval_auto(pg_v, guc_name, str(guc_value), replace)
-    util.echo_cmd(f"./nc reload {pg_v}")
+    if pg is None:
+        pg_v = util.get_pg_v(pg)
+        pg = pg_v[2:]
+
+    nc = "./pgedge "
+    ncb = nc + "pgbin " + str(pg) + " "
+
+    cmd = f"ALTER SYSTEM SET {guc_name} = {guc_value}"
+    rc1 = util.echo_cmd(ncb + '"psql -q -c \\"' + cmd + '\\" postgres"',False)    
+    cmd = f"SELECT pg_reload_conf()"
+    rc2 = util.echo_cmd(ncb + '"psql -q -c \\"' + cmd + '\\" postgres"',False)
+    rcs = rc1 + rc2
+    if rcs == 0:
+        util.message(f"Set GUC {guc_name} to {guc_value}","info")
+    else:
+        util.message("Unable to set GUC","error")
 
 
 def guc_show(guc_name, pg=None):

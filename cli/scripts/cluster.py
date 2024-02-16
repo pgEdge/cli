@@ -268,6 +268,47 @@ def init(cluster_name):
             ssh_cross_wire_pgedge(cluster_name, database["name"], pg, database["username"], database["password"], nodes)        
 
 
+def update_json(cluster_name, db_json):
+    parsed_json = get_cluster_json(cluster_name)
+    cluster_dir = base_dir + os.sep + cluster_name
+    os.system(f"mkdir -p {cluster_dir}{os.sep}backup")
+    timeof = datetime.datetime.now().strftime('%y%m%d_%H%M')
+    os.system(f"cp {cluster_dir}{os.sep}{cluster_name}.json {cluster_dir}{os.sep}backup/{cluster_name}_{timeof}.json")
+    text_file = open(cluster_dir + os.sep + cluster_name + ".json", "w")
+    parsed_json["database"]["databases"].append(db_json)
+    try:
+        text_file.write(json.dumps(parsed_json, indent=2))
+        text_file.close()
+    except Exception:
+        util.exit_message("Unable to update JSON file", 1)
+
+
+def add_db(cluster_name, database_name, username, password):
+    """Add a database to an existing cluster and cross wire it together.
+    
+       Create the new database in the cluster, install spock, and create all spock nodes and subscriptions.
+       This command requires a JSON file with the same name as the cluster to be in the cluster/<cluster_name>. \n
+       Example: cluster add-db demo test admin password
+       :param cluster_name: The name of the existing cluster.
+       :param database_name: The name of the new database.
+       :param username: The name of the user that will be created and own the db. 
+       :param password: The password for the new user.
+    """
+    util.message(f"## Loading cluster '{cluster_name}' json definition file")
+    db, pg, nodes = load_json(cluster_name)
+
+    db_json = {}
+    db_json["username"] = username
+    db_json["password"] = password
+    db_json["name"] = database_name
+
+    util.message(f"## Creating database {database_name}")
+    create_spock_db(nodes,db_json)
+    ssh_cross_wire_pgedge(cluster_name, database_name, pg, username, password, nodes)
+    util.message(f"## Updating cluster '{cluster_name}' json definition file")
+    update_json(cluster_name, db_json)
+
+
 def local_create(
     cluster_name,
     num_nodes,
@@ -607,6 +648,7 @@ if __name__ == "__main__":
             "local-create": local_create,
             "local-destroy": local_destroy,
             "init": init,
+            "add-db": add_db,
             "remove": remove,
             "command": command,
             "app-install": app_install,
