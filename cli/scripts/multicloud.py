@@ -408,6 +408,7 @@ def akm_node_list(conn, region, project, json):
         except Exception:
             private_ip = ""
         status = n.state
+        print(f"DEBUG: {n}")
         zone = n.extra["availability"]
         size = n.extra["instance_type"]
         country = region[:2]
