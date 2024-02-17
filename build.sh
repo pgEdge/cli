@@ -486,7 +486,7 @@ initPG () {
       ##fi
     fi
 
-    ## initC "postgrest"    "postgrest"    "$postgrestV" "$outPlat" "postgres/postgrest" "" "" "nil"
+    # initC "postgrest"    "postgrest"    "$postgrestV" "$outPlat" "postgres/postgrest" "" "" "nil"
 
   fi
 
@@ -498,6 +498,7 @@ initPG () {
   initC "firewalld"    "firewalld"    "$firwldV"   ""         "firewalld"         "" "" "nil"
   initC "pgcat"        "pgcat"        "$catV"      "$outPlat" "postgres/pgcat"    "" "" "nil"
   initC "pgadmin4"     "pgadmin4"     "$adminV"    ""         "postgres/pgadmin4" "" "" "Y"
+  initC "prompgexp"    "prompgexp"    "$prompgexpV" "$outPlat" "postgres/prompgexp" "" "" "nil"
 
   return
 

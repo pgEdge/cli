@@ -177,8 +177,8 @@ INSERT INTO versions VALUES ('postgrest', '12.0.2-1', 'el9, arm9', 0, '20240212'
 
 INSERT INTO projects VALUES ('prompgexp', 'pge', 11, 9187, 'golang', 0, 'https://github.com/prometheus-community/postgres_exporter/tags',
   'prompgexp', 0, 'prometheus.png', 'Prometheus PG Exporter', 'https://github.com/prometheus-community/postgres_exporter');
-INSERT INTO releases VALUES ('prompgexp', 9, 'prompgexp', 'Prometheus PG Exporter', '', 'prod', '', 1, 'Apache', '', '');
-INSERT INTO versions VALUES ('prompgexp', '0.11.1', '', 1, '20220720', '', 'EL9', 'https://github.com/prometheus-community/postgres_exporter');
+INSERT INTO releases VALUES ('prompgexp', 9, 'prompgexp', 'Prometheus Postgres Exporter', '', 'prod', '', 1, 'Apache', '', '');
+INSERT INTO versions VALUES ('prompgexp', '0.15.0-1', 'el9, arm9', 1, '20240219', '', '', 'https://github.com/prometheus-community/postgres_exporter');
 
 INSERT INTO projects VALUES ('audit', 'ext', 4, 0, 'hub', 0, 'https://github.com/pgaudit/pgaudit/releases',
   'audit', 1, 'audit.png', 'Audit Logging', 'https://github.com/pgaudit/pgaudit');
