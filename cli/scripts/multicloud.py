@@ -19,6 +19,7 @@ CONFIG = f"{os.getenv('HOME')}/.multicloud.conf"
 
 PROVIDERS = \
     [
+        ["akm", "linode",       "Akamai Linode"],
         ["eqn", "equinixmetal", "Equinix Metal"],
         ["aws", "ec2",          "Amazon Web Services"],
         ["azr", "azure",        "Microsoft Azure"],
@@ -367,6 +368,8 @@ def list_nodes(provider, region=None, project=None, json=False):
         nl = eqn_node_list(conn, region, project, json)
     elif provider == "aws":
         nl = aws_node_list(conn, region, project, json)
+    elif provider == "akm":
+        nl = akm_node_list(conn, region, project, json)
     else:
         util.exit_message(f"Invalid provider '{provider}' (list_nodes)")
 
@@ -385,6 +388,34 @@ def list_nodes(provider, region=None, project=None, json=False):
     print(p)
 
     return
+
+
+def akm_node_list(conn, region, project, json):
+    try:
+        nodes = conn.list_nodes()
+    except Exception as e:
+        util.exit_message(str(e), 1)
+
+    nl = []
+    for n in nodes:
+        node = n.name
+        try:
+            public_ip = n.public_ips[0]
+        except Exception:
+            public_ip = ""
+        try:
+            private_ip = n.private_ip[0]
+        except Exception:
+            private_ip = ""
+        status = n.state
+        zone = n.extra["availability"]
+        size = n.extra["instance_type"]
+        country = region[:2]
+        key_name = n.extra['key_name']
+        airport = get_airport("aws", region)
+        nl.append(["aws", airport, node, status, size, country, region, zone, public_ip, private_ip])
+
+    return(nl)
 
 
 def aws_node_list(conn, region, project, json):
@@ -487,7 +518,7 @@ def load_config(section):
     return None
 
 
-def get_connection(provider="equinixmetal", region=None, project=None):
+def get_connection(provider=None, region=None, project=None):
     sect = load_config(provider)
 
     # convert provider to libcloud from an alias
@@ -495,6 +526,8 @@ def get_connection(provider="equinixmetal", region=None, project=None):
         provider = "ec2"
     elif provider == "eqn":
         provider = "equinixmetal"
+    elif provider == "akm":
+        provider = "linode"
 
     try:
         Driver = libcloud.compute.providers.get_driver(provider)
@@ -509,6 +542,9 @@ def get_connection(provider="equinixmetal", region=None, project=None):
             if not region:
                 region = sect["region"]
             conn = Driver(p1, p2, region=region )
+        elif provider in ("linode"):
+            p1 = sect["access_token"]
+            conn = Driver(p1)
         else:
             util.exit_message(f"Invalid provider '{provider}'")
     except Exception as e:
