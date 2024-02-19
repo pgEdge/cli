@@ -408,13 +408,13 @@ def akm_node_list(conn, region, project, json):
         except Exception:
             private_ip = ""
         status = n.state
-        print(f"DEBUG: {n}")
-        zone = n.extra["availability"]
-        size = n.extra["instance_type"]
+        zone = n.extra["location"]
+        region = zone
+        size = n.size
         country = region[:2]
-        key_name = n.extra['key_name']
-        airport = get_airport("aws", region)
-        nl.append(["aws", airport, node, status, size, country, region, zone, public_ip, private_ip])
+        key_name = ""
+        airport = get_airport("akm", region)
+        nl.append(["akm", airport, node, status, size, country, region, zone, public_ip, private_ip])
 
     return(nl)
 

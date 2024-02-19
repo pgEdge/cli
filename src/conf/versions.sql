@@ -389,6 +389,7 @@ INSERT INTO providers VALUES ('aws',   1, 'AWS',     'Amazon Web Services',   'a
 INSERT INTO providers VALUES ('azr',   2, 'Azure',   'Microsoft Azure',       'azure.png', 'azure');
 INSERT INTO providers VALUES ('gcp',   3, 'GCP',     'Google Cloud Platform', 'gcp.png',   'gcp');
 INSERT INTO providers VALUES ('eqn',   4, 'Equinix', 'Equinix Metal',         'eqnx.png',  'equinixmetal');
+INSERT INTO providers VALUES ('akm',   5, 'Akamai',  'Akamai Linode',         'akamai.png','linode');
 
 CREATE TABLE geos (
   geo    TEXT     NOT NULL PRIMARY KEY,
@@ -473,6 +474,8 @@ INSERT INTO airports VALUES ('dsm', 'Iowa',               'us',   41.5341,  -93.
 INSERT INTO airports VALUES ('chs', 'Charleston',         'us',   32.8943,  -80.0382);
 INSERT INTO airports VALUES ('jac', 'Wyoming',            'us',   43.6034, -110.7363);
 INSERT INTO airports VALUES ('ric', 'Central Virginia',   'us',   37.5066,  -77.3208);
+INSERT INTO airports VALUES ('ewr', 'Newark, NJ',         'us',   40.6895,  -74.1745);
+
 
 INSERT INTO airports VALUES ('yul', 'Montreal',           'ca',   45.5019,  -73.5616);
 INSERT INTO airports VALUES ('yyz', 'Toronto',            'ca',   43.6777,  -79.6248);
@@ -576,6 +579,35 @@ INSERT INTO airport_regions VALUES ('eqn', 'ohr', 'Chicago',       '', '', 'Y');
 INSERT INTO airport_regions VALUES ('eqn', 'dfw', 'Dallas',        '', '', 'Y');
 
 
+INSERT INTO airport_regions VALUES ('akm', 'bom', 'ap-west',       '', '', 'Y');
+INSERT INTO airport_regions VALUES ('akm', 'maa', 'in-maa',        '', '', 'Y');
+INSERT INTO airport_regions VALUES ('akm', 'cgk', 'in-cgk',        '', '', 'Y');
+INSERT INTO airport_regions VALUES ('akm', 'itm', 'jp-osm',        '', '', 'Y');
+INSERT INTO airport_regions VALUES ('akm', 'syd', 'ap-southest',   '', '', 'Y');
+INSERT INTO airport_regions VALUES ('akm', 'sin', 'ap-south',      '', '', 'Y');
+INSERT INTO airport_regions VALUES ('akm', 'nrt', 'ap-northeast',  '', '', 'Y');
+
+INSERT INTO airport_regions VALUES ('akm', 'yyz', 'ca-central',    '', '', 'Y');
+
+INSERT INTO airport_regions VALUES ('akm', 'dfw', 'us-central',  '', '', 'Y');
+INSERT INTO airport_regions VALUES ('akm', 'sfo', 'us-west',       '', '', 'Y');
+INSERT INTO airport_regions VALUES ('akm', 'atl', 'us-southest',   '', '', 'Y');
+INSERT INTO airport_regions VALUES ('akm', 'ewr', 'us-east',       '', '', 'Y');
+INSERT INTO airport_regions VALUES ('akm', 'iad', 'us-iad',        '', '', 'Y');
+INSERT INTO airport_regions VALUES ('akm', 'chi', 'us-ord',        '', '', 'Y');
+INSERT INTO airport_regions VALUES ('akm', 'lax', 'us-lax',        '', '', 'Y');
+INSERT INTO airport_regions VALUES ('akm', 'mia', 'us-mia',        '', '', 'Y');
+INSERT INTO airport_regions VALUES ('akm', 'sea', 'us-sea',        '', '', 'Y');
+
+INSERT INTO airport_regions VALUES ('akm', 'lhr', 'eu-west',       '', '', 'Y');
+INSERT INTO airport_regions VALUES ('akm', 'mxp', 'it-mil',        '', '', 'Y');
+INSERT INTO airport_regions VALUES ('akm', 'cdg', 'fr-par',        '', '', 'Y');
+INSERT INTO airport_regions VALUES ('akm', 'ams', 'nl-ams',        '', '', 'Y');
+INSERT INTO airport_regions VALUES ('akm', 'arn', 'se-sto',        '', '', 'Y');
+INSERT INTO airport_regions VALUES ('akm', 'fra', 'eu-central',    '', '', 'Y');
+
+
+INSERT INTO airport_regions VALUES ('akm', 'gru', 'br-gru',        '', '', 'Y');
 
 INSERT INTO airport_regions VALUES ('aws', 'iad', 'us-east-1', '',                'a,b,c,d,e,f', 'Y');
 INSERT INTO airport_regions VALUES ('aws', 'dfw', 'us-east-1', 'us-east-1-dfw-1', 'a',           'Y');

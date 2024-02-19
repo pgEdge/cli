@@ -4,6 +4,11 @@ psycopg>=3.1.17
 psycopg-binary>=3.1.17
 psutil>=5.9.6
 pypsutil>=0.2.0
+semantic_version
+six
+termcolor
+typing_extensions
+click
 
 ## MULTICLOUD #######
 certifi>=3.0
