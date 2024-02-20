@@ -1,7 +1,7 @@
 # pgEdge Labs Release Notes #############
 
-## done for 24.2.3 planned on 2024-02-19 ############
-  - add test support for wal2json on pg15/16 (conflicts w Spock)
+## done for 24.2.3 planned on 2024-02-22 ############
+  - add test support for wal2json on pg15/16 
   - backrest v2.50-2 now support full, incremental and pitr(ibrar)
   - prelim support for pREST as a test component
   - add prelim support for our pgedge patroni v3.2.1
