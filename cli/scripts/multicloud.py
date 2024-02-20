@@ -37,6 +37,14 @@ def get_location(provider, location):
 
     return None
 
+def get_key(conn, p_key):
+    keys = conn.list_key_pairs()
+    for k in keys:
+        if k.name == p_key:
+            return k.public_key
+
+    util.exit_message(f"Invalid key '{p_key}'")
+
 
 def get_size(conn, p_size):
     sizes = conn.list_sizes()
@@ -165,6 +173,18 @@ def create_node(
 
         create_node_eqn(name, region, size, image, project)
 
+    elif provider in ("akm", "linode"):
+        if size is None:
+            size = sect["size"]
+        if image is None:
+            image = sect["image"]
+        if ssh_key is None:
+            ssh_key = sect["ssh_key"]
+        if project:
+            util.exit_message("'project' is not a valid AKM parm", 1)
+
+        create_node_akm(name, region, size, image, ssh_key)
+                        
     elif provider in ("aws", "ec2"):
         if size is None:
             size = sect["size"]
@@ -192,6 +212,23 @@ def create_node_aws(name, region, size, image, ssh_key):
     try:
         nd = conn.create_node(name=name, image=im, size=sz, ex_keyname=ssh_key)
         print(f"node.id = {nd.id}")
+    except Exception as e:
+        util.exit_message(str(e), 1)
+
+    return
+
+
+def create_node_akm(name, region, size, image, ssh_key):
+    conn, aaa, bbb, ccc, ddd = get_connection("akm")
+    sz = get_size(conn, size)
+    im = get_image("eqn", conn, image)
+    lctn = get_location("akm", region)
+    key = get_key(conn, ssh_key)
+
+    try:
+        conn.create_node(
+            name=name, image=im, size=sz, root_pass="AbcDDD1234!!!!!", location=lctn, ex_authorized_keys=[key]
+        )
     except Exception as e:
         util.exit_message(str(e), 1)
 
@@ -284,6 +321,12 @@ def cluster_nodes(cluster_name, providers, regions, node_names):
 
     return
 
+def list_keys(provider, region=None, project=None):
+    conn, sect, region, airport, project = get_connection(provider, region, project)
+    keys = conn.list_key_pairs()
+    for k in keys:
+       print(k)
+
 
 def list_sizes(provider, region=None, project=None, json=False):
     """List available node sizes."""
@@ -309,6 +352,8 @@ def list_sizes(provider, region=None, project=None, json=False):
             cpu = s.extra["vcpu"]
         elif provider in ("eqn", "equinixmetal"):
             cpu = s.extra["cpus"]
+        elif provider == "akm":
+            cpu = s.extra["vcpus"]
         if cpu is None:
             cpu = ""
         sl.append([provider, region, s.id, cpu, round(ram/1024), s.disk, bandwidth, price])
@@ -688,6 +733,7 @@ if __name__ == "__main__":
             "list-zones":     list_zones,
             "list-nodes":     list_nodes,
             "list-sizes":     list_sizes,
+            "list-keys":      list_keys,
             "create-node":    create_node,
             "start-node":     start_node,
             "stop-node":      stop_node,
