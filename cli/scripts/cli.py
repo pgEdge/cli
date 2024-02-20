@@ -1492,7 +1492,7 @@ if p_mode in native_list:
 
     bin_path = ""
     if p_mode == "backrest":
-       bin_path = os.path.join(MY_HOME, "backrest", "bin", "pgbackrest")
+       bin_path = os.path.join(MY_HOME, "backrest", "backrest.py")
     elif p_mode == "etcd":
        bin_path = "/usr/local/bin/etcd"
     elif p_mode == "ansible":

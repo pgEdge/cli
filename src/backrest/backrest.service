@@ -9,7 +9,7 @@ Group=ibrar
 WorkingDirectory=/home/ibrar/dev/cli/out/posix
 
 # Start the patroni process
-ExecStart=/usr/bin/backrest.py --config=/etc/pgbackrest/backrest.json --user=ibrar --stanza=pg16
+ExecStart=/usr/bin/backrestd.py --config=/etc/pgbackrest/backrest.json --user=ibrar stanza=xx
 
 # Send HUP to reload from patroni.yml
 ExecReload=/bin/kill -s HUP $MAINPID
