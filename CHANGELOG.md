@@ -1,6 +1,11 @@
 # pgEdge Labs Release Notes #############
 
-## done for 24.2.3 planned on 2024-02-22 ############
+## planned for 24.2.4 on 2024-02-28
+  still to do:
+  - fix upgrade scripts to reinstall ctlibs
+
+## done for 24.2.3 on 2024-02-21 ############
+  - make spock v3.2.7rc1 avaialble for test
   - add test support for wal2json on pg15/16 
   - backrest v2.50-2 now support full, incremental and pitr(ibrar)
   - prelim support for pREST as a test component
@@ -10,9 +15,6 @@
   - 'install etcd' now also install golang & haproxy by default
   - remove staz 
   - deprecate postgREST
-
-  still to do:
-  - fix upgrade scripts to reinstall ctlibs
 
 
 ## done for 24.2.2 on 2024-02-14 ###########

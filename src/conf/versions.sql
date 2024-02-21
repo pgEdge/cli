@@ -85,7 +85,7 @@ INSERT INTO categories VALUES (9,  87, 'Management & Monitoring', 'Manage/Monito
 -- ## HUB ################################
 INSERT INTO projects VALUES ('hub', 'app', 0, 0, 'hub', 0, 'https://github.com/pgedge/cli','',0,'','','');
 INSERT INTO releases VALUES ('hub', 1, 'hub', '', '', 'hidden', '', 1, '', '', '');
-INSERT INTO versions VALUES ('hub', '24.2.3',  '',  1, '20240219', '', '', '');
+INSERT INTO versions VALUES ('hub', '24.2.3',  '',  1, '20240221', '', '', '');
 INSERT INTO versions VALUES ('hub', '24.2.2',  '',  0, '20240214', '', '', '');
 INSERT INTO versions VALUES ('hub', '24.2.1',  '',  0, '20240212', '', '', '');
 INSERT INTO versions VALUES ('hub', '24.1.9',  '',  0, '20240207', '', '', '');
@@ -168,7 +168,7 @@ INSERT INTO versions VALUES ('plprofiler-pg16', '4.2.4-1', 'arm9, el9', 1, '2023
 INSERT INTO projects VALUES ('prest', 'pge', 11, 3000, 'hub', 0, 'https://github.com/prest/prest/release',
   'prest', 0, 'prest.png', 'a RESTful API', 'https://prest.org');
 INSERT INTO releases VALUES ('prest', 9, 'prest', 'pREST', '', 'prod', '', 1, 'MIT', '', '');
-INSERT INTO versions VALUES ('prest', '1.4.2', 'el8, el9, arm9', 1, '20240219', '', '', '');
+INSERT INTO versions VALUES ('prest', '1.4.2', 'el8, el9, arm9', 1, '20240221', '', '', '');
 
 INSERT INTO projects VALUES ('postgrest', 'pge', 11, 3000, 'hub', 0, 'https://github.com/postgrest/postgrest/tags',
   'postgrest', 0, 'postgrest.png', 'a RESTful API', 'https://postgrest.org');
@@ -178,7 +178,7 @@ INSERT INTO versions VALUES ('postgrest', '12.0.2-1', 'el9, arm9', 0, '20240212'
 INSERT INTO projects VALUES ('prompgexp', 'pge', 11, 9187, 'golang', 0, 'https://github.com/prometheus-community/postgres_exporter/tags',
   'prompgexp', 0, 'prometheus.png', 'Prometheus PG Exporter', 'https://github.com/prometheus-community/postgres_exporter');
 INSERT INTO releases VALUES ('prompgexp', 9, 'prompgexp', 'Prometheus Postgres Exporter', '', 'prod', '', 1, 'Apache', '', '');
-INSERT INTO versions VALUES ('prompgexp', '0.15.0-1', 'el9, arm9', 1, '20240219', '', '', 'https://github.com/prometheus-community/postgres_exporter');
+INSERT INTO versions VALUES ('prompgexp', '0.15.0-1', 'el9, arm9', 1, '20240221', '', '', 'https://github.com/prometheus-community/postgres_exporter');
 
 INSERT INTO projects VALUES ('audit', 'ext', 4, 0, 'hub', 0, 'https://github.com/pgaudit/pgaudit/releases',
   'audit', 1, 'audit.png', 'Audit Logging', 'https://github.com/pgaudit/pgaudit');
@@ -191,8 +191,8 @@ INSERT INTO projects VALUES ('wal2json', 'ext', 4, 0, 'hub', 0, 'https://github.
   'wal2json', 1, 'wal2json.png', 'WAL to JSON for CDC', 'https://github.com/eulerto/wal2json');
 INSERT INTO releases VALUES ('wal2json-pg15', 10, 'wal2json', 'wal2json', '', 'test', '', 1, 'POSTGRES', '', '');
 INSERT INTO releases VALUES ('wal2json-pg16', 10, 'wal2json', 'wal2json', '', 'test', '', 1, 'POSTGRES', '', '');
-INSERT INTO versions VALUES ('wal2json-pg15', '2.5.1-1', 'arm9, el9', 1, '20240219', 'pg15', '', 'https://github.com/eulerto/wal2json/tags');
-INSERT INTO versions VALUES ('wal2json-pg16', '2.5.1-1', 'arm9, el9', 1, '20230219', 'pg16', '', 'https://github.com/eulerto/wal2json/tags');
+INSERT INTO versions VALUES ('wal2json-pg15', '2.5.1-1', 'arm9, el9', 1, '20240221', 'pg15', '', 'https://github.com/eulerto/wal2json/tags');
+INSERT INTO versions VALUES ('wal2json-pg16', '2.5.1-1', 'arm9, el9', 1, '20230221', 'pg16', '', 'https://github.com/eulerto/wal2json/tags');
 
 INSERT INTO projects VALUES ('hintplan', 'ext', 4, 0, 'hub', 0, 'https://github.com/ossc-db/pg_hint_plan/tags',
   'hintplan', 1, 'hintplan.png', 'Execution Plan Hints', 'https://github.com/ossc-db/pg_hint_plan');
@@ -346,7 +346,7 @@ INSERT INTO versions VALUES ('pgcat', '1.1.1', 'el8, el9, arm9', 1, '20240108', 
 INSERT INTO projects VALUES ('backrest', 'pge', 11, 0, 'hub', 3, 'http://pgbackrest.org',
   'backrest',  0, 'backrest.png', 'Backup & Restore', 'http://pgbackrest.org');
 INSERT INTO releases VALUES ('backrest', 2, 'backrest',  'pgBackRest', '', 'prod', '', 1, 'MIT', '', '');
-INSERT INTO versions VALUES ('backrest', '2.50-2', 'el8, el9, arm9', 1, '20240219', '', '', '');
+INSERT INTO versions VALUES ('backrest', '2.50-2', 'el8, el9, arm9', 1, '20240221', '', '', '');
 INSERT INTO versions VALUES ('backrest', '2.50-1', 'el8, el9, arm9', 0, '20240212', '', '', '');
 INSERT INTO versions VALUES ('backrest', '2.49-1', 'el8, el9, arm9', 0, '20240108', '', '', '');
 
@@ -358,12 +358,12 @@ INSERT INTO versions VALUES ('firewalld', '1.2', '', 0, '20231101', '', 'EL9', '
 INSERT INTO projects VALUES ('patroni', 'app', 11, 0, 'etcd', 4, 'https://github.com/pgedge/pgedge-patroni/release',
   'patroni', 0, 'patroni.png', 'HA', 'https://github.com/pgedge/pgedge-patroni');
 INSERT INTO releases VALUES ('patroni', 1, 'patroni', 'pgEdge Patroni', '', 'prod', '', 1, 'POSTGRES', '', '');
-INSERT INTO versions VALUES ('patroni', '3.2.1-1', '', 1, '20240219', '', '', '');
+INSERT INTO versions VALUES ('patroni', '3.2.1-1', '', 1, '20240221', '', '', '');
 
 INSERT INTO projects VALUES ('etcd', 'app', 11, 2379, 'hub', 4, 'https://github.com/etcd-io/etcd/tags',
   'etcd', 0, 'etcd.png', 'HA', 'https://github.com/etcd-io/etcd');
 INSERT INTO releases VALUES ('etcd', 1, 'etcd', 'Etcd', '', 'prod', '', 1, 'POSTGRES', '', '');
-INSERT INTO versions VALUES ('etcd', '3.5.12', 'el8, el9, arm9', 1, '20240219', '', '', '');
+INSERT INTO versions VALUES ('etcd', '3.5.12', 'el8, el9, arm9', 1, '20240221', '', '', '');
 INSERT INTO versions VALUES ('etcd', '3.5.11', 'el8, el9, arm9', 0, '20240108', '', '', '');
 
 -- MULTICLOUD METADATA ------------------------------------------------------
