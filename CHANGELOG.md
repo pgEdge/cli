@@ -9,6 +9,7 @@
 
 ## done for 24.2.3 on 2024-02-21 ############
   - make spock v3.2.7rc1 available for test
+  - 'multicloud' CLI support for Akamai-Linode (for test clusters)
   - add test support for wal2json on pg15/16 
   - backrest v2.50-2 now support full, incremental and pitr(ibrar)
   - prelim support for pREST as a test component
