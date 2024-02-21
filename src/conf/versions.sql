@@ -276,6 +276,7 @@ INSERT INTO releases VALUES ('spock32-pg17', 4, 'spock', 'Spock', '', 'test', ''
 INSERT INTO versions VALUES ('spock32-pg14', '3.2.6-1', 'el8, el9, arm9', 1, '20240212', 'pg14', '', '');
 INSERT INTO versions VALUES ('spock32-pg15', '3.2.6-1', 'el8, el9, arm9', 1, '20240212', 'pg15', '', '');
 INSERT INTO versions VALUES ('spock32-pg16', '3.2.6-1', 'el8, el9, arm9', 1, '20240212', 'pg16', '', '');
+INSERT INTO versions VALUES ('spock32-pg16', '3.2.7rc1-1', 'el9, arm9',   0, '20240221', 'pg16', '', '');
 INSERT INTO versions VALUES ('spock32-pg17', '3.2.6-1', 'el9',            1, '20240212', 'pg17', '', '');
 INSERT INTO versions VALUES ('spock32-pg14', '3.2.4-1', 'el8, el9, arm9', 0, '20240108', 'pg14', '', '');
 INSERT INTO versions VALUES ('spock32-pg15', '3.2.4-1', 'el8, el9, arm9', 0, '20240108', 'pg15', '', '');
