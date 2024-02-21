@@ -3,9 +3,10 @@
 ## planned for 24.2.4 on 2024-02-28
   still to do:
   - fix upgrade scripts to reinstall ctlibs
+  - fix static linking of backrest so works on ubu & el8
 
 ## done for 24.2.3 on 2024-02-21 ############
-  - make spock v3.2.7rc1 avaialble for test
+  - make spock v3.2.7rc1 available for test
   - add test support for wal2json on pg15/16 
   - backrest v2.50-2 now support full, incremental and pitr(ibrar)
   - prelim support for pREST as a test component
