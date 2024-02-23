@@ -309,7 +309,7 @@ def add_db(cluster_name, database_name, username, password):
     update_json(cluster_name, db_json)
 
 
-def local_create(
+def localhost_create(
     cluster_name,
     num_nodes,
     pg="16",
@@ -329,6 +329,53 @@ def local_create(
        :param pg: The postgreSQL version of the database.
        :param port1: The starting port for this cluster. For local clusters, each node will have a port increasing by 1 from this port number. 
        :param db: The database name.
+
+Below is an example of the JSON file that is generated that defines a 2 node localhost cluster
+
+{
+  "name": "cl1",
+  "style": "localhost",
+  "create_date": "2024-02-23",
+  "localhost": {
+    "os_user": "rocky",
+    "ssh_key": ""
+  },
+  "database": {
+    "databases": [
+      {
+        "username": "lcusr",
+        "password": "lcpasswd",
+        "name": "lcdb"
+      }
+    ],
+    "pg_version": "16"
+  },
+  "node_groups": {
+    "localhost": [
+      {
+        "nodes": [
+          {
+            "name": "n1",
+            "is_active": true,
+            "ip_address": "127.0.0.1",
+            "port": 6432,
+            "path": "/home/rocky/dev/cli/out/posix/cluster/cl1/n1"
+          }
+        ]
+      },
+      {
+        "nodes": [
+          {
+            "name": "n2",
+            "is_active": true,
+            "ip_address": "127.0.0.1",
+            "port": 6433,
+            "path": "/home/rocky/dev/cli/out/posix/cluster/cl1/n2"
+          }
+        ]
+      }
+    ]
+  }
     """
     util.message("# verifying passwordless ssh...")
     if util.is_password_less_ssh():
@@ -498,7 +545,7 @@ def ssh_cross_wire_pgedge(cluster_name, db, pg, db_user, db_passwd, nodes):
         util.echo_cmd(cmd, host=nip, usr=os_user, key=ssh_key)
 
 
-def local_destroy(cluster_name):
+def localhost_destroy(cluster_name):
     """Stop and then nuke a localhost cluster.
     
        Destroy a local cluster. This will stop postgres on each node, and then remove the pgedge directory for each node in a local cluster. \n
@@ -645,8 +692,8 @@ if __name__ == "__main__":
         {
             "define-localhost": create_local_json,
             "define-remote": create_remote_json,
-            "local-create": local_create,
-            "local-destroy": local_destroy,
+            "localhost-create": localhost_create,
+            "localhost-destroy": localhost_destroy,
             "init": init,
             "add-db": add_db,
             "remove": remove,

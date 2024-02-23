@@ -35,7 +35,7 @@ except ImportError:
 from log_helpers import bcolours, characters
 import api, meta, ini
 
-MY_VERSION = "24.2.4"
+MY_VERSION = "24.2.5"
 DEFAULT_PG = "16"
 DEFAULT_SPOCK = "32"
 
