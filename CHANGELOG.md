@@ -1,11 +1,16 @@
-## planned for 24.2.4 on 2024-02-28
-  - fix 'update' command to install/re-install ctlibs
+## planned for 24.2.5 on 2024-02-28
 
   still to do:
   - fix static linking of backrest so works on ubu & el8
   - fix 'update' command to:
      + install/update 'pgedge' script 
      + work from 24.1.3 (production)
+
+
+## done for 24.2.4 on 2024-02-23 ############
+  - spock v3.2.7 is available as default in pg15 & pg16
+  - fix 'update' command to install/re-install ctlibs
+
 
 ## done for 24.2.3 on 2024-02-21 ############
   - make spock v3.2.7rc1 available for test
