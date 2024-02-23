@@ -1,4 +1,4 @@
-## planned for 24.2.5 on 2024-02-28
+## planned for 24.2.5 on 2024-02-28 #########
 
   still to do:
   - fix static linking of backrest so works on ubu & el8
@@ -9,6 +9,7 @@
 
 ## done for 24.2.4 on 2024-02-23 ############
   - spock v3.2.7 is available as default in pg15 & pg16
+  - improve and document regressions tests (susan)
   - fix 'update' command to install/re-install ctlibs
 
 
