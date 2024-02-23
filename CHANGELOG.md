@@ -1,4 +1,9 @@
 ## planned for 24.2.5 on 2024-02-28 #########
+  done so far:
+  - rename cluster 'local-create' command to 'localhost-create'
+  - rename cluster 'local-destroy' command to 'localhost-destroy'
+  - stop using depreacted './pgedge install pgegde' command, in 'cluster localhost-create',
+      in favor of using './pgedge setup' command
 
   still to do:
   - fix static linking of backrest so works on ubu & el8

@@ -377,6 +377,8 @@ Below is an example of the JSON file that is generated that defines a 2 node loc
     ]
   }
     """
+
+
     util.message("# verifying passwordless ssh...")
     if util.is_password_less_ssh():
         pass
@@ -471,22 +473,9 @@ def ssh_install_pgedge(cluster_name, db, pg, db_user, db_passwd, nodes):
         cmd2 = f'python3 -c "\\$(curl -fsSL {REPO}/{install_py})"'
         util.echo_cmd(cmd0 + cmd1 + cmd2, host=n["ip_address"], usr=n["os_user"], key=n["ssh_key"])
 
-        nc = ndpath + os.sep + "pgedge" + os.sep + "pgedge "
-        parms = (
-            " -U "
-            + str(db_user)
-            + " -P "
-            + str(db_passwd)
-            + " -d "
-            + str(db)
-            + " -p "
-            + str(ndport)
-            + " --pg "
-            + str(pg)
-        )
-        util.echo_cmd(
-            nc + " install pgedge" + parms, host=n["ip_address"], usr=n["os_user"], key=n["ssh_key"]
-        )
+        nc = os.path.join(ndpath, "pgedge", "pgedge ")
+        parms = f" -U {db_user} -P {db_passwd} -d {db} --port {ndport} --pg {pg}"
+        util.echo_cmd(f"{nc} setup {parms}", host=n["ip_address"], usr=n["os_user"], key=n["ssh_key"])
         util.message("#")
 
 
