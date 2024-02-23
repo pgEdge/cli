@@ -30,16 +30,23 @@ def exit_message(p_msg, p_rc=1):
     sys.exit(p_rc)
 
 
-## Run functions on both nodes
+
+  
+       
+## Run  functions on both nodes
 def run_cmd(msg, cmd, node_path):
-    print(cmd)  
-    result = subprocess.run(f"{node_path}/pgedge/nodectl {cmd}", shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
-    # Check if there were any errors
-    if result.returncode != 0:
-        print("Error occurred:")
-        print(result.stderr)
-        exit_message(f"Failed on step: {msg}",1)
-    return result 
+    print(cmd) 
+    print(node_path) 
+    rc = os.system(f"{node_path}/pgedge/pgedge {cmd}")
+    if rc != 0:
+       exit_message(f"Failed on step: {msg}",1) 
+       
+       
+## Run functions on both nodes
+def run_cmd_err(msg, cmd, node_path):
+    print(cmd)
+    result = subprocess.run(f"{node_path}/pgedge/pgedge {cmd}", shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+    return result         
 '''
 ## Get two psql connections
 def get_pg_connection():
@@ -112,12 +119,11 @@ def contains(haystack, needle):
         
         
         
-'''
+
 def needle_in_haystack(haystack, needle):
     if needle in str(haystack):
-    print("pass")
-        exit_message("Pass", p_rc=0)
+      print("pass")
+      exit_message("Pass", p_rc=0)
     else:
-        exit_message("Fail", p_rc=1)
-'''
+      exit_message("Fail", p_rc=1)
 
