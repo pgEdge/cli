@@ -7,7 +7,7 @@ import util, fire, meta, time
 base_dir = "cluster"
 
 
-def create_local_json(cluster_name, db, num_nodes, usr, passwd, pg, port1):
+def create_local_json(cluster_name, db, num_nodes, usr, passwd, pg, ports, hosts=None, paths=None, keys=None):
     """Create a json config file for a local cluster.
     
        Create a JSON configuration file that defines a local cluster. \n
@@ -18,7 +18,7 @@ def create_local_json(cluster_name, db, num_nodes, usr, passwd, pg, port1):
        :param usr: The username of the superuser created for this database.
        :param passwd: The password for the above user.
        :param pg: The postgres version of the database.
-       :param port1: The starting port for this cluster. For local clusters, each node will have a port increasing by 1 from this port number. 
+       :param ports: The starting port for this cluster. For local clusters, each node will have a port increasing by 1 from this port number. 
     """
 
     cluster_dir = base_dir + os.sep + cluster_name
@@ -43,6 +43,18 @@ def create_local_json(cluster_name, db, num_nodes, usr, passwd, pg, port1):
     cluster_json["database"] = database_json
     
     local_nodes = {"localhost": []}
+
+    port1 = ports
+    port_a = str(ports).split(",")
+    print(f"DEBUG: {len(port_a)}")
+    if len(port_a) == num_nodes:
+       pass
+    else:
+       if len(port_a) == 1:
+          port1 = ports
+       else:
+          util.exit_message("ports param '{ports}' does NOT match num_nodes = {num_nodes}")
+
     for n in range(1, num_nodes + 1):
         node_array = {"nodes": []}
         node_json = {}

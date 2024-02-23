@@ -10,7 +10,7 @@ outp="out/posix"
 clusterDir=$outp/cluster
 if [ -d $clusterDir ]; then
   echo "Removing local clusters..."
-  $outp/$api cluster local-destroy all
+  $outp/$api cluster localhost-destroy all
 fi
 
 if [ -d $outp ]; then
