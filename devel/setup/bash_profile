@@ -16,11 +16,12 @@ export DEVEL=$PGE/devel
 export PSX=$PGE/out/posix
 export PG=$DEVEL/pg
 export CLI=$PGE/cli/scripts
-export REPO=https://pgedge-upstream.s3.amazonaws.com/REPO
+#export REPO=https://pgedge-upstream.s3.amazonaws.com/REPO
+export REPO=http://localhost:8000
 
 export PGB=/opt/pgbin-build
 export BLD=$PGB/pgbin/bld
 
-export JAVA_HOME=/etc/alternatives/jre_17_openjdk
-export PATH=/usr/local/bin:$JAVA_HOME/bin:/opt/apache-maven-3.9.2/bin:$PATH
+#export JAVA_HOME=/etc/alternatives/jre_17_openjdk
+#export PATH=/usr/local/bin:$JAVA_HOME/bin:/opt/apache-maven-3.9.2/bin:$PATH
 
