@@ -31,14 +31,18 @@ def get_cluster_json(cluster_name):
     except Exception as e:
         util.exit_message(f"Unable to load cluster def file '{cluster_file}'\n{e}")
 
+    util.message(f"parsed_json = \n{json.dumps(parsed_json, indent=2)}", "debug")
     return parsed_json
 
 
 def write_cluster_json(cluster_name, cj):
     cluster_dir, cluster_file = get_cluster_info(cluster_name)
+
     try:
+        cjs = json.dumps(cj, indent=2)
+        util.message(f"write_cluster_json {cluster_name}, {cluster_dir}, {cluster_file},\n{cjs}", "debug")
         f = open(cluster_file, "w")
-        f.write(json.dumps(cj, indent=2))
+        f.write(cjs)
         f.close()
     except Exception as e:
         util.exit_message("Unable to write_cluster_json {cluster_file}\n{str(e)}")
@@ -48,12 +52,12 @@ def json_create(cluster_name, style, db, user, passwd, pg):
     cluster_json = {}
     cluster_json["name"] = cluster_name
     cluster_json["style"] = style
-    cluster_json["create_date"] = datetime.date.now().isoformat(" ", "seconds")
+    cluster_json["create_date"] = datetime.datetime.now().isoformat(" ", "seconds")
 
     database_json = {"databases": []}
     database_json["pg_version"] = pg
     db_json = {}
-    db_json["username"] = uesr
+    db_json["username"] = user
     db_json["password"] = passwd
     db_json["name"] = db
     database_json["databases"].append(db_json)
@@ -67,7 +71,10 @@ def json_create(cluster_name, style, db, user, passwd, pg):
 def json_add_node(cluster_name, node_group, node_name, is_active, ip_address, port, path, ssh_key=None, provider=None, airport=None):
     cj = get_cluster_json (cluster_name)
 
-    ng = cj["node_groups".node_group]
+    util.message(f"json_add_node()\n{json.dumps(cj, indent=2)}", "debug")
+
+    for ng in cj["node_groups"]:
+      print(f"DEBUG: {ng}")
 
     node_json = {}
     node_json["name"] = node_name
@@ -82,7 +89,11 @@ def json_add_node(cluster_name, node_group, node_name, is_active, ip_address, po
     if airport:
         node_json["airport"] = airport
 
-    ng.append(node_json)
+    util.message(f"node_json = {node_json}")
+
+    lhn = cj["node_groups"]
+    print(f"lhn {lhn}")
+    lhn["localhost"].append(node_json)
 
     write_cluster_json(cluster_name, cj)
 
@@ -104,6 +115,10 @@ def create_local_json(cluster_name, db, num_nodes, usr, passwd, pg, ports, hosts
     util.message(f"create_local_json({cluster_name}, {db}, {num_nodes}, {usr}, {passwd}, {pg}, {ports})", "debug")
 
     cluster_dir, cluster_file = get_cluster_info(cluster_name)
+
+    ## rc = json_create(cluster_name, "localhost", db, usr, passwd, pg)
+
+    ## json_add_node(cluster_name, "localhost", "n1", True, "127.0.0.1", "6432", "/tmp")
 
     text_file = open(cluster_dir + os.sep + cluster_name + ".json", "w")
     cluster_json = {}
@@ -157,7 +172,9 @@ def create_local_json(cluster_name, db, num_nodes, usr, passwd, pg, ports, hosts
         node_array["nodes"].append(node_json)
         local_nodes["localhost"].append(node_array)
         port1 = port1 + 1
+
     cluster_json["node_groups"] = local_nodes
+
     try:
         text_file.write(json.dumps(cluster_json, indent=2))
         text_file.close()
@@ -189,7 +206,7 @@ def create_remote_json(
     cluster_json = {}
     cluster_json["name"] = cluster_name
     cluster_json["style"] = "remote"
-    cluster_json["create_date"] = datetime.date.today().isoformat()
+    cluster_json["create_date"] = datetime.datetime.now().isoformat()
 
     remote_json = {}
     remote_json["os_user"] = ""
@@ -489,9 +506,6 @@ Below is an example of the JSON file that is generated that defines a 2 node loc
         util.message(f"# port {n} is busy")
         n = n + 1
     port1 = n
-
-    if os.path.exists(cluster_dir):
-        util.exit_message("cluster already exists: " + str(cluster_dir), 1)
 
     util.message("# creating cluster dir: " + os.getcwd() + os.sep + cluster_dir)
     os.system("mkdir -p " + cluster_dir)
