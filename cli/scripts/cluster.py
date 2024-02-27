@@ -4,10 +4,10 @@
 import os, json, datetime
 import util, fire, meta, time
 
-base_dir = "cluster"
+BASE_DIR = "cluster"
 
 def get_cluster_info(cluster_name):
-    cluster_dir = os.path.join("cluster", cluster_name)
+    cluster_dir = os.path.join(BASE_DIR, cluster_name)
     os.system("mkdir -p " + cluster_dir)
     cluster_file = os.path.join(cluster_dir, f"{cluster_name}.json")
     util.message(f"get_cluster_info({cluster_name}) --> ({cluster_dir}, {cluster_file})", "debug")
@@ -21,7 +21,8 @@ def get_cluster_json(cluster_name):
         util.exit_message(f"Cluster directory '{cluster_dir}' not found")
 
     if not os.path.isfile(cluster_file):
-        util.exit_message(f"Cluster file '{cluster_file}' not found")
+        util.message(f"Cluster file '{cluster_file}' not found", "warning")
+        return None
 
     parsed_json = None
     try:
@@ -102,7 +103,8 @@ def create_local_json(cluster_name, db, num_nodes, usr, passwd, pg, ports, hosts
 
     util.message(f"create_local_json({cluster_name}, {db}, {num_nodes}, {usr}, {passwd}, {pg}, {ports})", "debug")
 
-    cluster_dir = base_dir + os.sep + cluster_name
+    cluster_dir, cluster_file = get_cluster_info(cluster_name)
+
     text_file = open(cluster_dir + os.sep + cluster_name + ".json", "w")
     cluster_json = {}
     cluster_json["name"] = cluster_name
@@ -179,7 +181,8 @@ def create_remote_json(
        :param port1: The port number for the database. 
     """
 
-    cluster_dir = base_dir + os.sep + cluster_name
+    cluster_dir, cluster_file = get_cluster_info(cluster_name)
+
     os.system("mkdir -p " + cluster_dir)
     text_file = open(cluster_dir + os.sep + cluster_name + ".json", "w")
 
@@ -342,7 +345,9 @@ def init(cluster_name):
 
 def update_json(cluster_name, db_json):
     parsed_json = get_cluster_json(cluster_name)
-    cluster_dir = base_dir + os.sep + cluster_name
+
+    cluster_dir, cluster_file = get_cluster_info(cluster_name)
+
     os.system(f"mkdir -p {cluster_dir}{os.sep}backup")
     timeof = datetime.datetime.now().strftime('%y%m%d_%H%M')
     os.system(f"cp {cluster_dir}{os.sep}{cluster_name}.json {cluster_dir}{os.sep}backup/{cluster_name}_{timeof}.json")
@@ -457,7 +462,7 @@ Below is an example of the JSON file that is generated that defines a 2 node loc
     else:
         util.exit_message("passwordless ssh not configured on localhost", 1)
 
-    cluster_dir = base_dir + os.sep + cluster_name
+    cluster_dir, cluster_file = get_cluster_info(cluster_name)
 
     try:
         num_nodes = int(num_nodes)
@@ -614,12 +619,12 @@ def localhost_destroy(cluster_name):
        :param cluster_name: The name of the cluster. 
     """
 
-    if not os.path.exists(base_dir):
-        util.exit_message("no cluster directory: " + str(base_dir), 1)
+    if not os.path.exists(BASE_DIR):
+        util.exit_message("no cluster directory: " + str(BASE_DIR), 1)
 
     if cluster_name == "all":
         kount = 0
-        for it in os.scandir(base_dir):
+        for it in os.scandir(BASE_DIR):
             if it.is_dir():
                 kount = kount + 1
                 lc_destroy1(it.name)
@@ -632,14 +637,17 @@ def localhost_destroy(cluster_name):
 
 
 def lc_destroy1(cluster_name):
-    cluster_dir = base_dir + os.sep + str(cluster_name)
+    cluster_dir, cluster_file = get_cluster_info(cluster_name)
 
     cfg = get_cluster_json(cluster_name)
-    if "localhost" in cfg:
-        command(cluster_name, "all", "stop")
-        util.echo_cmd("rm -rf " + cluster_dir)
-    else:
-        util.message(f"Cluster '{cluster_name}' is not a localhost cluster")        
+
+    if cfg:
+        if "localhost" in cfg:
+            command(cluster_name, "all", "stop")
+        else:
+            util.message(f"Cluster '{cluster_name}' is not a localhost cluster")
+
+    util.echo_cmd("rm -rf " + cluster_dir)
 
 
 def command(cluster_name, node, cmd, args=None):

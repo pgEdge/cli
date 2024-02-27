@@ -80,7 +80,7 @@ def check_pre_reqs(User, Passwd, db, port, pg_major, pg_minor, spock, autostart)
     util.message("  Verify User & Passwd")
     usr_l = User.lower()
     if usr_l == "pgedge":
-        util.exit_message("The user defined supersuser may not be called 'pgedge'")
+        util.exit_message("The user defined superuser may not be called 'pgedge'")
 
     if usr_l == util.get_user():
         util.exit_message("The user-defined superuser may not be the same as the OS user")
