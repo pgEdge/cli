@@ -6,7 +6,85 @@ import util, fire, meta, time
 
 base_dir = "cluster"
 
+def get_cluster_info(cluster_name):
+    cluster_dir = os.path.join(base_dir, cluster_name)
+    os.system("mkdir -p " + cluster_dir)
+    cluster_file = os.path.join(cluster_dir, cluster_name, ".json")
+    return (cluster_dir, cluster_file)
 
+
+def get_cluster_json(cluster_name):
+    cluster_dir, cluster_file = get_cluster_info(cluster_name)
+
+    if not os.path.isdir(cluster_dir):
+        util.exit_message(f"Cluster directory '{cluster_dir}' not found")
+
+    if not os.path.isfile(cluster_file):
+        util.exit_message(f"Cluster file '{cluster_file}' not found")
+
+    parsed_json = None
+    try:
+        with open(cluster_file, "r") as f:
+            parsed_json = json.load(f)
+    except Exception as e:
+        util.exit_message(f"Unable to load cluster def file '{cluster_file}'\n{e}")
+
+    return parsed_json
+
+
+def write_cluster_json(cluster_name, cj):
+    cluster_dir, cluster_file = get_cluster_info(cluster_name)
+    try:
+        f = open(cluster_file, "w")
+        f.write(json.dumps(cj, indent=2))
+        f.close()
+    except Exception as e:
+        util.exit_message("Unable to write_cluster_json {cluster_file}\n{str(e)}")
+
+
+def json_create(cluster_name, style, db, user, passwd, pg):
+    cluster_json = {}
+    cluster_json["name"] = cluster_name
+    cluster_json["style"] = style
+    cluster_json["create_date"] = datetime.date.now().isoformat(" ", "seconds")
+
+    database_json = {"databases": []}
+    database_json["pg_version"] = pg
+    db_json = {}
+    db_json["username"] = uesr
+    db_json["password"] = passwd
+    db_json["name"] = db
+    database_json["databases"].append(db_json)
+    cluster_json["database"] = database_json
+
+    cluster_json["node_groups"] = {style: []}
+
+    write_cluster_json(cluster_name, cluster_json)
+
+
+def json_add_node(cluster_name, node_group, node_name, is_active, ip_address, port, path, ssh_key=None, provider=None, airport=None):
+    cj = get_cluster_json (cluster_name)
+
+    ng = cj["node_groups".node_group]
+
+    node_json = {}
+    node_json["name"] = node_name
+    node_json["is_active"] = is_active
+    node_json["ip_address"] = ip_address
+    node_json["port"] = port
+    node_json["path"] = path
+    if ssh_key:
+        node_json["ssh_key"] = ssh_key
+    if provider:
+        node_json["provider"] = provider
+    if airport:
+        node_json["airport"] = airport
+
+    ng.append(node_json)
+
+    write_cluster_json(cluster_name, cj)
+
+    
 def create_local_json(cluster_name, db, num_nodes, usr, passwd, pg, ports, hosts=None, paths=None, keys=None):
     """Create a json config file for a local cluster.
     
@@ -206,26 +284,6 @@ def load_json(cluster_name):
         pg,
         node
     )
-
-
-def get_cluster_json(cluster_name):
-    cluster_dir = base_dir + os.sep + cluster_name
-    cluster_file = cluster_dir + os.sep + cluster_name + ".json"
-
-    if not os.path.isdir(cluster_dir):
-        util.exit_message(f"Cluster directory '{cluster_dir}' not found")
-
-    if not os.path.isfile(cluster_file):
-        util.exit_message(f"Cluster file '{cluster_file}' not found")
-
-    parsed_json = None
-    try:
-        with open(cluster_file) as f:
-            parsed_json = json.load(f)
-    except Exception as e:
-        util.exit_message(f"Unable to load cluster def file '{cluster_file}\n{e}")
-
-    return parsed_json
 
 
 def remove(cluster_name):
