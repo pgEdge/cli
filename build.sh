@@ -305,11 +305,20 @@ finalizeOutput () {
   checkCmd "cp -r $PGE/docker ."
   checkCmd "cp -r $SRC/hub ."
   checkCmd "mkdir -p hub/scripts"
-  checkCmd "cp -r $CLI/* hub/scripts/."
+
+  checkCmd "cp $CLI/*.py        hub/scripts/."
+  checkCmd "cp $CLI/*.sh        hub/scripts/."
+  checkCmd "cp $CLI/*.template  hub/scripts/."
+  checkCmd "cp -r $CLI/fire     hub/scripts/."
+  checkCmd "cp -r $CLI/lib      hub/scripts/."
+  checkCmd "cp -r $CLI/ini      hub/scripts/."
+  checkCmd "cp -r $CLI/libcloud hub/scripts/."
+  checkCmd "cp -r $CLI/sql      hub/scripts/."
+  checkCmd "cp -r $CLI/sh       hub/scripts/."
+  checkCmd "cp -r $CLI/conf     hub/scripts/."
+
   checkCmd "cp -r $CLI/../doc hub/."
   checkCmd "cp $CLI/../README.md  hub/doc/."
-  checkCmd "rm -f hub/scripts/*.pyc"
-  checkCmd "rm -f hub/scripts/ruff.toml"
   zipDir "hub" "$hubV" "" "Enabled"
 
   checkCmd "cp conf/$verSQL ."
@@ -430,9 +439,9 @@ initPG () {
 
   initC "ctlibs"  "ctlibs"  "$ctlibsV"  "" "ctlibs"         "" "" "Y"
 
-  if [ "$outPlat" == "osx" ]; then
-    return
-  fi
+  ##if [ "$outPlat" == "osx" ]; then
+  ##  return
+  ##fi
 
   pgComp="pg$pgM"
   initDir "$pgComp" "pg" "$pgV" "$outPlat" "postgres/$pgComp" "Enabled" "5432" "nil"
@@ -487,21 +496,19 @@ initPG () {
     fi
 
     # initC "postgrest"    "postgrest"    "$postgrestV" "$outPlat" "postgres/postgrest" "" "" "nil"
+    # initC "group-pgedge" "group-pgedge" "$grp_pgeV"  ""         "group-pgedge"      "" "" "Y"
 
+    initC "prest"        "prest"        "$prestV"    "$outPlat" "pREST"             "" "" "nil"
+    initC "backrest"     "backrest"     "$backrestV" "$outPlat" "postgres/backrest" "" "" "nil"
+    initC "patroni"      "patroni"      "$patroniV"  ""         "patroni"           "" "" "nil"
+    initC "etcd"         "etcd"         "$etcdV"     "$outPlat" "etcd"              "" "" "nil"
+    initC "firewalld"    "firewalld"    "$firwldV"   ""         "firewalld"         "" "" "nil"
+    initC "pgcat"        "pgcat"        "$catV"      "$outPlat" "postgres/pgcat"    "" "" "nil"
+    initC "pgadmin4"     "pgadmin4"     "$adminV"    ""         "postgres/pgadmin4" "" "" "Y"
+    # initC "prompgexp"    "prompgexp"    "$prompgexpV" "$outPlat" "postgres/prompgexp" "" "" "nil"
   fi
 
-  initC "group-pgedge" "group-pgedge" "$grp_pgeV"  ""         "group-pgedge"      "" "" "Y"
-  initC "prest"        "prest"        "$prestV"    "$outPlat" "pREST"             "" "" "nil"
-  initC "backrest"     "backrest"     "$backrestV" "$outPlat" "postgres/backrest" "" "" "nil"
-  initC "patroni"      "patroni"      "$patroniV"  ""         "patroni"           "" "" "nil"
-  initC "etcd"         "etcd"         "$etcdV"     "$outPlat" "etcd"              "" "" "nil"
-  initC "firewalld"    "firewalld"    "$firwldV"   ""         "firewalld"         "" "" "nil"
-  initC "pgcat"        "pgcat"        "$catV"      "$outPlat" "postgres/pgcat"    "" "" "nil"
-  initC "pgadmin4"     "pgadmin4"     "$adminV"    ""         "postgres/pgadmin4" "" "" "Y"
-  # initC "prompgexp"    "prompgexp"    "$prompgexpV" "$outPlat" "postgres/prompgexp" "" "" "nil"
-
   return
-
 }
 
 

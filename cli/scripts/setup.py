@@ -29,9 +29,9 @@ def check_pre_reqs(User, Passwd, db, port, pg_major, pg_minor, spock, autostart)
 
     platf = util.get_platform()
 
-    util.message("  Verify Linux")
-    if platf != "Linux":
-        util.exit_message("OS must be Linux")
+    # util.message("  Verify Linux")
+    # if platf != "Linux":
+    #    util.exit_message("OS must be Linux")
 
     if platf == "Linux":
         util.message("  Verify Linux supported glibc version")

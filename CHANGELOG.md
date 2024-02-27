@@ -1,8 +1,9 @@
 ## planned for 24.2.5 on 2024-02-28 #########
   done so far:
+  - experimental developer support for pg15 on OSX
   - rename cluster 'local-create' command to 'localhost-create'
   - rename cluster 'local-destroy' command to 'localhost-destroy'
-  - stop using depreacted './pgedge install pgegde' command, in 'cluster localhost-create',
+  - stop using deprecated './pgedge install pgegde' command, in 'cluster localhost-create',
       in favor of using './pgedge setup' command
 
   still to do:
