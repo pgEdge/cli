@@ -7,9 +7,10 @@ import util, fire, meta, time
 base_dir = "cluster"
 
 def get_cluster_info(cluster_name):
-    cluster_dir = os.path.join(base_dir, cluster_name)
+    cluster_dir = os.path.join("cluster", cluster_name)
     os.system("mkdir -p " + cluster_dir)
-    cluster_file = os.path.join(cluster_dir, cluster_name, ".json")
+    cluster_file = os.path.join(cluster_dir, f"{cluster_name}.json")
+    util.message(f"get_cluster_info({cluster_name}) --> ({cluster_dir}, {cluster_file})", "debug")
     return (cluster_dir, cluster_file)
 
 
@@ -99,6 +100,8 @@ def create_local_json(cluster_name, db, num_nodes, usr, passwd, pg, ports, hosts
        :param ports: The starting port for this cluster. For local clusters, each node will have a port increasing by 1 from this port number. 
     """
 
+    util.message(f"create_local_json({cluster_name}, {db}, {num_nodes}, {usr}, {passwd}, {pg}, {ports})", "debug")
+
     cluster_dir = base_dir + os.sep + cluster_name
     text_file = open(cluster_dir + os.sep + cluster_name + ".json", "w")
     cluster_json = {}
@@ -124,7 +127,6 @@ def create_local_json(cluster_name, db, num_nodes, usr, passwd, pg, ports, hosts
 
     port1 = ports
     port_a = str(ports).split(",")
-    print(f"DEBUG: {len(port_a)}")
     if len(port_a) == num_nodes:
        pass
     else:
