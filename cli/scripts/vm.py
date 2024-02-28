@@ -23,8 +23,8 @@ PROVIDERS = \
         ["akm", "linode",       "Akamai Linode"],
         ["eqn", "equinixmetal", "Equinix Metal"],
         ["aws", "ec2",          "Amazon Web Services"],
-        ["azr", "azure",        "Microsoft Azure"],
-        ["gcp", "gce",          "Google Cloud Platform"],
+        ["azr", "azure",        "Microsoft Azure (Coming Soon)"],
+        ["gcp", "gce",          "Google Cloud Platform (Coming Soon)"],
     ]
 
 
@@ -83,7 +83,6 @@ def get_node_values(provider, region, name):
         name = str(nd.name)
         public_ip = str(nd.public_ips[0])
         status = str(nd.state)
-        location = None
         size = None
         if provider in ("eqn", "equinixmetal"):
             country = str(nd.extra["facility"]["metro"]["country"]).lower()
@@ -144,7 +143,7 @@ def node_action(action, provider, airport, name):
 
         return rc
 
-    util.exit_message(f"Node '{provider}:{region}:{name}' not found", 1)
+    util.exit_message(f"VM '{provider}:{region}:{name}' not found", 1)
 
 
 def is_node_unique(name, prvdr, conn, sect):
@@ -175,7 +174,7 @@ def create_node(
     conn, sect, region, airport, project = get_connection(provider, region, project)
 
     if not is_node_unique(name, provider, conn, sect):
-        util.exit_message(f"Node '{name}' already exists in '{provider}:{region}'")
+        util.exit_message(f"VM '{name}' already exists in '{provider}:{airport}'")
 
     if provider in ("eqn", "equinixmetal"):
         if size is None:
@@ -265,40 +264,47 @@ def create_node_eqn(name, location, size, image, project):
     return
 
 
-def start_node(provider, airport, node_name):
+def start_node(provider, airport, vm_name):
     """Start a VM"""
-    node_action("start", provider, airport, node_name)
+    node_action("start", provider, airport, vm_name)
     return
 
 
-def stop_node(provider, airport, node_name):
+def stop_node(provider, airport, vm_name):
     """Stop a VM"""
-    node_action("stop", provider, airport, node_name)
+    node_action("stop", provider, airport, de_name)
     return
 
 
-def reboot_node(provider, airport, node_name):
+def reboot_node(provider, airport, vm_name):
     """Reboot a VM"""
-    node_action("reboot", provider, airport, node_name)
+    node_action("reboot", provider, airport, vm_name)
     return
 
 
-def destroy_node(provider, airport, node_name):
+def destroy_node(provider, airport, vm_name):
     """Destroy a VM"""
-    node_action("destroy", provider, airport, node_name)
+    node_action("destroy", provider, airport, vm_name)
     return
 
 
-def list_keys(provider, region=None, project=None):
+def list_keys(provider, airport=None, project=None):
     """List available SSH Keys"""
+
+    if airport is None and provider == 'aws':
+        util.exit_message("airport param must be provided for AWS")
+
+    region = get_region(provider, airport)
     conn, sect, region, airport, project = get_connection(provider, region, project)
     keys = conn.list_key_pairs()
     for k in keys:
        print(k)
 
 
-def list_sizes(provider, region=None, project=None):
+def list_sizes(provider, airport=None, project=None):
     """List available VM"""
+
+    region = get_region(provider, airport)
     conn, sect, region, airport, project = get_connection(provider, region, project)
 
     if region is None:
@@ -339,8 +345,10 @@ def list_sizes(provider, region=None, project=None):
     print(p)
 
 
-def list_nodes(provider, region=None, project=None):
+def list_nodes(provider, airport=None, project=None, pretty=True):
     """List virtual machines"""
+
+    region = get_region(provider, airport)
     conn, sect, region, airport, project = get_connection(provider, region, project)
 
     nl = []
@@ -353,17 +361,19 @@ def list_nodes(provider, region=None, project=None):
     else:
         util.exit_message(f"Invalid provider '{provider}' (list_nodes)")
 
-    p = PrettyTable()
-    p.field_names = ["Provider", "Airport", "Node", "Status", "Size", "Country", "Region", "Zone", "Public IP", "Private IP"]
-    p.align["Node"] = "l"
-    p.align["Size"] = "l"
-    p.align["Public IP"] = "l"
-    p.align["Private IP"] = "l"
-    p.align["Region"] = "l"
-    p.add_rows(nl)
-    print(p)
+    if pretty:
+        p = PrettyTable()
+        p.field_names = ["Provider", "Airport", "Node", "Status", "Size", "Country", "Region", "Zone", "Public IP", "Private IP"]
+        p.align["Node"] = "l"
+        p.align["Size"] = "l"
+        p.align["Public IP"] = "l"
+        p.align["Private IP"] = "l"
+        p.align["Region"] = "l"
+        p.add_rows(nl)
+        print(p)
+        return
 
-    return
+    return(nl)
 
 
 def akm_node_list(conn, region):
@@ -566,22 +576,26 @@ def is_airport(airport):
         if data[0] > 0:
             return(True)
     except Exception as e:
-        util.exit_message(f"is_airport({airport}) ERROR:\n {str(e)}", 1)
+        util.exit_message(f"vm.is_airport({airport}) ERROR:\n {str(e)}", 1)
 
     return(False)
 
 
 def get_region(provider, airport):
-    try:
-        cursor = cL.cursor()
-        cursor.execute(f"SELECT region  FROM airport_regions WHERE provider = '{provider}' AND airport = '{airport}'")
-        data = cursor.fetchone()
-        if data:
-            return(str(data[0]))
-    except Exception as e:
-        util.exit_message(f"get_region({provider}:{airport}) ERROR:\n {str(e)}")
+    if airport:
+        try:
+            cursor = cL.cursor()
+            cursor.execute(f"SELECT region FROM airport_regions WHERE provider = '{provider}' AND airport = '{airport}'")
+            data = cursor.fetchone()
+            if data:
+                return(str(data[0]))
+        except Exception as e:
+            util.exit_message(f"vm.get_region({provider}:{airport}) ERROR:\n {str(e)}")
+    else:
+        if provider != "aws":
+            return None
 
-    return(None)
+    util.exit_message(f"provider '{provider}' & airport '{airport}' do NOT map to a cloud region")
 
 
 def get_airport(provider, region):
@@ -592,7 +606,7 @@ def get_airport(provider, region):
         if data:
             return(str(data[0]))
     except Exception as e:
-        util.exit_message(f"get_airport({provider}:{region}) ERROR:\n {str(e)}", 1)
+        util.exit_message(f"vm.get_airport({provider}:{region}) ERROR:\n {str(e)}", 1)
 
     return(None)
 
