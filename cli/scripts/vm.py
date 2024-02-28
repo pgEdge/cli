@@ -16,7 +16,7 @@ import termcolor
 from libcloud.compute.types import Provider
 from prettytable import PrettyTable
 
-CONFIG = f"{os.getenv('HOME')}/.multicloud.conf"
+CONFIG = f"{os.getenv('HOME')}/.pgedge-vm.conf"
 
 PROVIDERS = \
     [
