@@ -167,7 +167,7 @@ INSERT INTO versions VALUES ('plprofiler-pg16', '4.2.4-1', 'arm9, el9', 1, '2023
 
 INSERT INTO projects VALUES ('prest', 'pge', 11, 3000, 'hub', 0, 'https://github.com/prest/prest/release',
   'prest', 0, 'prest.png', 'a RESTful API', 'https://prest.org');
-INSERT INTO releases VALUES ('prest', 9, 'prest', 'pREST', '', 'prod', '', 1, 'MIT', '', '');
+INSERT INTO releases VALUES ('prest', 9, 'prest', 'pREST', '', 'test', '', 1, 'MIT', '', '');
 INSERT INTO versions VALUES ('prest', '1.4.2', 'el8, el9, arm9', 1, '20240221', '', '', '');
 
 INSERT INTO projects VALUES ('postgrest', 'pge', 11, 3000, 'hub', 0, 'https://github.com/postgrest/postgrest/tags',
@@ -333,8 +333,6 @@ INSERT INTO projects VALUES ('group-pgedge', 'pge', 0, 0, 'hub', 3, 'http://pged
   'group-pgedge',  0, 'pgedge.png', 'Multi-Active Global Postgres Clusters', 'http://pgedge.com');
 INSERT INTO releases VALUES ('group-pgedge', 1, 'group-pgedge',  'pgEdge', '', 'prod', '', 1, 'pgEdge Platform', '', '');
 INSERT INTO versions VALUES ('group-pgedge', '2.12',  '', 1, '20240214', '', '', '');
-INSERT INTO versions VALUES ('group-pgedge', '2.11',  '', 0, '20240206', '', '', '');
-INSERT INTO versions VALUES ('group-pgedge', '2.10',  '', 0, '20240130', '', '', '');
 
 INSERT INTO projects VALUES ('ctlibs', 'pge', 0, 0, 'hub', 3, 'https://github.com/pgedge/cli',
   'ctlibs',  0, 'ctlibs.png', 'ctlibs', 'https://github.com/pgedge/cli');
@@ -355,9 +353,9 @@ INSERT INTO versions VALUES ('backrest', '2.50-1', 'el8, el9, arm9', 0, '2024021
 INSERT INTO versions VALUES ('backrest', '2.49-1', 'el8, el9, arm9', 0, '20240108', '', '', '');
 
 INSERT INTO projects VALUES ('firewalld', 'app', 11, 0, '', 4, 'https://firewalld.org',
-  'firewalld', 0, 'firewalld.png', 'HA', 'https://github.com/firewalld/firewalld');
+  'firewalld', 0, 'firewalld.png', 'OS Firewall', 'https://github.com/firewalld/firewalld');
 INSERT INTO releases VALUES ('firewalld', 1, 'firewalld', 'Firewalld', '', 'prod', '', 1, 'GPLv2', '', '');
-INSERT INTO versions VALUES ('firewalld', '1.2', '', 0, '20231101', '', 'EL9', '');
+INSERT INTO versions VALUES ('firewalld', '1.2', '', 0, '20231101', '', '', '');
 
 INSERT INTO projects VALUES ('patroni', 'app', 11, 0, 'etcd', 4, 'https://github.com/pgedge/pgedge-patroni/release',
   'patroni', 0, 'patroni.png', 'HA', 'https://github.com/pgedge/pgedge-patroni');
@@ -367,8 +365,7 @@ INSERT INTO versions VALUES ('patroni', '3.2.1-1', '', 1, '20240221', '', '', ''
 INSERT INTO projects VALUES ('etcd', 'app', 11, 2379, 'hub', 4, 'https://github.com/etcd-io/etcd/tags',
   'etcd', 0, 'etcd.png', 'HA', 'https://github.com/etcd-io/etcd');
 INSERT INTO releases VALUES ('etcd', 1, 'etcd', 'Etcd', '', 'prod', '', 1, 'POSTGRES', '', '');
-INSERT INTO versions VALUES ('etcd', '3.5.12', 'el8, el9, arm9', 1, '20240221', '', '', '');
-INSERT INTO versions VALUES ('etcd', '3.5.11', 'el8, el9, arm9', 0, '20240108', '', '', '');
+INSERT INTO versions VALUES ('etcd', '3.5.12', 'el8, el9, arm9', 0, '20240221', '', '', '');
 
 -- MULTICLOUD METADATA ------------------------------------------------------
 
