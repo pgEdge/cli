@@ -315,7 +315,6 @@ finalizeOutput () {
   checkCmd "cp -r $CLI/libcloud hub/scripts/."
   checkCmd "cp -r $CLI/sql      hub/scripts/."
   checkCmd "cp -r $CLI/sh       hub/scripts/."
-  checkCmd "cp -r $CLI/conf     hub/scripts/."
 
   checkCmd "cp -r $CLI/../doc hub/."
   checkCmd "cp $CLI/../README.md  hub/doc/."

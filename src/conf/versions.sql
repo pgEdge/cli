@@ -433,7 +433,7 @@ INSERT INTO countries VALUES ('sg', 'ap', 'Singapore');
 INSERT INTO countries VALUES ('kr', 'ap', 'South Korea');
 INSERT INTO countries VALUES ('id', 'ap', 'Indonesia');
 INSERT INTO countries VALUES ('in', 'ap', 'India');
-INSERT INTO countries VALUES ('nz', 'ap', 'New Zealand');
+INSERT INTO countries VALUES ('nz', 'au', 'New Zealand');
 INSERT INTO countries VALUES ('cn', 'ap', 'China');
 INSERT INTO countries VALUES ('es', 'eu', 'Spain');
 INSERT INTO countries VALUES ('il', 'me', 'Israel');
