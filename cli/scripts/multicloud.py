@@ -119,13 +119,8 @@ def get_node(conn, name):
     return None
 
 
-def destroy_node(provider, region, name):
-    """Destroy a node."""
-    node_action("destroy", provider, region, name)
-    return
-
-
-def node_action(action, provider, region, name):
+def node_action(action, provider, airport, name):
+    region = get_region(provider, airport)
     conn, section, region, airport, project = get_connection(provider, region)
 
     nd = get_node(conn, name)
@@ -167,9 +162,15 @@ def is_node_unique(name, prvdr, conn, sect):
 
 
 def create_node(
-    provider, region, name, size=None, image=None, ssh_key=None, project=None
+    provider, airport, name, size=None, image=None, ssh_key=None, project=None
 ):
     """Create a virtual machine (VM)."""
+
+    region = get_region(provider, airport)
+    if region:
+       util.message(f"  # ({provider}, {airport}) --> {region}")
+    else:
+       util.exit_message(f"Invalid provider:airport '{provider}:{airport}'")
 
     conn, sect, region, airport, project = get_connection(provider, region, project)
 
@@ -264,21 +265,27 @@ def create_node_eqn(name, location, size, image, project):
     return
 
 
-def start_node(provider, region, name):
+def start_node(provider, airport, node_name):
     """Start a VM."""
-    node_action("start", provider, region, name)
+    node_action("start", provider, airport, node_name)
     return
 
 
-def stop_node(provider, region, name):
+def stop_node(provider, airport, node_name):
     """Stop a VM."""
-    node_action("stop", provider, region, name)
+    node_action("stop", provider, airport, node_name)
     return
 
 
-def reboot_node(provider, region, name):
+def reboot_node(provider, airport, node_name):
     """Reboot a VM."""
-    node_action("reboot", provider, region, name)
+    node_action("reboot", provider, airport, node_name)
+    return
+
+
+def destroy_node(provider, airport, node_name):
+    """Destroy a node."""
+    node_action("destroy", provider, airport, node_name)
     return
 
 
@@ -340,9 +347,9 @@ def list_nodes(provider, region=None, project=None):
     if provider == "eqn":
         nl = eqn_node_list(conn, region, project)
     elif provider == "aws":
-        nl = aws_node_list(conn, region, project)
+        nl = aws_node_list(conn, region)
     elif provider == "akm":
-        nl = akm_node_list(conn, region, project)
+        nl = akm_node_list(conn, region)
     else:
         util.exit_message(f"Invalid provider '{provider}' (list_nodes)")
 
@@ -359,7 +366,7 @@ def list_nodes(provider, region=None, project=None):
     return
 
 
-def akm_node_list(conn, region, project):
+def akm_node_list(conn, region):
     try:
         nodes = conn.list_nodes()
     except Exception as e:
@@ -368,17 +375,20 @@ def akm_node_list(conn, region, project):
     nl = []
     for n in nodes:
         node = n.name
+
         try:
             public_ip = n.public_ips[0]
         except Exception:
             public_ip = ""
+
         try:
             private_ip = n.private_ip[0]
         except Exception:
             private_ip = ""
+
         status = n.state
-        zone = n.extra["location"]
-        region = zone
+        region = n.extra["location"]
+        zone = ""
         size = n.size
         country = region[:2]
         key_name = ""
@@ -388,7 +398,7 @@ def akm_node_list(conn, region, project):
     return(nl)
 
 
-def aws_node_list(conn, region, project):
+def aws_node_list(conn, region):
     try:
         nodes = conn.list_nodes()
     except Exception as e:
@@ -657,12 +667,12 @@ if __name__ == "__main__":
             "list-airports":  list_airports,
             "list-sizes":     list_sizes,
             "list-keys":      list_keys,
-            "create-node":    create_node,
             "list-nodes":     list_nodes,
-            "start-node":     start_node,
-            "stop-node":      stop_node,
-            "reboot-node":    reboot_node,
-            "destroy-node":   destroy_node,
+            "node-create":    create_node,
+            "node-start":     start_node,
+            "node-stop":      stop_node,
+            "node-reboot":    reboot_node,
+            "node-destroy":   destroy_node,
             "cluster-create": cluster_create,
         }
     )
