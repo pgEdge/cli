@@ -1,12 +1,12 @@
 ## SYNOPSIS
-    ./pgedge multicloud create-node PROVIDER REGION NAME <flags>
+    ./pgedge vm create PROVIDER AIRPORT NAME <flags>
  
 ## DESCRIPTION
-    Create a virtual machine (VM).
+    Create a virtual machine (VM)
  
 ## POSITIONAL ARGUMENTS
     PROVIDER
-    REGION
+    AIRPORT
     NAME
  
 ## FLAGS

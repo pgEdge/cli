@@ -1,8 +1,8 @@
 ## SYNOPSIS
-    ./pgedge multicloud list-sizes PROVIDER <flags>
+    ./pgedge vm list-sizes PROVIDER <flags>
  
 ## DESCRIPTION
-    List available node sizes.
+    List available VM
  
 ## POSITIONAL ARGUMENTS
     PROVIDER

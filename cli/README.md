@@ -1,7 +1,7 @@
 # pgEdge CLI
 This is the pgEdge Command Line Interface (CLI).  It is a cross-platform 
 tool to manage your PostgreSQL eco-system of components.  The modules are 
-UM, SERVICE, SPOCK, ACE, MULTICLOUD, and CLUSTER.
+UM, SERVICE, SPOCK, ACE, CLUSTER, and VM.
 
 We are licensed under the [pgEdge Community License](https://www.pgedge.com/communitylicense)
 
@@ -20,5 +20,5 @@ We are licensed under the [pgEdge Community License](https://www.pgedge.com/comm
 
 ## [cluster](CLUSTER-README.md) - Create and control a local cluster 
 
-## [multicloud](MULTICLOUD-README.md) - for rapidly assembling Multicloud test clusters
+## [vm](VM-README.md) - Consistent Provisioning and Managemnt of VM's across multiple clouds
 

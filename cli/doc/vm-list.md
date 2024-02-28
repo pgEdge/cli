@@ -1,8 +1,8 @@
 ## SYNOPSIS
-    ./pgedge multicloud list-nodes PROVIDER <flags>
+    ./pgedge vm list PROVIDER <flags>
  
 ## DESCRIPTION
-    List virtual machines.
+    List virtual machines
  
 ## POSITIONAL ARGUMENTS
     PROVIDER

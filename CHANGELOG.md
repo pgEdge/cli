@@ -1,13 +1,15 @@
 ## planned for 24.2.5 on 2024-02-28 #########
   done so far:
-  - Multicloud CLI nows supports AWS, EQUINIX-METAL, & AKAMAI-LINODE
-  - experimental developer support for pg15 on OSX
+  - VM CLI nows supports AWS, EQUINIX-METAL, & AKAMAI-LINODE
+  - MULTICLOUD CLI now referred to as VM (virtual machine) CLI
   - rename cluster 'local-create' command to 'localhost-create'
   - rename cluster 'local-destroy' command to 'localhost-destroy'
   - stop using deprecated './pgedge install pgegde' command, in 'cluster localhost-create',
       in favor of using './pgedge setup' command
+  - experimental developer support for pg15 on OSX
 
   still to do:
+  - spock 3.2.7 for pg14
   - fix static linking of backrest so works on ubu & el8
   - fix 'update' command to:
      + work from 24.1.3 (production)

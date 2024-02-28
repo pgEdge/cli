@@ -67,7 +67,7 @@ fire_list = [
     "db",
     "app",
     "firewalld",
-    "multicloud",
+    "vm",
     "setup"
 ]
 

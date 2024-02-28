@@ -164,7 +164,7 @@ def is_node_unique(name, prvdr, conn, sect):
 def create_node(
     provider, airport, name, size=None, image=None, ssh_key=None, project=None
 ):
-    """Create a virtual machine (VM)."""
+    """Create a virtual machine (VM)"""
 
     region = get_region(provider, airport)
     if region:
@@ -266,31 +266,31 @@ def create_node_eqn(name, location, size, image, project):
 
 
 def start_node(provider, airport, node_name):
-    """Start a VM."""
+    """Start a VM"""
     node_action("start", provider, airport, node_name)
     return
 
 
 def stop_node(provider, airport, node_name):
-    """Stop a VM."""
+    """Stop a VM"""
     node_action("stop", provider, airport, node_name)
     return
 
 
 def reboot_node(provider, airport, node_name):
-    """Reboot a VM."""
+    """Reboot a VM"""
     node_action("reboot", provider, airport, node_name)
     return
 
 
 def destroy_node(provider, airport, node_name):
-    """Destroy a node."""
+    """Destroy a VM"""
     node_action("destroy", provider, airport, node_name)
     return
 
 
 def list_keys(provider, region=None, project=None):
-    """List available SSH Keys (not working for Equinix)."""
+    """List available SSH Keys"""
     conn, sect, region, airport, project = get_connection(provider, region, project)
     keys = conn.list_key_pairs()
     for k in keys:
@@ -298,7 +298,7 @@ def list_keys(provider, region=None, project=None):
 
 
 def list_sizes(provider, region=None, project=None):
-    """List available node sizes."""
+    """List available VM"""
     conn, sect, region, airport, project = get_connection(provider, region, project)
 
     if region is None:
@@ -340,7 +340,7 @@ def list_sizes(provider, region=None, project=None):
 
 
 def list_nodes(provider, region=None, project=None):
-    """List virtual machines."""
+    """List virtual machines"""
     conn, sect, region, airport, project = get_connection(provider, region, project)
 
     nl = []
@@ -446,12 +446,12 @@ def eqn_node_list(conn, region, project):
 
 
 def list_providers():
-    """List supported cloud providers."""
+    """List supported cloud providers"""
 
     p = PrettyTable()
-    p.field_names = ["Provider", "Libcloud Name", "Description"]
+    p.field_names = ["Provider", "Cloud Name", "Description"]
     p.add_rows(PROVIDERS)
-    p.align["Libcloud Name"] = "l"
+    p.align["Cloud Name"] = "l"
     p.align["Description"] = "l"
     print(p)
 
@@ -459,7 +459,7 @@ def list_providers():
 
 
 def list_airports(geo=None, country=None, airport=None, provider=None):
-   """List airport codes & provider regions."""
+   """List airport codes & provider regions"""
 
    al = airport_list(geo, country, airport, provider)
    p = PrettyTable()
@@ -473,6 +473,7 @@ def list_airports(geo=None, country=None, airport=None, provider=None):
    p.align["Zones"] = "l"
    p.add_rows(al)
    print(p)
+
 
 def load_config(section):
     # make section an alias
@@ -529,7 +530,6 @@ def get_connection(provider=None, region=None, project=None):
     airport = get_airport(provider, region)
 
     return (conn, sect, region, airport, project)
-
 
 
 def is_region(region):
@@ -621,8 +621,8 @@ def airport_list(geo=None, country=None, airport=None, provider=None):
     return (al)
 
 
-def cluster_create(cluster_name, nodes):
-    """Create a json config file for a remote cluster."""
+def cluster_define(cluster_name, nodes):
+    """Create a json config file for a vm cluster"""
     nl = str(nodes).split(",")
     if len(nl) < 1:
         util.exit_message("Must be a comma seperated list of 'provider:airport:node_name' triplets")
@@ -667,12 +667,12 @@ if __name__ == "__main__":
             "list-airports":  list_airports,
             "list-sizes":     list_sizes,
             "list-keys":      list_keys,
-            "list-nodes":     list_nodes,
-            "node-create":    create_node,
-            "node-start":     start_node,
-            "node-stop":      stop_node,
-            "node-reboot":    reboot_node,
-            "node-destroy":   destroy_node,
-            "cluster-create": cluster_create,
+            "list":           list_nodes,
+            "create":         create_node,
+            "start":          start_node,
+            "stop":           stop_node,
+            "reboot":         reboot_node,
+            "destroy":        destroy_node,
+            "cluster-define": cluster_define,
         }
     )

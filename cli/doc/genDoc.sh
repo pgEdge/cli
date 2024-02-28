@@ -116,18 +116,20 @@ $nc firewalld add           --help
 $nc firewalld remove        --help
 }
 
-multicloud () {
-$nc multicloud --help
-$nc multicloud list-providers       --help
-$nc multicloud list-airports        --help
-$nc multicloud list-nodes           --help
-$nc multicloud list-sizes           --help
-$nc multicloud create-node          --help
-$nc multicloud start-node           --help
-$nc multicloud stop-node            --help
-$nc multicloud reboot-node          --help
-$nc multicloud destroy-node         --help
-$nc multicloud cluster-create       --help
+vm () {
+$nc vm --help
+$nc vm list-providers       --help
+$nc vm list-airports        --help
+$nc vm list-sizes           --help
+
+$nc vm list                 --help
+$nc vm create               --help
+$nc vm start                --help
+$nc vm stop                 --help
+$nc vm reboot               --help
+$nc vm destroy              --help
+
+$nc vm cluster-define       --help
 }
 
 setup () {
@@ -150,7 +152,7 @@ if [ $m == "all" ]; then
   cluster
   cloud
   ace
-  multicloud
+  vm
   firewalld
   setup
 elif [ $m == "um" ]; then
@@ -167,8 +169,8 @@ elif [ $m == "cloud" ]; then
   cloud
 elif [ $m == "ace" ]; then
   ace
-elif [ $m == "multicloud" ]; then
-  multicloud
+elif [ $m == "vm" ]; then
+  vm
 elif [ $m == "firewalld" ]; then
   firewalld
 elif [ $m == "setup" ]; then

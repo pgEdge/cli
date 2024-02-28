@@ -241,8 +241,8 @@ def _SynopsisSection(component, actions_grouped_by_kind, spec, metadata,
     prfx = "ace"
   elif "db.py" in txt:
     prfx = "db"
-  elif "multicloud.py" in txt:
-    prfx = "multicloud"
+  elif "vm.py" in txt:
+    prfx = "vm"
   elif "cloud.py" in txt:
     prfx = "cloud"
   elif "firewalld.py" in txt:
