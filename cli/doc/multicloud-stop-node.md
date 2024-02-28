@@ -2,7 +2,7 @@
     ./pgedge multicloud stop-node PROVIDER REGION NAME
  
 ## DESCRIPTION
-    Stop a node.
+    Stop a VM.
  
 ## POSITIONAL ARGUMENTS
     PROVIDER

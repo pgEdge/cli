@@ -2,7 +2,7 @@
     ./pgedge multicloud reboot-node PROVIDER REGION NAME
  
 ## DESCRIPTION
-    Reboot a node.
+    Reboot a VM.
  
 ## POSITIONAL ARGUMENTS
     PROVIDER

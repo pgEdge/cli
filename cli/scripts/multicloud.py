@@ -10,6 +10,7 @@ sys.path.append(os.path.join(os.path.dirname(__file__), "lib"))
 import fire
 import libcloud
 import util
+import cluster
 
 import termcolor
 from libcloud.compute.types import Provider
@@ -74,8 +75,10 @@ def get_image(provider, conn, p_image):
 def get_node_values(provider, region, name):
     conn, section, region, airport, project = get_connection(provider, region)
     nd = get_node(conn, name)
+
     if not nd:
         return None, None, None, None, None
+
     try:
         name = str(nd.name)
         public_ip = str(nd.public_ips[0])
@@ -87,8 +90,18 @@ def get_node_values(provider, region, name):
             zone = str(nd.extra["facility"]["code"])
             size = str(nd.size.id)
         else:
-            zone = nd.extra["availability"]
-            size = nd.extra["instance_type"]
+            zone = ""
+            instance_type = ""
+
+            try:
+                zone = nd.extra["availability"]
+            except Exception:
+                pass
+
+            try:
+                size = nd.extra["instance_type"]
+            except Exception:
+                pass
     except Exception as e:
         util.exit_message(str(e), 1)
 
@@ -106,9 +119,9 @@ def get_node(conn, name):
     return None
 
 
-def destroy_node(provider, name, region):
+def destroy_node(provider, region, name):
     """Destroy a node."""
-    node_action("destroy", provider, name, region)
+    node_action("destroy", provider, region, name)
     return
 
 
@@ -154,9 +167,9 @@ def is_node_unique(name, prvdr, conn, sect):
 
 
 def create_node(
-    provider, region, name, size=None, image=None, ssh_key=None, project=None, json=False
+    provider, region, name, size=None, image=None, ssh_key=None, project=None
 ):
-    """Create a node."""
+    """Create a virtual machine (VM)."""
 
     conn, sect, region, airport, project = get_connection(provider, region, project)
 
@@ -252,83 +265,32 @@ def create_node_eqn(name, location, size, image, project):
 
 
 def start_node(provider, region, name):
-    """Start a node."""
+    """Start a VM."""
     node_action("start", provider, region, name)
     return
 
 
 def stop_node(provider, region, name):
-    """Stop a node."""
+    """Stop a VM."""
     node_action("stop", provider, region, name)
     return
 
 
 def reboot_node(provider, region, name):
-    """Reboot a node."""
+    """Reboot a VM."""
     node_action("reboot", provider, region, name)
     return
 
 
-def cluster_nodes(cluster_name, providers, regions, node_names):
-    """Create a Cluster definition json file from a set of nodes."""
-
-    util.message(
-        f"\n# cluster-nodes(cluster_name={cluster_name}, providers={providers}, regions={regions}, node_names={node_names})"
-    )
-
-    if not isinstance(providers, list) or len(providers) < 2:
-        util.exit_message(
-            f"providers parm '{providers}' must be a square bracketed list with two or more elements",
-            1,
-        )
-
-    if not isinstance(regions, list) or len(regions) < 2:
-        util.exit_message(
-            f"regions parm '{regions}' must be a square bracketed list with two or more elements",
-            1,
-        )
-
-    if not isinstance(node_names, list) or len(node_names) < 2:
-        util.exit_message(
-            f"node_names parm '{node_names}' must be a square bracketed list with two or more elements",
-            1,
-        )
-
-    if (not len(providers) == len(regions)) or (not len(providers) == len(node_names)):
-        s1 = f"providers({len(providers)}), regions({len(regions)}), and node_names({len(node_names)})"
-        util.exit_message(f"{s1} parms must have same number of elements")
-
-    if len(node_names) != len(set(node_names)):
-        util.exit_message(f"node_names ({node_names}) must be unique")
-
-    node_kount = len(providers)
-    i = 0
-    while i < node_kount:
-        util.message(f"\n## {providers[i]}, {regions[i]}, {node_names[i]}")
-        conn, section, region, airport, project = get_connection(providers[i], regions[i])
-
-        name, public_ip, status, region, size = get_node_values(
-            providers[i], regions[i], node_names[i]
-        )
-        if not name:
-            util.exit_message(
-                f"Node ({providers[i]}, {regions[i]}, {node_names[i]}) not available"
-            )
-
-        util.message(f"### {name}, {public_ip}, {status}, {region}, {size}")
-
-        i = i + 1
-
-    return
-
 def list_keys(provider, region=None, project=None):
+    """List available SSH Keys (not working for Equinix)."""
     conn, sect, region, airport, project = get_connection(provider, region, project)
     keys = conn.list_key_pairs()
     for k in keys:
        print(k)
 
 
-def list_sizes(provider, region=None, project=None, json=False):
+def list_sizes(provider, region=None, project=None):
     """List available node sizes."""
     conn, sect, region, airport, project = get_connection(provider, region, project)
 
@@ -358,10 +320,6 @@ def list_sizes(provider, region=None, project=None, json=False):
             cpu = ""
         sl.append([provider, region, s.id, cpu, round(ram/1024), s.disk, bandwidth, price])
 
-    if json:
-        util.output_json(sl)
-        return
-
     p = PrettyTable()
     p.field_names = ["Provider", "Region", "Size", "CPU", "RAM", "Disk", "Bandwidth", "Price"]
     p.add_rows(sl)
@@ -374,53 +332,19 @@ def list_sizes(provider, region=None, project=None, json=False):
     print(p)
 
 
-def list_zones(provider=None, airport=None, region=None, project=None, json=False):
-    """List availability zones."""
-
-    wr = "is_active = 'Y'"
-    if provider:
-        wr = wr + f" AND provider= '{provider}'"
-    if airport:
-        wr = wr + f" AND airport = '{airport}'"
-    cols = "provider, airport, region, parent, zones"
-    try:
-        cursor = cL.cursor()
-        cursor.execute(f"SELECT {cols} FROM airport_regions WHERE {wr} ORDER BY 1,2,3,4")
-        data = cursor.fetchall()
-    except Exception as e:
-        util.exit_message(str(e), 1)
-    lz = []
-    for d in data:
-        lz.append([str(d[0]), str(d[1]), str(d[2]), str(d[3]), str(d[4])])
-
-    p = PrettyTable()
-    p.field_names = ["Provider", "Airport", "Region", "Parent", "Zones"]
-    p.align["Region"] = "l"
-    p.align["Parent"] = "l"
-    p.align["Zones"] = "l"
-    p.add_rows(lz)
-    print(p)
-
-    return
-
-
-def list_nodes(provider, region=None, project=None, json=False):
+def list_nodes(provider, region=None, project=None):
     """List virtual machines."""
     conn, sect, region, airport, project = get_connection(provider, region, project)
 
     nl = []
     if provider == "eqn":
-        nl = eqn_node_list(conn, region, project, json)
+        nl = eqn_node_list(conn, region, project)
     elif provider == "aws":
-        nl = aws_node_list(conn, region, project, json)
+        nl = aws_node_list(conn, region, project)
     elif provider == "akm":
-        nl = akm_node_list(conn, region, project, json)
+        nl = akm_node_list(conn, region, project)
     else:
         util.exit_message(f"Invalid provider '{provider}' (list_nodes)")
-
-    if json:
-      util.output_json(nl)
-      return
 
     p = PrettyTable()
     p.field_names = ["Provider", "Airport", "Node", "Status", "Size", "Country", "Region", "Zone", "Public IP", "Private IP"]
@@ -435,7 +359,7 @@ def list_nodes(provider, region=None, project=None, json=False):
     return
 
 
-def akm_node_list(conn, region, project, json):
+def akm_node_list(conn, region, project):
     try:
         nodes = conn.list_nodes()
     except Exception as e:
@@ -464,7 +388,7 @@ def akm_node_list(conn, region, project, json):
     return(nl)
 
 
-def aws_node_list(conn, region, project, json):
+def aws_node_list(conn, region, project):
     try:
         nodes = conn.list_nodes()
     except Exception as e:
@@ -492,7 +416,7 @@ def aws_node_list(conn, region, project, json):
     return(nl)
 
 
-def eqn_node_list(conn, region, project, json):
+def eqn_node_list(conn, region, project):
     nodes = conn.list_nodes(project)
 
     nl = []
@@ -511,12 +435,8 @@ def eqn_node_list(conn, region, project, json):
     return(nl)
 
 
-def list_providers(json=False):
+def list_providers():
     """List supported cloud providers."""
-
-    if json:
-        util.output_json(PROVIDERS)
-        return
 
     p = PrettyTable()
     p.field_names = ["Provider", "Libcloud Name", "Description"]
@@ -528,10 +448,10 @@ def list_providers(json=False):
     return
 
 
-def list_airport_regions(geo=None, country=None, airport=None, provider=None, json=False):
-   """List airport codes & corresponding provider regions."""
+def list_airports(geo=None, country=None, airport=None, provider=None):
+   """List airport codes & provider regions."""
 
-   al = airport_list(geo, country, airport, provider, json)
+   al = airport_list(geo, country, airport, provider)
    p = PrettyTable()
    p.field_names = ["Geo", "Country", "Airport", "Area", "Lattitude", "Longitude", "Provider", "Region", "Parent", "Zones"]
    p.float_format = ".4"
@@ -601,11 +521,6 @@ def get_connection(provider=None, region=None, project=None):
     return (conn, sect, region, airport, project)
 
 
-def output_json(tbl):
-    print(tbl)
-
-    return
-
 
 def is_region(region):
     try:
@@ -672,7 +587,7 @@ def get_airport(provider, region):
     return(None)
 
 
-def airport_list(geo=None, country=None, airport=None, provider=None, json=False):
+def airport_list(geo=None, country=None, airport=None, provider=None):
     wr = "1 = 1"
     if geo:
         wr = wr + f" AND geo = '{geo}'"
@@ -696,12 +611,15 @@ def airport_list(geo=None, country=None, airport=None, provider=None, json=False
     return (al)
 
 
-def cluster_create(nodes):
+def cluster_create(cluster_name, nodes):
+    """Create a json config file for a remote cluster."""
     nl = str(nodes).split(",")
-    if len(nl) < 2:
+    if len(nl) < 1:
         util.exit_message("Must be a comma seperated list of 'provider:airport:node_name' triplets")
 
-    print(nl)
+    cluster.json_create(cluster_name, "remote")
+
+    util.message(f"cluster_create node list = {nl}", "debug")
     for n in nl:
         ns = n.strip()
         nsl = ns.split(":")
@@ -714,10 +632,17 @@ def cluster_create(nodes):
             util.exit_message(f"invalid provider:airport combo '{provider}:{airport}'")
         node_name = nsl[2]
         name, public_ip, status, zone, size = get_node_values(provider, region, node_name)
+
         if name is None:
             util.exit_message(f"node {node_name} not found for {provider}:{airport}")
 
-        print(f"'{ns}'")
+        sect = load_config(provider)
+        ssh_key = sect["ssh_key"]
+        os_user = sect["os_user"]
+
+        util.message(f"cluster_create node_values = {name}, {public_ip}, {status}", "debug")
+
+        cluster.json_add_node(cluster_name, "remote", node_name, True, public_ip, 5432, "/opt/pgedge", os_user=os_user, ssh_key=ssh_key, provider=provider, airport=airport)
 
     return 
 
@@ -729,12 +654,11 @@ if __name__ == "__main__":
     fire.Fire(
         {
             "list-providers": list_providers,
-            "list-airport-regions":  list_airport_regions,
-            "list-zones":     list_zones,
-            "list-nodes":     list_nodes,
+            "list-airports":  list_airports,
             "list-sizes":     list_sizes,
             "list-keys":      list_keys,
             "create-node":    create_node,
+            "list-nodes":     list_nodes,
             "start-node":     start_node,
             "stop-node":      stop_node,
             "reboot-node":    reboot_node,

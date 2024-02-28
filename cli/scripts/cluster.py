@@ -48,7 +48,7 @@ def write_cluster_json(cluster_name, cj):
         util.exit_message("Unable to write_cluster_json {cluster_file}\n{str(e)}")
 
 
-def json_create(cluster_name, style, db, user, passwd, pg):
+def json_create(cluster_name, style, db=None, user=None, passwd=None, pg=None):
     cluster_json = {}
     cluster_json["name"] = cluster_name
     cluster_json["style"] = style
@@ -68,13 +68,10 @@ def json_create(cluster_name, style, db, user, passwd, pg):
     write_cluster_json(cluster_name, cluster_json)
 
 
-def json_add_node(cluster_name, node_group, node_name, is_active, ip_address, port, path, ssh_key=None, provider=None, airport=None):
+def json_add_node(cluster_name, node_group, node_name, is_active, ip_address, port, path, os_user=None, ssh_key=None, provider=None, airport=None):
     cj = get_cluster_json (cluster_name)
 
     util.message(f"json_add_node()\n{json.dumps(cj, indent=2)}", "debug")
-
-    for ng in cj["node_groups"]:
-      print(f"DEBUG: {ng}")
 
     node_json = {}
     node_json["name"] = node_name
@@ -82,6 +79,8 @@ def json_add_node(cluster_name, node_group, node_name, is_active, ip_address, po
     node_json["ip_address"] = ip_address
     node_json["port"] = port
     node_json["path"] = path
+    if os_user:
+        node_json["os_user"] = os_user
     if ssh_key:
         node_json["ssh_key"] = ssh_key
     if provider:
@@ -89,11 +88,10 @@ def json_add_node(cluster_name, node_group, node_name, is_active, ip_address, po
     if airport:
         node_json["airport"] = airport
 
-    util.message(f"node_json = {node_json}")
+    util.message(f"node_json = {node_json}", "debug")
 
     lhn = cj["node_groups"]
-    print(f"lhn {lhn}")
-    lhn["localhost"].append(node_json)
+    lhn[node_group].append(node_json)
 
     write_cluster_json(cluster_name, cj)
 
@@ -115,10 +113,6 @@ def create_local_json(cluster_name, db, num_nodes, usr, passwd, pg, ports, hosts
     util.message(f"create_local_json({cluster_name}, {db}, {num_nodes}, {usr}, {passwd}, {pg}, {ports})", "debug")
 
     cluster_dir, cluster_file = get_cluster_info(cluster_name)
-
-    ## rc = json_create(cluster_name, "localhost", db, usr, passwd, pg)
-
-    ## json_add_node(cluster_name, "localhost", "n1", True, "127.0.0.1", "6432", "/tmp")
 
     text_file = open(cluster_dir + os.sep + cluster_name + ".json", "w")
     cluster_json = {}

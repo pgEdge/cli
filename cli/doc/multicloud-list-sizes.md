@@ -14,6 +14,3 @@
     -p, --project=PROJECT
     
     
-    -j, --json=JSON
-    
-    

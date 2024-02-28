@@ -1,10 +1,10 @@
 ## SYNOPSIS
-    ./pgedge multicloud destroy-node PROVIDER NAME REGION
+    ./pgedge multicloud destroy-node PROVIDER REGION NAME
  
 ## DESCRIPTION
     Destroy a node.
  
 ## POSITIONAL ARGUMENTS
     PROVIDER
-    NAME
     REGION
+    NAME

@@ -1,8 +1,8 @@
 ## SYNOPSIS
-    ./pgedge multicloud list-airport-regions <flags>
+    ./pgedge multicloud list-airports <flags>
  
 ## DESCRIPTION
-    List airport codes & corresponding provider regions.
+    List airport codes & provider regions.
  
 ## FLAGS
     -g, --geo=GEO
@@ -15,8 +15,5 @@
     
     
     -p, --provider=PROVIDER
-    
-    
-    -j, --json=JSON
     
     

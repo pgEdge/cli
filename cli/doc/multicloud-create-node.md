@@ -2,7 +2,7 @@
     ./pgedge multicloud create-node PROVIDER REGION NAME <flags>
  
 ## DESCRIPTION
-    Create a node.
+    Create a virtual machine (VM).
  
 ## POSITIONAL ARGUMENTS
     PROVIDER
@@ -20,8 +20,5 @@
     
     
     -p, --project=PROJECT
-    
-    
-    -j, --json=JSON
     
     

@@ -2,7 +2,7 @@
     ./pgedge multicloud start-node PROVIDER REGION NAME
  
 ## DESCRIPTION
-    Start a node.
+    Start a VM.
  
 ## POSITIONAL ARGUMENTS
     PROVIDER

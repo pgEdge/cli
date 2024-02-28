@@ -1,10 +1,5 @@
 ## SYNOPSIS
-    ./pgedge multicloud list-providers <flags>
+    ./pgedge multicloud list-providers -
  
 ## DESCRIPTION
     List supported cloud providers.
- 
-## FLAGS
-    -j, --json=JSON
-    
-    

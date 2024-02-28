@@ -119,8 +119,7 @@ $nc firewalld remove        --help
 multicloud () {
 $nc multicloud --help
 $nc multicloud list-providers       --help
-$nc multicloud list-airport-regions --help
-$nc multicloud list-zones           --help
+$nc multicloud list-airports        --help
 $nc multicloud list-nodes           --help
 $nc multicloud list-sizes           --help
 $nc multicloud create-node          --help
