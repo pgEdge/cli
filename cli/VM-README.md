@@ -8,7 +8,7 @@ Rapidly assemble clusters of VMs for Multiple Clouds
 [**list-airports**](doc/vm-list-airports.md)    - List airport codes & corresponding provider regions<br>
 [**list-sizes**](doc/vm-list-sizes.md)          - List available node sizes<br>
 [**list**](doc/vm-lists.md)                     - List virtual machines<br>
-[**create**](doc/vm-create.md)                  - Launch a VMe<br>
+[**create**](doc/vm-create.md)                  - Launch a VM<br>
 [**start**](doc/vm-start.md)                    - Start a VM<br>
 [**stop**](doc/vm-stop.md)                      - Stop a VM<br>
 [**reboot**](doc/vm-reboot.md)                  - Reboot a VM<br>
