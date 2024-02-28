@@ -1,5 +1,5 @@
 ## SYNOPSIS
-    ./pgedge cluster define-localhost CLUSTER_NAME DB NUM_NODES USR PASSWD PG PORT1
+    ./pgedge cluster define-localhost CLUSTER_NAME DB NUM_NODES USR PASSWD PG PORTS <flags>
  
 ## DESCRIPTION
     Create a JSON configuration file that defines a local cluster. 
@@ -19,5 +19,16 @@ Example: cluster define-localhost demo lcdb 3 lcusr lcpasswd 16 5432
         The password for the above user.
     PG
         The postgres version of the database.
-    PORT1
+    PORTS
         The starting port for this cluster. For local clusters, each node will have a port increasing by 1 from this port number.
+ 
+## FLAGS
+    -h, --hosts=HOSTS
+    
+    
+    -p, --paths=PATHS
+    
+    
+    -k, --keys=KEYS
+    
+    

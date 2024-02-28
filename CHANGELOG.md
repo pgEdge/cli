@@ -1,5 +1,6 @@
 ## planned for 24.2.5 on 2024-02-28 #########
   done so far:
+  - Multicloud CLI nows supports AWS, EQUINIX-METAL, & AKAMAI-LINODE
   - experimental developer support for pg15 on OSX
   - rename cluster 'local-create' command to 'localhost-create'
   - rename cluster 'local-destroy' command to 'localhost-destroy'
@@ -9,7 +10,6 @@
   still to do:
   - fix static linking of backrest so works on ubu & el8
   - fix 'update' command to:
-     + install/update 'pgedge' script 
      + work from 24.1.3 (production)
 
 

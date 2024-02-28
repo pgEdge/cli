@@ -75,8 +75,8 @@ cluster () {
 $nc cluster --help
 $nc cluster define-localhost  --help
 $nc cluster define-remote     --help
-$nc cluster local-create      --help
-$nc cluster local-destroy     --help
+$nc cluster localhost-create  --help
+$nc cluster localhost-destroy --help
 $nc cluster init              --help
 $nc cluster remove            --help
 $nc cluster command           --help
