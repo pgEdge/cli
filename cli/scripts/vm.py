@@ -297,11 +297,11 @@ def list_keys(provider, airport=None, project=None):
     region = get_region(provider, airport)
     conn, sect, region, airport, project = get_connection(provider, region, project)
     keys = conn.list_key_pairs()
-    for k in keys:
-       print(k)
 
+    return(keys)
+ 
 
-def list_sizes(provider, airport=None, project=None):
+def list_sizes(provider, airport=None, project=None, pretty=True):
     """List available VM"""
 
     region = get_region(provider, airport)
@@ -333,6 +333,9 @@ def list_sizes(provider, airport=None, project=None):
             cpu = ""
         sl.append([provider, region, s.id, cpu, round(ram/1024), s.disk, bandwidth, price])
 
+    if not pretty:
+        return(sl)
+
     p = PrettyTable()
     p.field_names = ["Provider", "Region", "Size", "CPU", "RAM", "Disk", "Bandwidth", "Price"]
     p.add_rows(sl)
@@ -343,6 +346,8 @@ def list_sizes(provider, airport=None, project=None):
     p.align["Bandwidth"] = "r"
     p.align["Price"] = "r"
     print(p)
+
+    return
 
 
 def list_nodes(provider, airport=None, project=None, pretty=True):
@@ -361,19 +366,20 @@ def list_nodes(provider, airport=None, project=None, pretty=True):
     else:
         util.exit_message(f"Invalid provider '{provider}' (list_nodes)")
 
-    if pretty:
-        p = PrettyTable()
-        p.field_names = ["Provider", "Airport", "Name", "Status", "Country", "Region", "Zone", "Public IP", "Private IP", "ID", "Size"]
-        p.align["Name"] = "l"
-        p.align["Size"] = "l"
-        p.align["Public IP"] = "l"
-        p.align["Private IP"] = "l"
-        p.align["Region"] = "l"
-        p.add_rows(nl)
-        print(p)
-        return
+    if not pretty:
+        return(nl)
+    
+    p = PrettyTable()
+    p.field_names = ["Provider", "Airport", "Name", "Status", "Country", "Region", "Zone", "Public IP", "Private IP", "ID", "Size"]
+    p.align["Name"] = "l"
+    p.align["Size"] = "l"
+    p.align["Public IP"] = "l"
+    p.align["Private IP"] = "l"
+    p.align["Region"] = "l"
+    p.add_rows(nl)
+    print(p)
 
-    return(nl)
+    return
 
 
 def akm_node_list(conn, region):
@@ -471,10 +477,14 @@ def list_providers():
     return
 
 
-def list_airports(geo=None, country=None, airport=None, provider=None):
+def list_airports(geo=None, country=None, airport=None, provider=None, pretty=True):
    """List airport codes & provider regions"""
 
    al = airport_list(geo, country, airport, provider)
+
+   if not pretty:
+       return(al)
+   
    p = PrettyTable()
    p.field_names = ["Geo", "Country", "Airport", "Area", "Lattitude", "Longitude", "Provider", "Region", "Parent", "Zones"]
    p.float_format = ".4"
@@ -486,6 +496,8 @@ def list_airports(geo=None, country=None, airport=None, provider=None):
    p.align["Zones"] = "l"
    p.add_rows(al)
    print(p)
+
+   return
 
 
 def load_config(section):
