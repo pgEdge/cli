@@ -48,12 +48,17 @@ CREATE TABLE releases (
   FOREIGN KEY (project) REFERENCES projects(project)
 );
 
+
 CREATE TABLE extensions (
   component      TEXT NOT NULL PRIMARY KEY,
   extension_name TEXT NOT NULL,
   default_conf   TEXT NOT NULL
 );
-INSERT INTO extensions VALUES ('spock32', 'spock', '[{"abc", "123"}]');
+INSERT INTO extensions VALUES ('spock32', 'spock', 
+  'wal_level=logical | max_worker_processes=12 | max_replication_slots=16 |
+   max_wal_senders=16 | hot_standby_feedback=on | wal_sender_timeout=5s |
+   track_commit_timestamp=on | spock.conflict_resolution=last_update_wins | 
+   spock.save_resolutions=on | shared_preload_libraries=spock');
 
 
 CREATE TABLE versions (

@@ -772,6 +772,22 @@ def restart_postgres(p_pg):
     time.sleep(4)
 
 
+def config_extension(p_pg, p_comp, create=True):
+
+    extension_name, default_conf = meta.get_extension_meta(p_comp)
+
+    for df in default_conf.split("|"):
+        df1 = df.strip()
+        df_l = df1.split("=")
+        if len(df_l) != 2:
+            message(f"skipping bad extension metadata \n  '{df_l}'")
+        else:
+            change_pgconf_keyval(p_pg, str(df_l[0]), str(df_l[1]), True)
+
+    if create:
+        create_extension(p_pg, extension_name, True)
+
+
 def create_extension(p_pg, p_ext, p_reboot=False, p_extension="", p_cascade=False):
     isPreload = os.getenv("isPreload")
 
