@@ -2,6 +2,7 @@ DROP VIEW  IF EXISTS v_versions;
 
 DROP TABLE IF EXISTS locations;
 DROP TABLE IF EXISTS versions;
+DROP TABLE IF EXISTS extensions;
 DROP TABLE IF EXISTS releases;
 DROP TABLE IF EXISTS projects;
 DROP TABLE IF EXISTS categories;
@@ -46,6 +47,13 @@ CREATE TABLE releases (
   available_ver TEXT     NOT NULL,
   FOREIGN KEY (project) REFERENCES projects(project)
 );
+
+CREATE TABLE extensions (
+  component      TEXT NOT NULL PRIMARY KEY,
+  extension_name TEXT NOT NULL,
+  default_conf   TEXT NOT NULL
+);
+INSERT INTO extensions VALUES ('spock32', 'spock', '[{"abc", "123"}]');
 
 
 CREATE TABLE versions (

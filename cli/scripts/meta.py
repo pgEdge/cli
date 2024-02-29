@@ -9,6 +9,21 @@ import api, util
 import datetime
 
 
+def get_extension_meta(component):
+    data = []
+    sql = f"SELECT extension_name, default_conf FROM extensions WHERE component = '{component}'"
+    try:
+        c = con.cursor()
+        c.execute(sql)
+        data = c.fetchone()
+        if data:
+            return str(data[0]), str(data[1])
+        else:
+            return None, None
+    except Exception as e:
+        fatal_error(e, sql, "get_extension_meta")
+
+
 def get_installed_count():
     data = []
     sql = "SELECT count(*) FROM components WHERE component <> 'hub'"

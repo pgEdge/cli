@@ -211,6 +211,8 @@ def run_script(componentName, scriptName, scriptParm):
         return
 
     componentDir = componentName
+    if meta.is_extension(componentName):
+        componentDir = componentName[-4:]
 
     cmd = ""
     scriptFile = os.path.join(MY_HOME, componentDir, scriptName)

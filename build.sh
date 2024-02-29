@@ -253,6 +253,11 @@ copy-pgXX () {
       checkCmd "mv $myNewDir/remove-$1-pgXX.py $myNewDir/remove-$1-pg$pgM.py"
       myReplace "pgXX" "pg$pgM" "$myNewDir/remove-$1-pg$pgM.py"
     fi
+
+    if [ -f $myNewDir/config-$1-pgXX.py ]; then
+      checkCmd "mv $myNewDir/config-$1-pgXX.py $myNewDir/config-$1-pg$pgM.py"
+      myReplace "pgXX" "pg$pgM" "$myNewDir/config-$1-pg$pgM.py"
+    fi
   fi
 }
 

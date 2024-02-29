@@ -7,6 +7,7 @@
   - stop using deprecated './pgedge install pgegde' command, in 'cluster localhost-create',
       in favor of using './pgedge setup' command
   - experimental developer support for pg15 on OSX
+  - configurable extension meta data (1st step toward disabled extensions at setup time)
 
   still to do:
   - spock 3.2.7 for pg14
