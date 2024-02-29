@@ -363,8 +363,8 @@ def list_nodes(provider, airport=None, project=None, pretty=True):
 
     if pretty:
         p = PrettyTable()
-        p.field_names = ["Provider", "Airport", "Node", "Status", "Size", "Country", "Region", "Zone", "Public IP", "Private IP"]
-        p.align["Node"] = "l"
+        p.field_names = ["Provider", "Airport", "Name", "Status", "Country", "Region", "Zone", "Public IP", "Private IP", "ID", "Size"]
+        p.align["Name"] = "l"
         p.align["Size"] = "l"
         p.align["Public IP"] = "l"
         p.align["Private IP"] = "l"
@@ -384,7 +384,7 @@ def akm_node_list(conn, region):
 
     nl = []
     for n in nodes:
-        node = n.name
+        name = n.name
 
         try:
             public_ip = n.public_ips[0]
@@ -397,13 +397,14 @@ def akm_node_list(conn, region):
             private_ip = ""
 
         status = n.state
+        id = n.id
         region = n.extra["location"]
         zone = ""
         size = n.size
         country = region[:2]
         key_name = ""
         airport = get_airport("akm", region)
-        nl.append(["akm", airport, node, status, size, country, region, zone, public_ip, private_ip])
+        nl.append(["akm", airport, name, status, country, region, zone, public_ip, private_ip, id, size])
 
     return(nl)
 
@@ -416,7 +417,7 @@ def aws_node_list(conn, region):
 
     nl = []
     for n in nodes:
-        node = n.name
+        name = n.name
         try:
             public_ip = n.public_ips[0]
         except Exception:
@@ -426,12 +427,13 @@ def aws_node_list(conn, region):
         except Exception:
             private_ip = ""
         status = n.state
+        id = n.id
         zone = n.extra["availability"]
         size = n.extra["instance_type"]
         country = region[:2]
         key_name = n.extra['key_name']
         airport = get_airport("aws", region)
-        nl.append(["aws", airport, node, status, size, country, region, zone, public_ip, private_ip])
+        nl.append(["aws", airport, name, status, country, region, zone, public_ip, private_ip, id, size])
 
     return(nl)
 
@@ -441,7 +443,7 @@ def eqn_node_list(conn, region, project):
 
     nl = []
     for n in nodes:
-        node = n.name
+        name = n.name
         public_ip = n.public_ips[0]
         private_ip = n.private_ips[0]
         size = str(n.size.id)
@@ -450,7 +452,8 @@ def eqn_node_list(conn, region, project):
         airport = get_airport("eqn", region)
         location = n.extra["facility"]["code"]
         status = n.state
-        nl.append(["eqn", airport, node, status, size, country, region, location, public_ip, private_ip])
+        id = n.id
+        nl.append(["eqn", airport, name, status, country, region, location, public_ip, private_ip, id, size])
 
     return(nl)
 
