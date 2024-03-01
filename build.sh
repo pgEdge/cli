@@ -462,15 +462,16 @@ initPG () {
     initC "readonly-pg$pgM"   "readonly"   "$readonlyV"  "$outPlat" "postgres/readonly"   "" "" "nil"
   fi
 
+  if [ "$pgM" == "15" ] || [ "$pgM" == "16" ]; then
+    initC "spock33-pg$pgM"    "spock33"    "$spock33V"   "$outPlat" "postgres/spock33"   "" "" "nil"
+  fi
+
   if [ "$isEL9" == "True" ]; then
 
     if [ "$pgM" == "16" ]; then
       initC "audit-pg$pgM"      "audit"      "$audit16V"   "$outPlat" "postgres/audit"     "" "" "nil"
       initC "hintplan-pg$pgM"   "hintplan"   "$hint16V"    "$outPlat" "postgres/hintplan"  "" "" "nil"
       initC "plv8-pg$pgM"       "plv8"       "$v8V"        "$outPlat" "postgres/plv8"       "" "" "nil"
-      if [ `arch` != "aarch64" ]; then
-        initC "spock33-pg$pgM"    "spock33"    "$spock33V"   "$outPlat" "postgres/spock33"   "" "" "nil"
-      fi
     fi
 
     if [ "$pgM" == "15" ]; then
@@ -479,7 +480,6 @@ initPG () {
     fi
 
     if [ "$pgM" == "15" ] || [ "$pgM" == "16" ]; then
-
       initC "wal2json-pg$pgM"   "wal2json"   "$wal2jV"     "$outPlat" "postgres/wal2json"   "" "" "nil"
       initC "pldebugger-pg$pgM" "pldebugger" "$debuggerV"  "$outPlat" "postgres/pldebugger" "" "" "nil"
       initC "pglogical-pg$pgM"  "pglogical"  "$logicalV"   "$outPlat" "postgres/logical"    "" "" "nil"

@@ -4,7 +4,7 @@ api=pgedge
 hubV=24.2.5
 ctlibsV=1.2
 
-spock33V=3.3.0dev0-1
+spock33V=3.3dev1-1
 spock32V=3.2.7-1
 
 foslotsV=1a-1
@@ -14,8 +14,8 @@ vectorV=0.6.0-1
 grp_pgeV=2.12
 
 P17=17devel-1
-P16=16.2-2
-P15=15.6-1
+P16=16.2-3
+P15=15.6-3
 P14=14.11-1
 P13=13.14-1
 P12=12.18-1
