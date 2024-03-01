@@ -31,7 +31,7 @@ readonlyV=1.1.1-1
 wal2jV=2.5.1-1
 
 curlV=2.2.2-1
-citusV=12.1.1-1
+citusV=12.1.2-1
 
 oraclefdwV=2.6.0-1
 inclV=21.6

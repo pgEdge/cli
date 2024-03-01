@@ -58,12 +58,12 @@ INSERT INTO extensions VALUES ('spock32', 'spock',
   'wal_level=logical | max_worker_processes=12 | max_replication_slots=16 |
    max_wal_senders=16 | hot_standby_feedback=on | wal_sender_timeout=5s |
    track_commit_timestamp=on | spock.conflict_resolution=last_update_wins | 
-   spock.save_resolutions=on | shared_preload_libraries=spock');
+   spock.save_resolutions=on');
 INSERT INTO extensions VALUES ('spock33', 'spock', 
   'wal_level=logical | max_worker_processes=12 | max_replication_slots=16 |
    max_wal_senders=16 | hot_standby_feedback=on | wal_sender_timeout=5s |
    track_commit_timestamp=on | spock.conflict_resolution=last_update_wins | 
-   spock.save_resolutions=on | shared_preload_libraries=spock');
+   spock.save_resolutions=on');
 
 
 CREATE TABLE versions (
@@ -255,10 +255,12 @@ INSERT INTO versions VALUES ('curl-pg16', '2.2.2-1',  'el9, arm9', 1, '20240130'
 
 INSERT INTO projects VALUES ('citus', 'pge', 4, 0, 'hub',0, 'https://github.com/citusdata/citus/releases',
   'citus', 1, 'citus.png', 'Sharded Postgres', 'https://github.com/citusdata/citus');
-INSERT INTO releases VALUES ('citus-pg15', 10, 'citus', 'Citus', '', 'test', '', 1, 'AGPLv3', '', '');
-INSERT INTO releases VALUES ('citus-pg16', 10, 'citus', 'Citus', '', 'test', '', 1, 'AGPLv3', '', '');
-INSERT INTO versions VALUES ('citus-pg15', '12.1.1-1', 'el9, arm9', 1, '20240130', 'pg15', '', '');
-INSERT INTO versions VALUES ('citus-pg16', '12.1.1-1', 'el9, arm9', 1, '20240130', 'pg16', '', '');
+INSERT INTO releases VALUES ('citus-pg15', 10, 'citus', 'Citus', '', 'prod', '', 1, 'AGPLv3', '', '');
+INSERT INTO releases VALUES ('citus-pg16', 10, 'citus', 'Citus', '', 'prod', '', 1, 'AGPLv3', '', '');
+INSERT INTO versions VALUES ('citus-pg15', '12.1.2-1', 'el9, arm9', 1, '20240301', 'pg15', '', '');
+INSERT INTO versions VALUES ('citus-pg16', '12.1.2-1', 'el9, arm9', 1, '20240301', 'pg16', '', '');
+INSERT INTO versions VALUES ('citus-pg15', '12.1.1-1', 'el9, arm9', 0, '20240130', 'pg15', '', '');
+INSERT INTO versions VALUES ('citus-pg16', '12.1.1-1', 'el9, arm9', 0, '20240130', 'pg16', '', '');
 
 INSERT INTO projects VALUES ('cron', 'ext', 4, 0, 'hub',0, 'https://github.com/citusdata/pg_cron/releases',
   'cron', 1, 'cron.png', 'Background Job Scheduler', 'https://github.com/citusdata/pg_cron');
