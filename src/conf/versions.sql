@@ -103,7 +103,8 @@ INSERT INTO categories VALUES (9,  87, 'Management & Monitoring', 'Manage/Monito
 -- ## HUB ################################
 INSERT INTO projects VALUES ('hub', 'app', 0, 0, 'hub', 0, 'https://github.com/pgedge/cli','',0,'','','');
 INSERT INTO releases VALUES ('hub', 1, 'hub', '', '', 'hidden', '', 1, '', '', '');
-INSERT INTO versions VALUES ('hub', '24.2.5',  '',  1, '20240301', '', '', '');
+INSERT INTO versions VALUES ('hub', '24.2.6',  '',  1, '20240310', '', '', '');
+INSERT INTO versions VALUES ('hub', '24.2.5',  '',  0, '20240301', '', '', '');
 INSERT INTO versions VALUES ('hub', '24.2.4',  '',  0, '20240223', '', '', '');
 INSERT INTO versions VALUES ('hub', '24.2.3',  '',  0, '20240221', '', '', '');
 INSERT INTO versions VALUES ('hub', '24.2.2',  '',  0, '20240214', '', '', '');
