@@ -46,14 +46,14 @@ else {
     if (-e $ncdir) {
 
         # Copying $ncdir contets to a temp location since the $n1dir resides inside 
-        # $ncdir, and a direct cp -r $ncdir/* $ncdir/ wasn't possible. 
+        # $ncdir, and a direct cp -r $ncdir/* $n1dir/ wasn't possible. 
         # Also creating $n1dir
         print("Creating $n1dir\n");
         run_command_and_exit_iferr(qq(rm -rf $ncdir_copy && cp -r -T $ncdir/. $ncdir_copy && mkdir -p $n1dir));
 
         print("copying $ncdir contents to $n1dir\n");
         # Copy $ncdir () to $n1dir
-        run_command_and_exit_iferr(qq(cp -r $ncdir_copy/* $n1dir/));
+        run_command_and_exit_iferr(qq(mv $ncdir_copy/* $n1dir/));
 
         print "Contents copied from $ncdir to $n1dir\n";
         $skipInstall = 1;
