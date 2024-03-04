@@ -34,13 +34,13 @@ if (grep { /already installed/i } @$stdout_buf) {
 }
 
 # initialise cluster (initdb) through init pgV specifying a custom port
-run_command(qq(pgePasswd=$password $homedir/$cli init $pgversion --port=$port));
+run_command_and_exit_iferr(qq(pgePasswd=$password $homedir/$cli init $pgversion --port=$port));
 
 # Starting pgV server
-run_command(qq($homedir/$cli start $pgversion));
+run_command_and_exit_iferr(qq($homedir/$cli start $pgversion));
 
 print("Adding credentials to .pgpass file");
-run_command(qq(echo "*:*:*:$username:$password" >> ~/.pgpass && chmod 600 ~/.pgpass));
+run_command_and_exit_iferr(qq(echo "*:*:*:$username:$password" >> ~/.pgpass && chmod 600 ~/.pgpass));
 
 my $cmd2 = qq($homedir/$cli um list);
 print("cmd = $cmd2\n");

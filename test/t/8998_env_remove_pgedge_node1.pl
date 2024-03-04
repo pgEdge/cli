@@ -1,4 +1,5 @@
-# This test case cleans up after the schedule that builds a two-node cluster  
+# This test case removes pgedge from the node 1 (n1) and will be used as a cleanup script
+# for the 8000a and 8000b tests.  
 # The test exercises: ./nodectl remove pgedge
 # 
 #
@@ -31,7 +32,7 @@ my $exitcode = 0;
 # Remove pgedge
 print("Removing pgedge on node 1\n");
 run_command_and_exit_iferr(qq($homedir1/$cli remove pgedge --pg $ENV{EDGE_INST_VERSION}));
-
+print("Verifying $pgversion , $spver , $spver are removed from node 1\n");
 #check for pgV
 my $cmd = qq($homedir1/$cli um list);
 my ($success, $error_message, $full_buf, $stdout_buf, $stderr_buf)= run_command($cmd);
