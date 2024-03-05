@@ -2,8 +2,8 @@
 # setup scripts
 ##
 t/8000a_env_setup_pgedge_node1.pl
-t/8000b_install_pgedge_node1.pl
 t/8001a_env_setup_pgedge_node2.pl
+t/8000b_install_pgedge_node1.pl
 t/8001b_install_pgedge_node2.pl
 ##
 # node creation
