@@ -274,10 +274,10 @@ INSERT INTO projects VALUES ('vector', 'pge', 4, 0, 'hub', 1, 'https://github.co
   'vector', 1, 'vector.png', 'Vector & Embeddings', 'https://github.com/pgedge/vector/#vector');
 INSERT INTO releases VALUES ('vector-pg15', 4, 'vector', 'pgVector', '', 'prod', '', 1, 'pgEdge Community', '', '');
 INSERT INTO releases VALUES ('vector-pg16', 4, 'vector', 'pgVector', '', 'prod', '', 1, 'pgEdge Community', '', '');
-INSERT INTO versions VALUES ('vector-pg15', '0.6.0-1', 'el9, arm9', 1, '20240131', 'pg15', '', '');
-INSERT INTO versions VALUES ('vector-pg16', '0.6.0-1', 'el9, arm9', 1, '20240131', 'pg16', '', '');
-INSERT INTO versions VALUES ('vector-pg15', '0.5.1-1', 'el9, arm9', 0, '20231031', 'pg15', '', '');
-INSERT INTO versions VALUES ('vector-pg16', '0.5.1-1', 'el9, arm9', 0, '20231031', 'pg16', '', '');
+INSERT INTO versions VALUES ('vector-pg15', '0.6.1-1', 'el9, arm9', 1, '20240310', 'pg15', '', '');
+INSERT INTO versions VALUES ('vector-pg16', '0.6.1-1', 'el9, arm9', 1, '20240310', 'pg16', '', '');
+INSERT INTO versions VALUES ('vector-pg15', '0.6.0-1', 'el9, arm9', 0, '20240131', 'pg15', '', '');
+INSERT INTO versions VALUES ('vector-pg16', '0.6.0-1', 'el9, arm9', 0, '20240131', 'pg16', '', '');
 
 INSERT INTO projects VALUES ('snowflake', 'pge', 4, 0, 'hub', 1, 'https://github.com/pgedge/snowflake/tags',
   'snowflake', 1, 'snowflake.png', 'Snowflake Sequences', 'https://github.com/pgedge/snowflake/');
@@ -327,8 +327,10 @@ INSERT INTO projects VALUES ('postgis', 'ext', 4, 1, 'hub', 3, 'http://postgis.n
   'postgis', 1, 'postgis.png', 'Spatial Extensions', 'http://postgis.net');
 INSERT INTO releases VALUES ('postgis-pg15', 3, 'postgis', 'PostGIS', '', 'prod', '', 1, 'GPLv2', '', '');
 INSERT INTO releases VALUES ('postgis-pg16', 3, 'postgis', 'PostGIS', '', 'prod', '', 1, 'GPLv2', '', '');
-INSERT INTO versions VALUES ('postgis-pg15', '3.4.1-1', 'el9, arm9', 1, '20240130', 'pg15', '', 'https://git.osgeo.org/gitea/postgis/postgis/raw/tag/3.4.1/NEWS');
-INSERT INTO versions VALUES ('postgis-pg16', '3.4.1-1', 'el9, arm9', 1, '20240130', 'pg16', '', 'https://git.osgeo.org/gitea/postgis/postgis/raw/tag/3.4.1/NEWS');
+INSERT INTO versions VALUES ('postgis-pg15', '3.4.2-1', 'el9, arm9', 1, '20240310', 'pg15', '', 'https://git.osgeo.org/gitea/postgis/postgis/raw/tag/3.4.2/NEWS');
+INSERT INTO versions VALUES ('postgis-pg16', '3.4.2-1', 'el9, arm9', 1, '20240310', 'pg16', '', 'https://git.osgeo.org/gitea/postgis/postgis/raw/tag/3.4.2/NEWS');
+INSERT INTO versions VALUES ('postgis-pg15', '3.4.1-1', 'el9, arm9', 0, '20240130', 'pg15', '', 'https://git.osgeo.org/gitea/postgis/postgis/raw/tag/3.4.1/NEWS');
+INSERT INTO versions VALUES ('postgis-pg16', '3.4.1-1', 'el9, arm9', 0, '20240130', 'pg16', '', 'https://git.osgeo.org/gitea/postgis/postgis/raw/tag/3.4.1/NEWS');
 
 INSERT INTO projects VALUES ('pgadmin4', 'app', 11, 443, '', 1, 'https://www.pgadmin.org/news/',
   'pgadmin4', 0, 'pgadmin.png', 'PostgreSQL Tools', 'https://pgadmin.org');

@@ -9,7 +9,7 @@ spock32V=3.2.7-1
 
 foslotsV=1a-1
 snwflkV=1.1-1
-vectorV=0.6.0-1
+vectorV=0.6.1-1
 
 grp_pgeV=2.12
 
@@ -56,7 +56,7 @@ etcdV=3.5.12
 audit15V=1.7.0-1
 audit16V=16.0-1
 
-postgisV=3.4.1-1
+postgisV=3.4.2-1
 
 pljavaV=1.6.4-1
 debuggerV=1.6-1
