@@ -20,19 +20,19 @@ In any directory owned by your non-root user, invoke the following command to cr
 python3 -c "$(curl -fsSL https://pgedge-upstream.s3.amazonaws.com/REPO/install.py)"
 </pre>
 
-cd into the `pgedge` directory and install the ***pgEdge Platform*** with the `ctl install pgedge` command. 
+cd into the `pgedge` directory and setup ***pgEdge*** with the `pgedge setup` command. 
 Specify a name for the database superuser name, password, and a database name. 
 Note that the name cannot be the name of an OS superuser, pgEdge, or any of the Postgres reserved words. 
 
 <pre>
 cd pgedge
-./pgedge install pgedge -U superuser-name -P superuser-password -d database-name
+./pgedge setup -U superuser-name -P superuser-password -d database-name
 </pre>
 
-For the examples that follow, I'll invoke the `pgedge install pgedge` command with options that install Postgres with database named `demo`, owned by a database superuser named `admin`, with a password of `mypassword1` . Use the following command to create those database objects:
+For the examples that follow, I'll invoke the `pgedge setup` command with options that install Postgres with database named `demo`, owned by a database superuser named `admin`, with a password of `mypassword1`. Use the following command to create those database objects:
 
 <pre>
-./pgedge install pgedge -U admin -P mypassword1 -d demo
+./pgedge setup -U admin -P mypassword1 -d demo
 </pre>
 
 If you encounter a permissions error on EL9 running this command, you may need to update your SELINUX mode to `permissive` or `disabled`, reboot, and retry the operation.
