@@ -1,2 +1,2 @@
 
-file moved to (https://github.com/pgedge/pgedge/changelog.md)
+see github pgEdge [CHANGELOG](https://github.com/pgEdge/pgedge/blob/main/changelog.md)
