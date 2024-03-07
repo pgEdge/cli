@@ -2,7 +2,7 @@
 
 import os
 
-MY_VERSION = "24.2.7"
+MY_VERSION = "24.3.1"
 DEFAULT_PG = "16"
 DEFAULT_SPOCK = "32"
 MY_CMD = os.getenv("MY_CMD", None)
