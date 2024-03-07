@@ -1,15 +1,18 @@
 
 #  Copyright 2022-2024 PGEDGE  All rights reserved. #
 
-
-import sys, os
+import sys, os, tarfile, platform
 
 VER = "24.2.7"
 REPO = os.getenv("REPO", "https://pgedge-upstream.s3.amazonaws.com/REPO")
 
-from urllib import request as urllib2
+if sys.version_info < (3, 9):
+    maj = sys.version_info.major
+    min = sys.version_info.minor
+    print(f"ERROR: Python 3.9 is minimally required (found Python {maj}.{min})")
+    sys.exit(1)
 
-import tarfile, platform
+from urllib import request as urllib2
 
 
 def download_n_unpack(p_file, p_url, p_download_msg, p_del_download):
