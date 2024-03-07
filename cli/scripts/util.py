@@ -1,7 +1,14 @@
 #  Copyright 2022-2024 PGEDGE  All rights reserved. #
 
-
 import os
+
+MY_VERSION = "24.2.7"
+DEFAULT_PG = "16"
+DEFAULT_SPOCK = "32"
+MY_CMD = os.getenv("MY_CMD", None)
+MY_HOME = os.getenv("MY_HOME", None)
+MY_LITE = os.getenv("MY_LITE", None)
+
 import sys
 import socket
 import sqlite3
@@ -35,13 +42,6 @@ except ImportError:
 from log_helpers import bcolours, characters
 import api, meta, ini
 
-MY_VERSION = "24.2.6"
-DEFAULT_PG = "16"
-DEFAULT_SPOCK = "32"
-
-MY_CMD = os.getenv("MY_CMD", None)
-MY_HOME = os.getenv("MY_HOME", None)
-MY_LITE = os.getenv("MY_LITE", None)
 
 isJSON = False
 if os.environ.get("isJson", "False") == "True":
