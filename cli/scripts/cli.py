@@ -66,9 +66,9 @@ fire_list = [
     "cloud",
     "db",
     "app",
-    "firewalld",
     "vm",
-    "setup"
+    "setup",
+    "localhost"
 ]
 
 native_list = ["backrest", "ansible", "patroni", "etcd"]
