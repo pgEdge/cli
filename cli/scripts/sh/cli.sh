@@ -60,7 +60,6 @@ if [ ! "$lib" == "None" ]; then
 fi
 
 export PYTHONPATH=$(printf "%s:" ${array[@]})
-##echo PYTHONPATH=$PYTHONPATH
 for var in "$@"
 do
   if [ "$var" == "-v" ]; then
@@ -68,12 +67,13 @@ do
   fi
 done
 
-v=`python3 --version | cut -d' ' -f2 | cut -d'.' -f1,2`
+python3 --version > /dev/null 2>&1
 rc=$?
 if [ $rc != 0 ];then
   echo "ERROR: missing python3"
   exit 1
 fi
+v=`python3 --version | cut -d' ' -f2 | cut -d'.' -f1,2`
 
 if [ $v == "3.9" ] || [ $v == "3.10" ] || [ $v == "3.11" ] || [ $v == "3.12" ]; then
   export PYTHON=python3
