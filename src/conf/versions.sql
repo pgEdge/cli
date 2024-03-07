@@ -296,20 +296,21 @@ INSERT INTO projects VALUES ('spock', 'pge', 4, 0, 'hub', 1, 'https://github.com
 INSERT INTO releases VALUES ('spock32-pg14', 4, 'spock', 'Spock', '', 'prod', '', 1, 'pgEdge Community', '', '');
 INSERT INTO releases VALUES ('spock32-pg15', 4, 'spock', 'Spock', '', 'prod', '', 1, 'pgEdge Community', '', '');
 INSERT INTO releases VALUES ('spock32-pg16', 4, 'spock', 'Spock', '', 'prod', '', 1, 'pgEdge Community', '', '');
-INSERT INTO releases VALUES ('spock32-pg17', 4, 'spock', 'Spock', '', 'test', '', 1, 'pgEdge Community', '', '');
 
-INSERT INTO versions VALUES ('spock32-pg15', '3.2.7-1', 'el8, el9, arm9, osx', 1, '20240023', 'pg15', '', '');
-INSERT INTO versions VALUES ('spock32-pg16', '3.2.7-1', 'el8, el9, arm9', 1, '20240223', 'pg16', '', '');
+INSERT INTO versions VALUES ('spock32-pg14', '3.2.8-1', 'el8, el9, arm9', 1, '20240307', 'pg14', '', '');
+INSERT INTO versions VALUES ('spock32-pg15', '3.2.8-1', 'el8, el9, arm9', 1, '20240307', 'pg15', '', '');
+INSERT INTO versions VALUES ('spock32-pg16', '3.2.8-1', 'el8, el9, arm9, osx', 1, '20240307', 'pg16', '', '');
 
-INSERT INTO versions VALUES ('spock32-pg14', '3.2.6-1', 'el8, el9, arm9', 1, '20240212', 'pg14', '', '');
+INSERT INTO versions VALUES ('spock32-pg15', '3.2.7-1', 'el8, el9, arm9', 0, '20240023', 'pg15', '', '');
+INSERT INTO versions VALUES ('spock32-pg16', '3.2.7-1', 'el8, el9, arm9', 0, '20240223', 'pg16', '', '');
+
+INSERT INTO versions VALUES ('spock32-pg14', '3.2.6-1', 'el8, el9, arm9', 0, '20240212', 'pg14', '', '');
 INSERT INTO versions VALUES ('spock32-pg15', '3.2.6-1', 'el8, el9, arm9', 0, '20240212', 'pg15', '', '');
 INSERT INTO versions VALUES ('spock32-pg16', '3.2.6-1', 'el8, el9, arm9', 0, '20240212', 'pg16', '', '');
-INSERT INTO versions VALUES ('spock32-pg17', '3.2.6-1', 'el9',            0, '20240212', 'pg17', '', '');
 
 INSERT INTO versions VALUES ('spock32-pg14', '3.2.4-1', 'el8, el9, arm9', 0, '20240108', 'pg14', '', '');
 INSERT INTO versions VALUES ('spock32-pg15', '3.2.4-1', 'el8, el9, arm9', 0, '20240108', 'pg15', '', '');
 INSERT INTO versions VALUES ('spock32-pg16', '3.2.4-1', 'el8, el9, arm9', 0, '20240108', 'pg16', '', '');
-INSERT INTO versions VALUES ('spock32-pg17', '3.2.4-1', 'el9',            0, '20240108', 'pg17', '', '');
 
 INSERT INTO releases VALUES ('spock33-pg15', 4, 'spock', 'Spock', '', 'test', '', 1, 'pgEdge Community', '', '');
 INSERT INTO releases VALUES ('spock33-pg16', 4, 'spock', 'Spock', '', 'test', '', 1, 'pgEdge Community', '', '');
