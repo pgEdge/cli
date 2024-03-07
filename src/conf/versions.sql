@@ -323,8 +323,8 @@ INSERT INTO versions VALUES ('spock32-pg16', '3.2.7-1', 'el8, el9, arm9', 0, '20
 INSERT INTO releases VALUES ('spock33-pg15', 4, 'spock', 'Spock', '', 'test', '', 1, 'pgEdge Community', '', '');
 INSERT INTO releases VALUES ('spock33-pg16', 4, 'spock', 'Spock', '', 'test', '', 1, 'pgEdge Community', '', '');
 
-INSERT INTO versions VALUES ('spock33-pg15', '3.3dev1-1', 'el8, el9, arm9', 1, '20240301', 'pg15', '', '');
-INSERT INTO versions VALUES ('spock33-pg16', '3.3dev1-1', 'el8, el9, arm9', 1, '20240301', 'pg16', '', '');
+INSERT INTO versions VALUES ('spock33-pg15', '3.3dev2-1', 'el8, el9, arm9', 1, '20240307', 'pg15', '', '');
+INSERT INTO versions VALUES ('spock33-pg16', '3.3dev2-1', 'el8, el9, arm9', 1, '20240307', 'pg16', '', '');
 
 ----------------------------------
 INSERT INTO projects VALUES ('pglogical', 'ext', 4, 0, 'hub', 1, 'https://github.com/2ndQuadrant/pglogical/releases',

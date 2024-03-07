@@ -63,7 +63,7 @@ def create(db=None, User=None, Passwd=None, pg=None, spock=None):
        major_ver = "32"
        ver = ""
     else:
-       major_ver = f"{spock[:1]}{spock[2:3:1]}"
+       major_ver = f"{str(spock)[:1]}{str(spock)[2:3:1]}"
        ver = spock
 
     spock_comp = f"spock{major_ver}-pg{pg}"
