@@ -104,7 +104,7 @@ def check_pre_reqs(User, Passwd, db, port, pg_major, pg_minor, spock, autostart)
        util.message(f"  Verify spock '{spock}' is valid and unique")
        ns = util.num_spocks(pg_major, spock, True)
        if ns == 0:
-           util.exit_message(f"No available version of spock like '{spock}*'")
+           util.exit_message(f"No available version of spock like '{spock}*' for pg{pg_major}")
        elif ns > 1:
            util.exit_message(f"More than 1 spock version available matching '{spock}*'")
 
