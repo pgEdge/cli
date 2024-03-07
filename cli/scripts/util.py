@@ -2,7 +2,7 @@
 
 import os
 
-MY_VERSION = "24.3.1"
+MY_VERSION = "24.3.2"
 DEFAULT_PG = "16"
 DEFAULT_SPOCK = "32"
 MY_CMD = os.getenv("MY_CMD", None)
@@ -35,8 +35,9 @@ from urllib import request as urllib2
 
 try:
     import psycopg
-except ImportError:
+except Exception:
     # Psycopg is only used for advanced functionality
+    #  and may throw errors in some cases
     pass
 
 from log_helpers import bcolours, characters
