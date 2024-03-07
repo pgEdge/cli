@@ -443,10 +443,6 @@ initPG () {
 
   initC "ctlibs"  "ctlibs"  "$ctlibsV"  "" "ctlibs"         "" "" "Y"
 
-  ##if [ "$outPlat" == "osx" ]; then
-  ##  return
-  ##fi
-
   pgComp="pg$pgM"
   initDir "$pgComp" "pg" "$pgV" "$outPlat" "postgres/$pgComp" "Enabled" "5432" "nil"
   supplementalPG "$pgComp"
@@ -455,6 +451,10 @@ initPG () {
   if [ "$pgM" \> "13" ] && [ "$pgM" \< "18" ]; then
     initC "snowflake-pg$pgM"  "snowflake"  "$snwflkV"    "$outPlat" "postgres/snowflake" "" "" "nil"
     initC "spock32-pg$pgM"    "spock32"    "$spock32V"   "$outPlat" "postgres/spock32"   "" "" "nil"
+  fi
+
+  if [ "$outPlat" == "osx" ]; then
+    return
   fi
 
   if [ "$pgM" \> "13" ] && [ "$pgM" \< "17" ]; then
