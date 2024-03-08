@@ -20,8 +20,12 @@
 
 sub contains
 {
+
     my $haystack = shift;
     my $needle = shift ;
+
+        # Trim leading and trailing whitespaces
+    $haystack =~ s/^\s+|\s+$//g;
 
     print("haystack = ($haystack)\n");
     print("needle = ($needle)\n");
@@ -142,7 +146,26 @@ sub get_json_component_attribute_value {
     return -1; # Indicates that either the component or attribute was not found
 }
 
+sub trim {
+    my $str = shift;
+    $str =~ s/^\s+//;   # removes leading whitespaces
+    $str =~ s/\s+$//;   # removes trailing whitespaces
+    return $str;
+}
 
+# The sanitize_and_combine_multiline_stdout subroutine addresses issues with inconsistencies
+# in multi-line command output obtained from cli calls. There are variations in formatting, 
+# leading/trailing whitespaces, and newline characters that can affect the reliability of subsequent
+# string matching. This function:
+#   1. Trims leading and trailing whitespaces from each line of the multiline buffer output.
+#   2. Combines the sanitized lines into a single string.
+
+sub sanitize_and_combine_multiline_stdout {
+    my $str = shift;
+    $str =~ s/^\s+//;   # removes leading whitespaces
+    $str =~ s/\s+$//;   # removes trailing whitespaces
+    return $str;
+}
 
 
 # This 1 at the end is required, even though it looks like an accident :)

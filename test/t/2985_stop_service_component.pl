@@ -27,14 +27,14 @@ my ($stdout_buf0)= (run_command_and_exit_iferr ($cmd0))[3];
 print("stdout_buf0 : @$stdout_buf0");
 
 # If server is running, we attempt to service stop it
-if (contains(@$stdout_buf0[0], "running on port"))
+if (contains($stdout_buf0->[0], "running on port"))
  {
     my $cmd = qq($homedir/$cli service stop $pgversion);
     print("cmd = $cmd\n");
     my ($stdout_buf)= (run_command_and_exit_iferr ($cmd))[3];
     print("stdout_buf : @$stdout_buf");
     # if service stop was successfuly able to stop the server
-    if(contains(@$stdout_buf[0], "stopping"))
+    if(contains($stdout_buf->[0], "stopping"))
     {
         print("$pgversion stopped successfully. Exiting with success");
         $exitcode = 0;

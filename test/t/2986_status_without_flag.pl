@@ -26,7 +26,7 @@ my ($stdout_buf)= (run_command_and_exit_iferr ($cmd))[3];
 print("stdout_buf = @$stdout_buf\n");
 
 # Since this case runs after 2984 test case in the schedule, the server is running
-if (contains(@$stdout_buf[0], "$pgversion running on port"))
+if (contains($stdout_buf->[0], "$pgversion running on port"))
  {
     exit(0);
  }
