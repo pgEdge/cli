@@ -502,6 +502,58 @@ def ssh_un_cross_wire(cluster_name, db, db_settings, db_user, db_passwd, nodes):
     ## To Do: Check Nodes have been dropped
 
 
+def replication_all_tables(cluster_name, database_name=None):
+    """Add all tables in the database to replication on every node"""
+    db, db_settings, nodes = load_json(cluster_name)
+    db_name=None
+    if database_name is None:
+        db_name=db[0]["name"]
+    else:
+        for i in db:
+            if i["name"]==database_name:
+                db_name=database_name
+    if db_name is None:
+        util.exit_message(f"Could not find information on db {database_name}")
+
+    if "auto_ddl" in db_settings:
+        if db_settings["auto_ddl"] == "on":
+            util.exit_message(f"Auto DDL enabled for db {database_name}")
+
+    for n in nodes:
+        ndpath = n["path"]
+        nc = ndpath + os.sep + "pgedge" + os.sep + "pgedge"
+        ndip = n["ip_address"]
+        os_user = n["os_user"]
+        ssh_key = n["ssh_key"]
+        cmd = f"{nc} spock repset-add-table default '*' {db_name}"
+        util.echo_cmd(cmd, host=ndip, usr=os_user, key=ssh_key)
+
+
+def replication_check(cluster_name, show_spock_tables=False, database_name=None):
+    """Print replication status on every node"""
+    db, db_settings, nodes = load_json(cluster_name)
+    db_name=None
+    if database_name is None:
+        db_name=db[0]["name"]
+    else:
+        for i in db:
+            if i["name"]==database_name:
+                db_name=database_name
+    if db_name is None:
+        util.exit_message(f"Could not find information on db {database_name}")
+    for n in nodes:
+        ndpath = n["path"]
+        nc = ndpath + os.sep + "pgedge" + os.sep + "pgedge"
+        ndip = n["ip_address"]
+        os_user = n["os_user"]
+        ssh_key = n["ssh_key"]
+        if show_spock_tables == True:
+            cmd = f"{nc} spock repset-list-tables '*' {db_name}"
+            util.echo_cmd(cmd, host=ndip, usr=os_user, key=ssh_key)
+        cmd = f"{nc} spock sub-show-status '*' {db_name}"
+        util.echo_cmd(cmd, host=ndip, usr=os_user, key=ssh_key)
+
+
 def command(cluster_name, node, cmd, args=None):
     """Run './pgedge' commands on one or 'all' nodes.
     
@@ -614,6 +666,8 @@ if __name__ == "__main__":
             "json-template": create_remote_json,
             "json-validate": validate,
             "init": init,
+            "replication-begin": replication_all_tables,
+            "replication-check": replication_check,
             "add-db": add_db,
             "remove": remove,
             "command": command,
