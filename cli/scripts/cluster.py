@@ -102,7 +102,7 @@ def json_add_node(cluster_name, node_group, node_name, is_active, ip_address, po
 def create_remote_json(
     cluster_name, db, num_nodes, usr, passwd, pg, port
 ):
-    """Create a template for a json config file for a remote cluster.
+    """Create a template for a Cluster Configuration JSON file.
     
        Create a JSON configuration file template that can be modified to fully define a remote cluster. \n
        Example: cluster define-remote demo lcdb 3 lcusr lcpasswd 16 5432
@@ -235,8 +235,44 @@ def load_json(cluster_name):
     )
 
 
+def validate(cluster_name):
+    """Validate a Cluster Configuration JSON file"""
+
+    parsed_json = get_cluster_json(cluster_name)    
+
+    if "name" not in parsed_json:
+        util.exit_message("Cluster name missing")
+
+    if "database" not in parsed_json:
+        util.exit_message("Database section missing")
+    else:
+        if "pg_version" not in parsed_json["database"]:
+            parsed_json["database"]["pg_version"] = ""
+        if "spock" not in parsed_json["database"]:
+            parsed_json["database"]["spock_version"]=""
+        if "auto_ddl" not in parsed_json["database"]:
+            parsed_json["database"]["auto_ddl"]="off"
+        if "databases" not in parsed_json["database"]:
+            util.exit_message("Database Details section missing")
+        if 1 > len(parsed_json["database"]["databases"]):
+            util.exit_message("At least one database needs to be defined")
+        else:
+            for db in parsed_json["database"]["databases"]:
+                if "name" not in db:
+                    util.exit_message("Database Name missing")
+                elif "username" not in db:
+                    util.exit_message("User missing for " + db["name"])
+                elif "password" not in db:
+                    util.exit_message("Password missing for " + db["name"])
+
+    if "node_groups" not in parsed_json:
+        util.exit_message("Node Group section missing")
+    db, db_settings, nodes = load_json(cluster_name)
+    util.message(f"JSON defines a {len(nodes)} node cluster", 'success')
+    
+
 def remove(cluster_name):
-    """Remove a test cluster from json definition file of existing nodes.
+    """Remove a test cluster.
     
        Remove a cluster. This will stop postgres on each node, and then remove the pgedge directory on each node.
        This command requires a JSON file with the same name as the cluster to be in the cluster/<cluster_name>. \n 
@@ -257,7 +293,7 @@ def remove(cluster_name):
 
 
 def init(cluster_name):
-    """Initialize a cluster from json definition file of existing nodes.
+    """Initialize a cluster via Cluster Configuration JSON file.
     
        Install pgedge on each node, create the initial database, install spock, and create all spock nodes and subscriptions. 
        Additional databases will be created with all spock nodes and subscriptions if defined in the json file.
@@ -305,7 +341,7 @@ def update_json(cluster_name, db_json):
 
 
 def add_db(cluster_name, database_name, username, password):
-    """Add a database to an existing cluster and cross wire it together.
+    """Add a database to an existing pgEdge cluster.
     
        Create the new database in the cluster, install spock, and create all spock nodes and subscriptions.
        This command requires a JSON file with the same name as the cluster to be in the cluster/<cluster_name>. \n
@@ -387,7 +423,7 @@ def create_spock_db(nodes,db):
 
 
 def ssh_cross_wire_pgedge(cluster_name, db, db_settings, db_user, db_passwd, nodes):
-    """Create nodes, repsets, and subs on every node in a cluster."""
+    """Create nodes and subs on every node in a cluster."""
     if db_settings["auto_ddl"] == "on":
         print("TODO Loop and set auto ddl")
 
@@ -544,7 +580,8 @@ def app_remove(cluster_name, app_name, database_name=None):
 if __name__ == "__main__":
     fire.Fire(
         {
-            "define-remote": create_remote_json,
+            "json-template": create_remote_json,
+            "json-validate": validate,
             "init": init,
             "add-db": add_db,
             "remove": remove,
