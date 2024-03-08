@@ -1,5 +1,5 @@
 ## SYNOPSIS
-    ./pgedge cluster localhost-create CLUSTER_NAME NUM_NODES <flags>
+    ./pgedge localhost cluster-create CLUSTER_NAME NUM_NODES <flags>
  
 ## DESCRIPTION
     Create a local cluster. Each node will be located in the cluster/<cluster_name>/<node_name> directory. Each database will have a different port. 

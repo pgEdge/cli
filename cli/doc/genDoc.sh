@@ -73,15 +73,18 @@ $nc db migrate              --help
 
 cluster () {
 $nc cluster --help
-$nc cluster define-localhost  --help
 $nc cluster define-remote     --help
-$nc cluster localhost-create  --help
-$nc cluster localhost-destroy --help
 $nc cluster init              --help
 $nc cluster remove            --help
 $nc cluster command           --help
 $nc cluster app-install       --help
 $nc cluster app-remove        --help
+}
+
+localhost () {
+$nc localhost --help
+$nc localhost cluster-create  --help
+$nc localhost cluster-destroy --help
 }
 
 cloud () {
@@ -107,13 +110,6 @@ $nc ace diff-spock          --help
 $nc ace table-repair        --help
 $nc ace table-rerun         --help
 $nc ace repset-diff         --help
-}
-
-firewalld () {
-$nc firewalld --help
-$nc firewalld list          --help
-$nc firewalld add           --help
-$nc firewalld remove        --help
 }
 
 vm () {
@@ -153,7 +149,7 @@ if [ $m == "all" ]; then
   cloud
   ace
   vm
-  firewalld
+  localhost
   setup
 elif [ $m == "um" ]; then
   um
@@ -171,18 +167,12 @@ elif [ $m == "ace" ]; then
   ace
 elif [ $m == "vm" ]; then
   vm
-elif [ $m == "firewalld" ]; then
-  firewalld
+elif [ $m == "localhost" ]; then
+  localhost
 elif [ $m == "setup" ]; then
   setup     
 else
   echo "ERROR: $m is not a valid module"
   exit 1
 fi
-
-exit 0
-
-
-cloud
-
 

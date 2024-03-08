@@ -245,8 +245,8 @@ def _SynopsisSection(component, actions_grouped_by_kind, spec, metadata,
     prfx = "vm"
   elif "cloud.py" in txt:
     prfx = "cloud"
-  elif "firewalld.py" in txt:
-    prfx = "firewalld"
+  elif "localhost" in txt:
+    prfx = "localhost"
   elif "setup.py" in txt:
     prfx = "setup"
 
