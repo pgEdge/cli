@@ -271,25 +271,28 @@ def validate(cluster_name):
     util.message(f"JSON defines a {len(nodes)} node cluster", 'success')
     
 
-def remove(cluster_name):
+def remove(cluster_name, force=False):
     """Remove a test cluster.
     
-       Remove a cluster. This will stop postgres on each node, and then remove the pgedge directory on each node.
+       Remove a cluster. This will remove spock subscriptions and nodes, and then stop postgres on each node. If the flag force is set to true, then it will also remove the pgedge directory on each node.
        This command requires a JSON file with the same name as the cluster to be in the cluster/<cluster_name>. \n 
        Example: cluster remove demo 
        :param cluster_name: The name of the cluster. 
     """
     db, db_settings, nodes = load_json(cluster_name)
 
+    ssh_un_cross_wire(cluster_name, db[0]["name"], db_settings, db[0]["username"], db[0]["password"], nodes)
+
     util.message("\n## Ensure that PG is stopped.")
     for nd in nodes:
         cmd = nd["path"] + os.sep + "pgedge stop 2> " + os.sep + "dev" + os.sep + "null"
         util.echo_cmd(cmd, host=nd["ip_address"], usr=nd["os_user"], key=nd["ssh_key"])
 
-    util.message("\n## Ensure that pgEdge root directory is gone")
-    for nd in nodes:
-        cmd = f"rm -rf " + nd["path"] + os.sep + "pgedge"
-        util.echo_cmd(cmd, host=nd["ip_address"], usr=nd["os_user"], key=nd["ssh_key"])
+    if force == True:
+        util.message("\n## Ensure that pgEdge root directory is gone")
+        for nd in nodes:
+            cmd = f"rm -rf " + nd["path"] + os.sep + "pgedge"
+            util.echo_cmd(cmd, host=nd["ip_address"], usr=nd["os_user"], key=nd["ssh_key"])
 
 
 def init(cluster_name):
@@ -469,6 +472,34 @@ def ssh_cross_wire_pgedge(cluster_name, db, db_settings, db_user, db_passwd, nod
         os_user = n[2]
         ssh_key = n[3]
         util.echo_cmd(cmd, host=nip, usr=os_user, key=ssh_key)
+
+
+def ssh_un_cross_wire(cluster_name, db, db_settings, db_user, db_passwd, nodes):
+    """Create nodes and subs on every node in a cluster."""
+    sub_array=[]
+    for prov_n in nodes:
+        ndnm = prov_n["name"]
+        ndpath = prov_n["path"]
+        nc = ndpath + os.sep + "pgedge" + os.sep + "pgedge"
+        ndip = prov_n["ip_address"]
+        os_user = prov_n["os_user"]
+        ssh_key = prov_n["ssh_key"]
+        for sub_n in nodes:
+            sub_ndnm = sub_n["name"]
+            if sub_ndnm != ndnm:
+                cmd = f"{nc} spock sub-drop sub_{ndnm}{sub_ndnm} {db}"
+                util.echo_cmd(cmd, host=ndip, usr=os_user, key=ssh_key)
+
+    for prov_n in nodes:
+        ndnm = prov_n["name"]
+        ndpath = prov_n["path"]
+        nc = ndpath + os.sep + "pgedge" + os.sep + "pgedge"
+        ndip = prov_n["ip_address"]
+        os_user = prov_n["os_user"]
+        ssh_key = prov_n["ssh_key"]
+        cmd1 = f"{nc} spock node-drop {ndnm} {db}"
+        util.echo_cmd(cmd1, host=ndip, usr=os_user, key=ssh_key)
+    ## To Do: Check Nodes have been dropped
 
 
 def command(cluster_name, node, cmd, args=None):
