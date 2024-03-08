@@ -28,10 +28,9 @@ my $datadir3="$homedir3/data/$pgversion";
 #my $pgpassEntry = "*:*:*:$username:$password";
 my $exitcode = 0;
 
-
 # Remove pgedge
 print("Removing pgedge on node 3\n");
-run_command_and_exit_iferr(qq($homedir3/$cli remove pgedge --pg $ENV{EDGE_INST_VERSION}));
+run_command_and_exit_iferr(qq($homedir3/$cli remove $pgversion --rm-data));
 print("Verifying $pgversion , $spver , $spver are removed from node 3\n");
 #check for pgV
 my $cmd = qq($homedir3/$cli um list);
@@ -61,19 +60,11 @@ if (defined($success3) && !is_umlist_component_installed($stdout_buf3, "$snowfla
     $exitcode++;
 } 
 
-# Cleanup. Removing datadir and the pgpass entry done by the 8000 tests
-
-print("Removing the data directory: $datadir3 \n");
-if (File::Path::remove_tree($datadir3)) {
-    print("Data directory $datadir3 removed successfully\n");
-} else {
-    print("Unable to remove Data directory $datadir3\n");
-}
 
 # removing the pgpass file that was created in 8000 test
-my $cmd4 = qq(rm ~/.pgpass);
-print("cmd = $cmd4\n");
-run_command($cmd4);
+#my $cmd4 = qq(rm ~/.pgpass);
+#print("cmd = $cmd4\n");
+#run_command($cmd4);
 if ($exitcode==3)
 {
     exit (0);
