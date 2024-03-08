@@ -56,6 +56,8 @@ def json_create(cluster_name, style, db=None, user=None, passwd=None, pg=None):
 
     database_json = {"databases": []}
     database_json["pg_version"] = pg
+    database_json["spock_version"] = ""
+    database_json["auto_ddl"] = "off"
     db_json = {}
     db_json["username"] = user
     db_json["password"] = passwd
@@ -130,6 +132,8 @@ def create_remote_json(
 
     database_json = {"databases": []}
     database_json["pg_version"] = pg
+    database_json["spock_version"] = ""
+    database_json["auto_ddl"] = "off"
     db_json = {}
     db_json["username"] = usr
     db_json["password"] = passwd
@@ -147,6 +151,7 @@ def create_remote_json(
         node_json["name"] = "n" + str(n)
         node_json["is_active"] = True
         node_json["ip_address"] = ""
+        node_json["ip_address_private"] = ""
         node_json["port"] = port
         node_json["path"] = ""
         node_array["nodes"].append(node_json)
@@ -165,7 +170,14 @@ def load_json(cluster_name):
     parsed_json = get_cluster_json(cluster_name)
 
     pg = parsed_json["database"]["pg_version"]
-    
+    spock = parsed_json["database"]["spock_version"]
+    auto_ddl = parsed_json["database"]["auto_ddl"]
+
+    db_settings = {}
+    db_settings["pg_version"] = pg
+    db_settings["spock_version"] = spock
+    db_settings["auto_ddl"] = auto_ddl
+ 
     db=[]
     for databases in parsed_json["database"]["databases"]:
         db.append(databases)
@@ -218,7 +230,7 @@ def load_json(cluster_name):
        
     return (
         db,
-        pg,
+        db_settings,
         node
     )
 
@@ -231,7 +243,7 @@ def remove(cluster_name):
        Example: cluster remove demo 
        :param cluster_name: The name of the cluster. 
     """
-    db, pg, nodes = load_json(cluster_name)
+    db, db_settings, nodes = load_json(cluster_name)
 
     util.message("\n## Ensure that PG is stopped.")
     for nd in nodes:
@@ -255,7 +267,7 @@ def init(cluster_name):
     """
 
     util.message(f"## Loading cluster '{cluster_name}' json definition file")
-    db, pg, nodes = load_json(cluster_name)
+    db, db_settings, nodes = load_json(cluster_name)
 
     util.message("\n## Checking ssh'ing to each node")
     for nd in nodes:
@@ -267,12 +279,12 @@ def init(cluster_name):
         else:
             util.exit_message("cannot ssh to node")
 
-    ssh_install_pgedge(cluster_name, db[0]["name"], pg, db[0]["username"], db[0]["password"], nodes)
-    ssh_cross_wire_pgedge(cluster_name, db[0]["name"], pg, db[0]["username"], db[0]["password"], nodes)
+    ssh_install_pgedge(cluster_name, db[0]["name"], db_settings, db[0]["username"], db[0]["password"], nodes)
+    ssh_cross_wire_pgedge(cluster_name, db[0]["name"], db_settings, db[0]["username"], db[0]["password"], nodes)
     if len(db) > 1:
         for database in db[1:]:
             create_spock_db(nodes,database)
-            ssh_cross_wire_pgedge(cluster_name, database["name"], pg, database["username"], database["password"], nodes)        
+            ssh_cross_wire_pgedge(cluster_name, database["name"], db_settings, database["username"], database["password"], nodes)        
 
 
 def update_json(cluster_name, db_json):
@@ -304,7 +316,7 @@ def add_db(cluster_name, database_name, username, password):
        :param password: The password for the new user.
     """
     util.message(f"## Loading cluster '{cluster_name}' json definition file")
-    db, pg, nodes = load_json(cluster_name)
+    db, db_settings, nodes = load_json(cluster_name)
 
     db_json = {}
     db_json["username"] = username
@@ -313,24 +325,24 @@ def add_db(cluster_name, database_name, username, password):
 
     util.message(f"## Creating database {database_name}")
     create_spock_db(nodes,db_json)
-    ssh_cross_wire_pgedge(cluster_name, database_name, pg, username, password, nodes)
+    ssh_cross_wire_pgedge(cluster_name, database_name, db_settings, username, password, nodes)
     util.message(f"## Updating cluster '{cluster_name}' json definition file")
     update_json(cluster_name, db_json)
 
 
 
-def print_install_hdr(cluster_name, db, pg, db_user, count):
+def print_install_hdr(cluster_name, db, db_user, count):
     util.message("#")
     util.message(
-        f"######## ssh_install_pgedge: cluster={cluster_name}, db={db}, pg={pg} db_user={db_user}, count={count}"
+        f"######## ssh_install_pgedge: cluster={cluster_name}, db={db}, db_user={db_user}, count={count}"
     )
 
 
-def ssh_install_pgedge(cluster_name, db, pg, db_user, db_passwd, nodes):
+def ssh_install_pgedge(cluster_name, db, db_settings, db_user, db_passwd, nodes):
     """Install pgEdge on every node in a cluster."""
 
     for n in nodes:
-        print_install_hdr(cluster_name, db, pg, db_user, len(nodes))
+        print_install_hdr(cluster_name, db, db_user, len(nodes))
         ndnm = n["name"]
         ndpath = n["path"]
         ndip = n["ip_address"]
@@ -349,14 +361,20 @@ def ssh_install_pgedge(cluster_name, db, pg, db_user, db_passwd, nodes):
         util.message(
             f"########                node={ndnm}, host={ndip}, path={ndpath} REPO={REPO}\n"
         )
-        
+        pg = db_settings["pg_version"]
+        spock = db_settings["spock_version"]        
+
         cmd0 = f"export REPO={REPO}; "
         cmd1 = f"mkdir -p {ndpath}; cd {ndpath}; "
         cmd2 = f'python3 -c "\\$(curl -fsSL {REPO}/{install_py})"'
         util.echo_cmd(cmd0 + cmd1 + cmd2, host=n["ip_address"], usr=n["os_user"], key=n["ssh_key"])
 
         nc = os.path.join(ndpath, "pgedge", "pgedge ")
-        parms = f" -U {db_user} -P {db_passwd} -d {db} --port {ndport} --pg {pg}"
+        parms = f" -U {db_user} -P {db_passwd} -d {db} --port {ndport}"
+        if pg is not None and pg != '':
+            parms = parms + f" --pg {pg}"
+        if spock is not None and spock != '':
+            parms = parms + f" --spock_ver {spock}"
         util.echo_cmd(f"{nc} setup {parms}", host=n["ip_address"], usr=n["os_user"], key=n["ssh_key"])
         util.message("#")
 
@@ -368,8 +386,11 @@ def create_spock_db(nodes,db):
             util.echo_cmd(cmd, host=n["ip_address"], usr=n["os_user"], key=n["ssh_key"])
 
 
-def ssh_cross_wire_pgedge(cluster_name, db, pg, db_user, db_passwd, nodes):
+def ssh_cross_wire_pgedge(cluster_name, db, db_settings, db_user, db_passwd, nodes):
     """Create nodes, repsets, and subs on every node in a cluster."""
+    if db_settings["auto_ddl"] == "on":
+        print("TODO Loop and set auto ddl")
+
 
     sub_array=[]
     for prov_n in nodes:
@@ -389,8 +410,6 @@ def ssh_cross_wire_pgedge(cluster_name, db, pg, db_user, db_passwd, nodes):
             ndport = "5432"
         cmd1 = f"{nc} spock node-create {ndnm} 'host={ndip_private} user={os_user} dbname={db} port={ndport}' {db}"
         util.echo_cmd(cmd1, host=ndip, usr=os_user, key=ssh_key)
-        cmd2 = f"{nc} spock repset-create {db}_repset {db}"
-        util.echo_cmd(cmd2, host=ndip, usr=os_user, key=ssh_key)
         for sub_n in nodes:
             sub_ndnm = sub_n["name"]
             if sub_ndnm != ndnm:
@@ -428,7 +447,7 @@ def command(cluster_name, node, cmd, args=None):
        :param cmd: The command to run on every node, excluding the beginning './pgedge' 
     """
 
-    db, pg, nodes = load_json(
+    db, db_settings, nodes = load_json(
         cluster_name
     )
     rc = 0
@@ -459,7 +478,7 @@ def app_install(cluster_name, app_name, database_name=None, factor=1):
        :param node: The application name, pgbench or northwind.
        :param factor: The scale flag for pgbench.
     """
-    db, pg, nodes = load_json(
+    db, db_settings, nodes = load_json(
             cluster_name
         )
     db_name=None
@@ -495,7 +514,7 @@ def app_remove(cluster_name, app_name, database_name=None):
        :param cluster_name: The name of the cluster.
        :param node: The application name, pgbench or northwind.
     """
-    db, pg, nodes = load_json(
+    db, db_settings, nodes = load_json(
             cluster_name
         )
     db_name=None

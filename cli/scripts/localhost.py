@@ -95,7 +95,7 @@ def remove(cluster_name):
        Example: cluster remove demo 
        :param cluster_name: The name of the cluster. 
     """
-    db, pg, nodes = cluster.load_json(cluster_name)
+    db, db_settings, nodes = cluster.load_json(cluster_name)
 
     util.message("\n## Ensure that PG is stopped.")
     for nd in nodes:
@@ -220,7 +220,7 @@ Below is an example of the JSON file that is generated that defines a 2 node loc
     Passwd = os.getenv("pgePasswd", Passwd)
 
     create_local_json(cluster_name, db, num_nodes, User, Passwd, pg, port1)
-    db, pg, nodes = cluster.load_json(cluster_name)
+    db, db_settings, nodes = cluster.load_json(cluster_name)
 
     cluster.ssh_install_pgedge(cluster_name, db[0]["name"], pg, db[0]["username"], db[0]["password"], nodes)
     cluster.ssh_cross_wire_pgedge(cluster_name, db[0]["name"], pg, db[0]["username"], db[0]["password"], nodes)
