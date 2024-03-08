@@ -90,7 +90,7 @@ time.sleep(3)
 osSys("pgbackrest stanza-create " + stanza)
 osSys("pgbackrest check " + stanza)
 
-util.message("\n## creating '/etc/system/systemd/backrest.service' ########")
+util.message("\n## creating '/etc/systemd/system/backrest.service' ########")
 conf_file = thisDir + "/backrest.service"
 util.replace("stanza=xx", stanza, conf_file, True)
 
@@ -99,4 +99,5 @@ osSys("sudo cp  backrestd.py /usr/bin/")
 
 util.message("\n## creating '/etc/pgbackrest/backrest.json' ########")
 osSys("sudo cp  backrest.json /etc/pgbackrest/")
+
 

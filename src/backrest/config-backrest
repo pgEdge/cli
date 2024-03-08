@@ -1,0 +1,11 @@
+#!/bin/bash
+cd "$(dirname "$0")"
+
+set -x
+backrestd.py --version
+pgbackrest version
+
+sudo cp backrest.service /etc/systemd/system/.
+sudo systemctl daemon-reload
+sudo systemctl enable backrest
+sudo systemctl start  backrest

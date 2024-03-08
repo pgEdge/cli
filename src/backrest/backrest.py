@@ -8,16 +8,61 @@ from tabulate import tabulate
 from datetime import datetime
 import fire
 import sys
+import os
 
 base_dir = "cluster"
 
-def pgedge_create_stanza():
+def pgedge_create_replica(stanza, restore_path, backup_id, primary_host='127.0.0.1', primary_port='5432', primary_user='postgres', replica_password=None, recovery_target_time=None):
+    """ 
+    pgedge: Create read-only replica, with an option for PITR
+    Usage: pgedge backrest create-replica --stanza=stanza --restore-path=<path> --set=<id> [--primary-host=<ip>] [--primary-port=<port>] [primary--user=<user>] [--replica-password=<password>] [--recovery-target-time=<time>]
+    
+    :param stanza: The pgBackRest stanza name.
+    :param restore_path: Path where PostgreSQL should be restored to create the replica.
+    :param backup_id: Label of the pgBackRest backup to use for restoration.
+    :param primary_host: IP address of the primary PostgreSQL server. Default is '127.0.0.1'.
+    :param primary_port: Port of the primary PostgreSQL server. Default is '5432'.
+    :param primary_user: User for the replication connection. Default is 'postgres'.
+    :param replica_password: Password for the replication user. Optional.
+    :param recovery_target_time: The target time for the PITR, in a format recognized by PostgreSQL (e.g., 'YYYY-MM-DD HH:MI:SS'). Optional.
     """
-    pgedge: Add or modify backup annotation.
-    Usage: pgedge backrest create-stanza
-    """
-    # Add logic here to create a stanza
-    pass
+    restore_command = ["pgbackrest", "--stanza", stanza, "restore", "--delta",
+                        "--set", backup_id, "--pg1-path", restore_path]
+
+    # If a recovery target time is specified, add PITR options
+    if recovery_target_time:
+        restore_command += ["--type", "time", "--target", recovery_target_time]
+
+    # Step 1: Restore the backup, with optional PITR
+    try:
+        subprocess.run(restore_command, check=True)
+        print(f"Backup {backup_id} successfully restored to {restore_path}.")
+        if recovery_target_time:
+            print(f"Point-In-Time Recovery to {recovery_target_time} applied.")
+    except subprocess.CalledProcessError as e:
+        print(f"Error restoring backup {backup_id}: {e}")
+        return
+
+    # Step 2: Modify postgresql.conf to configure as replica for PostgreSQL 16
+    postgresql_conf_path = os.path.join(restore_path, "postgresql.conf")
+    # Construct primary_conninfo with provided details
+    primary_conninfo = f"host={primary_host} port={primary_port} user={primary_user}"
+    if replica_password:
+        primary_conninfo += f" password={replica_password}"
+    
+    try:
+        with open(postgresql_conf_path, "a") as conf_file:
+            conf_file.write("\n# Replica settings for PostgreSQL\n")
+            conf_file.write("\nport=5433\n")
+            conf_file.write(f"primary_conninfo = '{primary_conninfo}'\n")
+            # Create standby.signal file
+            standby_signal_path = os.path.join(restore_path, "standby.signal")
+            with open(standby_signal_path, 'w') as signal_file:
+                signal_file.write("")  # Just need to create the file
+        print("Configurations modified to configure as replica. standby.signal file created.")
+        print("Make sure your pg_hba.conf is configured to allow connection from this IP")
+    except Exception as e:
+        print(f"Error modifying replica configuration: {e}")
 
 def pgedge_service_status():
     """
@@ -45,19 +90,21 @@ def pgedge_service_log():
 
 def pgedge_list_backups():
     """
-    pgedge: List stanza name, start time, end time, WAL start, and WAL end using pgbackrest info command.
+    pgedge: List dynamic stanza name, start time, end time, WAL start, and WAL end using pgbackrest info command.
     Usage: pgedge backrest list-backups
     """
     try:
         # Run pgbackrest info command and capture its output as JSON
         output = subprocess.check_output(["pgbackrest", "info", "--output=json"], stderr=subprocess.STDOUT, universal_newlines=True)
-        backups_info = json.loads(output)[0]['backup']  # Extract the list of backups
+        json_output = json.loads(output)
+        stanza_info = json_output[0]  # Assuming there's at least one stanza
+        stanza_name = stanza_info['name']  # Dynamically get the stanza name
+        backups_info = stanza_info['backup']  # Extract the list of backups
 
         # Extract necessary information for each backup
         backup_table = []
         for backup in backups_info:
             try:
-                stanza_name = "pg16"  # Assuming the stanza name is always "pg16" based on the provided JSON
                 start_time_unix = backup['timestamp']['start']
                 end_time_unix = backup['timestamp']['stop']
                 wal_start = backup['lsn']['start']
@@ -65,19 +112,22 @@ def pgedge_list_backups():
                 backup_type = backup['type']
                 backup_label = backup['label']
                 backup_size = backup['info']['size']
+                # Assuming the backup UUID is part of the label. Extracting it from there.
+                # In this example, backup_label is used as is, assuming it includes the UUID.
 
                 # Convert start and end time from UNIX timestamp to actual date and time
-                start_time = datetime.utcfromtimestamp(start_time_unix).strftime('%Y-%m-%d %H:%M:%S')
-                end_time = datetime.utcfromtimestamp(end_time_unix).strftime('%Y-%m-%d %H:%M:%S')
+                # Modifying the date format to MM-DD-YYYY HH:MM:SS
+                start_time = datetime.utcfromtimestamp(start_time_unix).strftime('%d-%m-%Y %H:%M:%S')
+                end_time = datetime.utcfromtimestamp(end_time_unix).strftime('%d-%m-%Y %H:%M:%S')
             except KeyError as e:
                 # If a KeyError occurs, set the corresponding value to "null"
                 print(f"Warning: Missing field - {e}")
-                stanza_name = start_time = end_time = wal_start = wal_end = backup_type = backup_label = backup_size = "null"
+                start_time = end_time = wal_start = wal_end = backup_type = backup_label = backup_size = "null"
 
-            backup_table.append([stanza_name, start_time, end_time, wal_start, wal_end, backup_type, backup_label, backup_size])
+            backup_table.append([stanza_name, backup_label, start_time, end_time, wal_start, wal_end, backup_type, backup_size])
 
         # Print the table
-        headers = ["Stanza Name", "Start Time", "End Time", "WAL Start", "WAL End", "Backup Type", "Label", "Size"]
+        headers = ["Stanza Name", "Label","Start Time", "End Time", "WAL Start", "WAL End", "Backup Type", "Size"]
         print(tabulate(backup_table, headers=headers, tablefmt="grid"))
     except subprocess.CalledProcessError as e:
         # If the command fails, print the error message
@@ -87,22 +137,6 @@ def pgedge_list_backups():
         print("Error accessing JSON data:", ke)
         print("Ensure that the JSON structure matches the expected format.")
 
-
-
-def pgedge_pitr(pitr_json_file):
-    """ 
-    pgedge: Restore a backup using pgbackrest restore command
-    Usage: pgedge backrest pitr <pitr_json_file>
-    """
-    if not os.path.exists(pitr_json_file):
-        raise FileNotFoundError(f"PITR JSON file '{pitr_json_file}' not found.")
-
-    try:
-        # Run pgbackrest restore command
-        subprocess.run(["pgbackrest", "restore"], check=True)
-    except subprocess.CalledProcessError as e:
-        # If the command fails, print the error message
-        print("Error executing pgbackrest restore command:", e.output)
 
 def pgbackrest_annotate():
     """
@@ -246,11 +280,10 @@ def call_pgbackrest(command):
 if __name__ == "__main__":
     # Create a Fire instance with the dictionary of commands
     fire_dict = {
-        "create-stanza": pgedge_create_stanza,
+        "create-replica": pgedge_create_replica,
         "service-log": pgedge_service_log,
         "service-status": pgedge_service_status,
         "list-backups": pgedge_list_backups,
-        "pitr": pgedge_pitr,
         "annotate": pgbackrest_annotate,
         "archive-get": pgbackrest_archive_get,
         "archive-push": pgbackrest_archive_push,
