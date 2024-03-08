@@ -9,21 +9,17 @@ Before performing the steps that follow, you need to install pgEdge Platform.  F
 1. Install PostgreSQL 16 using `pgedge`:
 
 ```bash
-./pgedge install pg16
+./pgedge install pg16 --start
 ```
 
-2. Start PostgreSQL 16:
 
-```bash
-./pgedge start pg16
-```
-
-3. Install pgBackRest and configure the backup environment. This step creates a stanza for pgBackRest and initiates the backup service to run in the background. A stanza is a configuration file that specifies your database location, connection information, a backup schedule, and other backup details. Backups will occur according to an installer-generated JSON schedule file; you can customize your schedule file to best suit your use. 
+2. Install pgBackRest and configure the backup environment. This step creates a stanza for pgBackRest and initiates the backup service to run in the background. A stanza is a configuration file that specifies your database location, connection information, a backup schedule, and other backup details. Backups will occur according to an installer-generated JSON schedule file; you can customize your schedule file to best suit your use. 
 
 Use the following command to install pgBackRest and create the pgBackRest artifacts:
 
 ```bash
 ./pgedge install backrest
+./pgedge config backrest
 ```
 
 ### Help 
@@ -66,7 +62,7 @@ COMMANDS
 
 ### Managing a Backup Schedule
 
-Use the following .json file as a starting point to configure your backup schedule; as written, this file performs a backup every day at 1:00 am. 
+Use the following .json file as a starting point to configure your backup schedule.
 ```jason
 {
   "jobs": [
@@ -87,6 +83,45 @@ Use the following .json file as a starting point to configure your backup schedu
     }   
   ]
 }
+
+This document outlines the backup strategy defined in the schedule file, which includes two types of backups: full and incremental. 
+
+#### Full Backup Schedule
+
+- **Type**: Full
+  - A full backup captures the entire state of the database at the point in time it runs.
+
+- **Daily Schedule**:
+  - **Time**: 01:00 AM daily
+    - Indicates a full backup is initiated every day at this specific time. The time is configurable to any preferred hour.
+
+- **Weekly Schedule**:
+  - **Days**: Monday, Tuesday, Wednesday, Thursday, Friday, Saturday, Sunday
+    - Specifies that the daily full backup at 01:00 AM occurs every day of the week, ensuring daily coverage without any gaps. Days are configurable to limit full backups to specific days if necessary.
+
+#### Incremental Backup Schedule
+
+- **Type**: Incremental
+  - An incremental backup only captures the changes made since the last backup (full or incremental), which saves space and can reduce backup time.
+
+- **Interval**: 
+  - 60 minutes
+    - An incremental backup is triggered every hour, capturing changes since the last backup. This frequency aims to minimize data loss by ensuring recent changes are regularly backed up.
+
+#### Configurability
+
+- **Full Backups**: 
+  - The execution time for full backups can be adjusted to any hour of the day to accommodate periods of low database activity or maintenance windows.
+
+- **Incremental Backups**:
+  - The interval for incremental backups can be customized based on the desired balance between backup frequency and resource usage.
+
+#### Operation
+
+- A daemon or scheduled task (`backrest daemon`) monitors the schedule file and initiates the respective backup operations according to the defined timings and intervals. This automated process facilitates regular data backup based on the configured schedule, minimizing manual intervention.
+
+This backup strategy combines the thorough data protection of nightly full backups with the efficiency of hourly incremental backups, offering a comprehensive approach to database backup management.
+
 ```
 
 
