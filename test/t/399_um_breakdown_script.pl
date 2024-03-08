@@ -27,7 +27,7 @@ my $cli = $ENV{EDGE_CLI};
 # Then, use nodectl to remove the Postgres installation.
 #
 
-my $cmd = qq($homedir/$cli remove $pgversion);
+my $cmd = qq($homedir/$cli remove $pgversion --rm-data);
 print("cmd = $cmd\n");
 my ($success, $error_message, $full_buf, $stdout_buf, $stderr_buf)= IPC::Cmd::run(command => $cmd, verbose => 0);
 
@@ -41,23 +41,6 @@ print("success = $success\n");
 print("stdout_buf = @$stdout_buf\n");
 print("stderr_buf = @$stderr_buf\n");
 
-#
-# Then, remove the data directory 
-#
-if(defined($success)){
-    print("Removing the data directory: $datadir \n");
-        if (File::Path::remove_tree($datadir)) {
-            print("Data directory $datadir removed successfully\n");
-        } else {
-            return 1;
-        }
-
-}
-else {
-    print("Unable to : $cmd \n @$full_buf \n");
-    return 1;
-}
-#my $result = system("rm -rf $home");
 
 #
 # Then, we remove the ~/.pgpass file.
