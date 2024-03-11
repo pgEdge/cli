@@ -170,8 +170,12 @@ def load_json(cluster_name):
     parsed_json = get_cluster_json(cluster_name)
 
     pg = parsed_json["database"]["pg_version"]
-    spock = parsed_json["database"]["spock_version"]
-    auto_ddl = parsed_json["database"]["auto_ddl"]
+    spock = ""
+    auto_ddl = "off"
+    if "spock_version" in parsed_json["database"]:
+        spock = parsed_json["database"]["spock_version"]
+    if "auto_ddl" in parsed_json["database"]:
+        auto_ddl = parsed_json["database"]["auto_ddl"]
 
     db_settings = {}
     db_settings["pg_version"] = pg
@@ -619,7 +623,7 @@ def app_install(cluster_name, app_name, database_name=None, factor=1):
         for n in nodes:
             ndpath = n["path"]
             ndip = n["ip_address"]
-            util.echo_cmd(f"{ndpath}{ctl} app northwind-install {db} default", host=ndip, usr=n["os_user"], key=n["ssh_key"])
+            util.echo_cmd(f"{ndpath}{ctl} app northwind-install {db_name} default", host=ndip, usr=n["os_user"], key=n["ssh_key"])
     else:
         util.exit_message(f"Invalid app_name '{app_name}'.")
 
