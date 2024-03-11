@@ -1,5 +1,5 @@
 ## SYNOPSIS
-    ./pgedge cluster define-remote CLUSTER_NAME DB NUM_NODES USR PASSWD PG PORT
+    ./pgedge cluster json-template CLUSTER_NAME DB NUM_NODES USR PASSWD PG PORT
  
 ## DESCRIPTION
     Create a JSON configuration file template that can be modified to fully define a remote cluster. 

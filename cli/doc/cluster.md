@@ -3,10 +3,13 @@
  
 ## COMMANDS
     COMMAND is one of the following:
-     define-remote       # Create a template for a json config file for a remote cluster.
-     init                # Initialize a cluster from json definition file of existing nodes.
-     add-db              # Add a database to an existing cluster and cross wire it together.
-     remove              # Remove a test cluster from json definition file of existing nodes.
+     json-template       # Create a template for a Cluster Configuration JSON file.
+     json-validate       # Validate a Cluster Configuration JSON file
+     init                # Initialize a cluster via Cluster Configuration JSON file.
+     replication-begin   # Add all tables in the database to replication on every node
+     replication-check   # Print replication status on every node
+     add-db              # Add a database to an existing pgEdge cluster.
+     remove              # Remove a test cluster.
      command             # Run ./pgedge commands on one or all nodes.
      app-install         # Install test application [ pgbench | northwind ].
      app-remove          # Remove test application from cluster.

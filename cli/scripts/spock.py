@@ -279,36 +279,6 @@ def repset_drop(set_name, db, pg=None):
     sys.exit(0)
 
 
-def repset_add_seq(replication_set, sequence, db, synchronize_data=False, pg=None):
-    """Add a sequence to a replication set."""
-    pg_v = util.get_pg_v(pg)
-    seqs = util.get_seq_list(sequence, db, pg_v)
-
-    for sequence in seqs:
-        seq = str(sequence[0])
-        sql = (
-            "SELECT spock.repset_add_seq("
-            + get_eq("set_name", replication_set, ", ")
-            + get_eq("relation", seq, ", ")
-            + get_eq("synchronize_data", synchronize_data, ")")
-        )
-        util.run_psyco_sql(pg_v, db, sql)
-        util.message(f"Adding sequence {seq} to replication set {replication_set}.")
-    sys.exit(0)
-
-
-def repset_remove_seq(set_name, relation, db, pg=None):
-    """Remove a sequence from a replication set."""
-    pg_v = util.get_pg_v(pg)
-    sql = (
-        "SELECT spock.repset_remove_seq("
-        + get_eq("set_name", set_name, ", ")
-        + get_eq("relation", relation, ")")
-    )
-    util.run_psyco_sql(pg_v, db, sql)
-    sys.exit(0)
-
-
 def repset_add_partition(parent_table, db, partition=None, row_filter=None, pg=None):
     """Add a partition to a replication set.
 
@@ -986,8 +956,6 @@ if __name__ == "__main__":
             "repset-drop": repset_drop,
             "repset-add-table": repset_add_table,
             "repset-remove-table": repset_remove_table,
-            "repset-add-seq": repset_add_seq,
-            "repset-remove-seq": repset_remove_seq,
             "repset-add-partition": repset_add_partition,
             "repset-remove-partition": repset_remove_partition,
             "repset-list-tables": repset_list_tables,

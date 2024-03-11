@@ -37,8 +37,6 @@ $nc spock repset-alter      --help
 $nc spock repset-drop       --help
 $nc spock repset-add-table  --help
 $nc spock repset-remove-table --help
-$nc spock repset-add-seq    --help
-$nc spock repset-remove-seq --help
 $nc spock repset-list-tables  --help
 $nc spock repset-add-partition --help
 $nc spock repset-remove-partition --help
@@ -73,9 +71,13 @@ $nc db migrate              --help
 
 cluster () {
 #$nc cluster --help
-$nc cluster define-remote     --help
+$nc cluster json-template     --help
+$nc cluster json-validate     --help
 $nc cluster init              --help
+$nc cluster replication-begin --help
+$nc cluster replication-check --help
 $nc cluster remove            --help
+$nc cluster add-db            --help
 $nc cluster command           --help
 $nc cluster app-install       --help
 $nc cluster app-remove        --help
