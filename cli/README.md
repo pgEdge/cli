@@ -1,24 +1,26 @@
 # pgEdge CLI
 This is the pgEdge Command Line Interface (CLI).  It is a cross-platform 
 tool to manage your PostgreSQL eco-system of components.  The modules are 
-UM, SERVICE, SPOCK, ACE, CLUSTER, and VM.
+SPOCK, ACE, DB, CLUSTER, VM, LOCALHOST, UM & SERVICE.
 
-We are licensed under the [pgEdge Community License](https://www.pgedge.com/communitylicense)
 
 ## Synopsis
     ./pgedge <module> <command> [parameters] [options] 
 
-## [um](UM-README.md) - Update Manager commands
+## Modules
+**spock** - Logical and multi-Active PostgreSQL node configuration
 
-## [service](SERVICE-README.md) - Service control commands
+**ace** - The Anti-Chaos Engine to help prove your active-active nodes are in sync.
 
-## [spock](SPOCK-README.md) - Logical and multi-Active PostgreSQL node configuration
+**db** - Configure and control Postgres Databases
 
-## [ace](ACE-README.md) - The Anti-Chaos Engine to help prove your active-active nodes are in sync.
+**cluster** - Create and control clusters 
 
-## [db](DB-README.md) - Configure and control Postgres Databases
+**vm** - Consistent Provisioning and Managemnt of VM's across multiple clouds
 
-## [cluster](CLUSTER-README.md) - Create and control a local cluster 
+**localhost** - Easily configure localhost test clusters
 
-## [vm](VM-README.md) - Consistent Provisioning and Managemnt of VM's across multiple clouds
+**um** - Update Manager commands
+
+**service** - Service control commands
 
