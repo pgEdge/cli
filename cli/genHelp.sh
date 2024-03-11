@@ -1,4 +1,4 @@
-export pgeMdDir=~/dev/pgedge/cli
+export pgeMdDir=~/dev/pgedge/cli/help
 export nc=../out/posix/pgedge
 
 um () {
@@ -128,10 +128,6 @@ $nc vm destroy              --help
 $nc vm cluster-define       --help
 }
 
-setup () {
-  $nc setup --help
-}
-
 
 ############## MAINLINE ############################
 if [ $# -ne 1 ]; then
@@ -149,7 +145,6 @@ if [ $m == "all" ]; then
   ace
   vm
   localhost
-  setup
 elif [ $m == "um" ]; then
   um
 elif [ $m == "service" ]; then
@@ -166,8 +161,6 @@ elif [ $m == "vm" ]; then
   vm
 elif [ $m == "localhost" ]; then
   localhost
-elif [ $m == "setup" ]; then
-  setup     
 else
   echo "ERROR: $m is not a valid module"
   exit 1
