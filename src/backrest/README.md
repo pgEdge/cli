@@ -22,48 +22,81 @@ Use the following command to install pgBackRest and create the pgBackRest artifa
 ./pgedge config backrest
 ```
 
-### Help 
-```
-bash-5.1$  ./pgedge backrest
+### Help
+
+```sh
+# pgedge backrest
 
 SYNOPSIS
-    backrest.py COMMAND
+    pgedge backrest COMMAND
 
 COMMANDS
     COMMAND is one of the following:
-     create-replica      # pgedge: Create read-only replica, with an option for PITR
-                           Usage: pgedge backrest create-replica --stanza=stanza --restore-path=<path> --set=<id> 
-                           [--primary-host=<ip>] [--primary-port=<port>] [primary--user=<user>] 
-                           [--replica-password=<password>] [--recovery-target-time=<time>]
-     service-log         # pgedge: Get remote service log. Usage: pgedge backrest service-log
-     service-status      # pgedge: Check service status. Usage: pgedge backrest service-status
-     list-backups        # pgedge: List dynamic stanza name, start time, end time, WAL start,
-                           and WAL end using pgbackrest info command. Usage: pgedge backrest list-backups
-     annotate            # Add or modify backup annotation. pgedge backrest  annotate
-     archive-get         # Get a WAL segment from the archive. pgedge backrest  archive-get
-     archive-push        # Push a WAL segment to the archive. pgedge backrest  archive-push
-     backup              # Backup a database cluster. pgedge backrest  backup
-     check               # Check the configuration. pgedge backrest  check
-     expire              # Expire backups that exceed retention. pgedge backrest  expire
-     info                # Retrieve information about backups. pgedge backrest  info
-     repo-get            # Get a file from a repository. pgedge backrest  repo-get
-     repo-ls             # List files in a repository. pgedge backrest  repo-ls
-     server              # pgBackRest server. pgedge backrest  server
-     server-ping         # Ping pgBackRest server. pgedge backrest  server-ping
-     stanza-create       # Create the required stanza data. pgedge backrest  stanza-create
-     stanza-delete       # Delete a stanza. pgedge backrest  stanza-delete
-     stanza-upgrade      # Upgrade a stanza. pgedge backrest  stanza-upgrade
-     start               # Allow pgBackRest processes to run. pgedge backrest  start
-     stop                # Stop pgBackRest processes from running. pgedge backrest  stop
-     verify              # Verify contents of the repository. pgedge backrest  verify
-     version             # Get version. pgedge backrest  version
+     create-replica      # pgedge: Create read-only replica, with an option for PITR 
+     service-log         # pgedge: Get remote service log.
+     service-status      # pgedge: Check service status.
+     list-backups        # pgedge: List dynamic stanza name, start time, end time, WAL start, and WAL end using pgbackrest info command.
+     annotate            # Add or modify backup annotation.
+     archive-get         # Get a WAL segment from the archive.
+     archive-push        # Push a WAL segment to the archive.
+     backup              # Backup a database cluster.
+     check               # Check the configuration.
+     expire              # Expire backups that exceed retention.
+     info                # Retrieve information about backups.
+     repo-get            # Get a file from a repository.
+     repo-ls             # List files in a repository.
+     server              # pgBackRest server.
+     server-ping         # Ping pgBackRest server.
+     stanza-create       # Create the required stanza data.
+     stanza-delete       # Delete a stanza.
+     stanza-upgrade      # Upgrade a stanza.
+     start               # Allow pgBackRest processes to run.
+     stop                # Stop pgBackRest processes from running.
+     verify              # Verify contents of the repository.
+     version             # Get version.
+```
 
+```sh
+# pgedge backrest create-replica --help
+
+SYNOPSIS
+    pgedge backrest create-replica STANZA RESTORE_PATH BACKUP_ID <flags>
+
+DESCRIPTION
+    pgedge: Create read-only replica, with an option for PITR
+    Usage: pgedge backrest create-replica --stanza=stanza --restore-path=<path> --set=<id>
+                        [--primary-host=<ip>] [--primary-port=<port>] [primary--user=<user>]
+                        [--replica-password=<password>] [--recovery-target-time=<time>]
+
+POSITIONAL ARGUMENTS
+    STANZA
+        The pgBackRest stanza name.
+    RESTORE_PATH
+        Path where PostgreSQL should be restored to create the replica.
+    BACKUP_ID
+        Label of the pgBackRest backup to use for restoration.
+
+FLAGS
+    --primary_host=PRIMARY_HOST
+        IP address of the primary PostgreSQL server. Default is '127.0.0.1'.
+    
+    --primary_port=PRIMARY_PORT
+        Port of the primary PostgreSQL server. Default is '5432'.
+    
+    --primary_user=PRIMARY_USER
+        User for the replication connection. Default is 'postgres'.
+    
+    --replica_password=REPLICA_PASSWORD
+        Password for the replication user. Optional.
+    
+    --recovery_target_time=RECOVERY_TARGET_TIME
+        The target time for the PITR, in a format recognized by PostgreSQL (e.g., 'YYYY-MM-DD HH:MI:SS'). Optional.
 ```
 
 ### Managing a Backup Schedule
 
 Use the following .json file as a starting point to configure your backup schedule.
-```jason
+```json
 {
   "jobs": [
     {   
@@ -83,6 +116,7 @@ Use the following .json file as a starting point to configure your backup schedu
     }   
   ]
 }
+```
 
 This document outlines the backup strategy defined in the schedule file, which includes two types of backups: full and incremental. 
 
