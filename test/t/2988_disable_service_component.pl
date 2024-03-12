@@ -31,7 +31,7 @@ my ($stdout_buf)= (run_command_and_exit_iferr ($cmd0))[3];
 print("stdout_buf : @$stdout_buf \n");
  
 # Check if the pgV service is running so we can disable it 
-if (contains(@$stdout_buf[0], "running on port"))
+if (contains($stdout_buf->[0], "running on port"))
  {
     # disable the service
     my $cmd = qq($homedir/$cli service disable $pgversion);
@@ -39,7 +39,7 @@ if (contains(@$stdout_buf[0], "running on port"))
     my ($stdout_buf)= (run_command_and_exit_iferr ($cmd))[3];
     print("stdout_buf : @$stdout_buf \n");
     # if service disable was successful, it would have stopping pgV in its stdout buffer 
-    if(contains(@$stdout_buf[0], "stopping"))
+    if(contains($stdout_buf->[0], "stopping"))
     {
         print("$pgversion stopped \n");
         print("Check if service status shows disabled status \n");

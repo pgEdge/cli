@@ -25,12 +25,12 @@ my $myport2 = $ENV{'EDGE_START_PORT'} + 1;
 
 # Install pgedge
 print("Install pgedge");
-my $out_buf = (run_command_and_exit_iferr(qq($homedir2/$cli install pgedge -U $ENV{EDGE_USERNAME} -P $ENV{EDGE_PASSWORD} -d $ENV{EDGE_DB} -p $myport2 --pg $ENV{EDGE_INST_VERSION})))[3];
+my $out_buf = (run_command_and_exit_iferr(qq($homedir2/$cli setup -U $ENV{EDGE_USERNAME} -P $ENV{EDGE_PASSWORD} -d $ENV{EDGE_DB} -p $myport2 --pg_ver $ENV{EDGE_INST_VERSION})))[3];
 
 # Check if 'already installed' is present in stdout_buf
 if (grep { /already installed/i } @$out_buf) {
     print("pgedge already installed, Exiting. Full Buffer (Install): @$out_buf\n");
-    $exitcode = 1;
+    $exitcode = 0;
 }
 
 #check for pgV

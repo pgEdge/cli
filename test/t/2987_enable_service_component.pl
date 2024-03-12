@@ -41,7 +41,7 @@ $stdout_buf= (run_command_and_exit_iferr ($cmd0))[3];
 print("stdout_buf : @$stdout_buf \n");
  
 # Check if the service disable command above stopped the running service 
-if (contains(@$stdout_buf[0], "disabled"))
+if (contains($stdout_buf->[0], "disabled"))
  {
     # enable the service
     my $cmd = qq($homedir/$cli service enable $pgversion);

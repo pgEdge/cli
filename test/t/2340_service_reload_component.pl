@@ -24,7 +24,7 @@ my $cmd = qq($homedir/$cli service reload $pgversion);
 print("cmd = $cmd\n");
 my ($stdout_buf)= (run_command_and_exit_iferr ($cmd))[3];
 
-if(contains(@$stdout_buf[0], "reloading"))
+if(contains($stdout_buf->[0], "reloading"))
 {
     exit(0);
 }

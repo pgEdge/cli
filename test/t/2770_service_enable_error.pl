@@ -22,11 +22,11 @@ my $cli = $ENV{EDGE_CLI};
 
 my $cmd = qq($homedir/$cli service enable pg10);
 print("cmd = $cmd\n");
-my ($stdout_buf)= (run_command_and_exit_iferr ($cmd))[3];
+my ($stdout_buf)= (run_command($cmd))[3];
 print("stdout_buf = @$stdout_buf\n");
 
 # Check if the command errored out with the expected message
-if (contains(@$stdout_buf[0], "Invalid component parameter"))
+if (contains($stdout_buf->[0], "Invalid component parameter"))
  {
     exit(0);
  }

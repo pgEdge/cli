@@ -25,10 +25,10 @@ my $exitcode = 0;
 my $cmd0 = qq($homedir/$cli service status $pgversion);
 print("cmd = $cmd0\n");
 my ($stdout_buf)= (run_command_and_exit_iferr ($cmd0))[3];
-print("stdout_buf : @$stdout_buf");
+print("stdout_buf : @$stdout_buf \n");
 
 # If server is stopped, we attempt to service start it
-if (contains(@$stdout_buf[0], "stopped on port"))
+if (contains($stdout_buf->[0], "stopped on port"))
  {
     # service start pgV
     my $cmd = qq($homedir/$cli service start $pgversion);
@@ -36,7 +36,7 @@ if (contains(@$stdout_buf[0], "stopped on port"))
     my ($stdout_buf)= (run_command_and_exit_iferr ($cmd))[3];
     print("stdout_buf : @$stdout_buf");
     # if service start was successful 
-    if(contains(@$stdout_buf[0], "starting on port"))
+    if(contains($stdout_buf->[0], "starting on port"))
     {
         print("$pgversion started successfully. Exiting with success\n");
         $exitcode = 0;

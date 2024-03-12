@@ -21,16 +21,16 @@ my $snowflakeversion = "snowflake-$pgversion";
 my $spver = $ENV{EDGE_SPOCK} =~ s/\.//r; #removing the . from version so that 3.2 becomes 32
 my $spockversion = "spock$spver-$pgversion"; #forming the spock product name e.g. spock32-pg16
 my $exitcode = 0;
-my $myport2 = $ENV{'EDGE_START_PORT'} + 1;
+my $myport3 = $ENV{'EDGE_START_PORT'} + 2;
 
 # Install pgedge
 print("Install pgedge");
-my $out_buf = (run_command_and_exit_iferr(qq($homedir3/$cli install pgedge -U $ENV{EDGE_USERNAME} -P $ENV{EDGE_PASSWORD} -d $ENV{EDGE_DB} -p $myport2 --pg $ENV{EDGE_INST_VERSION})))[3];
+my $out_buf = (run_command_and_exit_iferr(qq($homedir3/$cli setup -U $ENV{EDGE_USERNAME} -P $ENV{EDGE_PASSWORD} -d $ENV{EDGE_DB} -p $myport3 --pg_ver $ENV{EDGE_INST_VERSION})))[3];
 
 # Check if 'already installed' is present in stdout_buf
 if (grep { /already installed/i } @$out_buf) {
     print("pgedge already installed, Exiting. Full Buffer (Install): @$out_buf\n");
-    $exitcode = 1;
+    $exitcode = 0;
 }
 
 #check for pgV

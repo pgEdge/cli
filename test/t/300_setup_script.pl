@@ -36,6 +36,9 @@ if (grep { /already installed/i } @$stdout_buf) {
 # initialise cluster (initdb) through init pgV specifying a custom port
 run_command_and_exit_iferr(qq(pgePasswd=$password $homedir/$cli init $pgversion --port=$port));
 
+# Configure pgV to run as a service for service related (enable/disable) tests
+run_command(qq($homedir/$cli config $pgversion --autostart=on));
+
 # Starting pgV server
 run_command_and_exit_iferr(qq($homedir/$cli start $pgversion));
 
