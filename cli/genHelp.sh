@@ -64,9 +64,6 @@ db () {
 $nc db create               --help
 $nc db guc-set              --help
 $nc db guc-show             --help
-$nc db dump                 --help
-$nc db restore              --help
-$nc db migrate              --help
 }
 
 cluster () {
