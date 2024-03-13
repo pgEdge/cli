@@ -8,7 +8,14 @@ if [ ! "$rc" == "0" ]; then
   exit 1
 fi;
 
-majorV="$1"
+if [ "$1" == "" ]; then
+  majorV=16
+  echo ""
+  echo "### Defaulting to pg $majorV ###"
+else
+  majorV=$1
+fi
+
 if [ "$majorV" == "12" ]; then
   minorV=$P12
 elif [ "$majorV" == "13" ]; then
@@ -24,10 +31,6 @@ elif [ "$majorV" == "17" ]; then
 else
   echo "ERROR: pg must be 12-17"
   exit 1
-fi
-
-if [ ! "$2" == "" ]; then
-  outDir="$2"
 fi
 
 if [ "$OUT" == "" ]; then
@@ -78,6 +81,7 @@ if [ -d $outp ]; then
 fi
 
 
+echo ""
 echo "############### Build Package Manager ###################"
 rm -f $OUT/hub-$hubV*
 rm -f $OUT/$bundle-cli-$hubV*
