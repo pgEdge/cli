@@ -756,13 +756,8 @@ def run_sql_cmd(p_pg, p_sql, p_display=False):
 
 
 def posix_unpack(file_nm):
-    rc = os.system("pigz --version > /dev/null 2>&1")
-    if rc == 0:
-        flags = "-I pigz"
-    else:
-        flags = ""
-
-    return echo_cmd(f"tar {flags} -xf {file_nm}")
+    rc = os.system(f"tar -xf {file_nm}")
+    return(rc)
 
 
 def restart_postgres(p_pg):
@@ -2924,7 +2919,9 @@ def http_get_file(
         delete_file(file_name_partial)
         file_url = p_url + "/" + p_file_name
         req = urllib2.Request(file_url, None, http_headers())
+
         u = urllib2.urlopen(req, timeout=10)
+
         meta = u.info()
         file_size = int(meta.get_all("Content-Length")[0])
 
