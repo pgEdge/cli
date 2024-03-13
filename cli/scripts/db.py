@@ -139,11 +139,27 @@ def guc_show(guc_name, pg=None):
     sys.exit(0)
 
 
+def io_test(p_parms=False):
+  util.message(f"io_test({p_parms})", "debug")
+  rc = os.system("fio --version >/dev/null 2>&1")
+  if rc != 0:
+     util.exit_message("missing 'fio' Linux utility", 1)
+
+  if (p_parms == "help") or (p_parms in (True, False)):
+    os.system("fio --help")
+    util.exit_cleanly(0)
+
+  rc = util.echo_cmd(f"fio {p_parms}")
+  if rc != 0:
+    util.exit_cleanly(1)
+
+
 if __name__ == "__main__":
     fire.Fire(
         {
             "create": create,
             "guc-set": guc_set,
             "guc-show": guc_show,
+            "io-test": io_test
         }
     )
