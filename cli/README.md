@@ -8,19 +8,20 @@ SPOCK, ACE, DB, CLUSTER, VM, LOCALHOST, UM & SERVICE.
     ./pgedge <module> <command> [parameters] [options] 
 
 ## Modules
-**spock** - Logical and multi-Active PostgreSQL node configuration
 
-**ace** - The Anti-Chaos Engine to help prove your active-active nodes are in sync.
+spock - Logical and multi-Active PostgreSQL node configuration
 
-**db** - Configure and control Postgres Databases
+ace - The Anti-Chaos Engine to help prove your active-active nodes are in sync.
 
-**cluster** - Create and control clusters 
+db - Configure and control Postgres Databases
 
-**vm** - Consistent Provisioning and Managemnt of VM's across multiple clouds
+cluster - Create and control clusters 
 
-**localhost** - Easily configure localhost test clusters
+vm - Consistent Provisioning and Managemnt of VM's across multiple clouds
 
-**um** - Update Manager commands
+localhost - Easily configure localhost test clusters
 
-**service** - Service control commands
+um - Update Manager commands
+
+service - Service control commands
 

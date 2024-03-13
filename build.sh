@@ -307,8 +307,6 @@ writeFileChecksum () {
 
 finalizeOutput () {
   writeCompRow "hub"  "hub" "$hubV" "" "0" "Enabled" "nil"
-  checkCmd "cp -r $PGE/docker ."
-  checkCmd "cp -r $SRC/hub ."
   checkCmd "mkdir -p hub/scripts"
 
   checkCmd "cp $CLI/*.py        hub/scripts/."
@@ -321,7 +319,7 @@ finalizeOutput () {
   checkCmd "cp -r $CLI/sql      hub/scripts/."
   checkCmd "cp -r $CLI/sh       hub/scripts/."
 
-  checkCmd "cp -r $CLI/../doc hub/."
+  checkCmd "mkdir -p hub/doc"
   checkCmd "cp $CLI/../README.md  hub/doc/."
   zipDir "hub" "$hubV" "" "Enabled"
 
