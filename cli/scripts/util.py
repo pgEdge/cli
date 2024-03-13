@@ -2952,7 +2952,7 @@ def http_get_file(
             file_size_dl_mb = int(file_size_dl / 1024 / 1024)
             download_pct = int(file_size_dl * 100 / file_size)
             if p_display_status:
-                my_modulo = file_size_dl % (1024 * 1024 * 10)
+                my_modulo = file_size_dl % (1024 * 1024 * 50)
                 if (file_size_dl_mb > 1) and (my_modulo == 0):
                     if p_json:
                         json_dict["status"] = "wip"
