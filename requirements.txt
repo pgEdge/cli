@@ -1,7 +1,7 @@
 requests>=2.27
 paramiko>=3.3.1
-psycopg>=3.1.17
-psycopg-binary>=3.1.17
+psycopg==3.1.17
+psycopg-binary==3.1.17
 psutil>=5.9.6
 pypsutil>=0.2.0
 semantic_version>=2.10.0
@@ -11,10 +11,9 @@ typing_extensions>=4.9.0
 click>=8.1.7
 tabulate>=0.9.0
 
-## MULTICLOUD #######
+## VM ###############
 certifi>=3.0
 charset_normalizer>=2.0
-ansible>=8.7
 
 
 ## ACE ##############

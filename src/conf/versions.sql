@@ -230,7 +230,7 @@ INSERT INTO releases VALUES ('foslots-pg15', 10, 'foslots', 'FO Slots', '', 'pro
 INSERT INTO releases VALUES ('foslots-pg16', 10, 'foslots', 'FO Slots', '', 'prod', '', 1, 'POSTGRES', '', '');
 INSERT INTO versions VALUES ('foslots-pg14', '1a-1', 'el8, el9, arm9', 1, '20240108', 'pg14', '', '');
 INSERT INTO versions VALUES ('foslots-pg15', '1a-1', 'el8, el9, arm9', 1, '20240128', 'pg15', '', '');
-INSERT INTO versions VALUES ('foslots-pg16', '1a-1', 'el8, el9, arm9, osx', 1, '20240128', 'pg16', '', '');
+INSERT INTO versions VALUES ('foslots-pg16', '1a-1', 'el8, el9, arm9', 1, '20240128', 'pg16', '', '');
 
 INSERT INTO projects VALUES ('readonly', 'ext', 4, 0, 'hub',0, 'https://github.com/pgedge/readonly/tags',
   'readonly', 1, 'readonly.png', 'Support READ-ONLY Databases', 'https://github.com/pgedge/readonly');
@@ -239,7 +239,7 @@ INSERT INTO releases VALUES ('readonly-pg15', 10, 'readonly', 'pgReadOnly', '', 
 INSERT INTO releases VALUES ('readonly-pg16', 10, 'readonly', 'pgReadOnly', '', 'prod', '', 1, 'POSTGRES', '', '');
 INSERT INTO versions VALUES ('readonly-pg14', '1.1.1-1', 'el8, el9, arm9', 1, '20240108', 'pg14', '', '');
 INSERT INTO versions VALUES ('readonly-pg15', '1.1.1-1', 'el8, el9, arm9', 1, '20240108', 'pg15', '', '');
-INSERT INTO versions VALUES ('readonly-pg16', '1.1.1-1', 'el8, el9, arm9, osx', 1, '20240128', 'pg16', '', '');
+INSERT INTO versions VALUES ('readonly-pg16', '1.1.1-1', 'el8, el9, arm9', 1, '20240128', 'pg16', '', '');
 
 ----------------------------------
 INSERT INTO projects VALUES ('timescaledb', 'ext', 4, 0, 'hub',0, 'https://github.com/timescale/timescaledb/releases',
@@ -378,7 +378,6 @@ INSERT INTO projects VALUES ('ctlibs', 'pge', 0, 0, 'hub', 3, 'https://github.co
   'ctlibs',  0, 'ctlibs.png', 'ctlibs', 'https://github.com/pgedge/cli');
 INSERT INTO releases VALUES ('ctlibs', 2, 'ctlibs',  'nodectl Libs', '', 'prod', '', 1, '', '', '');
 INSERT INTO versions VALUES ('ctlibs', '1.2', '', 1, '20240130', '', '', '');
-INSERT INTO versions VALUES ('ctlibs', '1.1', '', 0, '20231130', '', '', '');
 
 INSERT INTO projects VALUES ('pgcat', 'pge', 11, 5433, 'hub', 3, 'https://github.com/pgedge/pgcat/tags',
   'cat',  0, 'pgcat.png', 'Connection Pooler', 'https://github.com/pgedge/pgcat');
@@ -399,7 +398,7 @@ INSERT INTO versions VALUES ('firewalld', '1.2', '', 0, '20231101', '', '', '');
 INSERT INTO projects VALUES ('patroni', 'app', 11, 0, 'etcd', 4, 'https://github.com/pgedge/pgedge-patroni/release',
   'patroni', 0, 'patroni.png', 'HA', 'https://github.com/pgedge/pgedge-patroni');
 INSERT INTO releases VALUES ('patroni', 1, 'patroni', 'pgEdge Patroni', '', 'prod', '', 1, 'POSTGRES', '', '');
-INSERT INTO versions VALUES ('patroni', '3.2.1-1', '', 1, '20240221', '', '', '');
+INSERT INTO versions VALUES ('patroni', '3.2.1-1', '', 0, '20240221', '', '', '');
 
 INSERT INTO projects VALUES ('etcd', 'app', 11, 2379, 'hub', 4, 'https://github.com/etcd-io/etcd/tags',
   'etcd', 0, 'etcd.png', 'HA', 'https://github.com/etcd-io/etcd');
