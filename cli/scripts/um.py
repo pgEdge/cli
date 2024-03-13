@@ -131,9 +131,17 @@ def clean():
     """Delete downloaded component files from local cache"""
     conf_cache = util.MY_HOME + os.sep + "conf" + os.sep + "cache" + os.sep + "*"
     files = glob.glob(conf_cache)
+    kount = 0
     for f in files:
+        kount = kount + 1
+        util.message(f"deleting {f}")
         os.remove(f)
-    util.exit_cleanly(0)
+
+    msg = ""
+    if kount == 0:
+       msg = "local cache is already empty"
+
+    util.exit_message(msg, 0)
 
 
 if __name__ == "__main__":
