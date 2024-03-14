@@ -1,275 +1,258 @@
 #!/usr/bin/env python3
-
-# Copyright 2022-2024 PGEDGE All rights reserved.
-
+#     Copyright (c)  2022-2024 PGEDGE  #
 import subprocess
-import json
-from tabulate import tabulate
-from datetime import datetime
+import os
 import fire
-import sys
+import util
+import json
+from datetime import datetime
+from tabulate import tabulate
 
-base_dir = "cluster"
 
-def pgedge_create_stanza():
-    """
-    pgedge: Add or modify backup annotation.
-    Usage: pgedge backrest create-stanza
-    """
-    # Add logic here to create a stanza
-    pass
+def fetch_backup_config():
+    """Fetch backup configuration from util module or other configuration source."""
+    config = {
+        "BACKUP_TOOL": util.get_value("BACKUP", "BACKUP_TOOL"),
+        "STANZA": util.get_value("BACKUP", "STANZA"),
+        "DATABASE": util.get_value("BACKUP", "DATABASE"),
+        "PG_PATH": util.get_value("BACKUP", "PG_PATH"),
+        "SOCKET_PATH": util.get_value("BACKUP", "SOCKET_PATH"),
+        "PG_USER": util.get_value("BACKUP", "PG_USER"),
+        "REPO_CIPHER_TYPE": util.get_value("BACKUP", "REPO_CIPHER_TYPE"),
+        "REPO_PATH": util.get_value("BACKUP", "REPO_PATH"),
+        "REPO_RETENTION_FULL_TYPE": util.get_value("BACKUP", "REPO_RETENTION_FULL_TYPE"),
+        "REPO_RETENTION_FULL": util.get_value("BACKUP", "REPO_RETENTION_FULL"),
+        "PRIMARY_HOST": util.get_value("BACKUP", "PRIMARY_HOST"),
+        "PRIMARY_PORT": util.get_value("BACKUP", "PRIMARY_PORT"),
+        "PRIMARY_USER": util.get_value("BACKUP", "PRIMARY_USER"),
+        "REPLICA_PASSWORD": util.get_value("BACKUP", "REPLICA_PASSWORD"),
+        "RECOVERY_TARGET_TIME": util.get_value("BACKUP", "RECOVERY_TARGET_TIME"),
+        "RESTORE_PATH": util.get_value("BACKUP", "RESTORE_PATH"),
+        
+        "REPO1_TYPE": util.get_value("BACKUP", "REPO1_TYPE"),
+        
+        "REPO_PATH": util.get_value("BACKUP", "REPO_PATH"),
+        "PG_PATH": util.get_value("BACKUP", "PG_PATH"),
+        "BACKUP_TYPE": util.get_value("BACKUP", "BACKUP_TYPE"),
+        
+        "S3_BUCKET": util.get_value("BACKUP", "S3_BUCKET"),
+        "S3_REGION": util.get_value("BACKUP", "S3_REGION"),
+        "S3_ENDPOINT": util.get_value("BACKUP", "S3_ENDPOINT"),
+    }
+    return config
 
-def pgedge_service_status():
-    """
-    pgedge: Check service status.
-    Usage: pgedge backrest service-status
-    """
+def run_command(command_args):
     try:
-        # Run a command to check the status of the backrest service
-        subprocess.run(["systemctl", "status", "backrest.service"], check=True)
+        subprocess.run(command_args, check=True)
+        print("Command executed successfully.")
     except subprocess.CalledProcessError as e:
-        # If the command fails, print the error message
-        print("Error checking service status:", e)
-
-def pgedge_service_log():
-    """
-    pgedge: Get remote service log.
-    Usage: pgedge backrest service-log
-    """
-    try:
-        # Run a command to retrieve the log of the backrest service
-        subprocess.run(["journalctl", "-u", "backrest.service"], check=True)
-    except subprocess.CalledProcessError as e:
-        # If the command fails, print the error message
-        print("Error retrieving service log:", e)
-
-def pgedge_list_backups():
-    """
-    pgedge: List stanza name, start time, end time, WAL start, and WAL end using pgbackrest info command.
-    Usage: pgedge backrest list-backups
-    """
-    try:
-        # Run pgbackrest info command and capture its output as JSON
-        output = subprocess.check_output(["pgbackrest", "info", "--output=json"], stderr=subprocess.STDOUT, universal_newlines=True)
-        backups_info = json.loads(output)[0]['backup']  # Extract the list of backups
-
-        # Extract necessary information for each backup
-        backup_table = []
-        for backup in backups_info:
-            try:
-                stanza_name = "pg16"  # Assuming the stanza name is always "pg16" based on the provided JSON
-                start_time_unix = backup['timestamp']['start']
-                end_time_unix = backup['timestamp']['stop']
-                wal_start = backup['lsn']['start']
-                wal_end = backup['lsn']['stop']
-                backup_type = backup['type']
-                backup_label = backup['label']
-                backup_size = backup['info']['size']
-
-                # Convert start and end time from UNIX timestamp to actual date and time
-                start_time = datetime.utcfromtimestamp(start_time_unix).strftime('%Y-%m-%d %H:%M:%S')
-                end_time = datetime.utcfromtimestamp(end_time_unix).strftime('%Y-%m-%d %H:%M:%S')
-            except KeyError as e:
-                # If a KeyError occurs, set the corresponding value to "null"
-                print(f"Warning: Missing field - {e}")
-                stanza_name = start_time = end_time = wal_start = wal_end = backup_type = backup_label = backup_size = "null"
-
-            backup_table.append([stanza_name, start_time, end_time, wal_start, wal_end, backup_type, backup_label, backup_size])
-
-        # Print the table
-        headers = ["Stanza Name", "Start Time", "End Time", "WAL Start", "WAL End", "Backup Type", "Label", "Size"]
-        print(tabulate(backup_table, headers=headers, tablefmt="grid"))
-    except subprocess.CalledProcessError as e:
-        # If the command fails, print the error message
-        print("Error executing pgbackrest info command:", e.output)
-    except KeyError as ke:
-        # If there's a KeyError, print the error message and provide information about the JSON structure
-        print("Error accessing JSON data:", ke)
-        print("Ensure that the JSON structure matches the expected format.")
+        print("Error executing command:", e)
 
 
+def backup(backup_type="full"):
+    """Perform a backup using the specified backup tool and backup type, storing the backup at the specified backup path."""
+    config = fetch_backup_config()
+    allowed_types = ["full", "diff", "incr"]
+    if backup_type not in allowed_types:
+        print(f"Error: '{backup_type}' is not a valid backup type. Allowed types are: {', '.join(allowed_types)}.")
+        return
 
-def pgedge_pitr(pitr_json_file):
-    """ 
-    pgedge: Restore a backup using pgbackrest restore command
-    Usage: pgedge backrest pitr <pitr_json_file>
-    """
-    if not os.path.exists(pitr_json_file):
-        raise FileNotFoundError(f"PITR JSON file '{pitr_json_file}' not found.")
+    command = [
+        config["BACKUP_TOOL"], "--type", backup_type, "backup",
+        "--stanza", config["STANZA"],
+        "--pg1-path", config["PG_PATH"],
+        "--repo1-retention-full-type", config["REPO_RETENTION_FULL_TYPE"],
+        "--repo1-retention-full", config["REPO_RETENTION_FULL"],
+    ]
+    
+    # Adding repository type specific configurations
+    if config["REPO1_TYPE"] == "s3":
+        command.extend([
+            "--repo1-type", "s3",
+            "--repo1-s3-bucket", config["S3_BUCKET"],
+            "--repo1-s3-region", config["S3_REGION"],
+            "--repo1-s3-endpoint", config["S3_ENDPOINT"],
+        ])
+    elif config["REPO1_TYPE"] == "posix":
+        command.extend(["--repo1-path", config["REPO_PATH"]])
+    
+    run_command(command)
 
-    try:
-        # Run pgbackrest restore command
-        subprocess.run(["pgbackrest", "restore"], check=True)
-    except subprocess.CalledProcessError as e:
-        # If the command fails, print the error message
-        print("Error executing pgbackrest restore command:", e.output)
+def restore(backup_id=None, recovery_target_time=None):
+    """
+    Restore database from a specified backup or to a specific point in time.
+    
+    Args:
+        backup_id (str, optional): The ID of the backup to restore from. If not provided, the latest backup will be used.
+        recovery_target_time (str, optional): The target time for point-in-time recovery (PITR). This is applicable if the backup tool supports PITR.
+    """
+    # Fetch the configuration
+    config = fetch_backup_config()
 
-def pgbackrest_annotate():
-    """
-    Add or modify backup annotation.
-    pgedge backrest  annotate
-    """
-    call_pgbackrest("annotate")
+    # Start constructing the restore command based on the backup tool
+    command = [
+        config["BACKUP_TOOL"],
+        "restore",
+        "--stanza", config["STANZA"],
+        "--pg1-path", config["RESTORE_PATH"]
+    ]
 
-def pgbackrest_archive_get():
-    """
-    Get a WAL segment from the archive.
-    pgedge backrest  archive-get
-    """
-    call_pgbackrest("archive-get")
+    # For pgBackRest, extend command based on `backup_id` and `recovery_target_time`
+    if config["BACKUP_TOOL"] == "pgbackrest":
+        if backup_id:
+            command += ["--set", backup_id]
+        if recovery_target_time:
+            command += ["--type", "time", "--target", recovery_target_time]
 
-def pgbackrest_archive_push():
-    """
-    Push a WAL segment to the archive.
-    pgedge backrest  archive-push
-    """
-    call_pgbackrest("archive-push")
+    run_command(command)
 
-def pgbackrest_backup():
-    """
-    Backup a database cluster.
-    pgedge backrest  backup
-    """
-    call_pgbackrest("backup")
+def _configure_replica(operation_type='replica'):
+    
+    config = fetch_backup_config()
+    postgresql_conf_path = os.path.join(config["RESTORE_PATH"], "postgresql.conf")
+    primary_conninfo = f"host={config['PRIMARY_HOST']} port={config['PRIMARY_PORT']} user={config['PRIMARY_USER']} password={config['REPLICA_PASSWORD']}"
 
-def pgbackrest_check():
-    """
-    Check the configuration.
-    pgedge backrest  check
-    """
-    call_pgbackrest("check")
+    with open(postgresql_conf_path, "a") as conf_file:
+        conf_file.write("\n# Replica settings\n")
+        conf_file.write(f"primary_conninfo = '{primary_conninfo}'\n")
 
-def pgbackrest_expire():
-    """
-    Expire backups that exceed retention.
-    pgedge backrest  expire
-    """
-    call_pgbackrest("expire")
+        if operation_type == 'replica':
+            # Specific settings for replica operation
+            conf_file.write("promote_trigger_file = '/tmp/pg_trigger'\n")
+        elif operation_type == 'pitr':
+            # Specific settings for PITR operation, if any
+            pass
 
-def pgbackrest_info():
-    """
-    Retrieve information about backups.
-    pgedge backrest  info
-    """
-    call_pgbackrest("info")
+    print("Configurations modified to configure as replica.")
 
-def pgbackrest_repo_get():
+def create_replica(backup_id=None, recovery_target_time=None, do_backup=False):
     """
-    Get a file from a repository.
-    pgedge backrest  repo-get
-    """
-    call_pgbackrest("repo-get")
+    Create a replica by restoring from a backup and configure it. If specified, perform PITR.
+    Optionally, initiate a backup before creating the replica.
 
-def pgbackrest_repo_ls():
+    Args:
+        backup_id (str, optional): The ID of the backup to use for creating the replica.
+                                   If not provided, the latest backup will be used unless do_backup is True.
+        recovery_target_time (str, optional): The target time for PITR.
+        do_backup (bool, optional): Whether to initiate a new backup before creating the replica.
+                                    Defaults to False.
     """
-    List files in a repository.
-    pgedge backrest  repo-ls
-    """
-    call_pgbackrest("repo-ls")
+    config = fetch_backup_config()
+    
+    # If do_backup is True, initiate a backup before proceeding
+    if do_backup:
+        print("Initiating a new backup...")
+        backup_command = [
+            config['BACKUP_TOOL'], "backup",
+            "--type", "full",
+            "--stanza", config['STANZA'],
+            "--pg1-path", config['PG_PATH']
+        ]
+        # Execute the backup command
+        run_command(backup_command)
+        # Optionally, update backup_id with the ID of the new backup if needed
+    
+    # Perform PITR if recovery_target_time is specified
+    if recovery_target_time:
+        print("Performing PITR...")
+        command = [
+            config['BACKUP_TOOL'], "restore",
+            "--stanza", config['STANZA'],
+            "--pg1-path", config['RESTORE_PATH'],
+            "--type", "time",
+            "--target", recovery_target_time
+        ]
+    else:
+        print("Creating replica from backup...")
+        command = [
+            config['BACKUP_TOOL'], "restore",
+            "--stanza", config['STANZA'],
+            "--pg1-path", config['RESTORE_PATH']
+        ]
+        if backup_id:
+            command += ["--set", backup_id]
+        elif not do_backup:
+            # If do_backup is False and no backup_id is provided, use the latest backup
+            print("Using the latest available backup for restoration.")
 
-def pgbackrest_server():
-    """
-    pgBackRest server.
-    pgedge backrest  server
-    """
-    call_pgbackrest("server")
+    # Execute the restore command
+    run_command(command)
 
-def pgbackrest_server_ping():
-    """
-    Ping pgBackRest server.
-    pgedge backrest  server-ping
-    """
-    call_pgbackrest("server-ping")
+    # Configure the PostgreSQL instance as a replica
+    _configure_replica(operation_type="pitr" if recovery_target_time else "replica")
 
-def pgbackrest_stanza_create():
-    """
-    Create the required stanza data.
-    pgedge backrest  stanza-create
-    """
-    call_pgbackrest("stanza-create")
 
-def pgbackrest_stanza_delete():
+def list_backups():
     """
-    Delete a stanza.
-    pgedge backrest  stanza-delete
+    List backups using the configured backup tool.
     """
-    call_pgbackrest("stanza-delete")
+    config = fetch_backup_config()
+    if config["BACKUP_TOOL"] == "pgbackrest":
+        try:
+            # Execute the pgbackrest info command with JSON output format
+            command_output = subprocess.check_output([config["BACKUP_TOOL"], "info", "--output=json"],
+                                                     stderr=subprocess.STDOUT, universal_newlines=True)
+            backups_info = json.loads(command_output)
 
-def pgbackrest_stanza_upgrade():
-    """
-    Upgrade a stanza.
-    pgedge backrest  stanza-upgrade
-    """
-    call_pgbackrest("stanza-upgrade")
+            # Prepare table data from backups info
+            backup_table = []
+            for stanza_info in backups_info:
+                for backup in stanza_info.get('backup', []):
+                    backup_details = [
+                        stanza_info['name'],  # Stanza Name
+                        backup.get('label', 'N/A'),  # Backup Label
+                        datetime.utcfromtimestamp(backup['timestamp']['start']).strftime('%Y-%m-%d %H:%M:%S'),  # Start Time
+                        datetime.utcfromtimestamp(backup['timestamp']['stop']).strftime('%Y-%m-%d %H:%M:%S'),  # End Time
+                        backup.get('lsn', {}).get('start', 'N/A'),  # WAL Start
+                        backup.get('lsn', {}).get('stop', 'N/A'),  # WAL End
+                        backup.get('type', 'N/A'),  # Backup Type
+                        f"{backup.get('info', {}).get('size', 0) / (1024**3):.2f} GB"  # Backup Size in GB
+                    ]
+                    backup_table.append(backup_details)
 
-def pgbackrest_start():
-    """
-    Allow pgBackRest processes to run.
-    pgedge backrest  start
-    """
-    call_pgbackrest("start")
+            # Print the backup table
+            headers = ["Stanza Name", "Label", "Start Time", "End Time", "WAL Start", "WAL End", "Backup Type", "Size (GB)"]
+            print(tabulate(backup_table, headers=headers, tablefmt="grid"))
 
-def pgbackrest_stop():
-    """
-    Stop pgBackRest processes from running.
-    pgedge backrest  stop
-    """
-    call_pgbackrest("stop")
+        except subprocess.CalledProcessError as e:
+            print(f"Error executing {config['BACKUP_TOOL']} info command:", e.output)
+        except KeyError as ke:
+            print(f"Error processing JSON data from {config['BACKUP_TOOL']}:", ke)
+    else:
+        print(f"The backup tool '{config['BACKUP_TOOL']}' does not support listing backups through this script.")
 
-def pgbackrest_verify():
-    """
-    Verify contents of the repository.
-    pgedge backrest  verify
-    """
-    call_pgbackrest("verify")
 
-def pgbackrest_version():
+def print_config():
     """
-    Get version.
-    pgedge backrest  version
+    List configuration parameter configured backup tool.
     """
-    call_pgbackrest("version")
+    config = fetch_backup_config()
+    bold_start = "\033[1m"
+    bold_end = "\033[0m"
+    max_key_length = max(len(key) for key in config.keys())
+    max_value_length = max(len(value) for value in config.values())
+    line_length = max_key_length + max_value_length + 4  # Including spaces around colon
 
-def call_pgbackrest(command):
-    """
-    Call pgbackrest with provided command.
-    """
-    try:
-        # Form the command to execute pgbackrest with provided command
-        full_command = ["pgbackrest", command]
-        # Execute the command
-        subprocess.run(full_command, check=True)
-    except subprocess.CalledProcessError as e:
-        # If the command fails, print the error message
-        print(f"Error executing pgbackrest command '{command}':", e.output)
+    # Print the top border
+    print(bold_start + "#" * (line_length + 4) + bold_end)  # Adjusting for padding
+    
+    for key, value in config.items():
+        # Right-align the key, align colons vertically, and ensure values are left-aligned
+        if key == bold_start + "REPLICA_PASSWORD" + bold_end:
+            val = "******"
+            print(f"# {key.rjust(max_key_length)} : {val.ljust(max_value_length)}")
+        else:  
+          print(bold_start + f"# {key.rjust(max_key_length)}" + bold_end + f": {value.ljust(max_value_length)}")
+        
+    # Print the bottom border
+    print(bold_start + "#" * (line_length + 4) + bold_end)  # Adjusting for padding
 
 if __name__ == "__main__":
-    # Create a Fire instance with the dictionary of commands
-    fire_dict = {
-        "create-stanza": pgedge_create_stanza,
-        "service-log": pgedge_service_log,
-        "service-status": pgedge_service_status,
-        "list-backups": pgedge_list_backups,
-        "pitr": pgedge_pitr,
-        "annotate": pgbackrest_annotate,
-        "archive-get": pgbackrest_archive_get,
-        "archive-push": pgbackrest_archive_push,
-        "backup": pgbackrest_backup,
-        "check": pgbackrest_check,
-        "expire": pgbackrest_expire,
-        "info": pgbackrest_info,
-        "repo-get": pgbackrest_repo_get,
-        "repo-ls": pgbackrest_repo_ls,
-        "server": pgbackrest_server,
-        "server-ping": pgbackrest_server_ping,
-        "stanza-create": pgbackrest_stanza_create,
-        "stanza-delete": pgbackrest_stanza_delete,
-        "stanza-upgrade": pgbackrest_stanza_upgrade,
-        "start": pgbackrest_start,
-        "stop": pgbackrest_stop,
-        "verify": pgbackrest_verify,
-        "version": pgbackrest_version
-    }
-
-    fire.Fire(fire_dict)
+    fire.Fire({
+        "backup": backup,
+        "restore": restore,
+        "create_replica": create_replica,
+        "list": list_backups,
+        "config": print_config,
+    })
 
