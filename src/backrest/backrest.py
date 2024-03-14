@@ -2,6 +2,7 @@
 #     Copyright (c)  2022-2024 PGEDGE  #
 import subprocess
 import os
+import sys
 import fire
 import util
 import json
@@ -97,7 +98,17 @@ def check_restore_path(restore_path):
         return True, directory_existed  # Directory exists and is writable
 
 def restore(backup_id=None, recovery_target_time=None):
-    
+    """
+    Restore a PostgreSQL database from a backup.
+
+    Args:
+        backup_id (str, optional): Specific backup ID to restore from. If not provided,
+                                   the latest backup will be used.
+        recovery_target_time (str, optional): Specific point in time to restore to,
+                                    useful for point-in-time recovery (PITR).
+                                    Must be a string in a format recognized by PostgreSQL.
+    """ 
+ 
     config = fetch_backup_config()
     path_check, directory_existed = check_restore_path(config["RESTORE_PATH"])
     if not path_check:  # No permission or failed to create directory
@@ -243,6 +254,22 @@ def print_config():
     # Print the bottom border
     print(bold_start + "#" * (line_length + 4) + bold_end)  # Adjusting for padding
 
+def run_external_command(*args):
+    """
+    Run pgbackrest) with the given arguments.
+    Automatically prepends 'pgbackrest' to the arguments.
+    """
+    # Prepend 'pgbackrest' to the command arguments
+    command = ["pgbackrest"] + list(args)
+    try:
+        # Execute the command and capture the output
+        result = subprocess.run(command, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+        # If the command was successful, print the stdout
+        print(result.stdout)
+    except subprocess.CalledProcessError as e:
+        # If an error occurred, print the stderr
+        print(f"Error executing command: {e.stderr}")
+
 if __name__ == "__main__":
     fire.Fire({
         "backup": backup,
@@ -250,5 +277,6 @@ if __name__ == "__main__":
         "create_replica": create_replica,
         "list": list_backups,
         "config": print_config,
+        "command": run_external_command,
     })
 
