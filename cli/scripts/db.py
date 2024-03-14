@@ -2,8 +2,14 @@
 #  Copyright 2022-2024 PGEDGE  All rights reserved. #
 #####################################################
 
-import os, sys
-import util, fire
+import os
+import sys
+import platform
+import subprocess
+import json
+
+import util
+import fire
 
 
 def create(db=None, User=None, Passwd=None, pg=None, spock=None):
@@ -139,19 +145,28 @@ def guc_show(guc_name, pg=None):
     sys.exit(0)
 
 
-def io_test(p_parms=False):
-  util.message(f"io_test({p_parms})", "debug")
-  rc = os.system("fio --version >/dev/null 2>&1")
-  if rc != 0:
-     util.exit_message("missing 'fio' Linux utility", 1)
+def test_io():
+    """ Use the 'fio' Flexible IO Tester on pg data directory """
 
-  if (p_parms == "help") or (p_parms in (True, False)):
-    os.system("fio --help")
-    util.exit_cleanly(0)
+    if platform.system() != "Linux":
+        util.exit_message("Must run on Linux w 'fio' package installed")
 
-  rc = util.echo_cmd(f"fio {p_parms}")
-  if rc != 0:
-    util.exit_cleanly(1)
+    rc = os.system("fio --version >/dev/null 2>&1")
+    if rc != 0:
+        util.exit_message("Missing 'fio'. In Rocky install via: \n" + \
+          "  'dnf --enablerepo=devel install fio' \n" + \
+          "or in Ubuntu perhaps via: \n" + \
+          "  'apt install fio'")
+
+    fio_cmd = "-rw=write -bs=8Ki -fsync=1 -runtime=2s -size=2GB -directory=/tmp -name=test_io  --output-format=json"
+
+    j_out_file = "/tmp/test_io.json"
+    rc =  os.system(f"fio {fio_cmd} > {j_out_file}")
+
+    j_out = util.get_parsed_json(j_out_file)
+
+    print(json.dumps(j_out, indent=2))
+
 
 
 if __name__ == "__main__":
@@ -160,6 +175,6 @@ if __name__ == "__main__":
             "create": create,
             "guc-set": guc_set,
             "guc-show": guc_show,
-            "io-test": io_test
+            "test-io": test_io
         }
     )

@@ -78,6 +78,18 @@ COMMAND = 15
 DEBUG = 10
 DEBUG2 = 9
 
+
+def get_parsed_json(file_nm):
+    parsed_json = None
+    try:
+        with open(file_nm, "r") as f:
+            parsed_json = json.load(f)
+    except Exception as e:
+        util.exit_message(f"Unable to load json file: {file_nm}\n{e}")
+
+    return(parsed_json)
+
+
 # Custom loglevel functions
 def debug2(self, message, *args, **kws):
     # Yes, logger takes its '*args' as 'args'.
