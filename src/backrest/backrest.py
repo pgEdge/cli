@@ -2,7 +2,6 @@
 #     Copyright (c)  2022-2024 PGEDGE  #
 import subprocess
 import os
-import sys
 import fire
 import util
 import json
@@ -105,10 +104,9 @@ def restore(backup_id=None, recovery_target_time=None):
         backup_id (str, optional): Specific backup ID to restore from. If not provided,
                                    the latest backup will be used.
         recovery_target_time (str, optional): Specific point in time to restore to,
-                                    useful for point-in-time recovery (PITR).
-                                    Must be a string in a format recognized by PostgreSQL.
+                                               useful for point-in-time recovery (PITR).
+                                               Must be a string in a format recognized by PostgreSQL.
     """ 
- 
     config = fetch_backup_config()
     path_check, directory_existed = check_restore_path(config["RESTORE_PATH"])
     if not path_check:  # No permission or failed to create directory
