@@ -64,7 +64,7 @@ def configure_backup_settings(stanza_name):
         "PRIMARY_USER": current_user,
         "REPLICA_PASSWORD": "123",
         "RECOVERY_TARGET_TIME": "",
-        "RESTORE_PATH": "/path/to/restore",
+        "RESTORE_PATH": "/tmp/",
         "REPO1_TYPE": "local",
         "BACKUP_TYPE": "full",
         "S3_BUCKET": "",
@@ -111,6 +111,18 @@ def generate_cipher_pass():
     sCipher = bCipher.decode("ascii")
     util.replace("repo1-cipher-pass=xx", f"repo1-cipher-pass={sCipher}", conf_file, True)
     util.set_value("BACKUP", "REPO_CIPHER_PASSWORD", sCipher)
+
+def modify_hba_conf():
+  new_rules = [
+      {
+          "type": "host",
+          "database": "replication",
+           "user": "all",
+           "address": "127.0.0.1/0",
+           "method": "trust"
+      }
+  ]
+  util.update_pg_hba_conf(pgV, new_rules)
 
 def modify_postgresql_conf(stanza):
     """
@@ -240,6 +252,7 @@ def main():
 
     print_header("Configuring pgbackrest's setting in postgresql.conf")
     modify_postgresql_conf(pgV)
+    modify_hba_conf()
 
     print_header("Restarting PostgreSQL instance " + pgV)
     osSys(f"../pgedge restart {pgV}")

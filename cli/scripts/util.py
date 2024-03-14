@@ -1948,6 +1948,14 @@ def change_pgconf_keyval_auto(p_pgver, p_key, p_val, p_replace=False):
 
     return True
 
+def update_pg_hba_conf(p_pgver, rules):
+    pg_data = get_column("datadir", p_pgver)
+    pg_hba_path = os.path.join(pg_data, "pg_hba.conf")
+
+    with open(pg_hba_path, "a") as pg_hba:
+        for rule in rules:
+            line = f"{rule['type']} {rule['database']} {rule['user']} {rule['address']} {rule['method']}\n"
+            pg_hba.write(line)
 
 def update_postgresql_conf(p_pgver, p_port, is_new=True, update_listen_addr=True):
     set_column("port", p_pgver, str(p_port))
