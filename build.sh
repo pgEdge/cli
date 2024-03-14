@@ -460,7 +460,7 @@ initPG () {
     initC "readonly-pg$pgM"   "readonly"   "$readonlyV"  "$outPlat" "postgres/readonly"   "" "" "nil"
   fi
 
-  if [ "$pgM" == "15" ] || [ "$pgM" == "16" ]; then
+  if [ "$pgM" == "14" ] || [ "$pgM" == "15" ] || [ "$pgM" == "16" ]; then
     initC "spock33-pg$pgM"    "spock33"    "$spock33V"   "$outPlat" "postgres/spock33"   "" "" "nil"
   fi
 

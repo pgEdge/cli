@@ -4,7 +4,7 @@ import os
 
 MY_VERSION = "24.3.2"
 DEFAULT_PG = "16"
-DEFAULT_SPOCK = "32"
+DEFAULT_SPOCK = "33"
 MY_CMD = os.getenv("MY_CMD", None)
 MY_HOME = os.getenv("MY_HOME", None)
 MY_LITE = os.getenv("MY_LITE", None)

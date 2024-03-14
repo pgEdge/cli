@@ -134,8 +134,8 @@ def setup_pgedge(User=None, Passwd=None, dbName=None, port=None, pg_ver=None, sp
        :param Passwd: The password for the newly created db user (required)
        :param dbName: The database name (required)
        :param port: Defaults to 5432 if not specified
-       :param pg_ver: Defaults to latest prod version of pg, such as 16.  May be pinned to a specific pg version such as 16.1
-       :param spock_ver: Defaults to latest prod version of spock, such as 3.2.  May be pinned to a specific spock version such as 3.2.4
+       :param pg_ver: Defaults to latest prod version of pg, such as 16.  May be pinned to a specific pg version such as 16.2
+       :param spock_ver: Defaults to latest prod version of spock, such as 3.3.  May be pinned to a specific spock version such as 3.3.1
        :param autostart: Defaults to False
     """
 
