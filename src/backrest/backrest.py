@@ -78,52 +78,91 @@ def backup(backup_type="full"):
     
     run_command(command)
 
+def check_restore_path(restore_path):
+    """Check if the restore path exists and if it is writable."""
+    directory_existed = os.path.exists(restore_path)
+    
+    if not directory_existed:
+        print(f"INFO: Restore path '{restore_path}' does not exist. Will attempt to create.", file=sys.stderr)
+        try:
+            os.makedirs(restore_path)  # Attempt to create the directory
+            return True, False  # Directory was successfully created, did not exist before
+        except PermissionError:
+            print(f"Error: No permission to create the restore path '{restore_path}'.", file=sys.stderr)
+            return False, False  # Permission error to create directory
+    elif not os.access(restore_path, os.W_OK):
+        print(f"Error: No write permission on the restore path '{restore_path}'.", file=sys.stderr)
+        return False, directory_existed  # Directory exists but no write permission
+    else:
+        return True, directory_existed  # Directory exists and is writable
+
 def restore(backup_id=None, recovery_target_time=None):
     """
-    Restore database from a specified backup or to a specific point in time.
-    
-    Args:
-        backup_id (str, optional): The ID of the backup to restore from. If not provided, the latest backup will be used.
-        recovery_target_time (str, optional): The target time for point-in-time recovery (PITR). This is applicable if the backup tool supports PITR.
-    """
-    # Fetch the configuration
-    config = fetch_backup_config()
+    Restore a PostgreSQL database from a backup.
 
-    # Start constructing the restore command based on the backup tool
+    Args:
+        backup_id (str, optional): Specific backup ID to restore from. If not provided,
+                                   the latest backup will be used.
+        recovery_target_time (str, optional): Specific point in time to restore to,
+                                               useful for point-in-time recovery (PITR).
+                                               Must be a string in a format recognized by PostgreSQL.
+    """ 
+    config = fetch_backup_config()
+    path_check, directory_existed = check_restore_path(config["RESTORE_PATH"])
+    if not path_check:  # No permission or failed to create directory
+        return  # Exit function without attempting to restore
+    
+    # Construct the restore command
     command = [
         config["BACKUP_TOOL"],
         "restore",
         "--stanza", config["STANZA"],
         "--pg1-path", config["RESTORE_PATH"]
     ]
-
-    # For pgBackRest, extend command based on `backup_id` and `recovery_target_time`
+    
+    # Append --delta if the directory existed and is writable
+    if directory_existed:
+        command.append("--delta")
+    
+    # Extend command based on `backup_id` and `recovery_target_time`
     if config["BACKUP_TOOL"] == "pgbackrest":
         if backup_id:
-            command += ["--set", backup_id]
+            command.append("--set={}".format(backup_id))
         if recovery_target_time:
-            command += ["--type", "time", "--target", recovery_target_time]
-
+            command.extend(["--type=time", "--target={}".format(recovery_target_time)])
+    
     run_command(command)
+    print("Restoration completed successfully.")
+
+def modify_postgresql_conf(stanza):
+     """
+     Modify 'postgresql.conf' to integrate with pgBackRest.
+     """
+     aCmd = f"pgbackrest --stanza={stanza} archive-push %p"
+     util.change_pgconf_keyval(stanza, "archive_command", aCmd, p_replace=True)
+     util.change_pgconf_keyval(stanza, "archive_mode", "on", p_replace=True)
 
 def _configure_replica(operation_type='replica'):
-    
     config = fetch_backup_config()
     postgresql_conf_path = os.path.join(config["RESTORE_PATH"], "postgresql.conf")
+    standby_signal_path = os.path.join(config["RESTORE_PATH"], "standby.signal")
+
+    # Connection info for the primary server
     primary_conninfo = f"host={config['PRIMARY_HOST']} port={config['PRIMARY_PORT']} user={config['PRIMARY_USER']} password={config['REPLICA_PASSWORD']}"
 
     with open(postgresql_conf_path, "a") as conf_file:
         conf_file.write("\n# Replica settings\n")
         conf_file.write(f"primary_conninfo = '{primary_conninfo}'\n")
+        conf_file.write("hot_standby = on\n")  # Ensure hot standby is enabled for read-only queries on the replica
+        conf_file.write("port = 5433\n") 
 
-        if operation_type == 'replica':
-            # Specific settings for replica operation
-            conf_file.write("promote_trigger_file = '/tmp/pg_trigger'\n")
-        elif operation_type == 'pitr':
-            # Specific settings for PITR operation, if any
-            pass
+    # Create an empty standby.signal file to signal the instance to start in standby mode
+    # This is crucial for PostgreSQL versions 12 and above
+    with open(standby_signal_path, "w") as _:
+        pass
 
-    print("Configurations modified to configure as replica.")
+    print("Configurations modified to configure as replica. Ensure the PostgreSQL instance is restarted to apply these changes.")
+
 
 def create_replica(backup_id=None, recovery_target_time=None, do_backup=False):
     """
@@ -141,46 +180,12 @@ def create_replica(backup_id=None, recovery_target_time=None, do_backup=False):
     
     # If do_backup is True, initiate a backup before proceeding
     if do_backup:
-        print("Initiating a new backup...")
-        backup_command = [
-            config['BACKUP_TOOL'], "backup",
-            "--type", "full",
-            "--stanza", config['STANZA'],
-            "--pg1-path", config['PG_PATH']
-        ]
-        # Execute the backup command
-        run_command(backup_command)
-        # Optionally, update backup_id with the ID of the new backup if needed
-    
-    # Perform PITR if recovery_target_time is specified
-    if recovery_target_time:
-        print("Performing PITR...")
-        command = [
-            config['BACKUP_TOOL'], "restore",
-            "--stanza", config['STANZA'],
-            "--pg1-path", config['RESTORE_PATH'],
-            "--type", "time",
-            "--target", recovery_target_time
-        ]
-    else:
-        print("Creating replica from backup...")
-        command = [
-            config['BACKUP_TOOL'], "restore",
-            "--stanza", config['STANZA'],
-            "--pg1-path", config['RESTORE_PATH']
-        ]
-        if backup_id:
-            command += ["--set", backup_id]
-        elif not do_backup:
-            # If do_backup is False and no backup_id is provided, use the latest backup
-            print("Using the latest available backup for restoration.")
+      backup("full")
 
-    # Execute the restore command
-    run_command(command)
+    restore(backup_id, recovery_target_time)
 
     # Configure the PostgreSQL instance as a replica
     _configure_replica(operation_type="pitr" if recovery_target_time else "replica")
-
 
 def list_backups():
     """
@@ -247,6 +252,22 @@ def print_config():
     # Print the bottom border
     print(bold_start + "#" * (line_length + 4) + bold_end)  # Adjusting for padding
 
+def run_external_command(*args):
+    """
+    Run pgbackrest) with the given arguments.
+    Automatically prepends 'pgbackrest' to the arguments.
+    """
+    # Prepend 'pgbackrest' to the command arguments
+    command = ["pgbackrest"] + list(args)
+    try:
+        # Execute the command and capture the output
+        result = subprocess.run(command, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+        # If the command was successful, print the stdout
+        print(result.stdout)
+    except subprocess.CalledProcessError as e:
+        # If an error occurred, print the stderr
+        print(f"Error executing command: {e.stderr}")
+
 if __name__ == "__main__":
     fire.Fire({
         "backup": backup,
@@ -254,5 +275,6 @@ if __name__ == "__main__":
         "create_replica": create_replica,
         "list": list_backups,
         "config": print_config,
+        "command": run_external_command,
     })
 
