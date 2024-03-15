@@ -195,6 +195,8 @@ initDir () {
   copy-pgXX "orafce"
   copy-pgXX "spock32"
   copy-pgXX "spock33"
+  copy-pgXX "spock40"
+  copy-pgXX "lolor"
   copy-pgXX "curl"
   copy-pgXX "pglogical"
   ##copy-pgXX "anon"
@@ -446,22 +448,22 @@ initPG () {
   supplementalPG "$pgComp"
   zipDir "$pgComp" "$pgV" "$outPlat" "Enabled"
 
-  if [ "$pgM" \> "13" ] && [ "$pgM" \< "18" ]; then
-    initC "snowflake-pg$pgM"  "snowflake"  "$snwflkV"    "$outPlat" "postgres/snowflake" "" "" "nil"
-    initC "spock32-pg$pgM"    "spock32"    "$spock32V"   "$outPlat" "postgres/spock32"   "" "" "nil"
-  fi
-
-  if [ "$outPlat" == "osx" ]; then
-    return
-  fi
-
   if [ "$pgM" \> "13" ] && [ "$pgM" \< "17" ]; then
-    initC "foslots-pg$pgM"    "foslots"    "$foslotsV"   "$outPlat" "postgres/foslots"    "" "" "nil"
+    initC "snowflake-pg$pgM"  "snowflake"  "$snwflkV"    "$outPlat" "postgres/snowflake" "" "" "nil"
+    initC "spock33-pg$pgM"    "spock33"    "$spock33V"   "$outPlat" "postgres/spock33"   "" "" "nil"
     initC "readonly-pg$pgM"   "readonly"   "$readonlyV"  "$outPlat" "postgres/readonly"   "" "" "nil"
   fi
 
-  if [ "$pgM" == "14" ] || [ "$pgM" == "15" ] || [ "$pgM" == "16" ]; then
-    initC "spock33-pg$pgM"    "spock33"    "$spock33V"   "$outPlat" "postgres/spock33"   "" "" "nil"
+  if [ "$isEL" == "False" ]; then
+    return
+  fi
+
+  if [ "$pgM" == "15" ] || [ "$pgM" == "16" ]; then
+    initC "spock40-pg$pgM"    "spock40"    "$spock40V"   "$outPlat" "postgres/spock40"   "" "" "nil"
+  fi
+
+  if [ "$pgM" == "14" ] || [ "$pgM" == "15" ]; then
+    initC "foslots-pg$pgM"    "foslots"    "$foslotsV"   "$outPlat" "postgres/foslots"    "" "" "nil"
   fi
 
   if [ "$isEL9" == "True" ]; then
