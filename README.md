@@ -3,13 +3,13 @@
 This is the pgEdge Command Line Interface (CLI) for managing components. 
 Take a look at our main pgEdge [repo](https://github.com/pgEdge/pgedge) for tips and example CLI commands.
 
-You can also peruse our [CHANGELOG](https://github.com/pgEdge/pgedge/blob/main/CHANGELOG.md) if you'd like to learn more about our recent enhancememnts and fixes.
+You can also peruse our [CHANGELOG](https://github.com/pgEdge/pgedge/blob/main/CHANGELOG.md) if you'd like to learn more about our recent enhancements and fixes.
 
 # Using the CLI to control a pgEdge cluster
 
-Get started quickly by taking a look at our [CLI tutorials](https://github.com/pgEdge/pgedge/tree/main/cli/tutorials) to create your own localhost or vm cluster
+Get started quickly by taking a look at our [tutorials](https://github.com/pgEdge/pgedge/tree/main/cli/tutorials) to create your own localhost or vm cluster.
 
-Check out our [CLI Commands](https://github.com/pgEdge/pgedge/tree/main?tab=readme-ov-file#cli-commands) to learm more about our multi-master power at your fingertips. :-)
+Check out our [commands](https://github.com/pgEdge/pgedge/tree/main?tab=readme-ov-file#cli-commands) to learn more about our multi-master power at your fingertips. :-)
 
 
 # To setup a dev environment to contribute to this project:
