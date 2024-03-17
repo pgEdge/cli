@@ -44,9 +44,11 @@ def mainline():
         sys.exit(0)
 
     if (p_from_ver < "24.3.3"):
-        os.system("pwd")
-        util.echo_cmd(CTL + " remove ctlibs")
-        util.echo_cmd(CTL + " install ctlibs")
+        util.echo_cmd(f"cp {MY_HOME}/hub_new/hub/scripts/sh/cli.sh {MY_HOME}/pgedge")
+        if os.path.isdir("ctlibs"):
+           util.echo_cmd(f"{CTL} remove ctlibs")
+        
+        util.echo_cmd(f"{CTL} install ctlibs")
 
     sys.exit(rc)
     return
