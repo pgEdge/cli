@@ -19,7 +19,7 @@ fi
 
 printUsageMessage () {
   echo "#-------------------------------------------------------------------#"
-  echo "#                Copyright (c) 2022-2023 PGEDGE                     #"
+  echo "#                Copyright (c) 2022-2024 PGEDGE                     #"
   echo "#-------------------------------------------------------------------#"
   echo "# -p $P17 $P16 $P15 $P14 $P13 $P12"
   echo "# -b hub-$hubV"
@@ -286,7 +286,7 @@ zipDir () {
     echo "COMPONENT = '$baseName' '$pStatus'"
     options=""
     if [ "$osName" == "Linux" ]; then
-      options="--owner=0 --group=0 -I pigz"
+      options="--owner=0 --group=0"
     fi
     if [ "$pComponent" == "hub" ]; then
       zip_bz2=$baseName.tar.bz2
