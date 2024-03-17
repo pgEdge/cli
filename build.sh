@@ -477,6 +477,8 @@ initPG () {
     initC "foslots-pg$pgM"    "foslots"    "$foslotsV"   "$outPlat" "postgres/foslots"    "" "" "nil"
   fi
 
+  initC "backrest"     "backrest"     "$backrestV" "$outPlat" "postgres/backrest" "" "" "nil"
+
   if [ "$isEL9" == "True" ]; then
 
     if [ "$pgM" == "16" ]; then
@@ -514,7 +516,6 @@ initPG () {
     # initC "group-pgedge" "group-pgedge" "$grp_pgeV"  ""         "group-pgedge"      "" "" "Y"
 
     initC "prest"        "prest"        "$prestV"    "$outPlat" "pREST"             "" "" "nil"
-    initC "backrest"     "backrest"     "$backrestV" "$outPlat" "postgres/backrest" "" "" "nil"
     initC "patroni"      "patroni"      "$patroniV"  ""         "patroni"           "" "" "nil"
     initC "etcd"         "etcd"         "$etcdV"     "$outPlat" "etcd"              "" "" "nil"
     initC "firewalld"    "firewalld"    "$firwldV"   ""         "firewalld"         "" "" "nil"
