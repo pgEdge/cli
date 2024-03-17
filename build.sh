@@ -288,7 +288,12 @@ zipDir () {
     if [ "$osName" == "Linux" ]; then
       options="--owner=0 --group=0 -I pigz"
     fi
-    checkCmd "tar $options -cf $myTarball $pComponent"
+    if [ "$pComponent" == "hub" ]; then
+      zip_bz2=$baseName.tar.bz2
+      checkCmd "tar $options -cjf $zip_bz2 $pComponent"
+      writeFileChecksum $zip_bz2
+    fi
+    checkCmd "tar $options -czf $myTarball $pComponent"
     writeFileChecksum $myTarball
   fi
 
@@ -325,8 +330,10 @@ finalizeOutput () {
   checkCmd "cp $CLI/../README.md  hub/doc/."
   zipDir "hub" "$hubV" "" "Enabled"
 
-  checkCmd "cp conf/$verSQL ."
-  writeFileChecksum "$verSQL"
+  checkCmd "cp conf/versions.sql  ."
+  writeFileChecksum "versions.sql"
+  checkCmd "cp conf/versions.sql  versions24.sql"
+  writeFileChecksum "versions24.sql"
 
   checkCmd "cd $HUB"
 

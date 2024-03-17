@@ -1,5 +1,6 @@
-# PGEDGE CLI for ~/.bash... ############################################################
-alias bp="cd ~/dev/cli; . ./bp.sh"
+# PGEDGE CLI for ~/.bash... #############################################
+alias bp="cd ~/dev/cli; source bp.sh"
+alias bap="cd ~/dev/cli; ./build_all.sh; source bp.sh"
 alias ver="vi ~/dev/cli/src/conf/versions.sql"
 
 export REGION=us-east-2
@@ -11,6 +12,7 @@ export OUT=$DEV/out
 export HIST=$DEV/history
 export PGE=$DEV/cli
 export SOURCE=$IN/sources
+export DOC=$DEV/pgedge
 
 export DEVEL=$PGE/devel
 export PSX=$PGE/out/posix

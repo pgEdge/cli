@@ -43,7 +43,8 @@ def mainline():
         print("Nothing to do.")
         sys.exit(0)
 
-    if (p_from_ver < "24.2.4"):
+    if (p_from_ver < "24.3.3"):
+        os.system("pwd")
         util.echo_cmd(CTL + " remove ctlibs")
         util.echo_cmd(CTL + " install ctlibs")
 

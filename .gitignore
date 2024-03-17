@@ -2,6 +2,7 @@
 out/
 devel/pg/src
 devel/pg/1*
+devel/pgedge
 ## devel/pg/postgrest
 
 cli/scripts/conf
