@@ -97,7 +97,7 @@ CREATE VIEW v_versions AS
      AND r.component = v.component;
 
 INSERT INTO categories VALUES (0,   0, 'Hidden', 'NotShown');
-INSERT INTO categories VALUES (1,  10, 'Rock-solid Postgres', 'Postgres');
+INSERT INTO categories VALUES (1,  10, 'Postgres', 'Postgres');
 INSERT INTO categories VALUES (11, 30, 'Applications', 'Applications');
 INSERT INTO categories VALUES (10, 15, 'Streaming Change Data Capture', 'CDC');
 INSERT INTO categories VALUES (2,  12, 'Legacy RDBMS', 'Legacy');
