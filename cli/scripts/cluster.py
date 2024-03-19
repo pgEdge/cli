@@ -396,7 +396,7 @@ def ssh_install_pgedge(cluster_name, db, db_settings, db_user, db_passwd, nodes)
 
         REPO = os.getenv("REPO", "")
         if REPO == "":
-            REPO = "https://pgedge-upstream.s3.amazonaws.com/REPO"
+            REPO = "https://pgedge-download.s3.amazonaws.com/REPO"
             os.environ["REPO"] = REPO
 
         install_py = "install.py"

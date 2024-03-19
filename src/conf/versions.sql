@@ -64,13 +64,6 @@ INSERT INTO extensions VALUES ('spock33', 'spock',
    max_wal_senders=16 | hot_standby_feedback=on | wal_sender_timeout=5s |
    track_commit_timestamp=on | spock.conflict_resolution=last_update_wins | 
    spock.save_resolutions=on');
-INSERT INTO extensions VALUES ('spock40', 'spock', 
-  'wal_level=logical | max_worker_processes=12 | max_replication_slots=16 |
-   max_wal_senders=16 | hot_standby_feedback=on | wal_sender_timeout=5s |
-   track_commit_timestamp=on | spock.conflict_resolution=last_update_wins | 
-   spock.save_resolutions=on');
-INSERT INTO extensions VALUES ('lolor', 'lolor', 
-  'lo_compat_privileges=on');
 
 
 CREATE TABLE versions (
@@ -110,17 +103,8 @@ INSERT INTO categories VALUES (9,  87, 'Management & Monitoring', 'Manage/Monito
 -- ## HUB ################################
 INSERT INTO projects VALUES ('hub', 'app', 0, 0, 'hub', 0, 'https://github.com/pgedge/cli','',0,'','','');
 INSERT INTO releases VALUES ('hub', 1, 'hub', '', '', 'hidden', '', 1, '', '', '');
-INSERT INTO versions VALUES ('hub', '24.3.2',  '',  1, '20240317', '', '', '');
-INSERT INTO versions VALUES ('hub', '24.3.1',  '',  0, '20240307', '', '', '');
-INSERT INTO versions VALUES ('hub', '24.2.5',  '',  0, '20240301', '', '', '');
-INSERT INTO versions VALUES ('hub', '24.2.4',  '',  0, '20240223', '', '', '');
-INSERT INTO versions VALUES ('hub', '24.2.3',  '',  0, '20240221', '', '', '');
-INSERT INTO versions VALUES ('hub', '24.2.2',  '',  0, '20240214', '', '', '');
-INSERT INTO versions VALUES ('hub', '24.2.1',  '',  0, '20240212', '', '', '');
-INSERT INTO versions VALUES ('hub', '24.1.9',  '',  0, '20240207', '', '', '');
-INSERT INTO versions VALUES ('hub', '24.1.7',  '',  0, '20240131', '', '', '');
-INSERT INTO versions VALUES ('hub', '24.1.5',  '',  0, '20240108', '', '', '');
-INSERT INTO versions VALUES ('hub', '24.1.4',  '',  0, '20240102', '', '', '');
+INSERT INTO versions VALUES ('hub', '24.3.3',  '',  1, '20240319', '', '', '');
+INSERT INTO versions VALUES ('hub', '24.3.2',  '',  0, '20240317', '', '', '');
 INSERT INTO versions VALUES ('hub', '24.1.3',  '',  0, '20231205', '', '', '');
 
 -- ##
@@ -334,17 +318,6 @@ INSERT INTO releases VALUES ('spock33-pg16', 4, 'spock', 'Spock', '', 'prod', ''
 INSERT INTO versions VALUES ('spock33-pg14', '3.3.1-1', 'el8, el9, arm9', 1, '20240317', 'pg14', '', '');
 INSERT INTO versions VALUES ('spock33-pg15', '3.3.1-1', 'el8, el9, arm9', 1, '20240317', 'pg15', '', '');
 INSERT INTO versions VALUES ('spock33-pg16', '3.3.1-1', 'el8, el9, arm9, osx', 1, '20240317', 'pg16', '', '');
-
-----------------------------------
-INSERT INTO releases VALUES ('spock40-pg15', 4, 'spock', 'Spock', '', 'test', '', 1, 'pgEdge Community', '', '');
-INSERT INTO releases VALUES ('spock40-pg16', 4, 'spock', 'Spock', '', 'test', '', 1, 'pgEdge Community', '', '');
-
-INSERT INTO versions VALUES ('spock40-pg15', '4.0dev3-1', 'el8, el9, arm9', 1, '20240317', 'pg15', '', '');
-INSERT INTO versions VALUES ('spock40-pg16', '4.0dev3-1', 'el8, el9, arm9', 1, '20240317', 'pg16', '', '');
-
-----------------------------------
-INSERT INTO releases VALUES ('lolor-pg16', 4, 'lolor', 'LgObjLOgicalRep', '', 'test', '', 1, 'pgEdge Community', '', '');
-INSERT INTO versions VALUES ('lolor-pg16', '1.0dev1-1', 'el9, arm9', 1, '20240317', 'pg16', '', '');
 
 ----------------------------------
 INSERT INTO projects VALUES ('pglogical', 'ext', 4, 0, 'hub', 1, 'https://github.com/2ndQuadrant/pglogical/releases',
