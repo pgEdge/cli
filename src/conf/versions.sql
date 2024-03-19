@@ -141,10 +141,6 @@ INSERT INTO versions VALUES ('pg16', '16.2-2',  'el8, el9, arm9', 0, '20240212',
 INSERT INTO versions VALUES ('pg16', '16.2-1',  'el8, el9, arm9', 0, '20240208','', '', '');
 INSERT INTO versions VALUES ('pg16', '16.1-1',  'el8, el9, arm9', 0, '20231109','', '', '');
 
-INSERT INTO releases VALUES ('pg17', 2, 'pg', '', '', 'test', 
-  '<font size=-1>New in <a href=https://www.postgresql.org/docs/17/release-17.html>2024!</a></font>', 1, 'POSTGRES', '', '');
-INSERT INTO versions VALUES ('pg17', '17devel-1',  'el9', 1, '20240108','', '', '');
-
 INSERT INTO projects VALUES ('orafce', 'ext', 4, 0, 'hub', 0, 'https://github.com/orafce/orafce/releases',
   'orafce', 1, 'larry.png', 'Ora Built-in Packages', 'https://github.com/orafce/orafce#orafce---oracles-compatibility-functions-and-packages');
 INSERT INTO releases VALUES ('orafce-pg15', 2, 'orafce', 'OraFCE', '', 'prod', '', 1, 'POSTGRES', '', '');
@@ -183,7 +179,7 @@ INSERT INTO versions VALUES ('plprofiler-pg16', '4.2.4-1', 'arm9, el9', 1, '2023
 INSERT INTO projects VALUES ('prest', 'pge', 11, 3000, 'hub', 0, 'https://github.com/prest/prest/release',
   'prest', 0, 'prest.png', 'a RESTful API', 'https://prest.org');
 INSERT INTO releases VALUES ('prest', 9, 'prest', 'pREST', '', 'test', '', 1, 'MIT', '', '');
-INSERT INTO versions VALUES ('prest', '1.4.2', 'el8, el9, arm9', 1, '20240221', '', '', '');
+INSERT INTO versions VALUES ('prest', '1.4.2', 'el8, el9, arm9', 0, '20240221', '', '', '');
 
 INSERT INTO projects VALUES ('postgrest', 'pge', 11, 3000, 'hub', 0, 'https://github.com/postgrest/postgrest/tags',
   'postgrest', 0, 'postgrest.png', 'a RESTful API', 'https://postgrest.org');
@@ -206,8 +202,8 @@ INSERT INTO projects VALUES ('wal2json', 'ext', 4, 0, 'hub', 0, 'https://github.
   'wal2json', 1, 'wal2json.png', 'WAL to JSON for CDC', 'https://github.com/eulerto/wal2json');
 INSERT INTO releases VALUES ('wal2json-pg15', 10, 'wal2json', 'wal2json', '', 'test', '', 1, 'POSTGRES', '', '');
 INSERT INTO releases VALUES ('wal2json-pg16', 10, 'wal2json', 'wal2json', '', 'test', '', 1, 'POSTGRES', '', '');
-INSERT INTO versions VALUES ('wal2json-pg15', '2.5.1-1', 'arm9, el9', 1, '20240221', 'pg15', '', 'https://github.com/eulerto/wal2json/tags');
-INSERT INTO versions VALUES ('wal2json-pg16', '2.5.1-1', 'arm9, el9', 1, '20230221', 'pg16', '', 'https://github.com/eulerto/wal2json/tags');
+INSERT INTO versions VALUES ('wal2json-pg15', '2.5.1-1', 'arm9, el9', 0, '20240221', 'pg15', '', 'https://github.com/eulerto/wal2json/tags');
+INSERT INTO versions VALUES ('wal2json-pg16', '2.5.1-1', 'arm9, el9', 0, '20230221', 'pg16', '', 'https://github.com/eulerto/wal2json/tags');
 
 INSERT INTO projects VALUES ('hintplan', 'ext', 4, 0, 'hub', 0, 'https://github.com/ossc-db/pg_hint_plan/tags',
   'hintplan', 1, 'hintplan.png', 'Execution Plan Hints', 'https://github.com/ossc-db/pg_hint_plan');
@@ -240,8 +236,8 @@ INSERT INTO projects VALUES ('timescaledb', 'ext', 4, 0, 'hub',0, 'https://githu
 INSERT INTO releases VALUES ('timescaledb-pg15', 10, 'timescaledb', 'TimescaleDB', '', 'test', '', 1, 'POSTGRES', '', '');
 INSERT INTO releases VALUES ('timescaledb-pg16', 10, 'timescaledb', 'TimescaleDB', '', 'test', '', 1, 'POSTGRES', '', '');
 
-INSERT INTO versions VALUES ('timescaledb-pg15', '2.13.1-1', 'el9, arm9', 1, '20240130', 'pg15', '', '');
-INSERT INTO versions VALUES ('timescaledb-pg16', '2.13.1-1', 'el9, arm9', 1, '20240130', 'pg16', '', '');
+INSERT INTO versions VALUES ('timescaledb-pg15', '2.13.1-1', 'el9, arm9', 0, '20240130', 'pg15', '', '');
+INSERT INTO versions VALUES ('timescaledb-pg16', '2.13.1-1', 'el9, arm9', 0, '20240130', 'pg16', '', '');
 
 ----------------------------------
 INSERT INTO projects VALUES ('curl', 'ext', 4, 0, 'hub',0, 'https://github.com/pg_curl/pg_curl/releases',
@@ -324,8 +320,8 @@ INSERT INTO projects VALUES ('pglogical', 'ext', 4, 0, 'hub', 1, 'https://github
   'pglogical', 1, 'spock.png', 'Logical Replication', 'https://github.com/2ndQuadrant/pglogical');
 INSERT INTO releases VALUES ('pglogical-pg15', 4, 'pglogical', 'pgLogical', '', 'test', '', 1, 'POSTGRES', '', '');
 INSERT INTO releases VALUES ('pglogical-pg16', 4, 'pglogical', 'pgLogical', '', 'test', '', 1, 'POSTGRES', '', '');
-INSERT INTO versions VALUES ('pglogical-pg15', '2.4.4-1',  'arm9, el9', 1, '20231112', 'pg15', '', 'https://github.com/2ndQuadrant/pglogical/releases/tag/REL2_4_4');
-INSERT INTO versions VALUES ('pglogical-pg16', '2.4.4-1',  'arm9, el9', 1, '20231112', 'pg16', '', 'https://github.com/2ndQuadrant/pglogical/releases/tag/REL2_4_4');
+INSERT INTO versions VALUES ('pglogical-pg15', '2.4.4-1',  'arm9, el9', 0, '20231112', 'pg15', '', 'https://github.com/2ndQuadrant/pglogical/releases/tag/REL2_4_4');
+INSERT INTO versions VALUES ('pglogical-pg16', '2.4.4-1',  'arm9, el9', 0, '20231112', 'pg16', '', 'https://github.com/2ndQuadrant/pglogical/releases/tag/REL2_4_4');
 
 INSERT INTO projects VALUES ('postgis', 'ext', 4, 1, 'hub', 3, 'http://postgis.net/source',
   'postgis', 1, 'postgis.png', 'Spatial Extensions', 'http://postgis.net');
@@ -339,8 +335,7 @@ INSERT INTO versions VALUES ('postgis-pg16', '3.4.1-1', 'el9, arm9', 0, '2024013
 INSERT INTO projects VALUES ('pgadmin4', 'app', 11, 443, '', 1, 'https://www.pgadmin.org/news/',
   'pgadmin4', 0, 'pgadmin.png', 'PostgreSQL Tools', 'https://pgadmin.org');
 INSERT INTO releases VALUES ('pgadmin4', 2, 'pgadmin4', 'pgAdmin 4', '', 'test', '', 1, 'POSTGRES', '', '');
-INSERT INTO versions VALUES ('pgadmin4', '8.x', '', 1, '20240108', '', '', '');
-INSERT INTO versions VALUES ('pgadmin4', '7-1', '', 0, '20231107', '', '', '');
+INSERT INTO versions VALUES ('pgadmin4', '8.x', '', 0, '20240108', '', '', '');
 
 INSERT INTO projects VALUES ('partman', 'ext', 4, 0, 'hub', 4, 'https://github.com/pgpartman/pg_partman/tags',
   'partman', 1, 'partman.png', 'Partition Management', 'https://github.com/pgpartman/pg_partman#pg-partition-manager');
