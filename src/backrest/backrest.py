@@ -5,6 +5,7 @@ import os
 import fire
 import util
 import json
+import sys
 from datetime import datetime
 from tabulate import tabulate
 
@@ -16,7 +17,7 @@ def fetch_backup_config():
         "STANZA": util.get_value("BACKUP", "STANZA"),
         "DATABASE": util.get_value("BACKUP", "DATABASE"),
         "PG_PATH": util.get_value("BACKUP", "PG_PATH"),
-        "SOCKET_PATH": util.get_value("BACKUP", "SOCKET_PATH"),
+        "PG_SOCKET_PATH": util.get_value("BACKUP", "PG_SOCKET_PATH"),
         "PG_USER": util.get_value("BACKUP", "PG_USER"),
         "REPO_CIPHER_TYPE": util.get_value("BACKUP", "REPO_CIPHER_TYPE"),
         "REPO_PATH": util.get_value("BACKUP", "REPO_PATH"),
@@ -28,13 +29,13 @@ def fetch_backup_config():
         "REPLICA_PASSWORD": util.get_value("BACKUP", "REPLICA_PASSWORD"),
         "RECOVERY_TARGET_TIME": util.get_value("BACKUP", "RECOVERY_TARGET_TIME"),
         "RESTORE_PATH": util.get_value("BACKUP", "RESTORE_PATH"),
-        
+
         "REPO1_TYPE": util.get_value("BACKUP", "REPO1_TYPE"),
-        
+
         "REPO_PATH": util.get_value("BACKUP", "REPO_PATH"),
         "PG_PATH": util.get_value("BACKUP", "PG_PATH"),
         "BACKUP_TYPE": util.get_value("BACKUP", "BACKUP_TYPE"),
-        
+
         "S3_BUCKET": util.get_value("BACKUP", "S3_BUCKET"),
         "S3_REGION": util.get_value("BACKUP", "S3_REGION"),
         "S3_ENDPOINT": util.get_value("BACKUP", "S3_ENDPOINT"),
@@ -61,10 +62,12 @@ def backup(backup_type="full"):
         config["BACKUP_TOOL"], "--type", backup_type, "backup",
         "--stanza", config["STANZA"],
         "--pg1-path", config["PG_PATH"],
+        #"--pg1-host", config["PRIMARY_HOST"],
+        "--pg1-port", config["PRIMARY_PORT"],
         "--repo1-retention-full-type", config["REPO_RETENTION_FULL_TYPE"],
         "--repo1-retention-full", config["REPO_RETENTION_FULL"],
     ]
-    
+
     # Adding repository type specific configurations
     if config["REPO1_TYPE"] == "s3":
         command.extend([
@@ -75,13 +78,13 @@ def backup(backup_type="full"):
         ])
     elif config["REPO1_TYPE"] == "posix":
         command.extend(["--repo1-path", config["REPO_PATH"]])
-    
+
     run_command(command)
 
 def check_restore_path(restore_path):
     """Check if the restore path exists and if it is writable."""
     directory_existed = os.path.exists(restore_path)
-    
+
     if not directory_existed:
         print(f"INFO: Restore path '{restore_path}' does not exist. Will attempt to create.", file=sys.stderr)
         try:
@@ -106,12 +109,14 @@ def restore(backup_id=None, recovery_target_time=None):
         recovery_target_time (str, optional): Specific point in time to restore to,
                                                useful for point-in-time recovery (PITR).
                                                Must be a string in a format recognized by PostgreSQL.
-    """ 
+    """
     config = fetch_backup_config()
+    print ("Checking restore path directory and permissions")
     path_check, directory_existed = check_restore_path(config["RESTORE_PATH"])
-    if not path_check:  # No permission or failed to create directory
-        return  # Exit function without attempting to restore
-    
+    if not path_check:
+        print ("Failed")
+        return
+
     # Construct the restore command
     command = [
         config["BACKUP_TOOL"],
@@ -119,18 +124,18 @@ def restore(backup_id=None, recovery_target_time=None):
         "--stanza", config["STANZA"],
         "--pg1-path", config["RESTORE_PATH"]
     ]
-    
+
     # Append --delta if the directory existed and is writable
     if directory_existed:
         command.append("--delta")
-    
+
     # Extend command based on `backup_id` and `recovery_target_time`
     if config["BACKUP_TOOL"] == "pgbackrest":
         if backup_id:
             command.append("--set={}".format(backup_id))
         if recovery_target_time:
             command.extend(["--type=time", "--target={}".format(recovery_target_time)])
-    
+
     run_command(command)
     print("Restoration completed successfully.")
 
@@ -154,7 +159,7 @@ def _configure_replica(operation_type='replica'):
         conf_file.write("\n# Replica settings\n")
         conf_file.write(f"primary_conninfo = '{primary_conninfo}'\n")
         conf_file.write("hot_standby = on\n")  # Ensure hot standby is enabled for read-only queries on the replica
-        conf_file.write("port = 5433\n") 
+        conf_file.write("port = 5433\n")
 
     # Create an empty standby.signal file to signal the instance to start in standby mode
     # This is crucial for PostgreSQL versions 12 and above
@@ -177,7 +182,7 @@ def create_replica(backup_id=None, recovery_target_time=None, do_backup=False):
                                     Defaults to False.
     """
     config = fetch_backup_config()
-    
+
     # If do_backup is True, initiate a backup before proceeding
     if do_backup:
       backup("full")
@@ -240,15 +245,15 @@ def print_config():
 
     # Print the top border
     print(bold_start + "#" * (line_length + 4) + bold_end)  # Adjusting for padding
-    
+
     for key, value in config.items():
         # Right-align the key, align colons vertically, and ensure values are left-aligned
-        if key == bold_start + "REPLICA_PASSWORD" + bold_end:
+        if key == "REPLICA_PASSWORD":
             val = "******"
-            print(f"# {key.rjust(max_key_length)} : {val.ljust(max_value_length)}")
-        else:  
+            print(bold_start + f"# {key.rjust(max_key_length)}" + bold_end + f": {val.ljust(max_value_length)}")
+        else:
           print(bold_start + f"# {key.rjust(max_key_length)}" + bold_end + f": {value.ljust(max_value_length)}")
-        
+
     # Print the bottom border
     print(bold_start + "#" * (line_length + 4) + bold_end)  # Adjusting for padding
 
