@@ -3,7 +3,7 @@
 
 
 import sys, os, subprocess, time
-import util, fire, psycopg
+import util, fire, db, psycopg
 
 nc = "./pgedge "
 
@@ -640,28 +640,11 @@ def sub_wait_for_sync(subscription_name, db, pg=None):
 
 
 def set_readonly(readonly="off", pg=None):
-    """Turn PG read-only mode 'on' or 'off'."""
+    """DEPRECATED: use db.set_readonly() instead"""
 
-    if readonly not in ("on", "off"):
-        util.exit_message("  readonly flag must be 'off' or 'on'")
+    util.message("spock.set_readonly() deprecated, use db.set_readonly() instead", "warning")
 
-    pg_v = util.get_pg_v(pg)
-
-    try:
-        con = util.get_pg_connection(pg_v, "postgres", util.get_user())
-        cur = con.cursor(row_factory=psycopg.rows.dict_row)
-
-        util.change_pgconf_keyval(pg_v, "default_transaction_read_only", readonly, True)
-
-        util.message("reloading postgresql.conf")
-        cur.execute("SELECT pg_reload_conf()")
-        cur.close()
-        con.close()
-
-    except Exception as e:
-        util.exit_exception(e)
-
-    sys.exit(0)
+    return(db.set_readonly(readonly, pg))
 
 
 def get_pii_cols(db, schema=None, pg=None):

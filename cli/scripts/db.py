@@ -169,12 +169,39 @@ def test_io():
 
 
 
+def set_readonly(readonly="off", pg=None):
+    """Turn PG read-only mode 'on' or 'off'."""
+
+    if readonly not in ("on", "off"):
+        util.exit_message("  readonly flag must be 'off' or 'on'")
+
+    pg_v = util.get_pg_v(pg)
+
+    try:
+        con = util.get_pg_connection(pg_v, "postgres", util.get_user())
+        cur = con.cursor(row_factory=psycopg.rows.dict_row)
+
+        util.change_pgconf_keyval(pg_v, "default_transaction_read_only", readonly, True)
+
+        util.message("reloading postgresql.conf")
+        cur.execute("SELECT pg_reload_conf()")
+        cur.close()
+        con.close()
+
+    except Exception as e:
+        util.exit_exception(e)
+
+    sys.exit(0)
+
+
+
 if __name__ == "__main__":
     fire.Fire(
         {
             "create": create,
             "guc-set": guc_set,
             "guc-show": guc_show,
+            "set-readonly": set_readonly,
             "test-io": test_io
         }
     )
