@@ -288,11 +288,11 @@ zipDir () {
     if [ "$osName" == "Linux" ]; then
       options="--owner=0 --group=0"
     fi
-    if [ "$pComponent" == "hub" ]; then
-      zip_bz2=$baseName.tar.bz2
-      checkCmd "tar $options -cjf $zip_bz2 $pComponent"
-      writeFileChecksum $zip_bz2
-    fi
+    ## if [ "$pComponent" == "hub" ]; then
+    ##   zip_bz2=$baseName.tar.bz2
+    ##   checkCmd "tar $options -cjf $zip_bz2 $pComponent"
+    ##   writeFileChecksum $zip_bz2
+    ## fi
     checkCmd "tar $options -czf $myTarball $pComponent"
     writeFileChecksum $myTarball
   fi
