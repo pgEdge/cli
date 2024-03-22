@@ -99,9 +99,12 @@ def check_restore_path(restore_path):
     else:
         return True, directory_existed  # Directory exists and is writable
 
-def format_recovery_target_time(recovery_target_time):
+def format_recovery_target_time(recovery_target_time=None):
+    if recovery_target_time is None:
+        print("Missing or Invalid recovery_target_time format. Please provide the time in 'YYYY-MM-DD HH:MM:SS' format.")
+        sys.exit(1)  # Exit the script if the input format is invalid
     try:
-        # Parse the input time string to a datetime object
+        # Parse the input time string to a datetime objecti
         recovery_time_obj = datetime.strptime(recovery_target_time, "%Y-%m-%d %H:%M:%S")
         # Format the datetime object to the required format
         formatted_time = recovery_time_obj.strftime("%Y-%m-%d %H:%M:%S")
@@ -110,7 +113,6 @@ def format_recovery_target_time(recovery_target_time):
         # Handle invalid input format
         print("Invalid recovery_target_time format. Please provide the time in 'YYYY-MM-DD HH:MM:SS' format.")
         sys.exit(1)  # Exit the script if the input format is invalid
-
 
 def restore(backup_id=None, recovery_target_time=None):
     """
@@ -123,7 +125,6 @@ def restore(backup_id=None, recovery_target_time=None):
                                                useful for point-in-time recovery (PITR).
                                                Must be a string in a format recognized by PostgreSQL.
     """
-    print(recovery_target_time)
     config = fetch_backup_config()
     print ("Checking restore path directory and permissions")
     path_check, directory_existed = check_restore_path(config["RESTORE_PATH"])
@@ -156,35 +157,69 @@ def restore(backup_id=None, recovery_target_time=None):
     run_command(command)
     print("Restoration completed successfully.")
 
-def modify_postgresql_conf(stanza):
-     """
-     Modify 'postgresql.conf' to integrate with pgBackRest.
-     """
-     aCmd = f"pgbackrest --stanza={stanza} archive-push %p"
-     util.change_pgconf_keyval(stanza, "archive_command", aCmd, p_replace=True)
-     util.change_pgconf_keyval(stanza, "archive_mode", "on", p_replace=True)
-
-def _configure_replica(operation_type='replica'):
+def _configure_pitr(stanza, recovery_target_time=None):
     config = fetch_backup_config()
-    postgresql_conf_path = os.path.join(config["RESTORE_PATH"], "postgresql.conf")
-    standby_signal_path = os.path.join(config["RESTORE_PATH"], "standby.signal")
+    conf_file = os.path.join(config["RESTORE_PATH"], "postgresql.conf")
+    logDir= config["RESTORE_PATH"] + "/log/"
+    aCmd = f"\"pgbackrest --stanza={stanza} archive-get %f \"%p\""
+    change_pgconf_keyval(conf_file, "restore_command", aCmd)
+    change_pgconf_keyval(conf_file, "recovery_target_time", recovery_target_time)
+    change_pgconf_keyval(conf_file, "recovery_target_action", 'pause')
+    change_pgconf_keyval(conf_file, "port", "5433")
+    change_pgconf_keyval(conf_file, "log_directory", logDir)
 
+
+def change_pgconf_keyval(config_path, key, value):
+    """
+    Append a new line to the postgresql.conf file or replace the existing
+    line if the key already exists.
+    """
+    key_found = False
+    new_lines = []
+    with open(config_path, 'r') as file:
+        lines = file.readlines()
+        for line in lines:
+            # Check if the line starts with the key
+            if line.strip().startswith(key):
+                new_lines.append(f"{key} = '{value}'\n")
+                key_found = True
+            else:
+                new_lines.append(line)
+    if not key_found:
+        new_lines.append(f"{key} = '{value}'\n")
+
+    with open(config_path, 'w') as file:
+        file.writelines(new_lines)
+
+def _configure_replica():
+    config = fetch_backup_config()
+    stanza = config["STANZA"]
+    conf_file = os.path.join(config["RESTORE_PATH"], "postgresql.conf")
+    standby_signal_path = os.path.join(config["RESTORE_PATH"], "standby.signal")
+    logDir= config["RESTORE_PATH"] + "/log/"
     # Connection info for the primary server
     primary_conninfo = f"host={config['PRIMARY_HOST']} port={config['PRIMARY_PORT']} user={config['PRIMARY_USER']} password={config['REPLICA_PASSWORD']}"
 
-    with open(postgresql_conf_path, "a") as conf_file:
-        conf_file.write("\n# Replica settings\n")
-        conf_file.write(f"primary_conninfo = '{primary_conninfo}'\n")
-        conf_file.write("hot_standby = on\n")  # Ensure hot standby is enabled for read-only queries on the replica
-        conf_file.write("port = 5433\n")
+    change_pgconf_keyval(conf_file, "primary_conninfo", primary_conninfo)
+    change_pgconf_keyval(conf_file, "hot_standby", "on")
+    change_pgconf_keyval(conf_file, "port", "5433")
+    change_pgconf_keyval(conf_file, "log_directory", logDir)
 
-    # Create an empty standby.signal file to signal the instance to start in standby mode
-    # This is crucial for PostgreSQL versions 12 and above
+    aCmd = f"pgbackrest --stanza={stanza} archive-push %p"
+    util.change_pgconf_keyval(stanza, "archive_command", aCmd, p_replace=True)
+    util.change_pgconf_keyval(stanza, "archive_mode", "on", p_replace=True)
+
     with open(standby_signal_path, "w") as _:
         pass
 
     print("Configurations modified to configure as replica. Ensure the PostgreSQL instance is restarted to apply these changes.")
 
+
+def pitr(backup_id=None, recovery_target_time=None):
+    rtt = format_recovery_target_time(recovery_target_time)
+    config = fetch_backup_config()
+    restore(backup_id, recovery_target_time)
+    _configure_pitr(config["STANZA"], recovery_target_time)
 
 def create_replica(backup_id=None, recovery_target_time=None, do_backup=False):
     """
@@ -198,7 +233,6 @@ def create_replica(backup_id=None, recovery_target_time=None, do_backup=False):
         do_backup (bool, optional): Whether to initiate a new backup before creating the replica.
                                     Defaults to False.
     """
-    config = fetch_backup_config()
 
     # If do_backup is True, initiate a backup before proceeding
     if do_backup:
@@ -207,7 +241,7 @@ def create_replica(backup_id=None, recovery_target_time=None, do_backup=False):
     restore(backup_id, recovery_target_time)
 
     # Configure the PostgreSQL instance as a replica
-    _configure_replica(operation_type="pitr" if recovery_target_time else "replica")
+    _configure_replica()
 
 def list_backups():
     """
@@ -294,6 +328,7 @@ if __name__ == "__main__":
     fire.Fire({
         "backup": backup,
         "restore": restore,
+        "pitr": pitr,
         "create_replica": create_replica,
         "list": list_backups,
         "config": print_config,
