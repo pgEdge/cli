@@ -1,8 +1,0 @@
-
-cluster localhost-create cl1 2
-cluster app-install cl1 northwind
-cluster command cl1 all "psql -c 'select count(*) from northwind.orders' lcdb"
-ace table-diff cl1 northwind.orders
-cluster command cl1 all "app northwind-run lcdb 2 ---rate=2 --time=10"
-ace table-diff cl1 northwind.orders
-
