@@ -41,6 +41,7 @@ def configure_backup_settings(stanza_name):
     Configures backup settings based on environment variables and system properties.
     """
     pg_data_path = os.getenv('PSX', '/usr/local/pgsql') + "/data/" + stanza_name
+    pg_restore_path = os.getenv('PSX', '/usr/local/pgsql') + "/restore/" + stanza_name
 
     current_user = getpass.getuser()
 
@@ -49,7 +50,6 @@ def configure_backup_settings(stanza_name):
         "BACKUP_PATH": "/path/to/backup",
         "DATABASE": "postgres",
         "PG_PATH": pg_data_path,
-        "SOCKET_PATH": "/tmp",
         "PG_USER": current_user,
         "PG_SOCKET_PATH": "/tmp",
         "REPO_CIPHER_TYPE": "aes-256-cbc",
@@ -64,7 +64,7 @@ def configure_backup_settings(stanza_name):
         "PRIMARY_USER": current_user,
         "REPLICA_PASSWORD": "123",
         "RECOVERY_TARGET_TIME": "",
-        "RESTORE_PATH": "/tmp/",
+        "RESTORE_PATH": pg_restore_path,
         "REPO1_TYPE": "local",
         "BACKUP_TYPE": "full",
         "S3_BUCKET": "",
@@ -84,22 +84,32 @@ def setup_pgbackrest_links():
     osSys("sudo rm -f /usr/bin/pgbackrest")
     osSys(f"sudo ln -s {thisDir}/bin/pgbackrest /usr/bin/pgbackrest")
     osSys("sudo chmod 755 /usr/bin/pgbackrest")
-    
+
     osSys("sudo mkdir -p -m 770 /var/log/pgbackrest")
 
 def setup_pgbackrest_conf():
     """
     Create pgbackrest configuration file and directories.
     """
+    config = fetch_backup_config()
+    usrUsr = config["PG_USER"]
+    dataDir = config["PG_PATH"]
+
     osSys(f"sudo chown {usrUsr} /var/log/pgbackrest")
     osSys("sudo mkdir -p /etc/pgbackrest /etc/pgbackrest/conf.d")
-    osSys("sudo touch /etc/pgbackrest/pgbackrest.conf")
+    osSys("sudo cp pgbackrest.conf /etc/pgbackrest/")
     osSys("sudo chmod 640 /etc/pgbackrest/pgbackrest.conf")
     osSys(f"sudo chown {usrUsr} /etc/pgbackrest/pgbackrest.conf")
 
     osSys("sudo mkdir -p /var/lib/pgbackrest")
     osSys("sudo chmod 750 /var/lib/pgbackrest")
     osSys(f"sudo chown {usrUsr} /var/lib/pgbackrest")
+    conf_file = thisDir + "/pgbackrest.conf"
+    util.replace("pgXX", pgV, conf_file, True)
+    util.replace("pg1-path=xx", "pg1-path=" + dataDir, conf_file, True)
+    util.replace("pg1-user=xx", "pg1-user=" + usrUsr, conf_file, True)
+    util.replace("pg1-database=xx", "pg1-database=" + "postgres", conf_file, True)
+    osSys("cp " + conf_file + "  /etc/pgbackrest/.")
 
 def generate_cipher_pass():
     """
@@ -135,17 +145,17 @@ def modify_postgresql_conf(stanza):
 def create_stanza():
     try:
         command = [
-            "pgbackrest", 
-            "--stanza=" + util.get_value("BACKUP", "STANZA"), 
-            "--pg1-path=" + util.get_value("BACKUP", "PG_PATH"), 
+            "pgbackrest",
+            "--stanza=" + util.get_value("BACKUP", "STANZA"),
+            "--pg1-path=" + util.get_value("BACKUP", "PG_PATH"),
             #"--pg1-host=" + util.get_value("BACKUP", "PRIMARY_HOST"),
-            #"--pg1-port=" + util.get_value("BACKUP", "PRIMARY_PORT"),
+            "--pg1-port=" + util.get_value("BACKUP", "PRIMARY_PORT"),
             "--pg1-user=" + util.get_value("BACKUP", "PRIMARY_USER"),
             "--pg1-socket-path=" + util.get_value("BACKUP", "PG_SOCKET_PATH"),
             "--repo1-cipher-type=" + util.get_value("BACKUP", "REPO_CIPHER_TYPE"),
             "--repo1-path=" + util.get_value("BACKUP", "REPO_PATH"),
-            "--log-level-console=info", 
-            "--log-level-file=info", 
+            "--log-level-console=info",
+            "--log-level-file=info",
             "stanza-create"
         ]
         subprocess.run(command, check=True)
@@ -181,7 +191,7 @@ def fetch_backup_config():
         "STANZA": util.get_value("BACKUP", "STANZA"),
         "DATABASE": util.get_value("BACKUP", "DATABASE"),
         "PG_PATH": util.get_value("BACKUP", "PG_PATH"),
-        "SOCKET_PATH": util.get_value("BACKUP", "SOCKET_PATH"),
+        "PG_SOCKET_PATH": util.get_value("BACKUP", "PG_SOCKET_PATH"),
         "PG_USER": util.get_value("BACKUP", "PG_USER"),
         "REPO_CIPHER_TYPE": util.get_value("BACKUP", "REPO_CIPHER_TYPE"),
         "REPO_PATH": util.get_value("BACKUP", "REPO_PATH"),
@@ -207,8 +217,8 @@ def fetch_backup_config():
     return config
 
 def print_config():
-    """ 
-    List configuration parameter configured backup tool.                                                                                                                                                                                                       
+    """
+    List configuration parameter configured backup tool.
     """
     config = fetch_backup_config()
     bold_start = "\033[1m"
@@ -219,15 +229,15 @@ def print_config():
 
     # Print the top border
     print(bold_start + "#" * (line_length + 4) + bold_end)  # Adjusting for padding
-        
+
     for key, value in config.items():
         # Right-align the key, align colons vertically, and ensure values are left-aligned
-        if key == bold_start + "REPLICA_PASSWORD" + bold_end:
+        if key == "REPLICA_PASSWORD":
             val = "******"
-            print(f"# {key.rjust(max_key_length)} : {val.ljust(max_value_length)}")
-        else:  
+            print(bold_start + f"# {key.rjust(max_key_length)}" + bold_end + f": {val.ljust(max_value_length)}")
+        else:
           print(bold_start + f"# {key.rjust(max_key_length)}" + bold_end + f": {value.ljust(max_value_length)}")
-            
+
     # Print the bottom border
     print(bold_start + "#" * (line_length + 4) + bold_end)  # Adjusting for padding
 
@@ -241,7 +251,7 @@ def main():
         exit_rm_backrest("ERROR: '/var/lib/pgbackrest' directory already exists")
 
     print_header("Configuring pgbackrest")
-    configure_backup_settings(pgV) 
+    configure_backup_settings(pgV)
     generate_cipher_pass()
     setup_pgbackrest_links()
     setup_pgbackrest_conf()
@@ -257,7 +267,7 @@ def main():
     print_header("Restarting PostgreSQL instance " + pgV)
     osSys(f"../pgedge restart {pgV}")
     time.sleep(3)
-    
+
     print_header("Creating stanza for pgbackrest" + pgV)
     create_stanza()
 
