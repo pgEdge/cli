@@ -435,7 +435,7 @@ def sub_enable(subscription_name, db, immediate=False, pg=None):
 
 
 def sub_disable(subscription_name, db, immediate=False, pg=None):
-    """Put a subscription on hold and disconnect from provider.
+    """Put sub on hold & disconnect from provider.
    
         Disable a subscription by putting it on hold and disconnect from provider. \n
         Example: spock sub-disable sub_n2n1 demo
