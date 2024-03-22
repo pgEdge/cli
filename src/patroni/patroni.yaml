@@ -1,0 +1,26 @@
+scope: postgres
+namespace: /db/
+name: NODE_NAME
+replication_slot_name: NODE_NAME
+
+restapi:
+  listen: 0.0.0.0:8008
+  connect_address: IP_NODE:8008
+
+etcd3:
+  host: IP_NODE:2379
+  ttl: 30
+  protocol: http
+
+bootstrap:
+  dcs:
+    ttl: 30
+    loop_wait: 10
+    retry_timeout: 10
+    maximum_lag_on_failover: 1048576
+  initdb:
+    - encoding: UTF8
+    - data-checksums
+  postgresql:
+    use_pg_rewind: true
+

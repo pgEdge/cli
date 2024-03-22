@@ -1,86 +1,50 @@
-#     Copyright (c)  2022-2024 PGEDGE  #
-
-# combined_script.py
+#!/usr/bin/env python3
+# Copyright (c) 2022-2024 PGEDGE
 
 import os
-import socket
 import subprocess
+import socket
+import util
 
-class Util:
-    @staticmethod
-    def message(msg):
-        print(msg)
+thisDir = os.path.dirname(os.path.realpath(__file__))
 
-class PatroniSetup:
-    PATRONI_YAML = """
-    scope: postgres
-    namespace: /db/
-    name: NODE_NAME
-    replication_slot_name: NODE_NAME
+# Function to execute system commands
+def osSys(p_input, p_display=True):
+    if p_display:
+        print("# " + p_input)
+    subprocess.run(p_input.split(), stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
-    restapi:
-      listen: 0.0.0.0:8008
-      connect_address: IP_NODE:8008
-
-    etcd3:
-      host: IP_NODE:2379
-      ttl: 30
-      protocol: http
-
-    bootstrap:
-      dcs:
-        ttl: 30
-        loop_wait: 10
-        retry_timeout: 10
-        maximum_lag_on_failover: 1048576
-      initdb:
-        - encoding: UTF8
-        - data-checksums
-      postgresql:
-        use_pg_rewind: true
-        use_
-    """
-
-  @staticmethod
-  def create_symlink():
-    thisDir = os.getcwd()  # Get the current working directory
+# Function to create a symbolic link
+def create_symlink():
+    osSys("sudo rm -rf /usr/local/patroni.py")
+    this_dir = os.getcwd()
     print("\n## Creating '/usr/local/patroni.py' symlink ##")
-    source_path = os.path.join(thisDir, "out/posix/patroni/patroni.py")
+    source_path = os.path.join(this_dir, "out/posix/patroni/patroni.py")
     target_path = "/usr/local/patroni.py"
+    osSys(f"sudo ln -sf {source_path} {target_path}")
 
-    # Construct the ln command with sudo
-    command = ["sudo", "ln", "-sf", source_path, target_path]
+# Function to write Patroni YAML configuration file
+def write_patroni_yaml():
+    # Get the system's IP address
+    ip_address = socket.gethostbyname(socket.gethostname())
+    usrUsr = f"{util.get_user()}:{util.get_user()}"
 
-    try:
-        # Execute the command
-        subprocess.run(command, check=True)
-        print(f"Symlink successfully created from {source_path} to {target_path}")
-    except subprocess.CalledProcessError:
-        print("Failed to create the symlink. Command execution error.")
-    except Exception as e:
-        print(f"An unexpected error occurred: {e}")
+    osSys(f"sudo mkdir -p /etc/patroni/")
+    osSys(f"sudo chown {usrUsr} /etc/patroni")
+
+    conf_file = os.path.join(thisDir, "patroni.yaml")
+    util.replace("IP_NODE", ip_address, conf_file, True)
+    osSys(f"sudo cp {conf_file} /etc/patroni/")
+    print(f"Patroni YAML file written with IP: {ip_address}")
+
+def configure_patroni():
+    osSys("/usr/local/patroni/patroni.py --version")
+    osSys("/usr/local/patroni/patronictl.py version")
+    osSys("sudo cp patroni.service /etc/systemd/system/")
+    osSys("sudo systemctl daemon-reload")
+    osSys("sudo systemctl enable patroni")
 
 if __name__ == "__main__":
     create_symlink()
-
-    @staticmethod
-    def write_patroni_yaml():
-        # Get system's IP address
-        ip_address = socket.gethostbyname(socket.gethostname())
-
-        # Replace NODE_NAME with the system's IP address
-        patroni_yaml_updated = PatroniSetup.PATRONI_YAML.replace("NODE_NAME", ip_address)
-
-        # Write to /etc/patroni/patroni.yaml
-        patroni_yaml_path = "/etc/patroni/patroni.yaml"
-        try:
-            with open(patroni_yaml_path, "w") as file:
-                file.write(patroni_yaml_updated)
-            print(f"Successfully wrote to {patroni_yaml_path}")
-        except Exception as e:
-            print(f"Failed to write to {patroni_yaml_path}: {e}")
-
-if __name__ == "__main__":
-    PatroniSetup.create_symlink()
-    PatroniSetup.write_patroni_yaml()
-
+    write_patroni_yaml()
+    configure_patroni()
