@@ -362,10 +362,11 @@ def init_db_connection(shared_objects, worker_state):
     db, pg, node_info = cluster.load_json(shared_objects["cluster_name"])
 
     cluster_nodes = []
+    database = db[0]
+    database["db_name"] = database.pop("name")
 
     # Combine db and cluster_nodes into a single json
-    for database, node in zip(db, node_info):
-        database["db_name"] = database.pop("name")
+    for node in node_info:
         combined_json = {**database, **node}
         cluster_nodes.append(combined_json)
 
@@ -564,9 +565,15 @@ def table_diff(
 
     cluster_nodes = []
 
+    '''
+    Even though multiple databases are allowed, ACE will, for now,
+    only take the first entry in the db list
+    '''
+    database = db[0]
+    database["db_name"] = database.pop("name")
+
     # Combine db and cluster_nodes into a single json
-    for database, node in zip(db, node_info):
-        database["db_name"] = database.pop("name")
+    for node in node_info:
         combined_json = {**database, **node}
         cluster_nodes.append(combined_json)
 
