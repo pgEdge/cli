@@ -2650,7 +2650,11 @@ def get_el_os():
 
 def get_el_ver():
     if platform.system() == "Darwin":
-        return "osx"
+        arch = getoutput("arch")
+        if arch == "i386":
+            return "osx-i386"
+        else:
+            return "osx"
 
     elv = os.getenv("ELV", None)
     if elv:
@@ -2685,7 +2689,10 @@ def is_el8():
 def get_os():
     if platform.system() == "Darwin":
         arch = getoutput("arch")
-        return "osx"
+        if arch == "i386":
+            return "osx-i386"
+        else:
+            return "osx"
 
     if platform.system() != "Linux":
         return "xxx"
