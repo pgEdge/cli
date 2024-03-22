@@ -578,10 +578,10 @@ do
 
             cp $CLI/sh/cli.sh     ./pgedge
 
-	    depnc=sh/deprecate-nc.sh
-	    cp $CLI/$depnc        ./nc
-	    cp $CLI/$depnc        ./nodectl 
-	    cp $CLI/$depnc        ./ctl 
+	    ##depnc=sh/deprecate-nc.sh
+	    ##cp $CLI/$depnc        ./nc
+	    ##cp $CLI/$depnc        ./nodectl 
+	    ##cp $CLI/$depnc        ./ctl 
 
             if [ "$outDir" == "posix" ]; then
               OS="???"
