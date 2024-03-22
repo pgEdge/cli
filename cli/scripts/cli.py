@@ -446,17 +446,7 @@ def install_comp(p_app, p_ver=0, p_rver=None, p_re_install=False):
             util.message("Unpack complete")
 
     else:
-        msg = p_app + " is already installed."
-        my_logger.info(msg)
-        if isJSON:
-            json_dict = {}
-            json_dict["state"] = "install"
-            json_dict["component"] = p_app
-            json_dict["status"] = "complete"
-            json_dict["msg"] = msg
-            msg = json.dumps([json_dict])
-        print(msg)
-        return 1
+        util.exit_message(f"{p_app} is already installed.")
 
 
 def downgrade_component(p_comp):
