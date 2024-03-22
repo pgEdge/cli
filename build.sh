@@ -513,7 +513,6 @@ initPG () {
     fi
 
     # initC "postgrest"    "postgrest"    "$postgrestV" "$outPlat" "postgres/postgrest" "" "" "nil"
-    # initC "group-pgedge" "group-pgedge" "$grp_pgeV"  ""         "group-pgedge"      "" "" "Y"
 
     initC "prest"        "prest"        "$prestV"    "$outPlat" "pREST"             "" "" "nil"
     initC "patroni"      "patroni"      "$patroniV"  ""         "patroni"           "" "" "nil"
