@@ -1262,24 +1262,10 @@ while i < len(args):
             break
     i += 1
 
-
-if "--ent" in args:
-    isENT = True
-    os.environ["isEnt"] = "True"
-    args.remove("--ent")
-
 if "--test" in args:
     util.isTEST = True
     os.environ["isTest"] = "True"
     args.remove("--test")
-
-if "--tent" in args:
-    util.isTEST = True
-    util.isENT = True
-    os.environ["isEnt"] = "True"
-    os.environ["isTest"] = "True"
-    args.remove("--tent")
-
 
 isSTART = False
 if "--start" in args:
@@ -1308,22 +1294,6 @@ if "--fips" in args and "install" in args:
     isFIPS = True
     os.environ["isFIPS"] = "True"
     args.remove("--fips")
-
-if "--with-postgrest" in args and "install" in args:
-    os.environ["withPOSTGREST"] = "True"
-    args.remove("--with-postgrest")
-
-if "--with-backrest" in args and "install" in args:
-    os.environ["withBACKREST"] = "True"
-    args.remove("--with-backrest")
-
-if "--with-cat" in args and "install" in args:
-    os.environ["withCAT"] = "True"
-    args.remove("--with-cat")
-
-if "--with-patroni" in args and "install" in args:
-    os.environ["withPATRONI"] = "True"
-    args.remove("--with-patroni")
 
 isAUTOSTART = False
 if "--autostart" in args and "install" in args:

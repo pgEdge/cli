@@ -513,8 +513,6 @@ def get_list(p_isJSON, p_comp=None, p_return=False):
     my_in = "'prod'"
     if util.isTEST:
         my_in = my_in + ", 'test'"
-    if util.isENT:
-        my_in = my_in + ", 'ent'"
 
     exclude_comp = exclude_comp + f" AND r.stage in ({my_in})"
 
