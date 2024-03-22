@@ -207,11 +207,13 @@ def get_next_arg(p_arg):
 
 # run external scripts #######################################
 def run_script(componentName, scriptName, scriptParm):
+    print(f"## DEBUG cli.run_script('{componentName}', '{scriptName}', '{scriptParm}')")
     if componentName not in installed_comp_list:
         return
 
     componentDir = componentName
-    if meta.is_extension(componentName):
+    is_ext = meta.is_extension(componentName)
+    if is_ext:
         componentDir = componentName[-4:]
 
     cmd = ""
@@ -225,9 +227,13 @@ def run_script(componentName, scriptName, scriptParm):
 
     rc = 0
     compState = util.get_comp_state(componentName)
-    if compState == "Enabled" and os.path.isfile(scriptFile):
-        run = cmd + " " + scriptFile + " " + scriptParm
-        rc = os.system(run)
+    if compState == "Enabled": 
+        if os.path.isfile(scriptFile):
+            run = cmd + " " + scriptFile + " " + scriptParm
+            rc = os.system(run)
+        else:
+            if is_ext:
+                rc = util.create_extension(componentName)
 
     if rc != 0:
         print("Error running " + scriptName)

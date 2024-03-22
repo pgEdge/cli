@@ -3642,7 +3642,7 @@ def check_comp(p_comp, p_port, p_kount, check_status=False):
 
 # run external scripts #######################################
 def run_script(componentName, scriptName, scriptParm):
-    message(f"run_script('{componentName}', '{scriptName}', '{scriptParm}')", "debug")
+    message(f"## util.run_script('{componentName}', '{scriptName}', '{scriptParm}')", "debug")
     installed_comp_list = meta.get_component_list()
     if componentName not in installed_comp_list:
         return
