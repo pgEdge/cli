@@ -99,6 +99,19 @@ def check_restore_path(restore_path):
     else:
         return True, directory_existed  # Directory exists and is writable
 
+def format_recovery_target_time(recovery_target_time):
+    try:
+        # Parse the input time string to a datetime object
+        recovery_time_obj = datetime.strptime(recovery_target_time, "%Y-%m-%d %H:%M:%S")
+        # Format the datetime object to the required format
+        formatted_time = recovery_time_obj.strftime("%Y-%m-%d %H:%M:%S")
+        return formatted_time
+    except ValueError:
+        # Handle invalid input format
+        print("Invalid recovery_target_time format. Please provide the time in 'YYYY-MM-DD HH:MM:SS' format.")
+        sys.exit(1)  # Exit the script if the input format is invalid
+
+
 def restore(backup_id=None, recovery_target_time=None):
     """
     Restore a PostgreSQL database from a backup.
@@ -110,6 +123,7 @@ def restore(backup_id=None, recovery_target_time=None):
                                                useful for point-in-time recovery (PITR).
                                                Must be a string in a format recognized by PostgreSQL.
     """
+    print(recovery_target_time)
     config = fetch_backup_config()
     print ("Checking restore path directory and permissions")
     path_check, directory_existed = check_restore_path(config["RESTORE_PATH"])
@@ -134,7 +148,10 @@ def restore(backup_id=None, recovery_target_time=None):
         if backup_id:
             command.append("--set={}".format(backup_id))
         if recovery_target_time:
-            command.extend(["--type=time", "--target={}".format(recovery_target_time)])
+            formatted_time = format_recovery_target_time(recovery_target_time)
+            print(formatted_time)
+            command.append(f"--type=time")
+            command.append(f"--target={formatted_time}")
 
     run_command(command)
     print("Restoration completed successfully.")
