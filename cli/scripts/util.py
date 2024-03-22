@@ -650,7 +650,7 @@ def get_1st_ip():
 
 def run_native(component, bin_path, cmd):
     if not os.path.isfile(bin_path):
-        message(f"{component} not installed, missing '{bin_path}'", "error")
+        message(f"{component} not installed.", "error")
         return
 
     return echo_cmd(bin_path + " " + cmd)
