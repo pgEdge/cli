@@ -27,17 +27,17 @@ Use the following command to install pgBackRest and create the pgBackRest artifa
 pgedge backrest 
 
 SYNOPSIS
-    pgedge backrest COMMAND
+    backrest.py COMMAND
 
 COMMANDS
     COMMAND is one of the following:
-     backup              # Perform a backup using the specified backup tool and backup type,
-                         # storing the backup at the specified backup path.
-     restore             # Restore database from a specified backup or to a specific point in time.
-     create_replica      # Create a replica by restoring from a backup and configure it. 
-                         # If specified, perform PITR. Optionally, initiate a backup before creating the replica.
+     backup              # Perform a backup using the specified backup tool and backup type, storing the backup at the specified backup path.
+     restore             # Restore a PostgreSQL database from a backup.
+     pitr                # Perfomr point-in-time recovery.
+     create_replica      # Create a replica by restoring from a backup and configure it. If specified, perform PITR. Optionally, initiate a backup before creating the replica.
      list                # List backups using the configured backup tool.
      config              # List configuration parameter configured backup tool.
+     command             # Run pgbackrest) with the given arguments. Automatically prepends 'pgbackrest' to the arguments.
 ```
 
 ### Configuration
@@ -68,7 +68,7 @@ pgedge backrest config
 #             PRIMARY_HOST: 127.0.0.1                              
 #             PRIMARY_PORT: 5432                                   
 #             PRIMARY_USER: pgedge                                  
-#         REPLICA_PASSWORD: 123                                    
+#         REPLICA_PASSWORD: *****                                   
 #     RECOVERY_TARGET_TIME:                                        
 #             RESTORE_PATH: /home/pgedg/pg16                       
 #               REPO1_TYPE: local                                  
