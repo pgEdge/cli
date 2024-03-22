@@ -216,6 +216,14 @@ def _configure_replica():
 
 
 def pitr(backup_id=None, recovery_target_time=None):
+    """
+    Perfomr point-in-time recovery.
+    Args:
+        backup_id (str, optional): The ID of the backup to use for creating the replica.
+                                   If not provided, the latest backup will be used unless do_backup is True.
+        recovery_target_time (str, optional): The target time for PITR.
+    """
+
     rtt = format_recovery_target_time(recovery_target_time)
     config = fetch_backup_config()
     restore(backup_id, recovery_target_time)
