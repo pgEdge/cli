@@ -332,8 +332,8 @@ finalizeOutput () {
 
   checkCmd "cp conf/versions.sql  ."
   writeFileChecksum "versions.sql"
-  checkCmd "cp conf/versions.sql  versions24.sql"
-  writeFileChecksum "versions24.sql"
+  ## checkCmd "cp conf/versions.sql  versions24.sql"
+  ## writeFileChecksum "versions24.sql"
 
   checkCmd "cd $HUB"
 
