@@ -132,12 +132,15 @@ def restore(backup_id=None, recovery_target_time=None):
         print ("Failed")
         return
 
+    rpath = config["RESTORE_PATH"]
+    data_dir = rpath + "/data/"
+
     # Construct the restore command
     command = [
         config["BACKUP_TOOL"],
         "restore",
         "--stanza", config["STANZA"],
-        "--pg1-path", config["RESTORE_PATH"]
+        "--pg1-path", data_dir
     ]
 
     # Append --delta if the directory existed and is writable
@@ -159,15 +162,12 @@ def restore(backup_id=None, recovery_target_time=None):
 
 def _configure_pitr(stanza, recovery_target_time=None):
     config = fetch_backup_config()
-    conf_file = os.path.join(config["RESTORE_PATH"], "postgresql.conf")
+    conf_file = os.path.join(config["RESTORE_PATH"], "data/postgresql.conf")
     logDir= config["RESTORE_PATH"] + "/log/"
-    aCmd = f"\"pgbackrest --stanza={stanza} archive-get %f \"%p\""
-    change_pgconf_keyval(conf_file, "restore_command", aCmd)
-    change_pgconf_keyval(conf_file, "recovery_target_time", recovery_target_time)
-    change_pgconf_keyval(conf_file, "recovery_target_action", 'pause')
     change_pgconf_keyval(conf_file, "port", "5433")
     change_pgconf_keyval(conf_file, "log_directory", logDir)
-
+    change_pgconf_keyval(conf_file, "archive_command", "''")
+    change_pgconf_keyval(conf_file, "archive_mode", "off")
 
 def change_pgconf_keyval(config_path, key, value):
     """
@@ -206,8 +206,8 @@ def _configure_replica():
     change_pgconf_keyval(conf_file, "log_directory", logDir)
 
     aCmd = f"pgbackrest --stanza={stanza} archive-push %p"
-    util.change_pgconf_keyval(stanza, "archive_command", aCmd, p_replace=True)
-    util.change_pgconf_keyval(stanza, "archive_mode", "on", p_replace=True)
+    util.change_pgconf_keyval(stanza, "archive_command", "''", p_replace=True)
+    util.change_pgconf_keyval(stanza, "archive_mode", "off", p_replace=True)
 
     with open(standby_signal_path, "w") as _:
         pass
