@@ -15,7 +15,7 @@ config = {
     "TEMP_LOG_FILE": "/tmp/logfile.log",
     "PGBENCH_SCALE_FACTOR": "10",
     "DEBUG_MODE": "0",
-    "PSX": os.getenv("PSX", "/home/pgedge/dev/cli/out/posix"),
+    "PSX": os.getenv("PSX", "/home/ibrar/dev/cli/out/posix"),
 }
 
 # Update environment variables
@@ -69,8 +69,7 @@ def check_server_running(step, pgdata_path):
 
 def stop_postgres_and_clean_data(step):
     """Stops PostgreSQL if running and removes the data directory if it exists."""
-    if check_server_running(step, config["PGDATA"]):
-        execute_command(["pg_ctl", "stop", "-D", config["PGDATA"], "-l", config["TEMP_LOG_FILE"]], f"{step} - Stopping PostgreSQL", False)
+    execute_command(["pg_ctl", "stop", "-D", config["PGDATA"], "-mf", "-l", config["TEMP_LOG_FILE"]], f"{step} - Stopping PostgreSQL", False)
     if os.path.exists(config["PGDATA"]):
         execute_command(["rm", "-rf", config["PGDATA"]], f"{step} - Removing Data Directory", False)
 
@@ -82,7 +81,9 @@ def main():
 
     # Insert Rows with pgbench
     step = "2 - Insert Rows"
-    execute_command(["pgbench", "-h", config["HOSTNAME"], "-d", config["DATABASE_NAME"], "-i", "-s", config["PGBENCH_SCALE_FACTOR"]], step)
+    execute_command(["psql", "-h", "127.0.0.1", "-p", "5432", "postgres", "-c", "CREATE TABLE IF NOT EXISTS backrest(a int)"], step)
+    execute_command(["psql", "-h", "127.0.0.1", "-p", "5432", "postgres", "-c", "TRUNCATE backrest"], step)
+    execute_command(["psql", "-h", "127.0.0.1", "-p", "5432", "postgres", "-c", "INSERT INTO backrest (a) SELECT generate_series(1, 100)"], step)
 
     # Perform a full backup
     step = "3 - Perform Full Backup"
@@ -90,7 +91,7 @@ def main():
 
     # Insert Rows with pgbench
     step = "4 - Insert Rows"
-    execute_command(["pgbench", "-h", config["HOSTNAME"], "-d", config["DATABASE_NAME"], "-i", "-s", config["PGBENCH_SCALE_FACTOR"]], step)
+    execute_command(["psql", "-h", "127.0.0.1", "-p", "5432", "postgres", "-c", "INSERT INTO backrest (a) SELECT generate_series(1, 100)"], step)
 
     # Perform Point-in-Time Recovery
     step = "5 - Perform PITR"
@@ -100,16 +101,16 @@ def main():
     # Insert Rows with pgbench
     step = "6 - Insert Rows"
     execute_command(["pgbench", "-h", config["HOSTNAME"], "-d", config["DATABASE_NAME"], "-i", "-s", config["PGBENCH_SCALE_FACTOR"]], step)
-    # Start PostgreSQL
 
+    # Start PostgreSQL
     step = "7 - Start PostgreSQL"
     execute_command(["pg_ctl", "start", "-D", config["PGDATA"], "-l", config["TEMP_LOG_FILE"]], step)
 
     # Verify the restored database
     step = "8 - Checking primary server rows"
-    execute_command(["psql", "-h", "127.0.0.1", "-p", "5432", "postgres", "-c", "SELECT COUNT(*) FROM pgbench_accounts"], step)
+    execute_command(["psql", "-h", "127.0.0.1", "-p", "5432", "postgres", "-c", "SELECT COUNT(*) FROM backrest"], step)
     step = "9 - Checking resetored server rows"
-    execute_command(["psql", "-h", "127.0.0.1", "-p", "5433", "postgres", "-c", "SELECT COUNT(*) FROM pgbench_accounts"], step)
+    execute_command(["psql", "-h", "127.0.0.1", "-p", "5433", "postgres", "-c", "SELECT COUNT(*) FROM backrest"], step)
 
 
     print_bold("\nScript execution completed.")

@@ -62,6 +62,7 @@ def backup(backup_type="full"):
         config["BACKUP_TOOL"], "--type", backup_type, "backup",
         "--stanza", config["STANZA"],
         "--pg1-path", config["PG_PATH"],
+        "--start-fast",
         #"--pg1-host", config["PRIMARY_HOST"],
         "--pg1-port", config["PRIMARY_PORT"],
         "--repo1-retention-full-type", config["REPO_RETENTION_FULL_TYPE"],
@@ -166,8 +167,10 @@ def _configure_pitr(stanza, recovery_target_time=None):
     logDir= config["RESTORE_PATH"] + "/log/"
     change_pgconf_keyval(conf_file, "port", "5433")
     change_pgconf_keyval(conf_file, "log_directory", logDir)
-    change_pgconf_keyval(conf_file, "archive_command", "''")
+    change_pgconf_keyval(conf_file, "archive_command", "")
     change_pgconf_keyval(conf_file, "archive_mode", "off")
+    change_pgconf_keyval(conf_file, "hot_standby", "on")
+    change_pgconf_keyval(conf_file, "recovery_target_action", "promote",)
 
 def change_pgconf_keyval(config_path, key, value):
     """
@@ -204,10 +207,6 @@ def _configure_replica():
     change_pgconf_keyval(conf_file, "hot_standby", "on")
     change_pgconf_keyval(conf_file, "port", "5433")
     change_pgconf_keyval(conf_file, "log_directory", logDir)
-
-    aCmd = f"pgbackrest --stanza={stanza} archive-push %p"
-    util.change_pgconf_keyval(stanza, "archive_command", "''", p_replace=True)
-    util.change_pgconf_keyval(stanza, "archive_mode", "off", p_replace=True)
 
     with open(standby_signal_path, "w") as _:
         pass
