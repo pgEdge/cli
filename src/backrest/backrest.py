@@ -154,7 +154,6 @@ def restore(backup_id=None, recovery_target_time=None):
             command.append("--set={}".format(backup_id))
         if recovery_target_time:
             formatted_time = format_recovery_target_time(recovery_target_time)
-            print(formatted_time)
             command.append(f"--type=time")
             command.append(f"--target={formatted_time}")
 
@@ -336,7 +335,7 @@ if __name__ == "__main__":
         "backup": backup,
         "restore": restore,
         "pitr": pitr,
-        "create_replica": create_replica,
+        "create-replica": create_replica,
         "list": list_backups,
         "config": print_config,
         "command": run_external_command,
