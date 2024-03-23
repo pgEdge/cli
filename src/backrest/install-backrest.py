@@ -67,9 +67,9 @@ def configure_backup_settings(stanza_name):
         "RESTORE_PATH": pg_restore_path,
         "REPO1_TYPE": "local",
         "BACKUP_TYPE": "full",
-        "S3_BUCKET": "",
-        "S3_REGION": "",
-        "S3_ENDPOINT": ""
+        "S3_BUCKET": "bucket-name",
+        "S3_REGION": "eu-west-2",
+        "S3_ENDPOINT": "s3.amazonaws.com"
     }
 
     for key, value in backup_config.items():
