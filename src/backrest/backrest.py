@@ -197,8 +197,8 @@ def change_pgconf_keyval(config_path, key, value):
 def _configure_replica():
     config = fetch_backup_config()
     stanza = config["STANZA"]
-    conf_file = os.path.join(config["RESTORE_PATH"], "postgresql.conf")
-    standby_signal_path = os.path.join(config["RESTORE_PATH"], "standby.signal")
+    conf_file = os.path.join(config["RESTORE_PATH"] + "/data/", "postgresql.conf")
+    standby_signal_path = os.path.join(config["RESTORE_PATH"] + "/data/", "standby.signal")
     logDir= config["RESTORE_PATH"] + "/log/"
     # Connection info for the primary server
     primary_conninfo = f"host={config['PRIMARY_HOST']} port={config['PRIMARY_PORT']} user={config['PRIMARY_USER']} password={config['REPLICA_PASSWORD']}"
@@ -207,6 +207,8 @@ def _configure_replica():
     change_pgconf_keyval(conf_file, "hot_standby", "on")
     change_pgconf_keyval(conf_file, "port", "5433")
     change_pgconf_keyval(conf_file, "log_directory", logDir)
+    change_pgconf_keyval(conf_file, "archive_command", "")
+    change_pgconf_keyval(conf_file, "archive_mode", "off")
 
     with open(standby_signal_path, "w") as _:
         pass
