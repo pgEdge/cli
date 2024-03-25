@@ -1,3 +1,5 @@
+
+## Core CLI #########
 requests>=2.27
 paramiko>=3.3.1
 psycopg>=3.1.18
@@ -11,24 +13,20 @@ typing_extensions>=4.9.0
 click>=8.1.7
 tabulate>=0.9.0
 python-crontab>=3.0.0
-
-## VM ###############
 certifi>=3.0
 charset_normalizer>=2.0
 
-
-## ACE ##############
+## ACE Advanced #####
 tqdm>=4.64
 ordered-set>=4.0
 mpire>=2.8.0
 pandas>=1.1.5
 
-## STAZ #############
+## pgEDGE-PATRONI ###
 cdiff>=1.0
 urllib3>=1.25.4,!=1.26.18
 PyYAML>=6.0
 python-etcd>=0.4.5,<0.5
-click>=4.1
 prettytable>=2.5
 python-dateutil>=2.8.2
 cryptography>=40.0.2
