@@ -166,8 +166,16 @@ def create_stanza():
 def define_cron_job():
 
     # Define your command
-    backup_command = "pgedge backup"
-    incr_backup_command = "pgedge backup --incr"
+    backup_command = [
+            "pgbackrest",
+            "--stanza=" + util.get_value("BACKUP", "STANZA"),
+            "--full"
+    ]
+    backup_command = [
+            "pgbackrest",
+            "--stanza=" + util.get_value("BACKUP", "STANZA"),
+            "--incr"
+    ]
 
     # Access the current user's crontab
     cron = CronTab(user=util.get_user())
