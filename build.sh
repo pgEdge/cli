@@ -478,6 +478,10 @@ initPG () {
   fi
 
   initC "backrest"     "backrest"     "$backrestV" "$outPlat" "postgres/backrest" "" "" "nil"
+  initC "etcd"         "etcd"         "$etcdV"     "$outPlat" "etcd"              "" "" "nil"
+  initC "pgcat"        "pgcat"        "$catV"      "$outPlat" "postgres/pgcat"    "" "" "nil"
+  initC "patroni"      "patroni"      "$patroniV"  ""         "patroni"           "" "" "nil"
+  initC "firewalld"    "firewalld"    "$firwldV"   ""         "firewalld"         "" "" "nil"
 
   if [ "$isEL9" == "True" ]; then
 
@@ -514,12 +518,8 @@ initPG () {
 
     # initC "postgrest"    "postgrest"    "$postgrestV" "$outPlat" "postgres/postgrest" "" "" "nil"
 
-    initC "prest"        "prest"        "$prestV"    "$outPlat" "pREST"             "" "" "nil"
-    initC "patroni"      "patroni"      "$patroniV"  ""         "patroni"           "" "" "nil"
-    initC "etcd"         "etcd"         "$etcdV"     "$outPlat" "etcd"              "" "" "nil"
-    initC "firewalld"    "firewalld"    "$firwldV"   ""         "firewalld"         "" "" "nil"
-    initC "pgcat"        "pgcat"        "$catV"      "$outPlat" "postgres/pgcat"    "" "" "nil"
-    initC "pgadmin4"     "pgadmin4"     "$adminV"    ""         "postgres/pgadmin4" "" "" "Y"
+    # initC "prest"        "prest"        "$prestV"    "$outPlat" "pREST"             "" "" "nil"
+    # initC "pgadmin4"     "pgadmin4"     "$adminV"    ""         "postgres/pgadmin4" "" "" "Y"
     # initC "prompgexp"    "prompgexp"    "$prompgexpV" "$outPlat" "postgres/prompgexp" "" "" "nil"
   fi
 
