@@ -207,7 +207,6 @@ def get_next_arg(p_arg):
 
 # run external scripts #######################################
 def run_script(componentName, scriptName, scriptParm):
-    print(f"## DEBUG cli.run_script('{componentName}', '{scriptName}', '{scriptParm}')")
     if componentName not in installed_comp_list:
         return
 
