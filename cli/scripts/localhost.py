@@ -11,7 +11,7 @@ def create_local_json(cluster_name, db, num_nodes, usr, passwd, pg, ports, hosts
     """Create a json config file for a local cluster.
     
        Create a JSON configuration file that defines a local cluster. \n
-       Example: cluster define-localhost demo lcdb 3 lcusr lcpasswd 16 5432
+       Example: localhost define demo lcdb 3 lcusr lcpasswd 16 5432
        :param cluster_name: The name of the cluster. A directory with this same name will be created in the cluster directory, and the JSON file will have the same name.
        :param db: The database name.
        :param num_nodes: The number of nodes in the cluster.
@@ -92,7 +92,7 @@ def remove(cluster_name):
     
        Remove a cluster. This will stop postgres on each node, and then remove the pgedge directory on each node.
        This command requires a JSON file with the same name as the cluster to be in the cluster/<cluster_name>. \n 
-       Example: cluster remove demo 
+       Example: localhost remove demo 
        :param cluster_name: The name of the cluster. 
     """
     db, db_settings, nodes = cluster.load_json(cluster_name)
@@ -120,7 +120,7 @@ def cluster_create(
     """Create a localhost test cluster of N pgEdge nodes on different ports.
     
        Create a local cluster. Each node will be located in the cluster/<cluster_name>/<node_name> directory. Each database will have a different port. \n
-       Example: cluster local-create demo 3 lcusr lcpasswd 16 6432 lcdb
+       Example: localhost cluster-create demo 3 -U lcusr -P lcpasswd -d lcdb
        :param cluster_name: The name of the cluster. 
        :param num_nodes: The number of nodes in the cluster.
        :param usr: The username of the superuser created for this database.
@@ -234,7 +234,7 @@ def cluster_destroy(cluster_name):
     """Stop and then nuke a localhost cluster.
     
        Destroy a local cluster. This will stop postgres on each node, and then remove the pgedge directory for each node in a local cluster. \n
-       Example: cluster local-destroy demo
+       Example: localhost cluster-destroy demo
        :param cluster_name: The name of the cluster. 
     """
 
