@@ -40,7 +40,7 @@ except Exception:
     #  and may throw errors in some cases
     pass
 
-from log_helpers import bcolours, characters
+import log_helpers
 import api, meta, ini
 
 
@@ -69,42 +69,12 @@ if os.path.exists(platform_lib_path):
     if platform_lib_path not in sys.path:
         sys.path.append(platform_lib_path)
 
-################ Logging Configuration ############
+
+my_logger = log_helpers.my_logger
 # Custom Logging
 COMMAND = 15
 DEBUG = 10
 DEBUG2 = 9
-
-
-def get_parsed_json(file_nm):
-    parsed_json = None
-    try:
-        with open(file_nm, "r") as f:
-            parsed_json = json.load(f)
-    except Exception as e:
-        util.exit_message(f"Unable to load json file: {file_nm}\n{e}")
-
-    return(parsed_json)
-
-
-# Custom loglevel functions
-def debug2(self, message, *args, **kws):
-    # Yes, logger takes its '*args' as 'args'.
-    if self.isEnabledFor(DEBUG2):
-        self._log(DEBUG2, message, args, **kws)
-
-
-def command(self, message, *args, **kws):
-    # Yes, logger takes its '*args' as 'args'.
-    if self.isEnabledFor(COMMAND):
-        self._log(COMMAND, message, args, **kws)
-
-my_logger = logging.getLogger()
-LOG_FILENAME = os.getenv('MY_LOGS')
-if not LOG_FILENAME:
-   MY_HOME = os.getenv("MY_HOME")
-   LOG_FILENAME = os.path.join(MY_HOME,"logs","cli_log.out")
-LOG_DIRECTORY = os.path.split(LOG_FILENAME)[0]
 
 isDebug=0
 pgeDebug = int(os.getenv('pgeDebug', '0'))
@@ -118,22 +88,27 @@ else:
     LOG_LEVEL = COMMAND
     isDebug = 0
 
+LOG_FILENAME = os.getenv('MY_LOGS')
+if not LOG_FILENAME:
+   MY_HOME = os.getenv("MY_HOME")
+   LOG_FILENAME = os.path.join(MY_HOME,"logs","cli_log.out")
+LOG_DIRECTORY = os.path.split(LOG_FILENAME)[0]
 if not os.path.isdir(LOG_DIRECTORY):
     os.mkdir(LOG_DIRECTORY)
 
-logging.addLevelName(COMMAND, "COMMAND")
-logging.Logger.command = command
-
-logging.addLevelName(DEBUG2, "DEBUG2")
-logging.Logger.debug2 = debug2
-
 my_logger.setLevel(LOG_LEVEL)
-handler = logging.handlers.RotatingFileHandler(
-                  LOG_FILENAME, maxBytes=10*1024*1024, backupCount=5)
-formatter = logging.Formatter('%(asctime)s [%(levelname)s] : %(message)s',
-                                  datefmt='%Y-%m-%d %H:%M:%S')
-handler.setFormatter(formatter)
-my_logger.addHandler(handler)
+
+
+def get_parsed_json(file_nm):
+    parsed_json = None
+    try:
+        with open(file_nm, "r") as f:
+            parsed_json = json.load(f)
+    except Exception as e:
+        util.exit_message(f"Unable to load json file: {file_nm}\n{e}")
+
+    return(parsed_json)
+
 
 def trim_plat(ver):
     if not ver:
@@ -1148,82 +1123,29 @@ def message(p_msg, p_state="info", p_isJSON=None):
     if p_msg is None:
         return
 
-    jsn_msg = None
-
-    log_level = p_state.lower()
-    cur_level = logging.root.level
-
-    if log_level == "error":
-        log_level_num = 40
-        my_logger.error(p_msg)
-        if log_level_num >= cur_level:
-            if not p_isJSON:
-                print(bcolours.FAIL + characters.CROSS + " " + p_msg + bcolours.ENDC)
-                return
-            else:
-                jsn_msg = p_msg
-    elif log_level == "warning":
-        log_level_num = 30
-        my_logger.warning(p_msg)
-        if log_level_num >= cur_level:
-            if not p_isJSON:
-                print(
-                    bcolours.YELLOW + characters.WARNING + " " + p_msg + bcolours.ENDC
-                )
-                return
-            else:
-                jsn_msg = p_msg
-    elif log_level == "alert":
-        log_level_num = 20
-        my_logger.alert(p_msg)
-        if log_level_num >= cur_level:
-            if not p_isJSON:
-                print(bcolours.YELLOW + p_msg + bcolours.ENDC)
-                return
-            else:
-                jsn_msg = p_msg
-    elif log_level == "debug":
-        log_level_num = 10
-        my_logger.debug(p_msg)
-        if log_level_num >= cur_level:
-            if not p_isJSON:
-                print(bcolours.YELLOW + p_msg + bcolours.ENDC)
-                return
-            else:
-                jsn_msg = p_msg
-    elif log_level == "success":
-        log_level_num = 20
-        my_logger.info(p_msg)
-        if log_level_num >= cur_level:
-            if not p_isJSON:
-                print(bcolours.OKGREEN + characters.TICK + " " + p_msg + bcolours.ENDC)
-                return
-            else:
-                jsn_msg = p_msg
-    elif log_level == "info":
-        log_level_num = 20
-        my_logger.info(p_msg)
-        if log_level_num >= cur_level:
-            if not p_isJSON:
-                print(p_msg)
-                return
-            else:
-                jsn_msg = p_msg
-    else:
-        if not p_isJSON:
-            print(p_msg)
-            return
-        else:
-            jsn_msg = p_msg
-
-    if jsn_msg != None:
+    if p_isJSON:
         msg = p_msg.replace("\n", "")
         if msg.strip() > "":
             json_dict = {}
             json_dict["state"] = p_state
             json_dict["msg"] = msg
             print(json.dumps([json_dict]))
-
+    else:
+        log_level = p_state.lower()
+        if log_level == "error":
+            my_logger.error(p_msg)
+        elif log_level == "warning":
+            my_logger.warning(p_msg)
+        elif log_level == "alert":
+            my_logger.alert(p_msg)
+        elif log_level == "debug":
+            my_logger.debug(p_msg)
+        elif log_level == "success":
+            print(bcolours.OKGREEN + characters.TICK + " " + p_msg + bcolours.ENDC)
+        elif log_level == "info":
+            my_logger.info(p_msg)
+        else:
+            my_logger.info(p_msg)
     return
 
 
