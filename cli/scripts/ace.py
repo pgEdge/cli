@@ -183,7 +183,7 @@ def get_key(p_con, p_schema, p_table):
     return ",".join(key_lst)
 
 
-def diff_schemas(cluster_name, node1, node2, schema_name):
+def schema_diff(cluster_name, node1, node2, schema_name):
     """Compare Postgres schemas on different cluster nodes"""
 
     util.message(f"## Validating cluster {cluster_name} exists")
@@ -225,7 +225,7 @@ def diff_schemas(cluster_name, node1, node2, schema_name):
     return rc
 
 
-def diff_spock(cluster_name, node1, node2):
+def spock_diff(cluster_name, node1, node2):
     """Compare spock meta data setup on different cluster nodes"""
     util.check_cluster_exists(cluster_name)
 
@@ -1585,10 +1585,10 @@ if __name__ == "__main__":
     fire.Fire(
         {
             "table-diff": table_diff,
-            "diff-schemas": diff_schemas,
-            "diff-spock": diff_spock,
             "table-repair": table_repair,
             "table-rerun": table_rerun,
             "repset-diff": repset_diff,
+            "schema-diff": schema_diff,
+            "spock-diff": spock_diff
         }
     )
