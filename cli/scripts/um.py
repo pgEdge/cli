@@ -65,9 +65,13 @@ def update():
     run_cmd("update")
 
 
-def install(component):
+def install(component, active=True):
     """Install a component"""
 
+    if active not in (True, False):
+        util.exit_message("'active' parm must be True or False")
+
+    util.message(f"um.install({component}, {active})", "debug")
     run_cmd("install", component)
 
 
