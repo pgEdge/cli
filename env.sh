@@ -52,7 +52,7 @@ repackV=1.4.8-1
 hint15V=1.5.1-1
 hint16V=1.6.0-1
 
-patroniV=3.2.1-2
+patroniV=3.2.2.1-1
 etcdV=3.5.12-2
 
 audit15V=1.7.0-1
