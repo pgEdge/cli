@@ -777,7 +777,11 @@ def restart_postgres(p_pg):
     time.sleep(4)
 
 
-def config_extension(p_pg, p_comp, create=True):
+def config_extension(p_pg, p_comp, create=True, active=True):
+    message(f"util.config_extension(p_pg={p_pg}, p_comp={p_comp}, create={create}, active={active})", "debug")
+
+    if active is False:
+        return
 
     extension_name, default_conf = meta.get_extension_meta(p_comp)
 
@@ -794,6 +798,9 @@ def config_extension(p_pg, p_comp, create=True):
 
 
 def create_extension(p_pg, p_ext, p_reboot=False, p_extension="", p_cascade=False):
+    message(f"util.create_extension({p_pg}, {p_ext}, p_reboot={p_reboot}, " + \
+            f"p_extension='{p_extension}', p_cascade={p_cascade})", "debug")
+
     isPreload = os.getenv("isPreload")
 
     if p_ext > " " and isPreload == "True":
