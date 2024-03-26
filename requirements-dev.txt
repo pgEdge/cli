@@ -1,2 +1,5 @@
 ruff>=0.1.8
 grip>=4.6.2
+awscli>=1.32
+azure-cli>=2.58.0
+ansible>=9.3
