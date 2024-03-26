@@ -28,7 +28,7 @@ adminV=8.x
 prestV=1.4.2
 postgrestV=12.0.2-1
 prompgexpV=0.15.0-1
-backrestV=2.50-4
+backrestV=2.51-1
 readonlyV=1.1.1-1
 wal2jV=2.5.1-1
 

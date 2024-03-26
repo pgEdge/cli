@@ -393,7 +393,7 @@ INSERT INTO versions VALUES ('pgcat', '1.1.1', 'el8, el9, arm9', 1, '20240108', 
 INSERT INTO projects VALUES ('backrest', 'pge', 11, 0, 'hub', 3, 'http://pgbackrest.org',
   'backrest',  0, 'backrest.png', 'Backup & Restore', 'http://pgbackrest.org');
 INSERT INTO releases VALUES ('backrest', 2, 'backrest',  'pgBackRest', '', 'prod', '', 1, 'MIT', '', '');
-INSERT INTO versions VALUES ('backrest', '2.50-4', 'el8, el9, arm9', 1, '20240401', '', '', '');
+INSERT INTO versions VALUES ('backrest', '2.51-1', 'el8, el9, arm9', 1, '20240401', '', '', '');
 INSERT INTO versions VALUES ('backrest', '2.50-3', 'el8, el9, arm9', 0, '20240317', '', '', '');
 INSERT INTO versions VALUES ('backrest', '2.50-2', 'el8, el9, arm9', 0, '20240221', '', '', '');
 INSERT INTO versions VALUES ('backrest', '2.50-1', 'el8, el9, arm9', 0, '20240212', '', '', '');
