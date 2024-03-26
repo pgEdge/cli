@@ -23,7 +23,7 @@ PROVIDERS = \
         ["akm", "linode",       "Akamai Linode"],
         ["eqn", "equinixmetal", "Equinix Metal"],
         ["aws", "ec2",          "Amazon Web Services"],
-        ["azr", "azure",        "Microsoft Azure (Coming Soon)"],
+        ["azr", "azure",        "Microsoft Azure"],
         ["gcp", "gce",          "Google Cloud Platform (Coming Soon)"],
     ]
 
@@ -363,6 +363,8 @@ def list_nodes(provider, airport=None, project=None, pretty=True):
         nl = aws_node_list(conn, region)
     elif provider == "akm":
         nl = akm_node_list(conn, region)
+    elif provider == "azr":
+        nl = azr_node_list(conn, region)
     else:
         util.exit_message(f"Invalid provider '{provider}' (list_nodes)")
 
@@ -440,6 +442,35 @@ def aws_node_list(conn, region):
         key_name = n.extra['key_name']
         airport = get_airport("aws", region)
         nl.append(["aws", airport, name, status, country, region, zone, public_ip, private_ip, id, size])
+
+    return(nl)
+
+
+def azr_node_list(conn, region):
+    try:
+        nodes = conn.list_nodes()
+    except Exception as e:
+        util.exit_message(str(e), 1)
+
+    nl = []
+    for n in nodes:
+        name = n.name
+        try:
+            public_ip = n.public_ips[0]
+        except Exception:
+            public_ip = ""
+        try:
+            private_ip = n.private_ip[0]
+        except Exception:
+            private_ip = ""
+        status = n.state
+        id = n.id
+        zone = n.extra["availability"]
+        size = n.extra["instance_type"]
+        country = region[:2]
+        key_name = n.extra['key_name']
+        airport = get_airport("azr", region)
+        nl.append(["azr", airport, name, status, country, region, zone, public_ip, private_ip, id, size])
 
     return(nl)
 
