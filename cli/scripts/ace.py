@@ -448,6 +448,12 @@ def compare_checksums(shared_objects, worker_state, pkey1, pkey2):
                 result_queue.append(BLOCK_ERROR)
                 return
 
+            # Transform all elements in t1_result and t2_result into strings before
+            # consolidating them into a set
+            # TODO: Test and add support for different datatypes here
+            t1_result = [tuple(str(x) if type(x) != list else str(sorted(x)) for x in row) for row in t1_result]
+            t2_result = [tuple(str(x) if type(x) != list else str(sorted(x)) for x in row) for row in t2_result]
+
             # Collect results into OrderedSets for comparison
             t1_set = OrderedSet(t1_result)
             t2_set = OrderedSet(t2_result)
