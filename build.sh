@@ -465,19 +465,11 @@ initPG () {
     return
   fi
 
-  if [ "$pgM" == "16" ]; then
-    initC "lolor-pg$pgM"      "lolor"      "$lolorV"     "$outPlat" "postgres/lolor"     "" "" "nil"
-  fi
-
-  if [ "$pgM" == "15" ] || [ "$pgM" == "16" ]; then
-    initC "spock40-pg$pgM"    "spock40"    "$spock40V"   "$outPlat" "postgres/spock40"   "" "" "nil"
-  fi
-
   if [ "$pgM" == "14" ] || [ "$pgM" == "15" ]; then
     initC "foslots-pg$pgM"    "foslots"    "$foslotsV"   "$outPlat" "postgres/foslots"    "" "" "nil"
   fi
 
-  initC "backrest"     "backrest"     "$backrestV" "$outPlat" "postgres/backrest" "" "" "nil"
+  ## initC "backrest"     "backrest"     "$backrestV" "$outPlat" "postgres/backrest" "" "" "nil"
 
   if [ "$isEL9" == "True" ]; then
 
@@ -516,8 +508,8 @@ initPG () {
     # initC "group-pgedge" "group-pgedge" "$grp_pgeV"  ""         "group-pgedge"      "" "" "Y"
 
     initC "prest"        "prest"        "$prestV"    "$outPlat" "pREST"             "" "" "nil"
-    initC "patroni"      "patroni"      "$patroniV"  ""         "patroni"           "" "" "nil"
-    initC "etcd"         "etcd"         "$etcdV"     "$outPlat" "etcd"              "" "" "nil"
+    ##initC "patroni"      "patroni"      "$patroniV"  ""         "patroni"           "" "" "nil"
+    ##initC "etcd"         "etcd"         "$etcdV"     "$outPlat" "etcd"              "" "" "nil"
     initC "firewalld"    "firewalld"    "$firwldV"   ""         "firewalld"         "" "" "nil"
     initC "pgcat"        "pgcat"        "$catV"      "$outPlat" "postgres/pgcat"    "" "" "nil"
     initC "pgadmin4"     "pgadmin4"     "$adminV"    ""         "postgres/pgadmin4" "" "" "Y"
