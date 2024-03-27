@@ -183,7 +183,7 @@ def get_key(p_con, p_schema, p_table):
     return ",".join(key_lst)
 
 
-def diff_schemas(cluster_name, node1, node2, schema_name):
+def schema_diff(cluster_name, node1, node2, schema_name):
     """Compare Postgres schemas on different cluster nodes"""
 
     util.message(f"## Validating cluster {cluster_name} exists")
@@ -225,7 +225,7 @@ def diff_schemas(cluster_name, node1, node2, schema_name):
     return rc
 
 
-def diff_spock(cluster_name, node1, node2):
+def spock_diff(cluster_name, node1, node2):
     """Compare spock meta data setup on different cluster nodes"""
     util.check_cluster_exists(cluster_name)
 
@@ -447,6 +447,12 @@ def compare_checksums(shared_objects, worker_state, pkey1, pkey2):
             except Exception:
                 result_queue.append(BLOCK_ERROR)
                 return
+
+            # Transform all elements in t1_result and t2_result into strings before
+            # consolidating them into a set
+            # TODO: Test and add support for different datatypes here
+            t1_result = [tuple(str(x) if type(x) != list else str(sorted(x)) for x in row) for row in t1_result]
+            t2_result = [tuple(str(x) if type(x) != list else str(sorted(x)) for x in row) for row in t2_result]
 
             # Collect results into OrderedSets for comparison
             t1_set = OrderedSet(t1_result)
@@ -1585,10 +1591,10 @@ if __name__ == "__main__":
     fire.Fire(
         {
             "table-diff": table_diff,
-            "diff-schemas": diff_schemas,
-            "diff-spock": diff_spock,
             "table-repair": table_repair,
             "table-rerun": table_rerun,
             "repset-diff": repset_diff,
+            "schema-diff": schema_diff,
+            "spock-diff": spock_diff
         }
     )
