@@ -52,10 +52,14 @@ Ensure that any prerequisites are met:
 `sudo yum install perl`
 `sudo yum install perl-cpan`
 `sudo dnf install perl-File-Which`
-`sudo dnf install perl-Try-Tiny perl-JSON perl-List-MoreUtils perl-DBD-Pg`
+`sudo dnf install perl-Try-Tiny`
+`sudo dnf perl-JSON`
+`sudo dnf perl-List-MoreUtils`
+`sudo dnf perl-DBD-Pg`
 `sudo dnf install python3`
 `sudo yum install pip`
-`pip install psycopg`
+`sudo dnf --enablerepo=devel`
+`sudo dnf install python3-psycopg2`
 `pip install python-dotenv`
 
 Review the environment variables in the `t/lib/config.env` file and make any adjustments required; then source the environment variables:
