@@ -333,11 +333,47 @@ def run_external_command(*args):
         # If an error occurred, print the stderr
         print(f"Error executing command: {e.stderr}")
 
+def create_stanza():
+    """
+    Create Stanza.
+    """
+    config = fetch_backup_config()
+    try:
+        command = [
+            "pgbackrest",
+            "--stanza=" + util.get_value("BACKUP", "STANZA"),
+            "--pg1-path=" + util.get_value("BACKUP", "PG_PATH"),
+            #"--pg1-host=" + util.get_value("BACKUP", "PRIMARY_HOST"),
+            "--pg1-port=" + util.get_value("BACKUP", "PRIMARY_PORT"),
+            "--pg1-user=" + util.get_value("BACKUP", "PRIMARY_USER"),
+            "--pg1-socket-path=" + util.get_value("BACKUP", "PG_SOCKET_PATH"),
+            "--repo1-cipher-type=" + util.get_value("BACKUP", "REPO_CIPHER_TYPE"),
+            "--repo1-path=" + util.get_value("BACKUP", "REPO_PATH"),
+            "--log-level-console=info",
+            "--log-level-file=info",
+            "stanza-create"
+        ]
+        # Adding repository type specific configurations
+        if config["REPO1_TYPE"] == "s3":
+            command.extend([
+                "--repo1-type", "s3",
+                "--repo1-s3-bucket", config["S3_BUCKET"],
+                "--repo1-s3-region", config["S3_REGION"],
+                "--repo1-s3-endpoint", config["S3_ENDPOINT"],
+            ])
+        elif config["REPO1_TYPE"] == "posix":
+            command.extend(["--repo1-path", config["REPO_PATH"]])
+        subprocess.run(command, check=True)
+        print("Stanza created successfully.")
+    except subprocess.CalledProcessError as e:
+        print("Error creating stanza:", e)
+
 if __name__ == "__main__":
     fire.Fire({
         "backup": backup,
         "restore": restore,
         "pitr": pitr,
+        "create_stanza": create_stanza,
         "create_replica": create_replica,
         "list": list_backups,
         "config": print_config,
