@@ -104,8 +104,8 @@ $nc cloud destroy-cluster    --help
 ace () {
 #$nc ace --help
 $nc ace table-diff          --help
-$nc ace diff-schemas        --help
-$nc ace diff-spock          --help
+$nc ace schema-diff         --help
+$nc ace spock-diff          --help
 $nc ace table-repair        --help
 $nc ace table-rerun         --help
 $nc ace repset-diff         --help
