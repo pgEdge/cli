@@ -1,4 +1,4 @@
-import sys, os, psycopg, json,subprocess
+import sys, os, psycopg2, json,subprocess
 from dotenv import load_dotenv
 
 ## Utility Functions
