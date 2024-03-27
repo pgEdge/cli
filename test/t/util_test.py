@@ -63,20 +63,20 @@ def run_cmd(msg, cmd, node_path):
 def get_pg_connection():
   port_n1, port_n2, host_n1, host_n2, db, usr, pw, repuser, pgv, repo = get_settings()
   try:
-    con1 = psycopg.connect(dbname=db, user=usr, host=host_n1, port=port_n1, password=pw, autocommit=False)
-    con2 = psycopg.connect(dbname=db, user=usr, host=host_n2, port=port_n2, password=pw, autocommit=False)
+    con1 = psycopg2.connect(dbname=db, user=usr, host=host_n1, port=port_n1, password=pw, autocommit=False)
+    con2 = psycopg2.connect(dbname=db, user=usr, host=host_n2, port=port_n2, password=pw, autocommit=False)
   except Exception as e:
     exit_message(e)
   return(con1, con2)
 '''
 
- 
+## To make the connection string work in get_pg_con, I removed autocommit=False option from line 78 (the con1 connection string) - SMD
 ## Get two psql connections
 def get_pg_con(host,dbname,port,pw,usr):
   #port, port_n2, host_n1, host_n2, db, usr, pw, repuser, pgv, repo = get_settings()
   try:
-    con1 = psycopg.connect(dbname=dbname, user=usr, host=host, port=port, password=pw, autocommit=False)
-    #con2 = psycopg.connect(dbname=db, user=repuser, host=host_n2, port=port_n2, password=pw, autocommit=False)
+    con1 = psycopg2.connect(dbname=dbname, user=usr, host=host, port=port, password=pw)
+    #con2 = psycopg2.connect(dbname=db, user=repuser, host=host_n2, port=port_n2, password=pw, autocommit=False)
   except Exception as e:
     exit_message(e)
   return(con1)
