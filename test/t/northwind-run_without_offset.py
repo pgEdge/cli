@@ -18,9 +18,9 @@ repuser=os.getenv("EDGE_REPUSER","pgedge")
 repset=os.getenv("EDGE_REPSET","demo-repset")
 spockpath=os.getenv("EDGE_SPOCK_PATH")
 dbname=os.getenv("EDGE_DB","lcdb")
-rate=os.getenv("EDGE_RATE","2")
-time=os.getenv("EDGE_TIME",10)
-offset=os.getenv("EDGE_OFFSET",1)
+
+rate=2
+time=1
 
 #CONFIRM that if you invoke the northwind-run command without an offset value, the error is handled gracefully.
 cmd_node = f"app northwind-run {dbname} {rate} {time}"
@@ -30,7 +30,7 @@ print("*"*100)
 
 #haystack and needle
 #Checking needle and haystack from returncode in the result
-check=util_test.contains(str(res.returncode),"0")
+check=util_test.contains(str(res.returncode),"1")
 print("*"*100)
 	
 util_test.exit_message(f"Pass - {os.path.basename(__file__)}", 0)

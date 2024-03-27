@@ -17,17 +17,18 @@ repuser=os.getenv("EDGE_REPUSER","pgedge")
 repset=os.getenv("EDGE_REPSET","demo-repset")
 spockpath=os.getenv("EDGE_SPOCK_PATH")
 dbname=os.getenv("EDGE_DB","lcdb")
-rate=os.getenv("EDGE_RATE","2")
-time=os.getenv("EDGE_TIME",10)
-offset=os.getenv("EDGE_OFFSET",1)
+
+rate=2
+time=1
+offset=1
 
 #Demonstrate that if you call northwind-run before northwind-install the error is handled gracefully.
 def northwindrun():
 	cmd_node = f"app northwind-run {dbname} {offset} {rate} {time}"
-	res=util_test.run_cmd("northwind install", cmd_node, f"{cluster_dir}/n1")
+	res=util_test.run_cmd("northwind run", cmd_node, f"{cluster_dir}/n1")
 	print(res)
 	print("*"*100)
-	check=util_test.contains(str(res.returncode),"0")
+	check=util_test.contains(str(res.returncode),"1")
 	print("*"*100)
 
 northwindrun()

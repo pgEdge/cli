@@ -28,7 +28,7 @@ print("*"*100)
 ##
 #haystack and needle
 #Checking needle and haystack from returncode in the result
-check=util_test.contains(str(res.returncode),"0")
+check=util_test.contains(str(res.stdout),"replication set defaul not found")
 print("*"*100)
 
 

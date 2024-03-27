@@ -17,8 +17,6 @@ repuser=os.getenv("EDGE_REPUSER","pgedge")
 repset=os.getenv("EDGE_REPSET","demo-repset")
 spockpath=os.getenv("EDGE_SPOCK_PATH")
 dbname=os.getenv("EDGE_DB","lcdb")
-rate=os.getenv("EDGE_RATE","2")
-time=os.getenv("EDGE_TIME",10)
 
 ## northwind-validate
 ## northwind-validate is called with a valid database name, a result that includes the sum of units on order and in stock is returned. 
@@ -28,7 +26,7 @@ print(res)
 print("*"*100)
 #
 #haystack and needle
-#confirm with SELECT * FROM information_schema.tables WHERE table_name='categories'
+#confirm with SELECT count(*) FROM northwind.products
 row = util_test.read_psql("select sum(units_on_order) From northwind.products;",host,dbname,port,pw,usr).strip("[]")
 check=util_test.contains(res.stdout,row)
 print("*"*100)

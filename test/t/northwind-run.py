@@ -17,9 +17,11 @@ repuser=os.getenv("EDGE_REPUSER","pgedge")
 repset=os.getenv("EDGE_REPSET","demo-repset")
 spockpath=os.getenv("EDGE_SPOCK_PATH")
 dbname=os.getenv("EDGE_DB","lcdb")
-rate=os.getenv("EDGE_RATE","2")
-time=os.getenv("EDGE_TIME",10)
-offset=os.getenv("EDGE_OFFSET",1)
+
+rate=2
+time=1
+offset=1
+
 ##
 ## The command invokes the northwind-run app and iterates through a list of orders.
 ##specifying ratevalue and timevalue

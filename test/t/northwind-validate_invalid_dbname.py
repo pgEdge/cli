@@ -17,11 +17,11 @@ repuser=os.getenv("EDGE_REPUSER","pgedge")
 repset=os.getenv("EDGE_REPSET","demo-repset")
 spockpath=os.getenv("EDGE_SPOCK_PATH")
 dbname=os.getenv("EDGE_DB","lcdb")
-rate=os.getenv("EDGE_RATE","2")
-time=os.getenv("EDGE_TIME",10)
+
+nodbname="edokatinikenduku"
 
 ##Demonstrate that if northwind-validate is called with an invalid database name, the error is handed gracefully.
-cmd_node = f"app northwind-validate {(not dbname)}"
+cmd_node = f"app northwind-validate {noddbname}"
 res=util_test.run_cmd("validate northwind providing non-ex dbname", cmd_node, f"{cluster_dir}/n1")
 print(res)
 print("*"*100)

@@ -1,4 +1,4 @@
-import sys, os, psycopg2, json,subprocess
+import sys, os, psycopg, json,subprocess
 from dotenv import load_dotenv
 
 ## Utility Functions
@@ -63,8 +63,8 @@ def run_cmd(msg, cmd, node_path):
 def get_pg_connection():
   port_n1, port_n2, host_n1, host_n2, db, usr, pw, repuser, pgv, repo = get_settings()
   try:
-    con1 = psycopg2.connect(dbname=db, user=usr, host=host_n1, port=port_n1, password=pw, autocommit=False)
-    con2 = psycopg2.connect(dbname=db, user=usr, host=host_n2, port=port_n2, password=pw, autocommit=False)
+    con1 = psycopg.connect(dbname=db, user=usr, host=host_n1, port=port_n1, password=pw, autocommit=False)
+    con2 = psycopg.connect(dbname=db, user=usr, host=host_n2, port=port_n2, password=pw, autocommit=False)
   except Exception as e:
     exit_message(e)
   return(con1, con2)
@@ -75,8 +75,8 @@ def get_pg_connection():
 def get_pg_con(host,dbname,port,pw,usr):
   #port, port_n2, host_n1, host_n2, db, usr, pw, repuser, pgv, repo = get_settings()
   try:
-    con1 = psycopg2.connect(dbname=dbname, user=usr, host=host, port=port, password=pw)
-    #con2 = psycopg2.connect(dbname=db, user=repuser, host=host_n2, port=port_n2, password=pw, autocommit=False)
+    con1 = psycopg.connect(dbname=dbname, user=usr, host=host, port=port, password=pw)
+    #con2 = psycopg.connect(dbname=db, user=repuser, host=host_n2, port=port_n2, password=pw, autocommit=False)
   except Exception as e:
     exit_message(e)
   return(con1)
@@ -162,7 +162,7 @@ def contains(haystack, needle):
         return 1
     else:
         print('Haystack and needle both have content, but our value is not found - returning 0 as it should')
-        return 0
+        exit_message("Fail", p_rc=1)
         
         
         

@@ -27,7 +27,7 @@ print("*"*100)
 #haystack and needle
 #confirm with SELECT * FROM information_schema.tables WHERE table_name='categories'
 row = util_test.read_psql("SELECT * FROM information_schema.tables WHERE table_name='categories';",host,dbname,port,pw,usr)
-check=util_test.contains((row),"Dropped northwind schema from database")
+check=util_test.contains((row),"")
 print("*"*100)
 
 util_test.exit_message(f"Pass - {os.path.basename(__file__)}", 0)

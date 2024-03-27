@@ -17,8 +17,6 @@ repuser=os.getenv("EDGE_REPUSER","pgedge")
 repset=os.getenv("EDGE_REPSET","demo-repset")
 spockpath=os.getenv("EDGE_SPOCK_PATH")
 dbname=os.getenv("EDGE_DB","lcdb")
-rate=os.getenv("EDGE_RATE","2")
-time=os.getenv("EDGE_TIME",10)
 
 #DEMONSTRATE that if northwind-validate is called without a valid database name, the error is handled gracefully.
 cmd_node = f"app northwind-validate"
