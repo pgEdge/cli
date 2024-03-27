@@ -9,7 +9,6 @@ import sys
 from datetime import datetime
 from tabulate import tabulate
 
-
 def fetch_backup_config():
     """Fetch backup configuration from util module or other configuration source."""
     config = {
@@ -28,6 +27,7 @@ def fetch_backup_config():
         "PRIMARY_USER": util.get_value("BACKUP", "PRIMARY_USER"),
         "REPLICA_PASSWORD": util.get_value("BACKUP", "REPLICA_PASSWORD"),
         "RECOVERY_TARGET_TIME": util.get_value("BACKUP", "RECOVERY_TARGET_TIME"),
+        "PROCESS_MAX": util.get_value("BACKUP", "PROCESS_MAX"),
         "RESTORE_PATH": util.get_value("BACKUP", "RESTORE_PATH"),
 
         "REPO1_TYPE": util.get_value("BACKUP", "REPO1_TYPE"),
@@ -50,19 +50,34 @@ def run_command(command_args):
         print("Error executing command:", e)
 
 
-def backup(backup_type="full"):
-    """Perform a backup using the specified backup tool and backup type, storing the backup at the specified backup path."""
+def backup(type="full"):
+    """
+    Backup a database cluster.
+
+    :param type: Specifies the type of backup to perform. This should be one of the following options:
+
+                 * "full" - Performs a full backup.
+
+                 * "diff" - Performs a differential backup.
+
+                 * "incr" - Performs an incremental backup.
+
+    :type type: str
+    :return: None
+    """
+
     config = fetch_backup_config()
     allowed_types = ["full", "diff", "incr"]
-    if backup_type not in allowed_types:
-        print(f"Error: '{backup_type}' is not a valid backup type. Allowed types are: {', '.join(allowed_types)}.")
+    if type not in allowed_types:
+        print(f"Error: '{type}' is not a valid backup type. Allowed types are: {', '.join(allowed_types)}.")
         return
 
     command = [
-        config["BACKUP_TOOL"], "--type", backup_type, "backup",
+        config["BACKUP_TOOL"], "--type", type, "backup",
         "--stanza", config["STANZA"],
         "--pg1-path", config["PG_PATH"],
         "--start-fast",
+        "--process-max", config["PROCESS_MAX"],
         #"--pg1-host", config["PRIMARY_HOST"],
         "--pg1-port", config["PRIMARY_PORT"],
         "--repo1-retention-full-type", config["REPO_RETENTION_FULL_TYPE"],
@@ -115,17 +130,20 @@ def format_recovery_target_time(recovery_target_time=None):
         print("Invalid recovery_target_time format. Please provide the time in 'YYYY-MM-DD HH:MM:SS' format.")
         sys.exit(1)  # Exit the script if the input format is invalid
 
-def restore(backup_id=None, recovery_target_time=None):
+def restore(backup_label=None, recovery_target_time=None):
     """
-    Restore a PostgreSQL database from a backup.
+    Restore a database cluster.
 
-    Args:
-        backup_id (str, optional): Specific backup ID to restore from. If not provided,
-                                   the latest backup will be used.
-        recovery_target_time (str, optional): Specific point in time to restore to,
-                                               useful for point-in-time recovery (PITR).
-                                               Must be a string in a format recognized by PostgreSQL.
+    :param backup_label: The backup label to use for creating the replica. If not specified, the latest backup will be used.
+    :type backup_label: str, optional
+
+    :param recovery_target_time: The target time for point-in-time recovery (PITR). This allows the replica to be restored to a specific point in time, rather than the state at the time of the backup.
+    :type recovery_target_time: str, optional.
+
+    :return: None
     """
+    pass
+
     config = fetch_backup_config()
     print ("Checking restore path directory and permissions")
     path_check, directory_existed = check_restore_path(config["RESTORE_PATH"])
@@ -148,10 +166,10 @@ def restore(backup_id=None, recovery_target_time=None):
     if directory_existed:
         command.append("--delta")
 
-    # Extend command based on `backup_id` and `recovery_target_time`
+    # Extend command based on `backup_label` and `recovery_target_time`
     if config["BACKUP_TOOL"] == "pgbackrest":
-        if backup_id:
-            command.append("--set={}".format(backup_id))
+        if backup_label:
+            command.append("--set={}".format(backup_label))
         if recovery_target_time:
             formatted_time = format_recovery_target_time(recovery_target_time)
             print(formatted_time)
@@ -173,10 +191,6 @@ def _configure_pitr(stanza, recovery_target_time=None):
     change_pgconf_keyval(conf_file, "recovery_target_action", "promote",)
 
 def change_pgconf_keyval(config_path, key, value):
-    """
-    Append a new line to the postgresql.conf file or replace the existing
-    line if the key already exists.
-    """
     key_found = False
     new_lines = []
     with open(config_path, 'r') as file:
@@ -216,38 +230,47 @@ def _configure_replica():
     print("Configurations modified to configure as replica. Ensure the PostgreSQL instance is restarted to apply these changes.")
 
 
-def pitr(backup_id=None, recovery_target_time=None):
+def pitr(backup_label=None, recovery_target_time=None):
     """
     Perfomr point-in-time recovery.
-    Args:
-        backup_id (str, optional): The ID of the backup to use for creating the replica.
-                                   If not provided, the latest backup will be used unless do_backup is True.
-        recovery_target_time (str, optional): The target time for PITR.
+
+    :param backup_label: The backup label to use for creating the replica. If not specified, the latest backup will be used.
+    :type backup_label: str, optional
+
+    :param recovery_target_time: The target time for point-in-time recovery (PITR). This allows the replica to be restored to a specific point in time, rather than the state at the time of the backup.
+    :type recovery_target_time: str, optional.
+
+    :return: None
     """
+    pass
 
     rtt = format_recovery_target_time(recovery_target_time)
     config = fetch_backup_config()
-    restore(backup_id, recovery_target_time)
+    restore(backup_label, recovery_target_time)
     _configure_pitr(config["STANZA"], recovery_target_time)
 
-def create_replica(backup_id=None, recovery_target_time=None, do_backup=False):
+def create_replica(backup_label=None, recovery_target_time=None, do_backup=False):
     """
-    Create a replica by restoring from a backup and configure it. If specified, perform PITR.
-    Optionally, initiate a backup before creating the replica.
+    Create a replica by restoring from a backup and configure it.
 
-    Args:
-        backup_id (str, optional): The ID of the backup to use for creating the replica.
-                                   If not provided, the latest backup will be used unless do_backup is True.
-        recovery_target_time (str, optional): The target time for PITR.
-        do_backup (bool, optional): Whether to initiate a new backup before creating the replica.
-                                    Defaults to False.
+    :param backup_label: The backup label to use for creating the replica. If not specified, the latest backup will be used.
+    :type backup_label: str, optional
+
+    :param recovery_target_time: The target time for point-in-time recovery (PITR). This allows the replica to be restored to a specific point in time, rather than the state at the time of the backup.
+    :type recovery_target_time: str, optional
+
+    :param do_backup: Whether to initiate a new backup before creating the replica. This can be used to ensure that the replica is as up-to-date as possible by creating a fresh backup from the primary before beginning the restoration process.
+    :type do_backup: bool, optional
+
+    :return: None
     """
+    pass
 
     # If do_backup is True, initiate a backup before proceeding
     if do_backup:
       backup("full")
 
-    restore(backup_id, recovery_target_time)
+    restore(backup_label, recovery_target_time)
 
     # Configure the PostgreSQL instance as a replica
     _configure_replica()
@@ -319,8 +342,9 @@ def print_config():
 
 def run_external_command(*args):
     """
-    Run pgbackrest) with the given arguments.
-    Automatically prepends 'pgbackrest' to the arguments.
+    Run pgbackrest with the given arguments.
+
+    Example:  ./pgedge backrest command info
     """
     # Prepend 'pgbackrest' to the command arguments
     command = ["pgbackrest"] + list(args)
@@ -333,13 +357,49 @@ def run_external_command(*args):
         # If an error occurred, print the stderr
         print(f"Error executing command: {e.stderr}")
 
+def create_stanza():
+    """
+    Create the required stanza data.
+    """
+    config = fetch_backup_config()
+    try:
+        command = [
+            "pgbackrest",
+            "--stanza=" + util.get_value("BACKUP", "STANZA"),
+            "--pg1-path=" + util.get_value("BACKUP", "PG_PATH"),
+            #"--pg1-host=" + util.get_value("BACKUP", "PRIMARY_HOST"),
+            "--pg1-port=" + util.get_value("BACKUP", "PRIMARY_PORT"),
+            "--pg1-user=" + util.get_value("BACKUP", "PRIMARY_USER"),
+            "--pg1-socket-path=" + util.get_value("BACKUP", "PG_SOCKET_PATH"),
+            "--repo1-cipher-type=" + util.get_value("BACKUP", "REPO_CIPHER_TYPE"),
+            "--repo1-path=" + util.get_value("BACKUP", "REPO_PATH"),
+            "--log-level-console=info",
+            "--log-level-file=info",
+            "stanza-create"
+        ]
+        # Adding repository type specific configurations
+        if config["REPO1_TYPE"] == "s3":
+            command.extend([
+                "--repo1-type", "s3",
+                "--repo1-s3-bucket", config["S3_BUCKET"],
+                "--repo1-s3-region", config["S3_REGION"],
+                "--repo1-s3-endpoint", config["S3_ENDPOINT"],
+            ])
+        elif config["REPO1_TYPE"] == "posix":
+            command.extend(["--repo1-path", config["REPO_PATH"]])
+        subprocess.run(command, check=True)
+        print("Stanza created successfully.")
+    except subprocess.CalledProcessError as e:
+        print("Error creating stanza:", e)
+
 if __name__ == "__main__":
     fire.Fire({
         "backup": backup,
         "restore": restore,
         "pitr": pitr,
-        "create_replica": create_replica,
-        "list": list_backups,
+        "create-stanza": create_stanza,
+        "create-replica": create_replica,
+        "list-backups": list_backups,
         "config": print_config,
         "command": run_external_command,
     })

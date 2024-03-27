@@ -226,7 +226,7 @@ def run_script(componentName, scriptName, scriptParm):
 
     rc = 0
     compState = util.get_comp_state(componentName)
-    if compState == "Enabled": 
+    if compState == "Enabled":
         if os.path.isfile(scriptFile):
             run = cmd + " " + scriptFile + " " + scriptParm
             rc = os.system(run)

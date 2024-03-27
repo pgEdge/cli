@@ -29,4 +29,4 @@ if pgV > "":
     util.change_pgconf_keyval(pgV, "archive_command", "", p_replace=True)
     util.change_pgconf_keyval(pgV, "archive_mode", "off", p_replace=True)
 
-    os.system("./nc restart " + pgV)
+    os.system("./pgedge db guc-set " + pgV)
