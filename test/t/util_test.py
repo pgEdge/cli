@@ -154,14 +154,14 @@ def contains(haystack, needle):
     print(f'haystack = ({haystack})')
     print(f'needle = ({needle})')
     
-    if haystack is None or needle is None or len(haystack) == 0 or len(needle) == 0:
+    if haystack is None and needle is None or len(haystack) == 0 and len(needle) == 0:
         return 0
 
     if haystack.find(needle) != -1:
         print('Haystack and needle both have content, and our value is found - this case correctly returns true')
-        return 1
+        return 0
     else:
-        print('Haystack and needle both have content, but our value is not found - returning 0 as it should')
+        print('Haystack and needle both have content, but our value is not found - returning 1 as it should')
         exit_message("Fail", p_rc=1)
         
         
