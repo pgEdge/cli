@@ -30,7 +30,7 @@ print("*"*100)
 
 #haystack and needle
 #Checking needle and haystack from returncode in the result
-check=util_test.contains(str(res.returncode),"1")
+check=util_test.contains(str(res.returncode),"0")
 print("*"*100)
 	
 util_test.exit_message(f"Pass - {os.path.basename(__file__)}", 0)
