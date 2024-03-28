@@ -21,7 +21,7 @@ dbname=os.getenv("EDGE_DB","lcdb")
 nodbname="edokatinikenduku"
 
 ##Demonstrate that if northwind-validate is called with an invalid database name, the error is handed gracefully.
-cmd_node = f"app northwind-validate {noddbname}"
+cmd_node = f"app northwind-validate {nodbname}"
 res=util_test.run_cmd("validate northwind providing non-ex dbname", cmd_node, f"{cluster_dir}/n1")
 print(res)
 print("*"*100)
