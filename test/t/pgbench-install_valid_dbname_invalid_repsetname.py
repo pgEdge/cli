@@ -8,7 +8,6 @@ util_test.set_env()
 #
 repo=os.getenv("EDGE_REPO")
 num_nodes=int(os.getenv("EDGE_NODES",2))
-print(num_nodes)
 cluster_dir=os.getenv("EDGE_CLUSTER_DIR")
 port=int(os.getenv("EDGE_START_PORT",6432))
 usr=os.getenv("EDGE_USERNAME","admin")
@@ -23,14 +22,16 @@ dbname=os.getenv("EDGE_DB","lcdb")
 #CONFIRM that if the name of an existing database is provided, and a non-ex. replication set is provided, the error is handled gracefully.
 #
 cmd_node = f"app pgbench-install {dbname} -r defaul"
-res=util_test.run_cmd_err("install pgbench with non-ex rep_set", cmd_node, f"{cluster_dir}/n1")
-print("*"*100)
+res=util_test.run_cmd("install pgbench with non-ex rep_set", cmd_node, f"{cluster_dir}/n1")
 print(res)
 print("*"*100)
+
 ##
 #haystack and Needle
-#Checking needle and haystack from returncode in the result
 check=util_test.contains(str(res.returncode),"0")
+print("*"*100)
+#
+
 
 
 util_test.exit_message(f"Pass - {os.path.basename(__file__)}", 0)

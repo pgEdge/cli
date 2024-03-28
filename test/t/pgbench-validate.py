@@ -21,15 +21,19 @@ dbname=os.getenv("EDGE_DB","lcdb")
 rate=os.getenv("EDGE_RATE","2")
 time=os.getenv("EDGE_TIME",10)
 
-## pgbench-install
+## pgbench-validate
 ## CONFIRM that the command performs as expected if you provide a valid db name. 
-##
-
-## Checking Sum Before validation of Pgbench
-#
-#
 cmd_node = f"app pgbench-validate {dbname}"
 res=util_test.run_cmd("validating pgbench", cmd_node, f"{cluster_dir}/n1")
+print(res)
+print("*"*100)
+
+##
+#haystack and needle
+#Checking needle and haystack from SELECT SUM(tbalance) FROM pgbench_tellers in the result
+row = util_test.read_psql("SELECT SUM(tbalance) FROM pgbench_tellers",host,dbname,port,pw,usr).strip("[]")
+check=util_test.contains(str(res.stdout),row)
+print("*"*100)
 
 util_test.exit_message(f"Pass - {os.path.basename(__file__)}", 0)
 

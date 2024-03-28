@@ -5,7 +5,6 @@ print(f"Starting - {os.path.basename(__file__)}")
 
 ## Get Test Settings
 util_test.set_env()
-
 #
 repo=os.getenv("EDGE_REPO")
 num_nodes=int(os.getenv("EDGE_NODES",2))
@@ -24,12 +23,14 @@ dbname=os.getenv("EDGE_DB","lcdb")
 ## CONFIRM that if a database name and repset name are provided, pgbench is installed as expected and the transactions are added to the repset
 cmd_node = f"app pgbench-install {dbname} -r default"
 res=util_test.run_cmd("running pgbench-install including repsetname", cmd_node, f"{cluster_dir}/n1")
-##
+print(res)
+print("*"*100)
+
+#haystack and needle
 ## confirm with SELECT * FROM spock.replication_set_table.
-cmd=f"SELECT * FROM spock.replication_set" 
-con=util_test.get_pg_con(host,db,port,pw,usr)
-val=util_test.run_psql(cmd, con)
-#print(val)
+row = util_test.read_psql("SELECT * FROM spock.tables",host,dbname,port,pw,usr).strip("[]")
+check=util_test.contains((row),"default")
+print("*"*100)
 
 util_test.exit_message(f"Pass - {os.path.basename(__file__)}", 0)
 

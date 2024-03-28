@@ -22,8 +22,7 @@ time=os.getenv("EDGE_TIME",10)
 
 #CONFIRM that pgbench-validate errors gracefully if a database name is not provided.
 cmd_node = f"app pgbench-validate"
-res=util_test.run_cmd_err("validate pgbench without database", cmd_node, f"{cluster_dir}/n1")
-print("*"*100)
+res=util_test.run_cmd("validate pgbench without database", cmd_node, f"{cluster_dir}/n1")
 print(res)
 print("*"*100)
 ##
@@ -34,7 +33,5 @@ check=util_test.contains(str(res.returncode),"1")
 util_test.exit_message(f"Pass - {os.path.basename(__file__)}", 0)
 
 
-
-check=util_test.contains(str(res),row)
 
 

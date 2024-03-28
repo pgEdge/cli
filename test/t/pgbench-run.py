@@ -25,6 +25,15 @@ time=os.getenv("EDGE_TIME",10)
 ##CONFIRM that if pgbench-install has been previously invoked, and a database name, rate value, and time value are provided, the pgbench-run command runs as expected.
 cmd_node = f"app pgbench-run {dbname} {rate} {time}"
 res=util_test.run_cmd("pgbench-run", cmd_node, f"{cluster_dir}/n1")
+print(res)
+print("*"*100)
+
+##
+#haystack and needle
+#Check needle and haystack from stdout in the result
+check=util_test.contains(res.stdout,"number of threads: 1")
+print("*"*100)
+
 
 util_test.exit_message(f"Pass - {os.path.basename(__file__)}", 0)
 

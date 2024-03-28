@@ -22,14 +22,14 @@ time=os.getenv("EDGE_TIME",10)
 
 #CONFIRM that pgbench-remove errors gracefully if a database name is not provided.
 cmd_node = f"app pgbench-remove"
-res=util_test.run_cmd_err("remove pgbench without dbname", cmd_node, f"{cluster_dir}/n1")
-print("*"*100)
+res=util_test.run_cmd("remove pgbench without dbname", cmd_node, f"{cluster_dir}/n1")
 print(res)
 print("*"*100)
+
 ##
 #haystack and needle
-#Checking needle and haystack from returncode in the result
 check=util_test.contains(str(res.returncode),"1")
+print("*"*100)
 
 util_test.exit_message(f"Pass - {os.path.basename(__file__)}", 0)
 
