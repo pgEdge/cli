@@ -10,7 +10,6 @@ def get_cluster_info(cluster_name):
     cluster_dir = os.path.join(BASE_DIR, cluster_name)
     os.system("mkdir -p " + cluster_dir)
     cluster_file = os.path.join(cluster_dir, f"{cluster_name}.json")
-    util.message(f"get_cluster_info({cluster_name}) --> ({cluster_dir}, {cluster_file})", "debug")
     return (cluster_dir, cluster_file)
 
 

@@ -174,6 +174,7 @@ pid_file = os.path.join(util.MY_HOME, "conf", "cli.pid")
 isJSON = util.isJSON
 
 def fire_away(p_mode, p_args):
+    util.message(f"cli.fire_away({p_mode}, {p_args})", "debug")
     py_file = f"{p_mode}.py"
     py3 = sys.executable
     if os.path.exists(py_file):
@@ -1217,15 +1218,17 @@ if "--pg" in args:
 if "-U" in args:
     usr = get_next_arg("-U")
     if usr > "":
-        args.remove("-U")
-        args.remove(usr)
+        if str(args[1]) not in fire_list:
+            args.remove("-U")
+            args.remove(usr)
         os.environ["pgeUser"] = usr
 
 if "-P" in args:
     passwd = get_next_arg("-P")
     if passwd > "":
-        args.remove("-P")
-        args.remove(passwd)
+        if str(args[1]) not in fire_list:
+            args.remove("-P")
+            args.remove(passwd)
         os.environ["pgePasswd"] = passwd
 
 if "-p" in args:
@@ -1256,8 +1259,9 @@ while i < len(args):
         if i < (len(args) - 1):
             PGNAME = args[i + 1]
             os.environ["pgName"] = PGNAME
-            args.remove(PGNAME)
-            args.remove("-d")
+            if str(args[1]) not in fire_list:
+                args.remove(PGNAME)
+                args.remove("-d")
             break
     i += 1
 
