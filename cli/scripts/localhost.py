@@ -177,6 +177,8 @@ Below is an example of the JSON file that is generated that defines a 2 node loc
   }
     """
 
+    util.message(f"localhost.cluster_create({cluster_name}, {num_nodes}, {pg}, {port1}, {User}, {Passwd}, {db})", "debug")
+
     util.message("# verifying passwordless ssh...")
     if util.is_password_less_ssh():
         pass
