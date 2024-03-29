@@ -56,7 +56,7 @@ def configure_backup_settings(stanza_name):
         "REPO_CIPHER_PASSWORD": "",
         "REPO_PATH": "/var/lib/pgbackrest",
         "REPO_RETENTION_FULL_TYPE": "count",
-        "REPO_RETENTION_FULL": "7",
+        "REPO_RETENTION_FULL": "31",
         "BACKUP_TOOL": "pgbackrest",
         "STANZA": stanza_name,
         "PRIMARY_HOST": "127.0.0.1",
@@ -65,6 +65,7 @@ def configure_backup_settings(stanza_name):
         "REPLICA_PASSWORD": "123",
         "RECOVERY_TARGET_TIME": "",
         "RESTORE_PATH": pg_restore_path,
+        "PROCESS_MAX": "3",
         "REPO1_TYPE": "local",
         "BACKUP_TYPE": "full",
         "S3_BUCKET": "bucket-name",
@@ -164,33 +165,39 @@ def create_stanza():
         print("Error creating stanza:", e)
 
 def define_cron_job():
+    # Define the full backup command
+    full_backup_command = [
+            "pgbackrest",
+            "--stanza=" + util.get_value("BACKUP", "STANZA"),
+            "--type=full",  # Ensure this is the correct way to specify the backup type
+            "backup"  # Assuming "backup" is needed as part of the command
+    ]
+    # Join the command list into a string
+    full_backup_command_str = ' '.join(full_backup_command)
 
-    # Define your command
-    backup_command = [
+    # Define the incremental backup command
+    incr_backup_command = [
             "pgbackrest",
             "--stanza=" + util.get_value("BACKUP", "STANZA"),
-            "--full"
+            "--type=incr",  # Ensure this is the correct way to specify the backup type
+            "backup"  # Assuming "backup" is needed as part of the command
     ]
-    backup_command = [
-            "pgbackrest",
-            "--stanza=" + util.get_value("BACKUP", "STANZA"),
-            "--incr"
-    ]
+    # Join the command list into a string
+    incr_backup_command_str = ' '.join(incr_backup_command)
 
     # Access the current user's crontab
     cron = CronTab(user=util.get_user())
 
     # Create a new job for the full backup at 01:00 every day
-    full_job = cron.new(command=backup_command, comment='Full backup job')
+    full_job = cron.new(command=full_backup_command_str, comment='Full backup job')
     full_job.setall('0 1 * * *')
 
     # Create a new job for the incremental backup every hour
-    incr_job = cron.new(command=incr_backup_command, comment='Incremental backup job')
+    incr_job = cron.new(command=incr_backup_command_str, comment='Incremental backup job')
     incr_job.setall('0 * * * *')
 
     # Write the jobs to the crontab
     cron.write()
-
 
 def fetch_backup_config():
     """Fetch backup configuration from util module or other configuration source."""
