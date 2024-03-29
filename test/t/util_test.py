@@ -18,7 +18,7 @@ def get_settings():
     return port_n1, port_n2, host_n1, host_n2, db, usr, pw, repuser, pgv, repo
 
 def set_env():
-    load_dotenv(dotenv_path='lib/config.env')
+    load_dotenv('t/lib/config.env')
 
 
 ## abruptly terminate with a codified message
