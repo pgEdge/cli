@@ -16,6 +16,7 @@ def osSys(p_input, p_display=True):
     rc = os.system(p_input)
     return rc
 
+
 def fetch_backup_config():
     """Fetch backup configuration from util module or other configuration source."""
     config = {
@@ -114,7 +115,7 @@ def restore(backup_label=None, recovery_target_time=None):
     rpath = config["RESTORE_PATH"]
     data_dir = rpath + "/data/"
 
-    util.message("Checking restore path directory and permissions")
+    print("Checking restore path directory and permissions ...")
     status = utilx.check_directory_status(rpath)
     if status['exists'] == True:
         if status['writable'] != True:
@@ -142,8 +143,16 @@ def restore(backup_label=None, recovery_target_time=None):
             command.append(f"--type=time")
             command.append(f"--target={formatted_time}")
 
-    utilx.run_command(command)
-    util.message("Restoration completed successfully.")
+    result = utilx.run_command(command)
+    if result["success"]:
+        util.message("Restoration completed successfully.")
+        #print("Output:", result["output"])
+    else:
+        utilx.ereport('Error', 'Failed to restore cluster',
+        detail='Ensure the PostgreSQL instance is not running on that restore path',
+        context='Restore Cluster')
+        exit(1)
+    return result
 
 def _configure_pitr(stanza, recovery_target_time=None):
     config = fetch_backup_config()
@@ -215,8 +224,9 @@ def pitr(backup_label=None, recovery_target_time=None):
 
     rtt = utilx.sfmt_time(recovery_target_time)
     config = fetch_backup_config()
-    restore(backup_label, recovery_target_time)
-    _configure_pitr(config["STANZA"], recovery_target_time)
+    result = restore(backup_label, recovery_target_time)
+    if result["success"]:
+        _configure_pitr(config["STANZA"], recovery_target_time)
 
 def create_replica(backup_label=None, recovery_target_time=None, do_backup=False):
     """
@@ -351,7 +361,7 @@ def create_stanza():
         subprocess.run(command, check=True)
         util.message("Stanza created successfully.")
     except subprocess.CalledProcessError as e:
-        util.message("Error creating stanza:", e)
+        util.message(f"Error creating stanza: {e}")
 
 if __name__ == "__main__":
     fire.Fire({
