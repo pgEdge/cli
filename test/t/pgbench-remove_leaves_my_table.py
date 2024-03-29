@@ -19,23 +19,22 @@ repset=os.getenv("EDGE_REPSET","demo-repset")
 spockpath=os.getenv("EDGE_SPOCK_PATH")
 dbname=os.getenv("EDGE_DB","lcdb")
 
-#pgbench-remove should not effect the table pgbench_foo
+# pgbench-remove should not remove my_table
 
-#creates table pgbench_foo
-row = util_test.write_psql("CREATE TABLE pgbench_foo (did integer PRIMARY KEY, name varchar(40));",host,dbname,port,pw,usr)
+# Create my_table:
+row = util_test.write_psql("CREATE TABLE my_table (did integer PRIMARY KEY, name varchar(40));",host,dbname,port,pw,usr)
 print(row)
 print("*"*100)
 
-#Removes pgbench and confirms only table pgbench_foo remains
+# Remove pgbench and confirm my_table remains:
 if (row==0):
 	cmd_node = f"app pgbench-remove {dbname}"
 	res=util_test.run_cmd("Removing pgbench", cmd_node, f"{cluster_dir}/n1")
 	print(res)
 	print("*"*100)
-	row = util_test.read_psql("SELECT * FROM information_schema.tables WHERE table_name='pgbench_foo'",host,dbname,port,pw,usr).strip("[]")
-	check=util_test.contains((row),"pgbench_foo")
+	row = util_test.read_psql("SELECT * FROM information_schema.tables WHERE table_name='my_table'",host,dbname,port,pw,usr).strip("[]")
+	check=util_test.contains((row),"my_table")
 	
-
 
 util_test.exit_message(f"Pass - {os.path.basename(__file__)}", 0)
 

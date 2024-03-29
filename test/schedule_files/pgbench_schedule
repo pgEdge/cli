@@ -9,7 +9,7 @@ t/8052_env_create_node2.pl
 
 ## pgbench
 t/pgbench-install.py
-t/pgbench-install_pgbench_foo.py
+t/pgbench-remove_leaves_my_table.py
 t/pgbench-install_with_repset.py
 t/pgbench-run.py
 t/pgbench-validate.py
