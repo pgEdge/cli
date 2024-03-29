@@ -23,17 +23,11 @@ def create(db=None, User=None, Passwd=None, pg=None, spock=None):
 
     """
 
-    if db is None:
-        db = os.getenv("pgName", None)
-
-    if User is None:
-        User = os.getenv("pgeUser", None)
+    util.message(f"db.create(db={db}, User={User}, Passwd={Passwd}, pg={pg}, spock={spock})", "debug")
 
     # one way or another, the user that creates the db will have a password
     if Passwd is None:
-        Passwd = os.getenv("pgePasswd", None)
-        if Passwd is None:
-            Passwd = util.get_random_password()
+        Passwd = util.get_random_password()
 
     if pg is None:
         pg_v = util.get_pg_v(pg)

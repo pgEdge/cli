@@ -139,16 +139,7 @@ def setup_pgedge(User=None, Passwd=None, dbName=None, port=None, pg_ver=None, sp
        :param autostart: Defaults to False
     """
 
-    util.message(f"setup.pgedge({User}, {dbName}, {port}, {pg_ver}, {spock_ver}, {autostart}", "debug")
-
-    if not User:
-        User = os.getenv("pgeUser", None)
-
-    if not Passwd:
-        Passwd = os.getenv("pgePasswd", None)
-
-    if not dbName:
-        dbName = os.getenv("pgName", None)
+    util.message(f"setup.pgedge(User={User}, Passwd='***', dbName={dbName}, port={port}, pg_ver={pg_ver}, spock_ver={spock_ver}, autostart={autostart}", "debug")
 
     if (User is None) or (Passwd is None) or (dbName is None):
         util.exit_message("Must specify User, Passwd & dbName")
