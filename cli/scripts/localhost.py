@@ -7,7 +7,7 @@ import util, fire, cluster
 BASE_DIR = "cluster"
 
 
-def create_local_json(cluster_name, db, num_nodes, usr, passwd, pg, ports, hosts=None, paths=None, keys=None):
+def create_local_json(cluster_name, db, num_nodes, usr, passwd, pg, ports, auto_ddl, hosts=None, paths=None, keys=None):
     """Create a json config file for a local cluster.
     
        Create a JSON configuration file that defines a local cluster. \n
@@ -24,6 +24,9 @@ def create_local_json(cluster_name, db, num_nodes, usr, passwd, pg, ports, hosts
     util.message(f"create_local_json({cluster_name}, {db}, {num_nodes}, {usr}, {passwd}, {pg}, {ports})", "debug")
 
     cluster_dir, cluster_file = cluster.get_cluster_info(cluster_name)
+    ddl="off"
+    if auto_ddl.lower() == "on":
+        ddl="on"
 
     text_file = open(cluster_dir + os.sep + cluster_name + ".json", "w")
     cluster_json = {}
@@ -38,6 +41,7 @@ def create_local_json(cluster_name, db, num_nodes, usr, passwd, pg, ports, hosts
 
     database_json = {"databases": []}
     database_json["pg_version"] = pg
+    database_json["auto_ddl"] = ddl
     db_json = {}
     db_json["username"] = usr
     db_json["password"] = passwd
@@ -116,6 +120,7 @@ def cluster_create(
     User="lcusr",
     Passwd="lcpasswd",
     db="lcdb",
+    auto_ddl="off"
 ):
     """Create a localhost test cluster of N pgEdge nodes on different ports.
     
@@ -128,6 +133,7 @@ def cluster_create(
        :param pg: The postgreSQL version of the database.
        :param port1: The starting port for this cluster. For local clusters, each node will have a port increasing by 1 from this port number. 
        :param db: The database name.
+       :param auto-ddl: Auto DDL on or off
 
 Below is an example of the JSON file that is generated that defines a 2 node localhost cluster
 
@@ -147,7 +153,8 @@ Below is an example of the JSON file that is generated that defines a 2 node loc
         "name": "lcdb"
       }
     ],
-    "pg_version": "16"
+    "pg_version": "16",
+    "auto_ddl": "off"
   },
   "node_groups": {
     "localhost": [
@@ -221,14 +228,14 @@ Below is an example of the JSON file that is generated that defines a 2 node loc
     User = os.getenv("pgeUser", User)
     Passwd = os.getenv("pgePasswd", Passwd)
 
-    create_local_json(cluster_name, db, num_nodes, User, Passwd, pg, port1)
+    create_local_json(cluster_name, db, num_nodes, User, Passwd, pg, port1, auto_ddl)
     db, db_settings, nodes = cluster.load_json(cluster_name)
 
     cluster.ssh_install_pgedge(cluster_name, db[0]["name"], db_settings, db[0]["username"], db[0]["password"], nodes)
     cluster.ssh_cross_wire_pgedge(cluster_name, db[0]["name"], db_settings, db[0]["username"], db[0]["password"], nodes)
     if len(db) > 1:
         for database in db[1:]:
-            cluster.create_spock_db(nodes,database)
+            cluster.create_spock_db(nodes,database,db_settings)
             cluster.ssh_cross_wire_pgedge(cluster_name, database["name"], pg, database["username"], database["password"], nodes)        
     
 
