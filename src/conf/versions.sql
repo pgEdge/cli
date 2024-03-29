@@ -337,7 +337,7 @@ INSERT INTO versions VALUES ('spock40-pg16', '4.0dev4-1', 'el8, el9, arm9', 1, '
 
 ----------------------------------
 INSERT INTO releases VALUES ('lolor-pg16', 4, 'lolor', 'LgObjLOgicalRep', '', 'test', '', 1, 'pgEdge Community', '', '');
-INSERT INTO versions VALUES ('lolor-pg16', '1.0dev1-1', 'el9, arm9', 1, '20240317', 'pg16', '', '');
+INSERT INTO versions VALUES ('lolor-pg16', '1.0beta1-1', 'el9, arm9, el8', 1, '20240403', 'pg16', '', '');
 
 ----------------------------------
 INSERT INTO projects VALUES ('pglogical', 'ext', 4, 0, 'hub', 1, 'https://github.com/2ndQuadrant/pglogical/releases',

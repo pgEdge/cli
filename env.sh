@@ -8,7 +8,7 @@ spock40V=4.0dev4-1
 spock33V=3.3.1-1
 spock32V=3.2.8-1
 
-lolorV=1.0dev1-1
+lolorV=1.0beta1-1
 foslotsV=1a-1
 snwflkV=1.2-1
 vectorV=0.6.2-1
