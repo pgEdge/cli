@@ -537,6 +537,7 @@ setupOutdir () {
   cd $outDir
   out="$PWD"
 
+  mkdir -p data/logs
   d_conf=data/conf
   mkdir -p $d_conf/cache
 

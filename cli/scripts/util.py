@@ -103,7 +103,7 @@ my_logger = logging.getLogger()
 LOG_FILENAME = os.getenv('MY_LOGS')
 if not LOG_FILENAME:
    MY_HOME = os.getenv("MY_HOME")
-   LOG_FILENAME = os.path.join(MY_HOME,"logs","cli_log.out")
+   LOG_FILENAME = os.path.join(MY_HOME, "data", "logs","cli_log.out")
 LOG_DIRECTORY = os.path.split(LOG_FILENAME)[0]
 
 isDebug=0

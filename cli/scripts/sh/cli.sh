@@ -13,7 +13,7 @@ script=`basename "$this"`
 my_home=`cd "$config_bin"; pwd`
 
 export MY_HOME="$my_home"
-export MY_LOGS=$MY_HOME/logs/cli_log.out
+export MY_LOGS=$MY_HOME/data/logs/cli_log.out
 export MY_LITE=$MY_HOME/data/conf/db_local.db
 export MY_CMD=pgedge
 
