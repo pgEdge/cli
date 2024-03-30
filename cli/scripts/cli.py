@@ -208,6 +208,7 @@ def get_next_arg(p_arg):
 
 # run external scripts #######################################
 def run_script(componentName, scriptName, scriptParm):
+    ## util.message(f"DEBUG cli.run_script({componentName}, {scriptName}, {scriptParm})")
     if componentName not in installed_comp_list:
         return
 
@@ -225,15 +226,21 @@ def run_script(componentName, scriptName, scriptParm):
         cmd = sys.executable + " -u"
         scriptFile = scriptFile + ".py"
 
+    scriptFileFound = False
+    if os.path.isfile(scriptFile):
+        scriptFileFound = True
+
+    ## util.message(f"DEBUG scriptFile '{scriptFile}', {scriptFileFound}")
+
     rc = 0
     compState = util.get_comp_state(componentName)
     if compState == "Enabled":
-        if os.path.isfile(scriptFile):
+        if scriptFileFound is True:
             run = cmd + " " + scriptFile + " " + scriptParm
             rc = os.system(run)
         else:
             if is_ext:
-                rc = util.create_extension(componentName)
+                rc = util.config_extension(p_pg=componentName[-4:], p_comp=componentName[0:-5])
 
     if rc != 0:
         print("Error running " + scriptName)
@@ -694,7 +701,7 @@ def unpack_comp(p_app, p_old_ver, p_new_ver):
                     f"{os.path.join(MY_HOME, parent)}  {os.path.join(backup_target_dir, parent)}"
                 )
             manifest_file_name = p_app + ".manifest"
-            manifest_file_path = os.path.join(MY_HOME, "conf", manifest_file_name)
+            manifest_file_path = os.path.join(MY_HOME, "data", "conf", manifest_file_name)
             my_logger.info("backing up current manifest file " + manifest_file_path)
             copy2(manifest_file_path, backup_target_dir)
             my_logger.info("deleting existing extension files from " + parent)
