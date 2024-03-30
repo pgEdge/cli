@@ -784,6 +784,8 @@ def config_extension(p_pg, p_comp, create=True, active=True):
         return
 
     extension_name, default_conf = meta.get_extension_meta(p_comp)
+    if extension_name is None:
+        exit_message(f"Cannot find {p_comp} meta data", 1)
 
     for df in default_conf.split("|"):
         df1 = df.strip()

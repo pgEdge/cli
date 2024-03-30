@@ -52,25 +52,21 @@ CREATE TABLE releases (
 CREATE TABLE extensions (
   component      TEXT NOT NULL PRIMARY KEY,
   extension_name TEXT NOT NULL,
+  is_preload     INTEGER NOT NULL,
   default_conf   TEXT NOT NULL
 );
-INSERT INTO extensions VALUES ('spock32', 'spock', 
+INSERT INTO extensions VALUES ('spock33', 'spock', 1,
   'wal_level=logical | max_worker_processes=12 | max_replication_slots=16 |
    max_wal_senders=16 | hot_standby_feedback=on | wal_sender_timeout=5s |
    track_commit_timestamp=on | spock.conflict_resolution=last_update_wins | 
    spock.save_resolutions=on');
-INSERT INTO extensions VALUES ('spock33', 'spock', 
+INSERT INTO extensions VALUES ('spock40', 'spock', 1,
   'wal_level=logical | max_worker_processes=12 | max_replication_slots=16 |
    max_wal_senders=16 | hot_standby_feedback=on | wal_sender_timeout=5s |
    track_commit_timestamp=on | spock.conflict_resolution=last_update_wins | 
    spock.save_resolutions=on');
-INSERT INTO extensions VALUES ('spock40', 'spock', 
-  'wal_level=logical | max_worker_processes=12 | max_replication_slots=16 |
-   max_wal_senders=16 | hot_standby_feedback=on | wal_sender_timeout=5s |
-   track_commit_timestamp=on | spock.conflict_resolution=last_update_wins | 
-   spock.save_resolutions=on');
-INSERT INTO extensions VALUES ('lolor', 'lolor', 
-  'lo_compat_privileges=on');
+INSERT INTO extensions VALUES ('lolor', 'lolor', 0, '');
+  
 
 
 CREATE TABLE versions (
@@ -336,6 +332,8 @@ INSERT INTO versions VALUES ('spock40-pg15', '4.0dev4-1', 'el8, el9, arm9', 1, '
 INSERT INTO versions VALUES ('spock40-pg16', '4.0dev4-1', 'el8, el9, arm9', 1, '20240321', 'pg16', '', '');
 
 ----------------------------------
+INSERT INTO projects VALUES ('lolor', 'pge', 4, 0, 'hub', 1, 'https://github.com/pgedge/lolor/tags',
+  'spock', 1, 'spock.png', 'Logical Replication of Large Objects', 'https://github.com/pgedge/lolor/#spock');
 INSERT INTO releases VALUES ('lolor-pg16', 4, 'lolor', 'LgObjLOgicalRep', '', 'test', '', 1, 'pgEdge Community', '', '');
 INSERT INTO versions VALUES ('lolor-pg16', '1.0beta1-1', 'el9, arm9, el8', 1, '20240403', 'pg16', '', '');
 
