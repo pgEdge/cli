@@ -1124,13 +1124,13 @@ if (args[1] == "help") or (args[1] == "--help"):
     exit_cleanly(0)
 
 ## process global parameters #################
-os.environ["isPreload"] = "True"
-if "--no-preload" in args:
-    args.remove("--no-preload")
-    os.environ["isPreload"] = "False"
-    os.environ["isRestart"] = "False"
-else:
-    os.environ["isRestart"] = "True"
+##os.environ["isPreload"] = "True"
+##if "--no-preload" in args:
+##    args.remove("--no-preload")
+##    os.environ["isPreload"] = "False"
+##    os.environ["isRestart"] = "False"
+##else:
+##    os.environ["isRestart"] = "True"
 
 if "--no-restart" in args:
     args.remove("--no-restart")
@@ -1741,8 +1741,7 @@ if p_mode == "install":
         if status == 1 and (c in p_comp_list or p_comp_list[0] == "all"):
             if isExt:
                 ## just run the CREATE EXTENSION sql command without reboot or change preloads
-                os.environ["isPreload"] = "False"
-                util.create_extension(parent, c, False)
+                util.create_extension(parent, c, False, is_preload=0)
             else:
                 ## already installed
                 pass

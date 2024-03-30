@@ -777,39 +777,40 @@ def restart_postgres(p_pg):
     time.sleep(4)
 
 
-def config_extension(p_pg, p_comp, create=True, active=True):
-    message(f"util.config_extension(p_pg={p_pg}, p_comp={p_comp}, create={create}, active={active})", "debug")
+def config_extension(p_pg, p_comp, active=True):
+    message("util.config_extension(" + \
+        f"p_pg={p_pg}, p_comp={p_comp}, active={active})", "debug")
 
     if active is False:
         return
 
-    extension_name, default_conf = meta.get_extension_meta(p_comp)
+    extension_name, is_preload, default_conf = meta.get_extension_meta(p_comp)
     if extension_name is None:
         exit_message(f"Cannot find {p_comp} meta data", 1)
 
-    for df in default_conf.split("|"):
-        df1 = df.strip()
-        df_l = df1.split("=")
-        if len(df_l) != 2:
-            message(f"skipping bad extension metadata \n  '{df_l}'")
-        else:
-            change_pgconf_keyval(p_pg, str(df_l[0]), str(df_l[1]), True)
+    if default_conf > "":
+        for df in default_conf.split("|"):
+            df1 = df.strip()
+            df_l = df1.split("=")
+            if len(df_l) != 2:
+                message(f"skipping bad extension metadata \n  '{df_l}'")
+            else:
+                change_pgconf_keyval(p_pg, str(df_l[0]), str(df_l[1]), True)
 
-    if create:
-        create_extension(p_pg, extension_name, True)
+    create_extension(p_pg, extension_name, True, p_is_preload=is_preload)
 
 
-def create_extension(p_pg, p_ext, p_reboot=False, p_extension="", p_cascade=False):
+def create_extension(p_pg, p_ext, p_reboot=False, p_extension="", p_cascade=False, p_is_preload=1):
     message(f"util.create_extension({p_pg}, {p_ext}, p_reboot={p_reboot}, " + \
-            f"p_extension='{p_extension}', p_cascade={p_cascade})", "debug")
+            f"p_extension='{p_extension}', p_cascade={p_cascade}, p_is_preload={p_is_preload})", "debug")
 
     isPreload = os.getenv("isPreload")
 
-    if p_ext > " " and isPreload == "True":
+    if p_ext > " " and p_is_preload == 1:
         rc = change_pgconf_keyval(p_pg, "shared_preload_libraries", p_ext)
 
     isRestart = os.getenv("isRestart")
-    if p_reboot and isRestart == "True":
+    if (p_reboot is True and p_is_preload == 1) or isRestart == "True":
         restart_postgres(p_pg)
 
     print("")
