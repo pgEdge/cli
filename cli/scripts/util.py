@@ -794,7 +794,7 @@ def config_extension(p_pg=None, p_comp=None, active=True):
     if active is False:
         return(0)
 
-    extension_name, is_preload, default_conf = meta.get_extension_meta(p_comp)
+    extension_name, is_preload, preload_name, default_conf = meta.get_extension_meta(p_comp)
     if extension_name is None:
         exit_message(f"Cannot find {p_comp} meta data", 1)
 
@@ -807,7 +807,8 @@ def config_extension(p_pg=None, p_comp=None, active=True):
             else:
                 change_pgconf_keyval(p_pg, str(df_l[0]), str(df_l[1]), True)
 
-    rc = create_extension(p_pg, extension_name, True, p_is_preload=is_preload)
+    rc = create_extension(p_pg, p_ext=preload_name, p_extension=extension_name, 
+                          p_cascade=True, p_is_preload=is_preload)
     if rc is True:
         return(0)
 

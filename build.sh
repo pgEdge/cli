@@ -204,7 +204,7 @@ initDir () {
   copy-pgXX "pldebugger"
   copy-pgXX "partman"
   copy-pgXX "audit"   
-  copy-pgXX "postgis"   
+  ## copy-pgXX "postgis"   
   copy-pgXX "cron"
   copy-pgXX "readonly"
   copy-pgXX "foslots"

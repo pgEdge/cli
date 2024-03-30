@@ -11,16 +11,16 @@ import datetime
 
 def get_extension_meta(component):
     data = []
-    sql = "SELECT extension_name, is_preload, default_conf\n" + \
+    sql = "SELECT extension_name, is_preload, preload_name, default_conf\n" + \
          f"  FROM extensions WHERE component = '{component}'"
     try:
         c = con.cursor()
         c.execute(sql)
         data = c.fetchone()
         if data:
-            return str(data[0]), data[1], str(data[2])
+            return str(data[0]), data[1], str(data[2]), str(data[3])
         else:
-            return None, None, None
+            return None, None, None, None
     except Exception as e:
         fatal_error(e, sql, "get_extension_meta")
 

@@ -53,19 +53,21 @@ CREATE TABLE extensions (
   component      TEXT NOT NULL PRIMARY KEY,
   extension_name TEXT NOT NULL,
   is_preload     INTEGER NOT NULL,
+  preload_name   TEXT NOT NULL,
   default_conf   TEXT NOT NULL
 );
-INSERT INTO extensions VALUES ('spock33', 'spock', 1,
+INSERT INTO extensions VALUES ('spock33', 'spock', 1, '',
   'wal_level=logical | max_worker_processes=12 | max_replication_slots=16 |
    max_wal_senders=16 | hot_standby_feedback=on | wal_sender_timeout=5s |
    track_commit_timestamp=on | spock.conflict_resolution=last_update_wins | 
    spock.save_resolutions=on');
-INSERT INTO extensions VALUES ('spock40', 'spock', 1,
+INSERT INTO extensions VALUES ('spock40', 'spock', 1, '',
   'wal_level=logical | max_worker_processes=12 | max_replication_slots=16 |
    max_wal_senders=16 | hot_standby_feedback=on | wal_sender_timeout=5s |
    track_commit_timestamp=on | spock.conflict_resolution=last_update_wins | 
    spock.save_resolutions=on');
-INSERT INTO extensions VALUES ('lolor', 'lolor', 0, '');
+INSERT INTO extensions VALUES ('lolor',   'lolor',     0, '',          '');
+INSERT INTO extensions VALUES ('postgis', 'postgis',   1, 'postgis-3', '');
   
 
 
