@@ -48,7 +48,7 @@ isJSON = False
 if os.environ.get("isJson", "False") == "True":
     isJSON = True
 
-pid_file = os.path.join(MY_HOME, "conf", "cli.pid")
+PID_FILE = os.path.join(MY_HOME, "data", "conf", "cli.pid")
 
 isTEST = False
 if os.environ.get("isTest", "False") == "True":
@@ -765,6 +765,7 @@ def run_sql_cmd(p_pg, p_sql, p_display=False):
 
 
 def posix_unpack(file_nm):
+    cmd = f"tar -xf {file_nm}"
     rc = os.system(f"tar -xf {file_nm}")
     return(rc)
 
@@ -778,8 +779,8 @@ def restart_postgres(p_pg):
 
 
 def config_extension(p_pg, p_comp, active=True):
-    message("util.config_extension(" + \
-        f"p_pg={p_pg}, p_comp={p_comp}, active={active})", "debug")
+    # message("DEBUG util.config_extension(" + \
+    #    f"p_pg={p_pg}, p_comp={p_comp}, active={active})")
 
     if active is False:
         return
@@ -801,8 +802,8 @@ def config_extension(p_pg, p_comp, active=True):
 
 
 def create_extension(p_pg, p_ext, p_reboot=False, p_extension="", p_cascade=False, p_is_preload=1):
-    message(f"util.create_extension({p_pg}, {p_ext}, p_reboot={p_reboot}, " + \
-            f"p_extension='{p_extension}', p_cascade={p_cascade}, p_is_preload={p_is_preload})", "debug")
+    #message(f"DEBUG util.create_extension({p_pg}, {p_ext}, p_reboot={p_reboot}, " + \
+    #        f"p_extension='{p_extension}', p_cascade={p_cascade}, p_is_preload={p_is_preload})")
 
     isPreload = os.getenv("isPreload")
 
@@ -2858,6 +2859,7 @@ def delete_file(p_file_name):
 
 
 def download_file(p_url, p_file):
+    #message(f"DEBUG util.download_file({p_url}, {p_file})")
     if os.path.exists(p_file):
         os.system("rm -f " + p_file)
 
@@ -2876,6 +2878,7 @@ def download_file(p_url, p_file):
 
 
 def unpack_file(p_file):
+    # message(f"DEBUG util.unpack_file({p_file})")
     if platform.system() in ("Linux", "Darwin"):
         rc = posix_unpack(os.getcwd() + os.sep + p_file)
         if rc == 0:
@@ -2936,6 +2939,7 @@ def get_url(url):
 def http_get_file(
     p_json, p_file_name, p_url, p_out_dir, p_display_status, p_msg, component_name=None
 ):
+    #message(f"DEBUG util.http_get_file({p_json}, {p_file_name}, {p_url}, {p_out_dir}, ... , {component_name})")
     file_exists = False
     file_name_complete = p_out_dir + os.sep + p_file_name
     file_name_partial = file_name_complete + ".part"
@@ -2975,7 +2979,7 @@ def http_get_file(
             if (
                 not p_file_name.endswith(".txt")
                 and not p_file_name.startswith("install.py")
-                and not os.path.isfile(pid_file)
+                and not os.path.isfile(PID_FILE)
             ):
                 raise KeyboardInterrupt("No lock file exists.")
             buffer = u.read(block_sz)

@@ -75,7 +75,7 @@ writeSettRow() {
   pKey="$2"
   pValue="$3"
   pVerbose="$4"
-  dbLocal="$out/conf/db_local.db"
+  dbLocal="$out/data/conf/db_local.db"
   cmdPy="$PYTHON $HUB/src/conf/insert_setting.py"
   $cmdPy "$dbLocal"  "$pSection" "$pKey" "$pValue"
   if [ "$pVerbose" == "-v" ]; then
@@ -106,7 +106,7 @@ writeCompRow() {
     return
   fi
 
-  dbLocal="$out/conf/db_local.db"
+  dbLocal="$out/data/conf/db_local.db"
   cmdPy="$PYTHON $HUB/src/conf/insert_component.py"
   $cmdPy "$dbLocal"  "$pComp" "$pProj" "$pVer" "$pPlat" "$pPort" "$pStatus"
 }
@@ -332,7 +332,7 @@ finalizeOutput () {
   checkCmd "cp $CLI/../README.md  hub/doc/."
   zipDir "hub" "$hubV" "" "Enabled"
 
-  checkCmd "cp conf/versions.sql  ."
+  checkCmd "cp data/conf/versions.sql  ."
   writeFileChecksum "versions.sql"
   ## checkCmd "cp conf/versions.sql  versions24.sql"
   ## writeFileChecksum "versions24.sql"
@@ -536,13 +536,14 @@ setupOutdir () {
   mkdir $outDir
   cd $outDir
   out="$PWD"
-  mkdir conf
-  mkdir conf/cache
-  conf="$SRC/conf"
 
-  cp $conf/db_local.db  conf/.
-  cp $conf/versions.sql  conf/.
-  sqlite3 conf/db_local.db < conf/versions.sql
+  d_conf=data/conf
+  mkdir -p $d_conf/cache
+
+  s_conf="$SRC/conf"
+  cp $s_conf/db_local.db  $d_conf/.
+  cp $s_conf/versions.sql  $d_conf/.
+  sqlite3 $d_conf/db_local.db < $d_conf/versions.sql
 }
 
 

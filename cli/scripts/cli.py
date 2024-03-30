@@ -41,9 +41,9 @@ if os.path.exists(platform_lib_path):
 import util, api, startup, meta
 my_logger=util.my_logger
 
-my_conf = os.path.join(util.MY_HOME, "conf")
+my_conf = os.path.join(util.MY_HOME, "data", "conf")
 if not util.is_writable(my_conf):
-    rc = os.system(f"sudo mkdir -P {my_conf}")
+    rc = os.system(f"sudo mkdir -p {my_conf}")
     if rc == 0:
         pass
     else:
@@ -166,10 +166,10 @@ installed_comp_list = []
 global check_sum_match
 check_sum_match = True
 
-backup_dir = os.path.join(util.MY_HOME, "conf", "backup")
+backup_dir = os.path.join(util.MY_HOME, "data", "conf", "backup")
 backup_target_dir = os.path.join(backup_dir, time.strftime("%Y%m%d%H%M"))
 
-pid_file = os.path.join(util.MY_HOME, "conf", "cli.pid")
+pid_file = os.path.join(util.MY_HOME, "data", "conf", "cli.pid")
 
 isJSON = util.isJSON
 
@@ -289,7 +289,7 @@ def get_depend_list(p_list, p_display=True):
 
 # Check if component is already downloaded
 def is_downloaded(p_comp, component_name=None):
-    conf_cache = "conf" + os.sep + "cache"
+    conf_cache = "data" + os.sep + "conf" + os.sep + "cache"
     zip_file = p_comp + ".tgz"
     checksum_file = zip_file + ".sha512"
 
@@ -342,6 +342,7 @@ class ProgressTarExtract(io.FileIO):
 
 # Install Component ######################################################
 def install_comp(p_app, p_ver=0, p_rver=None, p_re_install=False):
+    util.message(f"install_comp(p_app={p_app}, p_ver={p_ver}, p_rver={p_rver}, p_re_install={p_re_install})", "debug")
     if p_ver is None:
         p_ver = 0
     if p_rver:
@@ -381,7 +382,7 @@ def install_comp(p_app, p_ver=0, p_rver=None, p_re_install=False):
             exit_cleanly(1)
 
         base_name = p_app + "-" + ver
-        conf_cache = "conf" + os.sep + "cache"
+        conf_cache = "data" + os.sep + "conf" + os.sep + "cache"
         file = base_name + ".tgz"
         zip_file = conf_cache + os.sep + file
         json_dict = {}
@@ -404,7 +405,7 @@ def install_comp(p_app, p_ver=0, p_rver=None, p_re_install=False):
             exit_cleanly(1)
 
         util.message("\nUnpacking " + file)
-        full_file = "conf" + os.sep + "cache" + os.sep + file
+        full_file = conf_cache + os.sep + file
 
         if platform.system() in ("Linux", "Darwin"):
             return util.posix_unpack(full_file)
@@ -916,7 +917,7 @@ def retrieve_remote():
 
 ## Download tarball component and verify against checksum ###############
 def retrieve_comp(p_base_name, component_name=None):
-    conf_cache = "conf" + os.sep + "cache"
+    conf_cache = "data" + os.sep + "conf" + os.sep + "cache"
     zip_file = p_base_name + ".tgz"
     checksum_file = zip_file + ".sha512"
     global download_count

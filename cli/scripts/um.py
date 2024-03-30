@@ -133,7 +133,7 @@ def downgrade(component):
 
 def clean():
     """Delete downloaded component files from local cache"""
-    conf_cache = util.MY_HOME + os.sep + "conf" + os.sep + "cache" + os.sep + "*"
+    conf_cache = util.MY_HOME + os.sep + "data" + os.sep + "conf" + os.sep + "cache" + os.sep + "*"
     files = glob.glob(conf_cache)
     kount = 0
     for f in files:
