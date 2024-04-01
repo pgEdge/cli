@@ -108,7 +108,7 @@ INSERT INTO categories VALUES (9,  87, 'Management & Monitoring', 'Manage/Monito
 -- ## HUB ################################
 INSERT INTO projects VALUES ('hub', 'app', 0, 0, 'hub', 0, 'https://github.com/pgedge/cli','',0,'','','');
 INSERT INTO releases VALUES ('hub', 1, 'hub', '', '', 'hidden', '', 1, '', '', '');
-INSERT INTO versions VALUES ('hub', '24.4.2',  '',  1, '20240403', '', '', '');
+INSERT INTO versions VALUES ('hub', '24.4.2',  '',  1, '20240401', '', '', '');
 INSERT INTO versions VALUES ('hub', '24.4.1',  '',  0, '20240328', '', '', '');
 INSERT INTO versions VALUES ('hub', '24.4.0',  '',  0, '20240321', '', '', '');
 INSERT INTO versions VALUES ('hub', '24.3.2',  '',  0, '20240317', '', '', '');
@@ -337,7 +337,7 @@ INSERT INTO versions VALUES ('spock40-pg16', '4.0dev4-1', 'el8, el9, arm9', 1, '
 INSERT INTO projects VALUES ('lolor', 'pge', 4, 0, 'hub', 1, 'https://github.com/pgedge/lolor/tags',
   'spock', 1, 'spock.png', 'Logical Replication of Large Objects', 'https://github.com/pgedge/lolor/#spock');
 INSERT INTO releases VALUES ('lolor-pg16', 4, 'lolor', 'LgObjLOgicalRep', '', 'test', '', 1, 'pgEdge Community', '', '');
-INSERT INTO versions VALUES ('lolor-pg16', '1.0beta1-1', 'el9, arm9, el8', 1, '20240403', 'pg16', '', '');
+INSERT INTO versions VALUES ('lolor-pg16', '1.0beta1-1', 'el9, arm9, el8', 1, '20240401', 'pg16', '', '');
 
 ----------------------------------
 INSERT INTO projects VALUES ('pglogical', 'ext', 4, 0, 'hub', 1, 'https://github.com/2ndQuadrant/pglogical/releases',
@@ -394,10 +394,8 @@ INSERT INTO versions VALUES ('pgcat', '1.1.1', 'el8, el9, arm9', 1, '20240108', 
 INSERT INTO projects VALUES ('backrest', 'pge', 11, 0, 'hub', 3, 'http://pgbackrest.org',
   'backrest',  0, 'backrest.png', 'Backup & Restore', 'http://pgbackrest.org');
 INSERT INTO releases VALUES ('backrest', 2, 'backrest',  'pgBackRest', '', 'prod', '', 1, 'MIT', '', '');
-INSERT INTO versions VALUES ('backrest', '2.51-1', 'el8, el9, arm9', 1, '20240328', '', '', '');
+INSERT INTO versions VALUES ('backrest', '2.51-1', 'el8, el9, arm9', 1, '20240401', '', '', '');
 INSERT INTO versions VALUES ('backrest', '2.50-3', 'el8, el9, arm9', 0, '20240317', '', '', '');
-INSERT INTO versions VALUES ('backrest', '2.50-2', 'el8, el9, arm9', 0, '20240221', '', '', '');
-INSERT INTO versions VALUES ('backrest', '2.50-1', 'el8, el9, arm9', 0, '20240212', '', '', '');
 
 INSERT INTO projects VALUES ('firewalld', 'app', 11, 0, '', 4, 'https://firewalld.org',
   'firewalld', 0, 'firewalld.png', 'OS Firewall', 'https://github.com/firewalld/firewalld');
@@ -407,7 +405,7 @@ INSERT INTO versions VALUES ('firewalld', '1.2', '', 1, '20231101', '', '', '');
 INSERT INTO projects VALUES ('patroni', 'app', 11, 0, 'etcd', 4, 'https://github.com/pgedge/pgedge-patroni/release',
   'patroni', 0, 'patroni.png', 'HA', 'https://github.com/pgedge/pgedge-patroni');
 INSERT INTO releases VALUES ('patroni', 1, 'patroni', 'pgEdge Patroni', '', 'ent', '', 1, 'POSTGRES', '', '');
-INSERT INTO versions VALUES ('patroni', '3.2.2.1-1', '', 1, '20240328', '', '', '');
+INSERT INTO versions VALUES ('patroni', '3.2.2.1-1', '', 1, '20240401', '', '', '');
 INSERT INTO versions VALUES ('patroni', '3.2.1-1', '', 0, '20240221', '', '', '');
 
 INSERT INTO projects VALUES ('etcd', 'app', 11, 2379, 'hub', 4, 'https://github.com/etcd-io/etcd/tags',
