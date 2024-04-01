@@ -194,7 +194,7 @@ initDir () {
   fi
 
   copy-pgXX "snowflake"
-  copy-pgXX "orafce"
+  ## copy-pgXX "orafce"
   ## copy-pgXX "spock33"
   ## copy-pgXX "spock40"
   ## copy-pgXX "lolor"
