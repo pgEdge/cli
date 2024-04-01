@@ -66,9 +66,11 @@ INSERT INTO extensions VALUES ('spock40', 'spock', 1, '',
    max_wal_senders=16 | hot_standby_feedback=on | wal_sender_timeout=5s |
    track_commit_timestamp=on | spock.conflict_resolution=last_update_wins | 
    spock.save_resolutions=on');
-INSERT INTO extensions VALUES ('lolor',   'lolor',     0, '',          '');
-INSERT INTO extensions VALUES ('postgis', 'postgis',   1, 'postgis-3', '');
-INSERT INTO extensions VALUES ('orafce',  'orafce',    1, 'orafce',    '');
+INSERT INTO extensions VALUES ('lolor',     'lolor',     0, '',          '');
+INSERT INTO extensions VALUES ('postgis',   'postgis',   1, 'postgis-3', '');
+INSERT INTO extensions VALUES ('orafce',    'orafce',    1, 'orafce',    '');
+INSERT INTO extensions VALUES ('snowflake', 'snowflake', 1, 'snowflake', '');
+INSERT INTO extensions VALUES ('foslots',   'foslots',   0, '',          '');
   
 
 
@@ -229,10 +231,8 @@ INSERT INTO projects VALUES ('foslots', 'ext', 4, 0, 'hub',0, 'https://github.co
   'foslots', 1, 'foslots.png', 'Failover Slots', 'https://github.com/pgedge/foslots');
 INSERT INTO releases VALUES ('foslots-pg14', 10, 'foslots', 'FO Slots', '', 'prod', '', 1, 'POSTGRES', '', '');
 INSERT INTO releases VALUES ('foslots-pg15', 10, 'foslots', 'FO Slots', '', 'prod', '', 1, 'POSTGRES', '', '');
-INSERT INTO releases VALUES ('foslots-pg16', 10, 'foslots', 'FO Slots', '', 'prod', '', 1, 'POSTGRES', '', '');
-INSERT INTO versions VALUES ('foslots-pg14', '1a-1', 'el8, el9, arm9', 1, '20240108', 'pg14', '', '');
-INSERT INTO versions VALUES ('foslots-pg15', '1a-1', 'el8, el9, arm9', 1, '20240128', 'pg15', '', '');
-INSERT INTO versions VALUES ('foslots-pg16', '1a-1', 'el8, el9, arm9', 1, '20240128', 'pg16', '', '');
+INSERT INTO versions VALUES ('foslots-pg14', '1a-1', 'el8, el9, arm9', 1, '20240408', 'pg14', '', '');
+INSERT INTO versions VALUES ('foslots-pg15', '1a-1', 'el8, el9, arm9', 1, '20240408', 'pg15', '', '');
 
 INSERT INTO projects VALUES ('readonly', 'ext', 4, 0, 'hub',0, 'https://github.com/pgedge/readonly/tags',
   'readonly', 1, 'readonly.png', 'Support READ-ONLY Databases', 'https://github.com/pgedge/readonly');
@@ -300,9 +300,9 @@ INSERT INTO releases VALUES ('snowflake-pg14', 4, 'snowflake', 'Snowflake', '', 
 INSERT INTO releases VALUES ('snowflake-pg15', 4, 'snowflake', 'Snowflake', '', 'prod', '', 1, 'POSTGRES', '', '');
 INSERT INTO releases VALUES ('snowflake-pg16', 4, 'snowflake', 'Snowflake', '', 'prod', '', 1, 'POSTGRES', '', '');
 
-INSERT INTO versions VALUES ('snowflake-pg14', '1.2-1', 'el8, el9, arm9', 1, '20240307', 'pg14', '', '');
-INSERT INTO versions VALUES ('snowflake-pg15', '1.2-1', 'el8, el9, arm9', 1, '20240307', 'pg15', '', '');
-INSERT INTO versions VALUES ('snowflake-pg16', '1.2-1', 'el8, el9, arm9, osx', 1, '20240307', 'pg16', '', '');
+INSERT INTO versions VALUES ('snowflake-pg14', '1.2-1', 'el8, el9, arm9', 1, '20240408', 'pg14', '', '');
+INSERT INTO versions VALUES ('snowflake-pg15', '1.2-1', 'el8, el9, arm9', 1, '20240408', 'pg15', '', '');
+INSERT INTO versions VALUES ('snowflake-pg16', '1.2-1', 'el8, el9, arm9, osx', 1, '20240408', 'pg16', '', '');
 
 INSERT INTO versions VALUES ('snowflake-pg14', '1.1-1', 'el8, el9, arm9', 0, '20231204', 'pg14', '', '');
 INSERT INTO versions VALUES ('snowflake-pg15', '1.1-1', 'el8, el9, arm9', 0, '20231204', 'pg15', '', '');
