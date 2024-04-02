@@ -1132,13 +1132,13 @@ if (args[1] == "help") or (args[1] == "--help"):
     exit_cleanly(0)
 
 ## process global parameters #################
-##os.environ["isPreload"] = "True"
-##if "--no-preload" in args:
-##    args.remove("--no-preload")
-##    os.environ["isPreload"] = "False"
-##    os.environ["isRestart"] = "False"
-##else:
-##    os.environ["isRestart"] = "True"
+os.environ["isPreload"] = "True"
+if "--no-preload" in args:
+    args.remove("--no-preload")
+    os.environ["isPreload"] = "False"
+    os.environ["isRestart"] = "False"
+else:
+    os.environ["isRestart"] = "True"
 
 if "--no-restart" in args:
     args.remove("--no-restart")

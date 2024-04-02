@@ -56,12 +56,12 @@ CREATE TABLE extensions (
   preload_name   TEXT NOT NULL,
   default_conf   TEXT NOT NULL
 );
-INSERT INTO extensions VALUES ('spock33', 'spock', 1, '',
+INSERT INTO extensions VALUES ('spock33', 'spock', 1, 'spock',
   'wal_level=logical | max_worker_processes=12 | max_replication_slots=16 |
    max_wal_senders=16 | hot_standby_feedback=on | wal_sender_timeout=5s |
    track_commit_timestamp=on | spock.conflict_resolution=last_update_wins | 
    spock.save_resolutions=on');
-INSERT INTO extensions VALUES ('spock40', 'spock', 1, '',
+INSERT INTO extensions VALUES ('spock40', 'spock', 1, 'spock',
   'wal_level=logical | max_worker_processes=12 | max_replication_slots=16 |
    max_wal_senders=16 | hot_standby_feedback=on | wal_sender_timeout=5s |
    track_commit_timestamp=on | spock.conflict_resolution=last_update_wins | 
