@@ -111,7 +111,7 @@ INSERT INTO categories VALUES (9,  87, 'Management & Monitoring', 'Manage/Monito
 -- ## HUB ################################
 INSERT INTO projects VALUES ('hub', 'app', 0, 0, 'hub', 0, 'https://github.com/pgedge/cli','',0,'','','');
 INSERT INTO releases VALUES ('hub', 1, 'hub', '', '', 'hidden', '', 1, '', '', '');
-INSERT INTO versions VALUES ('hub', '24.4.3',  '',  1, '20240408', '', '', '');
+INSERT INTO versions VALUES ('hub', '24.4.3',  '',  1, '20240402', '', '', '');
 INSERT INTO versions VALUES ('hub', '24.4.2',  '',  0, '20240401', '', '', '');
 INSERT INTO versions VALUES ('hub', '24.4.1',  '',  0, '20240328', '', '', '');
 INSERT INTO versions VALUES ('hub', '24.4.0',  '',  0, '20240321', '', '', '');
@@ -231,8 +231,8 @@ INSERT INTO projects VALUES ('foslots', 'ext', 4, 0, 'hub',0, 'https://github.co
   'foslots', 1, 'foslots.png', 'Failover Slots', 'https://github.com/pgedge/foslots');
 INSERT INTO releases VALUES ('foslots-pg14', 10, 'foslots', 'FO Slots', '', 'prod', '', 1, 'POSTGRES', '', '');
 INSERT INTO releases VALUES ('foslots-pg15', 10, 'foslots', 'FO Slots', '', 'prod', '', 1, 'POSTGRES', '', '');
-INSERT INTO versions VALUES ('foslots-pg14', '1a-1', 'el8, el9, arm9', 1, '20240408', 'pg14', '', '');
-INSERT INTO versions VALUES ('foslots-pg15', '1a-1', 'el8, el9, arm9', 1, '20240408', 'pg15', '', '');
+INSERT INTO versions VALUES ('foslots-pg14', '1a-1', 'el8, el9, arm9', 1, '20240402', 'pg14', '', '');
+INSERT INTO versions VALUES ('foslots-pg15', '1a-1', 'el8, el9, arm9', 1, '20240402', 'pg15', '', '');
 
 INSERT INTO projects VALUES ('readonly', 'ext', 4, 0, 'hub',0, 'https://github.com/pgedge/readonly/tags',
   'readonly', 1, 'readonly.png', 'Support READ-ONLY Databases', 'https://github.com/pgedge/readonly');
@@ -300,8 +300,8 @@ INSERT INTO releases VALUES ('snowflake-pg14', 4, 'snowflake', 'Snowflake', '', 
 INSERT INTO releases VALUES ('snowflake-pg15', 4, 'snowflake', 'Snowflake', '', 'prod', '', 1, 'POSTGRES', '', '');
 INSERT INTO releases VALUES ('snowflake-pg16', 4, 'snowflake', 'Snowflake', '', 'prod', '', 1, 'POSTGRES', '', '');
 
-INSERT INTO versions VALUES ('snowflake-pg14', '1.2-1', 'el8, el9, arm9', 1, '20240408', 'pg14', '', '');
-INSERT INTO versions VALUES ('snowflake-pg15', '1.2-1', 'el8, el9, arm9', 1, '20240408', 'pg15', '', '');
+INSERT INTO versions VALUES ('snowflake-pg14', '1.2-1', 'el8, el9, arm9', 1, '20240402', 'pg14', '', '');
+INSERT INTO versions VALUES ('snowflake-pg15', '1.2-1', 'el8, el9, arm9', 1, '20240402', 'pg15', '', '');
 INSERT INTO versions VALUES ('snowflake-pg16', '1.2-1', 'el8, el9, arm9, osx', 1, '20240408', 'pg16', '', '');
 
 INSERT INTO versions VALUES ('snowflake-pg14', '1.1-1', 'el8, el9, arm9', 0, '20231204', 'pg14', '', '');
