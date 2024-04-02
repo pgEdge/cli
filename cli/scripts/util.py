@@ -779,8 +779,8 @@ def restart_postgres(p_pg):
 
 
 def config_extension(p_pg=None, p_comp=None, active=True):
-    ## message(f"DEBUG util.config_extension(" + \
-    ##   f"p_pg={p_pg}, p_comp={p_comp}, active={active})")
+    message(f"util.config_extension(" + \
+      f"p_pg={p_pg}, p_comp={p_comp}, active={active})", "debug")
 
     if p_comp is None:
         exit_message("p_comp must be specified in util.config_extension()")
@@ -816,8 +816,8 @@ def config_extension(p_pg=None, p_comp=None, active=True):
 
 
 def create_extension(p_pg, p_ext, p_reboot=False, p_extension="", p_cascade=False, p_is_preload=1):
-    ## message(f"DEBUG util.create_extension({p_pg}, {p_ext}, p_reboot={p_reboot}, " + \
-    ##        f"p_extension='{p_extension}', p_cascade={p_cascade}, p_is_preload={p_is_preload})")
+    message(f"util.create_extension({p_pg}, {p_ext}, p_reboot={p_reboot}, " + \
+           f"p_extension='{p_extension}', p_cascade={p_cascade}, p_is_preload={p_is_preload})", "debug")
 
     isPreload = os.getenv("isPreload")
 
@@ -1209,8 +1209,9 @@ def message(p_msg, p_state="info", p_isJSON=None):
                 jsn_msg = p_msg
     elif log_level == "debug":
         log_level_num = 10
+        pgeDebug = str(os.getenv("pgeDebug", "0"))
         my_logger.debug(p_msg)
-        if log_level_num >= cur_level:
+        if (log_level_num >= cur_level) or (pgeDebug == "1"):
             if not p_isJSON:
                 print(bcolours.YELLOW + p_msg + bcolours.ENDC)
                 return
@@ -2873,7 +2874,7 @@ def delete_file(p_file_name):
 
 
 def download_file(p_url, p_file):
-    ## message(f"DEBUG util.download_file({p_url}, {p_file})")
+    message(f"util.download_file({p_url}, {p_file})", "debug")
     if os.path.exists(p_file):
         os.system("rm -f " + p_file)
 
@@ -2892,7 +2893,7 @@ def download_file(p_url, p_file):
 
 
 def unpack_file(p_file):
-    ## message(f"DEBUG util.unpack_file({p_file})")
+    message(f"util.unpack_file({p_file})", "debug")
     if platform.system() in ("Linux", "Darwin"):
         rc = posix_unpack(os.getcwd() + os.sep + p_file)
         if rc == 0:
@@ -2953,7 +2954,7 @@ def get_url(url):
 def http_get_file(
     p_json, p_file_name, p_url, p_out_dir, p_display_status, p_msg, component_name=None
 ):
-    ## message(f"DEBUG util.http_get_file({p_json}, {p_file_name}, {p_url}, {p_out_dir}, ... , {component_name})")
+    message(f"util.http_get_file({p_json}, {p_file_name}, {p_url}, {p_out_dir}, ... , {component_name})", "debug")
     file_exists = False
     file_name_complete = p_out_dir + os.sep + p_file_name
     file_name_partial = file_name_complete + ".part"
@@ -3667,7 +3668,7 @@ def check_comp(p_comp, p_port, p_kount, check_status=False):
 
 # run external scripts #######################################
 def run_script(componentName, scriptName, scriptParm):
-    ## message(f"DEBUG util.run_script('{componentName}', '{scriptName}', '{scriptParm}')")
+    message(f"util.run_script('{componentName}', '{scriptName}', '{scriptParm}')", "debug")
     installed_comp_list = meta.get_component_list()
     if componentName not in installed_comp_list:
         return

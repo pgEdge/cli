@@ -208,7 +208,7 @@ def get_next_arg(p_arg):
 
 # run external scripts #######################################
 def run_script(componentName, scriptName, scriptParm):
-    ## util.message(f"DEBUG cli.run_script({componentName}, {scriptName}, {scriptParm})")
+    util.message(f"cli.run_script({componentName}, {scriptName}, {scriptParm})", "debug")
     if componentName not in installed_comp_list:
         return
 
@@ -230,7 +230,7 @@ def run_script(componentName, scriptName, scriptParm):
     if os.path.isfile(scriptFile):
         scriptFileFound = True
 
-    ## util.message(f"DEBUG scriptFile '{scriptFile}', {scriptFileFound}")
+    util.message(f"scriptFile '{scriptFile}', {scriptFileFound}", "debug")
 
     rc = 0
     compState = util.get_comp_state(componentName)
