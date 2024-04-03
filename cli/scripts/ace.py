@@ -1300,6 +1300,9 @@ def table_repair(cluster_name, diff_file, source_of_truth, table_name, dry_run=F
         return
 
     cols_list = cols.split(",")
+    # Remove metadata columsn "_Spock_CommitTS_" and "_Spock_CommitOrigin_"
+    # from cols_list
+    cols_list = [col for col in cols_list if not col.startswith("_Spock_")]
     simple_primary_key = True
     keys_list = []
 
@@ -1437,6 +1440,7 @@ def table_repair(cluster_name, diff_file, source_of_truth, table_name, dry_run=F
 
         conn = conns[divergent_node]
         cur = conn.cursor()
+        cur.execute("SELECT spock.pause_replication();")
 
         if rows_to_upsert:
             upsert_tuples = [tuple(row.values()) for row in rows_to_upsert_json]
@@ -1448,6 +1452,8 @@ def table_repair(cluster_name, diff_file, source_of_truth, table_name, dry_run=F
             # Performing the deletes
             if len(delete_keys) > 0:
                 cur.executemany(delete_sql, delete_keys)
+
+        cur.execute("SELECT spock.resume_replication();")
 
         conn.commit()
 
