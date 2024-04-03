@@ -740,6 +740,7 @@ def table_diff(
         offsets = [x for x in range(0, row_count + 1, block_rows)]
 
     cols_list = cols.split(",")
+    cols_list = [col for col in cols_list if not col.startswith("_Spock_")]
 
     # Shared variables needed by all workers
     shared_objects = {
@@ -1029,6 +1030,7 @@ def table_rerun(cluster_name, diff_file, table_name):
         diff_values[node_pair] = list(diff_values[node_pair])
 
     cols_list = cols.split(",")
+    cols_list = [col for col in cols_list if not col.startswith("_Spock_")]
 
     def run_query(cur, query):
         cur.execute(query)
