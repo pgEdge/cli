@@ -10,6 +10,7 @@ import json
 import subprocess
 import re
 import util
+import meta
 import fire
 import cluster
 import psycopg
@@ -1448,7 +1449,17 @@ def table_repair(cluster_name, diff_file, source_of_truth, table_name, dry_run=F
 
         conn = conns[divergent_node]
         cur = conn.cursor()
-        cur.execute("SELECT spock.pause_replication();")
+        spock_version = meta.get_spock_version(conn)
+
+        try:
+            spock_version = float(cur.fetchone()[0])
+        except Exception:
+            util.exit_message("Unknown Spock version")
+
+        # FIXME: Do not use harcoded version numbers
+        # Read required version numbers from a config file
+        if spock_version >= 4.0:
+            cur.execute("SELECT spock.pause_replication();")
 
         if rows_to_upsert:
             upsert_tuples = [tuple(row.values()) for row in rows_to_upsert_json]
@@ -1461,7 +1472,8 @@ def table_repair(cluster_name, diff_file, source_of_truth, table_name, dry_run=F
             if len(delete_keys) > 0:
                 cur.executemany(delete_sql, delete_keys)
 
-        cur.execute("SELECT spock.resume_replication();")
+        if spock_version >= 4.0:
+            cur.execute("SELECT spock.resume_replication();")
 
         conn.commit()
 
@@ -1495,6 +1507,11 @@ def table_repair(cluster_name, diff_file, source_of_truth, table_name, dry_run=F
         f"RUN TIME = {run_time_str} seconds",
         p_state="info",
     )
+
+    if spock_version < 4.0:
+        util.message("\n *** WARNING ***\n", p_state="warning")
+        util.message("Unable to pause/resume replication during repair. \
+                     It may have caused further divergence due to delta-apply columns", p_state="warning")
 
 
 def repset_diff(
