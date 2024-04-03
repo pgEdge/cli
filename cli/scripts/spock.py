@@ -162,21 +162,7 @@ def node_create(node_name, dsn, db, pg=None):
         util.exit_message("Could not connect to database with this dsn")
     finally:
         if conn:
-          """Define a node for spock.
-
-        Create a spock node. \n
-        Example: spock node-create n1 'host=10.1.2.5 user=pgedge dbname=demo' demo
-        :param node_name: The name of the node. 
-        Only one node is allowed per database, and each node in a cluster must have a unique name. 
-        To use snowflake, use the convention n1,n2, etc.
-        Example: n1
-        :param dsn: The connection string to the node.
-        The user in this string should equal the OS user. 
-        This connection string should be reachable from outside and match the one used later in the sub-create command. 
-        Example: 'host=10.1.2.5 port= 5432 user=pgedge dbname=demo'
-        :param db: The name of the database. 
-        Example: demo
-    """      conn.close()
+            conn.close()
 
     sql = (
         "SELECT spock.node_create("
