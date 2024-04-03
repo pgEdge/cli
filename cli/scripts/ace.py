@@ -59,11 +59,11 @@ def get_dump_file_name(p_prfx, p_schm, p_base_dir="/tmp"):
     return p_base_dir + os.sep + p_prfx + "-" + p_schm + ".sql"
 
 
-def write_pg_dump(p_ip, p_db, p_prfx, p_schm, p_base_dir="/tmp"):
+def write_pg_dump(p_ip, p_db, p_port, p_prfx, p_schm, p_base_dir="/tmp"):
     out_file = get_dump_file_name(p_prfx, p_schm, p_base_dir)
     try:
         cmd = (
-            "pg_dump -s -n " + p_schm + " -h " + p_ip + " -d " + p_db + " > " + out_file
+            f"pg_dump -s -n {p_schm} -h {p_ip} -p {p_port} -d {p_db} > {out_file}"
         )
         os.system(cmd)
     except Exception as e:
@@ -198,9 +198,15 @@ def schema_diff(cluster_name, node1, node2, schema_name):
 
     cluster_nodes = []
 
+    '''
+    Even though multiple databases are allowed, ACE will, for now,
+    only take the first entry in the db list
+    '''
+    database = db[0]
+    database["db_name"] = database.pop("name")
+
     # Combine db and cluster_nodes into a single json
-    for database, node in zip(db, node_info):
-        database["db_name"] = database.pop("name")
+    for node in node_info:
         combined_json = {**database, **node}
         cluster_nodes.append(combined_json)
 
@@ -208,9 +214,9 @@ def schema_diff(cluster_name, node1, node2, schema_name):
 
     for nd in cluster_nodes:
         if nd["name"] == node1:
-            sql1 = write_pg_dump(nd["ip_address"], nd["db_name"], "con1", l_schema)
+            sql1 = write_pg_dump(nd["ip_address"], nd["db_name"], nd["port"], "con1", l_schema)
         if nd["name"] == node2:
-            sql2 = write_pg_dump(nd["ip_address"], nd["db_name"], "con2", l_schema)
+            sql2 = write_pg_dump(nd["ip_address"], nd["db_name"], nd["port"], "con2", l_schema)
 
     cmd = "diff " + sql1 + "  " + sql2 + " > /tmp/diff.txt"
     util.message("\n## Running # " + cmd + "\n")
@@ -236,9 +242,15 @@ def spock_diff(cluster_name, node1, node2):
 
     cluster_nodes = []
 
+    '''
+    Even though multiple databases are allowed, ACE will, for now,
+    only take the first entry in the db list
+    '''
+    database = db[0]
+    database["db_name"] = database.pop("name")
+
     # Combine db and cluster_nodes into a single json
-    for database, node in zip(db, node_info):
-        database["db_name"] = database.pop("name")
+    for node in node_info:
         combined_json = {**database, **node}
         cluster_nodes.append(combined_json)
 
@@ -911,8 +923,11 @@ def table_rerun(cluster_name, diff_file, table_name):
     cluster_nodes = []
 
     # Combine db and cluster_nodes into a single json
-    for database, node in zip(db, node_info):
-        database["db_name"] = database.pop("name")
+    database = db[0]
+    database["db_name"] = database.pop("name")
+
+    # Combine db and cluster_nodes into a single json
+    for node in node_info:
         combined_json = {**database, **node}
         cluster_nodes.append(combined_json)
 
@@ -1132,9 +1147,15 @@ def table_repair(cluster_name, diff_file, source_of_truth, table_name, dry_run=F
 
     cluster_nodes = []
 
+    '''
+    Even though multiple databases are allowed, ACE will, for now,
+    only take the first entry in the db list
+    '''
+    database = db[0]
+    database["db_name"] = database.pop("name")
+
     # Combine db and cluster_nodes into a single json
-    for database, node in zip(db, node_info):
-        database["db_name"] = database.pop("name")
+    for node in node_info:
         combined_json = {**database, **node}
         cluster_nodes.append(combined_json)
 
@@ -1530,9 +1551,15 @@ def repset_diff(
 
     cluster_nodes = []
 
+    '''
+    Even though multiple databases are allowed, ACE will, for now,
+    only take the first entry in the db list
+    '''
+    database = db[0]
+    database["db_name"] = database.pop("name")
+
     # Combine db and cluster_nodes into a single json
-    for database, node in zip(db, node_info):
-        database["db_name"] = database.pop("name")
+    for node in node_info:
         combined_json = {**database, **node}
         cluster_nodes.append(combined_json)
 
