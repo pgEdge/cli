@@ -1063,8 +1063,12 @@ def table_rerun(cluster_name, diff_file, table_name):
                     ]
 
                     t1_result, t2_result = [f.result() for f in futures]
-                    node1_set.add(t1_result[0])
-                    node2_set.add(t2_result[0])
+
+                    t1_result = [tuple(str(x) if type(x) != list else str(sorted(x)) for x in row) for row in t1_result]
+                    t2_result = [tuple(str(x) if type(x) != list else str(sorted(x)) for x in row) for row in t2_result]
+
+                    node1_set = OrderedSet(t1_result)
+                    node2_set = OrderedSet(t2_result)
         else:
             for indices in values:
                 sql = f"""
@@ -1089,10 +1093,12 @@ def table_rerun(cluster_name, diff_file, table_name):
                     ]
 
                     t1_result, t2_result = [f.result() for f in futures]
-                    if t1_result:
-                        node1_set.add(t1_result[0])
-                    if t2_result:
-                        node2_set.add(t2_result[0])
+
+                    t1_result = [tuple(str(x) if type(x) != list else str(sorted(x)) for x in row) for row in t1_result]
+                    t2_result = [tuple(str(x) if type(x) != list else str(sorted(x)) for x in row) for row in t2_result]
+
+                    node1_set = OrderedSet(t1_result)
+                    node2_set = OrderedSet(t2_result)
 
         node1_diff = node1_set - node2_set
         node2_diff = node2_set - node1_set
