@@ -157,12 +157,9 @@ def node_create(node_name, dsn, db, pg=None):
 
         if not repl or not bypass:
             util.exit_message(f"User {user} is not a replication user. HINT: Ensure that user provided is a replication user - try user {repl_usr}")
-
+        conn.close()
     except psycopg.Error as e:
         util.exit_message("Could not connect to database with this dsn")
-    finally:
-        if conn:
-            conn.close()
 
     sql = (
         "SELECT spock.node_create("
@@ -453,12 +450,9 @@ def sub_create(
 
         if not repl or not bypass:
             util.exit_message(f"User {user} is not a replication user. HINT: Ensure that user provided is a replication user - try user {repl_usr}")
-
+        conn.close()
     except psycopg.Error as e:
         util.exit_message("Could not connect to database with this dsn")
-    finally:
-        if conn:
-            conn.close()
     
     sql = (
         "SELECT spock.sub_create("
