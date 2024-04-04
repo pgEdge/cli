@@ -96,59 +96,42 @@ def validate_checksum(p_file_name, p_checksum_file_name):
 
 
 def retrieve_remote():
-    versions_sql = "versions.sql"
-    set_value("GLOBAL", "VERSIONS", versions_sql)
+    conf_dir = "data" + os.sep + "conf"
 
     if not os.path.exists(BACKUP_DIR):
         os.mkdir(BACKUP_DIR)
     if not os.path.exists(BACKUP_TARGET_DIR):
         os.mkdir(BACKUP_TARGET_DIR)
-    recent_version_sql = os.path.join(MY_HOME,"data", "conf", versions_sql)
+    recent_version_sql = os.path.join(MY_HOME, "data", "conf", "versions.sql")
     recent_local_db = os.path.join(MY_HOME, "data", "conf", "db_local.db")
     if os.path.exists(recent_local_db):
         copy2(recent_local_db, BACKUP_TARGET_DIR)
     if os.path.exists(recent_version_sql):
         copy2(recent_version_sql, BACKUP_TARGET_DIR)
-    remote_file = versions_sql
-    msg = (
-        "Retrieving the remote list of latest component versions ("
-        + remote_file
-        + ") ..."
-    )
-    my_logger.info(msg)
-    if isJSON:
-        print('[{"status":"wip","msg":"' + msg + '"}]')
-        msg = ""
-    else:
-        if not isSILENT:
-            print(msg)
-    if not http_get_file(isJSON, remote_file, REPO, "conf", False, msg):
+    remote_file = "versions.sql"
+    msg="Retrieving the remote list of latest component versions ..."
+    message(msg)
+    if not http_get_file(isJSON, remote_file, REPO, conf_dir, False, msg):
         exit_cleanly(1)
-    msg = ""
+    msg=""
 
-    sql_file = "data" + os.sep + "conf" + os.sep + remote_file
+
+    sql_file = conf_dir + os.sep + remote_file
 
     if not http_get_file(
-        isJSON, remote_file + ".sha512", REPO, "conf", False, msg
+        isJSON, remote_file + ".sha512", REPO, conf_dir, False, msg
     ):
         exit_cleanly(1)
     msg = "Validating checksum file..."
     my_logger.info(msg)
-    if isJSON:
-        print('[{"status":"wip","msg":"' + msg + '"}]')
-    else:
-        if not isSILENT:
-            print(msg)
+    message(msg)
     if not validate_checksum(sql_file, sql_file + ".sha512"):
         exit_cleanly(1)
 
     msg = "Updating local repository with remote entries..."
     my_logger.info(msg)
-    if isJSON:
-        print('[{"status":"wip","msg":"' + msg + '"}]')
-    else:
-        if not isSILENT:
-            print(msg)
+    message(msg)
+
     if not process_sql_file(sql_file, isJSON):
         exit_cleanly(1)
 
