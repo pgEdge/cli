@@ -22,7 +22,7 @@ if not (MY_HOME and MY_CMD and MY_LITE):
     print("Required Envs not set (MY_HOME, MY_CMD, MY_LITE)")
     sys.exit(1)
 
-import time, datetime, platform, tarfile, sqlite3, time
+import time, datetime, platform, tarfile, sqlite3
 import json, glob, re, io, traceback, logging, logging.handlers
 from shutil import copy2
 from semantic_version import Version
@@ -301,7 +301,7 @@ def is_downloaded(p_comp, component_name=None):
     checksum_file = zip_file + ".sha512"
 
     if os.path.isfile(conf_cache + os.sep + checksum_file):
-        if validate_checksum(
+        if util.validate_checksum(
             conf_cache + os.sep + zip_file, conf_cache + os.sep + checksum_file
         ):
             return True
@@ -312,7 +312,7 @@ def is_downloaded(p_comp, component_name=None):
     ):
         return False
 
-    return validate_checksum(
+    return util.validate_checksum(
         conf_cache + os.sep + zip_file, conf_cache + os.sep + checksum_file
     )
 
@@ -864,64 +864,6 @@ def update_component_state(p_app, p_mode, p_ver=None):
     return
 
 
-def retrieve_remote():
-    versions_sql = "versions.sql"
-    util.set_value("GLOBAL", "VERSIONS", versions_sql)
-
-    if not os.path.exists(backup_dir):
-        os.mkdir(backup_dir)
-    if not os.path.exists(backup_target_dir):
-        os.mkdir(backup_target_dir)
-    recent_version_sql = os.path.join(MY_HOME, "conf", versions_sql)
-    recent_local_db = os.path.join(MY_HOME, "conf", "db_local.db")
-    if os.path.exists(recent_local_db):
-        copy2(recent_local_db, backup_target_dir)
-    if os.path.exists(recent_version_sql):
-        copy2(recent_version_sql, backup_target_dir)
-    remote_file = versions_sql
-    msg = (
-        "Retrieving the remote list of latest component versions ("
-        + remote_file
-        + ") ..."
-    )
-    my_logger.info(msg)
-    if isJSON:
-        print('[{"status":"wip","msg":"' + msg + '"}]')
-        msg = ""
-    else:
-        if not isSILENT:
-            print(msg)
-    if not util.http_get_file(isJSON, remote_file, REPO, "conf", False, msg):
-        exit_cleanly(1)
-    msg = ""
-
-    sql_file = "conf" + os.sep + remote_file
-
-    if not util.http_get_file(
-        isJSON, remote_file + ".sha512", REPO, "conf", False, msg
-    ):
-        exit_cleanly(1)
-    msg = "Validating checksum file..."
-    my_logger.info(msg)
-    if isJSON:
-        print('[{"status":"wip","msg":"' + msg + '"}]')
-    else:
-        if not isSILENT:
-            print(msg)
-    if not validate_checksum(sql_file, sql_file + ".sha512"):
-        exit_cleanly(1)
-
-    msg = "Updating local repository with remote entries..."
-    my_logger.info(msg)
-    if isJSON:
-        print('[{"status":"wip","msg":"' + msg + '"}]')
-    else:
-        if not isSILENT:
-            print(msg)
-    if not util.process_sql_file(sql_file, isJSON):
-        exit_cleanly(1)
-
-
 ## Download tarball component and verify against checksum ###############
 def retrieve_comp(p_base_name, component_name=None):
     conf_cache = "data" + os.sep + "conf" + os.sep + "cache"
@@ -946,22 +888,9 @@ def retrieve_comp(p_base_name, component_name=None):
     ):
         return False
 
-    return validate_checksum(
+    return util.validate_checksum(
         conf_cache + os.sep + zip_file, conf_cache + os.sep + checksum_file
     )
-
-
-def validate_checksum(p_file_name, p_checksum_file_name):
-    checksum_from_file = util.get_file_checksum(p_file_name)
-    checksum_from_remote_file = util.read_file_string(p_checksum_file_name).rstrip()
-    checksum_from_remote = checksum_from_remote_file.split()[0]
-    global check_sum_match
-    check_sum_match = False
-    if checksum_from_remote == checksum_from_file:
-        check_sum_match = True
-        return check_sum_match
-    util.print_error("SHA512 CheckSum Mismatch")
-    return check_sum_match
 
 
 def get_comp_display():
@@ -1790,7 +1719,7 @@ script_name = ""
 
 ## UPDATE ###################################################
 if p_mode == "update":
-    retrieve_remote()
+    util.retrieve_remote()
 
     if not isJSON:
         print(" ")
