@@ -1451,11 +1451,6 @@ def table_repair(cluster_name, diff_file, source_of_truth, table_name, dry_run=F
         cur = conn.cursor()
         spock_version = meta.get_spock_version(conn)
 
-        try:
-            spock_version = float(cur.fetchone()[0])
-        except Exception:
-            util.exit_message("Unknown Spock version")
-
         # FIXME: Do not use harcoded version numbers
         # Read required version numbers from a config file
         if spock_version >= 4.0:
@@ -1508,10 +1503,11 @@ def table_repair(cluster_name, diff_file, source_of_truth, table_name, dry_run=F
         p_state="info",
     )
 
+    print()
+
     if spock_version < 4.0:
-        util.message("\n *** WARNING ***\n", p_state="warning")
-        util.message("Unable to pause/resume replication during repair. \
-                     It may have caused further divergence due to delta-apply columns", p_state="warning")
+        util.message("WARNING: Unable to pause/resume replication during repair due to older spock version" 
+                     "\nPlease do a manual check as repair may have caused further divergence", p_state="warning")
 
 
 def repset_diff(
