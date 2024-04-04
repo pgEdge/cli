@@ -1,17 +1,17 @@
 
 bundle=pgedge
 api=pgedge
-hubV=24.4.1
+hubV=24.4.4
 ctlibsV=1.2
 
 spock40V=4.0dev4-1
 spock33V=3.3.1-1
 spock32V=3.2.8-1
 
-lolorV=1.0dev1-1
+lolorV=1.0beta1-1
 foslotsV=1a-1
 snwflkV=1.2-1
-vectorV=0.6.1-1
+vectorV=0.6.2-1
 
 grp_pgeV=2.12
 
@@ -28,7 +28,7 @@ adminV=8.x
 prestV=1.4.2
 postgrestV=12.0.2-1
 prompgexpV=0.15.0-1
-backrestV=2.50-4
+backrestV=2.51-1
 readonlyV=1.1.1-1
 wal2jV=2.5.1-1
 
@@ -52,7 +52,7 @@ repackV=1.4.8-1
 hint15V=1.5.1-1
 hint16V=1.6.0-1
 
-patroniV=3.2.1-2
+patroniV=3.2.2.1-1
 etcdV=3.5.12-2
 
 audit15V=1.7.0-1

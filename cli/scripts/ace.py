@@ -10,6 +10,7 @@ import json
 import subprocess
 import re
 import util
+import meta
 import fire
 import cluster
 import psycopg
@@ -59,11 +60,11 @@ def get_dump_file_name(p_prfx, p_schm, p_base_dir="/tmp"):
     return p_base_dir + os.sep + p_prfx + "-" + p_schm + ".sql"
 
 
-def write_pg_dump(p_ip, p_db, p_prfx, p_schm, p_base_dir="/tmp"):
+def write_pg_dump(p_ip, p_db, p_port, p_prfx, p_schm, p_base_dir="/tmp"):
     out_file = get_dump_file_name(p_prfx, p_schm, p_base_dir)
     try:
         cmd = (
-            "pg_dump -s -n " + p_schm + " -h " + p_ip + " -d " + p_db + " > " + out_file
+            f"pg_dump -s -n {p_schm} -h {p_ip} -p {p_port} -d {p_db} > {out_file}"
         )
         os.system(cmd)
     except Exception as e:
@@ -183,7 +184,7 @@ def get_key(p_con, p_schema, p_table):
     return ",".join(key_lst)
 
 
-def diff_schemas(cluster_name, node1, node2, schema_name):
+def schema_diff(cluster_name, node1, node2, schema_name):
     """Compare Postgres schemas on different cluster nodes"""
 
     util.message(f"## Validating cluster {cluster_name} exists")
@@ -198,9 +199,15 @@ def diff_schemas(cluster_name, node1, node2, schema_name):
 
     cluster_nodes = []
 
+    '''
+    Even though multiple databases are allowed, ACE will, for now,
+    only take the first entry in the db list
+    '''
+    database = db[0]
+    database["db_name"] = database.pop("name")
+
     # Combine db and cluster_nodes into a single json
-    for database, node in zip(db, node_info):
-        database["db_name"] = database.pop("name")
+    for node in node_info:
         combined_json = {**database, **node}
         cluster_nodes.append(combined_json)
 
@@ -208,9 +215,9 @@ def diff_schemas(cluster_name, node1, node2, schema_name):
 
     for nd in cluster_nodes:
         if nd["name"] == node1:
-            sql1 = write_pg_dump(nd["ip_address"], nd["db_name"], "con1", l_schema)
+            sql1 = write_pg_dump(nd["ip_address"], nd["db_name"], nd["port"], "con1", l_schema)
         if nd["name"] == node2:
-            sql2 = write_pg_dump(nd["ip_address"], nd["db_name"], "con2", l_schema)
+            sql2 = write_pg_dump(nd["ip_address"], nd["db_name"], nd["port"], "con2", l_schema)
 
     cmd = "diff " + sql1 + "  " + sql2 + " > /tmp/diff.txt"
     util.message("\n## Running # " + cmd + "\n")
@@ -225,7 +232,7 @@ def diff_schemas(cluster_name, node1, node2, schema_name):
     return rc
 
 
-def diff_spock(cluster_name, node1, node2):
+def spock_diff(cluster_name, node1, node2):
     """Compare spock meta data setup on different cluster nodes"""
     util.check_cluster_exists(cluster_name)
 
@@ -236,9 +243,15 @@ def diff_spock(cluster_name, node1, node2):
 
     cluster_nodes = []
 
+    '''
+    Even though multiple databases are allowed, ACE will, for now,
+    only take the first entry in the db list
+    '''
+    database = db[0]
+    database["db_name"] = database.pop("name")
+
     # Combine db and cluster_nodes into a single json
-    for database, node in zip(db, node_info):
-        database["db_name"] = database.pop("name")
+    for node in node_info:
         combined_json = {**database, **node}
         cluster_nodes.append(combined_json)
 
@@ -447,6 +460,12 @@ def compare_checksums(shared_objects, worker_state, pkey1, pkey2):
             except Exception:
                 result_queue.append(BLOCK_ERROR)
                 return
+
+            # Transform all elements in t1_result and t2_result into strings before
+            # consolidating them into a set
+            # TODO: Test and add support for different datatypes here
+            t1_result = [tuple(str(x) if type(x) != list else str(sorted(x)) for x in row) for row in t1_result]
+            t2_result = [tuple(str(x) if type(x) != list else str(sorted(x)) for x in row) for row in t2_result]
 
             # Collect results into OrderedSets for comparison
             t1_set = OrderedSet(t1_result)
@@ -722,6 +741,7 @@ def table_diff(
         offsets = [x for x in range(0, row_count + 1, block_rows)]
 
     cols_list = cols.split(",")
+    cols_list = [col for col in cols_list if not col.startswith("_Spock_")]
 
     # Shared variables needed by all workers
     shared_objects = {
@@ -905,8 +925,11 @@ def table_rerun(cluster_name, diff_file, table_name):
     cluster_nodes = []
 
     # Combine db and cluster_nodes into a single json
-    for database, node in zip(db, node_info):
-        database["db_name"] = database.pop("name")
+    database = db[0]
+    database["db_name"] = database.pop("name")
+
+    # Combine db and cluster_nodes into a single json
+    for node in node_info:
         combined_json = {**database, **node}
         cluster_nodes.append(combined_json)
 
@@ -1008,6 +1031,7 @@ def table_rerun(cluster_name, diff_file, table_name):
         diff_values[node_pair] = list(diff_values[node_pair])
 
     cols_list = cols.split(",")
+    cols_list = [col for col in cols_list if not col.startswith("_Spock_")]
 
     def run_query(cur, query):
         cur.execute(query)
@@ -1040,8 +1064,12 @@ def table_rerun(cluster_name, diff_file, table_name):
                     ]
 
                     t1_result, t2_result = [f.result() for f in futures]
-                    node1_set.add(t1_result[0])
-                    node2_set.add(t2_result[0])
+
+                    t1_result = [tuple(str(x) if type(x) != list else str(sorted(x)) for x in row) for row in t1_result]
+                    t2_result = [tuple(str(x) if type(x) != list else str(sorted(x)) for x in row) for row in t2_result]
+
+                    node1_set = OrderedSet(t1_result)
+                    node2_set = OrderedSet(t2_result)
         else:
             for indices in values:
                 sql = f"""
@@ -1066,10 +1094,12 @@ def table_rerun(cluster_name, diff_file, table_name):
                     ]
 
                     t1_result, t2_result = [f.result() for f in futures]
-                    if t1_result:
-                        node1_set.add(t1_result[0])
-                    if t2_result:
-                        node2_set.add(t2_result[0])
+
+                    t1_result = [tuple(str(x) if type(x) != list else str(sorted(x)) for x in row) for row in t1_result]
+                    t2_result = [tuple(str(x) if type(x) != list else str(sorted(x)) for x in row) for row in t2_result]
+
+                    node1_set = OrderedSet(t1_result)
+                    node2_set = OrderedSet(t2_result)
 
         node1_diff = node1_set - node2_set
         node2_diff = node2_set - node1_set
@@ -1126,9 +1156,15 @@ def table_repair(cluster_name, diff_file, source_of_truth, table_name, dry_run=F
 
     cluster_nodes = []
 
+    '''
+    Even though multiple databases are allowed, ACE will, for now,
+    only take the first entry in the db list
+    '''
+    database = db[0]
+    database["db_name"] = database.pop("name")
+
     # Combine db and cluster_nodes into a single json
-    for database, node in zip(db, node_info):
-        database["db_name"] = database.pop("name")
+    for node in node_info:
         combined_json = {**database, **node}
         cluster_nodes.append(combined_json)
 
@@ -1273,6 +1309,9 @@ def table_repair(cluster_name, diff_file, source_of_truth, table_name, dry_run=F
         return
 
     cols_list = cols.split(",")
+    # Remove metadata columsn "_Spock_CommitTS_" and "_Spock_CommitOrigin_"
+    # from cols_list
+    cols_list = [col for col in cols_list if not col.startswith("_Spock_")]
     simple_primary_key = True
     keys_list = []
 
@@ -1410,6 +1449,12 @@ def table_repair(cluster_name, diff_file, source_of_truth, table_name, dry_run=F
 
         conn = conns[divergent_node]
         cur = conn.cursor()
+        spock_version = meta.get_spock_version(conn)
+
+        # FIXME: Do not use harcoded version numbers
+        # Read required version numbers from a config file
+        if spock_version >= 4.0:
+            cur.execute("SELECT spock.pause_replication();")
 
         if rows_to_upsert:
             upsert_tuples = [tuple(row.values()) for row in rows_to_upsert_json]
@@ -1421,6 +1466,9 @@ def table_repair(cluster_name, diff_file, source_of_truth, table_name, dry_run=F
             # Performing the deletes
             if len(delete_keys) > 0:
                 cur.executemany(delete_sql, delete_keys)
+
+        if spock_version >= 4.0:
+            cur.execute("SELECT spock.resume_replication();")
 
         conn.commit()
 
@@ -1454,6 +1502,12 @@ def table_repair(cluster_name, diff_file, source_of_truth, table_name, dry_run=F
         f"RUN TIME = {run_time_str} seconds",
         p_state="info",
     )
+
+    print()
+
+    if spock_version < 4.0:
+        util.message("WARNING: Unable to pause/resume replication during repair due to older spock version" 
+                     "\nPlease do a manual check as repair may have caused further divergence", p_state="warning")
 
 
 def repset_diff(
@@ -1524,9 +1578,15 @@ def repset_diff(
 
     cluster_nodes = []
 
+    '''
+    Even though multiple databases are allowed, ACE will, for now,
+    only take the first entry in the db list
+    '''
+    database = db[0]
+    database["db_name"] = database.pop("name")
+
     # Combine db and cluster_nodes into a single json
-    for database, node in zip(db, node_info):
-        database["db_name"] = database.pop("name")
+    for node in node_info:
         combined_json = {**database, **node}
         cluster_nodes.append(combined_json)
 
@@ -1585,10 +1645,10 @@ if __name__ == "__main__":
     fire.Fire(
         {
             "table-diff": table_diff,
-            "diff-schemas": diff_schemas,
-            "diff-spock": diff_spock,
             "table-repair": table_repair,
             "table-rerun": table_rerun,
             "repset-diff": repset_diff,
+            "schema-diff": schema_diff,
+            "spock-diff": spock_diff
         }
     )

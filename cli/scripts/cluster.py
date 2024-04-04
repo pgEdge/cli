@@ -10,7 +10,6 @@ def get_cluster_info(cluster_name):
     cluster_dir = os.path.join(BASE_DIR, cluster_name)
     os.system("mkdir -p " + cluster_dir)
     cluster_file = os.path.join(cluster_dir, f"{cluster_name}.json")
-    util.message(f"get_cluster_info({cluster_name}) --> ({cluster_dir}, {cluster_file})", "debug")
     return (cluster_dir, cluster_file)
 
 
@@ -326,7 +325,7 @@ def init(cluster_name):
     ssh_cross_wire_pgedge(cluster_name, db[0]["name"], db_settings, db[0]["username"], db[0]["password"], nodes)
     if len(db) > 1:
         for database in db[1:]:
-            create_spock_db(nodes,database)
+            create_spock_db(nodes,database,db_settings)
             ssh_cross_wire_pgedge(cluster_name, database["name"], db_settings, database["username"], database["password"], nodes)        
 
 
@@ -367,7 +366,7 @@ def add_db(cluster_name, database_name, username, password):
     db_json["name"] = database_name
 
     util.message(f"## Creating database {database_name}")
-    create_spock_db(nodes,db_json)
+    create_spock_db(nodes,db_json, db_settings)
     ssh_cross_wire_pgedge(cluster_name, database_name, db_settings, username, password, nodes)
     util.message(f"## Updating cluster '{cluster_name}' json definition file")
     update_json(cluster_name, db_json)
@@ -419,21 +418,27 @@ def ssh_install_pgedge(cluster_name, db, db_settings, db_user, db_passwd, nodes)
         if spock is not None and spock != '':
             parms = parms + f" --spock_ver {spock}"
         util.echo_cmd(f"{nc} setup {parms}", host=n["ip_address"], usr=n["os_user"], key=n["ssh_key"])
+        if db_settings["auto_ddl"] == "on":
+            cmd = nc + " db guc-set spock.enable_ddl_replication on;"
+            cmd = cmd + " " + nc + " db guc-set spock.include_ddl_repset on;"
+            cmd = cmd + " " + nc + " db guc-set spock.allow_ddl_from_functions on;"
+            util.echo_cmd(cmd, host=n["ip_address"], usr=n["os_user"], key=n["ssh_key"])
         util.message("#")
 
 
-def create_spock_db(nodes,db):
+def create_spock_db(nodes,db,db_settings):
     for n in nodes:
-            nc = n["path"] + os.sep + "pgedge" + os.sep + "pgedge "
-            cmd = nc + " db create -U " + db["username"] + " -d " + db["name"] + " -p " + db["password"]
+        nc = n["path"] + os.sep + "pgedge" + os.sep + "pgedge "
+        cmd = nc + " db create -U " + db["username"] + " -d " + db["name"] + " -p " + db["password"]
+        util.echo_cmd(cmd, host=n["ip_address"], usr=n["os_user"], key=n["ssh_key"])
+        if db_settings["auto_ddl"] == "on":
+            cmd = nc + " db guc-set spock.enable_ddl_replication on;"
+            cmd = cmd + " " + nc + " db guc-set spock.include_ddl_repset on;"
+            cmd = cmd + " " + nc + " db guc-set spock.allow_ddl_from_functions on;"
             util.echo_cmd(cmd, host=n["ip_address"], usr=n["os_user"], key=n["ssh_key"])
-
 
 def ssh_cross_wire_pgedge(cluster_name, db, db_settings, db_user, db_passwd, nodes):
     """Create nodes and subs on every node in a cluster."""
-    if db_settings["auto_ddl"] == "on":
-        print("TODO Loop and set auto ddl")
-
 
     sub_array=[]
     for prov_n in nodes:

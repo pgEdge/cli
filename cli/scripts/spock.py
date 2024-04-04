@@ -99,6 +99,26 @@ def node_drop_interface(node_name, interface_name, db, pg=None):
     sys.exit(0)
 
 
+def extract_from_dsn(dsn):
+    host = None
+    port = None
+    user = None
+    if dsn:
+        # Split the DSN string by semicolons to separate key-value pairs
+        dsn_parts = dsn.split(" ")
+        for part in dsn_parts:
+            if part.startswith("host="):
+                host = part.split("=")[1]
+            elif part.startswith("port="):
+                port = part.split("=")[1]
+            # Check if the part contains 'user='
+            elif part.startswith("user="):
+                # Extract the user information after 'user='
+                user = part.split("=")[1]
+          
+    return host, port, user
+
+
 def node_create(node_name, dsn, db, pg=None):
     """Define a node for spock.
 
@@ -116,17 +136,43 @@ def node_create(node_name, dsn, db, pg=None):
         Example: demo
     """
     pg_v = util.get_pg_v(pg)
+
+    # Extract user from DSN
+    host, port, user = extract_from_dsn(dsn)
+    repl_usr = util.get_user()   
+    if port is None:
+        port = util.get_column("port", pg_v)
+
+    # Check if the given role exists and is a replication user
+    try:
+        conn = psycopg.connect(dbname=db, user=repl_usr, host=host, port=port, autocommit=False)
+        cur = conn.cursor()
+
+        # Get the operating system user with rolreplication='t' and rolbypassrls='t'
+        cur.execute(f"SELECT rolreplication, rolbypassrls FROM pg_roles WHERE rolname = '{user}'")
+        try:
+            repl, bypass = cur.fetchone()
+        except:
+            util.exit_message(f"User {user} not found. HINT: Ensure that user provided is a replication user - try user {repl_usr}")
+
+        if not repl or not bypass:
+            util.exit_message(f"User {user} is not a replication user. HINT: Ensure that user provided is a replication user - try user {repl_usr}")
+        conn.close()
+    except psycopg.Error as e:
+        util.exit_message("Could not connect to database with this dsn")
+
     sql = (
         "SELECT spock.node_create("
         + get_eq("node_name", node_name, ", ")
         + get_eq("dsn", dsn, ")")
     )
     util.run_psyco_sql(pg_v, db, sql)
+  
     if node_name[0] == "n" and node_name[1].isdigit():
-        cmd = f"db guc-set snowflake.node {node_name[1]}"
-        os.system(nc + cmd)
-    sys.exit(0)
+       cmd = f"db guc-set snowflake.node {node_name[1]}"
+       os.system(nc + cmd)
 
+    sys.exit(0)
 
 def node_drop(node_name, db, pg=None):
     """Remove a spock node.
@@ -377,6 +423,37 @@ def sub_create(
         :param apply_delay: The amount of time to delay the replication.
     """
     pg_v = util.get_pg_v(pg)
+    
+    # Extract user from provider DSN
+    host, port, user = extract_from_dsn(provider_dsn)
+    repl_usr = util.get_user()
+    if port is None:
+        port = util.get_column("port", pg_v)
+    
+    # Check if the given role exists and is a replication user
+    try:
+        conn = psycopg.connect(
+            dbname=db, 
+            user=repl_usr, 
+            host=host, 
+            port=port, 
+            autocommit=False
+        )
+        cur = conn.cursor()
+
+        # Get the operating system user with rolreplication='t' and rolbypassrls='t'
+        cur.execute(f"SELECT rolreplication, rolbypassrls FROM pg_roles WHERE rolname = '{user}'")
+        try:
+            repl, bypass = cur.fetchone()
+        except:
+            util.exit_message(f"User {user} not found. HINT: Ensure that user provided is a replication user - try user {repl_usr}")
+
+        if not repl or not bypass:
+            util.exit_message(f"User {user} is not a replication user. HINT: Ensure that user provided is a replication user - try user {repl_usr}")
+        conn.close()
+    except psycopg.Error as e:
+        util.exit_message("Could not connect to database with this dsn")
+    
     sql = (
         "SELECT spock.sub_create("
         + get_eq("subscription_name", subscription_name, ", ")
@@ -394,6 +471,8 @@ def sub_create(
         + get_eq("apply_delay", apply_delay, ")")
     )
     util.run_psyco_sql(pg_v, db, sql)
+  
+   
     sys.exit(0)
 
 
@@ -961,4 +1040,5 @@ if __name__ == "__main__":
             "set-readonly": set_readonly,
         }
     )
+
 

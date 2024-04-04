@@ -11,15 +11,16 @@ import datetime
 
 def get_extension_meta(component):
     data = []
-    sql = f"SELECT extension_name, default_conf FROM extensions WHERE component = '{component}'"
+    sql = "SELECT extension_name, is_preload, preload_name, default_conf\n" + \
+         f"  FROM extensions WHERE component = '{component}'"
     try:
         c = con.cursor()
         c.execute(sql)
         data = c.fetchone()
         if data:
-            return str(data[0]), str(data[1])
+            return str(data[0]), data[1], str(data[2]), str(data[3])
         else:
-            return None, None
+            return None, None, None, None
     except Exception as e:
         fatal_error(e, sql, "get_extension_meta")
 
@@ -47,6 +48,27 @@ def get_installed_pg():
         fatal_error(e, sql, "get_installed_pg")
 
     return data
+
+'''
+Accepts a connection object and returns the version of spock installed
+
+@param: conn - connection object
+@return: float - version of spock installed
+
+'''
+def get_spock_version(conn):
+    data = []
+    sql = "SELECT spock.spock_version();"
+    try:
+        c = conn.cursor()
+        c.execute(sql)
+        data = c.fetchone()
+        if data:
+            return float(data[0])
+    except Exception as e:
+        fatal_error(e, sql, "get_spock_version()")
+
+    return 0.0
 
 
 def get_stage(p_comp):

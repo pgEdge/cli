@@ -75,7 +75,7 @@ writeSettRow() {
   pKey="$2"
   pValue="$3"
   pVerbose="$4"
-  dbLocal="$out/conf/db_local.db"
+  dbLocal="$out/data/conf/db_local.db"
   cmdPy="$PYTHON $HUB/src/conf/insert_setting.py"
   $cmdPy "$dbLocal"  "$pSection" "$pKey" "$pValue"
   if [ "$pVerbose" == "-v" ]; then
@@ -106,7 +106,7 @@ writeCompRow() {
     return
   fi
 
-  dbLocal="$out/conf/db_local.db"
+  dbLocal="$out/data/conf/db_local.db"
   cmdPy="$PYTHON $HUB/src/conf/insert_component.py"
   $cmdPy "$dbLocal"  "$pComp" "$pProj" "$pVer" "$pPlat" "$pPort" "$pStatus"
 }
@@ -121,6 +121,8 @@ initDir () {
   pStatus="$6"
   pPort="$7"
   pParent="$8"
+
+  ## echo "DEBUG initDir(1=$1, 2=$2, 3=$3 4=$4, 5=$5, 6=$6, 7=$7, 8=$8"
 
   if [ "$pStatus" == "" ]; then
     pStatus="NotInstalled"
@@ -191,37 +193,24 @@ initDir () {
     $cpCmd $SRC/$pComponent/*  $myNewDir/.
   fi
 
-  copy-pgXX "snowflake"
-  copy-pgXX "orafce"
-  copy-pgXX "spock32"
-  copy-pgXX "spock33"
-  copy-pgXX "spock40"
-  copy-pgXX "lolor"
+  ## copy-pgXX "spock33"
+  ## copy-pgXX "spock40"
+  ## copy-pgXX "lolor"
+  ## copy-pgXX "postgis"   
+  ## copy-pgXX "orafce"
+  ## copy-pgXX "snowflake"
+  ## copy-pgXX "foslots"
+  copy-pgXX "readonly"
+  copy-pgXX "vector"
   copy-pgXX "curl"
   copy-pgXX "pglogical"
-  ##copy-pgXX "anon"
   copy-pgXX "plprofiler"
   copy-pgXX "pldebugger"
   copy-pgXX "partman"
-  ##copy-pgXX "repack"
-  ##copy-pgXX "bulkload"
   copy-pgXX "audit"   
-  copy-pgXX "postgis"   
-  ##copy-pgXX "mysqlfdw"  
-  ##copy-pgXX "mongofdw"  
-  ##copy-pgXX "decoderbufs"  
-  ##copy-pgXX "oraclefdw"  
-  ##copy-pgXX "tdsfdw"  
   copy-pgXX "cron"
-  copy-pgXX "readonly"
-  copy-pgXX "foslots"
   copy-pgXX "wal2json"
   copy-pgXX "citus"
-  copy-pgXX "vector"
-  ##copy-pgXX "multicorn2"
-  ##copy-pgXX "esfdw"
-  ##copy-pgXX "bqfdw"
-  copy-pgXX "pljava"
   copy-pgXX "plv8"
   copy-pgXX "hintplan"
   copy-pgXX "timescaledb"
@@ -330,7 +319,7 @@ finalizeOutput () {
   checkCmd "cp $CLI/../README.md  hub/doc/."
   zipDir "hub" "$hubV" "" "Enabled"
 
-  checkCmd "cp conf/versions.sql  ."
+  checkCmd "cp data/conf/versions.sql  ."
   writeFileChecksum "versions.sql"
   ## checkCmd "cp conf/versions.sql  versions24.sql"
   ## writeFileChecksum "versions24.sql"
@@ -534,13 +523,15 @@ setupOutdir () {
   mkdir $outDir
   cd $outDir
   out="$PWD"
-  mkdir conf
-  mkdir conf/cache
-  conf="$SRC/conf"
 
-  cp $conf/db_local.db  conf/.
-  cp $conf/versions.sql  conf/.
-  sqlite3 conf/db_local.db < conf/versions.sql
+  mkdir -p data/logs
+  d_conf=data/conf
+  mkdir -p $d_conf/cache
+
+  s_conf="$SRC/conf"
+  cp $s_conf/db_local.db  $d_conf/.
+  cp $s_conf/versions.sql  $d_conf/.
+  sqlite3 $d_conf/db_local.db < $d_conf/versions.sql
 }
 
 

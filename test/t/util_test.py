@@ -18,7 +18,7 @@ def get_settings():
     return port_n1, port_n2, host_n1, host_n2, db, usr, pw, repuser, pgv, repo
 
 def set_env():
-    load_dotenv(dotenv_path='lib/config.env')
+    load_dotenv('t/lib/config.env')
 
 
 ## abruptly terminate with a codified message
@@ -29,25 +29,36 @@ def exit_message(p_msg, p_rc=1):
        print(f"ERROR {p_msg}")
     sys.exit(p_rc)
 
-
+def run_home_cmd(msg, cmd, node_path):
+    print(cmd) 
+    print(node_path) 
+    rc = os.system(f"{node_path}/pgedge {cmd}")
+    if rc != 0:
+       exit_message(f"Failed on step: {msg}",1) 
+    return rc 
+       
+## Run functions on both nodes
+def run_home_err(msg, cmd, node_path):
+    print(cmd)
+    result = subprocess.run(f"{node_path}/pgedge {cmd}", shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+    return result  
 
   
-       
+## Run functions on both nodes
+def run_cmd(msg, cmd, node_path):
+    print(cmd)
+    result = subprocess.run(f"{node_path}/pgedge/pgedge {cmd}", shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+    return result         
+'''
+
 ## Run  functions on both nodes
 def run_cmd(msg, cmd, node_path):
     print(cmd) 
-    print(node_path) 
     rc = os.system(f"{node_path}/pgedge/pgedge {cmd}")
     if rc != 0:
        exit_message(f"Failed on step: {msg}",1) 
        
        
-## Run functions on both nodes
-def run_cmd_err(msg, cmd, node_path):
-    print(cmd)
-    result = subprocess.run(f"{node_path}/pgedge/pgedge {cmd}", shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
-    return result         
-'''
 ## Get two psql connections
 def get_pg_connection():
   port_n1, port_n2, host_n1, host_n2, db, usr, pw, repuser, pgv, repo = get_settings()
@@ -59,12 +70,12 @@ def get_pg_connection():
   return(con1, con2)
 '''
 
- 
+## To make the connection string work in get_pg_con, I removed autocommit=False option from line 78 (the con1 connection string) - SMD
 ## Get two psql connections
 def get_pg_con(host,dbname,port,pw,usr):
   #port, port_n2, host_n1, host_n2, db, usr, pw, repuser, pgv, repo = get_settings()
   try:
-    con1 = psycopg.connect(dbname=dbname, user=usr, host=host, port=port, password=pw, autocommit=False)
+    con1 = psycopg.connect(dbname=dbname, user=usr, host=host, port=port, password=pw)
     #con2 = psycopg.connect(dbname=db, user=repuser, host=host_n2, port=port_n2, password=pw, autocommit=False)
   except Exception as e:
     exit_message(e)
@@ -88,6 +99,44 @@ def run_psql(cmd1,con1):
     except Exception as e:
         pass
     return ret1
+    
+## Run psql
+def write_psql(cmd,host,dbname,port,pw,usr):
+    ret = 1
+    con = get_pg_con(host,dbname,port,pw,usr)
+    try:
+        cur = con.cursor()
+        print(cur)
+        cur.execute(cmd)
+        ret = 0
+        con.commit()
+        cur.close()
+    except Exception as e:
+        exit_message(e)
+
+    try:
+        con.close()
+    except Exception as e:
+        pass
+    return ret
+
+
+## Run psql
+def read_psql(cmd,host,dbname,port,pw,usr):
+    con = get_pg_con(host,dbname,port,pw,usr)
+    try:
+        cur = con.cursor()
+        cur.execute(cmd)
+        ret = json.dumps(cur.fetchall())
+        cur.close()
+    except Exception as e:
+        exit_message(e)
+
+    try:
+        con.close()
+    except Exception as e:
+        pass
+    return ret
 
 
 def cleanup_sub(db):
@@ -105,15 +154,15 @@ def contains(haystack, needle):
     print(f'haystack = ({haystack})')
     print(f'needle = ({needle})')
     
-    if haystack is None or needle is None or len(haystack) == 0 or len(needle) == 0:
+    if haystack is None and needle is None or len(haystack) == 0 and len(needle) == 0:
         return 0
 
     if haystack.find(needle) != -1:
         print('Haystack and needle both have content, and our value is found - this case correctly returns true')
-        return 1
-    else:
-        print('Haystack and needle both have content, but our value is not found - returning 0 as it should')
         return 0
+    else:
+        print('Haystack and needle both have content, but our value is not found - returning 1 as it should')
+        exit_message("Fail", p_rc=1)
         
         
         
@@ -126,4 +175,3 @@ def needle_in_haystack(haystack, needle):
       exit_message("Pass", p_rc=0)
     else:
       exit_message("Fail", p_rc=1)
-

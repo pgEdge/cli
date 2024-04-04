@@ -41,9 +41,9 @@ if os.path.exists(platform_lib_path):
 import util, api, startup, meta
 my_logger=util.my_logger
 
-my_conf = os.path.join(util.MY_HOME, "conf")
+my_conf = os.path.join(util.MY_HOME, "data", "conf")
 if not util.is_writable(my_conf):
-    rc = os.system(f"sudo mkdir -P {my_conf}")
+    rc = os.system(f"sudo mkdir -p {my_conf}")
     if rc == 0:
         pass
     else:
@@ -166,14 +166,15 @@ installed_comp_list = []
 global check_sum_match
 check_sum_match = True
 
-backup_dir = os.path.join(util.MY_HOME, "conf", "backup")
+backup_dir = os.path.join(util.MY_HOME, "data", "conf", "backup")
 backup_target_dir = os.path.join(backup_dir, time.strftime("%Y%m%d%H%M"))
 
-pid_file = os.path.join(util.MY_HOME, "conf", "cli.pid")
+pid_file = os.path.join(util.MY_HOME, "data", "conf", "cli.pid")
 
 isJSON = util.isJSON
 
 def fire_away(p_mode, p_args):
+    util.message(f"cli.fire_away({p_mode}, {p_args})", "debug")
     py_file = f"{p_mode}.py"
     py3 = sys.executable
     if os.path.exists(py_file):
@@ -207,6 +208,7 @@ def get_next_arg(p_arg):
 
 # run external scripts #######################################
 def run_script(componentName, scriptName, scriptParm):
+    util.message(f"cli.run_script({componentName}, {scriptName}, {scriptParm})", "debug")
     if componentName not in installed_comp_list:
         return
 
@@ -224,15 +226,21 @@ def run_script(componentName, scriptName, scriptParm):
         cmd = sys.executable + " -u"
         scriptFile = scriptFile + ".py"
 
+    scriptFileFound = False
+    if os.path.isfile(scriptFile):
+        scriptFileFound = True
+
+    util.message(f"scriptFile '{scriptFile}', {scriptFileFound}", "debug")
+
     rc = 0
     compState = util.get_comp_state(componentName)
-    if compState == "Enabled": 
-        if os.path.isfile(scriptFile):
+    if compState == "Enabled":
+        if scriptFileFound is True:
             run = cmd + " " + scriptFile + " " + scriptParm
             rc = os.system(run)
         else:
             if is_ext:
-                rc = util.create_extension(componentName)
+                rc = util.config_extension(p_pg=componentName[-4:], p_comp=componentName[0:-5])
 
     if rc != 0:
         print("Error running " + scriptName)
@@ -288,7 +296,7 @@ def get_depend_list(p_list, p_display=True):
 
 # Check if component is already downloaded
 def is_downloaded(p_comp, component_name=None):
-    conf_cache = "conf" + os.sep + "cache"
+    conf_cache = "data" + os.sep + "conf" + os.sep + "cache"
     zip_file = p_comp + ".tgz"
     checksum_file = zip_file + ".sha512"
 
@@ -341,6 +349,7 @@ class ProgressTarExtract(io.FileIO):
 
 # Install Component ######################################################
 def install_comp(p_app, p_ver=0, p_rver=None, p_re_install=False):
+    util.message(f"install_comp(p_app={p_app}, p_ver={p_ver}, p_rver={p_rver}, p_re_install={p_re_install})", "debug")
     if p_ver is None:
         p_ver = 0
     if p_rver:
@@ -380,7 +389,7 @@ def install_comp(p_app, p_ver=0, p_rver=None, p_re_install=False):
             exit_cleanly(1)
 
         base_name = p_app + "-" + ver
-        conf_cache = "conf" + os.sep + "cache"
+        conf_cache = "data" + os.sep + "conf" + os.sep + "cache"
         file = base_name + ".tgz"
         zip_file = conf_cache + os.sep + file
         json_dict = {}
@@ -403,7 +412,7 @@ def install_comp(p_app, p_ver=0, p_rver=None, p_re_install=False):
             exit_cleanly(1)
 
         util.message("\nUnpacking " + file)
-        full_file = "conf" + os.sep + "cache" + os.sep + file
+        full_file = conf_cache + os.sep + file
 
         if platform.system() in ("Linux", "Darwin"):
             return util.posix_unpack(full_file)
@@ -692,7 +701,7 @@ def unpack_comp(p_app, p_old_ver, p_new_ver):
                     f"{os.path.join(MY_HOME, parent)}  {os.path.join(backup_target_dir, parent)}"
                 )
             manifest_file_name = p_app + ".manifest"
-            manifest_file_path = os.path.join(MY_HOME, "conf", manifest_file_name)
+            manifest_file_path = os.path.join(MY_HOME, "data", "conf", manifest_file_name)
             my_logger.info("backing up current manifest file " + manifest_file_path)
             copy2(manifest_file_path, backup_target_dir)
             my_logger.info("deleting existing extension files from " + parent)
@@ -915,7 +924,7 @@ def retrieve_remote():
 
 ## Download tarball component and verify against checksum ###############
 def retrieve_comp(p_base_name, component_name=None):
-    conf_cache = "conf" + os.sep + "cache"
+    conf_cache = "data" + os.sep + "conf" + os.sep + "cache"
     zip_file = p_base_name + ".tgz"
     checksum_file = zip_file + ".sha512"
     global download_count
@@ -1217,15 +1226,17 @@ if "--pg" in args:
 if "-U" in args:
     usr = get_next_arg("-U")
     if usr > "":
-        args.remove("-U")
-        args.remove(usr)
+        if str(args[1]) not in fire_list:
+            args.remove("-U")
+            args.remove(usr)
         os.environ["pgeUser"] = usr
 
 if "-P" in args:
     passwd = get_next_arg("-P")
     if passwd > "":
-        args.remove("-P")
-        args.remove(passwd)
+        if str(args[1]) not in fire_list:
+            args.remove("-P")
+            args.remove(passwd)
         os.environ["pgePasswd"] = passwd
 
 if "-p" in args:
@@ -1256,8 +1267,9 @@ while i < len(args):
         if i < (len(args) - 1):
             PGNAME = args[i + 1]
             os.environ["pgName"] = PGNAME
-            args.remove(PGNAME)
-            args.remove("-d")
+            if str(args[1]) not in fire_list:
+                args.remove(PGNAME)
+                args.remove("-d")
             break
     i += 1
 
@@ -1737,8 +1749,7 @@ if p_mode == "install":
         if status == 1 and (c in p_comp_list or p_comp_list[0] == "all"):
             if isExt:
                 ## just run the CREATE EXTENSION sql command without reboot or change preloads
-                os.environ["isPreload"] = "False"
-                util.create_extension(parent, c, False)
+                util.create_extension(parent, c, False, is_preload=0)
             else:
                 ## already installed
                 pass

@@ -2,7 +2,7 @@
 
 import os
 
-MY_VERSION = "24.4.1"
+MY_VERSION = "24.4.4"
 DEFAULT_PG = "16"
 DEFAULT_SPOCK = "33"
 MY_CMD = os.getenv("MY_CMD", None)
@@ -48,7 +48,7 @@ isJSON = False
 if os.environ.get("isJson", "False") == "True":
     isJSON = True
 
-pid_file = os.path.join(MY_HOME, "conf", "cli.pid")
+PID_FILE = os.path.join(MY_HOME, "data", "conf", "cli.pid")
 
 isTEST = False
 if os.environ.get("isTest", "False") == "True":
@@ -75,6 +75,37 @@ my_logger = log_helpers.my_logger
 COMMAND = 15
 DEBUG = 10
 DEBUG2 = 9
+
+
+def get_parsed_json(file_nm):
+    parsed_json = None
+    try:
+        with open(file_nm, "r") as f:
+            parsed_json = json.load(f)
+    except Exception as e:
+        util.exit_message(f"Unable to load json file: {file_nm}\n{e}")
+
+    return(parsed_json)
+
+
+# Custom loglevel functions
+def debug2(self, message, *args, **kws):
+    # Yes, logger takes its '*args' as 'args'.
+    if self.isEnabledFor(DEBUG2):
+        self._log(DEBUG2, message, args, **kws)
+
+
+def command(self, message, *args, **kws):
+    # Yes, logger takes its '*args' as 'args'.
+    if self.isEnabledFor(COMMAND):
+        self._log(COMMAND, message, args, **kws)
+
+my_logger = logging.getLogger()
+LOG_FILENAME = os.getenv('MY_LOGS')
+if not LOG_FILENAME:
+   MY_HOME = os.getenv("MY_HOME")
+   LOG_FILENAME = os.path.join(MY_HOME, "data", "logs","cli_log.out")
+LOG_DIRECTORY = os.path.split(LOG_FILENAME)[0]
 
 isDebug=0
 pgeDebug = int(os.getenv('pgeDebug', '0'))
@@ -740,6 +771,7 @@ def run_sql_cmd(p_pg, p_sql, p_display=False):
 
 
 def posix_unpack(file_nm):
+    cmd = f"tar -xf {file_nm}"
     rc = os.system(f"tar -xf {file_nm}")
     return(rc)
 
@@ -752,30 +784,54 @@ def restart_postgres(p_pg):
     time.sleep(4)
 
 
-def config_extension(p_pg, p_comp, create=True):
+def config_extension(p_pg=None, p_comp=None, active=True):
+    message(f"util.config_extension(" + \
+      f"p_pg={p_pg}, p_comp={p_comp}, active={active})", "debug")
 
-    extension_name, default_conf = meta.get_extension_meta(p_comp)
+    if p_comp is None:
+        exit_message("p_comp must be specified in util.config_extension()")
 
-    for df in default_conf.split("|"):
-        df1 = df.strip()
-        df_l = df1.split("=")
-        if len(df_l) != 2:
-            message(f"skipping bad extension metadata \n  '{df_l}'")
-        else:
-            change_pgconf_keyval(p_pg, str(df_l[0]), str(df_l[1]), True)
+    pgV = p_pg
+    if p_pg is None:
+       pgV = p_comp[-4:]
+       message(f"defaulting p_pg to {pgV}")
+       
 
-    if create:
-        create_extension(p_pg, extension_name, True)
+    if active is False:
+        return(0)
+
+    extension_name, is_preload, preload_name, default_conf = meta.get_extension_meta(p_comp)
+    if extension_name is None:
+        exit_message(f"Cannot find {p_comp} meta data", 1)
+
+    if default_conf > "":
+        for df in default_conf.split("|"):
+            df1 = df.strip()
+            df_l = df1.split("=")
+            if len(df_l) != 2:
+                message(f"skipping bad extension metadata \n  '{df_l}'")
+            else:
+                change_pgconf_keyval(p_pg, str(df_l[0]), str(df_l[1]), True)
+
+    rc = create_extension(p_pg, p_ext=preload_name, p_extension=extension_name, 
+                          p_cascade=True, p_is_preload=is_preload)
+    if rc is True:
+        return(0)
+
+    return(1)
 
 
-def create_extension(p_pg, p_ext, p_reboot=False, p_extension="", p_cascade=False):
+def create_extension(p_pg, p_ext, p_reboot=False, p_extension="", p_cascade=False, p_is_preload=1):
+    message(f"util.create_extension({p_pg}, {p_ext}, p_reboot={p_reboot}, " + \
+           f"p_extension='{p_extension}', p_cascade={p_cascade}, p_is_preload={p_is_preload})", "debug")
+
     isPreload = os.getenv("isPreload")
 
-    if p_ext > " " and isPreload == "True":
+    if p_ext > " " and p_is_preload == 1:
         rc = change_pgconf_keyval(p_pg, "shared_preload_libraries", p_ext)
 
     isRestart = os.getenv("isRestart")
-    if p_reboot and isRestart == "True":
+    if (p_reboot is True and p_is_preload == 1) or isRestart == "True":
         restart_postgres(p_pg)
 
     print("")
@@ -1123,7 +1179,76 @@ def message(p_msg, p_state="info", p_isJSON=None):
     if p_msg is None:
         return
 
-    if p_isJSON:
+    jsn_msg = None
+
+    log_level = p_state.lower()
+    cur_level = logging.root.level
+
+    if log_level == "error":
+        log_level_num = 40
+        my_logger.error(p_msg)
+        if log_level_num >= cur_level:
+            if not p_isJSON:
+                print(bcolours.FAIL + characters.CROSS + " " + p_msg + bcolours.ENDC)
+                return
+            else:
+                jsn_msg = p_msg
+    elif log_level == "warning":
+        log_level_num = 30
+        my_logger.warning(p_msg)
+        if log_level_num >= cur_level:
+            if not p_isJSON:
+                print(
+                    bcolours.YELLOW + characters.WARNING + " " + p_msg + bcolours.ENDC
+                )
+                return
+            else:
+                jsn_msg = p_msg
+    elif log_level == "alert":
+        log_level_num = 20
+        my_logger.alert(p_msg)
+        if log_level_num >= cur_level:
+            if not p_isJSON:
+                print(bcolours.YELLOW + p_msg + bcolours.ENDC)
+                return
+            else:
+                jsn_msg = p_msg
+    elif log_level == "debug":
+        log_level_num = 10
+        pgeDebug = str(os.getenv("pgeDebug", "0"))
+        my_logger.debug(p_msg)
+        if (log_level_num >= cur_level) or (pgeDebug == "1"):
+            if not p_isJSON:
+                print(bcolours.YELLOW + p_msg + bcolours.ENDC)
+                return
+            else:
+                jsn_msg = p_msg
+    elif log_level == "success":
+        log_level_num = 20
+        my_logger.info(p_msg)
+        if log_level_num >= cur_level:
+            if not p_isJSON:
+                print(bcolours.OKGREEN + characters.TICK + " " + p_msg + bcolours.ENDC)
+                return
+            else:
+                jsn_msg = p_msg
+    elif log_level == "info":
+        log_level_num = 20
+        my_logger.info(p_msg)
+        if log_level_num >= cur_level:
+            if not p_isJSON:
+                print(p_msg)
+                return
+            else:
+                jsn_msg = p_msg
+    else:
+        if not p_isJSON:
+            print(p_msg)
+            return
+        else:
+            jsn_msg = p_msg
+
+    if jsn_msg != None:
         msg = p_msg.replace("\n", "")
         if msg.strip() > "":
             json_dict = {}
@@ -2770,6 +2895,7 @@ def delete_file(p_file_name):
 
 
 def download_file(p_url, p_file):
+    message(f"util.download_file({p_url}, {p_file})", "debug")
     if os.path.exists(p_file):
         os.system("rm -f " + p_file)
 
@@ -2788,6 +2914,7 @@ def download_file(p_url, p_file):
 
 
 def unpack_file(p_file):
+    message(f"util.unpack_file({p_file})", "debug")
     if platform.system() in ("Linux", "Darwin"):
         rc = posix_unpack(os.getcwd() + os.sep + p_file)
         if rc == 0:
@@ -2848,6 +2975,7 @@ def get_url(url):
 def http_get_file(
     p_json, p_file_name, p_url, p_out_dir, p_display_status, p_msg, component_name=None
 ):
+    message(f"util.http_get_file({p_json}, {p_file_name}, {p_url}, {p_out_dir}, ... , {component_name})", "debug")
     file_exists = False
     file_name_complete = p_out_dir + os.sep + p_file_name
     file_name_partial = file_name_complete + ".part"
@@ -2887,7 +3015,7 @@ def http_get_file(
             if (
                 not p_file_name.endswith(".txt")
                 and not p_file_name.startswith("install.py")
-                and not os.path.isfile(pid_file)
+                and not os.path.isfile(PID_FILE)
             ):
                 raise KeyboardInterrupt("No lock file exists.")
             buffer = u.read(block_sz)
@@ -3251,7 +3379,7 @@ def create_manifest(ext_comp, parent_comp, upgrade=None):
 
     manifest_file_name = ext_comp + ".manifest"
 
-    manifest_file_path = os.path.join(MY_HOME, "conf", manifest_file_name)
+    manifest_file_path = os.path.join(MY_HOME, "data", "conf", manifest_file_name)
 
     try:
         with open(manifest_file_path, "w") as f:
@@ -3561,7 +3689,7 @@ def check_comp(p_comp, p_port, p_kount, check_status=False):
 
 # run external scripts #######################################
 def run_script(componentName, scriptName, scriptParm):
-    message(f"## util.run_script('{componentName}', '{scriptName}', '{scriptParm}')", "debug")
+    message(f"util.run_script('{componentName}', '{scriptName}', '{scriptParm}')", "debug")
     installed_comp_list = meta.get_component_list()
     if componentName not in installed_comp_list:
         return
