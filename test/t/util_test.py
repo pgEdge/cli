@@ -1,6 +1,9 @@
 import sys, os, psycopg, json,subprocess
 from dotenv import load_dotenv
 
+EXIT_PASS = 0
+EXIT_FAIL = 1
+
 ## Utility Functions
 
 ## Return Test Configuration
