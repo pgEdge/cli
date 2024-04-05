@@ -6,6 +6,25 @@ import util, fire, meta, time
 
 BASE_DIR = "cluster"
 
+def set_firewalld(cluster_name):
+    """ Open up nodes only to each other on pg port (WIP)"""
+    
+    ## install & start firewalld if not present
+    rc = util.echo_cmd("sudo firewall-cmd --version")
+    if rc != 0:
+       rc = util.echo_cmd("sudo dnf install -y firewalld")
+       rc = util.echo_cmd("sudo systemctl start firewalld")
+
+    db, db_settings, nodes = load_json(cluster_name)
+
+    for nd in nodes:
+       util.message(f'OUT name={nd["name"]}, ip_address={nd["ip_address"]}, port={nd["port"]}', "info")
+       out_name = nd["name"]
+       for in_nd in nodes:
+          if in_nd["name"] != out_name:
+             print(f'   IN    name={in_nd["name"]}, ip_address={in_nd["ip_address"]}, port={in_nd["port"]}')
+
+
 def get_cluster_info(cluster_name):
     cluster_dir = os.path.join(util.MY_HOME, BASE_DIR, cluster_name)
     os.system("mkdir -p " + cluster_dir)
@@ -689,6 +708,7 @@ if __name__ == "__main__":
             "add-db": add_db,
             "remove": remove,
             "command": command,
+            "set-firewalld": set_firewalld,
             "app-install": app_install,
             "app-remove": app_remove
         }
