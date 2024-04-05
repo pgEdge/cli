@@ -6,6 +6,19 @@ import util, fire, meta, time
 
 BASE_DIR = "cluster"
 
+def ssh(cluster_name, node_name):
+    """An SSH Terminal session into the specified node"""
+
+    db, db_settings, nodes = load_json(cluster_name)
+   
+    for nd in nodes:
+       if node_name == nd["name"]:
+          util.echo_cmd(f'ssh -i ~/keys/eqn-test-key {nd["os_user"]}@{nd["ip_address"]}')
+          util.exit_cleanly(0)
+
+    util.exit_message(f"Could not locate node '{node_name}'")
+
+
 def set_firewalld(cluster_name):
     """ Open up nodes only to each other on pg port (WIP)"""
     
@@ -709,6 +722,7 @@ if __name__ == "__main__":
             "remove": remove,
             "command": command,
             "set-firewalld": set_firewalld,
+            "ssh": ssh,
             "app-install": app_install,
             "app-remove": app_remove
         }
