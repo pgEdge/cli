@@ -111,7 +111,7 @@ INSERT INTO categories VALUES (9,  87, 'Management & Monitoring', 'Manage/Monito
 -- ## HUB ################################
 INSERT INTO projects VALUES ('hub', 'app', 0, 0, 'hub', 0, 'https://github.com/pgedge/cli','',0,'','','');
 INSERT INTO releases VALUES ('hub', 1, 'hub', '', '', 'hidden', '', 1, '', '', '');
-INSERT INTO versions VALUES ('hub', '24.4.4',  '',  1, '20240408', '', '', '');
+INSERT INTO versions VALUES ('hub', '24.4.4',  '',  1, '20240405', '', '', '');
 INSERT INTO versions VALUES ('hub', '24.4.3',  '',  0, '20240402', '', '', '');
 INSERT INTO versions VALUES ('hub', '24.4.2',  '',  0, '20240401', '', '', '');
 INSERT INTO versions VALUES ('hub', '24.3.2',  '',  0, '20240317', '', '', '');
@@ -299,9 +299,9 @@ INSERT INTO releases VALUES ('snowflake-pg14', 4, 'snowflake', 'Snowflake', '', 
 INSERT INTO releases VALUES ('snowflake-pg15', 4, 'snowflake', 'Snowflake', '', 'prod', '', 1, 'POSTGRES', '', '');
 INSERT INTO releases VALUES ('snowflake-pg16', 4, 'snowflake', 'Snowflake', '', 'prod', '', 1, 'POSTGRES', '', '');
 
-INSERT INTO versions VALUES ('snowflake-pg14', '2.0-1', 'el8, el9, arm9',      1, '20240408', 'pg14', '', '');
-INSERT INTO versions VALUES ('snowflake-pg15', '2.0-1', 'el8, el9, arm9',      1, '20240408', 'pg15', '', '');
-INSERT INTO versions VALUES ('snowflake-pg16', '2.0-1', 'el8, el9, arm9, osx', 1, '20240408', 'pg16', '', '');
+INSERT INTO versions VALUES ('snowflake-pg14', '2.0-1', 'el8, el9, arm9',      1, '20240405', 'pg14', '', '');
+INSERT INTO versions VALUES ('snowflake-pg15', '2.0-1', 'el8, el9, arm9',      1, '20240405', 'pg15', '', '');
+INSERT INTO versions VALUES ('snowflake-pg16', '2.0-1', 'el8, el9, arm9, osx', 1, '20240405', 'pg16', '', '');
 
 INSERT INTO versions VALUES ('snowflake-pg14', '1.2-1', 'el8, el9, arm9', 0, '20240302', 'pg14', '', '');
 INSERT INTO versions VALUES ('snowflake-pg15', '1.2-1', 'el8, el9, arm9', 0, '20240302', 'pg15', '', '');
