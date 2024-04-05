@@ -101,6 +101,18 @@ t/8084_env_table_drop_n1.pl
 t/8085_env_table_drop_n2.pl
 t/8086_env_node_drop_n1.pl
 t/8087_env_node_drop_n2.pl
+# node creation
+##
+t/8051_env_create_node1.pl
+t/8052_env_create_node2.pl
+##
+# spock node-add and node-drop test cases
+##
+t/spock_node_add_interface.py
+t/spock_node_drop_interface.py
+t/spock_node_add_interface_no_db.py
+t/spock_node_drop_interface_no_interface.py
+t/spock_node_drop_interface_no_db.py
 ##
 # uninstall pgedge
 ##
