@@ -47,7 +47,7 @@ def write_cluster_json(cluster_name, cj):
         util.exit_message("Unable to write_cluster_json {cluster_file}\n{str(e)}")
 
 
-def json_create(cluster_name, style, db=None, user=None, passwd=None, pg=None, os_user=None, ssh_key=None):
+def json_create(cluster_name, style, db="demo", user="user1", passwd="passwd1", pg="16", os_user=None, ssh_key=None):
     cluster_json = {}
     cluster_json["name"] = cluster_name
     cluster_json["style"] = style
@@ -174,6 +174,8 @@ def load_json(cluster_name):
     """Load a json config file for a cluster."""
 
     parsed_json = get_cluster_json(cluster_name)
+    if parsed_json is None:
+        util.exit_message("Unable to load_json cluster")
 
     pg = parsed_json["database"]["pg_version"]
     spock = ""
