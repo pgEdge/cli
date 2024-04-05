@@ -7,7 +7,7 @@ import util, fire, meta, time
 BASE_DIR = "cluster"
 
 def get_cluster_info(cluster_name):
-    cluster_dir = os.path.join(BASE_DIR, cluster_name)
+    cluster_dir = os.path.join(util.MY_HOME, BASE_DIR, cluster_name)
     os.system("mkdir -p " + cluster_dir)
     cluster_file = os.path.join(cluster_dir, f"{cluster_name}.json")
     return (cluster_dir, cluster_file)
@@ -47,11 +47,16 @@ def write_cluster_json(cluster_name, cj):
         util.exit_message("Unable to write_cluster_json {cluster_file}\n{str(e)}")
 
 
-def json_create(cluster_name, style, db=None, user=None, passwd=None, pg=None):
+def json_create(cluster_name, style, db=None, user=None, passwd=None, pg=None, os_user=None, ssh_key=None):
     cluster_json = {}
     cluster_json["name"] = cluster_name
     cluster_json["style"] = style
     cluster_json["create_date"] = datetime.datetime.now().isoformat(" ", "seconds")
+
+    style_json = {}
+    style_json["os_user"] = os_user
+    style_json["ssh_key"] = ssh_key
+    cluster_json["remote"] = style_json
 
     database_json = {"databases": []}
     database_json["pg_version"] = pg
@@ -89,10 +94,12 @@ def json_add_node(cluster_name, node_group, node_name, is_active, ip_address, po
     if airport:
         node_json["airport"] = airport
 
-    util.message(f"node_json = {node_json}", "debug")
+    nodes = {"nodes": [node_json]}
+
+    util.message(f"nodes = {nodes}", "debug")
 
     lhn = cj["node_groups"]
-    lhn[node_group].append(node_json)
+    lhn[node_group].append(nodes)
 
     write_cluster_json(cluster_name, cj)
 

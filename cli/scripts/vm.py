@@ -23,7 +23,7 @@ PROVIDERS = \
         ["akm", "linode",       "Akamai Linode"],
         ["eqn", "equinixmetal", "Equinix Metal"],
         ["aws", "ec2",          "Amazon Web Services"],
-        ["azr", "azure",        "Microsoft Azure"],
+        ["azr", "azure",        "Microsoft Azure (wip)"],
         ["gcp", "gce",          "Google Cloud Platform (Coming Soon)"],
     ]
 
@@ -687,7 +687,10 @@ def cluster_define(cluster_name, nodes):
     if len(nl) < 1:
         util.exit_message("Must be a comma seperated list of 'provider:airport:node_name' triplets")
 
-    cluster.json_create(cluster_name, "remote")
+    os_user = "root"
+    ssh_key = "~/keys/eqn-test-key"
+
+    cluster.json_create(cluster_name, "remote", os_user=os_user, ssh_key=ssh_key)
 
     util.message(f"cluster_create node list = {nl}", "debug")
     for n in nl:
@@ -708,11 +711,16 @@ def cluster_define(cluster_name, nodes):
 
         sect = load_config(provider)
         ssh_key = sect["ssh_key"]
-        os_user = sect["os_user"]
+        try:
+            os_user = sect["os_user"]
+        except Exception:
+            os_user = "root"
 
         util.message(f"cluster_create node_values = {name}, {public_ip}, {status}", "debug")
 
-        cluster.json_add_node(cluster_name, "remote", node_name, True, public_ip, 5432, "/opt/pgedge", os_user=os_user, ssh_key=ssh_key, provider=provider, airport=airport)
+        cluster.json_add_node(cluster_name, "remote", node_name, True, 
+            public_ip, 5432, "/opt/pgedge", os_user=os_user, ssh_key=ssh_key, 
+            provider=provider, airport=airport)
 
     return 
 
