@@ -66,11 +66,10 @@ fire_list = [
     "cloud",
     "db",
     "app",
-    "setup",
-    "localhost"
+    "setup"
 ]
 
-fire_contrib = ["vm"]
+fire_contrib = ["vm", "localhost"]
 
 native_list = ["backrest", "ansible", "patroni", "etcd"]
 
