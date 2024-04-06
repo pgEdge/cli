@@ -66,10 +66,11 @@ fire_list = [
     "cloud",
     "db",
     "app",
-    "vm",
     "setup",
     "localhost"
 ]
+
+fire_contrib = ["vm"]
 
 native_list = ["backrest", "ansible", "patroni", "etcd"]
 
@@ -131,6 +132,7 @@ mode_list = (
         "--debug2",
     ]
     + fire_list
+    + fire_contrib
     + native_list
     + mode_list_advanced
 )
@@ -150,6 +152,7 @@ ignore_comp_list = (
         "change-pgconf",
     ]
     + fire_list
+    + fire_contrib
     + native_list
 )
 
@@ -158,6 +161,7 @@ no_log_commands = ["status", "info", "list", "top", "get", "metrics-check"]
 lock_commands = (
     ["install", "remove", "update", "upgrade", "downgrade", "service"]
     + fire_list
+    + fire_contrib
     + native_list
 )
 
@@ -180,7 +184,10 @@ def fire_away(p_mode, p_args):
     if os.path.exists(py_file):
         cmd = f"{py3} {py_file}"
     else:
-        cmd = f"{py3} hub/scripts/{py_file}"
+        if p_mode in fire_contrib:
+            cmd = f"{py3} hub/scripts/contrib/{py_file}"
+        else:
+            cmd = f"{py3} hub/scripts/{py_file}"
 
     for n in range(2, len(p_args)):
         parm = p_args[n]
@@ -1155,7 +1162,7 @@ if "--pg" in args:
 if "-U" in args:
     usr = get_next_arg("-U")
     if usr > "":
-        if str(args[1]) not in fire_list:
+        if (str(args[1]) not in fire_list) and (str(args[1]) not in fire_contrib):
             args.remove("-U")
             args.remove(usr)
         os.environ["pgeUser"] = usr
@@ -1163,7 +1170,7 @@ if "-U" in args:
 if "-P" in args:
     passwd = get_next_arg("-P")
     if passwd > "":
-        if str(args[1]) not in fire_list:
+        if (str(args[1]) not in fire_list) and (str(args[1]) not in fire_contrib):
             args.remove("-P")
             args.remove(passwd)
         os.environ["pgePasswd"] = passwd
@@ -1196,7 +1203,7 @@ while i < len(args):
         if i < (len(args) - 1):
             PGNAME = args[i + 1]
             os.environ["pgName"] = PGNAME
-            if str(args[1]) not in fire_list:
+            if str(args[1]) not in ((fire_list) or (fire_contrib)):
                 args.remove(PGNAME)
                 args.remove("-d")
             break
@@ -1389,7 +1396,7 @@ if p_mode == "pgbin":
     sys.exit(1)
 
 ## FIRE LIST ###############################################################
-if p_mode in fire_list:
+if (p_mode in fire_list) or (p_mode in fire_contrib):
     fire_away(p_mode, args)
 
 ## NATIVE_LIST #######################################

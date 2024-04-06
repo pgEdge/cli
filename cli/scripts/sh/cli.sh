@@ -59,6 +59,8 @@ if [ ! "$lib" == "None" ]; then
   fi
 fi
 
+array[3]=$MY_HOME/hub/scripts/contrib
+
 export PYTHONPATH=$(printf "%s:" ${array[@]})
 for var in "$@"
 do
@@ -80,6 +82,7 @@ if [ $v == "3.9" ] || [ $v == "3.10" ] || [ $v == "3.11" ] || [ $v == "3.12" ]; 
 elif [ -f /usr/bin/python3.9 ]; then
   export PYTHON=/usr/bin/python3.9
 else
+  # try it anyway
   export PYTHON=python3
 fi
 

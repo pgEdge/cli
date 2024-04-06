@@ -30,7 +30,11 @@ cd $outp
 
 ./$api set GLOBAL REPO http://localhost:8000
 ./$api info
-./$api install ctlibs
+if [ `arch` == "i386" ]; then
+  echo "Skipping install CTLIBS"
+else
+  ./$api install ctlibs
+fi
 
 if [ ! "$1" == "" ]; then
   ./$api install $comp
