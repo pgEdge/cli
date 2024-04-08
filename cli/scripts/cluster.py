@@ -6,8 +6,40 @@ import util, fire, meta, time
 
 BASE_DIR = "cluster"
 
+def ssh(cluster_name, node_name):
+    """An SSH Terminal session into the specified node"""
+
+    db, db_settings, nodes = load_json(cluster_name)
+   
+    for nd in nodes:
+       if node_name == nd["name"]:
+          util.echo_cmd(f'ssh -i ~/keys/eqn-test-key {nd["os_user"]}@{nd["ip_address"]}')
+          util.exit_cleanly(0)
+
+    util.exit_message(f"Could not locate node '{node_name}'")
+
+
+def set_firewalld(cluster_name):
+    """ Open up nodes only to each other on pg port (WIP)"""
+    
+    ## install & start firewalld if not present
+    rc = util.echo_cmd("sudo firewall-cmd --version")
+    if rc != 0:
+       rc = util.echo_cmd("sudo dnf install -y firewalld")
+       rc = util.echo_cmd("sudo systemctl start firewalld")
+
+    db, db_settings, nodes = load_json(cluster_name)
+
+    for nd in nodes:
+       util.message(f'OUT name={nd["name"]}, ip_address={nd["ip_address"]}, port={nd["port"]}', "info")
+       out_name = nd["name"]
+       for in_nd in nodes:
+          if in_nd["name"] != out_name:
+             print(f'   IN    name={in_nd["name"]}, ip_address={in_nd["ip_address"]}, port={in_nd["port"]}')
+
+
 def get_cluster_info(cluster_name):
-    cluster_dir = os.path.join(BASE_DIR, cluster_name)
+    cluster_dir = os.path.join(util.MY_HOME, BASE_DIR, cluster_name)
     os.system("mkdir -p " + cluster_dir)
     cluster_file = os.path.join(cluster_dir, f"{cluster_name}.json")
     return (cluster_dir, cluster_file)
@@ -47,11 +79,16 @@ def write_cluster_json(cluster_name, cj):
         util.exit_message("Unable to write_cluster_json {cluster_file}\n{str(e)}")
 
 
-def json_create(cluster_name, style, db=None, user=None, passwd=None, pg=None):
+def json_create(cluster_name, style, db="demo", user="user1", passwd="passwd1", pg="16", os_user=None, ssh_key=None):
     cluster_json = {}
     cluster_json["name"] = cluster_name
     cluster_json["style"] = style
     cluster_json["create_date"] = datetime.datetime.now().isoformat(" ", "seconds")
+
+    style_json = {}
+    style_json["os_user"] = os_user
+    style_json["ssh_key"] = ssh_key
+    cluster_json["remote"] = style_json
 
     database_json = {"databases": []}
     database_json["pg_version"] = pg
@@ -89,10 +126,12 @@ def json_add_node(cluster_name, node_group, node_name, is_active, ip_address, po
     if airport:
         node_json["airport"] = airport
 
-    util.message(f"node_json = {node_json}", "debug")
+    nodes = {"nodes": [node_json]}
+
+    util.message(f"nodes = {nodes}", "debug")
 
     lhn = cj["node_groups"]
-    lhn[node_group].append(node_json)
+    lhn[node_group].append(nodes)
 
     write_cluster_json(cluster_name, cj)
 
@@ -167,6 +206,8 @@ def load_json(cluster_name):
     """Load a json config file for a cluster."""
 
     parsed_json = get_cluster_json(cluster_name)
+    if parsed_json is None:
+        util.exit_message("Unable to load_json cluster")
 
     pg = parsed_json["database"]["pg_version"]
     spock = ""
@@ -680,6 +721,8 @@ if __name__ == "__main__":
             "add-db": add_db,
             "remove": remove,
             "command": command,
+            "set-firewalld": set_firewalld,
+            "ssh": ssh,
             "app-install": app_install,
             "app-remove": app_remove
         }

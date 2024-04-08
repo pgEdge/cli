@@ -1,16 +1,16 @@
 
 bundle=pgedge
 api=pgedge
-hubV=24.4.4
+hubV=24.4.5
 ctlibsV=1.2
 
 spock40V=4.0dev4-1
-spock33V=3.3.1-1
+spock33V=3.3.2-1
 spock32V=3.2.8-1
 
 lolorV=1.0beta1-1
 foslotsV=1a-1
-snwflkV=1.2-1
+snwflkV=2.0-1
 vectorV=0.6.2-1
 
 grp_pgeV=2.12

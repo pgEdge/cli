@@ -309,6 +309,7 @@ finalizeOutput () {
   checkCmd "cp $CLI/*.sh        hub/scripts/."
   checkCmd "cp $CLI/*.template  hub/scripts/."
   checkCmd "cp -r $CLI/fire     hub/scripts/."
+  checkCmd "cp -r $CLI/contrib  hub/scripts/."
   checkCmd "cp -r $CLI/lib      hub/scripts/."
   checkCmd "cp -r $CLI/ini      hub/scripts/."
   checkCmd "cp -r $CLI/libcloud hub/scripts/."

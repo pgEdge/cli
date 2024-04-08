@@ -22,7 +22,7 @@ ordered-set>=4.0
 mpire>=2.8.0
 pandas>=1.1.5
 
-## pgEDGE-PATRONI ###
+## pgEdge-Patroni ###
 cdiff>=1.0
 urllib3>=1.25.4,!=1.26.18
 PyYAML>=6.0
@@ -31,4 +31,54 @@ prettytable>=2.5
 python-dateutil>=2.8.2
 cryptography>=40.0.2
 ydiff>=1.2
+
+## pgEdge-Admin #####
+Flask==2.3.*
+Flask-Gravatar==0.*
+Flask-Login==0.*
+Flask-Mail==0.*
+Flask-Migrate==4.*
+greenlet==1.1.2;  python_version <= '3.10'
+Flask-SQLAlchemy==3.1.*
+Flask-WTF==1.2.*
+Flask-Compress==1.*
+Flask-Paranoid==0.*
+Flask-Babel==4.0.*
+Flask-Security-Too==5.3.*
+Flask-SocketIO==5.3.*
+WTForms==3.1.*
+passlib==1.*
+pytz==2023.*
+speaklater3==1.*
+sqlparse==0.*
+psutil==5.9.*
+psycopg[c]==3.1.12
+python-dateutil==2.*
+SQLAlchemy==2.*
+bcrypt==4.0.*
+cryptography==42.0.*
+sshtunnel==0.*
+ldap3==2.*
+gssapi==1.8.*
+eventlet==0.34.2
+httpagentparser==1.9.*
+user-agents==2.2.0
+pywinpty==2.0.*; sys_platform=="win32"
+Authlib==1.2.*
+pyotp==2.*
+qrcode==7.*
+boto3==1.33.*
+urllib3==1.26.*
+azure-mgmt-rdbms==10.1.0
+azure-mgmt-resource==23.0.1
+azure-mgmt-subscription==3.1.1
+azure-identity==1.15.0
+google-api-python-client==2.*
+google-auth-oauthlib==1.1.0
+keyring==24.*
+Werkzeug==2.3.*
+typer[all]==0.9.*
+setuptools==69.*; python_version >= '3.12'
+jsonformatter~=0.3.2
+
 

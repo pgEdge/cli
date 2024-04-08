@@ -55,7 +55,7 @@ def configure_backup_settings(stanza_name):
         "REPO_CIPHER_TYPE": "aes-256-cbc",
         "REPO_CIPHER_PASSWORD": "",
         "REPO_PATH": "/var/lib/pgbackrest",
-        "REPO_RETENTION_FULL_TYPE": "count",
+        "REPO_RETENTION_FULL_TYPE": "time",
         "REPO_RETENTION_FULL": "31",
         "BACKUP_TOOL": "pgbackrest",
         "STANZA": stanza_name,
@@ -164,40 +164,56 @@ def create_stanza():
     except subprocess.CalledProcessError as e:
         print("Error creating stanza:", e)
 
+
+def create_or_update_job(crontab_lines, job_comment, detailed_comment, new_job):
+    job_identifier = f"# {job_comment}"
+    detailed_comment_line = f"# {detailed_comment}\n"
+    job_exists = False
+
+    for i, line in enumerate(crontab_lines):
+        if job_identifier in line:
+            crontab_lines[i] = job_identifier + "\n"
+            if i + 1 < len(crontab_lines):
+                crontab_lines[i + 1] = detailed_comment_line
+                crontab_lines[i + 2] = new_job
+            job_exists = True
+            break
+
+    if not job_exists:
+        crontab_lines.extend([job_identifier + "\n", detailed_comment_line, new_job])
+
 def define_cron_job():
-    # Define the full backup command
-    full_backup_command = [
-            "pgbackrest",
-            "--stanza=" + util.get_value("BACKUP", "STANZA"),
-            "--type=full",  # Ensure this is the correct way to specify the backup type
-            "backup"  # Assuming "backup" is needed as part of the command
-    ]
-    # Join the command list into a string
-    full_backup_command_str = ' '.join(full_backup_command)
+    stanza = util.get_value("BACKUP", "STANZA")
+    full_backup_command = f"pgbackrest --stanza={stanza} --type=full backup"
+    incr_backup_command = f"pgbackrest --stanza={stanza} --type=incr backup"
+    expire_backup_command = f"pgbackrest --stanza={stanza} expire"
 
-    # Define the incremental backup command
-    incr_backup_command = [
-            "pgbackrest",
-            "--stanza=" + util.get_value("BACKUP", "STANZA"),
-            "--type=incr",  # Ensure this is the correct way to specify the backup type
-            "backup"  # Assuming "backup" is needed as part of the command
-    ]
-    # Join the command list into a string
-    incr_backup_command_str = ' '.join(incr_backup_command)
+    run_as_user = 'root'
 
-    # Access the current user's crontab
-    cron = CronTab(user=util.get_user())
+    # Crontab entries with detailed comments
+    full_backup_cron = f"0 1 * * * {run_as_user} {full_backup_command}\n"
+    incr_backup_cron = f"0 * * * * {run_as_user} {incr_backup_command}\n"
+    expire_backup_cron = f"30 1 * * * {run_as_user} {expire_backup_command}\n"
 
-    # Create a new job for the full backup at 01:00 every day
-    full_job = cron.new(command=full_backup_command_str, comment='Full backup job')
-    full_job.setall('0 1 * * *')
+    # Detailed comments for each job
+    full_backup_comment = "Performs a full backup daily at 1 AM."
+    incr_backup_comment = "Performs an incremental backup every hour."
+    expire_backup_comment = "Manages backup retention, expiring old backups at 1:30 AM daily."
 
-    # Create a new job for the incremental backup every hour
-    incr_job = cron.new(command=incr_backup_command_str, comment='Incremental backup job')
-    incr_job.setall('0 * * * *')
+    system_crontab_path = "/etc/crontab"
+    backrest_crontab_path = "backrest.crontab"
 
-    # Write the jobs to the crontab
-    cron.write()
+    with open(system_crontab_path, 'r') as file:
+        existing_crontab = file.readlines()
+
+    create_or_update_job(existing_crontab, "FullBackup", full_backup_comment, full_backup_cron)
+    create_or_update_job(existing_crontab, "IncrementalBackup", incr_backup_comment, incr_backup_cron)
+    create_or_update_job(existing_crontab, "ExpireBackup", expire_backup_comment, expire_backup_cron)
+
+    with open(backrest_crontab_path, 'w') as file:
+        file.writelines(existing_crontab)
+
+    osSys(f"sudo cat {backrest_crontab_path} | sudo tee {system_crontab_path} > /dev/null", False)
 
 def fetch_backup_config():
     """Fetch backup configuration from util module or other configuration source."""

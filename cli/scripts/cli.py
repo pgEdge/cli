@@ -22,7 +22,7 @@ if not (MY_HOME and MY_CMD and MY_LITE):
     print("Required Envs not set (MY_HOME, MY_CMD, MY_LITE)")
     sys.exit(1)
 
-import time, datetime, platform, tarfile, sqlite3, time
+import time, datetime, platform, tarfile, sqlite3
 import json, glob, re, io, traceback, logging, logging.handlers
 from shutil import copy2
 from semantic_version import Version
@@ -65,10 +65,10 @@ fire_list = [
     "cloud",
     "db",
     "app",
-    "vm",
-    "setup",
-    "localhost"
+    "setup"
 ]
+
+fire_contrib = ["vm", "localhost"]
 
 native_list = ["backrest", "ansible", "patroni", "etcd"]
 
@@ -129,6 +129,7 @@ mode_list = (
         "--debug"
     ]
     + fire_list
+    + fire_contrib
     + native_list
     + mode_list_advanced
 )
@@ -148,6 +149,7 @@ ignore_comp_list = (
         "change-pgconf",
     ]
     + fire_list
+    + fire_contrib
     + native_list
 )
 
@@ -156,6 +158,7 @@ no_log_commands = ["status", "info", "list", "top", "get", "metrics-check"]
 lock_commands = (
     ["install", "remove", "update", "upgrade", "downgrade", "service"]
     + fire_list
+    + fire_contrib
     + native_list
 )
 
@@ -178,7 +181,10 @@ def fire_away(p_mode, p_args):
     if os.path.exists(py_file):
         cmd = f"{py3} {py_file}"
     else:
-        cmd = f"{py3} hub/scripts/{py_file}"
+        if p_mode in fire_contrib:
+            cmd = f"{py3} hub/scripts/contrib/{py_file}"
+        else:
+            cmd = f"{py3} hub/scripts/{py_file}"
 
     for n in range(2, len(p_args)):
         parm = p_args[n]
@@ -299,7 +305,7 @@ def is_downloaded(p_comp, component_name=None):
     checksum_file = zip_file + ".sha512"
 
     if os.path.isfile(conf_cache + os.sep + checksum_file):
-        if validate_checksum(
+        if util.validate_checksum(
             conf_cache + os.sep + zip_file, conf_cache + os.sep + checksum_file
         ):
             return True
@@ -310,7 +316,7 @@ def is_downloaded(p_comp, component_name=None):
     ):
         return False
 
-    return validate_checksum(
+    return util.validate_checksum(
         conf_cache + os.sep + zip_file, conf_cache + os.sep + checksum_file
     )
 
@@ -944,22 +950,9 @@ def retrieve_comp(p_base_name, component_name=None):
     ):
         return False
 
-    return validate_checksum(
+    return util.validate_checksum(
         conf_cache + os.sep + zip_file, conf_cache + os.sep + checksum_file
     )
-
-
-def validate_checksum(p_file_name, p_checksum_file_name):
-    checksum_from_file = util.get_file_checksum(p_file_name)
-    checksum_from_remote_file = util.read_file_string(p_checksum_file_name).rstrip()
-    checksum_from_remote = checksum_from_remote_file.split()[0]
-    global check_sum_match
-    check_sum_match = False
-    if checksum_from_remote == checksum_from_file:
-        check_sum_match = True
-        return check_sum_match
-    util.print_error("SHA512 CheckSum Mismatch")
-    return check_sum_match
 
 
 def get_comp_display():
@@ -1216,7 +1209,7 @@ if "--pg" in args:
 if "-U" in args:
     usr = get_next_arg("-U")
     if usr > "":
-        if str(args[1]) not in fire_list:
+        if (str(args[1]) not in fire_list) and (str(args[1]) not in fire_contrib):
             args.remove("-U")
             args.remove(usr)
         os.environ["pgeUser"] = usr
@@ -1224,7 +1217,7 @@ if "-U" in args:
 if "-P" in args:
     passwd = get_next_arg("-P")
     if passwd > "":
-        if str(args[1]) not in fire_list:
+        if (str(args[1]) not in fire_list) and (str(args[1]) not in fire_contrib):
             args.remove("-P")
             args.remove(passwd)
         os.environ["pgePasswd"] = passwd
@@ -1257,7 +1250,7 @@ while i < len(args):
         if i < (len(args) - 1):
             PGNAME = args[i + 1]
             os.environ["pgName"] = PGNAME
-            if str(args[1]) not in fire_list:
+            if str(args[1]) not in ((fire_list) or (fire_contrib)):
                 args.remove(PGNAME)
                 args.remove("-d")
             break
@@ -1450,7 +1443,7 @@ if p_mode == "pgbin":
     sys.exit(1)
 
 ## FIRE LIST ###############################################################
-if p_mode in fire_list:
+if (p_mode in fire_list) or (p_mode in fire_contrib):
     fire_away(p_mode, args)
 
 ## NATIVE_LIST #######################################
@@ -1780,7 +1773,7 @@ script_name = ""
 
 ## UPDATE ###################################################
 if p_mode == "update":
-    retrieve_remote()
+    util.retrieve_remote()
 
     if not isJSON:
         print(" ")
