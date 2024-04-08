@@ -836,7 +836,7 @@ def table_diff(
     print()
 
     util.message(
-        f"TOTAL ROWS CHECKED = {total_rows}\nRUN TIME = {run_time_str} seconds",
+        f"TOTAL ROWS CHECKED = {total_rows}. RUN TIME = {run_time_str} seconds",
         p_state="info",
     )
 

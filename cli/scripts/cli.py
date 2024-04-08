@@ -39,7 +39,6 @@ if os.path.exists(platform_lib_path):
         sys.path.append(platform_lib_path)
 
 import util, api, startup, meta
-my_logger=util.my_logger
 
 my_conf = os.path.join(util.MY_HOME, "data", "conf")
 if not util.is_writable(my_conf):
@@ -127,8 +126,7 @@ mode_list = (
         "--pause",
         "--verbose",
         "-v",
-        "--debug",
-        "--debug2",
+        "--debug"
     ]
     + fire_list
     + native_list
@@ -281,7 +279,7 @@ def get_depend_list(p_list, p_display=True):
             sorted_depend_list.append(c[4:])
 
     msg = "  " + str(sorted_depend_list)
-    my_logger.info(msg)
+    util.message(msg, p_state="info")
     if isJSON:
         dictDeplist = {}
         dictDeplist["state"] = "deplist"
@@ -402,7 +400,7 @@ def install_comp(p_app, p_ver=0, p_rver=None, p_re_install=False):
 
         if os.path.exists(zip_file) and is_downloaded(base_name, p_app):
             msg = "File is already downloaded."
-            my_logger.info(msg)
+            util.message(msg, p_state="info")
             if isJSON:
                 json_dict["status"] = "complete"
                 msg = json.dumps([json_dict])
@@ -429,7 +427,7 @@ def install_comp(p_app, p_ver=0, p_rver=None, p_re_install=False):
             temp_tar_dir = os.path.join(MY_HOME, p_app)
             util.delete_dir(temp_tar_dir)
             msg = "Unpacking cancelled for file %s" % file
-            my_logger.error(msg)
+            util.message(msg, p_state="error")
             return_code = 1
             if isJSON:
                 json_dict = {}
@@ -444,7 +442,7 @@ def install_comp(p_app, p_ver=0, p_rver=None, p_re_install=False):
             temp_tar_dir = os.path.join(MY_HOME, p_app)
             util.delete_dir(temp_tar_dir)
             util.message("Unpacking failed for file %s" % str(e), "error")
-            my_logger.error(traceback.format_exc())
+            util.message(traceback.format_exc(), "error")
             return_code = 1
             if isJSON:
                 json_dict = {}
@@ -537,7 +535,7 @@ def upgrade_component(p_comp):
             + ")"
         )
 
-    my_logger.info(msg)
+    util.message(msg, p_state="info")
     if isJSON:
         print(
             '[{"state":"update","status":"start","component":"'
@@ -567,7 +565,7 @@ def upgrade_component(p_comp):
                     int(d_comp_server_port), p_comp
                 )
             if d_comp_server_running:
-                my_logger.info("Stopping the " + d_comp + " to upgrade the " + p_comp)
+                util.message(f"Stopping the {d_comp} to upgrade the {p_comp}", p_state="info")
                 run_script(d_comp, "stop-" + d_comp, "stop")
                 components_stopped.append(d_comp)
 
@@ -600,7 +598,7 @@ def upgrade_component(p_comp):
         run_script(p_comp, "start-" + p_comp, "start")
 
     for dc in components_stopped:
-        my_logger.info("Starting the " + dc + " after upgrading the " + p_comp)
+        util.message(f"Starting the {dc} after upgrading the {p_comp}", p_state="info")
         run_script(dc, "start-" + dc, "start")
 
     return 0
@@ -616,7 +614,7 @@ def unpack_comp(p_app, p_old_ver, p_new_ver):
 
     if os.path.exists(zip_file) and is_downloaded(base_name, p_app):
         msg = "File is already downloaded."
-        my_logger.info(msg)
+        util.message(msg, p_state="info")
         if isJSON:
             json_dict = {}
             json_dict["state"] = "download"
@@ -629,7 +627,7 @@ def unpack_comp(p_app, p_old_ver, p_new_ver):
         return 1
 
     msg = " Unpacking " + p_app + "(" + p_new_ver + ") over (" + p_old_ver + ")"
-    my_logger.info(msg)
+    util.message(msg, p_state="info")
 
     file = base_name + ".tgz"
 
@@ -672,7 +670,7 @@ def unpack_comp(p_app, p_old_ver, p_new_ver):
             msg = json.dumps([json_dict])
         if not isSILENT:
             print(msg)
-        my_logger.error(msg)
+        util.message(msg, p_state="error")
         return 1
     except Exception as e:
         util.delete_dir(new_comp_dir)
@@ -685,8 +683,8 @@ def unpack_comp(p_app, p_old_ver, p_new_ver):
             msg = json.dumps([json_dict])
         if not isSILENT:
             print(msg)
-        my_logger.error(msg)
-        my_logger.error(traceback.format_exc())
+        util.message(msg, p_state="error")
+        util.message(traceback.format_exc(), p_state="error")
         return 1
 
     tar.close
@@ -696,26 +694,26 @@ def unpack_comp(p_app, p_old_ver, p_new_ver):
         try:
             parent = util.get_parent_component(p_app, 0)
             if not os.path.exists(os.path.join(backup_target_dir, parent)):
-                my_logger.info("backing up the parent component %s " % parent)
+                util.message(f"backing up the parent component {parent}", p_state="info")
                 util.copytree(
                     f"{os.path.join(MY_HOME, parent)}  {os.path.join(backup_target_dir, parent)}"
                 )
             manifest_file_name = p_app + ".manifest"
             manifest_file_path = os.path.join(MY_HOME, "data", "conf", manifest_file_name)
-            my_logger.info("backing up current manifest file " + manifest_file_path)
+            util.message(f"backing up current manifest file {manifest_file_path}", p_state="info")
             copy2(manifest_file_path, backup_target_dir)
-            my_logger.info("deleting existing extension files from " + parent)
+            util.message(f"deleting existing extension files from {parent}", p_state="info")
             util.delete_extension_files(manifest_file_path, upgrade=True)
-            my_logger.info("deleting existing manifest file : " + manifest_file_name)
+            util.message(f"deleting existing manifest file : {manifest_file_name}", p_state="info")
             os.remove(manifest_file_path)
-            my_logger.info("creating new manifest file : " + manifest_file_name)
+            util.message(f"creating new manifest file : {manifest_file_name}", p_state="info")
             util.create_manifest(p_app, parent, upgrade=True)
-            my_logger.info("copying new extension files : " + manifest_file_name)
+            util.message(f"copying new extension files : {manifest_file_name}", p_state="info")
             util.copy_extension_files(p_app, parent, upgrade=True)
         except Exception as e:
             error_msg = "Error while upgrading the " + p_app + " : " + str(e)
-            my_logger.error(error_msg)
-            my_logger.error(traceback.format_exc())
+            util.message(error_msg, p_state="error")
+            util.message(traceback.format_exc(), p_state="error")
             if isJSON:
                 json_dict = {}
                 json_dict["state"] = "error"
@@ -732,13 +730,13 @@ def unpack_comp(p_app, p_old_ver, p_new_ver):
             if not os.path.exists(backup_target_dir):
                 os.mkdir(backup_target_dir)
             if not os.path.exists(os.path.join(backup_target_dir, p_app)):
-                my_logger.info("backing up the old version of %s " % p_app)
+                util.message(f"backing up the old version of {p_app}", p_state="info")
                 util.copytree(
                     f"{os.path.join(MY_HOME, p_app)}  {os.path.join(backup_target_dir, p_app)}"
                 )
 
             msg = p_app + " upgrade staged for completion."
-            my_logger.info(msg)
+            util.message(msg, p_state="info")
             if p_app in ("hub"):
                 copy2(os.path.join(MY_HOME, MY_CMD), backup_target_dir)
                 os.rename(new_comp_dir, "hub_new")
@@ -755,25 +753,25 @@ def unpack_comp(p_app, p_old_ver, p_new_ver):
                 )
                 os.system(upd_hub_cmd + p_old_ver + " " + p_new_ver)
             else:
-                my_logger.info("renaming the existing folder %s" % p_app)
+                util.message(f"renaming the existing folder {p_app}", p_state="info")
                 os.rename(p_app, p_app + "_old")
-                my_logger.info("copying the new files to folder %s" % p_app)
+                util.message(f"copying the new files to folder {p_app}", p_state="info")
 
                 util.copytree(
                     f"{os.path.join(MY_HOME, new_comp_dir, p_app)}  {os.path.join(MY_HOME, p_app)}"
                 )
 
-                my_logger.info("Restoring the conf and extension files if any")
+                util.message("Restoring the conf and extension files if any", p_state="info")
                 util.restore_conf_ext_files(
                     os.path.join(MY_HOME, p_app + "_old"), os.path.join(MY_HOME, p_app)
                 )
-                my_logger.info(p_app + " upgrade completed.")
+                util.message(f"{p_app} upgrade completed.", p_state="info")
         except Exception as upgrade_exception:
             error_msg = (
                 "Error while upgrading the " + p_app + " : " + str(upgrade_exception)
             )
-            my_logger.error(error_msg)
-            my_logger.error(traceback.format_exc())
+            util.message(error_msg, p_state="error")
+            util.message(traceback.format_exc(), p_state="error")
             if isJSON:
                 json_dict = {}
                 json_dict["state"] = "error"
@@ -857,7 +855,7 @@ def update_component_state(p_app, p_mode, p_ver=None):
         fatal_sql_error(e, sql, "update_component_state()")
 
     msg = p_app + " " + new_state
-    my_logger.info(msg)
+    util.message(msg, p_state="info")
     if isJSON:
         msg = '[{"status":"wip","msg":"' + msg + '"}]'
 
@@ -884,7 +882,7 @@ def retrieve_remote():
         + remote_file
         + ") ..."
     )
-    my_logger.info(msg)
+    util.message(msg, p_state="info")
     if isJSON:
         print('[{"status":"wip","msg":"' + msg + '"}]')
         msg = ""
@@ -902,7 +900,7 @@ def retrieve_remote():
     ):
         exit_cleanly(1)
     msg = "Validating checksum file..."
-    my_logger.info(msg)
+    util.message(msg, p_state="info")
     if isJSON:
         print('[{"status":"wip","msg":"' + msg + '"}]')
     else:
@@ -912,7 +910,7 @@ def retrieve_remote():
         exit_cleanly(1)
 
     msg = "Updating local repository with remote entries..."
-    my_logger.info(msg)
+    util.message(msg, p_state="info")
     if isJSON:
         print('[{"status":"wip","msg":"' + msg + '"}]')
     else:
@@ -931,7 +929,7 @@ def retrieve_comp(p_base_name, component_name=None):
     download_count += 1
 
     msg = "Get:" + str(download_count) + " " + REPO + " " + p_base_name
-    my_logger.info(msg)
+    util.message(msg, p_state="info")
     display_status = True
     if isSILENT:
         display_status = False
@@ -1161,18 +1159,10 @@ if "--jsonp" in args:
 isDEBUG = 0
 if "--debug" in args:
     args.remove("--debug")
-    my_logger.info("Enabling DEBUG mode")
-    logging.getLogger("cli_logger").setLevel(logging.DEBUG)
-    my_logger.debug("DEBUG enabled")
+    util.message("Enabling DEBUG mode", p_state="info")
+    util.setLevel(logging.DEBUG)
+    util.message("DEBUG enabled", p_state="debug")
     os.environ["pgeDebug"] = "1"
-
-if "--debug2" in args:
-    args.remove("--debug2")
-    my_logger.info("Enabling DEBUG2 mode")
-    logging.getLogger("cli_logger").setLevel(clilog.DEBUG2)
-    my_logger.debug("DEBUG enabled")
-    my_logger.debug2("DEBUG2 enabled")
-    os.environ["pgeDebug"] = "2"
 
 os.environ["pgeTTY"] = "True"
 if "--no-tty" in args:
@@ -1341,7 +1331,7 @@ elif (
 ):
     pass
 else:
-    my_logger.command(MY_CMD + " %s", util.scrub_passwd(full_cmd_line))
+    util.message(f"{MY_CMD} {util.scrub_passwd(full_cmd_line)}", p_state="info")
 
 if not is_valid_mode(p_mode):
     util.exit_message("Invalid option or command '" + p_mode + "'", 1, isJSON)
@@ -1716,7 +1706,7 @@ if p_mode == "remove":
 if p_mode == "install":
     if p_comp == "all":
         msg = "You must specify component to install."
-        my_logger.error(msg)
+        util.message(msg, p_state="error")
         return_code = 1
         if isJSON:
             return_code = 0
@@ -1940,7 +1930,7 @@ if p_mode == "downgrade":
     if rc == 1:
         msg = "Nothing to downgrade."
         print(msg)
-        my_logger.info(msg)
+        util.message(msg, p_state="info")
 
 ## UPGRADE ##################################################
 if p_mode == "upgrade":
@@ -1979,14 +1969,14 @@ if p_mode == "upgrade":
         if upgrade_flag == 1 and updates_cnt == 0:
             msg = "All components are already upgraded to the latest version."
             print(msg)
-            my_logger.info(msg)
+            util.message(msg, p_state="info")
     else:
         rc = upgrade_component(p_comp)
 
         if rc == 1:
             msg = "Nothing to upgrade."
             print(msg)
-            my_logger.info(msg)
+            util.message(msg, p_state="info")
 
 ## VERIFY #############################################
 if p_mode == "verify":

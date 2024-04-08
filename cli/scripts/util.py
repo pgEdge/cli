@@ -32,6 +32,7 @@ import filecmp
 from subprocess import Popen, PIPE, STDOUT
 from datetime import datetime, timedelta
 from urllib import request as urllib2
+from cli_logger import CLILogger
 
 try:
     import psycopg
@@ -69,13 +70,7 @@ if os.path.exists(platform_lib_path):
     if platform_lib_path not in sys.path:
         sys.path.append(platform_lib_path)
 
-
-my_logger = log_helpers.my_logger
-# Custom Logging
-COMMAND = 15
-DEBUG = 10
-DEBUG2 = 9
-
+my_logger = CLILogger("cli_logger")
 
 def get_parsed_json(file_nm):
     parsed_json = None
@@ -83,60 +78,18 @@ def get_parsed_json(file_nm):
         with open(file_nm, "r") as f:
             parsed_json = json.load(f)
     except Exception as e:
-        util.exit_message(f"Unable to load json file: {file_nm}\n{e}")
+        exit_message(f"Unable to load json file: {file_nm}\n{e}")
 
     return(parsed_json)
 
 
-# Custom loglevel functions
-def debug2(self, message, *args, **kws):
-    # Yes, logger takes its '*args' as 'args'.
-    if self.isEnabledFor(DEBUG2):
-        self._log(DEBUG2, message, args, **kws)
-
-
-def command(self, message, *args, **kws):
-    # Yes, logger takes its '*args' as 'args'.
-    if self.isEnabledFor(COMMAND):
-        self._log(COMMAND, message, args, **kws)
-
-my_logger = logging.getLogger()
-LOG_FILENAME = os.getenv('MY_LOGS')
-if not LOG_FILENAME:
-   MY_HOME = os.getenv("MY_HOME")
-   LOG_FILENAME = os.path.join(MY_HOME, "data", "logs","cli_log.out")
-LOG_DIRECTORY = os.path.split(LOG_FILENAME)[0]
-
-isDebug=0
-pgeDebug = int(os.getenv('pgeDebug', '0'))
-if pgeDebug == 1:
-    LOG_LEVEL = DEBUG
-    isDebug = 1
-elif pgeDebug == 2:
-    LOG_LEVEL = DEBUG2
-    isDebug = 2
-else:
-    LOG_LEVEL = COMMAND
-    isDebug = 0
-
-LOG_FILENAME = os.getenv('MY_LOGS')
-if not LOG_FILENAME:
-   MY_HOME = os.getenv("MY_HOME")
-   LOG_FILENAME = os.path.join(MY_HOME,"logs","cli_log.out")
-LOG_DIRECTORY = os.path.split(LOG_FILENAME)[0]
-if not os.path.isdir(LOG_DIRECTORY):
-    os.mkdir(LOG_DIRECTORY)
-
-my_logger.setLevel(LOG_LEVEL)
-
-
 def get_parsed_json(file_nm):
     parsed_json = None
     try:
         with open(file_nm, "r") as f:
             parsed_json = json.load(f)
     except Exception as e:
-        util.exit_message(f"Unable to load json file: {file_nm}\n{e}")
+        exit_message(f"Unable to load json file: {file_nm}\n{e}")
 
     return(parsed_json)
 
@@ -1179,76 +1132,7 @@ def message(p_msg, p_state="info", p_isJSON=None):
     if p_msg is None:
         return
 
-    jsn_msg = None
-
-    log_level = p_state.lower()
-    cur_level = logging.root.level
-
-    if log_level == "error":
-        log_level_num = 40
-        my_logger.error(p_msg)
-        if log_level_num >= cur_level:
-            if not p_isJSON:
-                print(bcolours.FAIL + characters.CROSS + " " + p_msg + bcolours.ENDC)
-                return
-            else:
-                jsn_msg = p_msg
-    elif log_level == "warning":
-        log_level_num = 30
-        my_logger.warning(p_msg)
-        if log_level_num >= cur_level:
-            if not p_isJSON:
-                print(
-                    bcolours.YELLOW + characters.WARNING + " " + p_msg + bcolours.ENDC
-                )
-                return
-            else:
-                jsn_msg = p_msg
-    elif log_level == "alert":
-        log_level_num = 20
-        my_logger.alert(p_msg)
-        if log_level_num >= cur_level:
-            if not p_isJSON:
-                print(bcolours.YELLOW + p_msg + bcolours.ENDC)
-                return
-            else:
-                jsn_msg = p_msg
-    elif log_level == "debug":
-        log_level_num = 10
-        pgeDebug = str(os.getenv("pgeDebug", "0"))
-        my_logger.debug(p_msg)
-        if (log_level_num >= cur_level) or (pgeDebug == "1"):
-            if not p_isJSON:
-                print(bcolours.YELLOW + p_msg + bcolours.ENDC)
-                return
-            else:
-                jsn_msg = p_msg
-    elif log_level == "success":
-        log_level_num = 20
-        my_logger.info(p_msg)
-        if log_level_num >= cur_level:
-            if not p_isJSON:
-                print(bcolours.OKGREEN + characters.TICK + " " + p_msg + bcolours.ENDC)
-                return
-            else:
-                jsn_msg = p_msg
-    elif log_level == "info":
-        log_level_num = 20
-        my_logger.info(p_msg)
-        if log_level_num >= cur_level:
-            if not p_isJSON:
-                print(p_msg)
-                return
-            else:
-                jsn_msg = p_msg
-    else:
-        if not p_isJSON:
-            print(p_msg)
-            return
-        else:
-            jsn_msg = p_msg
-
-    if jsn_msg != None:
+    if p_isJSON:
         msg = p_msg.replace("\n", "")
         if msg.strip() > "":
             json_dict = {}
@@ -1266,7 +1150,7 @@ def message(p_msg, p_state="info", p_isJSON=None):
         elif log_level == "debug":
             my_logger.debug(p_msg)
         elif log_level == "success":
-            print(bcolours.OKGREEN + characters.TICK + " " + p_msg + bcolours.ENDC)
+            my_logger.success(p_msg)
         elif log_level == "info":
             my_logger.info(p_msg)
         else:
@@ -1274,21 +1158,25 @@ def message(p_msg, p_state="info", p_isJSON=None):
     return
 
 
+def set_log_level(level):
+    my_logger.setLevel(level)
+
+
 def set_colour(message, colour):
     if colour == "red":
-        return bcolours.FAIL + message + bcolours.ENDC
+        return CLILogger.FAIL + message + CLILogger.ENDC
     elif colour == "green":
-        return bcolours.OKGREEN + message + bcolours.ENDC
+        return CLILogger.OKGREEN + message + CLILogger.ENDC
     elif colour == "yellow":
-        return bcolours.YELLOW + message + bcolours.ENDC
+        return CLILogger.YELLOW + message + CLILogger.ENDC
     elif colour == "blue":
-        return bcolours.OKBLUE + message + bcolours.ENDC
+        return CLILogger.OKBLUE + message + CLILogger.ENDC
     elif colour == "purple":
-        return bcolours.OKPURPLE + message + bcolours.ENDC
+        return CLILogger.OKPURPLE + message + CLILogger.ENDC
     elif colour == "cyan":
-        return bcolours.OKCYAN + message + bcolours.ENDC
+        return CLILogger.OKCYAN + message + CLILogger.ENDC
     elif colour == "white":
-        return bcolours.BOLD + message + bcolours.ENDC
+        return CLILogger.BOLD + message + CLILogger.ENDC
     else:
         return message
 
@@ -1575,7 +1463,7 @@ def read_env_file(component):
             for e in env:
                 os.environ[e] = env[e]
         except Exception:
-            my_logger.error(traceback.format_exc())
+            message(traceback.format_exc(), p_state="error")
             pass
 
     return
@@ -2478,7 +2366,7 @@ def process_sql_file(p_file, p_json):
                 else:
                     if not isSilent:
                         print(msg)
-                my_logger.info(msg)
+                message(msg, p_state="info")
                 break
             cmd = ""
     file.close()
@@ -2588,7 +2476,7 @@ def fatal_sql_error(err, sql, func):
     ):
         pass
     else:
-        my_logger.error(msg)
+        message(msg, p_state="error")
     sys.exit(1)
 
 
@@ -3009,7 +2897,7 @@ def http_get_file(
             log_file_name = p_file_name.replace(".tgz.sha512", "")
             log_msg = "Downloading checksum for %s " % log_file_name
         if p_display_status:
-            my_logger.info(log_msg)
+            message(log_msg, p_state="info")
         previous_time = datetime.now()
         while True:
             if (
@@ -3065,7 +2953,7 @@ def http_get_file(
         else:
             print("\n" + "ERROR: " + str(e))
             print("       " + msg)
-        my_logger.error("URL Error while dowloading file %s (%s)", p_file_name, str(e))
+        message("URL Error while dowloading file %s (%s)", p_file_name, str(e), p_state="error")
         if file_exists and not f.closed:
             f.close()
         delete_file(file_name_partial)
@@ -3081,9 +2969,7 @@ def http_get_file(
             print(json.dumps([json_dict]))
         else:
             print("\n" + str(e))
-        my_logger.error(
-            "Timeout Error while dowloading file %s (%s)", p_file_name, str(e)
-        )
+        message("Timeout Error while dowloading file %s (%s)", p_file_name, str(e), p_state="error")
         if file_exists and not f.closed:
             f.close()
         delete_file(file_name_partial)
@@ -3099,7 +2985,7 @@ def http_get_file(
             print(json.dumps([json_dict]))
         else:
             print("\n" + str(e))
-        my_logger.error("IO Error while dowloading file %s (%s)", p_file_name, str(e))
+        message("IO Error while dowloading file %s (%s)", p_file_name, str(e), p_state="error")
         if file_exists and not f.closed:
             f.close()
         delete_file(file_name_partial)
@@ -3116,7 +3002,7 @@ def http_get_file(
             print(json.dumps([json_dict]))
         else:
             print("Download Cancelled")
-        my_logger.error("Cancelled dowloading file %s ", p_file_name)
+        message("Cancelled dowloading file %s ", p_file_name, p_state="error")
         if file_exists and not f.closed:
             f.close()
         delete_file(file_name_partial)
@@ -3132,9 +3018,7 @@ def http_get_file(
             print(json.dumps([json_dict]))
         else:
             print("\n" + str(e))
-        my_logger.error(
-            "Value Error while dowloading file %s (%s)", p_file_name, str(e)
-        )
+        message("Value Error while dowloading file %s (%s)", p_file_name, str(e), p_state="error")
         if file_exists and not f.closed:
             f.close()
         delete_file(file_name_partial)
@@ -3385,8 +3269,8 @@ def create_manifest(ext_comp, parent_comp, upgrade=None):
         with open(manifest_file_path, "w") as f:
             json.dump(manifest, f, sort_keys=True, indent=4)
     except Exception as e:
-        my_logger.error(str(e))
-        my_logger.error(traceback.format_exc())
+        message(str(e), p_state="error")
+        message(traceback.format_exc(), p_state="error")
         print(str(e))
         pass
 
@@ -3406,7 +3290,7 @@ def copy_extension_files(ext_comp, parent_comp, upgrade=None):
 
 
 def delete_extension_files(manifest_file, upgrade=None):
-    my_logger.info("# checking for extension files.")
+    message("# checking for extension files.", p_state="info")
     try:
         with open(manifest_file) as data_file:
             data = json.load(data_file)
@@ -3426,7 +3310,7 @@ def delete_extension_files(manifest_file, upgrade=None):
                 raise e
             print(str(e))
             exit(1)
-    my_logger.info("deleting extension files.")
+    message("deleting extension files.", p_state="info")
     for file in data["files"]:
         if os.path.isfile(file) or os.path.islink(file):
             pass
@@ -3435,9 +3319,9 @@ def delete_extension_files(manifest_file, upgrade=None):
         try:
             os.remove(file)
         except IOError as e:
-            my_logger.error("failed to remove " + file)
-            my_logger.error(str(e))
-            my_logger.error(traceback.format_exc())
+            message("failed to remove " + file, p_state="error")
+            message(str(e), p_state="error")
+            message(traceback.format_exc(), p_state="error")
             print(str(e))
     return True
 
@@ -3526,11 +3410,12 @@ def recursively_copy_old_files(dcmp, diff_files=[], ignore=None):
             source_file = os.path.join(dcmp.left, name)
             shutil.move(source_file, dcmp.right)
         except Exception as e:
-            my_logger.error(
+            message(
                 "Failed to restore the file %s due to %s"
-                % (os.path.join(dcmp.right, name), str(e))
+                % (os.path.join(dcmp.right, name), str(e)),
+                p_state="error"
             )
-            my_logger.error(traceback.format_exc())
+            message(traceback.format_exc(), p_state="error")
             diff_files.append([name, dcmp.left, dcmp.right])
     for sub_dcmp in dcmp.subdirs.values():
         allfiles = diff_files
