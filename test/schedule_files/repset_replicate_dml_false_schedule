@@ -113,6 +113,14 @@ t/spock_node_drop_interface.py
 t/spock_node_add_interface_no_db.py
 t/spock_node_drop_interface_no_interface.py
 t/spock_node_drop_interface_no_db.py
+
+##
+# spock sub-create -r 'repset_array'
+##
+
+t/spock_create_sub_specify_repsets.py
+t/spock_create_sub_specify_repsets_nonrepset_user.py
+
 ##
 # uninstall pgedge
 ##

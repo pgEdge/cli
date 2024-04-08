@@ -22,12 +22,12 @@ dbname=os.getenv("EDGE_DB","lcdb")
 # 
 check_value = util_test.read_psql("select * from spock.node_interface;",host,dbname,port,pw,usr).strip("[]")
 if "my_interface" in str(check_value):
-    drop_interface = "spock node-drop-interface n1 my_interface lcdb"
+    drop_interface = f"spock node-drop-interface n1 my_interface {dbname}"
     drop=util_test.run_cmd("Run spock node-drop-interface.", add_interface, f"{cluster_dir}/n1")
     print(f"Print drop.stdout here: - {drop.stdout}")
 print("*"*100)
 
-command = "spock node-add-interface n1 my_interface 'host=127.0.0.1 user=lcusr dbname=lcdb' lcdb"
+command = f"spock node-add-interface n1 my_interface 'host={host} user={usr} dbname={dbname}' {dbname}"
 res=util_test.run_cmd("Run spock node-add-interface.", command, f"{cluster_dir}/n1")
 print(f"Print res.stdout here: - {res.stdout}")
 print("*"*100)
