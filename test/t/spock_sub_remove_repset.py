@@ -18,24 +18,24 @@ repset=os.getenv("EDGE_REPSET","demo-repset")
 spockpath=os.getenv("EDGE_SPOCK_PATH")
 dbname=os.getenv("EDGE_DB","lcdb")
 #
-# Create a subscription with an array of repsets; this is the 'happy path' testcase.
-# First, we clean up the environment to remove the subscription.
+# This test case tests spock sub-remove-repset; before we can remove the repset, we have to ensure that there is a repset to remove.
+# Add a subscription with repsets:
 
-check_value = util_test.read_psql("select sub_name from spock.subscription;",host,dbname,port,pw,usr).strip("[]")
-if "my_test_sub" in str(check_value):
-    drop_sub = f"spock sub-drop my_test_sub dbname={dbname}"
-    drop=util_test.run_cmd("Run spock sub-drop to prepare for test.", drop_sub, f"{cluster_dir}/n1")
+check_value = util_test.read_psql("select sub_replication_sets from spock.subscription;",host,dbname,port,pw,usr).strip("[]")
+if "my_test_sub" not in str(check_value):
+    add_sub = f"spock sub-create my_test_sub 'host={host} port={port} user={repuser} dbname={dbname}' {dbname} -r 'this_repset,that_repset,the_other_repset'"
+    add=util_test.run_cmd("Run spock sub-create to prepare for test.", add_sub, f"{cluster_dir}/n1")
 print("*"*100)
 
-command = f"spock sub-create my_test_sub 'host={host} port={port} user={repuser} dbname={dbname}' {dbname} -r 'this_repset,that_repset,the_other_repset'"
-res=util_test.run_cmd("Run spock sub-create -r.", command, f"{cluster_dir}/n1")
+command = f"spock sub-remove-repset my_test_sub the_other_repset {dbname}"
+res=util_test.run_cmd("Run spock sub-remove-repset.", command, f"{cluster_dir}/n1")
 print(f"Print our command here: {command}")
 print(f"Print res.stdout here: - {res.stdout}")
 print("*"*100)
 
 # Needle and Haystack
 #Check needle and haystack with res.stdout:
-check=util_test.contains(res.stdout,"sub_create")
+check=util_test.contains(res.stdout,"sub_remove")
 print("*"*100)
 
 util_test.exit_message(f"Pass - {os.path.basename(__file__)}", 0)
