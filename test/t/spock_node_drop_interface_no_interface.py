@@ -23,14 +23,14 @@ dbname=os.getenv("EDGE_DB","lcdb")
 # 
 check_value = util_test.read_psql("select * from spock.node_interface;",host,dbname,port,pw,usr).strip("[]")
 if "my_interface" in str(check_value):
-    drop_interface = "spock node-drop-interface n1 lcdb"
+    drop_interface = f"spock node-drop-interface n1 {dbname}"
     drop=util_test.run_cmd("Run spock node-drop-interface to prepare for test.", drop_interface, f"{cluster_dir}/n1")
     print(f"Print drop.stdout here: - {drop.stdout}")
 print("*"*100)
 
 # Confirm that spock node-drop-interface returns an error because the interface is not found:
 # 
-command = "spock node-drop-interface n1 my_interface lcdb"
+command = f"spock node-drop-interface n1 my_interface {dbname}"
 drop=util_test.run_cmd("Run spock node-drop-interface.", command, f"{cluster_dir}/n1")
 print(f"Print drop.stdout here: - {drop.stdout}")
 print("*"*100)
