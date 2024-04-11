@@ -207,7 +207,7 @@ initDir () {
   copy-pgXX "plprofiler"
   copy-pgXX "pldebugger"
   copy-pgXX "partman"
-  copy-pgXX "audit"   
+  ## copy-pgXX "audit"   
   copy-pgXX "cron"
   copy-pgXX "wal2json"
   copy-pgXX "citus"
