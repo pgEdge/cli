@@ -75,6 +75,8 @@ INSERT INTO extensions VALUES ('foslots',   'foslots',   0, '',          '');
 INSERT INTO extensions VALUES ('audit',     'pgaudit',      1, 'pgaudit',        '');
 INSERT INTO extensions VALUES ('partman',   'pg_partman',   1, 'pg_partman_bgw', '');
 INSERT INTO extensions VALUES ('hintplan',  'pg_hint_plan', 1, 'pg_hint_plan',   '');
+INSERT INTO extensions VALUES ('cron',      'pg_cron',      1, 'pg_cron',        '');
+INSERT INTO extensions VALUES ('wal2json',  'wal2json',     1, 'wal2json',       '');
   
 
 
