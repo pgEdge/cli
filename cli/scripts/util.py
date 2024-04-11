@@ -3,7 +3,7 @@
 import os
 import time
 
-MY_VERSION = "24.4.5"
+MY_VERSION = "24.4.6"
 DEFAULT_PG = "16"
 DEFAULT_SPOCK = "33"
 MY_CMD = os.getenv("MY_CMD", None)
