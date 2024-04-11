@@ -71,7 +71,9 @@ INSERT INTO extensions VALUES ('postgis',   'postgis',   1, 'postgis-3', '');
 INSERT INTO extensions VALUES ('orafce',    'orafce',    1, 'orafce',    '');
 INSERT INTO extensions VALUES ('snowflake', 'snowflake', 1, 'snowflake', '');
 INSERT INTO extensions VALUES ('foslots',   'foslots',   0, '',          '');
-INSERT INTO extensions VALUES ('audit',     'pgaudit',   1, 'pgaudit',   '');
+
+INSERT INTO extensions VALUES ('audit',     'pgaudit',    1, 'pgaudit',        '');
+INSERT INTO extensions VALUES ('partman',   'pg_partman', 1, 'pg_partman_bgw', '');
   
 
 
