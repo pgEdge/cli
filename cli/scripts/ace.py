@@ -21,6 +21,7 @@ from ordered_set import OrderedSet
 from itertools import combinations
 from mpire import WorkerPool
 from concurrent.futures import ThreadPoolExecutor
+from cli_logger import CLILogger, set_colour
 
 l_dir = "/tmp"
 
@@ -856,9 +857,8 @@ def write_diffs_json(block_rows):
         f.write(json.dumps(dict(diff_dict), default=str))
 
     util.message(
-        f"Diffs written out to" f" {util.set_colour(filename, 'blue')}",
-        p_state="info",
-    )
+        f"Diffs written out to" f" {set_colour(filename, 'blue')}",
+        p_state="info")
 
 
 # TODO: Come up with better naming convention for diff files

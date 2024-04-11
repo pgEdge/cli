@@ -1221,25 +1221,6 @@ def set_log_level(level):
     my_logger.setLevel(level)
 
 
-def set_colour(message, colour):
-    if colour == "red":
-        return CLILogger.FAIL + message + CLILogger.ENDC
-    elif colour == "green":
-        return CLILogger.OKGREEN + message + CLILogger.ENDC
-    elif colour == "yellow":
-        return CLILogger.YELLOW + message + CLILogger.ENDC
-    elif colour == "blue":
-        return CLILogger.OKBLUE + message + CLILogger.ENDC
-    elif colour == "purple":
-        return CLILogger.OKPURPLE + message + CLILogger.ENDC
-    elif colour == "cyan":
-        return CLILogger.OKCYAN + message + CLILogger.ENDC
-    elif colour == "white":
-        return CLILogger.BOLD + message + CLILogger.ENDC
-    else:
-        return message
-
-
 def verify(p_json):
     try:
         c = cL.cursor()

@@ -19,7 +19,7 @@ class CLILogger:
 
     def __init__(self, name):
         self.logger = logging.getLogger(name)
-        self.logger.setLevel(logging.DEBUG)
+        self.logger.setLevel(logging.INFO)
 
         formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
 
@@ -57,3 +57,22 @@ class CLILogger:
 
     def info(self, message):
         self.logger.info(f"{message}")
+
+
+def set_colour(message, colour):
+    if colour == "red":
+        return CLILogger.FAIL + message + CLILogger.ENDC
+    elif colour == "green":
+        return CLILogger.OKGREEN + message + CLILogger.ENDC
+    elif colour == "yellow":
+        return CLILogger.YELLOW + message + CLILogger.ENDC
+    elif colour == "blue":
+        return CLILogger.OKBLUE + message + CLILogger.ENDC
+    elif colour == "purple":
+        return CLILogger.OKPURPLE + message + CLILogger.ENDC
+    elif colour == "cyan":
+        return CLILogger.OKCYAN + message + CLILogger.ENDC
+    elif colour == "white":
+        return CLILogger.BOLD + message + CLILogger.ENDC
+    else:
+        return message
