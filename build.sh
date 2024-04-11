@@ -212,7 +212,7 @@ initDir () {
   copy-pgXX "wal2json"
   copy-pgXX "citus"
   copy-pgXX "plv8"
-  copy-pgXX "hintplan"
+  ## copy-pgXX "hintplan"
   copy-pgXX "timescaledb"
   copy-pgXX "hypopg"
 
