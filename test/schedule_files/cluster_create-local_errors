@@ -1,8 +1,0 @@
-# This test series exercises the cluster create-local command's error handling.
-t/020_nodectl_install_pgedge.pl
-t/600_cluster_setup_script_v15.pl
-t/602_cluster_setup_script_error.pl
-t/604_cluster_setup_nodecount_error.pl
-t/606_cluster_setup_name_missing_error.pl
-t/697_cluster_breakdown_error_pg15.pl
-t/699_cluster_breakdown_pg15.pl
