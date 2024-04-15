@@ -313,9 +313,13 @@ INSERT INTO releases VALUES ('spock33-pg14', 4, 'spock', 'Spock', '', 'prod', ''
 INSERT INTO releases VALUES ('spock33-pg15', 4, 'spock', 'Spock', '', 'prod', '', 1, 'pgEdge Community', '', '');
 INSERT INTO releases VALUES ('spock33-pg16', 4, 'spock', 'Spock', '', 'prod', '', 1, 'pgEdge Community', '', '');
 
-INSERT INTO versions VALUES ('spock33-pg14', '3.3.1-1', 'el8, el9, arm9', 1, '20240317', 'pg14', '', '');
-INSERT INTO versions VALUES ('spock33-pg15', '3.3.1-1', 'el8, el9, arm9', 1, '20240317', 'pg15', '', '');
-INSERT INTO versions VALUES ('spock33-pg16', '3.3.1-1', 'el8, el9, arm9, osx', 1, '20240317', 'pg16', '', '');
+INSERT INTO versions VALUES ('spock33-pg14', '3.3.2-1', 'el8, el9, arm9', 1, '20240415', 'pg14', '', '');
+INSERT INTO versions VALUES ('spock33-pg15', '3.3.2-1', 'el8, el9, arm9', 1, '20240415', 'pg15', '', '');
+INSERT INTO versions VALUES ('spock33-pg16', '3.3.2-1', 'el8, el9, arm9', 1, '20240415', 'pg16', '', '');
+
+INSERT INTO versions VALUES ('spock33-pg14', '3.3.1-1', 'el8, el9, arm9', 0, '20240317', 'pg14', '', '');
+INSERT INTO versions VALUES ('spock33-pg15', '3.3.1-1', 'el8, el9, arm9', 0, '20240317', 'pg15', '', '');
+INSERT INTO versions VALUES ('spock33-pg16', '3.3.1-1', 'el8, el9, arm9', 0, '20240317', 'pg16', '', '');
 
 ----------------------------------
 INSERT INTO projects VALUES ('pglogical', 'ext', 4, 0, 'hub', 1, 'https://github.com/2ndQuadrant/pglogical/releases',
