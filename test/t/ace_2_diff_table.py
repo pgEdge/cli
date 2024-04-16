@@ -32,4 +32,11 @@ print(res)
 if res.returncode == 1 or "TABLES DO NOT MATCH" not in res.stdout:
     util_test.exit_message(f"Fail - {os.path.basename(__file__)} - Diff Rows", 1)
 
+#compare tables with no pk in a cluster and shows any differences
+cmd_node = f"ace table-diff {cluster} public.foo_nopk"
+res=util_test.run_cmd("table-diff", cmd_node, f"{home_dir}")
+print(res)
+if res.returncode == 1 or "TABLES DO NOT MATCH" not in res.stdout:
+    util_test.exit_message(f"Fail - {os.path.basename(__file__)} - Diff Rows", 1)
+
 util_test.exit_message(f"Pass - {os.path.basename(__file__)}", 0) 
