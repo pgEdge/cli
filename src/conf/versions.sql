@@ -66,6 +66,9 @@ INSERT INTO extensions VALUES ('spock40', 'spock', 1, 'spock',
    max_wal_senders=16 | hot_standby_feedback=on | wal_sender_timeout=5s |
    track_commit_timestamp=on | spock.conflict_resolution=last_update_wins | 
    spock.save_resolutions=on');
+INSERT INTO extensions VALUES ('timescaledb','timescaledb', 1, 'timescaledb',
+  'timescaledb.telemetry_level=off');
+
 INSERT INTO extensions VALUES ('lolor',     'lolor',     0, '',          '');
 INSERT INTO extensions VALUES ('postgis',   'postgis',   1, 'postgis-3', '');
 INSERT INTO extensions VALUES ('orafce',    'orafce',    1, 'orafce',    '');
@@ -79,7 +82,6 @@ INSERT INTO extensions VALUES ('cron',      'pg_cron',      1, 'pg_cron',       
 INSERT INTO extensions VALUES ('wal2json',  'wal2json',     1, 'wal2json',       '');
 INSERT INTO extensions VALUES ('hypopg',    'hypopg',       1, 'hypopg',         '');
   
-
 
 CREATE TABLE versions (
   component     TEXT    NOT NULL,

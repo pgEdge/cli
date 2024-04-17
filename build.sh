@@ -211,9 +211,9 @@ initDir () {
   ## copy-pgXX "wal2json"
   ## copy-pgXX "hintplan"
   ## copy-pgXX "hypopg"
+  ## copy-pgXX "timescaledb"
   copy-pgXX "citus"
   copy-pgXX "plv8"
-  copy-pgXX "timescaledb"
 
   if [ -f $myNewDir/LICENSE.TXT ]; then
     mv $myNewDir/LICENSE.TXT $myNewDir/$pComponent-LICENSE.TXT
