@@ -68,6 +68,8 @@ INSERT INTO extensions VALUES ('spock40', 'spock', 1, 'spock',
    spock.save_resolutions=on');
 INSERT INTO extensions VALUES ('timescaledb','timescaledb', 1, 'timescaledb',
   'timescaledb.telemetry_level=off');
+INSERT INTO extensions VALUES ('citus',      'citus',       1, 'citus',
+  'citus.enable_statistics_collection=off');
 
 INSERT INTO extensions VALUES ('lolor',     'lolor',     0, '',          '');
 INSERT INTO extensions VALUES ('postgis',   'postgis',   1, 'postgis-3', '');

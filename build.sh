@@ -213,7 +213,7 @@ initDir () {
   ## copy-pgXX "hypopg"
   ## copy-pgXX "timescaledb"
   ## copy-pgXX "plv8"
-  copy-pgXX "citus"
+  ## copy-pgXX "citus"
 
   if [ -f $myNewDir/LICENSE.TXT ]; then
     mv $myNewDir/LICENSE.TXT $myNewDir/$pComponent-LICENSE.TXT
