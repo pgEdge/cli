@@ -34,19 +34,17 @@ wal2jV=2.5.1-1
 curlV=2.2.2-1
 citusV=12.1.2-1
 
-oraclefdwV=2.6.0-1
+## oraclefdwV=2.6.0-1
 inclV=21.6
 orafceV=4.9.2-1
-ora2pgV=23.1
+## ora2pgV=23.1
 v8V=3.2.2-1
 
 hypoV=1.4.0-1
 timescaleV=2.13.1-1
-logicalV=2.4.4-1
 profV=4.2.4-1
 bulkloadV=3.1.19-1
 partmanV=5.0.1-1
-repackV=1.4.8-1
 
 hint15V=1.5.1-1
 hint16V=1.6.0-1

@@ -203,18 +203,17 @@ initDir () {
   copy-pgXX "readonly"
   copy-pgXX "vector"
   copy-pgXX "curl"
-  copy-pgXX "pglogical"
   copy-pgXX "plprofiler"
   copy-pgXX "pldebugger"
   ## copy-pgXX "partman"
   ## copy-pgXX "audit"   
   ## copy-pgXX "cron"
   ## copy-pgXX "wal2json"
+  ## copy-pgXX "hintplan"
+  ## copy-pgXX "hypopg"
   copy-pgXX "citus"
   copy-pgXX "plv8"
-  ## copy-pgXX "hintplan"
   copy-pgXX "timescaledb"
-  copy-pgXX "hypopg"
 
   if [ -f $myNewDir/LICENSE.TXT ]; then
     mv $myNewDir/LICENSE.TXT $myNewDir/$pComponent-LICENSE.TXT
@@ -489,7 +488,6 @@ initPG () {
     if [ "$pgM" == "15" ] || [ "$pgM" == "16" ]; then
       initC "wal2json-pg$pgM"   "wal2json"   "$wal2jV"     "$outPlat" "postgres/wal2json"   "" "" "nil"
       initC "pldebugger-pg$pgM" "pldebugger" "$debuggerV"  "$outPlat" "postgres/pldebugger" "" "" "nil"
-      initC "pglogical-pg$pgM"  "pglogical"  "$logicalV"   "$outPlat" "postgres/logical"    "" "" "nil"
       initC "citus-pg$pgM"      "citus"      "$citusV"     "$outPlat" "postgres/citus"      "" "" "nil"
       initC "hypopg-pg$pgM"     "hypopg"     "$hypoV"      "$outPlat" "postgres/hypopg"     "" "" "nil"
       initC "curl-pg$pgM"       "curl"       "$curlV"      "$outPlat" "postgres/curl"       "" "" "nil"
