@@ -124,12 +124,12 @@ t/spock_sub_remove_repset.py
 t/spock_sub_remove_repset_error.py
 
 ##
-# spock repset-create errors
-# #
+# spock repset-create errors 
+##
 
-spock_repset_create_error_1.py
-spock_repset_create_error_2.py
-spock_repset_create_error_3.py
+t/spock_repset_create_error_1.py
+t/spock_repset_create_error_2.py
+t/spock_repset_create_error_3.py
 
 ##
 # uninstall pgedge
