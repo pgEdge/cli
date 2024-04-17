@@ -87,6 +87,8 @@ INSERT INTO extensions VALUES ('vector',    'vector',       0, '',              
 INSERT INTO extensions VALUES ('plv8',      'plv8',         0, '',               '');
 INSERT INTO extensions VALUES ('pldebugger','pldbgapi',     1, 'plugin_debugger','');
 INSERT INTO extensions VALUES ('plprofiler','plprofiler',   1, 'plprofiler',     '');
+INSERT INTO extensions VALUES ('readonly',  'pg_readonly',  1, 'pg_readonly',    '');
+INSERT INTO extensions VALUES ('curl',      'pg_curl',      1, 'pg_curl',        '');
   
 
 CREATE TABLE versions (
