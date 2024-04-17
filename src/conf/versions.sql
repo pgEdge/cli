@@ -81,6 +81,7 @@ INSERT INTO extensions VALUES ('hintplan',  'pg_hint_plan', 1, 'pg_hint_plan',  
 INSERT INTO extensions VALUES ('cron',      'pg_cron',      1, 'pg_cron',        '');
 INSERT INTO extensions VALUES ('wal2json',  'wal2json',     1, 'wal2json',       '');
 INSERT INTO extensions VALUES ('hypopg',    'hypopg',       1, 'hypopg',         '');
+INSERT INTO extensions VALUES ('vector',    'vector',       0, '',               '');
   
 
 CREATE TABLE versions (
