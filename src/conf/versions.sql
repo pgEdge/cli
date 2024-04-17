@@ -85,6 +85,8 @@ INSERT INTO extensions VALUES ('wal2json',  'wal2json',     1, 'wal2json',      
 INSERT INTO extensions VALUES ('hypopg',    'hypopg',       1, 'hypopg',         '');
 INSERT INTO extensions VALUES ('vector',    'vector',       0, '',               '');
 INSERT INTO extensions VALUES ('plv8',      'plv8',         0, '',               '');
+INSERT INTO extensions VALUES ('pldebugger','pldbgapi',     1, 'plugin_debugger','');
+INSERT INTO extensions VALUES ('plprofiler','plprofiler',   1, 'plprofiler',     '');
   
 
 CREATE TABLE versions (
