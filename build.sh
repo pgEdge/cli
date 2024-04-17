@@ -193,28 +193,6 @@ initDir () {
     $cpCmd $SRC/$pComponent/*  $myNewDir/.
   fi
 
-  ## copy-pgXX "spock33"
-  ## copy-pgXX "spock40"
-  ## copy-pgXX "lolor"
-  ## copy-pgXX "postgis"   
-  ## copy-pgXX "orafce"
-  ## copy-pgXX "snowflake"
-  ## copy-pgXX "foslots"
-  ## copy-pgXX "vector"
-  ## copy-pgXX "readonly"
-  ## copy-pgXX "curl"
-  ## copy-pgXX "plprofiler"
-  ## copy-pgXX "pldebugger"
-  ## copy-pgXX "partman"
-  ## copy-pgXX "audit"   
-  ## copy-pgXX "cron"
-  ## copy-pgXX "wal2json"
-  ## copy-pgXX "hintplan"
-  ## copy-pgXX "hypopg"
-  ## copy-pgXX "timescaledb"
-  ## copy-pgXX "plv8"
-  ## copy-pgXX "citus"
-
   if [ -f $myNewDir/LICENSE.TXT ]; then
     mv $myNewDir/LICENSE.TXT $myNewDir/$pComponent-LICENSE.TXT
   fi
@@ -229,26 +207,6 @@ initDir () {
 
   rm -rf $myNewdir/build*
   rm -rf $myNewDir/.git*
-}
-
-
-copy-pgXX () {
-  if [ "$pComponent" == "$1-pg$pgM" ]; then
-    checkCmd "cp -r $SRC/$1-pgXX/* $myNewDir/."
-
-    checkCmd "mv $myNewDir/install-$1-pgXX.py $myNewDir/install-$1-pg$pgM.py"
-    myReplace "pgXX" "pg$pgM" "$myNewDir/install-$1-pg$pgM.py"
-
-    if [ -f $myNewDir/remove-$1-pgXX.py ]; then
-      checkCmd "mv $myNewDir/remove-$1-pgXX.py $myNewDir/remove-$1-pg$pgM.py"
-      myReplace "pgXX" "pg$pgM" "$myNewDir/remove-$1-pg$pgM.py"
-    fi
-
-    if [ -f $myNewDir/config-$1-pgXX.py ]; then
-      checkCmd "mv $myNewDir/config-$1-pgXX.py $myNewDir/config-$1-pg$pgM.py"
-      myReplace "pgXX" "pg$pgM" "$myNewDir/config-$1-pg$pgM.py"
-    fi
-  fi
 }
 
 
