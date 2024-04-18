@@ -1,4 +1,3 @@
-#																																																																							
 import os, util_test, subprocess, pathlib
 # Get environment variables
 
