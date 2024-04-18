@@ -246,7 +246,11 @@ def run_script(componentName, scriptName, scriptParm):
             rc = os.system(run)
         else:
             if is_ext:
-                rc = util.config_extension(p_pg=componentName[-4:], p_comp=componentName[0:-5])
+                isPreload = os.getenv("isPreload", "False")
+                active = False
+                if isPreload == "True":
+                    active = True
+                rc = util.config_extension(p_pg=componentName[-4:], p_comp=componentName[0:-5], active=active)
 
     if rc != 0:
         print("Error running " + scriptName)
@@ -1846,7 +1850,7 @@ if p_mode == "update":
 
 ## ENABLE, DISABLE ###########################################
 if p_mode == "enable" or p_mode == "disable":
-    args.insert(0,p_mode)
+    args.insert(0, p_mode)
     fire_away("service", args)
 
 ## CONFIG, INIT, RELOAD ##################################

@@ -849,9 +849,9 @@ def config_extension(p_pg=None, p_comp=None, active=True):
     if p_pg is None:
        pgV = p_comp[-4:]
        message(f"defaulting p_pg to {pgV}")
-       
 
     if active is False:
+        update_component_state(p_comp, "disable")
         return(0)
 
     extension_name, is_preload, preload_name, default_conf = meta.get_extension_meta(p_comp)
@@ -3231,7 +3231,7 @@ def is_server(p_comp):
         if data is None:
             return False
     except Exception as e:
-        fatal_sql_error(e, sql, "get_comp_state()")
+        fatal_sql_error(e, sql, "is_server()")
 
     pidfile = data[0]
     port = data[1]
@@ -3261,7 +3261,7 @@ def get_comp_datadir(p_comp):
         if data is None:
             return "NotInstalled"
     except Exception as e:
-        fatal_sql_error(e, sql, "get_comp_state()")
+        fatal_sql_error(e, sql, "get_comp_datadir()")
     if data[0] is None:
         return ""
     return str(data[0])
