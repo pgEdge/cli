@@ -7,13 +7,8 @@ print(f"Starting - {os.path.basename(__file__)}")
 util_test.set_env()
 
 # Get environment variables
-num_nodes = int(os.getenv("EDGE_NODES", 2))
 cluster_dir = os.getenv("EDGE_CLUSTER_DIR")
-port=int(os.getenv("EDGE_START_PORT",6432))
 repuser=os.getenv("EDGE_REPUSER","pgedge")
-pw=os.getenv("EDGE_PASSWORD","lcpasswd")
-db=os.getenv("EDGE_DB","lcdb")
-host=os.getenv("EDGE_HOST","localhost")
 
 ## Repset List Tables Test
 cmd_node = f"spock repset-list-tables"
