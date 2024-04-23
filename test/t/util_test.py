@@ -109,8 +109,8 @@ def write_psql(cmd,host,dbname,port,pw,usr):
     con = get_pg_con(host,dbname,port,pw,usr)
     try:
         cur = con.cursor()
-        print(cur)
         cur.execute(cmd)
+        print(cur.statusmessage)
         ret = 0
         con.commit()
         cur.close()
@@ -130,6 +130,7 @@ def read_psql(cmd,host,dbname,port,pw,usr):
     try:
         cur = con.cursor()
         cur.execute(cmd)
+        print(cmd)
         ret = json.dumps(cur.fetchall())
         cur.close()
     except Exception as e:
