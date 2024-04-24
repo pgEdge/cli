@@ -101,6 +101,36 @@ t/8084_env_table_drop_n1.pl
 t/8085_env_table_drop_n2.pl
 t/8086_env_node_drop_n1.pl
 t/8087_env_node_drop_n2.pl
+# node creation
+##
+t/8051_env_create_node1.pl
+t/8052_env_create_node2.pl
+##
+# spock node-add and node-drop test cases
+##
+t/spock_node_add_interface.py
+t/spock_node_drop_interface.py
+t/spock_node_add_interface_no_db.py
+t/spock_node_drop_interface_no_interface.py
+t/spock_node_drop_interface_no_db.py
+
+##
+# spock sub-create -r 'repset_array'
+##
+
+t/spock_create_sub_specify_repsets.py
+t/spock_create_sub_specify_repsets_nonrepset_user.py
+t/spock_sub_remove_repset.py
+t/spock_sub_remove_repset_error.py
+
+##
+# spock repset-create errors 
+##
+
+t/spock_repset_create_error_1.py
+t/spock_repset_create_error_2.py
+t/spock_repset_create_error_3.py
+
 ##
 # uninstall pgedge
 ##

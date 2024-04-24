@@ -10,6 +10,7 @@ import json
 import subprocess
 import re
 import util
+import meta
 import fire
 import cluster
 import psycopg
@@ -740,6 +741,7 @@ def table_diff(
         offsets = [x for x in range(0, row_count + 1, block_rows)]
 
     cols_list = cols.split(",")
+    cols_list = [col for col in cols_list if not col.startswith("_Spock_")]
 
     # Shared variables needed by all workers
     shared_objects = {
@@ -1029,6 +1031,7 @@ def table_rerun(cluster_name, diff_file, table_name):
         diff_values[node_pair] = list(diff_values[node_pair])
 
     cols_list = cols.split(",")
+    cols_list = [col for col in cols_list if not col.startswith("_Spock_")]
 
     def run_query(cur, query):
         cur.execute(query)
@@ -1061,8 +1064,12 @@ def table_rerun(cluster_name, diff_file, table_name):
                     ]
 
                     t1_result, t2_result = [f.result() for f in futures]
-                    node1_set.add(t1_result[0])
-                    node2_set.add(t2_result[0])
+
+                    t1_result = [tuple(str(x) if type(x) != list else str(sorted(x)) for x in row) for row in t1_result]
+                    t2_result = [tuple(str(x) if type(x) != list else str(sorted(x)) for x in row) for row in t2_result]
+
+                    node1_set = OrderedSet(t1_result)
+                    node2_set = OrderedSet(t2_result)
         else:
             for indices in values:
                 sql = f"""
@@ -1087,10 +1094,12 @@ def table_rerun(cluster_name, diff_file, table_name):
                     ]
 
                     t1_result, t2_result = [f.result() for f in futures]
-                    if t1_result:
-                        node1_set.add(t1_result[0])
-                    if t2_result:
-                        node2_set.add(t2_result[0])
+
+                    t1_result = [tuple(str(x) if type(x) != list else str(sorted(x)) for x in row) for row in t1_result]
+                    t2_result = [tuple(str(x) if type(x) != list else str(sorted(x)) for x in row) for row in t2_result]
+
+                    node1_set = OrderedSet(t1_result)
+                    node2_set = OrderedSet(t2_result)
 
         node1_diff = node1_set - node2_set
         node2_diff = node2_set - node1_set
@@ -1300,6 +1309,9 @@ def table_repair(cluster_name, diff_file, source_of_truth, table_name, dry_run=F
         return
 
     cols_list = cols.split(",")
+    # Remove metadata columsn "_Spock_CommitTS_" and "_Spock_CommitOrigin_"
+    # from cols_list
+    cols_list = [col for col in cols_list if not col.startswith("_Spock_")]
     simple_primary_key = True
     keys_list = []
 
@@ -1437,6 +1449,12 @@ def table_repair(cluster_name, diff_file, source_of_truth, table_name, dry_run=F
 
         conn = conns[divergent_node]
         cur = conn.cursor()
+        spock_version = meta.get_spock_version(conn)
+
+        # FIXME: Do not use harcoded version numbers
+        # Read required version numbers from a config file
+        if spock_version >= 4.0:
+            cur.execute("SELECT spock.pause_replication();")
 
         if rows_to_upsert:
             upsert_tuples = [tuple(row.values()) for row in rows_to_upsert_json]
@@ -1448,6 +1466,9 @@ def table_repair(cluster_name, diff_file, source_of_truth, table_name, dry_run=F
             # Performing the deletes
             if len(delete_keys) > 0:
                 cur.executemany(delete_sql, delete_keys)
+
+        if spock_version >= 4.0:
+            cur.execute("SELECT spock.resume_replication();")
 
         conn.commit()
 
@@ -1481,6 +1502,12 @@ def table_repair(cluster_name, diff_file, source_of_truth, table_name, dry_run=F
         f"RUN TIME = {run_time_str} seconds",
         p_state="info",
     )
+
+    print()
+
+    if spock_version < 4.0:
+        util.message("WARNING: Unable to pause/resume replication during repair due to older spock version" 
+                     "\nPlease do a manual check as repair may have caused further divergence", p_state="warning")
 
 
 def repset_diff(

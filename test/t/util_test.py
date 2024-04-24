@@ -1,6 +1,9 @@
 import sys, os, psycopg, json,subprocess
 from dotenv import load_dotenv
 
+EXIT_PASS = 0
+EXIT_FAIL = 1
+
 ## Utility Functions
 def set_env():
     load_dotenv('t/lib/config.env')
@@ -55,8 +58,8 @@ def write_psql(cmd,host,dbname,port,pw,usr):
     con = get_pg_con(host,dbname,port,pw,usr)
     try:
         cur = con.cursor()
-        print(cur)
         cur.execute(cmd)
+        print(cur.statusmessage)
         ret = 0
         con.commit()
         cur.close()

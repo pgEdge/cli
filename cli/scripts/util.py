@@ -1,13 +1,16 @@
 #  Copyright 2022-2024 PGEDGE  All rights reserved. #
 
 import os
+import time
 
-MY_VERSION = "24.4.4"
+MY_VERSION = "24.4.6"
 DEFAULT_PG = "16"
 DEFAULT_SPOCK = "33"
 MY_CMD = os.getenv("MY_CMD", None)
 MY_HOME = os.getenv("MY_HOME", None)
 MY_LITE = os.getenv("MY_LITE", None)
+BACKUP_DIR = os.path.join(MY_HOME, "data", "conf", "backup")
+BACKUP_TARGET_DIR = os.path.join(BACKUP_DIR, time.strftime("%Y%m%d%H%M"))
 
 import sys
 import socket
@@ -32,6 +35,7 @@ import filecmp
 from subprocess import Popen, PIPE, STDOUT
 from datetime import datetime, timedelta
 from urllib import request as urllib2
+from shutil import copy2
 
 try:
     import psycopg
@@ -43,6 +47,9 @@ except Exception:
 from log_helpers import bcolours, characters
 import api, meta, ini
 
+isSILENT = False
+if os.environ.get("isSilent", "False") == "True":
+    isSILENT = True
 
 isJSON = False
 if os.environ.get("isJson", "False") == "True":
@@ -74,6 +81,59 @@ if os.path.exists(platform_lib_path):
 COMMAND = 15
 DEBUG = 10
 DEBUG2 = 9
+
+def validate_checksum(p_file_name, p_checksum_file_name):
+     checksum_from_file = get_file_checksum(p_file_name)
+     checksum_from_remote_file = read_file_string(p_checksum_file_name).rstrip()
+     checksum_from_remote = checksum_from_remote_file.split()[0]
+     global check_sum_match
+     check_sum_match = False
+     if checksum_from_remote == checksum_from_file:
+         check_sum_match = True
+         return check_sum_match
+     print_error("SHA512 CheckSum Mismatch")
+     return check_sum_match
+
+
+def retrieve_remote():
+    conf_dir = "data" + os.sep + "conf"
+
+    if not os.path.exists(BACKUP_DIR):
+        os.mkdir(BACKUP_DIR)
+    if not os.path.exists(BACKUP_TARGET_DIR):
+        os.mkdir(BACKUP_TARGET_DIR)
+    recent_version_sql = os.path.join(MY_HOME, "data", "conf", "versions.sql")
+    recent_local_db = os.path.join(MY_HOME, "data", "conf", "db_local.db")
+    if os.path.exists(recent_local_db):
+        copy2(recent_local_db, BACKUP_TARGET_DIR)
+    if os.path.exists(recent_version_sql):
+        copy2(recent_version_sql, BACKUP_TARGET_DIR)
+    remote_file = "versions.sql"
+    msg="Retrieving the remote list of latest component versions ..."
+    message(msg)
+    if not http_get_file(isJSON, remote_file, REPO, conf_dir, False, msg):
+        exit_cleanly(1)
+    msg=""
+
+
+    sql_file = conf_dir + os.sep + remote_file
+
+    if not http_get_file(
+        isJSON, remote_file + ".sha512", REPO, conf_dir, False, msg
+    ):
+        exit_cleanly(1)
+    msg = "Validating checksum file..."
+    my_logger.info(msg)
+    message(msg)
+    if not validate_checksum(sql_file, sql_file + ".sha512"):
+        exit_cleanly(1)
+
+    msg = "Updating local repository with remote entries..."
+    my_logger.info(msg)
+    message(msg)
+
+    if not process_sql_file(sql_file, isJSON):
+        exit_cleanly(1)
 
 
 def get_parsed_json(file_nm):
@@ -789,9 +849,9 @@ def config_extension(p_pg=None, p_comp=None, active=True):
     if p_pg is None:
        pgV = p_comp[-4:]
        message(f"defaulting p_pg to {pgV}")
-       
 
     if active is False:
+        update_component_state(p_comp, "disable")
         return(0)
 
     extension_name, is_preload, preload_name, default_conf = meta.get_extension_meta(p_comp)
@@ -1396,9 +1456,9 @@ def get_stage():
 
 
 def get_value(p_section, p_key, p_value=""):
+    sql = "SELECT s_value FROM settings WHERE section = ? AND s_key = ?"
     try:
         c = cL.cursor()
-        sql = "SELECT s_value FROM settings WHERE section = ? AND s_key = ?"
         c.execute(sql, [p_section, p_key])
         data = c.fetchone()
         if data is None:
@@ -3171,7 +3231,7 @@ def is_server(p_comp):
         if data is None:
             return False
     except Exception as e:
-        fatal_sql_error(e, sql, "get_comp_state()")
+        fatal_sql_error(e, sql, "is_server()")
 
     pidfile = data[0]
     port = data[1]
@@ -3201,7 +3261,7 @@ def get_comp_datadir(p_comp):
         if data is None:
             return "NotInstalled"
     except Exception as e:
-        fatal_sql_error(e, sql, "get_comp_state()")
+        fatal_sql_error(e, sql, "get_comp_datadir()")
     if data[0] is None:
         return ""
     return str(data[0])
@@ -3761,3 +3821,6 @@ def update_component_state(p_app, p_mode, p_ver=None):
 
 # MAINLINE ################################################################
 cL = sqlite3.connect(MY_LITE, check_same_thread=False)
+REPO = get_value("GLOBAL", "REPO")
+
+

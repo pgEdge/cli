@@ -92,7 +92,7 @@ def create_local_json(cluster_name, db, num_nodes, usr, passwd, pg, ports, auto_
 
 
 def remove(cluster_name):
-    """Remove a test cluster from json definition file of existing nodes.
+    """Remove a cluster from json definition file of existing nodes.
     
        Remove a cluster. This will stop postgres on each node, and then remove the pgedge directory on each node.
        This command requires a JSON file with the same name as the cluster to be in the cluster/<cluster_name>. \n 
@@ -122,9 +122,9 @@ def cluster_create(
     db="lcdb",
     auto_ddl="off"
 ):
-    """Create a localhost test cluster of N pgEdge nodes on different ports.
+    """Create localhost cluster of N pgEdge nodes on different ports.
     
-       Create a local cluster. Each node will be located in the cluster/<cluster_name>/<node_name> directory. Each database will have a different port. \n
+       Create a localhost cluster. Each node will be located in the cluster/<cluster_name>/<node_name> directory. Each database will have a different port. \n
        Example: localhost cluster-create demo 3 -U lcusr -P lcpasswd -d lcdb
        :param cluster_name: The name of the cluster. 
        :param num_nodes: The number of nodes in the cluster.

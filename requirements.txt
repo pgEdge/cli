@@ -22,7 +22,7 @@ ordered-set>=4.0
 mpire>=2.8.0
 pandas>=1.1.5
 
-## pgEDGE-PATRONI ###
+## pgEdge-Patroni ###
 cdiff>=1.0
 urllib3>=1.25.4,!=1.26.18
 PyYAML>=6.0
@@ -31,4 +31,3 @@ prettytable>=2.5
 python-dateutil>=2.8.2
 cryptography>=40.0.2
 ydiff>=1.2
-

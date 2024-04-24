@@ -70,9 +70,13 @@ def install(component, active=True):
 
     if active not in (True, False):
         util.exit_message("'active' parm must be True or False")
+    
+    cmd = "install"
+    if active is False:
+        cmd = "install --no-preload"
 
-    util.message(f"um.install({component}, {active})", "debug")
-    run_cmd("install", component)
+    util.message(f"um.install({cmd} {component})", "debug")
+    run_cmd(cmd, component)
 
 
 def remove(component):
