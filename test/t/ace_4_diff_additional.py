@@ -7,7 +7,7 @@ print(f"Starting - {os.path.basename(__file__)}")
 ## Get Test Settings
 util_test.set_env()
 
-home_dir = os.getenv("NC")
+home_dir = os.getenv("NC_DIR")
 cluster = os.getenv("EDGE_CLUSTER")
 
 #Use the spock-diff command to compare the meta-data on two cluster nodes
