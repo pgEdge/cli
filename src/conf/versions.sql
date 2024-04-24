@@ -71,7 +71,11 @@ INSERT INTO extensions VALUES ('postgis',   'postgis',   1, 'postgis-3', '');
 INSERT INTO extensions VALUES ('orafce',    'orafce',    1, 'orafce',    '');
 INSERT INTO extensions VALUES ('snowflake', 'snowflake', 1, 'snowflake', '');
 INSERT INTO extensions VALUES ('foslots',   'foslots',   0, '',          '');
-  
+
+INSERT INTO extensions VALUES ('vector',    'vector',       0, '',               '');
+INSERT INTO extensions VALUES ('wal2json',  'wal2json',     1, 'wal2json',       '');
+INSERT INTO extensions VALUES ('timescaledb','timescaledb', 1, 'timescaledb', 'timescaledb.telemetry_level=off'); 
+INSERT INTO extensions VALUES ('citus',      'citus',       1, 'citus', 'citus.enable_statistics_collection=off');
 
 
 CREATE TABLE versions (
