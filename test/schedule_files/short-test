@@ -1,0 +1,13 @@
+t/020_nodectl_install_pgedge.pl
+t/8000a_env_setup_pgedge_node1.pl
+t/8001a_env_setup_pgedge_node2.pl
+t/8000b_install_pgedge_node1.pl
+t/8001b_install_pgedge_node2.pl
+
+t/spock_1_setup.py
+t/spock_2_node_create.py
+t/spock_3_sub_create.py
+t/spock_4_repset_add_table.py
+t/spock_5_cofirm_replication.py
+
+t/spock_99_cleanup.py

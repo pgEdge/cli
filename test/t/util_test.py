@@ -2,21 +2,6 @@ import sys, os, psycopg, json,subprocess
 from dotenv import load_dotenv
 
 ## Utility Functions
-
-## Return Test Configuration
-def get_settings():
-    port_n1 = 6432
-    port_n2 = 6433
-    host_n1 = "127.0.0.1"
-    host_n2 = "127.0.0.1"
-    db = "mydb"
-    usr = "admin"
-    pw = "passwd"
-    repuser = os.popen('whoami').read() 
-    pgv = "16"
-    repo = "upstream"
-    return port_n1, port_n2, host_n1, host_n2, db, usr, pw, repuser, pgv, repo
-
 def set_env():
     load_dotenv('t/lib/config.env')
 
@@ -29,61 +14,25 @@ def exit_message(p_msg, p_rc=1):
        print(f"ERROR {p_msg}")
     sys.exit(p_rc)
 
-def run_home_cmd(msg, cmd, node_path):
-    print(cmd) 
-    print(node_path) 
-    rc = os.system(f"{node_path}/pgedge {cmd}")
-    if rc != 0:
-       exit_message(f"Failed on step: {msg}",1) 
-    return rc 
-       
-## Run functions on both nodes
-def run_home_err(msg, cmd, node_path):
-    print(cmd)
-    result = subprocess.run(f"{node_path}/pgedge {cmd}", shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
-    return result  
-
-  
-## Run functions on both nodes
+ 
+## Run pgEdge functions
 def run_cmd(msg, cmd, node_path):
     print(cmd)
     result = subprocess.run(f"{node_path}/pgedge/pgedge {cmd}", shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
-    return result         
-'''
+    return result
 
-## Run  functions on both nodes
-def run_cmd(msg, cmd, node_path):
-    print(cmd) 
-    rc = os.system(f"{node_path}/pgedge/pgedge {cmd}")
-    if rc != 0:
-       exit_message(f"Failed on step: {msg}",1) 
-       
-       
-## Get two psql connections
-def get_pg_connection():
-  port_n1, port_n2, host_n1, host_n2, db, usr, pw, repuser, pgv, repo = get_settings()
-  try:
-    con1 = psycopg.connect(dbname=db, user=usr, host=host_n1, port=port_n1, password=pw, autocommit=False)
-    con2 = psycopg.connect(dbname=db, user=usr, host=host_n2, port=port_n2, password=pw, autocommit=False)
-  except Exception as e:
-    exit_message(e)
-  return(con1, con2)
-'''
 
-## To make the connection string work in get_pg_con, I removed autocommit=False option from line 78 (the con1 connection string) - SMD
-## Get two psql connections
+## Get psql connection
 def get_pg_con(host,dbname,port,pw,usr):
-  #port, port_n2, host_n1, host_n2, db, usr, pw, repuser, pgv, repo = get_settings()
   try:
     con1 = psycopg.connect(dbname=dbname, user=usr, host=host, port=port, password=pw)
-    #con2 = psycopg.connect(dbname=db, user=repuser, host=host_n2, port=port_n2, password=pw, autocommit=False)
   except Exception as e:
     exit_message(e)
   return(con1)
 
+
 ## Run psql on both nodes
 def run_psql(cmd1,con1):
-    #con1 = get_pg_connection()  
     try:
         cur1 = con1.cursor()
         cur1.execute(cmd1)
@@ -95,12 +44,12 @@ def run_psql(cmd1,con1):
     
     try:
         con1.close()
-        #con2.close()
     except Exception as e:
         pass
     return ret1
+
     
-## Run psql
+## Write psql
 def write_psql(cmd,host,dbname,port,pw,usr):
     ret = 1
     con = get_pg_con(host,dbname,port,pw,usr)
@@ -121,7 +70,7 @@ def write_psql(cmd,host,dbname,port,pw,usr):
     return ret
 
 
-## Run psql
+## Read psql
 def read_psql(cmd,host,dbname,port,pw,usr):
     con = get_pg_con(host,dbname,port,pw,usr)
     try:
@@ -163,12 +112,8 @@ def contains(haystack, needle):
     else:
         print('Haystack and needle both have content, but our value is not found - returning 1 as it should')
         exit_message("Fail", p_rc=1)
-        
-        
-        
-        
-        
 
+    
 def needle_in_haystack(haystack, needle):
     if needle in str(haystack):
       print("pass")

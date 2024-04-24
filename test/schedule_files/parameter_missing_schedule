@@ -1,9 +1,0 @@
-t/020_nodectl_install_pgedge.pl
-t/4040_spock_node_create_error.pl
-t/4050_spock_node_create_error.pl
-t/4060_spock_node_create_error.pl
-t/4100_spock_repset_create_error.pl
-t/4110_spock_repset_create_error.pl
-t/4120_spock_repset_create_error.pl
-t/998_breakdown_cluster.pl
-

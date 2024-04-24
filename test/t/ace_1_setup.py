@@ -46,7 +46,7 @@ for n in range(1,num_nodes+1):
 
 
     cmd_node = f"spock repset-add-table default 'public.foo' {db}"
-    res=util_test.run_home_cmd("add tables to repset", cmd_node, f"{cluster_dir}/n{n}/pgedge")
+    res=util_test.run_cmd("add tables to repset", cmd_node, f"{cluster_dir}/n{n}")
     print(f"Added tables to repset on n{n}")
 
     port = port + 1

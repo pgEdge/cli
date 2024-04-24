@@ -1,0 +1,30 @@
+## Test UM Module
+t/020_nodectl_install_pgedge.pl
+
+## Test Service Module
+
+## Test curl, install.py, setup
+t/8000a_env_setup_pgedge_node1.pl
+t/8001a_env_setup_pgedge_node2.pl
+t/8000b_install_pgedge_node1.pl
+t/8001b_install_pgedge_node2.pl
+
+## Test Spock Module
+t/spock_1_setup.py
+t/spock_2_node_create.py
+t/spock_3_sub_create.py
+t/spock_4_repset_add_table.py
+t/spock_5_cofirm_replication.py
+
+## Test Ace Module
+t/cluster_1_gen_json.py
+t/ace_1_setup.py
+t/ace_2_diff_table.py
+t/ace_3_diff_table_args.py
+t/ace_4_diff_additional.py
+t/ace_99_cleanup.py
+
+## Test Drop and Negative Spock Module
+t/spock_6_drop.py
+t/spock_7_negative_list.py
+t/spock_8_negative_create.py
