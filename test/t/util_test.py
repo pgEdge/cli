@@ -18,7 +18,12 @@ def exit_message(p_msg, p_rc=1):
     sys.exit(p_rc)
 
  
-## Run pgEdge functions
+## Run pgEdge Functions
+# This function runs a pgedge command; to run a test, define the command in cmd_node, and then choose a variation:
+#
+#   * the n(node_number) directory, : res=util_test.run_cmd("add tables to repset", cmd_node, f"{cluster_dir}/n{n}")
+#   * the home directory (where home_dir is nc): res=util_test.run_cmd("Testing schema-diff", cmd_node, f"{home_dir}")
+
 def run_cmd(msg, cmd, node_path):
     print(cmd)
     result = subprocess.run(f"{node_path}/pgedge/pgedge {cmd}", shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
