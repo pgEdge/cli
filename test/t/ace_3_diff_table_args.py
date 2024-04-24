@@ -7,7 +7,7 @@ print(f"Starting - {os.path.basename(__file__)}")
 ## Get Test Settings
 util_test.set_env()
 
-home_dir = os.getenv("EDGE_HOME_DIR")
+home_dir = os.getenv("NC_DIR")
 cluster = os.getenv("EDGE_CLUSTER")
 
 ## Test Additional Arguements for table diff
