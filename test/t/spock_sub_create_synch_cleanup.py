@@ -16,7 +16,7 @@ dbname=os.getenv("EDGE_DB","lcdb")
 
 n2_port=port+1
 
-# Connect to each node and drop the foo table:
+# Connect to n1 and drop the foo table:
 drop_n1_table = util_test.write_psql("DROP TABLE IF EXISTS foo CASCADE",host,dbname,port,pw,usr)
 print("*"*100)
 
@@ -24,7 +24,7 @@ print("*"*100)
 confirm_n1_table_gone = util_test.read_psql("SELECT * FROM pg_tables WHERE tablename = 'foo';",host,dbname,port,pw,usr)
 print("*"*100)
 
-# Connect to each node and drop the foo table:
+# Connect to n2 and drop the foo table:
 drop_n2_table = util_test.write_psql("DROP TABLE IF EXISTS foo CASCADE",host,dbname,n2_port,pw,usr)
 print("*"*100)
 
@@ -33,7 +33,7 @@ confirm_n2_table_gone = util_test.read_psql("SELECT * FROM pg_tables WHERE table
 print("*"*100)
 
 # Needle and Haystack
-# Confirm the test works by looking for 'foo' in pg_tables:
+# Confirm the test works by looking for 'foo' in both pg_tables:
 if "foo" in str(confirm_n2_table_gone) or "foo" in str(confirm_n1_table_gone):
     util_test.EXIT_FAIL
 else:

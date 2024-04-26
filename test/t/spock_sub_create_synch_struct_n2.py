@@ -49,10 +49,10 @@ rep_check = util_test.read_psql("SELECT * FROM pg_tables WHERE schemaname = 'pub
 
 # Needle and Haystack
 # Confirm the test works by looking for 'foo' in rep_check:
-if "foo" in str(rep_check):
-    util_test.EXIT_PASS
-else:
+if "foo" not in str(rep_check) or sub_create.returncode ==1:
     util_test.EXIT_FAIL
+else:
+    util_test.EXIT_PASS
 
 
 

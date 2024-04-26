@@ -53,10 +53,12 @@ time.sleep(3)
 read_foo = util_test.read_psql("SELECT * FROM public.foo;",host,dbname,n2_port,pw,usr)
 print(f"The foo table contains: {read_foo}")
 
-if "Alice" in str(read_foo):
-    util_test.EXIT_PASS
-else:
+# Needle and Haystack
+# Confirm the test works:
+if "Alice" not in str(read_foo) or sub_create.returncode == 1:
     util_test.EXIT_FAIL
+else:
+    util_test.EXIT_PASS
 
 
 

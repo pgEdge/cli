@@ -42,11 +42,11 @@ print(f"Print repset_add here: - {repset_add}")
 print("*"*100)
 
 # Needle and Haystack
-# Confirm the test works by looking for 'Adding' in res.stdout:
-if "Adding" in str(repset_add.stdout):
-    util_test.EXIT_PASS
-else:
+# Confirm the test works by looking for 'Adding' in res.stdout and checking the returncode:
+if "Adding" not in str(repset_add.stdout) or repset_add.returncode == 1:
     util_test.EXIT_FAIL
+else:
+    util_test.EXIT_PASS
 
 
 

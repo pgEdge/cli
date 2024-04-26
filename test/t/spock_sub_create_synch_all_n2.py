@@ -41,12 +41,8 @@ sub_create=util_test.run_cmd("Run spock sub-create sub_n2n1.", command, f"{clust
 print(f"The spock sub-create command for sub_n2n1 returned: {sub_create.stdout}")
 print("*"*100)
 
-print("Napping")
-
-# Introduce a sleep...
+# print("Napping")
 time.sleep(3)
-
-print("Wake up")
 
 # Check for public.foo in pg_tables:
 table_check = util_test.read_psql("SELECT * FROM pg_tables WHERE schemaname='public';",host,dbname,n2_port,pw,usr)

@@ -39,24 +39,18 @@ print("*"*100)
 add_data = util_test.write_psql("INSERT INTO public.foo (empid, empname) VALUES(1,'Alice'), (2, 'Bob'), (3, 'Carol'), (4, 'Duane'), (5, 'Edward'), (6, 'Francis');",host,dbname,port,pw,usr)
 print("*"*100)
 
-
-
 # Add the table to the 'default' repset.
 command = (f"spock repset-add-table default 'public.foo' {dbname}")
 repset_add=util_test.run_cmd("Run spock repset-add-table.", command, f"{cluster_dir}/n1")
 print(f"Print repset_add here: - {repset_add}")
 print("*"*100)
 
-
-
-
-
 # Needle and Haystack
 # Confirm the test works by looking for 'Adding' in res.stdout:
-if "Adding" in str(repset_add.stdout):
-    util_test.EXIT_PASS
-else:
+if "Adding" not in str(repset_add.stdout) or repset_add.returncode == 1:
     util_test.EXIT_FAIL
+else:
+    util_test.EXIT_PASS
 
 
 
