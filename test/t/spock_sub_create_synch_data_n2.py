@@ -35,8 +35,13 @@ res=util_test.run_cmd("Run spock node-create.", command, f"{cluster_dir}/n2")
 print(f"spock node-create n2 returned: {res.stdout}")
 print("*"*100)
 
-# We're not going to create the table on n2; instead, we'll create the subscription with --synchronize-struct=True to pull the structure over.
-command = (f"spock sub-create sub_n2n1 'host={host} port={port} user={repuser} dbname={dbname}' {dbname} --synchronize_structure=True")
+# Define a table named foo - this should echo back 'CREATE TABLE'
+create_table = util_test.write_psql("CREATE TABLE IF NOT EXISTS foo (empid INT PRIMARY KEY, empname varchar(40))",host,dbname,n2_port,pw,usr)
+print(f"We just CREATED the table on n2: {create_table}")
+print("*"*100)
+
+# We've created the table, but we're not going to add the data on n2; instead, we'll create the subscription with --synchronize-data=True to pull the data over.
+command = (f"spock sub-create sub_n2n1 'host={host} port={port} user={repuser} dbname={dbname}' {dbname} --synchronize_data=True")
 sub_create=util_test.run_cmd("Run spock sub-create sub_n2n1.", command, f"{cluster_dir}/n2")
 print(f"The spock sub-create command for sub_n2n1 returned: {sub_create.stdout}")
 print("*"*100)
@@ -44,18 +49,14 @@ print("*"*100)
 # Napping
 time.sleep(3)
 
-# Check for public.foo in pg_tables:
-rep_check = util_test.read_psql("SELECT * FROM pg_tables WHERE schemaname = 'public';",host,dbname,n2_port,pw,usr)
+# Check for a user that was added to n1 in n2's public.foo:
+read_foo = util_test.read_psql("SELECT * FROM public.foo;",host,dbname,n2_port,pw,usr)
+print(f"The foo table contains: {read_foo}")
 
-# Needle and Haystack
-# Confirm the test works by looking for 'foo' in rep_check:
-if "foo" in str(rep_check):
+if "Alice" in str(read_foo):
     util_test.EXIT_PASS
 else:
     util_test.EXIT_FAIL
-
-
-
 
 
 

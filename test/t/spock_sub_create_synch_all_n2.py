@@ -29,30 +29,41 @@ if "n2" in str(check_node):
     print(f"Print drop.stdout here: - {drop.stdout}")
 print("*"*100)
 
-# Create a new n2:
+# Create a spock node n2:
 command = (f"spock node-create n2 'host={host} user={repuser} dbname={dbname} port={n2_port}' {dbname}")
 res=util_test.run_cmd("Run spock node-create.", command, f"{cluster_dir}/n2")
 print(f"spock node-create n2 returned: {res.stdout}")
 print("*"*100)
 
-# We're not going to create the table on n2; instead, we'll create the subscription with --synchronize-struct=True to pull the structure over.
-command = (f"spock sub-create sub_n2n1 'host={host} port={port} user={repuser} dbname={dbname}' {dbname} --synchronize_structure=True")
+# We're not going to create the table or the data on n2; instead, we'll create the subscription with --synchronize-struct=True to pull the structure over.
+command = (f"spock sub-create sub_n2n1 'host={host} port={port} user={repuser} dbname={dbname}' {dbname} --synchronize_structure=True --synchronize_data=True")
 sub_create=util_test.run_cmd("Run spock sub-create sub_n2n1.", command, f"{cluster_dir}/n2")
 print(f"The spock sub-create command for sub_n2n1 returned: {sub_create.stdout}")
 print("*"*100)
 
-# Napping
+print("Napping")
+
+# Introduce a sleep...
 time.sleep(3)
 
+print("Wake up")
+
 # Check for public.foo in pg_tables:
-rep_check = util_test.read_psql("SELECT * FROM pg_tables WHERE schemaname = 'public';",host,dbname,n2_port,pw,usr)
+table_check = util_test.read_psql("SELECT * FROM pg_tables WHERE schemaname='public';",host,dbname,n2_port,pw,usr)
+print(f"Print table_check: {table_check}")
+
+# Check for Gertrude in foo:
+data_check = util_test.read_psql("SELECT * FROM foo;",host,dbname,n2_port,pw,usr)
+print(f"Print data_check: {data_check}")
+
 
 # Needle and Haystack
 # Confirm the test works by looking for 'foo' in rep_check:
-if "foo" in str(rep_check):
-    util_test.EXIT_PASS
-else:
+if "foo" not in str(table_check) or "Gertrude" not in str(data_check) or sub_create.returncode != 0:
     util_test.EXIT_FAIL
+else:
+    util_test.EXIT_PASS
+
 
 
 
