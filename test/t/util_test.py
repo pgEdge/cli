@@ -84,6 +84,7 @@ def read_psql(cmd,host,dbname,port,pw,usr):
     try:
         cur = con.cursor()
         cur.execute(cmd)
+        print(cmd)
         ret = json.dumps(cur.fetchall())
         cur.close()
     except Exception as e:
