@@ -200,11 +200,11 @@ def schema_diff(cluster_name, nodes, schema_name):
 
     if len(node_list) > 3:
         util.exit_message(
-            "spock-diff currently supports up to a three-way table comparison"
+            "schema-diff currently supports up to a three-way table comparison"
         )
 
     if nodes != "all" and len(node_list) == 1:
-        util.exit_message("spock-diff needs at least two nodes to compare")
+        util.exit_message("schema-diff needs at least two nodes to compare")
 
     util.check_cluster_exists(cluster_name)
     util.message(f"Cluster {cluster_name} exists", p_state="success")
@@ -224,24 +224,32 @@ def schema_diff(cluster_name, nodes, schema_name):
         combined_json = {**database, **node}
         cluster_nodes.append(combined_json)
 
+    for nd in cluster_nodes:
+        if nodes == "all":
+            node_list.append(nd["name"])
+
     sql1, sql2 = "", ""
+    l_schema = schema_name
+    file_list = []
 
     for nd in cluster_nodes:
-        if nd["name"] in nodes:
+        if nd["name"] in node_list:
             sql1 = write_pg_dump(nd["ip_address"], nd["db_name"], nd["port"], nd["name"], l_schema)
-            print(sql1)
-            print(nd["name"])
-    cmd = "diff " + sql1 + "  " + sql2 + " > /tmp/diff.txt"
-    util.message("\n## Running # " + cmd + "\n")
-    rc = os.system(cmd)
-    if rc == 0:
-        util.message("SCHEMAS ARE THE SAME!!")
-        return rc
-    else:
-        util.message("SCHEMAS ARE NOT THE SAME!!")
-        util.message("")
-        rc = fix_schema("/tmp/diff.txt", sql1, sql2)
-    return rc
+            file_list.append(sql1)
+
+    if os.stat(file_list[0]).st_size == 0:
+        util.exit_message(f"Schema {schema_name} does not exist on node {node_list[0]}")
+
+    for n in range(1,len(file_list)):      
+        cmd = "diff " + file_list[0] + "  " + file_list[n] + " > /tmp/diff.txt"
+        util.message("\n## Running # " + cmd + "\n")
+        rc = os.system(cmd)
+        if os.stat(file_list[n]).st_size == 0:
+            util.exit_message(f"Schema {schema_name} does not exist on node {node_list[n]}")
+        if rc == 0:
+            util.message(f"SCHEMAS ARE THE SAME- between {node_list[0]} and {node_list[n]} !!", p_state="success")
+        else:
+            prRed(f"\u2718   SCHEMAS ARE NOT THE SAME- between {node_list[0]} and {node_list[n]}!!")
 
 
 def spock_diff(cluster_name, nodes):
