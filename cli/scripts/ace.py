@@ -444,7 +444,8 @@ def compare_checksums(shared_objects, worker_state, pkey1, pkey2):
                     executor.submit(run_query, worker_state, host2, hash_sql),
                 ]
                 hash1, hash2 = [f.result()[0][0] for f in futures]
-        except Exception:
+        except Exception as e:
+            #print(f"query = {hash_sql}", e)
             result_queue.append(BLOCK_ERROR)
             return
 
@@ -457,7 +458,8 @@ def compare_checksums(shared_objects, worker_state, pkey1, pkey2):
                         executor.submit(run_query, worker_state, host2, block_sql),
                     ]
                     t1_result, t2_result = [f.result() for f in futures]
-            except Exception:
+            except Exception as e:
+                #print(f"query = {block_sql}", e)
                 result_queue.append(BLOCK_ERROR)
                 return
 
@@ -694,21 +696,27 @@ def table_diff(
         rows = cur.fetchmany(block_rows)
 
         if simple_primary_key:
-            rows[:] = [x[0] for x in rows]
+            rows[:] = [str(x[0]) for x in rows]
+        else:
+            rows[:] = [tuple(str(i) for i in x) for x in rows]
 
-        pkey_offsets.append((None, rows[0]))
-        prev_min_offset = rows[0]
-        prev_max_offset = rows[-1]
+        pkey_offsets.append((None, str(rows[0])))
+        prev_min_offset = str(rows[0])
+        prev_max_offset = str(rows[-1])
 
         while rows:
             rows = cur.fetchmany(block_rows)
             if simple_primary_key:
-                rows[:] = [x[0] for x in rows]
+                rows[:] = [str(x[0]) for x in rows]
+            else:
+                rows[:] = [tuple(str(i) for i in x) for x in rows]
+
             if not rows:
                 if prev_max_offset != prev_min_offset:
                     pkey_offsets.append((prev_min_offset, prev_max_offset))
                 pkey_offsets.append((prev_max_offset, None))
                 break
+
             curr_min_offset = rows[0]
             pkey_offsets.append((prev_min_offset, curr_min_offset))
             prev_min_offset = curr_min_offset
