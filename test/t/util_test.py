@@ -115,7 +115,7 @@ def cleanup_sub(db):
 
 ## Create a connection to our SQLite database:
 
-def create_sqlite_connection(db_file):
+def get_sqlite_connection(db_file):
     conn = None
     try:
         conn = sqlite3.connect(db_file)
