@@ -22,12 +22,12 @@ res = json.loads(res.stdout)
 for i, inner_list in enumerate(res): 
     comp=(res[i].get("component"))
     install_comp=(f"um install {comp} -U {usr} -P {pw} -d {dbname}")
-    inst_res=util_test.run_cmd("Getting list of available packages", install_comp, f"{cluster_dir}/n1")
+    installed_res=util_test.run_cmd("Getting list of available packages", install_comp, f"{cluster_dir}/n1")
 
 # List the installed components:
-installed=(f"um list")
-installed_res=util_test.run_cmd("Getting list of available packages", installed, f"{cluster_dir}/n1")
-print(installed_res.stdout)
+list=(f"um list")
+list_res=util_test.run_cmd("Getting list of available packages", list, f"{cluster_dir}/n1")
+print(list_res.stdout)
 
 
 # Needle and Haystack

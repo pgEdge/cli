@@ -106,7 +106,38 @@ def cleanup_sub(db):
             cmd2 = f"spock sub-drop sub_n2n1 {db}"
         run_cmd("Drop Subs",cmd1,cmd2)
         
-        
+
+# *****************************************************************************
+## Query the SQLite Database
+## The file is here: nc/pgedge/cluster/demo/n1/pgedge/data/conf
+## and its name is db_local.db
+# *****************************************************************************
+
+## Create a connection to our SQLite database:
+
+def create_sqlite_connection(db_file):
+    conn = None
+    try:
+        conn = sqlite3.connect(db_file)
+        print(f"{conn}")
+    except Error as e:
+        print(e)
+    return conn
+
+## Execute a query on the SQLite database:
+
+def execute_sqlite_query(conn):
+    cur = conn.cursor()
+    cur.execute(f"{query}")
+    rows = cur.fetchall()
+    for row in rows:
+        print(row)
+
+
+# *****************************************************************************
+## Verify a result set
+# *****************************************************************************
+
 def contains(haystack, needle):
     print(f'haystack = ({haystack})')
     print(f'needle = ({needle})')
@@ -120,6 +151,7 @@ def contains(haystack, needle):
     else:
         print('Haystack and needle both have content, but our value is not found - returning 1 as it should')
         exit_message("Fail", p_rc=1)
+
 
     
 def needle_in_haystack(haystack, needle):
