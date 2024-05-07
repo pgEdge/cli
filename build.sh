@@ -416,7 +416,7 @@ initPG () {
     initC "lolor-pg$pgM"      "lolor"      "$lolorV"     "$outPlat" "postgres/lolor"     "" "" "nil"
   fi
 
-  if [ "$pgM" == "15" ] || [ "$pgM" == "16" ]; then
+  if [ "$pgM" == "16" ]; then
     initC "spock40-pg$pgM"    "spock40"    "$spock40V"   "$outPlat" "postgres/spock40"   "" "" "nil"
   fi
 

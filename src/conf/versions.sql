@@ -287,8 +287,11 @@ INSERT INTO projects VALUES ('vector', 'pge', 4, 0, 'hub', 1, 'https://github.co
 INSERT INTO releases VALUES ('vector-pg15', 4, 'vector', 'pgVector', '', 'prod', '', 1, 'pgEdge Community', '', '');
 INSERT INTO releases VALUES ('vector-pg16', 4, 'vector', 'pgVector', '', 'prod', '', 1, 'pgEdge Community', '', '');
 
-INSERT INTO versions VALUES ('vector-pg15', '0.6.2-1', 'el9, arm9', 1, '20240328', 'pg15', '', '');
-INSERT INTO versions VALUES ('vector-pg16', '0.6.2-1', 'el9, arm9', 1, '20240328', 'pg16', '', '');
+INSERT INTO versions VALUES ('vector-pg15', '0.7.0-1', 'el9, arm9', 1, '20240503', 'pg15', '', '');
+INSERT INTO versions VALUES ('vector-pg16', '0.7.0-1', 'el9, arm9', 1, '20240503', 'pg16', '', '');
+
+INSERT INTO versions VALUES ('vector-pg15', '0.6.2-1', 'el9, arm9', 0, '20240328', 'pg15', '', '');
+INSERT INTO versions VALUES ('vector-pg16', '0.6.2-1', 'el9, arm9', 0, '20240328', 'pg16', '', '');
 
 INSERT INTO versions VALUES ('vector-pg15', '0.6.1-1', 'el9, arm9', 0, '20240307', 'pg15', '', '');
 INSERT INTO versions VALUES ('vector-pg16', '0.6.1-1', 'el9, arm9', 0, '20240307', 'pg16', '', '');
@@ -340,8 +343,8 @@ INSERT INTO versions VALUES ('spock33-pg16', '3.3.1-1', 'el8, el9, arm9, osx', 0
 INSERT INTO releases VALUES ('spock40-pg15', 4, 'spock', 'Spock', '', 'test', '', 1, 'pgEdge Community', '', '');
 INSERT INTO releases VALUES ('spock40-pg16', 4, 'spock', 'Spock', '', 'test', '', 1, 'pgEdge Community', '', '');
 
-INSERT INTO versions VALUES ('spock40-pg15', '4.0dev5-1', 'el8, el9, arm9', 1, '20240410', 'pg15', '', '');
-INSERT INTO versions VALUES ('spock40-pg16', '4.0dev5-1', 'el8, el9, arm9', 1, '20240410', 'pg16', '', '');
+--INSERT INTO versions VALUES ('spock40-pg15', '4.0dev-1', 'el9, arm9', 1, '20240503', 'pg15', '', '');
+INSERT INTO versions VALUES ('spock40-pg16', '4.0dev-1', 'el9, arm9', 1, '20240503', 'pg16', '', '');
 
 ----------------------------------
 INSERT INTO projects VALUES ('lolor', 'pge', 4, 0, 'hub', 1, 'https://github.com/pgedge/lolor/tags',
