@@ -217,8 +217,10 @@ INSERT INTO projects VALUES ('wal2json', 'ext', 4, 0, 'hub', 0, 'https://github.
   'wal2json', 1, 'wal2json.png', 'WAL to JSON for CDC', 'https://github.com/eulerto/wal2json');
 INSERT INTO releases VALUES ('wal2json-pg15', 10, 'wal2json', 'wal2json', '', 'test', '', 1, 'POSTGRES', '', '');
 INSERT INTO releases VALUES ('wal2json-pg16', 10, 'wal2json', 'wal2json', '', 'test', '', 1, 'POSTGRES', '', '');
-INSERT INTO versions VALUES ('wal2json-pg15', '2.5.1-1', 'arm9, el9', 1, '20240221', 'pg15', '', 'https://github.com/eulerto/wal2json/tags');
-INSERT INTO versions VALUES ('wal2json-pg16', '2.5.1-1', 'arm9, el9', 1, '20230221', 'pg16', '', 'https://github.com/eulerto/wal2json/tags');
+INSERT INTO versions VALUES ('wal2json-pg15', '2.6.0-1', 'arm9, el9', 1, '20240507', 'pg15', '', 'https://github.com/eulerto/wal2json/tags');
+INSERT INTO versions VALUES ('wal2json-pg16', '2.6.0-1', 'arm9, el9', 1, '20240507', 'pg16', '', 'https://github.com/eulerto/wal2json/tags');
+INSERT INTO versions VALUES ('wal2json-pg15', '2.5.1-1', 'arm9, el9', 0, '20240221', 'pg15', '', 'https://github.com/eulerto/wal2json/tags');
+INSERT INTO versions VALUES ('wal2json-pg16', '2.5.1-1', 'arm9, el9', 0, '20230221', 'pg16', '', 'https://github.com/eulerto/wal2json/tags');
 
 INSERT INTO projects VALUES ('hintplan', 'ext', 4, 0, 'hub', 0, 'https://github.com/ossc-db/pg_hint_plan/tags',
   'hintplan', 1, 'hintplan.png', 'Execution Plan Hints', 'https://github.com/ossc-db/pg_hint_plan');
@@ -287,8 +289,8 @@ INSERT INTO projects VALUES ('vector', 'pge', 4, 0, 'hub', 1, 'https://github.co
 INSERT INTO releases VALUES ('vector-pg15', 4, 'vector', 'pgVector', '', 'prod', '', 1, 'pgEdge Community', '', '');
 INSERT INTO releases VALUES ('vector-pg16', 4, 'vector', 'pgVector', '', 'prod', '', 1, 'pgEdge Community', '', '');
 
-INSERT INTO versions VALUES ('vector-pg15', '0.7.0-1', 'el9, arm9', 1, '20240503', 'pg15', '', '');
-INSERT INTO versions VALUES ('vector-pg16', '0.7.0-1', 'el9, arm9', 1, '20240503', 'pg16', '', '');
+INSERT INTO versions VALUES ('vector-pg15', '0.7.0-1', 'el9, arm9', 1, '20240507', 'pg15', '', '');
+INSERT INTO versions VALUES ('vector-pg16', '0.7.0-1', 'el9, arm9', 1, '20240507', 'pg16', '', '');
 
 INSERT INTO versions VALUES ('vector-pg15', '0.6.2-1', 'el9, arm9', 0, '20240328', 'pg15', '', '');
 INSERT INTO versions VALUES ('vector-pg16', '0.6.2-1', 'el9, arm9', 0, '20240328', 'pg16', '', '');
@@ -327,9 +329,9 @@ INSERT INTO releases VALUES ('spock33-pg14', 4, 'spock', 'Spock', '', 'prod', ''
 INSERT INTO releases VALUES ('spock33-pg15', 4, 'spock', 'Spock', '', 'prod', '', 1, 'pgEdge Community', '', '');
 INSERT INTO releases VALUES ('spock33-pg16', 4, 'spock', 'Spock', '', 'prod', '', 1, 'pgEdge Community', '', '');
 
-INSERT INTO versions VALUES ('spock33-pg14', '3.3.3-1', 'el8, el9, arm9', 1, '20240502', 'pg14', '', '');
-INSERT INTO versions VALUES ('spock33-pg15', '3.3.3-1', 'el8, el9, arm9', 1, '20240502', 'pg15', '', '');
-INSERT INTO versions VALUES ('spock33-pg16', '3.3.3-1', 'el8, el9, arm9, osx', 1, '20240502', 'pg16', '', '');
+INSERT INTO versions VALUES ('spock33-pg14', '3.3.3-1', 'el8, el9, arm9', 1, '20240507', 'pg14', '', '');
+INSERT INTO versions VALUES ('spock33-pg15', '3.3.3-1', 'el8, el9, arm9', 1, '20240507', 'pg15', '', '');
+INSERT INTO versions VALUES ('spock33-pg16', '3.3.3-1', 'el8, el9, arm9, osx', 1, '20240507', 'pg16', '', '');
 
 INSERT INTO versions VALUES ('spock33-pg14', '3.3.2-1', 'el8, el9, arm9', 0, '20240410', 'pg14', '', '');
 INSERT INTO versions VALUES ('spock33-pg15', '3.3.2-1', 'el8, el9, arm9', 0, '20240410', 'pg15', '', '');
