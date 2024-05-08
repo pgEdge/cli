@@ -9,4 +9,4 @@ t/um_update_available_components.py
 t/um_remove_available_components.py
 
 t/8998_env_remove_pgedge_node1.pl
-t/9999_remove_nc_directory.py
+t/9998_remove_pgedge.pl
