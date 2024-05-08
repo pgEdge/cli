@@ -403,7 +403,6 @@ initPG () {
   if [ "$pgM" \> "13" ] && [ "$pgM" \< "17" ]; then
     initC "snowflake-pg$pgM"  "snowflake"  "$snwflkV"    "$outPlat" "postgres/snowflake" "" "" "nil"
     initC "spock33-pg$pgM"    "spock33"    "$spock33V"   "$outPlat" "postgres/spock33"   "" "" "nil"
-    initC "readonly-pg$pgM"   "readonly"   "$readonlyV"  "$outPlat" "postgres/readonly"   "" "" "nil"
   fi
 
   if [ "$isEL" == "False" ]; then
