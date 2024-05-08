@@ -40,7 +40,7 @@ orafceV=4.9.2-1
 ## ora2pgV=23.1
 v8V=3.2.2-1
 
-hypoV=1.4.0-1
+hypoV=1.4.1-1
 timescaleV=2.14.2-1
 profV=4.2.4-1
 bulkloadV=3.1.19-1
