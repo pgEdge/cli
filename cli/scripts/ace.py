@@ -14,6 +14,7 @@ import meta
 import fire
 import cluster
 import psycopg
+from psycopg import sql
 from psycopg.rows import dict_row
 from datetime import datetime
 from multiprocessing import Manager, cpu_count, Value, Lock
@@ -63,9 +64,7 @@ def get_dump_file_name(p_prfx, p_schm, p_base_dir="/tmp"):
 def write_pg_dump(p_ip, p_db, p_port, p_prfx, p_schm, p_base_dir="/tmp"):
     out_file = get_dump_file_name(p_prfx, p_schm, p_base_dir)
     try:
-        cmd = (
-            f"pg_dump -s -n {p_schm} -h {p_ip} -p {p_port} -d {p_db} > {out_file}"
-        )
+        cmd = f"pg_dump -s -n {p_schm} -h {p_ip} -p {p_port} -d {p_db} > {out_file}"
         os.system(cmd)
     except Exception as e:
         util.exit_exception(e)
@@ -199,10 +198,10 @@ def schema_diff(cluster_name, node1, node2, schema_name):
 
     cluster_nodes = []
 
-    '''
+    """
     Even though multiple databases are allowed, ACE will, for now,
     only take the first entry in the db list
-    '''
+    """
     database = db[0]
     database["db_name"] = database.pop("name")
 
@@ -215,9 +214,13 @@ def schema_diff(cluster_name, node1, node2, schema_name):
 
     for nd in cluster_nodes:
         if nd["name"] == node1:
-            sql1 = write_pg_dump(nd["ip_address"], nd["db_name"], nd["port"], "con1", l_schema)
+            sql1 = write_pg_dump(
+                nd["ip_address"], nd["db_name"], nd["port"], "con1", l_schema
+            )
         if nd["name"] == node2:
-            sql2 = write_pg_dump(nd["ip_address"], nd["db_name"], nd["port"], "con2", l_schema)
+            sql2 = write_pg_dump(
+                nd["ip_address"], nd["db_name"], nd["port"], "con2", l_schema
+            )
 
     cmd = "diff " + sql1 + "  " + sql2 + " > /tmp/diff.txt"
     util.message("\n## Running # " + cmd + "\n")
@@ -243,10 +246,10 @@ def spock_diff(cluster_name, node1, node2):
 
     cluster_nodes = []
 
-    '''
+    """
     Even though multiple databases are allowed, ACE will, for now,
     only take the first entry in the db list
-    '''
+    """
     database = db[0]
     database["db_name"] = database.pop("name")
 
@@ -400,26 +403,81 @@ def compare_checksums(shared_objects, worker_state, pkey1, pkey2):
         return
 
     p_key = shared_objects["p_key"]
+    schema_name = shared_objects["schema_name"]
     table_name = shared_objects["table_name"]
     node_list = shared_objects["node_list"]
     cols = shared_objects["cols_list"]
+    simple_primary_key = shared_objects["simple_primary_key"]
 
-    hash_sql = f"""
-    SELECT md5(cast(array_agg(t.* ORDER BY {p_key}) AS text))
-    FROM (SELECT * FROM {table_name} WHERE """
+    where_clause = []
 
-    where_clause = ""
+    if simple_primary_key:
+        if pkey1 is not None:
+            where_clause.append(
+                sql.SQL("{p_key} >= {pkey1}").format(
+                    p_key=sql.Identifier(p_key), pkey1=sql.Literal(pkey1)
+                )
+            )
+        if pkey2 is not None:
+            where_clause.append(
+                sql.SQL("({p_key}) < {pkey2}").format(
+                    p_key=sql.Identifier(p_key), pkey2=sql.Literal(pkey2)
+                )
+            )
+    else:
+        """
+        This is a slightly more complicated case since we have to split up
+        the primary key and compare them with split values of pkey1 and pkey2
+        """
+        pkey_list = [key.strip() for key in p_key.split(",")]
 
-    if pkey1:
-        where_clause += f"({p_key}) >= {pkey1}"
-    if pkey2:
-        if where_clause:
-            where_clause += " AND "
-        where_clause += f"({p_key}) < {pkey2}"
+        if pkey1 is not None:
+            for key_name, value in zip(pkey_list, pkey1):
+                where_clause.append(
+                    sql.SQL("{key_name} >= {value}").format(
+                        key_name=sql.Identifier(key_name), value=sql.Literal(value)
+                    )
+                )
+        if pkey2 is not None:
+            for key_name, value in zip(pkey_list, pkey2):
+                where_clause.append(
+                    sql.SQL("{key_name} < {value}").format(
+                        key_name=sql.Identifier(key_name), value=sql.Literal(value)
+                    )
+                )
+        
+    if simple_primary_key:
+        hash_sql = sql.SQL(
+            "SELECT md5(cast(array_agg(t.* ORDER BY {p_key}) AS text)) FROM"
+            "(SELECT * FROM {table_name} WHERE {where_clause}) t"
+        ).format(
+            p_key=sql.Identifier(p_key),
+            table_name=sql.SQL("{}.{}").format(
+                sql.Identifier(schema_name),
+                sql.Identifier(table_name),
+            ),
+            where_clause=sql.SQL(" AND ").join(where_clause),
+        )
+    else:
+        hash_sql = sql.SQL(
+            "SELECT md5(cast(array_agg(t.* ORDER BY {p_key}) AS text)) FROM"
+            "(SELECT * FROM {table_name} WHERE {where_clause}) t"
+        ).format(
+            p_key=sql.SQL(", ").join([sql.Identifier(col.strip()) for col in p_key.split(",")]),
+            table_name=sql.SQL("{}.{}").format(
+                sql.Identifier(schema_name),
+                sql.Identifier(table_name),
+            ),
+            where_clause=sql.SQL(" AND ").join(where_clause),
+        )
 
-    hash_sql += where_clause + ") t;"
-
-    block_sql = f"SELECT * FROM {table_name} WHERE " + where_clause + ";"
+    block_sql = sql.SQL("SELECT * FROM {table_name} WHERE {where_clause}").format(
+        table_name=sql.SQL("{}.{}").format(
+            sql.Identifier(schema_name),
+            sql.Identifier(table_name),
+        ),
+        where_clause=sql.SQL(" AND ").join(where_clause),
+    )
 
     node_pairs = combinations(node_list, 2)
 
@@ -430,6 +488,8 @@ def compare_checksums(shared_objects, worker_state, pkey1, pkey2):
     for node_pair in node_pairs:
         host1 = node_pair[0]
         host2 = node_pair[1]
+
+        #print("hash_sql = ", hash_sql.as_string(worker_state[host1]))
 
         # Return early if we have already exceeded the max number of diffs
         if row_diff_count.value >= MAX_DIFF_ROWS:
@@ -466,8 +526,18 @@ def compare_checksums(shared_objects, worker_state, pkey1, pkey2):
             # Transform all elements in t1_result and t2_result into strings before
             # consolidating them into a set
             # TODO: Test and add support for different datatypes here
-            t1_result = [tuple(str(x) if type(x) != list else str(sorted(x)) for x in row) for row in t1_result]
-            t2_result = [tuple(str(x) if type(x) != list else str(sorted(x)) for x in row) for row in t2_result]
+            t1_result = [
+                tuple(
+                    str(x) if not isinstance(x, list) else str(sorted(x)) for x in row
+                )
+                for row in t1_result
+            ]
+            t2_result = [
+                tuple(
+                    str(x) if not isinstance(x, list) else str(sorted(x)) for x in row
+                )
+                for row in t2_result
+            ]
 
             # Collect results into OrderedSets for comparison
             t1_set = OrderedSet(t1_result)
@@ -586,10 +656,10 @@ def table_diff(
 
     cluster_nodes = []
 
-    '''
+    """
     Even though multiple databases are allowed, ACE will, for now,
     only take the first entry in the db list
-    '''
+    """
     database = db[0]
     database["db_name"] = database.pop("name")
 
@@ -684,10 +754,20 @@ def table_diff(
     # of every block row. Repeat until we no longer have any more rows.
     # Store results in pkey_offsets.
 
-    # TODO: Test for composite keys
-    pkey_sql = f"""
-    SELECT {key} FROM {table_name} ORDER BY {key};
-    """
+    if simple_primary_key:
+        pkey_sql = sql.SQL("SELECT {key} FROM {table_name} ORDER BY {key}").format(
+            key=sql.Literal(key),
+            table_name=sql.SQL("{}.{}").format(
+                sql.Identifier(l_schema), sql.Identifier(l_table)
+            ),
+        )
+    else:
+        pkey_sql = sql.SQL("SELECT {key} FROM {table_name} ORDER BY {key}").format(
+            key=sql.SQL(", ").join([sql.Identifier(col) for col in key.split(",")]),
+            table_name=sql.SQL("{}.{}").format(
+                sql.Identifier(l_schema), sql.Identifier(l_table)
+            ),
+        )
 
     def get_pkey_offsets(conn, pkey_sql, block_rows):
         pkey_offsets = []
@@ -697,12 +777,14 @@ def table_diff(
 
         if simple_primary_key:
             rows[:] = [str(x[0]) for x in rows]
+            pkey_offsets.append((None, str(rows[0])))
+            prev_min_offset = str(rows[0])
+            prev_max_offset = str(rows[-1])
         else:
             rows[:] = [tuple(str(i) for i in x) for x in rows]
-
-        pkey_offsets.append((None, str(rows[0])))
-        prev_min_offset = str(rows[0])
-        prev_max_offset = str(rows[-1])
+            pkey_offsets.append((None, rows[0]))
+            prev_min_offset = rows[0]
+            prev_max_offset = rows[-1]
 
         while rows:
             rows = cur.fetchmany(block_rows)
@@ -755,10 +837,12 @@ def table_diff(
     shared_objects = {
         "cluster_name": cluster_name,
         "node_list": node_list,
-        "table_name": table_name,
+        "schema_name": l_schema,
+        "table_name": l_table,
         "cols_list": cols_list,
         "p_key": key,
         "block_rows": block_rows,
+        "simple_primary_key": simple_primary_key,
     }
 
     print("")
@@ -1073,8 +1157,20 @@ def table_rerun(cluster_name, diff_file, table_name):
 
                     t1_result, t2_result = [f.result() for f in futures]
 
-                    t1_result = [tuple(str(x) if type(x) != list else str(sorted(x)) for x in row) for row in t1_result]
-                    t2_result = [tuple(str(x) if type(x) != list else str(sorted(x)) for x in row) for row in t2_result]
+                    t1_result = [
+                        tuple(
+                            str(x) if not isinstance(x, list) else str(sorted(x))
+                            for x in row
+                        )
+                        for row in t1_result
+                    ]
+                    t2_result = [
+                        tuple(
+                            str(x) if not isinstance(x, list) else str(sorted(x))
+                            for x in row
+                        )
+                        for row in t2_result
+                    ]
 
                     node1_set = OrderedSet(t1_result)
                     node2_set = OrderedSet(t2_result)
@@ -1103,8 +1199,20 @@ def table_rerun(cluster_name, diff_file, table_name):
 
                     t1_result, t2_result = [f.result() for f in futures]
 
-                    t1_result = [tuple(str(x) if type(x) != list else str(sorted(x)) for x in row) for row in t1_result]
-                    t2_result = [tuple(str(x) if type(x) != list else str(sorted(x)) for x in row) for row in t2_result]
+                    t1_result = [
+                        tuple(
+                            str(x) if not isinstance(x, list) else str(sorted(x))
+                            for x in row
+                        )
+                        for row in t1_result
+                    ]
+                    t2_result = [
+                        tuple(
+                            str(x) if not isinstance(x, list) else str(sorted(x))
+                            for x in row
+                        )
+                        for row in t2_result
+                    ]
 
                     node1_set = OrderedSet(t1_result)
                     node2_set = OrderedSet(t2_result)
@@ -1164,10 +1272,10 @@ def table_repair(cluster_name, diff_file, source_of_truth, table_name, dry_run=F
 
     cluster_nodes = []
 
-    '''
+    """
     Even though multiple databases are allowed, ACE will, for now,
     only take the first entry in the db list
-    '''
+    """
     database = db[0]
     database["db_name"] = database.pop("name")
 
@@ -1514,8 +1622,12 @@ def table_repair(cluster_name, diff_file, source_of_truth, table_name, dry_run=F
     print()
 
     if spock_version < 4.0:
-        util.message("WARNING: Unable to pause/resume replication during repair due to older spock version" 
-                     "\nPlease do a manual check as repair may have caused further divergence", p_state="warning")
+        util.message(
+            "WARNING: Unable to pause/resume replication during repair due to"
+            "an older spock version. Please do a manual check as repair may"
+            "have caused further divergence",
+            p_state="warning",
+        )
 
 
 def repset_diff(
@@ -1586,10 +1698,10 @@ def repset_diff(
 
     cluster_nodes = []
 
-    '''
+    """
     Even though multiple databases are allowed, ACE will, for now,
     only take the first entry in the db list
-    '''
+    """
     database = db[0]
     database["db_name"] = database.pop("name")
 
@@ -1657,6 +1769,6 @@ if __name__ == "__main__":
             "table-rerun": table_rerun,
             "repset-diff": repset_diff,
             "schema-diff": schema_diff,
-            "spock-diff": spock_diff
+            "spock-diff": spock_diff,
         }
     )
