@@ -235,15 +235,6 @@ INSERT INTO releases VALUES ('foslots-pg15', 10, 'foslots', 'FO Slots', '', 'pro
 INSERT INTO versions VALUES ('foslots-pg14', '1a-1', 'el8, el9, arm9', 1, '20240402', 'pg14', '', '');
 INSERT INTO versions VALUES ('foslots-pg15', '1a-1', 'el8, el9, arm9', 1, '20240402', 'pg15', '', '');
 
-INSERT INTO projects VALUES ('readonly', 'ext', 4, 0, 'hub',0, 'https://github.com/pgedge/readonly/tags',
-  'readonly', 1, 'readonly.png', 'Support READ-ONLY Databases', 'https://github.com/pgedge/readonly');
-INSERT INTO releases VALUES ('readonly-pg14', 10, 'readonly', 'pgReadOnly', '', 'prod', '', 1, 'POSTGRES', '', '');
-INSERT INTO releases VALUES ('readonly-pg15', 10, 'readonly', 'pgReadOnly', '', 'prod', '', 1, 'POSTGRES', '', '');
-INSERT INTO releases VALUES ('readonly-pg16', 10, 'readonly', 'pgReadOnly', '', 'prod', '', 1, 'POSTGRES', '', '');
-INSERT INTO versions VALUES ('readonly-pg14', '1.1.1-1', 'el8, el9, arm9', 1, '20240108', 'pg14', '', '');
-INSERT INTO versions VALUES ('readonly-pg15', '1.1.1-1', 'el8, el9, arm9', 1, '20240108', 'pg15', '', '');
-INSERT INTO versions VALUES ('readonly-pg16', '1.1.1-1', 'el8, el9, arm9', 1, '20240128', 'pg16', '', '');
-
 ----------------------------------
 INSERT INTO projects VALUES ('timescaledb', 'ext', 4, 0, 'hub',0, 'https://github.com/timescale/timescaledb/releases',
   'timescaledb', 1, 'timescaledb.png', 'Timeseries Extension', 'https://github.com/timescaledb/timescaledb');
