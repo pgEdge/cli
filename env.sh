@@ -32,7 +32,7 @@ readonlyV=1.1.1-1
 wal2jV=2.6.0-1
 
 curlV=2.2.2-1
-citusV=12.1.2-1
+citusV=12.1.3-1
 
 ## oraclefdwV=2.6.0-1
 inclV=21.6
@@ -41,7 +41,7 @@ orafceV=4.9.2-1
 v8V=3.2.2-1
 
 hypoV=1.4.0-1
-timescaleV=2.13.1-1
+timescaleV=2.14.2-1
 profV=4.2.4-1
 bulkloadV=3.1.19-1
 partmanV=5.0.1-1
