@@ -393,8 +393,12 @@ INSERT INTO projects VALUES ('hypopg', 'ext', 4, 0, 'hub', 8, 'https://github.co
   'hypopg', 1, 'whatif.png', 'Hypothetical Indexes', 'https://hypopg.readthedocs.io/en/latest/');
 INSERT INTO releases VALUES ('hypopg-pg15', 99, 'hypopg', 'HypoPG', '', 'prod','',  1, 'POSTGRES', '', '');
 INSERT INTO releases VALUES ('hypopg-pg16', 99, 'hypopg', 'HypoPG', '', 'prod','',  1, 'POSTGRES', '', '');
-INSERT INTO versions VALUES ('hypopg-pg15', '1.4.0-1',  'arm9, el9', 1, '20230608', 'pg15', '', '');
-INSERT INTO versions VALUES ('hypopg-pg16', '1.4.0-1',  'arm9, el9', 1, '20230608', 'pg16', '', '');
+
+INSERT INTO versions VALUES ('hypopg-pg15', '1.4.1-1',  'arm9, el9', 1, '20240509', 'pg15', '', '');
+INSERT INTO versions VALUES ('hypopg-pg16', '1.4.1-1',  'arm9, el9', 1, '20230509', 'pg16', '', '');
+
+INSERT INTO versions VALUES ('hypopg-pg15', '1.4.0-1',  'arm9, el9', 0, '20230608', 'pg15', '', '');
+INSERT INTO versions VALUES ('hypopg-pg16', '1.4.0-1',  'arm9, el9', 0, '20230608', 'pg16', '', '');
 
 INSERT INTO projects VALUES ('badger', 'app', 4, 0, 'hub', 6, 'https://github.com/darold/pgbadger/releases',
   'badger', 0, 'badger.png', 'Performance Reporting', 'https://pgbadger.darold.net');
