@@ -7,7 +7,7 @@ ctlibsV=1.2
 spock40V=4.0dev-1
 spock33V=3.3.3-1
 
-lolorV=1.0beta1-1
+lolorV=1.0-1
 foslotsV=1a-1
 snwflkV=2.0-1
 vectorV=0.7.0-1
