@@ -154,14 +154,12 @@ INSERT INTO versions VALUES ('pg16', '16.2-4',  'el8, el9, arm9, osx', 0, '20240
 
 INSERT INTO releases VALUES ('pg17', 2, 'pg', '', '', 'test', 
   '<font size=-1>New in <a href=https://www.postgresql.org/docs/17/release-17.html>2024!</a></font>', 1, 'POSTGRES', '', '');
-INSERT INTO versions VALUES ('pg17', '17devel-1',  'el9', 1, '20240108','', '', '');
+INSERT INTO versions VALUES ('pg17', '17devel-1',  'el8, el9, arm9', 1, '20240509','', '', '');
 
 INSERT INTO projects VALUES ('orafce', 'ext', 4, 0, 'hub', 0, 'https://github.com/orafce/orafce/releases',
   'orafce', 1, 'larry.png', 'Ora Built-in Packages', 'https://github.com/orafce/orafce#orafce---oracles-compatibility-functions-and-packages');
 INSERT INTO releases VALUES ('orafce-pg15', 2, 'orafce', 'OraFCE', '', 'prod', '', 1, 'POSTGRES', '', '');
 INSERT INTO releases VALUES ('orafce-pg16', 2, 'orafce', 'OraFCE', '', 'prod', '', 1, 'POSTGRES', '', '');
-INSERT INTO versions VALUES ('orafce-pg15', '4.9.2-1',   'arm9, el9', 1, '20240212', 'pg15', '', '');
-INSERT INTO versions VALUES ('orafce-pg16', '4.9.2-1',   'arm9, el9', 1, '20240212', 'pg16', '', '');
 INSERT INTO versions VALUES ('orafce-pg15', '4.5.0-1',   'arm9, el9', 0, '20230914', 'pg15', '', '');
 INSERT INTO versions VALUES ('orafce-pg16', '4.5.0-1',   'arm9, el9', 0, '20230914', 'pg16', '', '');
 
