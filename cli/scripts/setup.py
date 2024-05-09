@@ -29,10 +29,6 @@ def check_pre_reqs(User, Passwd, db, port, pg_major, pg_minor, spock, autostart)
 
     platf = util.get_platform()
 
-    # util.message("  Verify Linux")
-    # if platf != "Linux":
-    #    util.exit_message("OS must be Linux")
-
     if platf == "Linux":
         util.message("  Verify Linux supported glibc version")
         if util.get_glibc_version() < "2.28":
@@ -56,7 +52,7 @@ def check_pre_reqs(User, Passwd, db, port, pg_major, pg_minor, spock, autostart)
     if util.is_socket_busy(int(port)):
            util.exit_message(f"Port {port} is unavailable")
 
-    util.message(f"  Using port {port}")
+    util.message(f"    - Using port {port}")
 
     util.message(f"  Verify pg major version {pg_major}")
     valid_pg = ["14", "15", "16", "17"]
