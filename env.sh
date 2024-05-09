@@ -1,7 +1,7 @@
 
 bundle=pgedge
 api=pgedge
-hubV=24.4.6
+hubV=24.4.7
 ctlibsV=1.2
 
 spock40V=4.0.130-1
