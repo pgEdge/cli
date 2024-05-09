@@ -232,6 +232,7 @@ def num_pg_minors(pg_minor, is_display=False):
 
 
 def num_spocks(pg, ver, is_display=False):
+    message(f"num_spocks(pg={pg}, ver={ver}, is_display={is_display})", "debug")
     try:
         c = cL.cursor()
         sql = (
@@ -239,9 +240,10 @@ def num_spocks(pg, ver, is_display=False):
             + f" WHERE component LIKE 'spock%{pg}' AND version LIKE '{ver}%'\n"
             + f"   AND platform LIKE '%{get_el_ver()}%'"
         )
-      
+        message(f"{sql}", "debug")
         c.execute(sql)
         data = c.fetchall()
+        message(f"{data}", "debug")
         c.close()
 
         kount = 0
