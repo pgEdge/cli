@@ -1,4 +1,4 @@
-import sys, os, psycopg, json,subprocess
+import sys, os, psycopg, json, subprocess, shutil
 from dotenv import load_dotenv
 
 EXIT_PASS = 0
@@ -17,10 +17,10 @@ def exit_message(p_msg, p_rc=1):
        print(f"ERROR {p_msg}")
     sys.exit(p_rc)
 
- 
-## Run pgEdge Functions
+# ************************************************************************************************************** 
+## Run a pgEdge command
+# **************************************************************************************************************
 # This function runs a pgedge command; to run a test, define the command in cmd_node, and then choose a variation:
-#
 #   * the n(node_number) directory, : res=util_test.run_cmd("add tables to repset", cmd_node, f"{cluster_dir}/n{n}")
 #   * the home directory (where home_dir is nc): res=util_test.run_cmd("Testing schema-diff", cmd_node, f"{home_dir}")
 
@@ -29,6 +29,32 @@ def run_cmd(msg, cmd, node_path):
     result = subprocess.run(f"{node_path}/pgedge/pgedge {cmd}", shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
     return result
 
+
+# **************************************************************************************************************
+# This function removes the directory specified in the path variable; specify the complete path and directory name
+# Note that this will remove a directory with contents - to remove a single file, use the remove_file command!
+# **************************************************************************************************************
+
+def remove_directory(path):
+    print(path)
+    result = shutil.rmtree(f"{path}")
+    return result
+
+
+# **************************************************************************************************************
+# This function removes the file specified in the file variable; file is the complete path to the file and 
+# the file name
+# **************************************************************************************************************
+
+def remove_file(file):
+    print(file)
+    result = os.remove(f"{file}")
+    return result
+
+
+# **************************************************************************************************************
+# PSQL Functions
+# **************************************************************************************************************
 
 ## Get psql connection
 def get_pg_con(host,dbname,port,pw,usr):
