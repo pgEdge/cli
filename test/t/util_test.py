@@ -37,8 +37,8 @@ def run_cmd(msg, cmd, node_path):
 
 def remove_directory(path):
     print(path)
-    result = shutil.rmtree(f"{path}")
-    return result
+    shutil.rmtree(f"{path}")
+
 
 
 # **************************************************************************************************************
@@ -48,8 +48,7 @@ def remove_directory(path):
 
 def remove_file(file):
     print(file)
-    result = os.remove(f"{file}")
-    return result
+    os.remove(f"{file}")
 
 
 # **************************************************************************************************************
