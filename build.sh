@@ -402,6 +402,7 @@ initPG () {
 
   if [ "$pgM" \> "13" ] && [ "$pgM" \< "18" ]; then
     initC "spock40-pg$pgM"    "spock40"    "$spock40V"   "$outPlat" "postgres/spock40"   "" "" "nil"
+    initC "lolor-pg$pgM"      "lolor"      "$lolorV"     "$outPlat" "postgres/lolor"     "" "" "nil"
   fi
 
   if [ "$pgM" \> "13" ] && [ "$pgM" \< "17" ]; then
@@ -411,10 +412,6 @@ initPG () {
 
   if [ "$isEL" == "False" ]; then
     return
-  fi
-
-  if [ "$pgM" == "16" ]; then
-    initC "lolor-pg$pgM"      "lolor"      "$lolorV"     "$outPlat" "postgres/lolor"     "" "" "nil"
   fi
 
   if [ "$pgM" == "14" ] || [ "$pgM" == "15" ]; then
