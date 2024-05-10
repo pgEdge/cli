@@ -1,13 +1,77 @@
-## Test UM Module
+## Set up a two node cluster
 t/020_nodectl_install_pgedge.pl
+t/300_setup_script.pl
+
+## Test UM Module
+t/um_install_available_components.py
+t/um_update_available_components.py
+t/um_remove_available_components.py
 
 ## Test Service Module
 
-## Test curl, install.py, setup
+## Setup scripts for lower level directory
 t/8000a_env_setup_pgedge_node1.pl
 t/8001a_env_setup_pgedge_node2.pl
 t/8000b_install_pgedge_node1.pl
 t/8001b_install_pgedge_node2.pl
+t/8051_env_create_node1.pl
+t/8052_env_create_node2.pl
+
+## Test DB Module
+t/db-guc-show.py
+t/db-guc-show-no-guc.py
+t/db-guc-show-wildcard.py
+t/db-guc-show-invalid-name.py
+t/db-guc-set.py
+t/db-guc-set-invalid-type.py
+t/db-guc-set-no-reload.py
+t/db-guc-set-invalid-value.py
+
+
+## Test sub_tests
+# error tests
+t/spock_node_create_no_node_name.py
+t/spock_node_create_no_repset_user.py
+t/spock_node_create_no_dbname.py
+t/spock_node_create_no_dns.py
+
+##
+# sub --synchronize_structure tests
+##
+t/spock_sub_create_synch_struct_n1.py
+t/spock_sub_create_synch_struct_n2.py
+
+# cleanup scripts
+t/spock_sub_create_synch_cleanup.py
+t/8083_env_sub_drop_n2.pl
+t/8086_env_node_drop_n1.pl
+t/8087_env_node_drop_n2.pl
+
+##
+# sub --synchronize_data tests
+##
+t/spock_sub_create_synch_data_n1.py
+t/spock_sub_create_synch_data_n2.py
+
+# cleanup scripts
+t/spock_sub_create_synch_cleanup.py
+t/8083_env_sub_drop_n2.pl
+t/8086_env_node_drop_n1.pl
+t/8087_env_node_drop_n2.pl
+
+##
+# sub --synchronize_structure and --synchronize_data tests
+##
+t/spock_sub_create_synch_all_n1.py
+t/spock_sub_create_synch_all_n2.py
+
+# cleanup scripts
+t/spock_sub_create_synch_cleanup.py
+t/8083_env_sub_drop_n2.pl
+t/8086_env_node_drop_n1.pl
+t/8087_env_node_drop_n2.pl
+
+
 
 ## Test Spock Module
 t/spock_1_setup.py
@@ -28,3 +92,11 @@ t/ace_99_cleanup.py
 t/spock_6_drop.py
 t/spock_7_negative_list.py
 t/spock_8_negative_create.py
+
+
+
+## UM Remove components, Clean environment and free ports
+t/8998_env_remove_pgedge_node1.pl
+t/8999_env_remove_pgedge_node2.pl
+
+t/9998_remove_pgedge.py

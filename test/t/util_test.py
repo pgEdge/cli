@@ -59,8 +59,10 @@ def remove_directory(path):
 
 def remove_file(file):
     print(file)
-    os.remove(f"{file}")
-
+    try:
+        os.remove(f"{file}")
+    except OSError:
+        pass
 
 # **************************************************************************************************************
 # PSQL Functions
