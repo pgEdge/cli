@@ -7,6 +7,7 @@ print(f"Starting - {os.path.basename(__file__)}")
 util_test.set_env()
 repo=os.getenv("EDGE_REPO")
 cluster_dir=os.getenv("EDGE_CLUSTER_DIR")
+home_dir=os.getenv("EDGE_HOME_DIR")
 port=int(os.getenv("EDGE_START_PORT",6432))
 usr=os.getenv("EDGE_USERNAME","lcusr")
 pw=os.getenv("EDGE_PASSWORD","password")
@@ -22,11 +23,11 @@ dbname=os.getenv("EDGE_DB","lcdb")
 #for i, inner_list in enumerate(res): 
 #    comp=(res[i].get("component"))
 update_comp=(f"um update")
-update_res=util_test.run_cmd("Getting list of available packages", update_comp, f"{cluster_dir}/n1")
+update_res=util_test.run_nc_cmd("Getting list of available packages", update_comp, f"{home_dir}")
 
 # List the installed components:
 list=(f"um list")
-list_res=util_test.run_cmd("Getting list of available packages", list, f"{cluster_dir}/n1")
+list_res=util_test.run_nc_cmd("Getting list of available packages", list, f"{home_dir}")
 print(list_res.stdout)
 
 

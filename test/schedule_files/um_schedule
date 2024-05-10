@@ -1,12 +1,8 @@
 t/020_nodectl_install_pgedge.pl
-
-t/8000a_env_setup_pgedge_node1.pl
-t/8000b_install_pgedge_node1.pl
-t/8051_env_create_node1.pl
+t/300_setup_script.pl
 
 t/um_install_available_components.py
 t/um_update_available_components.py
 t/um_remove_available_components.py
 
-t/8998_env_remove_pgedge_node1.pl
 t/9998_remove_pgedge.py
