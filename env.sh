@@ -4,7 +4,7 @@ api=pgedge
 hubV=24.4.7
 ctlibsV=1.2
 
-spock40V=4.0.130-1
+spock40V=4.0.131-1
 spock33V=3.3.3-1
 
 lolorV=1.0-1
