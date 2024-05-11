@@ -1,0 +1,14 @@
+
+sudo tee -a /etc/yum.repos.d/artifact-registry.repo << EOF
+[alloydb-omni-yum]
+name=alloydb-omni-yum
+baseurl=https://us-yum.pkg.dev/projects/alloydb-omni/alloydb-omni-yum
+enabled=1
+repo_gpgcheck=0
+gpgcheck=0
+EOF
+
+sudo yum makecache
+sudo yum install alloydb-cli -y
+
+
