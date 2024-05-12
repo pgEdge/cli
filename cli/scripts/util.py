@@ -556,6 +556,10 @@ def echo_cmd(cmd, echo=True, sleep_secs=0, host="", usr="", key=""):
             ssh_cmd = ssh_cmd + "-i " + str(key) + " "
 
         cmd = cmd.replace('"', '\\"')
+
+        if os.getenv("pgeDebug", "") > "":
+            cmd = f"{cmd} --debug"
+
         cmd = ssh_cmd + ' "' + str(cmd) + '"'
 
     isSilent = os.getenv("isSilent", "False")
