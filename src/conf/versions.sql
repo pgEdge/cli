@@ -168,8 +168,8 @@ INSERT INTO projects VALUES ('orafce', 'ext', 4, 0, 'hub', 0, 'https://github.co
   'orafce', 1, 'larry.png', 'Ora Built-in Packages', 'https://github.com/orafce/orafce#orafce---oracles-compatibility-functions-and-packages');
 INSERT INTO releases VALUES ('orafce-pg15', 2, 'orafce', 'OraFCE', '', 'prod', '', 1, 'POSTGRES', '', '');
 INSERT INTO releases VALUES ('orafce-pg16', 2, 'orafce', 'OraFCE', '', 'prod', '', 1, 'POSTGRES', '', '');
-INSERT INTO versions VALUES ('orafce-pg15', '4.5.0-1',   'arm9, el9', 0, '20230914', 'pg15', '', '');
-INSERT INTO versions VALUES ('orafce-pg16', '4.5.0-1',   'arm9, el9', 0, '20230914', 'pg16', '', '');
+INSERT INTO versions VALUES ('orafce-pg15', '4.10.0-1',   'arm9, el9', 1, '20240516', 'pg15', '', '');
+INSERT INTO versions VALUES ('orafce-pg16', '4.10.0-1',   'arm9, el9', 1, '20240516', 'pg16', '', '');
 
 INSERT INTO projects VALUES ('plv8', 'dev', 4, 0, 'hub', 0, 'https://github.com/plv8/plv8/tags',
   'plv8',   1, 'v8.png', 'Javascript Stored Procedures', 'https://github.com/plv8/plv8');

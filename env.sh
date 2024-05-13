@@ -12,8 +12,6 @@ foslotsV=1a-1
 snwflkV=2.0-1
 vectorV=0.7.0-1
 
-grp_pgeV=2.12
-
 P17=17devel-1
 P16=16.3-1
 P15=15.7-1
@@ -32,12 +30,13 @@ wal2jV=2.6.0-1
 
 curlV=2.2.2-1
 citusV=12.1.3-1
-
-## oraclefdwV=2.6.0-1
-inclV=21.6
-orafceV=4.9.2-1
-## ora2pgV=23.1
+orafceV=4.10.0-1
 v8V=3.2.2-1
+
+## grp_pgeV=2.12
+## oraclefdwV=2.6.0-1
+## inclV=21.6
+## ora2pgV=23.1
 
 hypoV=1.4.1-1
 timescaleV=2.14.2-1
