@@ -1,25 +1,23 @@
 
 bundle=pgedge
 api=pgedge
-hubV=24.4.6
+hubV=24.4.7
 ctlibsV=1.2
 
-spock40V=4.0dev5-1
+spock40V=4.0.131-1
 spock33V=3.3.3-1
 
-lolorV=1.0beta1-1
+lolorV=1.1-1
 foslotsV=1a-1
 snwflkV=2.0-1
-vectorV=0.6.2-1
-
-grp_pgeV=2.12
+vectorV=0.7.0-1
 
 P17=17devel-1
-P16=16.2-4
-P15=15.6-4
-P14=14.11-1
-P13=13.14-1
-P12=12.18-1
+P16=16.3-1
+P15=15.7-1
+P14=14.12-1
+P13=13.15-1
+P12=12.19-1
 
 catV=1.1.1
 firwldV=1.2
@@ -28,20 +26,20 @@ prestV=1.4.2
 postgrestV=12.0.2-1
 prompgexpV=0.15.0-1
 backrestV=2.51-1
-readonlyV=1.1.1-1
-wal2jV=2.5.1-1
+wal2jV=2.6.0-1
 
 curlV=2.2.2-1
-citusV=12.1.2-1
-
-## oraclefdwV=2.6.0-1
-inclV=21.6
-orafceV=4.9.2-1
-## ora2pgV=23.1
+citusV=12.1.3-1
+orafceV=4.10.0-1
 v8V=3.2.2-1
 
-hypoV=1.4.0-1
-timescaleV=2.13.1-1
+## grp_pgeV=2.12
+## oraclefdwV=2.6.0-1
+## inclV=21.6
+## ora2pgV=23.1
+
+hypoV=1.4.1-1
+timescaleV=2.14.2-1
 profV=4.2.4-1
 bulkloadV=3.1.19-1
 partmanV=5.0.1-1

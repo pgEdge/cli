@@ -25,8 +25,8 @@ print("cmd = $cmd\n");
 my ($stdout_buf)= (run_command_and_exit_iferr ($cmd))[3];
 print("stdout_buf = @$stdout_buf\n");
 
-# Since this case runs after 2984 test case in the schedule, the server is running
-if (contains($stdout_buf->[0], "$pgversion running on port"))
+# This test should return a message that contains the word 'port' regardless of the test case it follows:
+if (contains($stdout_buf->[0], "port"))
  {
     exit(0);
  }

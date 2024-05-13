@@ -1,4 +1,4 @@
-import sys, os, psycopg, json,subprocess
+import sys, os, psycopg, json, subprocess, shutil
 from dotenv import load_dotenv
 
 EXIT_PASS = 0
@@ -17,10 +17,10 @@ def exit_message(p_msg, p_rc=1):
        print(f"ERROR {p_msg}")
     sys.exit(p_rc)
 
- 
-## Run pgEdge Functions
+# ************************************************************************************************************** 
+## Run a pgEdge command
+# **************************************************************************************************************
 # This function runs a pgedge command; to run a test, define the command in cmd_node, and then choose a variation:
-#
 #   * the n(node_number) directory, : res=util_test.run_cmd("add tables to repset", cmd_node, f"{cluster_dir}/n{n}")
 #   * the home directory (where home_dir is nc): res=util_test.run_cmd("Testing schema-diff", cmd_node, f"{home_dir}")
 
@@ -29,6 +29,44 @@ def run_cmd(msg, cmd, node_path):
     result = subprocess.run(f"{node_path}/pgedge/pgedge {cmd}", shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
     return result
 
+# ************************************************************************************************************** 
+## Run a pgEdge command from home
+# **************************************************************************************************************
+# This function runs a pgedge command; to run a test, define the command in cmd_node, and then choose a variation:
+#   * the n(node_number) directory, : res=util_test.run_cmd("add tables to repset", cmd_node, f"{cluster_dir}/n{n}")
+#   * the home directory (where home_dir is nc): res=util_test.run_cmd("Testing schema-diff", cmd_node, f"{home_dir}")
+
+def run_nc_cmd(msg, cmd, node_path):
+    print(cmd)
+    result = subprocess.run(f"{node_path}/pgedge {cmd}", shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+    return result
+
+# **************************************************************************************************************
+# This function removes the directory specified in the path variable; specify the complete path and directory name
+# Note that this will remove a directory with contents - to remove a single file, use the remove_file command!
+# **************************************************************************************************************
+
+def remove_directory(path):
+    print(path)
+    shutil.rmtree(f"{path}")
+
+
+
+# **************************************************************************************************************
+# This function removes the file specified in the file variable; file is the complete path to the file and 
+# the file name
+# **************************************************************************************************************
+
+def remove_file(file):
+    print(file)
+    try:
+        os.remove(f"{file}")
+    except OSError:
+        pass
+
+# **************************************************************************************************************
+# PSQL Functions
+# **************************************************************************************************************
 
 ## Get psql connection
 def get_pg_con(host,dbname,port,pw,usr):
@@ -107,7 +145,38 @@ def cleanup_sub(db):
             cmd2 = f"spock sub-drop sub_n2n1 {db}"
         run_cmd("Drop Subs",cmd1,cmd2)
         
-        
+
+# *****************************************************************************
+## Query the SQLite Database
+## The file is here: nc/pgedge/cluster/demo/n1/pgedge/data/conf
+## and its name is db_local.db
+# *****************************************************************************
+
+## Create a connection to our SQLite database:
+
+def get_sqlite_connection(db_file):
+    conn = None
+    try:
+        conn = sqlite3.connect(db_file)
+        print(f"{conn}")
+    except Error as e:
+        print(e)
+    return conn
+
+## Execute a query on the SQLite database:
+
+def execute_sqlite_query(conn):
+    cur = conn.cursor()
+    cur.execute(f"{query}")
+    rows = cur.fetchall()
+    for row in rows:
+        print(row)
+
+
+# *****************************************************************************
+## Verify a result set
+# *****************************************************************************
+
 def contains(haystack, needle):
     print(f'haystack = ({haystack})')
     print(f'needle = ({needle})')
@@ -121,6 +190,7 @@ def contains(haystack, needle):
     else:
         print('Haystack and needle both have content, but our value is not found - returning 1 as it should')
         exit_message("Fail", p_rc=1)
+
 
     
 def needle_in_haystack(haystack, needle):

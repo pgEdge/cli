@@ -222,6 +222,9 @@ def run_script(componentName, scriptName, scriptParm):
     is_ext = meta.is_extension(componentName)
     if is_ext:
         componentDir = componentName[-4:]
+        componentName = componentName[:-5]
+
+    util.message(f"  - componentDir={componentDir}, componentName={componentName}, is_ext={is_ext}", "debug")
 
     cmd = ""
     scriptFile = os.path.join(MY_HOME, componentDir, scriptName)
@@ -236,21 +239,18 @@ def run_script(componentName, scriptName, scriptParm):
     if os.path.isfile(scriptFile):
         scriptFileFound = True
 
-    util.message(f"scriptFile '{scriptFile}', {scriptFileFound}", "debug")
+    util.message(f"  - scriptFile='{scriptFile}', {scriptFileFound}", "debug")
 
     rc = 0
     compState = util.get_comp_state(componentName)
-    if compState == "Enabled":
+    util.message(f"  - compState={compState}", "debug")
+    if compState in ["Enabled", "NotInstalled"]:
         if scriptFileFound is True:
             run = cmd + " " + scriptFile + " " + scriptParm
             rc = os.system(run)
         else:
             if is_ext:
-                isPreload = os.getenv("isPreload", "False")
-                active = False
-                if isPreload == "True":
-                    active = True
-                rc = util.config_extension(p_pg=componentName[-4:], p_comp=componentName[0:-5], active=active)
+                rc = util.config_extension(p_pg=componentDir, p_comp=componentName, p_enable=True)
 
     if rc != 0:
         print("Error running " + scriptName)
@@ -1688,7 +1688,7 @@ if p_mode == "install":
         if status == 1 and (c in p_comp_list or p_comp_list[0] == "all"):
             if isExt:
                 ## just run the CREATE EXTENSION sql command without reboot or change preloads
-                util.create_extension(parent, c, False, is_preload=0)
+                util.create_extension(parent, c, False, enable=False)
             else:
                 ## already installed
                 pass
