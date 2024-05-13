@@ -41,13 +41,30 @@ if (contains($stdout_buf0->[0], "running on port"))
     }
     else
     {
-        $exitcode = 1;
+        print("$pgversion already stopped. Start the server so we can start it.\n");
+        # service start pgV
+        my $cmd1 = qq($homedir/$cli service start $pgversion);
+        print("cmd1 = $cmd1\n");
+        my ($stdout_buf1)= (run_command_and_exit_iferr ($cmd1))[3];
+        print("stdout_buf1 : @$stdout_buf1");
+
+        # if service start was successful 
+        if(contains($stdout_buf1->[0], "started"))
+        {
+          print("$pgversion started - next we stop it.\n");
+          # service stop pgV
+          my $cmd2 = qq($homedir/$cli service stop $pgversion);
+          print("cmd2 = $cmd2\n");
+          my ($stdout_buf2)= (run_command_and_exit_iferr ($cmd2))[3];
+          print("stdout_buf2 : @$stdout_buf2");
+        }
+
+        else
+        {
+          $exitcode = 1;
+        }
+
     }
 }
-else 
-{
-    print("$pgversion not running. Exiting with failure");
-    $exitcode = 1;
-}
 
-exit ($exitcode);
+
