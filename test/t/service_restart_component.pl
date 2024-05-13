@@ -38,7 +38,7 @@ print("stdout_buf : @$stdout_buf");
 
 @$stdout_buf = join(' ', map { sanitize_and_combine_multiline_stdout($_) } @$stdout_buf);
 
-if (contains($stdout_buf->[0], "stopping") && contains($stdout_buf->[0], "starting"))
+if (contains($stdout_buf->[0], "stop") && contains($stdout_buf->[0], "start"))
 {
     exit(0);
 }

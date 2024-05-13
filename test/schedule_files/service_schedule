@@ -1,0 +1,18 @@
+## Set up a two node cluster
+t/020_nodectl_install_pgedge.pl
+t/300_setup_script.pl
+
+## Test Service Module
+t/service_reload_component.pl
+t/service_restart_component.pl
+t/start_service_component.pl
+t/stop_service_component.pl
+t/status_without_flag.pl
+t/enable_service_component.pl
+t/disable_service_component.pl
+t/service_enable_error.pl
+
+t/399_um_breakdown_script.pl
+
+# Uncomment 9998X.py to delete the nc directory, etc.
+#t/9998_remove_pgedge.py
