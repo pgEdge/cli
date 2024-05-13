@@ -844,9 +844,9 @@ def restart_postgres(p_pg):
     time.sleep(4)
 
 
-def config_extension(p_pg=None, p_comp=None, active=True):
-    message(f"util.config_extension(" + \
-      f"p_pg={p_pg}, p_comp={p_comp}, active={active})", "debug")
+def config_extension(p_pg=None, p_comp=None, p_enable=True):
+    """ Configure an extension from it's metadata """
+    message(f"util.config_extension(p_pg={p_pg}, p_comp={p_comp}, enable={p_enable})", "debug")
 
     if p_comp is None:
         exit_message("p_comp must be specified in util.config_extension()")
@@ -856,9 +856,11 @@ def config_extension(p_pg=None, p_comp=None, active=True):
        pgV = p_comp[-4:]
        message(f"defaulting p_pg to {pgV}")
 
-    if active is False:
+    if p_enable is False:
         update_component_state(p_comp, "disable")
         return(0)
+    else:
+        update_component_state(p_comp, "Installed")
 
     extension_name, is_preload, preload_name, default_conf = meta.get_extension_meta(p_comp)
     if extension_name is None:
@@ -873,25 +875,22 @@ def config_extension(p_pg=None, p_comp=None, active=True):
             else:
                 change_pgconf_keyval(p_pg, str(df_l[0]), str(df_l[1]), True)
 
-    rc = create_extension(p_pg, p_ext=preload_name, p_extension=extension_name, 
-                          p_cascade=True, p_is_preload=is_preload)
+    rc = create_extension(p_pg, p_ext=preload_name, p_extension=extension_name, p_enable=True)
     if rc is True:
         return(0)
 
     return(1)
 
 
-def create_extension(p_pg, p_ext, p_reboot=False, p_extension="", p_cascade=False, p_is_preload=1):
-    message(f"util.create_extension({p_pg}, {p_ext}, p_reboot={p_reboot}, " + \
-           f"p_extension='{p_extension}', p_cascade={p_cascade}, p_is_preload={p_is_preload})", "debug")
+def create_extension(p_pg, p_ext, p_reboot=False, p_extension="", p_enable=True):
+    message(f"util.create_extension(" + \
+        f"{p_pg}, {p_ext}, p_reboot={p_reboot}, p_extension='{p_extension}', p_enable={p_enable})", "debug")
 
-    isPreload = os.getenv("isPreload")
-
-    if p_ext > " " and p_is_preload == 1:
+    if p_ext > " " and p_enable is True: 
         rc = change_pgconf_keyval(p_pg, "shared_preload_libraries", p_ext)
 
     isRestart = os.getenv("isRestart")
-    if (p_reboot is True and p_is_preload == 1) or isRestart == "True":
+    if (p_reboot is True) or (isRestart == "True"):
         restart_postgres(p_pg)
 
     print("")
@@ -901,15 +900,13 @@ def create_extension(p_pg, p_ext, p_reboot=False, p_extension="", p_cascade=Fals
     if p_extension == "none" or isRestart == "False":
         pass
     else:
-        create_ext_cmd(p_extension, p_cascade, p_pg)
+        create_ext_cmd(p_extension, p_pg)
 
     return True
 
 
-def create_ext_cmd(p_extension, p_cascade, p_pg):
-    cmd = "CREATE EXTENSION IF NOT EXISTS " + p_extension
-    if p_cascade:
-        cmd = cmd + " CASCADE"
+def create_ext_cmd(p_extension, p_pg):
+    cmd = f"CREATE EXTENSION IF NOT EXISTS {p_extension} CASCADE"
     run_sql_cmd(p_pg, cmd, True)
 
 

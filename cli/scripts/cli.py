@@ -250,11 +250,7 @@ def run_script(componentName, scriptName, scriptParm):
             rc = os.system(run)
         else:
             if is_ext:
-                isPreload = os.getenv("isPreload", "False")
-                active = False
-                if isPreload == "True":
-                    active = True
-                rc = util.config_extension(p_pg=componentDir, p_comp=componentName, active=active)
+                rc = util.config_extension(p_pg=componentDir, p_comp=componentName, p_enable=True)
 
     if rc != 0:
         print("Error running " + scriptName)
@@ -1692,7 +1688,7 @@ if p_mode == "install":
         if status == 1 and (c in p_comp_list or p_comp_list[0] == "all"):
             if isExt:
                 ## just run the CREATE EXTENSION sql command without reboot or change preloads
-                util.create_extension(parent, c, False, is_preload=0)
+                util.create_extension(parent, c, False, enable=False)
             else:
                 ## already installed
                 pass
