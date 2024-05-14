@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 #     Copyright (c)  2022-2024 PGEDGE  #
+
 import os
 import subprocess
 import time
@@ -8,75 +9,120 @@ import getpass
 from crontab import CronTab
 import subprocess
 import util
+import utilx
 
 thisDir = os.path.dirname(os.path.realpath(__file__))
 osUsr = util.get_user()
 usrUsr = osUsr + ":" + osUsr
 
+os.chdir(f"{thisDir}")
+
 def exit_rm_backrest(msg):
     util.message(f"{msg}", "error")
-    osSys("./pgedge remove backrest")
+    osSys(f"{thisDir}/pgedge remove backrest")
     sys.exit(1)
 
-pgV = ""
-if os.path.isdir("pg14"):
-    pgV = "pg14"
-elif os.path.isdir("pg15"):
-    pgV = "pg15"
-elif os.path.isdir("pg16"):
-    pgV = "pg16"
-if pgV == "":
+
+def pgV():
+    pg_versions = ["pg14", "pg15", "pg16"]
+    os.chdir(f"{thisDir}/../")
+    for pg_version in pg_versions:
+        if os.path.isdir(pg_version):
+            return pg_version
+
     exit_rm_backrest("pg14, 15 or 16 must be installed")
 
-os.chdir(thisDir)
-
-def osSys(p_input, p_display=True):
+def osSys(p_input, p_display=False):
     if p_display:
         util.message("# " + p_input)
     rc = os.system(p_input)
     return rc
 
-def configure_backup_settings(stanza_name):
-    """
-    Configures backup settings based on environment variables and system properties.
-    """
-    pg_data_path = os.getenv('PSX', '/usr/local/pgsql') + "/data/" + stanza_name
-    pg_restore_path = os.getenv('PSX', '/usr/local/pgsql') + "/restore/" + stanza_name
-
-    current_user = getpass.getuser()
-
-    # Backup configuration settings
-    backup_config = {
-        "BACKUP_PATH": "/path/to/backup",
-        "DATABASE": "postgres",
-        "PG_PATH": pg_data_path,
-        "PG_USER": current_user,
-        "PG_SOCKET_PATH": "/tmp",
-        "REPO_CIPHER_TYPE": "aes-256-cbc",
-        "REPO_CIPHER_PASSWORD": "",
-        "REPO_PATH": "/var/lib/pgbackrest",
-        "REPO_RETENTION_FULL_TYPE": "time",
-        "REPO_RETENTION_FULL": "31",
-        "BACKUP_TOOL": "pgbackrest",
-        "STANZA": stanza_name,
-        "PRIMARY_HOST": "127.0.0.1",
-        "PRIMARY_PORT": "5432",
-        "PRIMARY_USER": current_user,
-        "REPLICA_PASSWORD": "123",
-        "RECOVERY_TARGET_TIME": "",
-        "RESTORE_PATH": pg_restore_path,
-        "PROCESS_MAX": "3",
-        "REPO1_TYPE": "local",
-        "BACKUP_TYPE": "full",
-        "S3_BUCKET": "bucket-name",
-        "S3_REGION": "eu-west-2",
-        "S3_ENDPOINT": "s3.amazonaws.com"
+def configure_backup_settings():
+    stanza = "pg16"
+    repo1_path = f"/var/lib/pgbackrest/"
+    config = {
+        "main": {
+            "restore_path": "xx",
+            "backup-type" : "full",
+            "stanza_count" : "1"
+        },
+        "global": {
+            "repo1-path": repo1_path,
+            "repo1-host-user": "xx",
+            "repo1-host": "xx",
+            "repo1-type": "posix",
+            "repo1-cipher-pass": "xx",
+            "repo1-cipher-type": "aes-256-cbc",
+            "repo1-s3-bucket": "xx",
+            "repo1-s3-region": "eu-west-2",
+            "repo1-s3-key": "xx",
+            "repo1-s3-key-secret": "xx",
+            "repo1-s3-endpoint": "s3.amazonaws.com",
+            "repo1-retention-full": "7",
+            "repo1-retention-full-type": "count",
+            "process-max" : "3",
+            "log-level-console": "info"
+        },
+        "stanza": {
+            "stanza0" : "xx",
+            "pg1-path0" : "xx",
+            "pg1-user0" : "xx",
+            "pg1-port0" : "5432",
+            "pg1-host0" : "127.0.0.1",
+            "db-socket-path0" : "/tmp",
+            "global:archive-push0": {
+                "compress-level": "3"
+            }
+        }
     }
+    for section, parameters in config.items():
+        if isinstance(parameters, dict):
+            for key, sub_params in parameters.items():
+                if isinstance(sub_params, dict):
+                    for sub_key, value in sub_params.items():
+                        util.set_value(f"BACKUP", sub_key, value)
+                else:
+                    util.set_value("BACKUP", key, sub_params)
 
-    for key, value in backup_config.items():
-        util.set_value("BACKUP", key, value)
+def save_config(filename="pgbackrest.conf"):
+    """Save the current pgbackrest configuration to a file in standard format."""
+    config = fetch_backup_config()
+    lines = []
 
-    print("Backup configuration has been set successfully.")
+    # Write global settings
+    if config["global"]:
+        lines.append("[global]")
+        for key, value in config["global"].items():
+            if key == "compress-level":
+                continue  # Handle this key separately in its own section
+            if value != " ":
+                lines.append(f"{key} = {value}")
+        lines.append("")  # Add a newline for separation
+
+        # Handle global:archive-push specifically if needed
+        if "compress-level" in config["global"]:
+            lines.append("[global:archive-push]")
+            lines.append(f"compress-level = {config['global']['compress-level']}")
+            lines.append("")  # Add a newline for separation
+
+    # Write stanza sections
+    stanza_count = int(config["main"].get("stanza_count", 1))
+    for i in range(stanza_count):
+        stanza_name = util.get_value("BACKUP", f"stanza{i}")
+        if stanza_name in config["stanza"]:
+            lines.append(f"[{stanza_name}]")
+            for key, value in config["stanza"][stanza_name].items():
+                clean_key = key.replace(str(i), '')  # Remove the index from key names
+                if value != " ":
+                    lines.append(f"{clean_key} = {value}")
+            lines.append("")  # Add a newline for separation
+
+    # Write the configuration to file
+    with open(f"{thisDir}/{filename}", "w") as f:
+        f.write("\n".join(lines))
+    osSys(f"sudo cp {thisDir}/{filename} /etc/pgbackrest/")
+    return filename
 
 def setup_pgbackrest_links():
     """
@@ -93,24 +139,37 @@ def setup_pgbackrest_conf():
     Create pgbackrest configuration file and directories.
     """
     config = fetch_backup_config()
-    usrUsr = config["PG_USER"]
-    dataDir = config["PG_PATH"]
+    usrUsr = osUsr
+    parentDir = os.path.dirname(thisDir)
+    
+    dataDir = f"{parentDir}/data/{pgV()}"
+    restoreDir = f"{parentDir}/restore"
 
+    save_config()
     osSys(f"sudo chown {usrUsr} /var/log/pgbackrest")
     osSys("sudo mkdir -p /etc/pgbackrest /etc/pgbackrest/conf.d")
-    osSys("sudo cp pgbackrest.conf /etc/pgbackrest/")
     osSys("sudo chmod 640 /etc/pgbackrest/pgbackrest.conf")
     osSys(f"sudo chown {usrUsr} /etc/pgbackrest/pgbackrest.conf")
 
     osSys("sudo mkdir -p /var/lib/pgbackrest")
     osSys("sudo chmod 750 /var/lib/pgbackrest")
-    osSys(f"sudo chown {usrUsr} /var/lib/pgbackrest")
+    osSys(f"sudo chown -R {usrUsr}:{usrUsr} /var/lib/pgbackrest")
+
     conf_file = thisDir + "/pgbackrest.conf"
-    util.replace("pgXX", pgV, conf_file, True)
+    util.replace("pgXX", pgV(), conf_file, True)
     util.replace("pg1-path=xx", "pg1-path=" + dataDir, conf_file, True)
     util.replace("pg1-user=xx", "pg1-user=" + usrUsr, conf_file, True)
     util.replace("pg1-database=xx", "pg1-database=" + "postgres", conf_file, True)
-    osSys("cp " + conf_file + "  /etc/pgbackrest/.")
+    
+    util.set_value("BACKUP", "restore_path", restoreDir)
+    
+    util.set_value("BACKUP", "repo1-host", " ")
+    util.set_value("BACKUP", "repo1-host-user", usrUsr)
+    
+    util.set_value("BACKUP", "stanza0", pgV())
+    util.set_value("BACKUP", "pg1-path0", dataDir)
+    util.set_value("BACKUP", "pg1-user0", usrUsr)
+    util.set_value("BACKUP", "pg1-database0", "postgres")
 
 def generate_cipher_pass():
     """
@@ -121,49 +180,19 @@ def generate_cipher_pass():
     bCipher = subprocess.check_output(cmd, shell=True)
     sCipher = bCipher.decode("ascii")
     util.replace("repo1-cipher-pass=xx", f"repo1-cipher-pass={sCipher}", conf_file, True)
-    util.set_value("BACKUP", "REPO_CIPHER_PASSWORD", sCipher)
+    util.set_value("BACKUP", "repo1-cipher-pass", sCipher)
 
 def modify_hba_conf():
   new_rules = [
       {
-          "type": "host",
-          "database": "replication",
-           "user": "all",
-           "address": "127.0.0.1/0",
-           "method": "trust"
+            "type": "host",
+            "database": "replication",
+            "user": "all",
+            "address": "127.0.0.1/0",
+            "method": "trust"
       }
   ]
-  util.update_pg_hba_conf(pgV, new_rules)
-
-def modify_postgresql_conf(stanza):
-    """
-    Modify 'postgresql.conf' to integrate with pgBackRest.
-    """
-    aCmd = f"pgbackrest --stanza={stanza} archive-push %p"
-    util.change_pgconf_keyval(stanza, "archive_command", aCmd, p_replace=True)
-    util.change_pgconf_keyval(stanza, "archive_mode", "on", p_replace=True)
-
-def create_stanza():
-    try:
-        command = [
-            "pgbackrest",
-            "--stanza=" + util.get_value("BACKUP", "STANZA"),
-            "--pg1-path=" + util.get_value("BACKUP", "PG_PATH"),
-            #"--pg1-host=" + util.get_value("BACKUP", "PRIMARY_HOST"),
-            "--pg1-port=" + util.get_value("BACKUP", "PRIMARY_PORT"),
-            "--pg1-user=" + util.get_value("BACKUP", "PRIMARY_USER"),
-            "--pg1-socket-path=" + util.get_value("BACKUP", "PG_SOCKET_PATH"),
-            "--repo1-cipher-type=" + util.get_value("BACKUP", "REPO_CIPHER_TYPE"),
-            "--repo1-path=" + util.get_value("BACKUP", "REPO_PATH"),
-            "--log-level-console=info",
-            "--log-level-file=info",
-            "stanza-create"
-        ]
-        subprocess.run(command, check=True)
-        print("Stanza created successfully.")
-    except subprocess.CalledProcessError as e:
-        print("Error creating stanza:", e)
-
+  util.update_pg_hba_conf(pgV(), new_rules)
 
 def create_or_update_job(crontab_lines, job_comment, detailed_comment, new_job):
     job_identifier = f"# {job_comment}"
@@ -183,7 +212,7 @@ def create_or_update_job(crontab_lines, job_comment, detailed_comment, new_job):
         crontab_lines.extend([job_identifier + "\n", detailed_comment_line, new_job])
 
 def define_cron_job():
-    stanza = util.get_value("BACKUP", "STANZA")
+    stanza = util.get_value("BACKUP", "stanza")
     full_backup_command = f"pgbackrest --stanza={stanza} --type=full backup"
     incr_backup_command = f"pgbackrest --stanza={stanza} --type=incr backup"
     expire_backup_command = f"pgbackrest --stanza={stanza} expire"
@@ -216,61 +245,40 @@ def define_cron_job():
     osSys(f"sudo cat {backrest_crontab_path} | sudo tee {system_crontab_path} > /dev/null", False)
 
 def fetch_backup_config():
-    """Fetch backup configuration from util module or other configuration source."""
+    """Fetch and return the pgBackRest configuration from system settings."""
     config = {
-        "BACKUP_TOOL": util.get_value("BACKUP", "BACKUP_TOOL"),
-        "STANZA": util.get_value("BACKUP", "STANZA"),
-        "DATABASE": util.get_value("BACKUP", "DATABASE"),
-        "PG_PATH": util.get_value("BACKUP", "PG_PATH"),
-        "PG_SOCKET_PATH": util.get_value("BACKUP", "PG_SOCKET_PATH"),
-        "PG_USER": util.get_value("BACKUP", "PG_USER"),
-        "REPO_CIPHER_TYPE": util.get_value("BACKUP", "REPO_CIPHER_TYPE"),
-        "REPO_PATH": util.get_value("BACKUP", "REPO_PATH"),
-        "REPO_RETENTION_FULL_TYPE": util.get_value("BACKUP", "REPO_RETENTION_FULL_TYPE"),
-        "REPO_RETENTION_FULL": util.get_value("BACKUP", "REPO_RETENTION_FULL"),
-        "PRIMARY_HOST": util.get_value("BACKUP", "PRIMARY_HOST"),
-        "PRIMARY_PORT": util.get_value("BACKUP", "PRIMARY_PORT"),
-        "PRIMARY_USER": util.get_value("BACKUP", "PRIMARY_USER"),
-        "REPLICA_PASSWORD": util.get_value("BACKUP", "REPLICA_PASSWORD"),
-        "RECOVERY_TARGET_TIME": util.get_value("BACKUP", "RECOVERY_TARGET_TIME"),
-        "RESTORE_PATH": util.get_value("BACKUP", "RESTORE_PATH"),
-
-        "REPO1_TYPE": util.get_value("BACKUP", "REPO1_TYPE"),
-
-        "REPO_PATH": util.get_value("BACKUP", "REPO_PATH"),
-        "PG_PATH": util.get_value("BACKUP", "PG_PATH"),
-        "BACKUP_TYPE": util.get_value("BACKUP", "BACKUP_TYPE"),
-
-        "S3_BUCKET": util.get_value("BACKUP", "S3_BUCKET"),
-        "S3_REGION": util.get_value("BACKUP", "S3_REGION"),
-        "S3_ENDPOINT": util.get_value("BACKUP", "S3_ENDPOINT"),
+        "main": {},
+        "global": {},
+        "stanza": {}
     }
+
+    main_params = ["restore_path", "backup-type", "stanza_count"]
+    global_params = [
+        "repo1-retention-full", "repo1-retention-full-type", "repo1-path", "repo1-host-user", "repo1-host",
+        "repo1-cipher-type", "repo1-cipher-pass", "repo1-s3-bucket", "repo1-s3-key-secret", "repo1-s3-key",
+        "repo1-s3-region", "repo1-s3-endpoint", "log-level-console", "repo1-type",
+        "process-max", "compress-level"
+    ]
+    stanza_params = [
+        "pg1-path", "pg1-user", "pg1-database", "db-socket-path", "pg1-port", "pg1-host"
+    ]
+
+    # Fetch main and global parameters
+    for param in main_params:
+        config["main"][param] = util.get_value("BACKUP", param)
+    for param in global_params:
+        config["global"][param] = util.get_value("BACKUP", param)
+
+    # Determine the number of stanzas and fetch their specific parameters
+    stanza_count = int(config["main"].get("stanza_count", 1))
+    for i in range(stanza_count):
+        stanza_name = util.get_value("BACKUP", f"stanza{i}")
+        config["stanza"][stanza_name] = {}
+        for param in stanza_params:
+            indexed_param = f"{param}{i}"
+            config["stanza"][stanza_name][param] = util.get_value("BACKUP", indexed_param)
+
     return config
-
-def print_config():
-    """
-    List configuration parameter configured backup tool.
-    """
-    config = fetch_backup_config()
-    bold_start = "\033[1m"
-    bold_end = "\033[0m"
-    max_key_length = max(len(key) for key in config.keys())
-    max_value_length = max(len(value) for value in config.values())
-    line_length = max_key_length + max_value_length + 4  # Including spaces around colon
-
-    # Print the top border
-    print(bold_start + "#" * (line_length + 4) + bold_end)  # Adjusting for padding
-
-    for key, value in config.items():
-        # Right-align the key, align colons vertically, and ensure values are left-aligned
-        if key == "REPLICA_PASSWORD":
-            val = "******"
-            print(bold_start + f"# {key.rjust(max_key_length)}" + bold_end + f": {val.ljust(max_value_length)}")
-        else:
-          print(bold_start + f"# {key.rjust(max_key_length)}" + bold_end + f": {value.ljust(max_value_length)}")
-
-    # Print the bottom border
-    print(bold_start + "#" * (line_length + 4) + bold_end)  # Adjusting for padding
 
 def print_header(header):
     bold_start = "\033[1m"
@@ -278,34 +286,17 @@ def print_header(header):
     print(bold_start + "##### " + header + " #####"+ bold_end)
 
 def main():
-    if os.path.isdir("/var/lib/pgbackrest"):
-        exit_rm_backrest("ERROR: '/var/lib/pgbackrest' directory already exists")
-
+    stanza = pgV()
+    if os.path.isdir(f"/var/lib/pgbackrest/{stanza}/"):
+        utilx.ereport("WARNING", "/var/lib/pgbackrest directory already exists")
+    
     print_header("Configuring pgbackrest")
-    configure_backup_settings(pgV)
+    configure_backup_settings()
     generate_cipher_pass()
     setup_pgbackrest_links()
     setup_pgbackrest_conf()
     usrUsr = f"{util.get_user()}:{util.get_user()}"
-    osSys("rm -r lib", False)
-    osSys("rm -r share", False)
-    print_config()
-
-    print_header("Configuring pgbackrest's setting in postgresql.conf")
-    modify_postgresql_conf(pgV)
-    modify_hba_conf()
-
-    print_header("Restarting PostgreSQL instance " + pgV)
-    osSys(f"../pgedge restart {pgV}")
-    time.sleep(3)
-
-    print_header("Creating stanza for pgbackrest" + pgV)
-    create_stanza()
-
-    print_header("Configuraing cron jobs for pgbackrest")
-    define_cron_job()
-
-    print("pgbackrest installed successfully")
+    osSys("pgbackrest version")
 
 if __name__ == "__main__":
     main()

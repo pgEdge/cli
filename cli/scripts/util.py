@@ -581,6 +581,33 @@ def psql_cmd(cmd, nc, db, pg, host, usr, key):
     echo_cmd(nc + ' psql "' + cmd + '" ' + db, host=host, usr=usr, key=key)
 
 
+def mk_cmd(cmd, echo=True, sleep_secs=0, host="", usr="", key=""):
+    if host > "":
+        ssh_cmd = "ssh -o StrictHostKeyChecking=no -q -t "
+        if usr > "":
+            ssh_cmd = ssh_cmd + str(usr) + "@"
+
+        ssh_cmd = ssh_cmd + str(host) + " "
+
+        if key > "":
+            ssh_cmd = ssh_cmd + "-i " + str(key) + " "
+
+        cmd = cmd.replace('"', '\\"')
+
+        if os.getenv("pgeDebug", "") > "":
+            cmd = f"{cmd} --debug"
+
+        cmd = ssh_cmd + ' "' + str(cmd) + '"'
+
+    return cmd
+
+
+def psql_cmd_output(cmd, nc, db, pg, host, usr, key):
+    cmd = mk_cmd(nc + ' psql "' + cmd + '" ' + db, host=host, usr=usr, key=key)
+    result = subprocess.run(cmd, text=True, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    return result.stdout
+
+
 def print_exception(e, msg_type="error"):
     lines = str(e).splitlines()
     for line in lines:
@@ -1842,6 +1869,32 @@ def put_pgconf_auto(p_pgver, p_conf):
     write_string_file(p_conf, config_file)
 
     return
+
+def get_pgconf_value(p_pgver, p_key):
+    config_file = get_pgconf_filename(p_pgver)
+    
+    if config_file == "":  
+        return False
+    
+    parameter_value = None
+
+    with open(config_file, 'r') as conf_file:
+        # Read each line of the file
+        for line in conf_file:
+            # Ignore comments and empty lines
+            if line.strip() == '' or line.strip().startswith('#'):
+                continue
+            # Split the line into parameter and value
+            parts = line.split('=')
+            if len(parts) == 2:
+                key = parts[0].strip()
+                value = parts[1].strip().split('#')[0].strip()  # Remove comments
+                # Check if the parameter matches the one we're looking for
+                if key == p_key:
+                    parameter_value = value
+                    break
+
+    return parameter_value
 
 
 def remove_pgconf_keyval(p_pgver, p_key, p_val=""):
