@@ -209,8 +209,6 @@ t/8070_env_update_false_n1.pl
 t/8071_env_sub_n1n2_update_false.pl
 t/8072_env_update_false_n2.pl
 t/8073_env_sub_n2n1_update_false.pl
-
-# Check this one - it fails at cmd10:
 t/8074_env_update_replication_check.pl
 ##
 # cleanup scripts
@@ -254,14 +252,7 @@ t/spock_repset_create_error_2.py
 t/spock_repset_create_error_3.py
 
 
-
-# The tests that I've commented out and spock_2 are both reporting that n1 and n2 already exist - we may need to drop the nodes before running the next round of tests.
-
-
 # Set up for the next round of tests
-
-#t/8000a_env_setup_pgedge_node1.pl
-#t/8001a_env_setup_pgedge_node2.pl
 
 ## Test Spock Module
 t/spock_1_setup.py
