@@ -848,12 +848,10 @@ def config_extension(p_pg=None, p_comp=None):
     """ Configure an extension from it's metadata """
     p_enable = True
     isDISABLED = os.getenv("isDISABLED", "")
-    message(f"isDISABLED = {isDISABLED}", "debug")
     if isDISABLED == "True":
        p_enable = False
 
     message(f"util.config_extension(p_pg={p_pg}, p_comp={p_comp}, enable={p_enable})", "debug")
-
 
     if p_comp is None:
         exit_message("p_comp must be specified in util.config_extension()")
@@ -864,8 +862,7 @@ def config_extension(p_pg=None, p_comp=None):
        message(f"defaulting p_pg to {pgV}")
 
     if p_enable is False:
-        update_component_state(p_comp, "disable")
-        return(0)
+        return(disable_extension(f"{p_comp}-{pgV}"))
     else:
         update_component_state(p_comp, "Installed")
 
@@ -887,6 +884,14 @@ def config_extension(p_pg=None, p_comp=None):
         return(0)
 
     return(1)
+
+
+def disable_extension(p_ext):
+    message(f"util.disable_extension({p_ext})", "debug")
+
+    ##update_component_state(p_ext, "disable")
+
+    return(0)
 
 
 def create_extension(p_pg, p_ext, p_reboot=False, p_extension="", p_enable=True):
