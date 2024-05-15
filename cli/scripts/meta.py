@@ -355,19 +355,35 @@ def is_extension(ext_comp):
 
 
 def list_components():
+    r_comp = []
     try:
         c = con.cursor()
         cols = "component, project, version, platform, port, status, install_dt, autostart"
         sql = f"SELECT {cols} FROM components"
         c.execute(sql)
         t_comp = c.fetchall()
-        r_comp = []
         for c in t_comp:
             r_comp.append([c[0], c[1], c[2], c[3], c[4], c[5], c[6], c[7]])
     except Exception as e:
         fatal_error(e, sql, "meta.list_components()")
 
     return r_comp
+
+
+def list_aliases():
+    r_al = []
+    try:
+        c = con.cursor()
+        cols = "project, aliases"
+        sql = f"SELECT {cols} FROM projects WHERE aliases > '' ORDER BY 1"
+        c.execute(sql)
+        t_al = c.fetchall()
+        for a in t_al:
+            r_al.append([a[0], a[1]])
+    except Exception as e:
+        fatal_error(e, sql, "meta.list_aliases()")
+
+    return r_al
 
 
 def get_available_component_list():

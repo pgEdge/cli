@@ -55,20 +55,29 @@ def run_cmd(p_cmd, p_comp=None):
     return rc
 
 
-def list(components=False):
+def list(components=False, aliases=False):
     """Display available/installed components"""
 
     util.message(f"um.list({components})", "debug")
 
     if components is True:
         list_components()
+    elif aliases is True:
+        list_aliases()
     else:
         meta.get_list(isJSON, "all")
 
 
 def list_components():
     lc = meta.list_components()
-    print(f"{lc}")
+    for c in lc:
+        print(c)
+
+
+def list_aliases():
+    la = meta.list_aliases()
+    for a in la:
+        print(a)
 
 
 def update():
