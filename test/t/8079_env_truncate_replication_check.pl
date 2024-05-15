@@ -170,7 +170,7 @@ if(!(contains(@$stdout_buf9[0], "888")))
    print("INSERT=TRUE REPLICATION CHECK IN NODE n2\n");
    
    #   print("Adding call to sleep function")
-   my($success999, $error_message999, $full_buf999, $stdout_buf999, $stderr_buf999)= IPC::Cmd::run(command => sleep(7), verbose => 0);
+   my($success999, $error_message999, $full_buf999, $stdout_buf999, $stderr_buf999)= IPC::Cmd::run(command => sleep(17), verbose => 0);
    print("stdout_buf999= @$stdout_buf999\n");
 
    print ("-"x45,"\n");
