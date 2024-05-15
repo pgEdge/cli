@@ -212,53 +212,6 @@ def get_next_arg(p_arg):
     return next_arg
 
 
-# run external scripts #######################################
-def run_script(componentName, scriptName, scriptParm):
-    util.message(f"cli.run_script({componentName}, {scriptName}, {scriptParm})", "debug")
-    if componentName not in installed_comp_list:
-        return
-
-    componentDir = componentName
-    is_ext = meta.is_extension(componentName)
-    if is_ext:
-        componentDir = componentName[-4:]
-        componentName = componentName[:-5]
-
-    util.message(f"  - componentDir={componentDir}, componentName={componentName}, is_ext={is_ext}", "debug")
-
-    cmd = ""
-    scriptFile = os.path.join(MY_HOME, componentDir, scriptName)
-
-    if os.path.isfile(scriptFile):
-        cmd = "bash"
-    else:
-        cmd = sys.executable + " -u"
-        scriptFile = scriptFile + ".py"
-
-    scriptFileFound = False
-    if os.path.isfile(scriptFile):
-        scriptFileFound = True
-
-    util.message(f"  - scriptFile='{scriptFile}', {scriptFileFound}", "debug")
-
-    rc = 0
-    compState = util.get_comp_state(componentName)
-    util.message(f"  - compState={compState}", "debug")
-    if compState in ["Enabled", "NotInstalled"]:
-        if scriptFileFound is True:
-            run = cmd + " " + scriptFile + " " + scriptParm
-            rc = os.system(run)
-        else:
-            if is_ext:
-                rc = util.config_extension(p_pg=componentDir, p_comp=componentName, p_enable=True)
-
-    if rc != 0:
-        print("Error running " + scriptName)
-        exit_cleanly(1)
-
-    return
-
-
 # Get Dependency List #########################################
 def get_depend_list(p_list, p_display=True):
     if p_list == ["all"]:
@@ -532,7 +485,7 @@ def upgrade_component(p_comp):
         server_running = util.is_socket_busy(int(server_port), p_comp)
 
     if server_running:
-        run_script(p_comp, "stop-" + p_comp, "stop")
+        util.run_script(p_comp, "stop-" + p_comp, "stop")
 
     if p_comp == "hub":
         msg = "updating from v" + present_version + "  to  v" + update_version
@@ -578,7 +531,7 @@ def upgrade_component(p_comp):
                 )
             if d_comp_server_running:
                 my_logger.info("Stopping the " + d_comp + " to upgrade the " + p_comp)
-                run_script(d_comp, "stop-" + d_comp, "stop")
+                util.run_script(d_comp, "stop-" + d_comp, "stop")
                 components_stopped.append(d_comp)
 
     rc = unpack_comp(p_comp, present_version, update_version)
@@ -587,7 +540,7 @@ def upgrade_component(p_comp):
     os.environ[p_comp + "_update_version"] = update_version
     if rc == 0:
         meta.update_component_version(p_comp, update_version)
-        run_script(p_comp, "update-" + p_comp, "update")
+        util.run_script(p_comp, "update-" + p_comp, "update")
         if isJSON:
             msg = (
                 "updated "
@@ -607,11 +560,11 @@ def upgrade_component(p_comp):
             )
 
     if server_running:
-        run_script(p_comp, "start-" + p_comp, "start")
+        util.run_script(p_comp, "start-" + p_comp, "start")
 
     for dc in components_stopped:
         my_logger.info("Starting the " + dc + " after upgrading the " + p_comp)
-        run_script(dc, "start-" + dc, "start")
+        util.run_script(dc, "start-" + dc, "start")
 
     return 0
 
@@ -827,7 +780,7 @@ def update_component_state(p_app, p_mode, p_ver=None):
         return
 
     if p_mode == "disable" or p_mode == "remove":
-        run_script(p_app, "stop-" + p_app, "kill")
+        util.run_script(p_app, "stop-" + p_app, "kill")
 
     try:
         c = connL.cursor()
@@ -1699,7 +1652,7 @@ if p_mode == "install":
                 util.create_manifest(c, parent)
                 util.copy_extension_files(c, parent)
             script_name = "install-" + c
-            run_script(c, script_name, meta.get_current_version(c))
+            util.run_script(c, script_name, meta.get_current_version(c))
             if isJSON:
                 json_dict = {}
                 json_dict["state"] = "install"
@@ -1856,7 +1809,7 @@ if p_mode == "enable" or p_mode == "disable":
 ## CONFIG, INIT, RELOAD ##################################
 if p_mode in ["config", "init", "reload"]:
     script_name = p_mode + "-" + p_comp
-    sys.exit(run_script(p_comp, script_name, extra_args))
+    sys.exit(util.run_script(p_comp, script_name, extra_args))
 
 ## STOP component(s) #####################################
 if (p_mode == "stop") or (p_mode == "kill"):

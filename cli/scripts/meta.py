@@ -338,19 +338,19 @@ def is_any_autostart():
 
 
 def is_extension(ext_comp):
-    util.message(f"meta.is_extension({ext_comp})", "debug")
+    ## util.message(f"meta.is_extension({ext_comp})", "debug")
     try:
         c = con.cursor()
         sql = f"SELECT count(*) FROM versions WHERE component = '{ext_comp}' AND parent > ''"
         c.execute(sql)
         data = c.fetchone()
         if data[0] == 0:
-            util.message("  - FALSE", "debug")
+            ## util.message("  - FALSE", "debug")
             return False
     except Exception as e:
         fatal_error(e, sql, "meta.is_extension()")
 
-    util.message("  - TRUE", "debug")
+    ## util.message("  - TRUE", "debug")
     return True
 
 

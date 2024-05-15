@@ -142,7 +142,7 @@ def get_parsed_json(file_nm):
         with open(file_nm, "r") as f:
             parsed_json = json.load(f)
     except Exception as e:
-        util.exit_message(f"Unable to load json file: {file_nm}\n{e}")
+        exit_message(f"Unable to load json file: {file_nm}\n{e}")
 
     return(parsed_json)
 
@@ -3729,34 +3729,51 @@ def check_comp(p_comp, p_port, p_kount, check_status=False):
     return
 
 
-# run external scripts #######################################
 def run_script(componentName, scriptName, scriptParm):
-    message(f"util.run_script('{componentName}', '{scriptName}', '{scriptParm}')", "debug")
-    installed_comp_list = meta.get_component_list()
-    if componentName not in installed_comp_list:
-        return
+    """ run external scripts (or their metadata equivalents) """
+    message(f"util.run_script({componentName}, {scriptName}, {scriptParm})", "debug")
+    ## if componentName not in installed_comp_list:
+    ##    return  
 
     componentDir = componentName
+    is_ext = meta.is_extension(componentName)
+    if is_ext: 
+        componentDir = componentName[-4:]
+        componentName = componentName[:-5]
+
+    message(f"  - componentDir={componentDir}, componentName={componentName}, is_ext={is_ext}", "debug")
 
     cmd = ""
     scriptFile = os.path.join(MY_HOME, componentDir, scriptName)
+
     if os.path.isfile(scriptFile):
         cmd = "bash"
-    else:
-        cmd = sys.executable + " -u"
-        scriptFile = scriptFile + ".py"
+    else:   
+        cmd = sys.executable + " -u" 
+        scriptFile = scriptFile + ".py" 
 
-    rc = 0
+    scriptFileFound = False 
+    if os.path.isfile(scriptFile):
+        scriptFileFound = True
+
+    message(f"  - scriptFile='{scriptFile}', {scriptFileFound}", "debug")
+
+    rc = 0  
     compState = get_comp_state(componentName)
-    if compState == "Enabled" and os.path.isfile(scriptFile):
-        run = cmd + " " + scriptFile + " " + scriptParm
-        rc = os.system(run)
+    message(f"  - compState={compState}", "debug")
+    if compState in ["Enabled", "NotInstalled"]:
+        if scriptFileFound is True:
+            run = cmd + " " + scriptFile + " " + scriptParm
+            rc = os.system(run)
+        else:   
+            if is_ext: 
+                rc = config_extension(p_pg=componentDir, p_comp=componentName, p_enable=True)
 
     if rc != 0:
         print("Error running " + scriptName)
         exit_cleanly(1)
 
-    return
+    return 
 
 
 def update_component_state(p_app, p_mode, p_ver=None):
