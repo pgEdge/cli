@@ -1543,11 +1543,11 @@ def table_repair(cluster_name, diff_file, source_of_truth, table_name, dry_run=F
         update_sql = f"""
         INSERT INTO {table_name}
         VALUES ({','.join(['%s'] * len(cols_list))})
-        ON CONFLICT ({key}) DO UPDATE SET
+        ON CONFLICT ("{key}") DO UPDATE SET
         """
 
         for col in cols_list:
-            update_sql += f"{col} = EXCLUDED.{col}, "
+            update_sql += f"\"{col}\" = EXCLUDED.\"{col}\", "
 
         update_sql = update_sql[:-2] + ";"
 
@@ -1556,7 +1556,7 @@ def table_repair(cluster_name, diff_file, source_of_truth, table_name, dry_run=F
         if simple_primary_key:
             delete_sql = f"""
             DELETE FROM {table_name}
-            WHERE {key} = %s;
+            WHERE "{key}" = %s;
             """
         else:
             delete_sql = f"""
@@ -1565,7 +1565,7 @@ def table_repair(cluster_name, diff_file, source_of_truth, table_name, dry_run=F
             """
 
             for k in keys_list:
-                delete_sql += f" {k} = %s AND"
+                delete_sql += f" \"{k}\" = %s AND"
 
             delete_sql = delete_sql[:-3] + ";"
 
