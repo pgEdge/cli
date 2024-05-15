@@ -105,34 +105,39 @@ if(!(contains(@$stdout_buf14[0], "0 rows")))
        print ("-"x100,"\n"); 
     
 
-    print("INSERT=TRUE REPLICATION CHECK IN NODE n1 \n");
+   print("INSERT=TRUE REPLICATION CHECK IN NODE n1 \n");
     
-     print ("-"x45,"\n");
-      # Listing table contents of Port1 6432
+   print ("-"x45,"\n");
+   # Listing table contents of Port1 6432
       
-     my $cmd9 = qq($homedir1/$ENV{EDGE_COMPONENT}/bin/psql  -h $ENV{EDGE_HOST} -p $ENV{EDGE_START_PORT} -d $ENV{EDGE_DB} -c "SELECT * FROM foo");
+   my $cmd9 = qq($homedir1/$ENV{EDGE_COMPONENT}/bin/psql  -h $ENV{EDGE_HOST} -p $ENV{EDGE_START_PORT} -d $ENV{EDGE_DB} -c "SELECT * FROM foo");
    print("cmd9 = $cmd9\n");
    my($success9, $error_message9, $full_buf9, $stdout_buf9, $stderr_buf9)= IPC::Cmd::run(command => $cmd9, verbose => 0);
    print("stdout_buf9= @$stdout_buf9\n");
-  print("="x100,"\n");
+   print("="x100,"\n");
 
 if(!(contains(@$stdout_buf9[0], "888")))
 {
-    exit(1);
+   exit(1);
 }
    
-  print("="x100,"\n");
+   print("="x100,"\n");
   
  # Listing table contents of Port2 6433
  
    print("INSERT=TRUE REPLICATION CHECK IN NODE n2\n");
    
-    print ("-"x45,"\n");
-  my $cmd10 = qq($homedir2/$ENV{EDGE_COMPONENT}/bin/psql  -h $ENV{EDGE_HOST} -p $myport2 -d $ENV{EDGE_DB} -c "SELECT * FROM foo WHERE col1=888");
+   #   print("Adding call to sleep function")
+   my($success999, $error_message999, $full_buf999, $stdout_buf999, $stderr_buf999)= IPC::Cmd::run(command => sleep(7), verbose => 0);
+   print("stdout_buf999= @$stdout_buf999\n");
+
+
+   print ("-"x45,"\n");
+   my $cmd10 = qq($homedir2/$ENV{EDGE_COMPONENT}/bin/psql  -h $ENV{EDGE_HOST} -p $myport2 -d $ENV{EDGE_DB} -c "SELECT * FROM foo WHERE col1=888");
    print("cmd10 = $cmd10\n");
    my($success10, $error_message10, $full_buf10, $stdout_buf10, $stderr_buf10)= IPC::Cmd::run(command => $cmd10, verbose => 0);
    print("stdout_buf10= @$stdout_buf10\n");
-  print("="x100,"\n");
+   print("="x100,"\n");
 
 if(!(contains(@$stdout_buf10[0], "1 row")))
 {
