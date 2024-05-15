@@ -88,6 +88,32 @@ def check_cluster_lag(n, dbname, stanza):
         last_receive_lsn, last_replay_lsn, lag_bytes = parse_query_output(op)
     utilx.echo_action("Checking lag time of new cluster", "ok")
 
+    cmd = """
+    SELECT 0, 0,
+    COALESCE(SUM(CASE
+        WHEN pub.confirmed_flush_lsn <= sub.latest_end_lsn THEN 1
+        ELSE 0
+    END), 0) AS total_all_flushed
+    FROM
+        pg_stat_subscription AS sub
+    JOIN
+        pg_replication_slots AS pub ON sub.subname = pub.slot_name
+    WHERE
+        pub.slot_name IS NOT NULL
+    """
+    utilx.echo_action("Checking wall reciver")
+    lag_bytes = 1
+    while lag_bytes > 0:
+        time.sleep(1)
+        op = util.psql_cmd_output(
+            cmd, f"{n['path']}/pgedge/pgedge", dbname, stanza,
+            host=n["ip_address"], usr=n["os_user"], key=n["ssh_key"]
+        )
+        print(op)
+        last_receive_lsn, last_replay_lsn, lag_bytes = parse_query_output(op)
+    utilx.echo_action("Checking wall reciver", "ok")
+
+
 def manage_node(node, action):
     """
     Starts or stops a cluster based on the provided action.
