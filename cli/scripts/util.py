@@ -3737,7 +3737,7 @@ def check_comp(p_comp, p_port, p_kount, check_status=False):
 
 
 def run_script(componentName, scriptName, scriptParm):
-    """ run external scripts (or their metadata equivalents) """
+    """ run external scripts (or metadata equivalents for extensions) """
     message(f"util.run_script({componentName}, {scriptName}, {scriptParm})", "debug")
     ## if componentName not in installed_comp_list:
     ##    return  
@@ -3768,26 +3768,26 @@ def run_script(componentName, scriptName, scriptParm):
     rc = 0  
     compState = get_comp_state(componentName)
     message(f"  - compState={compState}", "debug")
+
     if compState in ["Enabled", "NotInstalled"]:
-        if scriptFileFound is True:
-            run = cmd + " " + scriptFile + " " + scriptParm
-            rc = os.system(run)
-        else:   
-            if is_ext: 
-                rc = config_extension(p_pg=componentDir, p_comp=componentName)
+        if is_ext: 
+            rc = config_extension(p_pg=componentDir, p_comp=componentName)
+        else:
+            if scriptFileFound is True:
+                run = f"{cmd}  {scriptFile}  {scriptParm}"
+                rc = os.system(run)
 
     if rc != 0:
-        print("Error running " + scriptName)
+        print(f"Error running {scriptName}")
         exit_cleanly(1)
 
     return 
 
 
 def update_component_state(p_app, p_mode, p_ver=None):
-    message(f"util.update_component_state({p_app}, {p_mode}, {p_ver})", "debug")
+    is_ext = meta.is_extension(p_app) 
 
-    ## db_local = MY_LITE
-    ## connL = sqlite3.connect(db_local)
+    message(f"util.update_component_state({p_app}, {p_mode}, {p_ver}, is_ext={is_ext})", "debug")
 
     new_state = "Disabled"
     if p_mode == "enable":
@@ -3803,7 +3803,7 @@ def update_component_state(p_app, p_mode, p_ver=None):
     if current_state == new_state:
         return
 
-    if p_mode == "disable" or p_mode == "remove":
+    if is_ext is True and (p_mode == "disable" or p_mode == "remove"):
         run_script(p_app, "stop-" + p_app, "kill")
 
     try:
