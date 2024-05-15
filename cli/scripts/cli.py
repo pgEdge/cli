@@ -115,6 +115,7 @@ mode_list = (
         "remove",
         "--pg",
         "--start",
+        "--disabled",
         "--no-restart",
         "--no-preload",
         "--help",
@@ -1175,6 +1176,12 @@ if "--start" in args:
     isSTART = True
     os.environ["isSTART"] = "True"
     args.remove("--start")
+
+isDISABLED = False
+if "--disabled" in args:
+    isDISABLED = True
+    os.environ["isDISABLED"] = "True"
+    args.remove("--disabled")
 
 if util.get_stage() == "test":
     util.isTEST = True

@@ -844,9 +844,16 @@ def restart_postgres(p_pg):
     time.sleep(4)
 
 
-def config_extension(p_pg=None, p_comp=None, p_enable=True):
+def config_extension(p_pg=None, p_comp=None):
     """ Configure an extension from it's metadata """
+    p_enable = True
+    isDISABLED = os.getenv("isDISABLED", "")
+    message(f"isDISABLED = {isDISABLED}", "debug")
+    if isDISABLED == "True":
+       p_enable = False
+
     message(f"util.config_extension(p_pg={p_pg}, p_comp={p_comp}, enable={p_enable})", "debug")
+
 
     if p_comp is None:
         exit_message("p_comp must be specified in util.config_extension()")
@@ -3767,7 +3774,7 @@ def run_script(componentName, scriptName, scriptParm):
             rc = os.system(run)
         else:   
             if is_ext: 
-                rc = config_extension(p_pg=componentDir, p_comp=componentName, p_enable=True)
+                rc = config_extension(p_pg=componentDir, p_comp=componentName)
 
     if rc != 0:
         print("Error running " + scriptName)
@@ -3777,8 +3784,10 @@ def run_script(componentName, scriptName, scriptParm):
 
 
 def update_component_state(p_app, p_mode, p_ver=None):
-    db_local = MY_LITE
-    connL = sqlite3.connect(db_local)
+    message(f"util.update_component_state({p_app}, {p_mode}, {p_ver})", "debug")
+
+    ## db_local = MY_LITE
+    ## connL = sqlite3.connect(db_local)
 
     new_state = "Disabled"
     if p_mode == "enable":
@@ -3798,7 +3807,7 @@ def update_component_state(p_app, p_mode, p_ver=None):
         run_script(p_app, "stop-" + p_app, "kill")
 
     try:
-        c = connL.cursor()
+        c = cL.cursor()
 
         if p_mode in ("enable", "disable"):
             ver = meta.get_version(p_app)
@@ -3829,7 +3838,7 @@ def update_component_state(p_app, p_mode, p_ver=None):
                 ver = meta.get_current_version(p_app)
             c.execute(sql, [p_app, ver])
 
-        connL.commit()
+        cL.commit()
         c.close()
     except Exception as e:
         fatal_sql_error(e, sql, "update_component_state()")
