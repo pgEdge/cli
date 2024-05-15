@@ -124,11 +124,15 @@ if(!(contains(@$stdout_buf8[0], "888")))
     exit(1);
 }
 
-  # Listing table contents of Port2 6433
-  
-    print("INSERT FUNCTION REPLICATION CHECK IN NODE n2 \n");
-    print ("-"x45,"\n");
-  my $cmd11 = qq($homedir2/$ENV{EDGE_COMPONENT}/bin/psql  -h $ENV{EDGE_HOST} -p $myport2 -d $ENV{EDGE_DB} -c "SELECT * FROM foo");
+   # Listing table contents of Port2 6433
+   
+   #   print("Adding call to sleep function")
+   my($success999, $error_message999, $full_buf999, $stdout_buf999, $stderr_buf999)= IPC::Cmd::run(command => sleep(12), verbose => 0);
+   print("stdout_buf999= @$stdout_buf999\n");
+
+   print("INSERT FUNCTION REPLICATION CHECK IN NODE n2 \n");
+   print ("-"x45,"\n");
+   my $cmd11 = qq($homedir2/$ENV{EDGE_COMPONENT}/bin/psql  -h $ENV{EDGE_HOST} -p $myport2 -d $ENV{EDGE_DB} -c "SELECT * FROM foo");
    print("cmd11 = $cmd11\n");
    my($success11, $error_message11, $full_buf11, $stdout_buf11, $stderr_buf11)= IPC::Cmd::run(command => $cmd11, verbose => 0);
    print("stdout_buf11= @$stdout_buf11\n");

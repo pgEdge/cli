@@ -21,6 +21,15 @@ print("whoami = $ENV{EDGE_REPUSER}\n");
 
 print("The home directory is $homedir1\n"); 
 
+# Drop subscription to n1 node
+
+my $cmd22 = qq($homedir1/$ENV{EDGE_CLI} spock sub-drop my_test_sub $ENV{EDGE_DB});
+print("cmd22 = $cmd22\n");
+my ($success22, $error_message22, $full_buf22, $stdout_buf22, $stderr_buf22)= IPC::Cmd::run(command => $cmd22, verbose => 0);
+#print("stdout_buf22 = @$stdout_buf22\n");
+
+
+
 # Drop n1 node
 
 my $cmd2 = qq($homedir1/$ENV{EDGE_CLI} spock node-drop n1 $ENV{EDGE_DB});
