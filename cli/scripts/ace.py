@@ -420,7 +420,7 @@ def compare_checksums(shared_objects, worker_state, pkey1, pkey2):
             )
         if pkey2 is not None:
             where_clause.append(
-                sql.SQL("({p_key}) < {pkey2}").format(
+                sql.SQL("{p_key} < {pkey2}").format(
                     p_key=sql.Identifier(p_key), pkey2=sql.Literal(pkey2)
                 )
             )
@@ -429,23 +429,27 @@ def compare_checksums(shared_objects, worker_state, pkey1, pkey2):
         This is a slightly more complicated case since we have to split up
         the primary key and compare them with split values of pkey1 and pkey2
         """
-        pkey_list = [key.strip() for key in p_key.split(",")]
 
         if pkey1 is not None:
-            for key_name, value in zip(pkey_list, pkey1):
-                where_clause.append(
-                    sql.SQL("{key_name} >= {value}").format(
-                        key_name=sql.Identifier(key_name), value=sql.Literal(value)
-                    )
+            where_clause.append(
+                sql.SQL("({p_key}) >= ({pkey1})").format(
+                    p_key=sql.SQL(", ").join(
+                        [sql.Identifier(col.strip()) for col in p_key.split(",")]
+                    ),
+                    pkey1=sql.SQL(", ").join([sql.Literal(val) for val in pkey1]),
                 )
+            )
+
         if pkey2 is not None:
-            for key_name, value in zip(pkey_list, pkey2):
-                where_clause.append(
-                    sql.SQL("{key_name} < {value}").format(
-                        key_name=sql.Identifier(key_name), value=sql.Literal(value)
-                    )
+            where_clause.append(
+                sql.SQL("({p_key}) < ({pkey2})").format(
+                    p_key=sql.SQL(", ").join(
+                        [sql.Identifier(col.strip()) for col in p_key.split(",")]
+                    ),
+                    pkey2=sql.SQL(", ").join([sql.Literal(val) for val in pkey2]),
                 )
-        
+            )
+
     if simple_primary_key:
         hash_sql = sql.SQL(
             "SELECT md5(cast(array_agg(t.* ORDER BY {p_key}) AS text)) FROM"
@@ -463,7 +467,9 @@ def compare_checksums(shared_objects, worker_state, pkey1, pkey2):
             "SELECT md5(cast(array_agg(t.* ORDER BY {p_key}) AS text)) FROM"
             "(SELECT * FROM {table_name} WHERE {where_clause}) t"
         ).format(
-            p_key=sql.SQL(", ").join([sql.Identifier(col.strip()) for col in p_key.split(",")]),
+            p_key=sql.SQL(", ").join(
+                [sql.Identifier(col.strip()) for col in p_key.split(",")]
+            ),
             table_name=sql.SQL("{}.{}").format(
                 sql.Identifier(schema_name),
                 sql.Identifier(table_name),
@@ -489,7 +495,7 @@ def compare_checksums(shared_objects, worker_state, pkey1, pkey2):
         host1 = node_pair[0]
         host2 = node_pair[1]
 
-        #print("hash_sql = ", hash_sql.as_string(worker_state[host1]))
+        # print("hash_sql = ", hash_sql.as_string(worker_state[host1]))
 
         # Return early if we have already exceeded the max number of diffs
         if row_diff_count.value >= MAX_DIFF_ROWS:
@@ -505,7 +511,7 @@ def compare_checksums(shared_objects, worker_state, pkey1, pkey2):
                 ]
                 hash1, hash2 = [f.result()[0][0] for f in futures]
         except Exception as e:
-            #print(f"query = {hash_sql}", e)
+            print(f"query = {hash_sql.as_string(worker_state[host1])}", e)
             result_queue.append(BLOCK_ERROR)
             return
 
@@ -519,7 +525,7 @@ def compare_checksums(shared_objects, worker_state, pkey1, pkey2):
                     ]
                     t1_result, t2_result = [f.result() for f in futures]
             except Exception as e:
-                #print(f"query = {block_sql}", e)
+                print(f"query = {block_sql}", e)
                 result_queue.append(BLOCK_ERROR)
                 return
 
@@ -614,15 +620,15 @@ def table_diff(
             "table-diff currently supports only csv and json output formats"
         )
 
-    bad_br = True
-    try:
-        b_r = int(block_rows)
-        if b_r >= 1000:
-            bad_br = False
-    except ValueError:
-        pass
-    if bad_br:
-        util.exit_message(f"block_rows param '{block_rows}' must be integer >= 1000")
+    #bad_br = True
+    #try:
+    #    b_r = int(block_rows)
+    #    if b_r >= 1000:
+    #        bad_br = False
+    #except ValueError:
+    #    pass
+    #if bad_br:
+    #    util.exit_message(f"block_rows param '{block_rows}' must be integer >= 1000")
 
     node_list = []
 
@@ -756,7 +762,7 @@ def table_diff(
 
     if simple_primary_key:
         pkey_sql = sql.SQL("SELECT {key} FROM {table_name} ORDER BY {key}").format(
-            key=sql.Literal(key),
+            key=sql.Identifier(key),
             table_name=sql.SQL("{}.{}").format(
                 sql.Identifier(l_schema), sql.Identifier(l_table)
             ),
@@ -1570,7 +1576,7 @@ def table_repair(cluster_name, diff_file, source_of_truth, table_name, dry_run=F
         # FIXME: Do not use harcoded version numbers
         # Read required version numbers from a config file
         if spock_version >= 4.0:
-            cur.execute("SELECT spock.pause_replication();")
+            cur.execute("SELECT spock.repair_mode(true);")
 
         if rows_to_upsert:
             upsert_tuples = [tuple(row.values()) for row in rows_to_upsert_json]
@@ -1584,7 +1590,7 @@ def table_repair(cluster_name, diff_file, source_of_truth, table_name, dry_run=F
                 cur.executemany(delete_sql, delete_keys)
 
         if spock_version >= 4.0:
-            cur.execute("SELECT spock.resume_replication();")
+            cur.execute("SELECT spock.repair_mode(false);")
 
         conn.commit()
 
