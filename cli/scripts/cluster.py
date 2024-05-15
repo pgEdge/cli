@@ -3,6 +3,7 @@
 
 import os, json, datetime
 import util, utilx, fire, meta, time, sys
+import cluster_util
 
 BASE_DIR = "cluster"
 
@@ -874,12 +875,7 @@ def add_node(cluster_name, source_node, target_node, stanza=" ", backup_id=" ", 
     '''
     utilx.echo_cmd(cmd, host=n["ip_address"], usr=n["os_user"], key=n["ssh_key"])
     
-    utilx.echo_message("Stopping/removing default new cluster", bold = True)
-    cmd = f'''
-    cd {n['path']}/pgedge/;
-    ./pgedge stop
-    '''
-    utilx.echo_cmd(cmd, host=n["ip_address"], usr=n["os_user"], key=n["ssh_key"])
+    cluster_util.manage_node(n, "stop")
 
     cmd = f'rm -rf {n["path"]}/pgedge/data/{stanza}'
     utilx.echo_cmd(cmd, host=n["ip_address"], usr=n["os_user"], key=n["ssh_key"])
@@ -903,34 +899,10 @@ def add_node(cluster_name, source_node, target_node, stanza=" ", backup_id=" ", 
     cmd = f'echo "shared_preload_libraries = \'pg_stat_statements, snowflake\'">> {pgc}'
     utilx.echo_cmd(cmd, host=n["ip_address"], usr=n["os_user"], key=n["ssh_key"])
     
-    utilx.echo_message("Starting new cluster", bold = True)
-    cmd = f'''
-    cd {n['path']}/pgedge/;
-    ./pgedge config pg16 --port={n["port"]};
-    ./pgedge start
-    '''
-    
-    utilx.echo_cmd(cmd, host=n["ip_address"], usr=n["os_user"], key=n["ssh_key"])
-
-    utilx.echo_message("Checking lag time of new cluster", bold = True)
-    cmd = """
-    SELECT
-    pg_last_wal_receive_lsn() AS last_receive_lsn,
-    pg_last_wal_replay_lsn() AS last_replay_lsn,
-    pg_wal_lsn_diff(pg_last_wal_receive_lsn(), pg_last_wal_replay_lsn()) AS lag_bytes
-    """
-
-    lag_bytes = 1
-    while True:
-        if lag_bytes == 0:
-            break
-        time.sleep(1)
-        op = util.psql_cmd_output(cmd, f"{n['path']}/pgedge/pgedge", db[0]["name"], stanza, host=n["ip_address"], usr=n["os_user"], key=n["ssh_key"])
-        last_receive_lsn, last_replay_lsn, lag_bytes = parse_query_output(op)
-        print(f"Replica is {lag_bytes} bytes behind")
-    
-    terminate_cluster_transaction(nodes, dbname, stanza)
-    set_cluster_readonly(nodes, True, dbname, stanza)
+    cluster_util.manage_node(n, "start")
+    cluster_util.check_cluster_lag(n, dbname, stanza)
+    cluster_util.terminate_cluster_transactions(nodes, dbname, stanza)
+    cluster_util.set_cluster_readonly(nodes, True, dbname, stanza)
 
     cmd = "SELECT pg_promote()"
     util.psql_cmd_output(cmd, f"{n['path']}/pgedge/pgedge", dbname, stanza, host=n["ip_address"], usr=n["os_user"], key=n["ssh_key"])
@@ -944,77 +916,12 @@ def add_node(cluster_name, source_node, target_node, stanza=" ", backup_id=" ", 
     '''
     utilx.echo_cmd(cmd, host=n["ip_address"], usr=n["os_user"], key=n["ssh_key"])
    
-    create_node(nodes, n, dbname)
-    set_cluster_readonly(nodes, False,  dbname, stanza)
-    create_sub(nodes, n, dbname)
+    cluster_util.create_node(n,dbname)
+    cluster_util.set_cluster_readonly(nodes, False,  dbname, stanza)
+    cluster_util.create_sub(nodes, n, dbname)
+
     cluster_data['node_groups']['aws'].append(node_data)
     write_cluster_json(cluster_name, cluster_data)
-
-def create_node(nodes, n, dbname):
-    utilx.echo_action(f"Creating new node {n['name']}")
-    cmd = f'''
-    cd {n['path']}/pgedge/;
-    ./pgedge spock node-create {n["name"]} 'host={n["ip_address"]} user=pgedge dbname={dbname} port={n["port"]}' {dbname}
-    '''
-    utilx.echo_cmd(cmd, host=n["ip_address"], usr=n["os_user"], key=n["ssh_key"])
-    utilx.echo_action(f"Creating new node {n['name']}", "ok")
-
-def create_sub(nodes, n, dbname):
-    for node in nodes:
-        utilx.echo_action(f"Creating sub-create sub_{node['name']}{n['name']}")
-        cmd = f'''
-        cd {node['path']}/pgedge/;
-        ./pgedge spock sub-create sub_{node["name"]}{n["name"]} 'host={n["ip_address"]} user=pgedge dbname={dbname} port={n["port"]}' {dbname}
-        '''
-        util.echo_cmd(cmd, host=node["ip_address"], usr=node["os_user"], key=node["ssh_key"])
-        utilx.echo_action(f"Creating sub-create sub_{node['name']}{n['name']}", "ok")
-
-def terminate_cluster_transaction(nodes, dbname, stanza):
-    utilx.echo_action("Terminating cluster transcations")
-    cmd = """
-    SELECT spock.terminate_active_transactions()
-    """
-    for node in nodes:
-        util.psql_cmd_output(cmd, f"{node['path']}/pgedge/pgedge", dbname, stanza, host=node["ip_address"], usr=node["os_user"], key=node["ssh_key"])
-    utilx.echo_action("Terminating cluster transcations", "ok")
-
-def set_cluster_readonly(nodes, readonly, dbname, stanza):
-    if readonly == True:
-        utilx.echo_action(f"Setting readonly mode from cluster")
-        cmd = """
-        SELECT spock.set_cluster_readonly()
-        """
-        for node in nodes:
-            cwd = f"{node['path']}/pgedge/pgedge"
-            util.psql_cmd_output(cmd, cwd, dbname, stanza,host=node["ip_address"], usr=node["os_user"], key=node["ssh_key"])
-        utilx.echo_action(f"Setting readonly mode from cluster", "ok")
-    else:
-        utilx.echo_action(f"Removing readonly mode from cluster")
-        cmd = """
-        SELECT spock.unset_cluster_readonly()
-        """
-        for node in nodes:
-            cwd = f"{node['path']}/pgedge/pgedge"
-            util.psql_cmd_output(cmd, cwd, dbname, stanza,host=node["ip_address"], usr=node["os_user"], key=node["ssh_key"])
-        utilx.echo_action(f"Removing readonly mode from cluster", "ok")
-
-def parse_query_output(output):
-    # Split the output into lines
-    lines = output.split('\n')
-    
-    # Find the line with the data (usually the third line if formatted as shown)
-    data_line = lines[2].strip()
-    
-    # Split the data line into parts
-    parts = data_line.split('|')
-    
-    # Trim whitespace and assign to variables
-    last_receive_lsn = parts[0].strip()
-    last_replay_lsn = parts[1].strip()
-    lag_bytes = int(parts[2].strip())  # Convert lag_bytes to an integer
-    
-    # Return the parsed values
-    return last_receive_lsn, last_replay_lsn, lag_bytes
 
 def remove_node(cluster_name, node_name):
     """Remove node from cluster."""

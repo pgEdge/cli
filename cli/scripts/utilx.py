@@ -18,16 +18,21 @@ import sys
 
 bold_start = "\033[1m"
 bold_end = "\033[0m"
+
 def echo_action(action, status=None, e=False):
+
+    now = datetime.now()
+    t = now.strftime('%B %d, %Y, %H:%M:%S')
+    
     if status is None:
-        sys.stdout.write(f"{action}... ")
+        sys.stdout.write(f"{t}: {action}... ")
         sys.stdout.flush()
     else:
         sys.stdout.write("\r")
         if status.lower() == "ok":
-            sys.stdout.write(f"{action}... [OK]\n")
+            sys.stdout.write(f"{t}: {action}... [OK]\n")
         else:
-            sys.stdout.write(f"{action}... [Failed]\n")
+            sys.stdout.write(f"{t}: {action}... [Failed]\n")
             if e == True:
                 exit(1)
         sys.stdout.flush()
