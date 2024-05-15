@@ -354,6 +354,22 @@ def is_extension(ext_comp):
     return True
 
 
+def list_components():
+    try:
+        c = con.cursor()
+        cols = "component, project, version, platform, port, status, install_dt, autostart"
+        sql = f"SELECT {cols} FROM components"
+        c.execute(sql)
+        t_comp = c.fetchall()
+        r_comp = []
+        for c in t_comp:
+            r_comp.append([c[0], c[1], c[2], c[3], c[4], c[5], c[6], c[7]])
+    except Exception as e:
+        fatal_error(e, sql, "meta.list_components()")
+
+    return r_comp
+
+
 def get_available_component_list():
     try:
         c = con.cursor()
