@@ -620,14 +620,14 @@ def table_diff(
             "table-diff currently supports only csv and json output formats"
         )
 
-    #bad_br = True
-    #try:
+    # bad_br = True
+    # try:
     #    b_r = int(block_rows)
     #    if b_r >= 1000:
     #        bad_br = False
-    #except ValueError:
+    # except ValueError:
     #    pass
-    #if bad_br:
+    # if bad_br:
     #    util.exit_message(f"block_rows param '{block_rows}' must be integer >= 1000")
 
     node_list = []
@@ -1152,7 +1152,7 @@ def table_rerun(cluster_name, diff_file, table_name):
                 sql = f"""
                 SELECT *
                 FROM {table_name}
-                WHERE {key} = '{index}';
+                WHERE "{key}" = '{index}';
                 """
 
                 with ThreadPoolExecutor(max_workers=2) as executor:
@@ -1178,8 +1178,11 @@ def table_rerun(cluster_name, diff_file, table_name):
                         for row in t2_result
                     ]
 
-                    node1_set = OrderedSet(t1_result)
-                    node2_set = OrderedSet(t2_result)
+                    t1_result = tuple(t1_result)
+                    t2_result = tuple(t2_result)
+
+                    node1_set.add(t1_result)
+                    node2_set.add(t2_result)
         else:
             for indices in values:
                 sql = f"""
@@ -1189,9 +1192,8 @@ def table_rerun(cluster_name, diff_file, table_name):
                 """
 
                 ctr = 0
-                # XXX: What about ordering?
                 for k in key.split(","):
-                    sql += f" {k} = '{indices[ctr]}' AND"
+                    sql += f" \"{k}\" = '{indices[ctr]}' AND"
                     ctr += 1
 
                 # Get rid of the last "AND" and add a semicolon
@@ -1220,8 +1222,11 @@ def table_rerun(cluster_name, diff_file, table_name):
                         for row in t2_result
                     ]
 
-                    node1_set = OrderedSet(t1_result)
-                    node2_set = OrderedSet(t2_result)
+                    t1_result = tuple(t1_result)
+                    t2_result = tuple(t2_result)
+
+                    node1_set.add(t1_result)
+                    node2_set.add(t2_result)
 
         node1_diff = node1_set - node2_set
         node2_diff = node2_set - node1_set
@@ -1540,14 +1545,22 @@ def table_repair(cluster_name, diff_file, source_of_truth, table_name, dry_run=F
         Here we are constructing an UPSERT query from true_rows and
         applying it to all nodes
         """
-        update_sql = f"""
-        INSERT INTO {table_name}
-        VALUES ({','.join(['%s'] * len(cols_list))})
-        ON CONFLICT ("{key}") DO UPDATE SET
-        """
+        if simple_primary_key:
+            update_sql = f"""
+            INSERT INTO {table_name}
+            VALUES ({','.join(['%s'] * len(cols_list))})
+            ON CONFLICT ("{key}") DO UPDATE SET
+            """
+        else:
+            update_sql = f"""
+            INSERT INTO {table_name}
+            VALUES ({','.join(['%s'] * len(cols_list))})
+            ON CONFLICT
+            ({','.join(['"' + col + '"' for col in keys_list])}) DO UPDATE SET
+            """
 
         for col in cols_list:
-            update_sql += f"\"{col}\" = EXCLUDED.\"{col}\", "
+            update_sql += f'"{col}" = EXCLUDED."{col}", '
 
         update_sql = update_sql[:-2] + ";"
 
@@ -1565,7 +1578,7 @@ def table_repair(cluster_name, diff_file, source_of_truth, table_name, dry_run=F
             """
 
             for k in keys_list:
-                delete_sql += f" \"{k}\" = %s AND"
+                delete_sql += f' "{k}" = %s AND'
 
             delete_sql = delete_sql[:-3] + ";"
 
