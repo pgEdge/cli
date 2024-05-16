@@ -343,7 +343,7 @@ def get_table_list(table, db, pg_v):
         w_table = str(l_tbl[0])
 
     sql = (
-        "SELECT table_schema || '.' || table_name as schema_table \n"
+        "SELECT table_schema || '.' || table_name as schema_table,('\"' ||table_schema || '\".\"' ||table_name||'\"')::regclass::oid as table_oid \n"
         + "  FROM information_schema.tables\n"
         + " WHERE TABLE_TYPE = 'BASE TABLE' \n"
         + " AND table_schema NOT IN ('spock','pg_catalog','information_schema')"
@@ -352,7 +352,7 @@ def get_table_list(table, db, pg_v):
     if w_schema:
         sql = sql + "\n   AND table_schema = '" + w_schema + "'"
 
-    sql = sql + "\n   AND table_name LIKE '" + w_table.replace("*", "%") + "'"
+    sql = sql + "\n   AND table_name ILIKE '" + w_table.replace("*", "%") + "'"
 
     con = get_pg_connection(pg_v, db, get_user())
 

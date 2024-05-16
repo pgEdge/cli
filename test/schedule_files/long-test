@@ -251,6 +251,11 @@ t/spock_repset_create_error_1.py
 t/spock_repset_create_error_2.py
 t/spock_repset_create_error_3.py
 
+# cleanup scripts
+##
+
+t/8086_env_node_drop_n1.pl
+t/8087_env_node_drop_n2.pl
 
 # Set up for the next round of tests
 
