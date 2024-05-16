@@ -495,8 +495,6 @@ def compare_checksums(shared_objects, worker_state, pkey1, pkey2):
         host1 = node_pair[0]
         host2 = node_pair[1]
 
-        # print("hash_sql = ", hash_sql.as_string(worker_state[host1]))
-
         # Return early if we have already exceeded the max number of diffs
         if row_diff_count.value >= MAX_DIFF_ROWS:
             queue.append(block_result)
@@ -611,6 +609,8 @@ def table_diff(
 
     if max_cpu_ratio > 1 or max_cpu_ratio < 0:
         util.exit_message("Invalid values for ACE_MAX_CPU_RATIO or --max_cpu_ratio")
+
+    max_cpu_ratio = float(max_cpu_ratio)
 
     # Capping max block size here to prevent the hash function from taking forever
     if block_rows > MAX_ALLOWED_BLOCK_SIZE:
@@ -1753,7 +1753,7 @@ def repset_diff(
                 break
     else:
         database = db[0]
-    
+
     if not database:
         util.exit_message(f"Database '{dbname}' not found in cluster '{cluster_name}'")
 
