@@ -234,22 +234,32 @@ def schema_diff(cluster_name, nodes, schema_name):
 
     for nd in cluster_nodes:
         if nd["name"] in node_list:
-            sql1 = write_pg_dump(nd["ip_address"], nd["db_name"], nd["port"], nd["name"], l_schema)
+            sql1 = write_pg_dump(
+                nd["ip_address"], nd["db_name"], nd["port"], nd["name"], l_schema
+            )
             file_list.append(sql1)
 
     if os.stat(file_list[0]).st_size == 0:
         util.exit_message(f"Schema {schema_name} does not exist on node {node_list[0]}")
 
-    for n in range(1,len(file_list)):      
+    for n in range(1, len(file_list)):
         cmd = "diff " + file_list[0] + "  " + file_list[n] + " > /tmp/diff.txt"
         util.message("\n## Running # " + cmd + "\n")
         rc = os.system(cmd)
         if os.stat(file_list[n]).st_size == 0:
-            util.exit_message(f"Schema {schema_name} does not exist on node {node_list[n]}")
+            util.exit_message(
+                f"Schema {schema_name} does not exist on node {node_list[n]}"
+            )
         if rc == 0:
-            util.message(f"SCHEMAS ARE THE SAME- between {node_list[0]} and {node_list[n]} !!", p_state="success")
+            util.message(
+                f"SCHEMAS ARE THE SAME- between {node_list[0]} and {node_list[n]} !!",
+                p_state="success",
+            )
         else:
-            prRed(f"\u2718   SCHEMAS ARE NOT THE SAME- between {node_list[0]} and {node_list[n]}!!")
+            prRed(
+                f"\u2718   SCHEMAS ARE NOT THE SAME- between {node_list[0]}"
+                "and {node_list[n]}!!"
+            )
 
 
 def spock_diff(cluster_name, nodes):
@@ -278,10 +288,10 @@ def spock_diff(cluster_name, nodes):
     db, pg, node_info = cluster.load_json(cluster_name)
 
     cluster_nodes = []
-    '''
+    """
     Even though multiple databases are allowed, ACE will, for now,
     only take the first entry in the db list
-    ''' 
+    """
     database = db[0]
     database["db_name"] = database.pop("name")
 
@@ -338,7 +348,7 @@ def spock_diff(cluster_name, nodes):
 
         prCyan("  Subscriptions:")
 
-        diff_spock["subscriptions"]=[]
+        diff_spock["subscriptions"] = []
         for node in node_info:
             if node["sub_name"] is None:
                 hints.append("Hint: No subscriptions have been created on this node")
@@ -385,11 +395,16 @@ def spock_diff(cluster_name, nodes):
 
     print(" Spock - Diff")
     print("~~~~~~~~~~~~~~~~~~~~~~~~~")
-    for n in range(1,len(compare_spock)):
+    for n in range(1, len(compare_spock)):
         if compare_spock[0]["rep_set_info"] == compare_spock[n]["rep_set_info"]:
-            util.message(f"   Replication Rules are the same for {node_list[0]} and {node_list[n]}!!", p_state="success")
+            util.message(
+                f"   Replication Rules are the same for {node_list[0]} and {node_list[n]}!!",
+                p_state="success",
+            )
         else:
-            prRed(f"\u2718   Difference in Replication Rules between {node_list[0]} and {node_list[n]}")
+            prRed(
+                f"\u2718   Difference in Replication Rules between {node_list[0]} and {node_list[n]}"
+            )
 
 
 def run_query(worker_state, host, query):
