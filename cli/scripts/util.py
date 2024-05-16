@@ -581,6 +581,33 @@ def psql_cmd(cmd, nc, db, pg, host, usr, key):
     echo_cmd(nc + ' psql "' + cmd + '" ' + db, host=host, usr=usr, key=key)
 
 
+def mk_cmd(cmd, echo=True, sleep_secs=0, host="", usr="", key=""):
+    if host > "":
+        ssh_cmd = "ssh -o StrictHostKeyChecking=no -q -t "
+        if usr > "":
+            ssh_cmd = ssh_cmd + str(usr) + "@"
+
+        ssh_cmd = ssh_cmd + str(host) + " "
+
+        if key > "":
+            ssh_cmd = ssh_cmd + "-i " + str(key) + " "
+
+        cmd = cmd.replace('"', '\\"')
+
+        if os.getenv("pgeDebug", "") > "":
+            cmd = f"{cmd} --debug"
+
+        cmd = ssh_cmd + ' "' + str(cmd) + '"'
+
+    return cmd
+
+
+def psql_cmd_output(cmd, nc, db, pg, host, usr, key):
+    cmd = mk_cmd(nc + ' psql "' + cmd + '" ' + db, host=host, usr=usr, key=key)
+    result = subprocess.run(cmd, text=True, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    return result.stdout
+
+
 def print_exception(e, msg_type="error"):
     lines = str(e).splitlines()
     for line in lines:
@@ -1851,6 +1878,32 @@ def put_pgconf_auto(p_pgver, p_conf):
     write_string_file(p_conf, config_file)
 
     return
+
+def get_pgconf_value(p_pgver, p_key):
+    config_file = get_pgconf_filename(p_pgver)
+    
+    if config_file == "":  
+        return False
+    
+    parameter_value = None
+
+    with open(config_file, 'r') as conf_file:
+        # Read each line of the file
+        for line in conf_file:
+            # Ignore comments and empty lines
+            if line.strip() == '' or line.strip().startswith('#'):
+                continue
+            # Split the line into parameter and value
+            parts = line.split('=')
+            if len(parts) == 2:
+                key = parts[0].strip()
+                value = parts[1].strip().split('#')[0].strip()  # Remove comments
+                # Check if the parameter matches the one we're looking for
+                if key == p_key:
+                    parameter_value = value
+                    break
+
+    return parameter_value
 
 
 def remove_pgconf_keyval(p_pgver, p_key, p_val=""):
@@ -3852,6 +3905,56 @@ def update_component_state(p_app, p_mode, p_ver=None):
     message(msg, "debug", isJSON)
     return
 
+bold_start = "\033[1m"
+bold_end = "\033[0m"
+
+def echo_action(action, status=None, e=False):
+
+    now = datetime.now()
+    t = now.strftime('%B %d, %Y, %H:%M:%S')
+    
+    if status is None:
+        sys.stdout.write(f"{t}: {action}... ")
+        sys.stdout.flush()
+    else:
+        sys.stdout.write("\r")
+        if status.lower() == "ok":
+            sys.stdout.write(f"{t}: {action}... [OK]\n")
+        else:
+            sys.stdout.write(f"{t}: {action}... [Failed]\n")
+            if e == True:
+                exit(1)
+        sys.stdout.flush()
+
+def echo_message(msg, bold=False, level="info"):
+    now = datetime.now()
+    t = now.strftime('%B %d, %Y, %H:%M:%S')
+
+    if bold == True:
+        util.message(t + ": " + bold_start + msg + bold_end, level)
+    else:
+        util.message(t + ": " + msg,level)
+
+    if level == "error":
+        exit(1)
+
+def echo_node(data):
+    nodes = data.get('nodes', [])
+    for node in nodes:
+        print('#' * 30)
+        for key, value in node.items():
+            print(bold_start + f"* {key}:" + bold_end +"{value}")
+        print(bold_start + '#'*30 + bold_end)
+
+def run_command(command_args, max_attempts=1, timeout=None, capture_output=True, env=None, cwd=None, verbose=False):
+    attempts = 0
+    output, error = "", ""
+
+    while attempts < max_attempts:
+        try:
+            attempts += 1
+            result = subprocess.run(command_args, check=True, text=True,
+                                    capture_output=capture_output, timeout=timeout,
 
 # MAINLINE ################################################################
 cL = sqlite3.connect(MY_LITE, check_same_thread=False)

@@ -14,23 +14,102 @@ from dateutil import parser
 from datetime import datetime
 import logging
 
-def run_command(command_args, max_attempts=1, timeout=None, capture_output=False, env=None, cwd=None, verbose=True):
-    """
-    Executes an external command, with options to retry, set timeout, and capture output.
+import sys
 
-    Args:
-        command_args (list): Command and its arguments as a list, e.g., ['ls', '-l'].
-        max_attempts (int): Maximum number of attempts to execute the command.
-        timeout (int, optional): Time in seconds to wait for the command to complete.
-        capture_output (bool): Whether to capture and return the command's output.
-        env (dict, optional): Environment variables to set for the command.
-        cwd (str, optional): Set the working directory for the command.
-        verbose (bool): Print detailed execution logs.
+bold_start = "\033[1m"
+bold_end = "\033[0m"
 
-    Returns:
-        dict: A dictionary with keys 'success', 'output', 'error', and 'attempts',
-              indicating the execution status, captured output, error message, and number of attempts.
-    """
+def echo_action(action, status=None, e=False):
+
+    now = datetime.now()
+    t = now.strftime('%B %d, %Y, %H:%M:%S')
+    
+    if status is None:
+        sys.stdout.write(f"{t}: {action}... ")
+        sys.stdout.flush()
+    else:
+        sys.stdout.write("\r")
+        if status.lower() == "ok":
+            sys.stdout.write(f"{t}: {action}... [OK]\n")
+        else:
+            sys.stdout.write(f"{t}: {action}... [Failed]\n")
+            if e == True:
+                exit(1)
+        sys.stdout.flush()
+
+def echo_message(msg, bold=False, level="info"):
+    now = datetime.now()
+    t = now.strftime('%B %d, %Y, %H:%M:%S')
+
+    if bold == True:
+        util.message(t + ": " + bold_start + msg + bold_end, level)
+    else:
+        util.message(t + ": " + msg,level)
+
+    if level == "error":
+        exit(1)
+
+def echo_node(data):
+    nodes = data.get('nodes', [])
+    for node in nodes:
+        print('#' * 30)
+        for key, value in node.items():
+            print(bold_start + f"* {key}:" + bold_end +"{value}")
+        print(bold_start + '#'*30 + bold_end)
+
+def echo_cmd(cmd, echo=False, sleep_secs=0, host="", usr="", key=""):
+    if host > "":
+        ssh_cmd = "ssh -o StrictHostKeyChecking=no -q -t "
+        if usr > "":
+            ssh_cmd = ssh_cmd + str(usr) + "@"
+
+        ssh_cmd = ssh_cmd + str(host) + " "
+
+        if key > "":
+            ssh_cmd = ssh_cmd + "-i " + str(key) + " "
+
+        cmd = cmd.replace('"', '\\"')
+
+        if os.getenv("pgeDebug", "") > "":
+            cmd = f"{cmd} --debug"
+
+        cmd = ssh_cmd + ' "' + str(cmd) + '"'
+
+    isSilent = os.getenv("isSilent", "False")
+    if isSilent == "False":
+        s_cmd = scrub_passwd(cmd)
+        if echo:
+            print("#  " + str(s_cmd))
+
+    rc = os.system(str(cmd))
+    if rc == 0:
+        if int(sleep_secs) > 0:
+            os.system("sleep " + str(sleep_secs))
+        return 0
+
+    return 1
+
+def scrub_passwd(p_cmd):
+    ll = p_cmd.split()
+    flag = False
+    new_s = ""
+    key_wd = ""
+
+    for i in ll:
+        if ((i == "PASSWORD") or (i == "-P")) and (flag is False):
+            flag = True
+            key_wd = str(i)
+            continue
+
+        if flag:
+            new_s = new_s + " " + key_wd + " '???'"
+            flag = False
+        else:
+            new_s = new_s + " " + i
+
+    return new_s
+
+def run_command(command_args, max_attempts=1, timeout=None, capture_output=True, env=None, cwd=None, verbose=False):
     attempts = 0
     output, error = "", ""
 
@@ -44,13 +123,13 @@ def run_command(command_args, max_attempts=1, timeout=None, capture_output=False
                 output = result.stdout
                 error = result.stderr
             if verbose:
-                print(f"Attempt {attempts}: Command executed successfully.")
+                print(f"Command executed successfully.")
             return {"success": True, "output": output, "error": error, "attempts": attempts}
 
         except subprocess.CalledProcessError as e:
             error = e.stderr if capture_output else str(e)
             if verbose:
-                print(f"Attempt {attempts}: Error executing command: {error}")
+                print(f"Error executing command: {error}")
             time.sleep(1)  # Simple backoff strategy
         except subprocess.TimeoutExpired as e:
             error = f"Command timed out after {timeout} seconds."
@@ -59,7 +138,6 @@ def run_command(command_args, max_attempts=1, timeout=None, capture_output=False
             break  # No retry after timeout
 
     return {"success": False, "output": output, "error": error, "attempts": attempts}
-
 
 def check_directory_status(directory_path):
     """
@@ -109,123 +187,38 @@ def check_directory_status(directory_path):
 
 
 def sfmt_time(date_string, target_timezone='UTC'):
-    """
-    Formats a given date string to 'YYYY-MM-DD HH:MM:SS' format including timezone conversion.
-
-    Args:
-        date_string (str): The date string to format.
-        target_timezone (str): The target timezone for the formatted datetime. Defaults to 'UTC'.
-
-    Returns:
-        str: Formatted datetime string with timezone.
-
-    Raises:
-        ValueError: If the input date string is in an invalid format.
-    """
     try:
-        # Use dateutil.parser to automatically parse the date string
         dt = parser.parse(date_string)
-
-        # Check if the datetime object is timezone-aware. If not, assume UTC.
         if dt.tzinfo is None:
             from datetime import timezone
             dt = dt.replace(tzinfo=timezone.utc)
 
-        # Convert to target timezone if necessary
         if target_timezone.upper() != 'UTC':
             from zoneinfo import ZoneInfo
             dt = dt.astimezone(ZoneInfo(target_timezone))
 
-        # Format the datetime object to the required format with timezone information
         formatted_time_with_timezone = dt.strftime("%Y-%m-%d %H:%M:%S")
-        #formatted_time_with_timezone = dt.strftime("%Y-%m-%d %H:%M:%S %Z")
 
         return formatted_time_with_timezone
 
     except ValueError as e:
         raise ValueError(f"Invalid date string format: {e}")
 
-# Setup the logger
-logger = logging.getLogger('')
-logger.setLevel(logging.DEBUG)  # This could be configurable
-
-# Create console handler and set level to debug
-ch = logging.StreamHandler()
-ch.setLevel(logging.DEBUG)
-
-# Create formatter
-formatter = logging.Formatter('%(levelname)s - %(message)s')
-
-# Add formatter to ch
-ch.setFormatter(formatter)
-
-# Add ch to logger
-logger.addHandler(ch)
-
-
-def ereport(severity, message, detail=None, hint=None, context=None):
-    """
-    Mimics PostgreSQL's ereport function for logging messages in a style that closely resembles PostgreSQL log format.
-
-    Args:
-        severity (str): The severity level ('ERROR', 'WARNING', 'NOTICE', 'DEBUG', etc.).
-        message (str): The primary human-readable error message.
-        detail (str, optional): An optional detail message providing more context.
-        hint (str, optional): An optional hint message suggesting how to fix the problem.
-        context (str, optional): An optional context message where the error occurred.
-    """
-    parts = [f"{message}"]
-    if detail:
-        parts.append(f" |\tDETAIL: {detail}")
-    if hint:
-        parts.append(f" |\tHINT: {hint}")
-    if context:
-        parts.append(f" |\tCONTEXT: {context}")
-
-    full_message = "\n".join(parts)
-
-    # Assuming logger is already configured
-    if severity.upper() == 'ERROR':
-        logger.error(full_message)
-    elif severity.upper() == 'WARNING':
-        logger.warning(full_message)
-    elif severity.upper() == 'NOTICE':
-        logger.info(full_message)  # NOTICE is mapped to INFO in logging
-    elif severity.upper() == 'DEBUG':
-        logger.debug(full_message)
-    else:
-        logger.info(full_message)  # Default to INFO for unrecognized severity levels
-
 def guc_set(guc_name, guc_value, pg=None):
-    """
-    Sets a PostgreSQL GUC (Grand Unified Configuration) parameter.
-
-    Args:
-        guc_name (str): The name of the GUC parameter to set.
-        guc_value (str): The value to set for the GUC parameter.
-        pg (str, optional): The PostgreSQL version. If not provided, uses a default or derives it.
-    """
     if pg is None:
-        # If pg version is not specified, obtain it using util.get_pg_v function
         pg_v = util.get_pg_v(pg)
-        pg = pg_v[2:]  # Assuming util.get_pg_v returns a version string with a prefix to trim
+        pg = pg_v[2:]
 
-    # Base command prefix for using the appropriate PostgreSQL binary
     cmd_prefix = f"./pgedge pgbin {pg} "
 
-    # Command to alter the system setting for the specified GUC
     alter_system_cmd = f'psql -q -c "ALTER SYSTEM SET {guc_name} = {guc_value}" postgres'
 
-    # Execute the ALTER SYSTEM command
     rc1 = util.echo_cmd(f'{cmd_prefix}"{alter_system_cmd}"', False)
 
-    # Command to reload the configuration to apply the change
     reload_conf_cmd = 'psql -q -c "SELECT pg_reload_conf()" postgres'
 
-    # Execute the RELOAD CONFIGURATION command
     rc2 = util.echo_cmd(f'{cmd_prefix}"{reload_conf_cmd}"', False)
 
-    # Check if both commands executed successfully
     if rc1 == 0 and rc2 == 0:
         util.message(f"Set GUC {guc_name} to {guc_value}", "info")
     else:
