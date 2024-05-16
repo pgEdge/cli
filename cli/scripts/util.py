@@ -3955,6 +3955,26 @@ def run_command(command_args, max_attempts=1, timeout=None, capture_output=True,
             attempts += 1
             result = subprocess.run(command_args, check=True, text=True,
                                     capture_output=capture_output, timeout=timeout,
+                                    env=env, cwd=cwd)
+            if capture_output:
+                output = result.stdout
+                error = result.stderr
+            if verbose:
+                print(f"Command executed successfully.")
+            return {"success": True, "output": output, "error": error, "attempts": attempts}
+
+        except subprocess.CalledProcessError as e:
+            error = e.stderr if capture_output else str(e)
+            if verbose:
+                print(f"Error executing command: {error}")
+            time.sleep(1)  # Simple backoff strategy
+        except subprocess.TimeoutExpired as e:
+            error = f"Command timed out after {timeout} seconds."
+            if verbose:
+                print(f"Attempt {attempts}: {error}")
+            break  # No retry after timeout
+
+    return {"success": False, "output": output, "error": error, "attempts": attempts}
 
 # MAINLINE ################################################################
 cL = sqlite3.connect(MY_LITE, check_same_thread=False)
