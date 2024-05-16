@@ -590,6 +590,7 @@ def compare_checksums(shared_objects, worker_state, pkey1, pkey2):
 def table_diff(
     cluster_name,
     table_name,
+    dbname=None,
     block_rows=1000,
     max_cpu_ratio=MAX_CPU_RATIO,
     output="json",
@@ -604,7 +605,7 @@ def table_diff(
         except Exception:
             util.exit_message("Invalid values for ACE_BLOCK_ROWS")
     try:
-        max_cpu_ratio = int(os.environ.get("ACE_MAX_CPU_RATIO", max_cpu_ratio))
+        max_cpu_ratio = float(os.environ.get("ACE_MAX_CPU_RATIO", max_cpu_ratio))
     except Exception:
         util.exit_message("Invalid values for ACE_MAX_CPU_RATIO")
 
@@ -620,15 +621,15 @@ def table_diff(
             "table-diff currently supports only csv and json output formats"
         )
 
-    # bad_br = True
-    # try:
-    #    b_r = int(block_rows)
-    #    if b_r >= 1000:
-    #        bad_br = False
-    # except ValueError:
-    #    pass
-    # if bad_br:
-    #    util.exit_message(f"block_rows param '{block_rows}' must be integer >= 1000")
+    bad_br = True
+    try:
+        b_r = int(block_rows)
+        if b_r >= 1000:
+            bad_br = False
+    except ValueError:
+        pass
+    if bad_br:
+        util.exit_message(f"block_rows param '{block_rows}' must be integer >= 1000")
 
     node_list = []
 
@@ -661,12 +662,19 @@ def table_diff(
     db, pg, node_info = cluster.load_json(cluster_name)
 
     cluster_nodes = []
+    database = {}
 
-    """
-    Even though multiple databases are allowed, ACE will, for now,
-    only take the first entry in the db list
-    """
-    database = db[0]
+    if dbname:
+        for db_entry in db:
+            if db_entry["name"] == dbname:
+                database = db_entry
+                break
+    else:
+        database = db[0]
+
+    if not database:
+        util.exit_message(f"Database '{dbname}' not found in cluster '{cluster_name}'")
+
     database["db_name"] = database.pop("name")
 
     # Combine db and cluster_nodes into a single json
@@ -1003,7 +1011,7 @@ def write_diffs_csv():
         )
 
 
-def table_rerun(cluster_name, diff_file, table_name):
+def table_rerun(cluster_name, diff_file, table_name, dbname=None):
     """Re-run differences on the results of a recent table-diff"""
 
     if not os.path.exists(diff_file):
@@ -1021,9 +1029,19 @@ def table_rerun(cluster_name, diff_file, table_name):
     db, pg, node_info = cluster.load_json(cluster_name)
 
     cluster_nodes = []
+    database = {}
 
-    # Combine db and cluster_nodes into a single json
-    database = db[0]
+    if dbname:
+        for db_entry in db:
+            if db_entry["name"] == dbname:
+                database = db_entry
+                break
+    else:
+        database = db[0]
+
+    if not database:
+        util.exit_message(f"Database '{dbname}' not found in cluster '{cluster_name}'")
+
     database["db_name"] = database.pop("name")
 
     # Combine db and cluster_nodes into a single json
@@ -1261,7 +1279,9 @@ def table_rerun(cluster_name, diff_file, table_name):
     util.message("RUN TIME = " + str(util.round_timedelta(datetime.now() - start_time)))
 
 
-def table_repair(cluster_name, diff_file, source_of_truth, table_name, dry_run=False):
+def table_repair(
+    cluster_name, diff_file, source_of_truth, table_name, dbname=None, dry_run=False
+):
     """Apply changes from a table-diff source of truth to destination table"""
     import pandas as pd
 
@@ -1282,12 +1302,19 @@ def table_repair(cluster_name, diff_file, source_of_truth, table_name, dry_run=F
     db, pg, node_info = cluster.load_json(cluster_name)
 
     cluster_nodes = []
+    database = {}
 
-    """
-    Even though multiple databases are allowed, ACE will, for now,
-    only take the first entry in the db list
-    """
-    database = db[0]
+    if dbname:
+        for db_entry in db:
+            if db_entry["name"] == dbname:
+                database = db_entry
+                break
+    else:
+        database = db[0]
+
+    if not database:
+        util.exit_message(f"Database '{dbname}' not found in cluster '{cluster_name}'")
+
     database["db_name"] = database.pop("name")
 
     # Combine db and cluster_nodes into a single json
@@ -1652,6 +1679,7 @@ def table_repair(cluster_name, diff_file, source_of_truth, table_name, dry_run=F
 def repset_diff(
     cluster_name,
     repset_name,
+    dbname=None,
     block_rows=10000,
     max_cpu_ratio=MAX_CPU_RATIO,
     output="json",
@@ -1716,12 +1744,19 @@ def repset_diff(
     db, pg, node_info = cluster.load_json(cluster_name)
 
     cluster_nodes = []
+    database = {}
 
-    """
-    Even though multiple databases are allowed, ACE will, for now,
-    only take the first entry in the db list
-    """
-    database = db[0]
+    if dbname:
+        for db_entry in db:
+            if db_entry["name"] == dbname:
+                database = db_entry
+                break
+    else:
+        database = db[0]
+    
+    if not database:
+        util.exit_message(f"Database '{dbname}' not found in cluster '{cluster_name}'")
+
     database["db_name"] = database.pop("name")
 
     # Combine db and cluster_nodes into a single json
