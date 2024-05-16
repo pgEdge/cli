@@ -1,0 +1,2 @@
+
+sudo yum remove alloydb-cli -y

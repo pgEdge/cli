@@ -94,6 +94,7 @@ def json_create(cluster_name, style, db="demo", user="user1", passwd="passwd1", 
     database_json["pg_version"] = pg
     database_json["spock_version"] = ""
     database_json["auto_ddl"] = "off"
+    database_json["auto_start"] = "off"
     db_json = {}
     db_json["username"] = user
     db_json["password"] = passwd
@@ -172,6 +173,7 @@ def create_remote_json(
     database_json["pg_version"] = pg
     database_json["spock_version"] = ""
     database_json["auto_ddl"] = "off"
+    database_json["auto_start"] = "off"
     db_json = {}
     db_json["username"] = usr
     db_json["password"] = passwd
@@ -212,15 +214,19 @@ def load_json(cluster_name):
     pg = parsed_json["database"]["pg_version"]
     spock = ""
     auto_ddl = "off"
+    auto_start = "off"
     if "spock_version" in parsed_json["database"]:
         spock = parsed_json["database"]["spock_version"]
     if "auto_ddl" in parsed_json["database"]:
         auto_ddl = parsed_json["database"]["auto_ddl"]
+    if "auto_start" in parsed_json["database"]:
+        auto_start = parsed_json["database"]["auto_start"]
 
     db_settings = {}
     db_settings["pg_version"] = pg
     db_settings["spock_version"] = spock
     db_settings["auto_ddl"] = auto_ddl
+    db_settings["auto_start"] = auto_start
  
     db=[]
     for databases in parsed_json["database"]["databases"]:
@@ -296,6 +302,8 @@ def validate(cluster_name):
             parsed_json["database"]["spock_version"]=""
         if "auto_ddl" not in parsed_json["database"]:
             parsed_json["database"]["auto_ddl"]="off"
+        if "auto_start" not in parsed_json["database"]:
+            parsed_json["database"]["auto_start"]="off"
         if "databases" not in parsed_json["database"]:
             util.exit_message("Database Details section missing")
         if 1 > len(parsed_json["database"]["databases"]):
@@ -458,6 +466,8 @@ def ssh_install_pgedge(cluster_name, db, db_settings, db_user, db_passwd, nodes)
             parms = parms + f" --pg {pg}"
         if spock is not None and spock != '':
             parms = parms + f" --spock_ver {spock}"
+        if db_settings["auto_start"] == "on":
+            parms = f"{parms} --autostart"
         util.echo_cmd(f"{nc} setup {parms}", host=n["ip_address"], usr=n["os_user"], key=n["ssh_key"])
         if db_settings["auto_ddl"] == "on":
             cmd = nc + " db guc-set spock.enable_ddl_replication on;"

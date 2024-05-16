@@ -1,13 +1,263 @@
-## Test UM Module
+## Set up a two node cluster
 t/020_nodectl_install_pgedge.pl
+t/300_setup_script.pl
 
 ## Test Service Module
 
-## Test curl, install.py, setup
+t/service_reload_component.pl
+t/service_restart_component.pl
+t/service_start_component.pl
+t/service_stop_component.pl
+t/service_status_without_flag.pl
+t/service_enable_component.pl
+t/service_disable_component.pl
+t/service_enable_error.pl
+
+## Test UM Module
+t/um_install_available_components.py
+t/um_update_available_components.py
+t/um_remove_available_components.py
+
+
+## Setup scripts for lower level directory
 t/8000a_env_setup_pgedge_node1.pl
 t/8001a_env_setup_pgedge_node2.pl
 t/8000b_install_pgedge_node1.pl
 t/8001b_install_pgedge_node2.pl
+t/8051_env_create_node1.pl
+t/8052_env_create_node2.pl
+
+## Test DB Module
+t/db-guc-show.py
+t/db-guc-show-no-guc.py
+t/db-guc-show-wildcard.py
+t/db-guc-show-invalid-name.py
+t/db-guc-set.py
+t/db-guc-set-invalid-type.py
+t/db-guc-set-no-reload.py
+t/db-guc-set-invalid-value.py
+
+
+## Test sub_tests
+# error tests
+t/spock_node_create_no_node_name.py
+t/spock_node_create_no_repset_user.py
+t/spock_node_create_no_dbname.py
+t/spock_node_create_no_dns.py
+
+##
+# sub --synchronize_structure tests
+##
+t/spock_sub_create_synch_struct_n1.py
+t/spock_sub_create_synch_struct_n2.py
+
+# cleanup scripts
+t/spock_sub_create_synch_cleanup.py
+t/8083_env_sub_drop_n2.pl
+t/8086_env_node_drop_n1.pl
+t/8087_env_node_drop_n2.pl
+
+##
+# sub --synchronize_data tests
+##
+t/spock_sub_create_synch_data_n1.py
+t/spock_sub_create_synch_data_n2.py
+
+# cleanup scripts
+t/spock_sub_create_synch_cleanup.py
+t/8083_env_sub_drop_n2.pl
+t/8086_env_node_drop_n1.pl
+t/8087_env_node_drop_n2.pl
+
+##
+# sub --synchronize_structure and --synchronize_data tests
+##
+t/spock_sub_create_synch_all_n1.py
+t/spock_sub_create_synch_all_n2.py
+
+# cleanup scripts
+t/spock_sub_create_synch_cleanup.py
+t/8083_env_sub_drop_n2.pl
+t/8086_env_node_drop_n1.pl
+t/8087_env_node_drop_n2.pl
+
+
+##
+t/8000a_env_setup_pgedge_node1.pl
+t/8001a_env_setup_pgedge_node2.pl
+t/8051_env_create_node1.pl
+t/8052_env_create_node2.pl
+
+## pgbench
+t/pgbench-install.py
+t/pgbench-remove_leaves_my_table.py
+t/pgbench-install_with_repset.py
+t/pgbench-run.py
+t/pgbench-validate.py
+t/pgbench-install_skip.py
+t/pgbench-remove.py
+
+##
+#Negative-Tests
+#
+t/pgbench-install_no_dbname.py
+t/pgbench-install_invalid_dbname.py
+t/pgbench-install_invalid_dbname_valid_repsetname.py
+t/pgbench-validate_without_pgbench-install.py
+t/pgbench-run_dependency_on_pgbench-install.py
+t/pgbench-install_valid_dbname_invalid_repsetname.py
+t/pgbench-run_invalid_dbname.py
+t/pgbench-run_invalid_rate.py
+t/pgbench-validate_no_dbname.py
+t/pgbench-validate_invalid_dbname.py
+t/pgbench-remove_no_dbname.py
+
+
+# Repset tests
+#
+
+##
+# setup scripts
+##
+#The nodes already exist
+#
+#t/8000a_env_setup_pgedge_node1.pl
+#t/8001a_env_setup_pgedge_node2.pl
+#t/8000b_install_pgedge_node1.pl
+#t/8001b_install_pgedge_node2.pl
+##
+# node creation - the nodes already exist
+##
+#t/8051_env_create_node1.pl
+#t/8052_env_create_node2.pl
+##
+# repset replicateDelete=False test cases
+##
+t/8060_env_delete_false_n1.pl
+t/8061_env_sub_n1n2_delete_false.pl
+t/8062_env_delete_false_n2.pl
+t/8063_env_sub_n2n1_delete_false.pl
+t/8064_env_delete_replication_check.pl
+##
+# cleanup scripts
+##
+t/8080_env_repset_drop_n1.pl
+t/8081_env_repset_drop_n2.pl
+t/8082_env_sub_drop_n1.pl
+t/8083_env_sub_drop_n2.pl
+t/8084_env_table_drop_n1.pl
+t/8085_env_table_drop_n2.pl
+t/8086_env_node_drop_n1.pl
+t/8087_env_node_drop_n2.pl
+##
+# node creation
+##
+t/8051_env_create_node1.pl
+t/8052_env_create_node2.pl
+##
+# repset replicateInsert=False test cases
+##
+t/8065_env_insert_false_n1.pl
+t/8066_env_sub_n1n2_insert_false.pl
+t/8067_env_insert_false_n2.pl
+t/8068_env_sub_n2n1_insert_false.pl
+t/8069_env_insert_replication_check.pl
+##
+# cleanup scripts
+##
+t/8080_env_repset_drop_n1.pl
+t/8081_env_repset_drop_n2.pl
+t/8082_env_sub_drop_n1.pl
+t/8083_env_sub_drop_n2.pl
+t/8084_env_table_drop_n1.pl
+t/8085_env_table_drop_n2.pl
+t/8086_env_node_drop_n1.pl
+t/8087_env_node_drop_n2.pl
+##
+# node creation
+##
+t/8051_env_create_node1.pl
+t/8052_env_create_node2.pl
+##
+# repset replicateTruncate=False test cases
+##
+t/8075_env_truncate_false_n1.pl
+t/8076_env_sub_n1n2_truncate_false.pl
+t/8077_env_truncate_false_n2.pl
+t/8078_env_sub_n2n1_truncate_false.pl
+t/8079_env_truncate_replication_check.pl
+##
+# cleanup scripts
+##
+t/8080_env_repset_drop_n1.pl
+t/8081_env_repset_drop_n2.pl
+t/8082_env_sub_drop_n1.pl
+t/8083_env_sub_drop_n2.pl
+t/8084_env_table_drop_n1.pl
+t/8085_env_table_drop_n2.pl
+t/8086_env_node_drop_n1.pl
+t/8087_env_node_drop_n2.pl
+##
+# node creation
+##
+t/8051_env_create_node1.pl
+t/8052_env_create_node2.pl
+##
+# repset replicateUpdate=False test cases
+##
+t/8070_env_update_false_n1.pl
+t/8071_env_sub_n1n2_update_false.pl
+t/8072_env_update_false_n2.pl
+t/8073_env_sub_n2n1_update_false.pl
+t/8074_env_update_replication_check.pl
+##
+# cleanup scripts
+##
+t/8080_env_repset_drop_n1.pl
+t/8081_env_repset_drop_n2.pl
+t/8082_env_sub_drop_n1.pl
+t/8083_env_sub_drop_n2.pl
+t/8084_env_table_drop_n1.pl
+t/8085_env_table_drop_n2.pl
+t/8086_env_node_drop_n1.pl
+t/8087_env_node_drop_n2.pl
+# node creation
+##
+t/8051_env_create_node1.pl
+t/8052_env_create_node2.pl
+##
+# spock node-add and node-drop test cases
+##
+t/spock_node_add_interface.py
+t/spock_node_drop_interface.py
+t/spock_node_add_interface_no_db.py
+t/spock_node_drop_interface_no_interface.py
+t/spock_node_drop_interface_no_db.py
+
+##
+# spock sub-create -r 'repset_array'
+##
+
+t/spock_create_sub_specify_repsets.py
+t/spock_create_sub_specify_repsets_nonrepset_user.py
+t/spock_sub_remove_repset.py
+t/spock_sub_remove_repset_error.py
+
+##
+# spock repset-create errors 
+##
+
+t/spock_repset_create_error_1.py
+t/spock_repset_create_error_2.py
+t/spock_repset_create_error_3.py
+
+# cleanup scripts
+##
+
+t/8086_env_node_drop_n1.pl
+t/8087_env_node_drop_n2.pl
+
+# Set up for the next round of tests
 
 ## Test Spock Module
 t/spock_1_setup.py
@@ -28,3 +278,11 @@ t/ace_99_cleanup.py
 t/spock_6_drop.py
 t/spock_7_negative_list.py
 t/spock_8_negative_create.py
+
+
+## Remove components, Clean environment and free ports
+t/8998_env_remove_pgedge_node1.pl
+t/8999_env_remove_pgedge_node2.pl
+
+# Delete the nc directory and pgpass file
+t/9998_remove_pgedge.py

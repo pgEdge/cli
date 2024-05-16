@@ -3,7 +3,7 @@
 import os
 import time
 
-MY_VERSION = "24.4.6"
+MY_VERSION = "24.4.7"
 DEFAULT_PG = "16"
 DEFAULT_SPOCK = "33"
 MY_CMD = os.getenv("MY_CMD", None)
@@ -142,7 +142,7 @@ def get_parsed_json(file_nm):
         with open(file_nm, "r") as f:
             parsed_json = json.load(f)
     except Exception as e:
-        util.exit_message(f"Unable to load json file: {file_nm}\n{e}")
+        exit_message(f"Unable to load json file: {file_nm}\n{e}")
 
     return(parsed_json)
 
@@ -232,6 +232,7 @@ def num_pg_minors(pg_minor, is_display=False):
 
 
 def num_spocks(pg, ver, is_display=False):
+    message(f"num_spocks(pg={pg}, ver={ver}, is_display={is_display})", "debug")
     try:
         c = cL.cursor()
         sql = (
@@ -239,9 +240,10 @@ def num_spocks(pg, ver, is_display=False):
             + f" WHERE component LIKE 'spock%{pg}' AND version LIKE '{ver}%'\n"
             + f"   AND platform LIKE '%{get_el_ver()}%'"
         )
-      
+        message(f"{sql}", "debug")
         c.execute(sql)
         data = c.fetchall()
+        message(f"{data}", "debug")
         c.close()
 
         kount = 0
@@ -341,7 +343,7 @@ def get_table_list(table, db, pg_v):
         w_table = str(l_tbl[0])
 
     sql = (
-        "SELECT table_schema || '.' || table_name as schema_table \n"
+        "SELECT table_schema || '.' || table_name as schema_table,('\"' ||table_schema || '\".\"' ||table_name||'\"')::regclass::oid as table_oid \n"
         + "  FROM information_schema.tables\n"
         + " WHERE TABLE_TYPE = 'BASE TABLE' \n"
         + " AND table_schema NOT IN ('spock','pg_catalog','information_schema')"
@@ -350,7 +352,7 @@ def get_table_list(table, db, pg_v):
     if w_schema:
         sql = sql + "\n   AND table_schema = '" + w_schema + "'"
 
-    sql = sql + "\n   AND table_name LIKE '" + w_table.replace("*", "%") + "'"
+    sql = sql + "\n   AND table_name ILIKE '" + w_table.replace("*", "%") + "'"
 
     con = get_pg_connection(pg_v, db, get_user())
 
@@ -554,6 +556,10 @@ def echo_cmd(cmd, echo=True, sleep_secs=0, host="", usr="", key=""):
             ssh_cmd = ssh_cmd + "-i " + str(key) + " "
 
         cmd = cmd.replace('"', '\\"')
+
+        if os.getenv("pgeDebug", "") > "":
+            cmd = f"{cmd} --debug"
+
         cmd = ssh_cmd + ' "' + str(cmd) + '"'
 
     isSilent = os.getenv("isSilent", "False")
@@ -838,9 +844,14 @@ def restart_postgres(p_pg):
     time.sleep(4)
 
 
-def config_extension(p_pg=None, p_comp=None, active=True):
-    message(f"util.config_extension(" + \
-      f"p_pg={p_pg}, p_comp={p_comp}, active={active})", "debug")
+def config_extension(p_pg=None, p_comp=None):
+    """ Configure an extension from it's metadata """
+    p_enable = True
+    isDISABLED = os.getenv("isDISABLED", "")
+    if isDISABLED == "True":
+       p_enable = False
+
+    message(f"util.config_extension(p_pg={p_pg}, p_comp={p_comp}, enable={p_enable})", "debug")
 
     if p_comp is None:
         exit_message("p_comp must be specified in util.config_extension()")
@@ -850,9 +861,10 @@ def config_extension(p_pg=None, p_comp=None, active=True):
        pgV = p_comp[-4:]
        message(f"defaulting p_pg to {pgV}")
 
-    if active is False:
-        update_component_state(p_comp, "disable")
-        return(0)
+    if p_enable is False:
+        return(disable_extension(f"{p_comp}-{pgV}"))
+    else:
+        update_component_state(p_comp, "Installed")
 
     extension_name, is_preload, preload_name, default_conf = meta.get_extension_meta(p_comp)
     if extension_name is None:
@@ -867,25 +879,30 @@ def config_extension(p_pg=None, p_comp=None, active=True):
             else:
                 change_pgconf_keyval(p_pg, str(df_l[0]), str(df_l[1]), True)
 
-    rc = create_extension(p_pg, p_ext=preload_name, p_extension=extension_name, 
-                          p_cascade=True, p_is_preload=is_preload)
+    rc = create_extension(p_pg, p_ext=preload_name, p_extension=extension_name, p_enable=True)
     if rc is True:
         return(0)
 
     return(1)
 
 
-def create_extension(p_pg, p_ext, p_reboot=False, p_extension="", p_cascade=False, p_is_preload=1):
-    message(f"util.create_extension({p_pg}, {p_ext}, p_reboot={p_reboot}, " + \
-           f"p_extension='{p_extension}', p_cascade={p_cascade}, p_is_preload={p_is_preload})", "debug")
+def disable_extension(p_ext):
+    message(f"util.disable_extension({p_ext})", "debug")
 
-    isPreload = os.getenv("isPreload")
+    ##update_component_state(p_ext, "disable")
 
-    if p_ext > " " and p_is_preload == 1:
+    return(0)
+
+
+def create_extension(p_pg, p_ext, p_reboot=False, p_extension="", p_enable=True):
+    message(f"util.create_extension(" + \
+        f"{p_pg}, {p_ext}, p_reboot={p_reboot}, p_extension='{p_extension}', p_enable={p_enable})", "debug")
+
+    if p_ext > " " and p_enable is True: 
         rc = change_pgconf_keyval(p_pg, "shared_preload_libraries", p_ext)
 
     isRestart = os.getenv("isRestart")
-    if (p_reboot is True and p_is_preload == 1) or isRestart == "True":
+    if (p_reboot is True) or (isRestart == "True"):
         restart_postgres(p_pg)
 
     print("")
@@ -895,15 +912,13 @@ def create_extension(p_pg, p_ext, p_reboot=False, p_extension="", p_cascade=Fals
     if p_extension == "none" or isRestart == "False":
         pass
     else:
-        create_ext_cmd(p_extension, p_cascade, p_pg)
+        create_ext_cmd(p_extension, p_pg)
 
     return True
 
 
-def create_ext_cmd(p_extension, p_cascade, p_pg):
-    cmd = "CREATE EXTENSION IF NOT EXISTS " + p_extension
-    if p_cascade:
-        cmd = cmd + " CASCADE"
+def create_ext_cmd(p_extension, p_pg):
+    cmd = f"CREATE EXTENSION IF NOT EXISTS {p_extension} CASCADE"
     run_sql_cmd(p_pg, cmd, True)
 
 
@@ -3726,39 +3741,58 @@ def check_comp(p_comp, p_port, p_kount, check_status=False):
     return
 
 
-# run external scripts #######################################
 def run_script(componentName, scriptName, scriptParm):
-    message(f"util.run_script('{componentName}', '{scriptName}', '{scriptParm}')", "debug")
-    installed_comp_list = meta.get_component_list()
-    if componentName not in installed_comp_list:
-        return
+    """ run external scripts (or metadata equivalents for extensions) """
+    message(f"util.run_script({componentName}, {scriptName}, {scriptParm})", "debug")
+    ## if componentName not in installed_comp_list:
+    ##    return  
 
     componentDir = componentName
+    is_ext = meta.is_extension(componentName)
+    if is_ext: 
+        componentDir = componentName[-4:]
+        componentName = componentName[:-5]
+
+    message(f"  - componentDir={componentDir}, componentName={componentName}, is_ext={is_ext}", "debug")
 
     cmd = ""
     scriptFile = os.path.join(MY_HOME, componentDir, scriptName)
+
     if os.path.isfile(scriptFile):
         cmd = "bash"
-    else:
-        cmd = sys.executable + " -u"
-        scriptFile = scriptFile + ".py"
+    else:   
+        cmd = sys.executable + " -u" 
+        scriptFile = scriptFile + ".py" 
 
-    rc = 0
+    scriptFileFound = False 
+    if os.path.isfile(scriptFile):
+        scriptFileFound = True
+
+    message(f"  - scriptFile='{scriptFile}', {scriptFileFound}", "debug")
+
+    rc = 0  
     compState = get_comp_state(componentName)
-    if compState == "Enabled" and os.path.isfile(scriptFile):
-        run = cmd + " " + scriptFile + " " + scriptParm
-        rc = os.system(run)
+    message(f"  - compState={compState}", "debug")
+
+    if compState in ["Enabled", "NotInstalled"]:
+        if is_ext: 
+            rc = config_extension(p_pg=componentDir, p_comp=componentName)
+        else:
+            if scriptFileFound is True:
+                run = f"{cmd}  {scriptFile}  {scriptParm}"
+                rc = os.system(run)
 
     if rc != 0:
-        print("Error running " + scriptName)
+        print(f"Error running {scriptName}")
         exit_cleanly(1)
 
-    return
+    return 
 
 
 def update_component_state(p_app, p_mode, p_ver=None):
-    db_local = MY_LITE
-    connL = sqlite3.connect(db_local)
+    is_ext = meta.is_extension(p_app) 
+
+    message(f"util.update_component_state({p_app}, {p_mode}, {p_ver}, is_ext={is_ext})", "debug")
 
     new_state = "Disabled"
     if p_mode == "enable":
@@ -3774,11 +3808,11 @@ def update_component_state(p_app, p_mode, p_ver=None):
     if current_state == new_state:
         return
 
-    if p_mode == "disable" or p_mode == "remove":
+    if is_ext is True and (p_mode == "disable" or p_mode == "remove"):
         run_script(p_app, "stop-" + p_app, "kill")
 
     try:
-        c = connL.cursor()
+        c = cL.cursor()
 
         if p_mode in ("enable", "disable"):
             ver = meta.get_version(p_app)
@@ -3809,7 +3843,7 @@ def update_component_state(p_app, p_mode, p_ver=None):
                 ver = meta.get_current_version(p_app)
             c.execute(sql, [p_app, ver])
 
-        connL.commit()
+        cL.commit()
         c.close()
     except Exception as e:
         fatal_sql_error(e, sql, "update_component_state()")

@@ -13,7 +13,6 @@ function install_pgedge {
   ./pgedge start $pgV -y -d demo;
   ./pgedge install spock              -d demo
   ./pgedge install snowflake-$pgV     -d demo
-  ./pgedge install readonly-$pgV      -d demo
 }
 
 

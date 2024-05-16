@@ -175,6 +175,8 @@ def reload(component):
 
 def enable(component=None):
     """Enable a component"""
+    util.message(f"service.enable({component})", "debug")
+
     init_comp_list=[]
     if component is not None:
         init_comp_list=component.split()
@@ -182,6 +184,7 @@ def enable(component=None):
     if p_comp == "all":
         msg = "You must enable one component at a time"
         util.exit_message(msg, 1, isJSON)
+
     util.update_component_state(p_comp, "enable")
     script_name = "enable-" + p_comp
     sys.exit(util.run_script(p_comp, script_name, extra_args))
@@ -189,6 +192,8 @@ def enable(component=None):
 
 def disable(component=None):
     """Disable a server component from starting automatically"""
+    util.message(f"service.disable({component})", "debug")
+
     init_comp_list=[]
     if component is not None:
         init_comp_list=component.split()

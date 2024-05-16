@@ -4,16 +4,26 @@ alias bap="cd ~/dev/cli; ./build_all.sh; source bp.sh"
 alias bold="cd ~/dev/cli/devel; ./getOld.sh download; cd pgedge"
 alias ver="vi ~/dev/cli/src/conf/versions.sql"
 
+export DEV=$HOME/dev
+
+## input-output bucket info
 export REGION=us-east-2
 export BUCKET=s3://pgedge-upstream
 
-export DEV=$HOME/dev
+## inputs ####################
 export IN=$DEV/in
+export SOURCE=$IN/sources
+
+export PGB=/opt/pgbin-build
+export BLD=$PGB/pgbin/bld
+export DOC=$DEV/pgedge
+
+export PGE=$DEV/cli
+
+## output ######################
+export OUTPG=$DEV/in/postgres
 export OUT=$DEV/out
 export HIST=$DEV/history
-export PGE=$DEV/cli
-export SOURCE=$IN/sources
-export DOC=$DEV/pgedge
 
 export DEVEL=$PGE/devel
 export PSX=$PGE/out/posix
@@ -23,8 +33,6 @@ export CONT=$CLI/contrib
 export REPO=http://localhost:8000
 export CONN="-U user1 -P pword1 -d db1"
 
-export PGB=/opt/pgbin-build
-export BLD=$PGB/pgbin/bld
 
 #export JAVA_HOME=/etc/alternatives/jre_17_openjdk
 #export PATH=/usr/local/bin:$JAVA_HOME/bin:/opt/apache-maven-3.9.2/bin:$PATH

@@ -183,16 +183,30 @@ def get_key(p_con, p_schema, p_table):
     return ",".join(key_lst)
 
 
-def schema_diff(cluster_name, node1, node2, schema_name):
+def schema_diff(cluster_name, nodes, schema_name):
     """Compare Postgres schemas on different cluster nodes"""
 
     util.message(f"## Validating cluster {cluster_name} exists")
+    node_list = []
+    try:
+        if nodes != "all":
+            node_list = [s.strip() for s in nodes.split(",")]
+    except ValueError as e:
+        util.exit_message(
+            f'Nodes should be a comma-separated list of nodenames. \
+                E.g., --nodes="n1,n2". Error: {e}'
+        )
+
+    if len(node_list) > 3:
+        util.exit_message(
+            "schema-diff currently supports up to a three-way table comparison"
+        )
+
+    if nodes != "all" and len(node_list) == 1:
+        util.exit_message("schema-diff needs at least two nodes to compare")
+
     util.check_cluster_exists(cluster_name)
-
-    if node1 == node2:
-        util.exit_message("node1 must be different than node2")
-
-    l_schema = schema_name
+    util.message(f"Cluster {cluster_name} exists", p_state="success")
 
     db, pg, node_info = cluster.load_json(cluster_name)
 
@@ -210,46 +224,64 @@ def schema_diff(cluster_name, node1, node2, schema_name):
         combined_json = {**database, **node}
         cluster_nodes.append(combined_json)
 
+    for nd in cluster_nodes:
+        if nodes == "all":
+            node_list.append(nd["name"])
+
     sql1, sql2 = "", ""
+    l_schema = schema_name
+    file_list = []
 
     for nd in cluster_nodes:
-        if nd["name"] == node1:
-            sql1 = write_pg_dump(
-                nd["ip_address"], nd["db_name"], nd["port"], "con1", l_schema
-            )
-        if nd["name"] == node2:
-            sql2 = write_pg_dump(
-                nd["ip_address"], nd["db_name"], nd["port"], "con2", l_schema
-            )
+        if nd["name"] in node_list:
+            sql1 = write_pg_dump(nd["ip_address"], nd["db_name"], nd["port"], nd["name"], l_schema)
+            file_list.append(sql1)
 
-    cmd = "diff " + sql1 + "  " + sql2 + " > /tmp/diff.txt"
-    util.message("\n## Running # " + cmd + "\n")
-    rc = os.system(cmd)
-    if rc == 0:
-        util.message("SCHEMAS ARE THE SAME!!")
-        return rc
-    else:
-        util.message("SCHEMAS ARE NOT THE SAME!!")
-        util.message("")
-        rc = fix_schema("/tmp/diff.txt", sql1, sql2)
-    return rc
+    if os.stat(file_list[0]).st_size == 0:
+        util.exit_message(f"Schema {schema_name} does not exist on node {node_list[0]}")
+
+    for n in range(1,len(file_list)):      
+        cmd = "diff " + file_list[0] + "  " + file_list[n] + " > /tmp/diff.txt"
+        util.message("\n## Running # " + cmd + "\n")
+        rc = os.system(cmd)
+        if os.stat(file_list[n]).st_size == 0:
+            util.exit_message(f"Schema {schema_name} does not exist on node {node_list[n]}")
+        if rc == 0:
+            util.message(f"SCHEMAS ARE THE SAME- between {node_list[0]} and {node_list[n]} !!", p_state="success")
+        else:
+            prRed(f"\u2718   SCHEMAS ARE NOT THE SAME- between {node_list[0]} and {node_list[n]}!!")
 
 
-def spock_diff(cluster_name, node1, node2):
+def spock_diff(cluster_name, nodes):
     """Compare spock meta data setup on different cluster nodes"""
-    util.check_cluster_exists(cluster_name)
+    node_list = []
+    try:
+        if nodes != "all":
+            node_list = [s.strip() for s in nodes.split(",")]
+    except ValueError as e:
+        util.exit_message(
+            f'Nodes should be a comma-separated list of nodenames. \
+                E.g., --nodes="n1,n2". Error: {e}'
+        )
 
-    if node1 == node2:
-        util.exit_message("node1 must be different than node2")
+    if len(node_list) > 3:
+        util.exit_message(
+            "spock-diff currently supports up to a three-way table comparison"
+        )
+
+    if nodes != "all" and len(node_list) == 1:
+        util.exit_message("spock-diff needs at least two nodes to compare")
+
+    util.check_cluster_exists(cluster_name)
+    util.message(f"Cluster {cluster_name} exists", p_state="success")
 
     db, pg, node_info = cluster.load_json(cluster_name)
 
     cluster_nodes = []
-
-    """
+    '''
     Even though multiple databases are allowed, ACE will, for now,
     only take the first entry in the db list
-    """
+    ''' 
     database = db[0]
     database["db_name"] = database.pop("name")
 
@@ -262,6 +294,9 @@ def spock_diff(cluster_name, node1, node2):
 
     try:
         for nd in cluster_nodes:
+            if nodes == "all":
+                node_list.append(nd["name"])
+
             psql_conn = psycopg.connect(
                 dbname=nd["db_name"],
                 user=nd["username"],
@@ -273,14 +308,14 @@ def spock_diff(cluster_name, node1, node2):
             conn_list[nd["name"]] = psql_conn
 
     except Exception as e:
-        util.exit_message("Error in table_diff() Getting Connections:" + str(e), 1)
+        util.exit_message("Error in spock_diff() Getting Connections:" + str(e), 1)
 
     compare_spock = []
     print("\n")
 
     for cluster_node in cluster_nodes:
         cur = conn_list[cluster_node["name"]].cursor()
-        if cluster_node["name"] not in [node1, node2]:
+        if cluster_node["name"] not in node_list:
             continue
         diff_spock = {}
         diff_sub = {}
@@ -303,6 +338,7 @@ def spock_diff(cluster_name, node1, node2):
 
         prCyan("  Subscriptions:")
 
+        diff_spock["subscriptions"]=[]
         for node in node_info:
             if node["sub_name"] is None:
                 hints.append("Hint: No subscriptions have been created on this node")
@@ -315,19 +351,10 @@ def spock_diff(cluster_name, node1, node2):
                 print("      " + json.dumps(node["sub_replication_sets"]))
                 if node["sub_replication_sets"] == []:
                     hints.append("Hint: No replication sets added to subscription")
-                elif node["sub_replication_sets"] == [
-                    "default",
-                    "default_insert_only",
-                    "ddl_sql",
-                ]:
-                    hints.append(
-                        "Hint: Only default replication sets added to subscription: "
-                        + node["sub_name"]
-                    )
-                diff_spock["subscriptions"] = diff_sub
+                diff_spock["subscriptions"].append(diff_sub)
 
         sql = """
-        SELECT set_name, string_agg(relname,'   ') as relname
+        SELECT set_name, string_agg(nspname||'.'||relname,'   ') as relname
         FROM spock.tables GROUP BY set_name ORDER BY set_name;
         """
 
@@ -356,15 +383,13 @@ def spock_diff(cluster_name, node1, node2):
             prRed(hint)
         print("\n")
 
-    if len(compare_spock) == 2:
-        print(" Spock - Diff")
-        print("~~~~~~~~~~~~~~~~~~~~~~~~~")
-        if compare_spock[0]["rep_set_info"] == compare_spock[1]["rep_set_info"]:
-            prCyan("   Replication Rules are the same!!")
+    print(" Spock - Diff")
+    print("~~~~~~~~~~~~~~~~~~~~~~~~~")
+    for n in range(1,len(compare_spock)):
+        if compare_spock[0]["rep_set_info"] == compare_spock[n]["rep_set_info"]:
+            util.message(f"   Replication Rules are the same for {node_list[0]} and {node_list[n]}!!", p_state="success")
         else:
-            prRed("    Difference in Replication Rules")
-
-    return compare_spock
+            prRed(f"\u2718   Difference in Replication Rules between {node_list[0]} and {node_list[n]}")
 
 
 def run_query(worker_state, host, query):

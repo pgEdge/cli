@@ -776,10 +776,11 @@ def repset_add_table(
 
     for tbl in tbls:
         tab = str(tbl[0])
+        oid = str(tbl[1])
         sql = (
             "SELECT spock.repset_add_table("
             + get_eq("set_name", replication_set, ", ")
-            + get_eq("relation", tab, ", ")
+            + get_eq("relation", oid, ", ")
             + get_eq("synchronize_data", synchronize_data, ", ")
         )
 
