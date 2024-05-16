@@ -3931,9 +3931,9 @@ def echo_message(msg, bold=False, level="info"):
     t = now.strftime('%B %d, %Y, %H:%M:%S')
 
     if bold == True:
-        util.message(t + ": " + bold_start + msg + bold_end, level)
+        message(t + ": " + bold_start + msg + bold_end, level)
     else:
-        util.message(t + ": " + msg,level)
+        message(t + ": " + msg,level)
 
     if level == "error":
         exit(1)
