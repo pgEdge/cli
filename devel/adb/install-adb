@@ -1,5 +1,19 @@
 
-sudo tee -a /etc/yum.repos.d/artifact-registry.repo << EOF
+
+
+###################################################################
+getAPT () {
+  curl https://us-apt.pkg.dev/doc/repo-signing-key.gpg | sudo apt-key add -
+  sudo apt update
+  echo "deb https://us-apt.pkg.dev/projects/alloydb-omni alloydb-omni-apt main" \
+    | sudo tee -a /etc/apt/sources.list.d/artifact-registry.list
+  sudo apt update
+  sudo apt-get -y install alloydb-cl
+}
+
+####################################################################
+getYUM () {
+  sudo tee -a /etc/yum.repos.d/artifact-registry.repo << EOF
 [alloydb-omni-yum]
 name=alloydb-omni-yum
 baseurl=https://us-yum.pkg.dev/projects/alloydb-omni/alloydb-omni-yum
@@ -7,22 +21,8 @@ enabled=1
 repo_gpgcheck=0
 gpgcheck=0
 EOF
-
-sudo yum makecache
-sudo yum install alloydb-cli -y
-
-
-get-apt () {
-  curl https://us-apt.pkg.dev/doc/repo-signing-key.gpg | sudo apt-key add -
-  sudo apt update
-  echo "deb https://us-apt.pkg.dev/projects/alloydb-omni alloydb-omni-apt main" \
-    | sudo tee -a /etc/apt/sources.list.d/artifact-registry.list
-  sudo apt update
-  sudo apt-get -y install alloydb-cli docker.io
-}
-
-get-deb () {
-
+  sudo yum makecache
+  sudo yum install alloydb-cli -y
 }
 
 
