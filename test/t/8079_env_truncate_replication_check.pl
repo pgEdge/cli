@@ -26,6 +26,9 @@ no warnings 'uninitialized';
 my $homedir1="$ENV{EDGE_CLUSTER_DIR}/n1/pgedge";
 my $homedir2="$ENV{EDGE_CLUSTER_DIR}/n2/pgedge";
 my $myport2 = $ENV{'EDGE_START_PORT'} + 1;
+my $seconds = $ENV{'EDGE_SLEEP'};
+
+
 
 print("whoami = $ENV{EDGE_REPUSER}\n");
 
@@ -169,9 +172,9 @@ if(!(contains(@$stdout_buf9[0], "888")))
  
    print("INSERT=TRUE REPLICATION CHECK IN NODE n2\n");
    
-   #   print("Adding call to sleep function")
-   my($success999, $error_message999, $full_buf999, $stdout_buf999, $stderr_buf999)= IPC::Cmd::run(command => sleep(17), verbose => 0);
-   print("stdout_buf999= @$stdout_buf999\n");
+  # print("Adding call to sleep function")
+  my $cmd999 = qq(sleep($seconds));
+  my($success999, $error_message999, $full_buf999, $stdout_buf999, $stderr_buf999)= IPC::Cmd::run(command => $cmd999, verbose => 0);
 
    print ("-"x45,"\n");
    my $cmd10 = qq($homedir2/$ENV{EDGE_COMPONENT}/bin/psql  -h $ENV{EDGE_HOST} -p $myport2 -d $ENV{EDGE_DB} -c "SELECT * FROM foo WHERE col1=888");

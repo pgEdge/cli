@@ -29,6 +29,9 @@ my $homedir1="$ENV{EDGE_CLUSTER_DIR}/n1/pgedge";
 my $homedir2="$ENV{EDGE_CLUSTER_DIR}/n2/pgedge";
 #add 1 to the default port for use with node n2
 my $myport2 = $ENV{'EDGE_START_PORT'} + 1;
+my $seconds = $ENV{'EDGE_SLEEP'};
+
+
 print("whoami = $ENV{EDGE_REPUSER}\n");
 
 print("The home directory is $homedir1\n"); 
@@ -127,9 +130,10 @@ if(!(contains(@$stdout_buf8[0], "888")))
    # Listing table contents of Port2 6433
    
    #   print("Adding call to sleep function")
-   my($success999, $error_message999, $full_buf999, $stdout_buf999, $stderr_buf999)= IPC::Cmd::run(command => sleep(12), verbose => 0);
-   print("stdout_buf999= @$stdout_buf999\n");
-
+   my $cmd999 = qq(sleep($seconds));
+   my($success999, $error_message999, $full_buf999, $stdout_buf999, $stderr_buf999)= IPC::Cmd::run(command => $cmd999, verbose => 0);
+   print("cmd999 = $cmd999\n");
+   
    print("INSERT FUNCTION REPLICATION CHECK IN NODE n2 \n");
    print ("-"x45,"\n");
    my $cmd11 = qq($homedir2/$ENV{EDGE_COMPONENT}/bin/psql  -h $ENV{EDGE_HOST} -p $myport2 -d $ENV{EDGE_DB} -c "SELECT * FROM foo");

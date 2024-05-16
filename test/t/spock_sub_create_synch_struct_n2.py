@@ -14,6 +14,7 @@ pw=os.getenv("EDGE_PASSWORD","password")
 host=os.getenv("EDGE_HOST","localhost")
 repuser=os.getenv("EDGE_REPUSER","repuser")
 dbname=os.getenv("EDGE_DB","lcdb")
+seconds=int(os.getenv("EDGE_SLEEP"))
 
 n2_port = port + 1
 
@@ -42,7 +43,7 @@ print(f"The spock sub-create command for sub_n2n1 returned: {sub_create.stdout}"
 print("*"*100)
 
 # Napping
-time.sleep(3)
+time.sleep(seconds)
 
 # Check for public.foo in pg_tables:
 rep_check = util_test.read_psql("SELECT * FROM pg_tables WHERE schemaname = 'public';",host,dbname,n2_port,pw,usr)
