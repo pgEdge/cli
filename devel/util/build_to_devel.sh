@@ -19,9 +19,18 @@ step () {
 
 
 step 0 "## initialization  #######################"
-export BUCKET=s3://pgedge-internal
+export BUCKET=s3://pgedge-devel
+echo "#  BUCKET = $BUCKET"
+
+now=`date '+%F %r %Z'`
+echo "#     now = $now"
+
 run_day=`date +%j`
-vers="$1"
+echo "# run_day = $run_day"
+
+vers=$1
+echo "#     vers = \"$vers\""
+
 
 if [ ! "$#" == "1" ]; then
   echo "ERROR: One parm must be specified such as '15 16'"
@@ -57,8 +66,7 @@ sleep 3
 
 step 5 "copy to S3 ############################"
 flags="--acl public-read --storage-class STANDARD --recursive"
-BR=$BUCKET/REPO
-cmd "aws --region $REGION s3 cp . $BR $flags"
+cmd "aws --region $REGION s3 cp . $BUCKET/REPO $flags"
 
 step 6 "Goodbye! ##############################"
 exit 0
