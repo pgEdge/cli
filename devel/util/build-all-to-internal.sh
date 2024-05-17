@@ -1,11 +1,7 @@
 #!/bin/bash
 cd "$(dirname "$0")"
 
-export BUCKET=s3://pgedge-internal
-run_day=`date +%j`
-
 cmd () {
-  echo ""
   echo "# $1"
   $1
   rc=$?
@@ -16,26 +12,54 @@ cmd () {
 
 }
 
+step () {
+  echo ""
+  echo "## step $1 - $2"
+}
 
-##  MAINLINE ##########################################
+
+step 0 "## initialization  #######################"
+export BUCKET=s3://pgedge-internal
+run_day=`date +%j`
+vers="$1"
+
+if [ ! "$#" == "1" ]; then
+  echo "ERROR: One parm must be specified such as '15 16'"
+  exit 1
+fi
+
+if [ "$vers" == "" ]; then
+   echo "ERROR: Parm 1 must be space delimited string of versions"
+   exit 1
+fi
+
+step 1 "cleanup any old ########################"
 outDir=$HIST/internal-$run_day
 cmd "rm -rf $outDir"
 cmd "mkdir $outDir"
-
-cmd "cd $PGE"
-cmd "git pull"
 cmd "rm -f $OUT/*"
-cmd "./build_all.sh 14"
 
+step 2 "get latest cli #########################"
+cmd "cd $PGE"
+cmd "git status"
+cmd "git pull"
+
+step 3 "building $vers #########################"
+for ver in ${vers}; do
+    cmd "./build_all.sh $ver"
+done
+
+step 4 "copy OUT to HIST (outDir) #############"
 cmd "cp $OUT/* $outDir"
 cmd "cd $outDir"
 cmd "ls"
 sleep 3
 
+step 5 "copy to S3 ############################"
 flags="--acl public-read --storage-class STANDARD --recursive"
 BR=$BUCKET/REPO
-
 cmd "aws --region $REGION s3 cp . $BR $flags"
 
+step 6 "Goodbye! ##############################"
 exit 0
 
