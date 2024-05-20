@@ -2,7 +2,7 @@
 
 
 ###################################################################
-getAPT () {
+installAPT () {
   curl https://us-apt.pkg.dev/doc/repo-signing-key.gpg | sudo apt-key add -
   sudo apt update
   echo "deb https://us-apt.pkg.dev/projects/alloydb-omni alloydb-omni-apt main" \
@@ -11,8 +11,9 @@ getAPT () {
   sudo apt-get -y install alloydb-cl
 }
 
+
 ####################################################################
-getYUM () {
+installYUM () {
   sudo tee -a /etc/yum.repos.d/artifact-registry.repo << EOF
 [alloydb-omni-yum]
 name=alloydb-omni-yum
@@ -26,3 +27,18 @@ EOF
 }
 
 
+################ MAINLINE ##########################################
+
+set -x 
+
+yum --version
+rc=$?
+if [ "$rc" == "0" ]; then
+  installYUM
+else
+  installAPT
+fi
+
+sudo alloydb database-server install \
+    --data-dir=/opt/alloydb/data \
+    --pg-port=7654
