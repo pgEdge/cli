@@ -69,7 +69,7 @@ fire_list = [
     "setup"
 ]
 
-fire_contrib = ["vm", "localhost"]
+fire_contrib = ["node", "localhost"]
 
 native_list = ["backrest", "ansible", "patroni", "etcd"]
 

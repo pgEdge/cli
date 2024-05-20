@@ -1,5 +1,6 @@
-#!/usr/bin/env python3
-#     Copyright (c)  2022-2024 PGEDGE  #
+
+#     Copyright (c)  2023-2024 PGEDGE  #
+
 import subprocess
 import os
 import fire
