@@ -1,2 +1,10 @@
 
-sudo yum remove alloydb-cli -y
+
+yum --version >/dev/null 2>&1
+rc=$?
+if [ "$rc" == "0" ]; then
+  yum remove alloydb-cli -y
+else
+  installAPT
+fi
+
