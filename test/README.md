@@ -7,7 +7,7 @@
 `test/schedule_files` - contains the schedule files; each schedule file is made up of a set of scripts that set up and tear down a cluster.
 
 `test/t` - contains the test scripts and a file of the python utilities (util_test.py).
-Test scripts can be written in either perl (file.pl) or python (file.py) and the file types can be mixed within a schedule.
+Test scripts can be written in either perl (file.pl) or python (file.py) and the file types used can be mixed within a schedule.
 
 `test/t/lib` - contains the environment variable file and the perl utility files. Source the environment variable file before running the scripts.
 
@@ -49,18 +49,21 @@ Move into the `test` directory:
 
 Ensure that any prerequisites are met:
 
+`sudo yum install curl`
 `sudo yum install perl`
-`sudo yum install perl-cpan`
+`sudo yum install perl-CPAN`
 `sudo dnf install perl-File-Which`
 `sudo dnf install perl-Try-Tiny`
-`sudo dnf perl-JSON`
-`sudo dnf perl-List-MoreUtils`
-`sudo dnf perl-DBD-Pg`
+`sudo dnf install perl-JSON`
+`sudo dnf install perl-List-MoreUtils`
+`sudo dnf install perl-DBD-Pg`
+`sudo dnf install perl-DBD-DBI`
 `sudo dnf install python3`
-`sudo yum install pip`
 `sudo dnf --enablerepo=devel`
 `sudo dnf install python3-psycopg2`
+`sudo yum install pip`
 `pip install python-dotenv`
+`pip install psycopg`
 
 Review the environment variables in the `t/lib/config.env` file and make any adjustments required; then source the environment variables:
 
