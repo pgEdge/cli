@@ -2,13 +2,14 @@
 ## set -x
 
 SPOCK_REPO=spock-private
+SPOCK_BRANCH=per-subtrans-commit-ts
 
 v12=12.19
 v13=13.15
 v14=14.12
 v15=15.7
 v16=16.3
-v17=17devel
+v17=17beta1
 
 UNAME=`uname`
 
@@ -36,19 +37,22 @@ checkCmd () {
   fi
 }
 
-patchFromSpock () {
-  branch=$1
-  patch=$2
 
+patchFromSpock () {
   echoCmd "cd contrib"
   if [ ! -d $SPOCK_REPO ]; then
     echoCmd "git clone https://github.com/pgedge/$SPOCK_REPO"
   fi
   echoCmd "cd $SPOCK_REPO"
-  echoCmd "git checkout $branch"
+  echoCmd "git checkout $SPOCK_BRANCH"
   echoCmd "git pull"
   echoCmd "cd ../.."
-  echoCmd "patch -p1 -i contrib/$SPOCK_REPO/$patch"
+
+  FILES="contrib/$SPOCK_REPO/patches/pg$PGV*"
+  for f in $FILES
+  do
+    echoCmd "patch -p1 -i $f"
+  done
 
   sleep 2
 }
@@ -71,14 +75,7 @@ downBuild () {
 
   echoCmd "cd $1"
 
-  if [ "$pgV" == "14" ] || [ "$pgV" == "15" ] || [ "$pgV" == "16" ] || [ "$pgV" == "17" ]; then
-    patchFromSpock main patches/pg$pgV-005-log_old_value.diff
-  fi
-
-  if [ "$pgV" == "16" ]; then
-    patchFromSpock main patches/pg$pgV-012-hidden_columns.diff
-    patchFromSpock main patches/pg$pgV-015-delta_apply_function.diff
-  fi
+  patchFromSpock
 
   makeInstall
   echoCmd "cd .."
@@ -87,10 +84,6 @@ downBuild () {
 
 makeInstall () {
   if [ "$UNAME" = "Darwin" ]; then
-    ##export LLVM_CONFIG="/opt/homebrew/opt/llvm/bin/llvm-config"
-    ##export LDFLAGS="-L/opt/homebrew/opt/openssl@3/lib"
-    ##export CPPFLAGS="-I/opt/homebrew/opt/openssl@3/include"
-    ##export PKG_CONFIG_PATH="/opt/homebrew/opt/openssl@3/lib/pkgconfig"
     options=""
   else
     export LLVM_CONFIG=/usr/bin/llvm-config-64
@@ -122,23 +115,23 @@ makeInstall () {
 ## MAINLINE ##############################
 
 options=""
-pgV=$1
-if [ "$1" == "12" ]; then
+PGV=$1
+if [ "$PGV" == "12" ]; then
   options=""
   downBuild $v12
-elif [ "$1" == "13" ]; then
+elif [ "$PGV" == "13" ]; then
   options=""
   downBuild $v13
-elif [ "$1" == "14" ]; then
+elif [ "$PGV" == "14" ]; then
   options=""
   downBuild $v14
-elif [ "$1" == "15" ]; then
+elif [ "$PGV" == "15" ]; then
   options="--with-zstd --with-lz4 --with-icu"
   downBuild $v15
-elif [ "$1" == "16" ]; then
+elif [ "$PGV" == "16" ]; then
   options="--with-zstd --with-lz4 --with-icu"
   downBuild $v16
-elif [ "$1" == "17" ]; then
+elif [ "$PGV" == "17" ]; then
   options="--with-zstd --with-lz4 --with-icu"
   downBuild $v17
 else
