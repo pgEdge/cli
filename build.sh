@@ -403,13 +403,14 @@ initPG () {
   if [ "$pgM" \> "13" ] && [ "$pgM" \< "18" ]; then
     initC "spock40-pg$pgM"    "spock40"    "$spock40V"   "$outPlat" "postgres/spock40"   "" "" "nil"
     initC "lolor-pg$pgM"      "lolor"      "$lolorV"     "$outPlat" "postgres/lolor"     "" "" "nil"
+    initC "snowflake-pg$pgM"  "snowflake"  "$snwflkV"    "$outPlat" "postgres/snowflake" "" "" "nil"
   fi
 
   if [ "$pgM" \> "13" ] && [ "$pgM" \< "17" ]; then
-    initC "snowflake-pg$pgM"  "snowflake"  "$snwflkV"    "$outPlat" "postgres/snowflake" "" "" "nil"
     initC "spock33-pg$pgM"    "spock33"    "$spock33V"   "$outPlat" "postgres/spock33"   "" "" "nil"
   fi
 
+  ## bug out on OSX
   if [ "$isEL" == "False" ]; then
     return
   fi
@@ -456,11 +457,11 @@ initPG () {
       ##fi
     fi
 
-    # initC "postgrest"    "postgrest"    "$postgrestV" "$outPlat" "postgres/postgrest" "" "" "nil"
+    initC "prompgexp"    "prompgexp"    "$prompgexpV" "$outPlat" "postgres/prompgexp" "" "" "nil"
 
+    # initC "postgrest"    "postgrest"    "$postgrestV" "$outPlat" "postgres/postgrest" "" "" "nil"
     # initC "prest"        "prest"        "$prestV"    "$outPlat" "pREST"             "" "" "nil"
     # initC "pgadmin4"     "pgadmin4"     "$adminV"    ""         "postgres/pgadmin4" "" "" "Y"
-    # initC "prompgexp"    "prompgexp"    "$prompgexpV" "$outPlat" "postgres/prompgexp" "" "" "nil"
   fi
 
   return
