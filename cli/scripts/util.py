@@ -894,7 +894,7 @@ def config_extension(p_pg=None, p_comp=None):
        message(f"defaulting p_pg to {pgV}")
 
     if p_enable is False:
-        return(disable_extension(f"{p_comp}-{pgV}"))
+        return(disable_extension(p_comp, pgV))
     else:
         update_component_state(p_comp, "Installed")
 
@@ -918,10 +918,20 @@ def config_extension(p_pg=None, p_comp=None):
     return(1)
 
 
-def disable_extension(p_ext):
-    message(f"util.disable_extension({p_ext})", "debug")
+def disable_extension(p_ext, p_pg):
+    message(f"util.disable_extension({p_ext}, {p_pg})", "debug")
 
-    ##update_component_state(p_ext, "disable")
+    extension_name, is_preload, preload_name, default_conf = meta.get_extension_meta(p_ext)
+    if extension_name is None:
+        util.exit_message(f"{p_ext} not found")
+
+    cmd = f"DROP EXTENSION IF EXISTS {extension_name}"
+    run_sql_cmd(p_pg, cmd, True)
+
+    if is_preload == "1":
+        remove_pgconf_keyval(p_pg, "shared_preload_libraries", preload_name)
+    
+    update_component_state(p_ext, "disabled")
 
     return(0)
 
@@ -3832,6 +3842,10 @@ def run_script(componentName, scriptName, scriptParm):
     compState = get_comp_state(componentName)
     message(f"  - compState={compState}", "debug")
 
+    if is_ext and scriptName.startswith("disable"):
+        rc = disable_extension(p_pg=componentDir, p_ext=componentName)
+        compState = "Disabled"
+
     if compState in ["Enabled", "NotInstalled"]:
         if is_ext: 
             rc = config_extension(p_pg=componentDir, p_comp=componentName)
@@ -3865,9 +3879,6 @@ def update_component_state(p_app, p_mode, p_ver=None):
 
     if current_state == new_state:
         return
-
-    if is_ext is True and (p_mode == "disable" or p_mode == "remove"):
-        run_script(p_app, "stop-" + p_app, "kill")
 
     try:
         c = cL.cursor()
