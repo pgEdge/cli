@@ -1223,6 +1223,7 @@ if "--silent" in args:
 
 if "--extensions" in args:
     util.isEXTENSIONS = True
+    os.environ["isExtensions"] = "True"
     args.remove("--extensions")
 
 if len(args) == 1:

@@ -266,8 +266,8 @@ INSERT INTO versions VALUES ('curl-pg16', '2.2.2-1',  'el9, arm9', 1, '20240130'
 ----------------------------------
 INSERT INTO projects VALUES ('citus', 'pge', 4, 0, 'hub',0, 'https://github.com/citusdata/citus/releases',
   'citus', 1, 'citus.png', 'Sharded Postgres', 'https://github.com/citusdata/citus', 'citusdata, citus_data');
-INSERT INTO releases VALUES ('citus-pg15', 10, 'citus', 'Citus', '', 'prod', '', 1, 'AGPLv3', '', '');
-INSERT INTO releases VALUES ('citus-pg16', 10, 'citus', 'Citus', '', 'prod', '', 1, 'AGPLv3', '', '');
+INSERT INTO releases VALUES ('citus-pg15', 10, 'citus', 'Citus', '', 'test', '', 1, 'AGPLv3', '', '');
+INSERT INTO releases VALUES ('citus-pg16', 10, 'citus', 'Citus', '', 'test', '', 1, 'AGPLv3', '', '');
 
 INSERT INTO versions VALUES ('citus-pg15', '12.1.3-1', 'el9, arm9', 1, '20240509', 'pg15', '', '');
 INSERT INTO versions VALUES ('citus-pg16', '12.1.3-1', 'el9, arm9', 1, '20240509', 'pg16', '', '');

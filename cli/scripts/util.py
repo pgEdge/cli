@@ -61,8 +61,12 @@ PID_FILE = os.path.join(MY_HOME, "data", "conf", "cli.pid")
 isTEST = False
 if os.environ.get("isTest", "False") == "True":
     isTEST = True
+
 isSHOWDUPS = False
+
 isEXTENSIONS = False
+if os.environ.get("isExtensions", "False") == "True":
+    isEXTENSIONS = True
 
 ONE_DAY = 86400
 ONE_WEEK = ONE_DAY * 7
