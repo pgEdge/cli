@@ -45,7 +45,7 @@ else {
     # Check if $ncdir exists
     if (-e $ncdir) {
 
-        # Copying $ncdir contets to a temp location since the $n1dir resides inside 
+        # Copying $ncdir contents to a temp location since the $n1dir resides inside 
         # $ncdir, and a direct cp -r $ncdir/* $n1dir/ wasn't possible. 
         # Also creating $n1dir
         print("Creating $n1dir\n");
@@ -79,6 +79,12 @@ if (!$skipInstall)
     print ("Move into the pgedge directory and run the install.py file\n");
     chdir("./$n1dir");
     run_command_and_exit_iferr(qq(python install.py));
+
+    chdir("pgedge");
+    # Pull down pgedge info.
+    my ($success4, $error_message4, $full_buf4, $stdout_buf4, $stderr_buf4) = IPC::Cmd::run(command => "./pgedge info", verbose => 0);
+    print ("Our version is:\n @$stdout_buf4\n");
+
     chdir("./../../../../");
 }
 
