@@ -5,7 +5,7 @@ hubV=24.5.2
 ctlibsV=1.2
 
 spock40V=4.0.142-1
-spock33V=3.3.3-1
+spock33V=3.3.4-1
 
 lolorV=1.2-1
 foslotsV=1a-1
