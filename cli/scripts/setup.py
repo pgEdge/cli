@@ -22,8 +22,9 @@ def osSys(cmd, fatal_exit=True):
     return
 
 
-def check_pre_reqs(User, Passwd, db, port, pg_major, pg_minor, spock, autostart):
-    util.message(f"setup.check_pre_reqs({User}, {db}, {port}, {pg_major}, {pg_minor}, {spock})", "debug")
+def check_pre_reqs(User, Passwd, db, port, pg_major, pg_minor, spock, autostart, extensions):
+    util.message(f"setup.check_pre_reqs(User={User}, db={db}, port={port}, pg_major={pg_major}, " + \
+        f"pg_minor={pg_minor}, spock={spock}, autostart={autostart}, extensions={extensions})", "debug")
 
     util.message("#### Checking for Pre-Req's #########################")
 
@@ -120,7 +121,7 @@ def parse_pg(pg):
    return(pg_major, pg_minor)
 
 
-def setup_pgedge(User=None, Passwd=None, dbName=None, port=None, pg_ver=None, spock_ver=None, autostart=False):
+def setup_pgedge(User=None, Passwd=None, dbName=None, port=None, pg_ver=None, spock_ver=None, autostart=False, extensions=False):
     """Install pgEdge node (including postgres, spock, and snowflake-sequences)
 
        Install pgEdge node (including postgres, spock, and snowflake-sequences)
@@ -133,9 +134,17 @@ def setup_pgedge(User=None, Passwd=None, dbName=None, port=None, pg_ver=None, sp
        :param pg_ver: Defaults to latest prod version of pg, such as 16.  May be pinned to a specific pg version such as 16.2
        :param spock_ver: Defaults to latest prod version of spock, such as 3.3.  May be pinned to a specific spock version such as 3.3.1
        :param autostart: Defaults to False
+       :param extensions: Defaults to False.  Will install all (non-spock) supported extensions disabled when set
     """
 
-    util.message(f"setup.pgedge(User={User}, Passwd='***', dbName={dbName}, port={port}, pg_ver={pg_ver}, spock_ver={spock_ver}, autostart={autostart}", "debug")
+    if os.getenv("isAutoStart", "") == "True":
+        autostart = True
+
+    if util.isEXTENSIONS is True:
+        extensions = True
+
+    util.message(f"setup.pgedge(User={User}, Passwd='***', dbName={dbName}, port={port}, \n" + \
+                 f"    pg_ver={pg_ver}, spock_ver={spock_ver}, autostart={autostart}, extensions={extensions})", "debug")
 
     if (User is None) or (Passwd is None) or (dbName is None):
         util.exit_message("Must specify User, Passwd & dbName")
@@ -148,14 +157,14 @@ def setup_pgedge(User=None, Passwd=None, dbName=None, port=None, pg_ver=None, sp
 
     pg_major, pg_minor = parse_pg(pg_ver)
 
-    if not autostart:
+    if autostart is False:
         autos = os.getenv("isAutoStart")
         if autos == "True":
            autostart = True
         else:
            autostart = False 
 
-    check_pre_reqs(User, Passwd, dbName, port, pg_major, pg_minor, spock_ver, autostart)
+    check_pre_reqs(User, Passwd, dbName, port, pg_major, pg_minor, spock_ver, autostart, extensions)
 
     pause = 4
     pg_full = f"pg{pg_major}"
@@ -169,7 +178,7 @@ def setup_pgedge(User=None, Passwd=None, dbName=None, port=None, pg_ver=None, sp
         util.message("## symlink empty local data directory to empty /data ###")
         osSys("rm -rf data; ln -s /data data")
 
-    if autostart:
+    if autostart is True:
         util.message("\n## init & config autostart  ###############")
         osSys(f"{ctl} init pg{pg_major} --svcuser={util.get_user()}")
         osSys(f"{ctl} config pg{pg_major} --autostart=on")
@@ -183,6 +192,9 @@ def setup_pgedge(User=None, Passwd=None, dbName=None, port=None, pg_ver=None, sp
 
     db.create(dbName, User, Passwd, pg_major, spock_ver)
     time.sleep(pause)
+
+    if extensions is True:
+       util.message("This is where we will install supported extensions in a disabled state", "debug")
 
 
 if __name__ == "__main__":
