@@ -61,6 +61,12 @@ print "Executing cmd3 = $cmd3\n";
 my ($success3, $error_message3, $full_buf3, $stdout_buf3, $stderr_buf3) = IPC::Cmd::run(command => $cmd3, verbose => 0);
 handle_error_and_exit($success3, $error_message3, $full_buf3, $stdout_buf3, $stderr_buf3);
 
+chdir("./pgedge");
+
+# Pull down pgedge info.
+my ($success4, $error_message4, $full_buf4, $stdout_buf4, $stderr_buf4) = IPC::Cmd::run(command => $cmd4, verbose => 0);
+print ("Our version is:\n @$stdout_buf4\n");
+
 chdir("./../../../../");
 
 # Success
