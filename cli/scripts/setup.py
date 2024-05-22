@@ -204,12 +204,14 @@ def setup_pgedge(User=None, Passwd=None, dbName=None, port=None, pg_ver=None, sp
             util.message("--extensions not supported for EL8", "warning")
             return
 
-        # skipping test extension citus and timescale 
-
+        # omitting test extensions 'citus' and 'timescale' 
         exts = "audit vector cron orafce postgis partman curl " + \
                "hypopg hintplan plv8 profiler debugger"
 
-        osSys(f"{ctl} install {exts} --disabled")
+        # install extensions one-by-one and don't error out on problems
+        ext_l = exts.split()
+        for ext in ext_l:
+            osSys(f"{ctl} install {ext}-pg{pg_major} --disabled", fatal_exit=False)
 
 
 if __name__ == "__main__":
