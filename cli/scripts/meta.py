@@ -18,7 +18,7 @@ def get_extension_meta(component):
         c.execute(sql)
         data = c.fetchone()
         if data:
-            return str(data[0]), data[1], str(data[2]), str(data[3])
+            return str(data[0]), str(data[1]), str(data[2]), str(data[3])
         else:
             return None, None, None, None
     except Exception as e:
