@@ -14,7 +14,7 @@ import fire
 
 def create(db=None, User=None, Passwd=None, pg=None, spock=None):
     """
-    Create a pg db with spock installed into it.
+    Create a pg db with spock components installed into it.
 
 
      Usage:
@@ -59,6 +59,8 @@ def create(db=None, User=None, Passwd=None, pg=None, spock=None):
 
     util.echo_cmd(f"{nc} install snowflake-pg{pg} --no-restart")
 
+    util.echo_cmd(f"{nc} install lolor-pg{pg} --no-restart")
+
     if spock is None:
        if pg == "17":
            major_ver = util.DEFAULT_SPOCK_17
@@ -82,7 +84,10 @@ def create(db=None, User=None, Passwd=None, pg=None, spock=None):
     cmd = "CREATE EXTENSION snowflake"
     rc4 = util.echo_cmd(ncb + '"psql -q -c \\"' + cmd + '\\" ' + str(db) + '"')
 
-    rcs = rc1 + rc2 + rc3 + rc4
+    cmd = "CREATE EXTENSION lolor"
+    rc5 = util.echo_cmd(ncb + '"psql -q -c \\"' + cmd + '\\" ' + str(db) + '"')
+
+    rcs = rc1 + rc2 + rc3 + rc4 + rc5
     if rcs == 0:
         status = "success"
     else:
