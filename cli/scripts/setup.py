@@ -194,7 +194,22 @@ def setup_pgedge(User=None, Passwd=None, dbName=None, port=None, pg_ver=None, sp
     time.sleep(pause)
 
     if extensions is True:
-       util.message("This is where we will install supported extensions in a disabled state", "debug")
+        util.message("\n## Pre-install supported extensions in disabled state ########")
+
+        if pg_major not in ["15", "16"]:
+            util.message("--extensions not supported for this version of PG", "warning")
+            return
+
+        if util.get_el_os() == "EL8":
+            util.message("--extensions not supported for EL8", "warning")
+            return
+
+        # skipping test extension citus and timescale 
+
+        exts = "audit vector cron orafce postgis partman curl " + \
+               "hypopg hintplan plv8 profiler debugger"
+
+        osSys(f"{ctl} install {exts} --disabled")
 
 
 if __name__ == "__main__":
