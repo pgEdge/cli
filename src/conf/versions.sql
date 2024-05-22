@@ -61,12 +61,12 @@ INSERT INTO extensions VALUES ('spock33', 'spock', 1, 'spock',
   'wal_level=logical | max_worker_processes=12 | max_replication_slots=16 |
    max_wal_senders=16 | hot_standby_feedback=on | wal_sender_timeout=5s |
    track_commit_timestamp=on | spock.conflict_resolution=last_update_wins | 
-   spock.save_resolutions=on');
+   spock.save_resolutions=on | spock.conflict_log_level=DEBUG');
 INSERT INTO extensions VALUES ('spock40', 'spock', 1, 'spock',
   'wal_level=logical | max_worker_processes=12 | max_replication_slots=16 |
    max_wal_senders=16 | hot_standby_feedback=on | wal_sender_timeout=5s |
    track_commit_timestamp=on | spock.conflict_resolution=last_update_wins | 
-   spock.save_resolutions=on');
+   spock.save_resolutions=on | spock.conflict_log_level=DEBUG');
 INSERT INTO extensions VALUES ('lolor',     'lolor',     0, '',          '');
 INSERT INTO extensions VALUES ('postgis',   'postgis',   1, 'postgis-3', '');
 INSERT INTO extensions VALUES ('orafce',    'orafce',    1, 'orafce',    '');
