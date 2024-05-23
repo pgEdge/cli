@@ -2,7 +2,7 @@
 ## set -x
 
 SPOCK_REPO=spock-private
-SPOCK_BRANCH=per-subtrans-commit-ts
+SPOCK_BRANCH=main
 
 v12=12.19
 v13=13.15
