@@ -3,7 +3,7 @@
 import os
 import time
 
-MY_VERSION = "24.05.23"
+MY_VERSION = "24.05.28"
 DEFAULT_PG = "16"
 DEFAULT_SPOCK = "33"
 DEFAULT_SPOCK_17 = "40"
