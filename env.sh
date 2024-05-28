@@ -5,20 +5,20 @@ hubV=24.3.5
 ctlibsV=1.2
 
 spock40V=4.0dev3-1
-spock33V=3.3.2-1
+spock33V=3.3.4-1
 spock32V=3.2.8-1
 
 lolorV=1.0dev1-1
 foslotsV=1a-1
-snwflkV=1.2-1
-vectorV=0.6.1-1
+snwflkV=2.1-1
+vectorV=0.7.0-1
 
 grp_pgeV=2.12
 
 P17=17devel-1
-P16=16.2-4
-P15=15.6-4
-P14=14.11-1
+P16=16.3-2
+P15=15.7-2
+P14=14.12-2
 P13=13.14-1
 P12=12.18-1
 
@@ -30,7 +30,7 @@ postgrestV=12.0.2-1
 prompgexpV=0.15.0-1
 backrestV=2.50-3
 readonlyV=1.1.1-1
-wal2jV=2.5.1-1
+wal2jV=2.6.0-1
 
 curlV=2.2.2-1
 citusV=12.1.2-1
@@ -43,7 +43,7 @@ v8V=3.2.2-1
 
 hypoV=1.4.0-1
 timescaleV=2.13.1-1
-logicalV=2.4.4-1
+#logicalV=2.4.4-1
 profV=4.2.4-1
 bulkloadV=3.1.19-1
 partmanV=5.0.1-1

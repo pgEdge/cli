@@ -125,20 +125,23 @@ INSERT INTO versions VALUES ('pg13', '13.13-1', 'el8', 0, '20231109','', '', '')
 
 INSERT INTO releases VALUES ('pg14', 1, 'pg', '', '', 'prod', 
   '<font size=-1>New in <a href=https://www.postgresql.org/docs/14/release-14.html>2021</a></font>', 1, 'POSTGRES', '', '');
-INSERT INTO versions VALUES ('pg14', '14.11-1', 'el8, el9, arm9', 1, '20240208', '','','');
+INSERT INTO versions VALUES ('pg14', '14.12-2', 'el8, el9, arm9', 1, '20240528', '','','');
+INSERT INTO versions VALUES ('pg14', '14.11-1', 'el8, el9, arm9', 0, '20240208', '','','');
 INSERT INTO versions VALUES ('pg14', '14.10-2', 'el8, el9, arm9', 0, '20240108', '','','');
 
 INSERT INTO releases VALUES ('pg15', 2, 'pg', '', '', 'prod', 
   '<font size=-1>New in <a href=https://www.postgresql.org/docs/15/release-15.html>2022</a></font>', 1, 'POSTGRES', '', '');
-INSERT INTO versions VALUES ('pg15', '15.6-4',  'el8, el9, arm9', 1, '20240317','', '', '');
+INSERT INTO versions VALUES ('pg15', '15.7-2',  'el8, el9, arm9', 1, '20240528','', '', '');
+INSERT INTO versions VALUES ('pg15', '15.6-4',  'el8, el9, arm9', 0, '20240317','', '', '');
 INSERT INTO versions VALUES ('pg15', '15.6-3',  'el8, el9, arm9', 0, '20240301','', '', '');
 INSERT INTO versions VALUES ('pg15', '15.6-1',  'el8, el9, arm9', 0, '20240208','', '', '');
 INSERT INTO versions VALUES ('pg15', '15.5-1',  'el8, el9, arm9', 0, '20231109','', '', '');
 
 INSERT INTO releases VALUES ('pg16', 2, 'pg', '', '', 'prod', 
   '<font size=-1>New in <a href=https://www.postgresql.org/docs/16/release-16.html>2023!</a></font>', 1, 'POSTGRES', '', '');
-INSERT INTO versions VALUES ('pg16', '16.2-4',  'el8, el9, arm9, osx', 1, '20240317','', '', '');
-INSERT INTO versions VALUES ('pg16', '16.2-3',  'el8, el9, arm9, osx', 0, '20240301','', '', '');
+INSERT INTO versions VALUES ('pg16', '16.3-2',  'el8, el9, arm9', 1, '20240528','', '', '');
+INSERT INTO versions VALUES ('pg16', '16.2-4',  'el8, el9, arm9', 0, '20240317','', '', '');
+INSERT INTO versions VALUES ('pg16', '16.2-3',  'el8, el9, arm9', 0, '20240301','', '', '');
 INSERT INTO versions VALUES ('pg16', '16.2-2',  'el8, el9, arm9', 0, '20240212','', '', '');
 INSERT INTO versions VALUES ('pg16', '16.2-1',  'el8, el9, arm9', 0, '20240208','', '', '');
 INSERT INTO versions VALUES ('pg16', '16.1-1',  'el8, el9, arm9', 0, '20231109','', '', '');
@@ -204,6 +207,10 @@ INSERT INTO projects VALUES ('wal2json', 'ext', 4, 0, 'hub', 0, 'https://github.
   'wal2json', 1, 'wal2json.png', 'WAL to JSON for CDC', 'https://github.com/eulerto/wal2json');
 INSERT INTO releases VALUES ('wal2json-pg15', 10, 'wal2json', 'wal2json', '', 'test', '', 1, 'POSTGRES', '', '');
 INSERT INTO releases VALUES ('wal2json-pg16', 10, 'wal2json', 'wal2json', '', 'test', '', 1, 'POSTGRES', '', '');
+
+INSERT INTO versions VALUES ('wal2json-pg15', '2.6.0-1', 'arm9, el9', 0, '20240528', 'pg15', '', 'https://github.com/eulerto/wal2json/tags');
+INSERT INTO versions VALUES ('wal2json-pg16', '2.6.0-1', 'arm9, el9', 0, '20230528', 'pg16', '', 'https://github.com/eulerto/wal2json/tags');
+
 INSERT INTO versions VALUES ('wal2json-pg15', '2.5.1-1', 'arm9, el9', 0, '20240221', 'pg15', '', 'https://github.com/eulerto/wal2json/tags');
 INSERT INTO versions VALUES ('wal2json-pg16', '2.5.1-1', 'arm9, el9', 0, '20230221', 'pg16', '', 'https://github.com/eulerto/wal2json/tags');
 
@@ -276,8 +283,11 @@ INSERT INTO projects VALUES ('vector', 'pge', 4, 0, 'hub', 1, 'https://github.co
 INSERT INTO releases VALUES ('vector-pg15', 4, 'vector', 'pgVector', '', 'prod', '', 1, 'pgEdge Community', '', '');
 INSERT INTO releases VALUES ('vector-pg16', 4, 'vector', 'pgVector', '', 'prod', '', 1, 'pgEdge Community', '', '');
 
-INSERT INTO versions VALUES ('vector-pg15', '0.6.1-1', 'el9, arm9', 1, '20240307', 'pg15', '', '');
-INSERT INTO versions VALUES ('vector-pg16', '0.6.1-1', 'el9, arm9', 1, '20240307', 'pg16', '', '');
+INSERT INTO versions VALUES ('vector-pg15', '0.7.0-1', 'el9, arm9', 1, '20240528', 'pg15', '', '');
+INSERT INTO versions VALUES ('vector-pg16', '0.7.0-1', 'el9, arm9', 1, '20240528', 'pg16', '', '');
+
+INSERT INTO versions VALUES ('vector-pg15', '0.6.1-1', 'el9, arm9', 0, '20240307', 'pg15', '', '');
+INSERT INTO versions VALUES ('vector-pg16', '0.6.1-1', 'el9, arm9', 0, '20240307', 'pg16', '', '');
 
 INSERT INTO versions VALUES ('vector-pg15', '0.6.0-1', 'el9, arm9', 0, '20240131', 'pg15', '', '');
 INSERT INTO versions VALUES ('vector-pg16', '0.6.0-1', 'el9, arm9', 0, '20240131', 'pg16', '', '');
@@ -289,9 +299,13 @@ INSERT INTO releases VALUES ('snowflake-pg14', 4, 'snowflake', 'Snowflake', '', 
 INSERT INTO releases VALUES ('snowflake-pg15', 4, 'snowflake', 'Snowflake', '', 'prod', '', 1, 'POSTGRES', '', '');
 INSERT INTO releases VALUES ('snowflake-pg16', 4, 'snowflake', 'Snowflake', '', 'prod', '', 1, 'POSTGRES', '', '');
 
-INSERT INTO versions VALUES ('snowflake-pg14', '1.2-1', 'el8, el9, arm9', 1, '20240307', 'pg14', '', '');
-INSERT INTO versions VALUES ('snowflake-pg15', '1.2-1', 'el8, el9, arm9', 1, '20240307', 'pg15', '', '');
-INSERT INTO versions VALUES ('snowflake-pg16', '1.2-1', 'el8, el9, arm9, osx', 1, '20240307', 'pg16', '', '');
+INSERT INTO versions VALUES ('snowflake-pg14', '2.1-1', 'el8, el9, arm9', 1, '20240528', 'pg14', '', '');
+INSERT INTO versions VALUES ('snowflake-pg15', '2.1-1', 'el8, el9, arm9', 1, '20240528', 'pg15', '', '');
+INSERT INTO versions VALUES ('snowflake-pg16', '2.1-1', 'el8, el9, arm9', 1, '20240528', 'pg16', '', '');
+
+INSERT INTO versions VALUES ('snowflake-pg14', '1.2-1', 'el8, el9, arm9', 0, '20240307', 'pg14', '', '');
+INSERT INTO versions VALUES ('snowflake-pg15', '1.2-1', 'el8, el9, arm9', 0, '20240307', 'pg15', '', '');
+INSERT INTO versions VALUES ('snowflake-pg16', '1.2-1', 'el8, el9, arm9', 0, '20240307', 'pg16', '', '');
 
 INSERT INTO versions VALUES ('snowflake-pg14', '1.1-1', 'el8, el9, arm9', 0, '20231204', 'pg14', '', '');
 INSERT INTO versions VALUES ('snowflake-pg15', '1.1-1', 'el8, el9, arm9', 0, '20231204', 'pg15', '', '');
@@ -313,9 +327,13 @@ INSERT INTO releases VALUES ('spock33-pg14', 4, 'spock', 'Spock', '', 'prod', ''
 INSERT INTO releases VALUES ('spock33-pg15', 4, 'spock', 'Spock', '', 'prod', '', 1, 'pgEdge Community', '', '');
 INSERT INTO releases VALUES ('spock33-pg16', 4, 'spock', 'Spock', '', 'prod', '', 1, 'pgEdge Community', '', '');
 
-INSERT INTO versions VALUES ('spock33-pg14', '3.3.2-1', 'el8, el9, arm9', 1, '20240415', 'pg14', '', '');
-INSERT INTO versions VALUES ('spock33-pg15', '3.3.2-1', 'el8, el9, arm9', 1, '20240415', 'pg15', '', '');
-INSERT INTO versions VALUES ('spock33-pg16', '3.3.2-1', 'el8, el9, arm9', 1, '20240415', 'pg16', '', '');
+INSERT INTO versions VALUES ('spock33-pg14', '3.3.4-1', 'el8, el9, arm9', 1, '20240528', 'pg14', '', '');
+INSERT INTO versions VALUES ('spock33-pg15', '3.3.4-1', 'el8, el9, arm9', 1, '20240528', 'pg15', '', '');
+INSERT INTO versions VALUES ('spock33-pg16', '3.3.4-1', 'el8, el9, arm9', 1, '20240528', 'pg16', '', '');
+
+INSERT INTO versions VALUES ('spock33-pg14', '3.3.2-1', 'el8, el9, arm9', 0, '20240415', 'pg14', '', '');
+INSERT INTO versions VALUES ('spock33-pg15', '3.3.2-1', 'el8, el9, arm9', 0, '20240415', 'pg15', '', '');
+INSERT INTO versions VALUES ('spock33-pg16', '3.3.2-1', 'el8, el9, arm9', 0, '20240415', 'pg16', '', '');
 
 INSERT INTO versions VALUES ('spock33-pg14', '3.3.1-1', 'el8, el9, arm9', 0, '20240317', 'pg14', '', '');
 INSERT INTO versions VALUES ('spock33-pg15', '3.3.1-1', 'el8, el9, arm9', 0, '20240317', 'pg15', '', '');
