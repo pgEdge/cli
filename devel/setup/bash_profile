@@ -1,7 +1,6 @@
 # PGEDGE CLI for ~/.bash... #############################################
 alias bp="cd ~/dev/cli; source bp.sh"
 alias bap="cd ~/dev/cli; ./build_all.sh; source bp.sh"
-alias bold="cd ~/dev/cli/devel; ./getOld.sh download; cd pgedge"
 alias ver="vi ~/dev/cli/src/conf/versions.sql"
 
 export DEV=$HOME/dev
@@ -21,7 +20,7 @@ export DOC=$DEV/pgedge
 export PGE=$DEV/cli
 
 ## output ######################
-export OUTPG=$DEV/in/postgres
+export INPG=$DEV/in/postgres
 export OUT=$DEV/out
 export HIST=$DEV/history
 
@@ -29,11 +28,8 @@ export DEVEL=$PGE/devel
 export PSX=$PGE/out/posix
 export PG=$DEVEL/pg
 export CLI=$PGE/cli/scripts
-export CONT=$CLI/contrib
 export REPO=http://localhost:8000
 export CONN="-U user1 -P pword1 -d db1"
 
-
-#export JAVA_HOME=/etc/alternatives/jre_17_openjdk
-#export PATH=/usr/local/bin:$JAVA_HOME/bin:/opt/apache-maven-3.9.2/bin:$PATH
+source ~/venv/bin/activate
 
