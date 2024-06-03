@@ -126,7 +126,7 @@ INSERT INTO categories VALUES (9,  87, 'Management & Monitoring', 'Manage/Monito
 INSERT INTO projects VALUES ('hub', 'app', 0, 0, 'hub', 0, 'https://github.com/pgedge/cli','',0,'','','','');
 INSERT INTO releases VALUES ('hub', 1, 'hub',  '', '', 'hidden', '', 1, '', '', '');
 
-INSERT INTO versions VALUES ('hub', '24.05.28',  '',  1, '20240528', '', '', '');
+INSERT INTO versions VALUES ('hub', '24.06.04',  '',  1, '20240624', '', '', '');
 INSERT INTO versions VALUES ('hub', '24.05.23',  '',  0, '20240523', '', '', '');
 INSERT INTO versions VALUES ('hub', '24.4.6',    '',  0, '20240509', '', '', '');
 INSERT INTO versions VALUES ('hub', '24.4.5',    '',  0, '20240410', '', '', '');
@@ -345,15 +345,10 @@ INSERT INTO releases VALUES ('spock40-pg15', 4, 'spock', 'Spock', '', 'prod', ''
 INSERT INTO releases VALUES ('spock40-pg16', 4, 'spock', 'Spock', '', 'prod', '', 1, 'pgEdge Community', '', '');
 INSERT INTO releases VALUES ('spock40-pg17', 4, 'spock', 'Spock', '', 'prod', '', 1, 'pgEdge Community', '', '');
 
-INSERT INTO versions VALUES ('spock40-pg14', '4.0.144-1', 'el8, el9, arm9', 1, '20240523', 'pg14', '', '');
-INSERT INTO versions VALUES ('spock40-pg15', '4.0.144-1', 'el8, el9, arm9', 1, '20240523', 'pg15', '', '');
-INSERT INTO versions VALUES ('spock40-pg16', '4.0.144-1', 'el8, el9, arm9', 1, '20240523', 'pg16', '', '');
-INSERT INTO versions VALUES ('spock40-pg17', '4.0.144-1', 'el8, el9, arm9', 1, '20240523', 'pg17', '', '');
-
-INSERT INTO versions VALUES ('spock40-pg14', '4.0.142-1', 'el8, el9, arm9', 0, '20240521', 'pg14', '', '');
-INSERT INTO versions VALUES ('spock40-pg15', '4.0.142-1', 'el8, el9, arm9', 0, '20240521', 'pg15', '', '');
-INSERT INTO versions VALUES ('spock40-pg16', '4.0.142-1', 'el8, el9, arm9', 0, '20240521', 'pg16', '', '');
-INSERT INTO versions VALUES ('spock40-pg17', '4.0.142-1', 'el8, el9, arm9', 0, '20240521', 'pg17', '', '');
+INSERT INTO versions VALUES ('spock40-pg14', '4.0beta1-1', 'el8, el9, arm9', 1, '20240604', 'pg14', '', '');
+INSERT INTO versions VALUES ('spock40-pg15', '4.0beta1-1', 'el8, el9, arm9', 1, '20240604', 'pg15', '', '');
+INSERT INTO versions VALUES ('spock40-pg16', '4.0beta1-1', 'el8, el9, arm9', 1, '20240604', 'pg16', '', '');
+INSERT INTO versions VALUES ('spock40-pg17', '4.0beta1-1', 'el8, el9, arm9', 1, '20240604', 'pg17', '', '');
 
 -- ## LOLOR #############################
 INSERT INTO projects VALUES ('lolor', 'pge', 4, 0, 'hub', 1, 'https://github.com/pgedge/lolor/tags',
@@ -409,7 +404,7 @@ INSERT INTO versions VALUES ('badger', '11.8', '', 0, '20220408', '', '', '');
 INSERT INTO projects VALUES ('ctlibs', 'pge', 0, 0, 'hub', 3, 'https://github.com/pgedge/cli',
   'ctlibs',  0, 'ctlibs.png', 'ctlibs', 'https://github.com/pgedge/cli', '');
 INSERT INTO releases VALUES ('ctlibs', 2, 'ctlibs',  'nodectl Libs', '', 'prod', '', 1, '', '', '');
-INSERT INTO versions VALUES ('ctlibs', '1.3', '', 1, '20240528', '', '', '');
+INSERT INTO versions VALUES ('ctlibs', '1.3', '', 1, '20240604', '', '', '');
 INSERT INTO versions VALUES ('ctlibs', '1.2', '', 0, '20240130', '', '', '');
 
 -- ## PGCAT #############################
