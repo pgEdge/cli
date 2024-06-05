@@ -32,6 +32,7 @@ import platform
 import subprocess
 import getpass
 import filecmp
+from tqdm import tqdm
 
 from subprocess import Popen, PIPE, STDOUT
 from datetime import datetime, timedelta
@@ -99,6 +100,11 @@ def validate_checksum(p_file_name, p_checksum_file_name):
      print_error("SHA512 CheckSum Mismatch")
      return check_sum_match
 
+def osSys(p_input, p_display=False):
+    if p_display:
+        message("# " + p_input)
+    rc = os.system(p_input)
+    return rc
 
 def retrieve_remote():
     conf_dir = "data" + os.sep + "conf"
@@ -3924,11 +3930,41 @@ def update_component_state(p_app, p_mode, p_ver=None):
 bold_start = "\033[1m"
 bold_end = "\033[0m"
 
+def run_rcommand(cmd, message="", host="", usr="", key="", verbose=False, max_attempts=1):
+    if message == "":
+        result = echo_cmd(cmd, echo=verbose, host=host, usr=usr, key=key)
+        return result
+
+    if host == "":
+        host = "127.0.0.1"
+    message = f"{host} : {message}"
+    
+    echo_action(message)
+    attempts = 0
+    while attempts < max_attempts:
+        result = echo_cmd(cmd, echo=verbose, host=host, usr=usr, key=key)
+        if result == 0:
+            break
+        attempts = attempts + 1
+        time.sleep(5) 
+    
+    status = "ok" if result == 0 else "fail"
+    echo_action(message, status)
+    return result
+
+def wait_with_dots(message, duration=5):
+    #print(message)
+    for _ in tqdm(range(duration), desc="Progress", ncols=100):
+        time.sleep(1)
+
+bold_start = "\033[1m"
+bold_end = "\033[0m"
+
 def echo_action(action, status=None, e=False):
 
     now = datetime.now()
     t = now.strftime('%B %d, %Y, %H:%M:%S')
-    
+
     if status is None:
         sys.stdout.write(f"{t}: {action}... ")
         sys.stdout.flush()
@@ -3954,13 +3990,17 @@ def echo_message(msg, bold=False, level="info"):
     if level == "error":
         exit(1)
 
-def echo_node(data):
-    nodes = data.get('nodes', [])
-    for node in nodes:
-        print('#' * 30)
-        for key, value in node.items():
-            print(bold_start + f"* {key}:" + bold_end +"{value}")
-        print(bold_start + '#'*30 + bold_end)
+def echo_node(node):
+    max_key_length = max(len(key) for key in node.keys())
+    max_value_length = max(len(str(value)) for value in node.values())
+    total_length = max_key_length + max_value_length + 4  # for ': ' and some padding
+    bold_hashes = "\033[1m" + "#" * total_length + "\033[0m"
+    print(bold_hashes)
+    
+    for key, value in node.items():
+        print(f"# \033[1m{key.rjust(max_key_length)}:\033[0m {value}")
+    
+    print(bold_hashes)
 
 def run_command(command_args, max_attempts=1, timeout=None, capture_output=True, env=None, cwd=None, verbose=False):
     attempts = 0
@@ -3992,6 +4032,101 @@ def run_command(command_args, max_attempts=1, timeout=None, capture_output=True,
 
     return {"success": False, "output": output, "error": error, "attempts": attempts}
 
+def get_cluster_info(cluster_name):
+    cluster_dir = os.path.join(MY_HOME, BASE_DIR, cluster_name)
+    os.system("mkdir -p " + cluster_dir)
+    cluster_file = os.path.join(cluster_dir, f"{cluster_name}.json")
+    return (cluster_dir, cluster_file)
+
+def get_cluster_json(cluster_name):
+    cluster_dir, cluster_file = get_cluster_info(cluster_name)
+
+    if not os.path.isdir(cluster_dir):
+        exit_message(f"Cluster directory '{cluster_dir}' not found")
+
+    if not os.path.isfile(cluster_file):
+        message(f"Cluster file '{cluster_file}' not found", "warning")
+        return None
+
+    parsed_json = None
+    try:
+        with open(cluster_file, "r") as f:
+            parsed_json = json.load(f)
+    except Exception as e:
+        exit_message(f"Unable to load cluster def file '{cluster_file}'\n{e}")
+
+    message(f"parsed_json = \n{json.dumps(parsed_json, indent=2)}", "debug")
+    return parsed_json
+
+def load_json(cluster_name):
+    """Load a json config file for a cluster."""
+
+    parsed_json = get_cluster_json(cluster_name)
+    if parsed_json is None:
+        exit_message("Unable to load_json cluster")
+
+    pg = parsed_json["database"]["pg_version"]
+    spock = ""
+    auto_ddl = "off"
+    auto_start = "off"
+    if "spock_version" in parsed_json["database"]:
+        spock = parsed_json["database"]["spock_version"]
+    if "auto_ddl" in parsed_json["database"]:
+        auto_ddl = parsed_json["database"]["auto_ddl"]
+    if "auto_start" in parsed_json["database"]:
+        auto_start = parsed_json["database"]["auto_start"]
+
+    db_settings = {
+        "pg_version": pg,
+        "spock_version": spock,
+        "auto_ddl": auto_ddl,
+        "auto_start": auto_start
+    }
+
+    db = parsed_json["database"]["databases"]
+
+    node = []
+
+    def process_nodes(group, group_name):
+        if group_name in parsed_json:
+            for n in group["nodes"]:
+                n.update(parsed_json[group_name])
+                if "subnodes" in n:
+                    for subnode in n["subnodes"]:
+                        subnode["parent_node"] = n["name"]
+                        subnode["os_user"] = n["os_user"]
+                        subnode["ssh_key"] = n["ssh_key"]
+                node.append(n)
+        else:
+            exit_message(f"{group_name} info missing from JSON", 1)
+
+    if "remote" in parsed_json["node_groups"]:
+        for group in parsed_json["node_groups"]["remote"]:
+            process_nodes(group, "remote")
+
+    if "aws" in parsed_json["node_groups"]:
+        for group in parsed_json["node_groups"]["aws"]:
+            process_nodes(group, "aws")
+
+    if "azure" in parsed_json["node_groups"]:
+        for group in parsed_json["node_groups"]["azure"]:
+            process_nodes(group, "azure")
+
+    if "gcp" in parsed_json["node_groups"]:
+        for group in parsed_json["node_groups"]["gcp"]:
+            process_nodes(group, "gcp")
+
+    if "localhost" in parsed_json["node_groups"]:
+        for group in parsed_json["node_groups"]["localhost"]:
+            process_nodes(group, "localhost")
+
+    return (
+        db,
+        db_settings,
+        node
+    )
+
+BASE_DIR = "cluster"
 # MAINLINE ################################################################
 cL = sqlite3.connect(MY_LITE, check_same_thread=False)
 REPO = get_value("GLOBAL", "REPO")

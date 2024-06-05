@@ -3,6 +3,7 @@
 
 import os, json, datetime
 import util, fire, meta, time, sys
+import etcd, patroni
 
 BASE_DIR = "cluster"
 
@@ -221,67 +222,55 @@ def load_json(cluster_name):
     if "auto_start" in parsed_json["database"]:
         auto_start = parsed_json["database"]["auto_start"]
 
-    db_settings = {}
-    db_settings["pg_version"] = pg
-    db_settings["spock_version"] = spock
-    db_settings["auto_ddl"] = auto_ddl
-    db_settings["auto_start"] = auto_start
- 
-    db=[]
-    for databases in parsed_json["database"]["databases"]:
-        db.append(databases)
-    
-    node=[]
+    db_settings = {
+        "pg_version": pg,
+        "spock_version": spock,
+        "auto_ddl": auto_ddl,
+        "auto_start": auto_start
+    }
+
+    db = parsed_json["database"]["databases"]
+
+    node = []
+
+    def process_nodes(group, group_name):
+        if group_name in parsed_json:
+            for n in group["nodes"]:
+                n.update(parsed_json[group_name])
+                if "subnodes" in n:
+                    for subnode in n["subnodes"]:
+                        subnode["parent_node"] = n["name"]
+                        subnode["os_user"] = n["os_user"]
+                        subnode["ssh_key"] = n["ssh_key"]
+                node.append(n)
+        else:
+            util.exit_message(f"{group_name} info missing from JSON", 1)
+
     if "remote" in parsed_json["node_groups"]:
         for group in parsed_json["node_groups"]["remote"]:
-            if "remote" in parsed_json:
-                for n in group["nodes"]:
-                    n.update(parsed_json["remote"])
-                    node.append(n)
-            else:
-                util.exit_message("remote info missing from JSON", 1)
+            process_nodes(group, "remote")
 
     if "aws" in parsed_json["node_groups"]:
         for group in parsed_json["node_groups"]["aws"]:
-            if "aws" in parsed_json:
-                for n in group["nodes"]:
-                    n.update(parsed_json["aws"])
-                    node.append(n)
-            else:
-                util.exit_message("aws info missing from JSON", 1)
+            process_nodes(group, "aws")
 
     if "azure" in parsed_json["node_groups"]:
         for group in parsed_json["node_groups"]["azure"]:
-            if "azure" in parsed_json:
-                for n in group["nodes"]:
-                    n.update(parsed_json["azure"])
-                    node.append(n)
-            else:
-                util.exit_message("azure info missing from JSON", 1)           
+            process_nodes(group, "azure")
 
     if "gcp" in parsed_json["node_groups"]:
         for group in parsed_json["node_groups"]["gcp"]:
-            if "gcp" in parsed_json:
-                for n in group["nodes"]:
-                    n.update(parsed_json["gcp"])
-                    node.append(n)        
-            else:
-                util.exit_message("gcp info missing from JSON", 1)      
+            process_nodes(group, "gcp")
 
     if "localhost" in parsed_json["node_groups"]:
         for group in parsed_json["node_groups"]["localhost"]:
-            if "localhost" in parsed_json:
-                for n in group["nodes"]:
-                    n.update(parsed_json["localhost"])
-                    node.append(n)  
-            else:
-                util.exit_message("localhost info missing from JSON", 1)
+            process_nodes(group, "localhost")
+
     return (
         db,
         db_settings,
         node
     )
-
 
 def validate(cluster_name):
     """Validate a Cluster Configuration JSON file"""
@@ -346,35 +335,85 @@ def remove(cluster_name, force=False):
 
 
 def init(cluster_name):
-    """Initialize a cluster via Cluster Configuration JSON file.
-    
-       Install pgedge on each node, create the initial database, install spock, and create all spock nodes and subscriptions. 
-       Additional databases will be created with all spock nodes and subscriptions if defined in the json file.
-       This command requires a JSON file with the same name as the cluster to be in the cluster/<cluster_name>. \n 
-       Example: cluster init demo 
-       :param cluster_name: The name of the cluster. 
+    """
+    Initialize a cluster via Cluster Configuration JSON file.
+
+    Install pgedge on each node, create the initial database, install spock,
+    and create all spock nodes and subscriptions. Additional databases will
+    be created with all spock nodes and subscriptions if defined in the JSON
+    file. This command requires a JSON file with the same name as the cluster
+    to be in the cluster/<cluster_name>.
+
+    Example: cluster init demo
+    :param cluster_name: The name of the cluster.
     """
 
     util.message(f"## Loading cluster '{cluster_name}' json definition file")
     db, db_settings, nodes = load_json(cluster_name)
 
-    util.message("\n## Checking ssh'ing to each node")
     for nd in nodes:
-        rc = util.echo_cmd(
-            usr=nd["os_user"], host=nd["ip_address"], key=nd["ssh_key"], cmd="hostname"
+        message = f"Checking ssh on {nd['ip_address']}"
+        util.run_rcommand(
+            cmd="hostname",
+            message=message,
+            host=nd["ip_address"],
+            usr=nd["os_user"],
+            key=nd["ssh_key"],
+            verbose=False
         )
-        if rc == 0:
-            print("OK")
-        else:
-            util.exit_message("cannot ssh to node")
 
-    ssh_install_pgedge(cluster_name, db[0]["name"], db_settings, db[0]["username"], db[0]["password"], nodes)
-    ssh_cross_wire_pgedge(cluster_name, db[0]["name"], db_settings, db[0]["username"], db[0]["password"], nodes)
+    ssh_install_pgedge(
+        cluster_name, db[0]["name"], db_settings, db[0]["username"],
+        db[0]["password"], nodes, True, " "
+    )
+    ssh_cross_wire_pgedge(
+        cluster_name, db[0]["name"], db_settings, db[0]["username"],
+        db[0]["password"], nodes
+    )
+
     if len(db) > 1:
         for database in db[1:]:
-            create_spock_db(nodes,database,db_settings)
-            ssh_cross_wire_pgedge(cluster_name, database["name"], db_settings, database["username"], database["password"], nodes)        
+            create_spock_db(nodes, database, db_settings)
+            ssh_cross_wire_pgedge(
+                cluster_name, database["name"], db_settings, database["username"],
+                database["password"], nodes
+            )
 
+    pg_ver = db_settings["pg_version"]
+    for node in nodes:
+        system_identifier = get_system_identifier(db[0], node)
+        if "subnodes" in node:
+            for n in node["subnodes"]:
+                ssh_install(
+                    cluster_name, db[0]["name"], db_settings, db[0]["username"],
+                    db[0]["password"], n, False, " "
+                )
+
+    if any("subnodes" in node for node in nodes):
+        configure_etcd(cluster_name, system_identifier)
+        configure_patroni(cluster_name)
+
+def get_system_identifier(db, n):
+    cmd = "SELECT system_identifier FROM pg_control_system()"
+    try:
+        op = util.psql_cmd_output(
+            cmd, 
+            f"{n['path']}/pgedge/pgedge", 
+            db["name"], 
+            "",
+            host=n["ip_address"], 
+            usr=n["os_user"], 
+            key=n["ssh_key"]
+        )
+        lines = op.splitlines()
+        for line in lines:
+            # Look for the line that appears after the header line
+            if line.strip() and line.strip().isdigit():
+                system_identifier = line.strip()
+                return system_identifier
+        raise ValueError("System identifier not found in the output")
+    except Exception as e:
+        return str(e)
 
 def update_json(cluster_name, db_json):
     parsed_json = get_cluster_json(cluster_name)
@@ -418,20 +457,68 @@ def add_db(cluster_name, database_name, username, password):
     util.message(f"## Updating cluster '{cluster_name}' json definition file")
     update_json(cluster_name, db_json)
 
+def print_install_hdr(cluster_name, db, db_user, count, name, path, ip, port, repo, primary, primary_name):
+    
+    if primary:
+        node_type = "Primary"
+    else:
+        node_type = "Replica"
 
+    node = {
+        "REPO": repo,
+        "Cluster Name": cluster_name,
+        "Node Type": node_type,
+        "Primary Node Name": primary_name,
+        "Name": name,
+        "Host": ip,
+        "Port": port,
+        "Path": path,
+        "Database": db,
+        "Database User": db_user,
+        "Number of Nodes": count,
+    }
+    util.echo_node(node)
 
-def print_install_hdr(cluster_name, db, db_user, count):
-    util.message("#")
-    util.message(
-        f"######## ssh_install_pgedge: cluster={cluster_name}, db={db}, db_user={db_user}, count={count}"
-    )
+def ssh_install(cluster_name, db, db_settings, db_user, db_passwd, n, primary, primary_name):
+    REPO = os.getenv("REPO", "")
+    ndnm = n["name"]
+    ndpath = n["path"]
+    ndip = n["ip_address"]
+    pg = db_settings["pg_version"]
+    try:
+        ndport = str(n["port"])
+    except Exception:
+        ndport = "5432"
 
+    if REPO == "":
+        REPO = "https://pgedge-upstream.s3.amazonaws.com/REPO"
+        os.environ["REPO"] = REPO
 
-def ssh_install_pgedge(cluster_name, db, db_settings, db_user, db_passwd, nodes):
+    install_py = "install.py"
+
+    pg = db_settings["pg_version"]
+    spock = db_settings["spock_version"]        
+
+    cmd0 = f"export REPO={REPO}; "
+    cmd1 = f"mkdir -p {ndpath}; cd {ndpath}; "
+    cmd2 = f'python3 -c "\\$(curl -fsSL {REPO}/{install_py})"'
+    util.echo_cmd(cmd0 + cmd1 + cmd2, host=n["ip_address"], usr=n["os_user"], key=n["ssh_key"])
+    
+    nc = os.path.join(ndpath, "pgedge", "pgedge ")
+    cmd = f"{nc} install pg{pg}"
+    util.run_rcommand(
+        cmd,
+        message=f"Installing pg{pg} on {ndnm}",
+        host=n["ip_address"], usr=n["os_user"],
+        key=n["ssh_key"]
+        )
+
+def ssh_install_pgedge(cluster_name, db, db_settings, db_user, db_passwd, nodes, primary, primary_name):
     """Install pgEdge on every node in a cluster."""
 
     for n in nodes:
-        print_install_hdr(cluster_name, db, db_user, len(nodes))
+        REPO = os.getenv("REPO", "")
+        print_install_hdr(cluster_name, db, db_user, len(nodes), n["name"], n["path"], n["ip_address"], n["port"], REPO, primary, primary_name)
         ndnm = n["name"]
         ndpath = n["path"]
         ndip = n["ip_address"]
@@ -440,16 +527,12 @@ def ssh_install_pgedge(cluster_name, db, db_settings, db_user, db_passwd, nodes)
         except Exception:
             ndport = "5432"
 
-        REPO = os.getenv("REPO", "")
         if REPO == "":
             REPO = "https://pgedge-upstream.s3.amazonaws.com/REPO"
             os.environ["REPO"] = REPO
 
         install_py = "install.py"
 
-        util.message(
-            f"########                node={ndnm}, host={ndip}, path={ndpath} REPO={REPO}\n"
-        )
         pg = db_settings["pg_version"]
         spock = db_settings["spock_version"]        
 
@@ -474,6 +557,8 @@ def ssh_install_pgedge(cluster_name, db, db_settings, db_user, db_passwd, nodes)
             util.echo_cmd(cmd, host=n["ip_address"], usr=n["os_user"], key=n["ssh_key"])
         util.message("#")
     return 0
+
+
 def create_spock_db(nodes,db,db_settings):
     for n in nodes:
         nc = n["path"] + os.sep + "pgedge" + os.sep + "pgedge "
@@ -803,8 +888,7 @@ def add_node(cluster_name, source_node, target_node, stanza=" ", backup_id=" ", 
     
     if install_pgedge == True:
         util.echo_action(f"Installing postgresql ")
-        rc = ssh_install_pgedge(cluster_name, dbname, db_settings, db[0]["username"], db[0]["password"], node_data)
-        #ssh_cross_wire_pgedge(cluster_name, db[0]["name"], db_settings, db[0]["username"], db[0]["password"], node_data)
+        rc = ssh_install_pgedge(cluster_name, dbname, db_settings, db[0]["username"], db[0]["password"], node_data, True, " ")
         if (rc == 0):    
             util.echo_action(f"Installing postgresql ", "ok")
         else:
