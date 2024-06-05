@@ -43,14 +43,9 @@ def mainline():
         print("Nothing to do.")
         sys.exit(0)
 
-    if (p_from_ver < "24.3.3"):
-        util.echo_cmd(f"cp {MY_HOME}/hub_new/hub/scripts/sh/cli.sh {MY_HOME}/pgedge")
-        if os.path.isdir("ctlibs"):
-           util.echo_cmd(f"{CTL} remove ctlibs")
-        
-        util.echo_cmd(f"{CTL} install ctlibs")
-
-    sys.exit(rc)
+    util.echo_cmd(f"cp {MY_HOME}/hub_new/hub/scripts/sh/cli.sh {MY_HOME}/pgedge")
+   
+    sys.exit(0)
     return
 
 

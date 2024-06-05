@@ -1,7 +1,6 @@
 
 #  Copyright 2022-2024 PGEDGE  All rights reserved. #
 
-
 import sys, os
 
 if sys.version_info < (3, 9):
@@ -14,6 +13,11 @@ IS_64BITS = sys.maxsize > 2**32
 if not IS_64BITS:
     print("ERROR: This is a 32bit machine and we are 64bit.")
     sys.exit(1)
+
+if os.path.isdir("conf"):
+    print("WARNING: moving 'conf' dir to `data/conf`")
+    os.system(f"mv -f conf  data/.")
+    os.system("rm -f ctl nc nodectl")
 
 MY_HOME = os.getenv("MY_HOME", None)
 MY_CMD = os.getenv("MY_CMD", None)
