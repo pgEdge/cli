@@ -1,0 +1,610 @@
+-- 6111b - Validate and drop tables on n2
+-- Prepared statement for spock.tables so that we can execute it frequently in the script below
+PREPARE spocktab AS SELECT nspname, relname, set_name FROM spock.tables WHERE relname = $1 ORDER BY relid;
+PREPARE
+-- Validate sub_tx_table0
+-- Expected: table exists with column c of type int and primary key
+\d sub_tx_table0
+           Table "public.sub_tx_table0"
+ Column |  Type   | Collation | Nullable | Default 
+--------+---------+-----------+----------+---------
+ c      | integer |           | not null | 
+Indexes:
+    "sub_tx_table0_pkey" PRIMARY KEY, btree (c)
+
+EXECUTE spocktab('sub_tx_table0'); -- Replication set: default
+ nspname |    relname    | set_name 
+---------+---------------+----------
+ public  | sub_tx_table0 | default
+(1 row)
+
+-- Validate sub_tx_table0a
+-- Expected: table does not exist
+\d sub_tx_table0a
+Did not find any relation named "sub_tx_table0a".
+-- Validate sub_tx_table1
+-- Expected: table does not exist
+\d sub_tx_table1
+Did not find any relation named "sub_tx_table1".
+-- Validate sub_tx_table2
+-- Expected: table exists with column c of type bigint
+\d sub_tx_table2
+           Table "public.sub_tx_table2"
+ Column |  Type  | Collation | Nullable | Default 
+--------+--------+-----------+----------+---------
+ c      | bigint |           |          | 
+
+EXECUTE spocktab('sub_tx_table2'); -- Replication set: default_insert_only
+ nspname |    relname    |      set_name       
+---------+---------------+---------------------
+ public  | sub_tx_table2 | default_insert_only
+(1 row)
+
+-- Validate sub_tx_table3
+-- Expected: table exists with columns a (smallint, primary key) and b (real)
+\d sub_tx_table3
+            Table "public.sub_tx_table3"
+ Column |   Type   | Collation | Nullable | Default 
+--------+----------+-----------+----------+---------
+ a      | smallint |           | not null | 
+ b      | real     |           |          | 
+Indexes:
+    "sub_tx_table3_pkey" PRIMARY KEY, btree (a)
+
+EXECUTE spocktab('sub_tx_table3'); -- Replication set: default
+ nspname |    relname    | set_name 
+---------+---------------+----------
+ public  | sub_tx_table3 | default
+(1 row)
+
+-- Expected data: (0, 0.09561), (42, 324.78), (56, 7.8), (100, 99.097), (777, 777.777)
+SELECT * FROM sub_tx_table3 ORDER BY a;
+  a  |    b    
+-----+---------
+   0 | 0.09561
+  42 |  324.78
+  56 |     7.8
+ 100 |  99.097
+ 777 | 777.777
+(5 rows)
+
+-- Validate sub_tx_table4
+-- Expected: table does not exist
+\d sub_tx_table4
+Did not find any relation named "sub_tx_table4".
+-- Validate sub_tx_table5, sub_tx_table5a, and sub_tx_table5c, sub_tx_table5b should not exist
+\d sub_tx_table5
+           Table "public.sub_tx_table5"
+ Column |  Type   | Collation | Nullable | Default 
+--------+---------+-----------+----------+---------
+ c      | integer |           |          | 
+
+EXECUTE spocktab('sub_tx_table5'); -- Replication set: default_insert_only
+ nspname |    relname    |      set_name       
+---------+---------------+---------------------
+ public  | sub_tx_table5 | default_insert_only
+(1 row)
+
+\d sub_tx_table5a
+           Table "public.sub_tx_table5a"
+ Column |  Type   | Collation | Nullable | Default 
+--------+---------+-----------+----------+---------
+ c      | integer |           | not null | 
+Indexes:
+    "sub_tx_table5a_pkey" PRIMARY KEY, btree (c)
+
+EXECUTE spocktab('sub_tx_table5a'); -- Replication set: default
+ nspname |    relname     | set_name 
+---------+----------------+----------
+ public  | sub_tx_table5a | default
+(1 row)
+
+\d sub_tx_table5b
+Did not find any relation named "sub_tx_table5b".
+\d sub_tx_table5c
+           Table "public.sub_tx_table5c"
+ Column |  Type   | Collation | Nullable | Default 
+--------+---------+-----------+----------+---------
+ c      | integer |           |          | 
+
+EXECUTE spocktab('sub_tx_table5c'); -- Replication set: default_insert_only
+ nspname |    relname     |      set_name       
+---------+----------------+---------------------
+ public  | sub_tx_table5c | default_insert_only
+(1 row)
+
+-- Validate table_ctas1
+-- Expected: table exists with columns id (int), name (varchar), age (int)
+\d table_ctas1
+                   Table "public.table_ctas1"
+ Column |         Type          | Collation | Nullable | Default 
+--------+-----------------------+-----------+----------+---------
+ id     | integer               |           |          | 
+ name   | character varying(50) |           |          | 
+ age    | integer               |           |          | 
+
+EXECUTE spocktab('table_ctas1'); -- Replication set: default_insert_only
+ nspname |   relname   |      set_name       
+---------+-------------+---------------------
+ public  | table_ctas1 | default_insert_only
+(1 row)
+
+-- Expected data: (1, 'Alice', 30), (2, 'Bob', 25), (3, 'Carol', 35)
+SELECT * FROM table_ctas1 ORDER BY id;
+ id | name  | age 
+----+-------+-----
+  1 | Alice |  30
+  2 | Bob   |  25
+  3 | Carol |  35
+(3 rows)
+
+-- Validate table_ctas2
+-- Expected: table exists with columns id (int), age (int), primary key on id
+\d table_ctas2
+            Table "public.table_ctas2"
+ Column |  Type   | Collation | Nullable | Default 
+--------+---------+-----------+----------+---------
+ id     | integer |           | not null | 
+ age    | integer |           |          | 
+Indexes:
+    "table_ctas2_pkey" PRIMARY KEY, btree (id)
+
+EXECUTE spocktab('table_ctas2'); -- Replication set: default
+ nspname |   relname   | set_name 
+---------+-------------+----------
+ public  | table_ctas2 | default
+(1 row)
+
+-- Expected data: (3, 35)
+SELECT * FROM table_ctas2 ORDER BY id;
+ id | age 
+----+-----
+  3 |  35
+(1 row)
+
+-- Validate table_ctas3
+-- Expected: table exists with columns id (int), value (int), primary key on id
+\d table_ctas3
+            Table "public.table_ctas3"
+ Column |  Type   | Collation | Nullable | Default 
+--------+---------+-----------+----------+---------
+ id     | integer |           | not null | 
+ value  | integer |           |          | 
+Indexes:
+    "table_ctas3_pkey" PRIMARY KEY, btree (id)
+
+EXECUTE spocktab('table_ctas3'); -- Replication set: default
+ nspname |   relname   | set_name 
+---------+-------------+----------
+ public  | table_ctas3 | default
+(1 row)
+
+-- Expected data: (1, 10), (2, 20), (3, 30)
+SELECT * FROM table_ctas3 ORDER BY id;
+ id | value 
+----+-------
+  1 |    10
+  2 |    20
+  3 |    30
+(3 rows)
+
+-- Validate table_ctas4
+-- Expected: table exists with columns id (int), name (varchar), double_age (int), no data
+\d table_ctas4
+                     Table "public.table_ctas4"
+   Column   |         Type          | Collation | Nullable | Default 
+------------+-----------------------+-----------+----------+---------
+ id         | integer               |           |          | 
+ name       | character varying(50) |           |          | 
+ double_age | integer               |           |          | 
+
+EXECUTE spocktab('table_ctas4'); -- Replication set: default_insert_only
+ nspname |   relname   |      set_name       
+---------+-------------+---------------------
+ public  | table_ctas4 | default_insert_only
+(1 row)
+
+-- Expected data: empty (no data)
+SELECT * FROM table_ctas4 ORDER BY id;
+ id | name | double_age 
+----+------+------------
+(0 rows)
+
+-- Validate table_ctas5
+-- Expected: table exists with column num (int)
+\d table_ctas5
+            Table "public.table_ctas5"
+ Column |  Type   | Collation | Nullable | Default 
+--------+---------+-----------+----------+---------
+ num    | integer |           |          | 
+
+EXECUTE spocktab('table_ctas5'); -- Replication set: default_insert_only
+ nspname |   relname   |      set_name       
+---------+-------------+---------------------
+ public  | table_ctas5 | default_insert_only
+(1 row)
+
+-- Expected data: 1 through 10
+SELECT * FROM table_ctas5 ORDER BY num;
+ num 
+-----
+   1
+   2
+   3
+   4
+   5
+   6
+   7
+   8
+   9
+  10
+(10 rows)
+
+-- Validate table_ctas6
+-- Expected: table exists with column a (int)
+\d table_ctas6
+            Table "public.table_ctas6"
+ Column |  Type   | Collation | Nullable | Default 
+--------+---------+-----------+----------+---------
+ a      | integer |           |          | 
+
+EXECUTE spocktab('table_ctas6'); -- Replication set: default_insert_only
+ nspname |   relname   | set_name 
+---------+-------------+----------
+ public  | table_ctas6 | 
+(1 row)
+
+-- Expected data: 1
+SELECT * FROM table_ctas6 ORDER BY a;
+ a 
+---
+ 1
+(1 row)
+
+-- Validate table_si1
+-- Expected: table exists with columns id (int), column1 (text), column2 (int), column3 (date), column4 (boolean)
+\d table_si1
+              Table "public.table_si1"
+ Column  |  Type   | Collation | Nullable | Default 
+---------+---------+-----------+----------+---------
+ id      | integer |           |          | 
+ column1 | text    |           |          | 
+ column2 | integer |           |          | 
+ column3 | date    |           |          | 
+ column4 | boolean |           |          | 
+
+EXECUTE spocktab('table_si1'); -- Replication set: default_insert_only
+ nspname |  relname  |      set_name       
+---------+-----------+---------------------
+ public  | table_si1 | default_insert_only
+(1 row)
+
+-- Expected data: (1, 'value1', 10, '2023-01-01', TRUE), (2, 'value2', 20, '2023-01-02', FALSE), (3, 'value3', 30, '2023-01-03', TRUE), (4, 'value4', 40, '2023-01-04', FALSE)
+SELECT * FROM table_si1 ORDER BY id;
+ id | column1 | column2 |  column3   | column4 
+----+---------+---------+------------+---------
+  1 | value1  |      10 | 2023-01-01 | t
+  2 | value2  |      20 | 2023-01-02 | f
+  3 | value3  |      30 | 2023-01-03 | t
+  4 | value4  |      40 | 2023-01-04 | f
+(4 rows)
+
+-- Validate table_si2
+-- Expected: table exists with columns id (int), column1 (text), column2 (int)
+\d table_si2
+              Table "public.table_si2"
+ Column  |  Type   | Collation | Nullable | Default 
+---------+---------+-----------+----------+---------
+ id      | integer |           |          | 
+ column1 | text    |           |          | 
+ column2 | integer |           |          | 
+
+EXECUTE spocktab('table_si2'); -- Replication set: default_insert_only
+ nspname |  relname  |      set_name       
+---------+-----------+---------------------
+ public  | table_si2 | default_insert_only
+(1 row)
+
+-- Expected data: (3, 'value3', 30), (4, 'value4', 40)
+SELECT * FROM table_si2 ORDER BY id;
+ id | column1 | column2 
+----+---------+---------
+  3 | value3  |      30
+  4 | value4  |      40
+(2 rows)
+
+-- Validate table_si3
+-- Expected: table exists with columns column4 (boolean), count (int)
+\d table_si3
+              Table "public.table_si3"
+ Column  |  Type   | Collation | Nullable | Default 
+---------+---------+-----------+----------+---------
+ column4 | boolean |           |          | 
+ count   | bigint  |           |          | 
+
+EXECUTE spocktab('table_si3'); -- Replication set: default_insert_only
+ nspname |  relname  |      set_name       
+---------+-----------+---------------------
+ public  | table_si3 | default_insert_only
+(1 row)
+
+-- Expected data: (TRUE, 2), (FALSE, 2)
+SELECT * FROM table_si3 ORDER BY column4;
+ column4 | count 
+---------+-------
+ f       |     2
+ t       |     2
+(2 rows)
+
+-- Validate table_si4
+-- Expected: table exists with columns id (int), column1 (text)
+\d table_si4
+              Table "public.table_si4"
+ Column  |  Type   | Collation | Nullable | Default 
+---------+---------+-----------+----------+---------
+ id      | integer |           |          | 
+ column1 | text    |           |          | 
+
+EXECUTE spocktab('table_si4'); -- Replication set: default_insert_only
+ nspname |  relname  |      set_name       
+---------+-----------+---------------------
+ public  | table_si4 | default_insert_only
+(1 row)
+
+-- Expected data: (4, 'value4'), (3, 'value3')
+SELECT * FROM table_si4 ORDER BY id;
+ id | column1 
+----+---------
+  3 | value3
+  4 | value4
+(2 rows)
+
+-- Validate table_si5
+-- Expected: table exists with columns id (int), column1 (text), extra_data (varchar)
+\d table_si5
+                      Table "public.table_si5"
+   Column   |         Type          | Collation | Nullable | Default 
+------------+-----------------------+-----------+----------+---------
+ id         | integer               |           |          | 
+ column1    | text                  |           |          | 
+ extra_data | character varying(50) |           |          | 
+
+EXECUTE spocktab('table_si5'); -- Replication set: default_insert_only
+ nspname |  relname  |      set_name       
+---------+-----------+---------------------
+ public  | table_si5 | default_insert_only
+(1 row)
+
+-- Expected data: (1, 'value1', 'extra1'), (3, 'value3', 'extra3')
+SELECT * FROM table_si5 ORDER BY id;
+ id | column1 | extra_data 
+----+---------+------------
+  1 | value1  | extra1
+  3 | value3  | extra3
+(2 rows)
+
+-- Validate table_l1
+-- Expected: table exists with columns col1 (int), col2 (text, default 'default_text')
+\d table_l1
+                    Table "public.table_l1"
+ Column |  Type   | Collation | Nullable |       Default        
+--------+---------+-----------+----------+----------------------
+ col1   | integer |           | not null | 
+ col2   | text    |           |          | 'default_text'::text
+
+EXECUTE spocktab('table_l1'); -- Replication set: default_insert_repset
+ nspname | relname  |      set_name       
+---------+----------+---------------------
+ public  | table_l1 | default_insert_only
+(1 row)
+
+-- Expected data:  (3, 'default_text')
+SELECT * FROM table_l1 ORDER BY col1;
+ col1 |     col2     
+------+--------------
+    3 | default_text
+(1 row)
+
+-- Validate table_l2
+-- Expected: table exists with columns col1 (int, primary key), col2 (text)
+\d table_l2
+              Table "public.table_l2"
+ Column |  Type   | Collation | Nullable | Default 
+--------+---------+-----------+----------+---------
+ col1   | integer |           | not null | 
+ col2   | text    |           |          | 
+
+EXECUTE spocktab('table_l2'); -- Replication set: default_insert_only
+ nspname | relname  |      set_name       
+---------+----------+---------------------
+ public  | table_l2 | default_insert_only
+(1 row)
+
+-- Expected data: (4, 'text4')
+SELECT * FROM table_l2 ORDER BY col1;
+ col1 | col2  
+------+-------
+    4 | text4
+(1 row)
+
+-- Validate table_l3
+-- Expected: table exists with columns col1 (int), col2 (text), col3 (date), check constraint, unique constraint
+\d table_l3
+              Table "public.table_l3"
+ Column |  Type   | Collation | Nullable | Default 
+--------+---------+-----------+----------+---------
+ col1   | integer |           |          | 
+ col2   | text    |           |          | 
+ col3   | date    |           |          | 
+Indexes:
+    "table_l3_col2_key" UNIQUE CONSTRAINT, btree (col2)
+Check constraints:
+    "chk_col1" CHECK (col1 > 0)
+
+EXECUTE spocktab('table_l3'); -- Replication set: default_insert_only
+ nspname | relname  |      set_name       
+---------+----------+---------------------
+ public  | table_l3 | default_insert_only
+(1 row)
+
+-- Expected data: (3, 'unique_text3', '2023-01-03')
+SELECT * FROM table_l3 ORDER BY col1;
+ col1 |     col2     |    col3    
+------+--------------+------------
+    3 | unique_text3 | 2023-01-03
+(1 row)
+
+-- Validate table_l4
+-- Expected: table exists with columns col1 (int), col2 (text), col3 (date), no constraints
+\d table_l4
+              Table "public.table_l4"
+ Column |  Type   | Collation | Nullable | Default 
+--------+---------+-----------+----------+---------
+ col1   | integer |           |          | 
+ col2   | text    |           |          | 
+ col3   | date    |           |          | 
+
+EXECUTE spocktab('table_l4'); -- Replication set: default_insert_only
+ nspname | relname  |      set_name       
+---------+----------+---------------------
+ public  | table_l4 | default_insert_only
+(1 row)
+
+-- Expected data: (4, 'text4', '2023-01-04')
+SELECT * FROM table_l4 ORDER BY col1;
+ col1 | col2  |    col3    
+------+-------+------------
+    4 | text4 | 2023-01-04
+(1 row)
+
+-- Validate table_l5
+-- Expected: table exists with columns col1 (int, primary key), col2 (text)
+\d table_l5
+              Table "public.table_l5"
+ Column |  Type   | Collation | Nullable | Default 
+--------+---------+-----------+----------+---------
+ col1   | integer |           | not null | 
+ col2   | text    |           |          | 
+Indexes:
+    "table_l5_pkey" PRIMARY KEY, btree (col1)
+
+EXECUTE spocktab('table_l5'); -- Replication set: default
+ nspname | relname  | set_name 
+---------+----------+----------
+ public  | table_l5 | default
+(1 row)
+
+-- Expected data: (5, )
+SELECT * FROM table_l5 ORDER BY col1;
+ col1 | col2 
+------+------
+    5 | 
+(1 row)
+
+----------------------------
+-- Cleanup: Drop all created tables
+-----------------------------
+-- Confirm autoDDL of DROP commands (and also to cleanup for all tables created in 6111a)
+--cleanup for tables ddl in transactions
+DROP TABLE sub_tx_table0;
+NOTICE:  drop cascades to table sub_tx_table0 membership in replication set default
+INFO:  DDL statement replicated.
+DROP TABLE
+DROP TABLE sub_tx_table2, sub_tx_table3;
+NOTICE:  drop cascades to table sub_tx_table2 membership in replication set default_insert_only
+NOTICE:  drop cascades to table sub_tx_table3 membership in replication set default
+INFO:  DDL statement replicated.
+DROP TABLE
+DROP TABLE sub_tx_table5, sub_tx_table5a, sub_tx_table5c;
+NOTICE:  drop cascades to table sub_tx_table5 membership in replication set default_insert_only
+NOTICE:  drop cascades to table sub_tx_table5a membership in replication set default
+NOTICE:  drop cascades to table sub_tx_table5c membership in replication set default_insert_only
+INFO:  DDL statement replicated.
+DROP TABLE
+--cleanup for tables used in ctas
+DROP TABLE table_base1;
+NOTICE:  drop cascades to table table_base1 membership in replication set default
+INFO:  DDL statement replicated.
+DROP TABLE
+DROP TABLE table_ctas1;
+NOTICE:  drop cascades to table table_ctas1 membership in replication set default_insert_only
+INFO:  DDL statement replicated.
+DROP TABLE
+DROP TABLE table_ctas2;
+NOTICE:  drop cascades to table table_ctas2 membership in replication set default
+INFO:  DDL statement replicated.
+DROP TABLE
+DROP TABLE table_ctas3;
+NOTICE:  drop cascades to table table_ctas3 membership in replication set default
+INFO:  DDL statement replicated.
+DROP TABLE
+DROP TABLE table_ctas4;
+NOTICE:  drop cascades to table table_ctas4 membership in replication set default_insert_only
+INFO:  DDL statement replicated.
+DROP TABLE
+DROP TABLE table_ctas5;
+NOTICE:  drop cascades to table table_ctas5 membership in replication set default_insert_only
+INFO:  DDL statement replicated.
+DROP TABLE
+DROP TABLE table_ctas6;
+INFO:  DDL statement replicated.
+DROP TABLE
+--cleanup for select into
+-- DROP commands for cleanup in 6111b
+DROP TABLE table_existing1;
+NOTICE:  drop cascades to table table_existing1 membership in replication set default
+INFO:  DDL statement replicated.
+DROP TABLE
+DROP TABLE table_existing2;
+NOTICE:  drop cascades to table table_existing2 membership in replication set default_insert_only
+INFO:  DDL statement replicated.
+DROP TABLE
+DROP TABLE table_si1;
+NOTICE:  drop cascades to table table_si1 membership in replication set default_insert_only
+INFO:  DDL statement replicated.
+DROP TABLE
+DROP TABLE table_si2;
+NOTICE:  drop cascades to table table_si2 membership in replication set default_insert_only
+INFO:  DDL statement replicated.
+DROP TABLE
+DROP TABLE table_si3;
+NOTICE:  drop cascades to table table_si3 membership in replication set default_insert_only
+INFO:  DDL statement replicated.
+DROP TABLE
+DROP TABLE table_si4;
+NOTICE:  drop cascades to table table_si4 membership in replication set default_insert_only
+INFO:  DDL statement replicated.
+DROP TABLE
+DROP TABLE table_si5;
+NOTICE:  drop cascades to table table_si5 membership in replication set default_insert_only
+INFO:  DDL statement replicated.
+DROP TABLE
+-- DROP commands for cleanup in 6111b
+DROP TABLE table_base1a;
+NOTICE:  drop cascades to table table_base1a membership in replication set default
+INFO:  DDL statement replicated.
+DROP TABLE
+DROP TABLE table_base2;
+NOTICE:  drop cascades to table table_base2 membership in replication set default_insert_only
+INFO:  DDL statement replicated.
+DROP TABLE
+DROP TABLE table_l1;
+NOTICE:  drop cascades to table table_l1 membership in replication set default_insert_only
+INFO:  DDL statement replicated.
+DROP TABLE
+DROP TABLE table_l2;
+NOTICE:  drop cascades to table table_l2 membership in replication set default_insert_only
+INFO:  DDL statement replicated.
+DROP TABLE
+DROP TABLE table_l3;
+NOTICE:  drop cascades to table table_l3 membership in replication set default_insert_only
+INFO:  DDL statement replicated.
+DROP TABLE
+DROP TABLE table_l4;
+NOTICE:  drop cascades to table table_l4 membership in replication set default_insert_only
+INFO:  DDL statement replicated.
+DROP TABLE
+DROP TABLE table_l5;
+NOTICE:  drop cascades to table table_l5 membership in replication set default
+INFO:  DDL statement replicated.
+DROP TABLE
