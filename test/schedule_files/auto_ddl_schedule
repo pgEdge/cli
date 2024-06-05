@@ -24,7 +24,12 @@ t/6011_setup_autoddl_gucs_on_n2.pl
 ##
 # autoDDL scripts
 ##
-
+t/auto_ddl/6100a_table_datatypes_create_alter_n1.sql
+t/auto_ddl/6100b_table_validate_and_drop_n2.sql
+t/auto_ddl/6100c_table_validate_n1.sql
+t/auto_ddl/6111a_table_tx_ctas_selectinto_like.sql
+t/auto_ddl/6111b_table_validate_and_drop_n2.sql
+t/auto_ddl/6111c_table_validate_n1.sql
 ##
 # cleanup scripts
 ##
