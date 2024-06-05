@@ -33,6 +33,9 @@ cd $outp
 if [ `arch` == "i386" ]; then
   echo "Skipping CTLIBS for `arch`"
 else
+  if [ ! -f $OUT/ctlibs-el9-arm.tgz ]; then
+    cp -pv $IN/ctlibs/*.tgz $OUT/.
+  fi
   ./$api install ctlibs
 fi
 

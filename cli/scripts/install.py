@@ -3,7 +3,7 @@
 
 import sys, os, tarfile, platform
 
-VER = "24.5.1"
+VER = "24.6.4"
 REPO = os.getenv("REPO", "https://pgedge-upstream.s3.amazonaws.com/REPO")
 
 if sys.version_info < (3, 9):

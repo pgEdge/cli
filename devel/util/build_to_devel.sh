@@ -43,7 +43,7 @@ if [ "$vers" == "" ]; then
 fi
 
 step 1 "cleanup any old ########################"
-outDir=$HIST/internal-$run_day
+outDir=$HIST/devel-$run_day
 cmd "rm -rf $outDir"
 cmd "mkdir $outDir"
 cmd "rm -f $OUT/*"

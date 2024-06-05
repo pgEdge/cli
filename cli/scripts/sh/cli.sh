@@ -50,6 +50,14 @@ elif [ -d "$LIB/ubu22-arm" ]; then
   lib="$LIB/ubu22-arm"
 elif [ -d "$LIB/ubu22-amd" ]; then
   lib="$LIB/ubu22-amd"
+elif [ -d "$LIB/ubu24-arm" ]; then
+  lib="$LIB/ubu24-arm"
+elif [ -d "$LIB/ubu24-amd" ]; then
+  lib="$LIB/ubu24-amd"
+elif [ -d "$LIB/deb12-arm" ]; then
+  lib="$LIB/deb12-arm"
+elif [ -d "$LIB/deb12-amd" ]; then
+  lib="$LIB/deb12-amd"
 fi
 
 if [ ! "$lib" == "None" ]; then

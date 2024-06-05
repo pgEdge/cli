@@ -14,7 +14,7 @@ import fire
 
 def create(db=None, User=None, Passwd=None, pg=None, spock=None):
     """
-    Create a pg db with spock installed into it.
+    Create a pg db with spock components installed into it.
 
 
      Usage:
@@ -60,7 +60,10 @@ def create(db=None, User=None, Passwd=None, pg=None, spock=None):
     util.echo_cmd(f"{nc} install snowflake-pg{pg} --no-restart")
 
     if spock is None:
-       major_ver = util.DEFAULT_SPOCK
+       if pg == "17":
+           major_ver = util.DEFAULT_SPOCK_17
+       else:
+           major_ver = util.DEFAULT_SPOCK
        ver = ""
     else:
        major_ver = f"{str(spock)[:1]}{str(spock)[2:3:1]}"

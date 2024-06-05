@@ -30,17 +30,20 @@ if platform.system() == "Linux":
   else:
     f = "/etc/os-release"
     if os.path.exists(f):
-      rc = os.system(f"grep '22.04' {f} > /dev/null 2>&1")
-      if rc == 0:
+      rc22 = os.system(f"grep '22.04' {f} > /dev/null 2>&1")
+      rc24 = os.system(f"grep '24.04' {f} > /dev/null 2>&1")
+      deb12 = os.system(f"grep 'bookworm' {f} > /dev/null 2>&1")
+      rc_l15 = os.system(f"grep 'leap:15' {f} > /dev/null 2>&1")
+      rc_s15 = os.system(f"grep 'sles:15' {f} > /dev/null 2>&1")
+
+      if rc22 == 0:
         platf = f"ubu22-{plat_os}"
-      else:
-        rc = os.system(f"grep 'leap:15' {f} > /dev/null 2>&1")
-        if rc == 0:
-          platf = f"el8-{plat_os}"
-        else:
-          rc = os.system(f"grep 'sles:15' {f} > /dev/null 2>&1")
-          if rc == 0:
-            platf = f"el8-{plat_os}"
+      elif rc24 == 0:
+        platf = f"ubu24-{plat_os}"
+      elif deb12 == 0:
+        platf = f"deb12-{plat_os}"
+      elif ((rc_l15 == 0) or (rc_s15 == 0)):
+        platf = f"el8-{plat_os}"
 
 elif platform.system() == "Darwin":
   platf = "osx"

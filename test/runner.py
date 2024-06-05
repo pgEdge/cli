@@ -2,6 +2,7 @@
 
 import getopt, sys, re
 import subprocess, os
+import filecmp , shutil , difflib
 from datetime import datetime
 
 global glDebug
@@ -10,6 +11,24 @@ glDebug = False
 global glLogger
 glLogger = ""
 
+# Global configuration variables for SQL execution through psql
+homedir = os.getenv("EDGE_CLUSTER_DIR")
+pgversion = os.getenv("EDGE_COMPONENT", "pg16")
+n1dirbin = f"{homedir}/n1/pgedge/{pgversion}/bin/"
+n1port = int(os.getenv("EDGE_START_PORT", 6432))
+n2port = n1port + 1
+pgdb = os.getenv("EDGE_DB")
+pguser = os.getenv("EDGE_USERNAME")
+pgpassword = os.getenv("EDGE_PASSWORD")
+pghost = os.getenv("EDGE_HOST")
+actualOutDir = "/tmp/auto_ddl/"
+
+# Construct the path to the psql binary, using n1's psql for executing sql files (for both n1/n2)
+# The psql from path below will be passed appropriate switches/input/output files
+# in the build_psql_command function.
+psqlPath = f"{n1dirbin}psql"
+
+
 ################################################################################
 #  runners{}
 #
@@ -17,10 +36,12 @@ glLogger = ""
 #  an interpeter that can execute the indicated type of script
 
 runners = {
-    ".py" : "/usr/bin/python",
-    ".pl" : "/usr/bin/perl",
-    ".sh" : "bash %f"
+    ".py": "/usr/bin/python",
+    ".pl": "/usr/bin/perl",
+    ".sh": "bash %f",
+    ".sql": psqlPath  # Newly added support for .sql file, and its runner psql command path for SQL file execution
 }
+
 
 ################################################################################
 # expandSchedule()
@@ -126,65 +147,66 @@ def logTestOutput(testName, completedProcess):
 ################################################################################
 # runTest()
 #
-#    Runs the specified test, captures the stdout and stderr output and writes
-#    that output to the current log file.  If the test program completes and
-#    returns a 0, the test is presumed to have passed, otherwise the test is
-#    treated as a failure
-        
+# Runs the specified test, captures the stdout and stderr output, and writes
+# that output to the current log file. If the test completes successfully
+# and returns a 0, the test is presumed to have passed, otherwise the test
+# is treated as a failure. For .sql files, additional checks are made to 
+# ensure output files match expected results, and return codes are set manually.
+################################################################################
 def runTest(testName):
+    extension = testName[testName.rfind('.')::]  # Extract the file extension from the test name
+    if extension == '.sql':
+        # Execute psql command and Compare expected/actual output files, handle any errors gracefully through try/except block
+        try:
+            # Build the psql command with appropriate switches/inputs/outputs,
+            psql_command, actual_output_file, expected_output_file = build_psql_command(testName)
+            # Execute the psql command
+            result = subprocess.run(psql_command, shell=True, capture_output=True, text=True)  
+            # Compare actual and expected output files, setting shallow=False compares content and not just timestamps/size
+            if filecmp.cmp(actual_output_file, expected_output_file, shallow=False):
+                result_status = "pass"
+                result.stdout = "Expected and Actual output files match"  # Set success message
+                result.returncode = 0  # Explicitly set the return code for success
+            else:
+                result_status = "fail"
+                # Identify the diff between actual output and expected output 
+                diff_output = generate_diff(actual_output_file, expected_output_file)
+                # Set stderr to include the diff output 
+                result.stderr = "Expected and Actual output files do not match. Diff as follows:\n" + diff_output
+                result.returncode = 1 # Explicitly set the return code for failure
+        except Exception as e:
+            # Capture the error message
+            result_status = "error"
+            result.stderr = f"An unexpected error occurred: {str(e)}"
+            result.returncode = 1  # Set return code to 1 for error
+        # Log result to the log file
+        logTestOutput(testName, result) 
 
-    passCount  = 0
-    failCount  = 0
-    errorCount = 0
-    
-    # We find the runner command by looking in the runners array
-    # for a key that matches the extension found in testName
-    #
-    # For example, if testName = t/0050_misc.py, we find the extension
-    # (.py) and search for that key in runners[].  The value in that
-    # key/value pair will be the name of the python interpreter that we
-    # want to use in order to run test script
-
-    extension = testName[testName.rfind('.')::]
-    command = runners[extension]
-
-    if (len(command) == 0):
-        reportError("cannot find test runner for " + testName)
-        errorCount += 1
+        # Display result on console
+        printTestResult(testName, result_status)
+        # Return the pass/fail/error count, used for displaying the test summary counts
+        return {'passCount': 1 if result_status == "pass" else 0, 
+                'failCount': 1 if result_status == "fail" else 0, 
+                'errorCount': 1 if result_status == "error" else 0}
     else:
-        dotCount = 60
-
-        dotCount -= len(testName)
-        dotCount -= len("pass")
-
-        print(testName, '.' * dotCount, end="")
-
-        # Run the command and capture the stdout and stderr.  The run() function
-        # returns a CompletedProcess object that will contain (at least) the
-        # following:
-        #   returncode - exit code returned by the child process
-        #   stdout     - a string containing all of the stdout written the child
-        #   stderr     - a string containing all of the stderr written the child
-        #
-        # We Use the returncode to decide whether the test passes (exit(0)) or
-        # fails (any returncode other than zero).
-        #
-        # We write stdout and stderr to the current log file
-
-        result = subprocess.run([command, testName], capture_output=True, text=True)
-
-        if (result.returncode == 0):
-            logTestOutput(testName, result)
-            print("pass")
-            passCount += 1
+        # Existing handling for .pl, .py, and .sh files
+        command = runners[extension]
+        result = subprocess.run([command, testName], capture_output=True, text=True) 
+        # Determine the result status based on the return code
+        if result.returncode == 0:
+            result_status = "pass"
         else:
-            logTestOutput(testName, result)
-            print("fail")
-            failCount += 1
+            result_status = "fail"
+        # Log result
+        logTestOutput(testName, result)
 
-    status = { 'passCount': passCount, 'failCount': failCount, 'errorCount': errorCount}
+        #display result on console
+        printTestResult(testName, result_status)
 
-    return status
+        return {'passCount': 1 if result.returncode == 0 else 0, 
+                'failCount': 1 if result.returncode != 0 else 0, 
+                'errorCount': 0}
+
 
 ################################################################################
 # runTests()
@@ -210,6 +232,124 @@ def runTests(testList):
     print("errors: " + str(errorCount))
 
 ################################################################################
+# printTestResult()
+#
+# Prints the formatted test result to the console. This function is called after
+# each test run to display the name of the test along with its outcome, formatted
+# with dots to align the results neatly.
+#
+# Args:
+# testName : The name of the test.
+# result_status : Test outcome ('pass', 'fail', or 'error').
+################################################################################
+def printTestResult(testName, result_status):
+    # Calculate the number of dots for formatting output based on the test name length and status length
+    dotCount = 80 - len(testName) - len(result_status)
+    print(f"{testName} {'.' * dotCount} {result_status}")
+
+
+################################################################################
+# build_psql_command()
+#
+# Constructs the full psql command with all the necessary switches, replacing placeholders,
+# identifying port, and the paths for the actual and expected output files.
+# =============
+# Assumptions : 
+# =============
+# The sql file should have node indicator (n1 or n2) to convey which node the sql file will be
+# executed on (primarily to identify the server port). If no node info is specified, n1 is considered default.
+# 
+# The expected output file must pre-exist, with the same name as sql file but with a .out extension  
+# and same directory as sql file. The expected output file must be generated with the following command manually:
+#      ./psql -X -a -d lcdb -p <intended port> < input.sql > expected_output.out 2>&1
+#
+# The filename of actual output file will be same as that of the expected output file.
+# The actual output file will be generated at runtime in a directory controlled by actualOutDir variable
+# 
+# Args:
+# sql_file : The path to the SQL file to execute.
+#
+# Returns:
+# Three return values : The full psql command, path to the actual output file, and path to the expected output file.
+################################################################################
+def build_psql_command(sql_file):
+    # Retrieve the psql command path from the runners dictionary for SQL files
+    psql_command_path = runners[".sql"]
+    
+    # Determine the port based on the node identifier included in the SQL file name
+    if 'n2' in sql_file:
+        port = n2port
+    else:
+        port = n1port
+    
+    # Extract the file name from the sql_file path and replace the .sql extension with .out for the output file name
+    file_name = os.path.basename(sql_file).replace('.sql', '.out')
+    # Construct the full path for the actual output file in the designated output directory
+    actual_output_file = os.path.join(actualOutDir, file_name)
+    
+    # Assume the expected output file is in the same location as the sql_file, but with a .out extension
+    expected_output_file = sql_file.replace('.sql', '.out')
+
+    
+    # Construct the full psql command using the database parameters and file paths
+    psql_command = f"{psql_command_path} -X -a -d {pgdb} -p {port} -h {pghost} < {sql_file} > {actual_output_file} 2>&1"
+    
+    if glDebug:
+        print("sql_file:   " + str(sql_file))
+        print("port:   " + str(port))
+        print("actual output file:   " + str(actual_output_file))
+        print("expected output file:   " + str(expected_output_file))
+        print("psql_command:   " + str(psql_command))
+    
+    # Return the constructed psql command and the paths for the actual and expected output files
+    return psql_command, actual_output_file, expected_output_file
+
+
+################################################################################
+# generate_diff()
+#
+# Generates a diff between two files and returns the diff result as a string.
+# The corresponding diff is set in the stderr to go into the log file.
+#
+# Args: file1 (actual output) and file2 (expected output)
+#
+# Returns: diff between the two files.
+################################################################################
+def generate_diff(file1, file2):
+    # Read the contents of the files
+    with open(file1, 'r') as f1, open(file2, 'r') as f2:
+        file1_lines = f1.readlines()
+        file2_lines = f2.readlines()
+
+    # Generate unified diff
+    diff = difflib.unified_diff(
+        file2_lines, file1_lines,
+        fromfile='expected',
+        tofile='actual',
+        lineterm='', 
+        n=4  # Number of context lines (adjustable). 
+    )
+
+    # Format the differences in a single string
+    diff_string = ''.join(diff)
+    return diff_string
+
+
+################################################################################
+# prepareOutputDirectory()
+#
+# The autoddl tests utilise a temporary directory controlled by the actualOutDir variable
+# where the actual output files are stored as a result of executing the .sql files.
+# This function ensures that the output directory is empty at the start of the regression run.
+################################################################################
+def prepareOutputDirectory(directory):
+    # Check if the directory exists and remove it if it does
+    if os.path.exists(directory):
+        shutil.rmtree(directory)  # Removes the directory and all its contents
+    # Recreate the directory
+    os.makedirs(directory)
+
+################################################################################
 # main()
 #
 #  This function is the entry point for runner.py.  We start by parsing the
@@ -217,6 +357,9 @@ def runTests(testList):
 #  up by printing a summary of the test run (pass count, fail count, error count)
 
 def main():
+    # Prepare the output directory (for autoddl tests) to ensure it's empty and ready for new outputs
+    prepareOutputDirectory(actualOutDir)
+
     testList = parseCmdLine()
 
     global glDebug

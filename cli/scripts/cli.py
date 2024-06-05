@@ -71,7 +71,7 @@ fire_list = [
     "setup"
 ]
 
-fire_contrib = ["vm", "localhost"]
+fire_contrib = ["node", "localhost"]
 
 native_list = ["backrest", "ansible", "patroni", "etcd"]
 
@@ -1226,6 +1226,7 @@ if "--silent" in args:
 
 if "--extensions" in args:
     util.isEXTENSIONS = True
+    os.environ["isExtensions"] = "True"
     args.remove("--extensions")
 
 if len(args) == 1:

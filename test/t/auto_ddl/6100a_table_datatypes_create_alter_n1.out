@@ -1,0 +1,867 @@
+-- 6100a_create_alter_table_n1.sql
+-- This script creates and alters tables on node n1 to test the autoDDL functionality.
+-- It includes a wide variety of data types and exercises several CREATE TABLE/ ALTER TABLE DDL constructs.
+-- Also regularly verifying spock.tables 
+-- Prepared statement for spock.tables so that we can execute it frequently in the script below
+PREPARE spocktab AS SELECT nspname, relname, set_name FROM spock.tables WHERE relname = $1 ORDER BY relid;
+PREPARE
+-- Create a table for employee details with various data types
+CREATE TABLE employees (
+    emp_id INT PRIMARY KEY,
+    first_name VARCHAR(50) NOT NULL,
+    last_name VARCHAR(50) NOT NULL,
+    email VARCHAR(100) UNIQUE NOT NULL,
+    hire_date DATE,
+    birth_time TIME WITHOUT TIME ZONE,
+    salary NUMERIC(10, 2),
+    full_time BOOLEAN DEFAULT TRUE,
+    street_address TEXT,
+    metadata JSON,
+    start_timestamp TIMESTAMP WITHOUT TIME ZONE,
+    emp_coordinates POINT,
+    CONSTRAINT chk_salary CHECK (salary > 0)
+);
+INFO:  DDL statement replicated.
+CREATE TABLE
+-- Insert initial data into employees table
+INSERT INTO employees (emp_id, first_name, last_name, email, hire_date, birth_time, salary, full_time, street_address, metadata, start_timestamp, emp_coordinates) VALUES
+(1, 'John', 'Doe', 'john.doe@example.com', '2023-01-15', '08:30:00', 60000, TRUE, '123 Main St', '{"department": "HR"}', '2023-01-15 08:30:00', '(10, 20)'),
+(2, 'Jane', 'Smith', 'jane.smith@example.com', '2023-03-22', '09:00:00', 65000, FALSE, '456 Elm St', '{"department": "Engineering"}', '2023-03-22 09:00:00', '(30, 40)');
+INSERT 0 2
+-- Validate the structure, spock.tables catalog table and data
+\d employees
+                            Table "public.employees"
+     Column      |            Type             | Collation | Nullable | Default 
+-----------------+-----------------------------+-----------+----------+---------
+ emp_id          | integer                     |           | not null | 
+ first_name      | character varying(50)       |           | not null | 
+ last_name       | character varying(50)       |           | not null | 
+ email           | character varying(100)      |           | not null | 
+ hire_date       | date                        |           |          | 
+ birth_time      | time without time zone      |           |          | 
+ salary          | numeric(10,2)               |           |          | 
+ full_time       | boolean                     |           |          | true
+ street_address  | text                        |           |          | 
+ metadata        | json                        |           |          | 
+ start_timestamp | timestamp without time zone |           |          | 
+ emp_coordinates | point                       |           |          | 
+Indexes:
+    "employees_pkey" PRIMARY KEY, btree (emp_id)
+    "employees_email_key" UNIQUE CONSTRAINT, btree (email)
+Check constraints:
+    "chk_salary" CHECK (salary > 0::numeric)
+
+EXECUTE spocktab('employees');
+ nspname |  relname  | set_name 
+---------+-----------+----------
+ public  | employees | default
+(1 row)
+
+-- Create a table for department details
+CREATE TABLE departments (
+    dept_id INT PRIMARY KEY,
+    dept_name VARCHAR(100) NOT NULL,
+    location VARCHAR(100),
+    established DATE,
+    budget MONEY,
+    active BOOLEAN
+);
+INFO:  DDL statement replicated.
+CREATE TABLE
+-- Insert initial data into departments table
+INSERT INTO departments (dept_id, dept_name, location, established, budget, active) VALUES
+(1, 'Human Resources', 'New York', '2010-01-01', '$1000000', TRUE),
+(2, 'Engineering', 'San Francisco', '2015-06-15', '$2000000', TRUE);
+INSERT 0 2
+-- Validate the structure, spock.tables catalog table and data
+\d departments
+                      Table "public.departments"
+   Column    |          Type          | Collation | Nullable | Default 
+-------------+------------------------+-----------+----------+---------
+ dept_id     | integer                |           | not null | 
+ dept_name   | character varying(100) |           | not null | 
+ location    | character varying(100) |           |          | 
+ established | date                   |           |          | 
+ budget      | money                  |           |          | 
+ active      | boolean                |           |          | 
+Indexes:
+    "departments_pkey" PRIMARY KEY, btree (dept_id)
+
+EXECUTE spocktab('departments');
+ nspname |   relname   | set_name 
+---------+-------------+----------
+ public  | departments | default
+(1 row)
+
+-- Alter table employees to add new columns, modify existing columns, and add constraints
+ALTER TABLE employees ADD COLUMN middle_name VARCHAR(100);
+INFO:  DDL statement replicated.
+ALTER TABLE
+ALTER TABLE employees ADD COLUMN dept_id INT;
+INFO:  DDL statement replicated.
+ALTER TABLE
+ALTER TABLE employees ADD CONSTRAINT fk_dept FOREIGN KEY (dept_id) REFERENCES departments (dept_id);
+INFO:  DDL statement replicated.
+ALTER TABLE
+ALTER TABLE employees ALTER COLUMN salary SET NOT NULL;
+INFO:  DDL statement replicated.
+ALTER TABLE
+ALTER TABLE employees RENAME COLUMN street_address TO address;
+INFO:  DDL statement replicated.
+ALTER TABLE
+-- Validate the structure, spock.tables catalog table and data
+\d employees
+                            Table "public.employees"
+     Column      |            Type             | Collation | Nullable | Default 
+-----------------+-----------------------------+-----------+----------+---------
+ emp_id          | integer                     |           | not null | 
+ first_name      | character varying(50)       |           | not null | 
+ last_name       | character varying(50)       |           | not null | 
+ email           | character varying(100)      |           | not null | 
+ hire_date       | date                        |           |          | 
+ birth_time      | time without time zone      |           |          | 
+ salary          | numeric(10,2)               |           | not null | 
+ full_time       | boolean                     |           |          | true
+ address         | text                        |           |          | 
+ metadata        | json                        |           |          | 
+ start_timestamp | timestamp without time zone |           |          | 
+ emp_coordinates | point                       |           |          | 
+ middle_name     | character varying(100)      |           |          | 
+ dept_id         | integer                     |           |          | 
+Indexes:
+    "employees_pkey" PRIMARY KEY, btree (emp_id)
+    "employees_email_key" UNIQUE CONSTRAINT, btree (email)
+Check constraints:
+    "chk_salary" CHECK (salary > 0::numeric)
+Foreign-key constraints:
+    "fk_dept" FOREIGN KEY (dept_id) REFERENCES departments(dept_id)
+
+EXECUTE spocktab('employees');
+ nspname |  relname  | set_name 
+---------+-----------+----------
+ public  | employees | default
+(1 row)
+
+-- Insert additional data with new columns
+INSERT INTO employees (emp_id, first_name, middle_name, last_name, email, hire_date, birth_time, salary, full_time, address, metadata, start_timestamp, emp_coordinates, dept_id) VALUES
+(3, 'Alice', 'M', 'Brown', 'alice.brown@example.com', '2023-05-10', '07:45:00', 70000, TRUE, '789 Maple St', '{"department": "Engineering"}', '2023-05-10 07:45:00', '(50, 60)', 2),
+(4, 'Bob', 'J', 'Johnson', 'bob.johnson@example.com', '2023-02-20', '10:00:00', 62000, FALSE, '101 Pine St', '{"department": "HR"}', '2023-02-20 10:00:00', '(70, 80)', 1);
+INSERT 0 2
+-- Create more tables to cover various types and constraints
+CREATE TABLE projects (
+    project_id INT PRIMARY KEY,
+    project_name VARCHAR(100) NOT NULL,
+    start_date DATE,
+    end_date DATE,
+    budget NUMERIC(12, 2) CHECK (budget > 0),
+    active BOOLEAN,
+    metadata JSON
+);
+INFO:  DDL statement replicated.
+CREATE TABLE
+-- Insert initial data into projects table
+INSERT INTO projects (project_id, project_name, start_date, end_date, budget, active, metadata) VALUES
+(1, 'Project Alpha', '2023-01-01', '2023-06-30', 500000.00, TRUE, '{"client": "Client A"}'),
+(2, 'Project Beta', '2023-02-15', '2023-12-31', 750000.00, TRUE, '{"client": "Client B"}');
+INSERT 0 2
+-- Validate the structure, spock.tables catalog table and data
+\d projects
+                        Table "public.projects"
+    Column    |          Type          | Collation | Nullable | Default 
+--------------+------------------------+-----------+----------+---------
+ project_id   | integer                |           | not null | 
+ project_name | character varying(100) |           | not null | 
+ start_date   | date                   |           |          | 
+ end_date     | date                   |           |          | 
+ budget       | numeric(12,2)          |           |          | 
+ active       | boolean                |           |          | 
+ metadata     | json                   |           |          | 
+Indexes:
+    "projects_pkey" PRIMARY KEY, btree (project_id)
+Check constraints:
+    "projects_budget_check" CHECK (budget > 0::numeric)
+
+EXECUTE spocktab('projects');
+ nspname | relname  | set_name 
+---------+----------+----------
+ public  | projects | default
+(1 row)
+
+-- Create a table for employee projects (many-to-many relationship)
+CREATE TABLE employee_projects (
+    emp_id INT,
+    project_id INT,
+    hours_worked NUMERIC(5, 2),
+    role VARCHAR(50),
+    PRIMARY KEY (emp_id, project_id),
+    FOREIGN KEY (emp_id) REFERENCES employees (emp_id),
+    FOREIGN KEY (project_id) REFERENCES projects (project_id)
+);
+INFO:  DDL statement replicated.
+CREATE TABLE
+-- Insert initial data into employee_projects table
+INSERT INTO employee_projects (emp_id, project_id, hours_worked, role) VALUES
+(1, 1, 120.5, 'Manager'),
+(2, 1, 80.0, 'Developer'),
+(3, 2, 150.75, 'Lead Developer');
+INSERT 0 3
+-- Validate the structure, spock.tables catalog table and data
+\d employee_projects
+                   Table "public.employee_projects"
+    Column    |         Type          | Collation | Nullable | Default 
+--------------+-----------------------+-----------+----------+---------
+ emp_id       | integer               |           | not null | 
+ project_id   | integer               |           | not null | 
+ hours_worked | numeric(5,2)          |           |          | 
+ role         | character varying(50) |           |          | 
+Indexes:
+    "employee_projects_pkey" PRIMARY KEY, btree (emp_id, project_id)
+Foreign-key constraints:
+    "employee_projects_emp_id_fkey" FOREIGN KEY (emp_id) REFERENCES employees(emp_id)
+    "employee_projects_project_id_fkey" FOREIGN KEY (project_id) REFERENCES projects(project_id)
+
+EXECUTE spocktab('employee_projects');
+ nspname |      relname      | set_name 
+---------+-------------------+----------
+ public  | employee_projects | default
+(1 row)
+
+-- Create additional tables to cover more data types and constraints
+CREATE TABLE products (
+    product_id INT PRIMARY KEY,
+    product_name VARCHAR(100),
+    price NUMERIC(10, 2),
+    stock_quantity INT,
+    discontinued BOOLEAN,
+    product_description TEXT,
+    added TIMESTAMP WITHOUT TIME ZONE,
+    updated TIMESTAMPTZ
+);
+INFO:  DDL statement replicated.
+CREATE TABLE
+-- Insert initial data into products table
+INSERT INTO products (product_id, product_name, price, stock_quantity, discontinued, product_description, added, updated) VALUES
+(1, 'Product A', 19.99, 100, FALSE, 'Description of Product A', '2023-01-01 12:00:00', '2023-01-01 12:00:00+00'),
+(2, 'Product B', 29.99, 200, TRUE, 'Description of Product B', '2023-02-01 15:00:00', '2023-02-01 15:00:00+00');
+INSERT 0 2
+-- Validate the structure, spock.tables catalog table and data
+\d products
+                              Table "public.products"
+       Column        |            Type             | Collation | Nullable | Default 
+---------------------+-----------------------------+-----------+----------+---------
+ product_id          | integer                     |           | not null | 
+ product_name        | character varying(100)      |           |          | 
+ price               | numeric(10,2)               |           |          | 
+ stock_quantity      | integer                     |           |          | 
+ discontinued        | boolean                     |           |          | 
+ product_description | text                        |           |          | 
+ added               | timestamp without time zone |           |          | 
+ updated             | timestamp with time zone    |           |          | 
+Indexes:
+    "products_pkey" PRIMARY KEY, btree (product_id)
+
+EXECUTE spocktab('products');
+ nspname | relname  | set_name 
+---------+----------+----------
+ public  | products | default
+(1 row)
+
+-- Alter table products to add and modify columns
+ALTER TABLE products ADD COLUMN category VARCHAR(50);
+INFO:  DDL statement replicated.
+ALTER TABLE
+ALTER TABLE products ALTER COLUMN price SET NOT NULL;
+INFO:  DDL statement replicated.
+ALTER TABLE
+ALTER TABLE products ADD CONSTRAINT price_check CHECK (price > 0);
+INFO:  DDL statement replicated.
+ALTER TABLE
+-- Validate the structure, spock.tables catalog table and data
+\d products
+                              Table "public.products"
+       Column        |            Type             | Collation | Nullable | Default 
+---------------------+-----------------------------+-----------+----------+---------
+ product_id          | integer                     |           | not null | 
+ product_name        | character varying(100)      |           |          | 
+ price               | numeric(10,2)               |           | not null | 
+ stock_quantity      | integer                     |           |          | 
+ discontinued        | boolean                     |           |          | 
+ product_description | text                        |           |          | 
+ added               | timestamp without time zone |           |          | 
+ updated             | timestamp with time zone    |           |          | 
+ category            | character varying(50)       |           |          | 
+Indexes:
+    "products_pkey" PRIMARY KEY, btree (product_id)
+Check constraints:
+    "price_check" CHECK (price > 0::numeric)
+
+EXECUTE spocktab('products');
+ nspname | relname  | set_name 
+---------+----------+----------
+ public  | products | default
+(1 row)
+
+-- Update product data
+UPDATE products SET stock_quantity = 150 WHERE product_id = 1;
+UPDATE 1
+-- Create additional tables with case-sensitive names and special characters
+CREATE TABLE "CaseSensitiveTable" (
+    "ID" INT PRIMARY KEY,
+    "Name" VARCHAR(50),
+    "Value" NUMERIC(10, 2)
+);
+INFO:  DDL statement replicated.
+CREATE TABLE
+-- Insert initial data into CaseSensitiveTable
+INSERT INTO "CaseSensitiveTable" ("ID", "Name", "Value") VALUES
+(1, 'Item One', 123.45),
+(2, 'Item Two', 678.90);
+INSERT 0 2
+-- Validate the structure, spock.tables catalog table and data
+\d "CaseSensitiveTable"
+                Table "public.CaseSensitiveTable"
+ Column |         Type          | Collation | Nullable | Default 
+--------+-----------------------+-----------+----------+---------
+ ID     | integer               |           | not null | 
+ Name   | character varying(50) |           |          | 
+ Value  | numeric(10,2)         |           |          | 
+Indexes:
+    "CaseSensitiveTable_pkey" PRIMARY KEY, btree ("ID")
+
+EXECUTE spocktab('CaseSensitiveTable');
+ nspname |      relname       | set_name 
+---------+--------------------+----------
+ public  | CaseSensitiveTable | default
+(1 row)
+
+-- Create table to test various ALTER TABLE operations
+CREATE TABLE test_tab1 (
+    id UUID PRIMARY KEY,
+    data VARCHAR(100)
+);
+INFO:  DDL statement replicated.
+CREATE TABLE
+-- Insert initial data into test_tab1
+INSERT INTO test_tab1 (id, data) VALUES ('a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11', 'Initial data');
+INSERT 0 1
+-- Alter table test_tab1 to add, drop, and rename columns
+ALTER TABLE test_tab1 ADD COLUMN new_data TEXT;
+INFO:  DDL statement replicated.
+ALTER TABLE
+ALTER TABLE test_tab1 DROP COLUMN new_data;
+INFO:  DDL statement replicated.
+ALTER TABLE
+ALTER TABLE test_tab1 RENAME COLUMN data TO old_data;
+INFO:  DDL statement replicated.
+ALTER TABLE
+-- Validate the structure, spock.tables catalog table and data
+\d test_tab1
+                      Table "public.test_tab1"
+  Column  |          Type          | Collation | Nullable | Default 
+----------+------------------------+-----------+----------+---------
+ id       | uuid                   |           | not null | 
+ old_data | character varying(100) |           |          | 
+Indexes:
+    "test_tab1_pkey" PRIMARY KEY, btree (id)
+
+EXECUTE spocktab('test_tab1');
+ nspname |  relname  | set_name 
+---------+-----------+----------
+ public  | test_tab1 | default
+(1 row)
+
+-- Create table to test more data types and constraints
+CREATE TABLE test_tab2 (
+    id INT PRIMARY KEY,
+    timestamp_col TIMESTAMPTZ,
+    interval_col INTERVAL,
+    inet_col INET,
+    cidr_col CIDR,
+    macaddr_col MACADDR,
+    bit_col BIT(8),
+    varbit_col VARBIT(8),
+    box_col BOX,
+    circle_col CIRCLE,
+    line_col LINE,
+    lseg_col LSEG,
+    path_col PATH,
+    polygon_col POLYGON
+);
+INFO:  DDL statement replicated.
+CREATE TABLE
+-- Insert initial data into test_tab2
+INSERT INTO test_tab2 (id, timestamp_col, interval_col, inet_col, cidr_col, macaddr_col, bit_col, varbit_col, box_col, circle_col, line_col, lseg_col, path_col, polygon_col) VALUES
+(1, '2023-01-01 12:00:00+00', '1 year 2 months', '192.168.1.1', '192.168.0.0/24', '08:00:2b:01:02:03', B'10101010', B'10101010', '((0,0),(1,1))', '<(1,1),1>', '{1,2,3}', '((0,0),(1,1))', '((0,0),(1,1))', '((0,0),(1,1))');
+INSERT 0 1
+-- Validate the structure, spock.tables catalog table and data
+\d test_tab2
+                         Table "public.test_tab2"
+    Column     |           Type           | Collation | Nullable | Default 
+---------------+--------------------------+-----------+----------+---------
+ id            | integer                  |           | not null | 
+ timestamp_col | timestamp with time zone |           |          | 
+ interval_col  | interval                 |           |          | 
+ inet_col      | inet                     |           |          | 
+ cidr_col      | cidr                     |           |          | 
+ macaddr_col   | macaddr                  |           |          | 
+ bit_col       | bit(8)                   |           |          | 
+ varbit_col    | bit varying(8)           |           |          | 
+ box_col       | box                      |           |          | 
+ circle_col    | circle                   |           |          | 
+ line_col      | line                     |           |          | 
+ lseg_col      | lseg                     |           |          | 
+ path_col      | path                     |           |          | 
+ polygon_col   | polygon                  |           |          | 
+Indexes:
+    "test_tab2_pkey" PRIMARY KEY, btree (id)
+
+EXECUTE spocktab('test_tab2');
+ nspname |  relname  | set_name 
+---------+-----------+----------
+ public  | test_tab2 | default
+(1 row)
+
+-- Create table to test composite and array types
+CREATE TABLE test_tab3 (
+    id INT PRIMARY KEY,
+    name VARCHAR(100),
+    int_array INT[],
+    text_array TEXT[]
+);
+INFO:  DDL statement replicated.
+CREATE TABLE
+-- Insert initial data into test_tab3 
+INSERT INTO test_tab3 (id, name, int_array, text_array) VALUES
+(1, 'Henry', '{1,2,3}', '{"one","two","three"}'),
+(2, 'Isabel', '{4,5,6}', '{"four","five","six"}');
+INSERT 0 2
+-- Validate the structure, spock.tables catalog table and data
+\d test_tab3
+                       Table "public.test_tab3"
+   Column   |          Type          | Collation | Nullable | Default 
+------------+------------------------+-----------+----------+---------
+ id         | integer                |           | not null | 
+ name       | character varying(100) |           |          | 
+ int_array  | integer[]              |           |          | 
+ text_array | text[]                 |           |          | 
+Indexes:
+    "test_tab3_pkey" PRIMARY KEY, btree (id)
+
+EXECUTE spocktab('test_tab3');
+ nspname |  relname  | set_name 
+---------+-----------+----------
+ public  | test_tab3 | default
+(1 row)
+
+-- creating table without primary key to ensure the default repset is default_insert_only
+-- and then play around with adding primary key and dropping them to see the repset
+-- are set accordingly. 
+-- Create the initial table
+CREATE TABLE test_tab4 (
+    id TEXT,
+    data VARCHAR(100)
+);
+INFO:  DDL statement replicated.
+CREATE TABLE
+-- Insert initial data into test_tab4
+INSERT INTO test_tab4 (id, data) VALUES ('m2eebc99', 'Initial data');
+INSERT 0 1
+-- Execute prepared statement for the table, repset default_insert_only
+EXECUTE spocktab('test_tab4');
+ nspname |  relname  |      set_name       
+---------+-----------+---------------------
+ public  | test_tab4 | default_insert_only
+(1 row)
+
+-- Alter table to add a primary key on the id column
+ALTER TABLE test_tab4 ADD PRIMARY KEY (id);
+INFO:  DDL statement replicated.
+ALTER TABLE
+-- Display the table structure
+\d test_tab4
+                     Table "public.test_tab4"
+ Column |          Type          | Collation | Nullable | Default 
+--------+------------------------+-----------+----------+---------
+ id     | text                   |           | not null | 
+ data   | character varying(100) |           |          | 
+Indexes:
+    "test_tab4_pkey" PRIMARY KEY, btree (id)
+
+-- Execute prepared statement for the table, repset default
+EXECUTE spocktab('test_tab4');
+ nspname |  relname  | set_name 
+---------+-----------+----------
+ public  | test_tab4 | default
+(1 row)
+
+-- Alter table to remove primary key
+ALTER TABLE test_tab4 DROP CONSTRAINT test_tab4_pkey;
+INFO:  DDL statement replicated.
+ALTER TABLE
+-- Alter table to add, drop, and rename columns
+ALTER TABLE test_tab4 ADD COLUMN new_data TEXT;
+INFO:  DDL statement replicated.
+ALTER TABLE
+ALTER TABLE test_tab4 DROP COLUMN new_data;
+INFO:  DDL statement replicated.
+ALTER TABLE
+ALTER TABLE test_tab4 RENAME COLUMN data TO old_data;
+INFO:  DDL statement replicated.
+ALTER TABLE
+-- Display the table structure
+\d test_tab4
+                      Table "public.test_tab4"
+  Column  |          Type          | Collation | Nullable | Default 
+----------+------------------------+-----------+----------+---------
+ id       | text                   |           | not null | 
+ old_data | character varying(100) |           |          | 
+
+-- Execute prepared statement again for the table
+EXECUTE spocktab('test_tab4');
+ nspname |  relname  |      set_name       
+---------+-----------+---------------------
+ public  | test_tab4 | default_insert_only
+(1 row)
+
+-- Alter table to add a primary key on multiple columns
+ALTER TABLE test_tab4 ADD PRIMARY KEY (id, old_data);
+INFO:  DDL statement replicated.
+ALTER TABLE
+-- Display the table structure
+\d test_tab4
+                      Table "public.test_tab4"
+  Column  |          Type          | Collation | Nullable | Default 
+----------+------------------------+-----------+----------+---------
+ id       | text                   |           | not null | 
+ old_data | character varying(100) |           | not null | 
+Indexes:
+    "test_tab4_pkey" PRIMARY KEY, btree (id, old_data)
+
+-- Execute prepared statement again for the table
+EXECUTE spocktab('test_tab4');
+ nspname |  relname  | set_name 
+---------+-----------+----------
+ public  | test_tab4 | default
+(1 row)
+
+-- Alter table to drop the primary key
+ALTER TABLE test_tab4 DROP CONSTRAINT test_tab4_pkey;
+INFO:  DDL statement replicated.
+ALTER TABLE
+-- Display the table structure
+\d test_tab4
+                      Table "public.test_tab4"
+  Column  |          Type          | Collation | Nullable | Default 
+----------+------------------------+-----------+----------+---------
+ id       | text                   |           | not null | 
+ old_data | character varying(100) |           | not null | 
+
+-- Execute prepared statement again for the table
+EXECUTE spocktab('test_tab4');
+ nspname |  relname  |      set_name       
+---------+-----------+---------------------
+ public  | test_tab4 | default_insert_only
+(1 row)
+
+-- Negative test cases to validate constraints and error handling
+-- Attempt to insert a record with a duplicate primary key (should fail)
+INSERT INTO employees (emp_id, first_name, last_name, email) VALUES (1, 'Duplicate', 'Entry', 'duplicate@example.com'); -- This should produce a primary key violation error
+ERROR:  null value in column "salary" of relation "employees" violates not-null constraint
+DETAIL:  Failing row contains (1, Duplicate, Entry, duplicate@example.com, null, null, null, t, null, null, null, null, null, null).
+-- Attempt to insert a record with a negative salary (should fail due to CHECK constraint)
+INSERT INTO employees (emp_id, first_name, last_name, email, salary) VALUES (3, 'Negative', 'Salary', 'negative@example.com', -5000); -- This should produce a check constraint violation error
+ERROR:  new row for relation "employees" violates check constraint "chk_salary"
+DETAIL:  Failing row contains (3, Negative, Salary, negative@example.com, null, null, -5000.00, t, null, null, null, null, null, null).
+-- Final validation of all tables along with querying the spock.tables
+\d+ employees
+                                                       Table "public.employees"
+     Column      |            Type             | Collation | Nullable | Default | Storage  | Compression | Stats target | Description 
+-----------------+-----------------------------+-----------+----------+---------+----------+-------------+--------------+-------------
+ emp_id          | integer                     |           | not null |         | plain    |             |              | 
+ first_name      | character varying(50)       |           | not null |         | extended |             |              | 
+ last_name       | character varying(50)       |           | not null |         | extended |             |              | 
+ email           | character varying(100)      |           | not null |         | extended |             |              | 
+ hire_date       | date                        |           |          |         | plain    |             |              | 
+ birth_time      | time without time zone      |           |          |         | plain    |             |              | 
+ salary          | numeric(10,2)               |           | not null |         | main     |             |              | 
+ full_time       | boolean                     |           |          | true    | plain    |             |              | 
+ address         | text                        |           |          |         | extended |             |              | 
+ metadata        | json                        |           |          |         | extended |             |              | 
+ start_timestamp | timestamp without time zone |           |          |         | plain    |             |              | 
+ emp_coordinates | point                       |           |          |         | plain    |             |              | 
+ middle_name     | character varying(100)      |           |          |         | extended |             |              | 
+ dept_id         | integer                     |           |          |         | plain    |             |              | 
+Indexes:
+    "employees_pkey" PRIMARY KEY, btree (emp_id)
+    "employees_email_key" UNIQUE CONSTRAINT, btree (email)
+Check constraints:
+    "chk_salary" CHECK (salary > 0::numeric)
+Foreign-key constraints:
+    "fk_dept" FOREIGN KEY (dept_id) REFERENCES departments(dept_id)
+Referenced by:
+    TABLE "employee_projects" CONSTRAINT "employee_projects_emp_id_fkey" FOREIGN KEY (emp_id) REFERENCES employees(emp_id)
+Access method: heap
+
+EXECUTE spocktab('employees');
+ nspname |  relname  | set_name 
+---------+-----------+----------
+ public  | employees | default
+(1 row)
+
+\d+ departments
+                                                 Table "public.departments"
+   Column    |          Type          | Collation | Nullable | Default | Storage  | Compression | Stats target | Description 
+-------------+------------------------+-----------+----------+---------+----------+-------------+--------------+-------------
+ dept_id     | integer                |           | not null |         | plain    |             |              | 
+ dept_name   | character varying(100) |           | not null |         | extended |             |              | 
+ location    | character varying(100) |           |          |         | extended |             |              | 
+ established | date                   |           |          |         | plain    |             |              | 
+ budget      | money                  |           |          |         | plain    |             |              | 
+ active      | boolean                |           |          |         | plain    |             |              | 
+Indexes:
+    "departments_pkey" PRIMARY KEY, btree (dept_id)
+Referenced by:
+    TABLE "employees" CONSTRAINT "fk_dept" FOREIGN KEY (dept_id) REFERENCES departments(dept_id)
+Access method: heap
+
+execute spocktab('departments');
+ nspname |   relname   | set_name 
+---------+-------------+----------
+ public  | departments | default
+(1 row)
+
+\d+ projects
+                                                   Table "public.projects"
+    Column    |          Type          | Collation | Nullable | Default | Storage  | Compression | Stats target | Description 
+--------------+------------------------+-----------+----------+---------+----------+-------------+--------------+-------------
+ project_id   | integer                |           | not null |         | plain    |             |              | 
+ project_name | character varying(100) |           | not null |         | extended |             |              | 
+ start_date   | date                   |           |          |         | plain    |             |              | 
+ end_date     | date                   |           |          |         | plain    |             |              | 
+ budget       | numeric(12,2)          |           |          |         | main     |             |              | 
+ active       | boolean                |           |          |         | plain    |             |              | 
+ metadata     | json                   |           |          |         | extended |             |              | 
+Indexes:
+    "projects_pkey" PRIMARY KEY, btree (project_id)
+Check constraints:
+    "projects_budget_check" CHECK (budget > 0::numeric)
+Referenced by:
+    TABLE "employee_projects" CONSTRAINT "employee_projects_project_id_fkey" FOREIGN KEY (project_id) REFERENCES projects(project_id)
+Access method: heap
+
+execute spocktab('projects');
+ nspname | relname  | set_name 
+---------+----------+----------
+ public  | projects | default
+(1 row)
+
+\d+ employee_projects
+                                              Table "public.employee_projects"
+    Column    |         Type          | Collation | Nullable | Default | Storage  | Compression | Stats target | Description 
+--------------+-----------------------+-----------+----------+---------+----------+-------------+--------------+-------------
+ emp_id       | integer               |           | not null |         | plain    |             |              | 
+ project_id   | integer               |           | not null |         | plain    |             |              | 
+ hours_worked | numeric(5,2)          |           |          |         | main     |             |              | 
+ role         | character varying(50) |           |          |         | extended |             |              | 
+Indexes:
+    "employee_projects_pkey" PRIMARY KEY, btree (emp_id, project_id)
+Foreign-key constraints:
+    "employee_projects_emp_id_fkey" FOREIGN KEY (emp_id) REFERENCES employees(emp_id)
+    "employee_projects_project_id_fkey" FOREIGN KEY (project_id) REFERENCES projects(project_id)
+Access method: heap
+
+execute spocktab('employee_projects');
+ nspname |      relname      | set_name 
+---------+-------------------+----------
+ public  | employee_projects | default
+(1 row)
+
+\d+ products
+                                                         Table "public.products"
+       Column        |            Type             | Collation | Nullable | Default | Storage  | Compression | Stats target | Description 
+---------------------+-----------------------------+-----------+----------+---------+----------+-------------+--------------+-------------
+ product_id          | integer                     |           | not null |         | plain    |             |              | 
+ product_name        | character varying(100)      |           |          |         | extended |             |              | 
+ price               | numeric(10,2)               |           | not null |         | main     |             |              | 
+ stock_quantity      | integer                     |           |          |         | plain    |             |              | 
+ discontinued        | boolean                     |           |          |         | plain    |             |              | 
+ product_description | text                        |           |          |         | extended |             |              | 
+ added               | timestamp without time zone |           |          |         | plain    |             |              | 
+ updated             | timestamp with time zone    |           |          |         | plain    |             |              | 
+ category            | character varying(50)       |           |          |         | extended |             |              | 
+Indexes:
+    "products_pkey" PRIMARY KEY, btree (product_id)
+Check constraints:
+    "price_check" CHECK (price > 0::numeric)
+Access method: heap
+
+execute spocktab('products');
+ nspname | relname  | set_name 
+---------+----------+----------
+ public  | products | default
+(1 row)
+
+\d+ "CaseSensitiveTable"
+                                           Table "public.CaseSensitiveTable"
+ Column |         Type          | Collation | Nullable | Default | Storage  | Compression | Stats target | Description 
+--------+-----------------------+-----------+----------+---------+----------+-------------+--------------+-------------
+ ID     | integer               |           | not null |         | plain    |             |              | 
+ Name   | character varying(50) |           |          |         | extended |             |              | 
+ Value  | numeric(10,2)         |           |          |         | main     |             |              | 
+Indexes:
+    "CaseSensitiveTable_pkey" PRIMARY KEY, btree ("ID")
+Access method: heap
+
+execute spocktab('CaseSensitiveTable');
+ nspname |      relname       | set_name 
+---------+--------------------+----------
+ public  | CaseSensitiveTable | default
+(1 row)
+
+\d+ test_tab1
+                                                 Table "public.test_tab1"
+  Column  |          Type          | Collation | Nullable | Default | Storage  | Compression | Stats target | Description 
+----------+------------------------+-----------+----------+---------+----------+-------------+--------------+-------------
+ id       | uuid                   |           | not null |         | plain    |             |              | 
+ old_data | character varying(100) |           |          |         | extended |             |              | 
+Indexes:
+    "test_tab1_pkey" PRIMARY KEY, btree (id)
+Access method: heap
+
+execute spocktab('test_tab1');
+ nspname |  relname  | set_name 
+---------+-----------+----------
+ public  | test_tab1 | default
+(1 row)
+
+\d+ test_tab2
+                                                    Table "public.test_tab2"
+    Column     |           Type           | Collation | Nullable | Default | Storage  | Compression | Stats target | Description 
+---------------+--------------------------+-----------+----------+---------+----------+-------------+--------------+-------------
+ id            | integer                  |           | not null |         | plain    |             |              | 
+ timestamp_col | timestamp with time zone |           |          |         | plain    |             |              | 
+ interval_col  | interval                 |           |          |         | plain    |             |              | 
+ inet_col      | inet                     |           |          |         | main     |             |              | 
+ cidr_col      | cidr                     |           |          |         | main     |             |              | 
+ macaddr_col   | macaddr                  |           |          |         | plain    |             |              | 
+ bit_col       | bit(8)                   |           |          |         | extended |             |              | 
+ varbit_col    | bit varying(8)           |           |          |         | extended |             |              | 
+ box_col       | box                      |           |          |         | plain    |             |              | 
+ circle_col    | circle                   |           |          |         | plain    |             |              | 
+ line_col      | line                     |           |          |         | plain    |             |              | 
+ lseg_col      | lseg                     |           |          |         | plain    |             |              | 
+ path_col      | path                     |           |          |         | extended |             |              | 
+ polygon_col   | polygon                  |           |          |         | extended |             |              | 
+Indexes:
+    "test_tab2_pkey" PRIMARY KEY, btree (id)
+Access method: heap
+
+execute spocktab('test_tab2');
+ nspname |  relname  | set_name 
+---------+-----------+----------
+ public  | test_tab2 | default
+(1 row)
+
+\d+ test_tab3
+                                                  Table "public.test_tab3"
+   Column   |          Type          | Collation | Nullable | Default | Storage  | Compression | Stats target | Description 
+------------+------------------------+-----------+----------+---------+----------+-------------+--------------+-------------
+ id         | integer                |           | not null |         | plain    |             |              | 
+ name       | character varying(100) |           |          |         | extended |             |              | 
+ int_array  | integer[]              |           |          |         | extended |             |              | 
+ text_array | text[]                 |           |          |         | extended |             |              | 
+Indexes:
+    "test_tab3_pkey" PRIMARY KEY, btree (id)
+Access method: heap
+
+execute spocktab('test_tab3');
+ nspname |  relname  | set_name 
+---------+-----------+----------
+ public  | test_tab3 | default
+(1 row)
+
+\d+ test_tab4
+                                                 Table "public.test_tab4"
+  Column  |          Type          | Collation | Nullable | Default | Storage  | Compression | Stats target | Description 
+----------+------------------------+-----------+----------+---------+----------+-------------+--------------+-------------
+ id       | text                   |           | not null |         | extended |             |              | 
+ old_data | character varying(100) |           | not null |         | extended |             |              | 
+Access method: heap
+
+EXECUTE spocktab('test_tab4');
+ nspname |  relname  |      set_name       
+---------+-----------+---------------------
+ public  | test_tab4 | default_insert_only
+(1 row)
+
+-- Validating data in all tables
+SELECT * FROM employees ORDER BY emp_id;
+ emp_id | first_name | last_name |          email          | hire_date  | birth_time |  salary  | full_time |   address    |           metadata            |   start_timestamp   | emp_coordinates | middle_name | dept_id 
+--------+------------+-----------+-------------------------+------------+------------+----------+-----------+--------------+-------------------------------+---------------------+-----------------+-------------+---------
+      1 | John       | Doe       | john.doe@example.com    | 2023-01-15 | 08:30:00   | 60000.00 | t         | 123 Main St  | {"department": "HR"}          | 2023-01-15 08:30:00 | (10,20)         |             |        
+      2 | Jane       | Smith     | jane.smith@example.com  | 2023-03-22 | 09:00:00   | 65000.00 | f         | 456 Elm St   | {"department": "Engineering"} | 2023-03-22 09:00:00 | (30,40)         |             |        
+      3 | Alice      | Brown     | alice.brown@example.com | 2023-05-10 | 07:45:00   | 70000.00 | t         | 789 Maple St | {"department": "Engineering"} | 2023-05-10 07:45:00 | (50,60)         | M           |       2
+      4 | Bob        | Johnson   | bob.johnson@example.com | 2023-02-20 | 10:00:00   | 62000.00 | f         | 101 Pine St  | {"department": "HR"}          | 2023-02-20 10:00:00 | (70,80)         | J           |       1
+(4 rows)
+
+SELECT * FROM departments ORDER BY dept_id;
+ dept_id |    dept_name    |   location    | established |    budget     | active 
+---------+-----------------+---------------+-------------+---------------+--------
+       1 | Human Resources | New York      | 2010-01-01  | $1,000,000.00 | t
+       2 | Engineering     | San Francisco | 2015-06-15  | $2,000,000.00 | t
+(2 rows)
+
+SELECT * FROM projects ORDER BY project_id;
+ project_id | project_name  | start_date |  end_date  |  budget   | active |        metadata        
+------------+---------------+------------+------------+-----------+--------+------------------------
+          1 | Project Alpha | 2023-01-01 | 2023-06-30 | 500000.00 | t      | {"client": "Client A"}
+          2 | Project Beta  | 2023-02-15 | 2023-12-31 | 750000.00 | t      | {"client": "Client B"}
+(2 rows)
+
+SELECT * FROM employee_projects ORDER BY emp_id, project_id;
+ emp_id | project_id | hours_worked |      role      
+--------+------------+--------------+----------------
+      1 |          1 |       120.50 | Manager
+      2 |          1 |        80.00 | Developer
+      3 |          2 |       150.75 | Lead Developer
+(3 rows)
+
+SELECT * FROM products ORDER BY product_id;
+ product_id | product_name | price | stock_quantity | discontinued |   product_description    |        added        |        updated         | category 
+------------+--------------+-------+----------------+--------------+--------------------------+---------------------+------------------------+----------
+          1 | Product A    | 19.99 |            150 | f            | Description of Product A | 2023-01-01 12:00:00 | 2023-01-01 17:00:00+05 | 
+          2 | Product B    | 29.99 |            200 | t            | Description of Product B | 2023-02-01 15:00:00 | 2023-02-01 20:00:00+05 | 
+(2 rows)
+
+SELECT * FROM "CaseSensitiveTable" ORDER BY "ID";
+ ID |   Name   | Value  
+----+----------+--------
+  1 | Item One | 123.45
+  2 | Item Two | 678.90
+(2 rows)
+
+SELECT * FROM test_tab1 ORDER BY id;
+                  id                  |   old_data   
+--------------------------------------+--------------
+ a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11 | Initial data
+(1 row)
+
+SELECT * FROM test_tab2 ORDER BY id;
+ id |     timestamp_col      | interval_col  |  inet_col   |    cidr_col    |    macaddr_col    | bit_col  | varbit_col |   box_col   | circle_col | line_col |   lseg_col    |   path_col    |  polygon_col  
+----+------------------------+---------------+-------------+----------------+-------------------+----------+------------+-------------+------------+----------+---------------+---------------+---------------
+  1 | 2023-01-01 17:00:00+05 | 1 year 2 mons | 192.168.1.1 | 192.168.0.0/24 | 08:00:2b:01:02:03 | 10101010 | 10101010   | (1,1),(0,0) | <(1,1),1>  | {1,2,3}  | [(0,0),(1,1)] | ((0,0),(1,1)) | ((0,0),(1,1))
+(1 row)
+
+SELECT * FROM test_tab3 ORDER BY id;
+ id |  name  | int_array |   text_array    
+----+--------+-----------+-----------------
+  1 | Henry  | {1,2,3}   | {one,two,three}
+  2 | Isabel | {4,5,6}   | {four,five,six}
+(2 rows)
+
+SELECT * FROM test_tab4 ORDER BY id;
+    id    |   old_data   
+----------+--------------
+ m2eebc99 | Initial data
+(1 row)
+

@@ -6,7 +6,7 @@ to_bucket=s3://pgedge-download/REPO
 
 flags="--acl public-read --storage-class STANDARD --recursive"
 
-cmd="aws s3 sync $from_bucket $to_bucket $flags"
+cmd="aws s3 cp $from_bucket $to_bucket $flags"
 echo $cmd
 
 sleep 3
