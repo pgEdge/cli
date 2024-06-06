@@ -1,11 +1,12 @@
 
 # AutoDDL Testing Framework 
 
-The AutoDDL testing framework, laid out in the `Runner.py` (the regression runner for pgedge cli), facilitates the automated validation of DDL replication between 2 nodes. This framework encompasses SQL test cases that run on designated nodes and perform validation (of the auto-replicated DDL) on a secondary node. 
+The AutoDDL testing framework laid out in the `runner.py` program (the regression test runner for the pgEdge CLI), facilitates the automated validation of DDL replication between 2 nodes. This framework encompasses SQL test cases that run on designated nodes and perform validation (of the auto-replicated DDL) on a secondary node. 
+
 Key elements include:
 
 ## SQL Tests
-Test cases are written in .sql files to cover various DDL constructs. These files are executed via psql on the node specified in its filename (n1 or n2 specified prior to file extension). If no node is specified, n1 is assumed default. Each test case comprises a three-set file structure:
+Test cases are written in .sql files to cover various DDL constructs. These files are executed via psql on the node specified in its filename (n1 or n2 specified prior to file extension). If no node is specified, n1 is the assumed default. Each test case is comprised of a three-set file structure:
 - **a file** (e.g. `6555a_create_alter_table_n1.sql`): Contains the main CREATE and ALTER operations on node n1. With the cluster being in autoDDL mode, all these DDLs will be auto-replicated to n2.
 - **b file** (e.g. `6555b_table_validate_n2.sql`): Validates DDL on node n2 as a result of executing the a file on n1, and performs cleanup of replicated tables on n2, exercising the DROP construct, which auto-replicates and cleans up on n1.
 - **c file** (e.g. `6555c_table_validate_n1.sql`): Performs final validation on n1 to ensure all tables are dropped.
@@ -15,7 +16,7 @@ When writing SQL tests for the AutoDDL framework, it is important to ensure that
 
 - **Ordering Results**: Include `ORDER BY` clauses in `SELECT` statements to ensure that the result order is consistent across runs.
 - **Avoid Serial Types**: Do not use serial or auto-incrementing types, as they can produce different values on each run.
-- **Avoid varying outputs**: Avoid Functions or operations that generate variable results, such as `CURRENT_TIMESTAMP` or `EXPLAIN` plans.
+- **Avoid Varying Outputs**: Avoid Functions or operations that generate variable results, such as `CURRENT_TIMESTAMP` or `EXPLAIN` plans.
 - **Specific Meta Commands**: Use meta commands (`\d`, `\d+`) specific to the object being described to ensure clear and relevant output. For example, use `\d tablename` instead of just `\d`.
 - **Commenting**: Include comments in the SQL files to describe the purpose of each section and the expected outcome. This helps in understanding the test case and the validation process.
 
@@ -23,7 +24,7 @@ When writing SQL tests for the AutoDDL framework, it is important to ensure that
 Each of these .sql files will have a corresponding expected output file generated manually by executing the SQL files against psql on the intended node.
 
 ## Actual Output Files
-When these .sql files are executed during the regression run (through Runner.py), an actual output file is generated.
+When these .sql files are executed during the regression run (via runner.py), an actual output file is generated.
 
 ## Output Comparison
 Expected output files are compared against the actual output generated during test execution. Any differences between the actual and expected outputs result in the test being marked as a failure, and the discrepancies are logged for review.
@@ -35,28 +36,28 @@ Expected output files are compared against the actual output generated during te
 ## auto_ddl_schedule
 Comprises setup files (to set up a 2-node cluster with autoDDL enabled), autoDDL tests, and teardown files. Each test assumes there is autoDDL configured between the two node cluster with autoDDL GUCs enabled.
 
-## Enhancements to `Runner.py`
+## Enhancements to `runner.py`
 
-To support the above-mentioned test framework, the following enhancements have been made to Runner:
+To support the above-mentioned test framework, the following enhancements have been made to runner.py:
 
 ### .sql File Execution
-The Runner can now execute .sql files (specified in a schedule) against a specific node. The SQL files exercise DDL constructs/validation.
+runner.py can now execute .sql files (specified in a schedule) against a specific node. The SQL files exercise DDL constructs/validation.
 
 ### Generating Expected Output Files
-To generate the expected output file for a test case, you must use the following command:
+To generate the expected output file for a test case, use the following command:
 ```sql
 ./psql -X -a -d <db> -p <port> < input.sql > expected_output.out 2>&1
 ```
 Please adjust the port in the command above depending on the node you wish this file to run on.
 
 ### Runtime Execution
-During runtime, Runner.py reads the .sql file from the schedule, executes it via psql (constructing its path and switches based on the values defined in config.env), and generates an actual output file. It then compares the expected and actual outputs:
+When you run it, runner.py reads the .sql file from the schedule, executes the sql via psql (constructing its path and switches based on the values defined in config.env), and generates an actual output file. It then compares the expected and actual outputs:
 - If they match, the test passes.
 - If they do not match, the test fails, and a diff is logged.
 
 # Example: Adding a Set of Tests for CREATE TABLE
 
-To add a set of three tests for `CREATE TABLE` as an example, follow these steps for creating our a, b, c files:
+To add a set of three tests for `CREATE TABLE` as an example, use the following steps to create the a, b, and c files:
 
 1. **Create SQL Test Files**:
  - `6112a_create_table_n1.sql`:
@@ -110,7 +111,7 @@ To add a set of three tests for `CREATE TABLE` as an example, follow these steps
    DROP TABLE table_with_pk;
    DROP TABLE table_without_pk;
    ```
- - `6112c_validate_drop_n1.sql` (perform necessary validation on n1 to ensure all DROP statements exercised in the b file have been replicated to n1 and all objects are dropped):
+ - `6112c_validate_drop_n1.sql` (perform necessary validation on n1 to ensure all of the DROP statements exercised in the b file have been replicated to n1 and all objects are dropped):
    ```sql
    -- Ensure tables are dropped on n1
    -- Prepared statement for spock.tables
@@ -144,10 +145,9 @@ Thoroughly review the expected output file to ensure all tests and queries produ
    Add the entries of the .sql files in the `auto_ddl_schedule`, keeping their relative path from the `test` directory.
 
 6. **Execute a Run**:
-   Execute the schedule file through Runner to ensure your tests pass.
+   Execute the schedule file with runner.py to ensure your tests pass.
    
 7. **Commit the Changes**:
    Proceed with committing the relevant .sql and .out files and the updated schedule with a detailed commit message.
-
 
 By following this structure and example, you can add new AutoDDL test cases to the regression suite, ensuring thorough testing of various database operations and their replication across nodes.
