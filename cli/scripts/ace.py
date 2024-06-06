@@ -188,10 +188,16 @@ def schema_diff(cluster_name, nodes, schema_name):
 
     util.message(f"## Validating cluster {cluster_name} exists")
     node_list = []
-    if type(nodes) is str and nodes != "all":
-        node_list = [nodes]
-    elif type(nodes) is not str:
-        node_list = nodes
+    try:
+        if type(nodes) is str and nodes != "all":
+            node_list = [s.strip() for s in nodes.split(",")]
+        elif type(nodes) is not str:
+            node_list = nodes
+    except ValueError as e:
+        util.exit_message(
+            f'Nodes should be a comma-separated list of nodenames. \
+                E.g., --nodes="n1,n2". Error: {e}'
+        )
 
     if len(node_list) > 3:
         util.exit_message(
@@ -261,10 +267,16 @@ def schema_diff(cluster_name, nodes, schema_name):
 def spock_diff(cluster_name, nodes):
     """Compare spock meta data setup on different cluster nodes"""
     node_list = []
-    if type(nodes) is str and nodes != "all":
-        node_list = [nodes]
-    elif type(nodes) is not str:
-        node_list = nodes
+    try:
+        if type(nodes) is str and nodes != "all":
+            node_list = [s.strip() for s in nodes.split(",")]
+        elif type(nodes) is not str:
+            node_list = nodes
+    except ValueError as e:
+        util.exit_message(
+            f'Nodes should be a comma-separated list of nodenames. \
+                E.g., --nodes="n1,n2". Error: {e}'
+        )
 
     if len(node_list) > 3:
         util.exit_message(
