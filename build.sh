@@ -27,31 +27,6 @@ printUsageMessage () {
 }
 
 
-fatalError () {
-  echo "FATAL ERROR!  $1"
-  if [ "$2" == "u" ]; then
-    printUsageMessage
-  fi
-  echo
-  exit 1
-}
-
-
-echoCmd () {
-  echo "# $1"
-  checkCmd "$1"
-}
-
-
-checkCmd () {
-  $1
-  rc=`echo $?`
-  if [ ! "$rc" == "0" ]; then
-    fatalError "Stopping Script"
-  fi
-}
-
-
 myReplace () {
   oldVal="$1"
   newVal="$2"
@@ -356,39 +331,7 @@ initC () {
 
 
 initPG () {
-  if [ "$pgM" == "12" ]; then
-    pgV=$P12
-  elif [ "$pgM" == "13" ]; then
-    pgV=$P13
-  elif [ "$pgM" == "14" ]; then
-    pgV=$P14
-  elif [ "$pgM" == "15" ]; then
-    pgV=$P15
-  elif [ "$pgM" == "16" ]; then
-    pgV=$P16
-  elif [ "$pgM" == "17" ]; then
-    pgV=$P17
-  else
-    echo "ERROR: Invalid PG version '$pgM'"
-    exit 1
-  fi
-
-  if [ "$outDir" == "a64" ]; then
-    outPlat="arm"
-    if [ "$isEL9" == "True" ]; then
-      outPlat="arm9"
-    fi
-  elif [ "$outDir" == "m64" ]; then
-    outPlat="osx"
-  else
-    if [ "$isEL8" == "True" ]; then
-      outPlat="el8"
-    elif [ "$isEL9" == "True" ]; then
-      outPlat="el9"
-    else
-      outPlat="amd"
-    fi
-  fi
+  setPGV "$pgM"
 
   writeSettRow "GLOBAL" "STAGE" "prod"
   writeSettRow "GLOBAL" "AUTOSTART" "off"
