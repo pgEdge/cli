@@ -134,4 +134,7 @@ setPGV () {
   else
     fatalError "Invalid PG version ($1)"
   fi
+  pgMAJ=`echo "$pgV" | cut -d'.' -f1`
+  pgMIN=`echo "$pgV" | cut -d'-' -f1 | cut -d'.' -f2`
+  pgREV=`echo "$pgV" | cut -d'-' -f2`
 }
