@@ -9,9 +9,9 @@ if [ "$OUT" == "" ]; then
   fatalError "environment is not set"
 fi
 
-pkgr=src/packages/make_package.sh
-if [ ! -f $pkgr ]; then
-  fatalError "Cannot locate file ($pkgr)"
+PKGR=src/packages/make_package.sh
+if [ ! -f $PKGR ]; then
+  fatalError "Cannot locate file ($PKGR)"
 fi
 
 if [ $# -ne 1 ]; then
@@ -25,11 +25,11 @@ setPGV "$1"
 # echo "# pgREV = $pgREV"
 
 vers="--major_version $pgMAJ --minor_version $pgMIN --release $pgREV"
-echo "#    vers = $vers"
-bndl=bndl-$pgMAJ.$pgMIN.$pgREV-$hubV-$outPlat
-echo "# $bndl = $bndl"
+# echo "#    vers = $vers"
+bndl=bndl-$pgMAJ.$pgMIN.$pgREV-$hubV-$outPlat.tar.gz
+# echo "# $bndl = $bndl"
 
-cmd="$pkgr $vers --rpm_release $pgREV"
+cmd="$PKGR $vers --bundle_name $bndl"
 
 echoCmd "$cmd"
 

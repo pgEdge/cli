@@ -1,5 +1,7 @@
 #! /bin/bash
 
+cd $OUT
+
 #This script generates an RPM or DEB package.
 
 #Input: Directory containing appropriate pg binaries tar.gz.
@@ -15,15 +17,8 @@ HELP_TEXT() {
     printf "          Specify a PostgreSQL Minor Version Number\n"
     printf "      --release <1>\n"
     printf "          Specify an internal Release Number\n"
-    printf "      --rpm_release <1>\n"
-    printf "          Specify an RPM Build Release Number\n"
-    printf "\n"
-    printf "  Optional Flags:\n"
-    printf "      --source_dir </tmp>   DEFAULT=/tmp\n"
-    printf "          Specify the source directory in which sandbox can be found,\n"
-    printf "           otherwise we will attempt to download it to this specified directory\n"
-    printf "      --mirror_url http://localhost   DEFAULT=http://loclahost:8000\n"
-    printf "          Specify the source URL in which a sandbox can be found\n"
+    printf "      --bundle_name <bndl-pg17-sxksnx>\n"
+    printf "          Specify the package bundle name\n"
 
     printf "\n"
 }
@@ -49,19 +44,9 @@ do
             RELEASE="$1"
             shift
             ;;
-    --rpm_release ) 
+    --bundle_name ) 
             shift
-            RPM_RELEASE="$1"
-            shift
-            ;;
-    --sourcedir | --source_dir ) 
-            shift
-            SOURCE_DIR="$1"
-            shift
-            ;;
-    --mirror_url ) 
-            shift
-            MIRROR_URL="$1"
+            PKG_NAME="$1"
             shift
             ;;
     --help | -h | -? ) 
@@ -108,27 +93,9 @@ if [ -z "$RELEASE" ] ;then
     HELP_TEXT
     exit 1
 fi
-if [ -z "$RPM_RELEASE" ] ;then
+if [ -z "$BUNDLE_NAME" ] ;then
     printf "\n"
-    printf "ERROR: Must set --rpm_release\n"
-    printf "\n"
-    printf "    Please read below for details.\n"
-    printf "\n"
-    HELP_TEXT
-    exit 1
-fi
-if [ -z "$PKG_NAME" ] ;then
-    printf "\n"
-    printf "ERROR: Must set --pkg_name\n"
-    printf "\n"
-    printf "    Please read below for details.\n"
-    printf "\n"
-    HELP_TEXT
-    exit 1
-fi
-if [ -z "$SOURCE_DIR" ] ;then
-    printf "\n"
-    printf "ERROR: Must set --source_dir\n"
+    printf "ERROR: Must set --bundle_name\n"
     printf "\n"
     printf "    Please read below for details.\n"
     printf "\n"
@@ -136,50 +103,23 @@ if [ -z "$SOURCE_DIR" ] ;then
     exit 1
 fi
 
-PKG_NAME="$PKG_NAME${MAJOR_VERSION//[.]/}"
-PG_NAME="postgresql${MAJOR_VERSION//[.]/}"
-SANDBOX_NAME="pgedge-$MAJOR_VERSION.$MINOR_VERSION-$RELEASE.tar.bz2"
+#PKG_NAME="$PKG_NAME${MAJOR_VERSION//[.]/}"
+#PG_NAME="postgresql${MAJOR_VERSION//[.]/}"
+#SANDBOX_NAME="pgedge-$MAJOR_VERSION.$MINOR_VERSION-$RELEASE.tar.bz2"
 
-echo --------------------
-echo Locating Source File
-echo --------------------
+echo --------------------------
+echo Locating Package Bundle File
+echo ----------------------------
 echo
 
-if [ ! -f $SOURCE_DIR/$SANDBOX_NAME ]
-then
-    echo "***Input file not found, attempting to download from Mirror***"
-
-    echo ----------------------------------------------------
-    echo Downloading Sandbox $SANDBOX_NAME
-    echo ----------------------------------------------------
-
-    echo 
-    echo        Download URL is:        
-    echo 
-    echo $MIRROR_URL$SANDBOX_NAME
-
-    curl -o $SOURCE_DIR/$SANDBOX_NAME $MIRROR_URL$SANDBOX_NAME
-else
-    serverSha=`curl $MIRROR_URL$SANDBOX_NAME.sha512 2>/dev/null | awk '{print $1}'`
-    localSha=`sha512sum $SOURCE_DIR/$SANDBOX_NAME | awk '{print $1}'`
-    if [ "$serverSha" = "$localSha" ]
-    then
-        echo "***Source file $SOURCE_DIR/$SANDBOX_NAME found.  It will be assimilated into the collective.***"
-    else
-        printf "New Version of $SOURCE_DIR/$SANDBOX_NAME found on server, downloading\n\n"
-        rm -f $SOURCE_DIR/$SANDBOX_NAME
-        curl -o $SOURCE_DIR/$SANDBOX_NAME $MIRROR_URL$SANDBOX_NAME
-    fi
+if [ ! -f $BUNDLE_NAME ]; then
+    fatalError "*** Input file not found ($BUNDLE_NAME) ***"
 fi
+
+
 echo ------------------------------------
 echo PostgreSQL RPM/DEB generation script
 echo ------------------------------------
-
-#if [ $# -lt 1 -o $# -gt 2 ];
-#then
-#    echo "Usage: $0 <source dir> [<dest dir>]"
-#    exit 127
-#fi
 
 #This variable is used to determine value for LD_PRELOAD, a fix for psql dumb terminal issue.
 LIBREADLINE_SEARCH_PATH="/lib"
@@ -201,7 +141,6 @@ fi
 
 DEBIAN_ARCH=x64
 
-#INSTALLATION_PATH="/opt/postgresql/pg`echo $MAJOR_VERSION | sed 's/\.//g'`"
 INSTALLATION_PATH="/opt/pgedge"
 PGINSTALLATION_PATH="$INSTALLATION_PATH/pg`echo $MAJOR_VERSION | sed 's/\.//g'`"
 PG_LINUX_TAR="$SOURCE_DIR/pgedge-$MAJOR_VERSION.$MINOR_VERSION-$RELEASE-linux64.tar.bz2"
