@@ -1,0 +1,36 @@
+#!/bin/sh
+# vim: syn=sh ts=4 sts=4 sw=4 et :
+
+doExit=0
+if [ -z "$PGDATA" ] 
+then
+    printf "PGDATA variable not set, exiting...\n"
+    doExit=1
+fi
+
+if [ -z "$PGHOME" ] 
+then
+    printf "PGHOME variable not set, exiting...\n"
+    doExit=1
+fi
+
+if [ -z "$OSUSER" ]
+then
+    printf "The OS user running postgres is not set, exiting...\n"
+    doExit=1
+fi
+
+if [ "$doExit" -eq 1 ]
+then
+    printf "ERROR, Exiting...\n"
+    exit 1
+fi
+
+$PGHOME/bin/pg_ctl -D $PGDATA reload
+
+if [ "$?" -ne 0 ]
+then
+    printf "WARNING: PostgreSQL will not reload.\n"
+    printf "         Examine the log for details\n"
+fi
+

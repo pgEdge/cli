@@ -1,11 +1,11 @@
 
 bundle=pgedge
 api=pgedge
-hubV=24.6.4
+hubV=24.7.0
 ctlibsV=1.3
 
 spock40V=4.0beta1-1
-spock33V=3.3.4-1
+spock33V=3.3.5-1
 
 lolorV=1.2-1
 foslotsV=1a-1
@@ -33,7 +33,6 @@ citusV=12.1.3-1
 orafceV=4.10.0-1
 v8V=3.2.2-1
 
-## grp_pgeV=2.12
 ## oraclefdwV=2.6.0-1
 ## inclV=21.6
 ## ora2pgV=23.1
@@ -73,14 +72,21 @@ if [[ $OS == "Linux" ]]; then
   if [ `arch` == "aarch64" ]; then
     OS=arm
     outDir=a64
+    outPlat=arm9
   else
-    OS=amd;
+    OS=amd
     outDir=l64
+    if [ "$isEL8" == "True" ]; then
+      outPlat=el8
+    else 
+      outPlat=el9
+    fi
   fi
   sudo="sudo"
 elif [[ $OS == "Darwin" ]]; then
   outDir=m64
-  OS=osx;
+  OS=osx
+  outPlat=osx
   sudo=""
 else
   echo "ERROR: '$OS' is not supported"
@@ -88,3 +94,47 @@ else
 fi
 
 plat=$OS
+
+
+fatalError () {
+  echo "FATAL ERROR!  $1"
+  echo
+  exit 1
+}
+
+
+echoCmd () {
+  echo "# $1"
+  checkCmd "$1"
+}
+
+
+checkCmd () {
+  $1
+  rc=`echo $?`
+  if [ ! "$rc" == "0" ]; then
+    fatalError "Stopping Script"
+  fi
+}
+
+
+setPGV () {
+  if [ "$1" == "12" ]; then
+    pgV=$P12
+  elif [ "$1" == "13" ]; then
+    pgV=$P13
+  elif [ "$1" == "14" ]; then
+    pgV=$P14
+  elif [ "$1" == "15" ]; then
+    pgV=$P15
+  elif [ "$1" == "16" ]; then
+    pgV=$P16
+  elif [ "$1" == "17" ]; then
+    pgV=$P17
+  else
+    fatalError "Invalid PG version ($1)"
+  fi
+  pgMAJ=`echo "$pgV" | cut -d'.' -f1`
+  pgMIN=`echo "$pgV" | cut -d'-' -f1 | cut -d'.' -f2`
+  pgREV=`echo "$pgV" | cut -d'-' -f2`
+}

@@ -126,11 +126,12 @@ INSERT INTO categories VALUES (9,  87, 'Management & Monitoring', 'Manage/Monito
 INSERT INTO projects VALUES ('hub', 'app', 0, 0, 'hub', 0, 'https://github.com/pgedge/cli','',0,'','','','');
 INSERT INTO releases VALUES ('hub', 1, 'hub',  '', '', 'hidden', '', 1, '', '', '');
 
-INSERT INTO versions VALUES ('hub', '24.6.4',    '',  1, '20240624', '', '', '');
+INSERT INTO versions VALUES ('hub', '24.7.0',    '',  1, '20240701', '', '', '');
+INSERT INTO versions VALUES ('hub', '24.6.5',    '',  0, '20240607', '', '', '');
+INSERT INTO versions VALUES ('hub', '24.6.4',    '',  0, '20240604', '', '', '');
 INSERT INTO versions VALUES ('hub', '24.4.6',    '',  0, '20240509', '', '', '');
 INSERT INTO versions VALUES ('hub', '24.4.5',    '',  0, '20240410', '', '', '');
 INSERT INTO versions VALUES ('hub', '24.3.2',    '',  0, '20240317', '', '', '');
-INSERT INTO versions VALUES ('hub', '24.1.3',    '',  0, '20231205', '', '', '');
 
 -- ## PG #################################
 INSERT INTO projects VALUES ('pg', 'pge', 1, 5432, 'hub', 1, 'https://github.com/postgres/postgres/tags',
@@ -330,9 +331,13 @@ INSERT INTO releases VALUES ('spock33-pg14', 4, 'spock', 'Spock', '', 'prod', ''
 INSERT INTO releases VALUES ('spock33-pg15', 4, 'spock', 'Spock', '', 'prod', '', 1, 'pgEdge Community', '', '');
 INSERT INTO releases VALUES ('spock33-pg16', 4, 'spock', 'Spock', '', 'prod', '', 1, 'pgEdge Community', '', '');
 
-INSERT INTO versions VALUES ('spock33-pg14', '3.3.4-1', 'el8, el9, arm9',      1, '20240522', 'pg14', '', '');
-INSERT INTO versions VALUES ('spock33-pg15', '3.3.4-1', 'el8, el9, arm9',      1, '20240522', 'pg15', '', '');
-INSERT INTO versions VALUES ('spock33-pg16', '3.3.4-1', 'el8, el9, arm9, osx', 1, '20240522', 'pg16', '', '');
+INSERT INTO versions VALUES ('spock33-pg14', '3.3.5-1', 'el8, el9, arm9',      1, '20240607', 'pg14', '', '');
+INSERT INTO versions VALUES ('spock33-pg15', '3.3.5-1', 'el8, el9, arm9',      1, '20240607', 'pg15', '', '');
+INSERT INTO versions VALUES ('spock33-pg16', '3.3.5-1', 'el8, el9, arm9, osx', 1, '20240607', 'pg16', '', '');
+
+INSERT INTO versions VALUES ('spock33-pg14', '3.3.4-1', 'el8, el9, arm9',      0, '20240522', 'pg14', '', '');
+INSERT INTO versions VALUES ('spock33-pg15', '3.3.4-1', 'el8, el9, arm9',      0, '20240522', 'pg15', '', '');
+INSERT INTO versions VALUES ('spock33-pg16', '3.3.4-1', 'el8, el9, arm9, osx', 0, '20240522', 'pg16', '', '');
 
 INSERT INTO versions VALUES ('spock33-pg14', '3.3.3-1', 'el8, el9, arm9',      0, '20240509', 'pg14', '', '');
 INSERT INTO versions VALUES ('spock33-pg15', '3.3.3-1', 'el8, el9, arm9',      0, '20240509', 'pg15', '', '');
