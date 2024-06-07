@@ -76,3 +76,5 @@ EXECUTE spocktab('test_tab4');
 ---------+---------+----------
 (0 rows)
 
+\d+ test_tab5
+EXECUTE spocktab('test_tab5');

@@ -226,6 +226,9 @@ EXECUTE spocktab('test_tab4');
  public  | test_tab4 | default_insert_only
 (1 row)
 
+\d+ test_tab5
+EXECUTE spocktab('test_tab5');
+
 -- Validating data in all tables
 SELECT * FROM employees ORDER BY emp_id;
  emp_id | first_name | last_name |          email          | hire_date  | birth_time |  salary  | full_time |   address    |           metadata            |   start_timestamp   | emp_coordinates | middle_name | dept_id 
@@ -297,6 +300,8 @@ SELECT * FROM test_tab4 ORDER BY id;
  m2eebc99 | Initial data
 (1 row)
 
+SELECT * FROM test_tab5 ORDER BY 1;
+
 -- Execute drop statements on n2 to exercise DROP TABLE, ensuring it gets replicated.
 -- This also helps with the cleanup
 drop table employees cascade;
@@ -341,3 +346,4 @@ drop table test_tab4;
 NOTICE:  drop cascades to table test_tab4 membership in replication set default_insert_only
 INFO:  DDL statement replicated.
 DROP TABLE
+drop table test_tab5;
