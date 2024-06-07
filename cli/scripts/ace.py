@@ -189,8 +189,10 @@ def schema_diff(cluster_name, nodes, schema_name):
     util.message(f"## Validating cluster {cluster_name} exists")
     node_list = []
     try:
-        if nodes != "all":
+        if type(nodes) is str and nodes != "all":
             node_list = [s.strip() for s in nodes.split(",")]
+        elif type(nodes) is not str:
+            node_list = nodes
     except ValueError as e:
         util.exit_message(
             f'Nodes should be a comma-separated list of nodenames. \
@@ -266,8 +268,10 @@ def spock_diff(cluster_name, nodes):
     """Compare spock meta data setup on different cluster nodes"""
     node_list = []
     try:
-        if nodes != "all":
+        if type(nodes) is str and nodes != "all":
             node_list = [s.strip() for s in nodes.split(",")]
+        elif type(nodes) is not str:
+            node_list = nodes
     except ValueError as e:
         util.exit_message(
             f'Nodes should be a comma-separated list of nodenames. \
@@ -319,6 +323,10 @@ def spock_diff(cluster_name, nodes):
 
     except Exception as e:
         util.exit_message("Error in spock_diff() Getting Connections:" + str(e), 1)
+    
+    for nd in node_list:
+        if nd not in conn_list.keys():
+            util.exit_message(f"Specified nodename \"{nd}\" not present in cluster", 1)
 
     compare_spock = []
     print("\n")
@@ -328,7 +336,6 @@ def spock_diff(cluster_name, nodes):
         if cluster_node["name"] not in node_list:
             continue
         diff_spock = {}
-        diff_sub = {}
         hints = []
         print(" Spock - Config " + cluster_node["name"])
         print("~~~~~~~~~~~~~~~~~~~~~~~~~")
@@ -350,6 +357,7 @@ def spock_diff(cluster_name, nodes):
 
         diff_spock["subscriptions"] = []
         for node in node_info:
+            diff_sub = {}
             if node["sub_name"] is None:
                 hints.append("Hint: No subscriptions have been created on this node")
             else:
@@ -363,9 +371,15 @@ def spock_diff(cluster_name, nodes):
                     hints.append("Hint: No replication sets added to subscription")
                 diff_spock["subscriptions"].append(diff_sub)
 
+        # Query gets each table by which rep set they are in, values in each rep set are alphabetized
         sql = """
-        SELECT set_name, string_agg(nspname||'.'||relname,'   ') as relname
-        FROM spock.tables GROUP BY set_name ORDER BY set_name;
+        SELECT set_name, string_agg(nspname || '.' || relname, '   ') as relname
+        FROM (
+            SELECT set_name, nspname, relname
+            FROM spock.tables
+            ORDER BY set_name, nspname, relname
+        ) subquery
+        GROUP BY set_name ORDER BY set_name;
         """
 
         cur.execute(sql)
