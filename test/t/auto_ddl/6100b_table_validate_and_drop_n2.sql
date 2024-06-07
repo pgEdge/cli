@@ -37,6 +37,9 @@ execute spocktab('test_tab3');
 \d+ test_tab4
 EXECUTE spocktab('test_tab4');
 
+\d+ test_tab5
+EXECUTE spocktab('test_tab5');
+
 -- Validating data in all tables
 SELECT * FROM employees ORDER BY emp_id;
 SELECT * FROM departments ORDER BY dept_id;
@@ -48,6 +51,7 @@ SELECT * FROM test_tab1 ORDER BY id;
 SELECT * FROM test_tab2 ORDER BY id;
 SELECT * FROM test_tab3 ORDER BY id;
 SELECT * FROM test_tab4 ORDER BY id;
+SELECT * FROM test_tab5 ORDER BY 1;
 
 -- Execute drop statements on n2 to exercise DROP TABLE, ensuring it gets replicated.
 -- This also helps with the cleanup
@@ -61,3 +65,4 @@ drop table test_tab1;
 drop table test_tab2;
 drop table test_tab3;
 drop table test_tab4;
+drop table test_tab5;
