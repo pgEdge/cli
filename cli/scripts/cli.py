@@ -62,8 +62,6 @@ fire_list = [
     "um",
     "spock",
     "cluster",
-    "patroni",
-    "etcd",
     "ace",
     "cloud",
     "db",
@@ -87,8 +85,6 @@ mode_list_advanced = [
     "psql",
     "pg_isready",
     "cluster",
-    "etcd",
-    "patroni",
     "ace",
     "enable",
     "upgrade",
@@ -1238,7 +1234,7 @@ p_mode = args[1]
 if (p_mode in no_log_commands) and (isJSON == True):
     pass
 elif (
-    p_mode in ("service", "spock", "um", "cluster", "etcd", "patroni")
+    p_mode in ("service", "spock", "um", "cluster")
     and (len(args) > 2)
     and (args[2] in no_log_commands)
 ):
@@ -1375,6 +1371,10 @@ if p_mode in native_list:
     bin_path = ""
     if p_mode == "backrest":
        bin_path = os.path.join(MY_HOME, "backrest", "backrest.py")
+    if p_mode == "etcd":
+       bin_path = os.path.join(MY_HOME, "etcd", "etcd.py")
+    if p_mode == "patroni":
+       bin_path = os.path.join(MY_HOME, "patroni", "patroni.py")
     elif p_mode == "ansible":
        bin_path = "/usr/local/bin/ansible"
 
