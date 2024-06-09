@@ -114,7 +114,6 @@ plat=$OS
 
 fatalError () {
   echo "FATAL ERROR!  $1"
-  echo
   exit 1
 }
 

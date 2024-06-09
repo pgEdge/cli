@@ -6,16 +6,16 @@ source env.sh
 # echo "# outPlat = $outPlat"
 
 if [ "$OUT" == "" ]; then
-  fatalError "environment is not set"
+  fatalError "\$OUT environment is not set"
 fi
 
 PKGR=src/packages/make_package.sh
 if [ ! -f $PKGR ]; then
-  fatalError "Cannot locate file ($PKGR)"
+  fatalError "Cannot locate file \"$PKGR\""
 fi
 
 if [ $# -ne 1 ]; then
-  fatalError "only the pgParm variable is allowed such as '16'"
+  fatalError "only the pg_ver variable is allowed such as '16'"
 fi
 
 setPGV "$1"
@@ -24,12 +24,12 @@ setPGV "$1"
 # echo "# pgMIN = $pgMIN"
 # echo "# pgREV = $pgREV"
 
-vers="--major_version $pgMAJ --minor_version $pgMIN --release $pgREV"
+vers="--major_ver $pgMAJ --minor_ver $pgMIN --release $pgREV"
 # echo "#    vers = $vers"
-bndl=bndl-$pgMAJ.$pgMIN.$pgREV-$hubV-$outPlat.tar.gz
-# echo "# $bndl = $bndl"
+bundle=bundle-pg$pgMAJ.$pgMIN.$pgREV-edge$hubV-$outPlat
+# echo "# bundle = $bundle"
 
-cmd="$PKGR $vers --bundle_name $bndl"
+cmd="$PKGR $vers --bundle_name $bundle"
 
 echoCmd "$cmd"
 

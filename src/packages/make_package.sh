@@ -1,4 +1,7 @@
 #! /bin/bash
+cd "$(dirname "$0")"
+
+source ../../env.sh
 
 cd $OUT
 
@@ -11,32 +14,46 @@ cd $OUT
 HELP_TEXT() {
     printf "\n"
     printf "  Required Flags:\n"
-    printf "      --major_version <16>\n"
+    printf "      --major_ver <16>\n"
     printf "          Specify a PostgreSQL Major Version Number\n"
-    printf "      --minor_version <3>\n"
+    printf "      --minor_ver <3>\n"
     printf "          Specify a PostgreSQL Minor Version Number\n"
     printf "      --release <1>\n"
     printf "          Specify an internal Release Number\n"
-    printf "      --bundle_name <bndl-pg17-sxksnx>\n"
+    printf "      --bundle_name <bundle-pg16.3.1-edge24.7.0-el9>\n"
     printf "          Specify the package bundle name\n"
 
     printf "\n"
 }
+
+
+exit_error_msg () {
+    printf "\n"
+    printf "ERROR: $1\n"
+    printf "\n"
+    printf "    Please read below for details.\n"
+    printf "\n"
+    HELP_TEXT
+    exit 1
+}
+
+
+
+
 # Default options
 MIRROR_URL="http://localhost:8000/"
 SOURCE_DIR="/tmp"
-PKG_NAME="pgedge"
 while [ -n "$1" ] 
 do
     case "$1" in
-    --major_version | -majorver ) 
+    --major_ver | -majorver ) 
             shift
-            MAJOR_VERSION="$1"
+            MAJOR_VER="$1"
             shift
             ;;
-    --minor_version | -minorver )
+    --minor_ver | -minorver )
             shift
-            MINOR_VERSION="$1"
+            MINOR_VER="$1"
             shift
             ;;
     --release | -r ) 
@@ -46,7 +63,7 @@ do
             ;;
     --bundle_name ) 
             shift
-            PKG_NAME="$1"
+            BUNDLE_NAME="$1"
             shift
             ;;
     --help | -h | -? ) 
@@ -62,64 +79,35 @@ do
 done
 ###############################################
 
-#VARS_STRING="$MAJOR_VERSION $MINOR_VERSION $RELEASE $RPM_RELEASE $PKG_NAME $SOURCE_DIR $INIT_SCRIPT_SRC $SYSTEMD_SCRIPTS "
+#VARS_STRING="$MAJOR_VER $MINOR_VER $RELEASE $RPM_RELEASE $PKG_NAME $SOURCE_DIR $INIT_SCRIPT_SRC $SYSTEMD_SCRIPTS "
 
 #VAR_NUM="$VARS_STRING | wc -w"
 
-if [ -z "$MAJOR_VERSION" ] ;then
-    printf "\n"
-    printf "ERROR: Must set --major_version\n"
-    printf "\n"
-    printf "    Please read below for details.\n"
-    printf "\n"
-    HELP_TEXT
-    exit 1
-fi
-if [ -z "$MINOR_VERSION" ] ;then
-    printf "\n"
-    printf "ERROR: Must set --minor_version\n"
-    printf "\n"
-    printf "    Please read below for details.\n"
-    printf "\n"
-    HELP_TEXT
-    exit 1
-fi
-if [ -z "$RELEASE" ] ;then
-    printf "\n"
-    printf "ERROR: Must set --release\n"
-    printf "\n"
-    printf "    Please read below for details.\n"
-    printf "\n"
-    HELP_TEXT
-    exit 1
-fi
-if [ -z "$BUNDLE_NAME" ] ;then
-    printf "\n"
-    printf "ERROR: Must set --bundle_name\n"
-    printf "\n"
-    printf "    Please read below for details.\n"
-    printf "\n"
-    HELP_TEXT
-    exit 1
+if [ -z "$MAJOR_VER" ]; then
+    exit_error_msg "Must set --major_ver"
+elif [ -z "$MINOR_VER" ]; then
+    exit_error_msg "Must set --minor_ver"
+elif [ -z "$RELEASE" ]; then
+    exit_error_msg "Must set --release"
+elif [ -z "$BUNDLE_NAME" ]; then
+    exit_error_msg "Must set --bundle_name"
 fi
 
-#PKG_NAME="$PKG_NAME${MAJOR_VERSION//[.]/}"
-#PG_NAME="postgresql${MAJOR_VERSION//[.]/}"
-#SANDBOX_NAME="pgedge-$MAJOR_VERSION.$MINOR_VERSION-$RELEASE.tar.bz2"
+#PKG_NAME="$PKG_NAME${MAJOR_VER//[.]/}"
+#PG_NAME="postgresql${MAJOR_VER//[.]/}"
+#SANDBOX_NAME="pgedge-$MAJOR_VER.$MINOR_VER-$RELEASE.tar.bz2"
 
-echo --------------------------
-echo Locating Package Bundle File
-echo ----------------------------
-echo
+echo 
+echo ## Locating Package Bundle File ###################
 
-if [ ! -f $BUNDLE_NAME ]; then
-    fatalError "*** Input file not found ($BUNDLE_NAME) ***"
+bundle_tgz=$BUNDLE_NAME.tgz
+if [ ! -f $bundle_tgz ]; then
+    fatalError "Input file not found \"$bundle_tgz\""
 fi
 
 
-echo ------------------------------------
-echo PostgreSQL RPM/DEB generation script
-echo ------------------------------------
+echo 
+echo ## PostgreSQL RPM/DEB generation script ###########
 
 #This variable is used to determine value for LD_PRELOAD, a fix for psql dumb terminal issue.
 LIBREADLINE_SEARCH_PATH="/lib"
@@ -142,17 +130,17 @@ fi
 DEBIAN_ARCH=x64
 
 INSTALLATION_PATH="/opt/pgedge"
-PGINSTALLATION_PATH="$INSTALLATION_PATH/pg`echo $MAJOR_VERSION | sed 's/\.//g'`"
-PG_LINUX_TAR="$SOURCE_DIR/pgedge-$MAJOR_VERSION.$MINOR_VERSION-$RELEASE-linux64.tar.bz2"
+PGINSTALLATION_PATH="$INSTALLATION_PATH/pg`echo $MAJOR_VER | sed 's/\.//g'`"
+PG_LINUX_TAR="$SOURCE_DIR/pgedge-$MAJOR_VER.$MINOR_VER-$RELEASE-linux64.tar.bz2"
 TMP_PREFIX="/tmp/PG_PGEDGE_BUILD"
 TMP_ROOT="$TMP_PREFIX$INSTALLATION_PATH"
-TMP_INITD="$TMP_ROOT/pg`echo $MAJOR_VERSION | sed 's/\.//g'`/startup"
-INITD="postgresql-`echo $MAJOR_VERSION | sed 's/\.//g'`"
+TMP_INITD="$TMP_ROOT/pg`echo $MAJOR_VER | sed 's/\.//g'`/startup"
+INITD="postgresql-`echo $MAJOR_VER | sed 's/\.//g'`"
 PG_BUILD_DIR_NAME="pg_pgedge_build"
-PG_TRANSFORMED_TAR="/tmp/$PKG_NAME-$MAJOR_VERSION.$MINOR_VERSION-$RPM_RELEASE-$OS_PLATFORM-pgedge.tar.gz"
-ENVFILE_NAME="pg${MAJOR_VERSION//[.]/}.env"
+PG_TRANSFORMED_TAR="/tmp/$PKG_NAME-$MAJOR_VER.$MINOR_VER-$RPM_RELEASE-$OS_PLATFORM-pgedge.tar.gz"
+ENVFILE_NAME="pg${MAJOR_VER//[.]/}.env"
 ENVFILE="$TMP_ROOT/$ENVFILE_NAME"
-DEBIAN_DIR="pgedge-$MAJOR_VERSION.$MINOR_VERSION-$RELEASE-$DEBIAN_ARCH"
+DEBIAN_DIR="pgedge-$MAJOR_VER.$MINOR_VER-$RELEASE-$DEBIAN_ARCH"
 RPMOSUSER="pgedge"
 ###################################################################
 
@@ -167,8 +155,8 @@ function convertToPackageFriendly {
 	 #tar -xf $PG_LINUX_TAR -C $TMP_ROOT
      tar -xf $PG_LINUX_TAR -C $TMP_ROOT --strip 1
          #Remove stuff that we don't require
-	 mv $TMP_ROOT/pg${MAJOR_VERSION//[.]/}-$MAJOR_VERSION.$MINOR_VERSION-$RELEASE-linux64/* $TMP_ROOT
-	 rm -r $TMP_ROOT/pg${MAJOR_VERSION//[.]/}-$MAJOR_VERSION.$MINOR_VERSION-$RELEASE-linux64
+	 mv $TMP_ROOT/pg${MAJOR_VER//[.]/}-$MAJOR_VER.$MINOR_VER-$RELEASE-linux64/* $TMP_ROOT
+	 rm -r $TMP_ROOT/pg${MAJOR_VER//[.]/}-$MAJOR_VER.$MINOR_VER-$RELEASE-linux64
 	 #rm -rf $TMP_ROOT/stackbuilder
 	 #rm -rf $TMP_ROOT/pgAdmin3
 	 rm -f $PG_TRANSFORMED_TAR
@@ -176,10 +164,10 @@ function convertToPackageFriendly {
 	 #Dump default environment values
 #	 cat <<ENVEOF > $ENVFILE 
 ##!/bin/bash
-#export PGHOME=$INSTALLATION_PATH/pg${MAJOR_VERSION//[.]/}
-#export PGDATA=$INSTALLATION_PATH/data/pg${MAJOR_VERSION//[.]/}
-#export PATH=$INSTALLATION_PATH/pg${MAJOR_VERSION//[.]/}/bin:\$PATH
-#export LD_LIBRARY_PATH=$INSTALLATION_PATH/pg${MAJOR_VESION//[.]/}/lib:\$LD_LIBRARY_PATH
+#export PGHOME=$INSTALLATION_PATH/pg${MAJOR_VER//[.]/}
+#export PGDATA=$INSTALLATION_PATH/data/pg${MAJOR_VER//[.]/}
+#export PATH=$INSTALLATION_PATH/pg${MAJOR_VER//[.]/}/bin:\$PATH
+#export LD_LIBRARY_PATH=$INSTALLATION_PATH/pg${MAJOR_VER//[.]/}/lib:\$LD_LIBRARY_PATH
 #export PGUSER=postgres
 #export PGDATABASE=postgres
 #ENVEOF
@@ -223,12 +211,12 @@ function createRPMSpec {
   fi
 
   echo "Creating spec file..."
-  SPEC_OUTPUT="$PG_BUILD_DIR_NAME/SPECS/$PKG_NAME-$MAJOR_VERSION.$MINOR_VERSION-$OS_PLATFORM-pgedge.spec"
+  SPEC_OUTPUT="$PG_BUILD_DIR_NAME/SPECS/$PKG_NAME-$MAJOR_VER.$MINOR_VER-$OS_PLATFORM-pgedge.spec"
 
   FILES=$(/bin/tar -tzf $PG_TRANSFORMED_TAR | /bin/grep -v '^.*/$' | sed 's/^/\//')
   DIRS=$(/bin/tar -tvzf $PG_TRANSFORMED_TAR | grep "^d" | awk '{ print $6 }' | sed 's/^/\//' | sort | uniq)
 #echo $DIRS
-  FULL_VERSION="$MAJOR_VERSION.$MINOR_VERSION"
+  FULL_VERSION="$MAJOR_VER.$MINOR_VER"
 /bin/cat > ~/$SPEC_OUTPUT << EOF
 %define        __spec_install_post %{nil}
 %define          debug_package %{nil}
@@ -282,27 +270,27 @@ then
 fi
 
 %post
-ln -s \$RPM_INSTALL_PREFIX/pg${MAJOR_VERSION//[.]/}/bin/psql /usr/bin/psql 2>/dev/null
-ln -s \$RPM_INSTALL_PREFIX/pg${MAJOR_VERSION//[.]/}/lib/libpq.so.5 /usr/lib64/libpq.so.5 2>/dev/null
+ln -s \$RPM_INSTALL_PREFIX/pg${MAJOR_VER//[.]/}/bin/psql /usr/bin/psql 2>/dev/null
+ln -s \$RPM_INSTALL_PREFIX/pg${MAJOR_VER//[.]/}/lib/libpq.so.5 /usr/lib64/libpq.so.5 2>/dev/null
 
-cat <<ENVEOF > \$RPM_INSTALL_PREFIX/pg${MAJOR_VERSION//[.]/}.env
+cat <<ENVEOF > \$RPM_INSTALL_PREFIX/pg${MAJOR_VER//[.]/}.env
 #!/bin/bash
-export PGHOME=\$RPM_INSTALL_PREFIX/pg${MAJOR_VERSION//[.]/}
-export PGDATA=\$RPM_INSTALL_PREFIX/data/pg${MAJOR_VERSION//[.]/}
-export PATH=\$RPM_INSTALL_PREFIX/pg${MAJOR_VERSION//[.]/}/bin:\$PATH
+export PGHOME=\$RPM_INSTALL_PREFIX/pg${MAJOR_VER//[.]/}
+export PGDATA=\$RPM_INSTALL_PREFIX/data/pg${MAJOR_VER//[.]/}
+export PATH=\$RPM_INSTALL_PREFIX/pg${MAJOR_VER//[.]/}/bin:\$PATH
 export LD_LIBRARY_PATH=\$RPM_INSTALL_PREFIX/pg${MAJOR_VESION//[.]/}/lib:\$LD_LIBRARY_PATH
 export PGUSER=postgres
 export PGDATABASE=postgres
 ENVEOF
 
-chmod 0755 \$RPM_INSTALL_PREFIX/pg${MAJOR_VERSION//[.]/}.env
+chmod 0755 \$RPM_INSTALL_PREFIX/pg${MAJOR_VER//[.]/}.env
 
 printMessage=1
 # 2 means we're performing an upgrade
 if [ "\$1" = "2" ]
 then
     # If the env file exists, we're doing an upgrade of an initialized system
-    if [ -f \$RPM_INSTALL_PREFIX/pg${MAJOR_VERSION//[.]/}.env ]
+    if [ -f \$RPM_INSTALL_PREFIX/pg${MAJOR_VER//[.]/}.env ]
     then
         printf "\n\tMinor Version update completed, please restart\n"
         printf "\t the server for changes to take effect\n\n"
@@ -314,16 +302,16 @@ then
     # Post installation actions
     printf "\n\t======================================\n"
     printf "\tBinaries installed at: \$RPM_INSTALL_PREFIX\n\n"
-    printf "\t  sudo \$RPM_INSTALL_PREFIX/io start pg${MAJOR_VERSION//[.]/}\n\n"
-    printf "\t  sudo \$RPM_INSTALL_PREFIX/io stop pg${MAJOR_VERSION//[.]/}\n"
-    printf "\t  sudo \$RPM_INSTALL_PREFIX/io restart  pg${MAJOR_VERSION//[.]/}\n\n"
+    printf "\t  sudo \$RPM_INSTALL_PREFIX/io start pg${MAJOR_VER//[.]/}\n\n"
+    printf "\t  sudo \$RPM_INSTALL_PREFIX/io stop pg${MAJOR_VER//[.]/}\n"
+    printf "\t  sudo \$RPM_INSTALL_PREFIX/io restart  pg${MAJOR_VER//[.]/}\n\n"
     printf "\n"
 fi
 
 %preun
 if [ "\$1" -eq "0" ]
 then
-    for svc in ${PKG_NAME} postgresql-${MAJOR_VERSION//[.]/}
+    for svc in ${PKG_NAME} postgresql-${MAJOR_VER//[.]/}
     do
         service \$svc status >/dev/null 2>\&1
         ret="\$?"
@@ -390,8 +378,8 @@ rpmbuild -ba ~/$SPEC_OUTPUT #--sign
 #"
 ###rpmbuild -ba --sign ~/$SPEC_OUTPUT 
 # /mnt/hgfs/pgrpm/rpmbuild_expect.exp "~/$SPEC_OUTPUT"
-printf "$MAJOR_VERSION :: $MINOR_VERSION :: $RELEASE\n"
-mv ~/$PG_BUILD_DIR_NAME/RPMS/$ARCH/$PKG_NAME-$MAJOR_VERSION.$MINOR_VERSION-$RPM_RELEASE.x86_64.rpm ~/$PG_BUILD_DIR_NAME/RPMS/$ARCH/postgresql-$MAJOR_VERSION.$MINOR_VERSION-$RELEASE-x64-pgedge.rpm
+printf "$MAJOR_VER :: $MINOR_VER :: $RELEASE\n"
+mv ~/$PG_BUILD_DIR_NAME/RPMS/$ARCH/$PKG_NAME-$MAJOR_VER.$MINOR_VER-$RPM_RELEASE.x86_64.rpm ~/$PG_BUILD_DIR_NAME/RPMS/$ARCH/postgresql-$MAJOR_VER.$MINOR_VER-$RELEASE-x64-pgedge.rpm
 
 saveDir=/build/`date +'%Y-%m-%d'`
 test -d $saveDir
@@ -400,7 +388,7 @@ then
     mkdir $saveDir
 fi
 
-cp ~/$PG_BUILD_DIR_NAME/RPMS/$ARCH/postgresql-$MAJOR_VERSION.$MINOR_VERSION-$RELEASE-x64-pgedge.rpm $saveDir
+cp ~/$PG_BUILD_DIR_NAME/RPMS/$ARCH/postgresql-$MAJOR_VER.$MINOR_VER-$RELEASE-x64-pgedge.rpm $saveDir
 printf "Saved build to: $saveDir\n"
 printf "RPMBUild returned: $?\n\n\n"
 
@@ -428,7 +416,7 @@ function createDEBBuildStructure {
 }
 
 function createDEBControl {
-FULL_VERSION="$MAJOR_VERSION.$MINOR_VERSION-$RELEASE"
+FULL_VERSION="$MAJOR_VER.$MINOR_VER-$RELEASE"
 
 cat <<EOF > ~/$PG_BUILD_DIR_NAME/$DEBIAN_DIR/DEBIAN/control
 Package: $PKG_NAME
@@ -466,15 +454,15 @@ edg=/opt/pgedge
 
 
 
-ln -s $edg/pg${MAJOR_VERSION//[.]/}/bin/psql /usr/bin/psql 2>/dev/null
-ln -s $edg/pg${MAJOR_VERSION//[.]/}/lib/libpq.so.5 /usr/lib64/libpq.so.5 2>/dev/null
+ln -s $edg/pg${MAJOR_VER//[.]/}/bin/psql /usr/bin/psql 2>/dev/null
+ln -s $edg/pg${MAJOR_VER//[.]/}/lib/libpq.so.5 /usr/lib64/libpq.so.5 2>/dev/null
 
 # Post installation actions
 printf "\n\t======================================\n\n"
 printf "\tBinaries installed at: /opt/postgresql\n\n"
-printf "\t  sudo $edg start pg${MAJOR_VERSION//[.]/}\n\n"
-printf "\t  sudo $edg stop pg${MAJOR_VERSION//[.]/}\n"
-printf "\t  sudo $edg restart  pg${MAJOR_VERSION//[.]/}\n\n"
+printf "\t  sudo $edg start pg${MAJOR_VER//[.]/}\n\n"
+printf "\t  sudo $edg stop pg${MAJOR_VER//[.]/}\n"
+printf "\t  sudo $edg restart  pg${MAJOR_VER//[.]/}\n\n"
 printf "\n"
 
 EOF
@@ -486,7 +474,7 @@ cat <<EOF > ~/$PG_BUILD_DIR_NAME/$DEBIAN_DIR/DEBIAN/prerm
 arg="\$1"
 if [ "\$arg" = "remove" ]
 then
-    for svc in ${PKG_NAME} postgresql-${MAJOR_VERSION//[.]/}
+    for svc in ${PKG_NAME} postgresql-${MAJOR_VER//[.]/}
     do
         service \$svc status >/dev/null 2>\&1
         ret="\$?"
