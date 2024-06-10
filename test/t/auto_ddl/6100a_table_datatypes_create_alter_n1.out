@@ -572,6 +572,38 @@ DETAIL:  Failing row contains (1, Duplicate, Entry, duplicate@example.com, null,
 INSERT INTO employees (emp_id, first_name, last_name, email, salary) VALUES (3, 'Negative', 'Salary', 'negative@example.com', -5000); -- This should produce a check constraint violation error
 ERROR:  new row for relation "employees" violates check constraint "chk_salary"
 DETAIL:  Failing row contains (3, Negative, Salary, negative@example.com, null, null, -5000.00, t, null, null, null, null, null, null).
+
+-- Create a table to use the remaining data types 
+CREATE TABLE test_tab5 (
+    bigint_col BIGINT PRIMARY KEY,
+    character_col CHARACTER(10),
+    double_precision_col DOUBLE PRECISION,
+    jsonb_col JSONB,
+    macaddr8_col MACADDR8,
+    real_col REAL,
+    smallint_col SMALLINT,
+    time_col TIME,
+    time_with_time_zone_col TIME WITH TIME ZONE,
+    tsquery_col TSQUERY,
+    tsvector_col TSVECTOR,
+    xml_col XML
+);
+
+-- Insert initial data into test_tab5
+INSERT INTO test_tab5 (bigint_col, character_col, double_precision_col, jsonb_col, macaddr8_col, real_col, smallint_col, time_col, time_with_time_zone_col, tsquery_col, tsvector_col, xml_col) VALUES
+(9223372036854775807, 'char_test', 1.79769e+308, '{"key": "value"}', '08:00:2b:01:02:03:04:05', 3.40282e+38, 32767, '12:34:56', '12:34:56+02', 'fat & rat', 'a fat cat sat on a mat and ate a rat', '<root><child>value</child></root>');
+
+-- Insert another row into test_tab5
+INSERT INTO test_tab5 (bigint_col, character_col, double_precision_col, jsonb_col, macaddr8_col, real_col, smallint_col, time_col, time_with_time_zone_col, tsquery_col, tsvector_col, xml_col) VALUES
+(1234567890123456789, 'test_char', 2.22507e-308, '{"another_key": "another_value"}', '08:00:2b:06:07:08:09:0A', 1.17549e-38, -32768, '23:45:01', '23:45:01-05', 'quick & brown', 'the quick brown fox jumps over the lazy dog', '<root><child>another_value</child></root>');
+
+-- Update the existing row in test_tab5
+UPDATE test_tab5 SET character_col = 'upd_char', jsonb_col = '{"updated_key": "updated_value"}', real_col = 42.42 WHERE bigint_col = 9223372036854775807;
+
+-- Validate the structure of the table
+\d test_tab5
+EXECUTE spocktab('test_tab5'); -- default repset expected
+
 -- Final validation of all tables along with querying the spock.tables
 \d+ employees
                                                        Table "public.employees"
@@ -794,6 +826,9 @@ EXECUTE spocktab('test_tab4');
  public  | test_tab4 | default_insert_only
 (1 row)
 
+\d+ test_tab5
+EXECUTE spocktab('test_tab5');
+
 -- Validating data in all tables
 SELECT * FROM employees ORDER BY emp_id;
  emp_id | first_name | last_name |          email          | hire_date  | birth_time |  salary  | full_time |   address    |           metadata            |   start_timestamp   | emp_coordinates | middle_name | dept_id 
@@ -865,3 +900,4 @@ SELECT * FROM test_tab4 ORDER BY id;
  m2eebc99 | Initial data
 (1 row)
 
+SELECT * FROM test_tab5 ORDER BY 1;

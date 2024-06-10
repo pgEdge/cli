@@ -37,3 +37,6 @@ execute spocktab('test_tab3');
 
 \d+ test_tab4
 EXECUTE spocktab('test_tab4');
+
+\d+ test_tab5
+EXECUTE spocktab('test_tab5');
