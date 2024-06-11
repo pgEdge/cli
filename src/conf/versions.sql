@@ -285,8 +285,11 @@ INSERT INTO projects VALUES ('citus', 'pge', 4, 0, 'hub',0, 'https://github.com/
 INSERT INTO releases VALUES ('citus-pg15', 10, 'citus', 'Citus', '', 'test', '', 1, 'AGPLv3', '', '');
 INSERT INTO releases VALUES ('citus-pg16', 10, 'citus', 'Citus', '', 'test', '', 1, 'AGPLv3', '', '');
 
-INSERT INTO versions VALUES ('citus-pg15', '12.1.3-1', 'el9, arm9', 1, '20240509', 'pg15', '', '');
-INSERT INTO versions VALUES ('citus-pg16', '12.1.3-1', 'el9, arm9', 1, '20240509', 'pg16', '', '');
+INSERT INTO versions VALUES ('citus-pg15', '12.1.4-1', 'el9, arm9', 1, '20240612', 'pg15', '', '');
+INSERT INTO versions VALUES ('citus-pg16', '12.1.4-1', 'el9, arm9', 1, '20240612', 'pg16', '', '');
+
+INSERT INTO versions VALUES ('citus-pg15', '12.1.3-1', 'el9, arm9', 0, '20240509', 'pg15', '', '');
+INSERT INTO versions VALUES ('citus-pg16', '12.1.3-1', 'el9, arm9', 0, '20240509', 'pg16', '', '');
 
 -- ## CRON ##############################
 INSERT INTO projects VALUES ('cron', 'ext', 4, 0, 'hub',0, 'https://github.com/citusdata/pg_cron/releases',
@@ -303,8 +306,11 @@ INSERT INTO projects VALUES ('vector', 'pge', 4, 0, 'hub', 1, 'https://github.co
 INSERT INTO releases VALUES ('vector-pg15', 4, 'vector', 'pgVector', '', 'prod', '', 1, 'pgEdge Community', '', '');
 INSERT INTO releases VALUES ('vector-pg16', 4, 'vector', 'pgVector', '', 'prod', '', 1, 'pgEdge Community', '', '');
 
-INSERT INTO versions VALUES ('vector-pg15', '0.7.0-1', 'el9, arm9', 1, '20240509', 'pg15', '', '');
-INSERT INTO versions VALUES ('vector-pg16', '0.7.0-1', 'el9, arm9', 1, '20240509', 'pg16', '', '');
+INSERT INTO versions VALUES ('vector-pg15', '0.7.1-1', 'el9, arm9', 1, '20240612', 'pg15', '', '');
+INSERT INTO versions VALUES ('vector-pg16', '0.7.1-1', 'el9, arm9', 1, '20240612', 'pg16', '', '');
+
+INSERT INTO versions VALUES ('vector-pg15', '0.7.0-1', 'el9, arm9', 0, '20240509', 'pg15', '', '');
+INSERT INTO versions VALUES ('vector-pg16', '0.7.0-1', 'el9, arm9', 0, '20240509', 'pg16', '', '');
 
 -- ## SNOWFLAKE #########################
 INSERT INTO projects VALUES ('snowflake', 'pge', 4, 0, 'hub', 1, 'https://github.com/pgedge/snowflake/tags',

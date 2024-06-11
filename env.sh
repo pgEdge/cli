@@ -18,7 +18,7 @@ P14=14.12-2
 P13=13.15-1
 P12=12.19-1
 
-vectorV=0.7.0-1
+vectorV=0.7.1-1
 catV=1.1.1
 firwldV=1.2
 adminV=8.x
@@ -29,7 +29,7 @@ backrestV=2.51-1
 wal2jV=2.6.0-1
 
 curlV=2.2.2-1
-citusV=12.1.3-1
+citusV=12.1.4-1
 orafceV=4.10.0-1
 v8V=3.2.2-1
 
