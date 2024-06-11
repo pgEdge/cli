@@ -268,8 +268,11 @@ INSERT INTO projects VALUES ('timescaledb', 'ext', 4, 0, 'hub',0, 'https://githu
 INSERT INTO releases VALUES ('timescaledb-pg15', 10, 'timescaledb', 'TimescaleDB', '', 'test', '', 1, 'POSTGRES', '', '');
 INSERT INTO releases VALUES ('timescaledb-pg16', 10, 'timescaledb', 'TimescaleDB', '', 'test', '', 1, 'POSTGRES', '', '');
 
-INSERT INTO versions VALUES ('timescaledb-pg15', '2.14.2-1', 'el9, arm9', 1, '20240509', 'pg15', '', '');
-INSERT INTO versions VALUES ('timescaledb-pg16', '2.14.2-1', 'el9, arm9', 1, '20240509', 'pg16', '', '');
+INSERT INTO versions VALUES ('timescaledb-pg15', '2.15.2-1', 'el9, arm9', 1, '20240612', 'pg15', '', '');
+INSERT INTO versions VALUES ('timescaledb-pg16', '2.15.2-1', 'el9, arm9', 1, '20240612', 'pg16', '', '');
+
+INSERT INTO versions VALUES ('timescaledb-pg15', '2.14.2-1', 'el9, arm9', 0, '20240509', 'pg15', '', '');
+INSERT INTO versions VALUES ('timescaledb-pg16', '2.14.2-1', 'el9, arm9', 0, '20240509', 'pg16', '', '');
 
 -- ## CURL ##############################
 INSERT INTO projects VALUES ('curl', 'ext', 4, 0, 'hub',0, 'https://github.com/pg_curl/pg_curl/releases',
@@ -428,7 +431,9 @@ INSERT INTO versions VALUES ('pgcat', '1.1.1', 'el8, el9, arm9', 1, '20240108', 
 INSERT INTO projects VALUES ('backrest', 'pge', 11, 0, 'hub', 3, 'http://pgbackrest.org',
   'backrest',  0, 'backrest.png', 'Backup & Restore', 'http://pgbackrest.org', 'pg_backrest, pgbackrest');
 INSERT INTO releases VALUES ('backrest', 2, 'backrest',  'pgBackRest', '', 'prod', '', 1, 'MIT', '', '');
-INSERT INTO versions VALUES ('backrest', '2.51-1', 'el8, el9, arm9', 1, '20240410', '', '', '');
+
+INSERT INTO versions VALUES ('backrest', '2.52-1', 'el8, el9, arm9', 1, '20240612', '', '', '');
+INSERT INTO versions VALUES ('backrest', '2.51-1', 'el8, el9, arm9', 0, '20240410', '', '', '');
 
 -- ## FIREWALLD #########################
 INSERT INTO projects VALUES ('firewalld', 'app', 11, 0, '', 4, 'https://firewalld.org',

@@ -25,7 +25,7 @@ adminV=8.x
 prestV=1.4.2
 postgrestV=12.0.2-1
 prompgexpV=0.15.0
-backrestV=2.51-1
+backrestV=2.52-1
 wal2jV=2.6.0-1
 
 curlV=2.2.2-1
@@ -38,7 +38,7 @@ v8V=3.2.2-1
 ## ora2pgV=23.1
 
 hypoV=1.4.1-1
-timescaleV=2.14.2-1
+timescaleV=2.15.2-1
 profV=4.2.4-1
 bulkloadV=3.1.19-1
 partmanV=5.0.1-1
