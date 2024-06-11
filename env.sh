@@ -32,6 +32,8 @@ curlV=2.2.2-1
 citusV=12.1.4-1
 orafceV=4.10.0-1
 v8V=3.2.2-1
+setuserV=4.0.1-1
+permissionsV=1.2-1
 
 ## oraclefdwV=2.6.0-1
 ## inclV=21.6

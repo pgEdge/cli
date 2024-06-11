@@ -68,6 +68,7 @@ INSERT INTO extensions VALUES ('spock40', 'spock', 1, 'spock',
    spock.save_resolutions=on | spock.conflict_log_level=DEBUG');
 INSERT INTO extensions VALUES ('lolor',     'lolor',     0, '',          '');
 INSERT INTO extensions VALUES ('postgis',   'postgis',   1, 'postgis-3', '');
+INSERT INTO extensions VALUES ('setuser',   'set_user',  1, 'set_user',  '');
 INSERT INTO extensions VALUES ('orafce',    'orafce',    1, 'orafce',    '');
 INSERT INTO extensions VALUES ('snowflake', 'snowflake', 1, 'snowflake', '');
 INSERT INTO extensions VALUES ('foslots',   'foslots',   0, '',          '');
@@ -75,6 +76,7 @@ INSERT INTO extensions VALUES ('foslots',   'foslots',   0, '',          '');
 INSERT INTO extensions VALUES ('vector',    'vector',       0, '',               '');
 INSERT INTO extensions VALUES ('wal2json',  'wal2json',     1, 'wal2json',       '');
 INSERT INTO extensions VALUES ('timescaledb','timescaledb', 1, 'timescaledb', 'timescaledb.telemetry_level=off'); 
+INSERT INTO extensions VALUES ('permissions','pg_permissions', 0, '',               '');
 INSERT INTO extensions VALUES ('citus',      'citus',       1, 'citus', 'citus.enable_statistics_collection=off');
 
 INSERT INTO extensions VALUES ('audit',     'pgaudit',      1, 'pgaudit',        '');
@@ -376,6 +378,22 @@ INSERT INTO versions VALUES ('lolor-pg14', '1.2-1', 'el9, arm9, el8',      1, '2
 INSERT INTO versions VALUES ('lolor-pg15', '1.2-1', 'el9, arm9, el8',      1, '20240521', 'pg15', '', '');
 INSERT INTO versions VALUES ('lolor-pg16', '1.2-1', 'el9, arm9, el8, osx', 1, '20240521', 'pg16', '', '');
 INSERT INTO versions VALUES ('lolor-pg17', '1.2-1', 'el9, arm9, el8',      1, '20240521', 'pg17', '', '');
+
+-- ## PERMISSIONS #######################
+INSERT INTO projects VALUES ('permissions', 'ext', 4, 1, 'hub', 3, 'https://github.com/cybertec-postgresql/permissions',
+  'permissions', 1, 'permissions.png', 'Improved permissions views', 'https://github.com/cybertec-postgresql/permissions', 'set_user');
+INSERT INTO releases VALUES ('permissions-pg15', 3, 'permissions', 'Permissions', '', 'prod', '', 1, 'POSTGRES', '', '');
+INSERT INTO releases VALUES ('permissions-pg16', 3, 'permissions', 'Permissions', '', 'prod', '', 1, 'POSTGRES', '', '');
+INSERT INTO versions VALUES ('permissions-pg15', '1.2-1', 'el9, arm9', 1, '20240612', 'pg15', '', '');
+INSERT INTO versions VALUES ('permissions-pg16', '1.2-1', 'el9, arm9', 1, '20240612', 'pg16', '', '');
+
+-- ## SETUSER ###########################
+INSERT INTO projects VALUES ('setuser', 'ext', 4, 1, 'hub', 3, 'https://github.com/pgaudit/set_user',
+  'setuser', 1, 'setuser.png', 'Superuser privilege logging', 'https://github.com/pgaudit/set_user', 'set_user');
+INSERT INTO releases VALUES ('setuser-pg15', 3, 'setuser', 'SetUser', '', 'prod', '', 1, 'POSTGRES', '', '');
+INSERT INTO releases VALUES ('setuser-pg16', 3, 'setuser', 'SetUser', '', 'prod', '', 1, 'POSTGRES', '', '');
+INSERT INTO versions VALUES ('setuser-pg15', '4.0.1-1', 'el9, arm9', 1, '20240612', 'pg15', '', '');
+INSERT INTO versions VALUES ('setuser-pg16', '4.0.1-1', 'el9, arm9', 1, '20240612', 'pg16', '', '');
 
 -- ## POSTGIS ###########################
 INSERT INTO projects VALUES ('postgis', 'ext', 4, 1, 'hub', 3, 'http://postgis.net/source',
