@@ -32,8 +32,10 @@ function test_common_exts {
   ./pgedge install postgis-$pgV       -d demo
   ./pgedge install vector-$pgV        -d demo
   ./pgedge install audit-$pgV         -d demo
+  ./pgedge install setuser-$pgV       -d demo
   ./pgedge install hintplan-$pgV      -d demo
   ./pgedge install timescaledb-$pgV   -d demo
+  ./pgedge install permissions-$pgV   -d demo
 
   ./pgedge install plv8-$pgV          -d demo
 
