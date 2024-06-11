@@ -339,7 +339,7 @@ def install_pgedge(cluster_name):
             os.environ["REPO"] = REPO
         else:
             os.environ["REPO"] = ""
-            REPO = "https://pgedge-upstream.s3.amazonaws.com/REPO"
+            REPO = "https://pgedge-download.s3.amazonaws.com/REPO"
 
         cmd1 = f"mkdir -p {ndpath}; cd {ndpath}; "
         cmd2 = f"python3 -c '$(curl -fsSL {REPO}/install.py)'"
