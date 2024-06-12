@@ -145,9 +145,9 @@ def setup_pgbackrest_conf():
     dataDir = f"{parentDir}/data/{pgV()}"
     restoreDir = f"{parentDir}/restore"
 
+    osSys("sudo mkdir -p /etc/pgbackrest /etc/pgbackrest/conf.d")
     save_config()
     osSys(f"sudo chown {usrUsr} /var/log/pgbackrest")
-    osSys("sudo mkdir -p /etc/pgbackrest /etc/pgbackrest/conf.d")
     osSys("sudo chmod 640 /etc/pgbackrest/pgbackrest.conf")
     osSys(f"sudo chown {usrUsr} /etc/pgbackrest/pgbackrest.conf")
 
