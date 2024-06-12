@@ -68,6 +68,22 @@ pg="postgres"
 OS=`uname -s`
 OS=${OS:0:7}
 
+isEL8="False"
+isEL9="False"
+isEL="False"
+if [ -f /etc/os-release ]; then
+  PLATFORM=`cat /etc/os-release | grep PLATFORM_ID | cut -d: -f2 | tr -d '\"'`
+  if [ "$PLATFORM" == "el8" ]; then
+    isEL="True"
+    isEL8="True"
+    isEL9="False"
+  elif [ "$PLATFORM" == "el9" ]; then
+    isEL="True"
+    isEL8="False"
+    isEL9="True"
+  fi
+fi
+
 if [[ $OS == "Linux" ]]; then
   if [ `arch` == "aarch64" ]; then
     OS=arm
