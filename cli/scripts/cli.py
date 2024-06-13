@@ -617,7 +617,7 @@ def unpack_comp(p_app, p_old_ver, p_new_ver):
 
     return_value = 0
 
-    tarFileObj = ProgressTarExtract("conf" + os.sep + "cache" + os.sep + file)
+    tarFileObj = ProgressTarExtract("data" + os.sep + "conf" + os.sep + "cache" + os.sep + file)
     tarFileObj.component_name = p_app
     tarFileObj.file_name = file
     tar = tarfile.open(fileobj=tarFileObj, mode="r")
