@@ -3,7 +3,10 @@
 
 import os, json, datetime
 import util, fire, meta, time, sys
-import etcd, patroni
+try:
+    import etcd, patroni
+except Exception:
+    pass
 
 BASE_DIR = "cluster"
 
