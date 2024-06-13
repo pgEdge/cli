@@ -616,7 +616,7 @@ def unpack_comp(p_app, p_old_ver, p_new_ver):
 
     return_value = 0
 
-    tarFileObj = ProgressTarExtract("conf" + os.sep + "cache" + os.sep + file)
+    tarFileObj = ProgressTarExtract("data" + os.sep + "conf" + os.sep + "cache" + os.sep + file)
     tarFileObj.component_name = p_app
     tarFileObj.file_name = file
     tar = tarfile.open(fileobj=tarFileObj, mode="r")
@@ -662,11 +662,10 @@ def unpack_comp(p_app, p_old_ver, p_new_ver):
     if isExt:
         try:
             parent = util.get_parent_component(p_app, 0)
-            if not os.path.exists(os.path.join(backup_target_dir, parent)):
-                my_logger.info("backing up the parent component %s " % parent)
-                util.copytree(
-                    f"{os.path.join(MY_HOME, parent)}  {os.path.join(backup_target_dir, parent)}"
-                )
+            backup_parent = os.path.join(backup_target_dir, parent)
+            os.system(f"mkdir -p {backup_parent}")
+            my_logger.info("backing up the parent component %s " % parent)
+            util.copytree(f"{os.path.join(MY_HOME, parent)}  {backup_parent}")
             manifest_file_name = p_app + ".manifest"
             manifest_file_path = os.path.join(MY_HOME, "data", "conf", manifest_file_name)
             my_logger.info("backing up current manifest file " + manifest_file_path)
