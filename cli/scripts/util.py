@@ -3,7 +3,7 @@
 import os
 import time
 
-MY_VERSION = "24.7.1"
+MY_VERSION = "24.7.2"
 DEFAULT_PG = "16"
 DEFAULT_SPOCK = "33"
 DEFAULT_SPOCK_17 = "40"
@@ -32,7 +32,6 @@ import platform
 import subprocess
 import getpass
 import filecmp
-from tqdm import tqdm
 
 from subprocess import Popen, PIPE, STDOUT
 from datetime import datetime, timedelta
@@ -40,10 +39,11 @@ from urllib import request as urllib2
 from shutil import copy2
 
 try:
+    from tqdm import tqdm
     import psycopg
 except Exception:
-    # Psycopg is only used for advanced functionality
-    #  and may throw errors in some cases
+    # only used for advanced functionality
+    # and may throw errors in some cases before ctlibs is loaded
     pass
 
 from log_helpers import bcolours, characters
