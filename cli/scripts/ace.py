@@ -503,13 +503,36 @@ def compare_checksums(shared_objects, worker_state, pkey1, pkey2):
                     pkey2=sql.SQL(", ").join([sql.Literal(val) for val in pkey2]),
                 )
             )
+    
+    if where_clause:
+        if simple_primary_key:
+            hash_sql = sql.SQL(
+                "SELECT md5(cast(array_agg(t.* ORDER BY {p_key}) AS text)) FROM"
+                "(SELECT * FROM {table_name} WHERE {where_clause}) t"
+            ).format(
+                p_key=sql.Identifier(p_key),
+                table_name=sql.SQL("{}.{}").format(
+                    sql.Identifier(schema_name),
+                    sql.Identifier(table_name),
+                ),
+                where_clause=sql.SQL(" AND ").join(where_clause),
+            )
+        else:
+            hash_sql = sql.SQL(
+                "SELECT md5(cast(array_agg(t.* ORDER BY {p_key}) AS text)) FROM"
+                "(SELECT * FROM {table_name} WHERE {where_clause}) t"
+            ).format(
+                p_key=sql.SQL(", ").join(
+                    [sql.Identifier(col.strip()) for col in p_key.split(",")]
+                ),
+                table_name=sql.SQL("{}.{}").format(
+                    sql.Identifier(schema_name),
+                    sql.Identifier(table_name),
+                ),
+                where_clause=sql.SQL(" AND ").join(where_clause),
+            )
 
-    if simple_primary_key:
-        hash_sql = sql.SQL(
-            "SELECT md5(cast(array_agg(t.* ORDER BY {p_key}) AS text)) FROM"
-            "(SELECT * FROM {table_name} WHERE {where_clause}) t"
-        ).format(
-            p_key=sql.Identifier(p_key),
+        block_sql = sql.SQL("SELECT * FROM {table_name} WHERE {where_clause}").format(
             table_name=sql.SQL("{}.{}").format(
                 sql.Identifier(schema_name),
                 sql.Identifier(table_name),
@@ -517,27 +540,37 @@ def compare_checksums(shared_objects, worker_state, pkey1, pkey2):
             where_clause=sql.SQL(" AND ").join(where_clause),
         )
     else:
-        hash_sql = sql.SQL(
-            "SELECT md5(cast(array_agg(t.* ORDER BY {p_key}) AS text)) FROM"
-            "(SELECT * FROM {table_name} WHERE {where_clause}) t"
-        ).format(
-            p_key=sql.SQL(", ").join(
-                [sql.Identifier(col.strip()) for col in p_key.split(",")]
-            ),
+        if simple_primary_key:
+            hash_sql = sql.SQL(
+                "SELECT md5(cast(array_agg(t.* ORDER BY {p_key}) AS text)) FROM"
+                "(SELECT * FROM {table_name}) t"
+            ).format(
+                p_key=sql.Identifier(p_key),
+                table_name=sql.SQL("{}.{}").format(
+                    sql.Identifier(schema_name),
+                    sql.Identifier(table_name),
+                ),
+            )
+        else:
+            hash_sql = sql.SQL(
+                "SELECT md5(cast(array_agg(t.* ORDER BY {p_key}) AS text)) FROM"
+                "(SELECT * FROM {table_name}) t"
+            ).format(
+                p_key=sql.SQL(", ").join(
+                    [sql.Identifier(col.strip()) for col in p_key.split(",")]
+                ),
+                table_name=sql.SQL("{}.{}").format(
+                    sql.Identifier(schema_name),
+                    sql.Identifier(table_name),
+                ),
+            )
+
+        block_sql = sql.SQL("SELECT * FROM {table_name}").format(
             table_name=sql.SQL("{}.{}").format(
                 sql.Identifier(schema_name),
                 sql.Identifier(table_name),
             ),
-            where_clause=sql.SQL(" AND ").join(where_clause),
         )
-
-    block_sql = sql.SQL("SELECT * FROM {table_name} WHERE {where_clause}").format(
-        table_name=sql.SQL("{}.{}").format(
-            sql.Identifier(schema_name),
-            sql.Identifier(table_name),
-        ),
-        where_clause=sql.SQL(" AND ").join(where_clause),
-    )
 
     node_pairs = combinations(node_list, 2)
 
@@ -686,10 +719,11 @@ def table_diff(
         util.exit_message(f"block_rows param '{block_rows}' must be integer >= 1000")
 
     node_list = []
-
     try:
-        if nodes != "all":
+        if type(nodes) is str and nodes != "all":
             node_list = [s.strip() for s in nodes.split(",")]
+        elif type(nodes) is not str:
+            node_list = nodes
     except ValueError as e:
         util.exit_message(
             f'Nodes should be a comma-separated list of nodenames. \
@@ -838,10 +872,17 @@ def table_diff(
         )
 
     def get_pkey_offsets(conn, pkey_sql, block_rows):
-        pkey_offsets = []
-        cur = conn.cursor()
-        cur.execute(pkey_sql)
-        rows = cur.fetchmany(block_rows)
+        try:
+            pkey_offsets = []
+            cur = conn.cursor()
+            cur.execute(pkey_sql)
+            rows = cur.fetchmany(block_rows)
+        except AttributeError as e:
+            util.message(
+                f"TABLES MAY BE EMPTY",
+                p_state="warning",
+            )
+            return [(None, None)]
 
         if simple_primary_key:
             rows[:] = [str(x[0]) for x in rows]
@@ -1774,10 +1815,11 @@ def repset_diff(
         util.exit_message(f"block_rows param '{block_rows}' must be integer >= 1000")
 
     node_list = []
-
     try:
-        if nodes != "all":
+        if type(nodes) is str and nodes != "all":
             node_list = [s.strip() for s in nodes.split(",")]
+        elif type(nodes) is not str:
+            node_list = nodes
     except ValueError as e:
         util.exit_message(
             f'Nodes should be a comma-separated list of nodenames. \
@@ -1845,21 +1887,31 @@ def repset_diff(
 
     util.message("Connections successful to nodes in cluster", p_state="success")
 
-    sql = (
-        "SELECT concat_ws('.', nspname, relname) FROM spock.tables where set_name = %s;"
-    )
-
     # Connecting to any one of the nodes in the cluster should suffice
     conn = conn_list[0]
     cur = conn.cursor()
 
-    # No need to sanitise repset_name here since psycopg does it for us
-    cur.execute(sql, (repset_name,))
+    # Check if repset exists
+    sql = (
+        "select set_name from spock.replication_set;"
+    )
+    cur.execute(sql)
+    repset_list = [item[0] for item in cur.fetchall()]
+    if repset_name not in repset_list:
+        util.exit_message(f"Repset {repset_name} not found")
 
+    # No need to sanitise repset_name here since psycopg does it for us
+    sql = (
+        "SELECT concat_ws('.', nspname, relname) FROM spock.tables where set_name = %s;"
+    )
+    cur.execute(sql, (repset_name,))
     tables = cur.fetchall()
 
     if not tables:
-        util.exit_message(f"Repset {repset_name} not found")
+        util.message(
+            "Repset may be empty",
+            p_state="warning",
+        )
 
     # Convert fetched rows into a list of strings
     tables = [table[0] for table in tables]
