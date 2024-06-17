@@ -1268,7 +1268,7 @@ info_arg, p_comp_list, p_comp, p_version, extra_args = \
 
 ## PG_ISREADY #################################################################
 if p_mode == "pg_isready":
-    pg_v = util.get_pg_v(None)
+    pg_v, spock_v = util.get_pg_v()
     cmd = "./pgedge pgbin " + pg_v.replace("pg", "") + " pg_isready"
     rc = os.system(cmd)
     if rc == 0:
@@ -1298,8 +1298,7 @@ if p_mode == "psql":
     else:
         util.exit_message(psql_bad_msg)
 
-    pg_v = util.get_pg_v(None)
-
+    pg_v, spock_v = util.get_pg_v()
     cmd = "./pgedge pgbin " + pg_v.replace("pg", "") + " 'psql " + sql_cmd + db + "'"
 
     if isVERBOSE:

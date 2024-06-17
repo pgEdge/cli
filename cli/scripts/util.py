@@ -443,8 +443,10 @@ def json_dumps(p_input):
     return json.dumps(p_input, indent=2)
 
 
-def get_pg_v(pg):
+def get_pg_v(pg=None):
     pg_v = str(pg)
+    if pg_v is None:
+        pg_v = os.getenv("pgN")
 
     if pg_v.isdigit():
         pg_v = "pg" + str(pg_v)
@@ -466,7 +468,9 @@ def get_pg_v(pg):
     if not os.path.isdir(pg_v):
         exit_message(str(pg_v) + " not installed", 1)
 
-    return pg_v
+    spock_v = meta.get_installed_spock(pg_v)
+
+    return pg_v, spock_v
 
 
 def get_cloud_info():

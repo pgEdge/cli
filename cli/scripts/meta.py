@@ -49,26 +49,20 @@ def get_installed_pg():
 
     return data
 
-'''
-Accepts a connection object and returns the version of spock installed
 
-@param: conn - connection object
-@return: float - version of spock installed
-
-'''
-def get_spock_version(conn):
+def get_installed_spock(pg_v):
     data = []
-    sql = "SELECT spock.spock_version();"
+    sql = f"SELECT version FROM components WHERE component like 'spock%{pg_v}'"
     try:
-        c = conn.cursor()
+        c = con.cursor()
         c.execute(sql)
         data = c.fetchone()
-        if data:
-            return float(data[0])
     except Exception as e:
-        fatal_error(e, sql, "get_spock_version()")
-
-    return 0.0
+        fatal_error(e, sql, "get_installed_spock")
+    if data:
+        return data[0]
+    else:
+        return None
 
 
 def get_stage(p_comp):

@@ -101,13 +101,11 @@ def create(db=None, User=None, Passwd=None, pg=None, spock=None):
     return
 
 
-def guc_set(guc_name, guc_value, pg=None):
+def guc_set(guc_name, guc_value):
     """Set GUC"""
-    pg_v = util.get_pg_v(pg)
 
-    if pg is None:
-        pg_v = util.get_pg_v(pg)
-        pg = pg_v[2:]
+    pg_v, spock_v = util.get_pg_v()
+    pg = pg_v[2:]
 
     nc = "./pgedge "
     ncb = nc + "pgbin " + str(pg) + " "
@@ -123,9 +121,9 @@ def guc_set(guc_name, guc_value, pg=None):
         util.message("Unable to set GUC","error")
 
 
-def guc_show(guc_name, pg=None):
+def guc_show(guc_name):
     """Show GUC"""
-    pg_v = util.get_pg_v(pg)
+    pg_v, spock_v = util.get_pg_v()
     if guc_name == "all" or guc_name == "*":
         guc_name = "%"
     elif "*" in guc_name:
@@ -160,13 +158,13 @@ def test_io():
 
 
 
-def set_readonly(readonly="off", pg=None):
+def set_readonly(readonly="off"):
     """Turn PG read-only mode 'on' or 'off'."""
 
     if readonly not in ("on", "off"):
         util.exit_message("  readonly flag must be 'off' or 'on'")
 
-    pg_v = util.get_pg_v(pg)
+    pg_v, spock_v = util.get_pg_v()
 
     try:
         con = util.get_pg_connection(pg_v, "postgres", util.get_user())
