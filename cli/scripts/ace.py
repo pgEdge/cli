@@ -183,16 +183,37 @@ def get_key(p_con, p_schema, p_table):
     return ",".join(key_lst)
 
 
+def parse_nodes(nodes) -> list:
+    node_list = []
+    if type(nodes) is str and nodes != "all":
+        node_list = [s.strip() for s in nodes.split(",")]
+    elif type(nodes) is not str:
+        node_list = nodes
+
+    if nodes != "all":
+        rep_check = set()
+        result = list()
+        for node in node_list:
+            if node in rep_check:
+                util.message(
+                    f"Node {node} was given multiple times, ignoring copies",
+                    p_state="warning",
+                )
+            else:
+                result.append(node)
+                rep_check.add(node)
+        node_list = result
+    
+    return node_list
+
+
 def schema_diff(cluster_name, nodes, schema_name):
     """Compare Postgres schemas on different cluster nodes"""
 
     util.message(f"## Validating cluster {cluster_name} exists")
     node_list = []
     try:
-        if type(nodes) is str and nodes != "all":
-            node_list = [s.strip() for s in nodes.split(",")]
-        elif type(nodes) is not str:
-            node_list = nodes
+        node_list = parse_nodes(nodes)
     except ValueError as e:
         util.exit_message(
             f'Nodes should be a comma-separated list of nodenames. \
@@ -268,10 +289,7 @@ def spock_diff(cluster_name, nodes):
     """Compare spock meta data setup on different cluster nodes"""
     node_list = []
     try:
-        if type(nodes) is str and nodes != "all":
-            node_list = [s.strip() for s in nodes.split(",")]
-        elif type(nodes) is not str:
-            node_list = nodes
+        node_list = parse_nodes(nodes)
     except ValueError as e:
         util.exit_message(
             f'Nodes should be a comma-separated list of nodenames. \
@@ -687,10 +705,7 @@ def table_diff(
 
     node_list = []
     try:
-        if type(nodes) is str and nodes != "all":
-            node_list = [s.strip() for s in nodes.split(",")]
-        elif type(nodes) is not str:
-            node_list = nodes
+        node_list = parse_nodes(nodes)
     except ValueError as e:
         util.exit_message(
             f'Nodes should be a comma-separated list of nodenames. \
@@ -1783,10 +1798,7 @@ def repset_diff(
 
     node_list = []
     try:
-        if type(nodes) is str and nodes != "all":
-            node_list = [s.strip() for s in nodes.split(",")]
-        elif type(nodes) is not str:
-            node_list = nodes
+        node_list = parse_nodes(nodes)
     except ValueError as e:
         util.exit_message(
             f'Nodes should be a comma-separated list of nodenames. \
