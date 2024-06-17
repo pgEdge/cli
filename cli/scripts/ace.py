@@ -10,7 +10,6 @@ import json
 import subprocess
 import re
 import util
-import meta
 import fire
 import cluster
 import psycopg
@@ -69,6 +68,28 @@ def write_pg_dump(p_ip, p_db, p_port, p_prfx, p_schm, p_base_dir="/tmp"):
     except Exception as e:
         util.exit_exception(e)
     return out_file
+
+
+'''
+Accepts a connection object and returns the version of spock installed
+
+@param: conn - connection object
+@return: float - version of spock installed
+
+'''
+def get_spock_version(conn):
+    data = []
+    sql = "SELECT spock.spock_version();"
+    try:
+        c = conn.cursor()
+        c.execute(sql)
+        data = c.fetchone()
+        if data:
+            return float(data[0])
+    except Exception as e:
+        fatal_error(e, sql, "get_spock_version()")
+
+    return 0.0
 
 
 def fix_schema(diff_file, sql1, sql2):
@@ -1665,7 +1686,7 @@ def table_repair(
 
         conn = conns[divergent_node]
         cur = conn.cursor()
-        spock_version = meta.get_spock_version(conn)
+        spock_version = get_spock_version(conn)
 
         # FIXME: Do not use harcoded version numbers
         # Read required version numbers from a config file

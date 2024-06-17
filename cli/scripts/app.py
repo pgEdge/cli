@@ -6,10 +6,16 @@ import sys, os, json, time, logging, datetime, random, time
 import util, spock, meta, api, fire
 
 
-def pgbench_install(db, scale=1, replication_set=None, pg=None):
+def pgbench_install(db, scale=1, replication_set=None):
     """Initialize pgBench data, Alter Tables, and add to replication_set"""
-    pg_v = util.get_pg_v(pg)
+    pg_v, spock_v = util.get_pg_v()
     pg = pg_v.replace("pg", "")
+
+    if int(spock_v[0])>3:
+        delta_apply = "(log_old_value=true, delta_apply_function=spock.delta_apply)"
+    else:
+        delta_apply = "(LOG_OLD_VALUE=true)"
+
     usr = util.get_user()
     try:
         con = util.get_pg_connection(pg_v, db, usr)
@@ -17,13 +23,13 @@ def pgbench_install(db, scale=1, replication_set=None, pg=None):
         pgbench_cmd = '"pgbench --initialize --scale=' + str(scale) + ' ' + str(db) + '"'
         util.echo_cmd(f"./pgedge pgbin " + str(pg) + " " + pgbench_cmd)
         cur.execute(
-            "ALTER TABLE pgbench_accounts ALTER COLUMN abalance SET (LOG_OLD_VALUE=true)"
+            f"ALTER TABLE pgbench_accounts ALTER COLUMN abalance SET {delta_apply}"
         )
         cur.execute(
-            "ALTER TABLE pgbench_branches ALTER COLUMN bbalance SET (LOG_OLD_VALUE=true)"
+            f"ALTER TABLE pgbench_branches ALTER COLUMN bbalance SET {delta_apply}"
         )
         cur.execute(
-            "ALTER TABLE pgbench_tellers ALTER COLUMN tbalance SET (LOG_OLD_VALUE=true);"
+            f"ALTER TABLE pgbench_tellers ALTER COLUMN tbalance SET {delta_apply};"
         )
         con.commit()
         cur.close()
@@ -35,17 +41,17 @@ def pgbench_install(db, scale=1, replication_set=None, pg=None):
         )
 
 
-def pgbench_run(db, Rate, Time, pg=None):
+def pgbench_run(db, Rate, Time):
     """Run pgBench"""
-    pg_v = util.get_pg_v(pg)
+    pg_v, spock_v = util.get_pg_v()
     pg = pg_v.replace("pg", "")
     pgbench_cmd = f'"pgbench -R {Rate} -T {Time} -n {db}"'
     util.echo_cmd(f"./pgedge pgbin " + str(pg) + " " + pgbench_cmd)
 
 
-def pgbench_validate(db, pg=None):
+def pgbench_validate(db):
     """Validate pgBench"""
-    pg_v = util.get_pg_v(pg)
+    pg_v, spock_v = util.get_pg_v()
     usr = util.get_user()
     try:
         con = util.get_pg_connection(pg_v, db, usr)
@@ -58,9 +64,9 @@ def pgbench_validate(db, pg=None):
     util.exit_message(f"Sum of tbalance in pgbench_tellers= {v_sum}", 0)
 
 
-def pgbench_remove(db, pg=None):
+def pgbench_remove(db):
     """Drop pgBench Tables"""
-    pg_v = util.get_pg_v(pg)
+    pg_v, spock_v = util.get_pg_v()    
     usr = util.get_user()
     try:
         con = util.get_pg_connection(pg_v, db, usr)
@@ -76,9 +82,14 @@ def pgbench_remove(db, pg=None):
     util.exit_message(f"Dropped pgBench tables from database: {db}", 0)
 
 
-def northwind_install(db, replication_set=None, pg=None):
+def northwind_install(db, replication_set=None):
     """Install northwind data, Alter tables, and add to repsets"""
-    pg_v = util.get_pg_v(pg)
+    pg_v, spock_v = util.get_pg_v()
+
+    if int(spock_v[0])>3:
+        delta_apply = "(log_old_value=true, delta_apply_function=spock.delta_apply)"
+    else:
+        delta_apply = "(LOG_OLD_VALUE=true)"
 
     sql_file = f"hub{os.sep}scripts{os.sep}sql{os.sep}northwind.sql"
     os.system(f"./pgedge psql -f {sql_file} {db}")
@@ -88,10 +99,10 @@ def northwind_install(db, replication_set=None, pg=None):
         con = util.get_pg_connection(pg_v, db, usr)
         cur = con.cursor()
         cur.execute(
-            "ALTER TABLE northwind.products ALTER COLUMN units_in_stock SET (LOG_OLD_VALUE=true)"
+            f"ALTER TABLE northwind.products ALTER COLUMN units_in_stock SET {delta_apply}"
         )
         cur.execute(
-            "ALTER TABLE northwind.products ALTER COLUMN units_on_order SET (LOG_OLD_VALUE=true)"
+            f"ALTER TABLE northwind.products ALTER COLUMN units_on_order SET {delta_apply}"
         )
         con.commit()
         cur.close()
@@ -104,12 +115,12 @@ def northwind_install(db, replication_set=None, pg=None):
         )
 
 
-def northwind_run(db, offset, Rate=2, Time=10, pg=None):
+def northwind_run(db, offset, Rate=2, Time=10):
     """Run Sample Queries to Create Orders in Northwind"""
 
     print(f"db={db}, offset={offset}, Rate={Rate}, Time={Time}\n")
 
-    pg_v = util.get_pg_v(pg)
+    pg_v, spock_v = util.get_pg_v()
     usr = util.get_user()
     try:
         con = util.get_pg_connection(pg_v, db, usr)
@@ -230,9 +241,9 @@ def northwind_run(db, offset, Rate=2, Time=10, pg=None):
         v_order_id = v_order_id + 10
 
 
-def northwind_validate(db, pg=None):
+def northwind_validate(db):
     """Validate running sums in the Northwind products table"""
-    pg_v = util.get_pg_v(pg)
+    pg_v, spock_v = util.get_pg_v()
     usr = util.get_user()
     try:
         con = util.get_pg_connection(pg_v, db, usr)
@@ -251,9 +262,9 @@ def northwind_validate(db, pg=None):
     )
 
 
-def northwind_remove(db, pg=None):
+def northwind_remove(db):
     """Drop northwind schema"""
-    pg_v = util.get_pg_v(pg)
+    pg_v, spock_v = util.get_pg_v()
     usr = util.get_user()
     try:
         con = util.get_pg_connection(pg_v, db, usr)
