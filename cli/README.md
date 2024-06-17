@@ -5,7 +5,7 @@ SPOCK, ACE, DB, CLUSTER, VM, LOCALHOST, UM & SERVICE.
 
 
 ## Synopsis
-    ./pgedge <module> <command> [parameters] [options] 
+    ./pgedge <module> <command> [parameters] [options] <flags> 
 
 ## Modules
 
@@ -17,11 +17,17 @@ db - Configure and control Postgres Databases
 
 cluster - Create and control clusters 
 
-vm - Consistent Provisioning and Managemnt of VM's across multiple clouds
-
 localhost - Easily configure localhost test clusters
 
 um - Update Manager commands
 
 service - Service control commands
+
+## FLAGS
+
+--pg NN: If multiple versions of postgreSQL are installed due to a migration, this flag will allow you to use the CLI against the intended version. 
+
+--debug
+--verbose
+--json
 
