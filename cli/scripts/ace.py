@@ -504,35 +504,12 @@ def compare_checksums(shared_objects, worker_state, pkey1, pkey2):
                 )
             )
     
-    if where_clause:
-        if simple_primary_key:
-            hash_sql = sql.SQL(
-                "SELECT md5(cast(array_agg(t.* ORDER BY {p_key}) AS text)) FROM"
-                "(SELECT * FROM {table_name} WHERE {where_clause}) t"
-            ).format(
-                p_key=sql.Identifier(p_key),
-                table_name=sql.SQL("{}.{}").format(
-                    sql.Identifier(schema_name),
-                    sql.Identifier(table_name),
-                ),
-                where_clause=sql.SQL(" AND ").join(where_clause),
-            )
-        else:
-            hash_sql = sql.SQL(
-                "SELECT md5(cast(array_agg(t.* ORDER BY {p_key}) AS text)) FROM"
-                "(SELECT * FROM {table_name} WHERE {where_clause}) t"
-            ).format(
-                p_key=sql.SQL(", ").join(
-                    [sql.Identifier(col.strip()) for col in p_key.split(",")]
-                ),
-                table_name=sql.SQL("{}.{}").format(
-                    sql.Identifier(schema_name),
-                    sql.Identifier(table_name),
-                ),
-                where_clause=sql.SQL(" AND ").join(where_clause),
-            )
-
-        block_sql = sql.SQL("SELECT * FROM {table_name} WHERE {where_clause}").format(
+    if simple_primary_key:
+        hash_sql = sql.SQL(
+            "SELECT md5(cast(array_agg(t.* ORDER BY {p_key}) AS text)) FROM"
+            "(SELECT * FROM {table_name} WHERE {where_clause}) t"
+        ).format(
+            p_key=sql.Identifier(p_key),
             table_name=sql.SQL("{}.{}").format(
                 sql.Identifier(schema_name),
                 sql.Identifier(table_name),
@@ -540,37 +517,27 @@ def compare_checksums(shared_objects, worker_state, pkey1, pkey2):
             where_clause=sql.SQL(" AND ").join(where_clause),
         )
     else:
-        if simple_primary_key:
-            hash_sql = sql.SQL(
-                "SELECT md5(cast(array_agg(t.* ORDER BY {p_key}) AS text)) FROM"
-                "(SELECT * FROM {table_name}) t"
-            ).format(
-                p_key=sql.Identifier(p_key),
-                table_name=sql.SQL("{}.{}").format(
-                    sql.Identifier(schema_name),
-                    sql.Identifier(table_name),
-                ),
-            )
-        else:
-            hash_sql = sql.SQL(
-                "SELECT md5(cast(array_agg(t.* ORDER BY {p_key}) AS text)) FROM"
-                "(SELECT * FROM {table_name}) t"
-            ).format(
-                p_key=sql.SQL(", ").join(
-                    [sql.Identifier(col.strip()) for col in p_key.split(",")]
-                ),
-                table_name=sql.SQL("{}.{}").format(
-                    sql.Identifier(schema_name),
-                    sql.Identifier(table_name),
-                ),
-            )
-
-        block_sql = sql.SQL("SELECT * FROM {table_name}").format(
+        hash_sql = sql.SQL(
+            "SELECT md5(cast(array_agg(t.* ORDER BY {p_key}) AS text)) FROM"
+            "(SELECT * FROM {table_name} WHERE {where_clause}) t"
+        ).format(
+            p_key=sql.SQL(", ").join(
+                [sql.Identifier(col.strip()) for col in p_key.split(",")]
+            ),
             table_name=sql.SQL("{}.{}").format(
                 sql.Identifier(schema_name),
                 sql.Identifier(table_name),
             ),
+            where_clause=sql.SQL(" AND ").join(where_clause),
         )
+
+    block_sql = sql.SQL("SELECT * FROM {table_name} WHERE {where_clause}").format(
+        table_name=sql.SQL("{}.{}").format(
+            sql.Identifier(schema_name),
+            sql.Identifier(table_name),
+        ),
+        where_clause=sql.SQL(" AND ").join(where_clause),
+    )
 
     node_pairs = combinations(node_list, 2)
 
@@ -852,6 +819,13 @@ def table_diff(
 
     pkey_offsets = []
 
+    if not conn_with_max_rows:
+        util.message(
+            f"ALL TABLES ARE EMPTY",
+            p_state="warning",
+        )
+        return
+
     # Use conn_with_max_rows to get the first and last primary key values
     # of every block row. Repeat until we no longer have any more rows.
     # Store results in pkey_offsets.
@@ -872,17 +846,10 @@ def table_diff(
         )
 
     def get_pkey_offsets(conn, pkey_sql, block_rows):
-        try:
-            pkey_offsets = []
-            cur = conn.cursor()
-            cur.execute(pkey_sql)
-            rows = cur.fetchmany(block_rows)
-        except AttributeError as e:
-            util.message(
-                f"TABLES MAY BE EMPTY",
-                p_state="warning",
-            )
-            return [(None, None)]
+        pkey_offsets = []
+        cur = conn.cursor()
+        cur.execute(pkey_sql)
+        rows = cur.fetchmany(block_rows)
 
         if simple_primary_key:
             rows[:] = [str(x[0]) for x in rows]
