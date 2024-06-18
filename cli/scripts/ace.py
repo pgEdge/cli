@@ -194,7 +194,7 @@ def parse_nodes(nodes) -> list:
         rep_check = set(node_list)
         if len(rep_check) < len(node_list):
             util.message(
-                f"Some node was given multiple times, ignoring copies",
+                "Ignoring duplicate node names",
                 p_state="warning",
             )
             node_list = list(rep_check)
