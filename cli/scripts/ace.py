@@ -204,16 +204,32 @@ def get_key(p_con, p_schema, p_table):
     return ",".join(key_lst)
 
 
+def parse_nodes(nodes) -> list:
+    node_list = []
+    if type(nodes) is str and nodes != "all":
+        node_list = [s.strip() for s in nodes.split(",")]
+    elif type(nodes) is not str:
+        node_list = nodes
+
+    if nodes != "all":
+        rep_check = set(node_list)
+        if len(rep_check) < len(node_list):
+            util.message(
+                "Ignoring duplicate node names",
+                p_state="warning",
+            )
+            node_list = list(rep_check)
+    
+    return node_list
+
+
 def schema_diff(cluster_name, nodes, schema_name):
     """Compare Postgres schemas on different cluster nodes"""
 
     util.message(f"## Validating cluster {cluster_name} exists")
     node_list = []
     try:
-        if type(nodes) is str and nodes != "all":
-            node_list = [s.strip() for s in nodes.split(",")]
-        elif type(nodes) is not str:
-            node_list = nodes
+        node_list = parse_nodes(nodes)
     except ValueError as e:
         util.exit_message(
             f'Nodes should be a comma-separated list of nodenames. \
@@ -289,10 +305,7 @@ def spock_diff(cluster_name, nodes):
     """Compare spock meta data setup on different cluster nodes"""
     node_list = []
     try:
-        if type(nodes) is str and nodes != "all":
-            node_list = [s.strip() for s in nodes.split(",")]
-        elif type(nodes) is not str:
-            node_list = nodes
+        node_list = parse_nodes(nodes)
     except ValueError as e:
         util.exit_message(
             f'Nodes should be a comma-separated list of nodenames. \
@@ -524,7 +537,7 @@ def compare_checksums(shared_objects, worker_state, pkey1, pkey2):
                     pkey2=sql.SQL(", ").join([sql.Literal(val) for val in pkey2]),
                 )
             )
-
+    
     if simple_primary_key:
         hash_sql = sql.SQL(
             "SELECT md5(cast(array_agg(t.* ORDER BY {p_key}) AS text)) FROM"
@@ -707,10 +720,8 @@ def table_diff(
         util.exit_message(f"block_rows param '{block_rows}' must be integer >= 1000")
 
     node_list = []
-
     try:
-        if nodes != "all":
-            node_list = [s.strip() for s in nodes.split(",")]
+        node_list = parse_nodes(nodes)
     except ValueError as e:
         util.exit_message(
             f'Nodes should be a comma-separated list of nodenames. \
@@ -838,6 +849,13 @@ def table_diff(
         total_rows = row_count
 
     pkey_offsets = []
+
+    if not conn_with_max_rows:
+        util.message(
+            "ALL TABLES ARE EMPTY",
+            p_state="warning",
+        )
+        return
 
     # Use conn_with_max_rows to get the first and last primary key values
     # of every block row. Repeat until we no longer have any more rows.
@@ -1795,10 +1813,8 @@ def repset_diff(
         util.exit_message(f"block_rows param '{block_rows}' must be integer >= 1000")
 
     node_list = []
-
     try:
-        if nodes != "all":
-            node_list = [s.strip() for s in nodes.split(",")]
+        node_list = parse_nodes(nodes)
     except ValueError as e:
         util.exit_message(
             f'Nodes should be a comma-separated list of nodenames. \
@@ -1866,21 +1882,31 @@ def repset_diff(
 
     util.message("Connections successful to nodes in cluster", p_state="success")
 
-    sql = (
-        "SELECT concat_ws('.', nspname, relname) FROM spock.tables where set_name = %s;"
-    )
-
     # Connecting to any one of the nodes in the cluster should suffice
     conn = conn_list[0]
     cur = conn.cursor()
 
-    # No need to sanitise repset_name here since psycopg does it for us
-    cur.execute(sql, (repset_name,))
+    # Check if repset exists
+    sql = (
+        "select set_name from spock.replication_set;"
+    )
+    cur.execute(sql)
+    repset_list = [item[0] for item in cur.fetchall()]
+    if repset_name not in repset_list:
+        util.exit_message(f"Repset {repset_name} not found")
 
+    # No need to sanitise repset_name here since psycopg does it for us
+    sql = (
+        "SELECT concat_ws('.', nspname, relname) FROM spock.tables where set_name = %s;"
+    )
+    cur.execute(sql, (repset_name,))
     tables = cur.fetchall()
 
     if not tables:
-        util.exit_message(f"Repset {repset_name} not found")
+        util.message(
+            "Repset may be empty",
+            p_state="warning",
+        )
 
     # Convert fetched rows into a list of strings
     tables = [table[0] for table in tables]
