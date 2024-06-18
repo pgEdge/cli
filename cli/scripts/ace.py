@@ -191,18 +191,13 @@ def parse_nodes(nodes) -> list:
         node_list = nodes
 
     if nodes != "all":
-        rep_check = set()
-        result = list()
-        for node in node_list:
-            if node in rep_check:
-                util.message(
-                    f"Node {node} was given multiple times, ignoring copies",
-                    p_state="warning",
-                )
-            else:
-                result.append(node)
-                rep_check.add(node)
-        node_list = result
+        rep_check = set(node_list)
+        if len(rep_check) < len(node_list):
+            util.message(
+                f"Some node was given multiple times, ignoring copies",
+                p_state="warning",
+            )
+            node_list = list(rep_check)
     
     return node_list
 
@@ -836,7 +831,7 @@ def table_diff(
 
     if not conn_with_max_rows:
         util.message(
-            f"ALL TABLES ARE EMPTY",
+            "ALL TABLES ARE EMPTY",
             p_state="warning",
         )
         return
