@@ -1272,19 +1272,24 @@ def table_rerun(cluster_name, diff_file, table_name, dbname=None):
                         executor.submit(run_query, node2_cur, sql),
                     ]
 
-                    t1_result, t2_result = [f.result()[0] for f in futures]
+                    try:
+                        t1_result, t2_result = [f.result()[0] for f in futures]
 
-                    t1_result = tuple(
-                        str(x) if not isinstance(x, list) else str(sorted(x))
-                        for x in t1_result
-                    )
-                    t2_result = tuple(
-                        str(x) if not isinstance(x, list) else str(sorted(x))
-                        for x in t2_result
-                    )
+                        t1_result = tuple(
+                            str(x) if not isinstance(x, list) else str(sorted(x))
+                            for x in t1_result
+                        )
+                        t2_result = tuple(
+                            str(x) if not isinstance(x, list) else str(sorted(x))
+                            for x in t2_result
+                        )
 
-                    node1_set.add(t1_result)
-                    node2_set.add(t2_result)
+                        node1_set.add(t1_result)
+                        node2_set.add(t2_result)
+                    
+                    except IndexError as e:
+                        # previously different row got deleted
+                        pass
         else:
             for indices in values:
                 sql = f"""
@@ -1307,19 +1312,24 @@ def table_rerun(cluster_name, diff_file, table_name, dbname=None):
                         executor.submit(run_query, node2_cur, sql),
                     ]
 
-                    t1_result, t2_result = [f.result()[0] for f in futures]
+                    try:
+                        t1_result, t2_result = [f.result()[0] for f in futures]
 
-                    t1_result = tuple(
-                        str(x) if not isinstance(x, list) else str(sorted(x))
-                        for x in t1_result
-                    )
-                    t2_result = tuple(
-                        str(x) if not isinstance(x, list) else str(sorted(x))
-                        for x in t2_result
-                    )
+                        t1_result = tuple(
+                            str(x) if not isinstance(x, list) else str(sorted(x))
+                            for x in t1_result
+                        )
+                        t2_result = tuple(
+                            str(x) if not isinstance(x, list) else str(sorted(x))
+                            for x in t2_result
+                        )
 
-                    node1_set.add(t1_result)
-                    node2_set.add(t2_result)
+                        node1_set.add(t1_result)
+                        node2_set.add(t2_result)
+                    
+                    except IndexError as e:
+                        # previously different row got deleted
+                        pass
 
         node1_diff = node1_set - node2_set
         node2_diff = node2_set - node1_set
