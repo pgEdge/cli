@@ -1272,9 +1272,11 @@ def table_rerun(cluster_name, diff_file, table_name, dbname=None):
                         executor.submit(run_query, node2_cur, sql),
                     ]
 
-                    try:
-                        t1_result, t2_result = [f.result()[0] for f in futures]
+                    t1_result, t2_result = [f.result() for f in futures]
+                    t1_result = t1_result[0] if t1_result else None
+                    t2_result = t2_result[0] if t2_result else None
 
+                    if t1_result is not None and t2_result is not None:
                         t1_result = tuple(
                             str(x) if not isinstance(x, list) else str(sorted(x))
                             for x in t1_result
@@ -1286,10 +1288,6 @@ def table_rerun(cluster_name, diff_file, table_name, dbname=None):
 
                         node1_set.add(t1_result)
                         node2_set.add(t2_result)
-                    
-                    except IndexError as e:
-                        # previously different row got deleted
-                        pass
         else:
             for indices in values:
                 sql = f"""
@@ -1312,9 +1310,11 @@ def table_rerun(cluster_name, diff_file, table_name, dbname=None):
                         executor.submit(run_query, node2_cur, sql),
                     ]
 
-                    try:
-                        t1_result, t2_result = [f.result()[0] for f in futures]
+                    t1_result, t2_result = [f.result() for f in futures]
+                    t1_result = t1_result[0] if t1_result else None
+                    t2_result = t2_result[0] if t2_result else None
 
+                    if t1_result is not None and t2_result is not None:
                         t1_result = tuple(
                             str(x) if not isinstance(x, list) else str(sorted(x))
                             for x in t1_result
@@ -1326,10 +1326,6 @@ def table_rerun(cluster_name, diff_file, table_name, dbname=None):
 
                         node1_set.add(t1_result)
                         node2_set.add(t2_result)
-                    
-                    except IndexError as e:
-                        # previously different row got deleted
-                        pass
 
         node1_diff = node1_set - node2_set
         node2_diff = node2_set - node1_set
