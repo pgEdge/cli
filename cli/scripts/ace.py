@@ -1272,25 +1272,16 @@ def table_rerun(cluster_name, diff_file, table_name, dbname=None):
                         executor.submit(run_query, node2_cur, sql),
                     ]
 
-                    t1_result, t2_result = [f.result() for f in futures]
+                    t1_result, t2_result = [f.result()[0] for f in futures]
 
-                    t1_result = [
-                        tuple(
-                            str(x) if not isinstance(x, list) else str(sorted(x))
-                            for x in row
-                        )
-                        for row in t1_result
-                    ]
-                    t2_result = [
-                        tuple(
-                            str(x) if not isinstance(x, list) else str(sorted(x))
-                            for x in row
-                        )
-                        for row in t2_result
-                    ]
-
-                    t1_result = tuple(t1_result)
-                    t2_result = tuple(t2_result)
+                    t1_result = tuple(
+                        str(x) if not isinstance(x, list) else str(sorted(x))
+                        for x in t1_result
+                    )
+                    t2_result = tuple(
+                        str(x) if not isinstance(x, list) else str(sorted(x))
+                        for x in t2_result
+                    )
 
                     node1_set.add(t1_result)
                     node2_set.add(t2_result)
@@ -1316,25 +1307,16 @@ def table_rerun(cluster_name, diff_file, table_name, dbname=None):
                         executor.submit(run_query, node2_cur, sql),
                     ]
 
-                    t1_result, t2_result = [f.result() for f in futures]
+                    t1_result, t2_result = [f.result()[0] for f in futures]
 
-                    t1_result = [
-                        tuple(
-                            str(x) if not isinstance(x, list) else str(sorted(x))
-                            for x in row
-                        )
-                        for row in t1_result
-                    ]
-                    t2_result = [
-                        tuple(
-                            str(x) if not isinstance(x, list) else str(sorted(x))
-                            for x in row
-                        )
-                        for row in t2_result
-                    ]
-
-                    t1_result = tuple(t1_result)
-                    t2_result = tuple(t2_result)
+                    t1_result = tuple(
+                        str(x) if not isinstance(x, list) else str(sorted(x))
+                        for x in t1_result
+                    )
+                    t2_result = tuple(
+                        str(x) if not isinstance(x, list) else str(sorted(x))
+                        for x in t2_result
+                    )
 
                     node1_set.add(t1_result)
                     node2_set.add(t2_result)
