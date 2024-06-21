@@ -378,7 +378,8 @@ def install_comp(p_app, p_ver=0, p_rver=None, p_re_install=False):
         elif not retrieve_comp(base_name, p_app):
             exit_cleanly(1)
 
-        util.message("\nUnpacking " + file)
+        if not isSILENT:
+            util.message("\nUnpacking " + file)
         full_file = conf_cache + os.sep + file
 
         if platform.system() in ("Linux", "Darwin"):
@@ -1629,7 +1630,8 @@ if p_mode == "install":
             "this component is already included in our postgres binaries", 0
         )
 
-    util.message("\n########### Installing " + p_comp + " ###############")
+    if not isSILENT:
+        util.message("\n########### Installing " + p_comp + " ###############")
 
     deplist = get_depend_list(p_comp_list)
     component_installed = False

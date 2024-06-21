@@ -3286,6 +3286,9 @@ def http_get_file(
 
 
 def print_status_msg(p_mb, p_pct):
+    if os.getenv('isSilent') == "True":
+        return
+
     str_size_mb = str(p_mb)
     pretty_size_mb = str_size_mb.rjust(5) + " MB"
     print(pretty_size_mb + " [" + str(p_pct) + "%]")

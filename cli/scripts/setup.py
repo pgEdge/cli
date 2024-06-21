@@ -13,10 +13,8 @@ EXTS = "lolor audit vector cron orafce postgis partman curl citus timescaledb " 
 EXTS_15 = "foslots"
 
 
-
-def osSys(cmd, fatal_exit=True):
-    isSilent = os.getenv("isSilent", "False")
-    if isSilent == "False":
+def osSys(cmd, fatal_exit=True, is_silent=False):
+    if not is_silent:
         s_cmd = util.scrub_passwd(cmd)
         util.message("#")
         util.message("# " + str(s_cmd))
@@ -210,15 +208,17 @@ def setup_pgedge(User=None, Passwd=None, dbName=None, port=None, pg_ver=None, sp
             util.message("--extensions not supported for EL8", "warning")
             return
 
-        # install extensions one-by-one and don't error out on problems
+        # quietly install extensions one-by-one and don't error out on problems
         ext_l = EXTS.split()
         for ext in ext_l:
-            osSys(f"{ctl} install {ext}-pg{pg_major} --disabled", fatal_exit=False)
+            osSys(f"{ctl} install {ext}-pg{pg_major} --disabled --silent",
+                       fatal_exit=False, is_silent=True)
 
         if pg_major == "15":
             ext_l = EXTS_15.split()
             for ext in ext_l:
-                osSys(f"{ctl} install {ext}-pg{pg_major} --disabled", fatal_exit=False)
+                osSys(f"{ctl} install {ext}-pg{pg_major} --disabled --silent",
+                           fatal_exit=False, is_silent=True)
 
 
 if __name__ == "__main__":
