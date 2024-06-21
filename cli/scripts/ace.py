@@ -1248,7 +1248,7 @@ def table_rerun(cluster_name, diff_file, table_name, dbname=None):
         return results
 
     diff_rerun = {}
-    have_difference = False
+    diffs_found = False
 
     for node_pair_key, values in diff_values.items():
         node1, node2 = node_pair_key.split("/")
@@ -1332,7 +1332,7 @@ def table_rerun(cluster_name, diff_file, table_name, dbname=None):
         node2_diff = node2_set - node1_set
 
         if len(node1_diff) > 0 or len(node2_diff) > 0:
-            have_difference = True
+            diffs_found = True
             diff_rerun[node_pair_key] = {
                 node1: [dict(zip(cols_list, row)) for row in node1_diff],
                 node2: [dict(zip(cols_list, row)) for row in node2_diff],
@@ -1353,17 +1353,13 @@ def table_rerun(cluster_name, diff_file, table_name, dbname=None):
 
     print()
 
-    if have_difference:
+    if diffs_found:
         util.message(
-            f"FOUND DIFFS BETWEEN NODES",
+            f"FOUND DIFFS BETWEEN NODES: written out to {util.set_colour(filename, 'blue')}",
             p_state="warning",
         )
     else:
         util.message("TABLES MATCH OK\n", p_state="success")
-
-    util.message(
-        f"New diffs, if any, written out to {util.set_colour(filename, 'blue')}"
-    )
 
     print()
 
