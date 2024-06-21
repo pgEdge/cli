@@ -904,7 +904,8 @@ def config_extension(p_pg=None, p_comp=None):
        message(f"defaulting p_pg to {pgV}")
 
     if p_enable is False:
-        return(disable_extension(p_comp, pgV))
+        update_component_state(p_comp, "disable")
+        return(0)
     else:
         update_component_state(p_comp, "Installed")
 
@@ -3872,9 +3873,7 @@ def run_script(componentName, scriptName, scriptParm):
 
 
 def update_component_state(p_app, p_mode, p_ver=None):
-    is_ext = meta.is_extension(p_app) 
-
-    message(f"util.update_component_state({p_app}, {p_mode}, {p_ver}, is_ext={is_ext})", "debug")
+    message(f"util.update_component_state(p_app={p_app}, p_mode={p_mode}, p_ver={p_ver})", "debug")
 
     new_state = "Disabled"
     if p_mode == "enable":
@@ -3887,6 +3886,8 @@ def update_component_state(p_app, p_mode, p_ver=None):
     current_state = get_comp_state(p_app)
     ver = ""
 
+    message(f"  ucs2  current_state={current_state}, new_state={new_state})", "debug")
+
     if current_state == new_state:
         return
 
@@ -3895,8 +3896,8 @@ def update_component_state(p_app, p_mode, p_ver=None):
 
         if p_mode in ("enable", "disable"):
             ver = meta.get_version(p_app)
-            sql = "UPDATE components SET status = ? WHERE component = ?"
-            c.execute(sql, [new_state, p_app])
+            sql = "UPDATE components SET status = ? WHERE component LIKE ?"
+            c.execute(sql, [new_state, p_app + "%"])
 
         if p_mode == "remove":
             ver = meta.get_version(p_app)
