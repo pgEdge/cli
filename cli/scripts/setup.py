@@ -7,6 +7,12 @@ sys.path.append(os.path.join(os.path.dirname(__file__), "lib"))
 
 import fire, util, db
 
+# extensions installed 'Disabled' if you pass --extensions to setup()
+EXTS = "lolor audit vector cron orafce postgis partman curl citus timescaledb " + \
+       "wal2json hypopg hintplan plv8 setuser permissions profiler debugger"
+EXTS_15 = "foslots"
+
+
 
 def osSys(cmd, fatal_exit=True):
     isSilent = os.getenv("isSilent", "False")
@@ -204,14 +210,15 @@ def setup_pgedge(User=None, Passwd=None, dbName=None, port=None, pg_ver=None, sp
             util.message("--extensions not supported for EL8", "warning")
             return
 
-        # omitting test extensions 'citus' and 'timescale' 
-        exts = "audit vector cron orafce postgis partman curl " + \
-               "hypopg hintplan plv8 profiler debugger"
-
         # install extensions one-by-one and don't error out on problems
-        ext_l = exts.split()
+        ext_l = EXTS.split()
         for ext in ext_l:
             osSys(f"{ctl} install {ext}-pg{pg_major} --disabled", fatal_exit=False)
+
+        if pg_major == "15":
+            ext_l = EXTS_15.split()
+            for ext in ext_l:
+                osSys(f"{ctl} install {ext}-pg{pg_major} --disabled", fatal_exit=False)
 
 
 if __name__ == "__main__":
