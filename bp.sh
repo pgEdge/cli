@@ -39,7 +39,3 @@ else
   ./$api install ctlibs
 fi
 
-if [ ! "$1" == "" ]; then
-  ./$api install $comp
-fi
-

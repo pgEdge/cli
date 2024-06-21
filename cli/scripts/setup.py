@@ -78,6 +78,27 @@ def check_pre_reqs(User, Passwd, db, port, pg_major, pg_minor, spock, autostart,
         if len(dir) != 0:
             util.exit_message("The '" + data_dir + "' directory is not empty")
 
+    if extensions is True:
+        if (User is None) and (Passwd is None) and (db is None):
+            pass
+        else:
+            verifyUserPasswd(User, Passwd)
+    else:
+        if (User is None) or (Passwd is None) or (dbName is None):
+            util.exit_message("Must specify User, Passwd & dbName")
+
+
+    if spock:
+       util.message(f"  Verify spock '{spock}' is valid and unique")
+       ns = util.num_spocks(pg_major, spock, True)
+       if ns == 0:
+           util.exit_message(f"No available version of spock like '{spock}*' for pg{pg_major}")
+       elif ns > 1:
+           util.exit_message(f"More than 1 spock version available matching '{spock}*'")
+
+
+def verifyUserPasswd(User, Passwd):
+
     util.message("  Verify User & Passwd")
     usr_l = User.lower()
     if usr_l == "pgedge":
@@ -100,14 +121,6 @@ def check_pre_reqs(User, Passwd, db, port, pg_major, pg_minor, spock, autostart,
             util.exit_message(
                 "The password must not contain {',', \"'\", \", @, or a space"
             )
-
-    if spock:
-       util.message(f"  Verify spock '{spock}' is valid and unique")
-       ns = util.num_spocks(pg_major, spock, True)
-       if ns == 0:
-           util.exit_message(f"No available version of spock like '{spock}*' for pg{pg_major}")
-       elif ns > 1:
-           util.exit_message(f"More than 1 spock version available matching '{spock}*'")
 
 
 def parse_pg(pg):
@@ -150,9 +163,6 @@ def setup_pgedge(User=None, Passwd=None, dbName=None, port=None, pg_ver=None, sp
     util.message(f"setup.pgedge(User={User}, Passwd='***', dbName={dbName}, port={port}, \n" + \
                  f"    pg_ver={pg_ver}, spock_ver={spock_ver}, autostart={autostart}, extensions={extensions})", "debug")
 
-    if (User is None) or (Passwd is None) or (dbName is None):
-        util.exit_message("Must specify User, Passwd & dbName")
-
     if not port:
         port = os.getenv("pgePort", "5432")
 
@@ -182,20 +192,25 @@ def setup_pgedge(User=None, Passwd=None, dbName=None, port=None, pg_ver=None, sp
         util.message("## symlink empty local data directory to empty /data ###")
         osSys("rm -rf data; ln -s /data data")
 
-    if autostart is True:
-        util.message("\n## init & config autostart  ###############")
-        osSys(f"{ctl} init pg{pg_major} --svcuser={util.get_user()}")
-        osSys(f"{ctl} config pg{pg_major} --autostart=on")
+    core_exts_installed = False
+    if dbName is None:
+        pass
     else:
-        osSys(f"{ctl} init pg{pg_major}")
+        if autostart is True:
+            util.message("\n## init & config autostart  ###############")
+            osSys(f"{ctl} init pg{pg_major} --svcuser={util.get_user()}")
+            osSys(f"{ctl} config pg{pg_major} --autostart=on")
+        else:
+            osSys(f"{ctl} init pg{pg_major}")
 
-    osSys(f"{ctl} config pg{pg_major} --port={port}")
+        osSys(f"{ctl} config pg{pg_major} --port={port}")
 
-    osSys(f"{ctl} start pg{pg_major}")
-    time.sleep(pause)
+        osSys(f"{ctl} start pg{pg_major}")
+        time.sleep(pause)
 
-    db.create(dbName, User, Passwd, pg_major, spock_ver)
-    time.sleep(pause)
+        db.create(dbName, User, Passwd, pg_major, spock_ver)
+        time.sleep(pause)
+        core_exts_installed = True
 
     if extensions is True:
         util.message("\n## Pre-install supported extensions in disabled state ########")
@@ -209,6 +224,14 @@ def setup_pgedge(User=None, Passwd=None, dbName=None, port=None, pg_ver=None, sp
             return
 
         # quietly install extensions one-by-one and don't error out on problems
+
+        if core_exts_installed is False:
+            EXTS_CORE = "spock33 snowflake"
+            ext_l = EXTS_CORE.split()
+            for ext in ext_l:
+                osSys(f"{ctl} install {ext}-pg{pg_major} --disabled --silent",
+                           fatal_exit=False, is_silent=True)
+
         ext_l = EXTS.split()
         for ext in ext_l:
             osSys(f"{ctl} install {ext}-pg{pg_major} --disabled --silent",

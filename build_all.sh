@@ -4,9 +4,12 @@ cd "$(dirname "$0")"
 source ./env.sh
 rc=$?
 if [ ! "$rc" == "0" ]; then
-  echo "YIKES - no env.sh found"
-  exit 1
-fi;
+  fatalError "YIKES - no env.sh found"
+fi
+
+if [ $# -ne 0 ] && [ $# -ne 1 ] & [ $# -ne 3 ]; then
+  fatalError "must be zero, one, or three parms"
+fi
 
 if [ "$1" == "" ]; then
   majorV=16
@@ -14,6 +17,27 @@ if [ "$1" == "" ]; then
   echo "### Defaulting to pg $majorV ###"
 else
   majorV=$1
+fi
+
+if [ ! "$2" == "" ]; then
+  if [ ! "$2" == "rpm" ]; then
+     fatalError "ERROR:  2nd parm is pkg_type (only 'rpm' presently supported)"
+  fi
+
+  PKG_TYPE="$2"
+  BUNDLE_NM="$3"
+
+  source bp.sh
+  echo ""
+  sleep 1
+
+  cmd="./pgedge setup --pg_ver $majorV --extensions"
+  echoCmd "$cmd"
+  exit 1
+
+  cmd="./build.sh $majorV $PK_TYPE $BUNDLE_NM"
+  echoCmd $cmd
+  exit 0
 fi
 
 if [ "$majorV" == "12" ]; then

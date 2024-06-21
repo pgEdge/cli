@@ -1,7 +1,20 @@
 #!/bin/bash
 cd "$(dirname "$0")"
-
 source env.sh
+
+PKG_TYPE=rpm
+
+makeBundle () {
+  pgv="$1"
+  plat="$2"
+  bundle_nm="$3"
+
+  cmd="./build_all.sh $pgv $plat $bundl_nm"
+}
+
+
+############## MAINLINE #############################################
+
 # echo "#    hubV = $hubV"
 # echo "# outPlat = $outPlat"
 
@@ -15,7 +28,7 @@ if [ ! -f $PKGR ]; then
 fi
 
 if [ $# -ne 1 ]; then
-  fatalError "only the pg_ver variable is allowed such as '16'"
+  fatalError "pg_ver variable is required (such as '16')"
 fi
 
 setPGV "$1"
