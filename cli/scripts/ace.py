@@ -1248,6 +1248,7 @@ def table_rerun(cluster_name, diff_file, table_name, dbname=None):
         return results
 
     diff_rerun = {}
+    diffs_found = False
 
     for node_pair_key, values in diff_values.items():
         node1, node2 = node_pair_key.split("/")
@@ -1273,27 +1274,21 @@ def table_rerun(cluster_name, diff_file, table_name, dbname=None):
                     ]
 
                     t1_result, t2_result = [f.result() for f in futures]
+                    t1_result = t1_result[0] if t1_result else None
+                    t2_result = t2_result[0] if t2_result else None
 
-                    t1_result = [
-                        tuple(
+                    if t1_result is not None and t2_result is not None:
+                        t1_result = tuple(
                             str(x) if not isinstance(x, list) else str(sorted(x))
-                            for x in row
+                            for x in t1_result
                         )
-                        for row in t1_result
-                    ]
-                    t2_result = [
-                        tuple(
+                        t2_result = tuple(
                             str(x) if not isinstance(x, list) else str(sorted(x))
-                            for x in row
+                            for x in t2_result
                         )
-                        for row in t2_result
-                    ]
 
-                    t1_result = tuple(t1_result)
-                    t2_result = tuple(t2_result)
-
-                    node1_set.add(t1_result)
-                    node2_set.add(t2_result)
+                        node1_set.add(t1_result)
+                        node2_set.add(t2_result)
         else:
             for indices in values:
                 sql = f"""
@@ -1317,32 +1312,27 @@ def table_rerun(cluster_name, diff_file, table_name, dbname=None):
                     ]
 
                     t1_result, t2_result = [f.result() for f in futures]
+                    t1_result = t1_result[0] if t1_result else None
+                    t2_result = t2_result[0] if t2_result else None
 
-                    t1_result = [
-                        tuple(
+                    if t1_result is not None and t2_result is not None:
+                        t1_result = tuple(
                             str(x) if not isinstance(x, list) else str(sorted(x))
-                            for x in row
+                            for x in t1_result
                         )
-                        for row in t1_result
-                    ]
-                    t2_result = [
-                        tuple(
+                        t2_result = tuple(
                             str(x) if not isinstance(x, list) else str(sorted(x))
-                            for x in row
+                            for x in t2_result
                         )
-                        for row in t2_result
-                    ]
 
-                    t1_result = tuple(t1_result)
-                    t2_result = tuple(t2_result)
-
-                    node1_set.add(t1_result)
-                    node2_set.add(t2_result)
+                        node1_set.add(t1_result)
+                        node2_set.add(t2_result)
 
         node1_diff = node1_set - node2_set
         node2_diff = node2_set - node1_set
 
         if len(node1_diff) > 0 or len(node2_diff) > 0:
+            diffs_found = True
             diff_rerun[node_pair_key] = {
                 node1: [dict(zip(cols_list, row)) for row in node1_diff],
                 node2: [dict(zip(cols_list, row)) for row in node2_diff],
@@ -1363,9 +1353,13 @@ def table_rerun(cluster_name, diff_file, table_name, dbname=None):
 
     print()
 
-    util.message(
-        f"New diffs, if any, written out to {util.set_colour(filename, 'blue')}"
-    )
+    if diffs_found:
+        util.message(
+            f"FOUND DIFFS BETWEEN NODES: written out to {util.set_colour(filename, 'blue')}",
+            p_state="warning",
+        )
+    else:
+        util.message("TABLES MATCH OK\n", p_state="success")
 
     print()
 
