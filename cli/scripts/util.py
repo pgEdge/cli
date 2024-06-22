@@ -3403,7 +3403,10 @@ def get_comp_state(p_comp):
             return "NotInstalled"
     except Exception as e:
         fatal_sql_error(e, sql, "get_comp_state()")
-    return str(data[0])
+
+    state = str(data[0])
+    message(f"util.get_comp_state({p_comp}) --> '{state}'", "debug")
+    return (state)
 
 
 def get_comp_port(p_comp):
@@ -3826,6 +3829,9 @@ def check_comp(p_comp, p_port, p_kount, check_status=False):
 def run_script(componentName, scriptName, scriptParm):
     """ run external scripts (or metadata equivalents for extensions) """
     message(f"util.run_script({componentName}, {scriptName}, {scriptParm})", "debug")
+
+    installed_comp_list = meta.get_component_list()
+    message(f"   installed_comp_list = {installed_comp_list}", "debug")
     ## if componentName not in installed_comp_list:
     ##    return  
 
@@ -3854,7 +3860,6 @@ def run_script(componentName, scriptName, scriptParm):
 
     rc = 0  
     compState = get_comp_state(componentName)
-    message(f"  - compState={compState}", "debug")
 
     if is_ext and scriptName.startswith("disable"):
         rc = disable_extension(p_pg=componentDir, p_ext=componentName)

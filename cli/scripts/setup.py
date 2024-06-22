@@ -8,7 +8,7 @@ sys.path.append(os.path.join(os.path.dirname(__file__), "lib"))
 import fire, util, db
 
 # extensions installed 'Disabled' if you pass --extensions to setup()
-EXTS = "lolor audit vector cron orafce postgis partman curl citus timescaledb " + \
+EXTS = "spock33 snowflake lolor audit vector cron orafce postgis partman curl citus timescaledb " + \
        "wal2json hypopg hintplan plv8 setuser permissions profiler debugger"
 EXTS_15 = "foslots"
 
@@ -224,14 +224,6 @@ def setup_pgedge(User=None, Passwd=None, dbName=None, port=None, pg_ver=None, sp
             return
 
         # quietly install extensions one-by-one and don't error out on problems
-
-        if core_exts_installed is False:
-            EXTS_CORE = "spock33 snowflake"
-            ext_l = EXTS_CORE.split()
-            for ext in ext_l:
-                osSys(f"{ctl} install {ext}-pg{pg_major} --disabled --silent",
-                           fatal_exit=False, is_silent=True)
-
         ext_l = EXTS.split()
         for ext in ext_l:
             osSys(f"{ctl} install {ext}-pg{pg_major} --disabled --silent",

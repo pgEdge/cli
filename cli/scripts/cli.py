@@ -339,6 +339,11 @@ def install_comp(p_app, p_ver=0, p_rver=None, p_re_install=False):
             exit_cleanly(1)
 
     state = util.get_comp_state(p_app)
+    
+    if state in ["Enabled", "Disabled"]:
+        util.message(f"{p_app} is already installed & {state}", "warn")
+        return
+
     if state == "NotInstalled" or p_re_install:
         if p_ver == 0:
             ver = meta.get_latest_ver_plat(p_app)
@@ -426,9 +431,6 @@ def install_comp(p_app, p_ver=0, p_rver=None, p_re_install=False):
         tar.close
         if isJSON:
             util.message("Unpack complete")
-
-    else:
-        util.exit_message(f"{p_app} is already installed.")
 
 
 def downgrade_component(p_comp):

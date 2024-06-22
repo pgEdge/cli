@@ -7,7 +7,8 @@ if [ ! "$rc" == "0" ]; then
   fatalError "YIKES - no env.sh found"
 fi
 
-if [ $# -ne 0 ] && [ $# -ne 1 ] & [ $# -ne 3 ]; then
+num_p=$#
+if [ ! $num_p == "0" ] && [ ! $num_p == "1"  ] && [ ! $num_p == "3" ]; then
   fatalError "must be zero, one, or three parms"
 fi
 
@@ -17,27 +18,6 @@ if [ "$1" == "" ]; then
   echo "### Defaulting to pg $majorV ###"
 else
   majorV=$1
-fi
-
-if [ ! "$2" == "" ]; then
-  if [ ! "$2" == "rpm" ]; then
-     fatalError "ERROR:  2nd parm is pkg_type (only 'rpm' presently supported)"
-  fi
-
-  PKG_TYPE="$2"
-  BUNDLE_NM="$3"
-
-  source bp.sh
-  echo ""
-  sleep 1
-
-  cmd="./pgedge setup --pg_ver $majorV --extensions"
-  echoCmd "$cmd"
-  exit 1
-
-  cmd="./build.sh $majorV $PK_TYPE $BUNDLE_NM"
-  echoCmd $cmd
-  exit 0
 fi
 
 if [ "$majorV" == "12" ]; then
@@ -61,6 +41,37 @@ if [ "$OUT" == "" ]; then
   echo "ERROR: Environment is not set..."
   exit 1
 fi
+
+
+buildPkgBundle() {
+  pkg_type="$1"
+  bundle_nm="$2"
+
+  echo ""
+  echo "############## Build Package Bundle: $pkg_type - $bundle_nm ###############"
+  echo ""
+  sleep 2
+
+  source bp.sh
+  echo ""
+  sleep 2
+  echoCmd "./pgedge setup --pg_ver $majorV --extensions"
+  echoCmd "cd ../.."
+
+
+  echo ""
+  echo "## Cleanup cruft #####################"
+  base_d=out/posix
+  echoCmd "rm -r $base_d/ctlibs"
+  data_d=$base_d/data
+  echoCmd "rm -f $data_d/logs/*"
+  echoCmd "rm $data_d/conf/*.manifest"
+  echoCmd "rm -f $data_d/conf/*.pid"
+  echoCmd "rm $data_d/conf/cache/*"
+
+  echoCmd "rm -rf /tmp/$bundle_nm"
+  echoCmd "mv $base_d /tmp/$bundle_nm"
+}
 
 
 buildALL () {
@@ -102,6 +113,18 @@ if [ -d $outp ]; then
   $outp/$api stop
   sleep 2
   $sudo rm -rf $outp
+fi
+
+if [ ! "$2" == "" ]; then
+  if [ ! "$2" == "rpm" ]; then
+     fatalError "ERROR:  2nd parm is pkg_type (only 'rpm' presently supported)"
+  fi
+
+  buildPkgBundle "$2" "$3"
+  rc=$?
+
+  echo ""
+  exit $rc
 fi
 
 
