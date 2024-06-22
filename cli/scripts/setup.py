@@ -84,8 +84,8 @@ def check_pre_reqs(User, Passwd, db, port, pg_major, pg_minor, spock, autostart,
         else:
             verifyUserPasswd(User, Passwd)
     else:
-        if (User is None) or (Passwd is None) or (dbName is None):
-            util.exit_message("Must specify User, Passwd & dbName")
+        if (User is None) or (Passwd is None) or (db is None):
+            util.exit_message("Must specify User, Passwd & db")
 
 
     if spock:
