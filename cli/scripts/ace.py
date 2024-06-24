@@ -688,7 +688,7 @@ def table_diff(
 
     if not block_rows:
         if "ACE_BLOCK_ROWS" in os.environ:
-            block_rows = int(os.environ.get("ACE_BLOCK_ROWS", block_rows))
+            block_rows = os.environ.get("ACE_BLOCK_ROWS", block_rows)
         else:
             block_rows = BLOCK_ROWS_DEFAULT
     
@@ -1788,7 +1788,7 @@ def repset_diff(
 
     if not block_rows:
         if "ACE_BLOCK_ROWS" in os.environ:
-            block_rows = int(os.environ.get("ACE_BLOCK_ROWS", block_rows))
+            block_rows = os.environ.get("ACE_BLOCK_ROWS", block_rows)
         else:
             block_rows = BLOCK_ROWS_DEFAULT
     
