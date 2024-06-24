@@ -432,8 +432,7 @@ def init_db_connection(shared_objects, worker_state):
     db, pg, node_info = cluster.load_json(shared_objects["cluster_name"])
 
     cluster_nodes = []
-    database = db[0]
-    database["db_name"] = database.pop("name")
+    database = shared_objects["database"]
 
     # Combine db and cluster_nodes into a single json
     for node in node_info:
@@ -904,6 +903,7 @@ def table_diff(
     # Shared variables needed by all workers
     shared_objects = {
         "cluster_name": cluster_name,
+        "database": database,
         "node_list": node_list,
         "schema_name": l_schema,
         "table_name": l_table,
