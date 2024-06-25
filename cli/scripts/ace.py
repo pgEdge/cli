@@ -1784,9 +1784,9 @@ def repset_diff(
     
     # Capping max block size here to prevent the hash function from taking forever
     if block_rows > MAX_ALLOWED_BLOCK_SIZE:
-        util.exit_message(f"Desired block row size is > {MAX_ALLOWED_BLOCK_SIZE}")
+        util.exit_message(f"Block row size should be <= {MAX_ALLOWED_BLOCK_SIZE}")
     if block_rows < MIN_ALLOWED_BLOCK_SIZE:
-        util.exit_message(f"Desired block row size is < {MIN_ALLOWED_BLOCK_SIZE}")
+        util.exit_message(f"Block row size should be >= {MIN_ALLOWED_BLOCK_SIZE}")
 
     if type(max_cpu_ratio) is int:
         max_cpu_ratio = float(max_cpu_ratio)
