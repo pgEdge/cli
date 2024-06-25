@@ -11,7 +11,7 @@ lolorV=1.2-1
 foslotsV=1a-1
 snwflkV=2.1-1
 
-P17=17beta1-1
+P17=17beta2-1
 P16=16.3-2
 P15=15.7-2
 P14=14.12-2

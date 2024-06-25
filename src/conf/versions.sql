@@ -172,7 +172,7 @@ INSERT INTO versions VALUES ('pg16', '16.2-4',  'el8, el9, arm9, osx', 0, '20240
 
 INSERT INTO releases VALUES ('pg17', 2, 'pg', '', '', 'test', 
   '<font size=-1>New in <a href=https://www.postgresql.org/docs/17/release-17.html>2024!</a></font>', 1, 'POSTGRES', '', '');
-INSERT INTO versions VALUES ('pg17', '17beta1-1',  'el8, el9, arm9', 1, '20240521','', '', '');
+INSERT INTO versions VALUES ('pg17', '17beta2-1',  'el9, arm9', 1, '20240626','', '', '');
 
 -- ## ORAFCE #############################
 INSERT INTO projects VALUES ('orafce', 'ext', 4, 0, 'hub', 0, 'https://github.com/orafce/orafce/releases',
