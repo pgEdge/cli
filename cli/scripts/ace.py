@@ -34,8 +34,10 @@ lock = Lock()
 # Set max number of rows up to which
 # diff-tables will work
 MAX_DIFF_ROWS = 10000
+MIN_ALLOWED_BLOCK_SIZE = 1000
 MAX_ALLOWED_BLOCK_SIZE = 100000
-MAX_CPU_RATIO = 0.6
+BLOCK_ROWS_DEFAULT = os.environ.get("ACE_BLOCK_ROWS", 10000)
+MAX_CPU_RATIO_DEFAULT = os.environ.get("ACE_MAX_CPU_RATIO", 0.6)
 
 # Return codes for compare_checksums
 BLOCK_OK = 0
@@ -676,47 +678,45 @@ def table_diff(
     cluster_name,
     table_name,
     dbname=None,
-    block_rows=1000,
-    max_cpu_ratio=MAX_CPU_RATIO,
+    block_rows=BLOCK_ROWS_DEFAULT,
+    max_cpu_ratio=MAX_CPU_RATIO_DEFAULT,
     output="json",
     nodes="all",
     diff_file=None,
 ):
     """Efficiently compare tables across cluster using checksums and blocks of rows"""
-
-    if not diff_file:
+    
+    if type(block_rows) is str:
         try:
-            block_rows = int(os.environ.get("ACE_BLOCK_ROWS", block_rows))
+            block_rows = int(block_rows)
         except Exception:
             util.exit_message("Invalid values for ACE_BLOCK_ROWS")
-    try:
-        max_cpu_ratio = float(os.environ.get("ACE_MAX_CPU_RATIO", max_cpu_ratio))
-    except Exception:
-        util.exit_message("Invalid values for ACE_MAX_CPU_RATIO")
-
-    if max_cpu_ratio > 1 or max_cpu_ratio < 0:
-        util.exit_message("Invalid values for ACE_MAX_CPU_RATIO or --max_cpu_ratio")
-
-    max_cpu_ratio = float(max_cpu_ratio)
-
+    elif type(block_rows) is not int:
+        util.exit_message("Invalid value type for ACE_BLOCK_ROWS")
+    
     # Capping max block size here to prevent the hash function from taking forever
     if block_rows > MAX_ALLOWED_BLOCK_SIZE:
-        util.exit_message(f"Desired block row size is > {MAX_ALLOWED_BLOCK_SIZE}")
+        util.exit_message(f"Block row size should be <= {MAX_ALLOWED_BLOCK_SIZE}")
+    if block_rows < MIN_ALLOWED_BLOCK_SIZE:
+        util.exit_message(f"Block row size should be >= {MIN_ALLOWED_BLOCK_SIZE}")
+
+    if type(max_cpu_ratio) is int:
+        max_cpu_ratio = float(max_cpu_ratio)
+    elif type(max_cpu_ratio) is str:
+        try:
+            max_cpu_ratio = float(max_cpu_ratio)
+        except Exception:
+            util.exit_message("Invalid values for ACE_MAX_CPU_RATIO")
+    elif type(max_cpu_ratio) is not float:
+        util.exit_message("Invalid value type for ACE_MAX_CPU_RATIO")
+
+    if max_cpu_ratio > 1.0 or max_cpu_ratio < 0.0:
+        util.exit_message("Invalid value range for ACE_MAX_CPU_RATIO or --max_cpu_ratio")
 
     if output not in ["csv", "json"]:
         util.exit_message(
             "table-diff currently supports only csv and json output formats"
         )
-
-    bad_br = True
-    try:
-        b_r = int(block_rows)
-        if b_r >= 1000:
-            bad_br = False
-    except ValueError:
-        pass
-    if bad_br:
-        util.exit_message(f"block_rows param '{block_rows}' must be integer >= 1000")
 
     node_list = []
     try:
@@ -1767,44 +1767,44 @@ def repset_diff(
     cluster_name,
     repset_name,
     dbname=None,
-    block_rows=10000,
-    max_cpu_ratio=MAX_CPU_RATIO,
+    block_rows=BLOCK_ROWS_DEFAULT,
+    max_cpu_ratio=MAX_CPU_RATIO_DEFAULT,
     output="json",
     nodes="all",
 ):
     """Loop thru a replication-sets tables and run table-diff on them"""
 
-    # TODO: Use a more specific exception here
-    try:
-        block_rows = int(os.environ.get("ACE_BLOCK_ROWS", block_rows))
-    except Exception:
-        util.exit_message("Invalid values for ACE_BLOCK_ROWS")
-    try:
-        max_cpu_ratio = int(os.environ.get("ACE_MAX_CPU_RATIO", max_cpu_ratio))
-    except Exception:
-        util.exit_message("Invalid values for ACE_BLOCK_ROWS")
-
-    if max_cpu_ratio > 1 or max_cpu_ratio < 0:
-        util.exit_message("Invalid values for ACE_MAX_CPU_RATIO or --max_cpu_ratio")
-
+    if type(block_rows) is str:
+        try:
+            block_rows = int(block_rows)
+        except Exception:
+            util.exit_message("Invalid values for ACE_BLOCK_ROWS or --block_rows")
+    elif type(block_rows) is not int:
+        util.exit_message("Invalid value type for ACE_BLOCK_ROWS or --block_rows")
+    
     # Capping max block size here to prevent the hash function from taking forever
     if block_rows > MAX_ALLOWED_BLOCK_SIZE:
-        util.exit_message(f"Desired block row size is > {MAX_ALLOWED_BLOCK_SIZE}")
+        util.exit_message(f"Block row size should be <= {MAX_ALLOWED_BLOCK_SIZE}")
+    if block_rows < MIN_ALLOWED_BLOCK_SIZE:
+        util.exit_message(f"Block row size should be >= {MIN_ALLOWED_BLOCK_SIZE}")
+
+    if type(max_cpu_ratio) is int:
+        max_cpu_ratio = float(max_cpu_ratio)
+    elif type(max_cpu_ratio) is str:
+        try:
+            max_cpu_ratio = float(max_cpu_ratio)
+        except Exception:
+            util.exit_message("Invalid values for ACE_MAX_CPU_RATIO or --max_cpu_ratio")
+    elif type(max_cpu_ratio) is not float:
+        util.exit_message("Invalid value type for ACE_MAX_CPU_RATIO or --max_cpu_ratio")
+
+    if max_cpu_ratio > 1.0 or max_cpu_ratio < 0.0:
+        util.exit_message("Invalid value range for ACE_MAX_CPU_RATIO or --max_cpu_ratio")
 
     if output not in ["csv", "json"]:
         util.exit_message(
             "Diff-tables currently supports only csv and json output formats"
         )
-
-    bad_br = True
-    try:
-        b_r = int(block_rows)
-        if b_r >= 1000:
-            bad_br = False
-    except ValueError:
-        pass
-    if bad_br:
-        util.exit_message(f"block_rows param '{block_rows}' must be integer >= 1000")
 
     node_list = []
     try:
