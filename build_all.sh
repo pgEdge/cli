@@ -8,8 +8,8 @@ if [ ! "$rc" == "0" ]; then
 fi
 
 num_p=$#
-if [ ! $num_p == "0" ] && [ ! $num_p == "1"  ] && [ ! $num_p == "3" ]; then
-  fatalError "must be zero, one, or three parms"
+if [ ! $num_p == "0" ] && [ ! $num_p == "1"  ] && [ ! $num_p == "2" ]; then
+  fatalError "must be zero, one, or two parms"
 fi
 
 if [ "$1" == "" ]; then
@@ -44,13 +44,8 @@ fi
 
 
 buildPkgBundle() {
-  pkg_type="$1"
+  majorV="$1"
   bundle_nm="$2"
-
-  echo ""
-  echo "############## Build Package Bundle: $pkg_type - $bundle_nm ###############"
-  echo ""
-  sleep 2
 
   source bp.sh
   echo ""
@@ -120,7 +115,14 @@ if [ ! "$2" == "" ]; then
      fatalError "ERROR:  2nd parm is pkg_type (only 'rpm' presently supported)"
   fi
 
-  buildPkgBundle "$2" "$3"
+  echo ""
+  vers="--major_ver $majorV --minor_ver $minorV --hub $hubV"
+  echo "###### Build Bundle: $vers ################"
+  bundle_nm=bundle-pg$minorV-cli$hubV-$outPlat
+  echo "## bundle_nm = $bundle_nm"
+  echo ""
+
+  buildPkgBundle "$majorV" "$bundle_nm"
   rc=$?
 
   echo ""
