@@ -52,7 +52,7 @@ buildPkgBundle() {
   cliV="$5"
 
   echo ""
-  echo "##### run_fpm.buildPkgBundle() ###########"
+  echo "##### buildPkgBundle() ###################"
   echo "# 1. bundle_nm = $bundle_nm"
   echo "# 2.    majorV = $majorV"
   echo "# 3.       pgV = $pgV"
@@ -66,7 +66,6 @@ buildPkgBundle() {
   echoCmd "./pgedge setup --pg_ver $majorV --extensions"
   echoCmd "cd ../.."
 
-
   echo ""
   echo "## Cleanup cruft #####################"
   base_d=out/posix
@@ -79,9 +78,7 @@ buildPkgBundle() {
   echoCmd "rm -rf /tmp/$bundle_nm"
   echoCmd "mv $base_d /tmp/$bundle_nm"
 
-  echo ""
-  echo "## use FPM to build the package"
-  echoCmd "src/packages/run_fpm.sh $bundle_nm $majorV  $pgV  $spockV  $hubV"
+  echoCmd "src/packages/run_fpm.sh  $bundle_nm  $majorV  $pgV  $spockV  $hubV"
 }
 
 
@@ -131,17 +128,10 @@ if [ ! "$2" == "" ]; then
      fatalError "ERROR:  2nd parm is pkg_type (only 'rpm' presently supported)"
   fi
 
-  echo ""
-  vers="--major_ver $majorV --minor_ver $minorV --hub $hubV --spock $spock33V"
-  echo "###### Build Bundle: $vers ################"
   bundle_nm=bundle-pg$minorV-cli$hubV-$outPlat
-  echo "## bundle_nm = $bundle_nm"
-  echo ""
-
   buildPkgBundle "$bundle_nm" "$majorV" "$minorV" "$spock33V" "$hubV" 
   rc=$?
 
-  echo ""
   exit $rc
 fi
 

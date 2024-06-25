@@ -27,7 +27,7 @@ echo ""
 fpm --version > /dev/null 2>&1
 rc=$?
 if [ ! "$rc" == "0" ]; then
-  echo "ERROR: fpm is not installed"
+  echo "ERROR: fpm not installed (rc=$rc)"
   exit 1
 fi
 
@@ -71,10 +71,15 @@ if [ ! "$rc" == "0" ]; then
 fi
 
 echo "#"
-echo "# moving generated package to \$OUT"
+echo "# moving package & alias to \$OUT"
 rm -f $OUT/$rpm_file
 rm -f $OUT/$rpm_alias
+
+set -x
+
 mv $rpm_file $OUT/.
 cd $OUT
 ln -s $rpm_file $rpm_alias
+
+exit 0
 
