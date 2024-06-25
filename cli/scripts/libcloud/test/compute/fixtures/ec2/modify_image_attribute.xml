@@ -1,3 +1,0 @@
-<ModifyImageAttributeResponse xmlns="http://ec2.amazonaws.com/doc/2016-11-15/">
-    <return>true</return>
-</ModifyImageAttributeResponse>

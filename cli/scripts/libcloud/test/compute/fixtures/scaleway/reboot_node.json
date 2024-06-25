@@ -1,9 +1,0 @@
-{
-  "task": {
-    "description": "server_reboot",
-    "href_from": "/servers/741db378/action",
-    "id": "741db378",
-    "progress": "0",
-    "status": "pending"
-  }
-}
