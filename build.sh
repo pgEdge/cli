@@ -244,7 +244,6 @@ finalizeOutput () {
   checkCmd "cp -r $CLI/contrib  hub/scripts/."
   checkCmd "cp -r $CLI/lib      hub/scripts/."
   checkCmd "cp -r $CLI/ini      hub/scripts/."
-  checkCmd "cp -r $CLI/libcloud hub/scripts/."
   checkCmd "cp -r $CLI/sql      hub/scripts/."
   checkCmd "cp -r $CLI/sh       hub/scripts/."
 
