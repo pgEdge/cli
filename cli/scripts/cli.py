@@ -342,7 +342,7 @@ def install_comp(p_app, p_ver=0, p_rver=None, p_re_install=False):
     
     if state in ["Enabled", "Disabled"]:
         util.message(f"{p_app} is already installed & {state}", "warn")
-        return
+        return("enable")
 
     if state == "NotInstalled" or p_re_install:
         if p_ver == 0:
@@ -771,6 +771,7 @@ def list_depend_recur(p_app):
 
 
 def update_component_state(p_app, p_mode, p_ver=None):
+    util.message(f"cli.update_component_state(p_app={p_app}, p_mode={p_mode}, p_ver={p_ver}", "debug")
     new_state = "Disabled"
     if p_mode == "enable":
         new_state = "Enabled"
@@ -1646,6 +1647,10 @@ if p_mode == "install":
         else:
             p_version = None
             status = install_comp(c)
+
+        if status == "enable":
+            p_mode = "enable"
+
         p_version = util.trim_plat(p_version)
         update_component_state(c, p_mode, p_version)
         isExt = meta.is_extension(c)
@@ -1662,7 +1667,7 @@ if p_mode == "install":
             installed_comp_list.append(c)
             isExt = meta.is_extension(c)
             if isExt:
-                util.create_manifest(c, parent)
+                ## util.create_manifest(c, parent)
                 util.copy_extension_files(c, parent)
             script_name = "install-" + c
             util.run_script(c, script_name, meta.get_current_version(c))

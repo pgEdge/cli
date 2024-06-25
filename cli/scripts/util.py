@@ -3539,8 +3539,10 @@ def copy_extension_files(ext_comp, parent_comp, upgrade=None):
     if upgrade:
         COMP_DIR = os.path.join(COMP_DIR + "_new", ext_comp)
 
-    cmd = "cp -r " + COMP_DIR + "/. " + PARENT_DIR
-    os.system(cmd)
+    if os.path.exists(COMP_DIR):
+        cmd = "cp -r " + COMP_DIR + "/. " + PARENT_DIR
+        os.system(cmd)
+
     return True
 
 
