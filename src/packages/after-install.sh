@@ -1,6 +1,9 @@
 
 echo ""
 echo "## after-install.sh "
+
+chown -R pgedge:pgedge /opt/pgedge
+
 echo ""
 echo "1.) Change to the system user 'pgedge'"
 echo "      $ sudo su - pgedge"

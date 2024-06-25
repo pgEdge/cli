@@ -44,8 +44,21 @@ fi
 
 
 buildPkgBundle() {
-  majorV="$1"
-  bundle_nm="$2"
+  bundle_nm="$1"
+  majorV="$2"
+
+  pgV=`echo $3 | tr - .`
+  spockV=`echo $4 | tr - .`
+  cliV="$5"
+
+  echo ""
+  echo "##### run_fpm.buildPkgBundle() ###########"
+  echo "# 1. bundle_nm = $bundle_nm"
+  echo "# 2.    majorV = $majorV"
+  echo "# 3.       pgV = $pgV"
+  echo "# 4.    spockV = $spockV"
+  echo "# 5.      hubV = $hubV"
+  echo "#"
 
   source bp.sh
   echo ""
@@ -60,12 +73,15 @@ buildPkgBundle() {
   echoCmd "rm -r $base_d/ctlibs"
   data_d=$base_d/data
   echoCmd "rm -f $data_d/logs/*"
-  echoCmd "rm $data_d/conf/*.manifest"
   echoCmd "rm -f $data_d/conf/*.pid"
   echoCmd "rm $data_d/conf/cache/*"
 
   echoCmd "rm -rf /tmp/$bundle_nm"
   echoCmd "mv $base_d /tmp/$bundle_nm"
+
+  echo ""
+  echo "## use FPM to build the package"
+  echoCmd "src/packages/run_fpm.sh $bundle_nm $majorV  $pgV  $spockV  $hubV"
 }
 
 
@@ -116,13 +132,13 @@ if [ ! "$2" == "" ]; then
   fi
 
   echo ""
-  vers="--major_ver $majorV --minor_ver $minorV --hub $hubV"
+  vers="--major_ver $majorV --minor_ver $minorV --hub $hubV --spock $spock33V"
   echo "###### Build Bundle: $vers ################"
   bundle_nm=bundle-pg$minorV-cli$hubV-$outPlat
   echo "## bundle_nm = $bundle_nm"
   echo ""
 
-  buildPkgBundle "$majorV" "$bundle_nm"
+  buildPkgBundle "$bundle_nm" "$majorV" "$minorV" "$spock33V" "$hubV" 
   rc=$?
 
   echo ""
