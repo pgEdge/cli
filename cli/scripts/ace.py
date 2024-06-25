@@ -36,8 +36,8 @@ lock = Lock()
 MAX_DIFF_ROWS = 10000
 MIN_ALLOWED_BLOCK_SIZE = 1000
 MAX_ALLOWED_BLOCK_SIZE = 100000
-BLOCK_ROWS_DEFAULT = 10000
-MAX_CPU_RATIO_DEFAULT = 0.6
+BLOCK_ROWS_DEFAULT = os.environ.get("ACE_BLOCK_ROWS", 10000)
+MAX_CPU_RATIO_DEFAULT = os.environ.get("ACE_MAX_CPU_RATIO", 0.6)
 
 # Return codes for compare_checksums
 BLOCK_OK = 0
@@ -678,19 +678,13 @@ def table_diff(
     cluster_name,
     table_name,
     dbname=None,
-    block_rows=None,
-    max_cpu_ratio=None,
+    block_rows=BLOCK_ROWS_DEFAULT,
+    max_cpu_ratio=MAX_CPU_RATIO_DEFAULT,
     output="json",
     nodes="all",
     diff_file=None,
 ):
     """Efficiently compare tables across cluster using checksums and blocks of rows"""
-
-    if not block_rows:
-        if "ACE_BLOCK_ROWS" in os.environ:
-            block_rows = os.environ.get("ACE_BLOCK_ROWS", block_rows)
-        else:
-            block_rows = BLOCK_ROWS_DEFAULT
     
     if type(block_rows) is str:
         try:
@@ -705,12 +699,6 @@ def table_diff(
         util.exit_message(f"Desired block row size is > {MAX_ALLOWED_BLOCK_SIZE}")
     if block_rows < MIN_ALLOWED_BLOCK_SIZE:
         util.exit_message(f"Desired block row size is < {MIN_ALLOWED_BLOCK_SIZE}")
-
-    if not max_cpu_ratio:
-        if "ACE_MAX_CPU_RATIO" in os.environ:
-            max_cpu_ratio = os.environ.get("ACE_MAX_CPU_RATIO", max_cpu_ratio)
-        else:
-            max_cpu_ratio = MAX_CPU_RATIO_DEFAULT
 
     if type(max_cpu_ratio) is int:
         max_cpu_ratio = float(max_cpu_ratio)
@@ -1779,19 +1767,13 @@ def repset_diff(
     cluster_name,
     repset_name,
     dbname=None,
-    block_rows=None,
-    max_cpu_ratio=None,
+    block_rows=BLOCK_ROWS_DEFAULT,
+    max_cpu_ratio=MAX_CPU_RATIO_DEFAULT,
     output="json",
     nodes="all",
 ):
     """Loop thru a replication-sets tables and run table-diff on them"""
 
-    if not block_rows:
-        if "ACE_BLOCK_ROWS" in os.environ:
-            block_rows = os.environ.get("ACE_BLOCK_ROWS", block_rows)
-        else:
-            block_rows = BLOCK_ROWS_DEFAULT
-    
     if type(block_rows) is str:
         try:
             block_rows = int(block_rows)
@@ -1805,12 +1787,6 @@ def repset_diff(
         util.exit_message(f"Desired block row size is > {MAX_ALLOWED_BLOCK_SIZE}")
     if block_rows < MIN_ALLOWED_BLOCK_SIZE:
         util.exit_message(f"Desired block row size is < {MIN_ALLOWED_BLOCK_SIZE}")
-
-    if not max_cpu_ratio:
-        if "ACE_MAX_CPU_RATIO" in os.environ:
-            max_cpu_ratio = os.environ.get("ACE_MAX_CPU_RATIO", max_cpu_ratio)
-        else:
-            max_cpu_ratio = MAX_CPU_RATIO_DEFAULT
 
     if type(max_cpu_ratio) is int:
         max_cpu_ratio = float(max_cpu_ratio)
