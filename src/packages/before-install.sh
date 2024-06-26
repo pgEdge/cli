@@ -1,6 +1,6 @@
 
-echo ""
-echo "## before-install.sh "
+
+echo "## adding pgedge system user"
 
 adduser pgedge --system
 rc=$?

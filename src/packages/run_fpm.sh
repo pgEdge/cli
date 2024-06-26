@@ -42,10 +42,18 @@ if [ ! -d /tmp/$bundle ]; then
   exit 1
 fi
 
-rm -f $rpm_file
+echo "#"
+echo "# setting REPO to -devel (for starters)"
+
+ctl=$dir_bundle/pgedge
+$ctl set GLOBAL REPO https://pgedge-devel.s3.amazonaws.com/REPO
+$ctl info
+sleep 2
 
 echo "#"
-echo "# running FPM ... (be patient)"
+echo "# running FPM... (be patient for about 60 seconds)"
+
+rm -f $rpm_file
 
 fpm \
   -s dir -t rpm \
@@ -58,6 +66,7 @@ fpm \
   --maintainer "support@pgedge.com" \
   --before-install ./before-install.sh \
   --after-install ./after-install.sh \
+  --after-remove ./after-remove.sh \
   --no-rpm-autoreqprov \
   --rpm-tag '%define _build_id_links none' \
   --rpm-tag '%undefine _missing_build_ids_terminate_build' \
@@ -72,14 +81,16 @@ fi
 
 echo "#"
 echo "# moving package & alias to \$OUT"
+
 rm -f $OUT/$rpm_file
 rm -f $OUT/$rpm_alias
-
-set -x
 
 mv $rpm_file $OUT/.
 cd $OUT
 ln -s $rpm_file $rpm_alias
+
+touch $rpm_file
+touch $rpm_alias
 
 exit 0
 

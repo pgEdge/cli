@@ -1,6 +1,6 @@
 
-echo ""
-echo "## after-install.sh "
+# echo ""
+# echo "## after-install.sh "
 
 chown -R pgedge:pgedge /opt/pgedge
 
@@ -10,5 +10,5 @@ echo "      $ sudo su - pgedge"
 echo ""
 echo "2.) Run the setup command to startup pgedge & create an initial db"
 echo "      $ cd /opt/pgedge"
-echo "      $ ./pgedge setup -U user -P passwd -d db --autostart"
+echo "      $ ./pgedge setup -U user1 -P passwd1 -d db1 --autostart"
 
