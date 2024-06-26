@@ -840,6 +840,7 @@ def add_node(cluster_name, source_node, target_node, script= " ", stanza=" ", ba
     stanza_create = False
     if stanza == " ":
         stanza = f"pg{pg}"
+    pgV = f"pg{pg}"
     
     if parsed_json.get("log_level"):
        verbose = parsed_json["log_level"]
@@ -984,7 +985,7 @@ def add_node(cluster_name, source_node, target_node, script= " ", stanza=" ", ba
         verbose=verbose
     )
 
-    manage_node(n, "stop", verbose)
+    manage_node(n, "stop", pgV, verbose)
     cmd = f'rm -rf {n["path"]}/pgedge/data/{stanza}'
     util.run_rcommand(
         cmd,
@@ -1062,7 +1063,7 @@ def add_node(cluster_name, source_node, target_node, script= " ", stanza=" ", ba
         verbose=verbose
     )
  
-    manage_node(n, "start", verbose)
+    manage_node(n, "start", pgV, verbose)
     time.sleep(5)
 
     if script != " ":
@@ -1096,8 +1097,8 @@ def add_node(cluster_name, source_node, target_node, script= " ", stanza=" ", ba
     )
 
     cmd = (f'cd {n["path"]}/pgedge/;'
-           f'./pgedge remove spock33-pg16 -d {dbname} --no-restart;'
-           f'./pgedge install spock33-pg16 -d {dbname}')
+           f'./pgedge remove spock33-{pgV} -d {dbname} --no-restart;'
+           f'./pgedge install spock33-{pgV} -d {dbname}')
     util.run_rcommand(
         cmd,
         f"Re-installing spock",
@@ -1147,7 +1148,7 @@ def remove_node(cluster_name, node_name):
 
     write_cluster_json(cluster_name, cluster_data)
 
-def manage_node(node, action, verbose):
+def manage_node(node, action, pgV, verbose):
     """
     Starts or stops a cluster based on the provided action.
     """
@@ -1159,7 +1160,7 @@ def manage_node(node, action, verbose):
     # Construct the command based on the action
     if action == 'start':
         cmd = (f"cd {node['path']}/pgedge/; "
-               f"./pgedge config pg16 --port={node['port']}; "
+               f"./pgedge config {pgV} --port={node['port']}; "
                f"./pgedge start;")
     else:
         cmd = (f"cd {node['path']}/pgedge/; "

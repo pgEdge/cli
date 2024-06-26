@@ -3989,8 +3989,8 @@ def run_rcommand(cmd, message="", host="", usr="", key="", verbose="None", max_a
             break
         attempts += 1
         time.sleep(5) 
-    if os.getenv("pgeDebug", ""):
-        print (result.stdout) 
+    #if os.getenv("pgeDebug", ""):
+    print (result.stdout) 
     status = "ok" if result.returncode == 0 else "fail"
     echo_action(message, status)
 
