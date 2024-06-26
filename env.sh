@@ -9,7 +9,7 @@ spock33V=3.3.5-1
 
 lolorV=1.2-1
 foslotsV=1a-1
-snwflkV=2.1-1
+snwflkV=2.2-1
 
 P17=17beta2-1
 P16=16.3-2

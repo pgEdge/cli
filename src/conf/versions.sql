@@ -327,14 +327,16 @@ INSERT INTO releases VALUES ('snowflake-pg15', 4, 'snowflake', 'Snowflake', '', 
 INSERT INTO releases VALUES ('snowflake-pg16', 4, 'snowflake', 'Snowflake', '', 'prod', '', 1, 'POSTGRES', '', '');
 INSERT INTO releases VALUES ('snowflake-pg17', 4, 'snowflake', 'Snowflake', '', 'prod', '', 1, 'POSTGRES', '', '');
 
-INSERT INTO versions VALUES ('snowflake-pg14', '2.1-1', 'el8, el9, arm9',      1, '20240521', 'pg14', '', '');
-INSERT INTO versions VALUES ('snowflake-pg15', '2.1-1', 'el8, el9, arm9',      1, '20240521', 'pg15', '', '');
-INSERT INTO versions VALUES ('snowflake-pg16', '2.1-1', 'el8, el9, arm9, osx', 1, '20240521', 'pg16', '', '');
-INSERT INTO versions VALUES ('snowflake-pg17', '2.1-1', 'el8, el9, arm9',      1, '20240521', 'pg17', '', '');
+INSERT INTO versions VALUES ('snowflake-pg14', '2.2-1', 'el8, el9, arm9', 1, '20240626', 'pg14', '', '');
+INSERT INTO versions VALUES ('snowflake-pg15', '2.2-1', 'el8, el9, arm9', 1, '20240626', 'pg15', '', '');
+INSERT INTO versions VALUES ('snowflake-pg16', '2.2-1', 'el8, el9, arm9', 1, '20240626', 'pg16', '', '');
+INSERT INTO versions VALUES ('snowflake-pg17', '2.2-1', 'el8, el9, arm9', 1, '20240626', 'pg17', '', '');
 
-INSERT INTO versions VALUES ('snowflake-pg14', '2.0-1', 'el8, el9, arm9',      0, '20240405', 'pg14', '', '');
-INSERT INTO versions VALUES ('snowflake-pg15', '2.0-1', 'el8, el9, arm9',      0, '20240405', 'pg15', '', '');
-INSERT INTO versions VALUES ('snowflake-pg16', '2.0-1', 'el8, el9, arm9, osx', 0, '20240405', 'pg16', '', '');
+INSERT INTO versions VALUES ('snowflake-pg14', '2.1-1', 'el8, el9, arm9', 0, '20240521', 'pg14', '', '');
+INSERT INTO versions VALUES ('snowflake-pg15', '2.1-1', 'el8, el9, arm9', 0, '20240521', 'pg15', '', '');
+INSERT INTO versions VALUES ('snowflake-pg16', '2.1-1', 'el8, el9, arm9', 0, '20240521', 'pg16', '', '');
+INSERT INTO versions VALUES ('snowflake-pg17', '2.1-1', 'el8, el9, arm9', 0, '20240521', 'pg17', '', '');
+
 
 -- ## SPOCK (parent project) ############
 INSERT INTO projects VALUES ('spock', 'pge', 4, 0, 'hub', 1, 'https://github.com/pgedge/spock/tags',
