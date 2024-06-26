@@ -55,12 +55,18 @@ cmd "cd $PGE"
 cmd "git status"
 cmd "git pull"
 
-step 3 "building $vers #########################"
+step 3a "building $vers #########################"
 for ver in ${vers}; do
     cmd "./build_all.sh $ver"
 
     if [ ! "$PLATFORM" == "el8" ] && [ "$ver" == "16" ]; then
         cmd "./build_all.sh $ver rpm"
+
+        step 3a "cleanup unneeded ctlibs ##################"
+        cmd "rm -f $OUT/ctlibs-el*.tgz"
+        cmd "rm -f $OUT/ctlibs-ubu*.tgz"
+        cmd "rm -f $OUT/ctlibs-deb*.tgz"
+        cmd "rm -f $OUT/ctlibs-osx*.tgz"
     fi
 done
 
