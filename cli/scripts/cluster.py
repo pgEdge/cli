@@ -287,13 +287,7 @@ def validate(cluster_name):
         util.exit_message("Database section missing")
     else:
         if "pg_version" not in parsed_json["database"]:
-            parsed_json["database"]["pg_version"] = ""
-        if "spock" not in parsed_json["database"]:
-            parsed_json["database"]["spock_version"]=""
-        if "auto_ddl" not in parsed_json["database"]:
-            parsed_json["database"]["auto_ddl"]="off"
-        if "auto_start" not in parsed_json["database"]:
-            parsed_json["database"]["auto_start"]="off"
+            util.exit_message("pg_version is missing")
         if "databases" not in parsed_json["database"]:
             util.exit_message("Database Details section missing")
         if 1 > len(parsed_json["database"]["databases"]):
