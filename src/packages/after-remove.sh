@@ -1,14 +1,11 @@
 
-# echo ""
-# echo "## after-remove.sh "
+edg=/opt/pgedge
 
-cd /opt/pgedge
-./pgedge stop
+echo ""
+echo "# $edg/data is being left intact to remove manually (if desired)."
+echo ""
+
+$edg/pgedge stop
 sleep 4
-rm -rf pg*
-rm -rf hub
-
-echo ""
-echo "# /opt/pgedge/data has been left intact for the remove manually (if desired).
-echo ""
-
+rm -rf $edg/pg*
+rm -rf $edg/hub
