@@ -30,7 +30,7 @@ def create(db=None, User=None, Passwd=None, pg=None, spock=None):
         Passwd = util.get_random_password()
 
     if pg is None:
-        pg_v = util.get_pg_v(pg)
+        pg_v,spock = util.get_pg_v(pg)
         pg = pg_v[2:]
 
     nc = "./pgedge "
