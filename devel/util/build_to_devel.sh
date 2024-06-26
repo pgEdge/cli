@@ -1,6 +1,8 @@
 #!/bin/bash
 cd "$(dirname "$0")"
 
+PLATFORM=`cat /etc/os-release | grep PLATFORM_ID | cut -d: -f2 | tr -d '\"'`
+
 cmd () {
   echo "# $1"
   $1
@@ -56,6 +58,10 @@ cmd "git pull"
 step 3 "building $vers #########################"
 for ver in ${vers}; do
     cmd "./build_all.sh $ver"
+
+    if [ ! "$PLATFORM" == "el8" ] && [ "$ver" == "16" ]; then
+        cmd "./build_all.sh $ver rpm"
+    fi
 done
 
 step 4 "copy OUT to HIST (outDir) #############"
