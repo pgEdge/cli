@@ -1185,6 +1185,10 @@ def table_rerun(cluster_name, diff_file, table_name, dbname=None):
 
     start_time = datetime.now()
 
+    """
+    Please see comments in table_repair() for an explanation of validating the
+    diff file.
+    """
     try:
         diff_json = json.loads(open(diff_file, "r").read())
     except Exception:
@@ -1475,6 +1479,32 @@ def table_repair(
 
     util.message(f"Table {table_name} is comparable across nodes", p_state="success")
 
+    """
+    If the diff-file is not a valid json, then we throw an error message and exit.
+    However, if the diff-file is a valid json, it's a slightly trickier case.
+    Our diff-file is a json of the form:
+    {
+        "node1/node2": {
+            "node1": [{"col1": "val1", "col2": "val2", ...}, ...],
+            "node2": [{"col1": "val1", "col2": "val2", ...}, ...]
+        },
+        "node1/node3": {
+            "node1": [{"col1": "val1", "col2": "val2", ...}, ...],
+            "node3": [{"col1": "val1", "col2": "val2", ...}, ...]
+        }
+    }
+
+    We need to make sure that the root-level keys are of the form "node1/node2" and
+    that the inner keys have the corresponding node names. E.g., if the root-level key
+    is "node1/node2", then the inner keys should be "node1" and "node2".
+
+    A simple way we achieve this is by iterating over the root keys and checking if the
+    inner keys are contained in the list when the root key is split by "/". If not, we
+    throw an error message and exit.
+
+    TODO: It might be possible that the diff file has different cols compared to the
+    target table. We need to handle this case.
+    """
     try:
         diff_json = json.loads(open(diff_file, "r").read())
     except Exception:
