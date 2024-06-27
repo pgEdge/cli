@@ -1185,7 +1185,20 @@ def table_rerun(cluster_name, diff_file, table_name, dbname=None):
 
     start_time = datetime.now()
 
-    diff_json = json.loads(open(diff_file, "r").read())
+    """
+    Please see comments in table_repair() for an explanation of validating the
+    diff file.
+    """
+    try:
+        diff_json = json.loads(open(diff_file, "r").read())
+    except Exception:
+        util.exit_message("Could not load diff file as JSON")
+
+    try:
+        if any([set(list(diff_json[k].keys())) != set(k.split('/')) for k in diff_json.keys()]):
+            util.exit_message("Contents of diff file improperly formatted")
+    except Exception:
+        util.exit_message("Contents of diff file improperly formatted")
 
     """
     We first need to identify the tuples we need to recheck.
@@ -1375,6 +1388,14 @@ def table_repair(
     # Check if diff_file exists on disk
     if not os.path.exists(diff_file):
         util.exit_message(f"Diff file {diff_file} does not exist")
+    
+    if type(dry_run) is int:
+        if dry_run < 0 or dry_run > 1:
+            util.exit_message("Dry run should be True (1) or False (0)")
+        dry_run = bool(dry_run)
+    
+    if type(dry_run) is not bool:
+        util.exit_message("Dry run should be True (1) or False (0)")
 
     util.check_cluster_exists(cluster_name)
     util.message(f"Cluster {cluster_name} exists", p_state="success")
@@ -1458,8 +1479,42 @@ def table_repair(
 
     util.message(f"Table {table_name} is comparable across nodes", p_state="success")
 
-    with open(diff_file) as f:
-        diff_json = json.load(f)
+    """
+    If the diff-file is not a valid json, then we throw an error message and exit.
+    However, if the diff-file is a valid json, it's a slightly trickier case.
+    Our diff-file is a json of the form:
+    {
+        "node1/node2": {
+            "node1": [{"col1": "val1", "col2": "val2", ...}, ...],
+            "node2": [{"col1": "val1", "col2": "val2", ...}, ...]
+        },
+        "node1/node3": {
+            "node1": [{"col1": "val1", "col2": "val2", ...}, ...],
+            "node3": [{"col1": "val1", "col2": "val2", ...}, ...]
+        }
+    }
+
+    We need to make sure that the root-level keys are of the form "node1/node2" and
+    that the inner keys have the corresponding node names. E.g., if the root-level key
+    is "node1/node2", then the inner keys should be "node1" and "node2".
+
+    A simple way we achieve this is by iterating over the root keys and checking if the
+    inner keys are contained in the list when the root key is split by "/". If not, we
+    throw an error message and exit.
+
+    TODO: It might be possible that the diff file has different cols compared to the
+    target table. We need to handle this case.
+    """
+    try:
+        diff_json = json.loads(open(diff_file, "r").read())
+    except Exception:
+        util.exit_message("Could not load diff file as JSON")
+
+    try:
+        if any([set(list(diff_json[k].keys())) != set(k.split('/')) for k in diff_json.keys()]):
+            util.exit_message("Contents of diff file improperly formatted")
+    except Exception:
+        util.exit_message("Contents of diff file improperly formatted")
 
     true_df = pd.DataFrame()
 
