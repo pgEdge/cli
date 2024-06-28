@@ -3961,11 +3961,38 @@ def update_component_state(p_app, p_mode, p_ver=None):
 bold_start = "\033[1m"
 bold_end = "\033[0m"
 
-def run_rcommand(cmd, message="", host="", usr="", key="", verbose=False, max_attempts=1):
-    if message == "":
-        result = echo_cmd(cmd, echo=verbose, host=host, usr=usr, key=key)
-        return result
+def echo_rcmd(cmd, echo=True, sleep_secs=0, host="", usr="", key="", capture_output=False):
+    if host:
+        ssh_cmd = "ssh -o StrictHostKeyChecking=no -q -t "
+        if usr:
+            ssh_cmd += str(usr) + "@"
+        ssh_cmd += str(host) + " "
+        if key:
+            ssh_cmd += "-i " + str(key) + " "
+        cmd = ssh_cmd + '"' + cmd.replace('"', '\\"') + '"'
 
+    if os.getenv("pgeDebug", ""):
+        cmd += " --debug"
+
+    isSilent = os.getenv("isSilent", "False")
+    if isSilent == "False":
+        s_cmd = scrub_passwd(cmd)
+        if echo:
+            message(f"\n " + str(s_cmd) + f" \n")
+    if capture_output:
+        result = subprocess.run(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+    else:
+        result = subprocess.run(cmd, shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    return result
+
+def run_rcommand(cmd, message="", host="", usr="", key="", verbose="None", max_attempts=1, capture_output=False):
+    if verbose == "None":
+        echo=False
+    else:
+        echo=True
+
+    if message == "":
+        return echo_rcmd(cmd, echo=echo, host=host, usr=usr, key=key, capture_output=capture_output)
     if host == "":
         host = "127.0.0.1"
     message = f"{host} : {message}"
@@ -3973,39 +4000,36 @@ def run_rcommand(cmd, message="", host="", usr="", key="", verbose=False, max_at
     echo_action(message)
     attempts = 0
     while attempts < max_attempts:
-        result = echo_cmd(cmd, echo=verbose, host=host, usr=usr, key=key)
-        if result == 0:
+        result = echo_rcmd(cmd, echo=echo, host=host, usr=usr, key=key, capture_output=True)
+        if result.returncode == 0:
             break
-        attempts = attempts + 1
+        attempts += 1
         time.sleep(5) 
-    
-    status = "ok" if result == 0 else "fail"
+    #if os.getenv("pgeDebug", ""):
+    print (result.stdout) 
+    status = "ok" if result.returncode == 0 else "fail"
     echo_action(message, status)
+
     return result
 
 def wait_with_dots(message, duration=5):
-    #print(message)
     for _ in tqdm(range(duration), desc="Progress", ncols=100):
         time.sleep(1)
 
-bold_start = "\033[1m"
-bold_end = "\033[0m"
-
 def echo_action(action, status=None, e=False):
-
     now = datetime.now()
     t = now.strftime('%B %d, %Y, %H:%M:%S')
 
     if status is None:
-        sys.stdout.write(f"{t}: {action}... ")
+        sys.stdout.write(f"{t}: {action.ljust(75)}")
         sys.stdout.flush()
     else:
         sys.stdout.write("\r")
         if status.lower() == "ok":
-            sys.stdout.write(f"{t}: {action}... [OK]\n")
+            sys.stdout.write(f"{t}: {action.ljust(75)}[OK]\n")
         else:
-            sys.stdout.write(f"{t}: {action}... [Failed]\n")
-            if e == True:
+            sys.stdout.write(f"{t}: {action.ljust(75)}[Failed]\n")
+            if e:
                 exit(1)
         sys.stdout.flush()
 
@@ -4013,13 +4037,14 @@ def echo_message(msg, bold=False, level="info"):
     now = datetime.now()
     t = now.strftime('%B %d, %Y, %H:%M:%S')
 
-    if bold == True:
+    if bold:
         message(t + ": " + bold_start + msg + bold_end, level)
     else:
-        message(t + ": " + msg,level)
+        message(t + ": " + msg, level)
 
     if level == "error":
         exit(1)
+
 
 def echo_node(node):
     max_key_length = max(len(key) for key in node.keys())

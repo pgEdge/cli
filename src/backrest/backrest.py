@@ -3,17 +3,14 @@ import subprocess
 import os
 import fire
 import util
-import time
 import utilx
 import json
 import sys
 from datetime import datetime
 from tabulate import tabulate
 
-thisDir = os.path.dirname(os.path.realpath(__file__))
-
 def pgV():
-    """Return the first found among supported PostgreSQL versions."""
+    """Return the first found PostgreSQL version (pg14, pg15, or pg16)."""
     pg_versions = ["pg14", "pg15", "pg16"]
     for pg_version in pg_versions:
         if os.path.isdir(pg_version):
@@ -26,178 +23,149 @@ def osSys(p_input, p_display=True):
         util.message("# " + p_input)
     return os.system(p_input)
 
-def fetch_backup_config():
-    """Fetch and return the pgbackrest configuration from system settings."""
-    config = {
-        "main": {},
-        "global": {},
-        "stanza": {}
-    }
-
-    main_params = ["restore_path", "backup-type", "stanza_count"]
-    global_params = [
-        "repo1-retention-full", "repo1-retention-full-type", "repo1-path", "repo1-host-user", "repo1-host",
-        "repo1-cipher-type", "repo1-cipher-pass", "repo1-s3-bucket", "repo1-s3-key-secret", "repo1-s3-key",
-        "repo1-s3-region", "repo1-s3-endpoint", "log-level-console", "repo1-type",
-        "process-max", "compress-level"
+def fetch_config():
+    """Fetch and return the configuration from system settings."""
+    config = {}
+    params = [
+        "stanza","restore_path", "backup-type", "repo1-retention-full", 
+        "repo1-retention-full-type", "repo1-path", "repo1-host-user", 
+        "repo1-host", "repo1-cipher-type", "log-level-console", 
+        "repo1-type", "process-max", "compress-level", "pg1-path", 
+        "pg1-user", "pg1-database", "db-socket-path", "pg1-port", 
+        "pg1-host"
     ]
-    stanza_params = [
-        "pg1-path", "pg1-user", "pg1-database", "db-socket-path", "pg1-port", "pg1-host"
-    ]
-
-    # Fetch main and global parameters
-    for param in main_params:
-        config["main"][param] = util.get_value("BACKUP", param)
-    for param in global_params:
-        config["global"][param] = util.get_value("BACKUP", param)
-
-    # Determine the number of stanzas and fetch their specific parameters
-    stanza_count = int(config["main"].get("stanza_count", 1))
-    for i in range(stanza_count):
-        stanza_name = util.get_value("BACKUP", f"stanza{i}")
-        config["stanza"][stanza_name] = {}
-        for param in stanza_params:
-            indexed_param = f"{param}{i}"
-            config["stanza"][stanza_name][param] = util.get_value("BACKUP", indexed_param)
-
+    for param in params:
+        config[param] = util.get_value("BACKUP", param)
     return config
 
 def show_config():
-    """Display the current configuration in a readable format."""
-    config = fetch_backup_config()  # Fetches the full configuration from wherever it's stored
-    max_key_length = max(max(len(key) for key in section) for section in config.values() if section)
-
-    # Print section with adequate formatting based on the maximum key length
+    """Display the current configuration."""
+    config = fetch_config()
+    max_key_length = max(len(key) for key in config)
     print("#" * (max_key_length + 40))
-
-    main  = config["main"]
-    print(f"[main]")
-    for key, value in main.items():
+    for key, value in config.items():
         print(f"{key.ljust(max_key_length + 1)}= {value}")
-
-    glob = config["global"]
-    print(f"[global]")
-    for key, value in glob.items():
-        print(f"{key.ljust(max_key_length + 1)}= {value}")
-
-    stanza_count = int(config["main"].get("stanza_count", 1))
-    for i in range(stanza_count):
-        stanza_name = util.get_value("BACKUP", f"stanza{i}")
-        print(f"[{stanza_name}]")
-        for key, value in config["stanza"][stanza_name].items():
-            clean_key = key.replace(str(i), '') 
-            print(f"{clean_key.ljust(max_key_length + 1)}= {value}")
-    
     print("#" * (max_key_length + 40))
-
-
-def save_config(filename="pgbackrest.conf"):
-    """Save the current pgbackrest configuration to a file in standard format."""
-    config = fetch_backup_config()
-    lines = []
-
-    # Write global settings
-    if config["global"]:
-        lines.append("[global]")
-        for key, value in config["global"].items():
-            if key == "compress-level":
-                continue  # Handle this key separately in its own section
-            if value != " ":
-                lines.append(f"{key} = {value}")
-        lines.append("")  # Add a newline for separation
-
-        # Handle global:archive-push specifically if needed
-        if "compress-level" in config["global"]:
-            lines.append("[global:archive-push]")
-            lines.append(f"compress-level = {config['global']['compress-level']}")
-            lines.append("")  # Add a newline for separation
-
-    # Write stanza sections
-    stanza_count = int(config["main"].get("stanza_count", 1))
-    for i in range(stanza_count):
-        stanza_name = util.get_value("BACKUP", f"stanza{i}")
-        if stanza_name in config["stanza"]:
-            lines.append(f"[{stanza_name}]")
-            for key, value in config["stanza"][stanza_name].items():
-                clean_key = key.replace(str(i), '')  # Remove the index from key names
-                if value != " ":
-                    lines.append(f"{clean_key} = {value}")
-            lines.append("")  # Add a newline for separation
-
-    # Write the configuration to file
-    with open(f"{thisDir}/{filename}", "w") as f:
-        f.write("\n".join(lines))
-    util.message(f"Configuration saved to {thisDir}/{filename}.")
-    osSys(f"sudo cp {thisDir}/{filename} /etc/pgbackrest/")
-
-    return filename
 
 def backup(stanza, type="full", verbose=True):
-    """Perform a backup of a database cluster.
-
-    Args:
-        stanza (str): The name of the stanza to perform the backup on.
-        type (str): The type of backup to perform. Defaults to "full".
-                    Allowed types are "full", "diff", and "incr".
-    """
-    config = fetch_backup_config()
+    """Perform a backup of a database cluster."""
+    config = fetch_config()
     valid_types = ["full", "diff", "incr"]
+
+    # Check if backup type is valid
     if type not in valid_types:
-        utilx.echo_message(f"Error: '{type}' is not a valid backup type.\n allowed types are: {', '.join(valid_types)}.", level = "error")
+        utilx.echo_message(
+            f"Error: '{type}' is not valid.\nAllowed types: "
+            f"{', '.join(valid_types)}.",
+            level="error"
+        )
         return
 
-    command = ["pgbackrest", "--stanza", stanza, "--type", type, "backup"]
+    # Mandatory configuration keys
+    mandatory_keys = ['repo1-path', 'pg1-path']
 
-    result = utilx.run_command(command, capture_output = not verbose)
-    if result["success"] == False:
-        utilx.echo_message(f"Error: failed to take {type} backup", level = "error")
+    # Check if mandatory keys are present in config
+    for key in mandatory_keys:
+        if key not in config or not config[key]:
+            utilx.echo_message(
+                f"Error: Missing mandatory config value: {key}",
+                level="error"
+            )
+            return
+
+    command = [
+        "pgbackrest", 
+        "--stanza", stanza, 
+        "--type", type,
+        "--repo1-type", config['repo1-type'],
+        "--pg1-path", config['pg1-path'], 
+        "--repo1-path", config['repo1-path'],
+        "--db-socket-path", config['db-socket-path'], 
+        "backup"
+    ]
+
+    # Optional configuration keys
+    optional_keys = [
+        'repo1-retention-full', 'repo1-retention-full-type', 
+        'repo1-cipher-type', 'log-level-console', 'process-max', 'compress-level'
+    ]
+
+    # Add optional keys to the command if they are available in config
+    for key in optional_keys:
+        if key in config and config[key]:
+            command.extend([f"--{key.replace('_', '-')}", config[key]])
+
+    result = utilx.run_command(command, capture_output=not verbose)
+    if not result["success"]:
+        utilx.echo_message(
+            f"Error: failed to take {type} backup",
+            level="error"
+        )
 
 def restore(stanza, data_dir=None, backup_label=None, recovery_target_time=None, verbose=True):
     """Restore a database cluster to a specified state."""
-    
-    config = fetch_backup_config()
-    if data_dir == None:
-        data_dir = os.path.join(config["main"]["restore_path"], stanza, "data")
+    config = fetch_config()
+
+    # Mandatory configuration keys
+    mandatory_keys = ['restore_path', 'pg1-path', 'repo1-type']
+
+    # Check if mandatory keys are present in config
+    for key in mandatory_keys:
+        if key not in config or not config[key]:
+            utilx.echo_message(f"Error: Missing mandatory config value: {key}", level="error")
+            return
+
+    if data_dir is None:
+        data_dir = os.path.join(config["restore_path"], stanza, "data")
 
     status = utilx.check_directory_status(data_dir)
     if status['exists'] and not status['writable']:
         util.message(status['message'])
         return
 
-    command = ["pgbackrest", "--stanza", stanza, "restore", "--pg1-path", data_dir]
+    command = [
+        "pgbackrest", "--stanza", stanza, "restore", 
+        "--pg1-path", data_dir
+    ]
 
     if status['exists']:
         command.append("--delta")
-    
     if backup_label:
         command.append(f"--set={backup_label}")
-
     if recovery_target_time:
-        command.append("--type=time")
-        command.append(f"--target={recovery_target_time}")
+        command.extend(["--type=time", f"--target={recovery_target_time}"])
 
-    result = utilx.run_command(command, capture_output = not verbose)
-    if result["success"] == False:
-        utilx.echo_message(f"Error: failed to restore backup", level = "error")
+    # Optional configuration keys
+    optional_keys = [
+        'repo1-cipher-type', 
+        'log-level-console', 'process-max', 'repo1-type'
+    ]
+
+    # Add optional keys to the command if they are available in config
+    for key in optional_keys:
+        if key in config and config[key]:
+            command.extend([f"--{key.replace('_', '-')}", config[key]])
+
+    result = utilx.run_command(command, capture_output=not verbose)
+    if not result["success"]:
+        utilx.echo_message(f"Error: failed to restore backup", level="error")
+        return False
+
     return True
 
 def pitr(stanza, data_dir=None, recovery_target_time=None, verbose=True):
     """Perform point-in-time recovery on a database cluster."""
-    if restore(stanza, data_dir=None, backup_label = None, recovery_target_time=recovery_target_time, verbose=verbose) == True:
+    if restore(stanza, data_dir, None, recovery_target_time, verbose):
         _configure_pitr(stanza, data_dir, recovery_target_time)
 
 def _configure_pitr(stanza, pg_data_dir=None, recovery_target_time=None):
     """Configure PostgreSQL for point-in-time recovery."""
-    config = fetch_backup_config()
-    if pg_data_dir == None:
-        pg_data_dir = os.path.join(config["main"]["restore_path"], stanza, "data")
-
+    config = fetch_config()
+    if pg_data_dir is None:
+        pg_data_dir = os.path.join(config["restore_path"], stanza, "data")
     if recovery_target_time is None:
         recovery_target_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-
     config_file = os.path.join(pg_data_dir, "postgresql.conf")
-
-    # Configuration changes for PITR
     changes = {
         "port": "5433",
         "log_directory": os.path.join(pg_data_dir, "log"),
@@ -207,7 +175,6 @@ def _configure_pitr(stanza, pg_data_dir=None, recovery_target_time=None):
         "recovery_target_time": recovery_target_time,
         "recovery_target_action": "promote"
     }
-
     for key, value in changes.items():
         change_pgconf_keyval(config_file, key, value)
 
@@ -227,128 +194,190 @@ def change_pgconf_keyval(config_path, key, value):
             file.write(f"{key} = '{value}'\n")
 
 def create_replica(stanza, data_dir=None, backup_label=None, verbose=True):
-    """Create a replica by restoring from a backup and configure it as a standby server."""
-    if restore(stanza, data_dir, backup_label, recovery_target_time=None, verbose=verbose) == True:
-        _configure_replica(stanza, data_dir, verbose)
+    """Create a replica by restoring from a backup."""
+    if restore(stanza, data_dir, backup_label, verbose=verbose):
+        configure_replica_local(stanza, data_dir)
 
-def _configure_replica(stanza, pg_data_dir=None, verbose=True):
-    """Configure PostgreSQL to run as a replica (standby server)."""
-    config = fetch_backup_config()
-
-    if pg_data_dir == None:
-        pg_data_dir = os.path.join(config["main"]["restore_path"], stanza, "data")
-    
-    conf_file = os.path.join(pg_data_dir, "postgresql.conf")
-    standby_signal = os.path.join(pg_data_dir, "standby.signal")
-
-    # Connection info for the primary server should be configured prior to calling this function
-    primary_conninfo = f"host={config['global']['repo1-host']} port={config['stanza'][stanza]['pg1-port']} user={config['stanza'][stanza]['pg1-user']}"
-   
-    # Configure postgresql.conf for replica
+def configure_replica(stanza, pg1_path, pg1_host, pg1_port, pg1_user):
+    """Configure a PostgreSQL replica."""
+    conf_file = os.path.join(pg1_path, "postgresql.conf")
+    standby_signal = os.path.join(pg1_path, "standby.signal")
+    primary_conninfo = f"host={pg1_host} port={pg1_port} user={pg1_user}"
     changes = {
         "hot_standby": "on",
         "primary_conninfo": primary_conninfo,
-        "port": f"{config['stanza'][stanza]['pg1-port']}",
-        "log_directory": os.path.join(pg_data_dir, "log"),
+        "port": pg1_port,
+        "log_directory": os.path.join(pg1_path, "log"),
         "archive_command": "cd .",
         "archive_mode": "on"
     }
-
     for key, value in changes.items():
         change_pgconf_keyval(conf_file, key, value)
-    
-    # Create an empty standby.signal file to trigger standby mode
     open(standby_signal, 'a').close()
+
+def configure_replica_local(stanza):
+    """Configure a local PostgreSQL replica."""
+    config = fetch_config()
+    pg1_path = os.path.join(config["restore_path"], stanza, "data")
+    pg1_host = config['repo1-host']
+    pg1_port = config['pg1-port']
+    pg1_user = config['pg1-user']
+    configure_replica(stanza, pg1_path, pg1_host, pg1_port, pg1_user)
 
 def list_backups():
     """List all available backups using pgBackRest."""
-    config = fetch_backup_config()
+    config = fetch_config()
+
+    # Mandatory configuration keys
+    mandatory_keys = ['stanza', 'repo1-path']
+
+    # Check if mandatory keys are present in config
+    for key in mandatory_keys:
+        if key not in config or not config[key]:
+            utilx.echo_message(f"Error: Missing mandatory config value: {key}", level="error")
+            return
+
+    command = ["pgbackrest", "info", "--output=json", "--stanza", config['stanza']]
+
+    # Optional configuration keys
+    optional_keys = [
+        'repo1-path', 'repo1-type', 
+        'repo1-cipher-type', 'log-level-console'
+    ]
+
+    # Add optional keys to the command if they are available in config
+    for key in optional_keys:
+        if key in config and config[key]:
+            command.extend([f"--{key.replace('_', '-')}", config[key]])
+    print(command)
+
     try:
-        command = ["pgbackrest", "info", "--output=json"]
         command_output = subprocess.check_output(
-            command,
-            stderr=subprocess.STDOUT,
-            universal_newlines=True
+            command, stderr=subprocess.STDOUT, text=True
         )
         backups_info = json.loads(command_output)
-
         backup_table = []
+
         for stanza_info in backups_info:
             for backup in stanza_info.get('backup', []):
                 backup_details = [
                     stanza_info['name'],
                     backup.get('label', 'N/A'),
-                    datetime.utcfromtimestamp(backup['timestamp']['start']).strftime('%Y-%m-%d %H:%M:%S'),
-                    datetime.utcfromtimestamp(backup['timestamp']['stop']).strftime('%Y-%m-%d %H:%M:%S'),
+                    datetime.utcfromtimestamp(
+                        backup['timestamp']['start']
+                    ).strftime('%Y-%m-%d %H:%M:%S'),
+                    datetime.utcfromtimestamp(
+                        backup['timestamp']['stop']
+                    ).strftime('%Y-%m-%d %H:%M:%S'),
                     backup.get('type', 'N/A'),
                     f"{backup.get('info', {}).get('size', 0) / (1024**3):.2f} GB"
                 ]
                 backup_table.append(backup_details)
 
-        headers = ["Stanza Name", "Label", "Start Time", "End Time", "Type", "Size (GB)"]
+        headers = [
+            "Stanza Name", "Label", "Start Time", "End Time", "Type", "Size (GB)"
+        ]
         print(tabulate(backup_table, headers=headers, tablefmt="grid"))
 
     except subprocess.CalledProcessError as e:
         util.message(f"Error executing pgBackRest info command: {e.output}")
 
 def modify_hba_conf():
-  new_rules = [
-      {
-          "type": "host",
-          "database": "replication",
-          "user": "all",
-          "address": "127.0.0.1/0",
-          "method": "trust"
-      }
-  ]
-  util.update_pg_hba_conf(pgV(), new_rules)
+    """Modify pg_hba.conf for replication."""
+    new_rules = [{
+        "type": "host",
+        "database": "replication",
+        "user": "all",
+        "address": "127.0.0.1/0",
+        "method": "trust"
+    }]
+    util.update_pg_hba_conf(pgV(), new_rules)
 
-def modify_postgresql_conf(stanza):
-    """
-    Modify 'postgresql.conf' to integrate with pgbackrest.
-    """
-    aCmd = f"pgbackrest --stanza={stanza} archive-push %p"
+def modify_postgresql_conf(stanza, pg1_path, repo1_path, repo1_type):
+    """Modify 'postgresql.conf' to integrate with pgbackrest."""
+    aCmd = (
+        f"pgbackrest --stanza={stanza} --pg1-path={pg1_path} "
+        f"--repo1-type={repo1_type} --repo1-path={repo1_path} "
+        f"--repo1-cipher-type=aes-256-cbc archive-push %p"
+    )
     util.change_pgconf_keyval(pgV(), "archive_command", aCmd, p_replace=True)
     util.change_pgconf_keyval(pgV(), "archive_mode", "on", p_replace=True)
 
-def run_external_command(*args):
+def run_external_command(command, **kwargs):
     """Execute an external pgBackRest command."""
-
-    command = args
-    result = utilx.run_command(command)
-    if result["success"]:
-        util.message("Command executed successfully.")
-    else:
-        utilx.ereport('Error', 'Command execution failed', detail=result["error"])
-
-def validate_stanza_config(stanza_name, config):
-    """
-    Validate that all required parameters for a stanza are set.
-    """
-    required_params = ["pg1-path", "pg1-user", "pg1-database", "db-socket-path", "pg1-port", "pg1-host"]
-    missing_params = [param for param in required_params if not config["stanza"].get(stanza_name, {}).get(param)]
-    if missing_params:
-        raise ValueError(f"Missing configuration parameters for stanza {stanza_name}: {', '.join(missing_params)}")
-    return True
+    full_command = ["pgbackrest", command]
+    for key, value in kwargs.items():
+        if key and value:
+            if not key.startswith('--'):
+                key = key.replace('_', '-')
+                full_command.append(f"--{key}")
+            else:
+                full_command.append(key)
+            full_command.append(str(value))
+        else:
+            print(f"Invalid key-value pair ignored: key={key}, value={value}")
+    print(f"Full command to be executed: {' '.join(full_command)}")
+    try:
+        result = subprocess.run(full_command, check=True, text=True, capture_output=True)
+        print("Command executed successfully.")
+        print(result.stdout)
+    except subprocess.CalledProcessError as e:
+        print(f"Command execution failed: {e.stderr}")
+    except Exception as e:
+        print(f"Exception occurred during command execution: {str(e)}")
 
 def create_stanza(stanza, verbose=True):
-    """
-    Create the required stanza for pgBackRest and configure PostgreSQL settings after ensuring all values are properly set.
-    """
-    # Fetch the current configuration
-    config = fetch_backup_config()
+    """Create the required stanza for pgBackRest."""
+    config = fetch_config()
 
-    if validate_stanza_config(stanza, config):
-        command = ["pgbackrest", "--stanza", stanza, "stanza-create"]
-        result = utilx.run_command(command, capture_output = not verbose)
-        if result["success"] == False:
-            utilx.echo_message('Error', f'Failed to create or configure stanza', level = "error")
-        modify_postgresql_conf(stanza)
-        modify_hba_conf()
-        command = ["./pgedge", "restart", pgV()]
-        result = utilx.run_command(command, capture_output = not verbose)
-        if result["success"] == False:
-            utilx.echo_message(f"Error: failed to restart postgresql cluster", level = "error")
+    # Mandatory configuration keys
+    mandatory_keys = ['pg1-path', 'repo1-path', 'repo1-type']
+
+    # Check if mandatory keys are present in config
+    for key in mandatory_keys:
+        if key not in config or not config[key]:
+            utilx.echo_message(f"Error: Missing mandatory config value: {key}", level="error")
+            return
+
+    command = [
+        "pgbackrest", 
+        "--stanza", stanza, 
+        "--pg1-path", config['pg1-path'], 
+        "--repo1-path", config['repo1-path'],
+        "--repo1-type", config['repo1-type'], 
+        "--db-socket-path", config['db-socket-path'], 
+        "stanza-create"
+    ]
+
+    # Optional configuration keys
+    optional_keys = [
+        'repo1-cipher-type', 
+        'log-level-console'
+    ]
+
+    # Add optional keys to the command if they are available in config
+    for key in optional_keys:
+        if key in config and config[key]:
+            command.extend([f"--{key.replace('_', '-')}", config[key]])
+
+    result = utilx.run_command(command, capture_output=not verbose)
+    if not result["success"]:
+        utilx.echo_message(
+            'Error', 'Failed to create or configure stanza', level="error"
+        )
+        return
+
+    modify_postgresql_conf(
+        stanza, config['pg1-path'], config['repo1-path'], config['repo1-type']
+    )
+    modify_hba_conf()
+
+    command = ["./pgedge", "restart", pgV()]
+    result = utilx.run_command(command, capture_output=not verbose)
+    if not result["success"]:
+        utilx.echo_message(
+            f"Error: failed to restart postgresql cluster", level="error"
+        )
 
 if __name__ == "__main__":
     fire.Fire({
@@ -357,9 +386,11 @@ if __name__ == "__main__":
         "pitr": pitr,
         "create-stanza": create_stanza,
         "create-replica": create_replica,
+        "configure_replica": configure_replica,
         "list-backups": list_backups,
         "show-config": show_config,
-        "save-config": save_config,
+        "set_hbaconf": modify_hba_conf,
+        "set_postgresqlconf": modify_postgresql_conf,
         "command": run_external_command,
     })
 

@@ -85,45 +85,6 @@ def configure_backup_settings():
                 else:
                     util.set_value("BACKUP", key, sub_params)
 
-def save_config(filename="pgbackrest.conf"):
-    """Save the current pgbackrest configuration to a file in standard format."""
-    config = fetch_backup_config()
-    lines = []
-
-    # Write global settings
-    if config["global"]:
-        lines.append("[global]")
-        for key, value in config["global"].items():
-            if key == "compress-level":
-                continue  # Handle this key separately in its own section
-            if value != " ":
-                lines.append(f"{key} = {value}")
-        lines.append("")  # Add a newline for separation
-
-        # Handle global:archive-push specifically if needed
-        if "compress-level" in config["global"]:
-            lines.append("[global:archive-push]")
-            lines.append(f"compress-level = {config['global']['compress-level']}")
-            lines.append("")  # Add a newline for separation
-
-    # Write stanza sections
-    stanza_count = int(config["main"].get("stanza_count", 1))
-    for i in range(stanza_count):
-        stanza_name = util.get_value("BACKUP", f"stanza{i}")
-        if stanza_name in config["stanza"]:
-            lines.append(f"[{stanza_name}]")
-            for key, value in config["stanza"][stanza_name].items():
-                clean_key = key.replace(str(i), '')  # Remove the index from key names
-                if value != " ":
-                    lines.append(f"{clean_key} = {value}")
-            lines.append("")  # Add a newline for separation
-
-    # Write the configuration to file
-    with open(f"{thisDir}/{filename}", "w") as f:
-        f.write("\n".join(lines))
-    osSys(f"sudo cp {thisDir}/{filename} /etc/pgbackrest/")
-    return filename
-
 def setup_pgbackrest_links():
     """
     Set up symbolic link for pgbackrest and create necessary directories.
@@ -133,54 +94,10 @@ def setup_pgbackrest_links():
     osSys("sudo chmod 755 /usr/bin/pgbackrest")
 
     osSys("sudo mkdir -p -m 770 /var/log/pgbackrest")
-
-def setup_pgbackrest_conf():
-    """
-    Create pgbackrest configuration file and directories.
-    """
-    config = fetch_backup_config()
-    usrUsr = osUsr
-    parentDir = os.path.dirname(thisDir)
+    osSys("sudo chown pgedge -R /var/log/pgbackrest")
     
-    dataDir = f"{parentDir}/data/{pgV()}"
-    restoreDir = f"{parentDir}/restore"
-
-    osSys("sudo mkdir -p /etc/pgbackrest /etc/pgbackrest/conf.d")
-    save_config()
-    osSys(f"sudo chown {usrUsr} /var/log/pgbackrest")
-    osSys("sudo chmod 640 /etc/pgbackrest/pgbackrest.conf")
-    osSys(f"sudo chown {usrUsr} /etc/pgbackrest/pgbackrest.conf")
-
-    osSys("sudo mkdir -p /var/lib/pgbackrest")
-    osSys("sudo chmod 750 /var/lib/pgbackrest")
-    osSys(f"sudo chown -R {usrUsr}:{usrUsr} /var/lib/pgbackrest")
-
-    conf_file = thisDir + "/pgbackrest.conf"
-    util.replace("pgXX", pgV(), conf_file, True)
-    util.replace("pg1-path=xx", "pg1-path=" + dataDir, conf_file, True)
-    util.replace("pg1-user=xx", "pg1-user=" + usrUsr, conf_file, True)
-    util.replace("pg1-database=xx", "pg1-database=" + "postgres", conf_file, True)
-    
-    util.set_value("BACKUP", "restore_path", restoreDir)
-    
-    util.set_value("BACKUP", "repo1-host", " ")
-    util.set_value("BACKUP", "repo1-host-user", usrUsr)
-    
-    util.set_value("BACKUP", "stanza0", pgV())
-    util.set_value("BACKUP", "pg1-path0", dataDir)
-    util.set_value("BACKUP", "pg1-user0", usrUsr)
-    util.set_value("BACKUP", "pg1-database0", "postgres")
-
-def generate_cipher_pass():
-    """
-    Generate and replace cipher pass in pgbackrest.conf.
-    """
-    conf_file = os.path.join(thisDir, "pgbackrest.conf")
-    cmd = "dd if=/dev/urandom bs=256 count=1 2> /dev/null | LC_ALL=C tr -dc 'A-Za-z0-9' | head -c32"
-    bCipher = subprocess.check_output(cmd, shell=True)
-    sCipher = bCipher.decode("ascii")
-    util.replace("repo1-cipher-pass=xx", f"repo1-cipher-pass={sCipher}", conf_file, True)
-    util.set_value("BACKUP", "repo1-cipher-pass", sCipher)
+    osSys("sudo mkdir -p -m 770 /var/lib/pgbackrest")
+    osSys("sudo chown pgedge -R /var/lib/pgbackrest")
 
 def modify_hba_conf():
   new_rules = [
@@ -287,14 +204,12 @@ def print_header(header):
 
 def main():
     stanza = pgV()
-    if os.path.isdir(f"/var/lib/pgbackrest/{stanza}/"):
-        utilx.ereport("WARNING", "/var/lib/pgbackrest directory already exists")
+    if os.path.isdir(f"/var/lib/pgbackrest/"):
+        util.message("/var/lib/pgbackrest directory already exists")
     
     print_header("Configuring pgbackrest")
     configure_backup_settings()
-    generate_cipher_pass()
     setup_pgbackrest_links()
-    setup_pgbackrest_conf()
     usrUsr = f"{util.get_user()}:{util.get_user()}"
     osSys("pgbackrest version")
 
