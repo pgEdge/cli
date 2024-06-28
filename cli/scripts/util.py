@@ -98,11 +98,11 @@ def autostart_verify_prereqs():
     return
 
 
-def autostart_config(pg_major):
-    message(f"util.autostart_config(pg_major={pg_major})", "debug")
+def autostart_config(pg):
+    message(f"util.autostart_config(pg={pg})", "debug")
 
-    osSys(f"./{MY_CMD} init pg{pg_major} --svcuser={get_user()}")
-    osSys(f"./{MY_CMD} config pg{pg_major} --autostart=on")
+    osSys(f"./{MY_CMD} init {pg} --svcuser={get_user()}")
+    osSys(f"./{MY_CMD} config {pg} --autostart=on")
 
     return
 

@@ -191,14 +191,15 @@ def setup_pgedge(User=None, Passwd=None, dbName=None, port=None, pg_ver=None, sp
     if dbName is None:
         pass
     else:
+        pg_maj = f"pg{pg_major}"
         if autostart is True:
-            util.autostart_config(pg_major)
+            util.autostart_config(pg_maj)
         else:
-            osSys(f"{ctl} init pg{pg_major}")
+            osSys(f"{ctl} init {pg_maj}")
 
-        osSys(f"{ctl} config pg{pg_major} --port={port}")
+        osSys(f"{ctl} config {pg_maj} --port={port}")
 
-        osSys(f"{ctl} start pg{pg_major}")
+        osSys(f"{ctl} start {pg_maj}")
         time.sleep(pause)
 
         db.create(dbName, User, Passwd, pg_major, spock_ver)
