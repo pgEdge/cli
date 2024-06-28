@@ -1,7 +1,6 @@
-from __future__ import print_function, division
 
 ####################################################################
-######          Copyright (c)  2022-2023 PGEDGE             ##########
+######          Copyright (c)  2022-2024 PGEDGE             ##########
 ####################################################################
 
 import argparse, sys, os, tempfile, json, subprocess, getpass

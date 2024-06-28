@@ -19,6 +19,8 @@ if isFIPS == "True" or rc == 1:
 if isAutoStart == "True":
     util.autostart_verify_prereqs()
     util.autostart_config("pgXX")
+    os.environ["isSilent"] = "True"
+    os.environ["isSTART"] = "True"
     isSTART = "True"
 
 if isSTART == "True":
