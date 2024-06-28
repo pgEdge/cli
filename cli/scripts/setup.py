@@ -35,14 +35,11 @@ def check_pre_reqs(User, Passwd, db, port, pg_major, pg_minor, spock, autostart,
     platf = util.get_platform()
 
     if platf == "Linux":
-        util.message("  Verify Linux supported glibc version")
         if util.get_glibc_version() < "2.28":
             util.exit_message("Linux has unsupported (older) version of glibc")
 
         if autostart:
-            util.message("  Verify SELinux is not active")
-            if util.is_selinux_active():
-               util.exit_message("SELinux must not be active for --autostart True mode")
+            util.autostart_verify_prereqs()
     
     util.message("  Verify Python 3.9+")
     p3_minor_ver = util.get_python_minor_version()
@@ -59,12 +56,10 @@ def check_pre_reqs(User, Passwd, db, port, pg_major, pg_minor, spock, autostart,
 
     util.message(f"    - Using port {port}")
 
-    util.message(f"  Verify pg major version {pg_major}")
     valid_pg = ["14", "15", "16", "17"]
     if pg_major not in valid_pg:
         util.exit_message(f"pg {pg_major} must be in {valid_pg}")
     if pg_minor:
-       util.message(f"  Verify pg minor version {pg_minor}")
        num_pg_mins = util.num_pg_minors(pg_minor, True)
        if num_pg_mins == 0:
            util.exit_message(f"No available version of pg like '{pg_minor}*'")
@@ -197,9 +192,7 @@ def setup_pgedge(User=None, Passwd=None, dbName=None, port=None, pg_ver=None, sp
         pass
     else:
         if autostart is True:
-            util.message("\n## init & config autostart  ###############")
-            osSys(f"{ctl} init pg{pg_major} --svcuser={util.get_user()}")
-            osSys(f"{ctl} config pg{pg_major} --autostart=on")
+            util.autostart_config(pg_major)
         else:
             osSys(f"{ctl} init pg{pg_major}")
 
@@ -234,6 +227,7 @@ def setup_pgedge(User=None, Passwd=None, dbName=None, port=None, pg_ver=None, sp
             for ext in ext_l:
                 osSys(f"{ctl} install {ext}-pg{pg_major} --disabled --silent",
                            fatal_exit=False, is_silent=True)
+
 
 
 if __name__ == "__main__":

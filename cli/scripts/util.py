@@ -88,6 +88,25 @@ COMMAND = 15
 DEBUG = 10
 DEBUG2 = 9
 
+
+def autostart_verify_prereqs():
+    message("util.autostart_verify_prereqs()", "debug")
+
+    if is_selinux_active():
+        exit_message("SELinux must not be active for --autostart True mode")
+
+    return
+
+
+def autostart_config(pg_major):
+    message(f"util.autostart_config(pg_major={pg_major})", "debug")
+
+    osSys(f"./{MY_CMD} init pg{pg_major} --svcuser={get_user()}")
+    osSys(f"./{MY_CMD} config pg{pg_major} --autostart=on")
+
+    return
+
+
 def validate_checksum(p_file_name, p_checksum_file_name):
      checksum_from_file = get_file_checksum(p_file_name)
      checksum_from_remote_file = read_file_string(p_checksum_file_name).rstrip()
@@ -100,11 +119,13 @@ def validate_checksum(p_file_name, p_checksum_file_name):
      print_error("SHA512 CheckSum Mismatch")
      return check_sum_match
 
+
 def osSys(p_input, p_display=False):
     if p_display:
         message("# " + p_input)
     rc = os.system(p_input)
     return rc
+
 
 def retrieve_remote():
     conf_dir = "data" + os.sep + "conf"
@@ -3831,11 +3852,6 @@ def check_comp(p_comp, p_port, p_kount, check_status=False):
 def run_script(componentName, scriptName, scriptParm):
     """ run external scripts (or metadata equivalents for extensions) """
     message(f"util.run_script({componentName}, {scriptName}, {scriptParm})", "debug")
-
-    installed_comp_list = meta.get_component_list()
-    message(f"   installed_comp_list = {installed_comp_list}", "debug")
-    ## if componentName not in installed_comp_list:
-    ##    return  
 
     componentDir = componentName
     is_ext = meta.is_extension(componentName)
