@@ -1,6 +1,4 @@
-FROM rockylinux:9
-
-LABEL maintainer="CLI Team"
+FROM rockylinux:8
 
 SHELL ["/bin/bash", "-c"]
 
@@ -12,7 +10,7 @@ RUN dnf update -y \
     && rm -rf /var/cache/yum
 
 RUN useradd build  -U -m -d /home/build  \
-    && echo "build  ALL=(ALL)       NOPASSWD: ALL" >> /etc/sudoers
+    && echo "build  ALL=(ALL)  NOPASSWD: ALL" >> /etc/sudoers
 
 USER build
 WORKDIR /home/build
