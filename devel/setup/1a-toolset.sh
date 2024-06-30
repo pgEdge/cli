@@ -7,7 +7,6 @@ py3M=`echo $py3V | awk '{print $2}' | sed -r 's/([^.]+.[^.]*).*/\1/'`
 echo "# py3V = $py3V"
 echo "# py3M = $py3M"
 
-##yum="sudo dnf --skip-broken -y install"
 yum="sudo dnf -y install"
 PLATFORM=`cat /etc/os-release | grep PLATFORM_ID | cut -d: -f2 | tr -d '\"'`
 echo "## $PLATFORM ##"
@@ -46,12 +45,14 @@ if [ "$PLATFORM" == "el8" ] || [ "$PLATFORM" == "el9" ]; then
   $yum unixODBC-devel protobuf-c-devel libyaml-devel
   $yum lz4-devel libzstd-devel krb5-devel
 
-  sudo $yum geos-devel proj-devel gdal
+  $yum geos-devel proj-devel gdal
 
-  sudo $yum sqlite-devel
+  $yum sqlite-devel
 
-  sudo $yum rpm-build squashfs-tools
+  $yum rpm-build squashfs-tools
   gem install fpm
+
+  $yum podman podman-docker podman-compose
 
   rm -f install-rust.sh
   curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs > install-rust.sh 
@@ -59,12 +60,10 @@ if [ "$PLATFORM" == "el8" ] || [ "$PLATFORM" == "el9" ]; then
   ./install-rust.sh -y
   rm install-rust.sh
 
-  exit 0
 fi
 
 
-## basic setup for debian based distro's
-apt --version
+apt --version > /dev/null 2>&1
 rc=$?
 if [ $rc == "0" ]; then
   apt="sudo apt-get install -y"
@@ -72,9 +71,6 @@ if [ $rc == "0" ]; then
 
   $apt ruby squashfs-tools
   gem install fpm
-else
-  echo "ERROR: Platform not supported"
-  exit 1
 fi
  
 cd ~
