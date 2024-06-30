@@ -12,9 +12,10 @@ PLATFORM=`cat /etc/os-release | grep PLATFORM_ID | cut -d: -f2 | tr -d '\"'`
 echo "## $PLATFORM ##"
 
 if [ "$PLATFORM" == "el8" ]; then
-  $yum -y python39 python39-devel python39-pip gcc-toolset-11
+  sudo yum remove -y python3
+  $yum python39 python39-devel python39-pip gcc-toolset-11
   sudo dnf config-manager --set-enabled powertools
-  sudo yum install @ruby:3.0
+  $yum @ruby:3.0
 fi
 
 if [ "$PLATFORM" == "el9" ]; then
