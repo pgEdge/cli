@@ -22,3 +22,5 @@ Check out our [commands](https://github.com/pgEdge/pgedge/tree/main?tab=readme-o
 
 4.) configure your ~/.aws/config credentials
 
+5.) run `1d-pull-IN.sh` to retrieve REPO files
+

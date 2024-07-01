@@ -1,11 +1,6 @@
 
 echo " "
 echo "# run 1a-toolset"
-py3V=`python3 --version`
-py3M=`echo $py3V | awk '{print $2}' | sed -r 's/([^.]+.[^.]*).*/\1/'`
-
-echo "# py3V = $py3V"
-echo "# py3M = $py3M"
 
 yum="sudo dnf -y install"
 PLATFORM=`cat /etc/os-release | grep PLATFORM_ID | cut -d: -f2 | tr -d '\"'`
@@ -13,7 +8,7 @@ echo "## $PLATFORM ##"
 
 if [ "$PLATFORM" == "el8" ]; then
   sudo yum remove -y python3
-  $yum python39 python39-devel python39-pip gcc-toolset-11
+  $yum python39 python39-devel python39-pip gcc-toolset-12
   sudo dnf config-manager --set-enabled powertools
   $yum @ruby:3.0
 fi
@@ -73,6 +68,8 @@ if [ $rc == "0" ]; then
   $apt ruby squashfs-tools
   gem install fpm
 fi
+
+sudo update-alternatives --set python3 /usr/bin/python3.9
  
 cd ~
 python3 -m venv venv
