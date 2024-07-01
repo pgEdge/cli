@@ -343,7 +343,6 @@ initPG () {
   zipDir "$pgComp" "$pgV" "$outPlat" "Enabled"
 
   if [ "$pgM" \> "13" ] && [ "$pgM" \< "18" ]; then
-    initC "spock40-pg$pgM"    "spock40"    "$spock40V"   "$outPlat" "postgres/spock40"   "" "" "nil"
     initC "lolor-pg$pgM"      "lolor"      "$lolorV"     "$outPlat" "postgres/lolor"     "" "" "nil"
     initC "snowflake-pg$pgM"  "snowflake"  "$snwflkV"    "$outPlat" "postgres/snowflake" "" "" "nil"
   fi
@@ -352,7 +351,11 @@ initPG () {
     initC "spock33-pg$pgM"    "spock33"    "$spock33V"   "$outPlat" "postgres/spock33"   "" "" "nil"
   fi
 
-  ## bug out on OSX
+  if [ "$pgM" \> "15" ] && [ "$pgM" \< "18" ]; then
+    initC "spock40-pg$pgM"    "spock40"    "$spock40V"   "$outPlat" "postgres/spock40"   "" "" "nil"
+  fi
+
+  ## exit out on OSX
   if [ "$isEL" == "False" ]; then
     return
   fi
