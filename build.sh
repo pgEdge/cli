@@ -209,11 +209,6 @@ zipDir () {
     if [ "$osName" == "Linux" ]; then
       options="--owner=0 --group=0"
     fi
-    ## if [ "$pComponent" == "hub" ]; then
-    ##   zip_bz2=$baseName.tar.bz2
-    ##   checkCmd "tar $options -cjf $zip_bz2 $pComponent"
-    ##   writeFileChecksum $zip_bz2
-    ## fi
     checkCmd "tar $options -czf $myTarball $pComponent"
     writeFileChecksum $myTarball
   fi
@@ -370,7 +365,7 @@ initPG () {
   initC "patroni"      "patroni"      "$patroniV"  ""         "patroni"           "" "" "nil"
   initC "firewalld"    "firewalld"    "$firwldV"   ""         "firewalld"         "" "" "nil"
 
-  if [ "$isEL9" == "True" ]; then
+  ##if [ "$isEL9" == "True" ]; then
 
     if [ "$pgM" == "16" ]; then
       initC "audit-pg$pgM"      "audit"      "$audit16V"   "$outPlat" "postgres/audit"     "" "" "nil"
@@ -408,10 +403,10 @@ initPG () {
 
     initC "prompgexp"    "prompgexp"    "$prompgexpV" "$outPlat" "postgres/prompgexp" "" "" "nil"
 
-    # initC "postgrest"    "postgrest"    "$postgrestV" "$outPlat" "postgres/postgrest" "" "" "nil"
-    # initC "prest"        "prest"        "$prestV"    "$outPlat" "pREST"             "" "" "nil"
-    # initC "pgadmin4"     "pgadmin4"     "$adminV"    ""         "postgres/pgadmin4" "" "" "Y"
-  fi
+    ## initC "postgrest"    "postgrest"    "$postgrestV" "$outPlat" "postgres/postgrest" "" "" "nil"
+    ## initC "prest"        "prest"        "$prestV"    "$outPlat" "pREST"             "" "" "nil"
+    ## initC "pgadmin4"     "pgadmin4"     "$adminV"    ""         "postgres/pgadmin4" "" "" "Y"
+  ##fi
 
   return
 }

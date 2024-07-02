@@ -1,12 +1,12 @@
 #!/bin/bash
 
-isEL8="False"
-if [ -f /etc/os-release ]; then
-  PLATFORM=`cat /etc/os-release | grep PLATFORM_ID | cut -d: -f2 | tr -d '\"'`
-  if [ "$PLATFORM" == "el8" ]; then
-    isEL8="True"
-  fi
-fi
+##isEL8="False"
+##if [ -f /etc/os-release ]; then
+##  PLATFORM=`cat /etc/os-release | grep PLATFORM_ID | cut -d: -f2 | tr -d '\"'`
+##  if [ "$PLATFORM" == "el8" ]; then
+##    isEL8="True"
+##  fi
+##fi
 
 function install_pgedge {
   ./pgedge install $pgV; 
@@ -20,10 +20,6 @@ function install_pgedge {
 ## extensions common to pg15 & pg16
 function test_common_exts {
 
-  if [ "$isEL8" == "True" ]; then
-    return
-  fi
-
   ./pgedge install hypopg-$pgV        -d demo
   ./pgedge install orafce-$pgV        -d demo
   ./pgedge install curl-$pgV          -d demo
@@ -32,9 +28,9 @@ function test_common_exts {
   ./pgedge install postgis-$pgV       -d demo
   ./pgedge install vector-$pgV        -d demo
   ./pgedge install audit-$pgV         -d demo
-  ./pgedge install setuser-$pgV       -d demo
   ./pgedge install hintplan-$pgV      -d demo
   ./pgedge install timescaledb-$pgV   -d demo
+  ./pgedge install setuser-$pgV       -d demo
   ./pgedge install permissions-$pgV   -d demo
 
   ./pgedge install plv8-$pgV          -d demo
@@ -61,12 +57,6 @@ function test15 {
 
   test_common_exts
 
-  #./pgedge install decoderbufs-$pgV   -d demo
-  #./pgedge install mysqlfdw-$pgV      -d demo
-  #./pgedge install mongofdw-$pgV      -d demo
-  #./pgedge install oraclefdw-$pgV     -d demo
-  #./pgedge install esfdw-$pgV         -d demo
-  #./pgedge install multicorn2-$pgV    -d demo
 }
 
 
