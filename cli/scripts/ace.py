@@ -265,9 +265,14 @@ def schema_diff(cluster_name, nodes, schema_name):
         combined_json = {**database, **node}
         cluster_nodes.append(combined_json)
 
-    for nd in cluster_nodes:
-        if nodes == "all":
-            node_list.append(nd["name"])
+    cluster_node_names = [nd["name"] for nd in cluster_nodes]
+    if nodes == "all":
+        for nd in cluster_node_names:
+            node_list.append(nd)
+
+    for nd in node_list:
+        if nd not in cluster_node_names:
+            util.exit_message(f"Specified nodename \"{nd}\" not present in cluster", 1)
 
     sql1, sql2 = "", ""
     l_schema = schema_name
