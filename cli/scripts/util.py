@@ -3,7 +3,7 @@
 import os
 import time
 
-MY_VERSION = "24.7.3"
+MY_VERSION = "24.7.4"
 DEFAULT_PG = "16"
 DEFAULT_SPOCK = "33"
 DEFAULT_SPOCK_17 = "40"
@@ -37,6 +37,7 @@ from subprocess import Popen, PIPE, STDOUT
 from datetime import datetime, timedelta
 from urllib import request as urllib2
 from shutil import copy2
+from semantic_version import Version
 
 try:
     from tqdm import tqdm
@@ -2617,11 +2618,11 @@ def process_sql_file(p_file, p_json):
         if line_strip.endswith(";"):
             if ("hub" in cmd) and ("INSERT INTO versions" in cmd) and ("1," in cmd):
                 cmdList = cmd.split(",")
-                newHubV = cmdList[1].strip().replace("'", "")
-                oldHubV = get_version()
-                msg_frag = "'hub' from v" + oldHubV + " to v" + newHubV + "."
+                newHubV = Version.coerce(cmdList[1].strip().replace("'", ""))
+                oldHubV = Version.coerce(get_version())
+                msg_frag = f"'hub' from v{oldHubV} to v{newHubV}."
                 if newHubV == oldHubV:
-                    msg = "'hub' is v" + newHubV
+                    msg = f"'hub' is v{newHubV}"
                 if newHubV > oldHubV:
                     msg = "Automatic updating " + msg_frag
                 if newHubV < oldHubV:

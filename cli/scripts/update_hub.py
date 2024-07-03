@@ -3,6 +3,7 @@
 
 import os, sys, sqlite3
 import util
+from semantic_version import Version
 
 MY_HOME = os.getenv("MY_HOME", "")
 CTL = MY_HOME + "/pgedge"
@@ -29,15 +30,14 @@ def run_sql(cmd):
 def mainline():
     # need from_version & to_version
     if len(sys.argv) == 3:
-        p_from_ver = sys.argv[1]
-        p_to_ver = sys.argv[2]
+        p_from_ver = Version.coerce(sys.argv[1])
+        p_to_ver = Version.coerce(sys.argv[2])
     else:
         print("ERROR: Invalid number of parameters, try: ")
-        print("         python update-hub.py from_version  to_version")
+        print("         python3 update-hub.py  from_version  to_version")
         sys.exit(1)
 
-    print("")
-    print("Running update-hub from v" + p_from_ver + " to v" + p_to_ver)
+    print(f"\nRunning update-hub from v{p_from_ver} to v{p_to_ver}")
 
     if p_from_ver >= p_to_ver:
         print("Nothing to do.")
@@ -51,7 +51,7 @@ def mainline():
 
 #  MAINLINE ###########################
 if MY_HOME == "":
-    print("ERROR: Missing MY_HOME envionment variable")
+    print("ERROR: Missing MY_HOME environment variable")
     sys.exit(1)
 
 # gotta have a sqlite database to (possibly) update
