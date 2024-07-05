@@ -234,7 +234,9 @@ def trim_plat(ver):
     v1 = ver.replace("-el9", "")
     v2 = v1.replace("-arm9", "")
     v3 = v2.replace("-el8", "")
-    return v3
+    v4 = v3.replace("-amd64", "")
+    v5 = v4.replace("-arm64", "")
+    return v5
 
 
 def num_pg_minors(pg_minor, is_display=False):
@@ -2917,6 +2919,19 @@ def get_os():
         pass
 
     return "???"
+
+
+def get_cpu():
+    pfm = platform.machine()
+
+    if pfm in ["AMD64", "x86_64"]:
+        return("amd64")
+
+    if pfm in ["ARM64", "aarch64"]:
+        return("arm64")
+
+    message(f"'{pfm}' is not a supported CPU.", "warning")   
+    return("???")
 
 
 def get_pkg_mgr():

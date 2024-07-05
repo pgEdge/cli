@@ -316,7 +316,7 @@ def info(p_json, p_home, p_repo, print_flag=True):
     p_user = util.get_user()
     p_is_admin = util.is_admin()
     pip_ver = get_pip_ver()
-    os_arch = util.get_arch()
+    cpu = util.get_cpu()
 
     this_os = ""
     this_uname = str(platform.system())[0:7]
@@ -340,8 +340,6 @@ def info(p_json, p_home, p_repo, print_flag=True):
     glibcV = util.get_glibc_version()
 
     os_major_ver = ""
-    java_major_ver = ""
-    java_ver = ""
 
     if this_uname == "Darwin":
         mem_mb = util.get_mem_mb()
@@ -377,7 +375,6 @@ def info(p_json, p_home, p_repo, print_flag=True):
             this_os = util.getoutput(
                 "cat /etc/os-release | grep PRETTY_NAME | cut -d= -f2 | tr -d '\"'"
             )
-        [java_major_ver, java_ver] = util.get_java_ver()
 
     if system_memory_in_gb > 0.6:
         round_mem = round(system_memory_in_gb)
@@ -387,11 +384,6 @@ def info(p_json, p_home, p_repo, print_flag=True):
     mem = str(round_mem) + " GB"
 
     cores = str(system_cpu_cores)
-
-    cpu = cpu_model.strip()
-    cpu = cpu.replace("(R)", "")
-    cpu = cpu.replace("(TM)", "")
-    cpu = cpu.replace(" CPU ", " ")
 
     os2 = this_os.replace(" release ", " ")
     os2 = os2.replace(" (Final)", "")
@@ -405,7 +397,6 @@ def info(p_json, p_home, p_repo, print_flag=True):
         last_update_readable = util.get_readable_time_diff(str(time_diff), precision=2)
 
     versions_sql = util.get_versions_sql()
-    perl_ver = util.get_perl_ver()
 
     os_pkg_mgr = util.get_pkg_mgr()
 
@@ -427,7 +418,6 @@ def info(p_json, p_home, p_repo, print_flag=True):
         infoJson["platform"] = unicode(
             str(plat), sys.getdefaultencoding(), errors="ignore"
         ).strip()
-        infoJson["arch"] = os_arch
         infoJson["mem"] = round_mem
         infoJson["cores"] = system_cpu_cores
         infoJson["cpu"] = cpu
@@ -442,9 +432,6 @@ def info(p_json, p_home, p_repo, print_flag=True):
         infoJson["python_exe"] = python_exe
         if pip_ver != "None":
             infoJson["pip_ver"] = pip_ver
-        infoJson["perl_ver"] = perl_ver
-        infoJson["java_ver"] = java_ver
-        infoJson["java_major_ver"] = java_major_ver
         infoJson["glibc_ver"] = glibcV
         infoJson["region"] = region
         infoJson["az"] = az
@@ -464,17 +451,13 @@ def info(p_json, p_home, p_repo, print_flag=True):
         admin_display = ""
 
     langs = "Python v" + python_ver
-    if perl_ver > "":
-        langs = langs + " | Perl v" + perl_ver
-    if java_ver > "":
-        langs = langs + " | Java v" + java_ver
 
     # util.validate_distutils_click(False)
 
     if glibcV <= " ":
         glibc_v_display = ""
     else:
-        glibc_v_display = " glibc-" + glibcV + "-"
+        glibc_v_display = " glibc-" + glibcV
 
     isTTY = os.getenv("pgeTTY")
     if isTTY == "False":
@@ -501,10 +484,9 @@ def info(p_json, p_home, p_repo, print_flag=True):
         + os2.rstrip()
         + " "
         + glibc_v_display
-        + os_arch
     )
     print(
-        bold_start + "#     Machine: " + bold_end + mem + ", " + cores + " vCPU, " + cpu
+        f"{bold_start}#     Machine:{bold_end} {mem}, vCPU {cores}, {cpu}, {langs}"
     )
     if instance_id > "" and not cloud_name == "unknown":
         print(
@@ -513,8 +495,6 @@ def info(p_json, p_home, p_repo, print_flag=True):
             + bold_end
             + f"{cloud_name}  {cloud_platform}  {instance_id}  {flavor}  {az}"
         )
-
-    print(bold_start + "#       Langs: " + bold_end + langs)
 
     print(bold_start + "#    Repo URL: " + bold_end + p_repo)
 
