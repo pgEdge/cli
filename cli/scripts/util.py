@@ -3985,8 +3985,8 @@ def echo_rcmd(cmd, echo=True, sleep_secs=0, host="", usr="", key="", capture_out
         result = subprocess.run(cmd, shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     return result
 
-def run_rcommand(cmd, message="", host="", usr="", key="", verbose="None", max_attempts=1, capture_output=False):
-    if verbose == "None":
+def run_rcommand(cmd, message="", host="", usr="", key="", verbose="none", max_attempts=1, capture_output=False, ignore=False, important=False):
+    if verbose == "none":
         echo=False
     else:
         echo=True
@@ -3997,7 +3997,7 @@ def run_rcommand(cmd, message="", host="", usr="", key="", verbose="None", max_a
         host = "127.0.0.1"
     message = f"{host} : {message}"
     
-    echo_action(message)
+    echo_action(message, important=important)
     attempts = 0
     while attempts < max_attempts:
         result = echo_rcmd(cmd, echo=echo, host=host, usr=usr, key=key, capture_output=True)
@@ -4005,32 +4005,57 @@ def run_rcommand(cmd, message="", host="", usr="", key="", verbose="None", max_a
             break
         attempts += 1
         time.sleep(5) 
-    #if os.getenv("pgeDebug", ""):
-    print (result.stdout) 
-    status = "ok" if result.returncode == 0 else "fail"
-    echo_action(message, status)
-
+    if verbose == "debug":
+        print (result.stdout) 
+        print (result.stderr) 
+    if result.returncode == 0:
+        status = "ok"
+        echo_action(message, status, important=important)
+    else:
+        if ignore:
+            status = "ignore"
+            echo_action(message, status, important=important)
+        else:
+            status = "fail"
+            echo_action(message, status, important=important)
+            print (result.stdout) 
+            exit(0)
     return result
 
 def wait_with_dots(message, duration=5):
     for _ in tqdm(range(duration), desc="Progress", ncols=100):
         time.sleep(1)
 
-def echo_action(action, status=None, e=False):
+
+def echo_action(action, status=None, e=False, important=False):
     now = datetime.now()
     t = now.strftime('%B %d, %Y, %H:%M:%S')
+    RESET = "\033[0m"
 
     if status is None:
-        sys.stdout.write(f"{t}: {action.ljust(75)}")
+        if important:
+            sys.stdout.write(f"{t}: {bcolours.OKBLUE}{action.ljust(75)}{RESET}")
+        else:
+            sys.stdout.write(f"{t}: {action.ljust(75)}")
         sys.stdout.flush()
     else:
         sys.stdout.write("\r")
         if status.lower() == "ok":
-            sys.stdout.write(f"{t}: {action.ljust(75)}[OK]\n")
-        else:
-            sys.stdout.write(f"{t}: {action.ljust(75)}[Failed]\n")
+            if important:
+                sys.stdout.write(f"{t}: {bcolours.OKBLUE}{action.ljust(75)}[OK]{RESET}\n")
+            else:
+                sys.stdout.write(f"{t}: {action.ljust(75)}[OK]\n")
+        elif status.lower() == "ignore":
+            sys.stdout.write(f"{t}: {action.ljust(75)}[IGNORED]\n")
+        elif status.lower() == "fail":
+            sys.stdout.write(f"{t}: {bcolours.FAIL}{action.ljust(75)}[FAILED]{RESET}\n")
             if e:
                 exit(1)
+        else:
+            if important:
+                sys.stdout.write(f"{t}: {bcolours.OKBLUE}{action.ljust(75)}[{status.upper()}]{RESET}\n")
+            else:
+                sys.stdout.write(f"{t}: {bcolours.OKBLUE}{action.ljust(75)}{RESET}")
         sys.stdout.flush()
 
 def echo_message(msg, bold=False, level="info"):
