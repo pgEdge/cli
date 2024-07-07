@@ -1445,10 +1445,7 @@ def verify(p_json):
                 elif "osx" in plat:
                     verify_comp(comp_ver + "-osx")
                 elif "linux" in plat:
-                    if is_el8():
-                        verify_comp(comp_ver + "-el8")
-                    else:
-                        verify_comp(comp_ver + "-amd")
+                    verify_comp(comp_ver + "-amd")
     except Exception as e:
         fatal_sql_error(e, sql, "verify()")
 
@@ -2864,15 +2861,17 @@ def get_el_ver():
     glibc_v = get_glibc_version()
     arch = getoutput("uname -m")
     if arch == "aarch64":
-        if glibc_v >= "2.34":
-            return "arm9"
-        else:
-            return "arm"
+        return "arm"
+        ##if glibc_v >= "2.34":
+        ##    return "arm9"
+        ##else:
+        ##    return "arm"
     else:
-        if glibc_v >= "2.34":
-            return "el9"
-        else:
-            return "el8"
+        return "amd"
+        ##if glibc_v >= "2.34":
+        ##    return "el9"
+        ##else:
+        ##    return "el8"
 
 
 def is_el8():
@@ -2925,10 +2924,10 @@ def get_cpu():
     pfm = platform.machine()
 
     if pfm in ["AMD64", "x86_64"]:
-        return("amd64")
+        return("amd")
 
     if pfm in ["ARM64", "aarch64"]:
-        return("arm64")
+        return("arm")
 
     message(f"'{pfm}' is not a supported CPU.", "warning")   
     return("???")

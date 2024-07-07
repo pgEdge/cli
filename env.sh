@@ -90,15 +90,17 @@ if [[ $OS == "Linux" ]]; then
   if [ `arch` == "aarch64" ]; then
     OS=arm
     outDir=a64
-    outPlat=arm9
+    ##outPlat=arm9
+    outPlat=arm
   else
     OS=amd
     outDir=l64
-    if [ "$isEL8" == "True" ]; then
-      outPlat=el8
-    else 
-      outPlat=el9
-    fi
+    outPlat=amd
+    ##if [ "$isEL8" == "True" ]; then
+    ##  outPlat=el8
+    ##else 
+    ##  outPlat=el9
+    ##fi
   fi
   sudo="sudo"
 elif [[ $OS == "Darwin" ]]; then
