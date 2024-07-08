@@ -2467,11 +2467,15 @@ def write_pgenv_file(
         file.write(
             export + "GDAL_DATA=" + os.path.join(p_pghome, "share", "gdal") + "\n"
         )
-        file.write("if [ -f /usr/lib64/perl5/CORE/libperl.so ]; then \n")
-        file.write(
-            "    export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/lib64/perl5/CORE \n"
-        )
-        file.write("fi \n")
+        ## file.write("if [ -f /usr/lib64/perl5/CORE/libperl.so ]; then \n")
+        ## file.write(
+        ##    "    export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/lib64/perl5/CORE \n"
+        ##)
+        ##file.write("fi \n")
+      
+        libpath=os.path.join(p_pghome, "lib")
+        file.write(f"export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:{libpath} \n")
+       
         if os.path.exists("/etc/lsb-release"):
             # ubuntu xterm incompatible with el8 xterm key mappings
             file.write("export TERM=vt100\n")
