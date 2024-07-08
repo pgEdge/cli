@@ -234,8 +234,8 @@ def trim_plat(ver):
     v1 = ver.replace("-el9", "")
     v2 = v1.replace("-arm9", "")
     v3 = v2.replace("-el8", "")
-    v4 = v3.replace("-amd64", "")
-    v5 = v4.replace("-arm64", "")
+    v4 = v3.replace("-amd", "")
+    v5 = v4.replace("-arm", "")
     return v5
 
 
