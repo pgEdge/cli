@@ -59,7 +59,7 @@ step 3a "building $vers #########################"
 for ver in ${vers}; do
     cmd "./build_all.sh $ver"
 
-    if [ ! "$PLATFORM" == "el8" ] && [ "$ver" == "16" ]; then
+    if [ "$ver" == "16" ]; then
         cmd "./build_all.sh $ver rpm"
 
         step 3a "cleanup unneeded ctlibs ##################"
