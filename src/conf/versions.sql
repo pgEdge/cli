@@ -128,7 +128,7 @@ INSERT INTO categories VALUES (9,  87, 'Management & Monitoring', 'Manage/Monito
 INSERT INTO projects VALUES ('hub', 'app', 0, 0, 'hub', 0, 'https://github.com/pgedge/cli','',0,'','','','');
 INSERT INTO releases VALUES ('hub', 1, 'hub',  '', '', 'hidden', '', 1, '', '', '');
 
-INSERT INTO versions VALUES ('hub', '24.7.4',    '',  1, '20240704', '', '', '');
+INSERT INTO versions VALUES ('hub', '24.7.4',    '',  1, '20240708', '', '', '');
 INSERT INTO versions VALUES ('hub', '24.7.3',    '',  0, '20240701', '', '', '');
 INSERT INTO versions VALUES ('hub', '24.7.2',    '',  0, '20240620', '', '', '');
 INSERT INTO versions VALUES ('hub', '24.7.1',    '',  0, '20240611', '', '', '');
@@ -336,8 +336,8 @@ INSERT INTO releases VALUES ('spock40-pg15', 4, 'spock', 'Spock', '', 'test', ''
 INSERT INTO releases VALUES ('spock40-pg16', 4, 'spock', 'Spock', '', 'test', '', 1, 'pgEdge Community', '', '');
 INSERT INTO releases VALUES ('spock40-pg17', 4, 'spock', 'Spock', '', 'test', '', 1, 'pgEdge Community', '', '');
 
-INSERT INTO versions VALUES ('spock40-pg16', '4.0beta3-1', 'amd, arm', 1, '20240701', 'pg16', '', '');
-INSERT INTO versions VALUES ('spock40-pg17', '4.0beta3-1', 'amd, arm', 1, '20240701', 'pg17', '', '');
+INSERT INTO versions VALUES ('spock40-pg16', '4.0.0-1', 'amd, arm', 1, '20240708', 'pg16', '', '');
+INSERT INTO versions VALUES ('spock40-pg17', '4.0.0-1', 'amd, arm', 1, '20240708', 'pg17', '', '');
 
 -- ## LOLOR #############################
 INSERT INTO projects VALUES ('lolor', 'pge', 4, 0, 'hub', 1, 'https://github.com/pgedge/lolor/tags',
