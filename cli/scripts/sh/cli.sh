@@ -17,6 +17,30 @@ export MY_LOGS=$MY_HOME/data/logs/cli_log.out
 export MY_LITE=$MY_HOME/data/conf/db_local.db
 export MY_CMD=pgedge
 
+
+set_libpath () {
+  vers="$1"
+  for ver in ${vers}; do
+    lp="$MY_HOME/pg$ver/lib"
+    if [ -d "$lp" ]; then
+      export LD_LIBRARY_PATH="$lp":$LD_LIBRARY_PATH
+    fi
+  done
+}
+
+set_pythonpath () {
+  vers="$1"
+  for ver in ${vers}; do
+    lib="$LIB/$ver"
+    if [ -d "$LIB/$ver" ]; then
+      lib="$LIB/$ver"
+      return
+    fi
+  done
+}
+
+## MAINLINE #######################
+
 cd "$MY_HOME"
 
 hub_new="$MY_HOME/hub_new"
@@ -37,28 +61,10 @@ array[0]="$MY_HOME/hub/scripts"
 LIB="$MY_HOME/hub/scripts/lib"
 array[1]="$LIB"
 
+py_path="el9-arm el9-amd el8-amd ubu22-arm ubu22-amd"
+py_path="$py_path ubu24-arm ubu24-amd deb12-arm deb12-amd"
 lib="None"
-if [ -d "$LIB/el9-arm" ]; then
-  lib="$LIB/el9-arm"
-elif [ -d "$LIB/el9-amd" ]; then
-  lib="$LIB/el9-amd"
-elif [ -d "$LIB/el8-amd" ]; then
-  lib="$LIB/el8-amd"
-elif [ -d "$LIB/osx" ]; then
-  lib="$LIB/osx"
-elif [ -d "$LIB/ubu22-arm" ]; then
-  lib="$LIB/ubu22-arm"
-elif [ -d "$LIB/ubu22-amd" ]; then
-  lib="$LIB/ubu22-amd"
-elif [ -d "$LIB/ubu24-arm" ]; then
-  lib="$LIB/ubu24-arm"
-elif [ -d "$LIB/ubu24-amd" ]; then
-  lib="$LIB/ubu24-amd"
-elif [ -d "$LIB/deb12-arm" ]; then
-  lib="$LIB/deb12-arm"
-elif [ -d "$LIB/deb12-amd" ]; then
-  lib="$LIB/deb12-amd"
-fi
+set_pythonpath "$py_path"
 
 if [ ! "$lib" == "None" ]; then
   array[2]="$lib"
@@ -76,6 +82,11 @@ do
     echo "PYTHONPATH=$PYTHONPATH"
   fi
 done
+
+## echo "DEBUG: PYTHONPATH=$PYTHONPATH"
+
+set_libpath "12 13 14 15 16 17"
+## echo "DEBUG: LD_LIBRARY_PATH=$LD_LIBRARY_PATH"
 
 python3 --version > /dev/null 2>&1
 rc=$?
