@@ -123,7 +123,8 @@ else:
     # svcuser = util.get_column('svcuser', pgver)
     svcuser = util.get_user()
     startup.config_linux(
-        pgver, systemsvc, svcuser, cmd_start, cmd_log, cmd_stop, cmd_reload, cmd_status
+        pgver, systemsvc, svcuser, cmd_start, cmd_log, cmd_stop, cmd_reload, cmd_status,
+        p_env=f"LD_LIBRARY_PATH={os.path.join(MY_HOME, pgver, 'lib')}"
     )
     util.set_column("svcname", pgver, systemsvc)
 
