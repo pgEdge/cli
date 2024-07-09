@@ -142,7 +142,7 @@ def json_add_node(cluster_name, node_group, node_name, is_active, ip_address, po
     
 
 def create_remote_json(
-    cluster_name, db, num_nodes, usr, passwd, pg, port
+    cluster_name, db, num_nodes, usr, passwd, pg, port, os_user=None, ssh_key=None
 ):
     """Create a template for a Cluster Configuration JSON file.
     
@@ -170,6 +170,10 @@ def create_remote_json(
     remote_json = {}
     remote_json["os_user"] = ""
     remote_json["ssh_key"] = ""
+    if os_user: 
+        remote_json["os_user"] = os_user
+    if ssh_key:
+        remote_json["ssh_key"] = ssh_key
     cluster_json["remote"] = remote_json
 
     database_json = {"databases": []}
@@ -316,19 +320,47 @@ def remove(cluster_name, force=False):
        :param cluster_name: The name of the cluster. 
     """
     db, db_settings, nodes = load_json(cluster_name)
+    parsed_json = get_cluster_json(cluster_name)
+   
+    if parsed_json.get("log_level"):
+       verbose = parsed_json["log_level"]
+    else:
+       verbose = "Info"
 
-    ssh_un_cross_wire(cluster_name, db[0]["name"], db_settings, db[0]["username"], db[0]["password"], nodes)
+    rc = ssh_un_cross_wire(cluster_name, db[0]["name"], db_settings, db[0]["username"], db[0]["password"], nodes, verbose)
+    if rc == 0 or force == True:
+        util.echo_action(f"Removing Subscriptions ", "ok")
+    else:
+        util.echo_action(f"Removing Subscriptions ", "failed", True)
 
-    util.message("\n## Ensure that PG is stopped.")
     for nd in nodes:
-        cmd = nd["path"] + os.sep + "pgedge stop 2> " + os.sep + "dev" + os.sep + "null"
-        util.echo_cmd(cmd, host=nd["ip_address"], usr=nd["os_user"], key=nd["ssh_key"])
+        rc = util.run_rcommand(
+            nd["path"] + os.sep + "pgedge stop 2> " + os.sep + "dev" + os.sep + "null",
+            "Stopping pg",
+            host=nd["ip_address"],
+            usr=nd["os_user"],
+            key=nd["ssh_key"],
+            verbose=verbose
+        )
+        if rc == 0 or force == True:
+            util.echo_action(f"Stopping postgresql ", "ok")
+        else:
+            util.echo_action(f"Stopping postgresql ", "failed", True)
 
     if force == True:
-        util.message("\n## Ensure that pgEdge root directory is gone")
         for nd in nodes:
-            cmd = f"rm -rf " + nd["path"] + os.sep + "pgedge"
-            util.echo_cmd(cmd, host=nd["ip_address"], usr=nd["os_user"], key=nd["ssh_key"])
+            rc = util.run_rcommand(
+                f"rm -rf " + nd["path"] + os.sep + "pgedge",
+                "rm pgedge dir",
+                host=nd["ip_address"],
+                usr=nd["os_user"],
+                key=nd["ssh_key"],
+                verbose=verbose
+            )
+            if rc == 0 or force == True:
+                util.echo_action(f"Removing pgEdge root dir ", "ok")
+            else:
+                util.echo_action(f"Removing pgEdge root dir ", "failed", True)
 
 
 def init(cluster_name):
@@ -356,7 +388,7 @@ def init(cluster_name):
 
     for nd in nodes:
         message = f"Checking ssh on {nd['ip_address']}"
-        util.run_rcommand(
+        rc = util.run_rcommand(
             cmd="hostname",
             message=message,
             host=nd["ip_address"],
@@ -364,15 +396,29 @@ def init(cluster_name):
             key=nd["ssh_key"],
             verbose=verbose
         )
+        if rc.returncode == 1:
+           util.echo_action(f"Checking ssh ", "failed", True)
+           return 1
 
-    ssh_install_pgedge(
+    rc = ssh_install_pgedge(
         cluster_name, db[0]["name"], db_settings, db[0]["username"],
         db[0]["password"], nodes, True, " "
     )
-    ssh_cross_wire_pgedge(
+    if rc == 0:
+        util.echo_action(f"Installing postgresql ", "ok")
+    else:
+        util.echo_action(f"Installing postgresql ", "failed", True)
+        return 1
+    
+    rc = ssh_cross_wire_pgedge(
         cluster_name, db[0]["name"], db_settings, db[0]["username"],
         db[0]["password"], nodes
     )
+    if rc == 0:
+        util.echo_action(f"Connect nodes in cluster ", "ok")
+    else:
+        util.echo_action(f"Connect nodes in cluster ", "failed", True)
+        return 1
 
     if len(db) > 1:
         for database in db[1:]:
@@ -514,7 +560,7 @@ def ssh_install(cluster_name, db, db_settings, db_user, db_passwd, n, primary, p
         message=f"Installing pg{pg} on {ndnm}",
         host=n["ip_address"], usr=n["os_user"],
         key=n["ssh_key"],
-        verbose=verbose
+        verbose="Info"
         )
 
 def ssh_install_pgedge(cluster_name, db, db_settings, db_user, db_passwd, nodes, primary, primary_name):
@@ -543,7 +589,11 @@ def ssh_install_pgedge(cluster_name, db, db_settings, db_user, db_passwd, nodes,
         cmd0 = f"export REPO={REPO}; "
         cmd1 = f"mkdir -p {ndpath}; cd {ndpath}; "
         cmd2 = f'python3 -c "\\$(curl -fsSL {REPO}/{install_py})"'
-        util.echo_cmd(cmd0 + cmd1 + cmd2, host=n["ip_address"], usr=n["os_user"], key=n["ssh_key"])
+        rc = util.echo_cmd(cmd0 + cmd1 + cmd2, host=n["ip_address"], usr=n["os_user"], key=n["ssh_key"])
+        if rc == 1:
+           util.echo_action(
+               f"Installing pgEdge CLI ", "failed", True)
+           return 1
 
         nc = os.path.join(ndpath, "pgedge", "pgedge ")
         parms = f" -U {db_user} -P {db_passwd} -d {db} --port {ndport}"
@@ -553,7 +603,10 @@ def ssh_install_pgedge(cluster_name, db, db_settings, db_user, db_passwd, nodes,
             parms = parms + f" --spock_ver {spock}"
         if db_settings["auto_start"] == "on":
             parms = f"{parms} --autostart"
-        util.echo_cmd(f"{nc} setup {parms}", host=n["ip_address"], usr=n["os_user"], key=n["ssh_key"])
+        rc = util.echo_cmd(f"{nc} setup {parms}", host=n["ip_address"], usr=n["os_user"], key=n["ssh_key"])
+        if rc == 1:
+           util.echo_action(f"Installing postgreSQL and Spock ", "failed", True)
+           return 1
         if db_settings["auto_ddl"] == "on":
             cmd = nc + " db guc-set spock.enable_ddl_replication on;"
             cmd = cmd + " " + nc + " db guc-set spock.include_ddl_repset on;"
@@ -594,7 +647,14 @@ def ssh_cross_wire_pgedge(cluster_name, db, db_settings, db_user, db_passwd, nod
         except Exception:
             ndport = "5432"
         cmd1 = f"{nc} spock node-create {ndnm} 'host={ndip_private} user={os_user} dbname={db} port={ndport}' {db}"
-        util.echo_cmd(cmd1, host=ndip, usr=os_user, key=ssh_key)
+        util.run_rcommand(
+            cmd1,
+            message=f"Creating node {ndnm}",
+            host=ndip, 
+            usr=os_user,
+            key=ssh_key,
+            verbose="Info"
+        )
         for sub_n in nodes:
             sub_ndnm = sub_n["name"]
             if sub_ndnm != ndnm:
@@ -610,7 +670,7 @@ def ssh_cross_wire_pgedge(cluster_name, db, db_settings, db_user, db_passwd, nod
                 cmd = f"{nc} spock sub-create sub_{ndnm}{sub_ndnm} 'host={sub_ndip_private} user={os_user} dbname={db} port={sub_ndport}' {db}"
                 sub_array.append([cmd,ndip,os_user,ssh_key])
     ## To Do: Check Nodes have been created
-    print(f"{nc} spock node-list {db}") ##, host=ndip, usr=os_user, key=ssh_key)
+    ## print(f"{nc} spock node-list {db}") ##, host=ndip, usr=os_user, key=ssh_key)
     time.sleep(10)
     for n in sub_array:
         cmd = n[0]
@@ -618,11 +678,19 @@ def ssh_cross_wire_pgedge(cluster_name, db, db_settings, db_user, db_passwd, nod
         os_user = n[2]
         ssh_key = n[3]
         util.echo_cmd(cmd, host=nip, usr=os_user, key=ssh_key)
+        util.run_rcommand(
+            cmd,
+            message=f"Creating subscriptions on {nip}",
+            host=ndip, 
+            usr=os_user,
+            key=ssh_key,
+            verbose="Info"
+        )
+    return 0
 
 
-def ssh_un_cross_wire(cluster_name, db, db_settings, db_user, db_passwd, nodes):
+def ssh_un_cross_wire(cluster_name, db, db_settings, db_user, db_passwd, nodes, verbose):
     """Create nodes and subs on every node in a cluster."""
-    sub_array=[]
     for prov_n in nodes:
         ndnm = prov_n["name"]
         ndpath = prov_n["path"]
@@ -634,7 +702,14 @@ def ssh_un_cross_wire(cluster_name, db, db_settings, db_user, db_passwd, nodes):
             sub_ndnm = sub_n["name"]
             if sub_ndnm != ndnm:
                 cmd = f"{nc} spock sub-drop sub_{ndnm}{sub_ndnm} {db}"
-                util.echo_cmd(cmd, host=ndip, usr=os_user, key=ssh_key)
+                rc = util.run_rcommand(
+                    cmd,
+                    f"Drop Subscription sub_{ndnm}{sub_ndnm}",
+                    host=ndip,
+                    usr=os_user,
+                    key=ssh_key,
+                    verbose=verbose
+                )
 
     for prov_n in nodes:
         ndnm = prov_n["name"]
@@ -644,8 +719,19 @@ def ssh_un_cross_wire(cluster_name, db, db_settings, db_user, db_passwd, nodes):
         os_user = prov_n["os_user"]
         ssh_key = prov_n["ssh_key"]
         cmd1 = f"{nc} spock node-drop {ndnm} {db}"
-        util.echo_cmd(cmd1, host=ndip, usr=os_user, key=ssh_key)
+        rc = util.run_rcommand(
+            cmd1,
+            f"Drop Node {ndnm}",
+            host=ndip,
+            usr=os_user,
+            key=ssh_key,
+            verbose=verbose
+        )
+        if rc.returncode == 1:
+            return 1
+    
     ## To Do: Check Nodes have been dropped
+    return 0
 
 
 def replication_all_tables(cluster_name, database_name=None):
