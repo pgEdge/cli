@@ -145,27 +145,33 @@ INSERT INTO projects VALUES ('pg', 'pge', 1, 5432, 'hub', 1, 'https://github.com
 
 INSERT INTO releases VALUES ('pg12', 3, 'pg', 'PostgreSQL', '', 'prod',
   '<font size=-1>New in <a href=https://www.postgresql.org/docs/12/release-12.html>2019</a></font>', 1, 'POSTGRES', '', '');
-INSERT INTO versions VALUES ('pg12', '12.19-1', 'amd', 1, '20240509', '', '', '');
+INSERT INTO versions VALUES ('pg12', '12.19-3', 'amd', 1, '20240710', '', '', '');
+INSERT INTO versions VALUES ('pg12', '12.19-1', 'amd', 0, '20240509', '', '', '');
 
 INSERT INTO releases VALUES ('pg13', 2, 'pg', '', '', 'prod',
   '<font size=-1>New in <a href=https://www.postgresql.org/docs/13/release-13.html>2020</a></font>', 1, 'POSTGRES', '', '');
-INSERT INTO versions VALUES ('pg13', '13.15-1', 'amd', 1, '20240509','', '', '');
+INSERT INTO versions VALUES ('pg13', '13.15-3', 'amd', 1, '20240710','', '', '');
+INSERT INTO versions VALUES ('pg13', '13.15-1', 'amd', 0, '20240509','', '', '');
 
 INSERT INTO releases VALUES ('pg14', 1, 'pg', '', '', 'prod', 
   '<font size=-1>New in <a href=https://www.postgresql.org/docs/14/release-14.html>2021</a></font>', 1, 'POSTGRES', '', '');
-INSERT INTO versions VALUES ('pg14', '14.12-2', 'amd, arm', 1, '20240521', '','','');
+INSERT INTO versions VALUES ('pg14', '14.12-3', 'amd, arm', 1, '20240710', '','','');
+INSERT INTO versions VALUES ('pg14', '14.12-2', 'amd, arm', 0, '20240521', '','','');
 
 INSERT INTO releases VALUES ('pg15', 2, 'pg', '', '', 'prod', 
   '<font size=-1>New in <a href=https://www.postgresql.org/docs/15/release-15.html>2022</a></font>', 1, 'POSTGRES', '', '');
-INSERT INTO versions VALUES ('pg15', '15.7-2',  'amd, arm', 1, '20240521','', '', '');
+INSERT INTO versions VALUES ('pg15', '15.7-3',  'amd, arm', 1, '20240710','', '', '');
+INSERT INTO versions VALUES ('pg15', '15.7-2',  'amd, arm', 0, '20240521','', '', '');
 
 INSERT INTO releases VALUES ('pg16', 2, 'pg', '', '', 'prod', 
   '<font size=-1>New in <a href=https://www.postgresql.org/docs/16/release-16.html>2023!</a></font>', 1, 'POSTGRES', '', '');
-INSERT INTO versions VALUES ('pg16', '16.3-2',  'amd, arm', 1, '20240521','', '', '');
+INSERT INTO versions VALUES ('pg16', '16.3-3',  'amd, arm', 1, '20240710','', '', '');
+INSERT INTO versions VALUES ('pg16', '16.3-2',  'amd, arm', 0, '20240521','', '', '');
 
 INSERT INTO releases VALUES ('pg17', 2, 'pg', '', '', 'test', 
   '<font size=-1>New in <a href=https://www.postgresql.org/docs/17/release-17.html>2024!</a></font>', 1, 'POSTGRES', '', '');
-INSERT INTO versions VALUES ('pg17', '17beta2-1',  'amd, arm', 1, '20240626','', '', '');
+INSERT INTO versions VALUES ('pg17', '17beta2-3',  'amd, arm', 1, '20240710','', '', '');
+INSERT INTO versions VALUES ('pg17', '17beta2-1',  'amd, arm', 0, '20240626','', '', '');
 
 -- ## ORAFCE #############################
 INSERT INTO projects VALUES ('orafce', 'ext', 4, 0, 'hub', 0, 'https://github.com/orafce/orafce/releases',
