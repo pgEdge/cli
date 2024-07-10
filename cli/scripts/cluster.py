@@ -928,6 +928,7 @@ def add_node(cluster_name, source_node, target_node, script= " ", stanza=" ", ba
     cluster_data = get_cluster_json(cluster_name)
     parsed_json = get_cluster_json(cluster_name)
     pg = parsed_json["database"]["pg_version"]
+    
     stanza_create = False
     if stanza == " ":
         stanza = f"pg{pg}"
@@ -984,7 +985,6 @@ def add_node(cluster_name, source_node, target_node, script= " ", stanza=" ", ba
         if node.get('name') == n['name']:
             util.exit_message(f"node {n['name']} already exists.")
             break
-
 
     dbname = db[0]["name"]
     n.update({
@@ -1078,16 +1078,28 @@ def add_node(cluster_name, source_node, target_node, script= " ", stanza=" ", ba
         f'{n["path"]}/pgedge/data/{stanza} {s["ip_address"]} {s["port"]} {s["os_user"]}')
     message =  f"Configuring PITR on replica"
     run_cmd(cmd, n, message=message, verbose=verbose)
- 
-    manage_node(n, "start", pgV, verbose)
-    time.sleep(5)
-
+    
     if script != " ":
         if script.strip() and os.path.isfile(script):
           util.echo_cmd(f'{script}')
-
+ 
     terminate_cluster_transactions(nodes, dbname, stanza, verbose)
-    set_cluster_readonly(nodes, True, dbname, stanza, verbose)
+    
+    spock = db_settings["spock_version"]        
+    v4 = False    
+    spock_maj = 3
+    if spock is not None and spock != '':
+        ver = [int(x) for x in spock.split('.')]
+        spock_maj = ver[0]
+        spock_min = ver[1]
+
+    if spock_maj >= 4:
+        v4 = True
+
+    set_cluster_readonly(nodes, True, dbname, stanza, v4, verbose)
+    manage_node(n, "start", pgV, verbose)
+    time.sleep(5)
+    
     check_cluster_lag(n, dbname, stanza, verbose)
 
     sql_cmd = "SELECT pg_promote()"
@@ -1100,14 +1112,12 @@ def add_node(cluster_name, source_node, target_node, script= " ", stanza=" ", ba
     message = f"DROP extension spock cascade"
     run_cmd(cmd, n, message=message, verbose=verbose)
    
-    parms = "spock"
-    spock = db_settings["spock_version"]        
     if spock is not None and spock != '':
-        parms = parms + f" --spock_ver {spock}"
-    if db_settings["auto_start"] == "on":
-        parms = f"{parms} --autostart"
+        parms = f"spock{spock_maj}{spock_min}"
+    else:
+        parms="spock"
     
-    cmd = (f'cd {n["path"]}/pgedge/; ./pgedge install {spock} {parms}')
+    cmd = (f'cd {n["path"]}/pgedge/; ./pgedge install {parms}')
     message = f"Re-installing spock"
     run_cmd(cmd, n, message=message, verbose=verbose)
     
@@ -1117,9 +1127,14 @@ def add_node(cluster_name, source_node, target_node, script= " ", stanza=" ", ba
     run_cmd(cmd, n, message=message, verbose=verbose)
         
     create_node(n, dbname, verbose)
-    set_cluster_readonly(nodes, False, dbname, stanza, verbose)
+    
+    if v4 == False:
+        set_cluster_readonly(nodes, False, dbname, stanza, v4, verbose)
+    
     create_sub(nodes, n, dbname, verbose)
     create_sub_new(nodes, n, dbname, verbose)
+    if v4 == True:
+        set_cluster_readonly(nodes, False, dbname, stanza, v4, verbose)
     
     cmd = (f'cd {n["path"]}/pgedge/; ./pgedge spock node-list {dbname}')
     message = f"Listing spock nodes"
@@ -1290,7 +1305,7 @@ def terminate_cluster_transactions(nodes, dbname, stanza, verbose):
     sql_cmd = "SELECT spock.terminate_active_transactions()"
     for node in nodes:
         cmd = f"{node['path']}/pgedge/pgedge psql '{sql_cmd}' {dbname}"
-        message = f"Terminating·cluster·transactions"
+        message = f"Terminating cluster transactions"
         result = run_cmd(cmd = cmd, node=node, message=message, verbose=verbose, capture_output=True)
 
 def extract_psql_value(psql_output: str, alias: str) -> str:
@@ -1319,17 +1334,33 @@ def extract_psql_value(psql_output: str, alias: str) -> str:
     return ""
 
 
-def set_cluster_readonly(nodes, readonly, dbname, stanza, verbose):
+def set_cluster_readonly(nodes, readonly, dbname, stanza, v4, verbose):
     action = "Setting" if readonly else "Removing"
-    func_call = ("spock.set_cluster_readonly()" if readonly
+    
+    if v4:
+
+        sql_cmd = ('ALTER SYSTEM SET spock.readonly TO \\\\"all\\\\"' if readonly
+                else 'ALTER SYSTEM SET spock.readonly TO \\\\"off\\\\"') 
+        for node in nodes:
+            cmd = f"{node['path']}/pgedge/pgedge psql '{sql_cmd}' {dbname}"
+            message = f"{action} readonly mode from cluster"
+            run_cmd(cmd, node=node, message=message, verbose=verbose, important=True)
+
+        sql_cmd = "select pg_reload_conf()"
+        for node in nodes:
+            cmd = f"{node['path']}/pgedge/pgedge psql '{sql_cmd}' {dbname}"
+            message = f"Reload configuration pg_reload_conf()"
+            run_cmd(cmd, node=node, message=message, verbose=verbose, important=False)
+    else:
+        func_call = ("spock.set_cluster_readonly()" if readonly
                  else "spock.unset_cluster_readonly()")
 
-    sql_cmd = f"SELECT {func_call}"
+        sql_cmd = f"SELECT {func_call}"
 
-    for node in nodes:
-        cmd = f"{node['path']}/pgedge/pgedge psql '{sql_cmd}' {dbname}"
-        message = f"{action} readonly mode from cluster"
-        run_cmd(cmd, node=node, message=message, verbose=verbose, important=True)
+        for node in nodes:
+            cmd = f"{node['path']}/pgedge/pgedge psql '{sql_cmd}' {dbname}"
+            message = f"{action} readonly mode from cluster"
+            run_cmd(cmd, node=node, message=message, verbose=verbose, important=True)
 
 def check_cluster_lag(n, dbname, stanza, verbose, timeout=600, interval=1):
     sql_cmd = """
