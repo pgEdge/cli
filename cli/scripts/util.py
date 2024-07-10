@@ -2926,14 +2926,20 @@ def get_os():
 
 def get_cpu():
     pfm = platform.machine()
+    sys = platform.system()
 
-    if pfm in ["AMD64", "x86_64"]:
-        return("amd")
+    if sys == "Linux":
+        if pfm in ["AMD64", "x86_64"]:
+            return("amd")
 
-    if pfm in ["ARM64", "aarch64"]:
-        return("arm")
+        if pfm in ["ARM64", "aarch64"]:
+           return("arm")
 
-    message(f"'{pfm}' is not a supported CPU.", "warning")   
+    if sys == "Darwin":
+        if pfm == "arm64":
+            return("osx")
+
+    message(f"'{sys} - {pfm}' is not supported.", "warning")   
     return("???")
 
 
