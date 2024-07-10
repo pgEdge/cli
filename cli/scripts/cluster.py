@@ -835,18 +835,14 @@ def app_remove(cluster_name, app_name, database_name=None):
 def list_nodes(cluster_name):
     """List all nodes in the cluster."""
     
-    cluster_data = get_cluster_json(cluster_name)
+    db, db_settings, nodes = load_json(cluster_name)
+    dbname = db[0]["name"]
 
-    nodes_list = []
-    for group in cluster_data['node_groups']['aws']:
-        for node in group['nodes']:
-            node_info = (
-                f"Node: {node['name']}, IP: {node['ip_address']}, "
-                f"Port: {node['port']}, Active: {'Yes' if node['is_active'] else 'No'}"
-            )
-            nodes_list.append(node_info)
-
-    return nodes_list
+    for n in nodes:
+        ndpath = n["path"]
+        cmd = f'{ndpath}/pgedge/pgedge spock node-list {dbname}'
+        ndip = n["ip_address"]
+        util.echo_cmd(cmd, host=ndip, usr=n["os_user"], key=n["ssh_key"])
 
 def validate_json(json_data):
     required_keys = {
