@@ -337,11 +337,13 @@ INSERT INTO versions VALUES ('spock33-pg15', '3.3.5-1', 'amd, arm', 1, '20240607
 INSERT INTO versions VALUES ('spock33-pg16', '3.3.5-1', 'amd, arm', 1, '20240607', 'pg16', '', '');
 
 -- ## SPOCK40 ###########################
-INSERT INTO releases VALUES ('spock40-pg14', 4, 'spock', 'Spock', '', 'test', '', 1, 'pgEdge Community', '', '');
-INSERT INTO releases VALUES ('spock40-pg15', 4, 'spock', 'Spock', '', 'test', '', 1, 'pgEdge Community', '', '');
-INSERT INTO releases VALUES ('spock40-pg16', 4, 'spock', 'Spock', '', 'test', '', 1, 'pgEdge Community', '', '');
+INSERT INTO releases VALUES ('spock40-pg14', 4, 'spock', 'Spock', '', 'prod', '', 1, 'pgEdge Community', '', '');
+INSERT INTO releases VALUES ('spock40-pg15', 4, 'spock', 'Spock', '', 'prod', '', 1, 'pgEdge Community', '', '');
+INSERT INTO releases VALUES ('spock40-pg16', 4, 'spock', 'Spock', '', 'prod', '', 1, 'pgEdge Community', '', '');
 INSERT INTO releases VALUES ('spock40-pg17', 4, 'spock', 'Spock', '', 'test', '', 1, 'pgEdge Community', '', '');
 
+INSERT INTO versions VALUES ('spock40-pg14', '4.0.0-1', 'amd, arm', 1, '20240710', 'pg14', '', '');
+INSERT INTO versions VALUES ('spock40-pg15', '4.0.0-1', 'amd, arm', 1, '20240710', 'pg15', '', '');
 INSERT INTO versions VALUES ('spock40-pg16', '4.0.0-1', 'amd, arm', 1, '20240708', 'pg16', '', '');
 INSERT INTO versions VALUES ('spock40-pg17', '4.0.0-1', 'amd, arm', 1, '20240708', 'pg17', '', '');
 
