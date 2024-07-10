@@ -210,11 +210,7 @@ def setup_pgedge(User=None, Passwd=None, dbName=None, port=None, pg_ver=None, sp
         util.message("\n## Pre-install supported extensions in disabled state ########")
 
         if pg_major not in ["15", "16"]:
-            util.message("--extensions not supported for this version of PG", "warning")
-            return
-
-        if util.get_el_os() == "EL8":
-            util.message("--extensions not supported for EL8", "warning")
+            util.message(f"--extensions not supported for pg{pg_major}", "warning")
             return
 
         # quietly install extensions one-by-one and don't error out on problems
