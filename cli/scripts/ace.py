@@ -238,11 +238,6 @@ def schema_diff(cluster_name, nodes, schema_name):
                 E.g., --nodes="n1,n2". Error: {e}'
         )
 
-    if len(node_list) > 3:
-        util.exit_message(
-            "schema-diff currently supports up to a three-way table comparison"
-        )
-
     if nodes != "all" and len(node_list) == 1:
         util.exit_message("schema-diff needs at least two nodes to compare")
 
@@ -269,6 +264,11 @@ def schema_diff(cluster_name, nodes, schema_name):
     if nodes == "all":
         for nd in cluster_node_names:
             node_list.append(nd)
+
+    if len(node_list) > 3:
+        util.exit_message(
+            "schema-diff currently supports up to a three-way table comparison"
+        )
 
     for nd in node_list:
         if nd not in cluster_node_names:
@@ -319,11 +319,6 @@ def spock_diff(cluster_name, nodes):
                 E.g., --nodes="n1,n2". Error: {e}'
         )
 
-    if len(node_list) > 3:
-        util.exit_message(
-            "spock-diff currently supports up to a three-way table comparison"
-        )
-
     if nodes != "all" and len(node_list) == 1:
         util.exit_message("spock-diff needs at least two nodes to compare")
 
@@ -364,6 +359,11 @@ def spock_diff(cluster_name, nodes):
 
     except Exception as e:
         util.exit_message("Error in spock_diff() Getting Connections:" + str(e), 1)
+
+    if len(node_list) > 3:
+        util.exit_message(
+            "spock-diff currently supports up to a three-way table comparison"
+        )
     
     for nd in node_list:
         if nd not in conn_list.keys():
@@ -771,6 +771,11 @@ def table_diff(
     for node in node_info:
         combined_json = {**database, **node}
         cluster_nodes.append(combined_json)
+    
+    if nodes == "all" and len(cluster_nodes) > 3:
+        util.exit_message(
+            "Table-diff only supports up to three way comparison"
+        )
 
     if nodes != "all" and len(node_list) > 1:
         for n in node_list:
