@@ -37,53 +37,48 @@ def osSys(p_input, p_display=False):
         util.message("# " + p_input)
     rc = os.system(p_input)
     return rc
-
 def configure_backup_settings():
+    """Configure and return the pgBackRest settings."""
     stanza = "pg16"
-    repo1_path = f"/var/lib/pgbackrest/"
+    repo1_path = "/var/lib/pgbackrest/"
     config = {
-        "main": {
-            "restore_path": "xx",
-            "backup-type" : "full",
-            "stanza_count" : "1"
-        },
-        "global": {
-            "repo1-path": repo1_path,
-            "repo1-host-user": "xx",
-            "repo1-host": "xx",
-            "repo1-type": "posix",
-            "repo1-cipher-pass": "xx",
-            "repo1-cipher-type": "aes-256-cbc",
-            "repo1-s3-bucket": "xx",
-            "repo1-s3-region": "eu-west-2",
-            "repo1-s3-key": "xx",
-            "repo1-s3-key-secret": "xx",
-            "repo1-s3-endpoint": "s3.amazonaws.com",
-            "repo1-retention-full": "7",
-            "repo1-retention-full-type": "count",
-            "process-max" : "3",
-            "log-level-console": "info"
-        },
-        "stanza": {
-            "stanza0" : "xx",
-            "pg1-path0" : "xx",
-            "pg1-user0" : "xx",
-            "pg1-port0" : "5432",
-            "pg1-host0" : "127.0.0.1",
-            "db-socket-path0" : "/tmp",
-            "global:archive-push0": {
-                "compress-level": "3"
-            }
+        "stanza": stanza,
+        "restore_path": "xx",
+        "backup-type": "full",
+        "repo1-path": repo1_path,
+        "repo1-host-user": "xx",
+        "repo1-host": "xx",
+        "repo1-type": "posix",
+        "repo1-cipher-pass": "xx",
+        "repo1-cipher-type": "aes-256-cbc",
+        "repo1-s3-bucket": "xx",
+        "repo1-s3-region": "eu-west-2",
+        "repo1-s3-key": "xx",
+        "repo1-s3-key-secret": "xx",
+        "repo1-s3-endpoint": "s3.amazonaws.com",
+        "repo1-retention-full": "7",
+        "repo1-retention-full-type": "count",
+        "process-max": "3",
+        "log-level-console": "info",
+        "pg1-path": "xx",
+        "pg1-user": "xx",
+        "pg1-port": "5432",
+        "pg1-host": "127.0.0.1",
+        "db-socket-path": "/tmp",
+        "global:archive-push": {
+            "compress-level": "3"
         }
     }
-    for section, parameters in config.items():
-        if isinstance(parameters, dict):
-            for key, sub_params in parameters.items():
-                if isinstance(sub_params, dict):
-                    for sub_key, value in sub_params.items():
-                        util.set_value(f"BACKUP", sub_key, value)
-                else:
-                    util.set_value("BACKUP", key, sub_params)
+
+    # Set the configuration values
+    for key, value in config.items():
+        if isinstance(value, dict):
+            for sub_key, sub_value in value.items():
+                util.set_value("BACKUP", sub_key, sub_value)
+        else:
+            util.set_value("BACKUP", key, value)
+
+    return config
 
 def setup_pgbackrest_links():
     """
@@ -163,38 +158,21 @@ def define_cron_job():
 
 def fetch_backup_config():
     """Fetch and return the pgBackRest configuration from system settings."""
-    config = {
-        "main": {},
-        "global": {},
-        "stanza": {}
-    }
-
-    main_params = ["restore_path", "backup-type", "stanza_count"]
-    global_params = [
-        "repo1-retention-full", "repo1-retention-full-type", "repo1-path", "repo1-host-user", "repo1-host",
-        "repo1-cipher-type", "repo1-cipher-pass", "repo1-s3-bucket", "repo1-s3-key-secret", "repo1-s3-key",
-        "repo1-s3-region", "repo1-s3-endpoint", "log-level-console", "repo1-type",
-        "process-max", "compress-level"
-    ]
-    stanza_params = [
-        "pg1-path", "pg1-user", "pg1-database", "db-socket-path", "pg1-port", "pg1-host"
+    config = {}
+    params = [
+        "stanza", "restore_path", "backup-type", "repo1-retention-full",
+        "repo1-retention-full-type", "repo1-path", "repo1-host-user",
+        "repo1-host", "repo1-cipher-type", "repo1-cipher-pass", "repo1-s3-bucket",
+        "repo1-s3-key-secret", "repo1-s3-key", "repo1-s3-region", "repo1-s3-endpoint",
+        "log-level-console", "repo1-type", "process-max", "compress-level",
+        "pg1-path", "pg1-user", "pg1-database", "db-socket-path", "pg1-port",
+        "pg1-host"
     ]
 
-    # Fetch main and global parameters
-    for param in main_params:
-        config["main"][param] = util.get_value("BACKUP", param)
-    for param in global_params:
-        config["global"][param] = util.get_value("BACKUP", param)
-
-    # Determine the number of stanzas and fetch their specific parameters
-    stanza_count = int(config["main"].get("stanza_count", 1))
-    for i in range(stanza_count):
-        stanza_name = util.get_value("BACKUP", f"stanza{i}")
-        config["stanza"][stanza_name] = {}
-        for param in stanza_params:
-            indexed_param = f"{param}{i}"
-            config["stanza"][stanza_name][param] = util.get_value("BACKUP", indexed_param)
-
+    # Fetch all parameters
+    for param in params:
+        config[param] = util.get_value("BACKUP", param)
+    
     return config
 
 def print_header(header):
