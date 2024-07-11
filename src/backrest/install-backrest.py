@@ -89,10 +89,10 @@ def setup_pgbackrest_links():
     osSys("sudo chmod 755 /usr/bin/pgbackrest")
 
     osSys("sudo mkdir -p -m 770 /var/log/pgbackrest")
-    osSys("sudo chown pgedge -R /var/log/pgbackrest")
+    osSys(f"sudo chown {usrUsr} -R /var/log/pgbackrest")
     
     osSys("sudo mkdir -p -m 770 /var/lib/pgbackrest")
-    osSys("sudo chown pgedge -R /var/lib/pgbackrest")
+    osSys(f"sudo chown {usrUsr} -R /var/lib/pgbackrest")
 
 def modify_hba_conf():
   new_rules = [
@@ -188,7 +188,6 @@ def main():
     print_header("Configuring pgbackrest")
     configure_backup_settings()
     setup_pgbackrest_links()
-    usrUsr = f"{util.get_user()}:{util.get_user()}"
     osSys("pgbackrest version")
 
 if __name__ == "__main__":
