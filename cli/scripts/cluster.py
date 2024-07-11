@@ -162,7 +162,7 @@ def create_remote_json(
     """Create a template for a Cluster Configuration JSON file.
     
        Create a JSON configuration file template that can be modified to fully define a remote cluster. \n
-       Example: cluster define-remote demo db[0]["name"] 3 lcusr lcpasswd 16 5432
+       Example: cluster define-remote demo db 3 lcusr lcpasswd 16 5432
        :param cluster_name: The name of the cluster. A directory with this same name will be created in the cluster directory, and the JSON file will have the same name.
        :param db: The database name.
        :param num_nodes: The number of nodes in the cluster.
