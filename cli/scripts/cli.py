@@ -1073,11 +1073,6 @@ if "--debug2" in args:
     my_logger.debug2("DEBUG2 enabled")
     os.environ["pgeDebug"] = "2"
 
-os.environ["pgeTTY"] = "True"
-if "--no-tty" in args:
-    args.remove("--no-tty")
-    os.environ["pgeTTY"] = "False"
-
 p_host = ""
 p_home = ""
 p_user = ""

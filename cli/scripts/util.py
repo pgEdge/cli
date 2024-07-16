@@ -4,6 +4,8 @@ import os
 import time
 
 MY_VERSION = "24.7.4"
+MY_CODENAME = "Marin County"
+
 DEFAULT_PG = "16"
 DEFAULT_SPOCK = "33"
 DEFAULT_SPOCK_17 = "40"
@@ -88,6 +90,25 @@ if os.path.exists(platform_lib_path):
 COMMAND = 15
 DEBUG = 10
 DEBUG2 = 9
+
+
+def python3_ver():
+    return(platform.python_version())
+
+
+def pip3_ver():
+    pip3_ver = getoutput("pip3 --version | cut -d' ' -f2")
+    return(pip3_ver)
+
+
+def gcc_ver():
+    gcc_ver_full = getoutput("gcc --version | head -1 | cut -d' ' -f3")
+    return(gcc_ver_full)
+
+
+def which(p_exe):
+    which_path = getoutput(f"which {p_exe}")
+    return(which_path)
 
 
 def format_ver(p_ver):
@@ -759,7 +780,7 @@ def is_selinux_active():
     return True
 
 
-def get_glibc_version():
+def glibc_ver():
     if get_platform() != "Linux":
         return ""
 
@@ -1301,12 +1322,11 @@ def get_owner_name(p_path=None):
 # anonymous data from the INFO command
 def get_anonymous_info():
     jsonInfo = api.info(True, "", "", False)
-    platform = jsonInfo["platform"]
     os = jsonInfo["os"]
-    mem = str(jsonInfo["mem"])
+    mem = str(jsonInfo["os_memory_mb"])
     cores = str(jsonInfo["cores"])
-    cpu = jsonInfo["cpu"]
-    anon = "(" + platform + "; " + os + "; " + mem + "; " + cores + "; " + cpu + ")"
+    arch = jsonInfo["arch"]
+    anon = f"({os}; {mem}; {cores}; {arch})"
     return anon
 
 
@@ -2876,16 +2896,8 @@ def get_el_ver():
     arch = getoutput("uname -m")
     if arch == "aarch64":
         return "arm"
-        ##if glibc_v >= "2.34":
-        ##    return "arm9"
-        ##else:
-        ##    return "arm"
     else:
         return "amd"
-        ##if glibc_v >= "2.34":
-        ##    return "el9"
-        ##else:
-        ##    return "el8"
 
 
 def is_el8():

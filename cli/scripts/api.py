@@ -24,9 +24,6 @@ if os.path.exists(platform_lib_path):
 
 import util
 
-python_exe = sys.executable
-python_ver = platform.python_version()
-
 
 class bcolors:
     HEADER = "\033[95m"
@@ -71,16 +68,6 @@ def format_help(p_input):
         inp = "  " + inp + " " + italic_end
 
     return inp
-
-
-def get_pip_ver():
-    try:
-        import pip
-
-        return pip.__version__
-    except ImportError:
-        pass
-    return "None"
 
 
 def cli_unicode(p_str, p_encoding, errors="ignore"):
@@ -315,8 +302,7 @@ def info(p_json, p_home, p_repo, print_flag=True):
 
     p_user = util.get_user()
     p_is_admin = util.is_admin()
-    pip_ver = get_pip_ver()
-    cpu = util.get_cpu()
+    arch = platform.machine()
 
     this_os = ""
     this_uname = str(platform.system())[0:7]
@@ -337,7 +323,7 @@ def info(p_json, p_home, p_repo, print_flag=True):
 
     # Check the OS & Resources ########################################
     plat = util.get_os()
-    glibcV = util.get_glibc_version()
+    glibcV = util.glibc_ver()
 
     os_major_ver = ""
 
@@ -415,12 +401,9 @@ def info(p_json, p_home, p_repo, print_flag=True):
         ).strip()
         infoJson["os_pkg_mgr"] = os_pkg_mgr
         infoJson["os_major_ver"] = os_major_ver
-        infoJson["platform"] = unicode(
-            str(plat), sys.getdefaultencoding(), errors="ignore"
-        ).strip()
-        infoJson["mem"] = round_mem
+        infoJson["os_memory_mb"] = round_mem
         infoJson["cores"] = system_cpu_cores
-        infoJson["cpu"] = cpu
+        infoJson["arch"] = arch
         infoJson["last_update_utc"] = last_update_utc
         if last_update_local:
             infoJson["last_update_readable"] = last_update_readable
@@ -428,11 +411,14 @@ def info(p_json, p_home, p_repo, print_flag=True):
         infoJson["repo"] = p_repo
         infoJson["versions_sql"] = versions_sql
         infoJson["system_memory_in_kb"] = system_memory_in_kbytes
-        infoJson["python_ver"] = python_ver
-        infoJson["python_exe"] = python_exe
-        if pip_ver != "None":
-            infoJson["pip_ver"] = pip_ver
+        infoJson["python3_ver"] = util.python3_ver()
+        infoJson["python3_path"] = util.which("python3")
+        infoJson["python3_pip_ver"] = util.pip3_ver()
+        infoJson["python3_pip_path"] = util.which("pip3")
         infoJson["glibc_ver"] = glibcV
+        infoJson["gcc_ver"] = util.gcc_ver()
+        infoJson["gcc_path"] = util.which("gcc")
+
         infoJson["region"] = region
         infoJson["az"] = az
         infoJson["instance_id"] = instance_id
@@ -445,64 +431,51 @@ def info(p_json, p_home, p_repo, print_flag=True):
         else:
             return infoJson
 
+    INFO_WIDTH = 80
+
     if p_is_admin:
         admin_display = " (Admin)"
     else:
         admin_display = ""
 
-    langs = "Python v" + python_ver
-
-    # util.validate_distutils_click(False)
-
     if glibcV <= " ":
         glibc_v_display = ""
     else:
-        glibc_v_display = " glibc-" + glibcV
+        glibc_v_display = "glibc-" + glibcV
 
-    isTTY = os.getenv("pgeTTY")
-    if isTTY == "False":
-       tty = " (non-interactive) "
+
+    if util.MY_CODENAME > " ":
+       ver_display = f"pgEdge {util.format_ver(ver)} ({util.MY_CODENAME})"
     else:
-       tty = "  "
-    print(bold_start + ("#" * 70) + bold_end)
-    print(f"{bold_start}#      pgEdge: {bold_end}v{util.format_ver(ver)}{tty}{p_home}")
-    print(
-        bold_start
-        + "# User & Host: "
-        + bold_end
-        + p_user
-        + admin_display
-        + "  "
-        + host_display
-        + "  "
-        + host_ip
-    )
-    print(
-        bold_start
-        + "#          OS: "
-        + bold_end
-        + os2.rstrip()
-        + " "
-        + glibc_v_display
-    )
-    print(
-        f"{bold_start}#     Machine:{bold_end} {mem}, vCPU {cores}, {cpu}, {langs}"
-    )
+       ver_display = f"pgEdge {util.format_ver(ver)}"
+   
+    print("#" * INFO_WIDTH)
+    print(f"#{bold_start}         CLI:{bold_end} {ver_display}")
+
+    print(f"#{bold_start} User & Host:{bold_end} " +
+              f"{p_user}{admin_display}  {host_display}  {p_home}")
+    print(f"#{bold_start}          OS:{bold_end} {os2.rstrip()}, {glibc_v_display}")
+
+    print(f"#{bold_start}     Machine:{bold_end} {mem}, vCPU {cores}, {arch}")
+
+    print(f"#{bold_start}     Python3:{bold_end} {util.python3_ver()} {util.which('python3')}")
+
+    print(f"#{bold_start}        PIP3:{bold_end} {util.pip3_ver()} {util.which('pip3')}")
+
+    print(f"#{bold_start}         GCC:{bold_end} {util.gcc_ver()} {util.which('gcc')}")
+
     if instance_id > "" and not cloud_name == "unknown":
-        print(
-            bold_start
-            + "#  Cloud Info: "
-            + bold_end
+        print(f"#{bold_start}  Cloud Info:{bold_end} " +
             + f"{cloud_name}  {cloud_platform}  {instance_id}  {flavor}  {az}"
         )
 
-    print(bold_start + "#    Repo URL: " + bold_end + p_repo)
+    print(f"#{bold_start}    Repo URL:{bold_end} {p_repo}")
 
     if not last_update_local:
         last_update_local = "None"
 
-    print(bold_start + "# Last Update: " + bold_end + str(last_update_local))
-    print(bold_start + ("#" * 70) + bold_end)
+    print(f"#{bold_start} Last Update:{bold_end} {last_update_local}")
+    print("#" * INFO_WIDTH)
 
 
 def info_component(p_comp_dict, p_kount):
