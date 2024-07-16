@@ -465,7 +465,7 @@ def info(p_json, p_home, p_repo, print_flag=True):
     else:
        tty = "  "
     print(bold_start + ("#" * 70) + bold_end)
-    print(bold_start + "#  pgEdge CLI: " + bold_end + "v" + ver + tty + p_home)
+    print(f"{bold_start}#      pgEdge: {bold_end}v{util.format_ver(ver)}{tty}{p_home}")
     print(
         bold_start
         + "# User & Host: "

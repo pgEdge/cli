@@ -90,6 +90,16 @@ DEBUG = 10
 DEBUG2 = 9
 
 
+def format_ver(p_ver):
+    # formats 3-part version number as xx.yy-z
+    v = str(p_ver).split(".")
+    if len(v) != 3:
+        message(f"'{p_ver}' is not a valid three part version string", "warning")
+        return(p_ver)
+
+    return(f"{v[0]}.{str(v[1]).rjust(2,'0')}-{v[2]}")
+
+
 def autostart_verify_prereqs():
     message("util.autostart_verify_prereqs()", "debug")
 
