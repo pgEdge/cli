@@ -53,11 +53,11 @@ buildPkgBundle() {
 
   echo ""
   echo "##### buildPkgBundle() ###################"
-  echo "# 1. bundle_nm = $bundle_nm"
-  echo "# 2.    majorV = $majorV"
-  echo "# 3.       pgV = $pgV"
-  echo "# 4.    spockV = $spockV"
-  echo "# 5.      hubV = $hubV"
+  ##echo "# 1. bundle_nm = $bundle_nm"
+  ##echo "# 2.    majorV = $majorV"
+  ##echo "# 3.       pgV = $pgV"
+  ##echo "# 4.    spockV = $spockV"
+  ##echo "# 5.      hubV = $hubV"
   echo "#"
 
   source bp.sh
