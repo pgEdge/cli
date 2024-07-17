@@ -4,10 +4,10 @@ import os
 import time
 
 MY_VERSION = "24.7.4"
-MY_CODENAME = "Marin County"
+MY_CODENAME = "Golden Gate"
 
 DEFAULT_PG = "16"
-DEFAULT_SPOCK = "33"
+DEFAULT_SPOCK = "40"
 DEFAULT_SPOCK_17 = "40"
 MY_CMD = os.getenv("MY_CMD", None)
 MY_HOME = os.getenv("MY_HOME", None)
@@ -2888,11 +2888,6 @@ def get_el_ver():
         else:
             return "osx"
 
-    elv = os.getenv("ELV", None)
-    if elv:
-        return str(elv)
-
-    glibc_v = get_glibc_version()
     arch = getoutput("uname -m")
     if arch == "aarch64":
         return "arm"
@@ -2904,9 +2899,7 @@ def is_el8():
     if platform.system() != "Linux":
         return False
 
-    glibc_v = get_glibc_version()
-
-    if get_glibc_version() < "2.34":
+    if glibc_ver() < "2.34":
         return True
 
     return False

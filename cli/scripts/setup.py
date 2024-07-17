@@ -7,8 +7,8 @@ sys.path.append(os.path.join(os.path.dirname(__file__), "lib"))
 
 import fire, util, db
 
-# extensions installed 'Disabled' if you pass --extensions to setup()
-EXTS = "spock33 snowflake lolor audit vector cron orafce postgis partman curl citus timescaledb " + \
+# extensions installed 'Disabled' if you pass --extensions [core | all] to setup() (defaults to 'core')
+EXTS = "spock40 snowflake lolor audit vector cron orafce postgis partman curl citus timescaledb " + \
        "wal2json hypopg hintplan plv8 setuser permissions profiler debugger"
 EXTS_15 = "foslots"
 
@@ -35,7 +35,7 @@ def check_pre_reqs(User, Passwd, db, port, pg_major, pg_minor, spock, autostart,
     platf = util.get_platform()
 
     if platf == "Linux":
-        if util.get_glibc_version() < "2.28":
+        if util.glibc_ver() < "2.28":
             util.exit_message("Linux has unsupported (older) version of glibc")
 
         if autostart:
@@ -133,7 +133,7 @@ def parse_pg(pg):
    return(pg_major, pg_minor)
 
 
-def setup_pgedge(User=None, Passwd=None, dbName=None, port=None, pg_ver=None, spock_ver=None, autostart=False, extensions=False):
+def setup_pgedge(User=None, Passwd=None, dbName=None, port=None, pg_ver=None, spock_ver=None, autostart=False, extensions="core"):
     """Install pgEdge node (including postgres, spock, and snowflake-sequences)
 
        Install pgEdge node (including postgres, spock, and snowflake-sequences)
@@ -144,16 +144,18 @@ def setup_pgedge(User=None, Passwd=None, dbName=None, port=None, pg_ver=None, sp
        :param dbName: The database name (required)
        :param port: Defaults to 5432 if not specified
        :param pg_ver: Defaults to latest prod version of pg, such as 16.  May be pinned to a specific pg version such as 16.2
-       :param spock_ver: Defaults to latest prod version of spock, such as 3.3.  May be pinned to a specific spock version such as 3.3.1
+       :param spock_ver: Defaults to latest prod version of spock, such as 4.0.  May be pinned to a specific spock version such as 4.0.1
        :param autostart: Defaults to False
-       :param extensions: Defaults to False.  Will install all (non-spock) supported extensions disabled when set
+       :param extensions: Defaults to 'core' pgEdge extensions. Will install all supported extensions when set to 'all' 
     """
 
     if os.getenv("isAutoStart", "") == "True":
         autostart = True
 
-    if util.isEXTENSIONS is True:
-        extensions = True
+    pgeExt = os.getenv("pgeExtensions", False)
+    if pgeExt:
+        extensions = pgeExt
+
 
     util.message(f"setup.pgedge(User={User}, Passwd='***', dbName={dbName}, port={port}, \n" + \
                  f"    pg_ver={pg_ver}, spock_ver={spock_ver}, autostart={autostart}, extensions={extensions})", "debug")
@@ -206,7 +208,7 @@ def setup_pgedge(User=None, Passwd=None, dbName=None, port=None, pg_ver=None, sp
         time.sleep(pause)
         core_exts_installed = True
 
-    if extensions is True:
+    if extensions == "all":
         util.message("\n## Pre-install supported extensions in disabled state ########")
 
         if pg_major not in ["15", "16"]:
