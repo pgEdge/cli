@@ -3,7 +3,7 @@
 import os
 import time
 
-MY_VERSION = "24.7.4"
+MY_VERSION = "24.7.5"
 MY_CODENAME = "Golden Gate"
 
 DEFAULT_PG = "16"
