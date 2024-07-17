@@ -7,19 +7,17 @@ PLATFORM=`cat /etc/os-release | grep PLATFORM_ID | cut -d: -f2 | tr -d '\"'`
 echo "## $PLATFORM ##"
 
 if [ "$PLATFORM" == "el8" ]; then
-  sudo yum remove -y python3
-  $yum python39 python39-devel python39-pip gcc-toolset-12
   sudo dnf config-manager --set-enabled powertools
   $yum @ruby:3.0
 fi
 
 if [ "$PLATFORM" == "el9" ]; then
-  $yum python3-devel python3-pip gcc
   sudo dnf config-manager --set-enabled crb
-  sudo yum install ruby
+  $yum ruby
 fi
 
 if [ "$PLATFORM" == "el8" ] || [ "$PLATFORM" == "el9" ]; then
+  $yum python3.11 python3.11-devel python3.11-pip gcc-toolset-13
   $yum git net-tools wget curl pigz sqlite which zip
 
   $yum cpan
@@ -56,6 +54,8 @@ if [ "$PLATFORM" == "el8" ] || [ "$PLATFORM" == "el9" ]; then
   ./install-rust.sh -y
   rm install-rust.sh
 
+  sudo update-alternatives --set python3 /usr/bin/python3.11
+  sudo update-alternatives --set pip3    /usr/bin/pip3.11
 fi
 
 
@@ -68,8 +68,6 @@ if [ $rc == "0" ]; then
   $apt ruby squashfs-tools
   gem install fpm
 fi
-
-sudo update-alternatives --set python3 /usr/bin/python3.9
  
 cd ~
 python3 -m venv venv

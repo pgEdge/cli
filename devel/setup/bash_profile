@@ -1,3 +1,4 @@
+
 # PGEDGE CLI for ~/.bash... #############################################
 alias bp="cd ~/dev/cli; source bp.sh"
 alias bap="cd ~/dev/cli; ./build_all.sh; source bp.sh"
@@ -31,6 +32,6 @@ export CLI=$PGE/cli/scripts
 export REPO=http://localhost:8000
 export CONN="-U user1 -P pword1 -d db1"
 
-source ~/venv/bin/activate
-source scl_source enable gcc-toolset-12
+# source ~/venv/bin/activate
+# source scl_source enable gcc-toolset-13
 
