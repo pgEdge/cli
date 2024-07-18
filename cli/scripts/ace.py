@@ -6,6 +6,7 @@
 
 import os
 import json
+import ast
 
 import subprocess
 import re
@@ -79,6 +80,8 @@ Accepts a connection object and returns the version of spock installed
 @return: float - version of spock installed
 
 '''
+
+
 def get_spock_version(conn):
     data = []
     sql = "SELECT spock.spock_version();"
@@ -87,9 +90,16 @@ def get_spock_version(conn):
         c.execute(sql)
         data = c.fetchone()
         if data:
-            return float(data[0])
+            """
+            Spock returns 4.0.0 or something similar.
+            We are interested only in the first part of the version
+            """
+            data = data[0].split(".")[0]
+            return float(data)
+        else:
+            util.exit_message("Could not get spock version from the database")
     except Exception as e:
-        fatal_error(e, sql, "get_spock_version()")
+        util.exit_message("Error in get_spock_version(): " + str(e))
 
     return 0.0
 
@@ -1770,8 +1780,33 @@ def table_repair(
         if spock_version >= 4.0:
             cur.execute("SELECT spock.repair_mode(true);")
 
+        """
+        We had previously converted all rows to strings for computing set differences.
+        We now need to convert them back to their original types before upserting.
+        psycopg3 will internally handle type conversions from lists/arrays to their
+        respective types in Postgres.
+
+        So, if an element in a row is a list or a json that is represented as:
+        '{"key1": "val1", "key2": "val2"}' or '[1, 2, 3]', we need to use the
+        abstract syntax tree module to convert them back to their original types.
+        ast.literal_eval() will give us {'key1': 'val1', 'key2': 'val2'} and
+        [1, 2, 3] respectively.
+        """
+        upsert_tuples = []
         if rows_to_upsert:
-            upsert_tuples = [tuple(row.values()) for row in rows_to_upsert_json]
+            for row in rows_to_upsert:
+                modified_row = tuple()
+                for elem in row:
+                    try:
+                        item = ast.literal_eval(elem)
+                        if isinstance(item, list):
+                            modified_row += (item,)
+                        else:
+                            modified_row += (elem,)
+                    except (ValueError, SyntaxError):
+                        modified_row += (elem,)
+
+                upsert_tuples.append(modified_row)
 
             # Performing the upsert
             cur.executemany(update_sql, upsert_tuples)
