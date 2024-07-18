@@ -401,26 +401,30 @@ def spock_diff(cluster_name, nodes):
         cur.execute(sql)
         node_info = cur.fetchall()
 
-        print("  " + node_info[0]["node_name"])
-        diff_spock["node"] = node_info[0]["node_name"]
+        if node_info:
+            print("  " + node_info[0]["node_name"])
+            diff_spock["node"] = node_info[0]["node_name"]
 
-        prCyan("  Subscriptions:")
+            prCyan("  Subscriptions:")
 
-        diff_spock["subscriptions"] = []
-        for node in node_info:
-            diff_sub = {}
-            if node["sub_name"] is None:
-                hints.append("Hint: No subscriptions have been created on this node")
-            else:
-                print("    " + node["sub_name"])
-                diff_sub["sub_name"] = node["sub_name"]
-                diff_sub["sub_enabled"] = node["sub_enabled"]
-                prCyan("    RepSets:")
-                diff_sub["replication_sets"] = node["sub_replication_sets"]
-                print("      " + json.dumps(node["sub_replication_sets"]))
-                if node["sub_replication_sets"] == []:
-                    hints.append("Hint: No replication sets added to subscription")
-                diff_spock["subscriptions"].append(diff_sub)
+            diff_spock["subscriptions"] = []
+            for node in node_info:
+                diff_sub = {}
+                if node["sub_name"] is None:
+                    hints.append("Hint: No subscriptions have been created on this node")
+                else:
+                    print("    " + node["sub_name"])
+                    diff_sub["sub_name"] = node["sub_name"]
+                    diff_sub["sub_enabled"] = node["sub_enabled"]
+                    prCyan("    RepSets:")
+                    diff_sub["replication_sets"] = node["sub_replication_sets"]
+                    print("      " + json.dumps(node["sub_replication_sets"]))
+                    if node["sub_replication_sets"] == []:
+                        hints.append("Hint: No replication sets added to subscription")
+                    diff_spock["subscriptions"].append(diff_sub)
+
+        else:
+            print(f"  No node replication in {cluster_node['name']}")
 
         # Query gets each table by which rep set they are in, values in each rep set are alphabetized
         sql = """
