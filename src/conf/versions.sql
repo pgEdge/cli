@@ -128,7 +128,8 @@ INSERT INTO categories VALUES (9,  87, 'Management & Monitoring', 'Manage/Monito
 INSERT INTO projects VALUES ('hub', 'app', 0, 0, 'hub', 0, 'https://github.com/pgedge/cli','',0,'','','','');
 INSERT INTO releases VALUES ('hub', 1, 'hub',  '', '', 'hidden', '', 1, '', '', '');
 
-INSERT INTO versions VALUES ('hub', '24.7.4',    '',  1, '20240708', '', '', '');
+INSERT INTO versions VALUES ('hub', '24.7.5',    '',  1, '20240720', '', '', '');
+INSERT INTO versions VALUES ('hub', '24.7.4',    '',  0, '20240710', '', '', '');
 INSERT INTO versions VALUES ('hub', '24.7.3',    '',  0, '20240701', '', '', '');
 INSERT INTO versions VALUES ('hub', '24.7.2',    '',  0, '20240620', '', '', '');
 INSERT INTO versions VALUES ('hub', '24.7.1',    '',  0, '20240611', '', '', '');
@@ -171,7 +172,6 @@ INSERT INTO versions VALUES ('pg16', '16.3-2',  'amd, arm', 0, '20240521','', ''
 INSERT INTO releases VALUES ('pg17', 2, 'pg', '', '', 'test', 
   '<font size=-1>New in <a href=https://www.postgresql.org/docs/17/release-17.html>2024!</a></font>', 1, 'POSTGRES', '', '');
 INSERT INTO versions VALUES ('pg17', '17beta2-3',  'amd, arm', 1, '20240710','', '', '');
-INSERT INTO versions VALUES ('pg17', '17beta2-1',  'amd, arm', 0, '20240626','', '', '');
 
 -- ## ORAFCE #############################
 INSERT INTO projects VALUES ('orafce', 'ext', 4, 0, 'hub', 0, 'https://github.com/orafce/orafce/releases',
@@ -337,11 +337,13 @@ INSERT INTO versions VALUES ('spock33-pg15', '3.3.5-1', 'amd, arm', 1, '20240607
 INSERT INTO versions VALUES ('spock33-pg16', '3.3.5-1', 'amd, arm', 1, '20240607', 'pg16', '', '');
 
 -- ## SPOCK40 ###########################
-INSERT INTO releases VALUES ('spock40-pg14', 4, 'spock', 'Spock', '', 'test', '', 1, 'pgEdge Community', '', '');
-INSERT INTO releases VALUES ('spock40-pg15', 4, 'spock', 'Spock', '', 'test', '', 1, 'pgEdge Community', '', '');
-INSERT INTO releases VALUES ('spock40-pg16', 4, 'spock', 'Spock', '', 'test', '', 1, 'pgEdge Community', '', '');
+INSERT INTO releases VALUES ('spock40-pg14', 4, 'spock', 'Spock', '', 'prod', '', 1, 'pgEdge Community', '', '');
+INSERT INTO releases VALUES ('spock40-pg15', 4, 'spock', 'Spock', '', 'prod', '', 1, 'pgEdge Community', '', '');
+INSERT INTO releases VALUES ('spock40-pg16', 4, 'spock', 'Spock', '', 'prod', '', 1, 'pgEdge Community', '', '');
 INSERT INTO releases VALUES ('spock40-pg17', 4, 'spock', 'Spock', '', 'test', '', 1, 'pgEdge Community', '', '');
 
+INSERT INTO versions VALUES ('spock40-pg14', '4.0.0-1', 'amd, arm', 1, '20240710', 'pg14', '', '');
+INSERT INTO versions VALUES ('spock40-pg15', '4.0.0-1', 'amd, arm', 1, '20240710', 'pg15', '', '');
 INSERT INTO versions VALUES ('spock40-pg16', '4.0.0-1', 'amd, arm', 1, '20240708', 'pg16', '', '');
 INSERT INTO versions VALUES ('spock40-pg17', '4.0.0-1', 'amd, arm', 1, '20240708', 'pg17', '', '');
 

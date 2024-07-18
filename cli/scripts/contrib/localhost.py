@@ -231,8 +231,8 @@ Below is an example of the JSON file that is generated that defines a 2 node loc
     create_local_json(cluster_name, db, num_nodes, User, Passwd, pg, port1, auto_ddl)
     db, db_settings, nodes = cluster.load_json(cluster_name)
 
-    cluster.ssh_install_pgedge(cluster_name, db[0]["name"], db_settings, db[0]["username"], db[0]["password"], nodes)
-    cluster.ssh_cross_wire_pgedge(cluster_name, db[0]["name"], db_settings, db[0]["username"], db[0]["password"], nodes)
+    cluster.ssh_install_pgedge(cluster_name, db[0]["name"], db_settings, db[0]["username"], db[0]["password"], nodes, True, " ", verbose="none")
+    cluster.ssh_cross_wire_pgedge(cluster_name, db[0]["name"], db_settings, db[0]["username"], db[0]["password"], nodes, verbose="none")
     if len(db) > 1:
         for database in db[1:]:
             cluster.create_spock_db(nodes,database,db_settings)

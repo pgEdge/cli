@@ -10,6 +10,21 @@ except Exception:
 
 BASE_DIR = "cluster"
 
+def run_cmd(cmd, node, message, verbose, capture_output = False, ignore = False, important=False):
+    name = node["name"]
+    msg = name + " - " + message
+    return util.run_rcommand(
+        cmd=cmd,
+        message=msg,
+        host=node["ip_address"],
+        usr=node["os_user"],
+        key=node["ssh_key"],
+        verbose=verbose,
+        capture_output = capture_output,
+        ignore = ignore,
+        important=important
+    )
+
 def ssh(cluster_name, node_name):
     """An SSH Terminal session into the specified node"""
 
@@ -147,7 +162,7 @@ def create_remote_json(
     """Create a template for a Cluster Configuration JSON file.
     
        Create a JSON configuration file template that can be modified to fully define a remote cluster. \n
-       Example: cluster define-remote demo db[0]["name"] 3 lcusr lcpasswd 16 5432
+       Example: cluster define-remote demo db 3 lcusr lcpasswd 16 5432
        :param cluster_name: The name of the cluster. A directory with this same name will be created in the cluster directory, and the JSON file will have the same name.
        :param db: The database name.
        :param num_nodes: The number of nodes in the cluster.
@@ -352,26 +367,19 @@ def init(cluster_name):
     if parsed_json.get("log_level"):
        verbose = parsed_json["log_level"]
     else:
-       verbose = "Info"
+       verbose = "none"
 
     for nd in nodes:
         message = f"Checking ssh on {nd['ip_address']}"
-        util.run_rcommand(
-            cmd="hostname",
-            message=message,
-            host=nd["ip_address"],
-            usr=nd["os_user"],
-            key=nd["ssh_key"],
-            verbose=verbose
-        )
+        run_cmd(cmd="hostname", node=nd, message=message, verbose=verbose)
 
     ssh_install_pgedge(
         cluster_name, db[0]["name"], db_settings, db[0]["username"],
-        db[0]["password"], nodes, True, " "
+        db[0]["password"], nodes, True, " ", verbose
     )
     ssh_cross_wire_pgedge(
         cluster_name, db[0]["name"], db_settings, db[0]["username"],
-        db[0]["password"], nodes
+        db[0]["password"], nodes, verbose
     )
 
     if len(db) > 1:
@@ -379,7 +387,7 @@ def init(cluster_name):
             create_spock_db(nodes, database, db_settings)
             ssh_cross_wire_pgedge(
                 cluster_name, database["name"], db_settings, database["username"],
-                database["password"], nodes
+                database["password"], nodes, verbose
             )
 
     pg_ver = db_settings["pg_version"]
@@ -448,6 +456,11 @@ def add_db(cluster_name, database_name, username, password):
     """
     util.message(f"## Loading cluster '{cluster_name}' json definition file")
     db, db_settings, nodes = load_json(cluster_name)
+    pg = parsed_json["database"]["pg_version"]
+    if parsed_json.get("log_level"):
+       verbose = parsed_json["log_level"]
+    else:
+       verbose = "none"
 
     db_json = {}
     db_json["username"] = username
@@ -456,7 +469,7 @@ def add_db(cluster_name, database_name, username, password):
 
     util.message(f"## Creating database {database_name}")
     create_spock_db(nodes,db_json, db_settings)
-    ssh_cross_wire_pgedge(cluster_name, database_name, db_settings, username, password, nodes)
+    ssh_cross_wire_pgedge(cluster_name, database_name, db_settings, username, password, nodes, verbose)
     util.message(f"## Updating cluster '{cluster_name}' json definition file")
     update_json(cluster_name, db_json)
 
@@ -509,19 +522,16 @@ def ssh_install(cluster_name, db, db_settings, db_user, db_passwd, n, primary, p
     
     nc = os.path.join(ndpath, "pgedge", "pgedge ")
     cmd = f"{nc} install pg{pg}"
-    util.run_rcommand(
-        cmd,
-        message=f"Installing pg{pg} on {ndnm}",
-        host=n["ip_address"], usr=n["os_user"],
-        key=n["ssh_key"],
-        verbose=verbose
-        )
+    
+    message=f"Installing pg{pg} on {ndnm}",
+    run_cmd(cmd, n, message=message, verbose=verbose)
 
-def ssh_install_pgedge(cluster_name, db, db_settings, db_user, db_passwd, nodes, primary, primary_name):
+def ssh_install_pgedge(cluster_name, db, db_settings, db_user, db_passwd, nodes, primary, primary_name, verbose):
     """Install pgEdge on every node in a cluster."""
 
     for n in nodes:
         REPO = os.getenv("REPO", "")
+        print("\n")
         print_install_hdr(cluster_name, db, db_user, len(nodes), n["name"], n["path"], n["ip_address"], n["port"], REPO, primary, primary_name)
         ndnm = n["name"]
         ndpath = n["path"]
@@ -543,7 +553,9 @@ def ssh_install_pgedge(cluster_name, db, db_settings, db_user, db_passwd, nodes,
         cmd0 = f"export REPO={REPO}; "
         cmd1 = f"mkdir -p {ndpath}; cd {ndpath}; "
         cmd2 = f'python3 -c "\\$(curl -fsSL {REPO}/{install_py})"'
-        util.echo_cmd(cmd0 + cmd1 + cmd2, host=n["ip_address"], usr=n["os_user"], key=n["ssh_key"])
+   
+        message = f"Installing pgedge"
+        run_cmd(cmd0 + cmd1 + cmd2, n, message=message, verbose=verbose)
 
         nc = os.path.join(ndpath, "pgedge", "pgedge ")
         parms = f" -U {db_user} -P {db_passwd} -d {db} --port {ndport}"
@@ -553,13 +565,21 @@ def ssh_install_pgedge(cluster_name, db, db_settings, db_user, db_passwd, nodes,
             parms = parms + f" --spock_ver {spock}"
         if db_settings["auto_start"] == "on":
             parms = f"{parms} --autostart"
-        util.echo_cmd(f"{nc} setup {parms}", host=n["ip_address"], usr=n["os_user"], key=n["ssh_key"])
+    
+        cmd = f"{nc} setup {parms}"
+        message = f"Setup pgedge"
+        run_cmd(cmd, n, message=message, verbose=verbose)
+        
         if db_settings["auto_ddl"] == "on":
             cmd = nc + " db guc-set spock.enable_ddl_replication on;"
             cmd = cmd + " " + nc + " db guc-set spock.include_ddl_repset on;"
             cmd = cmd + " " + nc + " db guc-set spock.allow_ddl_from_functions on;"
-            util.echo_cmd(cmd, host=n["ip_address"], usr=n["os_user"], key=n["ssh_key"])
-        util.message("#")
+        
+            message = f"Setup spock"
+            run_cmd(cmd, n, message=message, verbose=verbose)
+        
+        if db_settings["auto_ddl"] == "on":
+            util.message("#")
     return 0
 
 
@@ -574,7 +594,7 @@ def create_spock_db(nodes,db,db_settings):
             cmd = cmd + " " + nc + " db guc-set spock.allow_ddl_from_functions on;"
             util.echo_cmd(cmd, host=n["ip_address"], usr=n["os_user"], key=n["ssh_key"])
 
-def ssh_cross_wire_pgedge(cluster_name, db, db_settings, db_user, db_passwd, nodes):
+def ssh_cross_wire_pgedge(cluster_name, db, db_settings, db_user, db_passwd, nodes, verbose):
     """Create nodes and subs on every node in a cluster."""
 
     sub_array=[]
@@ -594,7 +614,10 @@ def ssh_cross_wire_pgedge(cluster_name, db, db_settings, db_user, db_passwd, nod
         except Exception:
             ndport = "5432"
         cmd1 = f"{nc} spock node-create {ndnm} 'host={ndip_private} user={os_user} dbname={db} port={ndport}' {db}"
-        util.echo_cmd(cmd1, host=ndip, usr=os_user, key=ssh_key)
+        
+        message = f"Creating node {ndnm}"
+        run_cmd(cmd1, prov_n, message=message, verbose=verbose)
+        
         for sub_n in nodes:
             sub_ndnm = sub_n["name"]
             if sub_ndnm != ndnm:
@@ -607,18 +630,23 @@ def ssh_cross_wire_pgedge(cluster_name, db, db_settings, db_user, db_passwd, nod
                     sub_ndport = str(sub_n["port"])
                 except Exception:
                     sub_ndport = "5432"
+                sub_name = f"sub_{ndnm}{sub_ndnm}"
                 cmd = f"{nc} spock sub-create sub_{ndnm}{sub_ndnm} 'host={sub_ndip_private} user={os_user} dbname={db} port={sub_ndport}' {db}"
-                sub_array.append([cmd,ndip,os_user,ssh_key])
+                sub_array.append([cmd,ndip,os_user,ssh_key,prov_n, sub_name])
     ## To Do: Check Nodes have been created
-    print(f"{nc} spock node-list {db}") ##, host=ndip, usr=os_user, key=ssh_key)
-    time.sleep(10)
+    ## print(f"{nc} spock node-list {db}") ##, host=ndip, usr=os_user, key=ssh_key)
     for n in sub_array:
         cmd = n[0]
-        nip = n[1]
-        os_user = n[2]
-        ssh_key = n[3]
-        util.echo_cmd(cmd, host=nip, usr=os_user, key=ssh_key)
-
+        node = n[4]
+        sub_name = n[5]
+        message = f"Creating subscriptions {sub_name}"
+        run_cmd(cmd, node, message=message, verbose=verbose)
+    
+    cmd = f'{nc} spock node-list {db}'
+    message  = f"Listing spock nodes"
+    result  = run_cmd(cmd, prov_n, message=message, verbose=verbose, capture_output=True)
+    print(f"\n")
+    print(result.stdout)
 
 def ssh_un_cross_wire(cluster_name, db, db_settings, db_user, db_passwd, nodes):
     """Create nodes and subs on every node in a cluster."""
@@ -807,18 +835,77 @@ def app_remove(cluster_name, app_name, database_name=None):
 def list_nodes(cluster_name):
     """List all nodes in the cluster."""
     
-    cluster_data = get_cluster_json(cluster_name)
+    db, db_settings, nodes = load_json(cluster_name)
+    dbname = db[0]["name"]
 
-    nodes_list = []
-    for group in cluster_data['node_groups']['aws']:
-        for node in group['nodes']:
-            node_info = (
-                f"Node: {node['name']}, IP: {node['ip_address']}, "
-                f"Port: {node['port']}, Active: {'Yes' if node['is_active'] else 'No'}"
-            )
-            nodes_list.append(node_info)
+    for n in nodes:
+        ndpath = n["path"]
+        cmd = f'{ndpath}/pgedge/pgedge spock node-list {dbname}'
+        ndip = n["ip_address"]
+        util.echo_cmd(cmd, host=ndip, usr=n["os_user"], key=n["ssh_key"])
 
-    return nodes_list
+def validate_json(json_data):
+    required_keys = {
+        "node_groups": {
+            "dynamic_key": [
+                {
+                    "nodes": [
+                        {
+                            "name": str,
+                            "is_active": bool,
+                            "ip_address": str,
+                            "port": int,
+                            "repo1_type": str,
+                            "path": str
+                        }
+                    ]
+                }
+            ]
+        }
+    }
+
+    valid_node_groups = {"aws", "localhost", "azure", "gcp", "remote"}
+    valid_repo1_types = {"s3", "posix"}
+
+    def validate_keys(data, template, path=""):
+        if isinstance(template, dict):
+            if not isinstance(data, dict):
+                util.exit_message(
+                    f"Expected a dictionary at {path}, but got {type(data).__name__}.", 1
+                )
+            for key, sub_template in template.items():
+                if key == "dynamic_key":
+                    for dynamic_key in data.keys():
+                        if dynamic_key not in valid_node_groups:
+                            util.exit_message(
+                                f"Invalid node group '{dynamic_key}' at {path}.", 1
+                            )
+                        validate_keys(
+                            data[dynamic_key], sub_template,
+                            path + f".{dynamic_key}"
+                        )
+                else:
+                    if key not in data:
+                        util.exit_message(f"Missing key '{key}' at {path}.", 1)
+                    validate_keys(data[key], sub_template, path + f".{key}")
+        elif isinstance(template, list):
+            if not isinstance(data, list):
+                util.exit_message(
+                    f"Expected a list at {path}, but got {type(data).__name__}.", 1
+                )
+            if len(template) > 0:
+                for index, item in enumerate(data):
+                    validate_keys(item, template[0], path + f"[{index}]")
+        else:
+            if not isinstance(data, template):
+                util.exit_message(
+                    f"Expected {template.__name__} at {path}, but got {type(data).__name__}.", 1
+                )
+            if path.endswith(".repo1_type") and data not in valid_repo1_types:
+                util.exit_message(f"Invalid repo1_type '{data}' at {path}.", 1)
+
+    validate_keys(json_data, required_keys)
+
 
 def add_node(cluster_name, source_node, target_node, script= " ", stanza=" ", backup_id = " "):
     """
@@ -837,6 +924,7 @@ def add_node(cluster_name, source_node, target_node, script= " ", stanza=" ", ba
     cluster_data = get_cluster_json(cluster_name)
     parsed_json = get_cluster_json(cluster_name)
     pg = parsed_json["database"]["pg_version"]
+    
     stanza_create = False
     if stanza == " ":
         stanza = f"pg{pg}"
@@ -845,49 +933,54 @@ def add_node(cluster_name, source_node, target_node, script= " ", stanza=" ", ba
     if parsed_json.get("log_level"):
        verbose = parsed_json["log_level"]
     else:
-       verbose = "Info"
+       verbose = "none"
     
     node_file = f"{target_node}.json"
     if not os.path.exists(node_file):
-        util.exit_message(f"Error: Missing node configuration file '{node_file}'.")
+        util.exit_message(f"Missing node configuration file '{node_file}'.")
         return
 
     with open(node_file, 'r') as file:
-        data = json.load(file)
+        try:
+            data = json.load(file)
+            validate_json(data)
+        except json.JSONDecodeError as e:
+            util.exit_message(f"Invalid JSON: {e}")
 
-    if 'aws' in data:
-        aws_config = data['aws']
-        for node_config in aws_config:
-            node_data = node_config['nodes']
-            for node in node_data:
-                print(f"Node Name: {node['name']}")
-    if 'localhost' in data:
-        local_config = data['localhost']
-        for node_config in local_config:
-            node_data = node_config['nodes']
-            for node in node_data:
-                print(f"Node Name: {node['name']}")
+    node_groups = ['aws', 'remote', 'gcp', 'azure', 'localhost']
+    node_config = None
+    node_group_name = None
+    node = None
+    node_data= None
+    group_config = None
+    for group in node_groups:
+        if group in data.get("node_groups", {}):
+            group_config = data["node_groups"][group]
+            for config in group_config:
+                node_data = config['nodes']
+                for node in node_data:
+                    if node['name'] == target_node:
+                        node_config = node
+                        node_group_name = group
+                        break
+                if node_config:
+                    break
+        if node_config:
+            break
 
+    target_json = group_config[0] 
     n = node_data[0]
     
-    node_groups = cluster_data.get('node_groups', {})
-    if 'aws' in data:
-        nodes = node_groups.get('aws', [])
-    if 'localhost' in data:
-        nodes = node_groups.get('localhost', [])
-
-    for node_group in nodes:
-        nodes = node_group.get('nodes', [])
-        for node in nodes:
-            if node.get('name') == n['name']:
-                util.exit_message(f"Error: node {n['name']} already exists.")
-                break
-
     db, db_settings, nodes = load_json(cluster_name)
     s = next((node for node in nodes if node['name'] == source_node), None)
     if s is None:
-        util.exit_message(f"Error: Source node '{source_node}' not found in cluster data.")
+        util.exit_message(f"Source node '{source_node}' not found in cluster data.")
         return
+    
+    for node in nodes:
+        if node.get('name') == n['name']:
+            util.exit_message(f"node {n['name']} already exists.")
+            break
 
     dbname = db[0]["name"]
     n.update({
@@ -896,28 +989,20 @@ def add_node(cluster_name, source_node, target_node, script= " ", stanza=" ", ba
     })
 
     util.echo_message(f"Installing and Configuring new node\n", bold=True)
-    
-    util.echo_action(f"Installing postgresql \n")
     rc = ssh_install_pgedge(cluster_name, dbname, db_settings, db[0]["username"],
-                                db[0]["password"], node_data, True, " ")
-    if rc == 0:    
-        util.echo_action(f"Installing postgresql ", "ok")
-    else:
-        util.echo_action(f"Installing postgresql ", "failed", True)
+                                db[0]["password"], node_data, True, " ", verbose)
 
     cmd = f"{s['path']}/pgedge/pgedge install backrest"
-    util.run_rcommand(
-        cmd,
-        f"Installing backrest",
-        host=s["ip_address"],
-        usr=n["os_user"],
-        key=n["ssh_key"],
-        verbose=verbose
-    )
+    message = f"Installing backrest"
+    run_cmd(cmd, s, message=message, verbose=verbose)
 
     repo1_path = f"/var/lib/pgbackrest/{s['name']}"
+    cmd = f"sudo rm -rf {repo1_path}"
+    message = f"Removing the repo-path"
+    run_cmd(cmd, s, message=message, verbose=verbose)
+    
     os_user = n["os_user"]
-    repo1_type = n["repo1_type"] if "repo1_type" in n else "Posix"
+    repo1_type = n["repo1_type"] if "repo1_type" in n else "posix"
     port = s["port"]
     pg1_path = f"{s['path']}/pgedge/data/{stanza}"
 
@@ -926,225 +1011,231 @@ def add_node(cluster_name, source_node, target_node, script= " ", stanza=" ", ba
             f'--pg1-port {port} --db-socket-path /tmp --repo1-cipher-type aes-256-cbc' )
 
     cmd = f"{s['path']}/pgedge/pgedge backrest command stanza-create '{args}'"
-    util.run_rcommand(
-        cmd,
-        f"Creating stanza {stanza}",
-        host=s["ip_address"],
-        usr=s["os_user"],
-        key=s["ssh_key"],
-        verbose=verbose
-    )
+    message = f"Creating stanza {stanza}"
+    run_cmd(cmd, s, message=message, verbose=verbose)
+    
     cmd = f"{s['path']}/pgedge/pgedge  backrest set_postgresqlconf {stanza} {pg1_path} {repo1_path} {repo1_type}"
-    util.run_rcommand(
-        cmd,
-        f"Modifying postgresql.conf file",
-        host=s["ip_address"],
-        usr=s["os_user"],
-        key=s["ssh_key"],
-        verbose=verbose
-    )
+    message = f"Modifying postgresql.conf file"
+    run_cmd(cmd, s, message=message, verbose=verbose)
+    
     cmd = f"{s['path']}/pgedge/pgedge backrest set_hbaconf"
-    util.run_rcommand(
-        cmd,
-        f"Modifying pg_hba.conf file",
-        host=s["ip_address"],
-        usr=s["os_user"],
-        key=s["ssh_key"],
-        verbose=verbose
-    )
+    message = f"Modifying pg_hba.conf file"
+    run_cmd(cmd, s, message=message, verbose=verbose)
+    
     sql_cmd = "select pg_reload_conf()"
     cmd = f"{s['path']}/pgedge/pgedge psql '{sql_cmd}' {dbname}"
-    util.run_rcommand(
-        cmd,
-        f"Reload configuration pg_reload_conf()",
-        host=s["ip_address"],
-        usr=s["os_user"],
-        key=s["ssh_key"],
-        verbose=verbose
-    )
+    message = f"Reload configuration pg_reload_conf()"
+    run_cmd(cmd, s, message=message, verbose=verbose)
 
     args= args + f' --repo1-retention-full=7 --type=full'
     if backup_id == " ":
         cmd = f"{s['path']}/pgedge/pgedge backrest command backup '{args}'"
-        util.run_rcommand(
-            cmd,
-            f"Creating full backup",
-            host=s["ip_address"],
-            usr=n["os_user"],
-            key=n["ssh_key"],
-            verbose=verbose
-        )
+        message = f"Creating full backup"
+        run_cmd(cmd, s, message=message, verbose=verbose)
 
     cmd = f"{n['path']}/pgedge/pgedge install backrest"
-    util.run_rcommand(
-        cmd,
-        f"Installing backrest",
-        host=n["ip_address"],
-        usr=n["os_user"],
-        key=n["ssh_key"],
-        verbose=verbose
-    )
+    message = f"Installing backrest"
+    run_cmd(cmd, n, message=message, verbose=verbose)
 
     manage_node(n, "stop", pgV, verbose)
     cmd = f'rm -rf {n["path"]}/pgedge/data/{stanza}'
-    util.run_rcommand(
-        cmd,
-        f"Removing old data directory",
-        host=n["ip_address"],
-        usr=n["os_user"],
-        key=n["ssh_key"],
-        verbose=verbose
-    )
+    message = f"Removing old data directory"
+    run_cmd(cmd, n, message=message, verbose=verbose)
+    
     args = (f'--repo1-path /var/lib/pgbackrest/{s["name"]} --repo1-cipher-type aes-256-cbc ')
 
-    cmd1 = (f'{n["path"]}/pgedge/pgedge backrest command restore --repo1-type={repo1_type} '
+    cmd = (f'{n["path"]}/pgedge/pgedge backrest command restore --repo1-type={repo1_type} '
             f'--stanza={stanza} --pg1-path={n["path"]}/pgedge/data/{stanza} {args}')
-    util.run_rcommand(
-        cmd1,
-        f"Restoring backup on new node",
-        host=n["ip_address"],
-        usr=n["os_user"],
-        key=n["ssh_key"],
-        verbose=verbose
-    )
-
+    
+    message = f"Restoring backup"
+    run_cmd(cmd, n, message=message, verbose=verbose)
 
     pgd = f'{n["path"]}/pgedge/data/{stanza}'
     pgc = f'{pgd}/postgresql.conf'
     
     cmd = f'echo "ssl_cert_file=\'{pgd}/server.crt\'" >> {pgc}'
-    util.run_rcommand(
-        cmd,
-        f"Setting ssl_cert_file",
-        host=n["ip_address"],
-        usr=n["os_user"],
-        key=n["ssh_key"],
-        verbose=verbose
-    )
-
+    message = f"Setting ssl_cert_file"
+    run_cmd(cmd, n, message=message, verbose=verbose)
+    
+    message = f"Setting ssl_key_file"
     cmd = f'echo "ssl_key_file=\'{pgd}/server.key\'" >> {pgc}'
-    util.run_rcommand(
-        cmd,
-        f"Setting ssl_key_file",
-        host=n["ip_address"],
-        usr=n["os_user"],
-        key=n["ssh_key"],
-        verbose=verbose
-    )
+    run_cmd(cmd, n, message=message, verbose=verbose)
     
     cmd = f'echo "log_directory=\'{pgd}/log\'" >> {pgc}'
-    util.run_rcommand(
-        cmd,
-        f"Setting log_directory",
-        host=n["ip_address"],
-        usr=n["os_user"],
-        key=n["ssh_key"],
-        verbose=verbose
-    )
+    message = f"Setting log_directory"
+    run_cmd(cmd, n, message=message, verbose=verbose)
     
     cmd = (f'echo "shared_preload_libraries = \'pg_stat_statements, snowflake, spock\'"'
            f'>> {pgc}')
-    util.run_rcommand(
-        cmd,
-        f"Setting shared_preload_libraries",
-        host=n["ip_address"],
-        usr=n["os_user"],
-        key=n["ssh_key"],
-        verbose=verbose
-    )
+    message = f"Setting shared_preload_libraries"
+    run_cmd(cmd, n, message=message, verbose=verbose)
+    
     cmd = (f'{n["path"]}/pgedge/pgedge backrest configure_replica {stanza} '
         f'{n["path"]}/pgedge/data/{stanza} {s["ip_address"]} {s["port"]} {s["os_user"]}')
-    util.run_rcommand(
-        cmd,
-        f"Configuring PITR on replica",
-        host=n["ip_address"],
-        usr=n["os_user"],
-        key=n["ssh_key"],
-        verbose=verbose
-    )
- 
-    manage_node(n, "start", pgV, verbose)
-    time.sleep(5)
-
+    message =  f"Configuring PITR on replica"
+    run_cmd(cmd, n, message=message, verbose=verbose)
+    
     if script != " ":
         if script.strip() and os.path.isfile(script):
           util.echo_cmd(f'{script}')
-
-    check_cluster_lag(n, dbname, stanza, verbose)
+ 
     terminate_cluster_transactions(nodes, dbname, stanza, verbose)
-    set_cluster_readonly(nodes, True, dbname, stanza, verbose)
+    
+    spock = db_settings["spock_version"]        
+    v4 = False    
+    spock_maj = 3
+    if spock is not None and spock != '':
+        ver = [int(x) for x in spock.split('.')]
+        spock_maj = ver[0]
+        spock_min = ver[1]
+
+    if spock_maj >= 4:
+        v4 = True
+
+    set_cluster_readonly(nodes, True, dbname, stanza, v4, verbose)
+    manage_node(n, "start", pgV, verbose)
+    time.sleep(5)
+    
+    check_cluster_lag(n, dbname, stanza, verbose)
 
     sql_cmd = "SELECT pg_promote()"
     cmd = f"{n['path']}/pgedge/pgedge psql '{sql_cmd}' {dbname}"
-    util.run_rcommand(
-        cmd,
-        f"Promoting standby to primary",
-        host=n["ip_address"],
-        usr=n["os_user"],
-        key=n["ssh_key"],
-        verbose=verbose
-    )
+    message = f"Promoting standby to primary"
+    run_cmd(cmd, n, message=message, verbose=verbose)
 
     sql_cmd = "DROP extension spock cascade"
     cmd = f"{n['path']}/pgedge/pgedge psql '{sql_cmd}' {dbname}"
-    util.run_rcommand(
-        cmd,
-        f"DROP extension spock cascade",
-        host=n["ip_address"],
-        usr=n["os_user"],
-        key=n["ssh_key"],
-        verbose=verbose
-    )
-
-    cmd = (f'cd {n["path"]}/pgedge/;'
-           f'./pgedge remove spock33-{pgV} -d {dbname} --no-restart;'
-           f'./pgedge install spock33-{pgV} -d {dbname}')
-    util.run_rcommand(
-        cmd,
-        f"Re-installing spock",
-        host=n["ip_address"],
-        usr=n["os_user"],
-        key=n["ssh_key"],
-        verbose=verbose
-    )
+    message = f"DROP extension spock cascade"
+    run_cmd(cmd, n, message=message, verbose=verbose)
    
+    if spock is not None and spock != '':
+        parms = f"spock{spock_maj}{spock_min}"
+    else:
+        parms="spock"
+    
+    cmd = (f'cd {n["path"]}/pgedge/; ./pgedge install {parms}')
+    message = f"Re-installing spock"
+    run_cmd(cmd, n, message=message, verbose=verbose)
+    
+    sql_cmd = "CREATE EXTENSION spock"
+    cmd = f"{n['path']}/pgedge/pgedge psql '{sql_cmd}' {dbname}"
+    message = f"Create extension spock"
+    run_cmd(cmd, n, message=message, verbose=verbose)
+        
     create_node(n, dbname, verbose)
-    set_cluster_readonly(nodes, False, dbname, stanza, verbose)
+    
+    if v4 == False:
+        set_cluster_readonly(nodes, False, dbname, stanza, v4, verbose)
+    
     create_sub(nodes, n, dbname, verbose)
     create_sub_new(nodes, n, dbname, verbose)
+    if v4 == True:
+        set_cluster_readonly(nodes, False, dbname, stanza, v4, verbose)
     
-    cmd = (f'cd {n["path"]}/pgedge/; ./pgedge spock node-list lcdb')
-    result = util.run_rcommand(
-        cmd,
-        f"Listing spock nodes",
-        host=n["ip_address"],
-        usr=n["os_user"],
-        key=n["ssh_key"],
-        verbose=verbose,
-        capture_output=True
-    )
+    cmd = (f'cd {n["path"]}/pgedge/; ./pgedge spock node-list {dbname}')
+    message = f"Listing spock nodes"
+    result = run_cmd(cmd = cmd, node=n, message=message, verbose=verbose, capture_output=True)
+    print(f"\n")
+    print(result.stdout)
+   
+    sql_cmd = "select node_id,node_name from spock.node"
+    cmd = f"{s['path']}/pgedge/pgedge psql '{sql_cmd}' {dbname}"
+    message = f"List nodes"
+    result = run_cmd(cmd = cmd, node=s, message=message, verbose=verbose, capture_output=True)
+    print(f"\n")
+    print(result.stdout)
+    
+    for node in nodes:
+        sql_cmd = "select sub_id,sub_name,sub_enabled,sub_slot_name,sub_replication_sets from spock.subscription"
+        cmd = f"{node['path']}/pgedge/pgedge psql '{sql_cmd}' {dbname}"
+        message = f'List subscriptions'
+        result = run_cmd(cmd = cmd, node=node, message=message, verbose=verbose, capture_output=True)
+        print(f"\n")
+        print(result.stdout)
+    
+    sql_cmd = "select sub_id,sub_name,sub_enabled,sub_slot_name,sub_replication_sets from spock.subscription"
+    cmd = f"{n['path']}/pgedge/pgedge psql '{sql_cmd}' {dbname}"
+    message = f'List subscriptions'
+    result = run_cmd(cmd = cmd, node=n, message=message, verbose=verbose, capture_output=True)
+    print(f"\n")
     print(result.stdout)
 
-    if 'aws' in cluster_data['node_groups']:
-        cluster_data['node_groups']['aws'].append(node_config)
-    elif 'localhost' in cluster_data['node_groups']:
-        cluster_data['node_groups']['localhost'].append(node_config)
+    for node in target_json['nodes']:
+        if 'repo1_type' in node:
+            del node['repo1_type']
+        if 'os_user' in node:
+            del node['os_user']
+        if 'ssh_key' in node:
+            del node['ssh_key']
+
+    if node_group_name not in cluster_data["node_groups"]:
+        cluster_data["node_groups"][node_group_name] = []
+        cluster_data['node_groups'][node_group_name].append(target_json)
+    else:
+        cluster_data['node_groups'][node_group_name].append(target_json)
+
     write_cluster_json(cluster_name, cluster_data)
 
 def remove_node(cluster_name, node_name):
     """Remove node from cluster."""
-    
     cluster_data = get_cluster_json(cluster_name)
-    
     node_groups = cluster_data.get('node_groups', {})
-    nodes = node_groups.get('aws', [])
+    db, db_settings, nodes = load_json(cluster_name)
+    dbname = db[0]["name"]
+    os_user = ""
+    ssh_key = ""
+    parsed_json = get_cluster_json(cluster_name)
+    if parsed_json.get("log_level"):
+       verbose = parsed_json["log_level"]
+    else:
+       verbose = "none"
+    
+    for node in nodes:
+        os_user = node["os_user"]
+        ssh_key = node["ssh_key"]
+        message = f"Checking ssh on {node['ip_address']}"
+        cmd = "hostname"
+        run_cmd(cmd, node, message=message, verbose=verbose)
+    
+    for node in nodes:
+        if node.get('name') != node_name:
+            sub_name = f"sub_{node['name']}{node_name}"
+            cmd = (f"cd {node['path']}/pgedge/; "
+                    f"./pgedge spock sub-drop {sub_name} "
+                    f"{dbname}")
+            message = f"Dropping subscriptions {sub_name}"
+            run_cmd(cmd, node, message=message, verbose=verbose, ignore=True)
+    
+    sub_names = []
+    for node in nodes:
+        if node.get('name') != node_name:
+            sub_name = f"sub_{node_name}{node['name']}"
+            sub_names.append(sub_name)
 
-    for node_group in nodes:
-        nodes = node_group.get('nodes', [])
-        for node in nodes:
-            if node.get('name') == node_name:
-                nodes.remove(node)
-                break
+    for node in nodes:
+        if node.get('name') == node_name:
+            for sub_name in sub_names:
+                cmd = (f"cd {node['path']}/pgedge/; "
+                       f"./pgedge spock sub-drop {sub_name} "
+                       f"{dbname}")
+                message = f"Dropping subscription {sub_name}"
+                run_cmd(cmd, node, message=message, verbose=verbose, ignore = True)
+
+            cmd = (f"cd {node['path']}/pgedge/; "
+                    f"./pgedge spock node-drop {node['name']} "
+                    f"{dbname}")
+            message = f"Dropping node {node['name']}"
+            run_cmd(cmd, node, message=message, verbose=verbose, ignore = True)
+
+    for node in nodes:
+        cmd = (f'cd {node["path"]}/pgedge/; ./pgedge spock node-list {dbname}')
+        message = f"Listing spock nodes"
+        result = run_cmd(cmd = cmd, node=node, message=message, verbose=verbose, capture_output=True)
+        print(f"\n")
+        print(result.stdout)
+    
+    if not nodes:
+        node_group_list.remove(group)
 
     write_cluster_json(cluster_name, cluster_data)
 
@@ -1157,7 +1248,6 @@ def manage_node(node, action, pgV, verbose):
 
     action_message = "Starting" if action == 'start' else "Stopping"
 
-    # Construct the command based on the action
     if action == 'start':
         cmd = (f"cd {node['path']}/pgedge/; "
                f"./pgedge config {pgV} --port={node['port']}; "
@@ -1166,14 +1256,8 @@ def manage_node(node, action, pgV, verbose):
         cmd = (f"cd {node['path']}/pgedge/; "
                f"./pgedge stop")
 
-    util.run_rcommand(
-        cmd,
-        message=f"{action_message} new node",
-        host=node["ip_address"],
-        usr=node["os_user"],
-        key=node["ssh_key"],
-        verbose=verbose
-    )
+    message=f"{action_message} new node"
+    run_cmd(cmd, node, message=message, verbose=verbose)
 
 def create_node(node, dbname, verbose):
     """
@@ -1183,15 +1267,8 @@ def create_node(node, dbname, verbose):
            f"./pgedge spock node-create {node['name']} "
            f"'host={node['ip_address']} user=pgedge dbname={dbname} "
            f"port={node['port']}' {dbname}")
-    util.run_rcommand(
-        cmd,
-        message=f"Creating new node {node['name']}",
-        host=node["ip_address"],
-        usr=node["os_user"],
-        key=node["ssh_key"],
-        verbose=verbose
-    )
-
+    message=f"Creating new node {node['name']}"
+    run_cmd(cmd, node, message=message, verbose=verbose)
 
 def create_sub_new(nodes, n, dbname, verbose):
     """
@@ -1203,14 +1280,8 @@ def create_sub_new(nodes, n, dbname, verbose):
                f"./pgedge spock sub-create {sub_name} "
                f"'host={node['ip_address']} user=pgedge dbname={dbname} "
                f"port={node['port']}' {dbname}")
-        util.run_rcommand(
-            cmd,
-            message="Creating new subscriptions",
-            host=n["ip_address"],
-            usr=n["os_user"],
-            key=n["ssh_key"],
-            verbose=verbose
-        )
+        message=f"Creating new subscriptions {sub_name}"
+        run_cmd(cmd = cmd, node=n, message=message, verbose=verbose)
 
 def create_sub(nodes, new_node, dbname, verbose):
     """
@@ -1223,27 +1294,15 @@ def create_sub(nodes, new_node, dbname, verbose):
                f"./pgedge spock sub-create {sub_name} "
                f"'host={new_node['ip_address']} user=pgedge dbname={dbname} "
                f"port={new_node['port']}' {dbname}")
-        util.run_rcommand(
-            cmd,
-            message=f"Creating subscriptions {sub_name}",
-            host=n["ip_address"],
-            usr=n["os_user"],
-            key=n["ssh_key"],
-            verbose=verbose
-        )
+        message=f"Creating subscriptions {sub_name}"
+        run_cmd(cmd = cmd, node=n, message=message, verbose=verbose)
 
 def terminate_cluster_transactions(nodes, dbname, stanza, verbose):
     sql_cmd = "SELECT spock.terminate_active_transactions()"
     for node in nodes:
         cmd = f"{node['path']}/pgedge/pgedge psql '{sql_cmd}' {dbname}"
-        util.run_rcommand(
-            cmd,
-            f"Terminating·cluster·transactions on {node['name']}",
-            host=node["ip_address"],
-            usr=node["os_user"],
-            key=node["ssh_key"],
-            verbose=verbose
-        )
+        message = f"Terminating cluster transactions"
+        result = run_cmd(cmd = cmd, node=node, message=message, verbose=verbose, capture_output=True)
 
 def extract_psql_value(psql_output: str, alias: str) -> str:
     lines = psql_output.split('\n')
@@ -1271,23 +1330,33 @@ def extract_psql_value(psql_output: str, alias: str) -> str:
     return ""
 
 
-def set_cluster_readonly(nodes, readonly, dbname, stanza, verbose):
+def set_cluster_readonly(nodes, readonly, dbname, stanza, v4, verbose):
     action = "Setting" if readonly else "Removing"
-    func_call = ("spock.set_cluster_readonly()" if readonly
+    
+    if v4:
+
+        sql_cmd = ('ALTER SYSTEM SET spock.readonly TO \\\\"all\\\\"' if readonly
+                else 'ALTER SYSTEM SET spock.readonly TO \\\\"off\\\\"') 
+        for node in nodes:
+            cmd = f"{node['path']}/pgedge/pgedge psql '{sql_cmd}' {dbname}"
+            message = f"{action} readonly mode from cluster"
+            run_cmd(cmd, node=node, message=message, verbose=verbose, important=True)
+
+        sql_cmd = "select pg_reload_conf()"
+        for node in nodes:
+            cmd = f"{node['path']}/pgedge/pgedge psql '{sql_cmd}' {dbname}"
+            message = f"Reload configuration pg_reload_conf()"
+            run_cmd(cmd, node=node, message=message, verbose=verbose, important=False)
+    else:
+        func_call = ("spock.set_cluster_readonly()" if readonly
                  else "spock.unset_cluster_readonly()")
 
-    sql_cmd = f"SELECT {func_call}"
+        sql_cmd = f"SELECT {func_call}"
 
-    for node in nodes:
-        cmd = f"{node['path']}/pgedge/pgedge psql '{sql_cmd}' {dbname}"
-        util.run_rcommand(
-            cmd,
-            f"{action} readonly mode from cluster",
-            host=node["ip_address"],
-            usr=node["os_user"],
-            key=node["ssh_key"],
-            verbose=verbose
-        )
+        for node in nodes:
+            cmd = f"{node['path']}/pgedge/pgedge psql '{sql_cmd}' {dbname}"
+            message = f"{action} readonly mode from cluster"
+            run_cmd(cmd, node=node, message=message, verbose=verbose, important=True)
 
 def check_cluster_lag(n, dbname, stanza, verbose, timeout=600, interval=1):
     sql_cmd = """
@@ -1305,15 +1374,8 @@ def check_cluster_lag(n, dbname, stanza, verbose, timeout=600, interval=1):
             return
 
         cmd = f"{n['path']}/pgedge/pgedge psql '{sql_cmd}' {dbname}"
-        result = util.run_rcommand(
-            cmd,
-            f"Checking lag time of new cluster",
-            host=n["ip_address"],
-            usr=n["os_user"],
-            key=n["ssh_key"],
-            verbose=verbose,
-            capture_output=True
-        )
+        message = f"Checking lag time of new cluster"
+        result = run_cmd(cmd = cmd, node=n, message=message, verbose=verbose, capture_output=True)
         print(result.stdout)
         lag_bytes = int(extract_psql_value(result.stdout, "lag_bytes"))
 
@@ -1340,16 +1402,8 @@ def check_wal_rec(n, dbname, stanza, verbose, timeout=600, interval=1):
             return
 
         cmd = f"{n['path']}/pgedge/pgedge psql '{sql_cmd}' {dbname}"
-        result, output, error = util.run_rcommand(
-            cmd,
-            "Checking wal receiver",
-            host=n["ip_address"],
-            usr=n["os_user"],
-            key=n["ssh_key"],
-            verbose=verbose,
-            capture_output=True
-        )
-
+        message = "Checking wal receiver"
+        result = run_cmd(cmd = cmd, node=n, message=message, verbose=verbose, capture_output=True)
         time.sleep(interval)
         lag_bytes = int(extract_psql_value(result.stdout, "total_all_flushed"))
 

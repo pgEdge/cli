@@ -3,9 +3,11 @@
 import os
 import time
 
-MY_VERSION = "24.7.4"
+MY_VERSION = "24.7.5"
+MY_CODENAME = "Golden Gate"
+
 DEFAULT_PG = "16"
-DEFAULT_SPOCK = "33"
+DEFAULT_SPOCK = "40"
 DEFAULT_SPOCK_17 = "40"
 MY_CMD = os.getenv("MY_CMD", None)
 MY_HOME = os.getenv("MY_HOME", None)
@@ -88,6 +90,35 @@ if os.path.exists(platform_lib_path):
 COMMAND = 15
 DEBUG = 10
 DEBUG2 = 9
+
+
+def python3_ver():
+    return(platform.python_version())
+
+
+def pip3_ver():
+    pip3_ver = getoutput("pip3 --version | cut -d' ' -f2")
+    return(pip3_ver)
+
+
+def gcc_ver():
+    gcc_ver_full = getoutput("gcc --version | head -1 | cut -d' ' -f3")
+    return(gcc_ver_full)
+
+
+def which(p_exe):
+    which_path = getoutput(f"which {p_exe}")
+    return(which_path)
+
+
+def format_ver(p_ver):
+    # formats 3-part version number as xx.yy-z
+    v = str(p_ver).split(".")
+    if len(v) != 3:
+        message(f"'{p_ver}' is not a valid three part version string", "warning")
+        return(p_ver)
+
+    return(f"{v[0]}.{str(v[1]).rjust(2,'0')}-{v[2]}")
 
 
 def autostart_verify_prereqs():
@@ -749,7 +780,7 @@ def is_selinux_active():
     return True
 
 
-def get_glibc_version():
+def glibc_ver():
     if get_platform() != "Linux":
         return ""
 
@@ -1291,12 +1322,11 @@ def get_owner_name(p_path=None):
 # anonymous data from the INFO command
 def get_anonymous_info():
     jsonInfo = api.info(True, "", "", False)
-    platform = jsonInfo["platform"]
     os = jsonInfo["os"]
-    mem = str(jsonInfo["mem"])
+    mem = str(jsonInfo["os_memory_mb"])
     cores = str(jsonInfo["cores"])
-    cpu = jsonInfo["cpu"]
-    anon = "(" + platform + "; " + os + "; " + mem + "; " + cores + "; " + cpu + ")"
+    arch = jsonInfo["arch"]
+    anon = f"({os}; {mem}; {cores}; {arch})"
     return anon
 
 
@@ -2858,33 +2888,18 @@ def get_el_ver():
         else:
             return "osx"
 
-    elv = os.getenv("ELV", None)
-    if elv:
-        return str(elv)
-
-    glibc_v = get_glibc_version()
     arch = getoutput("uname -m")
     if arch == "aarch64":
         return "arm"
-        ##if glibc_v >= "2.34":
-        ##    return "arm9"
-        ##else:
-        ##    return "arm"
     else:
         return "amd"
-        ##if glibc_v >= "2.34":
-        ##    return "el9"
-        ##else:
-        ##    return "el8"
 
 
 def is_el8():
     if platform.system() != "Linux":
         return False
 
-    glibc_v = get_glibc_version()
-
-    if get_glibc_version() < "2.34":
+    if glibc_ver() < "2.34":
         return True
 
     return False
@@ -2926,14 +2941,20 @@ def get_os():
 
 def get_cpu():
     pfm = platform.machine()
+    sys = platform.system()
 
-    if pfm in ["AMD64", "x86_64"]:
-        return("amd")
+    if sys == "Linux":
+        if pfm in ["AMD64", "x86_64"]:
+            return("amd")
 
-    if pfm in ["ARM64", "aarch64"]:
-        return("arm")
+        if pfm in ["ARM64", "aarch64"]:
+           return("arm")
 
-    message(f"'{pfm}' is not a supported CPU.", "warning")   
+    if sys == "Darwin":
+        if pfm == "arm64":
+            return("osx")
+
+    message(f"'{sys} - {pfm}' is not supported.", "warning")   
     return("???")
 
 
@@ -4004,8 +4025,8 @@ def echo_rcmd(cmd, echo=True, sleep_secs=0, host="", usr="", key="", capture_out
         result = subprocess.run(cmd, shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     return result
 
-def run_rcommand(cmd, message="", host="", usr="", key="", verbose="None", max_attempts=1, capture_output=False):
-    if verbose == "None":
+def run_rcommand(cmd, message="", host="", usr="", key="", verbose="none", max_attempts=1, capture_output=False, ignore=False, important=False):
+    if verbose == "none":
         echo=False
     else:
         echo=True
@@ -4016,7 +4037,7 @@ def run_rcommand(cmd, message="", host="", usr="", key="", verbose="None", max_a
         host = "127.0.0.1"
     message = f"{host} : {message}"
     
-    echo_action(message)
+    echo_action(message, important=important)
     attempts = 0
     while attempts < max_attempts:
         result = echo_rcmd(cmd, echo=echo, host=host, usr=usr, key=key, capture_output=True)
@@ -4024,32 +4045,57 @@ def run_rcommand(cmd, message="", host="", usr="", key="", verbose="None", max_a
             break
         attempts += 1
         time.sleep(5) 
-    #if os.getenv("pgeDebug", ""):
-    print (result.stdout) 
-    status = "ok" if result.returncode == 0 else "fail"
-    echo_action(message, status)
-
+    if verbose == "debug":
+        print (result.stdout) 
+        print (result.stderr) 
+    if result.returncode == 0:
+        status = "ok"
+        echo_action(message, status, important=important)
+    else:
+        if ignore:
+            status = "ignore"
+            echo_action(message, status, important=important)
+        else:
+            status = "fail"
+            echo_action(message, status, important=important)
+            print (result.stdout) 
+            exit(0)
     return result
 
 def wait_with_dots(message, duration=5):
     for _ in tqdm(range(duration), desc="Progress", ncols=100):
         time.sleep(1)
 
-def echo_action(action, status=None, e=False):
+
+def echo_action(action, status=None, e=False, important=False):
     now = datetime.now()
     t = now.strftime('%B %d, %Y, %H:%M:%S')
+    RESET = "\033[0m"
 
     if status is None:
-        sys.stdout.write(f"{t}: {action.ljust(75)}")
+        if important:
+            sys.stdout.write(f"{t}: {bcolours.OKBLUE}{action.ljust(75)}{RESET}")
+        else:
+            sys.stdout.write(f"{t}: {action.ljust(75)}")
         sys.stdout.flush()
     else:
         sys.stdout.write("\r")
         if status.lower() == "ok":
-            sys.stdout.write(f"{t}: {action.ljust(75)}[OK]\n")
-        else:
-            sys.stdout.write(f"{t}: {action.ljust(75)}[Failed]\n")
+            if important:
+                sys.stdout.write(f"{t}: {bcolours.OKBLUE}{action.ljust(75)}[OK]{RESET}\n")
+            else:
+                sys.stdout.write(f"{t}: {action.ljust(75)}[OK]\n")
+        elif status.lower() == "ignore":
+            sys.stdout.write(f"{t}: {action.ljust(75)}[IGNORED]\n")
+        elif status.lower() == "fail":
+            sys.stdout.write(f"{t}: {bcolours.FAIL}{action.ljust(75)}[FAILED]{RESET}\n")
             if e:
                 exit(1)
+        else:
+            if important:
+                sys.stdout.write(f"{t}: {bcolours.OKBLUE}{action.ljust(75)}[{status.upper()}]{RESET}\n")
+            else:
+                sys.stdout.write(f"{t}: {bcolours.OKBLUE}{action.ljust(75)}{RESET}")
         sys.stdout.flush()
 
 def echo_message(msg, bold=False, level="info"):

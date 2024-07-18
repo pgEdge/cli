@@ -1073,11 +1073,6 @@ if "--debug2" in args:
     my_logger.debug2("DEBUG2 enabled")
     os.environ["pgeDebug"] = "2"
 
-os.environ["pgeTTY"] = "True"
-if "--no-tty" in args:
-    args.remove("--no-tty")
-    os.environ["pgeTTY"] = "False"
-
 p_host = ""
 p_home = ""
 p_user = ""
@@ -1228,9 +1223,13 @@ if "--silent" in args:
     args.remove("--silent")
 
 if "--extensions" in args:
-    util.isEXTENSIONS = True
-    os.environ["isExtensions"] = "True"
-    args.remove("--extensions")
+    ext  = get_next_arg("--extensions")
+    if ext in ["core", "all"]:
+        args.remove("--extensions")
+        args.remove(ext)
+        os.environ["pgeExtensions"] = ext 
+    else:
+        util.exit_message(f"Invalid --extensions parm '{ext}'")
 
 if len(args) == 1:
     util.exit_message("Nothing to do", 1, isJSON)

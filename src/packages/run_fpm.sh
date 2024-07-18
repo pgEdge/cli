@@ -7,21 +7,26 @@ pg_v="$3"
 spock_v="$4"
 cli_v="$5"
 
-suffix=el9-`arch`
-rpm_file=pgedge-$pg_v-$spock_v-$cli_v-$suffix.rpm
-rpm_alias=pgedge-$major_v-$suffix.rpm
+suffix=arm
+if [ `arch` == "x86_64" ]; then
+   suffix="amd"
+fi
+
+rpm_file=pgedge-$cli_v-$suffix.rpm
+rpm_alias=pgedge-$suffix.rpm
+
+sudo systemctl start firewalld
 
 echo ""
 echo "####### src/packages/run_fpm.sh ################"
-echo "# 1.  bundle = $bundle"
-echo "# 2. major_v = $major_v"
-echo "# 3.    pg_v = $pg_v"
-echo "# 4. spock_v = $spock_v"
-echo "# 5.   cli_v = $cli_v"
-echo "#"
+##echo "# 1.  bundle = $bundle"
+##echo "# 2. major_v = $major_v"
+##echo "# 3.    pg_v = $pg_v"
+##echo "# 4. spock_v = $spock_v"
+##echo "# 5.   cli_v = $cli_v"
+##echo "#"
 echo "#   rpm_file = $rpm_file"
-echo "#  rpm_alias = $rpm_alias"
-echo "############################"
+echo "###############################################"
 echo ""
 
 fpm --version > /dev/null 2>&1
@@ -43,10 +48,10 @@ if [ ! -d /tmp/$bundle ]; then
 fi
 
 echo "#"
-echo "# setting REPO to -devel (for starters)"
+echo "# setting REPO to -upstream for starters)"
 
 ctl=$dir_bundle/pgedge
-$ctl set GLOBAL REPO https://pgedge-devel.s3.amazonaws.com/REPO
+$ctl set GLOBAL REPO https://pgedge-upstream.s3.amazonaws.com/REPO
 $ctl info
 sleep 2
 
@@ -80,10 +85,9 @@ if [ ! "$rc" == "0" ]; then
 fi
 
 echo "#"
-echo "# moving package & alias to \$OUT"
+echo "# moving package to \$OUT"
 
 rm -f $OUT/$rpm_file
-rm -f $OUT/$rpm_alias
 
 mv $rpm_file $OUT/.
 cd $OUT
