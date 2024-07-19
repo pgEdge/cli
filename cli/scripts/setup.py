@@ -8,9 +8,13 @@ sys.path.append(os.path.join(os.path.dirname(__file__), "lib"))
 import fire, util, db
 
 # extensions installed 'Disabled' if you pass --extensions [core | all] to setup() (defaults to 'core')
-EXTS = "spock40 snowflake lolor audit vector cron orafce postgis partman curl citus timescaledb " + \
+CORE_EXTS="spock40 snowflake lolor"
+
+MORE_EXTS="audit vector cron orafce postgis partman curl citus timescaledb " + \
        "wal2json hypopg hintplan plv8 setuser permissions profiler debugger"
+
 EXTS_15 = "foslots"
+CTL="./pgedge"
 
 
 def osSys(cmd, fatal_exit=True, is_silent=False):
@@ -73,14 +77,11 @@ def check_pre_reqs(User, Passwd, db, port, pg_major, pg_minor, spock, autostart,
         if len(dir) != 0:
             util.exit_message("The '" + data_dir + "' directory is not empty")
 
-    if extensions is True:
-        if (User is None) and (Passwd is None) and (db is None):
-            pass
-        else:
-            verifyUserPasswd(User, Passwd)
-    else:
+    if extensions is None:
         if (User is None) or (Passwd is None) or (db is None):
             util.exit_message("Must specify User, Passwd & db")
+
+        verifyUserPasswd(User, Passwd)
 
 
     if spock:
@@ -133,7 +134,8 @@ def parse_pg(pg):
    return(pg_major, pg_minor)
 
 
-def setup_pgedge(User=None, Passwd=None, dbName=None, port=None, pg_ver=None, spock_ver=None, autostart=False, extensions="core"):
+def setup_pgedge(User=None, Passwd=None, dbName=None, port=None, 
+                 pg_ver=None, spock_ver=None, autostart=False, extensions=None):
     """Install pgEdge node (including postgres, spock, and snowflake-sequences)
 
        Install pgEdge node (including postgres, spock, and snowflake-sequences)
@@ -152,7 +154,7 @@ def setup_pgedge(User=None, Passwd=None, dbName=None, port=None, pg_ver=None, sp
     if os.getenv("isAutoStart", "") == "True":
         autostart = True
 
-    pgeExt = os.getenv("pgeExtensions", False)
+    pgeExt = os.getenv("pgeExtensions", None)
     if pgeExt:
         extensions = pgeExt
 
@@ -177,13 +179,12 @@ def setup_pgedge(User=None, Passwd=None, dbName=None, port=None, pg_ver=None, sp
 
     check_pre_reqs(User, Passwd, dbName, port, pg_major, pg_minor, spock_ver, autostart, extensions)
 
-    pause = 4
+    pause = 2
     pg_full = f"pg{pg_major}"
-    ctl = "./pgedge"
 
     if pg_minor:
         pg_full = f"pg{pg_major} {pg_minor}"
-    osSys(f"{ctl} install {pg_full}")
+    osSys(f"{CTL} install {pg_full}")
 
     if util.is_empty_writable_dir("/data") == 0:
         util.message("## symlink empty local data directory to empty /data ###")
@@ -197,36 +198,41 @@ def setup_pgedge(User=None, Passwd=None, dbName=None, port=None, pg_ver=None, sp
         if autostart is True:
             util.autostart_config(pg_maj)
         else:
-            osSys(f"{ctl} init {pg_maj}")
+            osSys(f"{CTL} init {pg_maj}")
 
-        osSys(f"{ctl} config {pg_maj} --port={port}")
+        osSys(f"{CTL} config {pg_maj} --port={port}")
 
-        osSys(f"{ctl} start {pg_maj}")
+        osSys(f"{CTL} start {pg_maj}")
         time.sleep(pause)
 
         db.create(dbName, User, Passwd, pg_major, spock_ver)
         time.sleep(pause)
         core_exts_installed = True
 
-    if extensions == "all":
-        util.message("\n## Pre-install supported extensions in disabled state ########")
+    if core_exts_installed is False:
+        install_disabled_exts(pg_major, CORE_EXTS)
 
+        if pg_major in ["14", "15"]:
+            install_disabled_exts(pg_major, EXTS_15)
+
+    if extensions == "all":
         if pg_major not in ["15", "16"]:
-            util.message(f"--extensions not supported for pg{pg_major}", "warning")
+            util.message(f"'--extensions all' not supported for pg{pg_major}", "warning")
             return
 
-        # quietly install extensions one-by-one and don't error out on problems
-        ext_l = EXTS.split()
-        for ext in ext_l:
-            osSys(f"{ctl} install {ext}-pg{pg_major} --disabled --silent",
+        install_disabled_exts(pg_major, MORE_EXTS)
+
+
+
+def install_disabled_exts(pg_major, exts):
+    util.message(f"setup.install_disabled_exts({pg_major}, {exts}", "debug")
+
+    ext_l = exts.split()
+    for ext in ext_l:
+        full_ext = f"{ext}-pg{pg_major}"
+        util.message(f"installing {full_ext}")
+        osSys(f"{CTL} install {full_ext} --disabled --silent",
                        fatal_exit=False, is_silent=True)
-
-        if pg_major == "15":
-            ext_l = EXTS_15.split()
-            for ext in ext_l:
-                osSys(f"{ctl} install {ext}-pg{pg_major} --disabled --silent",
-                           fatal_exit=False, is_silent=True)
-
 
 
 if __name__ == "__main__":

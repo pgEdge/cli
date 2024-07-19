@@ -63,7 +63,7 @@ buildPkgBundle() {
   source bp.sh
   echo ""
   sleep 2
-  echoCmd "./pgedge setup --pg_ver $majorV --extensions"
+  echoCmd "./pgedge setup --pg_ver $majorV --extensions core"
   echoCmd "cd ../.."
 
   echo ""
