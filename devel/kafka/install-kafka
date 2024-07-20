@@ -1,16 +1,17 @@
 #!/bin/bash
 cd "$(dirname "$0")"
 
-if [ "$1" == "" ]; then
-  echo "ERROR: version num parm required"
-  exit 1
+kafkaV=3.7.1
+if [ ! "$1" == "" ]; then
+  kafkaV=$1
+else
+  
 fi
 
 echo " "
 echo "## INSTALL KAFKA v$1 ######################################"
 source getPKMG.sh
 
-kafkaV=$1
 kafkaD=kafka_2.13-$kafkaV
 kafkaF=$kafkaD.tgz
 #URL=https://mirrors.ocf.berkeley.edu/apache/kafka
@@ -27,9 +28,9 @@ fi
 sudo mv $kafkaD $kdir
 
 if [ "$PKMG" == "yum" ]; then
-  java_home=/usr/lib/jvm/jre-11-openjdk
+  java_home=/usr/lib/jvm/jre-17-openjdk
 else
-  java_home=/usr/lib/jvm/java-11-openjdk-amd64
+  java_home=/usr/lib/jvm/java-17-openjdk-amd64
 fi
 cp kafka.service.orig kafka.service
 sed -i "s|java_home|$java_home|g" kafka.service
@@ -50,6 +51,5 @@ sudo systemctl daemon-reload
 sudo systemctl start kafka
 
 sleep 10
-##/usr/local/kafka/bin/kafka-topics.sh --create --zookeeper 0.0.0.0:2181 --topic my-connect-configs --replication-factor 1 --partitions 10
 /usr/local/kafka/bin/kafka-topics.sh --create --topic my-connect-configs --replication-factor 1 --partitions 10 --bootstrap-server localhost:9092
 
