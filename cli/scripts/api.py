@@ -441,7 +441,7 @@ def info(p_json, p_home, p_repo, print_flag=True):
     if glibcV <= " ":
         glibc_v_display = ""
     else:
-        glibc_v_display = "glibc-" + glibcV
+        glibc_v_display = ", glibc-" + glibcV
 
 
     if util.MY_CODENAME > " ":
@@ -454,15 +454,16 @@ def info(p_json, p_home, p_repo, print_flag=True):
 
     print(f"#{bold_start} User & Host:{bold_end} " +
               f"{p_user}{admin_display}  {host_display}  {p_home}")
-    print(f"#{bold_start}          OS:{bold_end} {os2.rstrip()}, {glibc_v_display}")
+    print(f"#{bold_start}          OS:{bold_end} {os2.rstrip()} {glibc_v_display}")
 
     print(f"#{bold_start}     Machine:{bold_end} {mem}, vCPU {cores}, {arch}")
 
     print(f"#{bold_start}     Python3:{bold_end} {util.python3_ver()} {util.which('python3')}")
 
-    print(f"#{bold_start}        PIP3:{bold_end} {util.pip3_ver()} {util.which('pip3')}")
 
-    print(f"#{bold_start}         GCC:{bold_end} {util.gcc_ver()} {util.which('gcc')}")
+    if util.get_platform() == "Linux":
+        print(f"#{bold_start}        PIP3:{bold_end} {util.pip3_ver()} {util.which('pip3')}")
+        print(f"#{bold_start}         GCC:{bold_end} {util.gcc_ver()} {util.which('gcc')}")
 
     if instance_id > "" and not cloud_name == "unknown":
         print(f"#{bold_start}  Cloud Info:{bold_end} " +
