@@ -3,22 +3,21 @@ cd "$(dirname "$0")"
 
 bundle="$1"
 major_v="$2"
-pg_v="$3"
-spock_v="$4"
-cli_v="$5"
+##pg_v="$3"
+##spock_v="$4"
+##cli_v="$5"
 
-suffix=arm
-if [ `arch` == "x86_64" ]; then
-   suffix="amd"
-fi
+##suffix=arm
+##if [ `arch` == "x86_64" ]; then
+##   suffix="amd"
+##fi
 
-rpm_file=pgedge-$cli_v-$suffix.rpm
-rpm_alias=pgedge-$suffix.rpm
+rpm_file=$bundle.rpm
+##rpm_alias=pgedge-$suffix.rpm
 
-sudo systemctl start firewalld
 
 echo ""
-echo "####### src/packages/run_fpm.sh ################"
+##echo "####### src/packages/run_fpm.sh ################"
 ##echo "# 1.  bundle = $bundle"
 ##echo "# 2. major_v = $major_v"
 ##echo "# 3.    pg_v = $pg_v"
@@ -26,8 +25,8 @@ echo "####### src/packages/run_fpm.sh ################"
 ##echo "# 5.   cli_v = $cli_v"
 ##echo "#"
 echo "#   rpm_file = $rpm_file"
-echo "###############################################"
-echo ""
+##echo "###############################################"
+##echo ""
 
 fpm --version > /dev/null 2>&1
 rc=$?
@@ -36,10 +35,10 @@ if [ ! "$rc" == "0" ]; then
   exit 1
 fi
 
-if [ ! "$#" == "5" ]; then
-  echo "ERROR: requires 5 parms: {bundle} {major_v} {pg_v} {spock_v} {cli_v}"
-  exit 1
-fi
+##if [ ! "$#" == "5" ]; then
+##  echo "ERROR: requires 5 parms: {bundle} {major_v} {pg_v} {spock_v} {cli_v}"
+##  exit 1
+##fi
 
 dir_bundle=/tmp/$bundle
 if [ ! -d /tmp/$bundle ]; then
@@ -47,11 +46,14 @@ if [ ! -d /tmp/$bundle ]; then
   exit 1
 fi
 
-echo "#"
-echo "# setting REPO to -upstream for starters)"
-
 ctl=$dir_bundle/pgedge
-$ctl set GLOBAL REPO https://pgedge-upstream.s3.amazonaws.com/REPO
+
+cmd="$ctl set GLOBAL REPO https://pgedge-upstream.s3.amazonaws.com/REPO"
+echo $cmd; $cmd
+
+cmd="$ctl set GLOBAL PG_VER $major_v"
+echo $cmd; $cmd
+
 $ctl info
 sleep 2
 
@@ -59,6 +61,8 @@ echo "#"
 echo "# running FPM... (be patient for about 60 seconds)"
 
 rm -f $rpm_file
+
+set -x
 
 fpm \
   -s dir -t rpm \
@@ -90,11 +94,12 @@ echo "# moving package to \$OUT"
 rm -f $OUT/$rpm_file
 
 mv $rpm_file $OUT/.
-cd $OUT
-ln -s $rpm_file $rpm_alias
 
-touch $rpm_file
-touch $rpm_alias
+##cd $OUT
+##ln -s $rpm_file $rpm_alias
+##
+##touch $rpm_file
+##touch $rpm_alias
 
 exit 0
 

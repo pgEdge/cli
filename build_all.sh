@@ -51,33 +51,32 @@ buildPkgBundle() {
   spockV=`echo $4 | tr - .`
   cliV="$5"
 
-  echo ""
-  echo "##### buildPkgBundle() ###################"
+  echo "## buildPkgBundle() $bundle_nm ##"
   ##echo "# 1. bundle_nm = $bundle_nm"
   ##echo "# 2.    majorV = $majorV"
   ##echo "# 3.       pgV = $pgV"
   ##echo "# 4.    spockV = $spockV"
   ##echo "# 5.      hubV = $hubV"
-  echo "#"
+  ##echo "#"
 
   source bp.sh
   echo ""
   sleep 2
   echoCmd "./pgedge setup --pg_ver $majorV --extensions core"
-  echoCmd "cd ../.."
+
+  ## Cleanup cruft #####################
+  cd ../..
+  base_d=out/posix
+  rm -r $base_d/ctlibs
+  data_d=$base_d/data
+  rm -f $data_d/logs/*
+  rm -f $data_d/conf/*.pid
+  rm $data_d/conf/cache/*
+
+  rm -rf /tmp/$bundle_nm
+  mv $base_d /tmp/$bundle_nm
 
   echo ""
-  echo "## Cleanup cruft #####################"
-  base_d=out/posix
-  echoCmd "rm -r $base_d/ctlibs"
-  data_d=$base_d/data
-  echoCmd "rm -f $data_d/logs/*"
-  echoCmd "rm -f $data_d/conf/*.pid"
-  echoCmd "rm $data_d/conf/cache/*"
-
-  echoCmd "rm -rf /tmp/$bundle_nm"
-  echoCmd "mv $base_d /tmp/$bundle_nm"
-
   echoCmd "src/packages/run_fpm.sh  $bundle_nm  $majorV  $pgV  $spockV  $hubV"
 }
 
@@ -128,8 +127,28 @@ if [ ! "$2" == "" ]; then
      fatalError "ERROR:  2nd parm is pkg_type (only 'rpm' presently supported)"
   fi
 
-  bundle_nm=bundle-pg$minorV-cli$hubV-$outPlat
-  buildPkgBundle "$bundle_nm" "$majorV" "$minorV" "$spock33V" "$hubV" 
+  vers=$(echo $hubV | tr "." "\n")
+  let x=0
+  for v in $vers
+  do
+    let x=x+1
+    if [ "$x" == "1" ]; then
+      newV=$v
+    elif [ "$x" == "2" ]; then
+      vv=`printf '%02d\n' "$v"`
+      newV=$newV.$vv
+    elif [ "$x" == "3" ]; then
+      newV=$newV-$v
+    fi
+  done
+
+  pf="arm64"
+  if [ `arch` == "x86_64" ]; then
+    pf="amd64"
+  fi
+  bundle_nm=pgedge-$newV-pg-$minorV-$pf
+
+  buildPkgBundle "$bundle_nm" "$majorV" "$minorV" "$spock40V" "$hubV" 
   rc=$?
 
   exit $rc
