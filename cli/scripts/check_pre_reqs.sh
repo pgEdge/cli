@@ -120,6 +120,26 @@ isAMD64 () {
 }
 
 
+isDEB12AMD () {
+  ver=12
+  cat /etc/os-release | grep debian > /dev/null
+  rc=$?
+  if [ $rc == "0" ]; then
+    cat /etc/os-release | grep VERSION_ID | grep 12 > /dev/null
+    rc=$?
+    if [ $rc == "0" ]; then
+      if [ `arch` == "x86_64" ]; then
+        echoX '#     DEB12AMD - OK'
+        return
+      fi
+    fi
+  fi
+
+  echoX 'ERROR: only supported on Debian 12 x86_64' 
+  exit 1
+}
+
+
 isUBU () {
   ver="$1.04"
   cat /etc/os-release | grep VERSION_ID | grep $ver > /dev/null
@@ -150,6 +170,8 @@ do
   elif [ "${req:0:3}" == "UBU" ]; then
     ver=${req:3:2}
     isUBU $ver
+  elif [ "$req" == "DEB12AMD" ]; then
+    isDEB12AMD
   elif [ "$req" == "AMD64" ]; then
     isAMD64
   elif [ "$req" == "PERL" ]; then
