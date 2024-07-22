@@ -96,6 +96,14 @@ def python3_ver():
     return(platform.python_version())
 
 
+def get_default_pg():
+    val = get_value("GLOBAL", "PG_VER", "")
+    if val > "":
+        return(val)
+
+    return(DEFAULT_PG)
+
+
 def pip3_ver():
     pip3_ver = getoutput("pip3 --version | cut -d' ' -f2")
     return(pip3_ver)
@@ -4153,11 +4161,13 @@ def run_command(command_args, max_attempts=1, timeout=None, capture_output=True,
 
     return {"success": False, "output": output, "error": error, "attempts": attempts}
 
+
 def get_cluster_info(cluster_name):
     cluster_dir = os.path.join(MY_HOME, BASE_DIR, cluster_name)
     os.system("mkdir -p " + cluster_dir)
     cluster_file = os.path.join(cluster_dir, f"{cluster_name}.json")
     return (cluster_dir, cluster_file)
+
 
 def get_cluster_json(cluster_name):
     cluster_dir, cluster_file = get_cluster_info(cluster_name)

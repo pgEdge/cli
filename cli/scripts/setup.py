@@ -165,8 +165,9 @@ def setup_pgedge(User=None, Passwd=None, dbName=None, port=None,
     if not port:
         port = os.getenv("pgePort", "5432")
 
+    df_pg = util.get_default_pg()
     if not pg_ver:
-        pg_ver = os.getenv("pgN", util.DEFAULT_PG)
+        pg_ver = os.getenv("pgN", df_pg)
 
     pg_major, pg_minor = parse_pg(pg_ver)
 
