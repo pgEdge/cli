@@ -1805,7 +1805,7 @@ def table_repair(
                         item = ast.literal_eval(elem)
                         if isinstance(item, list):
                             modified_row += (item,)
-                        if isinstance(item, dict):
+                        elif isinstance(item, dict):
                             modified_row += (json.dumps(item),)
                         else:
                             modified_row += (elem,)
