@@ -10,3 +10,5 @@ wget $url/$tk_v/local_installers/$rpm_f
 sudo rpm -i $rpm_f 
 sudo dnf clean all
 sudo dnf -y install cuda-toolkit-12-5
+
+rm $rpm_f
