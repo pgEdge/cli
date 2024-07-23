@@ -467,7 +467,7 @@ def info(p_json, p_home, p_repo, print_flag=True):
 
     if instance_id > "" and not cloud_name == "unknown":
         print(f"#{bold_start}  Cloud Info:{bold_end} " +
-            + f"{cloud_name}  {cloud_platform}  {instance_id}  {flavor}  {az}"
+              f"{cloud_name}  {cloud_platform}  {instance_id}  {flavor}  {az}"
         )
 
     print(f"#{bold_start}    Repo URL:{bold_end} {p_repo}")
