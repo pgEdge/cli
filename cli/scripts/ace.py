@@ -1642,6 +1642,48 @@ def table_repair(
     total_upserted = {}
     total_deleted = {}
 
+
+    """
+    Here we are grabbing the name and data type of each row from table from the source of truth
+    Using this ugly statement instead of a simpler one since this gives correct name of
+    non standard datatypes (i.e. vectors from Vector and geographys from PostGIS)
+    """
+
+    psql_qry = """
+        SELECT
+            a.attname AS column_name,
+            pg_catalog.format_type(a.atttypid, a.atttypmod) AS data_type
+        FROM
+            pg_catalog.pg_attribute a
+        JOIN
+            pg_catalog.pg_class c ON a.attrelid = c.oid
+        JOIN
+            pg_catalog.pg_type t ON a.atttypid = t.oid
+        LEFT JOIN
+            pg_catalog.pg_namespace n ON c.relnamespace = n.oid
+        WHERE
+            c.relname = %s
+            AND a.attnum > 0
+            AND NOT a.attisdropped
+        ORDER BY
+            a.attnum;
+    """
+
+    try:
+        conn = conns[source_of_truth]
+        cur = conn.cursor()
+        cur.execute(psql_qry, (l_table,))
+        table_types = {col_name: col_type for col_name, col_type in cur.fetchall()}
+
+    except:
+        table_types = dict()
+
+    finally:
+        conn.commit()
+        if not table_types:
+            util.exit_message("Couldn't find any ")
+
+
     for node_pair in diff_json.keys():
         node1, node2 = node_pair.split("/")
 
@@ -1798,17 +1840,19 @@ def table_repair(
         """
         upsert_tuples = []
         if rows_to_upsert:
-            for row in rows_to_upsert:
+            for row in rows_to_upsert_json:
                 modified_row = tuple()
-                for elem in row:
+                for col_name in cols_list:
+                    col_type = table_types[col_name]
+                    elem = row[col_name]
                     try:
-                        item = ast.literal_eval(elem)
-                        if isinstance(item, list):
-                            modified_row += (item,)
-                        elif isinstance(item, dict):
-                            modified_row += (json.dumps(item),)
-                        else:
+                        if any( [s in col_type for s in ["char", "text", "vector"]] ):
                             modified_row += (elem,)
+                        else:
+                            item = ast.literal_eval(elem)
+                            if col_type=="jsonb": item = json.dumps(item)
+                            modified_row += (item,)
+
                     except (ValueError, SyntaxError):
                         modified_row += (elem,)
 
