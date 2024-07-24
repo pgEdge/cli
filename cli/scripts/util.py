@@ -1356,7 +1356,7 @@ def exit_message(p_msg, p_rc=1, p_isJSON=None):
 
 
 # print codified message to stdout & logfile
-def message(p_msg, p_state="info", p_isJSON=None):
+def message(p_msg, p_state="info", p_isJSON=None, quiet_mode=False):
     if p_isJSON is None:
         p_isJSON = isJSON
 
@@ -1366,7 +1366,7 @@ def message(p_msg, p_state="info", p_isJSON=None):
     jsn_msg = None
 
     log_level = p_state.lower()
-    cur_level = logging.root.level
+    cur_level = logging.root.level if not quiet_mode else logging.ERROR
 
     if log_level == "error":
         log_level_num = 40

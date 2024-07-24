@@ -7,9 +7,9 @@
 import os
 import json
 import ast
-
 import subprocess
 import re
+import sys
 import util
 import fire
 import cluster
@@ -21,6 +21,7 @@ from multiprocessing import Manager, cpu_count, Value, Lock
 from ordered_set import OrderedSet
 from itertools import combinations
 from mpire import WorkerPool
+from mpire.utils import make_single_arguments
 from concurrent.futures import ThreadPoolExecutor
 
 l_dir = "/tmp"
@@ -42,7 +43,7 @@ MAX_CPU_RATIO_DEFAULT = os.environ.get("ACE_MAX_CPU_RATIO", 0.6)
 
 # Return codes for compare_checksums
 BLOCK_OK = 0
-MAX_DIFF_EXCEEDED = 1
+MAX_DIFFS_EXCEEDED = 1
 BLOCK_MISMATCH = 2
 BLOCK_ERROR = 3
 
@@ -504,7 +505,7 @@ def init_db_connection(shared_objects, worker_state):
         worker_state[node["name"]] = psycopg.connect(conn_str).cursor()
 
 
-def compare_checksums(shared_objects, worker_state, pkey1, pkey2):
+def compare_checksums(shared_objects, worker_state, batch):
     global row_diff_count
 
     if row_diff_count.value >= MAX_DIFF_ROWS:
@@ -518,179 +519,172 @@ def compare_checksums(shared_objects, worker_state, pkey1, pkey2):
     simple_primary_key = shared_objects["simple_primary_key"]
 
     where_clause = []
-
-    if simple_primary_key:
-        if pkey1 is not None:
-            where_clause.append(
-                sql.SQL("{p_key} >= {pkey1}").format(
-                    p_key=sql.Identifier(p_key), pkey1=sql.Literal(pkey1)
-                )
-            )
-        if pkey2 is not None:
-            where_clause.append(
-                sql.SQL("{p_key} < {pkey2}").format(
-                    p_key=sql.Identifier(p_key), pkey2=sql.Literal(pkey2)
-                )
-            )
-    else:
-        """
-        This is a slightly more complicated case since we have to split up
-        the primary key and compare them with split values of pkey1 and pkey2
-        """
-
-        if pkey1 is not None:
-            where_clause.append(
-                sql.SQL("({p_key}) >= ({pkey1})").format(
-                    p_key=sql.SQL(", ").join(
-                        [sql.Identifier(col.strip()) for col in p_key.split(",")]
-                    ),
-                    pkey1=sql.SQL(", ").join([sql.Literal(val) for val in pkey1]),
-                )
-            )
-
-        if pkey2 is not None:
-            where_clause.append(
-                sql.SQL("({p_key}) < ({pkey2})").format(
-                    p_key=sql.SQL(", ").join(
-                        [sql.Identifier(col.strip()) for col in p_key.split(",")]
-                    ),
-                    pkey2=sql.SQL(", ").join([sql.Literal(val) for val in pkey2]),
-                )
-            )
-    
-    if simple_primary_key:
-        hash_sql = sql.SQL(
-            "SELECT md5(cast(array_agg(t.* ORDER BY {p_key}) AS text)) FROM"
-            "(SELECT * FROM {table_name} WHERE {where_clause}) t"
-        ).format(
-            p_key=sql.Identifier(p_key),
-            table_name=sql.SQL("{}.{}").format(
-                sql.Identifier(schema_name),
-                sql.Identifier(table_name),
-            ),
-            where_clause=sql.SQL(" AND ").join(where_clause),
-        )
-    else:
-        hash_sql = sql.SQL(
-            "SELECT md5(cast(array_agg(t.* ORDER BY {p_key}) AS text)) FROM"
-            "(SELECT * FROM {table_name} WHERE {where_clause}) t"
-        ).format(
-            p_key=sql.SQL(", ").join(
-                [sql.Identifier(col.strip()) for col in p_key.split(",")]
-            ),
-            table_name=sql.SQL("{}.{}").format(
-                sql.Identifier(schema_name),
-                sql.Identifier(table_name),
-            ),
-            where_clause=sql.SQL(" AND ").join(where_clause),
-        )
-
-    block_sql = sql.SQL("SELECT * FROM {table_name} WHERE {where_clause}").format(
-        table_name=sql.SQL("{}.{}").format(
-            sql.Identifier(schema_name),
-            sql.Identifier(table_name),
-        ),
-        where_clause=sql.SQL(" AND ").join(where_clause),
-    )
-
     node_pairs = combinations(node_list, 2)
 
-    block_result = {}
-    block_result["offset"] = f"{pkey1}-{pkey2}"
-    block_result["diffs"] = []
+    for pkey1, pkey2 in batch:
+        if simple_primary_key:
+            if pkey1 is not None:
+                where_clause.append(
+                    sql.SQL("{p_key} >= {pkey1}").format(
+                        p_key=sql.Identifier(p_key), pkey1=sql.Literal(pkey1)
+                    )
+                )
+            if pkey2 is not None:
+                where_clause.append(
+                    sql.SQL("{p_key} < {pkey2}").format(
+                        p_key=sql.Identifier(p_key), pkey2=sql.Literal(pkey2)
+                    )
+                )
+        else:
+            """
+            This is a slightly more complicated case since we have to split up
+            the primary key and compare them with split values of pkey1 and pkey2
+            """
 
-    for node_pair in node_pairs:
-        host1 = node_pair[0]
-        host2 = node_pair[1]
+            if pkey1 is not None:
+                where_clause.append(
+                    sql.SQL("({p_key}) >= ({pkey1})").format(
+                        p_key=sql.SQL(", ").join(
+                            [sql.Identifier(col.strip()) for col in p_key.split(",")]
+                        ),
+                        pkey1=sql.SQL(", ").join([sql.Literal(val) for val in pkey1]),
+                    )
+                )
 
-        # Return early if we have already exceeded the max number of diffs
-        if row_diff_count.value >= MAX_DIFF_ROWS:
-            queue.append(block_result)
-            return
+            if pkey2 is not None:
+                where_clause.append(
+                    sql.SQL("({p_key}) < ({pkey2})").format(
+                        p_key=sql.SQL(", ").join(
+                            [sql.Identifier(col.strip()) for col in p_key.split(",")]
+                        ),
+                        pkey2=sql.SQL(", ").join([sql.Literal(val) for val in pkey2]),
+                    )
+                )
+        
+        if simple_primary_key:
+            hash_sql = sql.SQL(
+                "SELECT md5(cast(array_agg(t.* ORDER BY {p_key}) AS text)) FROM"
+                "(SELECT * FROM {table_name} WHERE {where_clause}) t"
+            ).format(
+                p_key=sql.Identifier(p_key),
+                table_name=sql.SQL("{}.{}").format(
+                    sql.Identifier(schema_name),
+                    sql.Identifier(table_name),
+                ),
+                where_clause=sql.SQL(" AND ").join(where_clause),
+            )
+        else:
+            hash_sql = sql.SQL(
+                "SELECT md5(cast(array_agg(t.* ORDER BY {p_key}) AS text)) FROM"
+                "(SELECT * FROM {table_name} WHERE {where_clause}) t"
+            ).format(
+                p_key=sql.SQL(", ").join(
+                    [sql.Identifier(col.strip()) for col in p_key.split(",")]
+                ),
+                table_name=sql.SQL("{}.{}").format(
+                    sql.Identifier(schema_name),
+                    sql.Identifier(table_name),
+                ),
+                where_clause=sql.SQL(" AND ").join(where_clause),
+            )
 
-        try:
-            # Run the checksum query on both nodes in parallel
-            with ThreadPoolExecutor(max_workers=2) as executor:
-                futures = [
-                    executor.submit(run_query, worker_state, host1, hash_sql),
-                    executor.submit(run_query, worker_state, host2, hash_sql),
-                ]
-                hash1, hash2 = [f.result()[0][0] for f in futures]
-        except Exception as e:
-            print(f"query = {hash_sql.as_string(worker_state[host1])}", e)
-            result_queue.append(BLOCK_ERROR)
-            return
+        block_sql = sql.SQL("SELECT * FROM {table_name} WHERE {where_clause}").format(
+            table_name=sql.SQL("{}.{}").format(
+                sql.Identifier(schema_name),
+                sql.Identifier(table_name),
+            ),
+            where_clause=sql.SQL(" AND ").join(where_clause),
+        )
 
-        if hash1 != hash2:
+        for node_pair in node_pairs:
+            host1 = node_pair[0]
+            host2 = node_pair[1]
+
+            # Return early if we have already exceeded the max number of diffs
+            if row_diff_count.value >= MAX_DIFF_ROWS:
+                return MAX_DIFFS_EXCEEDED
+
             try:
-                # Run the block query on both nodes in parallel
+                # Run the checksum query on both nodes in parallel
                 with ThreadPoolExecutor(max_workers=2) as executor:
                     futures = [
-                        executor.submit(run_query, worker_state, host1, block_sql),
-                        executor.submit(run_query, worker_state, host2, block_sql),
+                        executor.submit(run_query, worker_state, host1, hash_sql),
+                        executor.submit(run_query, worker_state, host2, hash_sql),
                     ]
-                    t1_result, t2_result = [f.result() for f in futures]
+                    hash1, hash2 = [f.result()[0][0] for f in futures]
             except Exception as e:
-                print(f"query = {block_sql}", e)
-                result_queue.append(BLOCK_ERROR)
-                return
+                # print(f"query = {hash_sql.as_string(worker_state[host1])}, exception = {e}", file=sys.stderr)
+                result_queue.append(e)
+                return BLOCK_ERROR
 
-            # Transform all elements in t1_result and t2_result into strings before
-            # consolidating them into a set
-            # TODO: Test and add support for different datatypes here
-            t1_result = [
-                tuple(
-                    str(x) if not isinstance(x, list) else str(sorted(x)) for x in row
-                )
-                for row in t1_result
-            ]
-            t2_result = [
-                tuple(
-                    str(x) if not isinstance(x, list) else str(sorted(x)) for x in row
-                )
-                for row in t2_result
-            ]
+            if hash1 != hash2:
+                try:
+                    # Run the block query on both nodes in parallel
+                    with ThreadPoolExecutor(max_workers=2) as executor:
+                        futures = [
+                            executor.submit(run_query, worker_state, host1, block_sql),
+                            executor.submit(run_query, worker_state, host2, block_sql),
+                        ]
+                        t1_result, t2_result = [f.result() for f in futures]
+                except Exception as e:
+                    # print(f"query = {block_sql.as_string(worker_state[host1])}, exception ={e}", file=sys.stderr)
+                    result_queue.append(e)
+                    return BLOCK_ERROR
 
-            # Collect results into OrderedSets for comparison
-            t1_set = OrderedSet(t1_result)
-            t2_set = OrderedSet(t2_result)
+                # Transform all elements in t1_result and t2_result into strings before
+                # consolidating them into a set
+                # TODO: Test and add support for different datatypes here
+                t1_result = [
+                    tuple(
+                        str(x) if not isinstance(x, list) else str(sorted(x)) for x in row
+                    )
+                    for row in t1_result
+                ]
+                t2_result = [
+                    tuple(
+                        str(x) if not isinstance(x, list) else str(sorted(x)) for x in row
+                    )
+                    for row in t2_result
+                ]
 
-            t1_diff = t1_set - t2_set
-            t2_diff = t2_set - t1_set
+                # Collect results into OrderedSets for comparison
+                t1_set = OrderedSet(t1_result)
+                t2_set = OrderedSet(t2_result)
 
-            node_pair_key = f"{host1}/{host2}"
+                t1_diff = t1_set - t2_set
+                t2_diff = t2_set - t1_set
 
-            if node_pair_key not in diff_dict:
-                diff_dict[node_pair_key] = {}
+                node_pair_key = f"{host1}/{host2}"
 
-            with lock:
-                if len(t1_diff) > 0 or len(t2_diff) > 0:
-                    temp_dict = {}
-                    if host1 in diff_dict[node_pair_key]:
-                        temp_dict[host1] = diff_dict[node_pair_key][host1]
-                    else:
-                        temp_dict[host1] = []
-                    if host2 in diff_dict[node_pair_key]:
-                        temp_dict[host2] = diff_dict[node_pair_key][host2]
-                    else:
-                        temp_dict[host2] = []
+                if node_pair_key not in diff_dict:
+                    diff_dict[node_pair_key] = {}
 
-                    temp_dict[host1] += [dict(zip(cols, row)) for row in t1_diff]
-                    temp_dict[host2] += [dict(zip(cols, row)) for row in t2_diff]
+                with lock:
+                    if len(t1_diff) > 0 or len(t2_diff) > 0:
+                        temp_dict = {}
+                        if host1 in diff_dict[node_pair_key]:
+                            temp_dict[host1] = diff_dict[node_pair_key][host1]
+                        else:
+                            temp_dict[host1] = []
+                        if host2 in diff_dict[node_pair_key]:
+                            temp_dict[host2] = diff_dict[node_pair_key][host2]
+                        else:
+                            temp_dict[host2] = []
 
-                    diff_dict[node_pair_key] = temp_dict
+                        temp_dict[host1] += [dict(zip(cols, row)) for row in t1_diff]
+                        temp_dict[host2] += [dict(zip(cols, row)) for row in t2_diff]
 
-            with row_diff_count.get_lock():
-                row_diff_count.value += max(len(t1_diff), len(t2_diff))
+                        diff_dict[node_pair_key] = temp_dict
 
-            if row_diff_count.value >= MAX_DIFF_ROWS:
-                result_queue.append(MAX_DIFF_EXCEEDED)
-                return
+                with row_diff_count.get_lock():
+                    row_diff_count.value += max(len(t1_diff), len(t2_diff))
+
+                if row_diff_count.value >= MAX_DIFF_ROWS:
+                    return MAX_DIFFS_EXCEEDED
+                else:
+                    result_queue.append(BLOCK_MISMATCH)
             else:
-                result_queue.append(BLOCK_MISMATCH)
-
-        else:
-            result_queue.append(BLOCK_OK)
+                result_queue.append(BLOCK_OK)
 
 
 def table_diff(
@@ -702,6 +696,8 @@ def table_diff(
     output="json",
     nodes="all",
     diff_file=None,
+    batch_size=10,
+    quiet=False,
 ):
     """Efficiently compare tables across cluster using checksums and blocks of rows"""
     
@@ -755,7 +751,7 @@ def table_diff(
         util.exit_message("table-diff needs at least two nodes to compare")
 
     util.check_cluster_exists(cluster_name)
-    util.message(f"Cluster {cluster_name} exists", p_state="success")
+    util.message(f"Cluster {cluster_name} exists", p_state="success", quiet_mode=quiet)
 
     nm_lst = table_name.split(".")
     if len(nm_lst) != 2:
@@ -816,7 +812,7 @@ def table_diff(
     except Exception as e:
         util.exit_message("Error in table_diff() Getting Connections:" + str(e), 1)
 
-    util.message("Connections successful to nodes in cluster", p_state="success")
+    util.message("Connections successful to nodes in cluster", p_state="success", quiet_mode=quiet)
 
     cols = None
     key = None
@@ -841,7 +837,7 @@ def table_diff(
         cols = curr_cols
         key = curr_key
 
-    util.message(f"Table {table_name} is comparable across nodes", p_state="success")
+    util.message(f"Table {table_name} is comparable across nodes", p_state="success", quiet_mode=quiet)
 
     simple_primary_key = True
     if len(key.split(",")) > 1:
@@ -877,6 +873,7 @@ def table_diff(
         util.message(
             "ALL TABLES ARE EMPTY",
             p_state="warning",
+            quiet_mode=quiet,
         )
         return
 
@@ -945,7 +942,7 @@ def table_diff(
     total_blocks = row_count // block_rows
     total_blocks = total_blocks if total_blocks > 0 else 1
     cpus = cpu_count()
-    max_procs = int(cpus * max_cpu_ratio * 2) if cpus > 1 else 1
+    max_procs = int(cpus * max_cpu_ratio) if cpus > 1 else 1
 
     # If we don't have enough blocks to keep all CPUs busy, use fewer processes
     procs = max_procs if total_blocks > max_procs else total_blocks
@@ -976,37 +973,44 @@ def table_diff(
         "simple_primary_key": simple_primary_key,
     }
 
-    print("")
-    util.message("Starting jobs to compare tables...\n", p_state="info")
+    util.message("Starting jobs to compare tables...\n", p_state="info", quiet_mode=quiet)
+
+    batches = [pkey_offsets[i:i+batch_size] for i in range(0, len(pkey_offsets), batch_size)]
+
+    mismatch = False
+    diffs_exceeded = False
+    errors = False
 
     with WorkerPool(
         n_jobs=procs,
         shared_objects=shared_objects,
         use_worker_state=True,
     ) as pool:
-        pool.map_unordered(
+        for result in pool.imap_unordered(
             compare_checksums,
-            pkey_offsets,
+            make_single_arguments(batches),
             worker_init=init_db_connection,
-            progress_bar=True,
-            iterable_len=len(pkey_offsets),
-        )
+            progress_bar=True if not quiet else False,
+            iterable_len=len(batches),
+            progress_bar_style="rich",
+        ):
+            if result == MAX_DIFFS_EXCEEDED:
+                diffs_exceeded = True
+                mismatch = True
+                break
+            elif result == BLOCK_ERROR:
+                errors = True
+                break
 
-    mismatch = False
-    diffs_exceeded = False
-    errors = False
-
+        # pool.terminate()
+        if diffs_exceeded:
+            util.message("Prematurely terminated jobs since diffs have exceeded MAX_ALLOWED_DIFFS", p_state="warning", quiet_mode=quiet)
+   
     for result in result_queue:
-        if result == MAX_DIFF_EXCEEDED:
-            diffs_exceeded = True
-
-        if result == BLOCK_MISMATCH or result == MAX_DIFF_EXCEEDED:
+        if result == BLOCK_MISMATCH:
             mismatch = True
-
-        if result == BLOCK_ERROR:
-            errors = True
-
-    print("")
+        elif result not in [BLOCK_OK, BLOCK_MISMATCH, BLOCK_ERROR]:
+            print(result)
 
     if errors:
         util.exit_message(
@@ -1022,10 +1026,11 @@ def table_diff(
             util.message(
                 f"TABLES DO NOT MATCH. DIFFS HAVE EXCEEDED {MAX_DIFF_ROWS} ROWS",
                 p_state="warning",
+                quiet_mode=quiet,
             )
 
         else:
-            util.message("TABLES DO NOT MATCH", p_state="warning")
+            util.message("TABLES DO NOT MATCH", p_state="warning", quiet_mode=quiet)
 
         """
         Read the result queue and count differences between each node pair
@@ -1040,48 +1045,51 @@ def table_diff(
             util.message(
                 f"FOUND {diff_count} DIFFS BETWEEN {node1} AND {node2}",
                 p_state="warning",
+                quiet_mode=quiet,
             )
 
-        print()
-
         if output == "json":
-            write_diffs_json(block_rows)
+            write_diffs_json(quiet_mode=quiet)
 
         elif output == "csv":
             write_diffs_csv()
 
     else:
-        util.message("TABLES MATCH OK\n", p_state="success")
+        util.message("TABLES MATCH OK\n", p_state="success", quiet_mode=quiet)
 
     run_time = util.round_timedelta(datetime.now() - start_time).total_seconds()
     run_time_str = f"{run_time:.2f}"
 
-    print()
-
     util.message(
         f"TOTAL ROWS CHECKED = {total_rows}\nRUN TIME = {run_time_str} seconds",
         p_state="info",
+        quiet_mode=quiet,
     )
 
 
-def write_diffs_json(block_rows):
-    dirname = datetime.now().astimezone(None).strftime("%Y-%m-%d_%H:%M:%S")
+def write_diffs_json(quiet_mode=False):
+    
+    if quiet_mode:
+        #print(json.dumps(dict(diff_dict), default=str))
+        print(json.dumps(dict(diff_dict)))
+    else:
+        dirname = datetime.now().astimezone(None).strftime("%Y-%m-%d_%H:%M:%S")
 
-    if not os.path.exists("diffs"):
-        os.mkdir("diffs")
+        if not os.path.exists("diffs"):
+            os.mkdir("diffs")
 
-    dirname = os.path.join("diffs", dirname)
-    os.mkdir(dirname)
+        dirname = os.path.join("diffs", dirname)
+        os.mkdir(dirname)
 
-    filename = os.path.join(dirname, "diff.json")
+        filename = os.path.join(dirname, "diff.json")
 
-    with open(filename, "w") as f:
-        f.write(json.dumps(dict(diff_dict), default=str))
+        with open(filename, "w") as f:
+            f.write(json.dumps(dict(diff_dict), default=str))
 
-    util.message(
-        f"Diffs written out to" f" {util.set_colour(filename, 'blue')}",
-        p_state="info",
-    )
+        util.message(
+            f"Diffs written out to" f" {util.set_colour(filename, 'blue')}",
+            p_state="info",
+        )
 
 
 # TODO: Come up with better naming convention for diff files
