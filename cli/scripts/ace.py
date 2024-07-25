@@ -375,7 +375,7 @@ def spock_diff(cluster_name, nodes):
         util.exit_message(
             "spock-diff currently supports up to a three-way table comparison"
         )
-    
+
     for nd in node_list:
         if nd not in conn_list.keys():
             util.exit_message(f"Specified nodename \"{nd}\" not present in cluster", 1)
@@ -613,7 +613,6 @@ def compare_checksums(shared_objects, worker_state, batch):
                     ]
                     hash1, hash2 = [f.result()[0][0] for f in futures]
             except Exception as e:
-                # print(f"query = {hash_sql.as_string(worker_state[host1])}, exception = {e}", file=sys.stderr)
                 result_queue.append(e)
                 return BLOCK_ERROR
 
@@ -627,7 +626,6 @@ def compare_checksums(shared_objects, worker_state, batch):
                         ]
                         t1_result, t2_result = [f.result() for f in futures]
                 except Exception as e:
-                    # print(f"query = {block_sql.as_string(worker_state[host1])}, exception ={e}", file=sys.stderr)
                     result_queue.append(e)
                     return BLOCK_ERROR
 
@@ -1009,8 +1007,6 @@ def table_diff(
     for result in result_queue:
         if result == BLOCK_MISMATCH:
             mismatch = True
-        elif result not in [BLOCK_OK, BLOCK_MISMATCH, BLOCK_ERROR]:
-            print(result)
 
     if errors:
         util.exit_message(
