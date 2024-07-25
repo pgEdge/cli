@@ -9,7 +9,6 @@ import json
 import ast
 import subprocess
 import re
-import sys
 import util
 import fire
 import cluster
@@ -74,13 +73,13 @@ def write_pg_dump(p_ip, p_db, p_port, p_prfx, p_schm, p_base_dir="/tmp"):
     return out_file
 
 
-'''
+"""
 Accepts a connection object and returns the version of spock installed
 
 @param: conn - connection object
 @return: float - version of spock installed
 
-'''
+"""
 
 
 def get_spock_version(conn):
@@ -232,8 +231,164 @@ def parse_nodes(nodes) -> list:
                 p_state="warning",
             )
             node_list = list(rep_check)
-    
+
     return node_list
+
+
+def grab_row_types(conn, table_name):
+    """
+    Here we are grabbing the name and data type of each row from table from the
+    given conn. Using this complex query instead of a simpler one since this
+    gives the correct name of non standard datatypes (i.e. vectors from Vector
+    and geometries from PostGIS)
+    """
+
+    psql_qry = """
+        SELECT
+            a.attname AS column_name,
+            pg_catalog.format_type(a.atttypid, a.atttypmod) AS data_type
+        FROM
+            pg_catalog.pg_attribute a
+        JOIN
+            pg_catalog.pg_class c ON a.attrelid = c.oid
+        JOIN
+            pg_catalog.pg_type t ON a.atttypid = t.oid
+        LEFT JOIN
+            pg_catalog.pg_namespace n ON c.relnamespace = n.oid
+        WHERE
+            c.relname = %s
+            AND a.attnum > 0
+            AND NOT a.attisdropped
+        ORDER BY
+            a.attnum;
+    """
+
+    try:
+        cur = conn.cursor()
+        cur.execute(psql_qry, (table_name,))
+        table_types = {col_name: col_type for col_name, col_type in cur.fetchall()}
+    except Exception:
+        table_types = dict()
+
+    finally:
+        conn.commit()
+        if not table_types:
+            util.exit_message(
+                "Error: couldn't connect to source of truth or find any columns"
+            )
+
+    return table_types
+
+
+def write_diffs_json(diff_dict, row_types, quiet_mode=False):
+
+    def convert_to_json_type(item: str, type: str):
+        try:
+            if any([s in type for s in ["char", "text", "time"]]):
+                return item
+            else:
+                item = ast.literal_eval(item)
+                return item
+
+        except Exception as e:
+            util.message(
+                f"Could not convert value {item} to {type} while writing to json: {e}",
+                p_state="warning",
+                quiet_mode=quiet_mode,
+            )
+
+        return item
+
+    """
+    All diff runs from ACE will be stored in diffs/<date>/diffs_<time>.json
+    Each day will have its own directory and each run will have its own file
+    that indicates the time of the run.
+    """
+    now = datetime.now()
+    dirname = now.strftime("%Y-%m-%d")
+    diff_file_suffix = now.strftime("%H%M%S") + f"{now.microsecond // 1000:03d}"
+    diff_filename = "diffs_" + diff_file_suffix + ".json"
+
+    if not os.path.exists("diffs"):
+        os.mkdir("diffs")
+
+    dirname = os.path.join("diffs", dirname)
+
+    if not os.path.exists(dirname):
+        os.mkdir(dirname)
+
+    filename = os.path.join(dirname, diff_filename)
+
+    # Converts diff so that values are correct json type
+    write_dict = {
+        node_pair: {
+            node: [
+                {
+                    key: convert_to_json_type(val, row_types[key])
+                    for key, val in row.items()
+                }
+                for row in rows
+            ]
+            for node, rows in nodes_data.items()
+        }
+        for node_pair, nodes_data in diff_dict.items()
+    }
+
+    if not quiet_mode:
+        with open(filename, "w") as f:
+            f.write(json.dumps(write_dict, default=str))
+    else:
+        print(json.dumps(write_dict, default=str))
+
+    util.message(
+        f"Diffs written out to" f" {util.set_colour(filename, 'blue')}",
+        p_state="info",
+        quiet_mode=quiet_mode,
+    )
+
+
+# TODO: Come up with better naming convention for diff files
+def write_diffs_csv(diff_dict):
+    import pandas as pd
+
+    dirname = datetime.now().astimezone(None).strftime("%Y-%m-%d_%H:%M:%S")
+
+    if not os.path.exists("diffs"):
+        os.mkdir("diffs")
+
+    dirname = os.path.join("diffs", dirname)
+    os.mkdir(dirname)
+
+    for node_pair in diff_dict.keys():
+        node1, node2 = node_pair.split("/")
+        node_pair_str = f"{node1}__{node2}"
+        node_pair_dir = os.path.join(dirname, node_pair_str)
+
+        # Create directory for node pair if it doesn't exist
+        if not os.path.exists(node_pair_dir):
+            os.mkdir(node_pair_dir)
+
+        t1_write_path = os.path.join(node_pair_dir, node1 + ".csv")
+        t2_write_path = os.path.join(node_pair_dir, node2 + ".csv")
+
+        df1 = pd.DataFrame.from_dict(diff_dict[node_pair][node1])
+        df2 = pd.DataFrame.from_dict(diff_dict[node_pair][node2])
+
+        df1.to_csv(t1_write_path, header=True, index=False)
+        df2.to_csv(t2_write_path, header=True, index=False)
+        diff_file_name = os.path.join(dirname, f"{node_pair_str}/out.diff")
+
+        t1_write_path = os.path.join(dirname, node_pair_str, node1 + ".csv")
+        t2_write_path = os.path.join(dirname, node_pair_str, node2 + ".csv")
+
+        cmd = f"diff -u {t1_write_path} {t2_write_path} | ydiff > {diff_file_name}"
+        subprocess.check_output(cmd, shell=True)
+
+        util.message(
+            f"DIFFS BETWEEN {util.set_colour(node1, 'blue')}"
+            f" AND {util.set_colour(node2, 'blue')}: {diff_file_name}",
+            p_state="info",
+        )
 
 
 def schema_diff(cluster_name, nodes, schema_name):
@@ -283,9 +438,9 @@ def schema_diff(cluster_name, nodes, schema_name):
 
     for nd in node_list:
         if nd not in cluster_node_names:
-            util.exit_message(f"Specified nodename \"{nd}\" not present in cluster", 1)
+            util.exit_message(f'Specified nodename "{nd}" not present in cluster', 1)
 
-    sql1, sql2 = "", ""
+    sql1 = ""
     l_schema = schema_name
     file_list = []
 
@@ -378,7 +533,7 @@ def spock_diff(cluster_name, nodes):
 
     for nd in node_list:
         if nd not in conn_list.keys():
-            util.exit_message(f"Specified nodename \"{nd}\" not present in cluster", 1)
+            util.exit_message(f'Specified nodename "{nd}" not present in cluster', 1)
 
     compare_spock = []
     print("\n")
@@ -412,7 +567,9 @@ def spock_diff(cluster_name, nodes):
             for node in node_info:
                 diff_sub = {}
                 if node["sub_name"] is None:
-                    hints.append("Hint: No subscriptions have been created on this node")
+                    hints.append(
+                        "Hint: No subscriptions have been created on this node"
+                    )
                 else:
                     print("    " + node["sub_name"])
                     diff_sub["sub_name"] = node["sub_name"]
@@ -427,7 +584,10 @@ def spock_diff(cluster_name, nodes):
         else:
             print(f"  No node replication in {cluster_node['name']}")
 
-        # Query gets each table by which rep set they are in, values in each rep set are alphabetized
+        """
+        Query gets each table by which rep set they are in, values in each rep
+        set are alphabetized
+        """
         sql = """
         SELECT set_name, string_agg(nspname || '.' || relname, '   ') as relname
         FROM (
@@ -468,12 +628,14 @@ def spock_diff(cluster_name, nodes):
     for n in range(1, len(compare_spock)):
         if compare_spock[0]["rep_set_info"] == compare_spock[n]["rep_set_info"]:
             util.message(
-                f"   Replication Rules are the same for {node_list[0]} and {node_list[n]}!!",
+                f"   Replication Rules are the same for {node_list[0]}"
+                " and {node_list[n]}!!",
                 p_state="success",
             )
         else:
             prRed(
-                f"\u2718   Difference in Replication Rules between {node_list[0]} and {node_list[n]}"
+                f"\u2718   Difference in Replication Rules between {node_list[0]}"
+                " and {node_list[n]}"
             )
 
 
@@ -518,10 +680,8 @@ def compare_checksums(shared_objects, worker_state, batch):
     cols = shared_objects["cols_list"]
     simple_primary_key = shared_objects["simple_primary_key"]
 
-    where_clause = []
-    node_pairs = combinations(node_list, 2)
-
     for pkey1, pkey2 in batch:
+        where_clause = []
         if simple_primary_key:
             if pkey1 is not None:
                 where_clause.append(
@@ -560,7 +720,7 @@ def compare_checksums(shared_objects, worker_state, batch):
                         pkey2=sql.SQL(", ").join([sql.Literal(val) for val in pkey2]),
                     )
                 )
-        
+
         if simple_primary_key:
             hash_sql = sql.SQL(
                 "SELECT md5(cast(array_agg(t.* ORDER BY {p_key}) AS text)) FROM"
@@ -596,12 +756,13 @@ def compare_checksums(shared_objects, worker_state, batch):
             where_clause=sql.SQL(" AND ").join(where_clause),
         )
 
-        for node_pair in node_pairs:
+        for node_pair in combinations(node_list, 2):
             host1 = node_pair[0]
             host2 = node_pair[1]
 
             # Return early if we have already exceeded the max number of diffs
             if row_diff_count.value >= MAX_DIFF_ROWS:
+                print("prematurely returning")
                 return MAX_DIFFS_EXCEEDED
 
             try:
@@ -614,6 +775,7 @@ def compare_checksums(shared_objects, worker_state, batch):
                     hash1, hash2 = [f.result()[0][0] for f in futures]
             except Exception as e:
                 result_queue.append(e)
+                print("prematurely returning")
                 return BLOCK_ERROR
 
             if hash1 != hash2:
@@ -627,6 +789,7 @@ def compare_checksums(shared_objects, worker_state, batch):
                         t1_result, t2_result = [f.result() for f in futures]
                 except Exception as e:
                     result_queue.append(e)
+                    print("prematurely returning")
                     return BLOCK_ERROR
 
                 # Transform all elements in t1_result and t2_result into strings before
@@ -634,13 +797,15 @@ def compare_checksums(shared_objects, worker_state, batch):
                 # TODO: Test and add support for different datatypes here
                 t1_result = [
                     tuple(
-                        str(x) if not isinstance(x, list) else str(sorted(x)) for x in row
+                        str(x) if not isinstance(x, list) else str(sorted(x))
+                        for x in row
                     )
                     for row in t1_result
                 ]
                 t2_result = [
                     tuple(
-                        str(x) if not isinstance(x, list) else str(sorted(x)) for x in row
+                        str(x) if not isinstance(x, list) else str(sorted(x))
+                        for x in row
                     )
                     for row in t2_result
                 ]
@@ -678,6 +843,7 @@ def compare_checksums(shared_objects, worker_state, batch):
                     row_diff_count.value += max(len(t1_diff), len(t2_diff))
 
                 if row_diff_count.value >= MAX_DIFF_ROWS:
+                    print("prematurely returning")
                     return MAX_DIFFS_EXCEEDED
                 else:
                     result_queue.append(BLOCK_MISMATCH)
@@ -698,7 +864,9 @@ def table_diff(
     quiet=False,
 ):
     """Efficiently compare tables across cluster using checksums and blocks of rows"""
-    
+
+    quiet_mode = quiet
+
     if type(block_rows) is str:
         try:
             block_rows = int(block_rows)
@@ -706,7 +874,7 @@ def table_diff(
             util.exit_message("Invalid values for ACE_BLOCK_ROWS")
     elif type(block_rows) is not int:
         util.exit_message("Invalid value type for ACE_BLOCK_ROWS")
-    
+
     # Capping max block size here to prevent the hash function from taking forever
     if block_rows > MAX_ALLOWED_BLOCK_SIZE:
         util.exit_message(f"Block row size should be <= {MAX_ALLOWED_BLOCK_SIZE}")
@@ -724,7 +892,9 @@ def table_diff(
         util.exit_message("Invalid value type for ACE_MAX_CPU_RATIO")
 
     if max_cpu_ratio > 1.0 or max_cpu_ratio < 0.0:
-        util.exit_message("Invalid value range for ACE_MAX_CPU_RATIO or --max_cpu_ratio")
+        util.exit_message(
+            "Invalid value range for ACE_MAX_CPU_RATIO or --max_cpu_ratio"
+        )
 
     if output not in ["csv", "json"]:
         util.exit_message(
@@ -749,7 +919,9 @@ def table_diff(
         util.exit_message("table-diff needs at least two nodes to compare")
 
     util.check_cluster_exists(cluster_name)
-    util.message(f"Cluster {cluster_name} exists", p_state="success", quiet_mode=quiet)
+    util.message(
+        f"Cluster {cluster_name} exists", p_state="success", quiet_mode=quiet_mode
+    )
 
     nm_lst = table_name.split(".")
     if len(nm_lst) != 2:
@@ -779,11 +951,9 @@ def table_diff(
     for node in node_info:
         combined_json = {**database, **node}
         cluster_nodes.append(combined_json)
-    
+
     if nodes == "all" and len(cluster_nodes) > 3:
-        util.exit_message(
-            "Table-diff only supports up to three way comparison"
-        )
+        util.exit_message("Table-diff only supports up to three way comparison")
 
     if nodes != "all" and len(node_list) > 1:
         for n in node_list:
@@ -810,7 +980,11 @@ def table_diff(
     except Exception as e:
         util.exit_message("Error in table_diff() Getting Connections:" + str(e), 1)
 
-    util.message("Connections successful to nodes in cluster", p_state="success", quiet_mode=quiet)
+    util.message(
+        "Connections successful to nodes in cluster",
+        p_state="success",
+        quiet_mode=quiet_mode,
+    )
 
     cols = None
     key = None
@@ -835,7 +1009,11 @@ def table_diff(
         cols = curr_cols
         key = curr_key
 
-    util.message(f"Table {table_name} is comparable across nodes", p_state="success", quiet_mode=quiet)
+    util.message(
+        f"Table {table_name} is comparable across nodes",
+        p_state="success",
+        quiet_mode=quiet_mode,
+    )
 
     simple_primary_key = True
     if len(key.split(",")) > 1:
@@ -932,6 +1110,11 @@ def table_diff(
         cur.close()
         return pkey_offsets
 
+    util.message(
+        "Getting primary key offsets for table...",
+        p_state="info",
+        quiet_mode=quiet_mode,
+    )
     future = ThreadPoolExecutor().submit(
         get_pkey_offsets, conn_with_max_rows, pkey_sql, block_rows
     )
@@ -971,9 +1154,14 @@ def table_diff(
         "simple_primary_key": simple_primary_key,
     }
 
-    util.message("Starting jobs to compare tables...\n", p_state="info", quiet_mode=quiet)
+    util.message(
+        "Starting jobs to compare tables...\n", p_state="info", quiet_mode=quiet_mode
+    )
 
-    batches = [pkey_offsets[i:i+batch_size] for i in range(0, len(pkey_offsets), batch_size)]
+    batches = [
+        pkey_offsets[i: i + batch_size]
+        for i in range(0, len(pkey_offsets), batch_size)
+    ]
 
     mismatch = False
     diffs_exceeded = False
@@ -1000,10 +1188,14 @@ def table_diff(
                 errors = True
                 break
 
-        # pool.terminate()
         if diffs_exceeded:
-            util.message("Prematurely terminated jobs since diffs have exceeded MAX_ALLOWED_DIFFS", p_state="warning", quiet_mode=quiet)
-   
+            util.message(
+                "Prematurely terminated jobs since diffs have"
+                " exceeded MAX_ALLOWED_DIFFS",
+                p_state="warning",
+                quiet_mode=quiet_mode,
+            )
+
     for result in result_queue:
         if result == BLOCK_MISMATCH:
             mismatch = True
@@ -1015,6 +1207,9 @@ def table_diff(
                     status before running this script again."
         )
 
+    # Gets types of each column in table
+    table_types = grab_row_types(conn_list[0], l_table)
+
     # Mismatch is True if there is a block mismatch or if we have
     # estimated that diffs may be greater than max allowed diffs
     if mismatch:
@@ -1022,11 +1217,13 @@ def table_diff(
             util.message(
                 f"TABLES DO NOT MATCH. DIFFS HAVE EXCEEDED {MAX_DIFF_ROWS} ROWS",
                 p_state="warning",
-                quiet_mode=quiet,
+                quiet_mode=quiet_mode,
             )
 
         else:
-            util.message("TABLES DO NOT MATCH", p_state="warning", quiet_mode=quiet)
+            util.message(
+                "TABLES DO NOT MATCH", p_state="warning", quiet_mode=quiet_mode
+            )
 
         """
         Read the result queue and count differences between each node pair
@@ -1041,17 +1238,17 @@ def table_diff(
             util.message(
                 f"FOUND {diff_count} DIFFS BETWEEN {node1} AND {node2}",
                 p_state="warning",
-                quiet_mode=quiet,
+                quiet_mode=quiet_mode,
             )
 
         if output == "json":
-            write_diffs_json(quiet_mode=quiet)
+            write_diffs_json(diff_dict, table_types, quiet_mode=quiet_mode)
 
         elif output == "csv":
-            write_diffs_csv()
+            write_diffs_csv(diff_dict)
 
     else:
-        util.message("TABLES MATCH OK\n", p_state="success", quiet_mode=quiet)
+        util.message("TABLES MATCH OK\n", p_state="success", quiet_mode=quiet_mode)
 
     run_time = util.round_timedelta(datetime.now() - start_time).total_seconds()
     run_time_str = f"{run_time:.2f}"
@@ -1059,77 +1256,8 @@ def table_diff(
     util.message(
         f"TOTAL ROWS CHECKED = {total_rows}\nRUN TIME = {run_time_str} seconds",
         p_state="info",
-        quiet_mode=quiet,
+        quiet_mode=quiet_mode,
     )
-
-
-def write_diffs_json(quiet_mode=False):
-    
-    if quiet_mode:
-        #print(json.dumps(dict(diff_dict), default=str))
-        print(json.dumps(dict(diff_dict)))
-    else:
-        dirname = datetime.now().astimezone(None).strftime("%Y-%m-%d_%H:%M:%S")
-
-        if not os.path.exists("diffs"):
-            os.mkdir("diffs")
-
-        dirname = os.path.join("diffs", dirname)
-        os.mkdir(dirname)
-
-        filename = os.path.join(dirname, "diff.json")
-
-        with open(filename, "w") as f:
-            f.write(json.dumps(dict(diff_dict), default=str))
-
-        util.message(
-            f"Diffs written out to" f" {util.set_colour(filename, 'blue')}",
-            p_state="info",
-        )
-
-
-# TODO: Come up with better naming convention for diff files
-def write_diffs_csv():
-    import pandas as pd
-
-    dirname = datetime.now().astimezone(None).strftime("%Y-%m-%d_%H:%M:%S")
-
-    if not os.path.exists("diffs"):
-        os.mkdir("diffs")
-
-    dirname = os.path.join("diffs", dirname)
-    os.mkdir(dirname)
-
-    for node_pair in diff_dict.keys():
-        node1, node2 = node_pair.split("/")
-        node_pair_str = f"{node1}__{node2}"
-        node_pair_dir = os.path.join(dirname, node_pair_str)
-
-        # Create directory for node pair if it doesn't exist
-        if not os.path.exists(node_pair_dir):
-            os.mkdir(node_pair_dir)
-
-        t1_write_path = os.path.join(node_pair_dir, node1 + ".csv")
-        t2_write_path = os.path.join(node_pair_dir, node2 + ".csv")
-
-        df1 = pd.DataFrame.from_dict(diff_dict[node_pair][node1])
-        df2 = pd.DataFrame.from_dict(diff_dict[node_pair][node2])
-
-        df1.to_csv(t1_write_path, header=True, index=False)
-        df2.to_csv(t2_write_path, header=True, index=False)
-        diff_file_name = os.path.join(dirname, f"{node_pair_str}/out.diff")
-
-        t1_write_path = os.path.join(dirname, node_pair_str, node1 + ".csv")
-        t2_write_path = os.path.join(dirname, node_pair_str, node2 + ".csv")
-
-        cmd = f"diff -u {t1_write_path} {t2_write_path} | ydiff > {diff_file_name}"
-        subprocess.check_output(cmd, shell=True)
-
-        util.message(
-            f"DIFFS BETWEEN {util.set_colour(node1, 'blue')}"
-            f" AND {util.set_colour(node2, 'blue')}: {diff_file_name}",
-            p_state="info",
-        )
 
 
 def table_rerun(cluster_name, diff_file, table_name, dbname=None):
@@ -1223,7 +1351,12 @@ def table_rerun(cluster_name, diff_file, table_name, dbname=None):
         util.exit_message("Could not load diff file as JSON")
 
     try:
-        if any([set(list(diff_json[k].keys())) != set(k.split('/')) for k in diff_json.keys()]):
+        if any(
+            [
+                set(list(diff_json[k].keys())) != set(k.split("/"))
+                for k in diff_json.keys()
+            ]
+        ):
             util.exit_message("Contents of diff file improperly formatted")
     except Exception:
         util.exit_message("Contents of diff file improperly formatted")
@@ -1290,6 +1423,10 @@ def table_rerun(cluster_name, diff_file, table_name, dbname=None):
 
     diff_rerun = {}
     diffs_found = False
+
+    # Gets types of each column in table
+    some_node = next(iter(diff_values)).split("/")[0]
+    table_types = grab_row_types(conn_list[some_node], l_table)
 
     for node_pair_key, values in diff_values.items():
         node1, node2 = node_pair_key.split("/")
@@ -1379,24 +1516,10 @@ def table_rerun(cluster_name, diff_file, table_name, dbname=None):
                 node2: [dict(zip(cols_list, row)) for row in node2_diff],
             }
 
-    dirname = datetime.now().astimezone(None).strftime("%Y-%m-%d_%H:%M:%S")
-
-    if not os.path.exists("diffs"):
-        os.mkdir("diffs")
-
-    dirname = os.path.join("diffs", dirname)
-    os.mkdir(dirname)
-
-    filename = os.path.join(dirname, "diff.json")
-
-    with open(filename, "w") as f:
-        f.write(json.dumps(diff_rerun, default=str))
-
-    print()
-
     if diffs_found:
+        write_diffs_json(diff_rerun, table_types)
         util.message(
-            f"FOUND DIFFS BETWEEN NODES: written out to {util.set_colour(filename, 'blue')}",
+            "FOUND DIFFS BETWEEN NODES",
             p_state="warning",
         )
     else:
@@ -1416,12 +1539,12 @@ def table_repair(
     # Check if diff_file exists on disk
     if not os.path.exists(diff_file):
         util.exit_message(f"Diff file {diff_file} does not exist")
-    
+
     if type(dry_run) is int:
         if dry_run < 0 or dry_run > 1:
             util.exit_message("Dry run should be True (1) or False (0)")
         dry_run = bool(dry_run)
-    
+
     if type(dry_run) is not bool:
         util.exit_message("Dry run should be True (1) or False (0)")
 
@@ -1539,7 +1662,12 @@ def table_repair(
         util.exit_message("Could not load diff file as JSON")
 
     try:
-        if any([set(list(diff_json[k].keys())) != set(k.split('/')) for k in diff_json.keys()]):
+        if any(
+            [
+                set(list(diff_json[k].keys())) != set(k.split("/"))
+                for k in diff_json.keys()
+            ]
+        ):
             util.exit_message("Contents of diff file improperly formatted")
     except Exception:
         util.exit_message("Contents of diff file improperly formatted")
@@ -1645,6 +1773,9 @@ def table_repair(
 
     total_upserted = {}
     total_deleted = {}
+
+    # Gets types of each column in table
+    table_types = grab_row_types(conns[source_of_truth], l_table)
 
     for node_pair in diff_json.keys():
         node1, node2 = node_pair.split("/")
@@ -1802,17 +1933,20 @@ def table_repair(
         """
         upsert_tuples = []
         if rows_to_upsert:
-            for row in rows_to_upsert:
+            for row in rows_to_upsert_json:
                 modified_row = tuple()
-                for elem in row:
+                for col_name in cols_list:
+                    col_type = table_types[col_name]
+                    elem = row[col_name]
                     try:
-                        item = ast.literal_eval(elem)
-                        if isinstance(item, list):
-                            modified_row += (item,)
-                        elif isinstance(item, dict):
-                            modified_row += (json.dumps(item),)
-                        else:
+                        if any([s in col_type for s in ["char", "text", "vector"]]):
                             modified_row += (elem,)
+                        else:
+                            item = ast.literal_eval(elem)
+                            if col_type == "jsonb":
+                                item = json.dumps(item)
+                            modified_row += (item,)
+
                     except (ValueError, SyntaxError):
                         modified_row += (elem,)
 
@@ -1891,7 +2025,7 @@ def repset_diff(
             util.exit_message("Invalid values for ACE_BLOCK_ROWS or --block_rows")
     elif type(block_rows) is not int:
         util.exit_message("Invalid value type for ACE_BLOCK_ROWS or --block_rows")
-    
+
     # Capping max block size here to prevent the hash function from taking forever
     if block_rows > MAX_ALLOWED_BLOCK_SIZE:
         util.exit_message(f"Block row size should be <= {MAX_ALLOWED_BLOCK_SIZE}")
@@ -1909,7 +2043,9 @@ def repset_diff(
         util.exit_message("Invalid value type for ACE_MAX_CPU_RATIO or --max_cpu_ratio")
 
     if max_cpu_ratio > 1.0 or max_cpu_ratio < 0.0:
-        util.exit_message("Invalid value range for ACE_MAX_CPU_RATIO or --max_cpu_ratio")
+        util.exit_message(
+            "Invalid value range for ACE_MAX_CPU_RATIO or --max_cpu_ratio"
+        )
 
     if output not in ["csv", "json"]:
         util.exit_message(
@@ -1991,9 +2127,7 @@ def repset_diff(
     cur = conn.cursor()
 
     # Check if repset exists
-    sql = (
-        "select set_name from spock.replication_set;"
-    )
+    sql = "select set_name from spock.replication_set;"
     cur.execute(sql)
     repset_list = [item[0] for item in cur.fetchall()]
     if repset_name not in repset_list:
