@@ -216,7 +216,7 @@ def get_key(p_con, p_schema, p_table):
     return ",".join(key_lst)
 
 
-def parse_nodes(nodes) -> list:
+def parse_nodes(nodes, quiet_mode=False) -> list:
     node_list = []
     if type(nodes) is str and nodes != "all":
         node_list = [s.strip() for s in nodes.split(",")]
@@ -229,6 +229,7 @@ def parse_nodes(nodes) -> list:
             util.message(
                 "Ignoring duplicate node names",
                 p_state="warning",
+                quiet_mode=quiet_mode,
             )
             node_list = list(rep_check)
 
@@ -348,16 +349,29 @@ def write_diffs_json(diff_dict, row_types, quiet_mode=False):
 
 
 # TODO: Come up with better naming convention for diff files
-def write_diffs_csv(diff_dict):
+def write_diffs_csv(quiet_mode=False):
     import pandas as pd
 
-    dirname = datetime.now().astimezone(None).strftime("%Y-%m-%d_%H:%M:%S")
+    """
+    All diff runs from ACE will be stored in diffs/<date>/diffs_<time>.json
+    Each day will have its own directory and each run will have its own file
+    that indicates the time of the run.
+    """
+    now = datetime.now()
+    dirname = now.strftime("%Y-%m-%d")
+    diff_file_suffix = now.strftime("%H%M%S") + f"{now.microsecond // 1000:03d}"
+    diff_filename = "diffs_" + diff_file_suffix + ".json"
 
     if not os.path.exists("diffs"):
         os.mkdir("diffs")
 
     dirname = os.path.join("diffs", dirname)
-    os.mkdir(dirname)
+
+    if not os.path.exists(dirname):
+        os.mkdir(dirname)
+
+    # FIXME: Update this and test
+    filename = os.path.join(dirname, diff_filename)
 
     for node_pair in diff_dict.keys():
         node1, node2 = node_pair.split("/")
@@ -1049,7 +1063,7 @@ def table_diff(
         util.message(
             "ALL TABLES ARE EMPTY",
             p_state="warning",
-            quiet_mode=quiet,
+            quiet_mode=quiet_mode,
         )
         return
 
@@ -1260,14 +1274,18 @@ def table_diff(
     )
 
 
-def table_rerun(cluster_name, diff_file, table_name, dbname=None):
+def table_rerun(cluster_name, diff_file, table_name, dbname=None, quiet=False):
     """Re-run differences on the results of a recent table-diff"""
+
+    quiet_mode = quiet
 
     if not os.path.exists(diff_file):
         util.exit_message(f"Diff file {diff_file} not found")
 
     util.check_cluster_exists(cluster_name)
-    util.message(f"Cluster {cluster_name} exists", p_state="success")
+    util.message(
+        f"Cluster {cluster_name} exists", p_state="success", quiet_mode=quiet_mode
+    )
 
     nm_lst = table_name.split(".")
     if len(nm_lst) != 2:
@@ -1312,7 +1330,11 @@ def table_rerun(cluster_name, diff_file, table_name, dbname=None):
     except Exception as e:
         util.exit_message("Error in diff_tbls() Getting Connections:" + str(e), 1)
 
-    util.message("Connections successful to nodes in cluster", p_state="success")
+    util.message(
+        "Connections successful to nodes in cluster",
+        p_state="success",
+        quiet_mode=quiet_mode,
+    )
 
     cols = None
     key = None
@@ -1337,7 +1359,11 @@ def table_rerun(cluster_name, diff_file, table_name, dbname=None):
         cols = curr_cols
         key = curr_key
 
-    util.message(f"Table {table_name} is comparable across nodes", p_state="success")
+    util.message(
+        f"Table {table_name} is comparable across nodes",
+        p_state="success",
+        quiet_mode=quiet_mode,
+    )
 
     start_time = datetime.now()
 
@@ -1517,24 +1543,34 @@ def table_rerun(cluster_name, diff_file, table_name, dbname=None):
             }
 
     if diffs_found:
-        write_diffs_json(diff_rerun, table_types)
+        write_diffs_json(diff_rerun, table_types, quiet_mode=quiet_mode)
         util.message(
             "FOUND DIFFS BETWEEN NODES",
             p_state="warning",
+            quiet_mode=quiet_mode,
         )
     else:
-        util.message("TABLES MATCH OK\n", p_state="success")
+        util.message("TABLES MATCH OK\n", p_state="success", quiet_mode=quiet_mode)
 
-    print()
-
-    util.message("RUN TIME = " + str(util.round_timedelta(datetime.now() - start_time)))
+    util.message(
+        "RUN TIME = " + str(util.round_timedelta(datetime.now() - start_time)),
+        quiet_mode=quiet_mode,
+    )
 
 
 def table_repair(
-    cluster_name, diff_file, source_of_truth, table_name, dbname=None, dry_run=False
+    cluster_name,
+    diff_file,
+    source_of_truth,
+    table_name,
+    dbname=None,
+    dry_run=False,
+    quiet=False,
 ):
     """Apply changes from a table-diff source of truth to destination table"""
     import pandas as pd
+
+    quiet_mode = quiet
 
     # Check if diff_file exists on disk
     if not os.path.exists(diff_file):
@@ -1549,7 +1585,9 @@ def table_repair(
         util.exit_message("Dry run should be True (1) or False (0)")
 
     util.check_cluster_exists(cluster_name)
-    util.message(f"Cluster {cluster_name} exists", p_state="success")
+    util.message(
+        f"Cluster {cluster_name} exists", p_state="success", quiet_mode=quiet_mode
+    )
 
     nm_lst = table_name.split(".")
     if len(nm_lst) != 2:
@@ -1603,7 +1641,11 @@ def table_repair(
     except Exception as e:
         util.exit_message("Error in diff_tbls() Getting Connections:" + str(e), 1)
 
-    util.message("Connections successful to nodes in cluster", p_state="success")
+    util.message(
+        "Connections successful to nodes in cluster",
+        p_state="success",
+        quiet_mode=quiet_mode,
+    )
 
     cols = None
     key = None
@@ -1628,7 +1670,11 @@ def table_repair(
         cols = curr_cols
         key = curr_key
 
-    util.message(f"Table {table_name} is comparable across nodes", p_state="success")
+    util.message(
+        f"Table {table_name} is comparable across nodes",
+        p_state="success",
+        quiet_mode=quiet_mode,
+    )
 
     """
     If the diff-file is not a valid json, then we throw an error message and exit.
@@ -1757,7 +1803,7 @@ def table_repair(
         "######## END DRY RUN ########"
     )
     if dry_run:
-        util.message(dry_run_msg, p_state="alert")
+        util.message(dry_run_msg, p_state="alert", quiet_mode=quiet_mode)
         return
 
     cols_list = cols.split(",")
@@ -1971,14 +2017,16 @@ def table_repair(
     util.message(
         f"Successfully applied diffs to {table_name} in cluster {cluster_name}\n",
         p_state="success",
+        quiet_mode=quiet_mode,
     )
 
-    util.message("*** SUMMARY ***\n", p_state="info")
+    util.message("*** SUMMARY ***\n", p_state="info", quiet_mode=quiet_mode)
 
     for node in total_upserted.keys():
         util.message(
             f"{node} UPSERTED = {total_upserted[node]} rows",
             p_state="info",
+            quiet_mode=quiet_mode,
         )
 
     print()
@@ -1987,16 +2035,14 @@ def table_repair(
         util.message(
             f"{node} DELETED = {total_deleted[node]} rows",
             p_state="info",
+            quiet_mode=quiet_mode,
         )
-
-    print()
 
     util.message(
         f"RUN TIME = {run_time_str} seconds",
         p_state="info",
+        quiet_mode=quiet_mode,
     )
-
-    print()
 
     if spock_version < 4.0:
         util.message(
@@ -2004,6 +2050,7 @@ def table_repair(
             "an older spock version. Please do a manual check as repair may"
             "have caused further divergence",
             p_state="warning",
+            quiet_mode=quiet_mode,
         )
 
 
@@ -2015,8 +2062,11 @@ def repset_diff(
     max_cpu_ratio=MAX_CPU_RATIO_DEFAULT,
     output="json",
     nodes="all",
+    quiet=False,
 ):
     """Loop thru a replication-sets tables and run table-diff on them"""
+
+    quiet_mode = quiet
 
     if type(block_rows) is str:
         try:
@@ -2070,7 +2120,9 @@ def repset_diff(
         util.exit_message("diff-tables needs at least two nodes to compare")
 
     util.check_cluster_exists(cluster_name)
-    util.message(f"Cluster {cluster_name} exists", p_state="success")
+    util.message(
+        f"Cluster {cluster_name} exists", p_state="success", quiet_mode=quiet_mode
+    )
 
     db, pg, node_info = cluster.load_json(cluster_name)
 
@@ -2120,7 +2172,11 @@ def repset_diff(
     except Exception as e:
         util.exit_message("Error in diff_tbls() Getting Connections:" + str(e), 1)
 
-    util.message("Connections successful to nodes in cluster", p_state="success")
+    util.message(
+        "Connections successful to nodes in cluster",
+        p_state="success",
+        quiet_mode=quiet_mode,
+    )
 
     # Connecting to any one of the nodes in the cluster should suffice
     conn = conn_list[0]
@@ -2144,14 +2200,17 @@ def repset_diff(
         util.message(
             "Repset may be empty",
             p_state="warning",
+            quiet_mode=quiet_mode,
         )
 
     # Convert fetched rows into a list of strings
     tables = [table[0] for table in tables]
 
     for table in tables:
-        util.message(f"\n\nCHECKING TABLE {table}...\n", p_state="info")
-        table_diff(cluster_name, table)
+        util.message(
+            f"\n\nCHECKING TABLE {table}...\n", p_state="info", quiet_mode=quiet_mode
+        )
+        table_diff(cluster_name, table, quiet=quiet_mode)
 
 
 if __name__ == "__main__":
