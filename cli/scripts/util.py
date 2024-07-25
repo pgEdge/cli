@@ -4033,8 +4033,8 @@ def echo_rcmd(cmd, echo=True, sleep_secs=0, host="", usr="", key="", capture_out
         result = subprocess.run(cmd, shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     return result
 
-def run_rcommand(cmd, message="", host="", usr="", key="", verbose="none", max_attempts=1, capture_output=False, ignore=False, important=False):
-    if verbose == "none":
+def run_rcommand(cmd, message="", host="", usr="", key="", verbose="info", max_attempts=1, capture_output=False, ignore=False, important=False):
+    if verbose == "info":
         echo=False
     else:
         echo=True
