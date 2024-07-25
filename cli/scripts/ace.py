@@ -235,6 +235,162 @@ def parse_nodes(nodes) -> list:
     return node_list
 
 
+def grab_row_types(conn, table_name):
+    """
+    Here we are grabbing the name and data type of each row from table from the given conn
+    Using this ugly statement instead of a simpler one since this gives correct name of
+    non standard datatypes (i.e. vectors from Vector and geographys from PostGIS)
+    """
+
+    psql_qry = """
+        SELECT
+            a.attname AS column_name,
+            pg_catalog.format_type(a.atttypid, a.atttypmod) AS data_type
+        FROM
+            pg_catalog.pg_attribute a
+        JOIN
+            pg_catalog.pg_class c ON a.attrelid = c.oid
+        JOIN
+            pg_catalog.pg_type t ON a.atttypid = t.oid
+        LEFT JOIN
+            pg_catalog.pg_namespace n ON c.relnamespace = n.oid
+        WHERE
+            c.relname = %s
+            AND a.attnum > 0
+            AND NOT a.attisdropped
+        ORDER BY
+            a.attnum;
+    """
+
+    try:
+        cur = conn.cursor()
+        cur.execute(psql_qry, (table_name,))
+        table_types = {col_name: col_type for col_name, col_type in cur.fetchall()}
+
+    except:
+        table_types = dict()
+
+    finally:
+        conn.commit()
+        if not table_types:
+            util.exit_message("Error: couldn't connect to source of truth or find any columns")
+    
+    return table_types
+
+
+def write_diffs_json(diff_dict, row_types):
+
+    def convert_to_json_type(item: str, type: str):
+        int_types = ["smallint", "integer", "bigint", "smallserial", "serial", "bigserial"]
+        flo_types = ["decimal", "numeric", "real", "double precision"]
+        arr_match = r".*?\[\]"          # matches `{ANYTHING}[]`
+        vec_match = r"vector\(\d+\)"    # matches `vector({ANY INT})`
+        # TODO JSONS and LISTS
+
+        try:
+            # if type in int_types:
+            #     return int(item)
+            # if type in flo_types:
+            #     return float(item)
+            # if type == "jsonb":
+            #     return json.loads(item)
+            # if re.match(arr_match, type):
+            #     return ast.literal_eval(item)
+            # if re.match(vec_match, type):
+            #     return ast.literal_eval(item)
+
+            if any( [s in type for s in ["char", "text"]] ):
+                return item
+            else:
+                item = ast.literal_eval(item)
+                return item
+
+        except Exception as e:
+            util.message(
+                f"Could not convert value {item} to {type} while writing to json: {e}",
+                p_state="warning"
+            )
+
+        return item
+
+    dirname = datetime.now().astimezone(None).strftime("%Y-%m-%d_%H:%M:%S")
+
+    if not os.path.exists("diffs"):
+        os.mkdir("diffs")
+
+    dirname = os.path.join("diffs", dirname)
+    os.mkdir(dirname)
+
+    filename = os.path.join(dirname, "diff.json")
+
+    # Converts diff so that values are correct json type
+    write_dict = {
+        node_pair: {
+            node: [
+                {
+                    key: convert_to_json_type(val, row_types[key])
+                    for key, val in row.items()
+                }
+                for row in rows
+            ]
+            for node, rows in nodes_data.items()
+        }
+        for node_pair, nodes_data in diff_dict.items()
+    }
+
+    with open(filename, "w") as f:
+        f.write(json.dumps(write_dict, default=str))
+
+    util.message(
+        f"Diffs written out to" f" {util.set_colour(filename, 'blue')}",
+        p_state="info",
+    )
+
+
+# TODO: Come up with better naming convention for diff files
+def write_diffs_csv(diff_dict):
+    import pandas as pd
+
+    dirname = datetime.now().astimezone(None).strftime("%Y-%m-%d_%H:%M:%S")
+
+    if not os.path.exists("diffs"):
+        os.mkdir("diffs")
+
+    dirname = os.path.join("diffs", dirname)
+    os.mkdir(dirname)
+
+    for node_pair in diff_dict.keys():
+        node1, node2 = node_pair.split("/")
+        node_pair_str = f"{node1}__{node2}"
+        node_pair_dir = os.path.join(dirname, node_pair_str)
+
+        # Create directory for node pair if it doesn't exist
+        if not os.path.exists(node_pair_dir):
+            os.mkdir(node_pair_dir)
+
+        t1_write_path = os.path.join(node_pair_dir, node1 + ".csv")
+        t2_write_path = os.path.join(node_pair_dir, node2 + ".csv")
+
+        df1 = pd.DataFrame.from_dict(diff_dict[node_pair][node1])
+        df2 = pd.DataFrame.from_dict(diff_dict[node_pair][node2])
+
+        df1.to_csv(t1_write_path, header=True, index=False)
+        df2.to_csv(t2_write_path, header=True, index=False)
+        diff_file_name = os.path.join(dirname, f"{node_pair_str}/out.diff")
+
+        t1_write_path = os.path.join(dirname, node_pair_str, node1 + ".csv")
+        t2_write_path = os.path.join(dirname, node_pair_str, node2 + ".csv")
+
+        cmd = f"diff -u {t1_write_path} {t2_write_path} | ydiff > {diff_file_name}"
+        subprocess.check_output(cmd, shell=True)
+
+        util.message(
+            f"DIFFS BETWEEN {util.set_colour(node1, 'blue')}"
+            f" AND {util.set_colour(node2, 'blue')}: {diff_file_name}",
+            p_state="info",
+        )
+
+
 def schema_diff(cluster_name, nodes, schema_name):
     """Compare Postgres schemas on different cluster nodes"""
 
@@ -1014,6 +1170,9 @@ def table_diff(
                 Please examine the connection information provided, or the nodes' \
                     status before running this script again."
         )
+    
+    # Gets types of each column in table
+    table_types = grab_row_types(conn_list[0], l_table)
 
     # Mismatch is True if there is a block mismatch or if we have
     # estimated that diffs may be greater than max allowed diffs
@@ -1045,10 +1204,10 @@ def table_diff(
         print()
 
         if output == "json":
-            write_diffs_json(block_rows)
+            write_diffs_json(diff_dict, table_types)
 
         elif output == "csv":
-            write_diffs_csv()
+            write_diffs_csv(diff_dict)
 
     else:
         util.message("TABLES MATCH OK\n", p_state="success")
@@ -1062,70 +1221,6 @@ def table_diff(
         f"TOTAL ROWS CHECKED = {total_rows}\nRUN TIME = {run_time_str} seconds",
         p_state="info",
     )
-
-
-def write_diffs_json(block_rows):
-    dirname = datetime.now().astimezone(None).strftime("%Y-%m-%d_%H:%M:%S")
-
-    if not os.path.exists("diffs"):
-        os.mkdir("diffs")
-
-    dirname = os.path.join("diffs", dirname)
-    os.mkdir(dirname)
-
-    filename = os.path.join(dirname, "diff.json")
-
-    with open(filename, "w") as f:
-        f.write(json.dumps(dict(diff_dict), default=str))
-
-    util.message(
-        f"Diffs written out to" f" {util.set_colour(filename, 'blue')}",
-        p_state="info",
-    )
-
-
-# TODO: Come up with better naming convention for diff files
-def write_diffs_csv():
-    import pandas as pd
-
-    dirname = datetime.now().astimezone(None).strftime("%Y-%m-%d_%H:%M:%S")
-
-    if not os.path.exists("diffs"):
-        os.mkdir("diffs")
-
-    dirname = os.path.join("diffs", dirname)
-    os.mkdir(dirname)
-
-    for node_pair in diff_dict.keys():
-        node1, node2 = node_pair.split("/")
-        node_pair_str = f"{node1}__{node2}"
-        node_pair_dir = os.path.join(dirname, node_pair_str)
-
-        # Create directory for node pair if it doesn't exist
-        if not os.path.exists(node_pair_dir):
-            os.mkdir(node_pair_dir)
-
-        t1_write_path = os.path.join(node_pair_dir, node1 + ".csv")
-        t2_write_path = os.path.join(node_pair_dir, node2 + ".csv")
-
-        df1 = pd.DataFrame.from_dict(diff_dict[node_pair][node1])
-        df2 = pd.DataFrame.from_dict(diff_dict[node_pair][node2])
-
-        df1.to_csv(t1_write_path, header=True, index=False)
-        df2.to_csv(t2_write_path, header=True, index=False)
-        diff_file_name = os.path.join(dirname, f"{node_pair_str}/out.diff")
-
-        t1_write_path = os.path.join(dirname, node_pair_str, node1 + ".csv")
-        t2_write_path = os.path.join(dirname, node_pair_str, node2 + ".csv")
-
-        cmd = f"diff -u {t1_write_path} {t2_write_path} | ydiff > {diff_file_name}"
-        subprocess.check_output(cmd, shell=True)
-
-        util.message(
-            f"DIFFS BETWEEN {util.set_colour(node1, 'blue')}"
-            f" AND {util.set_colour(node2, 'blue')}: {diff_file_name}",
-            p_state="info",
-        )
 
 
 def table_rerun(cluster_name, diff_file, table_name, dbname=None):
@@ -1287,6 +1382,10 @@ def table_rerun(cluster_name, diff_file, table_name, dbname=None):
     diff_rerun = {}
     diffs_found = False
 
+    # Gets types of each column in table
+    some_node = next(iter(diff_values)).split("/")[0]
+    table_types = grab_row_types(conn_list[some_node], l_table)
+
     for node_pair_key, values in diff_values.items():
         node1, node2 = node_pair_key.split("/")
 
@@ -1375,24 +1474,10 @@ def table_rerun(cluster_name, diff_file, table_name, dbname=None):
                 node2: [dict(zip(cols_list, row)) for row in node2_diff],
             }
 
-    dirname = datetime.now().astimezone(None).strftime("%Y-%m-%d_%H:%M:%S")
-
-    if not os.path.exists("diffs"):
-        os.mkdir("diffs")
-
-    dirname = os.path.join("diffs", dirname)
-    os.mkdir(dirname)
-
-    filename = os.path.join(dirname, "diff.json")
-
-    with open(filename, "w") as f:
-        f.write(json.dumps(diff_rerun, default=str))
-
-    print()
-
     if diffs_found:
+        write_diffs_json(diff_rerun, table_types)
         util.message(
-            f"FOUND DIFFS BETWEEN NODES: written out to {util.set_colour(filename, 'blue')}",
+            f"FOUND DIFFS BETWEEN NODES",
             p_state="warning",
         )
     else:
@@ -1643,45 +1728,8 @@ def table_repair(
     total_deleted = {}
 
 
-    """
-    Here we are grabbing the name and data type of each row from table from the source of truth
-    Using this ugly statement instead of a simpler one since this gives correct name of
-    non standard datatypes (i.e. vectors from Vector and geographys from PostGIS)
-    """
-
-    psql_qry = """
-        SELECT
-            a.attname AS column_name,
-            pg_catalog.format_type(a.atttypid, a.atttypmod) AS data_type
-        FROM
-            pg_catalog.pg_attribute a
-        JOIN
-            pg_catalog.pg_class c ON a.attrelid = c.oid
-        JOIN
-            pg_catalog.pg_type t ON a.atttypid = t.oid
-        LEFT JOIN
-            pg_catalog.pg_namespace n ON c.relnamespace = n.oid
-        WHERE
-            c.relname = %s
-            AND a.attnum > 0
-            AND NOT a.attisdropped
-        ORDER BY
-            a.attnum;
-    """
-
-    try:
-        conn = conns[source_of_truth]
-        cur = conn.cursor()
-        cur.execute(psql_qry, (l_table,))
-        table_types = {col_name: col_type for col_name, col_type in cur.fetchall()}
-
-    except:
-        table_types = dict()
-
-    finally:
-        conn.commit()
-        if not table_types:
-            util.exit_message("Couldn't find any ")
+    # Gets types of each column in table
+    table_types = grab_row_types(conns[source_of_truth], l_table)
 
 
     for node_pair in diff_json.keys():
