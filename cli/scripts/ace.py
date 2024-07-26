@@ -1715,6 +1715,20 @@ def table_repair(
             ]
         ):
             util.exit_message("Contents of diff file improperly formatted")
+    
+        diff_json = {
+            node_pair: {
+                node: [
+                    {
+                        key: str(val)
+                        for key, val in row.items()
+                    }
+                    for row in rows
+                ]
+                for node, rows in nodes_data.items()
+            }
+            for node_pair, nodes_data in diff_json.items()
+        }
     except Exception:
         util.exit_message("Contents of diff file improperly formatted")
 
