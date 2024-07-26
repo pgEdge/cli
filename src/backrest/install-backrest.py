@@ -9,7 +9,6 @@ import getpass
 from crontab import CronTab
 import subprocess
 import util
-import utilx
 
 thisDir = os.path.dirname(os.path.realpath(__file__))
 osUsr = util.get_user()
