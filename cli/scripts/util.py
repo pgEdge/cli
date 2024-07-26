@@ -4,8 +4,8 @@
 import os
 import time
 
-MY_VERSION = "24.7.5"
-MY_CODENAME = "Golden Gate"
+MY_VERSION = "24.8.0"
+MY_CODENAME = "Constellation"
 
 DEFAULT_PG = "16"
 DEFAULT_SPOCK = "40"
