@@ -349,7 +349,7 @@ def write_diffs_json(diff_dict, row_types, quiet_mode=False):
 
 
 # TODO: Come up with better naming convention for diff files
-def write_diffs_csv(quiet_mode=False):
+def write_diffs_csv():
     import pandas as pd
 
     """
@@ -359,8 +359,6 @@ def write_diffs_csv(quiet_mode=False):
     """
     now = datetime.now()
     dirname = now.strftime("%Y-%m-%d")
-    diff_file_suffix = now.strftime("%H%M%S") + f"{now.microsecond // 1000:03d}"
-    diff_filename = "diffs_" + diff_file_suffix + ".json"
 
     if not os.path.exists("diffs"):
         os.mkdir("diffs")
@@ -370,37 +368,34 @@ def write_diffs_csv(quiet_mode=False):
     if not os.path.exists(dirname):
         os.mkdir(dirname)
 
-    # FIXME: Update this and test
-    filename = os.path.join(dirname, diff_filename)
-
     for node_pair in diff_dict.keys():
+        diff_file_suffix = now.strftime("%H%M%S") + f"{now.microsecond // 1000:03d}"
         node1, node2 = node_pair.split("/")
-        node_pair_str = f"{node1}__{node2}"
-        node_pair_dir = os.path.join(dirname, node_pair_str)
+        node_str = f"{node1}_{node2}"
+        diff_file_name = f"{node_str}_" + diff_file_suffix + ".diff"
+        diff_file_path = os.path.join(dirname, diff_file_name)
+        t1_file_name = node1 + ".csv"
+        t2_file_name = node2 + ".csv"
 
-        # Create directory for node pair if it doesn't exist
-        if not os.path.exists(node_pair_dir):
-            os.mkdir(node_pair_dir)
-
-        t1_write_path = os.path.join(node_pair_dir, node1 + ".csv")
-        t2_write_path = os.path.join(node_pair_dir, node2 + ".csv")
+        t1_write_path = os.path.join(dirname, t1_file_name)
+        t2_write_path = os.path.join(dirname, t2_file_name)
 
         df1 = pd.DataFrame.from_dict(diff_dict[node_pair][node1])
         df2 = pd.DataFrame.from_dict(diff_dict[node_pair][node2])
 
         df1.to_csv(t1_write_path, header=True, index=False)
         df2.to_csv(t2_write_path, header=True, index=False)
-        diff_file_name = os.path.join(dirname, f"{node_pair_str}/out.diff")
 
-        t1_write_path = os.path.join(dirname, node_pair_str, node1 + ".csv")
-        t2_write_path = os.path.join(dirname, node_pair_str, node2 + ".csv")
-
-        cmd = f"diff -u {t1_write_path} {t2_write_path} | ydiff > {diff_file_name}"
+        cmd = f"diff -u {t1_write_path} {t2_write_path} | ydiff > {diff_file_path}"
         subprocess.check_output(cmd, shell=True)
+
+        # Delete the temporary files
+        os.remove(t1_write_path)
+        os.remove(t2_write_path)
 
         util.message(
             f"DIFFS BETWEEN {util.set_colour(node1, 'blue')}"
-            f" AND {util.set_colour(node2, 'blue')}: {diff_file_name}",
+            f" AND {util.set_colour(node2, 'blue')}: {diff_file_path}",
             p_state="info",
         )
 
@@ -1255,7 +1250,7 @@ def table_diff(
             write_diffs_json(diff_dict, table_types, quiet_mode=quiet_mode)
 
         elif output == "csv":
-            write_diffs_csv(diff_dict)
+            write_diffs_csv()
 
     else:
         util.message("TABLES MATCH OK\n", p_state="success", quiet_mode=quiet_mode)
