@@ -17,15 +17,17 @@ install_rpm () {
 install_deb () {
   pfx=cuda-repo-debian12-12-5-local
   deb_f=${pfx}_$TK_V-555.42.06-1_amd64.deb
+  install="sudo apt-get -y install"
 
   rm -f $deb_f
   wget $URL/$TK_V/local_installers/$deb_f
   sudo dpkg -i $deb_f
   sudo cp /var/$pfx/cuda-*-keyring.gpg /usr/share/keyrings/
-  sudo apt-get -y install software-properties-common
+  $install software-properties-common
   sudo add-apt-repository -y contrib
   sudo apt-get -y update
-  sudo apt-get -y install cuda-toolkit-12-5
+  $install glx-alternative-nvidia
+  $install cuda-toolkit-12-5 nvidia-smi
   rm $deb_f
 }
 

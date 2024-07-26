@@ -30,14 +30,14 @@ def create_local_json(cluster_name, db, num_nodes, usr, passwd, pg, ports, auto_
 
     text_file = open(cluster_dir + os.sep + cluster_name + ".json", "w")
     cluster_json = {}
+    cluster_json["json_version"] = 1
     cluster_json["name"] = cluster_name
-    cluster_json["style"] = "localhost"
     cluster_json["create_date"] = datetime.date.today().isoformat()
 
     local_json = {}
     local_json["os_user"] = util.get_user()
     local_json["ssh_key"] = ""
-    cluster_json["localhost"] = local_json
+    cluster_json["conn1"] = local_json
 
     database_json = {"databases": []}
     database_json["pg_version"] = pg
@@ -49,7 +49,7 @@ def create_local_json(cluster_name, db, num_nodes, usr, passwd, pg, ports, auto_
     database_json["databases"].append(db_json)
     cluster_json["database"] = database_json
     
-    local_nodes = {"localhost": []}
+    local_nodes = {"conn1": []}
 
     port1 = ports
     port_a = str(ports).split(",")
@@ -79,7 +79,7 @@ def create_local_json(cluster_name, db, num_nodes, usr, passwd, pg, ports, auto_
             + str(n)
         )
         node_array["nodes"].append(node_json)
-        local_nodes["localhost"].append(node_array)
+        local_nodes["conn1"].append(node_array)
         port1 = port1 + 1
 
     cluster_json["node_groups"] = local_nodes
@@ -139,9 +139,8 @@ Below is an example of the JSON file that is generated that defines a 2 node loc
 
 {
   "name": "cl1",
-  "style": "localhost",
   "create_date": "2024-02-23",
-  "localhost": {
+  "conn1": {
     "os_user": "rocky",
     "ssh_key": ""
   },
@@ -157,7 +156,7 @@ Below is an example of the JSON file that is generated that defines a 2 node loc
     "auto_ddl": "off"
   },
   "node_groups": {
-    "localhost": [
+    "conn1": [
       {
         "nodes": [
           {
@@ -270,7 +269,7 @@ def lc_destroy1(cluster_name):
     cfg = cluster.get_cluster_json(cluster_name)
 
     if cfg:
-        if "localhost" in cfg:
+        if "conn1" in cfg:
             cluster.command(cluster_name, "all", "stop")
         else:
             util.message(f"Cluster '{cluster_name}' is not a localhost cluster")

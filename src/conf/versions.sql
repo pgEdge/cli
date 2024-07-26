@@ -74,6 +74,7 @@ INSERT INTO extensions VALUES ('snowflake', 'snowflake', 1, 'snowflake', '');
 INSERT INTO extensions VALUES ('foslots',   'foslots',   0, '',          '');
 
 INSERT INTO extensions VALUES ('vector',    'vector',       0, '',               '');
+INSERT INTO extensions VALUES ('pgml',      'pgml',         0, '',               '');
 INSERT INTO extensions VALUES ('wal2json',  'wal2json',     1, 'wal2json',       '');
 INSERT INTO extensions VALUES ('timescaledb','timescaledb', 1, 'timescaledb', 'timescaledb.telemetry_level=off'); 
 INSERT INTO extensions VALUES ('permissions','pg_permissions', 0, '',               '');
@@ -128,7 +129,8 @@ INSERT INTO categories VALUES (9,  87, 'Management & Monitoring', 'Manage/Monito
 INSERT INTO projects VALUES ('hub', 'app', 0, 0, 'hub', 0, 'https://github.com/pgedge/cli','',0,'','','','');
 INSERT INTO releases VALUES ('hub', 1, 'hub',  '', '', 'hidden', '', 1, '', '', '');
 
-INSERT INTO versions VALUES ('hub', '24.7.5',    '',  1, '20240720', '', '', '');
+INSERT INTO versions VALUES ('hub', '24.8.0',    '',  1, '20240726', '', '', '');
+INSERT INTO versions VALUES ('hub', '24.7.5',    '',  0, '20240720', '', '', '');
 INSERT INTO versions VALUES ('hub', '24.7.4',    '',  0, '20240710', '', '', '');
 INSERT INTO versions VALUES ('hub', '24.7.3',    '',  0, '20240701', '', '', '');
 INSERT INTO versions VALUES ('hub', '24.7.2',    '',  0, '20240620', '', '', '');
@@ -299,6 +301,15 @@ INSERT INTO releases VALUES ('cron-pg16', 10, 'cron', 'pgCron', '', 'prod', '', 
 
 INSERT INTO versions VALUES ('cron-pg15', '1.6.2-1', 'amd, arm', 1, '20231112', 'pg15', '', '');
 INSERT INTO versions VALUES ('cron-pg16', '1.6.2-1', 'amd, arm', 1, '20231112', 'pg16', '', '');
+
+-- ## PGML ##############################
+INSERT INTO projects VALUES ('pgml', 'pge', 4, 0, 'hub', 1, 'https://github.com/postgresml/postgresml/tags',
+  'pgml', 1, 'pgml.png', 'GPU Powered AI Extension', 'https://github.com/postgresml/postgresml', 'postgresml');
+INSERT INTO releases VALUES ('pgml-pg15', 4, 'pgml', 'PostgresML', '', 'prod', '', 1, 'MIT', '', '');
+INSERT INTO releases VALUES ('pgml-pg16', 4, 'pgml', 'PostgresML', '', 'prod', '', 1, 'MIT', '', '');
+
+INSERT INTO versions VALUES ('pgml-pg15', '2.9.2-1', 'amd', 1, '20240801', 'pg15', '', '');
+INSERT INTO versions VALUES ('pgml-pg16', '2.9.2-1', 'amd', 1, '20240801', 'pg16', '', '');
 
 -- ## VECTOR ############################
 INSERT INTO projects VALUES ('vector', 'pge', 4, 0, 'hub', 1, 'https://github.com/pgedge/vector/tags',

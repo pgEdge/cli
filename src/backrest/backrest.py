@@ -3,7 +3,7 @@ import subprocess
 import os
 import fire
 import util
-import utilx
+import util
 import json
 import sys
 from datetime import datetime
@@ -54,7 +54,7 @@ def backup(stanza, type="full", verbose=True):
 
     # Check if backup type is valid
     if type not in valid_types:
-        utilx.echo_message(
+        util.echo_message(
             f"Error: '{type}' is not valid.\nAllowed types: "
             f"{', '.join(valid_types)}.",
             level="error"
@@ -67,7 +67,7 @@ def backup(stanza, type="full", verbose=True):
     # Check if mandatory keys are present in config
     for key in mandatory_keys:
         if key not in config or not config[key]:
-            utilx.echo_message(
+            util.echo_message(
                 f"Error: Missing mandatory config value: {key}",
                 level="error"
             )
@@ -95,9 +95,9 @@ def backup(stanza, type="full", verbose=True):
         if key in config and config[key]:
             command.extend([f"--{key.replace('_', '-')}", config[key]])
 
-    result = utilx.run_command(command, capture_output=not verbose)
+    result = util.run_command(command, capture_output=not verbose)
     if not result["success"]:
-        utilx.echo_message(
+        util.echo_message(
             f"Error: failed to take {type} backup",
             level="error"
         )
@@ -112,13 +112,13 @@ def restore(stanza, data_dir=None, backup_label=None, recovery_target_time=None,
     # Check if mandatory keys are present in config
     for key in mandatory_keys:
         if key not in config or not config[key]:
-            utilx.echo_message(f"Error: Missing mandatory config value: {key}", level="error")
+            util.echo_message(f"Error: Missing mandatory config value: {key}", level="error")
             return
 
     if data_dir is None:
         data_dir = os.path.join(config["restore_path"], stanza, "data")
 
-    status = utilx.check_directory_status(data_dir)
+    status = util.check_directory_status(data_dir)
     if status['exists'] and not status['writable']:
         util.message(status['message'])
         return
@@ -146,9 +146,9 @@ def restore(stanza, data_dir=None, backup_label=None, recovery_target_time=None,
         if key in config and config[key]:
             command.extend([f"--{key.replace('_', '-')}", config[key]])
 
-    result = utilx.run_command(command, capture_output=not verbose)
+    result = util.run_command(command, capture_output=not verbose)
     if not result["success"]:
-        utilx.echo_message(f"Error: failed to restore backup", level="error")
+        util.echo_message(f"Error: failed to restore backup", level="error")
         return False
 
     return True
@@ -234,7 +234,7 @@ def list_backups():
     # Check if mandatory keys are present in config
     for key in mandatory_keys:
         if key not in config or not config[key]:
-            utilx.echo_message(f"Error: Missing mandatory config value: {key}", level="error")
+            util.echo_message(f"Error: Missing mandatory config value: {key}", level="error")
             return
 
     command = ["pgbackrest", "info", "--output=json", "--stanza", config['stanza']]
@@ -336,7 +336,7 @@ def create_stanza(stanza, verbose=True):
     # Check if mandatory keys are present in config
     for key in mandatory_keys:
         if key not in config or not config[key]:
-            utilx.echo_message(f"Error: Missing mandatory config value: {key}", level="error")
+            util.echo_message(f"Error: Missing mandatory config value: {key}", level="error")
             return
 
     command = [
@@ -360,9 +360,9 @@ def create_stanza(stanza, verbose=True):
         if key in config and config[key]:
             command.extend([f"--{key.replace('_', '-')}", config[key]])
 
-    result = utilx.run_command(command, capture_output=not verbose)
+    result = util.run_command(command, capture_output=not verbose)
     if not result["success"]:
-        utilx.echo_message(
+        util.echo_message(
             'Error', 'Failed to create or configure stanza', level="error"
         )
         return
@@ -373,9 +373,9 @@ def create_stanza(stanza, verbose=True):
     modify_hba_conf()
 
     command = ["./pgedge", "restart", pgV()]
-    result = utilx.run_command(command, capture_output=not verbose)
+    result = util.run_command(command, capture_output=not verbose)
     if not result["success"]:
-        utilx.echo_message(
+        util.echo_message(
             f"Error: failed to restart postgresql cluster", level="error"
         )
 

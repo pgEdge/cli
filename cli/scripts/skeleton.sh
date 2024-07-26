@@ -1,12 +1,7 @@
 #!/bin/bash
 
-##isEL8="False"
-##if [ -f /etc/os-release ]; then
-##  PLATFORM=`cat /etc/os-release | grep PLATFORM_ID | cut -d: -f2 | tr -d '\"'`
-##  if [ "$PLATFORM" == "el8" ]; then
-##    isEL8="True"
-##  fi
-##fi
+#  Copyright 2022-2024 PGEDGE  All rights reserved. #
+
 
 function install_pgedge {
   ./pgedge install $pgV; 

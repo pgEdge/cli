@@ -1,3 +1,6 @@
+
+#  Copyright 2022-2024 PGEDGE  All rights reserved. #
+
 class bcolours:
     HEADER = "\033[95m"
     OKBLUE = "\033[94m"

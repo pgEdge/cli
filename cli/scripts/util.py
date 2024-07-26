@@ -1,10 +1,11 @@
+
 #  Copyright 2022-2024 PGEDGE  All rights reserved. #
 
 import os
 import time
 
-MY_VERSION = "24.7.5"
-MY_CODENAME = "Golden Gate"
+MY_VERSION = "24.8.0"
+MY_CODENAME = "Constellation"
 
 DEFAULT_PG = "16"
 DEFAULT_SPOCK = "40"
@@ -4033,8 +4034,8 @@ def echo_rcmd(cmd, echo=True, sleep_secs=0, host="", usr="", key="", capture_out
         result = subprocess.run(cmd, shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     return result
 
-def run_rcommand(cmd, message="", host="", usr="", key="", verbose="none", max_attempts=1, capture_output=False, ignore=False, important=False):
-    if verbose == "none":
+def run_rcommand(cmd, message="", host="", usr="", key="", verbose="info", max_attempts=1, capture_output=False, ignore=False, important=False):
+    if verbose == "info":
         echo=False
     else:
         echo=True
