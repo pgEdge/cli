@@ -1,6 +1,6 @@
-#####################################################
+
 #  Copyright 2022-2024 PGEDGE  All rights reserved. #
-#####################################################
+
 
 import sys, os, sqlite3, json
 from semantic_version import Version

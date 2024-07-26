@@ -1,7 +1,11 @@
 #!/bin/bash
+
+#  Copyright 2022-2024 PGEDGE  All rights reserved. #
+
 cd "$(dirname "$0")"
 
 parms=`echo $@`
+
 
 echoX () {
   if [ "$isJson" == "True" ]; then
@@ -55,6 +59,7 @@ isEL () {
   echoX "ERROR: must be $ELx"
   exit 1
 }
+
 
 installPERL () {
   sudo yum install -y perl perl-devel perl-DBI

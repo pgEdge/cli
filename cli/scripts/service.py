@@ -1,3 +1,6 @@
+
+#  Copyright 2022-2024 PGEDGE  All rights reserved. #
+
 import os, sys
 import fire, util, meta, api
 import time, datetime, platform, tarfile, sqlite3, time

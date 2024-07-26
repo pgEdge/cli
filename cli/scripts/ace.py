@@ -1,6 +1,6 @@
-####################################################
+
 #  Copyright 2022-2024 PGEDGE  All rights reserved. #
-#####################################################
+
 
 """ACE is the place of the Anti Chaos Engine"""
 
