@@ -263,7 +263,6 @@ def schema_diff(cluster_name, nodes, schema_name):
     only take the first entry in the db list
     """
     database = db[0]
-    database["db_name"] = database.pop("name")
 
     # Combine db and cluster_nodes into a single json
     for node in node_info:
@@ -291,7 +290,7 @@ def schema_diff(cluster_name, nodes, schema_name):
     for nd in cluster_nodes:
         if nd["name"] in node_list:
             sql1 = write_pg_dump(
-                nd["ip_address"], nd["db_name"], nd["port"], nd["name"], l_schema
+                nd["public_ip"], nd["db_name"], nd["port"], nd["name"], l_schema
             )
             file_list.append(sql1)
 
@@ -343,7 +342,6 @@ def spock_diff(cluster_name, nodes):
     only take the first entry in the db list
     """
     database = db[0]
-    database["db_name"] = database.pop("name")
 
     # Combine db and cluster_nodes into a single json
     for node in node_info:
@@ -359,9 +357,9 @@ def spock_diff(cluster_name, nodes):
 
             psql_conn = psycopg.connect(
                 dbname=nd["db_name"],
-                user=nd["username"],
-                password=nd["password"],
-                host=nd["ip_address"],
+                user=nd["db_user"],
+                password=nd["db_password"],
+                host=nd["public_ip"],
                 port=nd.get("port", 5432),
                 row_factory=dict_row,
             )
@@ -496,9 +494,9 @@ def init_db_connection(shared_objects, worker_state):
 
     for node in cluster_nodes:
         conn_str = f"dbname = {node['db_name']}      \
-                    user={node['username']}          \
-                    password={node['password']}   \
-                    host={node['ip_address']}   \
+                    user={node['db_user']}          \
+                    password={node['db_password']}   \
+                    host={node['public_ip']}   \
                     port={node.get('port', 5432)}"
 
         worker_state[node["name"]] = psycopg.connect(conn_str).cursor()
@@ -779,8 +777,6 @@ def table_diff(
     if not database:
         util.exit_message(f"Database '{dbname}' not found in cluster '{cluster_name}'")
 
-    database["db_name"] = database.pop("name")
-
     # Combine db and cluster_nodes into a single json
     for node in node_info:
         combined_json = {**database, **node}
@@ -806,9 +802,9 @@ def table_diff(
             if (node_list and nd["name"] in node_list) or (not node_list):
                 psql_conn = psycopg.connect(
                     dbname=nd["db_name"],
-                    user=nd["username"],
-                    password=nd["password"],
-                    host=nd["ip_address"],
+                    user=nd["db_user"],
+                    password=nd["db_password"],
+                    host=nd["public_ip"],
                     port=nd.get("port", 5432),
                 )
                 conn_list.append(psql_conn)
@@ -1150,7 +1146,7 @@ def table_rerun(cluster_name, diff_file, table_name, dbname=None):
 
     if dbname:
         for db_entry in db:
-            if db_entry["name"] == dbname:
+            if db_entry["db_name"] == dbname:
                 database = db_entry
                 break
     else:
@@ -1158,8 +1154,6 @@ def table_rerun(cluster_name, diff_file, table_name, dbname=None):
 
     if not database:
         util.exit_message(f"Database '{dbname}' not found in cluster '{cluster_name}'")
-
-    database["db_name"] = database.pop("name")
 
     # Combine db and cluster_nodes into a single json
     for node in node_info:
@@ -1172,9 +1166,9 @@ def table_rerun(cluster_name, diff_file, table_name, dbname=None):
         for nd in cluster_nodes:
             conn_list[nd["name"]] = psycopg.connect(
                 dbname=nd["db_name"],
-                user=nd["username"],
-                password=nd["password"],
-                host=nd["ip_address"],
+                user=nd["db_user"],
+                password=nd["db_password"],
+                host=nd["public_ip"],
                 port=nd.get("port", 5432),
             )
     except Exception as e:
@@ -1438,7 +1432,7 @@ def table_repair(
 
     if dbname:
         for db_entry in db:
-            if db_entry["name"] == dbname:
+            if db_entry["db_name"] == dbname:
                 database = db_entry
                 break
     else:
@@ -1446,8 +1440,6 @@ def table_repair(
 
     if not database:
         util.exit_message(f"Database '{dbname}' not found in cluster '{cluster_name}'")
-
-    database["db_name"] = database.pop("name")
 
     # Combine db and cluster_nodes into a single json
     for node in node_info:
@@ -1467,9 +1459,9 @@ def table_repair(
         for nd in cluster_nodes:
             conns[nd["name"]] = psycopg.connect(
                 dbname=nd["db_name"],
-                user=nd["username"],
-                password=nd["password"],
-                host=nd["ip_address"],
+                user=nd["db_user"],
+                password=nd["db_password"],
+                host=nd["public_ip"],
                 port=nd.get("port", 5432),
             )
 
@@ -1948,8 +1940,6 @@ def repset_diff(
     if not database:
         util.exit_message(f"Database '{dbname}' not found in cluster '{cluster_name}'")
 
-    database["db_name"] = database.pop("name")
-
     # Combine db and cluster_nodes into a single json
     for node in node_info:
         combined_json = {**database, **node}
@@ -1970,9 +1960,9 @@ def repset_diff(
             if (node_list and nd["name"] in node_list) or (not node_list):
                 psql_conn = psycopg.connect(
                     dbname=nd["db_name"],
-                    user=nd["username"],
-                    password=nd["password"],
-                    host=nd["ip_address"],
+                    user=nd["db_user"],
+                    password=nd["db_password"],
+                    host=nd["public_ip"],
                     port=nd.get("port", 5432),
                 )
                 conn_list.append(psql_conn)
