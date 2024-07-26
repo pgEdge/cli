@@ -769,7 +769,6 @@ def compare_checksums(shared_objects, worker_state, batch):
 
             # Return early if we have already exceeded the max number of diffs
             if row_diff_count.value >= MAX_DIFF_ROWS:
-                print("prematurely returning")
                 return MAX_DIFFS_EXCEEDED
 
             try:
@@ -782,7 +781,6 @@ def compare_checksums(shared_objects, worker_state, batch):
                     hash1, hash2 = [f.result()[0][0] for f in futures]
             except Exception as e:
                 result_queue.append(e)
-                print("prematurely returning")
                 return BLOCK_ERROR
 
             if hash1 != hash2:
