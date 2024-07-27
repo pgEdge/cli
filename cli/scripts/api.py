@@ -413,11 +413,11 @@ def info(p_json, p_home, p_repo, print_flag=True):
         infoJson["system_memory_in_kb"] = system_memory_in_kbytes
         infoJson["python3_ver"] = util.python3_ver()
         infoJson["python3_path"] = util.which("python3")
-        infoJson["python3_pip_ver"] = util.pip3_ver()
-        infoJson["python3_pip_path"] = util.which("pip3")
+        ##infoJson["python3_pip_ver"] = util.pip3_ver()
+        ##infoJson["python3_pip_path"] = util.which("pip3")
         infoJson["glibc_ver"] = glibcV
-        infoJson["gcc_ver"] = util.gcc_ver()
-        infoJson["gcc_path"] = util.which("gcc")
+        ##infoJson["gcc_ver"] = util.gcc_ver()
+        ##infoJson["gcc_path"] = util.which("gcc")
 
         infoJson["region"] = region
         infoJson["az"] = az
@@ -461,9 +461,9 @@ def info(p_json, p_home, p_repo, print_flag=True):
     print(f"#{bold_start}     Python3:{bold_end} {util.python3_ver()} {util.which('python3')}")
 
 
-    if util.get_platform() == "Linux":
-        print(f"#{bold_start}        PIP3:{bold_end} {util.pip3_ver()} {util.which('pip3')}")
-        print(f"#{bold_start}         GCC:{bold_end} {util.gcc_ver()} {util.which('gcc')}")
+    ##if util.get_platform() == "Linux":
+    ##    print(f"#{bold_start}        PIP3:{bold_end} {util.pip3_ver()} {util.which('pip3')}")
+    ##    print(f"#{bold_start}         GCC:{bold_end} {util.gcc_ver()} {util.which('gcc')}")
 
     if instance_id > "" and not cloud_name == "unknown":
         print(f"#{bold_start}  Cloud Info:{bold_end} " +
