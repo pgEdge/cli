@@ -17,7 +17,7 @@ RUN apt -y install software-properties-common
 RUN add-apt-repository -y contrib
 RUN apt -y update
 
-RUN apt-get -y install wget gawk gcc sqlite3 vim
+RUN apt-get -y install curl wget gawk gcc sqlite3 vim
 
 RUN wget $NVIDIA_URL/cuda-keyring_1.1-1_all.deb
 RUN dpkg -i cuda-keyring_1.1-1_all.deb
@@ -39,7 +39,20 @@ RUN rm -r v$PGML_V.tar.gz
 
 RUN pip3 install -r postgresml-$PGML_V/pgml-extension/requirements.linux.txt
 
-#RUN echo "Dockerfile Test on Apache2" > /var/www/html/index.html
+RUN mkdir -p /opt/pgedge
+RUN useradd -ms /bin/bash pgedge 
+RUN chown pgedge:pgedge /opt
+RUN chown pgedge:pgedge /opt/pgedge
+USER pgedge 
+WORKDIR /opt
+
+ENV REPO=https://pgedge-upstream.s3.amazonaws.com/REPO
+RUN python3 -c "$(curl -fsSL $REPO/install.py)"
+WORKDIR /opt/pgedge
+RUN ./pgedge install pg16 --start
+RUN ./pgedge tune pg16
+RUN ./pgedge install spock40 snowflake 
+RUN ./pgedge install lolor --disabled
 
 EXPOSE 5432
 #CMD ["/usr/sbin/apachectl", "-D", "FOREGROUND"]
