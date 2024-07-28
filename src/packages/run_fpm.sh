@@ -4,29 +4,23 @@ cd "$(dirname "$0")"
 bundle="$1"
 major_v="$2"
 
-##suffix=arm
-##if [ `arch` == "x86_64" ]; then
-##   suffix="amd"
-##fi
-
 pkg_type=deb
 yum --version > /dev/null 2>&1
 rc=$?
-if [ $rc" == "0" ]; then
+if [ "$rc" == "0" ]; then
   pkg_type=rpm
 fi
 pkg_file=$bundle.$pkg_type
+pkg_alias=pgedge-pg$major_v.$pkg_type
 
 
 echo ""
 ##echo "####### src/packages/run_fpm.sh ################"
 ##echo "# 1.  bundle = $bundle"
 ##echo "# 2. major_v = $major_v"
-##echo "# 3.    pg_v = $pg_v"
-##echo "# 4. spock_v = $spock_v"
-##echo "# 5.   cli_v = $cli_v"
 ##echo "#"
-echo "#   pkg_file = $pkg_file"
+echo "#   pkg_file  = $pkg_file"
+echo "#   pkg_alias = $pkg_alias"
 ##echo "###############################################"
 ##echo ""
 
@@ -57,7 +51,7 @@ sleep 2
 echo "#"
 echo "# running FPM... (be patient for about 60 seconds)"
 
-rm -f $rpm_file
+rm -f $pkg_file
 
 set -x
 
@@ -92,15 +86,15 @@ fi
 echo "#"
 echo "# moving package to \$OUT"
 
-rm -f $OUT/$rpm_file
+rm -f $OUT/$pkg_file
 
-mv $rpm_file $OUT/.
+mv $pkg_file $OUT/.
 
-##cd $OUT
-##ln -s $rpm_file $rpm_alias
-##
-##touch $rpm_file
-##touch $rpm_alias
+cd $OUT
+ln -s $pkg_file $pkg_alias
+
+touch $pkg_file
+touch $pkg_alias
 
 exit 0
 
