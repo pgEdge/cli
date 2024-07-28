@@ -3,17 +3,19 @@ cd "$(dirname "$0")"
 
 bundle="$1"
 major_v="$2"
-##pg_v="$3"
-##spock_v="$4"
-##cli_v="$5"
 
 ##suffix=arm
 ##if [ `arch` == "x86_64" ]; then
 ##   suffix="amd"
 ##fi
 
-rpm_file=$bundle.rpm
-##rpm_alias=pgedge-$suffix.rpm
+pkg_type=deb
+yum --version > /dev/null 2>&1
+rc=$?
+if [ $rc" == "0" ]; then
+  pkg_type=rpm
+fi
+pkg_file=$bundle.$pkg_type
 
 
 echo ""
@@ -24,7 +26,7 @@ echo ""
 ##echo "# 4. spock_v = $spock_v"
 ##echo "# 5.   cli_v = $cli_v"
 ##echo "#"
-echo "#   rpm_file = $rpm_file"
+echo "#   pkg_file = $pkg_file"
 ##echo "###############################################"
 ##echo ""
 
@@ -34,11 +36,6 @@ if [ ! "$rc" == "0" ]; then
   echo "ERROR: fpm not installed (rc=$rc)"
   exit 1
 fi
-
-##if [ ! "$#" == "5" ]; then
-##  echo "ERROR: requires 5 parms: {bundle} {major_v} {pg_v} {spock_v} {cli_v}"
-##  exit 1
-##fi
 
 dir_bundle=/tmp/$bundle
 if [ ! -d /tmp/$bundle ]; then
@@ -64,9 +61,17 @@ rm -f $rpm_file
 
 set -x
 
+if [ "$pkg_type" == "rpm" ]; then
+  opt="--no-rpm-autoreqprov --rpm-tag '%define _build_id_links none'"
+  opt="$opt --rpm-tag '%undefine _missing_build_ids_terminate_build'"
+  options="$opt --rpm-user pgedge"
+else
+  options="--deb-user pgedge"
+fi
+
 fpm \
-  -s dir -t rpm \
-  -p $rpm_file \
+  -s dir -t $pkg_type \
+  -p $pkg_file \
   --name pgedge \
   --version $pg_v.$spock_v.$cli_v \
   --architecture `arch` \
@@ -76,11 +81,7 @@ fpm \
   --before-install ./before-install.sh \
   --after-install ./after-install.sh \
   --after-remove ./after-remove.sh \
-  --no-rpm-autoreqprov \
-  --rpm-tag '%define _build_id_links none' \
-  --rpm-tag '%undefine _missing_build_ids_terminate_build' \
-  --rpm-user pgedge \
-  $dir_bundle/.=/opt/pgedge/.
+  $options $dir_bundle/.=/opt/pgedge/.
 
 rc=$?
 if [ ! "$rc" == "0" ]; then

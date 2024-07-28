@@ -349,13 +349,13 @@ initPG () {
     initC "spock40-pg$pgM"    "spock40"    "$spock40V"   "$outPlat" "postgres/spock40"   "" "" "nil"
   fi
 
+  if [ "$pgM" == "14" ] || [ "$pgM" == "15" ]; then
+    initC "foslots-pg$pgM"    "foslots"    "$foslotsV"   "$outPlat" "postgres/foslots"    "" "" "nil"
+  fi
+
   ## exit out on OSX
   if [ "$isEL" == "False" ]; then
     return
-  fi
-
-  if [ "$pgM" == "14" ] || [ "$pgM" == "15" ]; then
-    initC "foslots-pg$pgM"    "foslots"    "$foslotsV"   "$outPlat" "postgres/foslots"    "" "" "nil"
   fi
 
   initC "backrest"     "backrest"     "$backrestV" "$outPlat" "postgres/backrest" "" "" "nil"

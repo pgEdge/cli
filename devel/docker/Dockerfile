@@ -39,7 +39,6 @@ RUN rm -r v$PGML_V.tar.gz
 
 RUN pip3 install -r postgresml-$PGML_V/pgml-extension/requirements.linux.txt
 
-
 #RUN echo "Dockerfile Test on Apache2" > /var/www/html/index.html
 
 EXPOSE 5432

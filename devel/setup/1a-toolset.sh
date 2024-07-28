@@ -66,7 +66,7 @@ if [ $rc == "0" ]; then
   $apt python3-dev python3-pip python3-venv gcc sqlite
 
   $apt ruby squashfs-tools
-  gem install fpm
+  sudo gem install fpm
 fi
  
 cd ~
