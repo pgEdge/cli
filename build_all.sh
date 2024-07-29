@@ -123,8 +123,8 @@ if [ -d $outp ]; then
 fi
 
 if [ ! "$2" == "" ]; then
-  if [ ! "$2" == "rpm" ]; then
-     fatalError "ERROR:  2nd parm is pkg_type (only 'rpm' presently supported)"
+  if [ ! "$2" == "rpm" ] && [ ! "$2" == "deb" ]; then
+     fatalError "ERROR:  2nd parm is pkg_type (only 'rpm' & 'deb' are supported)"
   fi
 
   vers=$(echo $hubV | tr "." "\n")

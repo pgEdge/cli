@@ -1,1 +1,1 @@
-docker build -t pgedge/deb12:latest ./
+podman build -t pgedge/deb12:latest ./
