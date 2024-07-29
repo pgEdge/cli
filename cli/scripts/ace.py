@@ -477,8 +477,7 @@ def schema_diff(cluster_name, nodes, schema_name):
             )
         else:
             prRed(
-                f"\u2718   SCHEMAS ARE NOT THE SAME- between {node_list[0]}"
-                "and {node_list[n]}!!"
+                f"\u2718   SCHEMAS ARE NOT THE SAME- between {node_list[0]} and {node_list[n]}!!"
             )
 
 
@@ -941,7 +940,7 @@ def table_diff(
 
     if dbname:
         for db_entry in db:
-            if db_entry["name"] == dbname:
+            if db_entry["db_name"] == dbname:
                 database = db_entry
                 break
     else:
@@ -2130,7 +2129,7 @@ def repset_diff(
 
     if dbname:
         for db_entry in db:
-            if db_entry["name"] == dbname:
+            if db_entry["db_name"] == dbname:
                 database = db_entry
                 break
     else:
