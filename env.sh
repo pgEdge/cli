@@ -25,22 +25,22 @@ adminV=8.x
 prestV=1.4.2
 postgrestV=12.0.2-1
 prompgexpV=0.15.0
-backrestV=2.52-1
+backrestV=2.53-1
 wal2jV=2.6.0-1
 
 curlV=2.2.2-1
-citusV=12.1.4-1
-orafceV=4.10.0-1
+citusV=12.1.5-1
+orafceV=4.10.3-1
 v8V=3.2.2-1
 setuserV=4.0.1-1
-permissionsV=1.2-1
+permissionsV=1.3-1
 
 ## oraclefdwV=2.6.0-1
 ## inclV=21.6
 ## ora2pgV=23.1
 
 hypoV=1.4.1-1
-timescaleV=2.15.2-1
+timescaleV=2.15.3-1
 profV=4.2.4-1
 bulkloadV=3.1.19-1
 partmanV=5.0.1-1
@@ -58,7 +58,7 @@ postgisV=3.4.2-1
 
 pljavaV=1.6.4-1
 debuggerV=1.6-1
-cronV=1.6.2-1
+cronV=1.6.3-1
 
 HUB="$PWD"
 SRC="$HUB/src"
