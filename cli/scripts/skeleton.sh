@@ -17,7 +17,7 @@ function test_common_exts {
 
   ./pgedge install hypopg-$pgV        -d demo
   ./pgedge install orafce-$pgV        -d demo
-  ./pgedge install curl-$pgV          -d demo
+  ##./pgedge install curl-$pgV          -d demo
   ./pgedge install cron-$pgV
   ./pgedge install partman-$pgV       -d demo
   ./pgedge install postgis-$pgV       -d demo
