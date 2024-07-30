@@ -63,9 +63,9 @@ def check_pre_reqs(User, Passwd, db, port, pg_major, pg_minor, spock, autostart,
             util.exit_message(f"Port {port} is unavailable")
         util.message(f"    - Using port {port}")
 
-    valid_pg = ["14", "15", "16", "17"]
-    if pg_major not in valid_pg:
-        util.exit_message(f"pg {pg_major} must be in {valid_pg}")
+    VALID_PG = ["14", "15", "16", "17"]
+    if pg_major not in util.VALID_PG:
+        util.exit_message(f"pg {pg_major} must be in {util.VALID_PG}")
     if pg_minor:
        num_pg_mins = util.num_pg_minors(pg_minor, True)
        if num_pg_mins == 0:
