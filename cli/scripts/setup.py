@@ -41,7 +41,7 @@ def check_pre_reqs(User, Passwd, db, port, pg_major, pg_minor, spock, autostart,
 
     if platf == "Linux":
         if util.glibc_ver() < "2.28":
-            util.exit_message("Linux has unsupported (older) version of glibc")
+            util.exit_message("Linux has an older version of glibc (< el8)")
 
         if autostart:
             util.autostart_verify_prereqs()
@@ -63,9 +63,9 @@ def check_pre_reqs(User, Passwd, db, port, pg_major, pg_minor, spock, autostart,
             util.exit_message(f"Port {port} is unavailable")
         util.message(f"    - Using port {port}")
 
-    VALID_PG = ["14", "15", "16", "17"]
     if pg_major not in util.VALID_PG:
         util.exit_message(f"pg {pg_major} must be in {util.VALID_PG}")
+
     if pg_minor:
        num_pg_mins = util.num_pg_minors(pg_minor, True)
        if num_pg_mins == 0:
@@ -85,6 +85,12 @@ def check_pre_reqs(User, Passwd, db, port, pg_major, pg_minor, spock, autostart,
             util.exit_message("Must specify User, Passwd & db")
 
         verifyUserPasswd(User, Passwd)
+    else:
+        if (User is None) and (Passwd is None) and (db is None):
+            pass
+        else:
+            util.exit_message("Must NOT specify User, Passwd or db when --extensions")
+
 
 
     if spock:
