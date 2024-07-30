@@ -55,11 +55,13 @@ def check_pre_reqs(User, Passwd, db, port, pg_major, pg_minor, spock, autostart,
     if util.is_admin():
         util.exit_message("You must install as non-root user with passwordless sudo privleges")
 
-    util.message(f"  Verify port {port} availability")
-    if util.is_socket_busy(int(port)):
-           util.exit_message(f"Port {port} is unavailable")
-
-    util.message(f"    - Using port {port}")
+    if extensions:
+        pass
+    else:
+        util.message(f"  Verify port {port} availability")
+        if util.is_socket_busy(int(port)):
+            util.exit_message(f"Port {port} is unavailable")
+        util.message(f"    - Using port {port}")
 
     valid_pg = ["14", "15", "16", "17"]
     if pg_major not in valid_pg:
