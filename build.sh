@@ -353,59 +353,53 @@ initPG () {
     initC "foslots-pg$pgM"    "foslots"    "$foslotsV"   "$outPlat" "postgres/foslots"    "" "" "nil"
   fi
 
-  ## exit out on OSX
-  if [ "$isEL" == "False" ]; then
-    return
+  if [ "$isEL" == "True" ]; then
+    initC "backrest"     "backrest"     "$backrestV" "$outPlat" "postgres/backrest" "" "" "nil"
+    initC "etcd"         "etcd"         "$etcdV"     "$outPlat" "etcd"              "" "" "nil"
+    initC "pgcat"        "pgcat"        "$catV"      "$outPlat" "postgres/pgcat"    "" "" "nil"
+    initC "patroni"      "patroni"      "$patroniV"  ""         "patroni"           "" "" "nil"
+    initC "firewalld"    "firewalld"    "$firwldV"   ""         "firewalld"         "" "" "nil"
   fi
 
-  initC "backrest"     "backrest"     "$backrestV" "$outPlat" "postgres/backrest" "" "" "nil"
-  initC "etcd"         "etcd"         "$etcdV"     "$outPlat" "etcd"              "" "" "nil"
-  initC "pgcat"        "pgcat"        "$catV"      "$outPlat" "postgres/pgcat"    "" "" "nil"
-  initC "patroni"      "patroni"      "$patroniV"  ""         "patroni"           "" "" "nil"
-  initC "firewalld"    "firewalld"    "$firwldV"   ""         "firewalld"         "" "" "nil"
+  if [ "$pgM" == "16" ]; then
+    initC "audit-pg$pgM"      "audit"      "$audit16V"   "$outPlat" "postgres/audit"     "" "" "nil"
+    initC "hintplan-pg$pgM"   "hintplan"   "$hint16V"    "$outPlat" "postgres/hintplan"  "" "" "nil"
+  fi
 
-  ##if [ "$isEL9" == "True" ]; then
+  if [ "$pgM" == "15" ]; then
+    initC "audit-pg$pgM"      "audit"      "$audit15V"   "$outPlat" "postgres/audit"     "" "" "nil"
+    initC "hintplan-pg$pgM"   "hintplan"   "$hint15V"    "$outPlat" "postgres/hintplan"  "" "" "nil"
+  fi
 
-    if [ "$pgM" == "16" ]; then
-      initC "audit-pg$pgM"      "audit"      "$audit16V"   "$outPlat" "postgres/audit"     "" "" "nil"
-      initC "hintplan-pg$pgM"   "hintplan"   "$hint16V"    "$outPlat" "postgres/hintplan"  "" "" "nil"
-    fi
+  if [ "$pgM" == "15" ] || [ "$pgM" == "16" ]; then
+    initC "plv8-pg$pgM"       "plv8"       "$v8V"        "$outPlat" "postgres/plv8"       "" "" "nil"
+    initC "wal2json-pg$pgM"   "wal2json"   "$wal2jV"     "$outPlat" "postgres/wal2json"   "" "" "nil"
+    initC "pldebugger-pg$pgM" "pldebugger" "$debuggerV"  "$outPlat" "postgres/pldebugger" "" "" "nil"
+    initC "hypopg-pg$pgM"     "hypopg"     "$hypoV"      "$outPlat" "postgres/hypopg"     "" "" "nil"
+    ##initC "curl-pg$pgM"       "curl"       "$curlV"      "$outPlat" "postgres/curl"       "" "" "nil"
+    initC "orafce-pg$pgM"     "orafce"     "$orafceV"    "$outPlat" "postgres/orafce"     "" "" "nil"
+    initC "vector-pg$pgM"     "vector"     "$vectorV"    "$outPlat" "postgres/vector"     "" "" "nil"
+    initC "plprofiler-pg$pgM" "plprofiler" "$profV"      "$outPlat" "postgres/profiler"   "" "" "nil"
+    initC "postgis-pg$pgM"    "postgis"    "$postgisV"   "$outPlat" "postgres/postgis"    "" "" "nil"
+    initC "cron-pg$pgM"       "cron"       "$cronV"      "$outPlat" "postgres/cron"       "" "" "nil"
+    initC "partman-pg$pgM"    "partman"    "$partmanV"   "$outPlat" "postgres/partman"    "" "" "nil"
 
-    if [ "$pgM" == "15" ]; then
-      initC "audit-pg$pgM"      "audit"      "$audit15V"   "$outPlat" "postgres/audit"     "" "" "nil"
-      initC "hintplan-pg$pgM"   "hintplan"   "$hint15V"    "$outPlat" "postgres/hintplan"  "" "" "nil"
-    fi
+    initC "citus-pg$pgM"       "citus"       "$citusV"       "$outPlat" "postgres/citus"       "" "" "nil"
+    initC "timescaledb-pg$pgM" "timescaledb" "$timescaleV"   "$outPlat" "postgres/timescale"   "" "" "nil"
+    initC "setuser-pg$pgM"     "setuser"     "$setuserV"     "$outPlat" "postgres/setuser"     "" "" "nil"
+    initC "permissions-pg$pgM" "permissions" "$permissionsV" "$outPlat" "postgres/permissions" "" "" "nil"
 
-    if [ "$pgM" == "15" ] || [ "$pgM" == "16" ]; then
-      initC "plv8-pg$pgM"       "plv8"       "$v8V"        "$outPlat" "postgres/plv8"       "" "" "nil"
-      initC "wal2json-pg$pgM"   "wal2json"   "$wal2jV"     "$outPlat" "postgres/wal2json"   "" "" "nil"
-      initC "pldebugger-pg$pgM" "pldebugger" "$debuggerV"  "$outPlat" "postgres/pldebugger" "" "" "nil"
-      initC "hypopg-pg$pgM"     "hypopg"     "$hypoV"      "$outPlat" "postgres/hypopg"     "" "" "nil"
-      ##initC "curl-pg$pgM"       "curl"       "$curlV"      "$outPlat" "postgres/curl"       "" "" "nil"
-      initC "orafce-pg$pgM"     "orafce"     "$orafceV"    "$outPlat" "postgres/orafce"     "" "" "nil"
-      initC "vector-pg$pgM"     "vector"     "$vectorV"    "$outPlat" "postgres/vector"     "" "" "nil"
-      initC "plprofiler-pg$pgM" "plprofiler" "$profV"      "$outPlat" "postgres/profiler"   "" "" "nil"
-      initC "postgis-pg$pgM"    "postgis"    "$postgisV"   "$outPlat" "postgres/postgis"    "" "" "nil"
-      initC "cron-pg$pgM"       "cron"       "$cronV"      "$outPlat" "postgres/cron"       "" "" "nil"
-      initC "partman-pg$pgM"    "partman"    "$partmanV"   "$outPlat" "postgres/partman"    "" "" "nil"
+    ##initC "pljava-pg$pgM"     "pljava"     "$pljavaV"    "$outPlat" "postgres/pljava"     "" "" "nil"
+    ##if [ `arch` != "aarch64" ]; then
+    ##  initC "oraclefdw-pg$pgM"  "oraclefdw"  "$oraclefdwV" "$outPlat" "postgres/oraclefdw" "" "" "nil"
+    ##fi
+  fi
 
-      initC "citus-pg$pgM"       "citus"       "$citusV"       "$outPlat" "postgres/citus"       "" "" "nil"
-      initC "timescaledb-pg$pgM" "timescaledb" "$timescaleV"   "$outPlat" "postgres/timescale"   "" "" "nil"
-      initC "setuser-pg$pgM"     "setuser"     "$setuserV"     "$outPlat" "postgres/setuser"     "" "" "nil"
-      initC "permissions-pg$pgM" "permissions" "$permissionsV" "$outPlat" "postgres/permissions" "" "" "nil"
+  initC "prompgexp"    "prompgexp"    "$prompgexpV" "$outPlat" "postgres/prompgexp" "" "" "nil"
 
-      ##initC "pljava-pg$pgM"     "pljava"     "$pljavaV"    "$outPlat" "postgres/pljava"     "" "" "nil"
-      ##if [ `arch` != "aarch64" ]; then
-      ##  initC "oraclefdw-pg$pgM"  "oraclefdw"  "$oraclefdwV" "$outPlat" "postgres/oraclefdw" "" "" "nil"
-      ##fi
-    fi
-
-    initC "prompgexp"    "prompgexp"    "$prompgexpV" "$outPlat" "postgres/prompgexp" "" "" "nil"
-
-    ## initC "postgrest"    "postgrest"    "$postgrestV" "$outPlat" "postgres/postgrest" "" "" "nil"
-    ## initC "prest"        "prest"        "$prestV"    "$outPlat" "pREST"             "" "" "nil"
-    ## initC "pgadmin4"     "pgadmin4"     "$adminV"    ""         "postgres/pgadmin4" "" "" "Y"
-  ##fi
+  ## initC "postgrest"    "postgrest"    "$postgrestV" "$outPlat" "postgres/postgrest" "" "" "nil"
+  ## initC "prest"        "prest"        "$prestV"    "$outPlat" "pREST"             "" "" "nil"
+  ## initC "pgadmin4"     "pgadmin4"     "$adminV"    ""         "postgres/pgadmin4" "" "" "Y"
 
   return
 }

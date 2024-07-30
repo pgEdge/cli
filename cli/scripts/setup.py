@@ -9,10 +9,10 @@ sys.path.append(os.path.join(os.path.dirname(__file__), "lib"))
 import fire, util, db
 
 # extensions installed 'Disabled' if you pass --extensions [core | all] to setup() (defaults to 'core')
-CORE_EXTS="spock40 snowflake lolor"
+CORE_EXTS="spock40 snowflake lolor vector postgis"
 
-MORE_EXTS="audit vector cron orafce postgis partman curl citus timescaledb " + \
-       "wal2json hypopg hintplan plv8 setuser permissions profiler debugger"
+MORE_EXTS="audit cron orafce partman curl citus timescaledb wal2json " + \
+       "hypopg hintplan plv8 setuser permissions profiler debugger"
 
 EXTS_15 = "foslots"
 CTL="./pgedge"
