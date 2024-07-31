@@ -4,26 +4,32 @@
 
 """ACE is the place of the Anti Chaos Engine"""
 
-import os
-import json
 import ast
-import subprocess
+import json
+import os
 import re
-import util
-import fire
-import cluster
-import psycopg
-from psycopg import sql
-from psycopg.rows import dict_row
+import subprocess
+import uuid
 from datetime import datetime
-from multiprocessing import Manager, cpu_count, Value, Lock
-from ordered_set import OrderedSet
 from itertools import combinations
+from multiprocessing import Manager, Value, Lock, cpu_count
+
+import fire
+import psycopg
 from mpire import WorkerPool
 from mpire.utils import make_single_arguments
+from ordered_set import OrderedSet
+from psycopg import sql
+from psycopg.rows import dict_row
+from flask import Flask, request, jsonify
+
+import cluster
+import util
+import ace_db
 from concurrent.futures import ThreadPoolExecutor
 
-l_dir = "/tmp"
+
+app = Flask(__name__)
 
 # Shared variables needed by multiprocessing
 queue = Manager().list()
@@ -869,8 +875,8 @@ def compare_checksums(shared_objects, worker_state, batch):
 def table_diff_core(**kwargs):
     """Efficiently compare tables across cluster using checksums and blocks of rows"""
 
-    cluster_name = kwargs.get("cluster_name")
-    table_name = kwargs.get("table_name")
+    cluster_name = kwargs.get("cluster_name", None)
+    table_name = kwargs.get("table_name", None)
     dbname = kwargs.get("dbname", None)
     block_rows = kwargs.get("block_rows", BLOCK_ROWS_DEFAULT)
     max_cpu_ratio = kwargs.get("max_cpu_ratio", MAX_CPU_RATIO_DEFAULT)
@@ -878,6 +884,9 @@ def table_diff_core(**kwargs):
     nodes = kwargs.get("nodes", "all")
     batch_size = kwargs.get("batch_size", BATCH_SIZE_DEFAULT)
     quiet_mode = kwargs.get("quiet", False)
+
+    if not cluster_name or not table_name:
+        raise AceException("cluster_name and table_name are required arguments")
 
     if type(block_rows) is str:
         try:
@@ -1256,7 +1265,25 @@ def table_diff_core(**kwargs):
     )
 
 
-def table_diff(
+@app.route("/table-diff", methods=["GET"])
+def table_diff_api():
+    cluster_name = request.args.get("cluster_name")
+    table_name = request.args.get("table_name")
+    dbname = request.args.get("dbname")
+    block_rows = request.args.get("block_rows", BLOCK_ROWS_DEFAULT)
+    max_cpu_ratio = request.args.get("max_cpu_ratio", MAX_CPU_RATIO_DEFAULT)
+    output = request.args.get("output", "json")
+    nodes = request.args.get("nodes", "all")
+    batch_size = request.args.get("batch_size", BATCH_SIZE_DEFAULT)
+    quiet = request.args.get("quiet", False)
+
+    try:
+        table_diff_core(**locals())
+    except AceException as e:
+        return jsonify({"error": str(e)})
+
+
+def table_diff_cli(
         cluster_name,
         table_name,
         dbname=None,
@@ -2217,13 +2244,18 @@ def repset_diff(
         util.message(
             f"\n\nCHECKING TABLE {table}...\n", p_state="info", quiet_mode=quiet_mode
         )
-        table_diff(cluster_name, table, quiet=quiet_mode)
+        table_diff_core(cluster_name, table, quiet=quiet_mode)
+
+
+def start_ace():
+    ace_db.create_ace_tasks_table()
+    app.run(host="127.0.0.1", port=5000)
 
 
 if __name__ == "__main__":
     fire.Fire(
         {
-            "table-diff": table_diff,
+            "table-diff": table_diff_cli,
             "table-repair": table_repair,
             "table-rerun": table_rerun,
             "repset-diff": repset_diff,
