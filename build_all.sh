@@ -146,7 +146,7 @@ if [ ! "$2" == "" ]; then
   if [ `arch` == "x86_64" ]; then
     pf="amd64"
   fi
-  bundle_nm=pgedge-$newV-pg-$minorV-$pf
+  bundle_nm=pgedge-$newV-pg$minorV-$pf
 
   buildPkgBundle "$bundle_nm" "$majorV" "$minorV" "$spock40V" "$hubV" 
   rc=$?

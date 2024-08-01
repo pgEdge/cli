@@ -15,13 +15,12 @@ pkg_alias=pgedge-pg$major_v.$pkg_type
 
 
 echo ""
-##echo "####### src/packages/run_fpm.sh ################"
-##echo "# 1.  bundle = $bundle"
-##echo "# 2. major_v = $major_v"
-##echo "#"
-echo "#   pkg_file  = $pkg_file"
-echo "#   pkg_alias = $pkg_alias"
-##echo "###############################################"
+echo "####### src/packages/run_fpm.sh ################"
+echo "# 1.  bundle = $bundle"
+echo "# 2. major_v = $major_v"
+echo "#   pkg_file = $pkg_file"
+echo "#  pkg_alias = $pkg_alias"
+echo "###############################################"
 ##echo ""
 
 fpm --version > /dev/null 2>&1
@@ -53,7 +52,7 @@ echo "# running FPM... (be patient for about 60 seconds)"
 
 rm -f $pkg_file
 
-set -x
+##set -x
 
 if [ "$pkg_type" == "rpm" ]; then
   opt="--no-rpm-autoreqprov --rpm-tag '%define _build_id_links none'"
@@ -87,6 +86,7 @@ echo "#"
 echo "# moving package to \$OUT"
 
 rm -f $OUT/$pkg_file
+rm -f $OUT/$pkg_alias
 
 mv $pkg_file $OUT/.
 
