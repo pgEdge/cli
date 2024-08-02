@@ -111,7 +111,6 @@ def remove(cluster_name):
         cmd = f"rm -rf " + nd["path"] + os.sep + "pgedge"
         util.echo_cmd(cmd, host=nd["ip_address"], usr=nd["os_user"], key=nd["ssh_key"])
 
-
 def cluster_create(
     cluster_name,
     num_nodes,
@@ -128,59 +127,12 @@ def cluster_create(
        Example: localhost cluster-create demo 3 -U lcusr -P lcpasswd -d lcdb
        :param cluster_name: The name of the cluster. 
        :param num_nodes: The number of nodes in the cluster.
-       :param usr: The username of the superuser created for this database.
-       :param passwd: The password for the above user.
-       :param pg: The postgreSQL version of the database.
+       :param User: The username of the superuser created for this database.
+       :param Passwd: The password for the above user.
+       :param pg: The PostgreSQL version of the database.
        :param port1: The starting port for this cluster. For local clusters, each node will have a port increasing by 1 from this port number. 
        :param db: The database name.
-       :param auto-ddl: Auto DDL on or off
-
-Below is an example of the JSON file that is generated that defines a 2 node localhost cluster
-
-{
-  "name": "cl1",
-  "create_date": "2024-02-23",
-  "conn1": {
-    "os_user": "rocky",
-    "ssh_key": ""
-  },
-  "database": {
-    "databases": [
-      {
-        "username": "lcusr",
-        "password": "lcpasswd",
-        "name": "lcdb"
-      }
-    ],
-    "pg_version": "16",
-    "auto_ddl": "off"
-  },
-  "node_groups": {
-    "conn1": [
-      {
-        "nodes": [
-          {
-            "name": "n1",
-            "is_active": true,
-            "ip_address": "127.0.0.1",
-            "port": 6432,
-            "path": "/home/rocky/dev/cli/out/posix/cluster/cl1/n1"
-          }
-        ]
-      },
-      {
-        "nodes": [
-          {
-            "name": "n2",
-            "is_active": true,
-            "ip_address": "127.0.0.1",
-            "port": 6433,
-            "path": "/home/rocky/dev/cli/out/posix/cluster/cl1/n2"
-          }
-        ]
-      }
-    ]
-  }
+       :param auto_ddl: Auto DDL on or off
     """
 
     util.message(f"localhost.cluster_create({cluster_name}, {num_nodes}, {pg}, {port1}, {User}, {Passwd}, {db})", "debug")
@@ -203,16 +155,10 @@ Below is an example of the JSON file that is generated that defines a 2 node loc
     except Exception:
         util.exit_message("port1 parameter is not an integer", 1)
 
-    kount = meta.get_installed_count()
-    if kount > 1:
-        util.message(
-            "WARNING: No other components should be installed when using 'cluster local'"
-        )
-
     if num_nodes < 1:
         util.exit_message("num-nodes must be >= 1", 1)
 
-    #  increment port1 to the first available port from it's initial value
+    # Increment port1 to the first available port from its initial value
     n = port1
     while util.is_socket_busy(n):
         util.message(f"# port {n} is busy")
@@ -220,41 +166,85 @@ Below is an example of the JSON file that is generated that defines a 2 node loc
     port1 = n
 
     util.message("# creating cluster dir: " + os.getcwd() + os.sep + cluster_dir)
-    os.system("mkdir -p " + cluster_dir)
+    os.makedirs(cluster_dir, exist_ok=True)
 
-    pg = os.getenv("pgN", pg)
-    db = os.getenv("pgName", db)
-    User = os.getenv("pgeUser", User)
-    Passwd = os.getenv("pgePasswd", Passwd)
+    # Define JSON structure based on the new format
+    cluster_json = {
+        "json_version": "1.0",
+        "cluster_name": cluster_name,
+        "log_level": "debug",
+        "update_date": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S GMT"),
+        "pgedge": {
+            "pg_version": pg,
+            "auto_start": "off",
+            "spock": {
+                "spock_version": "4.0.1",
+                "auto_ddl": auto_ddl
+            },
+            "databases": [
+                {
+                    "db_name": db,
+                    "db_user": User,
+                    "db_password": Passwd
+                }
+            ]
+        },
+        "node_groups": []
+    }
 
-    create_local_json(cluster_name, db, num_nodes, User, Passwd, pg, port1, auto_ddl)
+    # Create nodes
+    for i in range(num_nodes):
+        node = {
+            "ssh": {
+                "os_user": "pgedge",
+                "private_key": ""
+            },
+            "name": f"n{i+1}",
+            "is_active": "on",
+            "public_ip": "127.0.0.1",
+            "private_ip": "127.0.0.1",
+            "port": str(port1 + i),
+            "path": os.path.join(cluster_dir, f"n{i+1}")
+        }
+        cluster_json["node_groups"].append(node)
+
+    # Write JSON to file
+    json_file_path = os.path.join(cluster_dir, f"{cluster_name}.json")
+    with open(json_file_path, 'w') as json_file:
+        json.dump(cluster_json, json_file, indent=2)
+
+    util.message(f"Cluster configuration saved to {json_file_path}")
+
+    # Load JSON
     db, db_settings, nodes = cluster.load_json(cluster_name)
+    verbose = db_settings.get("log_level", "info")
 
-    cluster.ssh_install_pgedge(cluster_name, db[0]["name"], db_settings, db[0]["username"], db[0]["password"], nodes, True, " ", verbose="none")
-    cluster.ssh_cross_wire_pgedge(cluster_name, db[0]["name"], db_settings, db[0]["username"], db[0]["password"], nodes, verbose="none")
+    cluster.ssh_install_pgedge(cluster_name, db[0]["db_name"], db_settings, db[0]["db_user"], db[0]["db_password"], nodes, True, " ", verbose=verbose)
+    cluster.ssh_cross_wire_pgedge(cluster_name, db[0]["db_name"], db_settings, db[0]["db_user"], db[0]["db_password"], nodes, verbose=verbose)
     if len(db) > 1:
         for database in db[1:]:
-            cluster.create_spock_db(nodes,database,db_settings)
-            cluster.ssh_cross_wire_pgedge(cluster_name, database["name"], pg, database["username"], database["password"], nodes)        
-    
+            cluster.create_spock_db(nodes, database, db_settings)
+            cluster.ssh_cross_wire_pgedge(cluster_name, database["name"], pg, database["username"], database["password"], nodes)
+
 
 def cluster_destroy(cluster_name):
     """Stop and then nuke a localhost cluster.
     
-       Destroy a local cluster. This will stop postgres on each node, and then remove the pgedge directory for each node in a local cluster. \n
+       Destroy a local cluster. This will stop postgres on each node, and then remove
+       the pgedge directory for each node in a local cluster.
        Example: localhost cluster-destroy demo
        :param cluster_name: The name of the cluster. 
     """
 
     if not os.path.exists(BASE_DIR):
-        util.exit_message("no cluster directory: " + str(BASE_DIR), 1)
+        util.exit_message(f"no cluster directory: {BASE_DIR}", 1)
 
     if cluster_name == "all":
         kount = 0
-        for it in os.scandir(BASE_DIR):
-            if it.is_dir():
-                kount = kount + 1
-                lc_destroy1(it.name)
+        for entry in os.scandir(BASE_DIR):
+            if entry.is_dir():
+                kount += 1
+                lc_destroy1(entry.name)
 
         if kount == 0:
             util.exit_message("no cluster(s) to delete", 1)
@@ -264,23 +254,29 @@ def cluster_destroy(cluster_name):
 
 
 def lc_destroy1(cluster_name):
+    """Helper function to destroy a specific cluster."""
     cluster_dir, cluster_file = cluster.get_cluster_info(cluster_name)
 
+    # Load the cluster configuration JSON
     cfg = cluster.get_cluster_json(cluster_name)
 
     if cfg:
-        if "conn1" in cfg:
+        # Check if the cluster is a localhost cluster by looking for "node_groups" in the config
+        if "node_groups" in cfg:
+            # Stop all nodes in the cluster
             cluster.command(cluster_name, "all", "stop")
         else:
             util.message(f"Cluster '{cluster_name}' is not a localhost cluster")
 
-    util.echo_cmd("rm -rf " + cluster_dir)
-
+    # Remove the cluster directory
+    util.message(f"Removing cluster directory: {cluster_dir}")
+    if os.path.exists(cluster_dir):
+        util.echo_cmd("rm -rf " + cluster_dir)
 
 if __name__ == "__main__":
     fire.Fire(
         {
             "cluster-create": cluster_create,
-            "cluster-destroy": cluster_destroy,  
+            "cluster-destroy": cluster_destroy,
         }
-    )
+        )
