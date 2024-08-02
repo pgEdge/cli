@@ -8,13 +8,15 @@ local_db_conn = sqlite3.connect(sqlite_db)
 
 ace_tasks_sql = """
 CREATE TABLE IF NOT EXISTS ace_tasks (
-  task_id            TEXT        PRIMARY KEY,
-  task_type          TEXT        NOT NULL,
+  task_id           TEXT        PRIMARY KEY,
+  task_type         TEXT        NOT NULL,
   cluster_name      TEXT        NOT NULL,
   schema            TEXT        NOT NULL,
   table_name        TEXT        NOT NULL,
-  task_status        TEXT        NOT NULL,
-  task_context       TEXT        NOT NULL
+  task_status       TEXT        NOT NULL,
+  task_context      TEXT,
+  diff_file_path    TEXT,
+  time_taken        DOUBLE
 );
 """
 
