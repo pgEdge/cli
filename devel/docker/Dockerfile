@@ -26,6 +26,7 @@ RUN apt-get -y install cuda-toolkit-12-5
 
 RUN apt-get install -y nvidia-kernel-open-dkms
 RUN apt-get install -y cuda-drivers
+RUN apt-get install -y nvidia-detect
 
 RUN apt-get install -y python3 python3-dev python3-pip python3-venv
 ENV VIRT_ENV=/opt/pgml-venv

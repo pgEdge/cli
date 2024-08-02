@@ -4,7 +4,7 @@
 import os
 import time
 
-MY_VERSION = "24.8.0"
+MY_VERSION = "24.8.2"
 MY_CODENAME = "Constellation"
 
 DEFAULT_PG = "16"
@@ -15,6 +15,7 @@ MY_HOME = os.getenv("MY_HOME", None)
 MY_LITE = os.getenv("MY_LITE", None)
 BACKUP_DIR = os.path.join(MY_HOME, "data", "conf", "backup")
 BACKUP_TARGET_DIR = os.path.join(BACKUP_DIR, time.strftime("%Y%m%d%H%M"))
+VALID_PG = ["14", "15", "16", "17"]
 
 import sys
 import socket
@@ -3568,6 +3569,9 @@ def get_files_recursively(directory):
 
 # create the manifest file for the extension
 def create_manifest(ext_comp, parent_comp, upgrade=None):
+    return True
+
+    ## the below is all unreachable on purpose (for now)
     PARENT_DIR = os.path.join(MY_HOME, parent_comp)
     COMP_DIR = os.path.join(MY_HOME, ext_comp)
     if upgrade:
@@ -3617,13 +3621,16 @@ def copy_extension_files(ext_comp, parent_comp, upgrade=None):
 
 
 def delete_extension_files(manifest_file, upgrade=None):
-    my_logger.info("# checking for extension files.")
+    message(f"util.delete_extension_file({manifest_file}, {upgrade})", "debug")
+    return True
+
+    ### the below is all unreachable on purpose
     try:
         with open(manifest_file) as data_file:
             data = json.load(data_file)
     except Exception as e:
         print(str(e))
-        exit(1)
+        ##exit(1)
     for file in data["files"]:
         if os.path.isfile(file) or os.path.islink(file):
             pass

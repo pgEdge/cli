@@ -9,10 +9,10 @@ sys.path.append(os.path.join(os.path.dirname(__file__), "lib"))
 import fire, util, db
 
 # extensions installed 'Disabled' if you pass --extensions [core | all] to setup() (defaults to 'core')
-CORE_EXTS="spock40 snowflake lolor"
+CORE_EXTS="spock40 snowflake lolor vector postgis"
 
-MORE_EXTS="audit vector cron orafce postgis partman curl citus timescaledb " + \
-       "wal2json hypopg hintplan plv8 setuser permissions profiler debugger"
+MORE_EXTS="audit cron orafce partman curl citus timescaledb wal2json " + \
+       "hypopg hintplan plv8 setuser permissions profiler debugger"
 
 EXTS_15 = "foslots"
 CTL="./pgedge"
@@ -41,7 +41,7 @@ def check_pre_reqs(User, Passwd, db, port, pg_major, pg_minor, spock, autostart,
 
     if platf == "Linux":
         if util.glibc_ver() < "2.28":
-            util.exit_message("Linux has unsupported (older) version of glibc")
+            util.exit_message("Linux has an older version of glibc (< el8)")
 
         if autostart:
             util.autostart_verify_prereqs()
@@ -55,15 +55,17 @@ def check_pre_reqs(User, Passwd, db, port, pg_major, pg_minor, spock, autostart,
     if util.is_admin():
         util.exit_message("You must install as non-root user with passwordless sudo privleges")
 
-    util.message(f"  Verify port {port} availability")
-    if util.is_socket_busy(int(port)):
-           util.exit_message(f"Port {port} is unavailable")
+    if extensions:
+        pass
+    else:
+        util.message(f"  Verify port {port} availability")
+        if util.is_socket_busy(int(port)):
+            util.exit_message(f"Port {port} is unavailable")
+        util.message(f"    - Using port {port}")
 
-    util.message(f"    - Using port {port}")
+    if pg_major not in util.VALID_PG:
+        util.exit_message(f"pg {pg_major} must be in {util.VALID_PG}")
 
-    valid_pg = ["14", "15", "16", "17"]
-    if pg_major not in valid_pg:
-        util.exit_message(f"pg {pg_major} must be in {valid_pg}")
     if pg_minor:
        num_pg_mins = util.num_pg_minors(pg_minor, True)
        if num_pg_mins == 0:
@@ -83,6 +85,12 @@ def check_pre_reqs(User, Passwd, db, port, pg_major, pg_minor, spock, autostart,
             util.exit_message("Must specify User, Passwd & db")
 
         verifyUserPasswd(User, Passwd)
+    else:
+        if (User is None) and (Passwd is None) and (db is None):
+            pass
+        else:
+            util.exit_message("Must NOT specify User, Passwd or db when --extensions")
+
 
 
     if spock:

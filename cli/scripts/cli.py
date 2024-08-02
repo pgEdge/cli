@@ -1222,10 +1222,17 @@ if "--silent" in args:
     os.environ["isSilent"] = "True"
     args.remove("--silent")
 
+arg = None
 if "--extensions" in args:
-    ext  = get_next_arg("--extensions")
+    arg = "--extensions"
+elif "--extension" in args:
+    arg = "--extension"
+elif "--ext" in args:
+    arg = "--ext"
+if arg:
+    ext  = get_next_arg(arg)
     if ext in ["core", "all"]:
-        args.remove("--extensions")
+        args.remove(arg)
         args.remove(ext)
         os.environ["pgeExtensions"] = ext 
     else:
