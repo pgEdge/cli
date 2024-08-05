@@ -8,10 +8,10 @@ import json
 import os
 import re
 import subprocess
-from datetime import datetime
+from datetime import datetime, timedelta
 from itertools import combinations
 from multiprocessing import Manager, Value, Lock, cpu_count
-from dataclasses import dataclass
+import logging
 
 import fire
 import psycopg
@@ -21,18 +21,21 @@ from ordered_set import OrderedSet
 from psycopg import sql
 from psycopg.rows import dict_row
 from flask import Flask, request, jsonify
-from apscheduler import Scheduler
+from apscheduler import Scheduler, Event, JobAcquired, JobReleased
 from apscheduler.datastores.memory import MemoryDataStore
 from apscheduler.eventbrokers.local import LocalEventBroker
-from apscheduler.executors.subprocess import ProcessPoolJobExecutor
 
 import cluster
 import util
 import ace_db
+from ace_db import TableDiffTask
 from concurrent.futures import ThreadPoolExecutor
 
 
 app = Flask(__name__)
+
+logging.basicConfig()
+logging.getLogger("apscheduler").setLevel(logging.DEBUG)
 
 # Shared variables needed by multiprocessing
 queue = Manager().list()
@@ -64,31 +67,6 @@ Defining a custom exception class for ACE
 
 class AceException(Exception):
     pass
-
-
-"""
-Use a dataclass to store the raw inputs supplied by the user
-"""
-
-
-@dataclass
-class TableDiffArgs:
-    cluster_name: str
-    _table_name: str
-    _dbname: str
-    block_rows: int
-    max_cpu_ratio: float
-    output: str
-    _nodes: str
-    batch_size: int
-    quiet_mode: bool
-    l_schema: str = None
-    l_table: str = None
-    node_list: list = None
-    key: str = None
-    cols: list = None
-    conn_list: list = None
-    database: str = None
 
 
 def prCyan(skk):
@@ -898,48 +876,48 @@ def compare_checksums(shared_objects, worker_state, batch):
                 result_queue.append(BLOCK_OK)
 
 
-def check_and_process_inputs(td_args: TableDiffArgs) -> TableDiffArgs:
+def check_and_process_inputs(td_task: TableDiffTask) -> TableDiffTask:
 
-    if not td_args.cluster_name or not td_args._table_name:
+    if not td_task.cluster_name or not td_task._table_name:
         raise AceException("cluster_name and table_name are required arguments")
 
-    if type(td_args.block_rows) is str:
+    if type(td_task.block_rows) is str:
         try:
-            td_args.block_rows = int(td_args.block_rows)
+            td_task.block_rows = int(td_task.block_rows)
         except Exception:
             raise AceException("Invalid values for ACE_BLOCK_ROWS")
-    elif type(td_args.block_rows) is not int:
+    elif type(td_task.block_rows) is not int:
         raise AceException("Invalid value type for ACE_BLOCK_ROWS")
 
     # Capping max block size here to prevent the hash function from taking forever
-    if td_args.block_rows > MAX_ALLOWED_BLOCK_SIZE:
+    if td_task.block_rows > MAX_ALLOWED_BLOCK_SIZE:
         raise AceException(f"Block row size should be <= {MAX_ALLOWED_BLOCK_SIZE}")
-    if td_args.block_rows < MIN_ALLOWED_BLOCK_SIZE:
+    if td_task.block_rows < MIN_ALLOWED_BLOCK_SIZE:
         raise AceException(f"Block row size should be >= {MIN_ALLOWED_BLOCK_SIZE}")
 
-    if type(td_args.max_cpu_ratio) is int:
-        td_args.max_cpu_ratio = float(td_args.max_cpu_ratio)
-    elif type(td_args.max_cpu_ratio) is str:
+    if type(td_task.max_cpu_ratio) is int:
+        td_task.max_cpu_ratio = float(td_task.max_cpu_ratio)
+    elif type(td_task.max_cpu_ratio) is str:
         try:
-            td_args.max_cpu_ratio = float(td_args.max_cpu_ratio)
+            td_task.max_cpu_ratio = float(td_task.max_cpu_ratio)
         except Exception:
             raise AceException("Invalid values for ACE_MAX_CPU_RATIO")
-    elif type(td_args.max_cpu_ratio) is not float:
+    elif type(td_task.max_cpu_ratio) is not float:
         raise AceException("Invalid value type for ACE_MAX_CPU_RATIO")
 
-    if td_args.max_cpu_ratio > 1.0 or td_args.max_cpu_ratio < 0.0:
+    if td_task.max_cpu_ratio > 1.0 or td_task.max_cpu_ratio < 0.0:
         raise AceException(
             "Invalid value range for ACE_MAX_CPU_RATIO or --max_cpu_ratio"
         )
 
-    if td_args.output not in ["csv", "json"]:
+    if td_task.output not in ["csv", "json"]:
         raise AceException(
             "table-diff currently supports only csv and json output formats"
         )
 
     node_list = []
     try:
-        node_list = parse_nodes(td_args._nodes)
+        node_list = parse_nodes(td_task._nodes)
     except ValueError as e:
         raise AceException(
             f'Nodes should be a comma-separated list of nodenames. \
@@ -951,32 +929,32 @@ def check_and_process_inputs(td_args: TableDiffArgs) -> TableDiffArgs:
             "table-diff currently supports up to a three-way table comparison"
         )
 
-    if td_args._nodes != "all" and len(node_list) == 1:
+    if td_task._nodes != "all" and len(node_list) == 1:
         raise AceException("table-diff needs at least two nodes to compare")
 
-    util.check_cluster_exists(td_args.cluster_name)
+    util.check_cluster_exists(td_task.cluster_name)
     util.message(
-        f"Cluster {td_args.cluster_name} exists",
+        f"Cluster {td_task.cluster_name} exists",
         p_state="success",
-        quiet_mode=td_args.quiet_mode,
+        quiet_mode=td_task.quiet_mode,
     )
 
-    nm_lst = td_args._table_name.split(".")
+    nm_lst = td_task._table_name.split(".")
     if len(nm_lst) != 2:
         raise AceException(
-            f"TableName {td_args._table_name} must be of form" " 'schema.table_name'"
+            f"TableName {td_task._table_name} must be of form" " 'schema.table_name'"
         )
     l_schema = nm_lst[0]
     l_table = nm_lst[1]
 
-    db, pg, node_info = cluster.load_json(td_args.cluster_name)
+    db, pg, node_info = cluster.load_json(td_task.cluster_name)
 
     cluster_nodes = []
     database = {}
 
-    if td_args._dbname:
+    if td_task._dbname:
         for db_entry in db:
-            if db_entry["db_name"] == td_args._dbname:
+            if db_entry["db_name"] == td_task._dbname:
                 database = db_entry
                 break
     else:
@@ -984,7 +962,7 @@ def check_and_process_inputs(td_args: TableDiffArgs) -> TableDiffArgs:
 
     if not database:
         raise AceException(
-            f"Database '{td_args._dbname}' not found in cluster"
+            f"Database '{td_task._dbname}' not found in cluster"
             " '{td_args.cluster_name}'"
         )
 
@@ -993,10 +971,10 @@ def check_and_process_inputs(td_args: TableDiffArgs) -> TableDiffArgs:
         combined_json = {**database, **node}
         cluster_nodes.append(combined_json)
 
-    if td_args._nodes == "all" and len(cluster_nodes) > 3:
+    if td_task._nodes == "all" and len(cluster_nodes) > 3:
         raise AceException("Table-diff only supports up to three way comparison")
 
-    if td_args._nodes != "all" and len(node_list) > 1:
+    if td_task._nodes != "all" and len(node_list) > 1:
         for n in node_list:
             if not any(filter(lambda x: x["name"] == n, cluster_nodes)):
                 raise AceException("Specified nodenames not present in cluster")
@@ -1005,7 +983,7 @@ def check_and_process_inputs(td_args: TableDiffArgs) -> TableDiffArgs:
 
     try:
         for nd in cluster_nodes:
-            if td_args._nodes == "all":
+            if td_task._nodes == "all":
                 node_list.append(nd["name"])
 
             if (node_list and nd["name"] in node_list) or (not node_list):
@@ -1024,7 +1002,7 @@ def check_and_process_inputs(td_args: TableDiffArgs) -> TableDiffArgs:
     util.message(
         "Connections successful to nodes in cluster",
         p_state="success",
-        quiet_mode=td_args.quiet_mode,
+        quiet_mode=td_task.quiet_mode,
     )
 
     cols = None
@@ -1035,9 +1013,9 @@ def check_and_process_inputs(td_args: TableDiffArgs) -> TableDiffArgs:
         curr_key = get_key(conn, l_schema, l_table)
 
         if not curr_cols:
-            raise AceException(f"Invalid table name '{td_args._table_name}'")
+            raise AceException(f"Invalid table name '{td_task._table_name}'")
         if not curr_key:
-            raise AceException(f"No primary key found for '{td_args._table_name}'")
+            raise AceException(f"No primary key found for '{td_task._table_name}'")
 
         if (not cols) and (not key):
             cols = curr_cols
@@ -1051,41 +1029,39 @@ def check_and_process_inputs(td_args: TableDiffArgs) -> TableDiffArgs:
         key = curr_key
 
     util.message(
-        f"Table {td_args._table_name} is comparable across nodes",
+        f"Table {td_task._table_name} is comparable across nodes",
         p_state="success",
-        quiet_mode=td_args.quiet_mode,
+        quiet_mode=td_task.quiet_mode,
     )
 
     """
     Now that the inputs have been checked and processed, we will populate the
     TableDiffArgs object with the processed values and return it
     """
-    td_args.conn_list = conn_list
-    td_args.cols = cols
-    td_args.key = key
-    td_args.l_schema = l_schema
-    td_args.l_table = l_table
-    td_args.node_list = node_list
-    td_args.database = database
+    td_task.conn_list = conn_list
+    td_task.cols = cols
+    td_task.key = key
+    td_task.l_schema = l_schema
+    td_task.l_table = l_table
+    td_task.node_list = node_list
+    td_task.database = database
 
-    return td_args
+    return td_task
 
 
-def table_diff_core(td_args: TableDiffArgs):
+def table_diff_core(td_task: TableDiffTask):
     """Efficiently compare tables across cluster using checksums and blocks of rows"""
 
-    task_id = ace_db.generate_task_id()
-
     simple_primary_key = True
-    if len(td_args.key.split(",")) > 1:
+    if len(td_task.key.split(",")) > 1:
         simple_primary_key = False
 
     row_count = 0
     total_rows = 0
     conn_with_max_rows = None
 
-    for conn in td_args.conn_list:
-        rows = get_row_count(conn, td_args.l_schema, td_args.l_table)
+    for conn in td_task.conn_list:
+        rows = get_row_count(conn, td_task.l_schema, td_task.l_table)
         total_rows += rows
         if rows > row_count:
             row_count = rows
@@ -1097,7 +1073,7 @@ def table_diff_core(td_args: TableDiffArgs):
         util.message(
             "ALL TABLES ARE EMPTY",
             p_state="warning",
-            quiet_mode=td_args.quiet_mode,
+            quiet_mode=td_task.quiet_mode,
         )
         return
 
@@ -1107,18 +1083,18 @@ def table_diff_core(td_args: TableDiffArgs):
 
     if simple_primary_key:
         pkey_sql = sql.SQL("SELECT {key} FROM {table_name} ORDER BY {key}").format(
-            key=sql.Identifier(td_args.key),
+            key=sql.Identifier(td_task.key),
             table_name=sql.SQL("{}.{}").format(
-                sql.Identifier(td_args.l_schema), sql.Identifier(td_args.l_table)
+                sql.Identifier(td_task.l_schema), sql.Identifier(td_task.l_table)
             ),
         )
     else:
         pkey_sql = sql.SQL("SELECT {key} FROM {table_name} ORDER BY {key}").format(
             key=sql.SQL(", ").join(
-                [sql.Identifier(col) for col in td_args.key.split(",")]
+                [sql.Identifier(col) for col in td_task.key.split(",")]
             ),
             table_name=sql.SQL("{}.{}").format(
-                sql.Identifier(td_args.l_schema), sql.Identifier(td_args.l_table)
+                sql.Identifier(td_task.l_schema), sql.Identifier(td_task.l_table)
             ),
         )
 
@@ -1163,17 +1139,17 @@ def table_diff_core(td_args: TableDiffArgs):
     util.message(
         "Getting primary key offsets for table...",
         p_state="info",
-        quiet_mode=td_args.quiet_mode,
+        quiet_mode=td_task.quiet_mode,
     )
     future = ThreadPoolExecutor().submit(
-        get_pkey_offsets, conn_with_max_rows, pkey_sql, td_args.block_rows
+        get_pkey_offsets, conn_with_max_rows, pkey_sql, td_task.block_rows
     )
     pkey_offsets = future.result()
 
-    total_blocks = row_count // td_args.block_rows
+    total_blocks = row_count // td_task.block_rows
     total_blocks = total_blocks if total_blocks > 0 else 1
     cpus = cpu_count()
-    max_procs = int(cpus * td_args.max_cpu_ratio) if cpus > 1 else 1
+    max_procs = int(cpus * td_task.max_cpu_ratio) if cpus > 1 else 1
 
     # If we don't have enough blocks to keep all CPUs busy, use fewer processes
     procs = max_procs if total_blocks > max_procs else total_blocks
@@ -1186,31 +1162,31 @@ def table_diff_core(td_args: TableDiffArgs):
     to capture diffs even if rows are absent in one node
     """
 
-    cols_list = td_args.cols.split(",")
+    cols_list = td_task.cols.split(",")
     cols_list = [col for col in cols_list if not col.startswith("_Spock_")]
 
     # Shared variables needed by all workers
     shared_objects = {
-        "cluster_name": td_args.cluster_name,
-        "database": td_args.database,
-        "node_list": td_args.node_list,
-        "schema_name": td_args.l_schema,
-        "table_name": td_args.l_table,
+        "cluster_name": td_task.cluster_name,
+        "database": td_task.database,
+        "node_list": td_task.node_list,
+        "schema_name": td_task.l_schema,
+        "table_name": td_task.l_table,
         "cols_list": cols_list,
-        "p_key": td_args.key,
-        "block_rows": td_args.block_rows,
+        "p_key": td_task.key,
+        "block_rows": td_task.block_rows,
         "simple_primary_key": simple_primary_key,
     }
 
     util.message(
         "Starting jobs to compare tables...\n",
         p_state="info",
-        quiet_mode=td_args.quiet_mode,
+        quiet_mode=td_task.quiet_mode,
     )
 
     batches = [
-        pkey_offsets[i: i + td_args.batch_size]
-        for i in range(0, len(pkey_offsets), td_args.batch_size)
+        pkey_offsets[i : i + td_task.batch_size]
+        for i in range(0, len(pkey_offsets), td_task.batch_size)
     ]
 
     mismatch = False
@@ -1226,7 +1202,7 @@ def table_diff_core(td_args: TableDiffArgs):
             compare_checksums,
             make_single_arguments(batches),
             worker_init=init_db_connection,
-            progress_bar=True if not td_args.quiet_mode else False,
+            progress_bar=True if not td_task.quiet_mode else False,
             iterable_len=len(batches),
             progress_bar_style="rich",
         ):
@@ -1243,7 +1219,7 @@ def table_diff_core(td_args: TableDiffArgs):
                 "Prematurely terminated jobs since diffs have"
                 " exceeded MAX_ALLOWED_DIFFS",
                 p_state="warning",
-                quiet_mode=td_args.quiet_mode,
+                quiet_mode=td_task.quiet_mode,
             )
 
     for result in result_queue:
@@ -1258,7 +1234,7 @@ def table_diff_core(td_args: TableDiffArgs):
         )
 
     # Gets types of each column in table
-    table_types = grab_row_types(td_args.conn_list[0], td_args.l_table)
+    table_types = grab_row_types(td_task.conn_list[0], td_task.l_table)
 
     # Mismatch is True if there is a block mismatch or if we have
     # estimated that diffs may be greater than max allowed diffs
@@ -1267,12 +1243,12 @@ def table_diff_core(td_args: TableDiffArgs):
             util.message(
                 f"TABLES DO NOT MATCH. DIFFS HAVE EXCEEDED {MAX_DIFF_ROWS} ROWS",
                 p_state="warning",
-                quiet_mode=td_args.quiet_mode,
+                quiet_mode=td_task.quiet_mode,
             )
 
         else:
             util.message(
-                "TABLES DO NOT MATCH", p_state="warning", quiet_mode=td_args.quiet_mode
+                "TABLES DO NOT MATCH", p_state="warning", quiet_mode=td_task.quiet_mode
             )
 
         """
@@ -1288,18 +1264,18 @@ def table_diff_core(td_args: TableDiffArgs):
             util.message(
                 f"FOUND {diff_count} DIFFS BETWEEN {node1} AND {node2}",
                 p_state="warning",
-                quiet_mode=td_args.quiet_mode,
+                quiet_mode=td_task.quiet_mode,
             )
 
-        if td_args.output == "json":
-            write_diffs_json(diff_dict, table_types, quiet_mode=td_args.quiet_mode)
+        if td_task.output == "json":
+            write_diffs_json(diff_dict, table_types, quiet_mode=td_task.quiet_mode)
 
-        elif td_args.output == "csv":
+        elif td_task.output == "csv":
             write_diffs_csv()
 
     else:
         util.message(
-            "TABLES MATCH OK\n", p_state="success", quiet_mode=td_args.quiet_mode
+            "TABLES MATCH OK\n", p_state="success", quiet_mode=td_task.quiet_mode
         )
 
     run_time = util.round_timedelta(datetime.now() - start_time).total_seconds()
@@ -1308,8 +1284,14 @@ def table_diff_core(td_args: TableDiffArgs):
     util.message(
         f"TOTAL ROWS CHECKED = {total_rows}\nRUN TIME = {run_time_str} seconds",
         p_state="info",
-        quiet_mode=td_args.quiet_mode,
+        quiet_mode=td_task.quiet_mode,
     )
+
+    td_task.task_status = "COMPLETED"
+    td_task.finished_at = datetime.now()
+    td_task.time_taken = run_time
+    td_task.task_context = json.dumps({"total_rows": total_rows, "mismatch": mismatch})
+    ace_db.update_ace_task(td_task)
 
 
 @app.route("/ace/table-diff", methods=["GET"])
@@ -1324,8 +1306,12 @@ def table_diff_api():
     batch_size = request.args.get("batch_size", BATCH_SIZE_DEFAULT)
     quiet = request.args.get("quiet", False)
 
+    task_id = ace_db.generate_task_id()
+
     try:
-        raw_args = TableDiffArgs(
+        raw_args = TableDiffTask(
+            task_id=task_id,
+            task_type="table-diff",
             cluster_name=cluster_name,
             _table_name=table_name,
             _dbname=dbname,
@@ -1336,9 +1322,15 @@ def table_diff_api():
             batch_size=batch_size,
             quiet_mode=quiet,
         )
-        td_args = check_and_process_inputs(raw_args)
-        job_id = scheduler.add_job(table_diff_core, td_args,
-                                   job_executor=ProcessPoolJobExecutor)
+        td_task = check_and_process_inputs(raw_args)
+        ace_db.create_ace_task(td_task=td_task)
+        job_id = scheduler.add_job(
+            table_diff_core,
+            args=(td_task,),
+            job_executor="processpool",
+            result_expiration_time=timedelta(seconds=600),
+        )
+        return jsonify({"task_id": task_id})
     except AceException as e:
         return jsonify({"error": str(e)})
 
@@ -1354,8 +1346,13 @@ def table_diff_cli(
     batch_size=BATCH_SIZE_DEFAULT,
     quiet=False,
 ):
+
+    task_id = ace_db.generate_task_id()
+
     try:
-        raw_args = TableDiffArgs(
+        raw_args = TableDiffTask(
+            task_id=task_id,
+            task_type="table-diff",
             cluster_name=cluster_name,
             _table_name=table_name,
             _dbname=dbname,
@@ -1367,6 +1364,7 @@ def table_diff_cli(
             quiet_mode=quiet,
         )
         td_args = check_and_process_inputs(raw_args)
+        ace_db.create_ace_task(td_task=td_args)
         table_diff_core(td_args)
     except AceException as e:
         util.exit_message(str(e))
@@ -2318,7 +2316,18 @@ def start_ace():
     app.run(host="127.0.0.1", port=5000)
 
 
+async def listener(event: Event) -> None:
+    print(f"Received {event.__class__.__name__}")
+
+
 if __name__ == "__main__":
+    ace_db.create_ace_tasks_table()
+    data_store = MemoryDataStore()
+    event_broker = LocalEventBroker()
+    scheduler = Scheduler(data_store, event_broker)
+    scheduler.start_in_background()
+    scheduler.subscribe(listener, {JobAcquired, JobReleased})
+
     fire.Fire(
         {
             "table-diff": table_diff_cli,
@@ -2330,11 +2339,4 @@ if __name__ == "__main__":
         }
     )
 
-    data_store = MemoryDataStore()
-    event_broker = LocalEventBroker()
-    scheduler = Scheduler(data_store, event_broker)
-    scheduler.start_in_background()
-
-    ace_db.drop_ace_tasks_table()
-    ace_db.create_ace_tasks_table()
-    app.run(host="127.0.0.1", port=5000)
+    app.run(host="127.0.0.1", port=5000, debug=True)
