@@ -1,1 +1,2 @@
-podman build -t pgedge/build-el8   ./
+
+podman build $1 -t pgedge/build-el8   ./

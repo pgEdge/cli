@@ -40,8 +40,11 @@ RUN git clone https://github.com/pgedge/cli
 WORKDIR /home/build
 RUN python3 -m venv venv
 RUN source ~/venv/bin/activate
-RUN pip3 install --upgrade --no-warn-script-location pip
+RUN pip3 install --user --upgrade --no-warn-script-location pip
 
+WORKDIR /home/build/dev/cli/devel/setup
+RUN  ./1b-bashrc.sh
+RUN source /home/build/.bashrc
 
 
 # see https://hub.docker.com/_/rockylinux
