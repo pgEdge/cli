@@ -2,17 +2,17 @@
 echo " "
 echo "# run 1a-toolset"
 
-yum="sudo dnf -y install"
+yum="dnf -y install"
 PLATFORM=`cat /etc/os-release | grep PLATFORM_ID | cut -d: -f2 | tr -d '\"'`
 echo "## $PLATFORM ##"
 
 if [ "$PLATFORM" == "el8" ]; then
-  sudo dnf config-manager --set-enabled powertools
+  dnf config-manager --set-enabled powertools
   $yum @ruby:3.0
 fi
 
 if [ "$PLATFORM" == "el9" ]; then
-  sudo dnf config-manager --set-enabled crb
+  dnf config-manager --set-enabled crb
   $yum ruby
 fi
 
@@ -22,12 +22,12 @@ if [ "$PLATFORM" == "el8" ] || [ "$PLATFORM" == "el9" ]; then
 
   $yum cpan
   echo yes | sudo cpan FindBin
-  sudo cpan IPC::Run
+  cpan IPC::Run
 
   $yum epel-release
 
-  sudo dnf -y groupinstall 'development tools'
-  sudo dnf -y --nobest install zlib-devel bzip2-devel lbzip2 \
+  dnf -y groupinstall 'development tools'
+  dnf -y --nobest install zlib-devel bzip2-devel lbzip2 \
       openssl-devel libxslt-devel libevent-devel c-ares-devel \
       perl-ExtUtils-Embed pam-devel openldap-devel boost-devel
   $yum curl-devel 
@@ -54,8 +54,8 @@ if [ "$PLATFORM" == "el8" ] || [ "$PLATFORM" == "el9" ]; then
   ./install-rust.sh -y
   rm install-rust.sh
 
-  sudo update-alternatives --set python3 /usr/bin/python3.9
-  sudo update-alternatives --set pip3    /usr/bin/pip3.9
+  update-alternatives --set python3 /usr/bin/python3.9
+  update-alternatives --set pip3    /usr/bin/pip3.9
 fi
 
 
@@ -63,7 +63,7 @@ apt --version > /dev/null 2>&1
 rc=$?
 if [ $rc == "0" ]; then
   apt="sudo apt-get install -y"
-  $apt python3-dev python3-pip python3-venv gcc sqlite
+  $apt python3-dev python3-pip python3-venv gcc sqlite3 git wget curl vim
 
   $apt ruby squashfs-tools
   sudo gem install fpm
