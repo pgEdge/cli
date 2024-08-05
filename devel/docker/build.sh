@@ -1,1 +1,1 @@
-podman build -t pgedge/ubi9:latest ./
+podman build -t pgedge/build-el8   ./
