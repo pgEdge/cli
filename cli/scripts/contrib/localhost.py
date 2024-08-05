@@ -3,6 +3,7 @@
 
 import os, json, datetime, meta, time
 import util, fire, cluster
+import getpass
 
 BASE_DIR = "cluster"
 
@@ -169,6 +170,7 @@ def cluster_create(
     os.makedirs(cluster_dir, exist_ok=True)
 
     # Define JSON structure based on the new format
+    os_user = getpass.getuser()
     cluster_json = {
         "json_version": "1.0",
         "cluster_name": cluster_name,
@@ -196,7 +198,7 @@ def cluster_create(
     for i in range(num_nodes):
         node = {
             "ssh": {
-                "os_user": "pgedge",
+                "os_user": os_user,
                 "private_key": ""
             },
             "name": f"n{i+1}",
