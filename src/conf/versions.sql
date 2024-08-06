@@ -129,7 +129,8 @@ INSERT INTO categories VALUES (9,  87, 'Management & Monitoring', 'Manage/Monito
 INSERT INTO projects VALUES ('hub', 'app', 0, 0, 'hub', 0, 'https://github.com/pgedge/cli','',0,'','','','');
 INSERT INTO releases VALUES ('hub', 1, 'hub',  '', '', 'hidden', '', 1, '', '', '');
 
-INSERT INTO versions VALUES ('hub', '24.8.2',    '',  1, '20240805', '', '', '');
+INSERT INTO versions VALUES ('hub', '24.8.3',    '',  1, '20240806', '', '', '');
+INSERT INTO versions VALUES ('hub', '24.8.2',    '',  0, '20240805', '', '', '');
 INSERT INTO versions VALUES ('hub', '24.8.1',    '',  0, '20240801', '', '', '');
 INSERT INTO versions VALUES ('hub', '24.8.0',    '',  0, '20240729', '', '', '');
 INSERT INTO versions VALUES ('hub', '24.7.5',    '',  0, '20240720', '', '', '');
@@ -451,7 +452,8 @@ INSERT INTO versions VALUES ('badger', '11.8', '', 0, '20220408', '', '', '');
 INSERT INTO projects VALUES ('ctlibs', 'pge', 0, 0, 'hub', 3, 'https://github.com/pgedge/cli',
   'ctlibs',  0, 'ctlibs.png', 'ctlibs', 'https://github.com/pgedge/cli', '');
 INSERT INTO releases VALUES ('ctlibs', 2, 'ctlibs',  'nodectl Libs', '', 'prod', '', 1, '', '', '');
-INSERT INTO versions VALUES ('ctlibs', '1.3', '', 1, '20240604', '', '', '');
+INSERT INTO versions VALUES ('ctlibs', '1.4', '', 1, '20240806', '', '', '');
+INSERT INTO versions VALUES ('ctlibs', '1.3', '', 0, '20240604', '', '', '');
 INSERT INTO versions VALUES ('ctlibs', '1.2', '', 0, '20240130', '', '', '');
 
 -- ## PGCAT #############################
