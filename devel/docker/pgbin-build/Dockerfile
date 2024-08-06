@@ -42,9 +42,19 @@ RUN python3 -m venv venv
 RUN source ~/venv/bin/activate
 RUN pip3 install --user --upgrade --no-warn-script-location pip
 
+USER root
+COPY ./config /tmp/.
+RUN chown build:build /tmp/config
+
+USER build
 WORKDIR /home/build/dev/cli/devel/setup
 RUN  ./1b-bashrc.sh
 RUN source /home/build/.bashrc
+RUN ./1c-awscli.sh
+RUN cp /tmp/config /home/build/.aws/. && chmod 600 /home/build/.aws/config && rm /tmp/config
+
+WORKDIR /home/build/dev/cli
+RUN pip3 install -r requirements.txt
 
 
 # see https://hub.docker.com/_/rockylinux
