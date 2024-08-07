@@ -34,6 +34,7 @@ set_pythonpath () {
     lib="$LIB/$ver"
     if [ -d "$LIB/$ver" ]; then
       lib="$LIB/$ver"
+      export MY_CTLIB_VER=$ver
       return
     fi
   done

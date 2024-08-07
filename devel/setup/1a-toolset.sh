@@ -17,7 +17,7 @@ if [ "$PLATFORM" == "el9" ]; then
 fi
 
 if [ "$PLATFORM" == "el8" ] || [ "$PLATFORM" == "el9" ]; then
-  $yum python3.9 python3.9-devel python3.9-pip gcc-toolset-12
+  $yum python39 python39-devel python39-pip gcc-toolset-13
   $yum git net-tools wget curl pigz sqlite which zip
 
   $yum cpan
@@ -55,7 +55,6 @@ if [ "$PLATFORM" == "el8" ] || [ "$PLATFORM" == "el9" ]; then
   rm install-rust.sh
 
   sudo update-alternatives --set python3 /usr/bin/python3.9
-  sudo update-alternatives --set pip3    /usr/bin/pip3.9
 fi
 
 

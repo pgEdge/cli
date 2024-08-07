@@ -129,53 +129,47 @@ INSERT INTO categories VALUES (9,  87, 'Management & Monitoring', 'Manage/Monito
 INSERT INTO projects VALUES ('hub', 'app', 0, 0, 'hub', 0, 'https://github.com/pgedge/cli','',0,'','','','');
 INSERT INTO releases VALUES ('hub', 1, 'hub',  '', '', 'hidden', '', 1, '', '', '');
 
-INSERT INTO versions VALUES ('hub', '24.8.2',    '',  1, '20240801', '', '', '');
+INSERT INTO versions VALUES ('hub', '24.8.3',    '',  1, '20240803', '', '', '');
+INSERT INTO versions VALUES ('hub', '24.8.2',    '',  0, '20240805', '', '', '');
 INSERT INTO versions VALUES ('hub', '24.8.1',    '',  0, '20240801', '', '', '');
 INSERT INTO versions VALUES ('hub', '24.8.0',    '',  0, '20240729', '', '', '');
 INSERT INTO versions VALUES ('hub', '24.7.5',    '',  0, '20240720', '', '', '');
 INSERT INTO versions VALUES ('hub', '24.7.4',    '',  0, '20240710', '', '', '');
-INSERT INTO versions VALUES ('hub', '24.7.3',    '',  0, '20240701', '', '', '');
-INSERT INTO versions VALUES ('hub', '24.7.2',    '',  0, '20240620', '', '', '');
-INSERT INTO versions VALUES ('hub', '24.7.1',    '',  0, '20240611', '', '', '');
 INSERT INTO versions VALUES ('hub', '24.7.0',    '',  0, '20240608', '', '', '');
 INSERT INTO versions VALUES ('hub', '24.6.5',    '',  0, '20240607', '', '', '');
-INSERT INTO versions VALUES ('hub', '24.6.4',    '',  0, '20240604', '', '', '');
-INSERT INTO versions VALUES ('hub', '24.4.6',    '',  0, '20240509', '', '', '');
-INSERT INTO versions VALUES ('hub', '24.4.5',    '',  0, '20240410', '', '', '');
-INSERT INTO versions VALUES ('hub', '24.3.2',    '',  0, '20240317', '', '', '');
 
 -- ## PG #################################
 INSERT INTO projects VALUES ('pg', 'pge', 1, 5432, 'hub', 1, 'https://github.com/postgres/postgres/tags',
  'postgres', 0, 'postgresql.png', 'Best RDBMS', 'https://postgresql.org', '');
 
-INSERT INTO releases VALUES ('pg12', 3, 'pg', 'PostgreSQL', '', 'prod',
+INSERT INTO releases VALUES ('pg12', 3, 'pg', 'PostgreSQL', '', 'test',
   '<font size=-1>New in <a href=https://www.postgresql.org/docs/12/release-12.html>2019</a></font>', 1, 'POSTGRES', '', '');
-INSERT INTO versions VALUES ('pg12', '12.19-3', 'amd', 1, '20240710', '', '', '');
+INSERT INTO versions VALUES ('pg12', '12.19-3', 'amd', 0, '20240710', '', '', '');
 INSERT INTO versions VALUES ('pg12', '12.19-1', 'amd', 0, '20240509', '', '', '');
 
-INSERT INTO releases VALUES ('pg13', 2, 'pg', '', '', 'prod',
+INSERT INTO releases VALUES ('pg13', 2, 'pg', '', '', 'test',
   '<font size=-1>New in <a href=https://www.postgresql.org/docs/13/release-13.html>2020</a></font>', 1, 'POSTGRES', '', '');
-INSERT INTO versions VALUES ('pg13', '13.15-3', 'amd', 1, '20240710','', '', '');
+INSERT INTO versions VALUES ('pg13', '13.15-3', 'amd', 0, '20240710','', '', '');
 INSERT INTO versions VALUES ('pg13', '13.15-1', 'amd', 0, '20240509','', '', '');
 
 INSERT INTO releases VALUES ('pg14', 1, 'pg', '', '', 'prod', 
   '<font size=-1>New in <a href=https://www.postgresql.org/docs/14/release-14.html>2021</a></font>', 1, 'POSTGRES', '', '');
-INSERT INTO versions VALUES ('pg14', '14.12-3', 'amd, arm', 1, '20240710', '','','');
-INSERT INTO versions VALUES ('pg14', '14.12-2', 'amd, arm', 0, '20240521', '','','');
+INSERT INTO versions VALUES ('pg14', '14.13-1', 'amd, arm', 1, '20240808', '','','');
+INSERT INTO versions VALUES ('pg14', '14.12-3', 'amd, arm', 0, '20240710', '','','');
 
 INSERT INTO releases VALUES ('pg15', 2, 'pg', '', '', 'prod', 
   '<font size=-1>New in <a href=https://www.postgresql.org/docs/15/release-15.html>2022</a></font>', 1, 'POSTGRES', '', '');
-INSERT INTO versions VALUES ('pg15', '15.7-3',  'amd, arm', 1, '20240710','', '', '');
-INSERT INTO versions VALUES ('pg15', '15.7-2',  'amd, arm', 0, '20240521','', '', '');
+INSERT INTO versions VALUES ('pg15', '15.8-1',  'amd, arm', 1, '20240808','', '', '');
+INSERT INTO versions VALUES ('pg15', '15.7-3',  'amd, arm', 0, '20240710','', '', '');
 
 INSERT INTO releases VALUES ('pg16', 2, 'pg', '', '', 'prod', 
   '<font size=-1>New in <a href=https://www.postgresql.org/docs/16/release-16.html>2023!</a></font>', 1, 'POSTGRES', '', '');
-INSERT INTO versions VALUES ('pg16', '16.3-3',  'amd, arm', 1, '20240710','', '', '');
-INSERT INTO versions VALUES ('pg16', '16.3-2',  'amd, arm', 0, '20240521','', '', '');
+INSERT INTO versions VALUES ('pg16', '16.4-1',  'amd, arm', 1, '20240808','', '', '');
+INSERT INTO versions VALUES ('pg16', '16.3-3',  'amd, arm', 0, '20240710','', '', '');
 
 INSERT INTO releases VALUES ('pg17', 2, 'pg', '', '', 'test', 
   '<font size=-1>New in <a href=https://www.postgresql.org/docs/17/release-17.html>2024!</a></font>', 1, 'POSTGRES', '', '');
-INSERT INTO versions VALUES ('pg17', '17beta2-3',  'amd, arm', 1, '20240710','', '', '');
+INSERT INTO versions VALUES ('pg17', '17beta3-1',  'amd, arm', 1, '20240808','', '', '');
 
 -- ## ORAFCE #############################
 INSERT INTO projects VALUES ('orafce', 'ext', 4, 0, 'hub', 0, 'https://github.com/orafce/orafce/releases',
@@ -451,7 +445,8 @@ INSERT INTO versions VALUES ('badger', '11.8', '', 0, '20220408', '', '', '');
 INSERT INTO projects VALUES ('ctlibs', 'pge', 0, 0, 'hub', 3, 'https://github.com/pgedge/cli',
   'ctlibs',  0, 'ctlibs.png', 'ctlibs', 'https://github.com/pgedge/cli', '');
 INSERT INTO releases VALUES ('ctlibs', 2, 'ctlibs',  'nodectl Libs', '', 'prod', '', 1, '', '', '');
-INSERT INTO versions VALUES ('ctlibs', '1.3', '', 1, '20240604', '', '', '');
+INSERT INTO versions VALUES ('ctlibs', '1.4', '', 1, '20240806', '', '', '');
+INSERT INTO versions VALUES ('ctlibs', '1.3', '', 0, '20240604', '', '', '');
 INSERT INTO versions VALUES ('ctlibs', '1.2', '', 0, '20240130', '', '', '');
 
 -- ## PGCAT #############################

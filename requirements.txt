@@ -1,35 +1,37 @@
 
 ## Core CLI #########
-requests>=2.27
-paramiko>=3.3.1
-psycopg>=3.2.1
-psycopg-binary>=3.2.1
-psutil>=5.9.6
-pypsutil>=0.2.0
-semantic_version>=2.10.0
-six>=1.16.0
-termcolor>=2.4.0
-typing_extensions>=4.9.0
-click>=8.1.7
-tabulate>=0.9.0
-python-crontab>=3.0.0
-certifi>=3.0
-charset_normalizer>=2.0
-gpustat>=1.1.1
+requests==2.32.2
+paramiko==3.4.0
+psycopg==3.2.1
+psycopg-binary==3.2.1
+psutil==6.0.0
+pypsutil==0.2.0
+semantic_version==2.10.0
+six==1.16.0
+termcolor==2.4.0
+typing_extensions==4.12.2
+click==8.1.7
+tabulate==0.9.0
+python-crontab==3.2.0
+certifi==2024.7.4
+charset_normalizer==3.3.2
+gpustat==1.1.1
+python_crontab==3.2.0
 
 ## ACE Advanced #####
-tqdm>=4.64
-ordered-set>=4.0
-mpire[dashboard]>=2.10.2
-rich>=13.7.1
-pandas>=1.1.5
+tqdm==4.66.4
+ordered-set==4.1.0
+mpire[dashboard]==2.10.2
+rich==13.7.1
+pandas==2.2.2
 
 ## pgEdge-Patroni ###
-cdiff>=1.0
-urllib3>=1.25.4,!=1.26.18
-PyYAML>=6.0
-python-etcd>=0.4.5,<0.5
-prettytable>=2.5
-python-dateutil>=2.8.2
-cryptography>=40.0.2
-ydiff>=1.2
+cdiff==1.0
+urllib3==2.2.2
+#urllib3>=1.25.4,!=1.26.18
+PyYAML==6.0.1
+python-etcd==0.4.5
+prettytable==3.10.2
+python-dateutil==2.9.0
+cryptography==43.0.0
+ydiff==1.3

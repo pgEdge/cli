@@ -362,6 +362,10 @@ def info(p_json, p_home, p_repo, print_flag=True):
                 "cat /etc/os-release | grep PRETTY_NAME | cut -d= -f2 | tr -d '\"'"
             )
 
+    cpu_model = cpu_model.replace("Intel(R) Core(TM) ", "")
+    ctlib_ver = os.getenv("MY_CTLIB_VER", "")
+
+
     if system_memory_in_gb > 0.6:
         round_mem = round(system_memory_in_gb)
     else:
@@ -450,13 +454,13 @@ def info(p_json, p_home, p_repo, print_flag=True):
        ver_display = f"pgEdge {util.format_ver(ver)}"
    
     print("#" * INFO_WIDTH)
-    print(f"#{bold_start}         CLI:{bold_end} {ver_display}")
+    print(f"#{bold_start}     Version:{bold_end} {ver_display}")
 
     print(f"#{bold_start} User & Host:{bold_end} " +
               f"{p_user}{admin_display}  {host_display}  {p_home}")
-    print(f"#{bold_start}          OS:{bold_end} {os2.rstrip()} {glibc_v_display}")
+    print(f"#{bold_start}          OS:{bold_end} {os2.rstrip()} {glibc_v_display}, {ctlib_ver}")
 
-    print(f"#{bold_start}     Machine:{bold_end} {mem}, vCPU {cores}, {arch}")
+    print(f"#{bold_start}     Machine:{bold_end} {mem}, vCPU {cores}, {cpu_model}")
 
     print(f"#{bold_start}     Python3:{bold_end} {util.python3_ver()} {util.which('python3')}")
 

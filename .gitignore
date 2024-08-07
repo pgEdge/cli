@@ -10,5 +10,7 @@ cli/scripts/conf
 cli/scripts/pg1*
 cli/scripts/data
 
+devel/docker/pgbin-build/config
+
 .DS_STORE
 __pycache__

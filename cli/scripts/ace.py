@@ -1660,6 +1660,8 @@ def table_repair(
     dbname=None,
     dry_run=False,
     quiet=False,
+    upsert_only=False,
+    generate_report=False,
 ):
     """Apply changes from a table-diff source of truth to destination table"""
     import pandas as pd
@@ -1718,6 +1720,23 @@ def table_repair(
         )
 
     start_time = datetime.now()
+
+    if generate_report:
+        report = dict()
+        report["time_stamp"] = datetime.now().strftime("%m/%d/%Y, %H:%M:%S")
+        report["arguments"]   = {
+            "cluster_name": cluster_name,
+            "diff_file": diff_file,
+            "source_of_truth": source_of_truth,
+            "table_name": table_name,
+            "dbname": dbname,
+            "dry_run": dry_run,
+            "quiet": quiet,
+            "upsert_only": upsert_only,
+            "generate_report": generate_report,
+        }
+        report["database"] = database["db_name"]
+        report["changes"] = dict()
 
     conns = {}
     try:
@@ -1923,6 +1942,9 @@ def table_repair(
     # Gets types of each column in table
     table_types = grab_row_types(conns[source_of_truth], l_table)
 
+    if upsert_only:
+        deletes_skipped = dict()
+
     for node_pair in diff_json.keys():
         node1, node2 = node_pair.split("/")
 
@@ -2065,6 +2087,9 @@ def table_repair(
         if spock_version >= 4.0:
             cur.execute("SELECT spock.repair_mode(true);")
 
+        if generate_report:
+            report["changes"][divergent_node] = dict()
+
         """
         We had previously converted all rows to strings for computing set differences.
         We now need to convert them back to their original types before upserting.
@@ -2100,16 +2125,67 @@ def table_repair(
 
             # Performing the upsert
             cur.executemany(update_sql, upsert_tuples)
+            if generate_report:
+                report["changes"][divergent_node]["upserted_rows"] = [dict(zip(cols_list, tup)) for tup in upsert_tuples]
 
-        if delete_keys:
+        if delete_keys and not upsert_only:
             # Performing the deletes
             if len(delete_keys) > 0:
                 cur.executemany(delete_sql, delete_keys)
+                if generate_report:
+                    report["changes"][divergent_node]["deleted_rows"] = delete_keys
+        elif delete_keys and upsert_only:
+            deletes_skipped[divergent_node] = filtered_rows_to_delete
 
         if spock_version >= 4.0:
             cur.execute("SELECT spock.repair_mode(false);")
 
         conn.commit()
+
+    if upsert_only:
+        def compare_values(val1: dict, val2: dict) -> bool:
+            if val1.keys() != val2.keys(): return False
+            if any( [val1[key] != val2[key] for key in val1.keys()] ): return False
+            return True
+
+        upsert_dict = dict()
+        for nd_name, values in deletes_skipped.items():
+            for value in values:
+                if simple_primary_key:
+                    full_key = value[key]
+                else:
+                    full_key = tuple(value[pkey_part] for pkey_part in keys_list)
+
+                if full_key not in upsert_dict:
+                    upsert_dict[full_key] = value, {nd_name}
+
+                elif not compare_values(value, upsert_dict[full_key][0]):
+                    upsert_dict[full_key][1].add(nd_name)
+                    # print( "Warning: differences found in elements present only not in Source of Truth.")
+                    # print(f"         leaving differences and inserting f{upsert_dict[full_key][0]} into Source of Truth")
+                
+                else:
+                    upsert_dict[full_key][1].add(nd_name)
+
+        # format of upsert dict will now be
+        # {
+        #     "pkey1" : ({key: val to upsert to pkey1}, {nodes that have pkey1})
+        #     "pkey2" : ({key: val to upsert to pkey2}, {nodes that have pkey2})
+        # }
+        # example when n1 is s.o.t.
+        # {
+        #     '2': ({'id': '2', 'num': '2'}, {'n2'}),
+        #     '4': ({'id': '4', 'num': '4'}, {'n3', 'n2'}),
+        #     '5': ({'id': '5', 'num': '4'}, {'n3', 'n2'}),
+        #     '3': ({'id': '3', 'num': '3'}, {'n3'})
+        # }
+        # so `2`, `3`, `4`, `5` need to be inserted into n1, `2` in n3, and `3` into n2
+
+        if generate_report:
+            report["changes"][source_of_truth] = dict()
+            report["changes"][source_of_truth]["upserted_rows"] = []
+            report["changes"][source_of_truth]["deleted_rows"] = []
+            report["changes"][source_of_truth]["missing_rows"] = [{"row": values, "present_in": list(nodes)} for values, nodes in upsert_dict.values()]
 
     run_time = util.round_timedelta(datetime.now() - start_time).total_seconds()
     run_time_str = f"{run_time:.2f}"
@@ -2119,6 +2195,28 @@ def table_repair(
         p_state="success",
         quiet_mode=quiet_mode,
     )
+
+    if generate_report:
+        now = datetime.now()
+        report_folder = "reports"
+        report["run_time"] = run_time
+        
+        if not os.path.exists(report_folder):
+            os.mkdir(report_folder)
+
+        dirname = now.strftime("%Y-%m-%d")
+        diff_file_suffix = now.strftime("%H%M%S") + f"{now.microsecond // 1000:03d}"
+        diff_filename = "report_" + diff_file_suffix + ".json"
+
+        dirname = os.path.join(report_folder, dirname)
+
+        if not os.path.exists(dirname):
+            os.mkdir(dirname)
+
+        filename = os.path.join(dirname, diff_filename)
+        json.dump(report, open(filename, "w"), default=str, indent=2)
+        print(f"Wrote report to {filename}")
+
 
     util.message("*** SUMMARY ***\n", p_state="info", quiet_mode=quiet_mode)
 
