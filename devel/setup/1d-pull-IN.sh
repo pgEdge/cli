@@ -13,14 +13,14 @@ if [ ! "$rc" == "0" ]; then
   exit 1
 fi
 
-pull=$PWD/in/pull-s3.sh
+pull=in/pull-s3.sh
 if [ ! -f "$pull" ]; then
   echo "ERROR: missing pull file \"$pull\""
   exit 1
 fi
 
+cp $pull $IN/.
 cd $IN
-cp $pull .
 ./pull-s3.sh
 chmod 755 *.sh
 
