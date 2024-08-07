@@ -1,1 +1,1 @@
-podman build -t build-amd .
+podman build $1 -t build-amd .

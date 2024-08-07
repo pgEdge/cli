@@ -44,16 +44,23 @@ RUN useradd -m build && \
 
 RUN echo "%build ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
 
-#USER build
-#WORKDIR /home/build
+USER build
+WORKDIR /home/build
+RUN mkdir .ssh
+RUN ssh-keygen -q -t rsa -N '' -f ~/.ssh/id_rsa
+WORKDIR .ssh
+RUN cat id_rsa.pub >> known_hosts
 
-#RUN mkdir dev 
-#WORKDIR dev
+RUN mkdir /home/build/dev
+WORKDIR /home/build/dev
+WORKDIR dev
 #RUN git clone https://github.com/pgedge/cli
 #WORKDIR /home/build
 #RUN python3 -m venv venv
 #RUN source ~/venv/bin/activate
 #RUN pip3 install --user --upgrade --no-warn-script-location pip
+
+USER root
 
 #USER root
 #COPY ./config /tmp/.
