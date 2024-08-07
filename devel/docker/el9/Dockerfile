@@ -1,12 +1,12 @@
-FROM docker://rockylinux/rockylinux:8-ubi-init
+FROM docker://rockylinux/rockylinux:9-ubi-init
 
 RUN dnf -y update && \
-    dnf -y install epel-release sudo openssh-server python39 python39-pip \
-    git wget curl wget curl pigz sqlite which zip iputils
+    dnf -y install epel-release sudo openssh-server python3 python3-pip \
+    git wget wget pigz sqlite which zip
 
 RUN systemctl enable sshd.service
 
-RUN update-alternatives --set python3 /usr/bin/python3.9
+#RUN update-alternatives --set python3 /usr/bin/python3.9
 
 # Create a new user and set the password
 RUN dnf -y install sudo && \
