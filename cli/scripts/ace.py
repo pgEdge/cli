@@ -8,7 +8,7 @@ import json
 import os
 import re
 import subprocess
-from datetime import datetime, timedelta
+from datetime import datetime
 from itertools import combinations
 from multiprocessing import Manager, Value, Lock, cpu_count
 import logging
@@ -21,7 +21,7 @@ from ordered_set import OrderedSet
 from psycopg import sql
 from psycopg.rows import dict_row
 from flask import Flask, request, jsonify
-from apscheduler import Scheduler, Event, JobAcquired, JobReleased
+from apscheduler import Event, JobAdded, Scheduler
 from apscheduler.datastores.memory import MemoryDataStore
 from apscheduler.eventbrokers.local import LocalEventBroker
 
@@ -43,6 +43,11 @@ result_queue = Manager().list()
 diff_dict = Manager().dict()
 row_diff_count = Value("I", 0)
 lock = Lock()
+
+# apscheduler setup
+data_store = MemoryDataStore()
+event_broker = LocalEventBroker()
+scheduler = Scheduler(data_store, event_broker)
 
 # Set max number of rows up to which
 # diff-tables will work
@@ -368,6 +373,7 @@ def write_diffs_json(diff_dict, row_types, quiet_mode=False):
         p_state="info",
         quiet_mode=quiet_mode,
     )
+    return filename
 
 
 # TODO: Come up with better naming convention for diff files
@@ -979,6 +985,7 @@ def check_and_process_inputs(td_task: TableDiffTask) -> TableDiffTask:
             if not any(filter(lambda x: x["name"] == n, cluster_nodes)):
                 raise AceException("Specified nodenames not present in cluster")
 
+    conn_params = []
     conn_list = []
 
     try:
@@ -987,14 +994,15 @@ def check_and_process_inputs(td_task: TableDiffTask) -> TableDiffTask:
                 node_list.append(nd["name"])
 
             if (node_list and nd["name"] in node_list) or (not node_list):
-                psql_conn = psycopg.connect(
-                    dbname=nd["db_name"],
-                    user=nd["db_user"],
-                    password=nd["db_password"],
-                    host=nd["public_ip"],
-                    port=nd.get("port", 5432),
-                )
-                conn_list.append(psql_conn)
+                params = {
+                    "dbname": nd["db_name"],
+                    "user": nd["db_user"],
+                    "password": nd["db_password"],
+                    "host": nd["public_ip"],
+                    "port": nd.get("port", 5432),
+                }
+                conn_list.append(psycopg.connect(**params))
+                conn_params.append(params)
 
     except Exception as e:
         raise AceException("Error in table_diff() Getting Connections:" + str(e), 1)
@@ -1038,7 +1046,10 @@ def check_and_process_inputs(td_task: TableDiffTask) -> TableDiffTask:
     Now that the inputs have been checked and processed, we will populate the
     TableDiffArgs object with the processed values and return it
     """
-    td_task.conn_list = conn_list
+
+    # Psycopg connection objects cannot be pickled easily,
+    # so, we send the connection parameters instead
+    td_task.conn_params = conn_params
     td_task.cols = cols
     td_task.key = key
     td_task.l_schema = l_schema
@@ -1059,8 +1070,13 @@ def table_diff_core(td_task: TableDiffTask):
     row_count = 0
     total_rows = 0
     conn_with_max_rows = None
+    table_types = None
 
-    for conn in td_task.conn_list:
+    for params in td_task.conn_params:
+        conn = psycopg.connect(**params)
+        if not table_types:
+            table_types = grab_row_types(conn, td_task.l_table)
+
         rows = get_row_count(conn, td_task.l_schema, td_task.l_table)
         total_rows += rows
         if rows > row_count:
@@ -1185,7 +1201,7 @@ def table_diff_core(td_task: TableDiffTask):
     )
 
     batches = [
-        pkey_offsets[i : i + td_task.batch_size]
+        pkey_offsets[i: i + td_task.batch_size]
         for i in range(0, len(pkey_offsets), td_task.batch_size)
     ]
 
@@ -1197,6 +1213,7 @@ def table_diff_core(td_task: TableDiffTask):
         n_jobs=procs,
         shared_objects=shared_objects,
         use_worker_state=True,
+        use_dill=True,
     ) as pool:
         for result in pool.imap_unordered(
             compare_checksums,
@@ -1233,9 +1250,6 @@ def table_diff_core(td_task: TableDiffTask):
                     status before running this script again."
         )
 
-    # Gets types of each column in table
-    table_types = grab_row_types(td_task.conn_list[0], td_task.l_table)
-
     # Mismatch is True if there is a block mismatch or if we have
     # estimated that diffs may be greater than max allowed diffs
     if mismatch:
@@ -1268,7 +1282,9 @@ def table_diff_core(td_task: TableDiffTask):
             )
 
         if td_task.output == "json":
-            write_diffs_json(diff_dict, table_types, quiet_mode=td_task.quiet_mode)
+            td_task.diff_file_path = write_diffs_json(
+                diff_dict, table_types, quiet_mode=td_task.quiet_mode
+            )
 
         elif td_task.output == "csv":
             write_diffs_csv()
@@ -1322,14 +1338,11 @@ def table_diff_api():
             batch_size=batch_size,
             quiet_mode=quiet,
         )
+
         td_task = check_and_process_inputs(raw_args)
         ace_db.create_ace_task(td_task=td_task)
-        job_id = scheduler.add_job(
-            table_diff_core,
-            args=(td_task,),
-            job_executor="processpool",
-            result_expiration_time=timedelta(seconds=600),
-        )
+        scheduler.add_job(table_diff_core, args=(td_task,))
+
         return jsonify({"task_id": task_id})
     except AceException as e:
         return jsonify({"error": str(e)})
@@ -1363,11 +1376,17 @@ def table_diff_cli(
             batch_size=batch_size,
             quiet_mode=quiet,
         )
-        td_args = check_and_process_inputs(raw_args)
-        ace_db.create_ace_task(td_task=td_args)
-        table_diff_core(td_args)
+        td_task = check_and_process_inputs(raw_args)
+        ace_db.create_ace_task(td_task=td_task)
+        table_diff_core(td_task)
     except AceException as e:
         util.exit_message(str(e))
+
+
+def listener(event: Event) -> None:
+    if isinstance(event, JobAdded):
+        task_id = event.task_id
+        scheduler.run_job(task_id)
 
 
 def table_rerun(cluster_name, diff_file, table_name, dbname=None, quiet=False):
@@ -1724,7 +1743,7 @@ def table_repair(
     if generate_report:
         report = dict()
         report["time_stamp"] = datetime.now().strftime("%m/%d/%Y, %H:%M:%S")
-        report["arguments"]   = {
+        report["arguments"] = {
             "cluster_name": cluster_name,
             "diff_file": diff_file,
             "source_of_truth": source_of_truth,
@@ -2126,7 +2145,9 @@ def table_repair(
             # Performing the upsert
             cur.executemany(update_sql, upsert_tuples)
             if generate_report:
-                report["changes"][divergent_node]["upserted_rows"] = [dict(zip(cols_list, tup)) for tup in upsert_tuples]
+                report["changes"][divergent_node]["upserted_rows"] = [
+                    dict(zip(cols_list, tup)) for tup in upsert_tuples
+                ]
 
         if delete_keys and not upsert_only:
             # Performing the deletes
@@ -2143,9 +2164,12 @@ def table_repair(
         conn.commit()
 
     if upsert_only:
+
         def compare_values(val1: dict, val2: dict) -> bool:
-            if val1.keys() != val2.keys(): return False
-            if any( [val1[key] != val2[key] for key in val1.keys()] ): return False
+            if val1.keys() != val2.keys():
+                return False
+            if any([val1[key] != val2[key] for key in val1.keys()]):
+                return False
             return True
 
         upsert_dict = dict()
@@ -2161,9 +2185,6 @@ def table_repair(
 
                 elif not compare_values(value, upsert_dict[full_key][0]):
                     upsert_dict[full_key][1].add(nd_name)
-                    # print( "Warning: differences found in elements present only not in Source of Truth.")
-                    # print(f"         leaving differences and inserting f{upsert_dict[full_key][0]} into Source of Truth")
-                
                 else:
                     upsert_dict[full_key][1].add(nd_name)
 
@@ -2185,7 +2206,10 @@ def table_repair(
             report["changes"][source_of_truth] = dict()
             report["changes"][source_of_truth]["upserted_rows"] = []
             report["changes"][source_of_truth]["deleted_rows"] = []
-            report["changes"][source_of_truth]["missing_rows"] = [{"row": values, "present_in": list(nodes)} for values, nodes in upsert_dict.values()]
+            report["changes"][source_of_truth]["missing_rows"] = [
+                {"row": values, "present_in": list(nodes)}
+                for values, nodes in upsert_dict.values()
+            ]
 
     run_time = util.round_timedelta(datetime.now() - start_time).total_seconds()
     run_time_str = f"{run_time:.2f}"
@@ -2200,7 +2224,7 @@ def table_repair(
         now = datetime.now()
         report_folder = "reports"
         report["run_time"] = run_time
-        
+
         if not os.path.exists(report_folder):
             os.mkdir(report_folder)
 
@@ -2216,7 +2240,6 @@ def table_repair(
         filename = os.path.join(dirname, diff_filename)
         json.dump(report, open(filename, "w"), default=str, indent=2)
         print(f"Wrote report to {filename}")
-
 
     util.message("*** SUMMARY ***\n", p_state="info", quiet_mode=quiet_mode)
 
@@ -2411,21 +2434,13 @@ def repset_diff(
 
 def start_ace():
     ace_db.create_ace_tasks_table()
-    app.run(host="127.0.0.1", port=5000)
-
-
-async def listener(event: Event) -> None:
-    print(f"Received {event.__class__.__name__}")
+    scheduler.start_in_background()
+    scheduler.subscribe(listener, {JobAdded})
+    app.run(host="127.0.0.1", port=5000, debug=True)
 
 
 if __name__ == "__main__":
     ace_db.create_ace_tasks_table()
-    data_store = MemoryDataStore()
-    event_broker = LocalEventBroker()
-    scheduler = Scheduler(data_store, event_broker)
-    scheduler.start_in_background()
-    scheduler.subscribe(listener, {JobAcquired, JobReleased})
-
     fire.Fire(
         {
             "table-diff": table_diff_cli,
@@ -2434,7 +2449,6 @@ if __name__ == "__main__":
             "repset-diff": repset_diff,
             "schema-diff": schema_diff,
             "spock-diff": spock_diff,
+            "start": start_ace,
         }
     )
-
-    app.run(host="127.0.0.1", port=5000, debug=True)

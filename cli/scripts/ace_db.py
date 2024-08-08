@@ -43,7 +43,7 @@ class TableDiffTask:
     node_list: list = None
     key: str = None
     cols: list = None
-    conn_list: list = None
+    conn_params: list = None
     database: str = None
 
 
