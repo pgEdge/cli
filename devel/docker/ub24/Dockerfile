@@ -1,4 +1,4 @@
-FROM debian:bookworm-slim
+FROM ubuntu:24.04
 
 ENV DEBIAN_FRONTEND=noninteractive
 ENV INSTALL="apt-get install -y"
@@ -8,7 +8,7 @@ ENV IN=$HOME/dev/in
 ENV OUT=$HOME/dev/out
 
 RUN apt-get update && \
-    $INSTALL apt python3 python3-pip pigz sudo zip wget curl sqlite3 git && \
+    $INSTALL apt python3 python3-pip pigz sudo zip wget curl sqlite3 which git && \
     $INSTALL openssh-server systemd
 
 RUN useradd -m $USER && \
