@@ -71,7 +71,7 @@ fire_list = [
     "db",
     "app",
     "setup",
-    "update2"
+    "update-cli"
 ]
 
 fire_contrib = ["node", "localhost"]
