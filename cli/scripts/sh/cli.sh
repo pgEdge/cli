@@ -62,7 +62,7 @@ array[0]="$MY_HOME/hub/scripts"
 LIB="$MY_HOME/hub/scripts/lib"
 array[1]="$LIB"
 
-py_path="el9-arm el9-amd el8-amd ubu22-arm ubu22-amd"
+py_path="el9-arm el9-amd el8-amd ubu22-arm ubu22-amd osx"
 py_path="$py_path ubu24-arm ubu24-amd deb12-arm deb12-amd"
 lib="None"
 set_pythonpath "$py_path"
@@ -86,7 +86,7 @@ done
 
 ## echo "DEBUG: PYTHONPATH=$PYTHONPATH"
 
-set_libpath "12 13 14 15 16 17"
+set_libpath "14 15 16 17"
 ## echo "DEBUG: LD_LIBRARY_PATH=$LD_LIBRARY_PATH"
 
 python3 --version > /dev/null 2>&1
