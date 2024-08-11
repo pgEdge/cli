@@ -2,8 +2,10 @@
 ## Core CLI #########
 requests==2.32.2
 paramiko==3.4.0
-psycopg==3.2.1
-psycopg-binary==3.2.1
+psycopg==3.1.19; platform_system=="Darwin"
+psycopg-binary==3.1.19; platform_system=="Darwin"
+psycopg==3.2.1; platform_system=="Linux"
+psycopg-binary==3.2.1; platform_system=="Linux"
 psutil==6.0.0
 pypsutil==0.2.0
 semantic_version==2.10.0
@@ -28,7 +30,6 @@ pandas==2.2.2
 ## pgEdge-Patroni ###
 cdiff==1.0
 urllib3==2.2.2
-#urllib3>=1.25.4,!=1.26.18
 PyYAML==6.0.1
 python-etcd==0.4.5
 prettytable==3.10.2
