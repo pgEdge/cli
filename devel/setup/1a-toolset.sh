@@ -62,7 +62,8 @@ apt --version > /dev/null 2>&1
 rc=$?
 if [ $rc == "0" ]; then
   apt="sudo apt-get install -y"
-  $apt python3-dev python3-pip python3-venv gcc sqlite
+  $apt python3-dev python3-pip python3-venv gcc sqlite3
+  $apt podman podman-compose
 
   $apt ruby squashfs-tools
   sudo gem install fpm
