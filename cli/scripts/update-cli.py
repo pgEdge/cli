@@ -37,7 +37,7 @@ def replace_files(from_dir, to_dir):
 def download_file(p_file, p_dir):
     file_path = f"{p_dir}/{p_file}"
     url_path = f"{util.get_value("GLOBAL", "REPO")}/{p_file}"
-    util.message(f"Downloading {url_path} to '{file_path}'")
+    util.message(f"\nDownloading {url_path}")
 
     try:
         fu = urllib2.urlopen(url_path)
@@ -53,7 +53,7 @@ def download_file(p_file, p_dir):
 def unpack_file(p_file, p_dir):
 
     os.chdir(p_dir)
-    util.message(f"Unpacking {p_file} ...")
+    util.message(f"\nUnpacking into {p_dir}")
 
     try:
         # Use 'data' filter if available, but revert to Python 3.11 behavior ('fully_trusted')
@@ -69,12 +69,19 @@ def unpack_file(p_file, p_dir):
 
 
 def backup_current():
+    """Backup current CLI to an archive directory
+
+       Backup current CLI to '/tmp/pgedge_backup_cli' archive directory
+    """
+
     ts = get_now()
     ver = get_cli_ver(f"{MY_HOME}/hub/scripts/install.py")
     backup_dir = f"{BASE_BACKUP_DIR}/{ts}_{ver}_CURRENT_BACKUP"
     rc = os.system(f"mkdir -p {backup_dir}")
     if rc != 0:
         return(None)
+
+    util.message(f"\nBacking up current CLI into {backup_dir}")
 
     rc1 = os.system(f"cp -r {MY_HOME}/hub {backup_dir}")
     rc2 = os.system(f"cp {MY_HOME}/pgedge {backup_dir}/.")
@@ -85,7 +92,11 @@ def backup_current():
     return(None)
 
 
-def apply_latest():
+def download_latest():
+    """Download latest CLI to an archive directory
+    
+       Download latest CLI to '/tmp/pgedge_backup_cli' archive directory
+    """
 
     ver_current = get_cli_ver(f"{MY_HOME}/hub/scripts/install.py")
     backup_dir = backup_current()
@@ -107,12 +118,16 @@ def apply_latest():
     download_file(file, new_dir)
     unpack_file(file, new_dir)
 
-    replace_files(new_dir, MY_HOME)
-
-    return
+    print("")
+    return(new_dir)
 
 
 def list_archives():
+    """List recent archive directories
+
+       List recent archive directories under '/tmp/pgedge_backup_cli'
+    """
+
     dir_list = []
 
     if not os.path.isdir(BASE_BACKUP_DIR):
@@ -128,19 +143,37 @@ def list_archives():
             print(name)
 
 
-def restore_archive(old_dir):
-    ## Create backup directory _BEFORE_RESTORE
+def update_from_archive(archive_dir, force=False):
+    """Update CLI from an archive directory
 
-    ## copy old_dir over current
-    copy_dir_over_current(old_dir)
+       Backup current CLI, download latest & then update with latest CLI
+
+       Example: ./pgedge update-cli update-from-archive --force True
+       :param force: force an update even if new version is same or older (defaults to False)
+    """
+
+    replace_files(archive_dir, MY_HOME)
 
     return("True || False")
 
 
+def now(force=False):
+    """ Backup current CLI, then download & update with latest CLI
+
+        Backup current CLI, download latest & then update with latest CLI
+
+        Example: ./pgedge update-cli now --force True
+        :param force: force an update even if new version is same or older (defaults to False)
+    """
+
+    return()
+
+
 if __name__ == "__main__":
     fire.Fire({
-        "apply-latest":    apply_latest,
-        "backup-current":  backup_current,
-        "list-archives":   list_archives,
-        "restore-archive":  restore_archive,
+        "now":                  now,
+        "backup-current":       backup_current,
+        "download-latest":      download_latest,
+        "update-from-archive":  update_from_archive,
+        "list-archives":        list_archives,
     })
