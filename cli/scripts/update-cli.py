@@ -1,7 +1,7 @@
 
 #  Copyright 2022-2024 PGEDGE  All rights reserved. #
 
-import os, sys, datetime, tarfile
+import os, sys, time, datetime, tarfile
 from urllib import request as urllib2
 
 
@@ -12,7 +12,7 @@ MY_HOME=os.getenv("MY_HOME")
 
 
 def get_now():
-    return(datetime.datetime.now(datetime.UTC).astimezone().strftime("%Y%m%d_%H%M%S"))
+    return(datetime.datetime.now(datetime.UTC).astimezone().strftime("%m%d_%H%M%S"))
 
 
 def get_cli_ver(p_file):
@@ -25,7 +25,8 @@ def get_cli_ver(p_file):
 
     ver = ver_quoted.replace('"', '')
 
-    return(util.format_ver(ver))
+    ##return(util.format_ver(ver))
+    return(ver)
 
 
 def replace_files(from_dir, to_dir):
@@ -50,13 +51,14 @@ def download_file(p_file, p_dir):
 
 
 def unpack_file(p_file, p_dir):
-    file_path = f"{p_dir}/{p_file}"
-    util.message(f"Unpacking {file_path} ...")
+
+    os.chdir(p_dir)
+    util.message(f"Unpacking {p_file} ...")
 
     try:
         # Use 'data' filter if available, but revert to Python 3.11 behavior ('fully_trusted')
         #   if this feature is not available:
-        tar = tarfile.open(file_path)
+        tar = tarfile.open(p_file)
         tar.extraction_filter = getattr(tarfile, 'data_filter',
                                        (lambda member, path: member))
         tar.extractall()
@@ -69,7 +71,7 @@ def unpack_file(p_file, p_dir):
 def backup_current():
     ts = get_now()
     ver = get_cli_ver(f"{MY_HOME}/hub/scripts/install.py")
-    backup_dir = f"{BASE_BACKUP_DIR}/{ts}_{ver}_BACKUP"
+    backup_dir = f"{BASE_BACKUP_DIR}/{ts}_{ver}_CURRENT_BACKUP"
     rc = os.system(f"mkdir -p {backup_dir}")
     if rc != 0:
         return(None)
@@ -89,17 +91,23 @@ def apply_latest():
     backup_dir = backup_current()
     if backup_dir is None:
         util.exit_message("Failed to take a current cli backup")
+    time.sleep(1)
 
-    download_dir = f"{BASE_BACKUP_DIR}/{get_now()}_{get_cli_ver()}_DOWNLOAD"
+    now = get_now()
+    download_dir = f"{BASE_BACKUP_DIR}/{now}_xxx_LATEST_DOWNLOAD"
     os.system(f"rm -rf {download_dir}")
     os.system(f"mkdir {download_dir}")
     download_file("install.py", download_dir)
     ver_latest = get_cli_ver(f"{download_dir}/install.py")
 
-    file = f"hub-{verlatest}"
-    download_file(file, download_dir)
-    unpack_file(file, download_dir)
-    replace_files(download_dir, MY_HOME)
+    new_dir = f"{BASE_BACKUP_DIR}/{now}_{ver_latest}_LATEST_DOWNLOAD"
+    os.system(f"mv {download_dir} {new_dir}")
+
+    file = f"pgedge-cli-{ver_latest}.tgz"
+    download_file(file, new_dir)
+    unpack_file(file, new_dir)
+
+    replace_files(new_dir, MY_HOME)
 
     return
 
