@@ -1,4 +1,4 @@
-cmd="~/venv/bin/aws --region $REGION s3 sync $BUCKET/IN . $1 $2"
+cmd="aws --region $REGION s3 sync $BUCKET/IN . $1 $2"
 echo $cmd
 sleep 3
 
