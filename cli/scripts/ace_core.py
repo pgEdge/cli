@@ -19,7 +19,7 @@ import ace_db
 import cluster
 import util
 import ace_config as config
-from ace_db import TableDiffTask
+from ace_db import TableDiffTask, TableRepairTask
 from ace import AceException
 
 
@@ -239,7 +239,7 @@ def compare_checksums(shared_objects, worker_state, batch):
                 result_queue.append(config.BLOCK_OK)
 
 
-def table_diff_core(td_task: TableDiffTask):
+def table_diff(td_task: TableDiffTask):
     """Efficiently compare tables across cluster using checksums and blocks of rows"""
 
     simple_primary_key = True
@@ -489,140 +489,32 @@ def table_diff_core(td_task: TableDiffTask):
     ace_db.update_ace_task(td_task)
 
 
-def table_repair(
-    cluster_name,
-    diff_file,
-    source_of_truth,
-    table_name,
-    dbname=None,
-    dry_run=False,
-    quiet=False,
-    upsert_only=False,
-    generate_report=False,
-):
+def table_repair(tr_task: TableRepairTask):
     """Apply changes from a table-diff source of truth to destination table"""
     import pandas as pd
 
-    quiet_mode = quiet
-
-    # Check if diff_file exists on disk
-    if not os.path.exists(diff_file):
-        util.exit_message(f"Diff file {diff_file} does not exist")
-
-    if type(dry_run) is int:
-        if dry_run < 0 or dry_run > 1:
-            util.exit_message("Dry run should be True (1) or False (0)")
-        dry_run = bool(dry_run)
-
-    if type(dry_run) is not bool:
-        util.exit_message("Dry run should be True (1) or False (0)")
-
-    util.check_cluster_exists(cluster_name)
-    util.message(
-        f"Cluster {cluster_name} exists", p_state="success", quiet_mode=quiet_mode
-    )
-
-    nm_lst = table_name.split(".")
-    if len(nm_lst) != 2:
-        util.exit_message(f"TableName {table_name} must be of form 'schema.table_name'")
-
-    l_schema = nm_lst[0]
-    l_table = nm_lst[1]
-
-    db, pg, node_info = cluster.load_json(cluster_name)
-
-    cluster_nodes = []
-    database = {}
-
-    if dbname:
-        for db_entry in db:
-            if db_entry["db_name"] == dbname:
-                database = db_entry
-                break
-    else:
-        database = db[0]
-
-    if not database:
-        util.exit_message(f"Database '{dbname}' not found in cluster '{cluster_name}'")
-
-    # Combine db and cluster_nodes into a single json
-    for node in node_info:
-        combined_json = {**database, **node}
-        cluster_nodes.append(combined_json)
-
-    # Check to see if source_of_truth node is present in cluster
-    if not any(node.get("name") == source_of_truth for node in cluster_nodes):
-        util.exit_message(
-            f"Source of truth node {source_of_truth} not present in cluster"
-        )
-
     start_time = datetime.now()
+    conns = {}
 
-    if generate_report:
+    for params in tr_task.conn_params:
+        conns[tr_task.fields.host_map[params["host"]]] = psycopg.connect(**params)
+
+    if tr_task.generate_report:
         report = dict()
         report["time_stamp"] = datetime.now().strftime("%m/%d/%Y, %H:%M:%S")
         report["arguments"] = {
-            "cluster_name": cluster_name,
-            "diff_file": diff_file,
-            "source_of_truth": source_of_truth,
-            "table_name": table_name,
-            "dbname": dbname,
-            "dry_run": dry_run,
-            "quiet": quiet,
-            "upsert_only": upsert_only,
-            "generate_report": generate_report,
+            "cluster_name": tr_task.cluster_name,
+            "diff_file": tr_task.diff_file,
+            "source_of_truth": tr_task.source_of_truth,
+            "table_name": tr_task._table_name,
+            "dbname": tr_task._dbname,
+            "dry_run": tr_task.dry_run,
+            "quiet": tr_task.quiet_mode,
+            "upsert_only": tr_task.upsert_only,
+            "generate_report": tr_task.generate_report,
         }
-        report["database"] = database["db_name"]
+        report["database"] = tr_task.fields.database
         report["changes"] = dict()
-
-    conns = {}
-    try:
-        for nd in cluster_nodes:
-            conns[nd["name"]] = psycopg.connect(
-                dbname=nd["db_name"],
-                user=nd["db_user"],
-                password=nd["db_password"],
-                host=nd["public_ip"],
-                port=nd.get("port", 5432),
-            )
-
-    except Exception as e:
-        util.exit_message("Error in diff_tbls() Getting Connections:" + str(e), 1)
-
-    util.message(
-        "Connections successful to nodes in cluster",
-        p_state="success",
-        quiet_mode=quiet_mode,
-    )
-
-    cols = None
-    key = None
-
-    for conn in conns.values():
-        curr_cols = ace.get_cols(conn, l_schema, l_table)
-        curr_key = ace.get_key(conn, l_schema, l_table)
-
-        if not curr_cols:
-            util.exit_message(f"Invalid table name '{table_name}'")
-        if not curr_key:
-            util.exit_message(f"No primary key found for '{table_name}'")
-
-        if (not cols) and (not key):
-            cols = curr_cols
-            key = curr_key
-            continue
-
-        if (curr_cols != cols) or (curr_key != key):
-            util.exit_message("Table schemas don't match")
-
-        cols = curr_cols
-        key = curr_key
-
-    util.message(
-        f"Table {table_name} is comparable across nodes",
-        p_state="success",
-        quiet_mode=quiet_mode,
-    )
 
     """
     If the diff-file is not a valid json, then we throw an error message and exit.
@@ -651,7 +543,7 @@ def table_repair(
     target table. We need to handle this case.
     """
     try:
-        diff_json = json.loads(open(diff_file, "r").read())
+        diff_json = json.loads(open(tr_task.diff_file, "r").read())
     except Exception:
         util.exit_message("Could not load diff file as JSON")
 
@@ -733,7 +625,7 @@ def table_repair(
     true_rows = [
         entry
         for node_pair in diff_json.keys()
-        for entry in diff_json[node_pair].get(source_of_truth, [])
+        for entry in diff_json[node_pair].get(tr_task.source_of_truth, [])
     ]
 
     # Collect all rows from our source of truth node and dedupe
@@ -750,7 +642,8 @@ def table_repair(
 
     # XXX: Fix dry run later
     nodes_to_repair = ",".join(
-        [nd["name"] for nd in cluster_nodes if nd["name"] != source_of_truth]
+        [nd["name"] 
+         for nd in tr_task.cluster_nodes if nd["name"] != tr_task.source_of_truth]
     )
     dry_run_msg = (
         "######## DRY RUN ########\n\n"
@@ -758,28 +651,29 @@ def table_repair(
         f"{nodes_to_repair}\n\n"
         "######## END DRY RUN ########"
     )
-    if dry_run:
-        util.message(dry_run_msg, p_state="alert", quiet_mode=quiet_mode)
+    if tr_task.dry_run:
+        util.message(dry_run_msg, p_state="alert", quiet_mode=tr_task.quiet_mode)
         return
 
-    cols_list = cols.split(",")
+    cols_list = tr_task.cols.split(",")
     # Remove metadata columsn "_Spock_CommitTS_" and "_Spock_CommitOrigin_"
     # from cols_list
     cols_list = [col for col in cols_list if not col.startswith("_Spock_")]
     simple_primary_key = True
     keys_list = []
 
-    if len(key.split(",")) > 1:
+    if len(tr_task.key.split(",")) > 1:
         simple_primary_key = False
-        keys_list = key.split(",")
+        keys_list = tr_task.key.split(",")
 
     total_upserted = {}
     total_deleted = {}
 
     # Gets types of each column in table
-    table_types = ace.get_row_types(conns[source_of_truth], l_table)
+    table_types = ace.get_row_types(conns[tr_task.source_of_truth],
+                                    tr_task.fields.l_table)
 
-    if upsert_only:
+    if tr_task.upsert_only:
         deletes_skipped = dict()
 
     for node_pair in diff_json.keys():
@@ -788,22 +682,22 @@ def table_repair(
         true_rows = (
             [
                 tuple(str(x) for x in entry.values())
-                for entry in diff_json[node_pair][source_of_truth]
+                for entry in diff_json[node_pair][tr_task.source_of_truth]
             ]
-            if source_of_truth in [node1, node2]
+            if tr_task.source_of_truth in [node1, node2]
             else true_rows
         )
 
         divergent_rows = []
         divergent_node = None
 
-        if node1 == source_of_truth:
+        if node1 == tr_task.source_of_truth:
             divergent_rows = [
                 tuple(str(x) for x in row.values())
                 for row in diff_json[node_pair][node2]
             ]
             divergent_node = node2
-        elif node2 == source_of_truth:
+        elif node2 == tr_task.source_of_truth:
             divergent_rows = [
                 tuple(str(x) for x in row.values())
                 for row in diff_json[node_pair][node1]
@@ -843,13 +737,13 @@ def table_repair(
         """
         for row in rows_to_upsert_json:
             if simple_primary_key:
-                upsert_lookup[row[key]] = 1
+                upsert_lookup[row[tr_task.key]] = 1
             else:
                 upsert_lookup[tuple(row[col] for col in keys_list)] = 1
 
         for entry in rows_to_delete_json:
             if simple_primary_key:
-                if entry[key] in upsert_lookup:
+                if entry[tr_task.key] in upsert_lookup:
                     continue
             else:
                 if tuple(entry[col] for col in keys_list) in upsert_lookup:
@@ -867,7 +761,8 @@ def table_repair(
 
         if rows_to_delete:
             if simple_primary_key:
-                delete_keys = tuple((row[key],) for row in filtered_rows_to_delete)
+                delete_keys = tuple((row[tr_task.key],)
+                                    for row in filtered_rows_to_delete)
             else:
                 delete_keys = tuple(
                     tuple(row[col] for col in keys_list)
@@ -880,13 +775,13 @@ def table_repair(
         """
         if simple_primary_key:
             update_sql = f"""
-            INSERT INTO {table_name}
+            INSERT INTO {tr_task._table_name}
             VALUES ({','.join(['%s'] * len(cols_list))})
-            ON CONFLICT ("{key}") DO UPDATE SET
+            ON CONFLICT ("{tr_task.key}") DO UPDATE SET
             """
         else:
             update_sql = f"""
-            INSERT INTO {table_name}
+            INSERT INTO {tr_task.table_name}
             VALUES ({','.join(['%s'] * len(cols_list))})
             ON CONFLICT
             ({','.join(['"' + col + '"' for col in keys_list])}) DO UPDATE SET
@@ -901,12 +796,12 @@ def table_repair(
 
         if simple_primary_key:
             delete_sql = f"""
-            DELETE FROM {table_name}
-            WHERE "{key}" = %s;
+            DELETE FROM {tr_task.table_name}
+            WHERE "{tr_task.key}" = %s;
             """
         else:
             delete_sql = f"""
-            DELETE FROM {table_name}
+            DELETE FROM {tr_task.table_name}
             WHERE
             """
 
@@ -924,7 +819,7 @@ def table_repair(
         if spock_version >= 4.0:
             cur.execute("SELECT spock.repair_mode(true);")
 
-        if generate_report:
+        if tr_task.generate_report:
             report["changes"][divergent_node] = dict()
 
         """
@@ -962,18 +857,18 @@ def table_repair(
 
             # Performing the upsert
             cur.executemany(update_sql, upsert_tuples)
-            if generate_report:
+            if tr_task.generate_report:
                 report["changes"][divergent_node]["upserted_rows"] = [
                     dict(zip(cols_list, tup)) for tup in upsert_tuples
                 ]
 
-        if delete_keys and not upsert_only:
+        if delete_keys and not tr_task.upsert_only:
             # Performing the deletes
             if len(delete_keys) > 0:
                 cur.executemany(delete_sql, delete_keys)
-                if generate_report:
+                if tr_task.generate_report:
                     report["changes"][divergent_node]["deleted_rows"] = delete_keys
-        elif delete_keys and upsert_only:
+        elif delete_keys and tr_task.upsert_only:
             deletes_skipped[divergent_node] = filtered_rows_to_delete
 
         if spock_version >= 4.0:
@@ -981,7 +876,7 @@ def table_repair(
 
         conn.commit()
 
-    if upsert_only:
+    if tr_task.upsert_only:
 
         def compare_values(val1: dict, val2: dict) -> bool:
             if val1.keys() != val2.keys():
@@ -994,7 +889,7 @@ def table_repair(
         for nd_name, values in deletes_skipped.items():
             for value in values:
                 if simple_primary_key:
-                    full_key = value[key]
+                    full_key = value[tr_task.key]
                 else:
                     full_key = tuple(value[pkey_part] for pkey_part in keys_list)
 
@@ -1020,11 +915,11 @@ def table_repair(
         # }
         # so `2`, `3`, `4`, `5` need to be inserted into n1, `2` in n3, and `3` into n2
 
-        if generate_report:
-            report["changes"][source_of_truth] = dict()
-            report["changes"][source_of_truth]["upserted_rows"] = []
-            report["changes"][source_of_truth]["deleted_rows"] = []
-            report["changes"][source_of_truth]["missing_rows"] = [
+        if tr_task.generate_report:
+            report["changes"][tr_task.source_of_truth] = dict()
+            report["changes"][tr_task.source_of_truth]["upserted_rows"] = []
+            report["changes"][tr_task.source_of_truth]["deleted_rows"] = []
+            report["changes"][tr_task.source_of_truth]["missing_rows"] = [
                 {"row": values, "present_in": list(nodes)}
                 for values, nodes in upsert_dict.values()
             ]
@@ -1033,12 +928,13 @@ def table_repair(
     run_time_str = f"{run_time:.2f}"
 
     util.message(
-        f"Successfully applied diffs to {table_name} in cluster {cluster_name}\n",
+        f"Successfully applied diffs to {tr_task._table_name} in cluster"
+        f"{tr_task.cluster_name}\n",
         p_state="success",
-        quiet_mode=quiet_mode,
+        quiet_mode=tr_task.quiet_mode,
     )
 
-    if generate_report:
+    if tr_task.generate_report:
         now = datetime.now()
         report_folder = "reports"
         report["run_time"] = run_time
@@ -1059,13 +955,13 @@ def table_repair(
         json.dump(report, open(filename, "w"), default=str, indent=2)
         print(f"Wrote report to {filename}")
 
-    util.message("*** SUMMARY ***\n", p_state="info", quiet_mode=quiet_mode)
+    util.message("*** SUMMARY ***\n", p_state="info", quiet_mode=tr_task.quiet_mode)
 
     for node in total_upserted.keys():
         util.message(
             f"{node} UPSERTED = {total_upserted[node]} rows",
             p_state="info",
-            quiet_mode=quiet_mode,
+            quiet_mode=tr_task.quiet_mode,
         )
 
     print()
@@ -1074,13 +970,13 @@ def table_repair(
         util.message(
             f"{node} DELETED = {total_deleted[node]} rows",
             p_state="info",
-            quiet_mode=quiet_mode,
+            quiet_mode=tr_task.quiet_mode,
         )
 
     util.message(
         f"RUN TIME = {run_time_str} seconds",
         p_state="info",
-        quiet_mode=quiet_mode,
+        quiet_mode=tr_task.quiet_mode,
     )
 
     if spock_version < 4.0:
@@ -1089,7 +985,7 @@ def table_repair(
             "an older spock version. Please do a manual check as repair may"
             "have caused further divergence",
             p_state="warning",
-            quiet_mode=quiet_mode,
+            quiet_mode=tr_task.quiet_mode,
         )
 
 
@@ -1533,7 +1429,7 @@ def repset_diff(
         util.message(
             f"\n\nCHECKING TABLE {table}...\n", p_state="info", quiet_mode=quiet_mode
         )
-        table_diff_core(cluster_name, table, quiet=quiet_mode)
+        table_diff(cluster_name, table, quiet=quiet_mode)
 
 
 def spock_diff(cluster_name, nodes):

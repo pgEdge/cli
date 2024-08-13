@@ -8,12 +8,35 @@ from datetime import datetime
 
 
 """
-Use a dataclass to store the raw inputs supplied by the user
+Use a dataclass to store the raw and processed inputs from the user
 """
 
 
 @dataclass
-class TableDiffTask:
+class Task:
+    task_id: str
+    task_type: str
+    task_status: str
+    task_context: str
+    started_at: datetime
+    finished_at: datetime
+    time_taken: float
+
+
+@dataclass
+class DerivedFields:
+    l_schema: str = None
+    l_table: str = None
+    key: str = None
+    cols: list = None
+    conn_params: list = None
+    database: str = None
+    node_list: list = None
+    host_map: dict = None
+
+
+@dataclass
+class TableDiffTask(Task):
     # Unprocessed fields
     _table_name: str  # Required
     _dbname: str
@@ -28,23 +51,39 @@ class TableDiffTask:
     quiet_mode: bool
 
     # Task specific parameters
-    task_id: str
-    task_type: str
+    task_type: str = "table-diff"
     task_status: str = "RUNNING"
-    task_context: str = None
     diff_file_path: str = None
     started_at: datetime = datetime.now()
-    finished_at: datetime = None
-    time_taken: float = None
 
     # Derived fields
-    l_schema: str = None
-    l_table: str = None
-    node_list: list = None
-    key: str = None
-    cols: list = None
-    conn_params: list = None
-    database: str = None
+    fields: DerivedFields = DerivedFields()
+
+
+@dataclass
+class TableRepairTask(Task):
+    # Unprocessed fields
+    _table_name: str
+    _dbname: str
+
+    # Mandatory fields
+    cluster_name: str
+    diff_file: str
+    source_of_truth: str
+
+    # Task-specific parameters
+    task_type: str = "table-repair"
+    task_status: str = "RUNNING"
+    started_at: datetime = datetime.now()
+
+    # Optional fields
+    quiet_mode: bool = False
+    dry_run: bool = False
+    generate_report: bool = False
+    upsert_only: bool = False
+
+    # Derived fields
+    fields: DerivedFields = DerivedFields()
 
 
 sqlite_db = util.MY_LITE

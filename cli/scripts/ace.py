@@ -23,7 +23,7 @@ import cluster
 import util
 import ace_db
 import ace_config as config
-from ace_db import TableDiffTask
+from ace_db import TableDiffTask, TableRepairTask
 
 
 app = Flask(__name__)
@@ -397,7 +397,7 @@ def write_diffs_csv(diff_dict):
         )
 
 
-def check_and_process_inputs(td_task: TableDiffTask) -> TableDiffTask:
+def table_diff_checks(td_task: TableDiffTask) -> TableDiffTask:
 
     if not td_task.cluster_name or not td_task._table_name:
         raise AceException("cluster_name and table_name are required arguments")
@@ -566,17 +566,142 @@ def check_and_process_inputs(td_task: TableDiffTask) -> TableDiffTask:
     TableDiffArgs object with the processed values and return it
     """
 
+    """
+    We populate the derived fields of TableDiffTask here
+    """
     # Psycopg connection objects cannot be pickled easily,
     # so, we send the connection parameters instead
-    td_task.conn_params = conn_params
-    td_task.cols = cols
-    td_task.key = key
-    td_task.l_schema = l_schema
-    td_task.l_table = l_table
-    td_task.node_list = node_list
-    td_task.database = database
+    td_task.fields.conn_params = conn_params
+    td_task.fields.cols = cols
+    td_task.fields.key = key
+    td_task.fields.l_schema = l_schema
+    td_task.fields.l_table = l_table
+    td_task.fields.node_list = node_list
+    td_task.fields.database = database
 
     return td_task
+
+
+def table_repair_checks(tr_task: TableRepairTask) -> TableRepairTask:
+
+    # Check if diff_file exists on disk
+    if not os.path.exists(tr_task.diff_file):
+        util.exit_message(f"Diff file {tr_task.diff_file} does not exist")
+
+    if type(tr_task.dry_run) is int:
+        if tr_task.dry_run < 0 or tr_task.dry_run > 1:
+            util.exit_message("Dry run should be True (1) or False (0)")
+        tr_task.dry_run = bool(tr_task.dry_run)
+
+    if type(tr_task.dry_run) is not bool:
+        util.exit_message("Dry run should be True (1) or False (0)")
+
+    util.check_cluster_exists(tr_task.cluster_name)
+    util.message(
+        f"Cluster {tr_task.cluster_name} exists", p_state="success",
+        quiet_mode=tr_task.quiet_mode
+    )
+
+    nm_lst = tr_task._table_name.split(".")
+    if len(nm_lst) != 2:
+        util.exit_message(f"TableName {tr_task._table_name} must be of form"
+                          "'schema.table_name'")
+
+    l_schema = nm_lst[0]
+    l_table = nm_lst[1]
+
+    db, pg, node_info = cluster.load_json(tr_task.cluster_name)
+
+    cluster_nodes = []
+    database = {}
+
+    if tr_task._dbname:
+        for db_entry in db:
+            if db_entry["db_name"] == tr_task.dbname:
+                database = db_entry
+                break
+    else:
+        database = db[0]
+
+    if not database:
+        util.exit_message(f"Database '{tr_task._dbname}' not found in cluster '"
+                          f"{tr_task.cluster_name}'")
+
+    # Combine db and cluster_nodes into a single json
+    for node in node_info:
+        combined_json = {**database, **node}
+        cluster_nodes.append(combined_json)
+
+    # Check to see if source_of_truth node is present in cluster
+    if not any(node.get("name") == tr_task.source_of_truth for node in cluster_nodes):
+        util.exit_message(
+            f"Source of truth node {tr_task.source_of_truth} not present in cluster"
+        )
+
+    conns = {}
+    conn_params = []
+    host_map = {}
+
+    try:
+        for nd in cluster_nodes:
+            params = {
+                "dbname": nd["db_name"],
+                "user": nd["db_user"],
+                "password": nd["db_password"],
+                "host": nd["public_ip"],
+                "port": nd.get("port", 5432),
+            }
+            host_map[nd["public_ip"]] = nd["name"]
+            conn_params.append(params)
+            conns[nd["name"]] = psycopg.connect(**params)
+
+    except Exception as e:
+        util.exit_message("Error in diff_tbls() Getting Connections:" + str(e), 1)
+
+    util.message(
+        "Connections successful to nodes in cluster",
+        p_state="success",
+        quiet_mode=tr_task.quiet_mode,
+    )
+
+    cols = None
+    key = None
+
+    for conn in conns.values():
+        curr_cols = get_cols(conn, l_schema, l_table)
+        curr_key = get_key(conn, l_schema, l_table)
+
+        if not curr_cols:
+            util.exit_message(f"Invalid table name '{tr_task._table_name}'")
+        if not curr_key:
+            util.exit_message(f"No primary key found for '{tr_task._table_name}'")
+
+        if (not cols) and (not key):
+            cols = curr_cols
+            key = curr_key
+            continue
+
+        if (curr_cols != cols) or (curr_key != key):
+            util.exit_message("Table schemas don't match")
+
+        cols = curr_cols
+        key = curr_key
+
+    util.message(
+        f"Table {tr_task._table_name} is comparable across nodes",
+        p_state="success",
+        quiet_mode=tr_task.quiet_mode,
+    )
+
+    """
+    Derived fields for TableRepairTask
+    """
+    tr_task.fields.cols = cols
+    tr_task.fields.key = key
+    tr_task.fields.l_schema = l_schema
+    tr_task.fields.l_table = l_table
+    tr_task.fields.conn_params = conn_params
+    tr_task.fields.host_map = host_map
 
 
 @app.route("/ace/table-diff", methods=["GET"])
@@ -608,9 +733,9 @@ def table_diff_api():
             quiet_mode=quiet,
         )
 
-        td_task = check_and_process_inputs(raw_args)
+        td_task = table_diff_checks(raw_args)
         ace_db.create_ace_task(td_task=td_task)
-        scheduler.add_job(ace_core.table_diff_core, args=(td_task,))
+        scheduler.add_job(ace_core.table_diff, args=(td_task,))
 
         return jsonify({"task_id": task_id, "submitted_at": datetime.now().isoformat()})
     except AceException as e:
@@ -663,16 +788,46 @@ def table_diff_cli(
             batch_size=batch_size,
             quiet_mode=quiet,
         )
-        td_task = check_and_process_inputs(raw_args)
+        td_task = table_diff_checks(raw_args)
         ace_db.create_ace_task(td_task=td_task)
-        ace_core.table_diff_core(td_task)
+        ace_core.table_diff(td_task)
     except AceException as e:
         util.exit_message(str(e))
 
 
-def table_repair_cli():
-    pass
+def table_repair_cli(
+    cluster_name,
+    diff_file,
+    source_of_truth,
+    table_name,
+    dbname=None,
+    dry_run=False,
+    quiet=False,
+    generate_report=False,
+    upsert_only=False,
+):
 
+    task_id = ace_db.generate_task_id()
+
+    try:
+        raw_args = TableRepairTask(
+            task_id=task_id,
+            task_type="table-repair",
+            cluster_name=cluster_name,
+            diff_file=diff_file,
+            source_of_truth=source_of_truth,
+            _table_name=table_name,
+            _dbname=dbname,
+            dry_run=dry_run,
+            quiet_mode=quiet,
+            generate_report=generate_report,
+            upsert_only=upsert_only,
+        )
+        tr_task = table_repair_checks(raw_args)
+        ace_db.create_ace_task(tr_task=tr_task)
+        ace_core.table_repair(tr_task)
+    except AceException as e:
+        util.exit_message(str(e))
 
 def table_rerun_cli():
     pass
