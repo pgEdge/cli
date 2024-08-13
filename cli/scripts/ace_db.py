@@ -113,14 +113,21 @@ def create_ace_task(td_task: TableDiffTask):
         util.fatal_sql_error(e, sql, "create_ace_task()")
 
 
-def get_ace_task_by_id(task_id):
-    try:
-        c = local_db_conn.cursor()
-        sql = "SELECT * FROM ace_tasks WHERE task_id = ?"
-        c.execute(sql, (task_id,))
-        return c.fetchone()
-    except Exception as e:
-        util.fatal_sql_error(e, sql, "get_ace_task_by_id()")
+def get_ace_task_by_id(task_id) -> dict:
+    c = local_db_conn.cursor()
+    sql = "SELECT * FROM ace_tasks WHERE task_id = ?"
+
+    # We are using a paramterised query here, so there's no
+    # need to explicitly sanitise the input
+    c.execute(sql, (task_id,))
+    row = c.fetchone()
+
+    if not row:
+        return None
+
+    colnames = [desc[0] for desc in c.description]
+    task_details = dict(zip(colnames, row))
+    return task_details
 
 
 def update_ace_task(td_task: TableDiffTask):

@@ -1,0 +1,17 @@
+import os
+
+
+#  Default values for ACE table-diff
+MAX_DIFF_ROWS = 10000
+MIN_ALLOWED_BLOCK_SIZE = 1000
+MAX_ALLOWED_BLOCK_SIZE = 100000
+BLOCK_ROWS_DEFAULT = os.environ.get("ACE_BLOCK_ROWS", 10000)
+MAX_CPU_RATIO_DEFAULT = os.environ.get("ACE_MAX_CPU_RATIO", 0.6)
+BATCH_SIZE_DEFAULT = os.environ.get("ACE_BATCH_SIZE", 10)
+
+
+# Return codes for compare_checksums
+BLOCK_OK = 0
+MAX_DIFFS_EXCEEDED = 1
+BLOCK_MISMATCH = 2
+BLOCK_ERROR = 3
