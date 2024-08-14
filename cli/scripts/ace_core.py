@@ -243,7 +243,7 @@ def table_diff(td_task: TableDiffTask):
     """Efficiently compare tables across cluster using checksums and blocks of rows"""
 
     simple_primary_key = True
-    if len(td_task.key.split(",")) > 1:
+    if len(td_task.fields.key.split(",")) > 1:
         simple_primary_key = False
 
     row_count = 0
@@ -251,12 +251,12 @@ def table_diff(td_task: TableDiffTask):
     conn_with_max_rows = None
     table_types = None
 
-    for params in td_task.conn_params:
+    for params in td_task.fields.conn_params:
         conn = psycopg.connect(**params)
         if not table_types:
-            table_types = ace.get_row_types(conn, td_task.l_table)
+            table_types = ace.get_row_types(conn, td_task.fields.l_table)
 
-        rows = ace.get_row_count(conn, td_task.l_schema, td_task.l_table)
+        rows = ace.get_row_count(conn, td_task.fields.l_schema, td_task.fields.l_table)
         total_rows += rows
         if rows > row_count:
             row_count = rows
@@ -278,18 +278,20 @@ def table_diff(td_task: TableDiffTask):
 
     if simple_primary_key:
         pkey_sql = sql.SQL("SELECT {key} FROM {table_name} ORDER BY {key}").format(
-            key=sql.Identifier(td_task.key),
+            key=sql.Identifier(td_task.fields.key),
             table_name=sql.SQL("{}.{}").format(
-                sql.Identifier(td_task.l_schema), sql.Identifier(td_task.l_table)
+                sql.Identifier(td_task.fields.l_schema),
+                sql.Identifier(td_task.fields.l_table)
             ),
         )
     else:
         pkey_sql = sql.SQL("SELECT {key} FROM {table_name} ORDER BY {key}").format(
             key=sql.SQL(", ").join(
-                [sql.Identifier(col) for col in td_task.key.split(",")]
+                [sql.Identifier(col) for col in td_task.fields.key.split(",")]
             ),
             table_name=sql.SQL("{}.{}").format(
-                sql.Identifier(td_task.l_schema), sql.Identifier(td_task.l_table)
+                sql.Identifier(td_task.fields.l_schema),
+                sql.Identifier(td_task.fields.l_table)
             ),
         )
 
@@ -357,18 +359,18 @@ def table_diff(td_task: TableDiffTask):
     to capture diffs even if rows are absent in one node
     """
 
-    cols_list = td_task.cols.split(",")
+    cols_list = td_task.fields.cols.split(",")
     cols_list = [col for col in cols_list if not col.startswith("_Spock_")]
 
     # Shared variables needed by all workers
     shared_objects = {
         "cluster_name": td_task.cluster_name,
-        "database": td_task.database,
-        "node_list": td_task.node_list,
-        "schema_name": td_task.l_schema,
-        "table_name": td_task.l_table,
+        "database": td_task.fields.database,
+        "node_list": td_task.fields.node_list,
+        "schema_name": td_task.fields.l_schema,
+        "table_name": td_task.fields.l_table,
         "cols_list": cols_list,
-        "p_key": td_task.key,
+        "p_key": td_task.fields.key,
         "block_rows": td_task.block_rows,
         "simple_primary_key": simple_primary_key,
     }
@@ -482,10 +484,11 @@ def table_diff(td_task: TableDiffTask):
         quiet_mode=td_task.quiet_mode,
     )
 
-    td_task.task_status = "COMPLETED"
-    td_task.finished_at = datetime.now()
-    td_task.time_taken = run_time
-    td_task.task_context = json.dumps({"total_rows": total_rows, "mismatch": mismatch})
+    td_task.scheduler.task_status = "COMPLETED"
+    td_task.scheduler.finished_at = datetime.now()
+    td_task.scheduler.time_taken = run_time
+    td_task.scheduler.task_context = json.dumps({"total_rows": total_rows,
+                                                 "mismatch": mismatch})
     ace_db.update_ace_task(td_task)
 
 

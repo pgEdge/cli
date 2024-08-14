@@ -776,8 +776,6 @@ def table_diff_cli(
 
     try:
         raw_args = TableDiffTask(
-            task_id=task_id,
-            task_type="table-diff",
             cluster_name=cluster_name,
             _table_name=table_name,
             _dbname=dbname,
@@ -788,6 +786,7 @@ def table_diff_cli(
             batch_size=batch_size,
             quiet_mode=quiet,
         )
+        raw_args.scheduler.task_id = task_id
         td_task = table_diff_checks(raw_args)
         ace_db.create_ace_task(td_task=td_task)
         ace_core.table_diff(td_task)

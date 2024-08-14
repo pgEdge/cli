@@ -14,13 +14,13 @@ Use a dataclass to store the raw and processed inputs from the user
 
 @dataclass
 class Task:
-    task_id: str
-    task_type: str
-    task_status: str
-    task_context: str
-    started_at: datetime
-    finished_at: datetime
-    time_taken: float
+    task_id: str = None
+    task_type: str = None
+    task_status: str = None
+    task_context: str = None
+    started_at: datetime = None
+    finished_at: datetime = None
+    time_taken: float = None
 
 
 @dataclass
@@ -36,7 +36,7 @@ class DerivedFields:
 
 
 @dataclass
-class TableDiffTask(Task):
+class TableDiffTask():
     # Unprocessed fields
     _table_name: str  # Required
     _dbname: str
@@ -49,19 +49,21 @@ class TableDiffTask(Task):
     output: str
     batch_size: int
     quiet_mode: bool
+    diff_file_path: str = None
+
+    scheduler: Task = Task()
 
     # Task specific parameters
-    task_type: str = "table-diff"
-    task_status: str = "RUNNING"
-    diff_file_path: str = None
-    started_at: datetime = datetime.now()
+    scheduler.task_type = "table-diff"
+    scheduler.task_status = "RUNNING"
+    scheduler.started_at = datetime.now()
 
     # Derived fields
     fields: DerivedFields = DerivedFields()
 
 
 @dataclass
-class TableRepairTask(Task):
+class TableRepairTask():
     # Unprocessed fields
     _table_name: str
     _dbname: str
@@ -72,9 +74,10 @@ class TableRepairTask(Task):
     source_of_truth: str
 
     # Task-specific parameters
-    task_type: str = "table-repair"
-    task_status: str = "RUNNING"
-    started_at: datetime = datetime.now()
+    scheduler: Task = Task()
+    scheduler.task_type = "table-repair"
+    scheduler.task_status = "RUNNING"
+    scheduler.started_at = datetime.now()
 
     # Optional fields
     quiet_mode: bool = False
@@ -134,17 +137,17 @@ def create_ace_task(td_task: TableDiffTask):
         c.execute(
             sql,
             (
-                td_task.task_id,
-                td_task.task_type,
+                td_task.scheduler.task_id,
+                td_task.scheduler.task_type,
                 td_task.cluster_name,
-                td_task.l_schema,
-                td_task.l_table,
-                td_task.task_status,
-                td_task.task_context,
+                td_task.fields.l_schema,
+                td_task.fields.l_table,
+                td_task.scheduler.task_status,
+                td_task.scheduler.task_context,
                 td_task.diff_file_path,
-                td_task.started_at,
-                td_task.finished_at,
-                td_task.time_taken,
+                td_task.scheduler.started_at,
+                td_task.scheduler.finished_at,
+                td_task.scheduler.time_taken,
             ),
         )
         local_db_conn.commit()
@@ -185,13 +188,13 @@ def update_ace_task(td_task: TableDiffTask):
         c.execute(
             sql,
             (
-                td_task.task_status,
-                json.dumps(td_task.task_context),
+                td_task.scheduler.task_status,
+                json.dumps(td_task.scheduler.task_context),
                 td_task.diff_file_path,
-                td_task.started_at.isoformat(timespec="milliseconds"),
-                td_task.finished_at.isoformat(timespec="milliseconds"),
-                td_task.time_taken,
-                td_task.task_id,
+                td_task.scheduler.started_at.isoformat(timespec="milliseconds"),
+                td_task.scheduler.finished_at.isoformat(timespec="milliseconds"),
+                td_task.scheduler.time_taken,
+                td_task.scheduler.task_id,
             ),
         )
         local_db_conn.commit()
