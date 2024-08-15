@@ -249,6 +249,8 @@ def _SynopsisSection(component, actions_grouped_by_kind, spec, metadata,
     prfx = "localhost"
   elif "setup.py" in txt:
     prfx = "setup"
+  elif "update-cli.py" in txt:
+    prfx = "update-cli"
 
   txt = txt.replace(f"{prfx}.py", f"./pgedge {prfx}")
 

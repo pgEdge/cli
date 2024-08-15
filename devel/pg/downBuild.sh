@@ -4,12 +4,12 @@
 SPOCK_REPO=spock-private
 SPOCK_BRANCH=main
 
-v12=12.19
-v13=13.15
-v14=14.12
-v15=15.7
-v16=16.3
-v17=17beta1
+v12=12.20
+v13=13.16
+v14=14.13
+v15=15.8
+v16=16.4
+v17=17beta3
 
 UNAME=`uname`
 
