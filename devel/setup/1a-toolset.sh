@@ -46,7 +46,7 @@ if [ "$PLATFORM" == "el8" ] || [ "$PLATFORM" == "el9" ]; then
   $yum rpm-build squashfs-tools
   gem install fpm
 
-  $yum podman podman-docker podman-compose
+  $yum podman podman-compose
 
   rm -f install-rust.sh
   curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs > install-rust.sh 
