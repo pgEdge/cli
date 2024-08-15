@@ -41,7 +41,7 @@ permissionsV=1.3-1
 
 hypoV=1.4.1-1
 timescaleV=2.16.1-1
-profV=4.2.4-1
+profV=4.2.5-1
 bulkloadV=3.1.19-1
 partmanV=5.0.1-1
 
