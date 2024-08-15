@@ -268,11 +268,11 @@ INSERT INTO projects VALUES ('timescaledb', 'ext', 4, 0, 'hub',0, 'https://githu
 INSERT INTO releases VALUES ('timescaledb-pg15', 10, 'timescaledb', 'TimescaleDB', '', 'test', '', 1, 'POSTGRES', '', '');
 INSERT INTO releases VALUES ('timescaledb-pg16', 10, 'timescaledb', 'TimescaleDB', '', 'test', '', 1, 'POSTGRES', '', '');
 
-INSERT INTO versions VALUES ('timescaledb-pg15', '2.15.3-1', 'amd, arm', 1, '20240729', 'pg15', '', '');
-INSERT INTO versions VALUES ('timescaledb-pg16', '2.15.3-1', 'amd, arm', 1, '20240729', 'pg16', '', '');
+INSERT INTO versions VALUES ('timescaledb-pg15', '2.16.1-1', 'amd, arm', 1, '20240815', 'pg15', '', '');
+INSERT INTO versions VALUES ('timescaledb-pg16', '2.16.1-1', 'amd, arm', 1, '20240815', 'pg16', '', '');
 
-INSERT INTO versions VALUES ('timescaledb-pg15', '2.15.2-1', 'amd, arm', 0, '20240612', 'pg15', '', '');
-INSERT INTO versions VALUES ('timescaledb-pg16', '2.15.2-1', 'amd, arm', 0, '20240612', 'pg16', '', '');
+INSERT INTO versions VALUES ('timescaledb-pg15', '2.15.3-1', 'amd, arm', 0, '20240729', 'pg15', '', '');
+INSERT INTO versions VALUES ('timescaledb-pg16', '2.15.3-1', 'amd, arm', 0, '20240729', 'pg16', '', '');
 
 -- ## CURL ##############################
 INSERT INTO projects VALUES ('curl', 'ext', 4, 0, 'hub',0, 'https://github.com/pg_curl/pg_curl/releases',
@@ -300,17 +300,17 @@ INSERT INTO projects VALUES ('cron', 'ext', 4, 0, 'hub',0, 'https://github.com/c
 INSERT INTO releases VALUES ('cron-pg15', 10, 'cron', 'pgCron', '', 'prod', '', 1, 'POSTGRES', '', '');
 INSERT INTO releases VALUES ('cron-pg16', 10, 'cron', 'pgCron', '', 'prod', '', 1, 'POSTGRES', '', '');
 
-INSERT INTO versions VALUES ('cron-pg15', '1.6.3-1', 'amd, arm', 1, '20230729', 'pg15', '', '');
-INSERT INTO versions VALUES ('cron-pg16', '1.6.3-1', 'amd, arm', 1, '20230729', 'pg16', '', '');
+INSERT INTO versions VALUES ('cron-pg15', '1.6.4-1', 'amd, arm', 1, '20230815', 'pg15', '', '');
+INSERT INTO versions VALUES ('cron-pg16', '1.6.4-1', 'amd, arm', 1, '20230815', 'pg16', '', '');
 
-INSERT INTO versions VALUES ('cron-pg15', '1.6.2-1', 'amd, arm', 0, '20231112', 'pg15', '', '');
-INSERT INTO versions VALUES ('cron-pg16', '1.6.2-1', 'amd, arm', 0, '20231112', 'pg16', '', '');
+INSERT INTO versions VALUES ('cron-pg15', '1.6.3-1', 'amd, arm', 0, '20230729', 'pg15', '', '');
+INSERT INTO versions VALUES ('cron-pg16', '1.6.3-1', 'amd, arm', 0, '20230729', 'pg16', '', '');
 
 -- ## PGML ##############################
 INSERT INTO projects VALUES ('pgml', 'pge', 4, 0, 'hub', 1, 'https://github.com/postgresml/postgresml/tags',
   'pgml', 1, 'pgml.png', 'GPU Powered AI Extension', 'https://github.com/postgresml/postgresml', 'postgresml');
-INSERT INTO releases VALUES ('pgml-pg15', 4, 'pgml', 'PostgresML', '', 'prod', '', 1, 'MIT', '', '');
-INSERT INTO releases VALUES ('pgml-pg16', 4, 'pgml', 'PostgresML', '', 'prod', '', 1, 'MIT', '', '');
+INSERT INTO releases VALUES ('pgml-pg15', 4, 'pgml', 'PostgresML', '', 'test', '', 1, 'MIT', '', '');
+INSERT INTO releases VALUES ('pgml-pg16', 4, 'pgml', 'PostgresML', '', 'test', '', 1, 'MIT', '', '');
 
 INSERT INTO versions VALUES ('pgml-pg15', '2.9.2-1', 'amd', 1, '20240801', 'pg15', '', '');
 INSERT INTO versions VALUES ('pgml-pg16', '2.9.2-1', 'amd', 1, '20240801', 'pg16', '', '');
@@ -321,8 +321,11 @@ INSERT INTO projects VALUES ('vector', 'pge', 4, 0, 'hub', 1, 'https://github.co
 INSERT INTO releases VALUES ('vector-pg15', 4, 'vector', 'pgVector', '', 'prod', '', 1, 'pgEdge Community', '', '');
 INSERT INTO releases VALUES ('vector-pg16', 4, 'vector', 'pgVector', '', 'prod', '', 1, 'pgEdge Community', '', '');
 
-INSERT INTO versions VALUES ('vector-pg15', '0.7.1-1', 'amd, arm', 1, '20240612', 'pg15', '', '');
-INSERT INTO versions VALUES ('vector-pg16', '0.7.1-1', 'amd, arm', 1, '20240612', 'pg16', '', '');
+INSERT INTO versions VALUES ('vector-pg15', '0.7.4-1', 'amd, arm', 1, '20240815', 'pg15', '', '');
+INSERT INTO versions VALUES ('vector-pg16', '0.7.4-1', 'amd, arm', 1, '20240815', 'pg16', '', '');
+
+INSERT INTO versions VALUES ('vector-pg15', '0.7.1-1', 'amd, arm', 0, '20240612', 'pg15', '', '');
+INSERT INTO versions VALUES ('vector-pg16', '0.7.1-1', 'amd, arm', 0, '20240612', 'pg16', '', '');
 
 -- ## SNOWFLAKE #########################
 INSERT INTO projects VALUES ('snowflake', 'pge', 4, 0, 'hub', 1, 'https://github.com/pgedge/snowflake/tags',
