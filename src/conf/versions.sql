@@ -129,6 +129,7 @@ INSERT INTO categories VALUES (9,  87, 'Management & Monitoring', 'Manage/Monito
 INSERT INTO projects VALUES ('hub', 'app', 0, 0, 'hub', 0, 'https://github.com/pgedge/cli','',0,'','','','');
 INSERT INTO releases VALUES ('hub', 1, 'hub',  '', '', 'hidden', '', 1, '', '', '');
 
+INSERT INTO versions VALUES ('hub', '24.7.7',    '',  1, '20240819', '', '', '');
 INSERT INTO versions VALUES ('hub', '24.7.6',    '',  0, '20240731', '', '', '');
 INSERT INTO versions VALUES ('hub', '24.7.4',    '',  0, '20240710', '', '', '');
 INSERT INTO versions VALUES ('hub', '24.7.0',    '',  0, '20240608', '', '', '');
@@ -211,9 +212,9 @@ INSERT INTO releases VALUES ('plprofiler-pg15', 0, 'plprofiler',    'PL/Profiler
 INSERT INTO releases VALUES ('plprofiler-pg16', 0, 'plprofiler',    'PL/Profiler',  '', 'prod', '', 1, 'POSTGRES', '', '');
 INSERT INTO releases VALUES ('plprofiler-pg17', 0, 'plprofiler',    'PL/Profiler',  '', 'prod', '', 1, 'POSTGRES', '', '');
 
-INSERT INTO versions VALUES ('plprofiler-pg17', '4.2.5-1', 'amd, arm', 1, '20240815', 'pg17', '', '');
-INSERT INTO versions VALUES ('plprofiler-pg16', '4.2.5-1', 'amd, arm', 1, '20240815', 'pg16', '', '');
-INSERT INTO versions VALUES ('plprofiler-pg15', '4.2.5-1', 'amd, arm', 1, '20240815', 'pg15', '', '');
+INSERT INTO versions VALUES ('plprofiler-pg17', '4.2.5-1', 'amd, arm', 1, '20240819', 'pg17', '', '');
+INSERT INTO versions VALUES ('plprofiler-pg16', '4.2.5-1', 'amd, arm', 1, '20240819', 'pg16', '', '');
+INSERT INTO versions VALUES ('plprofiler-pg15', '4.2.5-1', 'amd, arm', 1, '20240819', 'pg15', '', '');
 
 INSERT INTO versions VALUES ('plprofiler-pg16', '4.2.4-1', 'amd, arm', 0, '20230914', 'pg16', '', '');
 INSERT INTO versions VALUES ('plprofiler-pg15', '4.2.4-1', 'amd, arm', 0, '20230914', 'pg15', '', '');
@@ -274,8 +275,8 @@ INSERT INTO projects VALUES ('timescaledb', 'ext', 4, 0, 'hub',0, 'https://githu
 INSERT INTO releases VALUES ('timescaledb-pg15', 10, 'timescaledb', 'TimescaleDB', '', 'test', '', 1, 'POSTGRES', '', '');
 INSERT INTO releases VALUES ('timescaledb-pg16', 10, 'timescaledb', 'TimescaleDB', '', 'test', '', 1, 'POSTGRES', '', '');
 
-INSERT INTO versions VALUES ('timescaledb-pg15', '2.16.1-1', 'amd, arm', 1, '20240815', 'pg15', '', '');
-INSERT INTO versions VALUES ('timescaledb-pg16', '2.16.1-1', 'amd, arm', 1, '20240815', 'pg16', '', '');
+INSERT INTO versions VALUES ('timescaledb-pg15', '2.16.1-1', 'amd, arm', 1, '20240819', 'pg15', '', '');
+INSERT INTO versions VALUES ('timescaledb-pg16', '2.16.1-1', 'amd, arm', 1, '20240819', 'pg16', '', '');
 
 INSERT INTO versions VALUES ('timescaledb-pg15', '2.15.3-1', 'amd, arm', 0, '20240729', 'pg15', '', '');
 INSERT INTO versions VALUES ('timescaledb-pg16', '2.15.3-1', 'amd, arm', 0, '20240729', 'pg16', '', '');
@@ -327,8 +328,8 @@ INSERT INTO projects VALUES ('vector', 'pge', 4, 0, 'hub', 1, 'https://github.co
 INSERT INTO releases VALUES ('vector-pg15', 4, 'vector', 'pgVector', '', 'prod', '', 1, 'pgEdge Community', '', '');
 INSERT INTO releases VALUES ('vector-pg16', 4, 'vector', 'pgVector', '', 'prod', '', 1, 'pgEdge Community', '', '');
 
-INSERT INTO versions VALUES ('vector-pg15', '0.7.4-1', 'amd, arm', 1, '20240815', 'pg15', '', '');
-INSERT INTO versions VALUES ('vector-pg16', '0.7.4-1', 'amd, arm', 1, '20240815', 'pg16', '', '');
+INSERT INTO versions VALUES ('vector-pg15', '0.7.4-1', 'amd, arm', 1, '20240819', 'pg15', '', '');
+INSERT INTO versions VALUES ('vector-pg16', '0.7.4-1', 'amd, arm', 1, '20240819', 'pg16', '', '');
 
 INSERT INTO versions VALUES ('vector-pg15', '0.7.1-1', 'amd, arm', 0, '20240612', 'pg15', '', '');
 INSERT INTO versions VALUES ('vector-pg16', '0.7.1-1', 'amd, arm', 0, '20240612', 'pg16', '', '');
@@ -464,7 +465,7 @@ INSERT INTO versions VALUES ('pgcat', '1.1.1', 'amd, arm', 1, '20240108', '', ''
 INSERT INTO projects VALUES ('bouncer', 'pge', 11, 5433, 'hub', 3, 'http://pgbouncer.org',
   'bouncer',  0, 'bouncer.png', 'Lightweight Connnection Pooler', 'http://pgbouncer.org', 'pg_bouncer, pgbouncer');
 INSERT INTO releases VALUES ('bouncer', 2, 'bouncer',  'pgBouncer', '', 'prod', '', 1, 'POSTGRES', '', '');
-INSERT INTO versions VALUES ('bouncer', '1.23.1-1', 'amd, arm', 1, '20240815', '', '', '');
+INSERT INTO versions VALUES ('bouncer', '1.23.1-1', 'amd, arm', 1, '20240819', '', '', '');
 
 -- ## BACKREST ##########################
 INSERT INTO projects VALUES ('backrest', 'pge', 11, 0, 'hub', 3, 'http://pgbackrest.org',
