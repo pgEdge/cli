@@ -19,6 +19,7 @@ P14=14.13-1
 ##P12=12.19-3
 
 vectorV=0.7.4-1
+bouncerV=1.23.1-1
 catV=1.1.1
 firwldV=1.2
 adminV=8.x

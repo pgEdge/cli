@@ -76,7 +76,7 @@ fire_list = [
 
 fire_contrib = ["node", "localhost"]
 
-native_list = ["backrest", "ansible", "patroni", "etcd"]
+native_list = ["backrest", "ansible", "patroni", "etcd", "bouncer"]
 
 mode_list_advanced = [
     "kill",
@@ -1382,11 +1382,13 @@ if p_mode in native_list:
         cmd = cmd + " " + args[n]
 
     bin_path = ""
-    if p_mode == "backrest":
+    if p_mode == "bouncer":
+       bin_path = os.path.join(MY_HOME, "bouncer", "bin", "pgbouncer")
+    elif p_mode == "backrest":
        bin_path = os.path.join(MY_HOME, "backrest", "backrest.py")
-    if p_mode == "etcd":
+    elif p_mode == "etcd":
        bin_path = os.path.join(MY_HOME, "etcd", "etcd.py")
-    if p_mode == "patroni":
+    elif p_mode == "patroni":
        bin_path = os.path.join(MY_HOME, "patroni", "patroni.py")
     elif p_mode == "ansible":
        bin_path = "/usr/local/bin/ansible"

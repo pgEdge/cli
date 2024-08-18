@@ -352,6 +352,7 @@ initPG () {
   fi
 
   if [ "$isEL" == "True" ]; then
+    initC "bouncer"      "bouncer"      "$bouncerV"  "$outPlat" "postgres/bouncer"  "" "" "nil"
     initC "backrest"     "backrest"     "$backrestV" "$outPlat" "postgres/backrest" "" "" "nil"
     initC "etcd"         "etcd"         "$etcdV"     "$outPlat" "etcd"              "" "" "nil"
     initC "pgcat"        "pgcat"        "$catV"      "$outPlat" "postgres/pgcat"    "" "" "nil"

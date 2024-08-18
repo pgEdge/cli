@@ -460,6 +460,12 @@ INSERT INTO projects VALUES ('pgcat', 'pge', 11, 5433, 'hub', 3, 'https://github
 INSERT INTO releases VALUES ('pgcat', 2, 'pgcat',  'pgCat', '', 'prod', '', 1, 'MIT', '', '');
 INSERT INTO versions VALUES ('pgcat', '1.1.1', 'amd, arm', 1, '20240108', '', '', '');
 
+-- ## BOUNCER ###########################
+INSERT INTO projects VALUES ('bouncer', 'pge', 11, 5433, 'hub', 3, 'http://pgbouncer.org',
+  'bouncer',  0, 'bouncer.png', 'Lightweight Connnection Pooler', 'http://pgbouncer.org', 'pg_bouncer, pgbouncer');
+INSERT INTO releases VALUES ('bouncer', 2, 'bouncer',  'pgBouncer', '', 'prod', '', 1, 'POSTGRES', '', '');
+INSERT INTO versions VALUES ('bouncer', '1.23.1-1', 'amd, arm', 1, '20240815', '', '', '');
+
 -- ## BACKREST ##########################
 INSERT INTO projects VALUES ('backrest', 'pge', 11, 0, 'hub', 3, 'http://pgbackrest.org',
   'backrest',  0, 'backrest.png', 'Backup & Restore', 'http://pgbackrest.org', 'pg_backrest, pgbackrest');
@@ -467,7 +473,6 @@ INSERT INTO releases VALUES ('backrest', 2, 'backrest',  'pgBackRest', '', 'prod
 
 INSERT INTO versions VALUES ('backrest', '2.53-1', 'amd, arm', 1, '20240729', '', '', '');
 INSERT INTO versions VALUES ('backrest', '2.52-1', 'amd, arm', 0, '20240612', '', '', '');
-INSERT INTO versions VALUES ('backrest', '2.51-1', 'amd, arm', 0, '20240410', '', '', '');
 
 -- ## FIREWALLD #########################
 INSERT INTO projects VALUES ('firewalld', 'app', 11, 0, '', 4, 'https://firewalld.org',
