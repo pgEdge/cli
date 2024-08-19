@@ -316,7 +316,7 @@ def table_diff(td_task: TableDiffTask):
             key=sql.Identifier(td_task.fields.key),
             table_name=sql.SQL("{}.{}").format(
                 sql.Identifier(td_task.fields.l_schema),
-                sql.Identifier(td_task.fields.l_table)
+                sql.Identifier(td_task.fields.l_table),
             ),
         )
     else:
@@ -326,7 +326,7 @@ def table_diff(td_task: TableDiffTask):
             ),
             table_name=sql.SQL("{}.{}").format(
                 sql.Identifier(td_task.fields.l_schema),
-                sql.Identifier(td_task.fields.l_table)
+                sql.Identifier(td_task.fields.l_table),
             ),
         )
 
@@ -519,11 +519,10 @@ def table_diff(td_task: TableDiffTask):
         quiet_mode=td_task.quiet_mode,
     )
 
-    td_task.task.task_status = "COMPLETED"
-    td_task.task.finished_at = datetime.now()
-    td_task.task.time_taken = run_time
-    td_task.task.task_context = json.dumps({"total_rows": total_rows,
-                                            "mismatch": mismatch})
+    td_task.scheduler.task_status = "COMPLETED"
+    td_task.scheduler.finished_at = datetime.now()
+    td_task.scheduler.time_taken = run_time
+    td_task.scheduler.task_context = {"total_rows": total_rows, "mismatch": mismatch}
     ace_db.update_ace_task(td_task)
 
 
@@ -534,7 +533,7 @@ def table_repair(tr_task: TableRepairTask):
     start_time = datetime.now()
     conns = {}
 
-    for params in tr_task.conn_params:
+    for params in tr_task.fields.conn_params:
         conns[tr_task.fields.host_map[params["host"]]] = psycopg.connect(**params)
 
     if tr_task.generate_report:
@@ -581,7 +580,7 @@ def table_repair(tr_task: TableRepairTask):
     target table. We need to handle this case.
     """
     try:
-        diff_json = json.loads(open(tr_task.diff_file, "r").read())
+        diff_json = json.loads(open(tr_task.diff_file_path, "r").read())
     except Exception:
         util.exit_message("Could not load diff file as JSON")
 
@@ -680,8 +679,11 @@ def table_repair(tr_task: TableRepairTask):
 
     # XXX: Fix dry run later
     nodes_to_repair = ",".join(
-        [nd["name"] 
-         for nd in tr_task.cluster_nodes if nd["name"] != tr_task.source_of_truth]
+        [
+            nd["name"]
+            for nd in tr_task.fields.cluster_nodes
+            if nd["name"] != tr_task.source_of_truth
+        ]
     )
     dry_run_msg = (
         "######## DRY RUN ########\n\n"
@@ -693,23 +695,24 @@ def table_repair(tr_task: TableRepairTask):
         util.message(dry_run_msg, p_state="alert", quiet_mode=tr_task.quiet_mode)
         return
 
-    cols_list = tr_task.cols.split(",")
+    cols_list = tr_task.fields.cols.split(",")
     # Remove metadata columsn "_Spock_CommitTS_" and "_Spock_CommitOrigin_"
     # from cols_list
     cols_list = [col for col in cols_list if not col.startswith("_Spock_")]
     simple_primary_key = True
     keys_list = []
 
-    if len(tr_task.key.split(",")) > 1:
+    if len(tr_task.fields.key.split(",")) > 1:
         simple_primary_key = False
-        keys_list = tr_task.key.split(",")
+        keys_list = tr_task.fields.key.split(",")
 
     total_upserted = {}
     total_deleted = {}
 
     # Gets types of each column in table
-    table_types = ace.get_row_types(conns[tr_task.source_of_truth],
-                                    tr_task.fields.l_table)
+    table_types = ace.get_row_types(
+        conns[tr_task.source_of_truth], tr_task.fields.l_table
+    )
 
     if tr_task.upsert_only:
         deletes_skipped = dict()
@@ -775,13 +778,13 @@ def table_repair(tr_task: TableRepairTask):
         """
         for row in rows_to_upsert_json:
             if simple_primary_key:
-                upsert_lookup[row[tr_task.key]] = 1
+                upsert_lookup[row[tr_task.fields.key]] = 1
             else:
                 upsert_lookup[tuple(row[col] for col in keys_list)] = 1
 
         for entry in rows_to_delete_json:
             if simple_primary_key:
-                if entry[tr_task.key] in upsert_lookup:
+                if entry[tr_task.fields.key] in upsert_lookup:
                     continue
             else:
                 if tuple(entry[col] for col in keys_list) in upsert_lookup:
@@ -799,8 +802,9 @@ def table_repair(tr_task: TableRepairTask):
 
         if rows_to_delete:
             if simple_primary_key:
-                delete_keys = tuple((row[tr_task.key],)
-                                    for row in filtered_rows_to_delete)
+                delete_keys = tuple(
+                    (row[tr_task.fields.key],) for row in filtered_rows_to_delete
+                )
             else:
                 delete_keys = tuple(
                     tuple(row[col] for col in keys_list)
@@ -815,7 +819,7 @@ def table_repair(tr_task: TableRepairTask):
             update_sql = f"""
             INSERT INTO {tr_task._table_name}
             VALUES ({','.join(['%s'] * len(cols_list))})
-            ON CONFLICT ("{tr_task.key}") DO UPDATE SET
+            ON CONFLICT ("{tr_task.fields.key}") DO UPDATE SET
             """
         else:
             update_sql = f"""
@@ -834,8 +838,8 @@ def table_repair(tr_task: TableRepairTask):
 
         if simple_primary_key:
             delete_sql = f"""
-            DELETE FROM {tr_task.table_name}
-            WHERE "{tr_task.key}" = %s;
+            DELETE FROM {tr_task._table_name}
+            WHERE "{tr_task.fields.key}" = %s;
             """
         else:
             delete_sql = f"""
