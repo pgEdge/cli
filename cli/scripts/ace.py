@@ -6,18 +6,20 @@
 import ast
 import json
 import os
+import sys
 import re
 import subprocess
-from datetime import datetime
+from datetime import datetime, timedelta
 import logging
 
 import ace_core
 import fire
 import psycopg
 from flask import Flask, request, jsonify
-from apscheduler import Event, JobAdded, Scheduler
-from apscheduler.datastores.memory import MemoryDataStore
-from apscheduler.eventbrokers.local import LocalEventBroker
+from apscheduler.schedulers.background import BackgroundScheduler
+from apscheduler.jobstores.memory import MemoryJobStore
+from apscheduler.executors.pool import ProcessPoolExecutor
+from apscheduler.events import EVENT_JOB_ADDED
 
 import cluster
 import util
@@ -28,14 +30,24 @@ from ace_db import TableDiffTask, TableRepairTask
 
 app = Flask(__name__)
 
+# Configure the root logger
 logging.basicConfig()
-logging.getLogger("apscheduler").setLevel(logging.DEBUG)
+
+# Create a StreamHandler for stdout
+stream_handler = logging.StreamHandler(sys.stdout)
+stream_handler.setLevel(logging.DEBUG)  # Set the desired log level
+formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+stream_handler.setFormatter(formatter)
+
+# Get the apscheduler logger and add the handler
+apscheduler_logger = logging.getLogger("apscheduler")
+apscheduler_logger.setLevel(logging.DEBUG)
+apscheduler_logger.addHandler(stream_handler)
 
 
 # apscheduler setup
-data_store = MemoryDataStore()
-event_broker = LocalEventBroker()
-scheduler = Scheduler(data_store, event_broker)
+scheduler = BackgroundScheduler(jobstores={"default": MemoryJobStore()},
+                                executors={"default": ProcessPoolExecutor(32)})
 
 
 """
@@ -718,8 +730,13 @@ def table_repair_checks(tr_task: TableRepairTask) -> TableRepairTask:
     tr_task.fields.host_map = host_map
 
 
+def test_function(td_task):
+    print("test function", td_task)
+
+
 @app.route("/ace/table-diff", methods=["GET"])
 def table_diff_api():
+    from ace_core import table_diff
     cluster_name = request.args.get("cluster_name")
     table_name = request.args.get("table_name")
     dbname = request.args.get("dbname")
@@ -727,15 +744,13 @@ def table_diff_api():
     max_cpu_ratio = request.args.get("max_cpu_ratio", config.MAX_CPU_RATIO_DEFAULT)
     output = request.args.get("output", "json")
     nodes = request.args.get("nodes", "all")
-    batch_size = request.args.get("batch_size", config.BATCH_SIZE_DEFAULT)
+    batch_size = request.args.get("batch_size", config.BATCH_SIZE_DEFAULT, type=int)
     quiet = request.args.get("quiet", False)
 
     task_id = ace_db.generate_task_id()
 
     try:
         raw_args = TableDiffTask(
-            task_id=task_id,
-            task_type="table-diff",
             cluster_name=cluster_name,
             _table_name=table_name,
             _dbname=dbname,
@@ -747,9 +762,11 @@ def table_diff_api():
             quiet_mode=quiet,
         )
 
+        raw_args.task.task_id = task_id
         td_task = table_diff_checks(raw_args)
+
         ace_db.create_ace_task(td_task=td_task)
-        scheduler.add_job(ace_core.table_diff, args=(td_task,))
+        scheduler.add_job(table_diff, args=(td_task,))
 
         return jsonify({"task_id": task_id, "submitted_at": datetime.now().isoformat()})
     except AceException as e:
@@ -800,7 +817,7 @@ def table_diff_cli(
             batch_size=batch_size,
             quiet_mode=quiet,
         )
-        raw_args.scheduler.task_id = task_id
+        raw_args.task.task_id = task_id
         td_task = table_diff_checks(raw_args)
         ace_db.create_ace_task(td_task=td_task)
         ace_core.table_diff(td_task)
@@ -913,16 +930,14 @@ def spock_diff_cli():
     pass
 
 
-def listener(event: Event) -> None:
-    if isinstance(event, JobAdded):
-        task_id = event.task_id
-        scheduler.run_job(task_id)
+def listener(event):
+    print("Event:", str(event))
 
 
 def start_ace():
     ace_db.create_ace_tasks_table()
-    scheduler.start_in_background()
-    scheduler.subscribe(listener, {JobAdded})
+    scheduler.start()
+    scheduler.add_listener(listener, EVENT_JOB_ADDED)
     app.run(host="127.0.0.1", port=5000, debug=True)
 
 

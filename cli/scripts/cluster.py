@@ -70,17 +70,19 @@ def ssh(cluster_name, node_name):
 
     util.exit_message(f"Could not locate node '{node_name}'")
 
-
-def get_cluster_info(cluster_name):
-    """Get the cluster directory and file path for a given cluster name."""
+def get_cluster_info(cluster_name, create=True):
+    """Returns the cluster directory and file path for a given cluster name."""
     cluster_dir = os.path.join(util.MY_HOME, BASE_DIR, cluster_name)
-    os.system("mkdir -p " + cluster_dir)
     cluster_file = os.path.join(cluster_dir, f"{cluster_name}.json")
-    return (cluster_dir, cluster_file)
+
+    if create:
+        os.makedirs(cluster_dir, exist_ok=True)
+
+    return cluster_dir, cluster_file
 
 def get_cluster_json(cluster_name):
     """Load the cluster JSON configuration file."""
-    cluster_dir, cluster_file = get_cluster_info(cluster_name)
+    cluster_dir, cluster_file = get_cluster_info(cluster_name, False)
 
     if not os.path.isdir(cluster_dir):
         util.exit_message(f"Cluster directory '{cluster_dir}' not found")
@@ -133,14 +135,20 @@ def load_json(cluster_name):
         "auto_start": pgedge.get("auto_start", "on")
     }
 
-    # Extract database information
     db = []
-    for database in pgedge.get("databases", []):
+    if "databases" not in pgedge:
+        util.exit_message("databases key is missing")
+
+    for database in pgedge.get("databases"):
+        if set(database.keys()) != {"db_name", "db_user", "db_password"}:
+            util.exit_message("Each database entry must contain db_name, db_user, and db_password")
+
         db.append({
             "db_name": database["db_name"],
             "db_user": database["db_user"],
             "db_password": database["db_password"]
         })
+
 
     # Extract node information
     nodes = []
@@ -186,7 +194,6 @@ def load_json(cluster_name):
 def json_validate(cluster_name):
     """Validate a Cluster Configuration JSON file"""
     parsed_json = get_cluster_json(cluster_name)
-
     # Check for required top-level keys
     required_top_keys = ["cluster_name", "pgedge", "node_groups"]
     for key in required_top_keys:
@@ -202,6 +209,14 @@ def json_validate(cluster_name):
 
     if parsed_json["json_version"] != "1.0":
         util.exit_message("jason_version must be 1.0")
+ 
+    # Check for databases
+    if "databases" not in parsed_json["pgedge"]:
+        util.exit_message("databases is missing")
+
+    for database in parsed_json["pgedge"]["databases"]:
+        if set(database.keys()) != {"db_name", "db_user", "db_password"}:
+            util.exit_message("Each database entry must contain db_name, db_user, and db_password")
 
     # Validate node_groups
     for node in parsed_json["node_groups"]:

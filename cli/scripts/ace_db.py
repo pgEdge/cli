@@ -51,12 +51,12 @@ class TableDiffTask():
     quiet_mode: bool
     diff_file_path: str = None
 
-    scheduler: Task = Task()
+    task: Task = Task()
 
     # Task specific parameters
-    scheduler.task_type = "table-diff"
-    scheduler.task_status = "RUNNING"
-    scheduler.started_at = datetime.now()
+    task.task_type = "table-diff"
+    task.task_status = "RUNNING"
+    task.started_at = datetime.now()
 
     # Derived fields
     fields: DerivedFields = DerivedFields()
@@ -137,17 +137,17 @@ def create_ace_task(td_task: TableDiffTask):
         c.execute(
             sql,
             (
-                td_task.scheduler.task_id,
-                td_task.scheduler.task_type,
+                td_task.task.task_id,
+                td_task.task.task_type,
                 td_task.cluster_name,
                 td_task.fields.l_schema,
                 td_task.fields.l_table,
-                td_task.scheduler.task_status,
-                td_task.scheduler.task_context,
+                td_task.task.task_status,
+                td_task.task.task_context,
                 td_task.diff_file_path,
-                td_task.scheduler.started_at,
-                td_task.scheduler.finished_at,
-                td_task.scheduler.time_taken,
+                td_task.task.started_at,
+                td_task.task.finished_at,
+                td_task.task.time_taken,
             ),
         )
         local_db_conn.commit()
@@ -188,13 +188,13 @@ def update_ace_task(td_task: TableDiffTask):
         c.execute(
             sql,
             (
-                td_task.scheduler.task_status,
-                json.dumps(td_task.scheduler.task_context),
+                td_task.task.task_status,
+                json.dumps(td_task.task.task_context),
                 td_task.diff_file_path,
-                td_task.scheduler.started_at.isoformat(timespec="milliseconds"),
-                td_task.scheduler.finished_at.isoformat(timespec="milliseconds"),
-                td_task.scheduler.time_taken,
-                td_task.scheduler.task_id,
+                td_task.task.started_at.isoformat(timespec="milliseconds"),
+                td_task.task.finished_at.isoformat(timespec="milliseconds"),
+                td_task.task.time_taken,
+                td_task.task.task_id,
             ),
         )
         local_db_conn.commit()

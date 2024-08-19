@@ -46,7 +46,7 @@ if [ "$PLATFORM" == "el8" ] || [ "$PLATFORM" == "el9" ]; then
   $yum rpm-build squashfs-tools
   gem install fpm
 
-  $yum podman podman-docker podman-compose
+  $yum podman podman-compose
 
   rm -f install-rust.sh
   curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs > install-rust.sh 
@@ -62,7 +62,8 @@ apt --version > /dev/null 2>&1
 rc=$?
 if [ $rc == "0" ]; then
   apt="sudo apt-get install -y"
-  $apt python3-dev python3-pip python3-venv gcc sqlite
+  $apt python3-dev python3-pip python3-venv gcc sqlite3
+  $apt podman podman-compose
 
   $apt ruby squashfs-tools
   sudo gem install fpm

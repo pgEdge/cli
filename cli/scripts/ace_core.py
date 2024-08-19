@@ -430,7 +430,6 @@ def table_diff(td_task: TableDiffTask):
         n_jobs=procs,
         shared_objects=shared_objects,
         use_worker_state=True,
-        use_dill=True,
     ) as pool:
         for result in pool.imap_unordered(
             compare_checksums,
@@ -520,11 +519,11 @@ def table_diff(td_task: TableDiffTask):
         quiet_mode=td_task.quiet_mode,
     )
 
-    td_task.scheduler.task_status = "COMPLETED"
-    td_task.scheduler.finished_at = datetime.now()
-    td_task.scheduler.time_taken = run_time
-    td_task.scheduler.task_context = json.dumps({"total_rows": total_rows,
-                                                 "mismatch": mismatch})
+    td_task.task.task_status = "COMPLETED"
+    td_task.task.finished_at = datetime.now()
+    td_task.task.time_taken = run_time
+    td_task.task.task_context = json.dumps({"total_rows": total_rows,
+                                            "mismatch": mismatch})
     ace_db.update_ace_task(td_task)
 
 
