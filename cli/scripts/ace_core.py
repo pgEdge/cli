@@ -1036,7 +1036,7 @@ def table_rerun_temptable(td_task: TableDiffTask) -> None:
     # load diff data and validate
     diff_data = json.load(open(td_task.diff_file_path, "r"))
     diff_keys = set()
-    key = td_task.key.split(',')
+    key = td_task.fields.key.split(',')
 
     # Simple pkey
     if len(key) == 1:
@@ -1056,7 +1056,7 @@ def table_rerun_temptable(td_task: TableDiffTask) -> None:
                     tuple(row[key_component] for key_component in key)
                 )
 
-    temp_table_name = f"temp_{td_task.task_id.lower()}_rerun"
+    temp_table_name = f"temp_{td_task.scheduler.task_id.lower()}_rerun"
     table_qry = f"create table {temp_table_name} as "
     table_qry += f"SELECT * FROM {td_task._table_name} WHERE " + generate_where_clause(key, diff_keys)
     clean_qry = f"drop table {temp_table_name}"
@@ -1068,7 +1068,7 @@ def table_rerun_temptable(td_task: TableDiffTask) -> None:
         pkey_qry = f"ALTER TABLE {temp_table_name} ADD PRIMARY KEY ({pkey_columns});"
 
     conn_list = []
-    for params in td_task.conn_params:
+    for params in td_task.fields.conn_params:
         conn_list.append(psycopg.connect(**params))
 
     for con in conn_list:
@@ -1082,8 +1082,6 @@ def table_rerun_temptable(td_task: TableDiffTask) -> None:
 
     try:
         diff_args = TableDiffTask(
-            task_id=task_id,
-            task_type="table-diff",
             cluster_name=td_task.cluster_name,
             _table_name=f"public.{temp_table_name}",
             _dbname=td_task._dbname,
@@ -1094,8 +1092,9 @@ def table_rerun_temptable(td_task: TableDiffTask) -> None:
             batch_size=td_task.batch_size,
             quiet_mode=td_task.quiet_mode,
         )
+        diff_args.scheduler.task_id = task_id
         diff_task = ace.table_diff_checks(diff_args)
-        ace_db.create_ace_task(td_task=diff_task)
+        ace_db.create_ace_task(task=diff_task)
         table_diff(diff_task)
     except AceException as e:
         util.exit_message(str(e))
@@ -1106,25 +1105,25 @@ def table_rerun_temptable(td_task: TableDiffTask) -> None:
         cur.close()
         con.commit()
 
-    td_task.task_status = "COMPLETED"
-    td_task.finished_at = datetime.now()
-    td_task.time_taken = diff_task.time_taken
-    td_task.task_context = diff_task.task_context
+    td_task.scheduler.task_status = "COMPLETED"
+    td_task.scheduler.finished_at = datetime.now()
+    td_task.scheduler.time_taken = diff_task.scheduler.time_taken
+    td_task.scheduler.task_context = diff_task.scheduler.task_context
     ace_db.update_ace_task(td_task)
 
 def table_rerun_async(td_task: TableDiffTask) -> None:
     table_types = None
 
-    for params in td_task.conn_params:
+    for params in td_task.fields.conn_params:
         conn = psycopg.connect(**params)
         if not table_types:
-            table_types = ace.get_row_types(conn, td_task.l_table)
+            table_types = ace.get_row_types(conn, td_task.fields.l_table)
     
     # load diff data and validate
     diff_data = json.load(open(td_task.diff_file_path, "r"))
     diff_kset = set()
     diff_keys = list()
-    key = td_task.key.split(',')
+    key = td_task.fields.key.split(',')
     simple_primary_key = len(key) == 1
 
     # Simple pkey
@@ -1149,7 +1148,7 @@ def table_rerun_async(td_task: TableDiffTask) -> None:
                     diff_keys.append(element)
 
     # create blocks
-    total_rows = len(diff_kset) * len(td_task.node_list)
+    total_rows = len(diff_kset) * len(td_task.fields.node_list)
     total_diff = len(diff_keys)
 
     if total_diff > 100:
@@ -1178,18 +1177,18 @@ def table_rerun_async(td_task: TableDiffTask) -> None:
     to capture diffs even if rows are absent in one node
     """
 
-    cols_list = td_task.cols.split(",")
+    cols_list = td_task.fields.cols.split(",")
     cols_list = [col for col in cols_list if not col.startswith("_Spock_")]
 
     # Shared variables needed by all workers
     shared_objects = {
         "cluster_name": td_task.cluster_name,
-        "database": td_task.database,
-        "node_list": td_task.node_list,
-        "schema_name": td_task.l_schema,
-        "table_name": td_task.l_table,
+        "database": td_task.fields.database,
+        "node_list": td_task.fields.node_list,
+        "schema_name": td_task.fields.l_schema,
+        "table_name": td_task.fields.l_table,
         "cols_list": cols_list,
-        "p_key": td_task.key,
+        "p_key": td_task.fields.key,
         "block_rows": td_task.block_rows,
         "simple_primary_key": simple_primary_key,
         "mode": "rerun",
@@ -1299,10 +1298,10 @@ def table_rerun_async(td_task: TableDiffTask) -> None:
         quiet_mode=td_task.quiet_mode,
     )
 
-    td_task.task_status = "COMPLETED"
-    td_task.finished_at = datetime.now()
-    td_task.time_taken = run_time
-    td_task.task_context = json.dumps({"total_rows": total_rows, "mismatch": mismatch})
+    td_task.scheduler.task_status = "COMPLETED"
+    td_task.scheduler.finished_at = datetime.now()
+    td_task.scheduler.time_taken = run_time
+    td_task.scheduler.task_context = json.dumps({"total_rows": total_rows, "mismatch": mismatch})
     ace_db.update_ace_task(td_task)
 
 

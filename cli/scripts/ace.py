@@ -881,8 +881,6 @@ def table_rerun_cli(
     if behavior == "async":
         try:
             raw_args = TableDiffTask(
-                task_id=task_id,
-                task_type="table-rerun",
                 cluster_name=cluster_name,
                 _table_name=table_name,
                 _dbname=dbname,
@@ -894,8 +892,9 @@ def table_rerun_cli(
                 quiet_mode=quiet,
                 diff_file_path=diff_file,
             )
+            raw_args.scheduler.task_id = task_id
             td_task = table_diff_checks(raw_args)
-            ace_db.create_ace_task(td_task=td_task)
+            ace_db.create_ace_task(task=td_task)
             ace_core.table_rerun_async(td_task)
         except AceException as e:
             util.exit_message(str(e))
@@ -903,8 +902,6 @@ def table_rerun_cli(
     elif behavior == "temptable":
         try:
             raw_args = TableDiffTask(
-                task_id=task_id,
-                task_type="table-rerun",
                 cluster_name=cluster_name,
                 _table_name=table_name,
                 _dbname=dbname,
@@ -916,8 +913,9 @@ def table_rerun_cli(
                 quiet_mode=quiet,
                 diff_file_path=diff_file,
             )
+            raw_args.scheduler.task_id = task_id
             td_task = table_diff_checks(raw_args)
-            ace_db.create_ace_task(td_task=td_task)
+            ace_db.create_ace_task(task=td_task)
             ace_core.table_rerun_temptable(td_task)
         except AceException as e:
             util.exit_message(str(e))
