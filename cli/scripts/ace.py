@@ -9,7 +9,7 @@ import os
 import sys
 import re
 import subprocess
-from datetime import datetime, timedelta
+from datetime import datetime
 import logging
 
 import ace_core
@@ -19,7 +19,6 @@ from flask import Flask, request, jsonify
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.jobstores.memory import MemoryJobStore
 from apscheduler.executors.pool import ProcessPoolExecutor
-from apscheduler.events import EVENT_JOB_ADDED
 
 import cluster
 import util
@@ -35,19 +34,21 @@ logging.basicConfig()
 
 # Create a StreamHandler for stdout
 stream_handler = logging.StreamHandler(sys.stdout)
-stream_handler.setLevel(logging.DEBUG)  # Set the desired log level
-formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+stream_handler.setLevel(logging.DEBUG)
+formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 stream_handler.setFormatter(formatter)
 
 # Get the apscheduler logger and add the handler
 apscheduler_logger = logging.getLogger("apscheduler")
-apscheduler_logger.setLevel(logging.DEBUG)
+apscheduler_logger.setLevel(logging.INFO)
 apscheduler_logger.addHandler(stream_handler)
 
 
 # apscheduler setup
-scheduler = BackgroundScheduler(jobstores={"default": MemoryJobStore()},
-                                executors={"default": ProcessPoolExecutor(32)})
+scheduler = BackgroundScheduler(
+    jobstores={"default": MemoryJobStore()},
+    executors={"default": ProcessPoolExecutor(32)},
+)
 
 
 """
@@ -597,8 +598,8 @@ def table_diff_checks(td_task: TableDiffTask) -> TableDiffTask:
 def table_repair_checks(tr_task: TableRepairTask) -> TableRepairTask:
 
     # Check if diff_file exists on disk
-    if not os.path.exists(tr_task.diff_file):
-        util.exit_message(f"Diff file {tr_task.diff_file} does not exist")
+    if not os.path.exists(tr_task.diff_file_path):
+        util.exit_message(f"Diff file {tr_task.diff_file_path} does not exist")
 
     if type(tr_task.dry_run) is int:
         if tr_task.dry_run < 0 or tr_task.dry_run > 1:
@@ -610,14 +611,16 @@ def table_repair_checks(tr_task: TableRepairTask) -> TableRepairTask:
 
     util.check_cluster_exists(tr_task.cluster_name)
     util.message(
-        f"Cluster {tr_task.cluster_name} exists", p_state="success",
-        quiet_mode=tr_task.quiet_mode
+        f"Cluster {tr_task.cluster_name} exists",
+        p_state="success",
+        quiet_mode=tr_task.quiet_mode,
     )
 
     nm_lst = tr_task._table_name.split(".")
     if len(nm_lst) != 2:
-        util.exit_message(f"TableName {tr_task._table_name} must be of form"
-                          "'schema.table_name'")
+        util.exit_message(
+            f"TableName {tr_task._table_name} must be of form" "'schema.table_name'"
+        )
 
     l_schema = nm_lst[0]
     l_table = nm_lst[1]
@@ -636,8 +639,10 @@ def table_repair_checks(tr_task: TableRepairTask) -> TableRepairTask:
         database = db[0]
 
     if not database:
-        util.exit_message(f"Database '{tr_task._dbname}' not found in cluster '"
-                          f"{tr_task.cluster_name}'")
+        util.exit_message(
+            f"Database '{tr_task._dbname}' not found in cluster '"
+            f"{tr_task.cluster_name}'"
+        )
 
     # Combine db and cluster_nodes into a single json
     for node in node_info:
@@ -708,12 +713,15 @@ def table_repair_checks(tr_task: TableRepairTask) -> TableRepairTask:
     """
     Derived fields for TableRepairTask
     """
+    tr_task.fields.cluster_nodes = cluster_nodes
     tr_task.fields.cols = cols
     tr_task.fields.key = key
     tr_task.fields.l_schema = l_schema
     tr_task.fields.l_table = l_table
     tr_task.fields.conn_params = conn_params
     tr_task.fields.host_map = host_map
+
+    return tr_task
 
 
 def test_function(td_task):
@@ -723,6 +731,7 @@ def test_function(td_task):
 @app.route("/ace/table-diff", methods=["GET"])
 def table_diff_api():
     from ace_core import table_diff
+
     cluster_name = request.args.get("cluster_name")
     table_name = request.args.get("table_name")
     dbname = request.args.get("dbname")
@@ -748,10 +757,10 @@ def table_diff_api():
             quiet_mode=quiet,
         )
 
-        raw_args.task.task_id = task_id
+        raw_args.scheduler.task_id = task_id
         td_task = table_diff_checks(raw_args)
 
-        ace_db.create_ace_task(td_task=td_task)
+        ace_db.create_ace_task(task=td_task)
         scheduler.add_job(table_diff, args=(td_task,))
 
         return jsonify({"task_id": task_id, "submitted_at": datetime.now().isoformat()})
@@ -767,7 +776,7 @@ def task_status_api():
         return jsonify({"error": "task_id is a required parameter"})
 
     try:
-        task_details = ace_db.get_ace_task(task_id)
+        task_details = ace_db.get_ace_task_by_id(task_id)
     except Exception as e:
         return jsonify({"error": str(e)})
 
@@ -803,9 +812,9 @@ def table_diff_cli(
             batch_size=batch_size,
             quiet_mode=quiet,
         )
-        raw_args.task.task_id = task_id
+        raw_args.scheduler.task_id = task_id
         td_task = table_diff_checks(raw_args)
-        ace_db.create_ace_task(td_task=td_task)
+        ace_db.create_ace_task(task=td_task)
         ace_core.table_diff(td_task)
     except AceException as e:
         util.exit_message(str(e))
@@ -827,10 +836,8 @@ def table_repair_cli(
 
     try:
         raw_args = TableRepairTask(
-            task_id=task_id,
-            task_type="table-repair",
             cluster_name=cluster_name,
-            diff_file=diff_file,
+            diff_file_path=diff_file,
             source_of_truth=source_of_truth,
             _table_name=table_name,
             _dbname=dbname,
@@ -839,8 +846,9 @@ def table_repair_cli(
             generate_report=generate_report,
             upsert_only=upsert_only,
         )
+        raw_args.scheduler.task_id = task_id
         tr_task = table_repair_checks(raw_args)
-        ace_db.create_ace_task(tr_task=tr_task)
+        ace_db.create_ace_task(task=tr_task)
         ace_core.table_repair(tr_task)
     except AceException as e:
         util.exit_message(str(e))
@@ -862,15 +870,24 @@ def spock_diff_cli():
     pass
 
 
-def listener(event):
-    print("Event:", str(event))
+# def listener(event):
+#    print("Event:", str(event))
 
 
 def start_ace():
     ace_db.create_ace_tasks_table()
+
+    # Since the scheduler is a BackgroundScheduler,
+    # start() will not block
     scheduler.start()
-    scheduler.add_listener(listener, EVENT_JOB_ADDED)
-    app.run(host="127.0.0.1", port=5000, debug=True)
+
+    # A listener is needed for the upcoming 4.0.0 release
+    # of apscheduler. We will need to manually listen to
+    # the JOB_ADDED event and then run it. For now, using
+    # a BackgroundScheduler with add_job() will automatically
+    # run the job in the background.
+    # scheduler.add_listener(listener, EVENT_JOB_ADDED)
+    app.run(host="127.0.0.1", port=5000)
 
 
 if __name__ == "__main__":

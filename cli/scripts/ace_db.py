@@ -1,5 +1,6 @@
 import json
 import sqlite3
+from typing import Union
 import util
 import string
 import random
@@ -25,6 +26,7 @@ class Task:
 
 @dataclass
 class DerivedFields:
+    cluster_nodes: list = None
     l_schema: str = None
     l_table: str = None
     key: str = None
@@ -49,14 +51,18 @@ class TableDiffTask():
     output: str
     batch_size: int
     quiet_mode: bool
+
+    # For table-diff, the diff_file_path is
+    # obtained after the run of table-diff,
+    # and is not mandatory
     diff_file_path: str = None
 
-    task: Task = Task()
+    scheduler: Task = Task()
 
     # Task specific parameters
-    task.task_type = "table-diff"
-    task.task_status = "RUNNING"
-    task.started_at = datetime.now()
+    scheduler.task_type = "table-diff"
+    scheduler.task_status = "RUNNING"
+    scheduler.started_at = datetime.now()
 
     # Derived fields
     fields: DerivedFields = DerivedFields()
@@ -70,7 +76,11 @@ class TableRepairTask():
 
     # Mandatory fields
     cluster_name: str
-    diff_file: str
+
+    # For table-repair, the diff_file_path is
+    # mandatory, as it is used to repair the
+    # tables
+    diff_file_path: str
     source_of_truth: str
 
     # Task-specific parameters
@@ -125,7 +135,7 @@ def create_ace_tasks_table():
         util.fatal_sql_error(e, ace_tasks_sql, "create_ace_tasks_table()")
 
 
-def create_ace_task(td_task: TableDiffTask):
+def create_ace_task(task: Union[TableDiffTask, TableRepairTask]):
     try:
         c = local_db_conn.cursor()
         sql = """
@@ -137,17 +147,17 @@ def create_ace_task(td_task: TableDiffTask):
         c.execute(
             sql,
             (
-                td_task.task.task_id,
-                td_task.task.task_type,
-                td_task.cluster_name,
-                td_task.fields.l_schema,
-                td_task.fields.l_table,
-                td_task.task.task_status,
-                td_task.task.task_context,
-                td_task.diff_file_path,
-                td_task.task.started_at,
-                td_task.task.finished_at,
-                td_task.task.time_taken,
+                task.scheduler.task_id,
+                task.scheduler.task_type,
+                task.cluster_name,
+                task.fields.l_schema,
+                task.fields.l_table,
+                task.scheduler.task_status,
+                task.scheduler.task_context,
+                task.diff_file_path,
+                task.scheduler.started_at,
+                task.scheduler.finished_at,
+                task.scheduler.time_taken,
             ),
         )
         local_db_conn.commit()
@@ -168,7 +178,15 @@ def get_ace_task_by_id(task_id) -> dict:
         return None
 
     colnames = [desc[0] for desc in c.description]
-    task_details = dict(zip(colnames, row))
+
+    task_details = {}
+
+    for colname, value in zip(colnames, row):
+        if colname == "task_context":
+            task_details[colname] = json.loads(value)
+        else:
+            task_details[colname] = value
+
     return task_details
 
 
@@ -188,13 +206,13 @@ def update_ace_task(td_task: TableDiffTask):
         c.execute(
             sql,
             (
-                td_task.task.task_status,
-                json.dumps(td_task.task.task_context),
+                td_task.scheduler.task_status,
+                json.dumps(td_task.scheduler.task_context),
                 td_task.diff_file_path,
-                td_task.task.started_at.isoformat(timespec="milliseconds"),
-                td_task.task.finished_at.isoformat(timespec="milliseconds"),
-                td_task.task.time_taken,
-                td_task.task.task_id,
+                td_task.scheduler.started_at.isoformat(timespec="milliseconds"),
+                td_task.scheduler.finished_at.isoformat(timespec="milliseconds"),
+                td_task.scheduler.time_taken,
+                td_task.scheduler.task_id,
             ),
         )
         local_db_conn.commit()
