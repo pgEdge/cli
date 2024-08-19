@@ -13,6 +13,7 @@ from mpire.utils import make_single_arguments
 from ordered_set import OrderedSet
 from psycopg import sql
 from psycopg.rows import dict_row
+from math import ceil
 
 import ace
 import ace_db
@@ -59,7 +60,27 @@ def init_db_connection(shared_objects, worker_state):
         worker_state[node["name"]] = psycopg.connect(conn_str).cursor()
 
 
-def compare_checksums(shared_objects, worker_state, batch):
+# Accepts list of pkeys and values and generates a where clause that in the form
+# `(pkey1name, pkey2name ...) in ( (pkey1val1, pkey2val1 ...), (pkey1val2, pkey2val2 ...) ... )`
+def generate_where_clause(primary_keys, id_values):
+    if len(primary_keys) == 1:
+        # Single primary key
+        id_values_list = ", ".join(repr(val) for val in id_values)
+        query = f"{primary_keys[0]} IN ({id_values_list})"
+    
+    else:
+        # Composite primary key
+        conditions = ", ".join(
+            f"({', '.join(repr(val) for val in id_tuple)})"
+            for id_tuple in id_values
+        )
+        key_columns = ", ".join(primary_keys)
+        query = f"({key_columns}) IN ({conditions})"
+
+    return query
+
+
+def compare_checksums(shared_objects, worker_state, batches):
     global row_diff_count
 
     if row_diff_count.value >= config.MAX_DIFF_ROWS:
@@ -71,47 +92,61 @@ def compare_checksums(shared_objects, worker_state, batch):
     node_list = shared_objects["node_list"]
     cols = shared_objects["cols_list"]
     simple_primary_key = shared_objects["simple_primary_key"]
+    mode = shared_objects["mode"]
 
-    for pkey1, pkey2 in batch:
-        where_clause = []
-        if simple_primary_key:
-            if pkey1 is not None:
-                where_clause.append(
-                    sql.SQL("{p_key} >= {pkey1}").format(
-                        p_key=sql.Identifier(p_key), pkey1=sql.Literal(pkey1)
+    for batch in batches:
+        where_clause = str()
+        where_clause_temp = list()
+
+        if mode == "diff":
+            pkey1, pkey2 = batch
+            if simple_primary_key:
+                if pkey1 is not None:
+                    where_clause_temp.append(
+                        sql.SQL("{p_key} >= {pkey1}").format(
+                            p_key=sql.Identifier(p_key), pkey1=sql.Literal(pkey1)
+                        )
                     )
-                )
-            if pkey2 is not None:
-                where_clause.append(
-                    sql.SQL("{p_key} < {pkey2}").format(
-                        p_key=sql.Identifier(p_key), pkey2=sql.Literal(pkey2)
+                if pkey2 is not None:
+                    where_clause_temp.append(
+                        sql.SQL("{p_key} < {pkey2}").format(
+                            p_key=sql.Identifier(p_key), pkey2=sql.Literal(pkey2)
+                        )
                     )
-                )
+            else:
+                """
+                This is a slightly more complicated case since we have to split up
+                the primary key and compare them with split values of pkey1 and pkey2
+                """
+
+                if pkey1 is not None:
+                    where_clause_temp.append(
+                        sql.SQL("({p_key}) >= ({pkey1})").format(
+                            p_key=sql.SQL(", ").join(
+                                [sql.Identifier(col.strip()) for col in p_key.split(",")]
+                            ),
+                            pkey1=sql.SQL(", ").join([sql.Literal(val) for val in pkey1]),
+                        )
+                    )
+
+                if pkey2 is not None:
+                    where_clause_temp.append(
+                        sql.SQL("({p_key}) < ({pkey2})").format(
+                            p_key=sql.SQL(", ").join(
+                                [sql.Identifier(col.strip()) for col in p_key.split(",")]
+                            ),
+                            pkey2=sql.SQL(", ").join([sql.Literal(val) for val in pkey2]),
+                        )
+                    )
+            
+            where_clause = sql.SQL(" AND ").join(where_clause_temp)
+
+        elif mode == "rerun":
+            keys = p_key.split(',')
+            where_clause = sql.SQL( generate_where_clause(keys, batch) )
+
         else:
-            """
-            This is a slightly more complicated case since we have to split up
-            the primary key and compare them with split values of pkey1 and pkey2
-            """
-
-            if pkey1 is not None:
-                where_clause.append(
-                    sql.SQL("({p_key}) >= ({pkey1})").format(
-                        p_key=sql.SQL(", ").join(
-                            [sql.Identifier(col.strip()) for col in p_key.split(",")]
-                        ),
-                        pkey1=sql.SQL(", ").join([sql.Literal(val) for val in pkey1]),
-                    )
-                )
-
-            if pkey2 is not None:
-                where_clause.append(
-                    sql.SQL("({p_key}) < ({pkey2})").format(
-                        p_key=sql.SQL(", ").join(
-                            [sql.Identifier(col.strip()) for col in p_key.split(",")]
-                        ),
-                        pkey2=sql.SQL(", ").join([sql.Literal(val) for val in pkey2]),
-                    )
-                )
+            raise Exception(f"Mode {mode} not recognized in compare_checksums")
 
         if simple_primary_key:
             hash_sql = sql.SQL(
@@ -123,7 +158,7 @@ def compare_checksums(shared_objects, worker_state, batch):
                     sql.Identifier(schema_name),
                     sql.Identifier(table_name),
                 ),
-                where_clause=sql.SQL(" AND ").join(where_clause),
+                where_clause=where_clause,
             )
         else:
             hash_sql = sql.SQL(
@@ -137,7 +172,7 @@ def compare_checksums(shared_objects, worker_state, batch):
                     sql.Identifier(schema_name),
                     sql.Identifier(table_name),
                 ),
-                where_clause=sql.SQL(" AND ").join(where_clause),
+                where_clause=where_clause,
             )
 
         block_sql = sql.SQL("SELECT * FROM {table_name} WHERE {where_clause}").format(
@@ -145,7 +180,7 @@ def compare_checksums(shared_objects, worker_state, batch):
                 sql.Identifier(schema_name),
                 sql.Identifier(table_name),
             ),
-            where_clause=sql.SQL(" AND ").join(where_clause),
+            where_clause=where_clause,
         )
 
         for node_pair in combinations(node_list, 2):
@@ -373,6 +408,7 @@ def table_diff(td_task: TableDiffTask):
         "p_key": td_task.fields.key,
         "block_rows": td_task.block_rows,
         "simple_primary_key": simple_primary_key,
+        "mode": "diff"
     }
 
     util.message(
@@ -995,286 +1031,278 @@ def table_repair(tr_task: TableRepairTask):
         )
 
 
-def table_rerun(cluster_name, diff_file, table_name, dbname=None, quiet=False):
-    """Re-run differences on the results of a recent table-diff"""
+def table_rerun_temptable(td_task: TableDiffTask) -> None:
+    
+    # load diff data and validate
+    diff_data = json.load(open(td_task.diff_file_path, "r"))
+    diff_keys = set()
+    key = td_task.fields.key.split(',')
 
-    quiet_mode = quiet
+    # Simple pkey
+    if len(key) == 1:
+        for node_pair in diff_data.keys():
+            nd1, nd2 = node_pair.split('/')
 
-    if not os.path.exists(diff_file):
-        util.exit_message(f"Diff file {diff_file} not found")
-
-    util.check_cluster_exists(cluster_name)
-    util.message(
-        f"Cluster {cluster_name} exists", p_state="success", quiet_mode=quiet_mode
-    )
-
-    nm_lst = table_name.split(".")
-    if len(nm_lst) != 2:
-        util.exit_message(f"TableName {table_name} must be of form 'schema.table_name'")
-    l_schema = nm_lst[0]
-    l_table = nm_lst[1]
-
-    db, pg, node_info = cluster.load_json(cluster_name)
-
-    cluster_nodes = []
-    database = {}
-
-    if dbname:
-        for db_entry in db:
-            if db_entry["db_name"] == dbname:
-                database = db_entry
-                break
+            for row in diff_data[node_pair][nd1] + diff_data[node_pair][nd2]:
+                diff_keys.add(row[key[0]])
+            
+    # Comp pkey
     else:
-        database = db[0]
+        for node_pair in diff_data.keys():
+            nd1, nd2 = node_pair.split('/')
 
-    if not database:
-        util.exit_message(f"Database '{dbname}' not found in cluster '{cluster_name}'")
+            for row in diff_data[node_pair][nd1] + diff_data[node_pair][nd2]:
+                diff_keys.add(
+                    tuple(row[key_component] for key_component in key)
+                )
 
-    # Combine db and cluster_nodes into a single json
-    for node in node_info:
-        combined_json = {**database, **node}
-        cluster_nodes.append(combined_json)
+    temp_table_name = f"temp_{td_task.scheduler.task_id.lower()}_rerun"
+    table_qry = f"create table {temp_table_name} as "
+    table_qry += f"SELECT * FROM {td_task._table_name} WHERE " + generate_where_clause(key, diff_keys)
+    clean_qry = f"drop table {temp_table_name}"
 
-    conn_list = {}
+    if len(key) == 1:
+        pkey_qry = f"ALTER TABLE {temp_table_name} ADD PRIMARY KEY ({key[0]});"
+    else:
+        pkey_columns = ", ".join(key)
+        pkey_qry = f"ALTER TABLE {temp_table_name} ADD PRIMARY KEY ({pkey_columns});"
+
+    conn_list = []
+    for params in td_task.fields.conn_params:
+        conn_list.append(psycopg.connect(**params))
+
+    for con in conn_list:
+        cur = con.cursor()
+        cur.execute(table_qry)
+        cur.execute(pkey_qry)
+        cur.close()
+        con.commit()
+
+    task_id = ace_db.generate_task_id()
 
     try:
-        for nd in cluster_nodes:
-            conn_list[nd["name"]] = psycopg.connect(
-                dbname=nd["db_name"],
-                user=nd["db_user"],
-                password=nd["db_password"],
-                host=nd["public_ip"],
-                port=nd.get("port", 5432),
-            )
-    except Exception as e:
-        util.exit_message("Error in diff_tbls() Getting Connections:" + str(e), 1)
+        diff_args = TableDiffTask(
+            cluster_name=td_task.cluster_name,
+            _table_name=f"public.{temp_table_name}",
+            _dbname=td_task._dbname,
+            block_rows=td_task.block_rows,
+            max_cpu_ratio=td_task.max_cpu_ratio,
+            output=td_task.output,
+            _nodes=td_task._nodes,
+            batch_size=td_task.batch_size,
+            quiet_mode=td_task.quiet_mode,
+        )
+        diff_args.scheduler.task_id = task_id
+        diff_task = ace.table_diff_checks(diff_args)
+        ace_db.create_ace_task(task=diff_task)
+        table_diff(diff_task)
+    except AceException as e:
+        util.exit_message(str(e))
+    
+    for con in conn_list:
+        cur = con.cursor()
+        cur.execute(clean_qry)
+        cur.close()
+        con.commit()
 
-    util.message(
-        "Connections successful to nodes in cluster",
-        p_state="success",
-        quiet_mode=quiet_mode,
-    )
+    td_task.scheduler.task_status = "COMPLETED"
+    td_task.scheduler.finished_at = datetime.now()
+    td_task.scheduler.time_taken = diff_task.scheduler.time_taken
+    td_task.scheduler.task_context = diff_task.scheduler.task_context
+    ace_db.update_ace_task(td_task)
 
-    cols = None
-    key = None
+def table_rerun_async(td_task: TableDiffTask) -> None:
+    table_types = None
 
-    for node, conn in conn_list.items():
-        curr_cols = ace.get_cols(conn, l_schema, l_table)
-        curr_key = ace.get_key(conn, l_schema, l_table)
+    for params in td_task.fields.conn_params:
+        conn = psycopg.connect(**params)
+        if not table_types:
+            table_types = ace.get_row_types(conn, td_task.fields.l_table)
+    
+    # load diff data and validate
+    diff_data = json.load(open(td_task.diff_file_path, "r"))
+    diff_kset = set()
+    diff_keys = list()
+    key = td_task.fields.key.split(',')
+    simple_primary_key = len(key) == 1
 
-        if not curr_cols:
-            util.exit_message(f"Invalid table name '{table_name}'")
-        if not curr_key:
-            util.exit_message(f"No primary key found for '{table_name}'")
+    # Simple pkey
+    if simple_primary_key == 1:
+        for node_pair in diff_data.keys():
+            nd1, nd2 = node_pair.split('/')
 
-        if (not cols) and (not key):
-            cols = curr_cols
-            key = curr_key
-            continue
+            for row in diff_data[node_pair][nd1] + diff_data[node_pair][nd2]:
+                if row[key[0]] not in diff_kset:
+                    diff_kset.add(row[key[0]])
+                    diff_keys.append(row[key[0]])
+            
+    # Comp pkey
+    else:
+        for node_pair in diff_data.keys():
+            nd1, nd2 = node_pair.split('/')
 
-        if (curr_cols != cols) or (curr_key != key):
-            util.exit_message("Table schemas don't match")
+            for row in diff_data[node_pair][nd1] + diff_data[node_pair][nd2]:
+                element = tuple(row[key_component] for key_component in key)
+                if element not in diff_kset:
+                    diff_kset.add(element)
+                    diff_keys.append(element)
 
-        cols = curr_cols
-        key = curr_key
+    # create blocks
+    total_rows = len(diff_kset) * len(td_task.fields.node_list)
+    total_diff = len(diff_keys)
 
-    util.message(
-        f"Table {table_name} is comparable across nodes",
-        p_state="success",
-        quiet_mode=quiet_mode,
-    )
+    if total_diff > 100:
+        block_size = min(500, total_diff//10)
+        block_nums = ceil(total_diff/block_size)
+        
+        blocks = [
+            [diff_keys[i*block_size : i*block_size + block_size]]
+            for i in range(block_nums)
+        ]
+    else:
+        blocks = [[diff_keys]]
+
+    total_blocks = len(blocks)
+
+    # If we don't have enough blocks to keep all CPUs busy, use fewer processes
+    cpus = cpu_count()
+    max_procs = int(cpus * td_task.max_cpu_ratio) if cpus > 1 else 1
+    procs = max_procs if total_blocks > max_procs else total_blocks
 
     start_time = datetime.now()
 
     """
-    Please see comments in table_repair() for an explanation of validating the
-    diff file.
-    """
-    try:
-        diff_json = json.loads(open(diff_file, "r").read())
-    except Exception:
-        util.exit_message("Could not load diff file as JSON")
-
-    try:
-        if any(
-            [
-                set(list(diff_json[k].keys())) != set(k.split("/"))
-                for k in diff_json.keys()
-            ]
-        ):
-            util.exit_message("Contents of diff file improperly formatted")
-    except Exception:
-        util.exit_message("Contents of diff file improperly formatted")
-
-    """
-    We first need to identify the tuples we need to recheck.
-    For that, we iterate through the diffs and get the primary key values.
-    However, if the primary key is a composite key, we need to get all the columns,
-    and then use all of them to extract the respective tuples from the database
-
-    We need to collect a maximal set of rows for each pair of nodes. E.g., if we have
-    7 rows in node A and 5 rows in node B, we need to collect a union of both those
-    sets of rows. This is because we want to capture the case where a row is missing
-    and the case where a row is present but has different values.
-
-    Our data structure that captures this is a dictionary of the form:
-    {
-        "node1/node2": [[key1, key2, key3], [key3, key4, key5] ...],
-        "node1/node3": [[key1, key2, key3], [key3, key4, key5] ...],
-        "node2/node3": [[key1, key2, key3], [key3, key4, key5] ...]
-    }
+    Generate offsets for each process to work on.
+    We go up to the max rows among all nodes because we want our set difference logic
+    to capture diffs even if rows are absent in one node
     """
 
-    diff_values = {}
-    simple_primary_key = True
-
-    if len(key.split(",")) > 1:
-        # We have a composite key situation here
-        key_cols = key.split(",")
-        simple_primary_key = False
-
-        node_pairs = diff_json.keys()
-
-        for node_pair in node_pairs:
-            if node_pair not in diff_values:
-                diff_values[node_pair] = set()
-
-            for node in node_pair.split("/"):
-                for row in diff_json[node_pair][node]:
-                    diff_values[node_pair].add(tuple(row[col] for col in key_cols))
-    else:
-        # We have a single column primary key
-        node_pairs = diff_json.keys()
-
-        for node_pair in node_pairs:
-            if node_pair not in diff_values:
-                diff_values[node_pair] = set()
-
-            for node in node_pair.split("/"):
-                for row in diff_json[node_pair][node]:
-                    diff_values[node_pair].add(row[key])
-
-    # Transform the set of tuples into a list of tuples
-    for node_pair in diff_values.keys():
-        diff_values[node_pair] = list(diff_values[node_pair])
-
-    cols_list = cols.split(",")
+    cols_list = td_task.fields.cols.split(",")
     cols_list = [col for col in cols_list if not col.startswith("_Spock_")]
 
-    def run_query(cur, query):
-        cur.execute(query)
-        results = cur.fetchall()
-        return results
-
-    diff_rerun = {}
-    diffs_found = False
-
-    # Gets types of each column in table
-    some_node = next(iter(diff_values)).split("/")[0]
-    table_types = ace.get_row_types(conn_list[some_node], l_table)
-
-    for node_pair_key, values in diff_values.items():
-        node1, node2 = node_pair_key.split("/")
-
-        node1_cur = conn_list[node1].cursor()
-        node2_cur = conn_list[node2].cursor()
-
-        node1_set = OrderedSet()
-        node2_set = OrderedSet()
-
-        if simple_primary_key:
-            for index in values:
-                sql = f"""
-                SELECT *
-                FROM {table_name}
-                WHERE "{key}" = '{index}';
-                """
-
-                with ThreadPoolExecutor(max_workers=2) as executor:
-                    futures = [
-                        executor.submit(run_query, node1_cur, sql),
-                        executor.submit(run_query, node2_cur, sql),
-                    ]
-
-                    t1_result, t2_result = [f.result() for f in futures]
-                    t1_result = t1_result[0] if t1_result else None
-                    t2_result = t2_result[0] if t2_result else None
-
-                    if t1_result is not None and t2_result is not None:
-                        t1_result = tuple(
-                            str(x) if not isinstance(x, list) else str(sorted(x))
-                            for x in t1_result
-                        )
-                        t2_result = tuple(
-                            str(x) if not isinstance(x, list) else str(sorted(x))
-                            for x in t2_result
-                        )
-
-                        node1_set.add(t1_result)
-                        node2_set.add(t2_result)
-        else:
-            for indices in values:
-                sql = f"""
-                SELECT *
-                FROM {table_name}
-                WHERE
-                """
-
-                ctr = 0
-                for k in key.split(","):
-                    sql += f" \"{k}\" = '{indices[ctr]}' AND"
-                    ctr += 1
-
-                # Get rid of the last "AND" and add a semicolon
-                sql = sql[:-3] + ";"
-
-                with ThreadPoolExecutor(max_workers=2) as executor:
-                    futures = [
-                        executor.submit(run_query, node1_cur, sql),
-                        executor.submit(run_query, node2_cur, sql),
-                    ]
-
-                    t1_result, t2_result = [f.result() for f in futures]
-                    t1_result = t1_result[0] if t1_result else None
-                    t2_result = t2_result[0] if t2_result else None
-
-                    if t1_result is not None and t2_result is not None:
-                        t1_result = tuple(
-                            str(x) if not isinstance(x, list) else str(sorted(x))
-                            for x in t1_result
-                        )
-                        t2_result = tuple(
-                            str(x) if not isinstance(x, list) else str(sorted(x))
-                            for x in t2_result
-                        )
-
-                        node1_set.add(t1_result)
-                        node2_set.add(t2_result)
-
-        node1_diff = node1_set - node2_set
-        node2_diff = node2_set - node1_set
-
-        if len(node1_diff) > 0 or len(node2_diff) > 0:
-            diffs_found = True
-            diff_rerun[node_pair_key] = {
-                node1: [dict(zip(cols_list, row)) for row in node1_diff],
-                node2: [dict(zip(cols_list, row)) for row in node2_diff],
-            }
-
-    if diffs_found:
-        ace.write_diffs_json(diff_rerun, table_types, quiet_mode=quiet_mode)
-        util.message(
-            "FOUND DIFFS BETWEEN NODES",
-            p_state="warning",
-            quiet_mode=quiet_mode,
-        )
-    else:
-        util.message("TABLES MATCH OK\n", p_state="success", quiet_mode=quiet_mode)
+    # Shared variables needed by all workers
+    shared_objects = {
+        "cluster_name": td_task.cluster_name,
+        "database": td_task.fields.database,
+        "node_list": td_task.fields.node_list,
+        "schema_name": td_task.fields.l_schema,
+        "table_name": td_task.fields.l_table,
+        "cols_list": cols_list,
+        "p_key": td_task.fields.key,
+        "block_rows": td_task.block_rows,
+        "simple_primary_key": simple_primary_key,
+        "mode": "rerun",
+    }
 
     util.message(
-        "RUN TIME = " + str(util.round_timedelta(datetime.now() - start_time)),
-        quiet_mode=quiet_mode,
+        "Starting jobs to compare tables ...\n",
+        p_state="info",
+        quiet_mode=td_task.quiet_mode,
     )
+
+    mismatch = False
+    diffs_exceeded = False
+    errors = False
+
+    with WorkerPool(
+        n_jobs=procs,
+        shared_objects=shared_objects,
+        use_worker_state=True,
+        use_dill=True,
+    ) as pool:
+        for result in pool.imap_unordered(
+            compare_checksums,
+            make_single_arguments(blocks),
+            worker_init=init_db_connection,
+            progress_bar=True if not td_task.quiet_mode else False,
+            iterable_len=len(blocks),
+            progress_bar_style="rich",
+        ):
+            if result == config.MAX_DIFFS_EXCEEDED:
+                diffs_exceeded = True
+                mismatch = True
+                break
+            elif result == config.BLOCK_ERROR:
+                errors = True
+                break
+
+        if diffs_exceeded:
+            util.message(
+                "Prematurely terminated jobs since diffs have"
+                " exceeded MAX_ALLOWED_DIFFS",
+                p_state="warning",
+                quiet_mode=td_task.quiet_mode,
+            )
+
+    for result in result_queue:
+        if result == config.BLOCK_MISMATCH:
+            mismatch = True
+
+    if errors:
+        raise AceException(
+            "There were one or more errors while connecting to databases.\n \
+                Please examine the connection information provided, or the nodes' \
+                    status before running this script again."
+        )
+
+    # Mismatch is True if there is a block mismatch or if we have
+    # estimated that diffs may be greater than max allowed diffs
+    if mismatch:
+        if diffs_exceeded:
+            util.message(
+                f"TABLES DO NOT MATCH. DIFFS HAVE EXCEEDED {config.MAX_DIFF_ROWS} ROWS",
+                p_state="warning",
+                quiet_mode=td_task.quiet_mode,
+            )
+
+        else:
+            util.message(
+                "TABLES DO NOT MATCH", p_state="warning", quiet_mode=td_task.quiet_mode
+            )
+
+        """
+        Read the result queue and count differences between each node pair
+        in the cluster
+        """
+
+        for node_pair in diff_dict.keys():
+            node1, node2 = node_pair.split("/")
+            diff_count = max(
+                len(diff_dict[node_pair][node1]), len(diff_dict[node_pair][node2])
+            )
+            util.message(
+                f"FOUND {diff_count} DIFFS BETWEEN {node1} AND {node2}",
+                p_state="warning",
+                quiet_mode=td_task.quiet_mode,
+            )
+
+        if td_task.output == "json":
+            td_task.diff_file_path = ace.write_diffs_json(
+                diff_dict, table_types, quiet_mode=td_task.quiet_mode
+            )
+
+        elif td_task.output == "csv":
+            ace.write_diffs_csv()
+
+    else:
+        util.message(
+            "TABLES MATCH OK\n", p_state="success", quiet_mode=td_task.quiet_mode
+        )
+
+    run_time = util.round_timedelta(datetime.now() - start_time).total_seconds()
+    run_time_str = f"{run_time:.2f}"
+
+    util.message(
+        f"TOTAL ROWS CHECKED = {total_rows}\nRUN TIME = {run_time_str} seconds",
+        p_state="info",
+        quiet_mode=td_task.quiet_mode,
+    )
+
+    td_task.scheduler.task_status = "COMPLETED"
+    td_task.scheduler.finished_at = datetime.now()
+    td_task.scheduler.time_taken = run_time
+    td_task.scheduler.task_context = json.dumps({"total_rows": total_rows, "mismatch": mismatch})
+    ace_db.update_ace_task(td_task)
 
 
 def repset_diff(

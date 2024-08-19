@@ -574,6 +574,20 @@ def table_diff_checks(td_task: TableDiffTask) -> TableDiffTask:
         quiet_mode=td_task.quiet_mode,
     )
 
+    if td_task.diff_file_path:
+        
+        diff_data = json.load(open(td_task.diff_file_path, "r"))
+        try:
+            if any(
+                [
+                    set(list(diff_data[k].keys())) != set(k.split("/"))
+                    for k in diff_data.keys()
+                ]
+            ):
+                raise AceException("Contents of diff file improperly formatted")
+        except Exception as e:
+            raise AceException(f"Contents of diff file improperly formatted: {e}")
+
     """
     Now that the inputs have been checked and processed, we will populate the
     TableDiffArgs object with the processed values and return it
@@ -898,9 +912,61 @@ def table_repair_cli(
     except AceException as e:
         util.exit_message(str(e))
 
+def table_rerun_cli(
+        cluster_name,
+        diff_file,
+        table_name,
+        dbname=None,
+        quiet=False,
+        behavior="async"
+    ):
 
-def table_rerun_cli():
-    pass
+    task_id = ace_db.generate_task_id()
+
+    if behavior == "async":
+        try:
+            raw_args = TableDiffTask(
+                cluster_name=cluster_name,
+                _table_name=table_name,
+                _dbname=dbname,
+                block_rows=config.BLOCK_ROWS_DEFAULT,
+                max_cpu_ratio=config.MAX_CPU_RATIO_DEFAULT,
+                output="json",
+                _nodes="all",
+                batch_size=config.BATCH_SIZE_DEFAULT,
+                quiet_mode=quiet,
+                diff_file_path=diff_file,
+            )
+            raw_args.scheduler.task_id = task_id
+            td_task = table_diff_checks(raw_args)
+            ace_db.create_ace_task(task=td_task)
+            ace_core.table_rerun_async(td_task)
+        except AceException as e:
+            util.exit_message(str(e))
+
+    elif behavior == "temptable":
+        try:
+            raw_args = TableDiffTask(
+                cluster_name=cluster_name,
+                _table_name=table_name,
+                _dbname=dbname,
+                block_rows=config.BLOCK_ROWS_DEFAULT,
+                max_cpu_ratio=config.MAX_CPU_RATIO_DEFAULT,
+                output="json",
+                _nodes="all",
+                batch_size=config.BATCH_SIZE_DEFAULT,
+                quiet_mode=quiet,
+                diff_file_path=diff_file,
+            )
+            raw_args.scheduler.task_id = task_id
+            td_task = table_diff_checks(raw_args)
+            ace_db.create_ace_task(task=td_task)
+            ace_core.table_rerun_temptable(td_task)
+        except AceException as e:
+            util.exit_message(str(e))
+
+    else:
+        util.exit_message(f"Invalid behavior: {behavior}")
 
 
 def repset_diff_cli():
