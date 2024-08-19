@@ -597,17 +597,26 @@ def table_diff_checks(td_task: TableDiffTask) -> TableDiffTask:
 
 def table_repair_checks(tr_task: TableRepairTask) -> TableRepairTask:
 
+    if not tr_task.cluster_name:
+        raise AceException("cluster_name is a required argument")
+    
+    if not tr_task.diff_file_path:
+        raise AceException("diff_file is a required argument")
+
+    if not tr_task.source_of_truth:
+        raise AceException("source_of_truth is a required argument")
+
     # Check if diff_file exists on disk
     if not os.path.exists(tr_task.diff_file_path):
-        util.exit_message(f"Diff file {tr_task.diff_file_path} does not exist")
+        raise AceException(f"Diff file {tr_task.diff_file_path} does not exist")
 
     if type(tr_task.dry_run) is int:
         if tr_task.dry_run < 0 or tr_task.dry_run > 1:
-            util.exit_message("Dry run should be True (1) or False (0)")
+            raise AceException("Dry run should be True (1) or False (0)")
         tr_task.dry_run = bool(tr_task.dry_run)
 
     if type(tr_task.dry_run) is not bool:
-        util.exit_message("Dry run should be True (1) or False (0)")
+        raise AceException("Dry run should be True (1) or False (0)")
 
     util.check_cluster_exists(tr_task.cluster_name)
     util.message(
@@ -618,7 +627,7 @@ def table_repair_checks(tr_task: TableRepairTask) -> TableRepairTask:
 
     nm_lst = tr_task._table_name.split(".")
     if len(nm_lst) != 2:
-        util.exit_message(
+        raise AceException(
             f"TableName {tr_task._table_name} must be of form" "'schema.table_name'"
         )
 
@@ -639,7 +648,7 @@ def table_repair_checks(tr_task: TableRepairTask) -> TableRepairTask:
         database = db[0]
 
     if not database:
-        util.exit_message(
+        raise AceException(
             f"Database '{tr_task._dbname}' not found in cluster '"
             f"{tr_task.cluster_name}'"
         )
@@ -651,7 +660,7 @@ def table_repair_checks(tr_task: TableRepairTask) -> TableRepairTask:
 
     # Check to see if source_of_truth node is present in cluster
     if not any(node.get("name") == tr_task.source_of_truth for node in cluster_nodes):
-        util.exit_message(
+        raise AceException(
             f"Source of truth node {tr_task.source_of_truth} not present in cluster"
         )
 
@@ -673,7 +682,7 @@ def table_repair_checks(tr_task: TableRepairTask) -> TableRepairTask:
             conns[nd["name"]] = psycopg.connect(**params)
 
     except Exception as e:
-        util.exit_message("Error in diff_tbls() Getting Connections:" + str(e), 1)
+        raise AceException("Error in diff_tbls() Getting Connections:" + str(e), 1)
 
     util.message(
         "Connections successful to nodes in cluster",
@@ -689,9 +698,9 @@ def table_repair_checks(tr_task: TableRepairTask) -> TableRepairTask:
         curr_key = get_key(conn, l_schema, l_table)
 
         if not curr_cols:
-            util.exit_message(f"Invalid table name '{tr_task._table_name}'")
+            raise AceException(f"Invalid table name '{tr_task._table_name}'")
         if not curr_key:
-            util.exit_message(f"No primary key found for '{tr_task._table_name}'")
+            raise AceException(f"No primary key found for '{tr_task._table_name}'")
 
         if (not cols) and (not key):
             cols = curr_cols
@@ -699,7 +708,7 @@ def table_repair_checks(tr_task: TableRepairTask) -> TableRepairTask:
             continue
 
         if (curr_cols != cols) or (curr_key != key):
-            util.exit_message("Table schemas don't match")
+            raise AceException("Table schemas don't match")
 
         cols = curr_cols
         key = curr_key
@@ -818,6 +827,42 @@ def table_diff_cli(
         ace_core.table_diff(td_task)
     except AceException as e:
         util.exit_message(str(e))
+
+
+@app.route("/ace/table-repair", methods=["GET"])
+def table_repair_api():
+    cluster_name = request.args.get("cluster_name")
+    diff_file = request.args.get("diff_file")
+    source_of_truth = request.args.get("source_of_truth")
+    table_name = request.args.get("table_name")
+    dbname = request.args.get("dbname")
+    dry_run = request.args.get("dry_run", False)
+    quiet = request.args.get("quiet", False)
+    generate_report = request.args.get("generate_report", False)
+    upsert_only = request.args.get("upsert_only", False)
+
+    task_id = ace_db.generate_task_id()
+
+    try:
+        raw_args = TableRepairTask(
+            cluster_name=cluster_name,
+            diff_file_path=diff_file,
+            source_of_truth=source_of_truth,
+            _table_name=table_name,
+            _dbname=dbname,
+            dry_run=dry_run,
+            quiet_mode=quiet,
+            generate_report=generate_report,
+            upsert_only=upsert_only,
+        )
+        raw_args.scheduler.task_id = task_id
+        tr_task = table_repair_checks(raw_args)
+        ace_db.create_ace_task(task=tr_task)
+
+        scheduler.add_job(ace_core.table_repair, args=(tr_task,))
+        return jsonify({"task_id": task_id, "submitted_at": datetime.now().isoformat()})
+    except AceException as e:
+        return jsonify({"error": str(e)})
 
 
 def table_repair_cli(
