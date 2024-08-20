@@ -145,6 +145,26 @@ isDEB12AMD () {
 }
 
 
+isUB22AMD () {
+  ver=22.04
+  cat /etc/os-release | grep Ubuntu > /dev/null
+  rc=$?
+  if [ $rc == "0" ]; then
+    cat /etc/os-release | grep VERSION_ID | grep $ver > /dev/null
+    rc=$?
+    if [ $rc == "0" ]; then
+      if [ `arch` == "x86_64" ]; then
+        echoX '#     UB22AMD - OK'
+        return
+      fi
+    fi
+  fi
+
+  echoX 'ERROR: only supported on Ubuntu 22.04 x86_64' 
+  exit 1
+}
+
+
 isUBU () {
   ver="$1.04"
   cat /etc/os-release | grep VERSION_ID | grep $ver > /dev/null
@@ -177,6 +197,8 @@ do
     isUBU $ver
   elif [ "$req" == "DEB12AMD" ]; then
     isDEB12AMD
+  elif [ "$req" == "UB22AMD" ]; then
+    isUB22AMD
   elif [ "$req" == "AMD64" ]; then
     isAMD64
   elif [ "$req" == "PERL" ]; then

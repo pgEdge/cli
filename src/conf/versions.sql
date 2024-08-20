@@ -316,8 +316,8 @@ INSERT INTO versions VALUES ('cron-pg16', '1.6.3-1', 'amd, arm', 0, '20230729', 
 -- ## PGML ##############################
 INSERT INTO projects VALUES ('pgml', 'pge', 4, 0, 'hub', 1, 'https://github.com/postgresml/postgresml/tags',
   'pgml', 1, 'pgml.png', 'GPU Powered AI Extension', 'https://github.com/postgresml/postgresml', 'postgresml');
-INSERT INTO releases VALUES ('pgml-pg16', 4, 'pgml', 'PostgresML', '', 'test', '', 1, 'MIT', '', '');
-INSERT INTO versions VALUES ('pgml-pg16', '2.9.3-1', 'amd', 1, '20240819', 'pg16', '', '');
+INSERT INTO releases VALUES ('pgml-pg16', 4, 'pgml', 'PostgresML', '', 'prod', '', 1, 'MIT', '', '');
+INSERT INTO versions VALUES ('pgml-pg16', '2.9.3-1', 'amd', 1, '20240819', 'pg16', 'UB22AMD', '');
 
 -- ## VECTOR ############################
 INSERT INTO projects VALUES ('vector', 'pge', 4, 0, 'hub', 1, 'https://github.com/pgedge/vector/tags',
