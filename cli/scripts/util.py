@@ -978,7 +978,7 @@ def config_extension(p_pg=None, p_comp=None):
     if extension_name is None:
         exit_message(f"Cannot find {p_comp} meta data", 1)
 
-    default_conf = default_conf.replace("MY_HOME", MY_HOME)
+    default_conf = default_conf.replace("~", os.path.expanduser("~"))
 
     if default_conf > "":
         for df in default_conf.split("|"):

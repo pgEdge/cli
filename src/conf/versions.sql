@@ -74,7 +74,7 @@ INSERT INTO extensions VALUES ('snowflake', 'snowflake', 1, 'snowflake', '');
 INSERT INTO extensions VALUES ('foslots',   'foslots',   0, '',          '');
 
 INSERT INTO extensions VALUES ('vector',    'vector',       0, '',               '');
-INSERT INTO extensions VALUES ('pgml',      'pgml',         0, 'pgml',           'pgml.venv=MY_HOME/venv');
+INSERT INTO extensions VALUES ('pgml',      'pgml',         0, 'pgml',           'pgml.venv=~/venv');
 INSERT INTO extensions VALUES ('wal2json',  'wal2json',     1, 'wal2json',       '');
 INSERT INTO extensions VALUES ('timescaledb','timescaledb', 1, 'timescaledb', 'timescaledb.telemetry_level=off'); 
 INSERT INTO extensions VALUES ('permissions','pg_permissions', 0, '',               '');
