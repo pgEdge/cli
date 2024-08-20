@@ -46,6 +46,17 @@ table_header_style = bcolors.BOLD + bcolors.BACKGROUND
 error_start = bcolors.FAIL
 
 
+def get_gpu_status():
+    try:
+        cmd = "gpustat --no-color --no-processes --no-header | head -1"
+        stat = str(subprocess.check_output(cmd, shell=False, bufsize=1, stdout=subprocess.PIPE, stderr=subprocess.STDOUT), "utf-8")
+    except Exception:
+        return ""
+
+    return str(stat).replace("\n","")
+
+
+
 def format_help(p_input):
     inp = str(p_input)
     inp_lst = inp.split()
@@ -379,7 +390,7 @@ def info(p_json, p_home, p_repo, print_flag=True):
     os2 = os2.replace(" (Final)", "")
     os2 = os2.replace(" (Core)", "")
 
-    gpu_status = str(subprocess.check_output("gpustat --no-color --no-processes --no-header", shell=True), "utf-8").replace("\n","")
+    gpu_status = get_gpu_status()
 
     ver = util.get_version()
     [last_update_utc, last_update_local, unique_id] = util.read_hosts("localhost")
