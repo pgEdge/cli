@@ -835,7 +835,7 @@ def table_repair(tr_task: TableRepairTask):
             """
         else:
             update_sql = f"""
-            INSERT INTO {tr_task.table_name}
+            INSERT INTO {tr_task._table_name}
             VALUES ({','.join(['%s'] * len(cols_list))})
             ON CONFLICT
             ({','.join(['"' + col + '"' for col in keys_list])}) DO UPDATE SET
@@ -855,7 +855,7 @@ def table_repair(tr_task: TableRepairTask):
             """
         else:
             delete_sql = f"""
-            DELETE FROM {tr_task.table_name}
+            DELETE FROM {tr_task._table_name}
             WHERE
             """
 
@@ -982,7 +982,7 @@ def table_repair(tr_task: TableRepairTask):
     run_time_str = f"{run_time:.2f}"
 
     util.message(
-        f"Successfully applied diffs to {tr_task._table_name} in cluster"
+        f"Successfully applied diffs to {tr_task._table_name} in cluster "
         f"{tr_task.cluster_name}\n",
         p_state="success",
         quiet_mode=tr_task.quiet_mode,
