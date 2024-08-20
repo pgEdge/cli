@@ -569,7 +569,14 @@ def table_diff_checks(td_task: TableDiffTask) -> TableDiffTask:
     )
 
     if td_task.diff_file_path:
-        diff_data = json.load(open(td_task.diff_file_path, "r"))
+        if not os.path.exists(td_task.diff_file_path):
+            raise AceException(f"Diff file {td_task.diff_file_path} not found")
+
+        try: 
+            diff_data = json.load(open(td_task.diff_file_path, "r"))
+        except Exception as e:
+            raise AceException(f"Could not load diff file as JSON: {e}")
+
         try:
             if any(
                 [
