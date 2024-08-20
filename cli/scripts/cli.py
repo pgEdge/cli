@@ -1162,7 +1162,7 @@ while i < len(args):
         if i < (len(args) - 1):
             PGNAME = args[i + 1]
             os.environ["pgName"] = PGNAME
-            if str(args[1]) not in ((fire_list) or (fire_contrib)):
+            if str(args[1]) not in ((fire_list) and (fire_contrib)):
                 args.remove(PGNAME)
                 args.remove("-d")
             break
