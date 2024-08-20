@@ -495,8 +495,7 @@ def table_diff_checks(td_task: TableDiffTask) -> TableDiffTask:
 
     if not database:
         raise AceException(
-            f"Database '{td_task._dbname}' not found in cluster"
-            " '{td_args.cluster_name}'"
+            f"Database '{td_task._dbname}' not found in cluster '{td_task.cluster_name}'"
         )
 
     # Combine db and cluster_nodes into a single json
@@ -657,8 +656,7 @@ def table_repair_checks(tr_task: TableRepairTask) -> TableRepairTask:
 
     if not database:
         raise AceException(
-            f"Database '{tr_task._dbname}' not found in cluster '"
-            f"{tr_task.cluster_name}'"
+            f"Database '{tr_task._dbname}' not found in cluster '{tr_task.cluster_name}'"
         )
 
     # Combine db and cluster_nodes into a single json
