@@ -4,11 +4,7 @@ echo "# run 1a-toolset"
 
 
 install_rust () {
-  rm -f install-rust.sh
-  curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs > install-rust.sh
-  chmod 755 install-rust.sh
-  ./install-rust.sh -y
-  rm install-rust.sh
+  curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs/ | sh -s -- --default-toolchain=1.79.0 -y
 }
 
 
@@ -21,7 +17,7 @@ install-apt-toolset () {
   $apt systemtap-sdt-dev clang pkg-config liblz4-dev libzstd-dev
   $apt libreadline-dev libssl-dev uuid-dev libipc-run-perl
 
-  $apt libclang-dev libopenblas-dev libz-dev tzdata lld
+  $apt libclang-dev libopenblas-dev libz-dev tzdata lld llvm-dev
 
   install_rust
 }
