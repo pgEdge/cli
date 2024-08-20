@@ -1,0 +1,2 @@
+class AceException(Exception):
+    pass

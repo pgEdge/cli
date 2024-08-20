@@ -12,10 +12,9 @@ import subprocess
 from datetime import datetime
 import logging
 
-import ace_core
+import ace_api
 import fire
 import psycopg
-from flask import Flask, request, jsonify
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.jobstores.memory import MemoryJobStore
 from apscheduler.executors.pool import ProcessPoolExecutor
@@ -25,9 +24,9 @@ import util
 import ace_db
 import ace_config as config
 from ace_db import TableDiffTask, TableRepairTask
+import ace_cli
+from ace_exceptions import AceException
 
-
-app = Flask(__name__)
 
 # Configure the root logger
 logging.basicConfig()
@@ -54,10 +53,6 @@ scheduler = BackgroundScheduler(
 """
 Defining a custom exception class for ACE
 """
-
-
-class AceException(Exception):
-    pass
 
 
 def prCyan(skk):
@@ -575,7 +570,6 @@ def table_diff_checks(td_task: TableDiffTask) -> TableDiffTask:
     )
 
     if td_task.diff_file_path:
-        
         diff_data = json.load(open(td_task.diff_file_path, "r"))
         try:
             if any(
@@ -613,7 +607,7 @@ def table_repair_checks(tr_task: TableRepairTask) -> TableRepairTask:
 
     if not tr_task.cluster_name:
         raise AceException("cluster_name is a required argument")
-    
+
     if not tr_task.diff_file_path:
         raise AceException("diff_file is a required argument")
 
@@ -693,7 +687,7 @@ def table_repair_checks(tr_task: TableRepairTask) -> TableRepairTask:
             }
 
             # Use port number to support localhost clusters
-            host_map[nd["public_ip"]+params["port"]] = nd["name"]
+            host_map[nd["public_ip"] + params["port"]] = nd["name"]
             conn_params.append(params)
             conns[nd["name"]] = psycopg.connect(**params)
 
@@ -749,270 +743,16 @@ def table_repair_checks(tr_task: TableRepairTask) -> TableRepairTask:
     return tr_task
 
 
-def test_function(td_task):
-    print("test function", td_task)
-
-
-@app.route("/ace/table-diff", methods=["GET"])
-def table_diff_api():
-    from ace_core import table_diff
-
-    cluster_name = request.args.get("cluster_name")
-    table_name = request.args.get("table_name")
-    dbname = request.args.get("dbname")
-    block_rows = request.args.get("block_rows", config.BLOCK_ROWS_DEFAULT)
-    max_cpu_ratio = request.args.get("max_cpu_ratio", config.MAX_CPU_RATIO_DEFAULT)
-    output = request.args.get("output", "json")
-    nodes = request.args.get("nodes", "all")
-    batch_size = request.args.get("batch_size", config.BATCH_SIZE_DEFAULT, type=int)
-    quiet = request.args.get("quiet", False)
-
-    task_id = ace_db.generate_task_id()
-
-    try:
-        raw_args = TableDiffTask(
-            cluster_name=cluster_name,
-            _table_name=table_name,
-            _dbname=dbname,
-            block_rows=block_rows,
-            max_cpu_ratio=max_cpu_ratio,
-            output=output,
-            _nodes=nodes,
-            batch_size=batch_size,
-            quiet_mode=quiet,
-        )
-
-        raw_args.scheduler.task_id = task_id
-        td_task = table_diff_checks(raw_args)
-
-        ace_db.create_ace_task(task=td_task)
-        scheduler.add_job(table_diff, args=(td_task,))
-
-        return jsonify({"task_id": task_id, "submitted_at": datetime.now().isoformat()})
-    except AceException as e:
-        return jsonify({"error": str(e)})
-
-
-@app.route("/ace/task-status", methods=["GET"])
-def task_status_api():
-    task_id = request.args.get("task_id")
-
-    if not task_id:
-        return jsonify({"error": "task_id is a required parameter"})
-
-    try:
-        task_details = ace_db.get_ace_task_by_id(task_id)
-    except Exception as e:
-        return jsonify({"error": str(e)})
-
-    if not task_details:
-        return jsonify({"error": f"Task {task_id} not found"})
-
-    return jsonify(task_details)
-
-
-def table_diff_cli(
-    cluster_name,
-    table_name,
-    dbname=None,
-    block_rows=config.BLOCK_ROWS_DEFAULT,
-    max_cpu_ratio=config.MAX_CPU_RATIO_DEFAULT,
-    output="json",
-    nodes="all",
-    batch_size=config.BATCH_SIZE_DEFAULT,
-    quiet=False,
-):
-
-    task_id = ace_db.generate_task_id()
-
-    try:
-        raw_args = TableDiffTask(
-            cluster_name=cluster_name,
-            _table_name=table_name,
-            _dbname=dbname,
-            block_rows=block_rows,
-            max_cpu_ratio=max_cpu_ratio,
-            output=output,
-            _nodes=nodes,
-            batch_size=batch_size,
-            quiet_mode=quiet,
-        )
-        raw_args.scheduler.task_id = task_id
-        td_task = table_diff_checks(raw_args)
-        ace_db.create_ace_task(task=td_task)
-        ace_core.table_diff(td_task)
-    except AceException as e:
-        util.exit_message(str(e))
-
-
-@app.route("/ace/table-repair", methods=["GET"])
-def table_repair_api():
-    cluster_name = request.args.get("cluster_name")
-    diff_file = request.args.get("diff_file")
-    source_of_truth = request.args.get("source_of_truth")
-    table_name = request.args.get("table_name")
-    dbname = request.args.get("dbname")
-    dry_run = request.args.get("dry_run", False)
-    quiet = request.args.get("quiet", False)
-    generate_report = request.args.get("generate_report", False)
-    upsert_only = request.args.get("upsert_only", False)
-
-    task_id = ace_db.generate_task_id()
-
-    try:
-        raw_args = TableRepairTask(
-            cluster_name=cluster_name,
-            diff_file_path=diff_file,
-            source_of_truth=source_of_truth,
-            _table_name=table_name,
-            _dbname=dbname,
-            dry_run=dry_run,
-            quiet_mode=quiet,
-            generate_report=generate_report,
-            upsert_only=upsert_only,
-        )
-        raw_args.scheduler.task_id = task_id
-        tr_task = table_repair_checks(raw_args)
-        ace_db.create_ace_task(task=tr_task)
-
-        scheduler.add_job(ace_core.table_repair, args=(tr_task,))
-        return jsonify({"task_id": task_id, "submitted_at": datetime.now().isoformat()})
-    except AceException as e:
-        return jsonify({"error": str(e)})
-
-
-def table_repair_cli(
-    cluster_name,
-    diff_file,
-    source_of_truth,
-    table_name,
-    dbname=None,
-    dry_run=False,
-    quiet=False,
-    generate_report=False,
-    upsert_only=False,
-):
-
-    task_id = ace_db.generate_task_id()
-
-    try:
-        raw_args = TableRepairTask(
-            cluster_name=cluster_name,
-            diff_file_path=diff_file,
-            source_of_truth=source_of_truth,
-            _table_name=table_name,
-            _dbname=dbname,
-            dry_run=dry_run,
-            quiet_mode=quiet,
-            generate_report=generate_report,
-            upsert_only=upsert_only,
-        )
-        raw_args.scheduler.task_id = task_id
-        tr_task = table_repair_checks(raw_args)
-        ace_db.create_ace_task(task=tr_task)
-        ace_core.table_repair(tr_task)
-    except AceException as e:
-        util.exit_message(str(e))
-
-def table_rerun_cli(
-        cluster_name,
-        diff_file,
-        table_name,
-        dbname=None,
-        quiet=False,
-        behavior="async"
-    ):
-
-    task_id = ace_db.generate_task_id()
-
-    if behavior == "async":
-        try:
-            raw_args = TableDiffTask(
-                cluster_name=cluster_name,
-                _table_name=table_name,
-                _dbname=dbname,
-                block_rows=config.BLOCK_ROWS_DEFAULT,
-                max_cpu_ratio=config.MAX_CPU_RATIO_DEFAULT,
-                output="json",
-                _nodes="all",
-                batch_size=config.BATCH_SIZE_DEFAULT,
-                quiet_mode=quiet,
-                diff_file_path=diff_file,
-            )
-            raw_args.scheduler.task_id = task_id
-            td_task = table_diff_checks(raw_args)
-            ace_db.create_ace_task(task=td_task)
-            ace_core.table_rerun_async(td_task)
-        except AceException as e:
-            util.exit_message(str(e))
-
-    elif behavior == "temptable":
-        try:
-            raw_args = TableDiffTask(
-                cluster_name=cluster_name,
-                _table_name=table_name,
-                _dbname=dbname,
-                block_rows=config.BLOCK_ROWS_DEFAULT,
-                max_cpu_ratio=config.MAX_CPU_RATIO_DEFAULT,
-                output="json",
-                _nodes="all",
-                batch_size=config.BATCH_SIZE_DEFAULT,
-                quiet_mode=quiet,
-                diff_file_path=diff_file,
-            )
-            raw_args.scheduler.task_id = task_id
-            td_task = table_diff_checks(raw_args)
-            ace_db.create_ace_task(task=td_task)
-            ace_core.table_rerun_temptable(td_task)
-        except AceException as e:
-            util.exit_message(str(e))
-
-    else:
-        util.exit_message(f"Invalid behavior: {behavior}")
-
-
-def repset_diff_cli():
-    pass
-
-
-def schema_diff_cli():
-    pass
-
-
-def spock_diff_cli():
-    pass
-
-
-# def listener(event):
-#    print("Event:", str(event))
-
-
-def start_ace():
-    ace_db.create_ace_tasks_table()
-
-    # Since the scheduler is a BackgroundScheduler,
-    # start() will not block
-    scheduler.start()
-
-    # A listener is needed for the upcoming 4.0.0 release
-    # of apscheduler. We will need to manually listen to
-    # the JOB_ADDED event and then run it. For now, using
-    # a BackgroundScheduler with add_job() will automatically
-    # run the job in the background.
-    # scheduler.add_listener(listener, EVENT_JOB_ADDED)
-    app.run(host="127.0.0.1", port=5000)
-
-
 if __name__ == "__main__":
     ace_db.create_ace_tasks_table()
     fire.Fire(
         {
-            "table-diff": table_diff_cli,
-            "table-repair": table_repair_cli,
-            "table-rerun": table_rerun_cli,
-            "repset-diff": repset_diff_cli,
-            "schema-diff": schema_diff_cli,
-            "spock-diff": spock_diff_cli,
-            "start": start_ace,
+            "table-diff": ace_cli.table_diff_cli,
+            "table-repair": ace_cli.table_repair_cli,
+            "table-rerun": ace_cli.table_rerun_cli,
+            "repset-diff": ace_cli.repset_diff_cli,
+            "schema-diff": ace_cli.schema_diff_cli,
+            "spock-diff": ace_cli.spock_diff_cli,
+            "start": ace_api.start_ace,
         }
     )
