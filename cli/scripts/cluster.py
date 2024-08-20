@@ -165,7 +165,8 @@ def load_json(cluster_name):
             "port": group.get("port", ""),
             "path": group.get("path", ""),
             "os_user": os_user,
-            "ssh_key": ssh_key
+            "ssh_key": ssh_key,
+            "backrest": group.get("backrest", {})
         }
 
         if not node_info["public_ip"] and not node_info["private_ip"]:
@@ -504,7 +505,6 @@ def json_template(cluster_name, db, num_nodes, usr, passwd, pg, port):
     backrest_json["repo1-retention-full"] = "7"
     backrest_json["log-level-console"] = "info"
     backrest_json["repo1-cipher-type"] = "aes-256-cbc"
-    cluster_json["backrest"] = backrest_json
 
     node_groups = []
     os_user = getpass.getuser()
@@ -517,6 +517,7 @@ def json_template(cluster_name, db, num_nodes, usr, passwd, pg, port):
         node_json["private_ip"] = "127.0.0.1"
         node_json["port"] = str(port + n - 1)
         node_json["path"] = f"/home/{os_user}/{cluster_name}/n{n}"
+        node_json["backrest"] = backrest_json
         node_groups.append(node_json)
     cluster_json["node_groups"] = node_groups
 
@@ -605,6 +606,18 @@ def init(cluster_name):
                     cluster_name, db[0]["db_name"], db_settings, db[0]["db_user"],
                     db[0]["db_password"], n, False, " "
                 )
+
+    # Process backrest installation and settings if present
+    for nd in nodes:
+        if nd.get('backrest'):
+            cmd = f"{nd['path']}/pgedge/pgedge install backrest"
+            message = "Installing backrest"
+            run_cmd(cmd, nd, message=message, verbose=verbose)
+            cmd = ""
+            message = "Configuring backrest"
+            for setting_name, setting_value in nd['backrest'].items():
+                cmd = cmd + f"{nd['path']}/pgedge/pgedge set BACKUP {setting_name} {setting_value};"
+            run_cmd(cmd, nd, message, verbose=verbose)
 
     if any("sub_nodes" in node for node in nodes):
         configure_etcd(cluster_name, system_identifier)
