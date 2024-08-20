@@ -1,14 +1,14 @@
 
-pgmlV=2.9.3
-pgV=16.4
-cargoV=0.11.3 
+source ./pgml-env.sh
 
 pgbin=$PWD/$pgV/bin
 export PATH=$pgbin:$PATH
+export PGRX_IGNORE_RUST_VERSIONS=1
 
+set -e
 set -x
 
-cargo install cargo-pgrx --version $cargoV
+cargo install cargo-pgrx --version $cargoV --force
 
 rm -rf postgresml
 git clone https://github.com/postgresml/postgresml
@@ -16,6 +16,9 @@ cd postgresml/
 git checkout v$pgmlV
 git submodule update --init --recursive
 
-cargo pgrx init --pg16 $pgbin/pg_config
+cargo pgrx init --pg$pgMajorV $pgbin/pg_config
 cd pgml-extension
 cargo pgrx package
+
+echo "Goodbye!"
+exit 0

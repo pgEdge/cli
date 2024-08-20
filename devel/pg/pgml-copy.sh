@@ -1,13 +1,12 @@
 
+
+source ./pgml-env.sh
+
+set -e
 set -x
 
-plat=arm
-if [ `arch` == "x86_64" ]; then
-  plat="amd"
-fi
-
-ver=2.9.3-1
-base=postgresml/pgml-extension/target/release/pgml-pg16/home/build/dev/cli/devel/pg/16.4
+ver=$pgmlV-1
+base=postgresml/pgml-extension/target/release/pgml-pg16/home/$USER/dev/cli/devel/pg/$pgV 
 dir=pgml-pg16-$ver-$plat
 
 rm -rf $dir*
@@ -22,6 +21,7 @@ rm -rf $dir
 cp $tgz $IN/postgres/pgml/.
 rm $tgz
 
-
+echo "Goodbye!"
+exit 0
 
 
