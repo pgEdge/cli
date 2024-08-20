@@ -691,7 +691,9 @@ def table_repair_checks(tr_task: TableRepairTask) -> TableRepairTask:
                 "host": nd["public_ip"],
                 "port": nd.get("port", 5432),
             }
-            host_map[nd["public_ip"]] = nd["name"]
+
+            # Use port number to support localhost clusters
+            host_map[nd["public_ip"]+params["port"]] = nd["name"]
             conn_params.append(params)
             conns[nd["name"]] = psycopg.connect(**params)
 

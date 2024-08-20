@@ -61,18 +61,18 @@ def init_db_connection(shared_objects, worker_state):
 
 
 # Accepts list of pkeys and values and generates a where clause that in the form
-# `(pkey1name, pkey2name ...) in ( (pkey1val1, pkey2val1 ...), (pkey1val2, pkey2val2 ...) ... )`
+# `(pkey1name, pkey2name ...) in ( (pkey1val1, pkey2val1 ...),
+#                                 (pkey1val2, pkey2val2 ...) ... )`
 def generate_where_clause(primary_keys, id_values):
     if len(primary_keys) == 1:
         # Single primary key
         id_values_list = ", ".join(repr(val) for val in id_values)
         query = f"{primary_keys[0]} IN ({id_values_list})"
-    
+
     else:
         # Composite primary key
         conditions = ", ".join(
-            f"({', '.join(repr(val) for val in id_tuple)})"
-            for id_tuple in id_values
+            f"({', '.join(repr(val) for val in id_tuple)})" for id_tuple in id_values
         )
         key_columns = ", ".join(primary_keys)
         query = f"({key_columns}) IN ({conditions})"
@@ -123,9 +123,14 @@ def compare_checksums(shared_objects, worker_state, batches):
                     where_clause_temp.append(
                         sql.SQL("({p_key}) >= ({pkey1})").format(
                             p_key=sql.SQL(", ").join(
-                                [sql.Identifier(col.strip()) for col in p_key.split(",")]
+                                [
+                                    sql.Identifier(col.strip())
+                                    for col in p_key.split(",")
+                                ]
                             ),
-                            pkey1=sql.SQL(", ").join([sql.Literal(val) for val in pkey1]),
+                            pkey1=sql.SQL(", ").join(
+                                [sql.Literal(val) for val in pkey1]
+                            ),
                         )
                     )
 
@@ -133,17 +138,22 @@ def compare_checksums(shared_objects, worker_state, batches):
                     where_clause_temp.append(
                         sql.SQL("({p_key}) < ({pkey2})").format(
                             p_key=sql.SQL(", ").join(
-                                [sql.Identifier(col.strip()) for col in p_key.split(",")]
+                                [
+                                    sql.Identifier(col.strip())
+                                    for col in p_key.split(",")
+                                ]
                             ),
-                            pkey2=sql.SQL(", ").join([sql.Literal(val) for val in pkey2]),
+                            pkey2=sql.SQL(", ").join(
+                                [sql.Literal(val) for val in pkey2]
+                            ),
                         )
                     )
-            
+
             where_clause = sql.SQL(" AND ").join(where_clause_temp)
 
         elif mode == "rerun":
-            keys = p_key.split(',')
-            where_clause = sql.SQL( generate_where_clause(keys, batch) )
+            keys = p_key.split(",")
+            where_clause = sql.SQL(generate_where_clause(keys, batch))
 
         else:
             raise Exception(f"Mode {mode} not recognized in compare_checksums")
@@ -408,7 +418,7 @@ def table_diff(td_task: TableDiffTask):
         "p_key": td_task.fields.key,
         "block_rows": td_task.block_rows,
         "simple_primary_key": simple_primary_key,
-        "mode": "diff"
+        "mode": "diff",
     }
 
     util.message(
@@ -534,7 +544,9 @@ def table_repair(tr_task: TableRepairTask):
     conns = {}
 
     for params in tr_task.fields.conn_params:
-        conns[tr_task.fields.host_map[params["host"]]] = psycopg.connect(**params)
+        conns[tr_task.fields.host_map[params["host"] + params["port"]]] = (
+            psycopg.connect(**params)
+        )
 
     if tr_task.generate_report:
         report = dict()
@@ -1030,35 +1042,45 @@ def table_repair(tr_task: TableRepairTask):
             quiet_mode=tr_task.quiet_mode,
         )
 
+    tr_task.scheduler.task_status = "COMPLETED"
+    tr_task.scheduler.finished_at = datetime.now()
+    tr_task.scheduler.time_taken = run_time
+    tr_task.scheduler.task_context = {
+        "source_of_truth": tr_task.source_of_truth,
+        "upserted": total_upserted,
+        "deleted": total_deleted,
+    }
+    ace_db.update_ace_task(tr_task)
+
 
 def table_rerun_temptable(td_task: TableDiffTask) -> None:
-    
+
     # load diff data and validate
     diff_data = json.load(open(td_task.diff_file_path, "r"))
     diff_keys = set()
-    key = td_task.fields.key.split(',')
+    key = td_task.fields.key.split(",")
 
     # Simple pkey
     if len(key) == 1:
         for node_pair in diff_data.keys():
-            nd1, nd2 = node_pair.split('/')
+            nd1, nd2 = node_pair.split("/")
 
             for row in diff_data[node_pair][nd1] + diff_data[node_pair][nd2]:
                 diff_keys.add(row[key[0]])
-            
+
     # Comp pkey
     else:
         for node_pair in diff_data.keys():
-            nd1, nd2 = node_pair.split('/')
+            nd1, nd2 = node_pair.split("/")
 
             for row in diff_data[node_pair][nd1] + diff_data[node_pair][nd2]:
-                diff_keys.add(
-                    tuple(row[key_component] for key_component in key)
-                )
+                diff_keys.add(tuple(row[key_component] for key_component in key))
 
     temp_table_name = f"temp_{td_task.scheduler.task_id.lower()}_rerun"
     table_qry = f"create table {temp_table_name} as "
-    table_qry += f"SELECT * FROM {td_task._table_name} WHERE " + generate_where_clause(key, diff_keys)
+    table_qry += f"SELECT * FROM {td_task._table_name} WHERE " + generate_where_clause(
+        key, diff_keys
+    )
     clean_qry = f"drop table {temp_table_name}"
 
     if len(key) == 1:
@@ -1098,7 +1120,7 @@ def table_rerun_temptable(td_task: TableDiffTask) -> None:
         table_diff(diff_task)
     except AceException as e:
         util.exit_message(str(e))
-    
+
     for con in conn_list:
         cur = con.cursor()
         cur.execute(clean_qry)
@@ -1111,6 +1133,7 @@ def table_rerun_temptable(td_task: TableDiffTask) -> None:
     td_task.scheduler.task_context = diff_task.scheduler.task_context
     ace_db.update_ace_task(td_task)
 
+
 def table_rerun_async(td_task: TableDiffTask) -> None:
     table_types = None
 
@@ -1118,28 +1141,28 @@ def table_rerun_async(td_task: TableDiffTask) -> None:
         conn = psycopg.connect(**params)
         if not table_types:
             table_types = ace.get_row_types(conn, td_task.fields.l_table)
-    
+
     # load diff data and validate
     diff_data = json.load(open(td_task.diff_file_path, "r"))
     diff_kset = set()
     diff_keys = list()
-    key = td_task.fields.key.split(',')
+    key = td_task.fields.key.split(",")
     simple_primary_key = len(key) == 1
 
     # Simple pkey
     if simple_primary_key == 1:
         for node_pair in diff_data.keys():
-            nd1, nd2 = node_pair.split('/')
+            nd1, nd2 = node_pair.split("/")
 
             for row in diff_data[node_pair][nd1] + diff_data[node_pair][nd2]:
                 if row[key[0]] not in diff_kset:
                     diff_kset.add(row[key[0]])
                     diff_keys.append(row[key[0]])
-            
+
     # Comp pkey
     else:
         for node_pair in diff_data.keys():
-            nd1, nd2 = node_pair.split('/')
+            nd1, nd2 = node_pair.split("/")
 
             for row in diff_data[node_pair][nd1] + diff_data[node_pair][nd2]:
                 element = tuple(row[key_component] for key_component in key)
@@ -1152,11 +1175,11 @@ def table_rerun_async(td_task: TableDiffTask) -> None:
     total_diff = len(diff_keys)
 
     if total_diff > 100:
-        block_size = min(500, total_diff//10)
-        block_nums = ceil(total_diff/block_size)
-        
+        block_size = min(500, total_diff // 10)
+        block_nums = ceil(total_diff / block_size)
+
         blocks = [
-            [diff_keys[i*block_size : i*block_size + block_size]]
+            [diff_keys[i * block_size: i * block_size + block_size]]
             for i in range(block_nums)
         ]
     else:
@@ -1301,7 +1324,9 @@ def table_rerun_async(td_task: TableDiffTask) -> None:
     td_task.scheduler.task_status = "COMPLETED"
     td_task.scheduler.finished_at = datetime.now()
     td_task.scheduler.time_taken = run_time
-    td_task.scheduler.task_context = json.dumps({"total_rows": total_rows, "mismatch": mismatch})
+    td_task.scheduler.task_context = json.dumps(
+        {"total_rows": total_rows, "mismatch": mismatch}
+    )
     ace_db.update_ace_task(td_task)
 
 
