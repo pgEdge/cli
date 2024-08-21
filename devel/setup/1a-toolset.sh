@@ -18,7 +18,7 @@ install-apt-toolset () {
   $apt libreadline-dev libssl-dev uuid-dev libipc-run-perl
 
   $apt libclang-dev libopenblas-dev libz-dev tzdata lld llvm-dev
-  $apt libxgboost-dev cmake
+  $apt libxgboost-dev cmake pigz
 
   install_rust
 }
