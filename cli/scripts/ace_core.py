@@ -827,15 +827,17 @@ def table_repair(tr_task: TableRepairTask):
         Here we are constructing an UPSERT query from true_rows and
         applying it to all nodes
         """
+
+        table_name_sql = f"{tr_task.fields.l_schema}.\"{tr_task.fields.l_table}\""
         if simple_primary_key:
             update_sql = f"""
-            INSERT INTO {tr_task._table_name}
+            INSERT INTO {table_name_sql}
             VALUES ({','.join(['%s'] * len(cols_list))})
             ON CONFLICT ("{tr_task.fields.key}") DO UPDATE SET
             """
         else:
             update_sql = f"""
-            INSERT INTO {tr_task._table_name}
+            INSERT INTO {table_name_sql}
             VALUES ({','.join(['%s'] * len(cols_list))})
             ON CONFLICT
             ({','.join(['"' + col + '"' for col in keys_list])}) DO UPDATE SET
@@ -850,12 +852,12 @@ def table_repair(tr_task: TableRepairTask):
 
         if simple_primary_key:
             delete_sql = f"""
-            DELETE FROM {tr_task._table_name}
+            DELETE FROM {table_name_sql}
             WHERE "{tr_task.fields.key}" = %s;
             """
         else:
             delete_sql = f"""
-            DELETE FROM {tr_task._table_name}
+            DELETE FROM {table_name_sql}
             WHERE
             """
 
