@@ -131,7 +131,7 @@ def fix_schema(diff_file, sql1, sql2):
 
 
 def get_row_count(p_con, p_schema, p_table):
-    sql = f"SELECT count(*) FROM {p_schema}.{p_table}"
+    sql = f"SELECT count(*) FROM {p_schema}.\"{p_table}\""
 
     try:
         cur = p_con.cursor()
@@ -730,10 +730,10 @@ def compare_checksums(shared_objects, worker_state, batch):
         if simple_primary_key:
             hash_sql = sql.SQL(
                 "SELECT md5(cast(array_agg(t.* ORDER BY {p_key}) AS text)) FROM"
-                "(SELECT * FROM {table_name} WHERE {where_clause}) t"
+                "(SELECT * FROM {sql_table_name} WHERE {where_clause}) t"
             ).format(
                 p_key=sql.Identifier(p_key),
-                table_name=sql.SQL("{}.{}").format(
+                sql_table_name=sql.SQL("{}.{}").format(
                     sql.Identifier(schema_name),
                     sql.Identifier(table_name),
                 ),
@@ -742,20 +742,20 @@ def compare_checksums(shared_objects, worker_state, batch):
         else:
             hash_sql = sql.SQL(
                 "SELECT md5(cast(array_agg(t.* ORDER BY {p_key}) AS text)) FROM"
-                "(SELECT * FROM {table_name} WHERE {where_clause}) t"
+                "(SELECT * FROM {sql_table_name} WHERE {where_clause}) t"
             ).format(
                 p_key=sql.SQL(", ").join(
                     [sql.Identifier(col.strip()) for col in p_key.split(",")]
                 ),
-                table_name=sql.SQL("{}.{}").format(
+                sql_table_name=sql.SQL("{}.{}").format(
                     sql.Identifier(schema_name),
                     sql.Identifier(table_name),
                 ),
                 where_clause=sql.SQL(" AND ").join(where_clause),
             )
 
-        block_sql = sql.SQL("SELECT * FROM {table_name} WHERE {where_clause}").format(
-            table_name=sql.SQL("{}.{}").format(
+        block_sql = sql.SQL("SELECT * FROM {sql_table_name} WHERE {where_clause}").format(
+            sql_table_name=sql.SQL("{}.{}").format(
                 sql.Identifier(schema_name),
                 sql.Identifier(table_name),
             ),
@@ -1453,7 +1453,7 @@ def table_rerun(cluster_name, diff_file, table_name, dbname=None, quiet=False):
             for index in values:
                 sql = f"""
                 SELECT *
-                FROM {table_name}
+                FROM {l_schema}.\"{l_table}\"
                 WHERE "{key}" = '{index}';
                 """
 
@@ -1939,15 +1939,17 @@ def table_repair(
         Here we are constructing an UPSERT query from true_rows and
         applying it to all nodes
         """
+        table_name_sql = f"{l_schema}.\"{l_table}\""
+
         if simple_primary_key:
             update_sql = f"""
-            INSERT INTO {table_name}
+            INSERT INTO {table_name_sql}
             VALUES ({','.join(['%s'] * len(cols_list))})
             ON CONFLICT ("{key}") DO UPDATE SET
             """
         else:
             update_sql = f"""
-            INSERT INTO {table_name}
+            INSERT INTO {table_name_sql}
             VALUES ({','.join(['%s'] * len(cols_list))})
             ON CONFLICT
             ({','.join(['"' + col + '"' for col in keys_list])}) DO UPDATE SET
@@ -1962,12 +1964,12 @@ def table_repair(
 
         if simple_primary_key:
             delete_sql = f"""
-            DELETE FROM {table_name}
+            DELETE FROM {table_name_sql}
             WHERE "{key}" = %s;
             """
         else:
             delete_sql = f"""
-            DELETE FROM {table_name}
+            DELETE FROM {table_name_sql}
             WHERE
             """
 
