@@ -513,7 +513,7 @@ def table_diff(td_task: TableDiffTask):
             )
 
         elif td_task.output == "csv":
-            ace.write_diffs_csv()
+            ace.write_diffs_csv( diff_dict )
 
     else:
         util.message(
