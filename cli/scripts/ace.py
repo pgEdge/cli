@@ -655,7 +655,7 @@ def table_repair_checks(tr_task: TableRepairTask) -> TableRepairTask:
 
     if tr_task._dbname:
         for db_entry in db:
-            if db_entry["db_name"] == tr_task.dbname:
+            if db_entry["db_name"] == tr_task._dbname:
                 database = db_entry
                 break
     else:
