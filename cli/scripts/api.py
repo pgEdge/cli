@@ -49,7 +49,7 @@ error_start = bcolors.FAIL
 def get_gpu_status():
     try:
         cmd = "gpustat --no-color --no-processes --no-header | head -1"
-        stat = str(subprocess.check_output(cmd, shell=False, bufsize=1, stdout=subprocess.PIPE, stderr=subprocess.STDOUT), "utf-8")
+        stat = str(subprocess.check_output(cmd, shell=True), "utf-8")
     except Exception:
         return ""
 
