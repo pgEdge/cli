@@ -231,14 +231,14 @@ def compare_checksums(shared_objects, worker_state, batches):
                 # TODO: Test and add support for different datatypes here
                 t1_result = [
                     tuple(
-                        str(x) if not isinstance(x, list) else str(sorted(x))
+                        str(x)
                         for x in row
                     )
                     for row in t1_result
                 ]
                 t2_result = [
                     tuple(
-                        str(x) if not isinstance(x, list) else str(sorted(x))
+                        str(x)
                         for x in row
                     )
                     for row in t2_result
