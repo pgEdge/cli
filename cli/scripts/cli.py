@@ -70,8 +70,7 @@ fire_list = [
     "cloud",
     "db",
     "app",
-    "setup",
-    "update-cli"
+    "setup"
 ]
 
 fire_contrib = ["node", "localhost"]

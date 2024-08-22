@@ -1,43 +1,58 @@
 
 #  Copyright 2022-2024 PGEDGE  All rights reserved. #
 
-import os, sys, time, datetime, tarfile
+import os, sys, time, datetime, tarfile, subprocess
 from urllib import request as urllib2
 
-
-import util, fire
-
 BASE_BACKUP_DIR="/tmp/pgedge-cli-updates"
-MY_HOME=os.getenv("MY_HOME")
+MY_HOME=os.getcwd()
+
+def exit_message(msg):
+    print(f"ERROR: {msg}")
+    sys.exit(1)
+
+
+def check_cmd(p_cmd):
+    print(f"$ {p_cmd}")
+    rc = os.system(p_cmd)
+    if rc == 0:
+        return
+    exit_message("Failed command")
 
 
 def get_now():
     return(datetime.datetime.now(datetime.UTC).astimezone().strftime("%m%d_%H%M%S"))
 
 
-def get_cli_ver(p_file):
+def get_output(p_cmd):
+    try:
+        out_b = subprocess.check_output(p_cmd, shell=True)
+    except Exception as e:
+        exit_message(f"Unable to run {p_cmd} \n {e}")
 
+    out_s = out_b.strip().decode("ascii") 
+    return (out_s)
+
+
+def get_cli_ver(p_file):
     if not os.path.isfile(f"{p_file}"):
-        util.exit_message(f"Cannot locate version file: {p_file}")
+        exit_message(f"Cannot locate version file: {p_file}")
 
     awk3 = "awk '{print $3}'"
-    ver_quoted = util.getoutput(f"grep 'VER =' {p_file} | {awk3}")
+    cmd = f"grep 'VER =' {p_file} | {awk3}"
+    ver_quoted = get_output(cmd)
 
     ver = ver_quoted.replace('"', '')
-
-    ##return(util.format_ver(ver))
     return(ver)
-
-
-def replace_files(from_dir, to_dir):
-    util.message("DEBUG:  figure it manually first")
-    return
 
 
 def download_file(p_file, p_dir):
     file_path = f"{p_dir}/{p_file}"
-    url_path = f"{util.get_value("GLOBAL", "REPO")}/{p_file}"
-    util.message(f"\nDownloading {url_path}")
+
+    repo = get_output(f"{MY_HOME}/pgedge get GLOBAL REPO")
+
+    url_path = f"{repo}/{p_file}"
+    print(f"# Downloading {url_path}")
 
     try:
         fu = urllib2.urlopen(url_path)
@@ -45,7 +60,7 @@ def download_file(p_file, p_dir):
         local_file.write(fu.read())
         local_file.close()
     except Exception as e:
-        util.exit_message(f"Unable to download \n {str(e)}")
+        exit_message(f"Unable to download \n {e}")
 
     return
 
@@ -53,7 +68,7 @@ def download_file(p_file, p_dir):
 def unpack_file(p_file, p_dir):
 
     os.chdir(p_dir)
-    util.message(f"\nUnpacking into {p_dir}")
+    print(f"# Unpacking into {p_dir}")
 
     try:
         # Use 'data' filter if available, but revert to Python 3.11 behavior ('fully_trusted')
@@ -64,116 +79,88 @@ def unpack_file(p_file, p_dir):
         tar.extractall()
         tar.close()
     except Exception as e:
-        print("ERROR: Unable to unpack \n" + str(e))
-        sys.exit(1)
+        exit_message(f"Unable to unpack\n {str(e)}")
 
 
 def backup_current():
-    """Backup current CLI to an archive directory
-
-       Backup current CLI to '/tmp/pgedge_backup_cli' archive directory
-    """
+    print("\n### Backing up current CLI")
 
     ts = get_now()
     ver = get_cli_ver(f"{MY_HOME}/hub/scripts/install.py")
     backup_dir = f"{BASE_BACKUP_DIR}/{ts}_{ver}_CURRENT_BACKUP"
-    rc = os.system(f"mkdir -p {backup_dir}")
-    if rc != 0:
-        return(None)
+    check_cmd(f"mkdir -p {backup_dir}")
 
-    util.message(f"\nBacking up current CLI into {backup_dir}")
+    check_cmd(f"cp -r {MY_HOME}/hub {backup_dir}")
+    check_cmd(f"cp {MY_HOME}/pgedge {backup_dir}/.")
 
-    rc1 = os.system(f"cp -r {MY_HOME}/hub {backup_dir}")
-    rc2 = os.system(f"cp {MY_HOME}/pgedge {backup_dir}/.")
-
-    if rc1 + rc2 == 0:
-        return(backup_dir)
-
-    return(None)
+    return(backup_dir)
 
 
 def download_latest():
-    """Download latest CLI to an archive directory
-    
-       Download latest CLI to '/tmp/pgedge_backup_cli' archive directory
-    """
-
-    ver_current = get_cli_ver(f"{MY_HOME}/hub/scripts/install.py")
-    backup_dir = backup_current()
-    if backup_dir is None:
-        util.exit_message("Failed to take a current cli backup")
-    time.sleep(1)
+    print("\n### Download latest CLI to archive directory")
 
     now = get_now()
     download_dir = f"{BASE_BACKUP_DIR}/{now}_xxx_LATEST_DOWNLOAD"
-    os.system(f"rm -rf {download_dir}")
-    os.system(f"mkdir {download_dir}")
+    check_cmd(f"rm -rf {download_dir}")
+    check_cmd(f"mkdir {download_dir}")
+
     download_file("install.py", download_dir)
     ver_latest = get_cli_ver(f"{download_dir}/install.py")
 
     new_dir = f"{BASE_BACKUP_DIR}/{now}_{ver_latest}_LATEST_DOWNLOAD"
-    os.system(f"mv {download_dir} {new_dir}")
+    check_cmd(f"mv {download_dir} {new_dir}")
 
     file = f"pgedge-cli-{ver_latest}.tgz"
     download_file(file, new_dir)
     unpack_file(file, new_dir)
 
-    print("")
     return(new_dir)
 
+#
+#def list_archives():
+#    """ List recent archive directories """
+#
+#    dir_list = []
+#
+#    if not os.path.isdir(BASE_BACKUP_DIR):
+#        os.system(f"mkdir -p {BASE_BACKUP_DIR}")
+#
+#    for name in os.listdir(BASE_BACKUP_DIR):
+#        if ("_BACKUP" in name) or ("_DOWNLOAD" in name):
+#            dir_list.append(name)
+#
+#    if len(dir_list) >= 1:
+#        desc_list = sorted(dir_list, reverse=True)
+#        for name in desc_list:
+#            print(name)
+#
 
-def list_archives():
-    """List recent archive directories
+def update_from_archive(archive_dir):
+    print("\n### Updating CLI (hub) files from archive")
 
-       List recent archive directories under '/tmp/pgedge_backup_cli'
-    """
+    os.chdir(MY_HOME)
+    check_cmd(f"cp -r {archive_dir}/pgedge/hub .")
+    check_cmd(f"cp {archive_dir}/pgedge/pgedge .")
 
-    dir_list = []
-
-    if not os.path.isdir(BASE_BACKUP_DIR):
-        os.system(f"mkdir -p {BASE_BACKUP_DIR}")
-
-    for name in os.listdir(BASE_BACKUP_DIR):
-        if ("_BACKUP" in name) or ("_DOWNLOAD" in name):
-            dir_list.append(name)
-
-    if len(dir_list) >= 1:
-        desc_list = sorted(dir_list, reverse=True)
-        for name in desc_list:
-            print(name)
-
-
-def update_from_archive(archive_dir, force=False):
-    """Update CLI from an archive directory
-
-       Backup current CLI, download latest & then update with latest CLI
-
-       Example: ./pgedge update-cli update-from-archive --force True
-       :param force: force an update even if new version is same or older (defaults to False)
-    """
-
-    replace_files(archive_dir, MY_HOME)
-
-    return("True || False")
+    print("\n### Updating system from archive")
+    check_cmd("./pgedge update")
 
 
-def now(force=False):
-    """ Backup current CLI, then download & update with latest CLI
+########## MAINLINE ###############################
 
-        Backup current CLI, download latest & then update with latest CLI
+curr_backup = backup_current()
 
-        Example: ./pgedge update-cli now --force True
-        :param force: force an update even if new version is same or older (defaults to False)
-    """
+time.sleep(1)
+latest_archive = download_latest()
 
-    return()
+install_py = "hub/scripts/install.py"
+curr_ver = get_cli_ver(f"{curr_backup}/{install_py}")
+latest_ver = get_cli_ver(f"{latest_archive}/pgedge/{install_py}")
 
+sleep_secs = 5
+print(f"\n### Updating to {latest_ver} from {curr_ver} in {sleep_secs}")
+time.sleep(sleep_secs)
 
-if __name__ == "__main__":
-    fire.Fire({
-        "now":                  now,
-        "backup-current":       backup_current,
-        "download-latest":      download_latest,
-        "update-from-archive":  update_from_archive,
-        "list-archives":        list_archives,
-    })
+update_from_archive(latest_archive)
+
+sys.exit(0)
