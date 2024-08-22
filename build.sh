@@ -458,7 +458,7 @@ do
           writeSettRow "GLOBAL" "PLATFORM" "$plat"
           if [ "$plat" == "posix" ]; then
             checkCmd "cp $CLI/install.py $OUT/."
-            checkCmd "cp $CLI/update-cli.py $OUT/."
+            checkCmd "cp $CLI/upgrade-cli.py $OUT/."
           fi;;
 
       R)  writeSettRow "GLOBAL" "REPO" "$repo" "-v";;

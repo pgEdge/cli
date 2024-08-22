@@ -229,6 +229,8 @@ def _SynopsisSection(component, actions_grouped_by_kind, spec, metadata,
 
   # # BEGIN PGEDGE MODS ########################################
   prfx = "pgedge"
+  file = ""
+
   if "spock.py" in txt:
     prfx = "spock"
   elif "um.py" in txt:
@@ -249,10 +251,14 @@ def _SynopsisSection(component, actions_grouped_by_kind, spec, metadata,
     prfx = "localhost"
   elif "setup.py" in txt:
     prfx = "setup"
-  elif "update-cli.py" in txt:
-    prfx = "update-cli"
+  elif "upgrade-cli-fire.py" in txt:
+    prfx = "upgrade-cli"
+    file = "upgrade-cli-fire"
 
-  txt = txt.replace(f"{prfx}.py", f"./pgedge {prfx}")
+  if file == "":
+      file = prfx
+
+  txt = txt.replace(f"{file}.py", f"./pgedge {prfx}")
 
   if sfx > "":
     MD_FILE = f"{prfx}-{sfx}.md"

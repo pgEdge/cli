@@ -70,10 +70,11 @@ fire_list = [
     "cloud",
     "db",
     "app",
-    "setup"
+    "setup",
+    "upgrade-cli"
 ]
 
-fire_contrib = ["node", "localhost"]
+fire_contrib = ["localhost"]
 
 native_list = ["backrest", "ansible", "patroni", "etcd", "bouncer"]
 
@@ -180,9 +181,15 @@ pid_file = os.path.join(util.MY_HOME, "data", "conf", "cli.pid")
 
 isJSON = util.isJSON
 
+
 def fire_away(p_mode, p_args):
     util.message(f"cli.fire_away({p_mode}, {p_args})", "debug")
-    py_file = f"{p_mode}.py"
+
+    mode = p_mode
+    if p_mode == "upgrade-cli":
+        mode = "upgrade-cli-fire"
+
+    py_file = f"{mode}.py"
     py3 = sys.executable
     if os.path.exists(py_file):
         cmd = f"{py3} {py_file}"
