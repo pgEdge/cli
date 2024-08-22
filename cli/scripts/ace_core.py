@@ -550,10 +550,15 @@ def table_repair(tr_task: TableRepairTask):
 
     if tr_task.generate_report:
         report = dict()
-        report["time_stamp"] = datetime.now().strftime("%m/%d/%Y, %H:%M:%S")
-        report["arguments"] = {
+        now = datetime.now()
+        report["operation_type"] = "table-repair"
+        report["mode"] = "LIVE-RUN"
+        report["time_stamp"] = (
+            now.strftime("%Y-%m-%d %H:%M:%S") + f"{now.microsecond // 1000:03d}"
+        )
+        report["supplied_args"] = {
             "cluster_name": tr_task.cluster_name,
-            "diff_file": tr_task.diff_file,
+            "diff_file": tr_task.diff_file_path,
             "source_of_truth": tr_task.source_of_truth,
             "table_name": tr_task._table_name,
             "dbname": tr_task._dbname,
@@ -562,7 +567,7 @@ def table_repair(tr_task: TableRepairTask):
             "upsert_only": tr_task.upsert_only,
             "generate_report": tr_task.generate_report,
         }
-        report["database"] = tr_task.fields.database
+        report["database_credentials_used"] = tr_task.fields.database
         report["changes"] = dict()
 
     """
@@ -1335,8 +1340,9 @@ def repset_diff(rd_task: RepsetDiffTask) -> None:
 
     for table in rd_task.table_list:
         util.message(
-            f"\n\nCHECKING TABLE {table}...\n", p_state="info",
-            quiet_mode=rd_task.quiet_mode
+            f"\n\nCHECKING TABLE {table}...\n",
+            p_state="info",
+            quiet_mode=rd_task.quiet_mode,
         )
         table_diff(rd_task)
 

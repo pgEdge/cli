@@ -733,6 +733,7 @@ def table_repair_checks(tr_task: TableRepairTask) -> TableRepairTask:
     Derived fields for TableRepairTask
     """
     tr_task.fields.cluster_nodes = cluster_nodes
+    tr_task.fields.database = database
     tr_task.fields.cols = cols
     tr_task.fields.key = key
     tr_task.fields.l_schema = l_schema
