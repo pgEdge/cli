@@ -3,6 +3,7 @@ out/
 devel/pg/src
 devel/pg/1*
 devel/pg/postgresml/
+devel/incus
 
 src/packages/*.rpm
 src/packages/*.deb
