@@ -231,14 +231,14 @@ def compare_checksums(shared_objects, worker_state, batches):
                 # TODO: Test and add support for different datatypes here
                 t1_result = [
                     tuple(
-                        str(x) if not isinstance(x, list) else str(sorted(x))
+                        str(x)
                         for x in row
                     )
                     for row in t1_result
                 ]
                 t2_result = [
                     tuple(
-                        str(x) if not isinstance(x, list) else str(sorted(x))
+                        str(x)
                         for x in row
                     )
                     for row in t2_result
@@ -513,7 +513,7 @@ def table_diff(td_task: TableDiffTask):
             )
 
         elif td_task.output == "csv":
-            ace.write_diffs_csv()
+            ace.write_diffs_csv( diff_dict )
 
     else:
         util.message(
@@ -832,15 +832,17 @@ def table_repair(tr_task: TableRepairTask):
         Here we are constructing an UPSERT query from true_rows and
         applying it to all nodes
         """
+
+        table_name_sql = f"{tr_task.fields.l_schema}.\"{tr_task.fields.l_table}\""
         if simple_primary_key:
             update_sql = f"""
-            INSERT INTO {tr_task._table_name}
+            INSERT INTO {table_name_sql}
             VALUES ({','.join(['%s'] * len(cols_list))})
             ON CONFLICT ("{tr_task.fields.key}") DO UPDATE SET
             """
         else:
             update_sql = f"""
-            INSERT INTO {tr_task.table_name}
+            INSERT INTO {table_name_sql}
             VALUES ({','.join(['%s'] * len(cols_list))})
             ON CONFLICT
             ({','.join(['"' + col + '"' for col in keys_list])}) DO UPDATE SET
@@ -855,12 +857,12 @@ def table_repair(tr_task: TableRepairTask):
 
         if simple_primary_key:
             delete_sql = f"""
-            DELETE FROM {tr_task._table_name}
+            DELETE FROM {table_name_sql}
             WHERE "{tr_task.fields.key}" = %s;
             """
         else:
             delete_sql = f"""
-            DELETE FROM {tr_task.table_name}
+            DELETE FROM {table_name_sql}
             WHERE
             """
 
@@ -987,7 +989,7 @@ def table_repair(tr_task: TableRepairTask):
     run_time_str = f"{run_time:.2f}"
 
     util.message(
-        f"Successfully applied diffs to {tr_task._table_name} in cluster"
+        f"Successfully applied diffs to {tr_task._table_name} in cluster "
         f"{tr_task.cluster_name}\n",
         p_state="success",
         quiet_mode=tr_task.quiet_mode,

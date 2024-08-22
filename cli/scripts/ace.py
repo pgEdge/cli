@@ -135,7 +135,7 @@ def fix_schema(diff_file, sql1, sql2):
 
 
 def get_row_count(p_con, p_schema, p_table):
-    sql = f"SELECT count(*) FROM {p_schema}.{p_table}"
+    sql = f"SELECT count(*) FROM {p_schema}.\"{p_table}\""
 
     try:
         cur = p_con.cursor()
@@ -495,8 +495,7 @@ def table_diff_checks(td_task: TableDiffTask) -> TableDiffTask:
 
     if not database:
         raise AceException(
-            f"Database '{td_task._dbname}' not found in cluster"
-            " '{td_args.cluster_name}'"
+            f"Database '{td_task._dbname}' not found in cluster '{td_task.cluster_name}'"
         )
 
     # Combine db and cluster_nodes into a single json
@@ -570,7 +569,14 @@ def table_diff_checks(td_task: TableDiffTask) -> TableDiffTask:
     )
 
     if td_task.diff_file_path:
-        diff_data = json.load(open(td_task.diff_file_path, "r"))
+        if not os.path.exists(td_task.diff_file_path):
+            raise AceException(f"Diff file {td_task.diff_file_path} not found")
+
+        try: 
+            diff_data = json.load(open(td_task.diff_file_path, "r"))
+        except Exception as e:
+            raise AceException(f"Could not load diff file as JSON: {e}")
+
         try:
             if any(
                 [
@@ -649,7 +655,7 @@ def table_repair_checks(tr_task: TableRepairTask) -> TableRepairTask:
 
     if tr_task._dbname:
         for db_entry in db:
-            if db_entry["db_name"] == tr_task.dbname:
+            if db_entry["db_name"] == tr_task._dbname:
                 database = db_entry
                 break
     else:
@@ -657,8 +663,7 @@ def table_repair_checks(tr_task: TableRepairTask) -> TableRepairTask:
 
     if not database:
         raise AceException(
-            f"Database '{tr_task._dbname}' not found in cluster '"
-            f"{tr_task.cluster_name}'"
+            f"Database '{tr_task._dbname}' not found in cluster '{tr_task.cluster_name}'"
         )
 
     # Combine db and cluster_nodes into a single json
