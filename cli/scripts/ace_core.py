@@ -20,7 +20,7 @@ import ace_db
 import cluster
 import util
 import ace_config as config
-from ace_db import TableDiffTask, TableRepairTask
+from ace_db import RepsetDiffTask, TableDiffTask, TableRepairTask
 from ace import AceException
 
 
@@ -1330,165 +1330,15 @@ def table_rerun_async(td_task: TableDiffTask) -> None:
     ace_db.update_ace_task(td_task)
 
 
-def repset_diff(
-    cluster_name,
-    repset_name,
-    dbname=None,
-    block_rows=config.BLOCK_ROWS_DEFAULT,
-    max_cpu_ratio=config.MAX_CPU_RATIO_DEFAULT,
-    output="json",
-    nodes="all",
-    quiet=False,
-):
+def repset_diff(rd_task: RepsetDiffTask) -> None:
     """Loop thru a replication-sets tables and run table-diff on them"""
 
-    quiet_mode = quiet
-
-    if type(block_rows) is str:
-        try:
-            block_rows = int(block_rows)
-        except Exception:
-            util.exit_message("Invalid values for ACE_BLOCK_ROWS or --block_rows")
-    elif type(block_rows) is not int:
-        util.exit_message("Invalid value type for ACE_BLOCK_ROWS or --block_rows")
-
-    # Capping max block size here to prevent the hash function from taking forever
-    if block_rows > config.MAX_ALLOWED_BLOCK_SIZE:
-        util.exit_message(
-            f"Block row size should be <= {config.MAX_ALLOWED_BLOCK_SIZE}"
-        )
-    if block_rows < config.MIN_ALLOWED_BLOCK_SIZE:
-        util.exit_message(
-            f"Block row size should be >= {config.MIN_ALLOWED_BLOCK_SIZE}"
-        )
-
-    if type(max_cpu_ratio) is int:
-        max_cpu_ratio = float(max_cpu_ratio)
-    elif type(max_cpu_ratio) is str:
-        try:
-            max_cpu_ratio = float(max_cpu_ratio)
-        except Exception:
-            util.exit_message("Invalid values for ACE_MAX_CPU_RATIO or --max_cpu_ratio")
-    elif type(max_cpu_ratio) is not float:
-        util.exit_message("Invalid value type for ACE_MAX_CPU_RATIO or --max_cpu_ratio")
-
-    if max_cpu_ratio > 1.0 or max_cpu_ratio < 0.0:
-        util.exit_message(
-            "Invalid value range for ACE_MAX_CPU_RATIO or --max_cpu_ratio"
-        )
-
-    if output not in ["csv", "json"]:
-        util.exit_message(
-            "Diff-tables currently supports only csv and json output formats"
-        )
-
-    node_list = []
-    try:
-        node_list = ace.parse_nodes(nodes)
-    except ValueError as e:
-        util.exit_message(
-            f'Nodes should be a comma-separated list of nodenames. \
-                E.g., --nodes="n1,n2". Error: {e}'
-        )
-
-    if len(node_list) > 3:
-        util.exit_message(
-            "diff-tables currently supports up to a three-way table comparison"
-        )
-
-    if nodes != "all" and len(node_list) == 1:
-        util.exit_message("diff-tables needs at least two nodes to compare")
-
-    util.check_cluster_exists(cluster_name)
-    util.message(
-        f"Cluster {cluster_name} exists", p_state="success", quiet_mode=quiet_mode
-    )
-
-    db, pg, node_info = cluster.load_json(cluster_name)
-
-    cluster_nodes = []
-    database = {}
-
-    if dbname:
-        for db_entry in db:
-            if db_entry["db_name"] == dbname:
-                database = db_entry
-                break
-    else:
-        database = db[0]
-
-    if not database:
-        util.exit_message(f"Database '{dbname}' not found in cluster '{cluster_name}'")
-
-    # Combine db and cluster_nodes into a single json
-    for node in node_info:
-        combined_json = {**database, **node}
-        cluster_nodes.append(combined_json)
-
-    if nodes != "all" and len(node_list) > 1:
-        for n in node_list:
-            if not any(filter(lambda x: x["name"] == n, cluster_nodes)):
-                util.exit_message("Specified nodenames not present in cluster")
-
-    conn_list = []
-
-    try:
-        for nd in cluster_nodes:
-            if nodes == "all":
-                node_list.append(nd["name"])
-
-            if (node_list and nd["name"] in node_list) or (not node_list):
-                psql_conn = psycopg.connect(
-                    dbname=nd["db_name"],
-                    user=nd["db_user"],
-                    password=nd["db_password"],
-                    host=nd["public_ip"],
-                    port=nd.get("port", 5432),
-                )
-                conn_list.append(psql_conn)
-
-    except Exception as e:
-        util.exit_message("Error in diff_tbls() Getting Connections:" + str(e), 1)
-
-    util.message(
-        "Connections successful to nodes in cluster",
-        p_state="success",
-        quiet_mode=quiet_mode,
-    )
-
-    # Connecting to any one of the nodes in the cluster should suffice
-    conn = conn_list[0]
-    cur = conn.cursor()
-
-    # Check if repset exists
-    sql = "select set_name from spock.replication_set;"
-    cur.execute(sql)
-    repset_list = [item[0] for item in cur.fetchall()]
-    if repset_name not in repset_list:
-        util.exit_message(f"Repset {repset_name} not found")
-
-    # No need to sanitise repset_name here since psycopg does it for us
-    sql = (
-        "SELECT concat_ws('.', nspname, relname) FROM spock.tables where set_name = %s;"
-    )
-    cur.execute(sql, (repset_name,))
-    tables = cur.fetchall()
-
-    if not tables:
+    for table in rd_task.table_list:
         util.message(
-            "Repset may be empty",
-            p_state="warning",
-            quiet_mode=quiet_mode,
+            f"\n\nCHECKING TABLE {table}...\n", p_state="info",
+            quiet_mode=rd_task.quiet_mode
         )
-
-    # Convert fetched rows into a list of strings
-    tables = [table[0] for table in tables]
-
-    for table in tables:
-        util.message(
-            f"\n\nCHECKING TABLE {table}...\n", p_state="info", quiet_mode=quiet_mode
-        )
-        table_diff(cluster_name, table, quiet=quiet_mode)
+        table_diff(rd_task)
 
 
 def spock_diff(cluster_name, nodes):

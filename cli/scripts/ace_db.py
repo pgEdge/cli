@@ -35,6 +35,7 @@ class DerivedFields:
     database: str = None
     node_list: list = None
     host_map: dict = None
+    table_list: list = None
 
 
 @dataclass
@@ -94,6 +95,36 @@ class TableRepairTask():
     dry_run: bool = False
     generate_report: bool = False
     upsert_only: bool = False
+
+    # Derived fields
+    fields: DerivedFields = DerivedFields()
+
+
+@dataclass
+class RepsetDiffTask():
+    # Unprocessed fields
+    _dbname: str
+    _nodes: str
+
+    # Mandatory fields
+    cluster_name: str
+    repset_name: str
+
+    # Optional fields
+    # Non-default members since the handler method will fill in the
+    # default values
+    block_rows: int
+    max_cpu_ratio: float
+    output: str
+    batch_size: int 
+    quiet_mode: bool
+    nodes: str
+
+    # Task-specific parameters
+    scheduler: Task = Task()
+    scheduler.task_type = "repset-diff"
+    scheduler.task_status = "RUNNING"
+    scheduler.started_at = datetime.now()
 
     # Derived fields
     fields: DerivedFields = DerivedFields()

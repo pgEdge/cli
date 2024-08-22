@@ -1,7 +1,7 @@
 import ace_config as config
 import ace_core
 import ace_db
-from ace_db import TableDiffTask, TableRepairTask
+from ace_db import RepsetDiffTask, TableDiffTask, TableRepairTask
 import ace
 import util
 from ace_exceptions import AceException
@@ -116,8 +116,38 @@ def table_rerun_cli(
         util.exit_message(str(e))
 
 
-def repset_diff_cli():
-    pass
+def repset_diff_cli(
+        cluster_name,
+        dbname,
+        repset_name,
+        block_rows=config.BLOCK_ROWS_DEFAULT,
+        max_cpu_ratio=config.MAX_CPU_RATIO_DEFAULT,
+        output="json",
+        nodes="all",
+        batch_size=config.BATCH_SIZE_DEFAULT,
+        quiet=False,
+):
+
+    task_id = ace_db.generate_task_id()
+
+    try:
+        raw_args = RepsetDiffTask(
+            cluster_name=cluster_name,
+            _dbname=dbname,
+            _repset_name=repset_name,
+            block_rows=block_rows,
+            max_cpu_ratio=max_cpu_ratio,
+            output=output,
+            _nodes=nodes,
+            batch_size=batch_size,
+            quiet_mode=quiet,
+        )
+        raw_args.scheduler.task_id = task_id
+        rd_task = ace.repset_diff_checks(raw_args)
+        ace_db.create_ace_task(task=rd_task)
+        ace_core.repset_diff(rd_task)
+    except AceException as e:
+        util.exit_message(str(e))
 
 
 def schema_diff_cli():
