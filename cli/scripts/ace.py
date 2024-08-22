@@ -1483,7 +1483,7 @@ def table_rerun(cluster_name, diff_file, table_name, dbname=None, quiet=False):
             for indices in values:
                 sql = f"""
                 SELECT *
-                FROM {table_name}
+                FROM {l_schema}.\"{l_table}\"
                 WHERE
                 """
 
