@@ -4,7 +4,7 @@ from flask import Flask, request, jsonify
 import ace_core
 import ace_config as config
 import ace_db
-from ace_db import TableDiffTask, TableRepairTask
+from ace_data_models import RepsetDiffTask, TableDiffTask, TableRepairTask
 import ace
 from ace_exceptions import AceException
 
@@ -133,6 +133,42 @@ def table_rerun_api():
         return jsonify({"error": str(e)})
 
 
+@app.route("/ace/repset-diff", methods=["GET"])
+def repset_diff_api():
+    cluster_name = request.args.get("cluster_name")
+    dbname = request.args.get("dbname")
+    repset_name = request.args.get("repset_name")
+    block_rows = request.args.get("block_rows", config.BLOCK_ROWS_DEFAULT)
+    max_cpu_ratio = request.args.get("max_cpu_ratio", config.MAX_CPU_RATIO_DEFAULT)
+    output = request.args.get("output", "json")
+    nodes = request.args.get("nodes", "all")
+    batch_size = request.args.get("batch_size", config.BATCH_SIZE_DEFAULT, type=int)
+    quiet = request.args.get("quiet", False)
+
+    task_id = ace_db.generate_task_id()
+
+    try:
+        raw_args = RepsetDiffTask(
+            cluster_name=cluster_name,
+            _dbname=dbname,
+            repset_name=repset_name,
+            block_rows=block_rows,
+            max_cpu_ratio=max_cpu_ratio,
+            output=output,
+            _nodes=nodes,
+            batch_size=batch_size,
+            quiet_mode=quiet,
+        )
+
+        raw_args.scheduler.task_id = task_id
+        rd_task = ace.repset_diff_checks(raw_args)
+        ace_db.create_ace_task(task=rd_task)
+        ace.scheduler.add_job(ace_core.repset_diff, args=(rd_task,))
+        return jsonify({"task_id": task_id, "submitted_at": datetime.now().isoformat()})
+    except AceException as e:
+        return jsonify({"error": str(e)})
+
+
 @app.route("/ace/task-status", methods=["GET"])
 def task_status_api():
     task_id = request.args.get("task_id")
@@ -164,4 +200,4 @@ def start_ace():
     # a BackgroundScheduler with add_job() will automatically
     # run the job in the background.
     # scheduler.add_listener(listener, EVENT_JOB_ADDED)
-    app.run(host="127.0.0.1", port=5000)
+    app.run(host="127.0.0.1", port=5000, debug=True)

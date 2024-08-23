@@ -4,131 +4,7 @@ from typing import Union
 import util
 import string
 import random
-from dataclasses import dataclass
-from datetime import datetime
-
-
-"""
-Use a dataclass to store the raw and processed inputs from the user
-"""
-
-
-@dataclass
-class Task:
-    task_id: str = None
-    task_type: str = None
-    task_status: str = None
-    task_context: str = None
-    started_at: datetime = None
-    finished_at: datetime = None
-    time_taken: float = None
-
-
-@dataclass
-class DerivedFields:
-    cluster_nodes: list = None
-    l_schema: str = None
-    l_table: str = None
-    key: str = None
-    cols: list = None
-    conn_params: list = None
-    database: str = None
-    node_list: list = None
-    host_map: dict = None
-    table_list: list = None
-
-
-@dataclass
-class TableDiffTask():
-    # Unprocessed fields
-    _table_name: str  # Required
-    _dbname: str
-    _nodes: str
-
-    # User-specified, validated fields
-    cluster_name: str  # Required
-    block_rows: int
-    max_cpu_ratio: float
-    output: str
-    batch_size: int
-    quiet_mode: bool
-
-    # For table-diff, the diff_file_path is
-    # obtained after the run of table-diff,
-    # and is not mandatory
-    diff_file_path: str = None
-
-    scheduler: Task = Task()
-
-    # Task specific parameters
-    scheduler.task_type = "table-diff"
-    scheduler.task_status = "RUNNING"
-    scheduler.started_at = datetime.now()
-
-    # Derived fields
-    fields: DerivedFields = DerivedFields()
-
-
-@dataclass
-class TableRepairTask():
-    # Unprocessed fields
-    _table_name: str
-    _dbname: str
-
-    # Mandatory fields
-    cluster_name: str
-
-    # For table-repair, the diff_file_path is
-    # mandatory, as it is used to repair the
-    # tables
-    diff_file_path: str
-    source_of_truth: str
-
-    # Task-specific parameters
-    scheduler: Task = Task()
-    scheduler.task_type = "table-repair"
-    scheduler.task_status = "RUNNING"
-    scheduler.started_at = datetime.now()
-
-    # Optional fields
-    quiet_mode: bool = False
-    dry_run: bool = False
-    generate_report: bool = False
-    upsert_only: bool = False
-
-    # Derived fields
-    fields: DerivedFields = DerivedFields()
-
-
-@dataclass
-class RepsetDiffTask():
-    # Unprocessed fields
-    _dbname: str
-    _nodes: str
-
-    # Mandatory fields
-    cluster_name: str
-    repset_name: str
-
-    # Optional fields
-    # Non-default members since the handler method will fill in the
-    # default values
-    block_rows: int
-    max_cpu_ratio: float
-    output: str
-    batch_size: int 
-    quiet_mode: bool
-    nodes: str
-
-    # Task-specific parameters
-    scheduler: Task = Task()
-    scheduler.task_type = "repset-diff"
-    scheduler.task_status = "RUNNING"
-    scheduler.started_at = datetime.now()
-
-    # Derived fields
-    fields: DerivedFields = DerivedFields()
-
+from ace_data_models import TableDiffTask, TableRepairTask, RepsetDiffTask
 
 sqlite_db = util.MY_LITE
 local_db_conn = sqlite3.connect(sqlite_db, check_same_thread=False)
@@ -137,11 +13,12 @@ ace_tasks_sql = """
 CREATE TABLE IF NOT EXISTS ace_tasks (
   task_id           TEXT        PRIMARY KEY,
   task_type         TEXT        NOT NULL,
-  cluster_name      TEXT        NOT NULL,
-  schema            TEXT        NOT NULL,
-  table_name        TEXT        NOT NULL,
   task_status       TEXT        NOT NULL,
+  cluster_name      TEXT        NOT NULL,
   task_context      TEXT,
+  schema            TEXT,
+  table_name        TEXT,
+  repset_name       TEXT,
   diff_file_path    TEXT,
   started_at        TEXT,
   finished_at       TEXT,
@@ -166,14 +43,16 @@ def create_ace_tasks_table():
         util.fatal_sql_error(e, ace_tasks_sql, "create_ace_tasks_table()")
 
 
-def create_ace_task(task: Union[TableDiffTask, TableRepairTask]):
+def create_ace_task(
+    task: Union[TableDiffTask, TableRepairTask, RepsetDiffTask]
+) -> None:
     try:
         c = local_db_conn.cursor()
         sql = """
                 INSERT INTO ace_tasks (task_id, task_type, cluster_name, schema,
-                table_name, task_status, task_context, diff_file_path,
+                table_name, repset_name, task_status, task_context, diff_file_path,
                 started_at, finished_at, time_taken)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
               """
         c.execute(
             sql,
@@ -183,9 +62,11 @@ def create_ace_task(task: Union[TableDiffTask, TableRepairTask]):
                 task.cluster_name,
                 task.fields.l_schema,
                 task.fields.l_table,
+                task.repset_name if isinstance(task, RepsetDiffTask) else None,
                 task.scheduler.task_status,
                 task.scheduler.task_context,
-                task.diff_file_path,
+                # diff_file_path is not mandatory for table-diff and repset-diff
+                getattr(task, "diff_file_path", None),
                 task.scheduler.started_at,
                 task.scheduler.finished_at,
                 task.scheduler.time_taken,
@@ -221,7 +102,7 @@ def get_ace_task_by_id(task_id) -> dict:
     return task_details
 
 
-def update_ace_task(td_task: TableDiffTask):
+def update_ace_task(task: Union[TableDiffTask, TableRepairTask, RepsetDiffTask]):
     try:
         c = local_db_conn.cursor()
         sql = """
@@ -237,13 +118,13 @@ def update_ace_task(td_task: TableDiffTask):
         c.execute(
             sql,
             (
-                td_task.scheduler.task_status,
-                json.dumps(td_task.scheduler.task_context),
-                td_task.diff_file_path,
-                td_task.scheduler.started_at.isoformat(timespec="milliseconds"),
-                td_task.scheduler.finished_at.isoformat(timespec="milliseconds"),
-                td_task.scheduler.time_taken,
-                td_task.scheduler.task_id,
+                task.scheduler.task_status,
+                json.dumps(task.scheduler.task_context),
+                task.diff_file_path,
+                task.scheduler.started_at.isoformat(timespec="milliseconds"),
+                task.scheduler.finished_at.isoformat(timespec="milliseconds"),
+                task.scheduler.time_taken,
+                task.scheduler.task_id,
             ),
         )
         local_db_conn.commit()

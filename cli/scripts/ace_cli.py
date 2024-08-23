@@ -1,7 +1,7 @@
 import ace_config as config
 import ace_core
 import ace_db
-from ace_db import RepsetDiffTask, TableDiffTask, TableRepairTask
+from ace_data_models import RepsetDiffTask, TableDiffTask, TableRepairTask
 import ace
 import util
 from ace_exceptions import AceException

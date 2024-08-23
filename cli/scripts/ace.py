@@ -23,7 +23,7 @@ import cluster
 import util
 import ace_db
 import ace_config as config
-from ace_db import RepsetDiffTask, TableDiffTask, TableRepairTask
+from ace_data_models import RepsetDiffTask, TableDiffTask, TableRepairTask
 import ace_cli
 from ace_exceptions import AceException
 
@@ -495,7 +495,8 @@ def table_diff_checks(td_task: TableDiffTask) -> TableDiffTask:
 
     if not database:
         raise AceException(
-            f"Database '{td_task._dbname}' not found in cluster '{td_task.cluster_name}'"
+            f"Database '{td_task._dbname}' not found in cluster"
+            f"'{td_task.cluster_name}'"
         )
 
     # Combine db and cluster_nodes into a single json
@@ -572,7 +573,7 @@ def table_diff_checks(td_task: TableDiffTask) -> TableDiffTask:
         if not os.path.exists(td_task.diff_file_path):
             raise AceException(f"Diff file {td_task.diff_file_path} not found")
 
-        try: 
+        try:
             diff_data = json.load(open(td_task.diff_file_path, "r"))
         except Exception as e:
             raise AceException(f"Could not load diff file as JSON: {e}")
@@ -663,7 +664,8 @@ def table_repair_checks(tr_task: TableRepairTask) -> TableRepairTask:
 
     if not database:
         raise AceException(
-            f"Database '{tr_task._dbname}' not found in cluster '{tr_task.cluster_name}'"
+            f"Database '{tr_task._dbname}' not found in cluster"
+            f"'{tr_task.cluster_name}'"
         )
 
     # Combine db and cluster_nodes into a single json
@@ -793,7 +795,7 @@ def repset_diff_checks(rd_task: RepsetDiffTask) -> RepsetDiffTask:
 
     node_list = []
     try:
-        node_list = parse_nodes(rd_task.nodes)
+        node_list = parse_nodes(rd_task._nodes)
     except ValueError as e:
         raise AceException(
             f'Nodes should be a comma-separated list of nodenames. \
@@ -805,7 +807,7 @@ def repset_diff_checks(rd_task: RepsetDiffTask) -> RepsetDiffTask:
             "diff-tables currently supports up to a three-way table comparison"
         )
 
-    if rd_task.nodes != "all" and len(node_list) == 1:
+    if rd_task._nodes != "all" and len(node_list) == 1:
         raise AceException("repset-diff needs at least two nodes to compare")
 
     util.check_cluster_exists(rd_task.cluster_name)
@@ -836,7 +838,7 @@ def repset_diff_checks(rd_task: RepsetDiffTask) -> RepsetDiffTask:
         combined_json = {**database, **node}
         cluster_nodes.append(combined_json)
 
-    if rd_task.nodes != "all" and len(node_list) > 1:
+    if rd_task._nodes != "all" and len(node_list) > 1:
         for n in node_list:
             if not any(filter(lambda x: x["name"] == n, cluster_nodes)):
                 raise AceException("Specified nodenames not present in cluster")
@@ -845,7 +847,7 @@ def repset_diff_checks(rd_task: RepsetDiffTask) -> RepsetDiffTask:
 
     try:
         for nd in cluster_nodes:
-            if rd_task.nodes == "all":
+            if rd_task._nodes == "all":
                 node_list.append(nd["name"])
 
             if (node_list and nd["name"] in node_list) or (not node_list):

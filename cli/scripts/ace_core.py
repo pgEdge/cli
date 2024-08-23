@@ -20,7 +20,7 @@ import ace_db
 import cluster
 import util
 import ace_config as config
-from ace_db import RepsetDiffTask, TableDiffTask, TableRepairTask
+from ace_data_models import RepsetDiffTask, TableDiffTask, TableRepairTask
 from ace import AceException
 
 
@@ -229,20 +229,8 @@ def compare_checksums(shared_objects, worker_state, batches):
                 # Transform all elements in t1_result and t2_result into strings before
                 # consolidating them into a set
                 # TODO: Test and add support for different datatypes here
-                t1_result = [
-                    tuple(
-                        str(x)
-                        for x in row
-                    )
-                    for row in t1_result
-                ]
-                t2_result = [
-                    tuple(
-                        str(x)
-                        for x in row
-                    )
-                    for row in t2_result
-                ]
+                t1_result = [tuple(str(x) for x in row) for row in t1_result]
+                t2_result = [tuple(str(x) for x in row) for row in t2_result]
 
                 # Collect results into OrderedSets for comparison
                 t1_set = OrderedSet(t1_result)
@@ -428,7 +416,7 @@ def table_diff(td_task: TableDiffTask):
     )
 
     batches = [
-        pkey_offsets[i: i + td_task.batch_size]
+        pkey_offsets[i : i + td_task.batch_size]
         for i in range(0, len(pkey_offsets), td_task.batch_size)
     ]
 
@@ -513,7 +501,7 @@ def table_diff(td_task: TableDiffTask):
             )
 
         elif td_task.output == "csv":
-            ace.write_diffs_csv( diff_dict )
+            ace.write_diffs_csv(diff_dict)
 
     else:
         util.message(
@@ -533,12 +521,13 @@ def table_diff(td_task: TableDiffTask):
     td_task.scheduler.finished_at = datetime.now()
     td_task.scheduler.time_taken = run_time
     td_task.scheduler.task_context = {"total_rows": total_rows, "mismatch": mismatch}
-    ace_db.update_ace_task(td_task)
+
+    if not td_task.skip_db_update:
+        ace_db.update_ace_task(td_task)
 
 
 def table_repair(tr_task: TableRepairTask):
     """Apply changes from a table-diff source of truth to destination table"""
-    import pandas as pd
 
     start_time = datetime.now()
     conns = {}
@@ -620,7 +609,6 @@ def table_repair(tr_task: TableRepairTask):
     except Exception:
         util.exit_message("Contents of diff file improperly formatted")
 
-
     # Remove metadata columsn "_Spock_CommitTS_" and "_Spock_CommitOrigin_"
     # from cols_list
     cols_list = tr_task.fields.cols.split(",")
@@ -633,9 +621,7 @@ def table_repair(tr_task: TableRepairTask):
         keys_list = tr_task.fields.key.split(",")
     else:
         simple_primary_key = True
-        keys_list = [ tr_task.fields.key ]
-
-    true_df = pd.DataFrame()
+        keys_list = [tr_task.fields.key]
 
     """
     The structure of the diff_json is as follows:
@@ -690,10 +676,9 @@ def table_repair(tr_task: TableRepairTask):
 
     """
 
-
     full_rows_to_upsert = dict()
     full_rows_to_delete = dict()
-    other_nodes         = set()
+    other_nodes = set()
 
     for node_pair, node_data in diff_json.items():
         node1, node2 = node_pair.split("/")
@@ -706,12 +691,18 @@ def table_repair(tr_task: TableRepairTask):
         else:
             continue
 
-        other_nodes.add( node2 )
-        main_rows = { tuple( row[key] for key in keys_list ) : row for row in node_data[node1] }
-        side_rows = { tuple( row[key] for key in keys_list ) : row for row in node_data[node2] }
+        other_nodes.add(node2)
+        main_rows = {
+            tuple(row[key] for key in keys_list): row for row in node_data[node1]
+        }
+        side_rows = {
+            tuple(row[key] for key in keys_list): row for row in node_data[node2]
+        }
 
-        full_rows_to_upsert[ node2 ] = main_rows
-        full_rows_to_delete[ node2 ] = {key: val for key, val in side_rows.items() if key not in main_rows}
+        full_rows_to_upsert[node2] = main_rows
+        full_rows_to_delete[node2] = {
+            key: val for key, val in side_rows.items() if key not in main_rows
+        }
 
     """
     Format of full_rows_to_upsert = {
@@ -734,7 +725,7 @@ def table_repair(tr_task: TableRepairTask):
 
     Format of other_nodes = {
         node1,
-        node2,    
+        node2,
     }
     """
 
@@ -742,52 +733,20 @@ def table_repair(tr_task: TableRepairTask):
         dry_run_msg = "######## DRY RUN ########\n\n"
         for node in other_nodes:
             if not tr_task.upsert_only:
-                dry_run_msg += f"Repair would have attempted to upsert { len(full_rows_to_upsert[node]) } rows and delete { len(full_rows_to_delete[node]) } rows on { node }\n"
+                dry_run_msg += "Repair would have attempted to upsert"
+                f"{len(full_rows_to_upsert[node])} rows and delete"
+                f"{len(full_rows_to_delete[node])} rows on { node }\n"
             else:
-                dry_run_msg += f"Repair would have attempted to upsert { len(full_rows_to_upsert[node]) } rows on { node }\n"
-                dry_run_msg += f"There are an additional { len(full_rows_to_delete[node]) } rows on { node } not present on { tr_task.source_of_truth }\n"
+                dry_run_msg += "Repair would have attempted to upsert"
+                f"{len(full_rows_to_upsert[node])} rows on { node }\n"
+
+                dry_run_msg += "There are an additional"
+                f"{len(full_rows_to_delete[node])} rows on { node }"
+                f"not present on { tr_task.source_of_truth }\n"
         dry_run_msg += "\n######## END DRY RUN ########"
 
         util.message(dry_run_msg, p_state="alert", quiet_mode=tr_task.quiet_mode)
         return
-            
-
-    # # Gather all rows from source of truth node across all node pairs
-    # true_rows = [
-    #     entry
-    #     for node_pair in diff_json.keys()
-    #     for entry in diff_json[node_pair].get(tr_task.source_of_truth, [])
-    # ]
-
-    # # Collect all rows from our source of truth node and dedupe
-    # true_df = pd.concat([true_df, pd.DataFrame(true_rows)], ignore_index=True)
-    # true_df.drop_duplicates(inplace=True)
-
-    # if not true_df.empty:
-    #     # Convert them to a list of tuples after deduping
-    #     true_rows = [
-    #         tuple(str(x) for x in row) for row in true_df.to_records(index=False)
-    #     ]
-
-    # print()
-
-    # # XXX: Fix dry run later
-    # nodes_to_repair = ",".join(
-    #     [
-    #         nd["name"]
-    #         for nd in tr_task.fields.cluster_nodes
-    #         if nd["name"] != tr_task.source_of_truth
-    #     ]
-    # )
-    # dry_run_msg = (
-    #     "######## DRY RUN ########\n\n"
-    #     f"Repair would have attempted to upsert {len(true_rows)} rows on "
-    #     f"{nodes_to_repair}\n\n"
-    #     "######## END DRY RUN ########"
-    # )
-    # if tr_task.dry_run:
-    #     util.message(dry_run_msg, p_state="alert", quiet_mode=tr_task.quiet_mode)
-    #     return
 
     total_upserted = {}
     total_deleted = {}
@@ -803,8 +762,7 @@ def table_repair(tr_task: TableRepairTask):
     for divergent_node in other_nodes:
 
         rows_to_upsert_json = full_rows_to_upsert[divergent_node].values()
-        delete_keys         = list( full_rows_to_delete[divergent_node].keys() )
-
+        delete_keys = list(full_rows_to_delete[divergent_node].keys())
 
         # filtered_rows_to_delete = []
 
@@ -855,7 +813,7 @@ def table_repair(tr_task: TableRepairTask):
         applying it to all nodes
         """
 
-        table_name_sql = f"{tr_task.fields.l_schema}.\"{tr_task.fields.l_table}\""
+        table_name_sql = f'{tr_task.fields.l_schema}."{tr_task.fields.l_table}"'
         if simple_primary_key:
             update_sql = f"""
             INSERT INTO {table_name_sql}
@@ -1206,7 +1164,7 @@ def table_rerun_async(td_task: TableDiffTask) -> None:
         block_nums = ceil(total_diff / block_size)
 
         blocks = [
-            [diff_keys[i * block_size: i * block_size + block_size]]
+            [diff_keys[i * block_size : i * block_size + block_size]]
             for i in range(block_nums)
         ]
     else:
@@ -1366,7 +1324,24 @@ def repset_diff(rd_task: RepsetDiffTask) -> None:
             p_state="info",
             quiet_mode=rd_task.quiet_mode,
         )
-        table_diff(rd_task)
+        td_task = TableDiffTask(
+            cluster_name=rd_task.cluster_name,
+            _table_name=table,
+            _dbname=rd_task._dbname,
+            fields=rd_task.fields,
+            quiet_mode=rd_task.quiet_mode,
+            block_rows=rd_task.block_rows,
+            max_cpu_ratio=rd_task.max_cpu_ratio,
+            output=rd_task.output,
+            _nodes=rd_task._nodes,
+            batch_size=rd_task.batch_size,
+            skip_db_update=True,
+        )
+
+        ace.table_diff_checks(td_task)
+        table_diff(td_task)
+
+    # TODO: Add repset_diff status to ace_db
 
 
 def spock_diff(cluster_name, nodes):
