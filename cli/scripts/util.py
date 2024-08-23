@@ -1394,7 +1394,7 @@ def message(p_msg, p_state="info", p_isJSON=None, quiet_mode=False):
                 jsn_msg = p_msg
     elif log_level == "alert":
         log_level_num = 20
-        my_logger.alert(p_msg)
+        my_logger.info(p_msg)
         if log_level_num >= cur_level:
             if not p_isJSON:
                 print(bcolours.YELLOW + p_msg + bcolours.ENDC)
