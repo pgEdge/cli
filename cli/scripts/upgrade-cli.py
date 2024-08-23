@@ -21,7 +21,7 @@ def check_cmd(p_cmd):
 
 
 def get_now():
-    return(datetime.datetime.now(datetime.UTC).astimezone().strftime("%m%d_%H%M%S"))
+    return(datetime.datetime.now().astimezone().strftime("%m%d_%H%M%S"))
 
 
 def get_output(p_cmd):
@@ -66,7 +66,6 @@ def download_file(p_file, p_dir):
 
 
 def unpack_file(p_file, p_dir):
-
     os.chdir(p_dir)
     print(f"# Unpacking into {p_dir}")
 
@@ -92,6 +91,8 @@ def backup_current():
 
     check_cmd(f"cp -r {MY_HOME}/hub {backup_dir}")
     check_cmd(f"cp {MY_HOME}/pgedge {backup_dir}/.")
+    check_cmd(f"cp {MY_HOME}/data/conf/db_local.db {backup_dir}/.")
+    check_cmd(f"cp {MY_HOME}/data/conf/versions.sql {backup_dir}/.")
 
     return(backup_dir)
 
@@ -136,14 +137,18 @@ def download_latest():
 #
 
 def update_from_archive(archive_dir):
-    print("\n### Updating CLI (hub) files from archive")
+    print("\n### Updating CLI (hub) modules from archive")
 
     os.chdir(MY_HOME)
     check_cmd(f"cp -r {archive_dir}/pgedge/hub .")
     check_cmd(f"cp {archive_dir}/pgedge/pgedge .")
 
-    print("\n### Updating system from archive")
+    print("\n### Updating meta data from remote")
     check_cmd("./pgedge update")
+
+    print("\n### Ensure latest ctlibs")
+    check_cmd("./pgedge remove ctlibs")
+    check_cmd("./pgedge install ctlibs")
 
 
 ########## MAINLINE ###############################
@@ -158,7 +163,7 @@ curr_ver = get_cli_ver(f"{curr_backup}/{install_py}")
 latest_ver = get_cli_ver(f"{latest_archive}/pgedge/{install_py}")
 
 sleep_secs = 5
-print(f"\n### Updating to {latest_ver} from {curr_ver} in {sleep_secs}")
+print(f"\n### Updating to {latest_ver} from {curr_ver} in {sleep_secs} seconds")
 time.sleep(sleep_secs)
 
 update_from_archive(latest_archive)

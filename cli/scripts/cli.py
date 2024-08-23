@@ -251,8 +251,7 @@ def get_depend_list(p_list, p_display=True):
     sorted_depend_list = []
     for c in sorted(num_deplist):
         comp = str(c[4:])
-        if comp != "hub":
-            sorted_depend_list.append(c[4:])
+        sorted_depend_list.append(c[4:])
 
     msg = "  " + str(sorted_depend_list)
     my_logger.info(msg)
@@ -501,18 +500,7 @@ def upgrade_component(p_comp):
     if server_running:
         util.run_script(p_comp, "stop-" + p_comp, "stop")
 
-    if p_comp == "hub":
-        msg = "updating from v" + present_version + "  to  v" + update_version
-    else:
-        msg = (
-            "upgrading "
-            + p_comp
-            + " from ("
-            + present_version
-            + ") to ("
-            + update_version
-            + ")"
-        )
+    msg = (f"upgrading {p_comp} from ({present_version} to ({update_version})")
 
     my_logger.info(msg)
     if isJSON:
@@ -533,20 +521,20 @@ def upgrade_component(p_comp):
     if isExt:
         parent = util.get_parent_component(p_comp, 0)
         dependent_components.append([parent])
-    if not p_comp == "hub":
-        for dc in dependent_components:
-            d_comp = str(dc[0])
-            d_comp_present_state = util.get_comp_state(d_comp)
-            d_comp_server_port = util.get_comp_port(d_comp)
-            d_comp_server_running = False
-            if d_comp_server_port > "1":
-                d_comp_server_running = util.is_socket_busy(
-                    int(d_comp_server_port), p_comp
-                )
-            if d_comp_server_running:
-                my_logger.info("Stopping the " + d_comp + " to upgrade the " + p_comp)
-                util.run_script(d_comp, "stop-" + d_comp, "stop")
-                components_stopped.append(d_comp)
+
+    for dc in dependent_components:
+        d_comp = str(dc[0])
+        d_comp_present_state = util.get_comp_state(d_comp)
+        d_comp_server_port = util.get_comp_port(d_comp)
+        d_comp_server_running = False
+        if d_comp_server_port > "1":
+            d_comp_server_running = util.is_socket_busy(
+                int(d_comp_server_port), p_comp
+            )
+        if d_comp_server_running:
+            my_logger.info("Stopping the " + d_comp + " to upgrade the " + p_comp)
+            util.run_script(d_comp, "stop-" + d_comp, "stop")
+            components_stopped.append(d_comp)
 
     rc = unpack_comp(p_comp, present_version, update_version)
 
@@ -633,8 +621,7 @@ def unpack_comp(p_app, p_old_ver, p_new_ver):
 
     new_comp_dir = p_app + "_new"
     old_comp_dir = p_app + "_old"
-    if p_app in ("hub"):
-        new_comp_dir = p_app + "_update"
+
     try:
         tar.extractall(path=new_comp_dir)
     except KeyboardInterrupt as e:
@@ -715,35 +702,15 @@ def unpack_comp(p_app, p_old_ver, p_new_ver):
 
             msg = p_app + " upgrade staged for completion."
             my_logger.info(msg)
-            if p_app in ("hub"):
-                copy2(os.path.join(MY_HOME, MY_CMD), backup_target_dir)
-                os.rename(new_comp_dir, "hub_new")
-                # run the update_hub script in the _new directory
-                upd_hub_cmd = (
-                    sys.executable
-                    + " hub_new"
-                    + os.sep
-                    + "hub"
-                    + os.sep
-                    + "scripts"
-                    + os.sep
-                    + "update_hub.py "
-                )
-                os.system(upd_hub_cmd + p_old_ver + " " + p_new_ver)
-            else:
-                my_logger.info("renaming the existing folder %s" % p_app)
-                os.rename(p_app, p_app + "_old")
-                my_logger.info("copying the new files to folder %s" % p_app)
+            my_logger.info("renaming the existing folder %s" % p_app)
+            os.rename(p_app, p_app + "_old")
+            my_logger.info("copying the new files to folder %s" % p_app)
 
-                util.copytree(
-                    f"{os.path.join(MY_HOME, new_comp_dir, p_app)}  {os.path.join(MY_HOME, p_app)}"
-                )
+            util.copytree(
+                f"{os.path.join(MY_HOME, new_comp_dir, p_app)}  {os.path.join(MY_HOME, p_app)}"
+            )
 
-                my_logger.info("Restoring the conf and extension files if any")
-                util.restore_conf_ext_files(
-                    os.path.join(MY_HOME, p_app + "_old"), os.path.join(MY_HOME, p_app)
-                )
-                my_logger.info(p_app + " upgrade completed.")
+            my_logger.info(p_app + " upgrade completed.")
         except Exception as upgrade_exception:
             error_msg = (
                 "Error while upgrading the " + p_app + " : " + str(upgrade_exception)
@@ -954,28 +921,6 @@ def cli_lock():
     return False
 
 
-def fire_api(prog):
-    api = (
-        os.getenv("MY_HOME")
-        + os.sep
-        + "hub"
-        + os.sep
-        + "scripts"
-        + os.sep
-        + prog
-        + ".py"
-    )
-
-    parms = ""
-    for i in range(2, len(args)):
-        parms = parms + '"' + args[i] + '" '
-
-    cmd = sys.executable + " -u " + api + " " + parms
-    os.system(cmd)
-
-    return
-
-
 ####################################################################
 ########                    MAINLINE                      ##########
 ####################################################################
@@ -1168,8 +1113,7 @@ while i < len(args):
         if i < (len(args) - 1):
             PGNAME = args[i + 1]
             os.environ["pgName"] = PGNAME
-            fire_full = fire_list + fire_contrib
-            if str(args[1]) not in fire_full:
+            if str(args[1]) not in ((fire_list) or (fire_contrib)):
                 args.remove(PGNAME)
                 args.remove("-d")
             break
@@ -1769,7 +1713,6 @@ if p_mode == "update":
         l.close()
 
         hasUpdates = 0
-        hub_update = 0
         kount = 0
         jsonList = []
 
@@ -1790,12 +1733,9 @@ if p_mode == "update":
             if stage in ("bring-own", "included", "soon"):
                 continue
 
-            if str(row[0]) == "hub":
-                hub_update = 1
-            else:
-                hasUpdates = 1
-                kount = kount + 1
-                jsonList.append(compDict)
+            hasUpdates = 1
+            kount = kount + 1
+            jsonList.append(compDict)
 
         if not isJSON and not isSILENT:
             if kount >= 1:
@@ -1814,10 +1754,6 @@ if p_mode == "update":
             else:
                 print("--- No new components released in last 30 days ---")
             print(" ")
-
-        if hub_update == 1:
-            rc = upgrade_component("hub")
-            hub_update = 0
 
         [last_update_utc, last_update_local, unique_id] = util.read_hosts(
             "localhost"
