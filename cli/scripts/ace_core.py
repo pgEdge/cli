@@ -620,6 +620,21 @@ def table_repair(tr_task: TableRepairTask):
     except Exception:
         util.exit_message("Contents of diff file improperly formatted")
 
+
+    # Remove metadata columsn "_Spock_CommitTS_" and "_Spock_CommitOrigin_"
+    # from cols_list
+    cols_list = tr_task.fields.cols.split(",")
+    cols_list = [col for col in cols_list if not col.startswith("_Spock_")]
+
+    simple_primary_key = True
+    keys_list = []
+    if len(tr_task.fields.key.split(",")) > 1:
+        simple_primary_key = False
+        keys_list = tr_task.fields.key.split(",")
+    else:
+        simple_primary_key = True
+        keys_list = [ tr_task.fields.key ]
+
     true_df = pd.DataFrame()
 
     """
@@ -675,53 +690,104 @@ def table_repair(tr_task: TableRepairTask):
 
     """
 
-    # Gather all rows from source of truth node across all node pairs
-    true_rows = [
-        entry
-        for node_pair in diff_json.keys()
-        for entry in diff_json[node_pair].get(tr_task.source_of_truth, [])
-    ]
 
-    # Collect all rows from our source of truth node and dedupe
-    true_df = pd.concat([true_df, pd.DataFrame(true_rows)], ignore_index=True)
-    true_df.drop_duplicates(inplace=True)
+    full_rows_to_upsert = dict()
+    full_rows_to_delete = dict()
+    other_nodes         = set()
 
-    if not true_df.empty:
-        # Convert them to a list of tuples after deduping
-        true_rows = [
-            tuple(str(x) for x in row) for row in true_df.to_records(index=False)
-        ]
+    for node_pair, node_data in diff_json.items():
+        node1, node2 = node_pair.split("/")
 
-    print()
+        if node1 == tr_task.source_of_truth:
+            pass
+        elif node2 == tr_task.source_of_truth:
+            node2 = node1
+            node1 = tr_task.source_of_truth
+        else:
+            continue
 
-    # XXX: Fix dry run later
-    nodes_to_repair = ",".join(
-        [
-            nd["name"]
-            for nd in tr_task.fields.cluster_nodes
-            if nd["name"] != tr_task.source_of_truth
-        ]
-    )
-    dry_run_msg = (
-        "######## DRY RUN ########\n\n"
-        f"Repair would have attempted to upsert {len(true_rows)} rows on "
-        f"{nodes_to_repair}\n\n"
-        "######## END DRY RUN ########"
-    )
+        other_nodes.add( node2 )
+        main_rows = { tuple( row[key] for key in keys_list ) : row for row in node_data[node1] }
+        side_rows = { tuple( row[key] for key in keys_list ) : row for row in node_data[node2] }
+
+        full_rows_to_upsert[ node2 ] = main_rows
+        full_rows_to_delete[ node2 ] = {key: val for key, val in side_rows.items() if key not in main_rows}
+
+    """
+    Format of full_rows_to_upsert = {
+        'node2': {
+            pkey to upsert: full row of pkey ...
+        },
+        'node3: {
+            pkey to upsert: full row of pkey ...
+        },
+    }
+
+    Format of full_rows_to_delete = {
+        'node2': {
+            pkey to delete: full row of pkey ...
+        },
+        'node3: {
+            pkey to delete: full row of pkey ...
+        },
+    }
+
+    Format of other_nodes = {
+        node1,
+        node2,    
+    }
+    """
+
     if tr_task.dry_run:
+        dry_run_msg = "######## DRY RUN ########\n\n"
+        for node in other_nodes:
+            if not tr_task.upsert_only:
+                dry_run_msg += f"Repair would have attempted to upsert { len(full_rows_to_upsert[node]) } rows and delete { len(full_rows_to_delete[node]) } rows on { node }\n"
+            else:
+                dry_run_msg += f"Repair would have attempted to upsert { len(full_rows_to_upsert[node]) } rows on { node }\n"
+                dry_run_msg += f"There are an additional { len(full_rows_to_delete[node]) } rows on { node } not present on { tr_task.source_of_truth }\n"
+        dry_run_msg += "\n######## END DRY RUN ########"
+
         util.message(dry_run_msg, p_state="alert", quiet_mode=tr_task.quiet_mode)
         return
+            
 
-    cols_list = tr_task.fields.cols.split(",")
-    # Remove metadata columsn "_Spock_CommitTS_" and "_Spock_CommitOrigin_"
-    # from cols_list
-    cols_list = [col for col in cols_list if not col.startswith("_Spock_")]
-    simple_primary_key = True
-    keys_list = []
+    # # Gather all rows from source of truth node across all node pairs
+    # true_rows = [
+    #     entry
+    #     for node_pair in diff_json.keys()
+    #     for entry in diff_json[node_pair].get(tr_task.source_of_truth, [])
+    # ]
 
-    if len(tr_task.fields.key.split(",")) > 1:
-        simple_primary_key = False
-        keys_list = tr_task.fields.key.split(",")
+    # # Collect all rows from our source of truth node and dedupe
+    # true_df = pd.concat([true_df, pd.DataFrame(true_rows)], ignore_index=True)
+    # true_df.drop_duplicates(inplace=True)
+
+    # if not true_df.empty:
+    #     # Convert them to a list of tuples after deduping
+    #     true_rows = [
+    #         tuple(str(x) for x in row) for row in true_df.to_records(index=False)
+    #     ]
+
+    # print()
+
+    # # XXX: Fix dry run later
+    # nodes_to_repair = ",".join(
+    #     [
+    #         nd["name"]
+    #         for nd in tr_task.fields.cluster_nodes
+    #         if nd["name"] != tr_task.source_of_truth
+    #     ]
+    # )
+    # dry_run_msg = (
+    #     "######## DRY RUN ########\n\n"
+    #     f"Repair would have attempted to upsert {len(true_rows)} rows on "
+    #     f"{nodes_to_repair}\n\n"
+    #     "######## END DRY RUN ########"
+    # )
+    # if tr_task.dry_run:
+    #     util.message(dry_run_msg, p_state="alert", quiet_mode=tr_task.quiet_mode)
+    #     return
 
     total_upserted = {}
     total_deleted = {}
@@ -734,99 +800,55 @@ def table_repair(tr_task: TableRepairTask):
     if tr_task.upsert_only:
         deletes_skipped = dict()
 
-    for node_pair in diff_json.keys():
-        node1, node2 = node_pair.split("/")
+    for divergent_node in other_nodes:
 
-        true_rows = (
-            [
-                tuple(str(x) for x in entry.values())
-                for entry in diff_json[node_pair][tr_task.source_of_truth]
-            ]
-            if tr_task.source_of_truth in [node1, node2]
-            else true_rows
-        )
+        rows_to_upsert_json = full_rows_to_upsert[divergent_node].values()
+        delete_keys         = list( full_rows_to_delete[divergent_node].keys() )
 
-        divergent_rows = []
-        divergent_node = None
 
-        if node1 == tr_task.source_of_truth:
-            divergent_rows = [
-                tuple(str(x) for x in row.values())
-                for row in diff_json[node_pair][node2]
-            ]
-            divergent_node = node2
-        elif node2 == tr_task.source_of_truth:
-            divergent_rows = [
-                tuple(str(x) for x in row.values())
-                for row in diff_json[node_pair][node1]
-            ]
-            divergent_node = node1
-        else:
-            """
-            It's possible that only one node or both nodes have divergent rows.
-            Instead of attempting to fix one or both nodes here and then
-            skipping them later, it's probably best to ignore all differences
-            between divergent nodes and continue with the next node pair.
-            """
-            continue
+        # filtered_rows_to_delete = []
 
-        true_set = OrderedSet(true_rows)
-        divergent_set = OrderedSet(divergent_rows)
+        # upsert_lookup = {}
 
-        rows_to_upsert = true_set - divergent_set  # Set difference
-        rows_to_delete = divergent_set - true_set
+        # """
+        # We need to construct a lookup table for the upserts.
+        # This is because we need to delete only those rows from
+        # the divergent node that are not a part of the upserts
+        # """
+        # for row in rows_to_upsert_json:
+        #     if simple_primary_key:
+        #         upsert_lookup[row[tr_task.fields.key]] = 1
+        #     else:
+        #         upsert_lookup[tuple(row[col] for col in keys_list)] = 1
 
-        rows_to_upsert_json = []
-        rows_to_delete_json = []
+        # for entry in rows_to_delete_json:
+        #     if simple_primary_key:
+        #         if entry[tr_task.fields.key] in upsert_lookup:
+        #             continue
+        #     else:
+        #         if tuple(entry[col] for col in keys_list) in upsert_lookup:
+        #             continue
 
-        if rows_to_upsert:
-            rows_to_upsert_json = [dict(zip(cols_list, row)) for row in rows_to_upsert]
-        if rows_to_delete:
-            rows_to_delete_json = [dict(zip(cols_list, row)) for row in rows_to_delete]
+        #     filtered_rows_to_delete.append(entry)
 
-        filtered_rows_to_delete = []
+        # if divergent_node not in total_upserted:
+        #     total_upserted[divergent_node] = len(rows_to_upsert_json)
 
-        upsert_lookup = {}
+        # if divergent_node not in total_deleted:
+        #     total_deleted[divergent_node] = len(filtered_rows_to_delete)
 
-        """
-        We need to construct a lookup table for the upserts.
-        This is because we need to delete only those rows from
-        the divergent node that are not a part of the upserts
-        """
-        for row in rows_to_upsert_json:
-            if simple_primary_key:
-                upsert_lookup[row[tr_task.fields.key]] = 1
-            else:
-                upsert_lookup[tuple(row[col] for col in keys_list)] = 1
+        # delete_keys = []
 
-        for entry in rows_to_delete_json:
-            if simple_primary_key:
-                if entry[tr_task.fields.key] in upsert_lookup:
-                    continue
-            else:
-                if tuple(entry[col] for col in keys_list) in upsert_lookup:
-                    continue
-
-            filtered_rows_to_delete.append(entry)
-
-        if divergent_node not in total_upserted:
-            total_upserted[divergent_node] = len(rows_to_upsert_json)
-
-        if divergent_node not in total_deleted:
-            total_deleted[divergent_node] = len(filtered_rows_to_delete)
-
-        delete_keys = []
-
-        if rows_to_delete:
-            if simple_primary_key:
-                delete_keys = tuple(
-                    (row[tr_task.fields.key],) for row in filtered_rows_to_delete
-                )
-            else:
-                delete_keys = tuple(
-                    tuple(row[col] for col in keys_list)
-                    for row in filtered_rows_to_delete
-                )
+        # if rows_to_delete:
+        #     if simple_primary_key:
+        #         delete_keys = tuple(
+        #             (row[tr_task.fields.key],) for row in filtered_rows_to_delete
+        #         )
+        #     else:
+        #         delete_keys = tuple(
+        #             tuple(row[col] for col in keys_list)
+        #             for row in filtered_rows_to_delete
+        #         )
 
         """
         Here we are constructing an UPSERT query from true_rows and
@@ -896,41 +918,39 @@ def table_repair(tr_task: TableRepairTask):
         [1, 2, 3] respectively.
         """
         upsert_tuples = []
-        if rows_to_upsert:
-            for row in rows_to_upsert_json:
-                modified_row = tuple()
-                for col_name in cols_list:
-                    col_type = table_types[col_name]
-                    elem = row[col_name]
-                    try:
-                        if any([s in col_type for s in ["char", "text", "vector"]]):
-                            modified_row += (elem,)
-                        else:
-                            item = ast.literal_eval(elem)
-                            if col_type == "jsonb":
-                                item = json.dumps(item)
-                            modified_row += (item,)
-
-                    except (ValueError, SyntaxError):
+        for row in rows_to_upsert_json:
+            modified_row = tuple()
+            for col_name in cols_list:
+                col_type = table_types[col_name]
+                elem = row[col_name]
+                try:
+                    if any([s in col_type for s in ["char", "text", "vector"]]):
                         modified_row += (elem,)
+                    else:
+                        item = ast.literal_eval(elem)
+                        if col_type == "jsonb":
+                            item = json.dumps(item)
+                        modified_row += (item,)
 
-                upsert_tuples.append(modified_row)
+                except (ValueError, SyntaxError):
+                    modified_row += (elem,)
 
-            # Performing the upsert
-            cur.executemany(update_sql, upsert_tuples)
-            if tr_task.generate_report:
-                report["changes"][divergent_node]["upserted_rows"] = [
-                    dict(zip(cols_list, tup)) for tup in upsert_tuples
-                ]
+            upsert_tuples.append(modified_row)
+
+        # Performing the upsert
+        cur.executemany(update_sql, upsert_tuples)
+        if tr_task.generate_report:
+            report["changes"][divergent_node]["upserted_rows"] = [
+                dict(zip(cols_list, tup)) for tup in upsert_tuples
+            ]
 
         if delete_keys and not tr_task.upsert_only:
             # Performing the deletes
-            if len(delete_keys) > 0:
-                cur.executemany(delete_sql, delete_keys)
-                if tr_task.generate_report:
-                    report["changes"][divergent_node]["deleted_rows"] = delete_keys
+            cur.executemany(delete_sql, delete_keys)
+            if tr_task.generate_report:
+                report["changes"][divergent_node]["deleted_rows"] = delete_keys
         elif delete_keys and tr_task.upsert_only:
-            deletes_skipped[divergent_node] = filtered_rows_to_delete
+            deletes_skipped[divergent_node] = delete_keys
 
         if spock_version >= 4.0:
             cur.execute("SELECT spock.repair_mode(false);")
@@ -1018,18 +1038,18 @@ def table_repair(tr_task: TableRepairTask):
 
     util.message("*** SUMMARY ***\n", p_state="info", quiet_mode=tr_task.quiet_mode)
 
-    for node in total_upserted.keys():
+    for node in other_nodes:
         util.message(
-            f"{node} UPSERTED = {total_upserted[node]} rows",
+            f"{node} UPSERTED = {len(full_rows_to_upsert[node])} rows",
             p_state="info",
             quiet_mode=tr_task.quiet_mode,
         )
 
     print()
 
-    for node in total_deleted.keys():
+    for node in other_nodes:
         util.message(
-            f"{node} DELETED = {total_deleted[node]} rows",
+            f"{node} DELETED = {len(full_rows_to_delete[node])} rows",
             p_state="info",
             quiet_mode=tr_task.quiet_mode,
         )
