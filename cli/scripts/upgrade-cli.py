@@ -12,12 +12,14 @@ def exit_message(msg):
     sys.exit(1)
 
 
-def check_cmd(p_cmd):
-    print(f"$ {p_cmd}")
+def check_cmd(p_cmd, noisy=True):
+    if noisy:
+        print(f"$ {p_cmd}")
+
     rc = os.system(p_cmd)
     if rc == 0:
         return
-    exit_message("Failed command")
+    exit_message(f"Failed '{p_cmd}'")
 
 
 def get_now():
@@ -82,17 +84,20 @@ def unpack_file(p_file, p_dir):
 
 
 def backup_current():
-    print("\n### Backing up current CLI")
 
+    print(f"\n### Validating CLI current dir '{MY_HOME}'")
     ts = get_now()
     ver = get_cli_ver(f"{MY_HOME}/hub/scripts/install.py")
-    backup_dir = f"{BASE_BACKUP_DIR}/{ts}_{ver}_CURRENT_BACKUP"
-    check_cmd(f"mkdir -p {backup_dir}")
+    print(f"## Current CLI = {ver}")
 
-    check_cmd(f"cp -r {MY_HOME}/hub {backup_dir}")
-    check_cmd(f"cp {MY_HOME}/pgedge {backup_dir}/.")
-    check_cmd(f"cp {MY_HOME}/data/conf/db_local.db {backup_dir}/.")
-    check_cmd(f"cp {MY_HOME}/data/conf/versions.sql {backup_dir}/.")
+    backup_dir = f"{BASE_BACKUP_DIR}/{ts}_{ver}_CURRENT_BACKUP"
+    print(f"\n### Backing up current CLI to {backup_dir}")
+    check_cmd(f"mkdir -p {backup_dir}", False)
+
+    check_cmd(f"cp -r {MY_HOME}/hub {backup_dir}", False)
+    check_cmd(f"cp {MY_HOME}/pgedge {backup_dir}/.", False)
+    check_cmd(f"cp {MY_HOME}/data/conf/db_local.db {backup_dir}/.", False)
+    check_cmd(f"cp {MY_HOME}/data/conf/versions.sql {backup_dir}/.", False)
 
     return(backup_dir)
 
@@ -102,14 +107,15 @@ def download_latest():
 
     now = get_now()
     download_dir = f"{BASE_BACKUP_DIR}/{now}_xxx_LATEST_DOWNLOAD"
-    check_cmd(f"rm -rf {download_dir}")
-    check_cmd(f"mkdir {download_dir}")
+    check_cmd(f"rm -rf {download_dir}", False)
+    check_cmd(f"mkdir {download_dir}", False)
 
     download_file("install.py", download_dir)
     ver_latest = get_cli_ver(f"{download_dir}/install.py")
+    print(f"### Latest CLI = {ver_latest}")
 
     new_dir = f"{BASE_BACKUP_DIR}/{now}_{ver_latest}_LATEST_DOWNLOAD"
-    check_cmd(f"mv {download_dir} {new_dir}")
+    check_cmd(f"mv {download_dir} {new_dir}", False)
 
     file = f"pgedge-cli-{ver_latest}.tgz"
     download_file(file, new_dir)
@@ -137,11 +143,11 @@ def download_latest():
 #
 
 def update_from_archive(archive_dir):
-    print("\n### Updating CLI (hub) modules from archive")
+    print("\n### Updating CLI modules from archive")
 
     os.chdir(MY_HOME)
-    check_cmd(f"cp -r {archive_dir}/pgedge/hub .")
-    check_cmd(f"cp {archive_dir}/pgedge/pgedge .")
+    check_cmd(f"cp -r {archive_dir}/pgedge/hub .", False)
+    check_cmd(f"cp {archive_dir}/pgedge/pgedge .", False)
 
     print("\n### Updating meta data from remote")
     check_cmd("./pgedge update")
