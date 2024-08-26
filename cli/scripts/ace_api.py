@@ -158,6 +158,7 @@ def repset_diff_api():
             _nodes=nodes,
             batch_size=batch_size,
             quiet_mode=quiet,
+            invoke_method="API",
         )
 
         raw_args.scheduler.task_id = task_id

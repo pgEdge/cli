@@ -120,7 +120,7 @@ def update_ace_task(task: Union[TableDiffTask, TableRepairTask, RepsetDiffTask])
             (
                 task.scheduler.task_status,
                 json.dumps(task.scheduler.task_context),
-                task.diff_file_path,
+                getattr(task, "diff_file_path", None),
                 task.scheduler.started_at.isoformat(timespec="milliseconds"),
                 task.scheduler.finished_at.isoformat(timespec="milliseconds"),
                 task.scheduler.time_taken,

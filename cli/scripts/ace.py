@@ -543,6 +543,7 @@ def table_diff_checks(td_task: TableDiffTask) -> TableDiffTask:
     cols = None
     key = None
 
+    # TODO: Check column types here?
     for conn in conn_list:
         curr_cols = get_cols(conn, l_schema, l_table)
         curr_key = get_key(conn, l_schema, l_table)

@@ -134,13 +134,14 @@ def repset_diff_cli(
         raw_args = RepsetDiffTask(
             cluster_name=cluster_name,
             _dbname=dbname,
-            _repset_name=repset_name,
+            repset_name=repset_name,
             block_rows=block_rows,
             max_cpu_ratio=max_cpu_ratio,
             output=output,
             _nodes=nodes,
             batch_size=batch_size,
             quiet_mode=quiet,
+            invoke_method="CLI",
         )
         raw_args.scheduler.task_id = task_id
         rd_task = ace.repset_diff_checks(raw_args)

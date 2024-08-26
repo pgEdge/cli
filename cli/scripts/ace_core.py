@@ -525,6 +525,8 @@ def table_diff(td_task: TableDiffTask):
     if not td_task.skip_db_update:
         ace_db.update_ace_task(td_task)
 
+    return td_task
+
 
 def table_repair(tr_task: TableRepairTask):
     """Apply changes from a table-diff source of truth to destination table"""
@@ -1318,30 +1320,66 @@ def table_rerun_async(td_task: TableDiffTask) -> None:
 def repset_diff(rd_task: RepsetDiffTask) -> None:
     """Loop thru a replication-sets tables and run table-diff on them"""
 
+    rd_task_context = []
+    rd_start_time = datetime.now()
+    errors_encountered = False
+
     for table in rd_task.table_list:
-        util.message(
-            f"\n\nCHECKING TABLE {table}...\n",
-            p_state="info",
-            quiet_mode=rd_task.quiet_mode,
-        )
-        td_task = TableDiffTask(
-            cluster_name=rd_task.cluster_name,
-            _table_name=table,
-            _dbname=rd_task._dbname,
-            fields=rd_task.fields,
-            quiet_mode=rd_task.quiet_mode,
-            block_rows=rd_task.block_rows,
-            max_cpu_ratio=rd_task.max_cpu_ratio,
-            output=rd_task.output,
-            _nodes=rd_task._nodes,
-            batch_size=rd_task.batch_size,
-            skip_db_update=True,
-        )
+        try:
+            start_time = datetime.now()
+            util.message(
+                f"\n\nCHECKING TABLE {table}...\n",
+                p_state="info",
+                quiet_mode=rd_task.quiet_mode,
+            )
 
-        ace.table_diff_checks(td_task)
-        table_diff(td_task)
+            td_task = TableDiffTask(
+                cluster_name=rd_task.cluster_name,
+                _table_name=table,
+                _dbname=rd_task._dbname,
+                fields=rd_task.fields,
+                quiet_mode=rd_task.quiet_mode,
+                block_rows=rd_task.block_rows,
+                max_cpu_ratio=rd_task.max_cpu_ratio,
+                output=rd_task.output,
+                _nodes=rd_task._nodes,
+                batch_size=rd_task.batch_size,
+                skip_db_update=True,
+            )
 
-    # TODO: Add repset_diff status to ace_db
+            td_task = ace.table_diff_checks(td_task)
+            td_task = table_diff(td_task)
+            run_time = util.round_timedelta(datetime.now() - start_time).total_seconds()
+            status = {
+                "table": table,
+                "status": "COMPLETED",
+                "time_taken": run_time,
+                "total_rows": td_task.scheduler.task_context["total_rows"],
+                "mismatch": td_task.scheduler.task_context["mismatch"],
+                "diff_file_path": getattr(td_task, "diff_file_path", None),
+            }
+        except Exception as e:
+            errors_encountered = True
+            status = {
+                "table": table,
+                "status": "FAILED",
+                "error": str(e),
+            }
+            util.message(
+                f"Repset-diff failed for table {table} with: {str(e)}",
+                p_state="warning",
+            )
+
+        rd_task_context.append(status)
+
+    rd_task.scheduler.task_status = "COMPLETED" if not errors_encountered else "FAILED"
+    rd_task.scheduler.finished_at = datetime.now()
+    rd_task.scheduler.task_context = rd_task_context
+    rd_task.scheduler.time_taken = util.round_timedelta(
+        datetime.now() - rd_start_time
+    ).total_seconds()
+
+    ace_db.update_ace_task(rd_task)
 
 
 def spock_diff(cluster_name, nodes):

@@ -118,6 +118,8 @@ class RepsetDiffTask():
     batch_size: int
     quiet_mode: bool
 
+    invoke_method: str = "CLI"
+
     # Task-specific parameters
     scheduler: Task = Task()
     scheduler.task_type = "repset-diff"
