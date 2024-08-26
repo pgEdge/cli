@@ -363,9 +363,6 @@ initPG () {
   if [ "$pgM" == "16" ]; then
     initC "audit-pg$pgM"      "audit"      "$audit16V"   "$outPlat" "postgres/audit"     "" "" "nil"
     initC "hintplan-pg$pgM"   "hintplan"   "$hint16V"    "$outPlat" "postgres/hintplan"  "" "" "nil"
-    if [ `arch` == "x86_64" ]; then
-      initC "pgml-pg$pgM"     "pgml"       "$pgmlV"      "$outPlat" "postgres/pgml"      "" "" "nil"
-    fi
   fi
 
   if [ "$pgM" == "15" ]; then
@@ -461,6 +458,7 @@ do
           writeSettRow "GLOBAL" "PLATFORM" "$plat"
           if [ "$plat" == "posix" ]; then
             checkCmd "cp $CLI/install.py $OUT/."
+            checkCmd "cp $CLI/upgrade-cli.py $OUT/."
           fi;;
 
       R)  writeSettRow "GLOBAL" "REPO" "$repo" "-v";;

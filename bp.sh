@@ -21,8 +21,6 @@ if [ -d $outp ]; then
   sudo rm -rf $outp
 fi
 
-sudo rm -rf /var/lib/pgbackrest
-
 ./devel/startHTTP.sh
 ./build.sh -X posix -R
 

@@ -1042,15 +1042,6 @@ def create_ext_cmd(p_extension, p_pg):
     run_sql_cmd(p_pg, cmd, True)
 
 
-def secure_win_dir(p_dir, p_is_exe, p_user):
-    CLI = os.path.join(MY_HOME, "hub", "scripts")
-    cmnd = os.path.join(CLI, "PsExec.exe -accepteula -nobanner -s /c ")
-    cmnd = cmnd + os.path.join(CLI, "secure-win-dir.bat") + ' "' + p_dir + '" '
-    cmnd = cmnd + '"' + p_is_exe + '" "' + p_user + '" >> '
-    cmnd = cmnd + os.path.join(MY_HOME, "logs", "fix-security.log") + " 2>&1"
-    system(cmnd, is_display=True)
-
-
 def source_env_file(p_env_file):
     try:
         command = ["bash", "-c", "source " + p_env_file + " && env"]
@@ -1394,7 +1385,7 @@ def message(p_msg, p_state="info", p_isJSON=None, quiet_mode=False):
                 jsn_msg = p_msg
     elif log_level == "alert":
         log_level_num = 20
-        my_logger.alert(p_msg)
+        my_logger.info(p_msg)
         if log_level_num >= cur_level:
             if not p_isJSON:
                 print(bcolours.YELLOW + p_msg + bcolours.ENDC)
@@ -2650,43 +2641,43 @@ def get_depend():
 def process_sql_file(p_file, p_json):
     isSilent = os.environ.get("isSilent", None)
 
-    rc = True
-
+    #rc = True
+    #
     # verify the hub version ##################
-    file = open(p_file, "r")
-    cmd = ""
-    for line in file:
-        line_strip = line.strip()
-        if line_strip == "":
-            continue
-        cmd = cmd + line
-        if line_strip.endswith(";"):
-            if ("hub" in cmd) and ("INSERT INTO versions" in cmd) and ("1," in cmd):
-                cmdList = cmd.split(",")
-                newHubV = Version.coerce(cmdList[1].strip().replace("'", ""))
-                oldHubV = Version.coerce(get_version())
-                msg_frag = f"'hub' from v{oldHubV} to v{newHubV}."
-                if newHubV == oldHubV:
-                    msg = f"'hub' is v{newHubV}"
-                if newHubV > oldHubV:
-                    msg = "Automatic updating " + msg_frag
-                if newHubV < oldHubV:
-                    msg = "ENVIRONMENT ERROR:  Cannot downgrade " + msg_frag
-                    rc = False
-                if p_json:
-                    print('[{"status":"wip","msg":"' + msg + '"}]')
-                else:
-                    if not isSilent:
-                        print(msg)
-                my_logger.info(msg)
-                break
-            cmd = ""
-    file.close()
-
-    if rc == False:
-        if p_json:
-            print('[{"status":"completed","has_updates":0}]')
-        return False
+    #file = open(p_file, "r")
+    #cmd = ""
+    #for line in file:
+    #    line_strip = line.strip()
+    #    if line_strip == "":
+    #        continue
+    #    cmd = cmd + line
+    #    if line_strip.endswith(";"):
+    #        if ("hub" in cmd) and ("INSERT INTO versions" in cmd) and ("1," in cmd):
+    #            cmdList = cmd.split(",")
+    #            newHubV = Version.coerce(cmdList[1].strip().replace("'", ""))
+    #            oldHubV = Version.coerce(get_version())
+    #            msg_frag = f"'hub' from v{oldHubV} to v{newHubV}."
+    #            if newHubV == oldHubV:
+    #                msg = f"'hub' is v{newHubV}"
+    #            if newHubV > oldHubV:
+    #                msg = "Automatic updating " + msg_frag
+    #            if newHubV < oldHubV:
+    #                msg = "ENVIRONMENT ERROR:  Cannot downgrade " + msg_frag
+    #                rc = False
+    #            if p_json:
+    #                print('[{"status":"wip","msg":"' + msg + '"}]')
+    #            else:
+    #                if not isSilent:
+    #                    print(msg)
+    #            my_logger.info(msg)
+    #            break
+    #        cmd = ""
+    #file.close()
+    #
+    #if rc == False:
+    #    if p_json:
+    #        print('[{"status":"completed","has_updates":0}]')
+    #    return False
 
     # process the file ##########################
     file = open(p_file, "r")
@@ -3737,52 +3728,6 @@ def get_readable_time_diff(amount, units="seconds", precision=0):
     return buf
 
 
-# recursively check and restore all env / extension files during upgrade
-def recursively_copy_old_files(dcmp, diff_files=[], ignore=None):
-    for name in dcmp.left_only:
-        if ignore and name in ignore:
-            continue
-        try:
-            source_file = os.path.join(dcmp.left, name)
-            shutil.move(source_file, dcmp.right)
-        except Exception as e:
-            my_logger.error(
-                "Failed to restore the file %s due to %s"
-                % (os.path.join(dcmp.right, name), str(e))
-            )
-            my_logger.error(traceback.format_exc())
-            diff_files.append([name, dcmp.left, dcmp.right])
-    for sub_dcmp in dcmp.subdirs.values():
-        allfiles = diff_files
-        recursively_copy_old_files(sub_dcmp, allfiles)
-    return diff_files
-
-
-# restore any extensions or env/conf files during upgrade
-def restore_conf_ext_files(src, dst, ignore=None):
-    if os.path.isdir(dst):
-        diff = filecmp.dircmp(src, dst)
-        recursively_copy_old_files(diff, ignore=ignore)
-    return True
-
-
-# Add the application to launchpad in OSX
-def create_shortlink_osx(short_link, target_link):
-    short_link_path = os.path.join("/Applications", short_link)
-    cmd = "ln -s '{0}' '{1}'".format(target_link, short_link_path)
-    os.system(cmd)
-    os.system("killall Dock")
-
-
-# delete the application from launchpad in OSX
-def delete_shortlink_osx(short_link):
-    short_link_path = os.path.join("/Applications", short_link)
-    cmd = "rm '{0}'".format(short_link_path)
-    if os.path.exists(short_link_path):
-        os.system(cmd)
-        os.system("killall Dock")
-
-
 def exit_cleanly(p_rc, conn=None):
     if conn:
         try:
@@ -3962,7 +3907,7 @@ def update_component_state(p_app, p_mode, p_ver=None):
     new_state = "Disabled"
     if p_mode == "enable":
         new_state = "Enabled"
-    elif p_mode == "install":
+    elif p_mode in ["install", "Installed"]:
         new_state = "Enabled"
     elif p_mode == "remove":
         new_state = "NotInstalled"
