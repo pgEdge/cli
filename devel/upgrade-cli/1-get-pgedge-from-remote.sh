@@ -21,8 +21,8 @@ cd pgedge
 ./pgedge setup $CONN
 ./pgedge stop
 
-#export REPO=$R_LOCALHOST
-export REPO=$R_DEVEL
+export REPO=$R_LOCALHOST
+#export REPO=$R_DEVEL
 ./pgedge set GLOBAL REPO $REPO
 
 pwd
