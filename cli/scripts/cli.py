@@ -662,16 +662,22 @@ def unpack_comp(p_app, p_old_ver, p_new_ver):
             os.system(f"mkdir -p {backup_parent}")
             my_logger.info("backing up the parent component %s " % parent)
             util.copytree(f"{os.path.join(MY_HOME, parent)}  {backup_parent}")
+
             manifest_file_name = p_app + ".manifest"
             manifest_file_path = os.path.join(MY_HOME, "data", "conf", manifest_file_name)
-            my_logger.info("backing up current manifest file " + manifest_file_path)
-            copy2(manifest_file_path, backup_target_dir)
-            my_logger.info("deleting existing extension files from " + parent)
-            util.delete_extension_files(manifest_file_path, upgrade=True)
-            my_logger.info("deleting existing manifest file : " + manifest_file_name)
-            os.remove(manifest_file_path)
-            my_logger.info("creating new manifest file : " + manifest_file_name)
-            util.create_manifest(p_app, parent, upgrade=True)
+            try:
+                os.remove(manifest_file_path)
+            except Exception:
+                pass
+
+            #my_logger.info("backing up current manifest file " + manifest_file_path)
+            #copy2(manifest_file_path, backup_target_dir)
+            #my_logger.info("deleting existing extension files from " + parent)
+            #util.delete_extension_files(manifest_file_path, upgrade=True)
+            #my_logger.info("deleting existing manifest file : " + manifest_file_name)
+            #my_logger.info("creating new manifest file : " + manifest_file_name)
+            #util.create_manifest(p_app, parent, upgrade=True)
+
             my_logger.info("copying new extension files : " + manifest_file_name)
             util.copy_extension_files(p_app, parent, upgrade=True)
         except Exception as e:
