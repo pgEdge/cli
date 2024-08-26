@@ -620,7 +620,6 @@ def unpack_comp(p_app, p_old_ver, p_new_ver):
     tar = tarfile.open(fileobj=tarFileObj, mode="r")
 
     new_comp_dir = p_app + "_new"
-    old_comp_dir = p_app + "_old"
 
     try:
         tar.extractall(path=new_comp_dir)
@@ -702,15 +701,15 @@ def unpack_comp(p_app, p_old_ver, p_new_ver):
 
             msg = p_app + " upgrade staged for completion."
             my_logger.info(msg)
-            my_logger.info("renaming the existing folder %s" % p_app)
-            os.rename(p_app, p_app + "_old")
-            my_logger.info("copying the new files to folder %s" % p_app)
+
+            my_logger.info("copying the new files over folder %s" % p_app)
 
             util.copytree(
                 f"{os.path.join(MY_HOME, new_comp_dir, p_app)}  {os.path.join(MY_HOME, p_app)}"
             )
 
             my_logger.info(p_app + " upgrade completed.")
+
         except Exception as upgrade_exception:
             error_msg = (
                 "Error while upgrading the " + p_app + " : " + str(upgrade_exception)
@@ -729,8 +728,6 @@ def unpack_comp(p_app, p_old_ver, p_new_ver):
 
     if os.path.exists(os.path.join(MY_HOME, new_comp_dir)):
         util.delete_dir(os.path.join(MY_HOME, new_comp_dir))
-    if os.path.exists(os.path.join(MY_HOME, old_comp_dir)):
-        util.delete_dir(os.path.join(MY_HOME, old_comp_dir))
 
     return return_value
 
