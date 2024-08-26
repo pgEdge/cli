@@ -3907,7 +3907,7 @@ def update_component_state(p_app, p_mode, p_ver=None):
     new_state = "Disabled"
     if p_mode == "enable":
         new_state = "Enabled"
-    elif p_mode == "install":
+    elif p_mode in ["install", "Installed"]:
         new_state = "Enabled"
     elif p_mode == "remove":
         new_state = "NotInstalled"

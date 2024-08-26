@@ -1806,6 +1806,7 @@ if p_mode == "downgrade":
 
 ## UPGRADE ##################################################
 if p_mode == "upgrade":
+    os.environ["isRestart"] = "False"
     if p_comp == "all":
         updates_comp = []
         comp_list = meta.get_list(False, p_return=True)

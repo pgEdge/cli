@@ -6,7 +6,7 @@ devel/pg/postgresml/
 
 devel/incus
 devel/upgrade-cli/pgedge
-devel/upgrade-cli/test-pgedge
+devel/upgrade-cli/bakup-pgedge
 
 src/packages/*.rpm
 src/packages/*.deb
