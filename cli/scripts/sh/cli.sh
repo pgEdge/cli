@@ -44,19 +44,6 @@ set_pythonpath () {
 
 cd "$MY_HOME"
 
-hub_new="$MY_HOME/hub_new"
-if [ -d "$hub_new" ];then
-  `mv $MY_HOME/hub_new $MY_HOME/hub_upgrade`
-  log_time=`date +"%Y-%m-%d %H:%M:%S"`
-  echo "$log_time [INFO] : completing hub upgrade" >> $MY_LOGS
-  `mv $MY_HOME/hub $MY_HOME/hub_old`
-  `cp -rf $MY_HOME/hub_upgrade/* $MY_HOME/`
-  `rm -rf $MY_HOME/hub_upgrade`
-  `rm -rf $MY_HOME/hub_old`
-  log_time=`date +"%Y-%m-%d %H:%M:%S"`
-  echo "$log_time [INFO] : hub upgrade completed" >> $MY_LOGS
-fi
-
 declare -a array
 array[0]="$MY_HOME/hub/scripts"
 LIB="$MY_HOME/hub/scripts/lib"
@@ -106,4 +93,4 @@ else
   export PYTHON=python3
 fi
 
-$PYTHON -u "$MY_HOME/hub/scripts/cli.py" "$@"
+$PYTHON -W ignore -u "$MY_HOME/hub/scripts/cli.py" "$@"
