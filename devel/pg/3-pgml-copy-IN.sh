@@ -13,7 +13,7 @@ rm -rf $dir*
 mkdir $dir
 
 cp -r $base/* $dir
-cp -r $pgml_ext/pgml-venv $dir
+#cp -r $pgml_ext/pgml-venv $dir
 
 tgz=$dir.tgz
 tar cf - $dir | pigz > $tgz
