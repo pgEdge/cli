@@ -1,0 +1,3 @@
+podman build -t myub22 --force-rm  .
+podman run -ti --rm --device=nvidia.com/gpu=0 myub22
+
