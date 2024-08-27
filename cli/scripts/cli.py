@@ -711,7 +711,7 @@ def unpack_comp(p_app, p_old_ver, p_new_ver):
             my_logger.info("copying the new files over folder %s" % p_app)
 
             util.copytree(
-                f"{os.path.join(MY_HOME, new_comp_dir, p_app)}  {os.path.join(MY_HOME, p_app)}"
+                f"{os.path.join(MY_HOME, new_comp_dir, p_app, '.')}  {os.path.join(MY_HOME, p_app)}"
             )
 
             my_logger.info(p_app + " upgrade completed.")
