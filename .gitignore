@@ -4,10 +4,6 @@ devel/pg/src
 devel/pg/1*
 devel/pg/postgresml/
 
-devel/incus
-devel/upgrade-cli/pgedge
-devel/upgrade-cli/bakup-pgedge
-
 src/packages/*.rpm
 src/packages/*.deb
 
