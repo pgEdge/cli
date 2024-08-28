@@ -80,7 +80,7 @@ def start(component=None):
 
     util.check_server(component, "start")
 
-    if component and util.get_component_state(component) == "Disabled":
+    if component and util.get_comp_state(component) == "Disabled":
         util.exit_message(f"{component} is disabled and will not be started")
 
     for svr in util.get_enabled_servers():
