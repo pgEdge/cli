@@ -1,4 +1,4 @@
-FROM docker://nvidia/cuda:12.5.1-devel-ubuntu22.04
+FROM docker://nvidia/cuda:12.1.1-devel-ubuntu22.04
 ENV PATH="/usr/local/cuda/bin:${PATH}"
 
 RUN apt update && \
