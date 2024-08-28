@@ -27,7 +27,7 @@ ENV VIRTUAL_ENV=/home/mledge/venv
 RUN python3 -m venv $VIRTUAL_ENV
 ENV PATH="$VIRTUAL_ENV/bin:$PATH"
 
-COPY requirements.txt /tmp/.
+COPY reqs.ub22  /tmp/requirements.txt
 RUN pip3 install -r /tmp/requirements.txt
 
 WORKDIR /home/mledge/pgedge
