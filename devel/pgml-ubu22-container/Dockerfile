@@ -34,6 +34,8 @@ WORKDIR /home/mledge/pgedge
 COPY install_pgml.py .
 RUN python3 install_pgml.py
 
+EXPOSE 5432
+
 
 #COPY entrypoint.sh /app/entrypoint.sh
 #COPY dashboard.sh /app/dashboard.sh

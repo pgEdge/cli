@@ -1,3 +1,6 @@
 alias pbld="podman build -t myub22 --force-rm  ."
-alias prun="podman run -ti --rm --device=nvidia.com/gpu=0 myub22"
+
+## WARNING:  Our sample db trust's connections without autrhetication so we only allow u
+##              connecting from localhost
+alias prun="podman run -ti -p 127.0.0.1:65432:5432 --rm --device=nvidia.com/gpu=0 myub22"
 
