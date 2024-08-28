@@ -7,6 +7,7 @@ from urllib import request as urllib2
 BASE_BACKUP_DIR="/tmp/pgedge-cli-updates"
 MY_HOME=os.getcwd()
 
+
 def exit_message(msg):
     print(f"ERROR: {msg}")
     sys.exit(1)
@@ -54,7 +55,8 @@ def download_file(p_file, p_dir):
     repo = get_output(f"{MY_HOME}/pgedge get GLOBAL REPO")
 
     url_path = f"{repo}/{p_file}"
-    print(f"# Downloading {url_path}")
+    if not DRYRUN:
+        print(f"# Downloading {url_path}")
 
     try:
         fu = urllib2.urlopen(url_path)
@@ -85,13 +87,15 @@ def unpack_file(p_file, p_dir):
 
 def backup_current():
 
-    print(f"\n### Validating CLI current dir '{MY_HOME}'")
+    if not DRYRUN:
+        print(f"\n### Validating CLI current dir '{MY_HOME}'")
     ts = get_now()
     ver = get_cli_ver(f"{MY_HOME}/hub/scripts/install.py")
-    print(f"## Current CLI = {ver}")
+    print(f"\n## Current CLI = {ver}")
 
     backup_dir = f"{BASE_BACKUP_DIR}/{ts}_{ver}_CURRENT_BACKUP"
-    print(f"\n### Backing up current CLI to {backup_dir}")
+    if not DRYRUN:
+        print(f"\n### Backing up current CLI to {backup_dir}")
     check_cmd(f"mkdir -p {backup_dir}", False)
 
     check_cmd(f"cp -r {MY_HOME}/hub {backup_dir}", False)
@@ -112,7 +116,11 @@ def download_latest():
 
     download_file("install.py", download_dir)
     ver_latest = get_cli_ver(f"{download_dir}/install.py")
-    print(f"### Latest CLI = {ver_latest}")
+
+    print(f"\n### Latest CLI = {ver_latest}\n")
+
+    if DRYRUN:
+        return("")
 
     new_dir = f"{BASE_BACKUP_DIR}/{now}_{ver_latest}_LATEST_DOWNLOAD"
     check_cmd(f"mv {download_dir} {new_dir}", False)
@@ -123,24 +131,6 @@ def download_latest():
 
     return(new_dir)
 
-#
-#def list_archives():
-#    """ List recent archive directories """
-#
-#    dir_list = []
-#
-#    if not os.path.isdir(BASE_BACKUP_DIR):
-#        os.system(f"mkdir -p {BASE_BACKUP_DIR}")
-#
-#    for name in os.listdir(BASE_BACKUP_DIR):
-#        if ("_BACKUP" in name) or ("_DOWNLOAD" in name):
-#            dir_list.append(name)
-#
-#    if len(dir_list) >= 1:
-#        desc_list = sorted(dir_list, reverse=True)
-#        for name in desc_list:
-#            print(name)
-#
 
 def update_from_archive(archive_dir):
     print("\n### Updating CLI modules from archive")
@@ -159,16 +149,30 @@ def update_from_archive(archive_dir):
 
 ########## MAINLINE ###############################
 
+if len(sys.argv) > 2:
+    exit_message("Too many parms, only optional parm is '--dryrun'")
+
+DRYRUN = False
+if len(sys.argv) == 2:
+    if sys.argv[1] == "--dryrun":
+        DRYRUN = True
+    else:
+        exit_message(f"Invalid parm {sys.argv[1]}, only optional parm is '--dryrun'")
+
+
 curr_backup = backup_current()
 
 time.sleep(1)
 latest_archive = download_latest()
 
+if DRYRUN:
+    sys.exit(0)
+
 install_py = "hub/scripts/install.py"
 curr_ver = get_cli_ver(f"{curr_backup}/{install_py}")
 latest_ver = get_cli_ver(f"{latest_archive}/pgedge/{install_py}")
 
-sleep_secs = 5
+sleep_secs = 3
 print(f"\n### Updating to {latest_ver} from {curr_ver} in {sleep_secs} seconds")
 time.sleep(sleep_secs)
 
