@@ -1782,8 +1782,9 @@ if p_mode == "enable" or p_mode == "disable":
 
 ## CONFIG, INIT, RELOAD ##################################
 if p_mode in ["config", "init", "reload"]:
-    script_name = p_mode + "-" + p_comp
-    sys.exit(util.run_script(p_comp, script_name, extra_args))
+    util.message(f"'{p_mode}' '{p_comp} from cli.py", "debug")
+    util.check_server(p_comp, p_mode)
+    sys.exit(util.run_script(p_comp, f"{p_mode}-{p_comp}", extra_args))
 
 ## STOP component(s) #####################################
 if (p_mode == "stop") or (p_mode == "kill"):

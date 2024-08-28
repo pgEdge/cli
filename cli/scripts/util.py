@@ -3383,6 +3383,30 @@ def is_protected(p_comp, p_platform):
     return False
 
 
+def check_server(p_comp, p_action):
+    if p_comp is None:
+        return
+
+    if not is_server(p_comp):
+        exit_message(f"can not {p_action} {p_comp}")
+
+
+def get_enabled_servers():
+    svr_list = []
+    try:
+        c = cL.cursor()
+        sql = "SELECT component FROM components WHERE port > 1 and status = 'Enabled'"
+        c.execute(sql)
+        data = c.fetchall()
+    except Exception as e:
+        fatal_sql_error(e, sql, "get_enabled_servers()")
+
+    for d in data:
+        svr_list.append(d[0])
+
+    return(svr_list)
+
+
 def is_server(p_comp):
     try:
         c = cL.cursor()
