@@ -12,7 +12,6 @@ from mpire import WorkerPool
 from mpire.utils import make_single_arguments
 from ordered_set import OrderedSet
 from psycopg import sql
-from psycopg.rows import dict_row
 from math import ceil
 
 import ace
@@ -20,7 +19,12 @@ import ace_db
 import cluster
 import util
 import ace_config as config
-from ace_data_models import RepsetDiffTask, TableDiffTask, TableRepairTask
+from ace_data_models import (
+    RepsetDiffTask,
+    SpockDiffTask,
+    TableDiffTask,
+    TableRepairTask,
+)
 from ace import AceException
 
 
@@ -1382,167 +1386,142 @@ def repset_diff(rd_task: RepsetDiffTask) -> None:
     ace_db.update_ace_task(rd_task)
 
 
-def spock_diff(cluster_name, nodes):
+def spock_diff(sd_task: SpockDiffTask) -> None:
     """Compare spock meta data setup on different cluster nodes"""
-    node_list = []
-    try:
-        node_list = ace.parse_nodes(nodes)
-    except ValueError as e:
-        util.exit_message(
-            f'Nodes should be a comma-separated list of nodenames. \
-                E.g., --nodes="n1,n2". Error: {e}'
-        )
 
-    if nodes != "all" and len(node_list) == 1:
-        util.exit_message("spock-diff needs at least two nodes to compare")
-
-    util.check_cluster_exists(cluster_name)
-    util.message(f"Cluster {cluster_name} exists", p_state="success")
-
-    db, pg, node_info = cluster.load_json(cluster_name)
-
-    cluster_nodes = []
-    """
-    Even though multiple databases are allowed, ACE will, for now,
-    only take the first entry in the db list
-    """
-    database = db[0]
-
-    # Combine db and cluster_nodes into a single json
-    for node in node_info:
-        combined_json = {**database, **node}
-        cluster_nodes.append(combined_json)
-
-    conn_list = {}
-
-    try:
-        for nd in cluster_nodes:
-            if nodes == "all":
-                node_list.append(nd["name"])
-
-            psql_conn = psycopg.connect(
-                dbname=nd["db_name"],
-                user=nd["db_user"],
-                password=nd["db_password"],
-                host=nd["public_ip"],
-                port=nd.get("port", 5432),
-                row_factory=dict_row,
-            )
-            conn_list[nd["name"]] = psql_conn
-
-    except Exception as e:
-        util.exit_message("Error in spock_diff() Getting Connections:" + str(e), 1)
-
-    if len(node_list) > 3:
-        util.exit_message(
-            "spock-diff currently supports up to a three-way table comparison"
-        )
-
-    for nd in node_list:
-        if nd not in conn_list.keys():
-            util.exit_message(f'Specified nodename "{nd}" not present in cluster', 1)
-
+    conns = {}
     compare_spock = []
     print("\n")
 
-    for cluster_node in cluster_nodes:
-        cur = conn_list[cluster_node["name"]].cursor()
-        if cluster_node["name"] not in node_list:
-            continue
-        diff_spock = {}
-        hints = []
-        print(" Spock - Config " + cluster_node["name"])
-        print("~~~~~~~~~~~~~~~~~~~~~~~~~")
-        ace.prCyan("Node:")
-        sql = """
-        SELECT n.node_id, n.node_name, n.location, n.country,
-           s.sub_id, s.sub_name, s.sub_enabled, s.sub_replication_sets
-           FROM spock.node n LEFT OUTER JOIN spock.subscription s
-           ON s.sub_target=n.node_id WHERE s.sub_name IS NOT NULL;
-        """
+    for params in sd_task.fields.conn_params:
+        conns[sd_task.fields.host_map[params["host"] + params["port"]]] = (
+            psycopg.connect(**params)
+        )
 
-        cur.execute(sql)
-        node_info = cur.fetchall()
+    try:
+        for cluster_node in sd_task.fields.cluster_nodes:
+            cur = conns[cluster_node["name"]].cursor()
 
-        if node_info:
-            print("  " + node_info[0]["node_name"])
-            diff_spock["node"] = node_info[0]["node_name"]
+            if cluster_node["name"] not in sd_task.fields.node_list:
+                continue
 
-            ace.prCyan("  Subscriptions:")
+            diff_spock = {}
+            hints = []
+            print(" Spock - Config " + cluster_node["name"])
+            print("~~~~~~~~~~~~~~~~~~~~~~~~~")
+            ace.prCyan("Node:")
 
-            diff_spock["subscriptions"] = []
-            for node in node_info:
-                diff_sub = {}
-                if node["sub_name"] is None:
+            sql = """
+            SELECT
+                n.node_id,
+                n.node_name,
+                n.location,
+                n.country,
+                s.sub_id,
+                s.sub_name,
+                s.sub_enabled,
+                s.sub_replication_sets
+            FROM spock.node n
+            LEFT OUTER JOIN spock.subscription s
+            ON s.sub_target = n.node_id
+            WHERE s.sub_name IS NOT NULL;
+            """
+
+            cur.execute(sql)
+            node_info = cur.fetchall()
+
+            if node_info:
+                print("  " + node_info[0]["node_name"])
+                diff_spock["node"] = node_info[0]["node_name"]
+
+                ace.prCyan("  Subscriptions:")
+
+                diff_spock["subscriptions"] = []
+                for node in node_info:
+                    diff_sub = {}
+                    if node["sub_name"] is None:
+                        hints.append(
+                            "Hint: No subscriptions have been created on this node"
+                        )
+                    else:
+                        print("    " + node["sub_name"])
+                        diff_sub["sub_name"] = node["sub_name"]
+                        diff_sub["sub_enabled"] = node["sub_enabled"]
+                        ace.prCyan("    RepSets:")
+                        diff_sub["replication_sets"] = node["sub_replication_sets"]
+                        print("      " + json.dumps(node["sub_replication_sets"]))
+                        if node["sub_replication_sets"] == []:
+                            hints.append(
+                                "Hint: No replication sets added to" " subscription"
+                            )
+                        diff_spock["subscriptions"].append(diff_sub)
+
+            else:
+                print(f"  No node replication in {cluster_node['name']}")
+
+            """
+            Query gets each table by which rep set they are in, values in each rep
+            set are alphabetized
+            """
+            repset_sql = """
+            SELECT
+            set_name,
+            array_agg(nspname || '.' || relname ORDER BY nspname, relname) as relname
+            FROM (
+                SELECT
+                    set_name,
+                    nspname,
+                    relname
+                FROM spock.tables
+                ORDER BY set_name, nspname, relname
+            ) subquery
+            GROUP BY set_name
+            ORDER BY set_name;
+            """
+
+            cur.execute(repset_sql)
+            table_info = cur.fetchall()
+            diff_spock["rep_set_info"] = []
+            ace.prCyan("Tables in RepSets:")
+            if table_info == []:
+                hints.append("Hint: No tables in database")
+            for table in table_info:
+                if table["set_name"] is None:
+                    print(" - Not in a replication set")
                     hints.append(
-                        "Hint: No subscriptions have been created on this node"
+                        "Hint: Tables not in replication set might not have"
+                        "primary keys, or you need to run repset-add-table"
                     )
                 else:
-                    print("    " + node["sub_name"])
-                    diff_sub["sub_name"] = node["sub_name"]
-                    diff_sub["sub_enabled"] = node["sub_enabled"]
-                    ace.prCyan("    RepSets:")
-                    diff_sub["replication_sets"] = node["sub_replication_sets"]
-                    print("      " + json.dumps(node["sub_replication_sets"]))
-                    if node["sub_replication_sets"] == []:
-                        hints.append("Hint: No replication sets added to subscription")
-                    diff_spock["subscriptions"].append(diff_sub)
+                    print(" - " + table["set_name"])
 
-        else:
-            print(f"  No node replication in {cluster_node['name']}")
+                diff_spock["rep_set_info"].append({table["set_name"]: table["relname"]})
+                print("   - ", table["relname"])
 
-        """
-        Query gets each table by which rep set they are in, values in each rep
-        set are alphabetized
-        """
-        sql = """
-        SELECT set_name, string_agg(nspname || '.' || relname, '   ') as relname
-        FROM (
-            SELECT set_name, nspname, relname
-            FROM spock.tables
-            ORDER BY set_name, nspname, relname
-        ) subquery
-        GROUP BY set_name ORDER BY set_name;
-        """
+            compare_spock.append(diff_spock)
 
-        cur.execute(sql)
-        table_info = cur.fetchall()
-        diff_spock["rep_set_info"] = []
-        ace.prCyan("Tables in RepSets:")
-        if table_info == []:
-            hints.append("Hint: No tables in database")
-        for table in table_info:
-            if table["set_name"] is None:
-                print(" - Not in a replication set")
-                hints.append(
-                    "Hint: Tables not in replication set might not have primary keys,"
-                    " or you need to run repset-add-table"
-                )
-            else:
-                print(" - " + table["set_name"])
+            for hint in hints:
+                ace.prRed(hint)
+            print("\n")
 
-            diff_spock["rep_set_info"].append({table["set_name"]: table["relname"]})
-            print("   - " + table["relname"])
-
-        compare_spock.append(diff_spock)
-
-        for hint in hints:
-            ace.prRed(hint)
-        print("\n")
+    except Exception as e:
+        raise AceException(f"Error while comparing Spock meta data: {str(e)}")
 
     print(" Spock - Diff")
     print("~~~~~~~~~~~~~~~~~~~~~~~~~")
+
     for n in range(1, len(compare_spock)):
         if compare_spock[0]["rep_set_info"] == compare_spock[n]["rep_set_info"]:
             util.message(
-                f"   Replication Rules are the same for {node_list[0]}"
-                " and {node_list[n]}!!",
+                f"   Replication Rules are the same for {sd_task.fields.node_list[0]}"
+                f" and {sd_task.fields.node_list[n]}!!",
                 p_state="success",
             )
         else:
             ace.prRed(
-                f"\u2718   Difference in Replication Rules between {node_list[0]}"
-                " and {node_list[n]}"
+                f"\u2718   Difference in Replication Rules between"
+                f" {sd_task.fields.node_list[0]}"
+                f" and {sd_task.fields.node_list[n]}"
             )
 
 

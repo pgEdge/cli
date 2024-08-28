@@ -128,3 +128,25 @@ class RepsetDiffTask():
 
     # Derived fields
     fields: DerivedFields = DerivedFields()
+
+
+@dataclass
+class SpockDiffTask():
+    # Mandatory fields
+    cluster_name: str
+
+    # Optional fields
+    # Non-default members since the handler method will fill in the
+    # default values
+    _nodes: str
+    _dbname: str
+    quiet_mode: bool
+
+    # Task-specific parameters
+    scheduler: Task = Task()
+    scheduler.task_type = "spock-diff"
+    scheduler.task_status = "RUNNING"
+    scheduler.started_at = datetime.now()
+
+    # Derived fields
+    fields: DerivedFields = DerivedFields()

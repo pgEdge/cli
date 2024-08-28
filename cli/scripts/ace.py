@@ -13,6 +13,7 @@ from datetime import datetime
 import logging
 
 import ace_api
+import ace_core
 import fire
 import psycopg
 from apscheduler.schedulers.background import BackgroundScheduler
@@ -23,7 +24,12 @@ import cluster
 import util
 import ace_db
 import ace_config as config
-from ace_data_models import RepsetDiffTask, TableDiffTask, TableRepairTask
+from ace_data_models import (
+    RepsetDiffTask,
+    SpockDiffTask,
+    TableDiffTask,
+    TableRepairTask,
+)
 import ace_cli
 from ace_exceptions import AceException
 
@@ -135,7 +141,7 @@ def fix_schema(diff_file, sql1, sql2):
 
 
 def get_row_count(p_con, p_schema, p_table):
-    sql = f"SELECT count(*) FROM {p_schema}.\"{p_table}\""
+    sql = f'SELECT count(*) FROM {p_schema}."{p_table}"'
 
     try:
         cur = p_con.cursor()
@@ -283,6 +289,11 @@ def get_row_types(conn, table_name):
             )
 
     return table_types
+
+
+def check_cluster_exists(cluster_name, base_dir="cluster"):
+    cluster_dir = base_dir + "/" + str(cluster_name)
+    return True if os.path.exists(cluster_dir) else False
 
 
 def write_diffs_json(diff_dict, row_types, quiet_mode=False):
@@ -465,12 +476,15 @@ def table_diff_checks(td_task: TableDiffTask) -> TableDiffTask:
     if td_task._nodes != "all" and len(node_list) == 1:
         raise AceException("table-diff needs at least two nodes to compare")
 
-    util.check_cluster_exists(td_task.cluster_name)
-    util.message(
-        f"Cluster {td_task.cluster_name} exists",
-        p_state="success",
-        quiet_mode=td_task.quiet_mode,
-    )
+    found = check_cluster_exists(td_task.cluster_name)
+    if found:
+        util.message(
+            f"Cluster {td_task.cluster_name} exists",
+            p_state="success",
+            quiet_mode=td_task.quiet_mode,
+        )
+    else:
+        raise AceException(f"Cluster {td_task.cluster_name} not found")
 
     nm_lst = td_task._table_name.split(".")
     if len(nm_lst) != 2:
@@ -634,12 +648,15 @@ def table_repair_checks(tr_task: TableRepairTask) -> TableRepairTask:
     if type(tr_task.dry_run) is not bool:
         raise AceException("Dry run should be True (1) or False (0)")
 
-    util.check_cluster_exists(tr_task.cluster_name)
-    util.message(
-        f"Cluster {tr_task.cluster_name} exists",
-        p_state="success",
-        quiet_mode=tr_task.quiet_mode,
-    )
+    found = check_cluster_exists(tr_task.cluster_name)
+    if found:
+        util.message(
+            f"Cluster {tr_task.cluster_name} exists",
+            p_state="success",
+            quiet_mode=tr_task.quiet_mode,
+        )
+    else:
+        raise AceException(f"Cluster {tr_task.cluster_name} not found")
 
     nm_lst = tr_task._table_name.split(".")
     if len(nm_lst) != 2:
@@ -778,11 +795,13 @@ def repset_diff_checks(rd_task: RepsetDiffTask) -> RepsetDiffTask:
         try:
             rd_task.max_cpu_ratio = float(rd_task.max_cpu_ratio)
         except Exception:
-            raise AceException("Invalid values for ACE_MAX_CPU_RATIO or"
-                               "--max_cpu_ratio")
+            raise AceException(
+                "Invalid values for ACE_MAX_CPU_RATIO or" "--max_cpu_ratio"
+            )
     elif type(rd_task.max_cpu_ratio) is not float:
-        raise AceException("Invalid value type for ACE_MAX_CPU_RATIO or"
-                           "--max_cpu_ratio")
+        raise AceException(
+            "Invalid value type for ACE_MAX_CPU_RATIO or" "--max_cpu_ratio"
+        )
 
     if rd_task.max_cpu_ratio > 1.0 or rd_task.max_cpu_ratio < 0.0:
         raise AceException(
@@ -811,11 +830,15 @@ def repset_diff_checks(rd_task: RepsetDiffTask) -> RepsetDiffTask:
     if rd_task._nodes != "all" and len(node_list) == 1:
         raise AceException("repset-diff needs at least two nodes to compare")
 
-    util.check_cluster_exists(rd_task.cluster_name)
-    util.message(
-        f"Cluster {rd_task.cluster_name} exists", p_state="success",
-        quiet_mode=rd_task.quiet_mode
-    )
+    found = check_cluster_exists(rd_task.cluster_name)
+    if found:
+        util.message(
+            f"Cluster {rd_task.cluster_name} exists",
+            p_state="success",
+            quiet_mode=rd_task.quiet_mode,
+        )
+    else:
+        raise AceException(f"Cluster {rd_task.cluster_name} not found")
 
     db, pg, node_info = cluster.load_json(rd_task.cluster_name)
 
@@ -831,8 +854,10 @@ def repset_diff_checks(rd_task: RepsetDiffTask) -> RepsetDiffTask:
         database = db[0]
 
     if not database:
-        raise AceException(f"Database '{rd_task._dbname}' not found in cluster"
-                           f"'{rd_task.cluster_name}'")
+        raise AceException(
+            f"Database '{rd_task._dbname}' not found in cluster"
+            f"'{rd_task.cluster_name}'"
+        )
 
     # Combine db and cluster_nodes into a single json
     for node in node_info:
@@ -904,6 +929,88 @@ def repset_diff_checks(rd_task: RepsetDiffTask) -> RepsetDiffTask:
     return rd_task
 
 
+def spock_diff_checks(sd_task: SpockDiffTask) -> SpockDiffTask:
+    node_list = []
+    try:
+        node_list = parse_nodes(sd_task._nodes)
+    except ValueError as e:
+        raise AceException(
+            f'Nodes should be a comma-separated list of nodenames. \
+                E.g., --nodes="n1,n2". Error: {e}'
+        )
+
+    if sd_task._nodes != "all" and len(node_list) == 1:
+        raise AceException("spock-diff needs at least two nodes to compare")
+
+    if len(node_list) > 3:
+        raise AceException(
+            "spock-diff currently supports up to a three-way table comparison"
+        )
+
+    found = check_cluster_exists(sd_task.cluster_name)
+    if found:
+        util.message(f"Cluster {sd_task.cluster_name} exists", p_state="success")
+    else:
+        raise AceException(f"Cluster {sd_task.cluster_name} does not exist")
+
+    db, pg, node_info = cluster.load_json(sd_task.cluster_name)
+
+    cluster_nodes = []
+
+    if sd_task._dbname:
+        for db_entry in db:
+            if db_entry["db_name"] == sd_task._dbname:
+                database = db_entry
+                break
+    else:
+        database = db[0]
+
+    if not database:
+        raise AceException(
+            f"Database '{sd_task._dbname}' not found in cluster"
+            f"'{sd_task.cluster_name}'"
+        )
+
+    # Combine db and cluster_nodes into a single json
+    for node in node_info:
+        combined_json = {**database, **node}
+        cluster_nodes.append(combined_json)
+
+    if sd_task._nodes != "all" and len(node_list) > 1:
+        for n in node_list:
+            if not any(filter(lambda x: x["name"] == n, cluster_nodes)):
+                raise AceException("Specified nodenames not present in cluster")
+
+    conn_params = []
+    host_map = {}
+
+    try:
+        for nd in cluster_nodes:
+            if sd_task._nodes == "all":
+                node_list.append(nd["name"])
+
+            if (node_list and nd["name"] in node_list) or (not node_list):
+                params = {
+                    "dbname": nd["db_name"],
+                    "user": nd["db_user"],
+                    "password": nd["db_password"],
+                    "host": nd["public_ip"],
+                    "port": nd.get("port", 5432),
+                }
+                psycopg.connect(**params)
+                conn_params.append(params)
+                host_map[nd["public_ip"] + params["port"]] = nd["name"]
+
+    except Exception as e:
+        raise AceException("Error in spock_diff() Getting Connections:" + str(e), 1)
+
+    sd_task.fields.cluster_nodes = cluster_nodes
+    sd_task.fields.database = database
+    sd_task.fields.conn_params = conn_params
+
+    return sd_task
+
+
 if __name__ == "__main__":
     ace_db.create_ace_tasks_table()
     fire.Fire(
@@ -913,7 +1020,7 @@ if __name__ == "__main__":
             "table-rerun": ace_cli.table_rerun_cli,
             "repset-diff": ace_cli.repset_diff_cli,
             "schema-diff": ace_cli.schema_diff_cli,
-            "spock-diff": ace_cli.spock_diff_cli,
+            "spock-diff": ace_core.spock_diff,
             "start": ace_api.start_ace,
         }
     )
