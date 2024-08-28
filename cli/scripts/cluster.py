@@ -1064,10 +1064,10 @@ def manage_node(node, action, pgV, verbose):
     if action == 'start':
         cmd = (f"cd {node['path']}/pgedge/; "
                 f"./pgedge config {pgV} --port={node['port']}; "
-                f"./pgedge start;")
+                f"./pgedge start {pgV};")
     else:
         cmd = (f"cd {node['path']}/pgedge/; "
-               f"./pgedge stop")
+               f"./pgedge stop {pgV}")
 
     message=f"{action_message} node"
     run_cmd(cmd, node, message=message, verbose=verbose)
