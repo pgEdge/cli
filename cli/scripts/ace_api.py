@@ -6,6 +6,7 @@ import ace_config as config
 import ace_db
 from ace_data_models import (
     RepsetDiffTask,
+    SchemaDiffTask,
     SpockDiffTask,
     TableDiffTask,
     TableRepairTask,
@@ -21,13 +22,16 @@ app = Flask(__name__)
 def table_diff_api():
     cluster_name = request.args.get("cluster_name")
     table_name = request.args.get("table_name")
-    dbname = request.args.get("dbname")
+    dbname = request.args.get("dbname", None)
     block_rows = request.args.get("block_rows", config.BLOCK_ROWS_DEFAULT)
     max_cpu_ratio = request.args.get("max_cpu_ratio", config.MAX_CPU_RATIO_DEFAULT)
     output = request.args.get("output", "json")
     nodes = request.args.get("nodes", "all")
     batch_size = request.args.get("batch_size", config.BATCH_SIZE_DEFAULT, type=int)
     quiet = request.args.get("quiet", False)
+
+    if not cluster_name or not table_name:
+        return jsonify({"error": "cluster_name and table_name are required parameters"})
 
     task_id = ace_db.generate_task_id()
 
@@ -67,6 +71,14 @@ def table_repair_api():
     generate_report = request.args.get("generate_report", False)
     upsert_only = request.args.get("upsert_only", False)
 
+    if not cluster_name or not diff_file or not source_of_truth or not table_name:
+        return jsonify(
+            {
+                "error": "cluster_name, diff_file, source_of_truth, and table_name"
+                "are required parameters"
+            }
+        )
+
     task_id = ace_db.generate_task_id()
 
     try:
@@ -96,9 +108,17 @@ def table_rerun_api():
     cluster_name = request.args.get("cluster_name")
     diff_file = request.args.get("diff_file")
     table_name = request.args.get("table_name")
-    dbname = request.args.get("dbname")
+    dbname = request.args.get("dbname", None)
     quiet = request.args.get("quiet", False)
     behavior = request.args.get("behavior", "multiprocessing")
+
+    if not cluster_name or not diff_file or not table_name:
+        return jsonify(
+            {
+                "error": "cluster_name, diff_file, and table_name"
+                "are required parameters"
+            }
+        )
 
     task_id = ace_db.generate_task_id()
 
@@ -141,14 +161,19 @@ def table_rerun_api():
 @app.route("/ace/repset-diff", methods=["GET"])
 def repset_diff_api():
     cluster_name = request.args.get("cluster_name")
-    dbname = request.args.get("dbname")
     repset_name = request.args.get("repset_name")
+    dbname = request.args.get("dbname", None)
     block_rows = request.args.get("block_rows", config.BLOCK_ROWS_DEFAULT)
     max_cpu_ratio = request.args.get("max_cpu_ratio", config.MAX_CPU_RATIO_DEFAULT)
     output = request.args.get("output", "json")
     nodes = request.args.get("nodes", "all")
     batch_size = request.args.get("batch_size", config.BATCH_SIZE_DEFAULT, type=int)
     quiet = request.args.get("quiet", False)
+
+    if not cluster_name or not repset_name:
+        return jsonify(
+            {"error": "cluster_name and repset_name are required parameters"}
+        )
 
     task_id = ace_db.generate_task_id()
 
@@ -182,6 +207,9 @@ def spock_diff_api():
     nodes = request.args.get("nodes", "all")
     quiet = request.args.get("quiet", False)
 
+    if not cluster_name:
+        return jsonify({"error": "cluster_name is a required parameter"})
+
     task_id = ace_db.generate_task_id()
 
     try:
@@ -196,6 +224,39 @@ def spock_diff_api():
         sd_task = ace.spock_diff_checks(raw_args)
         ace_db.create_ace_task(task=sd_task)
         ace.scheduler.add_job(ace_core.spock_diff, args=(sd_task,))
+        return jsonify({"task_id": task_id, "submitted_at": datetime.now().isoformat()})
+    except AceException as e:
+        return jsonify({"error": str(e)})
+
+
+@app.route("/ace/schema-diff", methods=["GET"])
+def schema_diff_api():
+    cluster_name = request.args.get("cluster_name")
+    schema_name = request.args.get("schema_name")
+    dbname = request.args.get("dbname", None)
+    nodes = request.args.get("nodes", "all")
+    quiet = request.args.get("quiet", False)
+
+    task_id = ace_db.generate_task_id()
+
+    if not cluster_name or not schema_name:
+        return jsonify(
+            {"error": "cluster_name and schema_name are required parameters"}
+        )
+
+    try:
+        raw_args = SchemaDiffTask(
+            cluster_name=cluster_name,
+            schema_name=schema_name,
+            _dbname=dbname,
+            _nodes=nodes,
+            quiet_mode=quiet,
+        )
+
+        raw_args.scheduler.task_id = task_id
+        sd_task = ace.schema_diff_checks(raw_args)
+        ace_db.create_ace_task(task=sd_task)
+        ace.scheduler.add_job(ace_core.schema_diff, args=(sd_task,))
         return jsonify({"task_id": task_id, "submitted_at": datetime.now().isoformat()})
     except AceException as e:
         return jsonify({"error": str(e)})

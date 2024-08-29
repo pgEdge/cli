@@ -3,6 +3,7 @@ import ace_core
 import ace_db
 from ace_data_models import (
     RepsetDiffTask,
+    SchemaDiffTask,
     SpockDiffTask,
     TableDiffTask,
     TableRepairTask,
@@ -180,5 +181,21 @@ def spock_diff_cli(
         util.exit_message(str(e))
 
 
-def schema_diff_cli():
-    pass
+def schema_diff_cli(cluster_name, schema_name, nodes="all", dbname=None, quiet=False):
+
+    task_id = ace_db.generate_task_id()
+
+    try:
+        raw_args = SchemaDiffTask(
+            cluster_name=cluster_name,
+            schema_name=schema_name,
+            _dbname=dbname,
+            _nodes=nodes,
+            quiet_mode=quiet,
+        )
+        raw_args.scheduler.task_id = task_id
+        sd_task = ace.schema_diff_checks(raw_args)
+        ace_db.create_ace_task(task=sd_task)
+        ace_core.schema_diff(sd_task)
+    except AceException as e:
+        util.exit_message(str(e))

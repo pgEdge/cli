@@ -26,6 +26,7 @@ import ace_api
 import ace_config as config
 from ace_data_models import (
     RepsetDiffTask,
+    SchemaDiffTask,
     SpockDiffTask,
     TableDiffTask,
     TableRepairTask,
@@ -1011,6 +1012,74 @@ def spock_diff_checks(sd_task: SpockDiffTask) -> SpockDiffTask:
     sd_task.fields.host_map = host_map
 
     return sd_task
+
+
+def schema_diff_checks(sc_task: SchemaDiffTask) -> SchemaDiffTask:
+
+    util.message(f"## Validating cluster {sc_task.cluster_name} exists")
+    node_list = []
+    try:
+        node_list = parse_nodes(sc_task._nodes)
+    except ValueError as e:
+        util.exit_message(
+            f'Nodes should be a comma-separated list of nodenames. \
+                E.g., --nodes="n1,n2". Error: {e}'
+        )
+
+    if sc_task._nodes != "all" and len(node_list) == 1:
+        raise AceException("schema-diff needs at least two nodes to compare")
+
+    found = check_cluster_exists(sc_task.cluster_name)
+
+    if found:
+        util.message(f"Cluster {sc_task.cluster_name} exists", p_state="success")
+    else:
+        raise AceException(f"Cluster {sc_task.cluster_name} not found")
+
+    db, pg, node_info = cluster.load_json(sc_task.cluster_name)
+
+    cluster_nodes = []
+
+    database = {}
+
+    if sc_task._dbname:
+        for db_entry in db:
+            if db_entry["db_name"] == sc_task._dbname:
+                database = db_entry
+                break
+    else:
+        database = db[0]
+
+    if not database:
+        raise AceException(
+            f"Database '{sc_task._dbname}' not found in cluster"
+            f"'{sc_task.cluster_name}'"
+        )
+
+    # Combine db and cluster_nodes into a single json
+    for node in node_info:
+        combined_json = {**database, **node}
+        cluster_nodes.append(combined_json)
+
+    cluster_node_names = [nd["name"] for nd in cluster_nodes]
+    if sc_task._nodes == "all":
+        for nd in cluster_node_names:
+            node_list.append(nd)
+
+    if len(node_list) > 3:
+        raise AceException(
+            "schema-diff currently supports up to a three-way table comparison"
+        )
+
+    for nd in node_list:
+        if nd not in cluster_node_names:
+            raise AceException(f'Specified nodename "{nd}" not present in cluster', 1)
+
+    sc_task.fields.cluster_nodes = cluster_nodes
+    sc_task.fields.database = database
+    sc_task.fields.node_list = node_list
+
+    return sc_task
 
 
 if __name__ == "__main__":

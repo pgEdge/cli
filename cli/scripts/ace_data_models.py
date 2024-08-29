@@ -33,7 +33,7 @@ class DerivedFields:
 
 
 @dataclass
-class TableDiffTask():
+class TableDiffTask:
     # Unprocessed fields
     _table_name: str  # Required
     _dbname: str
@@ -69,7 +69,7 @@ class TableDiffTask():
 
 
 @dataclass
-class TableRepairTask():
+class TableRepairTask:
     # Unprocessed fields
     _table_name: str
     _dbname: str
@@ -101,7 +101,7 @@ class TableRepairTask():
 
 
 @dataclass
-class RepsetDiffTask():
+class RepsetDiffTask:
     # Unprocessed fields
     _dbname: str
     _nodes: str
@@ -132,7 +132,7 @@ class RepsetDiffTask():
 
 
 @dataclass
-class SpockDiffTask():
+class SpockDiffTask:
     # Mandatory fields
     cluster_name: str
 
@@ -146,6 +146,29 @@ class SpockDiffTask():
     # Task-specific parameters
     scheduler: Task = Task()
     scheduler.task_type = "spock-diff"
+    scheduler.task_status = "RUNNING"
+    scheduler.started_at = datetime.now()
+
+    # Derived fields
+    fields: DerivedFields = DerivedFields()
+
+
+@dataclass
+class SchemaDiffTask:
+    # Mandatory fields
+    cluster_name: str
+    schema_name: str
+
+    # Optional fields
+    # Non-default members since the handler method will fill in the
+    # default values
+    _nodes: str
+    _dbname: str
+    quiet_mode: bool
+
+    # Task-specific parameters
+    scheduler: Task = Task()
+    scheduler.task_type = "schema-diff"
     scheduler.task_status = "RUNNING"
     scheduler.started_at = datetime.now()
 

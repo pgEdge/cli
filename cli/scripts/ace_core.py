@@ -23,6 +23,7 @@ import util
 import ace_config as config
 from ace_data_models import (
     RepsetDiffTask,
+    SchemaDiffTask,
     SpockDiffTask,
     TableDiffTask,
     TableRepairTask,
@@ -1561,83 +1562,67 @@ def spock_diff(sd_task: SpockDiffTask) -> None:
     return task_context
 
 
-def schema_diff(cluster_name, nodes, schema_name):
+def schema_diff(sc_task: SchemaDiffTask) -> None:
     """Compare Postgres schemas on different cluster nodes"""
 
-    util.message(f"## Validating cluster {cluster_name} exists")
-    node_list = []
-    try:
-        node_list = ace.parse_nodes(nodes)
-    except ValueError as e:
-        util.exit_message(
-            f'Nodes should be a comma-separated list of nodenames. \
-                E.g., --nodes="n1,n2". Error: {e}'
-        )
-
-    if nodes != "all" and len(node_list) == 1:
-        util.exit_message("schema-diff needs at least two nodes to compare")
-
-    util.check_cluster_exists(cluster_name)
-    util.message(f"Cluster {cluster_name} exists", p_state="success")
-
-    db, pg, node_info = cluster.load_json(cluster_name)
-
-    cluster_nodes = []
-
-    """
-    Even though multiple databases are allowed, ACE will, for now,
-    only take the first entry in the db list
-    """
-    database = db[0]
-
-    # Combine db and cluster_nodes into a single json
-    for node in node_info:
-        combined_json = {**database, **node}
-        cluster_nodes.append(combined_json)
-
-    cluster_node_names = [nd["name"] for nd in cluster_nodes]
-    if nodes == "all":
-        for nd in cluster_node_names:
-            node_list.append(nd)
-
-    if len(node_list) > 3:
-        util.exit_message(
-            "schema-diff currently supports up to a three-way table comparison"
-        )
-
-    for nd in node_list:
-        if nd not in cluster_node_names:
-            util.exit_message(f'Specified nodename "{nd}" not present in cluster', 1)
-
     sql1 = ""
-    l_schema = schema_name
+    l_schema = sc_task.schema_name
     file_list = []
+    task_context = {}
 
-    for nd in cluster_nodes:
-        if nd["name"] in node_list:
+    sc_task_start_time = datetime.now()
+
+    for nd in sc_task.fields.cluster_nodes:
+        if nd["name"] in sc_task.fields.node_list:
             sql1 = ace.write_pg_dump(
                 nd["public_ip"], nd["db_name"], nd["port"], nd["name"], l_schema
             )
             file_list.append(sql1)
 
     if os.stat(file_list[0]).st_size == 0:
-        util.exit_message(f"Schema {schema_name} does not exist on node {node_list[0]}")
+        raise AceException(
+            f"Schema {sc_task.schema_name} does not exist on node "
+            f"{sc_task.fields.node_list[0]}"
+        )
 
     for n in range(1, len(file_list)):
         cmd = "diff " + file_list[0] + "  " + file_list[n] + " > /tmp/diff.txt"
         util.message("\n## Running # " + cmd + "\n")
         rc = os.system(cmd)
         if os.stat(file_list[n]).st_size == 0:
-            util.exit_message(
-                f"Schema {schema_name} does not exist on node {node_list[n]}"
+            raise AceException(
+                f"Schema {sc_task.schema_name} does not exist on node "
+                f"{sc_task.fields.node_list[n]}"
             )
+        context_key = sc_task.fields.node_list[0] + "/" + sc_task.fields.node_list[n]
         if rc == 0:
+            task_context[context_key] = {
+                "mismatch": False,
+                "message": f"Schemas are the same between "
+                f"{sc_task.fields.node_list[0]} and {sc_task.fields.node_list[n]}",
+            }
             util.message(
-                f"SCHEMAS ARE THE SAME- between {node_list[0]} and {node_list[n]} !!",
+                f"SCHEMAS ARE THE SAME- between {sc_task.fields.node_list[0]} "
+                f"and {sc_task.fields.node_list[n]} !!",
                 p_state="success",
             )
         else:
+            task_context[context_key] = {
+                "mismatch": True,
+                "message": f"Schemas are different between "
+                f"{sc_task.fields.node_list[0]} and {sc_task.fields.node_list[n]}",
+            }
             ace.prRed(
-                f"\u2718   SCHEMAS ARE NOT THE SAME- between {node_list[0]}"
-                " and {node_list[n]}!!"
+                f"\u2718   SCHEMAS ARE NOT THE SAME- between "
+                f"{sc_task.fields.node_list[0]}"
+                f" and {sc_task.fields.node_list[n]}!!"
             )
+
+    sc_task.scheduler.task_status = "COMPLETED"
+    sc_task.scheduler.finished_at = datetime.now()
+    sc_task.scheduler.time_taken = util.round_timedelta(
+        datetime.now() - sc_task_start_time
+    ).total_seconds()
+    sc_task.scheduler.task_context = {"diffs": task_context}
+
+    ace_db.update_ace_task(sc_task)
