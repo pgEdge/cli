@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 from datetime import datetime
+from bidict import bidict
 
 """
 Use a dataclass to store the raw and processed inputs from the user
@@ -27,7 +28,7 @@ class DerivedFields:
     conn_params: list = None
     database: str = None
     node_list: list = None
-    host_map: dict = None
+    host_map: bidict = None
     table_list: list = None
 
 

@@ -12,10 +12,9 @@ import subprocess
 from datetime import datetime
 import logging
 
-import ace_api
-import ace_core
 import fire
 import psycopg
+from bidict import bidict
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.jobstores.memory import MemoryJobStore
 from apscheduler.executors.pool import ProcessPoolExecutor
@@ -23,6 +22,7 @@ from apscheduler.executors.pool import ProcessPoolExecutor
 import cluster
 import util
 import ace_db
+import ace_api
 import ace_config as config
 from ace_data_models import (
     RepsetDiffTask,
@@ -699,7 +699,7 @@ def table_repair_checks(tr_task: TableRepairTask) -> TableRepairTask:
 
     conns = {}
     conn_params = []
-    host_map = {}
+    host_map = bidict({})
 
     try:
         for nd in cluster_nodes:
@@ -712,7 +712,7 @@ def table_repair_checks(tr_task: TableRepairTask) -> TableRepairTask:
             }
 
             # Use port number to support localhost clusters
-            host_map[nd["public_ip"] + params["port"]] = nd["name"]
+            host_map[nd["public_ip"] + ":" + params["port"]] = nd["name"]
             conn_params.append(params)
             conns[nd["name"]] = psycopg.connect(**params)
 
@@ -956,6 +956,7 @@ def spock_diff_checks(sd_task: SpockDiffTask) -> SpockDiffTask:
     db, pg, node_info = cluster.load_json(sd_task.cluster_name)
 
     cluster_nodes = []
+    database = {}
 
     if sd_task._dbname:
         for db_entry in db:
@@ -982,7 +983,7 @@ def spock_diff_checks(sd_task: SpockDiffTask) -> SpockDiffTask:
                 raise AceException("Specified nodenames not present in cluster")
 
     conn_params = []
-    host_map = {}
+    host_map = bidict({})
 
     try:
         for nd in cluster_nodes:
@@ -999,7 +1000,7 @@ def spock_diff_checks(sd_task: SpockDiffTask) -> SpockDiffTask:
                 }
                 psycopg.connect(**params)
                 conn_params.append(params)
-                host_map[nd["public_ip"] + params["port"]] = nd["name"]
+                host_map[nd["public_ip"] + ":" + params["port"]] = nd["name"]
 
     except Exception as e:
         raise AceException("Error in spock_diff() Getting Connections:" + str(e), 1)
@@ -1007,6 +1008,7 @@ def spock_diff_checks(sd_task: SpockDiffTask) -> SpockDiffTask:
     sd_task.fields.cluster_nodes = cluster_nodes
     sd_task.fields.database = database
     sd_task.fields.conn_params = conn_params
+    sd_task.fields.host_map = host_map
 
     return sd_task
 
@@ -1020,7 +1022,7 @@ if __name__ == "__main__":
             "table-rerun": ace_cli.table_rerun_cli,
             "repset-diff": ace_cli.repset_diff_cli,
             "schema-diff": ace_cli.schema_diff_cli,
-            "spock-diff": ace_core.spock_diff,
+            "spock-diff": ace_cli.spock_diff_cli,
             "start": ace_api.start_ace,
         }
     )

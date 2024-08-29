@@ -60,9 +60,9 @@ def create_ace_task(
                 task.scheduler.task_id,
                 task.scheduler.task_type,
                 task.cluster_name,
-                task.fields.l_schema,
-                task.fields.l_table,
-                task.repset_name if isinstance(task, RepsetDiffTask) else None,
+                getattr(task.fields, "l_schema", None),
+                getattr(task.fields, "l_table", None),
+                getattr(task.fields, "repset_name", None),
                 task.scheduler.task_status,
                 task.scheduler.task_context,
                 # diff_file_path is not mandatory for table-diff and repset-diff

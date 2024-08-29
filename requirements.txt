@@ -27,6 +27,7 @@ mpire[dashboard]==2.10.2
 rich==13.7.1
 pandas==2.2.2
 apscheduler==3.10.4
+bidict==0.23.1
 
 ## pgEdge-Patroni ###
 cdiff==1.0

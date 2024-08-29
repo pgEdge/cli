@@ -1,7 +1,12 @@
 import ace_config as config
 import ace_core
 import ace_db
-from ace_data_models import RepsetDiffTask, TableDiffTask, TableRepairTask
+from ace_data_models import (
+    RepsetDiffTask,
+    SpockDiffTask,
+    TableDiffTask,
+    TableRepairTask,
+)
 import ace
 import util
 from ace_exceptions import AceException
@@ -117,15 +122,15 @@ def table_rerun_cli(
 
 
 def repset_diff_cli(
-        cluster_name,
-        dbname,
-        repset_name,
-        block_rows=config.BLOCK_ROWS_DEFAULT,
-        max_cpu_ratio=config.MAX_CPU_RATIO_DEFAULT,
-        output="json",
-        nodes="all",
-        batch_size=config.BATCH_SIZE_DEFAULT,
-        quiet=False,
+    cluster_name,
+    dbname,
+    repset_name,
+    block_rows=config.BLOCK_ROWS_DEFAULT,
+    max_cpu_ratio=config.MAX_CPU_RATIO_DEFAULT,
+    output="json",
+    nodes="all",
+    batch_size=config.BATCH_SIZE_DEFAULT,
+    quiet=False,
 ):
 
     task_id = ace_db.generate_task_id()
@@ -151,9 +156,29 @@ def repset_diff_cli(
         util.exit_message(str(e))
 
 
+def spock_diff_cli(
+    cluster_name,
+    dbname=None,
+    nodes="all",
+    quiet=False,
+):
+
+    task_id = ace_db.generate_task_id()
+
+    try:
+        raw_args = SpockDiffTask(
+            cluster_name=cluster_name,
+            _dbname=dbname,
+            _nodes=nodes,
+            quiet_mode=quiet,
+        )
+        raw_args.scheduler.task_id = task_id
+        spock_diff_task = ace.spock_diff_checks(raw_args)
+        ace_db.create_ace_task(task=spock_diff_task)
+        ace_core.spock_diff(spock_diff_task)
+    except AceException as e:
+        util.exit_message(str(e))
+
+
 def schema_diff_cli():
-    pass
-
-
-def spock_diff_cli():
     pass

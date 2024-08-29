@@ -4,7 +4,12 @@ from flask import Flask, request, jsonify
 import ace_core
 import ace_config as config
 import ace_db
-from ace_data_models import RepsetDiffTask, TableDiffTask, TableRepairTask
+from ace_data_models import (
+    RepsetDiffTask,
+    SpockDiffTask,
+    TableDiffTask,
+    TableRepairTask,
+)
 import ace
 from ace_exceptions import AceException
 
@@ -165,6 +170,32 @@ def repset_diff_api():
         rd_task = ace.repset_diff_checks(raw_args)
         ace_db.create_ace_task(task=rd_task)
         ace.scheduler.add_job(ace_core.repset_diff, args=(rd_task,))
+        return jsonify({"task_id": task_id, "submitted_at": datetime.now().isoformat()})
+    except AceException as e:
+        return jsonify({"error": str(e)})
+
+
+@app.route("/ace/spock-diff", methods=["GET"])
+def spock_diff_api():
+    cluster_name = request.args.get("cluster_name")
+    dbname = request.args.get("dbname", None)
+    nodes = request.args.get("nodes", "all")
+    quiet = request.args.get("quiet", False)
+
+    task_id = ace_db.generate_task_id()
+
+    try:
+        raw_args = SpockDiffTask(
+            cluster_name=cluster_name,
+            _dbname=dbname,
+            _nodes=nodes,
+            quiet_mode=quiet,
+        )
+
+        raw_args.scheduler.task_id = task_id
+        sd_task = ace.spock_diff_checks(raw_args)
+        ace_db.create_ace_task(task=sd_task)
+        ace.scheduler.add_job(ace_core.spock_diff, args=(sd_task,))
         return jsonify({"task_id": task_id, "submitted_at": datetime.now().isoformat()})
     except AceException as e:
         return jsonify({"error": str(e)})

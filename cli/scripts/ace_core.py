@@ -6,12 +6,14 @@ from itertools import combinations
 from multiprocessing import Lock, Manager, Value, cpu_count
 
 from concurrent.futures import ThreadPoolExecutor
+import traceback
 
 import psycopg
 from mpire import WorkerPool
 from mpire.utils import make_single_arguments
 from ordered_set import OrderedSet
 from psycopg import sql
+from psycopg.rows import dict_row
 from math import ceil
 
 import ace
@@ -539,7 +541,7 @@ def table_repair(tr_task: TableRepairTask):
     conns = {}
 
     for params in tr_task.fields.conn_params:
-        conns[tr_task.fields.host_map[params["host"] + params["port"]]] = (
+        conns[tr_task.fields.host_map[params["host"] + ":" + params["port"]]] = (
             psycopg.connect(**params)
         )
 
@@ -759,7 +761,9 @@ def table_repair(tr_task: TableRepairTask):
 
     # Gets types of each column in table
     table_types = ace.get_row_types(
-        conns[tr_task.source_of_truth], tr_task.fields.l_table
+        # TODO: Check if this is correct
+        conns[tr_task.source_of_truth],
+        tr_task.fields.l_table,
     )
 
     if tr_task.upsert_only:
@@ -857,6 +861,7 @@ def table_repair(tr_task: TableRepairTask):
 
             delete_sql = delete_sql[:-3] + ";"
 
+        # TODO: Check if this is correct
         conn = conns[divergent_node]
         cur = conn.cursor()
         spock_version = ace.get_spock_version(conn)
@@ -1391,18 +1396,24 @@ def spock_diff(sd_task: SpockDiffTask) -> None:
 
     conns = {}
     compare_spock = []
+    task_context = {}
+    sd_start_time = datetime.now()
+
     print("\n")
 
     for params in sd_task.fields.conn_params:
-        conns[sd_task.fields.host_map[params["host"] + params["port"]]] = (
-            psycopg.connect(**params)
+        conns[sd_task.fields.host_map[params["host"] + ":" + params["port"]]] = (
+            psycopg.connect(**params, row_factory=dict_row)
         )
 
     try:
         for cluster_node in sd_task.fields.cluster_nodes:
             cur = conns[cluster_node["name"]].cursor()
 
-            if cluster_node["name"] not in sd_task.fields.node_list:
+            if (
+                sd_task.fields.node_list
+                and cluster_node["name"] not in sd_task.fields.node_list
+            ):
                 continue
 
             diff_spock = {}
@@ -1498,6 +1509,7 @@ def spock_diff(sd_task: SpockDiffTask) -> None:
                 diff_spock["rep_set_info"].append({table["set_name"]: table["relname"]})
                 print("   - ", table["relname"])
 
+            diff_spock["hints"] = hints
             compare_spock.append(diff_spock)
 
             for hint in hints:
@@ -1505,24 +1517,48 @@ def spock_diff(sd_task: SpockDiffTask) -> None:
             print("\n")
 
     except Exception as e:
-        raise AceException(f"Error while comparing Spock meta data: {str(e)}")
+        traceback.print_exc()
+        raise AceException("Error while comparing Spock meta data: " f"{e}")
+
+    task_context["spock_config"] = compare_spock
+    task_context["diffs"] = {}
 
     print(" Spock - Diff")
     print("~~~~~~~~~~~~~~~~~~~~~~~~~")
 
     for n in range(1, len(compare_spock)):
+        diff_key = compare_spock[0]["node"] + "/" + compare_spock[n]["node"]
         if compare_spock[0]["rep_set_info"] == compare_spock[n]["rep_set_info"]:
+            task_context["diffs"][diff_key] = {
+                "mismatch": False,
+                "message": "Replication sets are the same between nodes "
+                f"{compare_spock[0]['node']} and {compare_spock[n]['node']}",
+            }
             util.message(
-                f"   Replication Rules are the same for {sd_task.fields.node_list[0]}"
-                f" and {sd_task.fields.node_list[n]}!!",
+                f"   Replication Rules are the same for {compare_spock[0]['node']}"
+                f" and {compare_spock[n]['node']}",
                 p_state="success",
             )
         else:
+            task_context["diffs"][diff_key] = {
+                "mismatch": True,
+                "message": "Replication sets are different in nodes "
+                f"{compare_spock[0]['node']} and {compare_spock[n]['node']}",
+            }
             ace.prRed(
                 f"\u2718   Difference in Replication Rules between"
-                f" {sd_task.fields.node_list[0]}"
-                f" and {sd_task.fields.node_list[n]}"
+                f" {compare_spock[0]['node']} and {compare_spock[n]['node']}"
             )
+
+    sd_task.scheduler.task_status = "COMPLETED"
+    sd_task.scheduler.finished_at = datetime.now()
+    sd_task.scheduler.time_taken = util.round_timedelta(
+        datetime.now() - sd_start_time
+    ).total_seconds()
+    sd_task.scheduler.task_context = task_context
+    ace_db.update_ace_task(sd_task)
+
+    return task_context
 
 
 def schema_diff(cluster_name, nodes, schema_name):
