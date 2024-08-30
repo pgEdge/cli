@@ -4,7 +4,7 @@ RUN dnf -y  update && dnf remove -y subscription-manager dnf-plugin-subscription
 
 ENV install="dnf install -y --allowerasing"
 RUN $install python3 python3-pip git wget curl pigz which zip sqlite
-RUN $install openssh-server systemd
+RUN $install openssh-server systemd sudo
 
 RUN adduser --home-dir /home/pgedge --shell /bin/bash  pgedge
 RUN echo '%pgedge ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
@@ -18,5 +18,5 @@ RUN rm install.py
 
 EXPOSE 22
 
-
+CMD [/sbin/init]
 
