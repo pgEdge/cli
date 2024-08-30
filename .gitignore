@@ -4,6 +4,9 @@ devel/pg/src
 devel/pg/1*
 devel/pg/postgresml/
 
+devel/repo/cleanREMOTE
+devel/repo/local
+
 src/packages/*.rpm
 src/packages/*.deb
 
