@@ -1,8 +1,13 @@
 from datetime import datetime
-from flask import Flask, request, jsonify
+import pickle
+import _pickle as cPickle
 
-import ace_core
+from flask import Flask, jsonify, request
+from apscheduler.events import EVENT_JOB_ERROR
+
+import ace
 import ace_config as config
+import ace_core
 import ace_db
 from ace_data_models import (
     RepsetDiffTask,
@@ -11,7 +16,6 @@ from ace_data_models import (
     TableDiffTask,
     TableRepairTask,
 )
-import ace
 from ace_exceptions import AceException
 
 
@@ -52,7 +56,13 @@ def table_diff_api():
         td_task = ace.table_diff_checks(raw_args)
 
         ace_db.create_ace_task(task=td_task)
-        ace.scheduler.add_job(ace_core.table_diff, args=(td_task,))
+        td_job = ace.scheduler.add_job(
+            ace_core.table_diff,
+            args=(td_task,),
+        )
+
+        pickled_task = pickle.dumps(td_task, protocol=pickle.HIGHEST_PROTOCOL)
+        ace_db.store_pickled_task(td_job.id, pickled_task)
 
         return jsonify({"task_id": task_id, "submitted_at": datetime.now().isoformat()})
     except AceException as e:
@@ -281,11 +291,13 @@ def task_status_api():
 
 
 def start_ace():
-    ace_db.create_ace_tasks_table()
+    ace_db.drop_ace_tables()
+    ace_db.create_ace_tables()
 
     # Since the scheduler is a BackgroundScheduler,
     # start() will not block
     ace.scheduler.start()
+    ace.scheduler.add_listener(ace.error_listener, EVENT_JOB_ERROR)
 
     # A listener is needed for the upcoming 4.0.0 release
     # of apscheduler. We will need to manually listen to

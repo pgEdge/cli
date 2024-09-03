@@ -1,9 +1,11 @@
 import json
+import pickle
 import sqlite3
 from typing import Union
 import util
 import string
 import random
+import _pickle as cPickle
 from ace_data_models import TableDiffTask, TableRepairTask, RepsetDiffTask
 
 sqlite_db = util.MY_LITE
@@ -26,6 +28,13 @@ CREATE TABLE IF NOT EXISTS ace_tasks (
 );
 """
 
+ace_internal_table_sql = """
+CREATE TABLE IF NOT EXISTS ace_internal (
+    job_id TEXT PRIMARY KEY,
+    task_obj BLOB NOT NULL
+);
+"""
+
 
 def generate_task_id(length=8):
     return "".join(
@@ -34,10 +43,11 @@ def generate_task_id(length=8):
     )
 
 
-def create_ace_tasks_table():
+def create_ace_tables():
     try:
         c = local_db_conn.cursor()
         c.execute(ace_tasks_sql)
+        c.execute(ace_internal_table_sql)
         local_db_conn.commit()
     except Exception as e:
         util.fatal_sql_error(e, ace_tasks_sql, "create_ace_tasks_table()")
@@ -75,6 +85,26 @@ def create_ace_task(
         local_db_conn.commit()
     except Exception as e:
         util.fatal_sql_error(e, sql, "create_ace_task()")
+
+
+def store_pickled_task(job_id, task_obj):
+    try:
+        c = local_db_conn.cursor()
+        sql = "INSERT INTO ace_internal (job_id, task_obj) VALUES (?, ?)"
+        c.execute(sql, (job_id, sqlite3.Binary(task_obj)))
+        local_db_conn.commit()
+    except Exception as e:
+        util.fatal_sql_error(e, sql, "store_pickled_task()")
+
+
+def get_pickled_task(job_id):
+    c = local_db_conn.cursor()
+    sql = "SELECT task_obj FROM ace_internal WHERE job_id = ?"
+    c.execute(sql, (job_id,))
+    row = c.fetchone()
+    if not row:
+        return None
+    return pickle.loads(row[0])
 
 
 def get_ace_task_by_id(task_id) -> dict:
@@ -142,11 +172,13 @@ def cleanup_ace_tasks():
         util.fatal_sql_error(e, sql, "cleanup_ace_tasks()")
 
 
-def drop_ace_tasks_table():
+def drop_ace_tables():
     try:
         c = local_db_conn.cursor()
-        sql = "DROP TABLE IF EXISTS ace_tasks"
-        c.execute(sql)
+        tasks_sql = "DROP TABLE IF EXISTS ace_tasks"
+        internal_sql = "DROP TABLE IF EXISTS ace_internal"
+        c.execute(tasks_sql)
+        c.execute(internal_sql)
         local_db_conn.commit()
     except Exception as e:
-        util.fatal_sql_error(e, sql, "drop_ace_tasks_table()")
+        util.fatal_sql_error(e, tasks_sql, "drop_ace_tables()")

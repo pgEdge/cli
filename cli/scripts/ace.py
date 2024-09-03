@@ -14,7 +14,6 @@ import logging
 
 import fire
 import psycopg
-from bidict import bidict
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.jobstores.memory import MemoryJobStore
 from apscheduler.executors.pool import ProcessPoolExecutor
@@ -700,7 +699,7 @@ def table_repair_checks(tr_task: TableRepairTask) -> TableRepairTask:
 
     conns = {}
     conn_params = []
-    host_map = bidict({})
+    host_map = {}
 
     try:
         for nd in cluster_nodes:
@@ -984,7 +983,7 @@ def spock_diff_checks(sd_task: SpockDiffTask) -> SpockDiffTask:
                 raise AceException("Specified nodenames not present in cluster")
 
     conn_params = []
-    host_map = bidict({})
+    host_map = {}
 
     try:
         for nd in cluster_nodes:
@@ -1082,8 +1081,16 @@ def schema_diff_checks(sc_task: SchemaDiffTask) -> SchemaDiffTask:
     return sc_task
 
 
+def error_listener(event):
+    if event.exception:
+        job_id = event.job_id
+        print(f"Job ID: {job_id}")
+        job = ace_db.get_pickled_task(job_id)
+        print(f"Job details: {str(job)}")
+
+
 if __name__ == "__main__":
-    ace_db.create_ace_tasks_table()
+    ace_db.create_ace_tables()
     fire.Fire(
         {
             "table-diff": ace_cli.table_diff_cli,

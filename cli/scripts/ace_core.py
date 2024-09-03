@@ -28,7 +28,8 @@ from ace_data_models import (
     TableDiffTask,
     TableRepairTask,
 )
-from ace import AceException
+
+from ace_exceptions import AceException
 
 
 # Shared variables needed by multiprocessing
@@ -40,10 +41,13 @@ lock = Lock()
 
 
 def run_query(worker_state, host, query):
-    cur = worker_state[host]
-    cur.execute(query)
-    results = cur.fetchall()
-    return results
+    try:
+        cur = worker_state[host]
+        cur.execute(query)
+        results = cur.fetchall()
+        return results
+    except Exception as e:
+        return f"Error on {host}: {str(e)}"
 
 
 def init_db_connection(shared_objects, worker_state):
@@ -215,9 +219,19 @@ def compare_checksums(shared_objects, worker_state, batches):
                         executor.submit(run_query, worker_state, host1, hash_sql),
                         executor.submit(run_query, worker_state, host2, hash_sql),
                     ]
-                    hash1, hash2 = [f.result()[0][0] for f in futures]
+                    results = [f.result() for f in futures]
+                
+                errors = [r for r in results if isinstance(r, str)]
+                if errors:
+                    error_msg = "; ".join(errors)
+                    result_queue.append(error_msg)
+                    return config.BLOCK_ERROR
+
+                hash1, hash2 = results[0][0][0], results[1][0][0]
             except Exception as e:
-                result_queue.append(e)
+                error_msg = f"Unexpected error in checksum comparison: {str(e)}"
+                print("error_msg", error_msg)
+                result_queue.append(error_msg)
                 return config.BLOCK_ERROR
 
             if hash1 != hash2:
@@ -228,9 +242,19 @@ def compare_checksums(shared_objects, worker_state, batches):
                             executor.submit(run_query, worker_state, host1, block_sql),
                             executor.submit(run_query, worker_state, host2, block_sql),
                         ]
-                        t1_result, t2_result = [f.result() for f in futures]
+                        results = [f.result() for f in futures]
+                    
+                    errors = [r for r in results if isinstance(r, str)]
+                    if errors:
+                        error_msg = "; ".join(errors)
+                        result_queue.append(error_msg)
+                        return config.BLOCK_ERROR
+
+                    t1_result, t2_result = results
                 except Exception as e:
-                    result_queue.append(e)
+                    error_msg = f"Unexpected error in block query: {str(e)}"
+                    print("error_msg", error_msg)
+                    result_queue.append(error_msg)
                     return config.BLOCK_ERROR
 
                 # Transform all elements in t1_result and t2_result into strings before
@@ -430,6 +454,7 @@ def table_diff(td_task: TableDiffTask):
     mismatch = False
     diffs_exceeded = False
     errors = False
+    error_list = []
 
     with WorkerPool(
         n_jobs=procs,
@@ -459,16 +484,21 @@ def table_diff(td_task: TableDiffTask):
                 p_state="warning",
                 quiet_mode=td_task.quiet_mode,
             )
+    
 
     for result in result_queue:
         if result == config.BLOCK_MISMATCH:
             mismatch = True
+        elif result == config.BLOCK_ERROR:
+            error_list.append(result)
+
 
     if errors:
         raise AceException(
-            "There were one or more errors while connecting to databases.\n \
-                Please examine the connection information provided, or the nodes' \
-                    status before running this script again."
+            "There were one or more errors while running the table-diff job. \n"
+            "Please examine the connection information provided, or the nodes' \n"
+            "status before running this script again. Error list: \n"
+            f"{error_list}"
         )
 
     # Mismatch is True if there is a block mismatch or if we have
@@ -774,50 +804,6 @@ def table_repair(tr_task: TableRepairTask):
 
         rows_to_upsert_json = full_rows_to_upsert[divergent_node].values()
         delete_keys = list(full_rows_to_delete[divergent_node].keys())
-
-        # filtered_rows_to_delete = []
-
-        # upsert_lookup = {}
-
-        # """
-        # We need to construct a lookup table for the upserts.
-        # This is because we need to delete only those rows from
-        # the divergent node that are not a part of the upserts
-        # """
-        # for row in rows_to_upsert_json:
-        #     if simple_primary_key:
-        #         upsert_lookup[row[tr_task.fields.key]] = 1
-        #     else:
-        #         upsert_lookup[tuple(row[col] for col in keys_list)] = 1
-
-        # for entry in rows_to_delete_json:
-        #     if simple_primary_key:
-        #         if entry[tr_task.fields.key] in upsert_lookup:
-        #             continue
-        #     else:
-        #         if tuple(entry[col] for col in keys_list) in upsert_lookup:
-        #             continue
-
-        #     filtered_rows_to_delete.append(entry)
-
-        # if divergent_node not in total_upserted:
-        #     total_upserted[divergent_node] = len(rows_to_upsert_json)
-
-        # if divergent_node not in total_deleted:
-        #     total_deleted[divergent_node] = len(filtered_rows_to_delete)
-
-        # delete_keys = []
-
-        # if rows_to_delete:
-        #     if simple_primary_key:
-        #         delete_keys = tuple(
-        #             (row[tr_task.fields.key],) for row in filtered_rows_to_delete
-        #         )
-        #     else:
-        #         delete_keys = tuple(
-        #             tuple(row[col] for col in keys_list)
-        #             for row in filtered_rows_to_delete
-        #         )
 
         """
         Here we are constructing an UPSERT query from true_rows and
