@@ -94,6 +94,20 @@ DEBUG = 10
 DEBUG2 = 9
 
 
+def is_pg_reserved_word(p_word):
+    l_word = str(p_word).lower()
+
+    rsvd_words = [
+        'select', 'from', 'where', 'order', 'column', 'row', 'table', \
+        'abc'
+        ]
+
+    if l_word in rsvd_words:
+        return(True)
+
+    return(False)
+
+
 def python3_ver():
     return(platform.python_version())
 

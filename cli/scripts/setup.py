@@ -1,7 +1,7 @@
 
 #  Copyright 2024-2024 PGEDGE  All rights reserved. #
 
-import os, sys, time
+import os, sys, time, getpass
 
 os.chdir(os.getenv("MY_HOME"))
 sys.path.append(os.path.join(os.path.dirname(__file__), "lib"))
@@ -88,7 +88,11 @@ def check_pre_reqs(User, Passwd, db, port, pg_major, pg_minor, spock, autostart,
             sys.exit(1)
         if not verifyPasswd(Passwd):
             sys.exit(1)
+        if not verifyDbname(db):
+            sys.exit(1)
+
     else:
+
         if (User is None) and (Passwd is None) and (db is None):
             pass
         else:
@@ -106,11 +110,11 @@ def check_pre_reqs(User, Passwd, db, port, pg_major, pg_minor, spock, autostart,
 
 
 def inputUser():
-    util.message(f"inputUser()", "debug")
+    util.message(f"setup.inputUser()", "debug")
 
     while True:
         try:
-            user = input("Superuser: ")
+            user = input("DB Owner: ")
         except KeyboardInterrupt:
             util.exit_message("cancelled")
         except Exception:
@@ -141,12 +145,18 @@ def verifyUser(User):
 
 
 def inputPasswd():
-    util.message(f"inputPasswd()", "debug")
+    util.message(f"setup.inputPasswd()", "debug")
     while True:
         try:
-            passwd = input("Password: ")
+            passwd = getpass.getpass("Password: ")
+            passwd2 = getpass.getpass("Confirm Password: ")
+
+            if passwd != passwd2:
+                util.message("passwords do not match", "error")
+
         except KeyboardInterrupt:
             util.exit_message("cancelled")
+
         except Exception:
             return(None)
 
@@ -170,6 +180,45 @@ def verifyPasswd(Passwd):
             return(False)
 
     return(True)
+
+
+def inputDbname():
+    util.message(f"setup.inputDbname()", "debug")
+    while True:
+        try:
+            dbname = input(" DB Name: ")
+        except KeyboardInterrupt:
+            util.exit_message("cancelled")
+        except Exception:
+            return(None)
+
+        if verifyDbname(dbname):
+            return(dbname)
+
+
+def verifyDbname(p_db):
+
+    l_db = str(p_db).lower()
+
+    if l_db != p_db:
+        util.message(f"pgEdge Dbname's are case insensitive for your own sanity", "warning")
+
+    if util.is_pg_reserved_word(l_db):
+        util.message(f"Dbname '{l_db}' is a postgres reserved word", "error")
+        return(False)
+
+    if str(l_db[0]).isdigit():
+        util.message(f"Dbname '{l_db}' first character may not be a digit", "error")
+        return(False)
+
+    for c in l_db:
+        if c.isdigit() or c.isalpha() or c == "_":
+            pass
+        else:
+            util.message(f"Dbname '{l_db}' characters can only be (a-z), (1-9), or an (_)", "error") 
+            return(False)
+
+    return (True)
 
 
 def parse_pg(pg):
@@ -237,6 +286,9 @@ def setup_pgedge(User=None, Passwd=None, dbName=None, port=None,
 
         if Passwd is None:
             Passwd = inputPasswd()
+
+        if dbName is None:
+            dbName = inputDbname()
 
     check_pre_reqs(User, Passwd, dbName, port, pg_major, pg_minor, spock_ver, autostart, extensions)
 
