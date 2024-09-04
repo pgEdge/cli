@@ -14,7 +14,6 @@ CORE_EXTS="spock40 snowflake lolor vector postgis"
 MORE_EXTS="audit cron orafce partman curl citus timescaledb wal2json " + \
        "hypopg hintplan plv8 setuser permissions profiler debugger"
 
-EXTS_15 = "foslots"
 CTL="./pgedge"
 
 
@@ -324,9 +323,6 @@ def setup_pgedge(User=None, Passwd=None, dbName=None, port=None,
 
     if core_exts_installed is False:
         install_disabled_exts(pg_major, CORE_EXTS)
-
-        if pg_major in ["14", "15"]:
-            install_disabled_exts(pg_major, EXTS_15)
 
     if extensions == "all":
         if pg_major not in ["15", "16"]:
