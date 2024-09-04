@@ -50,6 +50,7 @@ def table_diff_api():
             _nodes=nodes,
             batch_size=batch_size,
             quiet_mode=quiet,
+            skip_db_update=False,
         )
 
         raw_args.scheduler.task_id = task_id
@@ -61,8 +62,8 @@ def table_diff_api():
             args=(td_task,),
         )
 
-        pickled_task = pickle.dumps(td_task, protocol=pickle.HIGHEST_PROTOCOL)
-        ace_db.store_pickled_task(td_job.id, pickled_task)
+        #pickled_task = pickle.dumps(td_task, protocol=pickle.HIGHEST_PROTOCOL)
+        #ace_db.store_pickled_task(td_job.id, pickled_task)
 
         return jsonify({"task_id": task_id, "submitted_at": datetime.now().isoformat()})
     except AceException as e:
@@ -297,7 +298,7 @@ def start_ace():
     # Since the scheduler is a BackgroundScheduler,
     # start() will not block
     ace.scheduler.start()
-    ace.scheduler.add_listener(ace.error_listener, EVENT_JOB_ERROR)
+    # ace.scheduler.add_listener(ace.error_listener, EVENT_JOB_ERROR)
 
     # A listener is needed for the upcoming 4.0.0 release
     # of apscheduler. We will need to manually listen to

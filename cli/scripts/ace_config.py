@@ -1,5 +1,8 @@
 import os
 
+# Postgres options
+STATEMENT_TIMEOUT = 10000
+
 
 #  Default values for ACE table-diff
 MAX_DIFF_ROWS = 10000

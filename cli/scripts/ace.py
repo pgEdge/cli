@@ -541,6 +541,7 @@ def table_diff_checks(td_task: TableDiffTask) -> TableDiffTask:
                     "password": nd["db_password"],
                     "host": nd["public_ip"],
                     "port": nd.get("port", 5432),
+                    "options": f"-c statement_timeout={config.STATEMENT_TIMEOUT}",
                 }
                 conn_list.append(psycopg.connect(**params))
                 conn_params.append(params)
@@ -709,6 +710,7 @@ def table_repair_checks(tr_task: TableRepairTask) -> TableRepairTask:
                 "password": nd["db_password"],
                 "host": nd["public_ip"],
                 "port": nd.get("port", 5432),
+                "options": f"-c statement_timeout={config.STATEMENT_TIMEOUT}",
             }
 
             # Use port number to support localhost clusters
@@ -883,6 +885,7 @@ def repset_diff_checks(rd_task: RepsetDiffTask) -> RepsetDiffTask:
                     password=nd["db_password"],
                     host=nd["public_ip"],
                     port=nd.get("port", 5432),
+                    options=f"-c statement_timeout={config.STATEMENT_TIMEOUT}",
                 )
                 conn_list.append(psql_conn)
 
@@ -997,6 +1000,7 @@ def spock_diff_checks(sd_task: SpockDiffTask) -> SpockDiffTask:
                     "password": nd["db_password"],
                     "host": nd["public_ip"],
                     "port": nd.get("port", 5432),
+                    "options": f"-c statement_timeout={config.STATEMENT_TIMEOUT}",
                 }
                 psycopg.connect(**params)
                 conn_params.append(params)

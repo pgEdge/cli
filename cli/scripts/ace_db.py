@@ -1,3 +1,4 @@
+from datetime import time
 import json
 import pickle
 import sqlite3
@@ -47,7 +48,7 @@ def create_ace_tables():
     try:
         c = local_db_conn.cursor()
         c.execute(ace_tasks_sql)
-        c.execute(ace_internal_table_sql)
+        # c.execute(ace_internal_table_sql)
         local_db_conn.commit()
     except Exception as e:
         util.fatal_sql_error(e, ace_tasks_sql, "create_ace_tasks_table()")
@@ -145,21 +146,36 @@ def update_ace_task(task: Union[TableDiffTask, TableRepairTask, RepsetDiffTask])
                 time_taken = ?
                 WHERE task_id = ?
               """
+        
+        # Prepare data outside of the execute call
+        task_context = json.dumps(task.scheduler.task_context)
+        started_at = task.scheduler.started_at.isoformat(timespec="milliseconds")
+        finished_at = task.scheduler.finished_at.isoformat(timespec="milliseconds")
+        
         c.execute(
             sql,
             (
                 task.scheduler.task_status,
-                json.dumps(task.scheduler.task_context),
+                task_context,
                 getattr(task, "diff_file_path", None),
-                task.scheduler.started_at.isoformat(timespec="milliseconds"),
-                task.scheduler.finished_at.isoformat(timespec="milliseconds"),
+                started_at,
+                finished_at,
                 task.scheduler.time_taken,
                 task.scheduler.task_id,
             ),
         )
         local_db_conn.commit()
+    except sqlite3.OperationalError as e:
+        if "database is locked" in str(e):
+            print("Database is locked. Retrying...")
+            time.sleep(1)  # Wait for 1 second before retrying
+            return update_ace_task(task)  # Recursive call to retry
+        else:
+            util.fatal_sql_error(e, sql, "update_ace_task()")
     except Exception as e:
         util.fatal_sql_error(e, sql, "update_ace_task()")
+    
+    print("task updated in DB")
 
 
 def cleanup_ace_tasks():
