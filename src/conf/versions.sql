@@ -72,7 +72,6 @@ INSERT INTO extensions VALUES ('setuser',   'set_user',  1, 'set_user',  '');
 INSERT INTO extensions VALUES ('orafce',    'orafce',    1, 'orafce',    '');
 INSERT INTO extensions VALUES ('pgml',      'pgml',      1, 'pgml',      '');
 INSERT INTO extensions VALUES ('snowflake', 'snowflake', 1, 'snowflake', '');
-INSERT INTO extensions VALUES ('foslots',   'foslots',   0, '',          '');
 
 INSERT INTO extensions VALUES ('vector',    'vector',       0, '',               '');
 INSERT INTO extensions VALUES ('wal2json',  'wal2json',     1, 'wal2json',       '');
@@ -265,14 +264,6 @@ INSERT INTO releases VALUES ('hintplan-pg15', 10, 'hintplan', 'pgHintPlan', '', 
 INSERT INTO releases VALUES ('hintplan-pg16', 10, 'hintplan', 'pgHintPlan', '', 'prod', '', 1, 'POSTGRES', '', '');
 INSERT INTO versions VALUES ('hintplan-pg15', '1.5.1-1', 'amd, arm', 1, '20230927', 'pg15', '', 'https://github.com/pghintplan/pghintplan/releases/tag/1.5.1');
 INSERT INTO versions VALUES ('hintplan-pg16', '1.6.0-1', 'amd, arm', 1, '20230927', 'pg16', '', 'https://github.com/pghintplan/pghintplan/releases/tag/1.6.0');
-
--- ## FOSLOTS ############################
-INSERT INTO projects VALUES ('foslots', 'ext', 4, 0, '',0, 'https://github.com/pgedge/foslots/tags',
-  'foslots', 1, 'foslots.png', 'Failover Slots', 'https://github.com/pgedge/foslots', 'failover_slots, fail_over_slots');
-INSERT INTO releases VALUES ('foslots-pg14', 10, 'foslots', 'FO Slots', '', 'prod', '', 1, 'POSTGRES', '', '');
-INSERT INTO releases VALUES ('foslots-pg15', 10, 'foslots', 'FO Slots', '', 'prod', '', 1, 'POSTGRES', '', '');
-INSERT INTO versions VALUES ('foslots-pg14', '1a-1', 'amd, arm', 1, '20240402', 'pg14', '', '');
-INSERT INTO versions VALUES ('foslots-pg15', '1a-1', 'amd, arm', 1, '20240402', 'pg15', '', '');
 
 -- ## TIMESCALEDB #######################
 INSERT INTO projects VALUES ('timescaledb', 'ext', 4, 0, '',0, 'https://github.com/timescale/timescaledb/releases',

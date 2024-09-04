@@ -8,7 +8,6 @@ spock40V=4.0.1-1
 spock33V=3.3.6-1
 
 lolorV=1.2-1
-foslotsV=1a-1
 snwflkV=2.2-1
 
 P17=17beta3-1

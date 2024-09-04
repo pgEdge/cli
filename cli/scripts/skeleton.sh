@@ -41,23 +41,18 @@ function test_common_exts {
 
 function test16 {
   install_pgedge
-
   test_common_exts
 }
 
 
 function test15 {
   install_pgedge
-  ./pgedge install foslots-$pgV       -d demo
-
   test_common_exts
-
 }
 
 
 function test14 {
   install_pgedge
-  ./pgedge install foslots-$pgV       -d demo
 }
 
 
