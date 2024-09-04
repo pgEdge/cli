@@ -179,6 +179,7 @@ def repset_diff_api():
     nodes = request.args.get("nodes", "all")
     batch_size = request.args.get("batch_size", config.BATCH_SIZE_DEFAULT, type=int)
     quiet = request.args.get("quiet", False)
+    skip_tables = request.args.get("skip_tables", None)
 
     if not cluster_name or not repset_name:
         return jsonify(
@@ -198,6 +199,7 @@ def repset_diff_api():
             _nodes=nodes,
             batch_size=batch_size,
             quiet_mode=quiet,
+            skip_tables=skip_tables
             invoke_method="API",
         )
 

@@ -132,6 +132,7 @@ def repset_diff_cli(
     nodes="all",
     batch_size=config.BATCH_SIZE_DEFAULT,
     quiet=False,
+    skip_tables=None,
 ):
 
     task_id = ace_db.generate_task_id()
@@ -148,6 +149,7 @@ def repset_diff_cli(
             batch_size=batch_size,
             quiet_mode=quiet,
             invoke_method="CLI",
+            skip_tables=skip_tables
         )
         raw_args.scheduler.task_id = task_id
         rd_task = ace.repset_diff_checks(raw_args)
