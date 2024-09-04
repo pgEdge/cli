@@ -83,6 +83,7 @@ mode_list_advanced = [
     "config",
     "init",
     "clean",
+    "download",
     "useradd",
     "spock",
     "downgrade",
@@ -1566,19 +1567,9 @@ if p_mode == "status":
     args.insert(0,p_mode)
     fire_away("service", args)
 
-## CLEAN ####################################################
-if p_mode == "clean":
-    args.insert(0,p_mode)
-    fire_away("um", args)
-
-## LIST #########################################################
-if p_mode == "list":
-    args.insert(0,p_mode)
-    fire_away("um", args)
-
-## REMOVE ##################################################
-if p_mode == "remove":
-    args.insert(0,p_mode)
+## DOWNLOAD, CLEAN, LIST, REMOVE ############################
+if p_mode in ["download", "clean", "list", "remove"]:
+    args.insert(0, p_mode)
     fire_away("um", args)
 
 ## INSTALL ################################################

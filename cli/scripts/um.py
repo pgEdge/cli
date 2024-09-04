@@ -158,6 +158,13 @@ def downgrade(component):
     run_cmd("downgrade", component)
 
 
+def download():
+    """Download a component into local cache (without installing it)"""
+
+    util.exit_message("Coming Soon!!!!")
+    return
+
+
 def clean():
     """Delete downloaded component files from local cache"""
     conf_cache = util.MY_HOME + os.sep + "data" + os.sep + "conf" + os.sep + "cache" + os.sep + "*"
@@ -183,6 +190,7 @@ if __name__ == "__main__":
             "install": install,
             "remove": remove,
             "upgrade": upgrade,
+            "download": download,
             "clean": clean,
         }
     )
