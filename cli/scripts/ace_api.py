@@ -199,7 +199,7 @@ def repset_diff_api():
             _nodes=nodes,
             batch_size=batch_size,
             quiet_mode=quiet,
-            skip_tables=skip_tables
+            skip_tables=skip_tables,
             invoke_method="API",
         )
 

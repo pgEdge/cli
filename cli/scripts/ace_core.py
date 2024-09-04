@@ -1322,7 +1322,7 @@ def repset_diff(rd_task: RepsetDiffTask) -> None:
 
     for table in rd_task.table_list:
 
-        if rd_task.skip_tables and table.split(".")[1] in rd_task.skip_tables:
+        if table.split(".")[1] in rd_task.skip_tables:
             util.message(
                 f"\nSKIPPING TABLE {table}",
                 p_state="info",
