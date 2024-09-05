@@ -2,7 +2,30 @@
 echo " "
 echo "# run 1a-toolset"
 
+
+install_rust () {
+  curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs/ | sh -s -- --default-toolchain=1.79.0 -y
+}
+
+
+install-apt-toolset () {
+  $apt podman podman-compose
+  $apt ruby squashfs-tools
+  sudo gem install fpm
+
+  $apt build-essential flex bison libxml2 libxslt-dev
+  $apt systemtap-sdt-dev clang pkg-config liblz4-dev libzstd-dev
+  $apt libreadline-dev libssl-dev uuid-dev libipc-run-perl
+
+  $apt libclang-dev libopenblas-dev libz-dev tzdata lld llvm-dev
+  $apt libxgboost-dev cmake pigz
+
+  install_rust
+}
+
+
 yum="sudo dnf -y install"
+apt="sudo apt-get install -y"
 PLATFORM=`cat /etc/os-release | grep PLATFORM_ID | cut -d: -f2 | tr -d '\"'`
 echo "## $PLATFORM ##"
 
@@ -48,11 +71,7 @@ if [ "$PLATFORM" == "el8" ] || [ "$PLATFORM" == "el9" ]; then
 
   $yum podman podman-compose
 
-  rm -f install-rust.sh
-  curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs > install-rust.sh 
-  chmod 755 install-rust.sh
-  ./install-rust.sh -y
-  rm install-rust.sh
+  install_rust
 
   sudo update-alternatives --set python3 /usr/bin/python3.9
 fi
@@ -61,12 +80,9 @@ fi
 apt --version > /dev/null 2>&1
 rc=$?
 if [ $rc == "0" ]; then
-  apt="sudo apt-get install -y"
-  $apt python3-dev python3-pip python3-venv gcc sqlite3
-  $apt podman podman-compose
+  $apt python3-dev python3-pip python3-venv gcc sqlite3 sudo
 
-  $apt ruby squashfs-tools
-  sudo gem install fpm
+  install-apt-toolset
 fi
  
 cd ~

@@ -1,7 +1,7 @@
 
 #  Copyright 2024-2024 PGEDGE  All rights reserved. #
 
-import os, sys, time
+import os, sys, time, getpass
 
 os.chdir(os.getenv("MY_HOME"))
 sys.path.append(os.path.join(os.path.dirname(__file__), "lib"))
@@ -14,7 +14,6 @@ CORE_EXTS="spock40 snowflake lolor vector postgis"
 MORE_EXTS="audit cron orafce partman curl citus timescaledb wal2json " + \
        "hypopg hintplan plv8 setuser permissions profiler debugger"
 
-EXTS_15 = "foslots"
 CTL="./pgedge"
 
 
@@ -84,8 +83,15 @@ def check_pre_reqs(User, Passwd, db, port, pg_major, pg_minor, spock, autostart,
         if (User is None) or (Passwd is None) or (db is None):
             util.exit_message("Must specify User, Passwd & db")
 
-        verifyUserPasswd(User, Passwd)
+        if not verifyUser(User):
+            sys.exit(1)
+        if not verifyPasswd(Passwd):
+            sys.exit(1)
+        if not verifyDbname(db):
+            sys.exit(1)
+
     else:
+
         if (User is None) and (Passwd is None) and (db is None):
             pass
         else:
@@ -102,30 +108,117 @@ def check_pre_reqs(User, Passwd, db, port, pg_major, pg_minor, spock, autostart,
            util.exit_message(f"More than 1 spock version available matching '{spock}*'")
 
 
-def verifyUserPasswd(User, Passwd):
+def inputUser():
+    util.message(f"setup.inputUser()", "debug")
 
-    util.message("  Verify User & Passwd")
+    while True:
+        try:
+            user = input("DB Owner: ")
+        except KeyboardInterrupt:
+            util.exit_message("cancelled")
+        except Exception:
+            return(None)
+
+        if verifyUser(user):
+            return(user)
+
+
+def verifyUser(User):
+    util.message(f"setup.verifyUser({User})", "debug")
+
     usr_l = User.lower()
     if usr_l == "pgedge":
-        util.exit_message("The user defined superuser may not be called 'pgedge'")
+        util.message("The user defined superuser may not be called 'pgedge'", "error")
+        return(False)
 
     if usr_l == util.get_user():
-        util.exit_message("The user-defined superuser may not be the same as the OS user")
+        util.message("The user-defined superuser may not be the same as the OS user", "error")
+        return(False)
 
     usr_len = len(usr_l)
     if (usr_len < 1) or (usr_len > 64):
-        util.exit_message("The user-defined superuser must be >=1 and <= 64 in length")
+        util.message("The user-defined superuser must be >=1 and <= 64 in length", "error")
+        return(False)
+
+    return(True)
+
+
+def inputPasswd():
+    util.message(f"setup.inputPasswd()", "debug")
+    while True:
+        try:
+            passwd = getpass.getpass("Password: ")
+            passwd2 = getpass.getpass("Confirm Password: ")
+
+            if passwd != passwd2:
+                util.message("passwords do not match", "error")
+                continue
+
+        except KeyboardInterrupt:
+            util.exit_message("cancelled")
+
+        except Exception:
+            return(None)
+
+        if verifyPasswd(passwd):
+            return(passwd)
+
+
+def verifyPasswd(Passwd):
+    util.message(f"setup.verifyPasswd({Passwd})", "debug")
 
     pwd_len = len(Passwd)
     if (pwd_len < 6) or (pwd_len > 128):
-        util.exit_message("The password must be >= 6 and <= 128 in length")
+        util.message("The password must be >= 6 and <= 128 in length", "error")
+        return(False)
 
     for pwd_char in Passwd:
         pwd_c = pwd_char.strip()
         if pwd_c in (",", "'", '"', "@", ""):
-            util.exit_message(
-                "The password must not contain {',', \"'\", \", @, or a space"
-            )
+            util.message(
+                "The password must not contain {',', \"'\", \", @, or a space", "error")
+            return(False)
+
+    return(True)
+
+
+def inputDbname():
+    util.message(f"setup.inputDbname()", "debug")
+    while True:
+        try:
+            dbname = input(" DB Name: ")
+        except KeyboardInterrupt:
+            util.exit_message("cancelled")
+        except Exception:
+            return(None)
+
+        if verifyDbname(dbname):
+            return(dbname)
+
+
+def verifyDbname(p_db):
+
+    l_db = str(p_db).lower()
+
+    if l_db != p_db:
+        util.message(f"pgEdge Dbname's are case insensitive for your own sanity", "warning")
+
+    if util.is_pg_reserved_word(l_db):
+        util.message(f"Dbname '{l_db}' is a postgres reserved word", "error")
+        return(False)
+
+    if str(l_db[0]).isdigit():
+        util.message(f"Dbname '{l_db}' first character may not be a digit", "error")
+        return(False)
+
+    for c in l_db:
+        if c.isdigit() or c.isalpha() or c == "_":
+            pass
+        else:
+            util.message(f"Dbname '{l_db}' characters can only be (a-z), (1-9), or an (_)", "error") 
+            return(False)
+
+    return (True)
 
 
 def parse_pg(pg):
@@ -187,6 +280,16 @@ def setup_pgedge(User=None, Passwd=None, dbName=None, port=None,
         else:
            autostart = False 
 
+    if extensions is None:
+        if User is None:
+            User = inputUser()
+
+        if Passwd is None:
+            Passwd = inputPasswd()
+
+        if dbName is None:
+            dbName = inputDbname()
+
     check_pre_reqs(User, Passwd, dbName, port, pg_major, pg_minor, spock_ver, autostart, extensions)
 
     pause = 2
@@ -221,9 +324,6 @@ def setup_pgedge(User=None, Passwd=None, dbName=None, port=None,
 
     if core_exts_installed is False:
         install_disabled_exts(pg_major, CORE_EXTS)
-
-        if pg_major in ["14", "15"]:
-            install_disabled_exts(pg_major, EXTS_15)
 
     if extensions == "all":
         if pg_major not in ["15", "16"]:

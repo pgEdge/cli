@@ -141,7 +141,7 @@ def fix_schema(diff_file, sql1, sql2):
 
 
 def get_row_count(p_con, p_schema, p_table):
-    sql = f'SELECT count(*) FROM {p_schema}."{p_table}"'
+    sql = f"SELECT count(*) FROM {p_schema}.\"{p_table}\""
 
     try:
         cur = p_con.cursor()

@@ -87,8 +87,8 @@ makeInstall () {
     options=""
   else
     ##export LLVM_CONFIG=/usr/bin/llvm-config-64
-    ##options="$options --with-openssl --with-llvm --with-gssapi --with-libxml --with-libxslt"
-    options="$options --without-openssl --without-readline"
+    options="$options --with-openssl --with-llvm --with-libxml --with-libxslt"
+    ##options="$options --without-openssl --without-readline"
   fi
 
   cmd="./configure --prefix=$PWD $options"
@@ -124,13 +124,13 @@ elif [ "$PGV" == "13" ]; then
 elif [ "$PGV" == "14" ]; then
   downBuild $v14
 elif [ "$PGV" == "15" ]; then
-  options="--without-zstd --without-lz4 --without-icu"
+  #options="--without-zstd --without-lz4 --without-icu"
   downBuild $v15
 elif [ "$PGV" == "16" ]; then
-  options="--without-zstd --without-lz4 --without-icu"
+  #options="--without-zstd --without-lz4 --without-icu"
   downBuild $v16
 elif [ "$PGV" == "17" ]; then
-  options="--without-zstd --without-lz4 --without-icu"
+  #options="--without-zstd --without-lz4 --without-icu"
   downBuild $v17
 else
   echo "ERROR: Incorrect PG version.  Must be between 12 & 17"

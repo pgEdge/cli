@@ -62,6 +62,13 @@ def create_local_json(cluster_name, db, num_nodes, usr, passwd, pg, ports, auto_
        else:
           util.exit_message("ports param '{ports}' does NOT match num_nodes = {num_nodes}")
 
+    backrest_json = {}
+    backrest_json["stanza"] = f"{cluster_name}_stanza"
+    backrest_json["repo1-path"] = "/var/lib/pgbackrest"
+    backrest_json["repo1-retention-full"] = "7"
+    backrest_json["log-level-console"] = "info"
+    backrest_json["repo1-cipher-type"] = "aes-256-cbc"
+
     for n in range(1, num_nodes + 1):
         node_array = {"nodes": []}
         node_json = {}
@@ -79,6 +86,7 @@ def create_local_json(cluster_name, db, num_nodes, usr, passwd, pg, ports, auto_
             + "n"
             + str(n)
         )
+        node_json["backrest"] = backrest_json
         node_array["nodes"].append(node_json)
         local_nodes["conn1"].append(node_array)
         port1 = port1 + 1
@@ -195,6 +203,12 @@ def cluster_create(
     }
 
     # Create nodes
+    backrest_json = {}
+    backrest_json["stanza"] = f"{cluster_name}_stanza"
+    backrest_json["repo1-path"] = "/var/lib/pgbackrest"
+    backrest_json["repo1-retention-full"] = "7"
+    backrest_json["log-level-console"] = "info"
+    backrest_json["repo1-cipher-type"] = "aes-256-cbc"
     for i in range(num_nodes):
         node = {
             "ssh": {
@@ -208,6 +222,7 @@ def cluster_create(
             "port": str(port1 + i),
             "path": os.path.join(cluster_dir, f"n{i+1}")
         }
+        node["backrest"] = backrest_json
         cluster_json["node_groups"].append(node)
 
     # Write JSON to file
@@ -228,6 +243,17 @@ def cluster_create(
             cluster.create_spock_db(nodes, database, db_settings)
             cluster.ssh_cross_wire_pgedge(cluster_name, database["name"], pg, database["username"], database["password"], nodes)
 
+    # Process backrest installation and settings if present
+    for nd in nodes:
+        if nd.get('backrest'):
+            cmd = f"{nd['path']}/pgedge/pgedge install backrest"
+            message = "Installing backrest"
+            cluster.run_cmd(cmd, nd, message=message, verbose=verbose)
+            cmd = ""
+            message = "Configuring backrest"
+            for setting_name, setting_value in nd['backrest'].items():
+                cmd = cmd + f"{nd['path']}/pgedge/pgedge set BACKUP {setting_name} {setting_value};"
+            cluster.run_cmd(cmd, nd, message, verbose=verbose)
 
 def cluster_destroy(cluster_name):
     """Stop and then nuke a localhost cluster.

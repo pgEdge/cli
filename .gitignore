@@ -2,15 +2,18 @@
 out/
 devel/pg/src
 devel/pg/1*
-devel/pgedge
+devel/pg/postgresml/
+
+devel/repo/cleanREMOTE
+devel/repo/local
 
 src/packages/*.rpm
+src/packages/*.deb
 
 cli/scripts/conf
 cli/scripts/pg1*
 cli/scripts/data
 
-devel/docker/pgbin-build/config
 
 .DS_STORE
 __pycache__

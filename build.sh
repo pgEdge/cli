@@ -340,18 +340,14 @@ initPG () {
     initC "lolor-pg$pgM"      "lolor"      "$lolorV"     "$outPlat" "postgres/lolor"     "" "" "nil"
     initC "snowflake-pg$pgM"  "snowflake"  "$snwflkV"    "$outPlat" "postgres/snowflake" "" "" "nil"
     initC "spock40-pg$pgM"    "spock40"    "$spock40V"   "$outPlat" "postgres/spock40"   "" "" "nil"
-    initC "plprofiler-pg$pgM" "plprofiler" "$profV"      "$outPlat" "postgres/profiler"  "" "" "nil"
   fi
 
   if [ "$pgM" \> "13" ] && [ "$pgM" \< "17" ]; then
     initC "spock33-pg$pgM"    "spock33"    "$spock33V"   "$outPlat" "postgres/spock33"   "" "" "nil"
   fi
 
-  if [ "$pgM" == "14" ] || [ "$pgM" == "15" ]; then
-    initC "foslots-pg$pgM"    "foslots"    "$foslotsV"   "$outPlat" "postgres/foslots"    "" "" "nil"
-  fi
-
   if [ "$isEL" == "True" ]; then
+    initC "bouncer"      "bouncer"      "$bouncerV"  "$outPlat" "postgres/bouncer"  "" "" "nil"
     initC "backrest"     "backrest"     "$backrestV" "$outPlat" "postgres/backrest" "" "" "nil"
     initC "etcd"         "etcd"         "$etcdV"     "$outPlat" "etcd"              "" "" "nil"
     initC "pgcat"        "pgcat"        "$catV"      "$outPlat" "postgres/pgcat"    "" "" "nil"
@@ -362,6 +358,9 @@ initPG () {
   if [ "$pgM" == "16" ]; then
     initC "audit-pg$pgM"      "audit"      "$audit16V"   "$outPlat" "postgres/audit"     "" "" "nil"
     initC "hintplan-pg$pgM"   "hintplan"   "$hint16V"    "$outPlat" "postgres/hintplan"  "" "" "nil"
+    if [ `arch` == "x86_64" ]; then
+      initC "pgml-pg$pgM"     "pgml"       "$pgmlV"      "$outPlat" "postgres/pgml"      "" "" "nil"
+    fi
   fi
 
   if [ "$pgM" == "15" ]; then
@@ -369,10 +368,14 @@ initPG () {
     initC "hintplan-pg$pgM"   "hintplan"   "$hint15V"    "$outPlat" "postgres/hintplan"  "" "" "nil"
   fi
 
+  if [ "$pgM" == "15" ] || [ "$pgM" == "16" ] || [ "$pgM" == "17" ]; then
+    initC "pldebugger-pg$pgM" "pldebugger" "$debuggerV"  "$outPlat" "postgres/pldebugger" "" "" "nil"
+    initC "plprofiler-pg$pgM" "plprofiler" "$profV"      "$outPlat" "postgres/profiler"  "" "" "nil"
+  fi
+
   if [ "$pgM" == "15" ] || [ "$pgM" == "16" ]; then
     initC "plv8-pg$pgM"       "plv8"       "$v8V"        "$outPlat" "postgres/plv8"       "" "" "nil"
     initC "wal2json-pg$pgM"   "wal2json"   "$wal2jV"     "$outPlat" "postgres/wal2json"   "" "" "nil"
-    initC "pldebugger-pg$pgM" "pldebugger" "$debuggerV"  "$outPlat" "postgres/pldebugger" "" "" "nil"
     initC "hypopg-pg$pgM"     "hypopg"     "$hypoV"      "$outPlat" "postgres/hypopg"     "" "" "nil"
     ##initC "curl-pg$pgM"       "curl"       "$curlV"      "$outPlat" "postgres/curl"       "" "" "nil"
     initC "orafce-pg$pgM"     "orafce"     "$orafceV"    "$outPlat" "postgres/orafce"     "" "" "nil"
@@ -457,6 +460,7 @@ do
           writeSettRow "GLOBAL" "PLATFORM" "$plat"
           if [ "$plat" == "posix" ]; then
             checkCmd "cp $CLI/install.py $OUT/."
+            checkCmd "cp $CLI/upgrade-cli.py $OUT/."
           fi;;
 
       R)  writeSettRow "GLOBAL" "REPO" "$repo" "-v";;

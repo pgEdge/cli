@@ -1,25 +1,24 @@
 
 bundle=pgedge
 api=pgedge
-hubV=24.7.6
+hubV=24.9.1
 ctlibsV=1.4
 
 spock40V=4.0.1-1
-spock33V=3.3.5-1
+spock33V=3.3.6-1
 
 lolorV=1.2-1
-foslotsV=1a-1
 snwflkV=2.2-1
 
 P17=17beta3-1
 P16=16.4-1
 P15=15.8-1
 P14=14.13-1
-##P13=13.15-3
-##P12=12.19-3
 
+pgmlV=2.9.3-1
 vectorV=0.7.4-1
-catV=1.1.1
+bouncerV=1.23.1-1
+catV=1.2.0
 firwldV=1.2
 adminV=8.x
 ##prestV=1.4.2
@@ -57,7 +56,7 @@ audit16V=16.0-1
 postgisV=3.4.2-1
 
 pljavaV=1.6.4-1
-debuggerV=1.6-1
+debuggerV=1.8-1
 cronV=1.6.4-1
 
 HUB="$PWD"

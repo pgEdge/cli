@@ -18,7 +18,6 @@ python-crontab==3.2.0
 certifi==2024.7.4
 charset_normalizer==3.3.2
 gpustat==1.1.1
-python_crontab==3.2.0
 
 ## ACE Advanced #####
 tqdm==4.66.4
@@ -36,5 +35,5 @@ PyYAML==6.0.1
 python-etcd==0.4.5
 prettytable==3.10.2
 python-dateutil==2.9.0
-cryptography==43.0.0
+cryptography==43.0.1
 ydiff==1.3

@@ -46,6 +46,17 @@ table_header_style = bcolors.BOLD + bcolors.BACKGROUND
 error_start = bcolors.FAIL
 
 
+def get_gpu_status():
+    try:
+        cmd = "gpustat --no-color --no-processes --no-header 2> /dev/null | head -1"
+        stat = str(subprocess.check_output(cmd, shell=True), "utf-8")
+    except Exception:
+        return ""
+
+    return str(stat).replace("\n","")
+
+
+
 def format_help(p_input):
     inp = str(p_input)
     inp_lst = inp.split()
@@ -362,7 +373,7 @@ def info(p_json, p_home, p_repo, print_flag=True):
                 "cat /etc/os-release | grep PRETTY_NAME | cut -d= -f2 | tr -d '\"'"
             )
 
-    cpu_model = cpu_model.replace("Intel(R) Core(TM) ", "")
+    cpu_model = cpu_model.replace("Intel(R) Core(TM)", "Intel Core")
     ctlib_ver = os.getenv("MY_CTLIB_VER", "")
 
 
@@ -375,9 +386,11 @@ def info(p_json, p_home, p_repo, print_flag=True):
 
     cores = str(system_cpu_cores)
 
-    os2 = this_os.replace(" release ", " ")
+    os2 = this_os.replace(" release ", "")
     os2 = os2.replace(" (Final)", "")
     os2 = os2.replace(" (Core)", "")
+
+    gpu_status = get_gpu_status()
 
     ver = util.get_version()
     [last_update_utc, last_update_local, unique_id] = util.read_hosts("localhost")
@@ -445,7 +458,7 @@ def info(p_json, p_home, p_repo, print_flag=True):
     if glibcV <= " ":
         glibc_v_display = ""
     else:
-        glibc_v_display = ", glibc-" + glibcV
+        glibc_v_display = f", glibc-{glibcV},"
 
 
     if util.MY_CODENAME > " ":
@@ -458,9 +471,13 @@ def info(p_json, p_home, p_repo, print_flag=True):
 
     print(f"#{bold_start} User & Host:{bold_end} " +
               f"{p_user}{admin_display}  {host_display}  {p_home}")
-    print(f"#{bold_start}          OS:{bold_end} {os2.rstrip()} {glibc_v_display}, {ctlib_ver}")
+    print(f"#{bold_start}          OS:{bold_end} {os2}{glibc_v_display} {ctlib_ver}")
 
     print(f"#{bold_start}     Machine:{bold_end} {mem}, vCPU {cores}, {cpu_model}")
+
+    if gpu_status > "":
+        print(f"#{bold_start}  GPU Status:{bold_end} {gpu_status}")
+
 
     print(f"#{bold_start}     Python3:{bold_end} {util.python3_ver()} {util.which('python3')}")
 

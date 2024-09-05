@@ -11,7 +11,7 @@ echoX () {
   if [ "$isJson" == "True" ]; then
     echo "{\"msg\": \"$1\"}"
   else
-    echo $1
+    echo "$1"
   fi
 }
 
@@ -125,23 +125,36 @@ isAMD64 () {
 }
 
 
-isDEB12AMD () {
-  ver=12
-  cat /etc/os-release | grep debian > /dev/null
+isPGML () {
+  ver=22.04
+  cat /etc/os-release | grep Ubuntu > /dev/null
   rc=$?
   if [ $rc == "0" ]; then
-    cat /etc/os-release | grep VERSION_ID | grep 12 > /dev/null
+    cat /etc/os-release | grep VERSION_ID | grep $ver > /dev/null
     rc=$?
     if [ $rc == "0" ]; then
       if [ `arch` == "x86_64" ]; then
-        echoX '#     DEB12AMD - OK'
-        return
+	rc=0
+        echoX '# UB22AMD - OK'
+      else
+	rc=1
       fi
     fi
   fi
 
-  echoX 'ERROR: only supported on Debian 12 x86_64' 
-  exit 1
+  if [ ! "$rc" == "0" ]; then
+    echoX 'ERROR: PGML only presently supported on Ubuntu 22.04 x86_64' 
+    exit 1
+  fi
+
+  venv_test_dir=$HOME/venv/lib/python3.10/site-packages/xgboost
+  if [ -d "$venv_test_dir" ]; then
+    echoX '#  ~/VENV - OK'
+    return
+  else
+    echoX "ERROR: missing valid pgml virtual env dir - $venv_test_dir"
+    exit 1
+  fi
 }
 
 
@@ -175,8 +188,8 @@ do
   elif [ "${req:0:3}" == "UBU" ]; then
     ver=${req:3:2}
     isUBU $ver
-  elif [ "$req" == "DEB12AMD" ]; then
-    isDEB12AMD
+  elif [ "$req" == "PGML" ]; then
+    isPGML
   elif [ "$req" == "AMD64" ]; then
     isAMD64
   elif [ "$req" == "PERL" ]; then

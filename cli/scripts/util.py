@@ -4,7 +4,7 @@
 import os
 import time
 
-MY_VERSION = "24.7.6"
+MY_VERSION = "24.9.1"
 MY_CODENAME = "Constellation"
 
 DEFAULT_PG = "16"
@@ -92,6 +92,20 @@ if os.path.exists(platform_lib_path):
 COMMAND = 15
 DEBUG = 10
 DEBUG2 = 9
+
+
+def is_pg_reserved_word(p_word):
+    l_word = str(p_word).lower()
+
+    rsvd_words = [
+        'select', 'from', 'where', 'order', 'column', 'row', 'table', \
+        'abc'
+        ]
+
+    if l_word in rsvd_words:
+        return(True)
+
+    return(False)
 
 
 def python3_ver():
@@ -269,15 +283,14 @@ formatter = logging.Formatter('%(asctime)s [%(levelname)s] : %(message)s',
 handler.setFormatter(formatter)
 my_logger.addHandler(handler)
 
+
 def trim_plat(ver):
     if not ver:
         return None
-    v1 = ver.replace("-el9", "")
-    v2 = v1.replace("-arm9", "")
-    v3 = v2.replace("-el8", "")
-    v4 = v3.replace("-amd", "")
-    v5 = v4.replace("-arm", "")
-    return v5
+
+    v1 = ver.replace("-amd", "")
+    v2 = v1.replace("-arm", "")
+    return v2
 
 
 def num_pg_minors(pg_minor, is_display=False):
@@ -978,6 +991,8 @@ def config_extension(p_pg=None, p_comp=None):
     if extension_name is None:
         exit_message(f"Cannot find {p_comp} meta data", 1)
 
+    default_conf = default_conf.replace("~", os.path.expanduser("~"))
+
     if default_conf > "":
         for df in default_conf.split("|"):
             df1 = df.strip()
@@ -1038,15 +1053,6 @@ def create_extension(p_pg, p_ext, p_reboot=False, p_extension="", p_enable=True)
 def create_ext_cmd(p_extension, p_pg):
     cmd = f"CREATE EXTENSION IF NOT EXISTS {p_extension} CASCADE"
     run_sql_cmd(p_pg, cmd, True)
-
-
-def secure_win_dir(p_dir, p_is_exe, p_user):
-    CLI = os.path.join(MY_HOME, "hub", "scripts")
-    cmnd = os.path.join(CLI, "PsExec.exe -accepteula -nobanner -s /c ")
-    cmnd = cmnd + os.path.join(CLI, "secure-win-dir.bat") + ' "' + p_dir + '" '
-    cmnd = cmnd + '"' + p_is_exe + '" "' + p_user + '" >> '
-    cmnd = cmnd + os.path.join(MY_HOME, "logs", "fix-security.log") + " 2>&1"
-    system(cmnd, is_display=True)
 
 
 def source_env_file(p_env_file):
@@ -2648,43 +2654,43 @@ def get_depend():
 def process_sql_file(p_file, p_json):
     isSilent = os.environ.get("isSilent", None)
 
-    rc = True
-
+    #rc = True
+    #
     # verify the hub version ##################
-    file = open(p_file, "r")
-    cmd = ""
-    for line in file:
-        line_strip = line.strip()
-        if line_strip == "":
-            continue
-        cmd = cmd + line
-        if line_strip.endswith(";"):
-            if ("hub" in cmd) and ("INSERT INTO versions" in cmd) and ("1," in cmd):
-                cmdList = cmd.split(",")
-                newHubV = Version.coerce(cmdList[1].strip().replace("'", ""))
-                oldHubV = Version.coerce(get_version())
-                msg_frag = f"'hub' from v{oldHubV} to v{newHubV}."
-                if newHubV == oldHubV:
-                    msg = f"'hub' is v{newHubV}"
-                if newHubV > oldHubV:
-                    msg = "Automatic updating " + msg_frag
-                if newHubV < oldHubV:
-                    msg = "ENVIRONMENT ERROR:  Cannot downgrade " + msg_frag
-                    rc = False
-                if p_json:
-                    print('[{"status":"wip","msg":"' + msg + '"}]')
-                else:
-                    if not isSilent:
-                        print(msg)
-                my_logger.info(msg)
-                break
-            cmd = ""
-    file.close()
-
-    if rc == False:
-        if p_json:
-            print('[{"status":"completed","has_updates":0}]')
-        return False
+    #file = open(p_file, "r")
+    #cmd = ""
+    #for line in file:
+    #    line_strip = line.strip()
+    #    if line_strip == "":
+    #        continue
+    #    cmd = cmd + line
+    #    if line_strip.endswith(";"):
+    #        if ("hub" in cmd) and ("INSERT INTO versions" in cmd) and ("1," in cmd):
+    #            cmdList = cmd.split(",")
+    #            newHubV = Version.coerce(cmdList[1].strip().replace("'", ""))
+    #            oldHubV = Version.coerce(get_version())
+    #            msg_frag = f"'hub' from v{oldHubV} to v{newHubV}."
+    #            if newHubV == oldHubV:
+    #                msg = f"'hub' is v{newHubV}"
+    #            if newHubV > oldHubV:
+    #                msg = "Automatic updating " + msg_frag
+    #            if newHubV < oldHubV:
+    #                msg = "ENVIRONMENT ERROR:  Cannot downgrade " + msg_frag
+    #                rc = False
+    #            if p_json:
+    #                print('[{"status":"wip","msg":"' + msg + '"}]')
+    #            else:
+    #                if not isSilent:
+    #                    print(msg)
+    #            my_logger.info(msg)
+    #            break
+    #        cmd = ""
+    #file.close()
+    #
+    #if rc == False:
+    #    if p_json:
+    #        print('[{"status":"completed","has_updates":0}]')
+    #    return False
 
     # process the file ##########################
     file = open(p_file, "r")
@@ -2884,6 +2890,15 @@ def get_el_os():
         rc = os.system('grep "platform:el8" /etc/os-release > /dev/null 2>&1')
         if rc == 0:
             return "EL8"
+
+        rc = os.system('grep "platform:el10" /etc/os-release > /dev/null 2>&1')
+        if rc == 0:
+            return "EL10"
+
+        rc = os.system('grep "platform:f40" /etc/os-release > /dev/null 2>&1')
+        if rc == 0:
+            return "EL10"
+
 
         return "EL"
 
@@ -3390,6 +3405,30 @@ def is_protected(p_comp, p_platform):
     return False
 
 
+def check_server(p_comp, p_action):
+    if p_comp is None:
+        return
+
+    if not is_server(p_comp):
+        exit_message(f"can not {p_action} {p_comp}")
+
+
+def get_enabled_servers():
+    svr_list = []
+    try:
+        c = cL.cursor()
+        sql = "SELECT component FROM components WHERE port > 1 and status = 'Enabled'"
+        c.execute(sql)
+        data = c.fetchall()
+    except Exception as e:
+        fatal_sql_error(e, sql, "get_enabled_servers()")
+
+    for d in data:
+        svr_list.append(d[0])
+
+    return(svr_list)
+
+
 def is_server(p_comp):
     try:
         c = cL.cursor()
@@ -3735,52 +3774,6 @@ def get_readable_time_diff(amount, units="seconds", precision=0):
     return buf
 
 
-# recursively check and restore all env / extension files during upgrade
-def recursively_copy_old_files(dcmp, diff_files=[], ignore=None):
-    for name in dcmp.left_only:
-        if ignore and name in ignore:
-            continue
-        try:
-            source_file = os.path.join(dcmp.left, name)
-            shutil.move(source_file, dcmp.right)
-        except Exception as e:
-            my_logger.error(
-                "Failed to restore the file %s due to %s"
-                % (os.path.join(dcmp.right, name), str(e))
-            )
-            my_logger.error(traceback.format_exc())
-            diff_files.append([name, dcmp.left, dcmp.right])
-    for sub_dcmp in dcmp.subdirs.values():
-        allfiles = diff_files
-        recursively_copy_old_files(sub_dcmp, allfiles)
-    return diff_files
-
-
-# restore any extensions or env/conf files during upgrade
-def restore_conf_ext_files(src, dst, ignore=None):
-    if os.path.isdir(dst):
-        diff = filecmp.dircmp(src, dst)
-        recursively_copy_old_files(diff, ignore=ignore)
-    return True
-
-
-# Add the application to launchpad in OSX
-def create_shortlink_osx(short_link, target_link):
-    short_link_path = os.path.join("/Applications", short_link)
-    cmd = "ln -s '{0}' '{1}'".format(target_link, short_link_path)
-    os.system(cmd)
-    os.system("killall Dock")
-
-
-# delete the application from launchpad in OSX
-def delete_shortlink_osx(short_link):
-    short_link_path = os.path.join("/Applications", short_link)
-    cmd = "rm '{0}'".format(short_link_path)
-    if os.path.exists(short_link_path):
-        os.system(cmd)
-        os.system("killall Dock")
-
-
 def exit_cleanly(p_rc, conn=None):
     if conn:
         try:
@@ -3960,7 +3953,7 @@ def update_component_state(p_app, p_mode, p_ver=None):
     new_state = "Disabled"
     if p_mode == "enable":
         new_state = "Enabled"
-    elif p_mode == "install":
+    elif p_mode in ["install", "Installed"]:
         new_state = "Enabled"
     elif p_mode == "remove":
         new_state = "NotInstalled"
