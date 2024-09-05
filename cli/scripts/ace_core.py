@@ -1253,6 +1253,16 @@ def repset_diff(rd_task: RepsetDiffTask) -> None:
     errors_encountered = False
 
     for table in rd_task.table_list:
+
+        if table.split(".")[1] in rd_task.skip_tables:
+            util.message(
+                f"\nSKIPPING TABLE {table}",
+                p_state="info",
+                quiet_mode=rd_task.quiet_mode,
+            )
+
+            continue
+
         try:
             start_time = datetime.now()
             util.message(

@@ -118,6 +118,7 @@ class RepsetDiffTask:
     output: str
     batch_size: int
     quiet_mode: bool
+    skip_tables: any
 
     invoke_method: str = "CLI"
 
