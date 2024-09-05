@@ -206,8 +206,14 @@ INSERT INTO projects VALUES ('pldebugger', 'dev', 4, 0, '', 0, 'https://github.c
   'pldebugger', 1, 'debugger.png', 'Stored Procedure Debugger', 'https://github.com/EnterpriseDB/pldebugger', 'pl_debugger, dbgapi');
 INSERT INTO releases VALUES ('pldebugger-pg15', 2, 'pldebugger', 'PL/Debugger', '', 'prod', '', 1, 'POSTGRES', '', '');
 INSERT INTO releases VALUES ('pldebugger-pg16', 2, 'pldebugger', 'PL/Debugger', '', 'prod', '', 1, 'POSTGRES', '', '');
-INSERT INTO versions VALUES ('pldebugger-pg15', '1.6-1',  'amd, arm',  1, '20231112', 'pg15', '', '');
-INSERT INTO versions VALUES ('pldebugger-pg16', '1.6-1',  'amd, arm',  1, '20231112', 'pg16', '', '');
+INSERT INTO releases VALUES ('pldebugger-pg17', 2, 'pldebugger', 'PL/Debugger', '', 'prod', '', 1, 'POSTGRES', '', '');
+
+INSERT INTO versions VALUES ('pldebugger-pg17', '1.8-1',  'amd, arm',  1, '20240905', 'pg17', '', '');
+INSERT INTO versions VALUES ('pldebugger-pg16', '1.8-1',  'amd, arm',  1, '20240905', 'pg16', '', '');
+INSERT INTO versions VALUES ('pldebugger-pg15', '1.8-1',  'amd, arm',  1, '20240905', 'pg15', '', '');
+
+INSERT INTO versions VALUES ('pldebugger-pg16', '1.6-1',  'amd, arm',  0, '20231112', 'pg16', '', '');
+INSERT INTO versions VALUES ('pldebugger-pg15', '1.6-1',  'amd, arm',  0, '20231112', 'pg15', '', '');
 
 -- ## PLPROFILER #########################
 INSERT INTO projects VALUES ('plprofiler', 'dev', 4, 0, '', 7, 'https://github.com/bigsql/plprofiler/tags',
