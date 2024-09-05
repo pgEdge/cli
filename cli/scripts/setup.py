@@ -152,6 +152,7 @@ def inputPasswd():
 
             if passwd != passwd2:
                 util.message("passwords do not match", "error")
+                continue
 
         except KeyboardInterrupt:
             util.exit_message("cancelled")
