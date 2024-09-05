@@ -170,7 +170,7 @@ INSERT INTO versions VALUES ('pg17', '17beta3-1',  'amd, arm', 1, '20240808','',
 INSERT INTO projects VALUES ('pgml', 'ext', 4, 0, '', 0, 'https://github.com/postgresml/postgresml',
   'pgml', 1, 'pgml.png', 'GPU Driven AI', 'https://github.com/postgresml/postgresml', '');
 INSERT INTO releases VALUES ('pgml-pg16', 2, 'pgml', 'pgML', '', 'test', '', 1, 'MIT', '', '');
-INSERT INTO versions VALUES ('pgml-pg16', '2.9.3-1',   'amd', 1, '20240901', 'pg16', 'PGML', '');
+INSERT INTO versions VALUES ('pgml-pg16', '2.9.3-1',   'amd', 1, '20240905', 'pg16', 'PGML', '');
 
 -- ## ORAFCE #############################
 INSERT INTO projects VALUES ('orafce', 'ext', 4, 0, '', 0, 'https://github.com/orafce/orafce/releases',
@@ -450,7 +450,8 @@ INSERT INTO versions VALUES ('ctlibs', '1.2', '', 0, '20240130', '', '', '');
 INSERT INTO projects VALUES ('pgcat', 'pge', 11, 5433, '', 3, 'https://github.com/pgedge/pgcat/tags',
   'cat',  0, 'pgcat.png', 'Connection Pooler', 'https://github.com/pgedge/pgcat', 'pg_cat, cat');
 INSERT INTO releases VALUES ('pgcat', 2, 'pgcat',  'pgCat', '', 'prod', '', 1, 'MIT', '', '');
-INSERT INTO versions VALUES ('pgcat', '1.1.1', 'amd, arm', 1, '20240108', '', '', '');
+INSERT INTO versions VALUES ('pgcat', '1.2.0', 'amd, arm', 1, '20240905', '', '', '');
+INSERT INTO versions VALUES ('pgcat', '1.1.1', 'amd, arm', 0, '20240108', '', '', '');
 
 -- ## BOUNCER ###########################
 INSERT INTO projects VALUES ('bouncer', 'pge', 11, 5433, '', 3, 'http://pgbouncer.org',
