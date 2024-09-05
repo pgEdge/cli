@@ -18,7 +18,7 @@ P14=14.13-1
 pgmlV=2.9.3-1
 vectorV=0.7.4-1
 bouncerV=1.23.1-1
-catV=1.1.1
+catV=1.2.0
 firwldV=1.2
 adminV=8.x
 ##prestV=1.4.2
@@ -56,7 +56,7 @@ audit16V=16.0-1
 postgisV=3.4.2-1
 
 pljavaV=1.6.4-1
-debuggerV=1.6-1
+debuggerV=1.8-1
 cronV=1.6.4-1
 
 HUB="$PWD"

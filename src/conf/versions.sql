@@ -170,7 +170,7 @@ INSERT INTO versions VALUES ('pg17', '17beta3-1',  'amd, arm', 1, '20240808','',
 INSERT INTO projects VALUES ('pgml', 'ext', 4, 0, '', 0, 'https://github.com/postgresml/postgresml',
   'pgml', 1, 'pgml.png', 'GPU Driven AI', 'https://github.com/postgresml/postgresml', '');
 INSERT INTO releases VALUES ('pgml-pg16', 2, 'pgml', 'pgML', '', 'test', '', 1, 'MIT', '', '');
-INSERT INTO versions VALUES ('pgml-pg16', '2.9.3-1',   'amd', 1, '20240901', 'pg16', 'PGML', '');
+INSERT INTO versions VALUES ('pgml-pg16', '2.9.3-1',   'amd', 1, '20240905', 'pg16', 'PGML', '');
 
 -- ## ORAFCE #############################
 INSERT INTO projects VALUES ('orafce', 'ext', 4, 0, '', 0, 'https://github.com/orafce/orafce/releases',
@@ -206,8 +206,14 @@ INSERT INTO projects VALUES ('pldebugger', 'dev', 4, 0, '', 0, 'https://github.c
   'pldebugger', 1, 'debugger.png', 'Stored Procedure Debugger', 'https://github.com/EnterpriseDB/pldebugger', 'pl_debugger, dbgapi');
 INSERT INTO releases VALUES ('pldebugger-pg15', 2, 'pldebugger', 'PL/Debugger', '', 'prod', '', 1, 'POSTGRES', '', '');
 INSERT INTO releases VALUES ('pldebugger-pg16', 2, 'pldebugger', 'PL/Debugger', '', 'prod', '', 1, 'POSTGRES', '', '');
-INSERT INTO versions VALUES ('pldebugger-pg15', '1.6-1',  'amd, arm',  1, '20231112', 'pg15', '', '');
-INSERT INTO versions VALUES ('pldebugger-pg16', '1.6-1',  'amd, arm',  1, '20231112', 'pg16', '', '');
+INSERT INTO releases VALUES ('pldebugger-pg17', 2, 'pldebugger', 'PL/Debugger', '', 'prod', '', 1, 'POSTGRES', '', '');
+
+INSERT INTO versions VALUES ('pldebugger-pg17', '1.8-1',  'amd, arm',  1, '20240905', 'pg17', '', '');
+INSERT INTO versions VALUES ('pldebugger-pg16', '1.8-1',  'amd, arm',  1, '20240905', 'pg16', '', '');
+INSERT INTO versions VALUES ('pldebugger-pg15', '1.8-1',  'amd, arm',  1, '20240905', 'pg15', '', '');
+
+INSERT INTO versions VALUES ('pldebugger-pg16', '1.6-1',  'amd, arm',  0, '20231112', 'pg16', '', '');
+INSERT INTO versions VALUES ('pldebugger-pg15', '1.6-1',  'amd, arm',  0, '20231112', 'pg15', '', '');
 
 -- ## PLPROFILER #########################
 INSERT INTO projects VALUES ('plprofiler', 'dev', 4, 0, '', 7, 'https://github.com/bigsql/plprofiler/tags',
@@ -450,7 +456,8 @@ INSERT INTO versions VALUES ('ctlibs', '1.2', '', 0, '20240130', '', '', '');
 INSERT INTO projects VALUES ('pgcat', 'pge', 11, 5433, '', 3, 'https://github.com/pgedge/pgcat/tags',
   'cat',  0, 'pgcat.png', 'Connection Pooler', 'https://github.com/pgedge/pgcat', 'pg_cat, cat');
 INSERT INTO releases VALUES ('pgcat', 2, 'pgcat',  'pgCat', '', 'prod', '', 1, 'MIT', '', '');
-INSERT INTO versions VALUES ('pgcat', '1.1.1', 'amd, arm', 1, '20240108', '', '', '');
+INSERT INTO versions VALUES ('pgcat', '1.2.0', 'amd, arm', 1, '20240905', '', '', '');
+INSERT INTO versions VALUES ('pgcat', '1.1.1', 'amd, arm', 0, '20240108', '', '', '');
 
 -- ## BOUNCER ###########################
 INSERT INTO projects VALUES ('bouncer', 'pge', 11, 5433, '', 3, 'http://pgbouncer.org',
