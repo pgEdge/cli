@@ -50,7 +50,7 @@ LIB="$MY_HOME/hub/scripts/lib"
 array[1]="$LIB"
 
 py_path="el9-arm el9-amd el8-amd ubu22-arm ubu22-amd osx"
-py_path="$py_path ubu24-arm ubu24-amd deb12-arm deb12-amd"
+py_path="$py_path ubu24-arm ubu24-amd deb12-arm deb12-amd el10-amd el10-arm"
 lib="None"
 set_pythonpath "$py_path"
 

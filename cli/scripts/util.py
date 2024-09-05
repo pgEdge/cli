@@ -283,15 +283,14 @@ formatter = logging.Formatter('%(asctime)s [%(levelname)s] : %(message)s',
 handler.setFormatter(formatter)
 my_logger.addHandler(handler)
 
+
 def trim_plat(ver):
     if not ver:
         return None
-    v1 = ver.replace("-el9", "")
-    v2 = v1.replace("-arm9", "")
-    v3 = v2.replace("-el8", "")
-    v4 = v3.replace("-amd", "")
-    v5 = v4.replace("-arm", "")
-    return v5
+
+    v1 = ver.replace("-amd", "")
+    v2 = v1.replace("-arm", "")
+    return v2
 
 
 def num_pg_minors(pg_minor, is_display=False):
@@ -2891,6 +2890,15 @@ def get_el_os():
         rc = os.system('grep "platform:el8" /etc/os-release > /dev/null 2>&1')
         if rc == 0:
             return "EL8"
+
+        rc = os.system('grep "platform:el10" /etc/os-release > /dev/null 2>&1')
+        if rc == 0:
+            return "EL10"
+
+        rc = os.system('grep "platform:f40" /etc/os-release > /dev/null 2>&1')
+        if rc == 0:
+            return "EL10"
+
 
         return "EL"
 

@@ -16,8 +16,11 @@ else:
 platf = "unsupported"
 if platform.system() == "Linux":
   if os.path.exists("/etc/redhat-release"):
-    if util.get_el_os() == "EL9":
+    el_os = util.get_el_os()
+    if el_os == "EL9":
       platf = f"el9-{plat_os}"
+    elif el_os == "EL10":
+      platf = f"el10-{plat_os}"
     else:
       platf = f"el8-amd"
   elif os.path.exists("/etc/amazon-linux-release"):
