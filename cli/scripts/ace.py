@@ -929,7 +929,7 @@ def repset_diff_checks(rd_task: RepsetDiffTask) -> RepsetDiffTask:
     rd_task.fields.cluster_nodes = cluster_nodes
     rd_task.fields.database = database
 
-    if rd_task.skip_tables == None:
+    if rd_task.skip_tables is None:
         rd_task.skip_tables = set()
     elif isinstance(rd_task.skip_tables, str):
         rd_task.skip_tables = {rd_task.skip_tables}
