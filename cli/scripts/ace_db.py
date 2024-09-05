@@ -6,7 +6,6 @@ from typing import Union
 import util
 import string
 import random
-import _pickle as cPickle
 from ace_data_models import TableDiffTask, TableRepairTask, RepsetDiffTask
 
 sqlite_db = util.MY_LITE
@@ -146,12 +145,12 @@ def update_ace_task(task: Union[TableDiffTask, TableRepairTask, RepsetDiffTask])
                 time_taken = ?
                 WHERE task_id = ?
               """
-        
+
         # Prepare data outside of the execute call
         task_context = json.dumps(task.scheduler.task_context)
         started_at = task.scheduler.started_at.isoformat(timespec="milliseconds")
         finished_at = task.scheduler.finished_at.isoformat(timespec="milliseconds")
-        
+
         c.execute(
             sql,
             (
@@ -174,8 +173,6 @@ def update_ace_task(task: Union[TableDiffTask, TableRepairTask, RepsetDiffTask])
             util.fatal_sql_error(e, sql, "update_ace_task()")
     except Exception as e:
         util.fatal_sql_error(e, sql, "update_ace_task()")
-    
-    print("task updated in DB")
 
 
 def cleanup_ace_tasks():

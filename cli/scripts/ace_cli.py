@@ -45,6 +45,8 @@ def table_diff_cli(
         ace_core.table_diff(td_task)
     except AceException as e:
         util.exit_message(str(e))
+    except Exception as e:
+        util.exit_message(f"Unexpected error while running table diff: {e}")
 
 
 def table_repair_cli(
@@ -79,6 +81,8 @@ def table_repair_cli(
         ace_core.table_repair(tr_task)
     except AceException as e:
         util.exit_message(str(e))
+    except Exception as e:
+        util.exit_message(f"Unexpected error while running table repair: {e}")
 
 
 def table_rerun_cli(
@@ -110,6 +114,8 @@ def table_rerun_cli(
         ace_db.create_ace_task(task=td_task)
     except AceException as e:
         util.exit_message(str(e))
+    except Exception as e:
+        util.exit_message(f"Unexpected error while running table rerun: {e}")
 
     try:
         if behavior == "multiprocessing":
@@ -120,6 +126,8 @@ def table_rerun_cli(
             util.exit_message(f"Invalid behavior: {behavior}")
     except AceException as e:
         util.exit_message(str(e))
+    except Exception as e:
+        util.exit_message(f"Unexpected error while running table rerun: {e}")
 
 
 def repset_diff_cli(
@@ -155,6 +163,8 @@ def repset_diff_cli(
         ace_core.repset_diff(rd_task)
     except AceException as e:
         util.exit_message(str(e))
+    except Exception as e:
+        util.exit_message(f"Unexpected error while running repset diff: {e}")
 
 
 def spock_diff_cli(
@@ -179,6 +189,8 @@ def spock_diff_cli(
         ace_core.spock_diff(spock_diff_task)
     except AceException as e:
         util.exit_message(str(e))
+    except Exception as e:
+        util.exit_message(f"Unexpected error while running spock diff: {e}")
 
 
 def schema_diff_cli(cluster_name, schema_name, nodes="all", dbname=None, quiet=False):
@@ -199,3 +211,5 @@ def schema_diff_cli(cluster_name, schema_name, nodes="all", dbname=None, quiet=F
         ace_core.schema_diff(sd_task)
     except AceException as e:
         util.exit_message(str(e))
+    except Exception as e:
+        util.exit_message(f"Unexpected error while running schema diff: {e}")

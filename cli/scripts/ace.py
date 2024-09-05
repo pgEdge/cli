@@ -1085,6 +1085,20 @@ def schema_diff_checks(sc_task: SchemaDiffTask) -> SchemaDiffTask:
     return sc_task
 
 
+def handle_task_exception(task, task_context):
+    task.scheduler.task_status = "FAILED"
+    task.scheduler.finished_at = datetime.now()
+    task.scheduler.time_taken = util.round_timedelta(
+        datetime.now() - task.scheduler.started_at
+    ).total_seconds()
+    task.scheduler.task_context = task_context
+
+    skip_update = getattr(task, "skip_db_update", False)
+
+    if not skip_update:
+        ace_db.update_ace_task(task)
+
+
 def error_listener(event):
     if event.exception:
         job_id = event.job_id

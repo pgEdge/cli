@@ -6,7 +6,6 @@ from itertools import combinations
 from multiprocessing import Lock, Manager, Value, cpu_count
 
 from concurrent.futures import ThreadPoolExecutor
-import traceback
 
 import psycopg
 from mpire import WorkerPool
@@ -14,7 +13,6 @@ from mpire.utils import make_single_arguments
 from ordered_set import OrderedSet
 from psycopg import sql
 from psycopg.rows import dict_row
-from math import ceil
 
 import ace
 import ace_db
@@ -235,7 +233,8 @@ def compare_checksums(shared_objects, worker_state, batches):
                     "MAX_DIFFS_EXCEEDED",
                     errors=True,
                     error_messages=[
-                        f"Diffs have exceeded the maximum allowed number of diffs: {config.MAX_DIFF_ROWS}"
+                        f"Diffs have exceeded the maximum allowed number of diffs:"
+                        f"{config.MAX_DIFF_ROWS}"
                     ],
                 )
                 result_queue.append(result_dict)
@@ -336,7 +335,8 @@ def compare_checksums(shared_objects, worker_state, batches):
                         "MAX_DIFFS_EXCEEDED",
                         errors=True,
                         error_messages=[
-                            f"Diffs have exceeded the maximum allowed number of diffs: {config.MAX_DIFF_ROWS}"
+                            f"Diffs have exceeded the maximum allowed number of diffs:"
+                            f"{config.MAX_DIFF_ROWS}"
                         ],
                     )
                     result_queue.append(result_dict)
@@ -365,16 +365,23 @@ def table_diff(td_task: TableDiffTask):
     conn_with_max_rows = None
     table_types = None
 
-    for params in td_task.fields.conn_params:
-        conn = psycopg.connect(**params)
-        if not table_types:
-            table_types = ace.get_row_types(conn, td_task.fields.l_table)
+    try:
+        for params in td_task.fields.conn_params:
+            conn = psycopg.connect(**params)
+            if not table_types:
+                table_types = ace.get_row_types(conn, td_task.fields.l_table)
 
-        rows = ace.get_row_count(conn, td_task.fields.l_schema, td_task.fields.l_table)
-        total_rows += rows
-        if rows > row_count:
-            row_count = rows
-            conn_with_max_rows = conn
+            rows = ace.get_row_count(
+                conn, td_task.fields.l_schema, td_task.fields.l_table
+            )
+            total_rows += rows
+            if rows > row_count:
+                row_count = rows
+                conn_with_max_rows = conn
+    except Exception as e:
+        context = {"total_rows": total_rows, "mismatch": False, "errors": [e]}
+        ace.handle_task_exception(td_task, context)
+        raise e
 
     pkey_offsets = []
 
@@ -452,10 +459,19 @@ def table_diff(td_task: TableDiffTask):
         p_state="info",
         quiet_mode=td_task.quiet_mode,
     )
+
     future = ThreadPoolExecutor().submit(
         get_pkey_offsets, conn_with_max_rows, pkey_sql, td_task.block_rows
     )
-    pkey_offsets = future.result()
+    pkey_offsets = future.result() if not future.exception() else []
+    if future.exception():
+        context = {
+            "total_rows": total_rows,
+            "mismatch": False,
+            "errors": [future.exception()],
+        }
+        ace.handle_task_exception(td_task, context)
+        raise future.exception()
 
     total_blocks = row_count // td_task.block_rows
     total_blocks = total_blocks if total_blocks > 0 else 1
@@ -506,35 +522,40 @@ def table_diff(td_task: TableDiffTask):
     errors = False
     error_list = []
 
-    with WorkerPool(
-        n_jobs=procs,
-        shared_objects=shared_objects,
-        use_worker_state=True,
-    ) as pool:
-        for result in pool.imap_unordered(
-            compare_checksums,
-            make_single_arguments(batches),
-            worker_init=init_db_connection,
-            progress_bar=True if not td_task.quiet_mode else False,
-            iterable_len=len(batches),
-            progress_bar_style="rich",
-        ):
-            if result == config.MAX_DIFFS_EXCEEDED:
-                diffs_exceeded = True
-                mismatch = True
-                break
-            elif result == config.BLOCK_ERROR:
-                errors = True
-                break
+    try:
+        with WorkerPool(
+            n_jobs=procs,
+            shared_objects=shared_objects,
+            use_worker_state=True,
+        ) as pool:
+            for result in pool.imap_unordered(
+                compare_checksums,
+                make_single_arguments(batches),
+                worker_init=init_db_connection,
+                progress_bar=True if not td_task.quiet_mode else False,
+                iterable_len=len(batches),
+                progress_bar_style="rich",
+            ):
+                if result == config.MAX_DIFFS_EXCEEDED:
+                    diffs_exceeded = True
+                    mismatch = True
+                    break
+                elif result == config.BLOCK_ERROR:
+                    errors = True
+                    break
 
-        if diffs_exceeded:
-            util.message(
-                "Prematurely terminated jobs since diffs have"
-                " exceeded MAX_ALLOWED_DIFFS",
-                p_state="warning",
-                quiet_mode=td_task.quiet_mode,
-            )
-    
+            if diffs_exceeded:
+                util.message(
+                    "Prematurely terminated jobs since diffs have"
+                    " exceeded MAX_ALLOWED_DIFFS",
+                    p_state="warning",
+                    quiet_mode=td_task.quiet_mode,
+                )
+    except Exception as e:
+        context = {"total_rows": total_rows, "mismatch": mismatch, "errors": [e]}
+        ace.handle_task_exception(td_task, context)
+        raise e
+
     for result in result_queue:
         if result["status_code"] == config.BLOCK_MISMATCH:
             mismatch = True
@@ -542,16 +563,13 @@ def table_diff(td_task: TableDiffTask):
             errors = True
             error_list.append(result)
 
-
     if errors:
-        td_task.scheduler.task_status = "FAILED"
-        td_task.scheduler.finished_at = datetime.now()
-        td_task.scheduler.time_taken = util.round_timedelta(datetime.now() - start_time).total_seconds()
-        td_task.scheduler.task_context = {"total_rows": total_rows, "mismatch": mismatch, "errors": error_list}
-        
-        if not td_task.skip_db_update:
-            ace_db.update_ace_task(td_task)
+        context = {"total_rows": total_rows, "mismatch": mismatch, "errors": error_list}
+        ace.handle_task_exception(td_task, context)
 
+        # Even though we've updated the task in the DB, we still need to
+        # raise an exception so that a) it comes up in the CLI and b) we
+        # have a record of it in the logs
         raise AceException(
             "There were one or more errors while running the table-diff job. \n"
             "Please examine the connection information provided, or the nodes' \n"
@@ -590,13 +608,17 @@ def table_diff(td_task: TableDiffTask):
                 quiet_mode=td_task.quiet_mode,
             )
 
-        if td_task.output == "json":
-            td_task.diff_file_path = ace.write_diffs_json(
-                diff_dict, table_types, quiet_mode=td_task.quiet_mode
-            )
-
-        elif td_task.output == "csv":
-            ace.write_diffs_csv(diff_dict)
+        try:
+            if td_task.output == "json":
+                td_task.diff_file_path = ace.write_diffs_json(
+                    diff_dict, table_types, quiet_mode=td_task.quiet_mode
+                )
+            elif td_task.output == "csv":
+                ace.write_diffs_csv(diff_dict)
+        except Exception as e:
+            context = {"total_rows": total_rows, "mismatch": mismatch, "errors": [e]}
+            ace.handle_task_exception(td_task, context)
+            raise e
 
     else:
         util.message(
@@ -615,12 +637,16 @@ def table_diff(td_task: TableDiffTask):
     td_task.scheduler.task_status = "COMPLETED"
     td_task.scheduler.finished_at = datetime.now()
     td_task.scheduler.time_taken = run_time
-    td_task.scheduler.task_context = {"total_rows": total_rows, "mismatch": mismatch, "errors": []}
+    td_task.scheduler.task_context = {
+        "total_rows": total_rows,
+        "mismatch": mismatch,
+        "errors": [],
+    }
 
     if not td_task.skip_db_update:
         print("Updating task in DB")
         ace_db.update_ace_task(td_task)
-    
+
     return td_task
 
 
@@ -630,10 +656,15 @@ def table_repair(tr_task: TableRepairTask):
     start_time = datetime.now()
     conns = {}
 
-    for params in tr_task.fields.conn_params:
-        conns[tr_task.fields.host_map[params["host"] + ":" + params["port"]]] = (
-            psycopg.connect(**params)
-        )
+    try:
+        for params in tr_task.fields.conn_params:
+            conns[tr_task.fields.host_map[params["host"] + ":" + params["port"]]] = (
+                psycopg.connect(**params)
+            )
+    except Exception as e:
+        context = {"errors": [e]}
+        ace.handle_task_exception(tr_task, context)
+        raise e
 
     if tr_task.generate_report:
         report = dict()
@@ -685,8 +716,10 @@ def table_repair(tr_task: TableRepairTask):
     """
     try:
         diff_json = json.loads(open(tr_task.diff_file_path, "r").read())
-    except Exception:
-        util.exit_message("Could not load diff file as JSON")
+    except Exception as e:
+        context = {"errors": [f"Could not load diff file as JSON: {e}"]}
+        ace.handle_task_exception(tr_task, context)
+        raise e
 
     try:
         if any(
@@ -695,7 +728,7 @@ def table_repair(tr_task: TableRepairTask):
                 for k in diff_json.keys()
             ]
         ):
-            util.exit_message("Contents of diff file improperly formatted")
+            raise AceException("Contents of diff file improperly formatted")
 
         diff_json = {
             node_pair: {
@@ -704,8 +737,10 @@ def table_repair(tr_task: TableRepairTask):
             }
             for node_pair, nodes_data in diff_json.items()
         }
-    except Exception:
-        util.exit_message("Contents of diff file improperly formatted")
+    except Exception as e:
+        context = {"errors": [f"Could not read diff file: {e}"]}
+        ace.handle_task_exception(tr_task, context)
+        raise e
 
     # Remove metadata columsn "_Spock_CommitTS_" and "_Spock_CommitOrigin_"
     # from cols_list
@@ -827,6 +862,7 @@ def table_repair(tr_task: TableRepairTask):
     }
     """
 
+    # TODO: Jsonify dry run into task context
     if tr_task.dry_run:
         dry_run_msg = "######## DRY RUN ########\n\n"
         for node in other_nodes:
@@ -850,11 +886,15 @@ def table_repair(tr_task: TableRepairTask):
     total_deleted = {}
 
     # Gets types of each column in table
-    table_types = ace.get_row_types(
-        # TODO: Check if this is correct
-        conns[tr_task.source_of_truth],
-        tr_task.fields.l_table,
-    )
+    try:
+        table_types = ace.get_row_types(
+            conns[tr_task.source_of_truth],
+            tr_task.fields.l_table,
+        )
+    except Exception as e:
+        context = {"errors": [f"Could not get row types: {e}"]}
+        ace.handle_task_exception(tr_task, context)
+        raise e
 
     if tr_task.upsert_only:
         deletes_skipped = dict()
@@ -907,15 +947,19 @@ def table_repair(tr_task: TableRepairTask):
 
             delete_sql = delete_sql[:-3] + ";"
 
-        # TODO: Check if this is correct
-        conn = conns[divergent_node]
-        cur = conn.cursor()
-        spock_version = ace.get_spock_version(conn)
+        try:
+            conn = conns[divergent_node]
+            cur = conn.cursor()
+            spock_version = ace.get_spock_version(conn)
 
-        # FIXME: Do not use harcoded version numbers
-        # Read required version numbers from a config file
-        if spock_version >= 4.0:
-            cur.execute("SELECT spock.repair_mode(true);")
+            # FIXME: Do not use harcoded version numbers
+            # Read required version numbers from a config file
+            if spock_version >= 4.0:
+                cur.execute("SELECT spock.repair_mode(true);")
+        except Exception as e:
+            context = {"errors": [f"Could not set repair mode: {e}"]}
+            ace.handle_task_exception(tr_task, context)
+            raise e
 
         if tr_task.generate_report:
             report["changes"][divergent_node] = dict()
@@ -953,24 +997,29 @@ def table_repair(tr_task: TableRepairTask):
             upsert_tuples.append(modified_row)
 
         # Performing the upsert
-        cur.executemany(update_sql, upsert_tuples)
-        if tr_task.generate_report:
-            report["changes"][divergent_node]["upserted_rows"] = [
-                dict(zip(cols_list, tup)) for tup in upsert_tuples
-            ]
-
-        if delete_keys and not tr_task.upsert_only:
-            # Performing the deletes
-            cur.executemany(delete_sql, delete_keys)
+        try:
+            cur.executemany(update_sql, upsert_tuples)
             if tr_task.generate_report:
-                report["changes"][divergent_node]["deleted_rows"] = delete_keys
-        elif delete_keys and tr_task.upsert_only:
-            deletes_skipped[divergent_node] = delete_keys
+                report["changes"][divergent_node]["upserted_rows"] = [
+                    dict(zip(cols_list, tup)) for tup in upsert_tuples
+                ]
 
-        if spock_version >= 4.0:
-            cur.execute("SELECT spock.repair_mode(false);")
+            if delete_keys and not tr_task.upsert_only:
+                # Performing the deletes
+                cur.executemany(delete_sql, delete_keys)
+                if tr_task.generate_report:
+                    report["changes"][divergent_node]["deleted_rows"] = delete_keys
+            elif delete_keys and tr_task.upsert_only:
+                deletes_skipped[divergent_node] = delete_keys
 
-        conn.commit()
+            if spock_version >= 4.0:
+                cur.execute("SELECT spock.repair_mode(false);")
+
+            conn.commit()
+        except Exception as e:
+            context = {"errors": [f"Could not perform repairs: {e}"]}
+            ace.handle_task_exception(tr_task, context)
+            raise e
 
     if tr_task.upsert_only:
 
@@ -1048,7 +1097,14 @@ def table_repair(tr_task: TableRepairTask):
             os.mkdir(dirname)
 
         filename = os.path.join(dirname, diff_filename)
-        json.dump(report, open(filename, "w"), default=str, indent=2)
+
+        try:
+            json.dump(report, open(filename, "w"), default=str, indent=2)
+        except Exception as e:
+            context = {"errors": [f"Could not write report: {e}"]}
+            ace.handle_task_exception(tr_task, context)
+            raise e
+
         print(f"Wrote report to {filename}")
 
     util.message("*** SUMMARY ***\n", p_state="info", quiet_mode=tr_task.quiet_mode)
@@ -1132,15 +1188,21 @@ def table_rerun_temptable(td_task: TableDiffTask) -> None:
         pkey_qry = f"ALTER TABLE {temp_table_name} ADD PRIMARY KEY ({pkey_columns});"
 
     conn_list = []
-    for params in td_task.fields.conn_params:
-        conn_list.append(psycopg.connect(**params))
 
-    for con in conn_list:
-        cur = con.cursor()
-        cur.execute(table_qry)
-        cur.execute(pkey_qry)
-        cur.close()
-        con.commit()
+    try:
+        for params in td_task.fields.conn_params:
+            conn_list.append(psycopg.connect(**params))
+
+        for con in conn_list:
+            cur = con.cursor()
+            cur.execute(table_qry)
+            cur.execute(pkey_qry)
+            cur.close()
+            con.commit()
+    except Exception as e:
+        context = {"errors": [f"Could not create temp table: {e}"]}
+        ace.handle_task_exception(td_task, context)
+        raise e
 
     task_id = ace_db.generate_task_id()
 
@@ -1160,14 +1222,21 @@ def table_rerun_temptable(td_task: TableDiffTask) -> None:
         diff_task = ace.table_diff_checks(diff_args)
         ace_db.create_ace_task(task=diff_task)
         table_diff(diff_task)
-    except AceException as e:
-        util.exit_message(str(e))
+    except Exception as e:
+        context = {"errors": [f"Could not run table diff: {e}"]}
+        ace.handle_task_exception(td_task, context)
+        raise e
 
-    for con in conn_list:
-        cur = con.cursor()
-        cur.execute(clean_qry)
-        cur.close()
-        con.commit()
+    try:
+        for con in conn_list:
+            cur = con.cursor()
+            cur.execute(clean_qry)
+            cur.close()
+            con.commit()
+    except Exception as e:
+        context = {"errors": [f"Could not clean up temp table: {e}"]}
+        ace.handle_task_exception(td_task, context)
+        raise e
 
     td_task.scheduler.task_status = "COMPLETED"
     td_task.scheduler.finished_at = datetime.now()
@@ -1251,10 +1320,15 @@ def spock_diff(sd_task: SpockDiffTask) -> None:
 
     print("\n")
 
-    for params in sd_task.fields.conn_params:
-        conns[sd_task.fields.host_map[params["host"] + ":" + params["port"]]] = (
-            psycopg.connect(**params, row_factory=dict_row)
-        )
+    try:
+        for params in sd_task.fields.conn_params:
+            conns[sd_task.fields.host_map[params["host"] + ":" + params["port"]]] = (
+                psycopg.connect(**params, row_factory=dict_row)
+            )
+    except Exception as e:
+        context = {"errors": [f"Could not connect to nodes: {e}"]}
+        ace.handle_task_exception(sd_task, context)
+        raise e
 
     try:
         for cluster_node in sd_task.fields.cluster_nodes:
@@ -1367,8 +1441,9 @@ def spock_diff(sd_task: SpockDiffTask) -> None:
             print("\n")
 
     except Exception as e:
-        traceback.print_exc()
-        raise AceException("Error while comparing Spock meta data: " f"{e}")
+        context = {"errors": [f"Error while comparing Spock meta data: {e}"]}
+        ace.handle_task_exception(sd_task, context)
+        raise e
 
     task_context["spock_config"] = compare_spock
     task_context["diffs"] = {}
@@ -1421,51 +1496,70 @@ def schema_diff(sc_task: SchemaDiffTask) -> None:
 
     sc_task_start_time = datetime.now()
 
-    for nd in sc_task.fields.cluster_nodes:
-        if nd["name"] in sc_task.fields.node_list:
-            sql1 = ace.write_pg_dump(
-                nd["public_ip"], nd["db_name"], nd["port"], nd["name"], l_schema
-            )
-            file_list.append(sql1)
+    try:
+        for nd in sc_task.fields.cluster_nodes:
+            if nd["name"] in sc_task.fields.node_list:
+                sql1 = ace.write_pg_dump(
+                    nd["public_ip"], nd["db_name"], nd["port"], nd["name"], l_schema
+                )
+                file_list.append(sql1)
+    except Exception as e:
+        context = {"errors": [f"Could not connect to nodes: {e}"]}
+        ace.handle_task_exception(sc_task, context)
+        raise e
 
     if os.stat(file_list[0]).st_size == 0:
+        context = {
+            "errors": [
+                f"Schema {sc_task.schema_name} does not exist on node "
+                f"{sc_task.fields.node_list[0]}"
+            ]
+        }
+        ace.handle_task_exception(sc_task, context)
         raise AceException(
             f"Schema {sc_task.schema_name} does not exist on node "
             f"{sc_task.fields.node_list[0]}"
         )
 
-    for n in range(1, len(file_list)):
-        cmd = "diff " + file_list[0] + "  " + file_list[n] + " > /tmp/diff.txt"
-        util.message("\n## Running # " + cmd + "\n")
-        rc = os.system(cmd)
-        if os.stat(file_list[n]).st_size == 0:
-            raise AceException(
-                f"Schema {sc_task.schema_name} does not exist on node "
-                f"{sc_task.fields.node_list[n]}"
+    try:
+        for n in range(1, len(file_list)):
+            cmd = "diff " + file_list[0] + "  " + file_list[n] + " > /tmp/diff.txt"
+            util.message("\n## Running # " + cmd + "\n")
+            rc = os.system(cmd)
+            if os.stat(file_list[n]).st_size == 0:
+                raise AceException(
+                    f"Schema {sc_task.schema_name} does not exist on node "
+                    f"{sc_task.fields.node_list[n]}"
+                )
+            context_key = (
+                sc_task.fields.node_list[0] + "/" + sc_task.fields.node_list[n]
             )
-        context_key = sc_task.fields.node_list[0] + "/" + sc_task.fields.node_list[n]
-        if rc == 0:
-            task_context[context_key] = {
-                "mismatch": False,
-                "message": f"Schemas are the same between "
-                f"{sc_task.fields.node_list[0]} and {sc_task.fields.node_list[n]}",
-            }
-            util.message(
-                f"SCHEMAS ARE THE SAME- between {sc_task.fields.node_list[0]} "
-                f"and {sc_task.fields.node_list[n]} !!",
-                p_state="success",
-            )
-        else:
-            task_context[context_key] = {
-                "mismatch": True,
-                "message": f"Schemas are different between "
-                f"{sc_task.fields.node_list[0]} and {sc_task.fields.node_list[n]}",
-            }
-            ace.prRed(
-                f"\u2718   SCHEMAS ARE NOT THE SAME- between "
-                f"{sc_task.fields.node_list[0]}"
-                f" and {sc_task.fields.node_list[n]}!!"
-            )
+            if rc == 0:
+                task_context[context_key] = {
+                    "mismatch": False,
+                    "message": f"Schemas are the same between "
+                    f"{sc_task.fields.node_list[0]} and {sc_task.fields.node_list[n]}",
+                }
+                util.message(
+                    f"SCHEMAS ARE THE SAME- between {sc_task.fields.node_list[0]} "
+                    f"and {sc_task.fields.node_list[n]} !!",
+                    p_state="success",
+                )
+            else:
+                task_context[context_key] = {
+                    "mismatch": True,
+                    "message": f"Schemas are different between "
+                    f"{sc_task.fields.node_list[0]} and {sc_task.fields.node_list[n]}",
+                }
+                ace.prRed(
+                    f"\u2718   SCHEMAS ARE NOT THE SAME- between "
+                    f"{sc_task.fields.node_list[0]}"
+                    f" and {sc_task.fields.node_list[n]}!!"
+                )
+    except Exception as e:
+        context = {"errors": [f"Error while comparing schemas: {e}"]}
+        ace.handle_task_exception(sc_task, context)
+        raise e
 
     sc_task.scheduler.task_status = "COMPLETED"
     sc_task.scheduler.finished_at = datetime.now()

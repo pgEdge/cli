@@ -1,9 +1,6 @@
 from datetime import datetime
-import pickle
-import _pickle as cPickle
 
 from flask import Flask, jsonify, request
-from apscheduler.events import EVENT_JOB_ERROR
 
 import ace
 import ace_config as config
@@ -16,8 +13,6 @@ from ace_data_models import (
     TableDiffTask,
     TableRepairTask,
 )
-from ace_exceptions import AceException
-
 
 app = Flask(__name__)
 
@@ -57,16 +52,13 @@ def table_diff_api():
         td_task = ace.table_diff_checks(raw_args)
 
         ace_db.create_ace_task(task=td_task)
-        td_job = ace.scheduler.add_job(
+        ace.scheduler.add_job(
             ace_core.table_diff,
             args=(td_task,),
         )
 
-        #pickled_task = pickle.dumps(td_task, protocol=pickle.HIGHEST_PROTOCOL)
-        #ace_db.store_pickled_task(td_job.id, pickled_task)
-
         return jsonify({"task_id": task_id, "submitted_at": datetime.now().isoformat()})
-    except AceException as e:
+    except Exception as e:
         return jsonify({"error": str(e)})
 
 
@@ -110,7 +102,7 @@ def table_repair_api():
 
         ace.scheduler.add_job(ace_core.table_repair, args=(tr_task,))
         return jsonify({"task_id": task_id, "submitted_at": datetime.now().isoformat()})
-    except AceException as e:
+    except Exception as e:
         return jsonify({"error": str(e)})
 
 
@@ -149,7 +141,7 @@ def table_rerun_api():
         raw_args.scheduler.task_id = task_id
         td_task = ace.table_diff_checks(raw_args)
         ace_db.create_ace_task(task=td_task)
-    except AceException as e:
+    except Exception as e:
         return jsonify({"error": str(e)})
 
     try:
@@ -165,7 +157,7 @@ def table_rerun_api():
             )
         else:
             return jsonify({"error": f"Invalid behavior: {behavior}"})
-    except AceException as e:
+    except Exception as e:
         return jsonify({"error": str(e)})
 
 
@@ -207,7 +199,7 @@ def repset_diff_api():
         ace_db.create_ace_task(task=rd_task)
         ace.scheduler.add_job(ace_core.repset_diff, args=(rd_task,))
         return jsonify({"task_id": task_id, "submitted_at": datetime.now().isoformat()})
-    except AceException as e:
+    except Exception as e:
         return jsonify({"error": str(e)})
 
 
@@ -236,7 +228,7 @@ def spock_diff_api():
         ace_db.create_ace_task(task=sd_task)
         ace.scheduler.add_job(ace_core.spock_diff, args=(sd_task,))
         return jsonify({"task_id": task_id, "submitted_at": datetime.now().isoformat()})
-    except AceException as e:
+    except Exception as e:
         return jsonify({"error": str(e)})
 
 
@@ -269,7 +261,7 @@ def schema_diff_api():
         ace_db.create_ace_task(task=sd_task)
         ace.scheduler.add_job(ace_core.schema_diff, args=(sd_task,))
         return jsonify({"task_id": task_id, "submitted_at": datetime.now().isoformat()})
-    except AceException as e:
+    except Exception as e:
         return jsonify({"error": str(e)})
 
 
