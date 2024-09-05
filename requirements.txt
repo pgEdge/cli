@@ -33,5 +33,5 @@ PyYAML==6.0.1
 python-etcd==0.4.5
 prettytable==3.10.2
 python-dateutil==2.9.0
-cryptography==43.0.0
+cryptography==43.0.1
 ydiff==1.3
