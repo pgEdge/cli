@@ -24,9 +24,9 @@ tqdm==4.66.4
 ordered-set==4.1.0
 mpire[dashboard]==2.10.2
 rich==13.7.1
-pandas==2.2.2
 apscheduler==3.10.4
-bidict==0.23.1
+Flask==3.0.3
+pandas==2.2.2
 
 ## pgEdge-Patroni ###
 cdiff==1.0

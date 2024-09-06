@@ -4,8 +4,7 @@ from math import ceil
 import os
 from datetime import datetime
 from itertools import combinations
-from multiprocessing import Lock, Manager, Value, cpu_count
-
+from multiprocessing import Manager, cpu_count
 from concurrent.futures import ThreadPoolExecutor
 
 import psycopg
@@ -29,14 +28,6 @@ from ace_data_models import (
 )
 
 from ace_exceptions import AceException
-
-
-# Shared variables needed by multiprocessing
-queue = Manager().list()
-result_queue = Manager().list()
-diff_dict = Manager().dict()
-row_diff_count = Value("I", 0)
-lock = Lock()
 
 
 def run_query(worker_state, host, query):
@@ -109,7 +100,11 @@ def create_result_dict(
 
 
 def compare_checksums(shared_objects, worker_state, batches):
-    global row_diff_count
+
+    result_queue = shared_objects["result_queue"]
+    diff_dict = shared_objects["diff_dict"]
+    row_diff_count = shared_objects["row_diff_count"]
+    lock = shared_objects["lock"]
 
     if row_diff_count.value >= config.MAX_DIFF_ROWS:
         return
@@ -309,6 +304,7 @@ def compare_checksums(shared_objects, worker_state, batches):
                     diff_dict[node_pair_key] = {}
 
                 with lock:
+                    # Update diff_dict with the results of the diff
                     if len(t1_diff) > 0 or len(t2_diff) > 0:
                         temp_dict = {}
                         if host1 in diff_dict[node_pair_key]:
@@ -325,7 +321,7 @@ def compare_checksums(shared_objects, worker_state, batches):
 
                         diff_dict[node_pair_key] = temp_dict
 
-                with row_diff_count.get_lock():
+                    # Update row_diff_count with the number of diffs
                     row_diff_count.value += max(len(t1_diff), len(t2_diff))
 
                 if row_diff_count.value >= config.MAX_DIFF_ROWS:
@@ -356,6 +352,8 @@ def compare_checksums(shared_objects, worker_state, batches):
 
 def table_diff(td_task: TableDiffTask):
     """Efficiently compare tables across cluster using checksums and blocks of rows"""
+
+    global result_queue, diff_dict, row_diff_count
 
     simple_primary_key = True
     if len(td_task.fields.key.split(",")) > 1:
@@ -493,6 +491,12 @@ def table_diff(td_task: TableDiffTask):
     cols_list = td_task.fields.cols.split(",")
     cols_list = [col for col in cols_list if not col.startswith("_Spock_")]
 
+    # Shared multiprocessing data structures
+    result_queue = Manager().list()
+    diff_dict = Manager().dict()
+    row_diff_count = Manager().Value("I", 0)
+    lock = Manager().Lock()
+
     # Shared variables needed by all workers
     shared_objects = {
         "cluster_name": td_task.cluster_name,
@@ -505,6 +509,10 @@ def table_diff(td_task: TableDiffTask):
         "block_rows": td_task.block_rows,
         "simple_primary_key": simple_primary_key,
         "mode": "diff",
+        "result_queue": result_queue,
+        "diff_dict": diff_dict,
+        "row_diff_count": row_diff_count,
+        "lock": lock,
     }
 
     util.message(
@@ -645,7 +653,6 @@ def table_diff(td_task: TableDiffTask):
     }
 
     if not td_task.skip_db_update:
-        print("Updating task in DB")
         ace_db.update_ace_task(td_task)
 
     return td_task
@@ -863,21 +870,27 @@ def table_repair(tr_task: TableRepairTask):
     }
     """
 
-    # TODO: Jsonify dry run into task context
     if tr_task.dry_run:
         dry_run_msg = "######## DRY RUN ########\n\n"
         for node in other_nodes:
             if not tr_task.upsert_only:
-                dry_run_msg += "Repair would have attempted to upsert"
-                f"{len(full_rows_to_upsert[node])} rows and delete"
-                f"{len(full_rows_to_delete[node])} rows on { node }\n"
+                dry_run_msg += (
+                    "Repair would have attempted to upsert "
+                    + f"{len(full_rows_to_upsert[node])} rows and delete "
+                    + f"{len(full_rows_to_delete[node])} rows on { node }\n"
+                )
             else:
-                dry_run_msg += "Repair would have attempted to upsert"
-                f"{len(full_rows_to_upsert[node])} rows on { node }\n"
+                dry_run_msg += (
+                    "Repair would have attempted to upsert "
+                    + f"{len(full_rows_to_upsert[node])} rows on { node }\n"
+                )
 
-                dry_run_msg += "There are an additional"
-                f"{len(full_rows_to_delete[node])} rows on { node }"
-                f"not present on { tr_task.source_of_truth }\n"
+                if len(full_rows_to_delete[node]) > 0:
+                    dry_run_msg += (
+                        "There are an additional "
+                        + f"{len(full_rows_to_delete[node])} rows on { node }"
+                        + f" not present on { tr_task.source_of_truth }\n"
+                    )
         dry_run_msg += "\n######## END DRY RUN ########"
 
         util.message(dry_run_msg, p_state="alert", quiet_mode=tr_task.quiet_mode)
@@ -1325,6 +1338,11 @@ def table_rerun_async(td_task: TableDiffTask) -> None:
     cols_list = td_task.fields.cols.split(",")
     cols_list = [col for col in cols_list if not col.startswith("_Spock_")]
 
+    result_queue = Manager().list()
+    diff_dict = Manager().dict()
+    row_diff_count = Manager().Value("I", 0)
+    lock = Manager().Lock()
+
     # Shared variables needed by all workers
     shared_objects = {
         "cluster_name": td_task.cluster_name,
@@ -1337,6 +1355,10 @@ def table_rerun_async(td_task: TableDiffTask) -> None:
         "block_rows": td_task.block_rows,
         "simple_primary_key": simple_primary_key,
         "mode": "rerun",
+        "result_queue": result_queue,
+        "diff_dict": diff_dict,
+        "row_diff_count": row_diff_count,
+        "lock": lock,
     }
 
     util.message(
@@ -1387,7 +1409,7 @@ def table_rerun_async(td_task: TableDiffTask) -> None:
         raise e
 
     for result in result_queue:
-        if result == config.BLOCK_MISMATCH:
+        if result["status_code"] == config.BLOCK_MISMATCH:
             mismatch = True
 
     if errors:

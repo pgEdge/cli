@@ -132,8 +132,8 @@ def table_rerun_cli(
 
 def repset_diff_cli(
     cluster_name,
-    dbname,
     repset_name,
+    dbname=None,
     block_rows=config.BLOCK_ROWS_DEFAULT,
     max_cpu_ratio=config.MAX_CPU_RATIO_DEFAULT,
     output="json",

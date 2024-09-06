@@ -286,7 +286,6 @@ def task_status_api():
 
 
 def start_ace():
-    ace_db.drop_ace_tables()
     ace_db.create_ace_tables()
 
     # Since the scheduler is a BackgroundScheduler,

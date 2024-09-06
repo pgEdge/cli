@@ -645,8 +645,14 @@ def table_repair_checks(tr_task: TableRepairTask) -> TableRepairTask:
         if tr_task.dry_run < 0 or tr_task.dry_run > 1:
             raise AceException("Dry run should be True (1) or False (0)")
         tr_task.dry_run = bool(tr_task.dry_run)
-
-    if type(tr_task.dry_run) is not bool:
+    elif type(tr_task.dry_run) is str:
+        if tr_task.dry_run in ["True", "true", "1", "t"]:
+            tr_task.dry_run = True
+        elif tr_task.dry_run in ["False", "false", "0", "f"]:
+            tr_task.dry_run = False
+        else:
+            raise AceException("Invalid value for dry_run")
+    elif type(tr_task.dry_run) is not bool:
         raise AceException("Dry run should be True (1) or False (0)")
 
     found = check_cluster_exists(tr_task.cluster_name)

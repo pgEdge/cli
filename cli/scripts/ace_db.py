@@ -121,13 +121,10 @@ def get_ace_task_by_id(task_id) -> dict:
 
     colnames = [desc[0] for desc in c.description]
 
-    task_details = {}
-
-    for colname, value in zip(colnames, row):
-        if colname == "task_context":
-            task_details[colname] = json.loads(value)
-        else:
-            task_details[colname] = value
+    task_details = {
+        colname: json.loads(value) if colname == 'task_context' and value else value
+        for colname, value in zip(colnames, row)
+    }
 
     return task_details
 
