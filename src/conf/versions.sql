@@ -164,7 +164,7 @@ INSERT INTO versions VALUES ('pg16', '16.3-3',  'amd, arm', 0, '20240710','', ''
 
 INSERT INTO releases VALUES ('pg17', 2, 'pg', '', '', 'test', 
   '<font size=-1>New in <a href=https://www.postgresql.org/docs/17/release-17.html>2024!</a></font>', 1, 'POSTGRES', '', '');
-INSERT INTO versions VALUES ('pg17', '17beta3-1',  'amd, arm', 1, '20240808','', '', '');
+INSERT INTO versions VALUES ('pg17', '17rc1-1',    'amd, arm', 1, '20240905','', '', '');
 
 -- ## PGML ###############################
 INSERT INTO projects VALUES ('pgml', 'ext', 4, 0, '', 0, 'https://github.com/postgresml/postgresml',
