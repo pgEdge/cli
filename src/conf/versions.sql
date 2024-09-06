@@ -306,14 +306,16 @@ INSERT INTO versions VALUES ('citus-pg16', '12.1.4-1', 'amd, arm', 0, '20240612'
 -- ## CRON ##############################
 INSERT INTO projects VALUES ('cron', 'ext', 4, 0, '',0, 'https://github.com/citusdata/pg_cron/releases',
   'cron', 1, 'cron.png', 'Background Job Scheduler', 'https://github.com/citusdata/pg_cron', 'pg_cron, pgcron');
-INSERT INTO releases VALUES ('cron-pg15', 10, 'cron', 'pgCron', '', 'prod', '', 1, 'POSTGRES', '', '');
+INSERT INTO releases VALUES ('cron-pg17', 10, 'cron', 'pgCron', '', 'prod', '', 1, 'POSTGRES', '', '');
 INSERT INTO releases VALUES ('cron-pg16', 10, 'cron', 'pgCron', '', 'prod', '', 1, 'POSTGRES', '', '');
+INSERT INTO releases VALUES ('cron-pg15', 10, 'cron', 'pgCron', '', 'prod', '', 1, 'POSTGRES', '', '');
 
-INSERT INTO versions VALUES ('cron-pg15', '1.6.4-1', 'amd, arm', 1, '20230815', 'pg15', '', '');
-INSERT INTO versions VALUES ('cron-pg16', '1.6.4-1', 'amd, arm', 1, '20230815', 'pg16', '', '');
+INSERT INTO versions VALUES ('cron-pg17', '1.6.4-1', 'amd, arm', 1, '20240910', 'pg17', '', '');
+INSERT INTO versions VALUES ('cron-pg16', '1.6.4-1', 'amd, arm', 1, '20240815', 'pg16', '', '');
+INSERT INTO versions VALUES ('cron-pg15', '1.6.4-1', 'amd, arm', 1, '20240815', 'pg15', '', '');
 
-INSERT INTO versions VALUES ('cron-pg15', '1.6.3-1', 'amd, arm', 0, '20230729', 'pg15', '', '');
 INSERT INTO versions VALUES ('cron-pg16', '1.6.3-1', 'amd, arm', 0, '20230729', 'pg16', '', '');
+INSERT INTO versions VALUES ('cron-pg15', '1.6.3-1', 'amd, arm', 0, '20230729', 'pg15', '', '');
 
 -- ## VECTOR ############################
 INSERT INTO projects VALUES ('vector', 'pge', 4, 0, '', 1, 'https://github.com/pgedge/vector/tags',

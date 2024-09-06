@@ -21,7 +21,7 @@ printUsageMessage () {
   echo "#-------------------------------------------------------------------#"
   echo "#                Copyright (c) 2022-2024 PGEDGE                     #"
   echo "#-------------------------------------------------------------------#"
-  echo "# -p $P17 $P16 $P15 $P14 $P13 $P12"
+  echo "# -p $P17 $P16 $P15 $P14"
   echo "# -b hub-$hubV"
   echo "#-------------------------------------------------------------------#"
 }
@@ -370,19 +370,18 @@ initPG () {
 
   if [ "$pgM" == "15" ] || [ "$pgM" == "16" ] || [ "$pgM" == "17" ]; then
     initC "pldebugger-pg$pgM" "pldebugger" "$debuggerV"  "$outPlat" "postgres/pldebugger" "" "" "nil"
-    initC "plprofiler-pg$pgM" "plprofiler" "$profV"      "$outPlat" "postgres/profiler"  "" "" "nil"
+    initC "plprofiler-pg$pgM" "plprofiler" "$profV"      "$outPlat" "postgres/profiler"   "" "" "nil"
+    initC "cron-pg$pgM"       "cron"       "$cronV"      "$outPlat" "postgres/cron"       "" "" "nil"
   fi
 
   if [ "$pgM" == "15" ] || [ "$pgM" == "16" ]; then
     initC "plv8-pg$pgM"       "plv8"       "$v8V"        "$outPlat" "postgres/plv8"       "" "" "nil"
     initC "wal2json-pg$pgM"   "wal2json"   "$wal2jV"     "$outPlat" "postgres/wal2json"   "" "" "nil"
     initC "hypopg-pg$pgM"     "hypopg"     "$hypoV"      "$outPlat" "postgres/hypopg"     "" "" "nil"
-    ##initC "curl-pg$pgM"       "curl"       "$curlV"      "$outPlat" "postgres/curl"       "" "" "nil"
     initC "orafce-pg$pgM"     "orafce"     "$orafceV"    "$outPlat" "postgres/orafce"     "" "" "nil"
     initC "vector-pg$pgM"     "vector"     "$vectorV"    "$outPlat" "postgres/vector"     "" "" "nil"
     initC "plprofiler-pg$pgM" "plprofiler" "$profV"      "$outPlat" "postgres/profiler"   "" "" "nil"
     initC "postgis-pg$pgM"    "postgis"    "$postgisV"   "$outPlat" "postgres/postgis"    "" "" "nil"
-    initC "cron-pg$pgM"       "cron"       "$cronV"      "$outPlat" "postgres/cron"       "" "" "nil"
     initC "partman-pg$pgM"    "partman"    "$partmanV"   "$outPlat" "postgres/partman"    "" "" "nil"
 
     initC "citus-pg$pgM"       "citus"       "$citusV"       "$outPlat" "postgres/citus"       "" "" "nil"

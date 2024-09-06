@@ -12,13 +12,20 @@ function install_pgedge {
 }
 
 
+## extensions common to pg15, pg16 & pg17
+function test_common_17 {
+  ./pgedge install cron-$pgV
+
+  # ./pgedge install plprofiler-$pgV
+  # ./pgedge install pldebugger-$pgV    -d demo
+}
+
+
 ## extensions common to pg15 & pg16
-function test_common_exts {
+function test_common_16 {
 
   ./pgedge install hypopg-$pgV        -d demo
   ./pgedge install orafce-$pgV        -d demo
-  ##./pgedge install curl-$pgV          -d demo
-  ./pgedge install cron-$pgV
   ./pgedge install partman-$pgV       -d demo
   ./pgedge install postgis-$pgV       -d demo
   ./pgedge install vector-$pgV        -d demo
@@ -33,21 +40,27 @@ function test_common_exts {
   #./pgedge install pljava-$pgV        -d demo
 
   ## extensions that dont always play nice with others
-  # ./pgedge install plprofiler-$pgV
-  # ./pgedge install pldebugger-$pgV    -d demo
   # ./pgedge install citus-$pgV         -d demo
+}
+
+
+function test17 {
+  install_pgedge
+  test_common_17
 }
 
 
 function test16 {
   install_pgedge
-  test_common_exts
+  test_common_16
+  test_common_17
 }
 
 
 function test15 {
   install_pgedge
-  test_common_exts
+  test_common_16  
+  test_common_17
 }
 
 
@@ -59,21 +72,20 @@ function test14 {
 cd ../..
 pgV="pg$1"
 
-if [ "$pgV" == "pg16" ]; then
+if [ "$pgV" == "pg17" ]; then
+  test17
+elif [ "$pgV" == "pg16" ]; then
   test16
-  exit 0
-fi
-
-if [ "$pgV" == "pg15" ]; then
+elif [ "$pgV" == "pg15" ]; then
   test15
-  exit 0
-fi
-
-if [ "$pgV" == "pg14" ]; then
+elif [ "$pgV" == "pg14" ]; then
   test14
-  exit 0
+else
+  echo "ERROR: Invalid parm, must be one of '14' thru '17'"
+  exit 1
 fi
 
-echo "ERROR: Invalid parm, must be '14', '15' or '16'"
-exit 1
+echo "Goodbye!"
+exit 0
+
 
