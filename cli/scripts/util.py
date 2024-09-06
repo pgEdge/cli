@@ -94,6 +94,26 @@ DEBUG = 10
 DEBUG2 = 9
 
 
+## Download tarball component and verify against checksum ###############
+def download_component(p_comp):
+    conf_cache = "data/conf/cache"
+    zip_file = f"{p_comp}.tgz"
+    checksum_file = f"{zip_file}.sha512"
+
+    msg = "Get: {REPO} {p_comp}"
+    if not http_get_file(
+        isJSON, zip_file, REPO, conf_cache, False, msg, ""):
+        return False
+
+    msg = f"Preparing to unpack {p_comp}"
+    if not http_get_file(
+        isJSON, checksum_file, REPO, conf_cache, False, msg, ""):
+        return False
+
+    return validate_checksum(
+        f"{conf_cache}/{zip_file}", "{conf_cache}/{checksum_file}")
+
+
 def is_pg_reserved_word(p_word):
     l_word = str(p_word).lower()
 
@@ -2898,7 +2918,6 @@ def get_el_os():
         rc = os.system('grep "platform:f40" /etc/os-release > /dev/null 2>&1')
         if rc == 0:
             return "EL10"
-
 
         return "EL"
 

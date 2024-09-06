@@ -152,16 +152,10 @@ def upgrade(component):
     run_cmd("upgrade", component)
 
 
-def downgrade(component):
-    """Perform a downgrade to an older version of a component"""
-
-    run_cmd("downgrade", component)
-
-
-def download():
+def download(component):
     """Download a component into local cache (without installing it)"""
 
-    util.exit_message("Coming Soon!!!!")
+    util.download_component(component)
     return
 
 
