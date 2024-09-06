@@ -159,6 +159,52 @@ def download(component):
     return
 
 
+def download_all():
+    """Download all current components into local cache"""
+
+    comp_l = [
+        "pg16", "spock40-pg16", "spock33-pg16", "lolor-pg16",
+        "snowflake-pg16", "postgis-pg16", "vector-pg16",
+        "pg15", "spock40-pg15", "spock33-pg15", "lolor-pg15",
+        "snowflake-pg15", "postgis-pg15", "vector-pg15",
+        "pgcat", "etcd", "patroni", "backrest", "bouncer"
+        ]
+
+    os.environ["isSilent"] = "True"
+    for c in comp_l:
+        util.download_component(c)
+
+    return
+
+
+def make_bundle():
+
+  bundle = f"pgedge-{util.MY_VERSION}-{util.get_ctlib_dir()}.tgz"
+  print(f"make_bundle() - {bundle}")
+
+  os.chdir("/tmp")
+
+  os.system(f"rm -f {bundle}")
+  os.system("rm -f install.py")
+  os.system("rm -rf pgedge")
+ 
+  repo = util.get_value('GLOBAL', 'REPO') 
+  util.echo_cmd(f"wget {repo}/install.py")
+  util.echo_cmd("python3 install.py")
+
+  util.echo_cmd("pgedge/pgedge um download-all")
+
+  util.echo_cmd(f"tar czf {bundle} pgedge")
+
+  ## cleanup the details
+  os.system("rm -f install.py")
+  os.system("rm -rf pgedge")
+
+  os.system(f"ls -lh /tmp/{bundle}")
+
+  return
+
+
 def clean():
     """Delete downloaded component files from local cache"""
     conf_cache = util.MY_HOME + os.sep + "data" + os.sep + "conf" + os.sep + "cache" + os.sep + "*"
@@ -184,7 +230,9 @@ if __name__ == "__main__":
             "install": install,
             "remove": remove,
             "upgrade": upgrade,
-            "download": download,
             "clean": clean,
+            "download": download,
+            "download-all": download_all,
+            "make-bundle": make_bundle,
         }
     )

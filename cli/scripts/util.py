@@ -94,6 +94,54 @@ DEBUG = 10
 DEBUG2 = 9
 
 
+def get_ctlib_dir():
+
+    if platform.system() == "Darwin":
+        return("osx")
+
+    plat_os = "amd"
+    if platform.machine() == "aarch64":
+        plat_os = "arm"
+
+    if os.path.exists("/etc/redhat-release"):
+        el_os = get_el_os()
+        if el_os == "EL9":
+          return f"el9-{plat_os}"
+        elif el_os == "EL10":
+          return f"el10-{plat_os}"
+        else:
+          return "el8-amd"
+
+    if os.path.exists("/etc/amazon-linux-release"):
+        f = "/etc/amazon-linux-release"
+        rc = os.system(f"grep 2023 {f} > /dev/null 2>&1")
+        if rc == 0:
+          return f"el9-{plat_os}"
+        else:
+          return "el8-amd"
+
+    f = "/etc/os-release"
+    if os.path.exists(f):
+        rc22 = os.system(f"grep '22.04' {f} > /dev/null 2>&1")
+        if rc22 == 0:
+            return f"ubu22-{plat_os}"
+
+        rc24 = os.system(f"grep '24.04' {f} > /dev/null 2>&1")
+        if rc24 == 0:
+            return f"ubu24-{plat_os}"
+
+        deb12 = os.system(f"grep 'bookworm' {f} > /dev/null 2>&1")
+        if deb12 == 0:
+            return f"deb12-{plat_os}"
+
+        rc_l15 = os.system(f"grep 'leap:15' {f} > /dev/null 2>&1")
+        rc_s15 = os.system(f"grep 'sles:15' {f} > /dev/null 2>&1")
+        if ((rc_l15 == 0) or (rc_s15 == 0)):
+            return f"el8-{plat_os}"
+
+    return "unsupported"
+
+
 ## Download tarball component and verify against checksum ###############
 def download_component(p_comp):
 
