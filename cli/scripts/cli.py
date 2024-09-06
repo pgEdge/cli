@@ -323,7 +323,7 @@ class ProgressTarExtract(io.FileIO):
 
 # Install Component ######################################################
 def install_comp(p_app, p_ver=0, p_rver=None, p_re_install=False):
-    util.message(f"install_comp(p_app={p_app}, p_ver={p_ver}, p_rver={p_rver}, p_re_install={p_re_install})", "debug")
+    util.message(f"cli.install_comp(p_app={p_app}, p_ver={p_ver}, p_rver={p_rver}, p_re_install={p_re_install})", "debug")
     if p_ver is None:
         p_ver = 0
     if p_rver:
