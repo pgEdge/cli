@@ -1,5 +1,6 @@
 import ast
 import json
+from math import ceil
 import os
 from datetime import datetime
 from itertools import combinations
@@ -1242,6 +1243,231 @@ def table_rerun_temptable(td_task: TableDiffTask) -> None:
     td_task.scheduler.finished_at = datetime.now()
     td_task.scheduler.time_taken = diff_task.scheduler.time_taken
     td_task.scheduler.task_context = diff_task.scheduler.task_context
+    ace_db.update_ace_task(td_task)
+
+
+def table_rerun_async(td_task: TableDiffTask) -> None:
+    table_types = None
+
+    try:
+        for params in td_task.fields.conn_params:
+            conn = psycopg.connect(**params)
+            if not table_types:
+                table_types = ace.get_row_types(conn, td_task.fields.l_table)
+    except Exception as e:
+        context = {"errors": [f"Could not connect to nodes: {e}"]}
+        ace.handle_task_exception(td_task, context)
+        raise e
+
+    # load diff data and validate
+    try:
+        diff_data = json.load(open(td_task.diff_file_path, "r"))
+    except Exception as e:
+        context = {"errors": [f"Could not read diff file: {e}"]}
+        ace.handle_task_exception(td_task, context)
+        raise e
+
+    diff_kset = set()
+    diff_keys = list()
+    key = td_task.fields.key.split(",")
+    simple_primary_key = len(key) == 1
+
+    # Simple pkey
+    if simple_primary_key == 1:
+        for node_pair in diff_data.keys():
+            nd1, nd2 = node_pair.split("/")
+
+            for row in diff_data[node_pair][nd1] + diff_data[node_pair][nd2]:
+                if row[key[0]] not in diff_kset:
+                    diff_kset.add(row[key[0]])
+                    diff_keys.append(row[key[0]])
+    # Comp pkey
+    else:
+        for node_pair in diff_data.keys():
+            nd1, nd2 = node_pair.split("/")
+
+            for row in diff_data[node_pair][nd1] + diff_data[node_pair][nd2]:
+                element = tuple(row[key_component] for key_component in key)
+                if element not in diff_kset:
+                    diff_kset.add(element)
+                    diff_keys.append(element)
+
+    # create blocks
+    total_rows = len(diff_kset) * len(td_task.fields.node_list)
+    total_diff = len(diff_keys)
+
+    if total_diff > 100:
+        block_size = min(500, total_diff // 10)
+        block_nums = ceil(total_diff / block_size)
+
+        blocks = [
+            [diff_keys[i * block_size : i * block_size + block_size]]
+            for i in range(block_nums)
+        ]
+    else:
+        blocks = [[diff_keys]]
+
+    total_blocks = len(blocks)
+
+    # If we don't have enough blocks to keep all CPUs busy, use fewer processes
+    cpus = cpu_count()
+    max_procs = int(cpus * td_task.max_cpu_ratio) if cpus > 1 else 1
+    procs = max_procs if total_blocks > max_procs else total_blocks
+
+    start_time = datetime.now()
+
+    """
+    Generate offsets for each process to work on.
+    We go up to the max rows among all nodes because we want our set difference logic
+    to capture diffs even if rows are absent in one node
+    """
+
+    cols_list = td_task.fields.cols.split(",")
+    cols_list = [col for col in cols_list if not col.startswith("_Spock_")]
+
+    # Shared variables needed by all workers
+    shared_objects = {
+        "cluster_name": td_task.cluster_name,
+        "database": td_task.fields.database,
+        "node_list": td_task.fields.node_list,
+        "schema_name": td_task.fields.l_schema,
+        "table_name": td_task.fields.l_table,
+        "cols_list": cols_list,
+        "p_key": td_task.fields.key,
+        "block_rows": td_task.block_rows,
+        "simple_primary_key": simple_primary_key,
+        "mode": "rerun",
+    }
+
+    util.message(
+        "Starting jobs to compare tables ...\n",
+        p_state="info",
+        quiet_mode=td_task.quiet_mode,
+    )
+
+    mismatch = False
+    diffs_exceeded = False
+    errors = False
+    errors_list = []
+
+    try:
+        with WorkerPool(
+            n_jobs=procs,
+            shared_objects=shared_objects,
+            use_worker_state=True,
+            use_dill=True,
+        ) as pool:
+            for result in pool.imap_unordered(
+                compare_checksums,
+                make_single_arguments(blocks),
+                worker_init=init_db_connection,
+                progress_bar=True if not td_task.quiet_mode else False,
+                iterable_len=len(blocks),
+                progress_bar_style="rich",
+            ):
+                if result == config.MAX_DIFFS_EXCEEDED:
+                    diffs_exceeded = True
+                    mismatch = True
+                    break
+                elif result == config.BLOCK_ERROR:
+                    errors = True
+                    errors_list.append(result)
+                    break
+
+            if diffs_exceeded:
+                util.message(
+                    "Prematurely terminated jobs since diffs have"
+                    " exceeded MAX_ALLOWED_DIFFS",
+                    p_state="warning",
+                    quiet_mode=td_task.quiet_mode,
+                )
+    except Exception as e:
+        context = {"errors": [f"Could not spawn multiprocessing workers: {e}"]}
+        ace.handle_task_exception(td_task, context)
+        raise e
+
+    for result in result_queue:
+        if result == config.BLOCK_MISMATCH:
+            mismatch = True
+
+    if errors:
+        context = {
+            "total_rows": total_rows,
+            "mismatch": mismatch,
+            "errors": errors_list,
+        }
+        ace.handle_task_exception(td_task, context)
+        raise AceException(
+            "There were one or more errors while connecting to databases."
+            "Please examine the connection information provided, or the nodes"
+            "status before running this script again."
+            f"Errors: {errors_list}"
+        )
+
+    # Mismatch is True if there is a block mismatch or if we have
+    # estimated that diffs may be greater than max allowed diffs
+    if mismatch:
+        if diffs_exceeded:
+            util.message(
+                f"TABLES DO NOT MATCH. DIFFS HAVE EXCEEDED {config.MAX_DIFF_ROWS} ROWS",
+                p_state="warning",
+                quiet_mode=td_task.quiet_mode,
+            )
+
+        else:
+            util.message(
+                "TABLES DO NOT MATCH", p_state="warning", quiet_mode=td_task.quiet_mode
+            )
+
+        """
+        Read the result queue and count differences between each node pair
+        in the cluster
+        """
+
+        for node_pair in diff_dict.keys():
+            node1, node2 = node_pair.split("/")
+            diff_count = max(
+                len(diff_dict[node_pair][node1]), len(diff_dict[node_pair][node2])
+            )
+            util.message(
+                f"FOUND {diff_count} DIFFS BETWEEN {node1} AND {node2}",
+                p_state="warning",
+                quiet_mode=td_task.quiet_mode,
+            )
+
+        try:
+            if td_task.output == "json":
+                td_task.diff_file_path = ace.write_diffs_json(
+                    diff_dict, table_types, quiet_mode=td_task.quiet_mode
+                )
+
+            elif td_task.output == "csv":
+                ace.write_diffs_csv()
+        except Exception as e:
+            context = {"errors": [f"Could not write diffs to file: {e}"]}
+            ace.handle_task_exception(td_task, context)
+            raise e
+
+    else:
+        util.message(
+            "TABLES MATCH OK\n", p_state="success", quiet_mode=td_task.quiet_mode
+        )
+
+    run_time = util.round_timedelta(datetime.now() - start_time).total_seconds()
+    run_time_str = f"{run_time:.2f}"
+
+    util.message(
+        f"TOTAL ROWS CHECKED = {total_rows}\nRUN TIME = {run_time_str} seconds",
+        p_state="info",
+        quiet_mode=td_task.quiet_mode,
+    )
+
+    td_task.scheduler.task_status = "COMPLETED"
+    td_task.scheduler.finished_at = datetime.now()
+    td_task.scheduler.time_taken = run_time
+    td_task.scheduler.task_context = json.dumps(
+        {"total_rows": total_rows, "mismatch": mismatch}
+    )
     ace_db.update_ace_task(td_task)
 
 
