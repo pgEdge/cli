@@ -8,11 +8,7 @@ sys.path.append(os.path.join(os.path.dirname(__file__), "lib"))
 
 import fire, util, db
 
-# extensions installed 'Disabled' if you pass --extensions [core | all] to setup() (defaults to 'core')
 CORE_EXTS="spock40 snowflake lolor vector postgis"
-
-MORE_EXTS="audit cron orafce partman curl citus timescaledb wal2json " + \
-       "hypopg hintplan plv8 setuser permissions profiler debugger"
 
 CTL="./pgedge"
 
@@ -30,9 +26,9 @@ def osSys(cmd, fatal_exit=True, is_silent=False):
     return
 
 
-def check_pre_reqs(User, Passwd, db, port, pg_major, pg_minor, spock, autostart, extensions):
+def check_pre_reqs(User, Passwd, db, port, pg_major, pg_minor, spock, autostart):
     util.message(f"setup.check_pre_reqs(User={User}, db={db}, port={port}, pg_major={pg_major}, " + \
-        f"pg_minor={pg_minor}, spock={spock}, autostart={autostart}, extensions={extensions})", "debug")
+        f"pg_minor={pg_minor}, spock={spock}, autostart={autostart}", "debug")
 
     util.message("#### Checking for Pre-Req's #########################")
 
@@ -54,13 +50,10 @@ def check_pre_reqs(User, Passwd, db, port, pg_major, pg_minor, spock, autostart,
     if util.is_admin():
         util.exit_message("You must install as non-root user with passwordless sudo privleges")
 
-    if extensions:
-        pass
-    else:
-        util.message(f"  Verify port {port} availability")
-        if util.is_socket_busy(int(port)):
-            util.exit_message(f"Port {port} is unavailable")
-        util.message(f"    - Using port {port}")
+    util.message(f"  Verify port {port} availability")
+    if util.is_socket_busy(int(port)):
+        util.exit_message(f"Port {port} is unavailable")
+    util.message(f"    - Using port {port}")
 
     if pg_major not in util.VALID_PG:
         util.exit_message(f"pg {pg_major} must be in {util.VALID_PG}")
@@ -79,24 +72,20 @@ def check_pre_reqs(User, Passwd, db, port, pg_major, pg_minor, spock, autostart,
         if len(dir) != 0:
             util.exit_message("The '" + data_dir + "' directory is not empty")
 
-    if extensions is None:
-        if (User is None) or (Passwd is None) or (db is None):
-            util.exit_message("Must specify User, Passwd & db")
+    if (User is None) or (Passwd is None) or (db is None):
+        util.exit_message("Must specify User, Passwd & db")
 
-        if not verifyUser(User):
-            sys.exit(1)
-        if not verifyPasswd(Passwd):
-            sys.exit(1)
-        if not verifyDbname(db):
-            sys.exit(1)
+    kount = 0
 
-    else:
+    if verifyUser(User):
+        kount = kount + 1
+    if verifyPasswd(Passwd):
+        kount = kount + 1
+    if verifyDbname(db):
+        kount = kount + 1
 
-        if (User is None) and (Passwd is None) and (db is None):
-            pass
-        else:
-            util.exit_message("Must NOT specify User, Passwd or db when --extensions")
-
+    if kount < 3:
+        sys.exit(1)
 
 
     if spock:
@@ -236,8 +225,7 @@ def parse_pg(pg):
    return(pg_major, pg_minor)
 
 
-def setup_pgedge(User=None, Passwd=None, dbName=None, port=None, 
-                 pg_ver=None, spock_ver=None, autostart=False, extensions=None):
+def setup_pgedge(User=None, Passwd=None, dbName=None, port=None, pg_ver=None, spock_ver=None, autostart=False):
     """Install pgEdge node (including postgres, spock, and snowflake-sequences)
 
        Install pgEdge node (including postgres, spock, and snowflake-sequences)
@@ -247,10 +235,9 @@ def setup_pgedge(User=None, Passwd=None, dbName=None, port=None,
        :param Passwd: The password for the newly created db user (required)
        :param dbName: The database name (required)
        :param port: Defaults to 5432 if not specified
-       :param pg_ver: Defaults to latest prod version of pg, such as 16.  May be pinned to a specific pg version such as 16.2
+       :param pg_ver: Defaults to latest prod version of pg, such as 16.  May be pinned to a specific pg version such as 16.4
        :param spock_ver: Defaults to latest prod version of spock, such as 4.0.  May be pinned to a specific spock version such as 4.0.1
        :param autostart: Defaults to False
-       :param extensions: Defaults to 'core' pgEdge extensions. Will install all supported extensions when set to 'all' 
     """
 
     if os.getenv("isAutoStart", "") == "True":
@@ -262,7 +249,7 @@ def setup_pgedge(User=None, Passwd=None, dbName=None, port=None,
 
 
     util.message(f"setup.pgedge(User={User}, Passwd='***', dbName={dbName}, port={port}, \n" + \
-                 f"    pg_ver={pg_ver}, spock_ver={spock_ver}, autostart={autostart}, extensions={extensions})", "debug")
+                 f"    pg_ver={pg_ver}, spock_ver={spock_ver}, autostart={autostart})", "debug")
 
     if not port:
         port = os.getenv("pgePort", "5432")
@@ -280,17 +267,16 @@ def setup_pgedge(User=None, Passwd=None, dbName=None, port=None,
         else:
            autostart = False 
 
-    if extensions is None:
-        if User is None:
-            User = inputUser()
+    if User is None:
+        User = inputUser()
 
-        if Passwd is None:
-            Passwd = inputPasswd()
+    if Passwd is None:
+        Passwd = inputPasswd()
 
-        if dbName is None:
-            dbName = inputDbname()
+    if dbName is None:
+        dbName = inputDbname()
 
-    check_pre_reqs(User, Passwd, dbName, port, pg_major, pg_minor, spock_ver, autostart, extensions)
+    check_pre_reqs(User, Passwd, dbName, port, pg_major, pg_minor, spock_ver, autostart)
 
     pause = 2
     pg_full = f"pg{pg_major}"
@@ -303,7 +289,6 @@ def setup_pgedge(User=None, Passwd=None, dbName=None, port=None,
         util.message("## symlink empty local data directory to empty /data ###")
         osSys("rm -rf data; ln -s /data data")
 
-    core_exts_installed = False
     if dbName is None:
         pass
     else:
@@ -320,29 +305,6 @@ def setup_pgedge(User=None, Passwd=None, dbName=None, port=None,
 
         db.create(dbName, User, Passwd, pg_major, spock_ver)
         time.sleep(pause)
-        core_exts_installed = True
-
-    if core_exts_installed is False:
-        install_disabled_exts(pg_major, CORE_EXTS)
-
-    if extensions == "all":
-        if pg_major not in ["15", "16"]:
-            util.message(f"'--extensions all' not supported for pg{pg_major}", "warning")
-            return
-
-        install_disabled_exts(pg_major, MORE_EXTS)
-
-
-
-def install_disabled_exts(pg_major, exts):
-    util.message(f"setup.install_disabled_exts({pg_major}, {exts}", "debug")
-
-    ext_l = exts.split()
-    for ext in ext_l:
-        full_ext = f"{ext}-pg{pg_major}"
-        util.message(f"installing {full_ext}")
-        osSys(f"{CTL} install {full_ext} --disabled --silent",
-                       fatal_exit=False, is_silent=True)
 
 
 if __name__ == "__main__":
