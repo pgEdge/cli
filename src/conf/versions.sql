@@ -266,10 +266,16 @@ INSERT INTO versions VALUES ('wal2json-pg16', '2.6.0-1', 'amd, arm', 1, '2024050
 -- ## HINTPLAN ###########################
 INSERT INTO projects VALUES ('hintplan', 'ext', 4, 0, '', 0, 'https://github.com/ossc-db/pg_hint_plan/tags',
   'hintplan', 1, 'hintplan.png', 'Execution Plan Hints', 'https://github.com/ossc-db/pg_hint_plan', 'pg_hintplan, pg_hint_plan');
-INSERT INTO releases VALUES ('hintplan-pg15', 10, 'hintplan', 'pgHintPlan', '', 'prod', '', 1, 'POSTGRES', '', '');
+INSERT INTO releases VALUES ('hintplan-pg17', 10, 'hintplan', 'pgHintPlan', '', 'prod', '', 1, 'POSTGRES', '', '');
 INSERT INTO releases VALUES ('hintplan-pg16', 10, 'hintplan', 'pgHintPlan', '', 'prod', '', 1, 'POSTGRES', '', '');
-INSERT INTO versions VALUES ('hintplan-pg15', '1.5.1-1', 'amd, arm', 1, '20230927', 'pg15', '', 'https://github.com/pghintplan/pghintplan/releases/tag/1.5.1');
-INSERT INTO versions VALUES ('hintplan-pg16', '1.6.0-1', 'amd, arm', 1, '20230927', 'pg16', '', 'https://github.com/pghintplan/pghintplan/releases/tag/1.6.0');
+INSERT INTO releases VALUES ('hintplan-pg15', 10, 'hintplan', 'pgHintPlan', '', 'prod', '', 1, 'POSTGRES', '', '');
+
+INSERT INTO versions VALUES ('hintplan-pg17', '1.7.0-1', 'amd, arm', 1, '20240910', 'pg17', '', '');
+INSERT INTO versions VALUES ('hintplan-pg16', '1.6.1-1', 'amd, arm', 1, '20240910', 'pg16', '', '');
+INSERT INTO versions VALUES ('hintplan-pg15', '1.5.2-1', 'amd, arm', 1, '20240910', 'pg15', '', '');
+
+INSERT INTO versions VALUES ('hintplan-pg16', '1.6.0-1', 'amd, arm', 0, '20230927', 'pg16', '', '');
+INSERT INTO versions VALUES ('hintplan-pg15', '1.5.1-1', 'amd, arm', 0, '20230927', 'pg15', '', '');
 
 -- ## TIMESCALEDB #######################
 INSERT INTO projects VALUES ('timescaledb', 'ext', 4, 0, '',0, 'https://github.com/timescale/timescaledb/releases',

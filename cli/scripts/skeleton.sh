@@ -15,6 +15,7 @@ function install_pgedge {
 ## extensions common to pg15, pg16 & pg17
 function test_common_17 {
   ./pgedge install cron-$pgV
+  ./pgedge install hintplan-$pgV      -d demo
 
   # ./pgedge install plprofiler-$pgV
   # ./pgedge install pldebugger-$pgV    -d demo
@@ -30,7 +31,6 @@ function test_common_16 {
   ./pgedge install postgis-$pgV       -d demo
   ./pgedge install vector-$pgV        -d demo
   ./pgedge install audit-$pgV         -d demo
-  ./pgedge install hintplan-$pgV      -d demo
   ./pgedge install timescaledb-$pgV   -d demo
   ./pgedge install setuser-$pgV       -d demo
   ./pgedge install permissions-$pgV   -d demo

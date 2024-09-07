@@ -355,6 +355,10 @@ initPG () {
     initC "firewalld"    "firewalld"    "$firwldV"   ""         "firewalld"         "" "" "nil"
   fi
 
+  if [ "$pgM" == "17" ]; then
+    initC "hintplan-pg$pgM"   "hintplan"   "$hint17V"    "$outPlat" "postgres/hintplan"  "" "" "nil"
+  fi
+
   if [ "$pgM" == "16" ]; then
     initC "audit-pg$pgM"      "audit"      "$audit16V"   "$outPlat" "postgres/audit"     "" "" "nil"
     initC "hintplan-pg$pgM"   "hintplan"   "$hint16V"    "$outPlat" "postgres/hintplan"  "" "" "nil"
