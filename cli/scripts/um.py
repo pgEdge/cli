@@ -160,7 +160,7 @@ def download(component):
 
 
 def download_all():
-    """Download all current components into local cache"""
+    """Download pg15 & pg16 components into local cache"""
 
     comp_l = [
         "pg16", "spock40-pg16", "spock33-pg16", "lolor-pg16",
@@ -178,31 +178,31 @@ def download_all():
 
 
 def make_bundle():
+    """Make a tarball of pg15 & pg16 components"""
 
-  bundle = f"pgedge-{util.MY_VERSION}-{util.get_ctlib_dir()}.tgz"
-  print(f"make_bundle() - {bundle}")
+    bundle = f"pgedge-{util.MY_VERSION}-{util.get_ctlib_dir()}.tgz"
+    print(f"make_bundle() - {bundle}")
 
-  os.chdir("/tmp")
+    os.chdir("/tmp")
 
-  os.system(f"rm -f {bundle}")
-  os.system("rm -f install.py")
-  os.system("rm -rf pgedge")
+    os.system(f"rm -f {bundle}")
+    os.system("rm -f install.py")
+    os.system("rm -rf pgedge")
  
-  repo = util.get_value('GLOBAL', 'REPO') 
-  util.echo_cmd(f"wget {repo}/install.py")
-  util.echo_cmd("python3 install.py")
+    repo = util.get_value('GLOBAL', 'REPO') 
+    util.echo_cmd(f"wget {repo}/install.py")
+    util.echo_cmd("python3 install.py")
 
-  util.echo_cmd("pgedge/pgedge um download-all")
+    util.echo_cmd("pgedge/pgedge um download-all")
 
-  util.echo_cmd(f"tar czf {bundle} pgedge")
+    util.echo_cmd(f"tar czf {bundle} pgedge")
 
-  ## cleanup the details
-  os.system("rm -f install.py")
-  os.system("rm -rf pgedge")
+    os.system("rm -f install.py")
+    os.system("rm -rf pgedge")
 
-  os.system(f"ls -lh /tmp/{bundle}")
+    os.system(f"ls -lh /tmp/{bundle}")
 
-  return
+    return
 
 
 def clean():
