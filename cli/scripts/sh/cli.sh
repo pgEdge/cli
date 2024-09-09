@@ -84,7 +84,9 @@ if [ $rc != 0 ];then
 fi
 v=`python3 --version | cut -d' ' -f2 | cut -d'.' -f1,2`
 
-if [ $v == "3.9" ] || [ $v == "3.10" ] || [ $v == "3.11" ] || [ $v == "3.12" ]; then
+if [ -f /usr/bin/python3.11 ]; then
+  export PYTHON=python3.11
+elif [ $v == "3.9" ] || [ $v == "3.10" ] || [ $v == "3.11" ] || [ $v == "3.12" ]; then
   export PYTHON=python3
 elif [ -f /usr/bin/python3.9 ]; then
   export PYTHON=/usr/bin/python3.9
