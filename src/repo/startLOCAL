@@ -6,6 +6,5 @@ set +e
 
 ./stopLOCAL
 
-cd local
 python3 -m http.server &
 

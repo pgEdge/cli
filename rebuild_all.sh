@@ -31,22 +31,31 @@ cmd () {
 if [ "$vers" == "" ] || [ "$vers" == "all" ]; then
   vers="14 15 16 17"
   echo "# default to rebuilding pg \"$vers\""
-#  cmd "rm -f $OUT/*"
+  cmd "rm -f $OUT/*"
 fi
 
 for ver in ${vers}; do
   echo ""
-#  cmd "rm -f $OUT/*pg$ver*"
-#  cmd "./build_all.sh $ver"
-
+  cmd "rm -f $OUT/*pg$ver*"
+  cmd "./build_all.sh $ver"
 done
 
-./devel/startHTTP.sh
+# 'bp.sh' all various ctlib versions into OUT
+./bp.sh
+
 set -x
 
-if [ "$pkg" == "tgz" ] && [ "$1" == "all" ]; then
+# remove large ctlib tarballs of different architecture
+rm -v $OUT/*ctlibs*osx.tgz
+if [ `arch` == "aarch64" ]; then
+  rm -v $OUT/*ctlibs*amd.tgz
+else
+  rm -v $OUT/*ctlibs*arm.tgz
+fi
 
-  bndl="pgedge-$hubV-$OS.tgz"
+
+if [ "$pkg" == "tgz" ] && [ "$1" == "all" ]; then
+  bndl="pgedge-$hubVV-$OS.tgz"
 
   cd /tmp
 
@@ -56,11 +65,10 @@ if [ "$pkg" == "tgz" ] && [ "$1" == "all" ]; then
   cp $CLI/install.py /tmp/.
   python3 install.py
 
+  cmd "cp -v  $PGE/src/repo/* $OUT/."
   cmd "cp $OUT/* pgedge/data/conf/cache/."
 
-  ##cmd "tar czf $bndl pgedge"
-  ##cmd "tar cf - pgedge | pigz -f $bndl"
-  tar --use-compress-program="pigz -6 --recursive" -cf $bndl pgedge
+  tar --use-compress-program="pigz -8 --recursive" -cf $bndl pgedge
 
   rm -f install.py
   rm -rf pgedge
