@@ -40,7 +40,7 @@ if [ "$PLATFORM" == "el9" ]; then
 fi
 
 if [ "$PLATFORM" == "el8" ] || [ "$PLATFORM" == "el9" ]; then
-  $yum python311 gcc-toolset-13
+  $yum python3.11 python3.11-pip python3.11-devel gcc-toolset-13
   $yum git wget curl pigz sqlite which zip
 
   $yum cpan
