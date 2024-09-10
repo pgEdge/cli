@@ -56,19 +56,7 @@ cmd "git status"
 cmd "git pull"
 
 step 3a "building $vers #########################"
-for ver in ${vers}; do
-    cmd "./build_all.sh $ver"
-
-    if [ "$ver" == "16" ]; then
-        cmd "./build_all.sh $ver rpm"
-
-        step 3a "cleanup unneeded ctlibs ##################"
-        cmd "rm -f $OUT/ctlibs-el*.tgz"
-        cmd "rm -f $OUT/ctlibs-ubu*.tgz"
-        cmd "rm -f $OUT/ctlibs-deb*.tgz"
-        cmd "rm -f $OUT/ctlibs-osx*.tgz"
-    fi
-done
+./rebuild_all.sh "$vers" tgz
 
 step 4 "copy OUT to HIST (outDir) #############"
 cmd "cp $OUT/* $outDir"
