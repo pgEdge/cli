@@ -14,7 +14,7 @@ from ipaddress import ip_address
 try:
     import etcd
     import patroni
-except ImportError:
+except Exception:
     pass
 
 BASE_DIR = "cluster"

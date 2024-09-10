@@ -12,7 +12,7 @@ try:
     from colorama import init
 
     init()
-except ImportError:
+except Exception:
     pass
 
 scripts_lib_path = os.path.join(os.path.dirname(__file__), "lib")
