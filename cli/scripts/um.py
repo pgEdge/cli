@@ -232,7 +232,5 @@ if __name__ == "__main__":
             "upgrade": upgrade,
             "clean": clean,
             "download": download,
-            "download-all": download_all,
-            "make-bundle": make_bundle,
         }
     )
