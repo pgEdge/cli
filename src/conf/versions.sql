@@ -70,7 +70,7 @@ INSERT INTO extensions VALUES ('lolor',     'lolor',     0, '',          '');
 INSERT INTO extensions VALUES ('postgis',   'postgis',   1, 'postgis-3', '');
 INSERT INTO extensions VALUES ('setuser',   'set_user',  1, 'set_user',  '');
 INSERT INTO extensions VALUES ('orafce',    'orafce',    1, 'orafce',    '');
-INSERT INTO extensions VALUES ('pgml',      'pgml',      1, 'pgml',      '');
+INSERT INTO extensions VALUES ('pgml',      'pgml',      1, 'pgml',      'pgml.venv=~/venv');
 INSERT INTO extensions VALUES ('snowflake', 'snowflake', 1, 'snowflake', '');
 
 INSERT INTO extensions VALUES ('vector',    'vector',       0, '',               '');
