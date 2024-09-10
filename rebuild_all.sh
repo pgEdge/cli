@@ -1,6 +1,7 @@
 #!/bin/bash
 cd "$(dirname "$0")"
 
+TGZ_REPO="https://pgedge-upstream.s3.amazonaws.com/REPO"
 set -e
 
 source env.sh
@@ -40,7 +41,7 @@ for ver in ${vers}; do
   cmd "./build_all.sh $ver"
 done
 
-# 'bp.sh' all various ctlib versions into OUT
+# copy all ctlib versions into OUT
 ./bp.sh
 
 set -x
@@ -53,7 +54,6 @@ else
   rm -v $OUT/*ctlibs*arm.tgz
 fi
 
-
 if [ "$pkg" == "tgz" ] && [ "$1" == "all" ]; then
   bndl="pgedge-$hubVV-$OS.tgz"
 
@@ -64,6 +64,7 @@ if [ "$pkg" == "tgz" ] && [ "$1" == "all" ]; then
 
   cp $CLI/install.py /tmp/.
   python3 install.py
+  cmd "pgedge/pgedge set GLOBAL REPO $TGZ_REPO"
 
   cmd "cp -v  $PGE/src/repo/* $OUT/."
   cmd "cp $OUT/* pgedge/data/conf/cache/."
