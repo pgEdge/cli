@@ -18,6 +18,7 @@ python-crontab==3.2.0
 certifi==2024.7.4
 charset_normalizer==3.3.2
 gpustat==1.1.1
+py-cpuinfo==9.0.0
 
 ## ACE Advanced #####
 tqdm==4.66.4

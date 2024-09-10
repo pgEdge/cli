@@ -338,12 +338,12 @@ def info(p_json, p_home, p_repo, print_flag=True):
 
     os_major_ver = ""
 
+    system_cpu_cores, cpu_model = util.get_cpu_info()
+
     if this_uname == "Darwin":
         mem_mb = util.get_mem_mb()
         system_memory_in_kbytes = mem_mb * 1024
         system_memory_in_gb = mem_mb / 1024.0
-        system_cpu_cores = util.get_cpu_cores()
-        cpu_model = util.getoutput("/usr/sbin/sysctl -n machdep.cpu.brand_string")
         prod_name = util.getoutput("sw_vers -productName")
         prod_version = util.getoutput("sw_vers -productVersion")
         this_os = prod_name + " " + prod_version
@@ -351,15 +351,9 @@ def info(p_json, p_home, p_repo, print_flag=True):
         mem_mb = util.get_mem_mb()
         system_memory_in_kbytes = mem_mb * 1024
         system_memory_in_gb = mem_mb / 1024.0
-        system_cpu_cores = util.get_cpu_cores()
-        cpu_model = util.getoutput(
-            "grep 'model name' /proc/cpuinfo | head -1 | cut -d':' -f2"
-        )
         os_major_ver = util.getoutput(
             "cat /etc/os-release | grep VERSION_ID | cut -d= -f2 | tr -d '\"'"
         )
-        if cpu_model == "":
-            cpu_model = "ARM"
         if os.path.exists("/etc/redhat-release"):
             this_os = util.getoutput("cat /etc/redhat-release")
         elif os.path.exists("/etc/system-release"):

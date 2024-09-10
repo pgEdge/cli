@@ -94,8 +94,20 @@ DEBUG = 10
 DEBUG2 = 9
 
 
-def get_ctlib_dir():
+def get_cpu_info():
+    try:
+        import cpuinfo
+    except Exception:
+        return(1,'??')
 
+    cpui = cpuinfo.get_cpu_info()
+    vcpu = cpui["count"]
+    brand = cpui["brand_raw"]
+
+    return(vcpu, brand)
+
+
+def get_ctlib_dir():
     if platform.system() == "Darwin":
         return("osx")
 
@@ -2268,6 +2280,7 @@ def change_pgconf_keyval_auto(p_pgver, p_key, p_val, p_replace=False):
 
     return True
 
+
 def update_pg_hba_conf(p_pgver, rules):
     pg_data = get_column("datadir", p_pgver)
     pg_hba_path = os.path.join(pg_data, "pg_hba.conf")
@@ -2276,6 +2289,7 @@ def update_pg_hba_conf(p_pgver, rules):
         for rule in rules:
             line = f"{rule['type']} {rule['database']} {rule['user']} {rule['address']} {rule['method']}\n"
             pg_hba.write(line)
+
 
 def update_postgresql_conf(p_pgver, p_port, is_new=True, update_listen_addr=True):
     set_column("port", p_pgver, str(p_port))
@@ -2415,19 +2429,6 @@ def update_postgresql_conf(p_pgver, p_port, is_new=True, update_listen_addr=True
         message("\nUsing PostgreSQL Port " + str(p_port))
 
     return
-
-
-def get_cpu_cores():
-    cpu_cores = 0
-
-    if get_platform() == "Linux":
-        cpu_cores = int(
-            getoutput("grep -E -c 'processor([[:space:]]+):.*' /proc/cpuinfo")
-        )
-    elif get_platform() == "Darwin":
-        cpu_cores = int(getoutput("/usr/sbin/sysctl hw.physicalcpu | awk '{print $2}'"))
-
-    return cpu_cores
 
 
 def get_mem_mb():
