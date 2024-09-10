@@ -41,22 +41,22 @@ isEL () {
   ELx=EL$1
 
  
-  grep "VERSION_ID=\"$1" /etc/os-release > /dev/null 2>&1
+  grep "VERSION_ID=\"$1" /etc/redhat-release > /dev/null 2>&1
   rc=$?
   if [ "$rc" == "0" ]; then
     echoX "#       $ELx - OK"
 
-    ## also make sure wget is installed
+    ## also make sure wget and python3.11 are installed
     wget --version > /dev/null 2>&1
     rc=$?
     if [ ! "$rc" == "0" ]; then
-      sudo yum install -y wget
+      sudo yum install -y wget python3.11 python3.11-pip
     fi
 
     return
   fi
 
-  echoX "ERROR: must be $ELx"
+  echoX "ERROR: must be Enterprise Linux 8+"
   exit 1
 }
 
