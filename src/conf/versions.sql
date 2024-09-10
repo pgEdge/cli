@@ -456,10 +456,9 @@ INSERT INTO versions VALUES ('badger', '11.8', '', 0, '20220408', '', '', '');
 -- ## CTLIBS ############################
 INSERT INTO projects VALUES ('ctlibs', 'pge', 0, 0, '', 3, 'https://github.com/pgedge/cli',
   'ctlibs',  0, 'ctlibs.png', 'ctlibs', 'https://github.com/pgedge/cli', '');
-INSERT INTO releases VALUES ('ctlibs', 2, 'ctlibs',  'nodectl Libs', '', 'prod', '', 1, '', '', '');
-INSERT INTO versions VALUES ('ctlibs', '1.4', '', 1, '20240806', '', '', '');
-INSERT INTO versions VALUES ('ctlibs', '1.3', '', 0, '20240604', '', '', '');
-INSERT INTO versions VALUES ('ctlibs', '1.2', '', 0, '20240130', '', '', '');
+INSERT INTO releases VALUES ('ctlibs', 2, 'ctlibs',  'pgEdge Libs', '', 'prod', '', 1, '', '', '');
+INSERT INTO versions VALUES ('ctlibs', '1.5', '', 1, '20240916', '', '', '');
+INSERT INTO versions VALUES ('ctlibs', '1.4', '', 0, '20240806', '', '', '');
 
 -- ## PGCAT #############################
 INSERT INTO projects VALUES ('pgcat', 'pge', 11, 5433, '', 3, 'https://github.com/pgedge/pgcat/tags',
