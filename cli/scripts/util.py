@@ -3674,53 +3674,6 @@ def get_comp_category(p_comp):
     return data[0]
 
 
-# get the list for files in a folder recursively:
-def get_files_recursively(directory):
-    for root, dirs, files in os.walk(directory):
-        for basename in files:
-            filename = os.path.join(root, basename)
-            yield filename
-
-
-# create the manifest file for the extension
-def create_manifest(ext_comp, parent_comp, upgrade=None):
-    return True
-
-    ## the below is all unreachable on purpose (for now)
-    PARENT_DIR = os.path.join(MY_HOME, parent_comp)
-    COMP_DIR = os.path.join(MY_HOME, ext_comp)
-    if upgrade:
-        COMP_DIR = os.path.join(COMP_DIR + "_new", ext_comp)
-
-    manifest = {}
-    manifest["component"] = ext_comp
-    manifest["parent"] = parent_comp
-
-    target_files = []
-
-    files_list = get_files_recursively(COMP_DIR)
-    for file in files_list:
-        target_file = file.replace(COMP_DIR, PARENT_DIR)
-        target_files.append(target_file)
-
-    manifest["files"] = target_files
-
-    manifest_file_name = ext_comp + ".manifest"
-
-    manifest_file_path = os.path.join(MY_HOME, "data", "conf", manifest_file_name)
-
-    try:
-        with open(manifest_file_path, "w") as f:
-            json.dump(manifest, f, sort_keys=True, indent=4)
-    except Exception as e:
-        my_logger.error(str(e))
-        my_logger.error(traceback.format_exc())
-        print(str(e))
-        pass
-
-    return True
-
-
 def copy_extension_files(ext_comp, parent_comp, upgrade=None):
     # always overlay these files ##
     PARENT_DIR = os.path.join(MY_HOME, parent_comp)
@@ -3732,46 +3685,6 @@ def copy_extension_files(ext_comp, parent_comp, upgrade=None):
         cmd = "cp -r " + COMP_DIR + "/. " + PARENT_DIR
         os.system(cmd)
 
-    return True
-
-
-def delete_extension_files(manifest_file, upgrade=None):
-    message(f"util.delete_extension_file({manifest_file}, {upgrade})", "debug")
-    return True
-
-    ### the below is all unreachable on purpose
-    try:
-        with open(manifest_file) as data_file:
-            data = json.load(data_file)
-    except Exception as e:
-        print(str(e))
-        ##exit(1)
-    for file in data["files"]:
-        if os.path.isfile(file) or os.path.islink(file):
-            pass
-        else:
-            continue
-        try:
-            fp = open(file)
-            fp.close()
-        except IOError as e:
-            if upgrade:
-                raise e
-            print(str(e))
-            exit(1)
-    my_logger.info("deleting extension files.")
-    for file in data["files"]:
-        if os.path.isfile(file) or os.path.islink(file):
-            pass
-        else:
-            continue
-        try:
-            os.remove(file)
-        except IOError as e:
-            my_logger.error("failed to remove " + file)
-            my_logger.error(str(e))
-            my_logger.error(traceback.format_exc())
-            print(str(e))
     return True
 
 

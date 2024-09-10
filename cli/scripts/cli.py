@@ -671,14 +671,6 @@ def unpack_comp(p_app, p_old_ver, p_new_ver):
             except Exception:
                 pass
 
-            #my_logger.info("backing up current manifest file " + manifest_file_path)
-            #copy2(manifest_file_path, backup_target_dir)
-            #my_logger.info("deleting existing extension files from " + parent)
-            #util.delete_extension_files(manifest_file_path, upgrade=True)
-            #my_logger.info("deleting existing manifest file : " + manifest_file_name)
-            #my_logger.info("creating new manifest file : " + manifest_file_name)
-            #util.create_manifest(p_app, parent, upgrade=True)
-
             my_logger.info("copying new extension files : " + manifest_file_name)
             util.copy_extension_files(p_app, parent, upgrade=True)
         except Exception as e:
@@ -1622,7 +1614,6 @@ if p_mode == "install":
             installed_comp_list.append(c)
             isExt = meta.is_extension(c)
             if isExt:
-                ## util.create_manifest(c, parent)
                 util.copy_extension_files(c, parent)
             script_name = "install-" + c
             util.run_script(c, script_name, meta.get_current_version(c))

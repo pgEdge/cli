@@ -42,11 +42,6 @@ def remove_comp(p_comp):
         util.delete_dir(p_comp)
     if meta.is_extension(p_comp):
         util.run_script(meta.get_extension_parent(p_comp), script_name, "")
-        ##manifest_file_name = p_comp + ".manifest"
-        ##manifest_file_path = os.path.join(MY_HOME, "data", "conf", manifest_file_name)
-        ## util.delete_extension_files(manifest_file_path)
-        ##util.message("deleted manifest file : " + manifest_file_name, "info", isJSON)
-        ##os.remove(manifest_file_path)
     return 0
 
 
