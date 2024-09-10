@@ -900,7 +900,7 @@ def metrics_check(db):
     """Retrieve advanced DB & OS metrics."""
     try:
         import psutil
-    except ImportError:
+    except Exception:
         util.exit_message("Missing or bad psutil module", 1)
 
     pg_v,spock_v = get_spock_ver()
