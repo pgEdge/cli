@@ -44,8 +44,6 @@ done
 # copy all ctlib versions into OUT
 ./bp.sh
 
-set -x
-
 # remove large ctlib tarballs of different architecture
 rm -v $OUT/*ctlibs*osx.tgz
 if [ `arch` == "aarch64" ]; then
@@ -74,6 +72,7 @@ if [ "$pkg" == "tgz" ] && [ "$1" == "all" ]; then
   rm -f install.py
   rm -rf pgedge
 
-  ls -lh /tmp/$bndl
+  mv /tmp/$bndl $OUT/.
+  ls -lh /$OUT/$bndl
 fi
 
