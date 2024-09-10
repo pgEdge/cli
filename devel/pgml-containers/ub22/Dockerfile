@@ -5,7 +5,7 @@ RUN apt update && \
 	apt install -y \
 		lsb-release curl wget  ca-certificates \
 		gnupg coreutils sudo openssl \
-		vim python3-dev python3-venv python3-pip \
+		vim python3-dev python3-virtualenv python3-pip \
                 git wget curl sqlite libopenblas-dev
 
 ENV TZ=UTC
@@ -24,10 +24,11 @@ RUN python3 install.py
 RUN rm install.py
 
 ENV VIRTUAL_ENV=/home/mledge/venv
-RUN python3 -m venv $VIRTUAL_ENV
+RUN virtualenv $VIRTUAL_ENV
 ENV PATH="$VIRTUAL_ENV/bin:$PATH"
 
 COPY reqs.ub22  /tmp/requirements.txt
+RUN which pip3
 RUN pip3 install -r /tmp/requirements.txt
 
 WORKDIR /home/mledge/pgedge

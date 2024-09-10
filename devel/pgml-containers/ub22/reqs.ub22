@@ -1,5 +1,6 @@
 
 gpustat
+py-cpuinfo
 
 accelerate==0.33.0
 aiohttp==3.9.5
