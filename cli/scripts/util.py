@@ -98,7 +98,7 @@ def get_cpu_info():
     try:
         import cpuinfo
     except Exception:
-        return(1,'??')
+        return(0,'?')
 
     cpui = cpuinfo.get_cpu_info()
     vcpu = cpui["count"]

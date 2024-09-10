@@ -462,7 +462,11 @@ def info(p_json, p_home, p_repo, print_flag=True):
               f"{p_user}{admin_display}  {host_display}  {p_home}")
     print(f"#{bold_start}          OS:{bold_end} {os2}{glibc_v_display} {ctlib_ver}")
 
-    print(f"#{bold_start}     Machine:{bold_end} {mem}, vCPU {cores}, {cpu_model}")
+    cores_model = ""
+    if cores != "0":
+        cores_model = f", vCPU {cores}, {cpu_model}"
+
+    print(f"#{bold_start}     Machine:{bold_end} {mem}{cores_model}")
 
     if gpu_status > "":
         print(f"#{bold_start}  GPU Status:{bold_end} {gpu_status}")
