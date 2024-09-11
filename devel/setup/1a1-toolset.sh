@@ -1,4 +1,6 @@
 
+set -e
+
 echo " "
 echo "# run 1a-toolset"
 
@@ -39,8 +41,16 @@ if [ "$PLATFORM" == "el9" ]; then
   $yum ruby
 fi
 
-if [ "$PLATFORM" == "el8" ] || [ "$PLATFORM" == "el9" ]; then
-  $yum python3.11 python3.11-pip python3.11-devel gcc-toolset-13
+el_supported=no
+if [ "$PLATFORM" == "el8"  ] &&  [ `arch` == "x86_64" ]; then
+  el_supported=yes
+fi
+if [ "$PLATFORM" == "el9"  ] &&  [ `arch` == "aarch64" ]; then
+  el_supported=yes
+fi
+
+if [ $el_supported == "yes" ]; then
+  $yum python39 python39-pip python39-devel gcc-toolset-13
   $yum git wget curl pigz sqlite which zip
 
   $yum cpan
@@ -64,16 +74,14 @@ if [ "$PLATFORM" == "el8" ] || [ "$PLATFORM" == "el9" ]; then
 
   $yum geos-devel proj-devel gdal
 
-  $yum sqlite-devel
+  $yum sqlite-devel patchelf
 
   $yum rpm-build squashfs-tools
   gem install fpm
 
-  $yum podman podman-compose
-
   install_rust
 
-  sudo update-alternatives --set python3 /usr/bin/python3.11
+  sudo update-alternatives --set python3 /usr/bin/python3.9
 fi
 
 
@@ -85,8 +93,3 @@ if [ $rc == "0" ]; then
   install-apt-toolset
 fi
  
-cd ~
-python3 -m venv venv
-source ~/venv/bin/activate
- 
-pip3 install --upgrade pip
