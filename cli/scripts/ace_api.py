@@ -1,6 +1,9 @@
 from datetime import datetime
 
 from flask import Flask, jsonify, request
+from apscheduler.schedulers.background import BackgroundScheduler
+from apscheduler.jobstores.memory import MemoryJobStore
+from apscheduler.executors.pool import ProcessPoolExecutor
 
 import ace
 import ace_config as config
@@ -15,6 +18,12 @@ from ace_data_models import (
 )
 
 app = Flask(__name__)
+
+# apscheduler setup
+scheduler = BackgroundScheduler(
+    jobstores={"default": MemoryJobStore()},
+    executors={"default": ProcessPoolExecutor(32)},
+)
 
 
 """
@@ -69,10 +78,13 @@ def table_diff_api():
         )
 
         raw_args.scheduler.task_id = task_id
+        raw_args.scheduler.task_type = "table-diff"
+        raw_args.scheduler.task_status = "RUNNING"
+        raw_args.scheduler.started_at = datetime.now()
         td_task = ace.table_diff_checks(raw_args)
 
         ace_db.create_ace_task(task=td_task)
-        ace.scheduler.add_job(
+        scheduler.add_job(
             ace_core.table_diff,
             args=(td_task,),
         )
@@ -139,10 +151,13 @@ def table_repair_api():
             upsert_only=upsert_only,
         )
         raw_args.scheduler.task_id = task_id
+        raw_args.scheduler.task_type = "table-repair"
+        raw_args.scheduler.task_status = "RUNNING"
+        raw_args.scheduler.started_at = datetime.now()
         tr_task = ace.table_repair_checks(raw_args)
         ace_db.create_ace_task(task=tr_task)
 
-        ace.scheduler.add_job(ace_core.table_repair, args=(tr_task,))
+        scheduler.add_job(ace_core.table_repair, args=(tr_task,))
         return jsonify({"task_id": task_id, "submitted_at": datetime.now().isoformat()})
     except Exception as e:
         return jsonify({"error": str(e)})
@@ -203,6 +218,9 @@ def table_rerun_api():
             diff_file_path=diff_file,
         )
         raw_args.scheduler.task_id = task_id
+        raw_args.scheduler.task_type = "table-rerun"
+        raw_args.scheduler.task_status = "RUNNING"
+        raw_args.scheduler.started_at = datetime.now()
         td_task = ace.table_diff_checks(raw_args)
         ace_db.create_ace_task(task=td_task)
     except Exception as e:
@@ -210,12 +228,12 @@ def table_rerun_api():
 
     try:
         if behavior == "multiprocessing":
-            ace.scheduler.add_job(ace_core.table_rerun_async, args=(td_task,))
+            scheduler.add_job(ace_core.table_rerun_async, args=(td_task,))
             return jsonify(
                 {"task_id": task_id, "submitted_at": datetime.now().isoformat()}
             )
         elif behavior == "hostdb":
-            ace.scheduler.add_job(ace_core.table_rerun_temptable, args=(td_task,))
+            scheduler.add_job(ace_core.table_rerun_temptable, args=(td_task,))
             return jsonify(
                 {"task_id": task_id, "submitted_at": datetime.now().isoformat()}
             )
@@ -287,9 +305,12 @@ def repset_diff_api():
         )
 
         raw_args.scheduler.task_id = task_id
+        raw_args.scheduler.task_type = "repset-diff"
+        raw_args.scheduler.task_status = "RUNNING"
+        raw_args.scheduler.started_at = datetime.now()
         rd_task = ace.repset_diff_checks(raw_args)
         ace_db.create_ace_task(task=rd_task)
-        ace.scheduler.add_job(ace_core.repset_diff, args=(rd_task,))
+        scheduler.add_job(ace_core.repset_diff, args=(rd_task,))
         return jsonify({"task_id": task_id, "submitted_at": datetime.now().isoformat()})
     except Exception as e:
         return jsonify({"error": str(e)})
@@ -334,9 +355,12 @@ def spock_diff_api():
         )
 
         raw_args.scheduler.task_id = task_id
+        raw_args.scheduler.task_type = "spock-diff"
+        raw_args.scheduler.task_status = "RUNNING"
+        raw_args.scheduler.started_at = datetime.now()
         sd_task = ace.spock_diff_checks(raw_args)
         ace_db.create_ace_task(task=sd_task)
-        ace.scheduler.add_job(ace_core.spock_diff, args=(sd_task,))
+        scheduler.add_job(ace_core.spock_diff, args=(sd_task,))
         return jsonify({"task_id": task_id, "submitted_at": datetime.now().isoformat()})
     except Exception as e:
         return jsonify({"error": str(e)})
@@ -387,9 +411,12 @@ def schema_diff_api():
         )
 
         raw_args.scheduler.task_id = task_id
+        raw_args.scheduler.task_type = "schema-diff"
+        raw_args.scheduler.task_status = "RUNNING"
+        raw_args.scheduler.started_at = datetime.now()
         sd_task = ace.schema_diff_checks(raw_args)
         ace_db.create_ace_task(task=sd_task)
-        ace.scheduler.add_job(ace_core.schema_diff, args=(sd_task,))
+        scheduler.add_job(ace_core.schema_diff, args=(sd_task,))
         return jsonify({"task_id": task_id, "submitted_at": datetime.now().isoformat()})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
@@ -427,7 +454,7 @@ def task_status_api():
 
 
 """
-Starts the ACE (Automated Consistency Engine) API server.
+Starts the ACE API server.
 
 This function performs the following tasks:
 1. Creates necessary database tables for ACE.
@@ -452,7 +479,7 @@ def start_ace():
 
     # Since the scheduler is a BackgroundScheduler,
     # start() will not block
-    ace.scheduler.start()
+    scheduler.start()
     # ace.scheduler.add_listener(ace.error_listener, EVENT_JOB_ERROR)
 
     # A listener is needed for the upcoming 4.0.0 release

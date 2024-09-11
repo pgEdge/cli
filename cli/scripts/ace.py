@@ -14,9 +14,6 @@ import logging
 
 import fire
 import psycopg
-from apscheduler.schedulers.background import BackgroundScheduler
-from apscheduler.jobstores.memory import MemoryJobStore
-from apscheduler.executors.pool import ProcessPoolExecutor
 
 import cluster
 import util
@@ -34,30 +31,13 @@ import ace_cli
 from ace_exceptions import AceException
 
 
-# Configure the root logger
-logging.basicConfig()
-
-# Create a StreamHandler for stdout
-stream_handler = logging.StreamHandler(sys.stdout)
-stream_handler.setLevel(logging.DEBUG)
-formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
-stream_handler.setFormatter(formatter)
-
-# Get the apscheduler logger and add the handler
-apscheduler_logger = logging.getLogger("apscheduler")
-apscheduler_logger.setLevel(logging.INFO)
-apscheduler_logger.addHandler(stream_handler)
-
-
-# apscheduler setup
-scheduler = BackgroundScheduler(
-    jobstores={"default": MemoryJobStore()},
-    executors={"default": ProcessPoolExecutor(32)},
-)
-
-
 """
-Defining a custom exception class for ACE
+CAUTION:
+Do not declare any variables in the global scope of this file.
+This causes mpire to crash on macOS and Windows because of the
+freeze_support() issue.
+
+https://stackoverflow.com/a/60693016/7170797
 """
 
 
@@ -141,7 +121,7 @@ def fix_schema(diff_file, sql1, sql2):
 
 
 def get_row_count(p_con, p_schema, p_table):
-    sql = f"SELECT count(*) FROM {p_schema}.\"{p_table}\""
+    sql = f'SELECT count(*) FROM {p_schema}."{p_table}"'
 
     try:
         cur = p_con.cursor()
@@ -1121,7 +1101,24 @@ def error_listener(event):
 
 
 if __name__ == "__main__":
+    # Configure the root logger
+    logging.basicConfig()
+
+    # Create a StreamHandler for stdout
+    stream_handler = logging.StreamHandler(sys.stdout)
+    stream_handler.setLevel(logging.DEBUG)
+    formatter = logging.Formatter(
+        "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    )
+    stream_handler.setFormatter(formatter)
+
+    # Get the apscheduler logger and add the handler
+    apscheduler_logger = logging.getLogger("apscheduler")
+    apscheduler_logger.setLevel(logging.INFO)
+    apscheduler_logger.addHandler(stream_handler)
+
     ace_db.create_ace_tables()
+
     fire.Fire(
         {
             "table-diff": ace_cli.table_diff_cli,

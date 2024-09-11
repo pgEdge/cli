@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import datetime
 
 """
@@ -56,15 +56,10 @@ class TableDiffTask:
     # status of each table-diff task (for now)
     skip_db_update: bool = False
 
-    scheduler: Task = Task()
-
-    # Task specific parameters
-    scheduler.task_type = "table-diff"
-    scheduler.task_status = "RUNNING"
-    scheduler.started_at = datetime.now()
+    scheduler: Task = field(default=Task)
 
     # Derived fields
-    fields: DerivedFields = DerivedFields()
+    fields: DerivedFields = field(default=DerivedFields)
 
 
 @dataclass
@@ -90,13 +85,10 @@ class TableRepairTask:
     upsert_only: bool
 
     # Task-specific parameters
-    scheduler: Task = Task()
-    scheduler.task_type = "table-repair"
-    scheduler.task_status = "RUNNING"
-    scheduler.started_at = datetime.now()
+    scheduler: Task = field(default=Task)
 
     # Derived fields
-    fields: DerivedFields = DerivedFields()
+    fields: DerivedFields = field(default=DerivedFields)
 
 
 @dataclass
@@ -122,13 +114,10 @@ class RepsetDiffTask:
     invoke_method: str = "CLI"
 
     # Task-specific parameters
-    scheduler: Task = Task()
-    scheduler.task_type = "repset-diff"
-    scheduler.task_status = "RUNNING"
-    scheduler.started_at = datetime.now()
+    scheduler: Task = field(default=Task)
 
     # Derived fields
-    fields: DerivedFields = DerivedFields()
+    fields: DerivedFields = field(default=DerivedFields)
 
 
 @dataclass
@@ -144,13 +133,10 @@ class SpockDiffTask:
     quiet_mode: bool
 
     # Task-specific parameters
-    scheduler: Task = Task()
-    scheduler.task_type = "spock-diff"
-    scheduler.task_status = "RUNNING"
-    scheduler.started_at = datetime.now()
+    scheduler: Task = field(default=Task)
 
     # Derived fields
-    fields: DerivedFields = DerivedFields()
+    fields: DerivedFields = field(default=DerivedFields)
 
 
 @dataclass
@@ -167,10 +153,7 @@ class SchemaDiffTask:
     quiet_mode: bool
 
     # Task-specific parameters
-    scheduler: Task = Task()
-    scheduler.task_type = "schema-diff"
-    scheduler.task_status = "RUNNING"
-    scheduler.started_at = datetime.now()
+    scheduler: Task = field(default=Task)
 
     # Derived fields
-    fields: DerivedFields = DerivedFields()
+    fields: DerivedFields = field(default=DerivedFields)

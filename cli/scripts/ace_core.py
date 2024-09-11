@@ -378,7 +378,7 @@ def table_diff(td_task: TableDiffTask):
                 row_count = rows
                 conn_with_max_rows = conn
     except Exception as e:
-        context = {"total_rows": total_rows, "mismatch": False, "errors": [e]}
+        context = {"total_rows": total_rows, "mismatch": False, "errors": [str(e)]}
         ace.handle_task_exception(td_task, context)
         raise e
 
@@ -467,7 +467,7 @@ def table_diff(td_task: TableDiffTask):
         context = {
             "total_rows": total_rows,
             "mismatch": False,
-            "errors": [future.exception()],
+            "errors": [str(future.exception())],
         }
         ace.handle_task_exception(td_task, context)
         raise future.exception()
@@ -561,7 +561,7 @@ def table_diff(td_task: TableDiffTask):
                     quiet_mode=td_task.quiet_mode,
                 )
     except Exception as e:
-        context = {"total_rows": total_rows, "mismatch": mismatch, "errors": [e]}
+        context = {"total_rows": total_rows, "mismatch": mismatch, "errors": [str(e)]}
         ace.handle_task_exception(td_task, context)
         raise e
 
@@ -625,7 +625,11 @@ def table_diff(td_task: TableDiffTask):
             elif td_task.output == "csv":
                 ace.write_diffs_csv(diff_dict)
         except Exception as e:
-            context = {"total_rows": total_rows, "mismatch": mismatch, "errors": [e]}
+            context = {
+                "total_rows": total_rows,
+                "mismatch": mismatch,
+                "errors": [str(e)],
+            }
             ace.handle_task_exception(td_task, context)
             raise e
 
@@ -670,7 +674,7 @@ def table_repair(tr_task: TableRepairTask):
                 psycopg.connect(**params)
             )
     except Exception as e:
-        context = {"errors": [e]}
+        context = {"errors": [str(e)]}
         ace.handle_task_exception(tr_task, context)
         raise e
 
@@ -725,7 +729,7 @@ def table_repair(tr_task: TableRepairTask):
     try:
         diff_json = json.loads(open(tr_task.diff_file_path, "r").read())
     except Exception as e:
-        context = {"errors": [f"Could not load diff file as JSON: {e}"]}
+        context = {"errors": [f"Could not load diff file as JSON: {str(e)}"]}
         ace.handle_task_exception(tr_task, context)
         raise e
 
@@ -746,7 +750,7 @@ def table_repair(tr_task: TableRepairTask):
             for node_pair, nodes_data in diff_json.items()
         }
     except Exception as e:
-        context = {"errors": [f"Could not read diff file: {e}"]}
+        context = {"errors": [f"Could not read diff file: {str(e)}"]}
         ace.handle_task_exception(tr_task, context)
         raise e
 
@@ -906,7 +910,7 @@ def table_repair(tr_task: TableRepairTask):
             tr_task.fields.l_table,
         )
     except Exception as e:
-        context = {"errors": [f"Could not get row types: {e}"]}
+        context = {"errors": [f"Could not get row types: {str(e)}"]}
         ace.handle_task_exception(tr_task, context)
         raise e
 
@@ -971,7 +975,7 @@ def table_repair(tr_task: TableRepairTask):
             if spock_version >= 4.0:
                 cur.execute("SELECT spock.repair_mode(true);")
         except Exception as e:
-            context = {"errors": [f"Could not set repair mode: {e}"]}
+            context = {"errors": [f"Could not set repair mode: {str(e)}"]}
             ace.handle_task_exception(tr_task, context)
             raise e
 
@@ -1031,7 +1035,7 @@ def table_repair(tr_task: TableRepairTask):
 
             conn.commit()
         except Exception as e:
-            context = {"errors": [f"Could not perform repairs: {e}"]}
+            context = {"errors": [f"Could not perform repairs: {str(e)}"]}
             ace.handle_task_exception(tr_task, context)
             raise e
 
@@ -1115,7 +1119,7 @@ def table_repair(tr_task: TableRepairTask):
         try:
             json.dump(report, open(filename, "w"), default=str, indent=2)
         except Exception as e:
-            context = {"errors": [f"Could not write report: {e}"]}
+            context = {"errors": [f"Could not write report: {str(e)}"]}
             ace.handle_task_exception(tr_task, context)
             raise e
 
@@ -1214,7 +1218,7 @@ def table_rerun_temptable(td_task: TableDiffTask) -> None:
             cur.close()
             con.commit()
     except Exception as e:
-        context = {"errors": [f"Could not create temp table: {e}"]}
+        context = {"errors": [f"Could not create temp table: {str(e)}"]}
         ace.handle_task_exception(td_task, context)
         raise e
 
@@ -1237,7 +1241,7 @@ def table_rerun_temptable(td_task: TableDiffTask) -> None:
         ace_db.create_ace_task(task=diff_task)
         table_diff(diff_task)
     except Exception as e:
-        context = {"errors": [f"Could not run table diff: {e}"]}
+        context = {"errors": [f"Could not run table diff: {str(e)}"]}
         ace.handle_task_exception(td_task, context)
         raise e
 
@@ -1248,7 +1252,7 @@ def table_rerun_temptable(td_task: TableDiffTask) -> None:
             cur.close()
             con.commit()
     except Exception as e:
-        context = {"errors": [f"Could not clean up temp table: {e}"]}
+        context = {"errors": [f"Could not clean up temp table: {str(e)}"]}
         ace.handle_task_exception(td_task, context)
         raise e
 
@@ -1268,7 +1272,7 @@ def table_rerun_async(td_task: TableDiffTask) -> None:
             if not table_types:
                 table_types = ace.get_row_types(conn, td_task.fields.l_table)
     except Exception as e:
-        context = {"errors": [f"Could not connect to nodes: {e}"]}
+        context = {"errors": [f"Could not connect to nodes: {str(e)}"]}
         ace.handle_task_exception(td_task, context)
         raise e
 
@@ -1276,7 +1280,7 @@ def table_rerun_async(td_task: TableDiffTask) -> None:
     try:
         diff_data = json.load(open(td_task.diff_file_path, "r"))
     except Exception as e:
-        context = {"errors": [f"Could not read diff file: {e}"]}
+        context = {"errors": [f"Could not read diff file: {str(e)}"]}
         ace.handle_task_exception(td_task, context)
         raise e
 
@@ -1404,7 +1408,7 @@ def table_rerun_async(td_task: TableDiffTask) -> None:
                     quiet_mode=td_task.quiet_mode,
                 )
     except Exception as e:
-        context = {"errors": [f"Could not spawn multiprocessing workers: {e}"]}
+        context = {"errors": [f"Could not spawn multiprocessing workers: {str(e)}"]}
         ace.handle_task_exception(td_task, context)
         raise e
 
@@ -1466,7 +1470,7 @@ def table_rerun_async(td_task: TableDiffTask) -> None:
             elif td_task.output == "csv":
                 ace.write_diffs_csv()
         except Exception as e:
-            context = {"errors": [f"Could not write diffs to file: {e}"]}
+            context = {"errors": [f"Could not write diffs to file: {str(e)}"]}
             ace.handle_task_exception(td_task, context)
             raise e
 
@@ -1584,7 +1588,7 @@ def spock_diff(sd_task: SpockDiffTask) -> None:
                 psycopg.connect(**params, row_factory=dict_row)
             )
     except Exception as e:
-        context = {"errors": [f"Could not connect to nodes: {e}"]}
+        context = {"errors": [f"Could not connect to nodes: {str(e)}"]}
         ace.handle_task_exception(sd_task, context)
         raise e
 
@@ -1699,7 +1703,7 @@ def spock_diff(sd_task: SpockDiffTask) -> None:
             print("\n")
 
     except Exception as e:
-        context = {"errors": [f"Error while comparing Spock meta data: {e}"]}
+        context = {"errors": [f"Error while comparing Spock meta data: {str(e)}"]}
         ace.handle_task_exception(sd_task, context)
         raise e
 
@@ -1762,7 +1766,7 @@ def schema_diff(sc_task: SchemaDiffTask) -> None:
                 )
                 file_list.append(sql1)
     except Exception as e:
-        context = {"errors": [f"Could not connect to nodes: {e}"]}
+        context = {"errors": [f"Could not connect to nodes: {str(e)}"]}
         ace.handle_task_exception(sc_task, context)
         raise e
 
@@ -1815,7 +1819,7 @@ def schema_diff(sc_task: SchemaDiffTask) -> None:
                     f" and {sc_task.fields.node_list[n]}!!"
                 )
     except Exception as e:
-        context = {"errors": [f"Error while comparing schemas: {e}"]}
+        context = {"errors": [f"Error while comparing schemas: {str(e)}"]}
         ace.handle_task_exception(sc_task, context)
         raise e
 

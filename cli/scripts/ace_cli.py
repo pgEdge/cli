@@ -1,3 +1,4 @@
+from datetime import datetime
 import ace_config as config
 import ace_core
 import ace_db
@@ -68,6 +69,10 @@ def table_diff_cli(
             quiet_mode=quiet,
         )
         raw_args.scheduler.task_id = task_id
+        raw_args.scheduler.task_type = "table-diff"
+        raw_args.scheduler.task_status = "RUNNING"
+        raw_args.scheduler.started_at = datetime.now()
+
         td_task = ace.table_diff_checks(raw_args)
         ace_db.create_ace_task(task=td_task)
         ace_core.table_diff(td_task)
@@ -132,6 +137,9 @@ def table_repair_cli(
             upsert_only=upsert_only,
         )
         raw_args.scheduler.task_id = task_id
+        raw_args.scheduler.task_type = "table-repair"
+        raw_args.scheduler.task_status = "RUNNING"
+        raw_args.scheduler.started_at = datetime.now()
         tr_task = ace.table_repair_checks(raw_args)
         ace_db.create_ace_task(task=tr_task)
         ace_core.table_repair(tr_task)
@@ -189,6 +197,9 @@ def table_rerun_cli(
             diff_file_path=diff_file,
         )
         raw_args.scheduler.task_id = task_id
+        raw_args.scheduler.task_type = "table-rerun"
+        raw_args.scheduler.task_status = "RUNNING"
+        raw_args.scheduler.started_at = datetime.now()
         td_task = ace.table_diff_checks(raw_args)
         ace_db.create_ace_task(task=td_task)
     except AceException as e:
@@ -268,6 +279,9 @@ def repset_diff_cli(
             skip_tables=skip_tables,
         )
         raw_args.scheduler.task_id = task_id
+        raw_args.scheduler.task_type = "repset-diff"
+        raw_args.scheduler.task_status = "RUNNING"
+        raw_args.scheduler.started_at = datetime.now()
         rd_task = ace.repset_diff_checks(raw_args)
         ace_db.create_ace_task(task=rd_task)
         ace_core.repset_diff(rd_task)
@@ -313,6 +327,9 @@ def spock_diff_cli(
             quiet_mode=quiet,
         )
         raw_args.scheduler.task_id = task_id
+        raw_args.scheduler.task_type = "spock-diff"
+        raw_args.scheduler.task_status = "RUNNING"
+        raw_args.scheduler.started_at = datetime.now()
         spock_diff_task = ace.spock_diff_checks(raw_args)
         ace_db.create_ace_task(task=spock_diff_task)
         ace_core.spock_diff(spock_diff_task)
@@ -355,6 +372,9 @@ def schema_diff_cli(cluster_name, schema_name, nodes="all", dbname=None, quiet=F
             quiet_mode=quiet,
         )
         raw_args.scheduler.task_id = task_id
+        raw_args.scheduler.task_type = "schema-diff"
+        raw_args.scheduler.task_status = "RUNNING"
+        raw_args.scheduler.started_at = datetime.now()
         sd_task = ace.schema_diff_checks(raw_args)
         ace_db.create_ace_task(task=sd_task)
         ace_core.schema_diff(sd_task)

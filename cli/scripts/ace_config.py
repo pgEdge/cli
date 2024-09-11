@@ -1,7 +1,7 @@
 import os
 
 # Postgres options
-STATEMENT_TIMEOUT = 10000
+STATEMENT_TIMEOUT = 60000
 
 
 #  Default values for ACE table-diff
