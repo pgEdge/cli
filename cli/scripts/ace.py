@@ -464,8 +464,8 @@ def table_diff_checks(td_task: TableDiffTask) -> TableDiffTask:
         node_list = parse_nodes(td_task._nodes)
     except ValueError as e:
         raise AceException(
-            f'Nodes should be a comma-separated list of nodenames. \
-                E.g., --nodes="n1,n2". Error: {e}'
+            "Nodes should be a comma-separated list of nodenames " +
+            f"\n\tE.g., --nodes=\"n1,n2\". Error: {e}"
         )
 
     if len(node_list) > 3:
@@ -509,8 +509,8 @@ def table_diff_checks(td_task: TableDiffTask) -> TableDiffTask:
 
     if not database:
         raise AceException(
-            f"Database '{td_task._dbname}' not found in cluster"
-            f"'{td_task.cluster_name}'"
+            f"Database '{td_task._dbname}' " +
+            f"not found in cluster '{td_task.cluster_name}'"
         )
 
     # Combine db and cluster_nodes into a single json
@@ -689,8 +689,8 @@ def table_repair_checks(tr_task: TableRepairTask) -> TableRepairTask:
 
     if not database:
         raise AceException(
-            f"Database '{tr_task._dbname}' not found in cluster"
-            f"'{tr_task.cluster_name}'"
+            f"Database '{tr_task._dbname}' " +
+            f"not found in cluster '{tr_task.cluster_name}'"
         )
 
     # Combine db and cluster_nodes into a single json
@@ -826,8 +826,8 @@ def repset_diff_checks(rd_task: RepsetDiffTask) -> RepsetDiffTask:
         node_list = parse_nodes(rd_task._nodes)
     except ValueError as e:
         raise AceException(
-            f'Nodes should be a comma-separated list of nodenames. \
-                E.g., --nodes="n1,n2". Error: {e}'
+            "Nodes should be a comma-separated list of nodenames " +
+            f"\n\tE.g., --nodes=\"n1,n2\". Error: {e}"
         )
 
     if len(node_list) > 3:
@@ -863,8 +863,8 @@ def repset_diff_checks(rd_task: RepsetDiffTask) -> RepsetDiffTask:
 
     if not database:
         raise AceException(
-            f"Database '{rd_task._dbname}' not found in cluster"
-            f"'{rd_task.cluster_name}'"
+            f"Database '{rd_task._dbname}' " +
+            f"not found in cluster '{rd_task.cluster_name}'"
         )
 
     # Combine db and cluster_nodes into a single json
@@ -951,8 +951,8 @@ def spock_diff_checks(sd_task: SpockDiffTask) -> SpockDiffTask:
         node_list = parse_nodes(sd_task._nodes)
     except ValueError as e:
         raise AceException(
-            f'Nodes should be a comma-separated list of nodenames. \
-                E.g., --nodes="n1,n2". Error: {e}'
+            "Nodes should be a comma-separated list of nodenames " +
+            f"\n\tE.g., --nodes=\"n1,n2\". Error: {e}"
         )
 
     if sd_task._nodes != "all" and len(node_list) == 1:
@@ -984,8 +984,8 @@ def spock_diff_checks(sd_task: SpockDiffTask) -> SpockDiffTask:
 
     if not database:
         raise AceException(
-            f"Database '{sd_task._dbname}' not found in cluster"
-            f"'{sd_task.cluster_name}'"
+            f"Database '{sd_task._dbname}' " + 
+            f"not found in cluster '{sd_task.cluster_name}'"
         )
 
     # Combine db and cluster_nodes into a single json
@@ -1037,9 +1037,9 @@ def schema_diff_checks(sc_task: SchemaDiffTask) -> SchemaDiffTask:
     try:
         node_list = parse_nodes(sc_task._nodes)
     except ValueError as e:
-        util.exit_message(
-            f'Nodes should be a comma-separated list of nodenames. \
-                E.g., --nodes="n1,n2". Error: {e}'
+        raise AceException(
+            "Nodes should be a comma-separated list of nodenames " +
+            f"\n\tE.g., --nodes=\"n1,n2\". Error: {e}"
         )
 
     if sc_task._nodes != "all" and len(node_list) == 1:
@@ -1068,8 +1068,8 @@ def schema_diff_checks(sc_task: SchemaDiffTask) -> SchemaDiffTask:
 
     if not database:
         raise AceException(
-            f"Database '{sc_task._dbname}' not found in cluster"
-            f"'{sc_task.cluster_name}'"
+            f"Database '{sc_task._dbname}' " +
+            f"not found in cluster '{sc_task.cluster_name}'"
         )
 
     # Combine db and cluster_nodes into a single json
