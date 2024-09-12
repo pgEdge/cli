@@ -54,6 +54,7 @@ etcdV=3.5.12-2
 
 audit15V=1.7.0-1
 audit16V=16.0-1
+audit17V=17.0-1
 
 postgisV=3.4.2-1
 

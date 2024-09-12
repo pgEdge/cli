@@ -356,6 +356,7 @@ initPG () {
   fi
 
   if [ "$pgM" == "17" ]; then
+    initC "audit-pg$pgM"      "audit"      "$audit17V"   "$outPlat" "postgres/audit"     "" "" "nil"
     initC "hintplan-pg$pgM"   "hintplan"   "$hint17V"    "$outPlat" "postgres/hintplan"  "" "" "nil"
   fi
 

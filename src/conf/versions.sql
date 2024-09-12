@@ -255,10 +255,13 @@ INSERT INTO versions VALUES ('prompgexp', '0.15.0', 'amd, arm', 1, '20240521', '
 -- ## AUDIT ##############################
 INSERT INTO projects VALUES ('audit', 'ext', 4, 0, '', 0, 'https://github.com/pgaudit/pgaudit/releases',
   'audit', 1, 'audit.png', 'Audit Logging', 'https://github.com/pgaudit/pgaudit', 'pg_audit, pgaudit');
-INSERT INTO releases VALUES ('audit-pg15', 10, 'audit', 'pgAudit', '', 'prod', '', 1, 'POSTGRES', '', '');
+INSERT INTO releases VALUES ('audit-pg17', 10, 'audit', 'pgAudit', '', 'prod', '', 1, 'POSTGRES', '', '');
 INSERT INTO releases VALUES ('audit-pg16', 10, 'audit', 'pgAudit', '', 'prod', '', 1, 'POSTGRES', '', '');
-INSERT INTO versions VALUES ('audit-pg15', '1.7.0-1', 'amd, arm', 1, '20230914', 'pg15', '', 'https://github.com/pgaudit/pgaudit/releases/tag/1.7.0');
+INSERT INTO releases VALUES ('audit-pg15', 10, 'audit', 'pgAudit', '', 'prod', '', 1, 'POSTGRES', '', '');
+
+INSERT INTO versions VALUES ('audit-pg17', '17.0-1',  'amd, arm', 1, '20240916', 'pg17', '', 'https://github.com/pgaudit/pgaudit/releases/tag/17.0');
 INSERT INTO versions VALUES ('audit-pg16', '16.0-1',  'amd, arm', 1, '20230914', 'pg16', '', 'https://github.com/pgaudit/pgaudit/releases/tag/16.0');
+INSERT INTO versions VALUES ('audit-pg15', '1.7.0-1', 'amd, arm', 1, '20230914', 'pg15', '', 'https://github.com/pgaudit/pgaudit/releases/tag/1.7.0');
 
 -- ## WAL2JSON ###########################
 INSERT INTO projects VALUES ('wal2json', 'ext', 4, 0, '', 0, 'https://github.com/eulerto/wal2json/tags',
