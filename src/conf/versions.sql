@@ -482,8 +482,9 @@ INSERT INTO projects VALUES ('backrest', 'pge', 11, 0, '', 3, 'http://pgbackrest
   'backrest',  0, 'backrest.png', 'Backup & Restore', 'http://pgbackrest.org', 'pg_backrest, pgbackrest');
 INSERT INTO releases VALUES ('backrest', 2, 'backrest',  'pgBackRest', '', 'prod', '', 1, 'MIT', '', '');
 
-INSERT INTO versions VALUES ('backrest', '2.53-1', 'amd, arm', 1, '20240729', '', '', '');
-INSERT INTO versions VALUES ('backrest', '2.52-1', 'amd, arm', 0, '20240612', '', '', '');
+INSERT INTO versions VALUES ('backrest', '2.53.1-1', 'amd, arm', 1, '20240916', '', '', '');
+INSERT INTO versions VALUES ('backrest', '2.53-1',   'amd, arm', 0, '20240729', '', '', '');
+INSERT INTO versions VALUES ('backrest', '2.52-1',   'amd, arm', 0, '20240612', '', '', '');
 
 -- ## FIREWALLD #########################
 INSERT INTO projects VALUES ('firewalld', 'app', 11, 0, '', 4, 'https://firewalld.org',

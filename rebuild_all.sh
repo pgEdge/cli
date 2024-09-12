@@ -47,9 +47,9 @@ done
 # remove large ctlib tarballs of different architecture
 rm -v $OUT/*ctlibs*osx.tgz
 if [ `arch` == "aarch64" ]; then
-  rm -v $OUT/*ctlibs*amd.tgz
+  rm -f $OUT/*ctlibs*amd.tgz
 else
-  rm -v $OUT/*ctlibs*arm.tgz
+  rm -f $OUT/*ctlibs*arm.tgz
 fi
 
 if [ "$pkg" == "tgz" ] && [ "$1" == "all" ]; then

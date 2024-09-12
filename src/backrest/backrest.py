@@ -10,12 +10,12 @@ from datetime import datetime
 from tabulate import tabulate
 
 def pgV():
-    """Return the first found PostgreSQL version (pg14, pg15, or pg16)."""
-    pg_versions = ["pg14", "pg15", "pg16"]
+    """Return the first found PostgreSQL version (v14 thru v17)."""
+    pg_versions = ["pg14", "pg15", "pg16", "pg17"]
     for pg_version in pg_versions:
         if os.path.isdir(pg_version):
             return pg_version
-    sys.exit("pg14, 15 or 16 must be installed")
+    sys.exit("pg14, 15, 16 or 17 must be installed")
 
 def osSys(p_input, p_display=True):
     """Execute a shell command and optionally display it."""

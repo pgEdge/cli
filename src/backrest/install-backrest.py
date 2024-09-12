@@ -23,13 +23,13 @@ def exit_rm_backrest(msg):
 
 
 def pgV():
-    pg_versions = ["pg14", "pg15", "pg16"]
+    pg_versions = ["pg14", "pg15", "pg16", "pg17"]
     os.chdir(f"{thisDir}/../")
     for pg_version in pg_versions:
         if os.path.isdir(pg_version):
             return pg_version
 
-    exit_rm_backrest("pg14, 15 or 16 must be installed")
+    exit_rm_backrest("pg14, 15, 16 or 17 must be installed")
 
 def osSys(p_input, p_display=False):
     if p_display:

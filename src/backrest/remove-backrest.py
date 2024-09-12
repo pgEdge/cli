@@ -10,13 +10,14 @@ elif os.path.isdir("pg15"):
     pgV = "pg15"
 elif os.path.isdir("pg16"):
     pgV = "pg16"
+elif os.path.isdir("pg17"):
+    pgV = "pg17"
 
 autostart = util.get_column("autostart", "backrest")
 if autostart == "on":
     startup.remove_linux("backrest")
 
 os.system("sudo rm -f /usr/bin/pgbackrest")
-
 
 isRM_DATA = os.getenv("isRM_DATA", "False")
 if isRM_DATA == "True":
