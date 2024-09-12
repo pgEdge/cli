@@ -49,8 +49,13 @@ array[0]="$MY_HOME/hub/scripts"
 LIB="$MY_HOME/hub/scripts/lib"
 array[1]="$LIB"
 
-py_path="el9-arm el9-amd el8-amd ubu22-arm ubu22-amd osx"
-py_path="$py_path ubu24-arm ubu24-amd deb12-arm deb12-amd el10-amd el10-arm"
+arch=`arch`
+if [ $arch == "x86_64" ]; then
+  arch=amd
+else
+  arch=arm
+fi
+py_path="py3.9-$arch py3.10-$arch py3.11-$arch py3.12-$arch osx"
 lib="None"
 set_pythonpath "$py_path"
 
@@ -71,10 +76,7 @@ do
   fi
 done
 
-## echo "DEBUG: PYTHONPATH=$PYTHONPATH"
-
 set_libpath "14 15 16 17"
-## echo "DEBUG: LD_LIBRARY_PATH=$LD_LIBRARY_PATH"
 
 python3 --version > /dev/null 2>&1
 rc=$?
@@ -82,17 +84,13 @@ if [ $rc != 0 ];then
   echo "ERROR: missing python3"
   exit 1
 fi
-v=`python3 --version | cut -d' ' -f2 | cut -d'.' -f1,2`
 
-if [ -f /usr/bin/python3.11 ]; then
-  export PYTHON=python3.11
-elif [ $v == "3.9" ] || [ $v == "3.10" ] || [ $v == "3.11" ] || [ $v == "3.12" ]; then
-  export PYTHON=python3
-elif [ -f /usr/bin/python3.9 ]; then
-  export PYTHON=/usr/bin/python3.9
+v=`python3 --version | cut -d' ' -f2 | cut -d'.' -f1,2`
+if [ $v == "3.9" ] || [ $v == "3.10" ] || [ $v == "3.11" ] || [ $v == "3.12" ]; then
+  cat /dev/null
 else
-  # try it anyway
-  export PYTHON=python3
+  echo "Python$v not supported"
+  exit 1
 fi
 
-$PYTHON -W ignore -u "$MY_HOME/hub/scripts/cli.py" "$@"
+python3 -W ignore -u "$MY_HOME/hub/scripts/cli.py" "$@"

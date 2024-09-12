@@ -226,8 +226,7 @@ if util.is_admin() and util.is_systemctl():
     cmd_status = pg_ctl + " status -D " + pg_data
     cmd_log = "-l " + pg_data + "/pgstartup.log"
     startup.config_linux(
-        pgver, systemsvc, svcuser, cmd_start, cmd_log, cmd_stop, cmd_reload, cmd_status,
-        p_env=f"LD_LIBRARY_PATH={os.path.join(MY_HOME, pgver, 'lib')}"
-    )
+        pgver, systemsvc, svcuser, cmd_start, cmd_log, cmd_stop, cmd_reload, cmd_status)
+        ##p_env=f"LD_LIBRARY_PATH={os.path.join(MY_HOME, pgver, 'lib')}"
     util.set_column("svcname", pgver, systemsvc)
     util.set_column("autostart", pgver, "on")
