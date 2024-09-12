@@ -659,7 +659,7 @@ def add_db(cluster_name, database_name, username, password):
     update_json(cluster_name, db_json)
 
 
-def add_node(cluster_name, source_node, target_node, repo1_path=None, backup_id=None, script=" ", stanza=" "):
+def add_node(cluster_name, source_node, target_node, repo1_path=None, backup_id=None, script=" ", stanza=" ", install=True):
     """
     Adds a new node to a cluster, copying configurations from a specified 
     source node.
