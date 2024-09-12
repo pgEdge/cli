@@ -151,22 +151,25 @@ INSERT INTO versions VALUES ('pg13', '13.15-1', 'amd', 0, '20240509','', '', '')
 
 INSERT INTO releases VALUES ('pg14', 1, 'pg', '', '', 'prod', 
   '<font size=-1>New in <a href=https://www.postgresql.org/docs/14/release-14.html>2021</a></font>', 1, 'POSTGRES', '', '');
-INSERT INTO versions VALUES ('pg14', '14.13-1', 'amd, arm', 1, '20240808', '','','');
+INSERT INTO versions VALUES ('pg14', '14.13-2', 'amd, arm', 1, '20240916', '','','');
+INSERT INTO versions VALUES ('pg14', '14.13-1', 'amd, arm', 0, '20240808', '','','');
 INSERT INTO versions VALUES ('pg14', '14.12-3', 'amd, arm', 0, '20240710', '','','');
 
 INSERT INTO releases VALUES ('pg15', 2, 'pg', '', '', 'prod', 
   '<font size=-1>New in <a href=https://www.postgresql.org/docs/15/release-15.html>2022</a></font>', 1, 'POSTGRES', '', '');
-INSERT INTO versions VALUES ('pg15', '15.8-1',  'amd, arm', 1, '20240808','', '', '');
+INSERT INTO versions VALUES ('pg15', '15.8-2',  'amd, arm', 1, '20240916','', '', '');
+INSERT INTO versions VALUES ('pg15', '15.8-1',  'amd, arm', 0, '20240808','', '', '');
 INSERT INTO versions VALUES ('pg15', '15.7-3',  'amd, arm', 0, '20240710','', '', '');
 
 INSERT INTO releases VALUES ('pg16', 2, 'pg', '', '', 'prod', 
   '<font size=-1>New in <a href=https://www.postgresql.org/docs/16/release-16.html>2023!</a></font>', 1, 'POSTGRES', '', '');
-INSERT INTO versions VALUES ('pg16', '16.4-1',  'amd, arm', 1, '20240808','', '', '');
+INSERT INTO versions VALUES ('pg16', '16.4-2',  'amd, arm', 1, '20240916','', '', '');
+INSERT INTO versions VALUES ('pg16', '16.4-1',  'amd, arm', 0, '20240808','', '', '');
 INSERT INTO versions VALUES ('pg16', '16.3-3',  'amd, arm', 0, '20240710','', '', '');
 
 INSERT INTO releases VALUES ('pg17', 2, 'pg', '', '', 'test', 
   '<font size=-1>New in <a href=https://www.postgresql.org/docs/17/release-17.html>2024!</a></font>', 1, 'POSTGRES', '', '');
-INSERT INTO versions VALUES ('pg17', '17rc1-1',    'amd, arm', 1, '20240905','', '', '');
+INSERT INTO versions VALUES ('pg17', '17rc1-2',    'amd, arm', 1, '20240916','', '', '');
 
 -- ## PGML ###############################
 INSERT INTO projects VALUES ('pgml', 'ext', 4, 0, '', 0, 'https://github.com/postgresml/postgresml',
