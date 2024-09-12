@@ -377,6 +377,7 @@ initPG () {
     initC "pldebugger-pg$pgM" "pldebugger" "$debuggerV"  "$outPlat" "postgres/pldebugger" "" "" "nil"
     initC "plprofiler-pg$pgM" "plprofiler" "$profV"      "$outPlat" "postgres/profiler"   "" "" "nil"
     initC "cron-pg$pgM"       "cron"       "$cronV"      "$outPlat" "postgres/cron"       "" "" "nil"
+    initC "setuser-pg$pgM"    "setuser"    "$setuserV"   "$outPlat" "postgres/setuser"    "" "" "nil"
   fi
 
   if [ "$pgM" == "15" ] || [ "$pgM" == "16" ]; then
@@ -391,7 +392,6 @@ initPG () {
 
     initC "citus-pg$pgM"       "citus"       "$citusV"       "$outPlat" "postgres/citus"       "" "" "nil"
     initC "timescaledb-pg$pgM" "timescaledb" "$timescaleV"   "$outPlat" "postgres/timescale"   "" "" "nil"
-    initC "setuser-pg$pgM"     "setuser"     "$setuserV"     "$outPlat" "postgres/setuser"     "" "" "nil"
     initC "permissions-pg$pgM" "permissions" "$permissionsV" "$outPlat" "postgres/permissions" "" "" "nil"
 
     ##initC "pljava-pg$pgM"     "pljava"     "$pljavaV"    "$outPlat" "postgres/pljava"     "" "" "nil"

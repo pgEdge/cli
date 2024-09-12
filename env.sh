@@ -32,7 +32,7 @@ wal2jV=2.6.0-1
 citusV=12.1.5-1
 orafceV=4.10.3-1
 v8V=3.2.2-1
-setuserV=4.0.1-1
+setuserV=4.1.0-1
 permissionsV=1.3-1
 
 ## oraclefdwV=2.6.0-1
