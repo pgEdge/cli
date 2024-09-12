@@ -267,12 +267,15 @@ def json_validate(cluster_name):
     
     util.message(f"Cluster json's cluster/{cluster_name}/{cluster_name}.json file structure is valid.", "success")
 
-def ssh_install(cluster_name, db, db_settings, db_user, db_passwd, n, primary, primary_name, num_nodes):
+def ssh_install(cluster_name, db, db_settings, db_user, db_passwd, n, install, primary, primary_name, num_nodes):
+    if install is None: 
+        install=True
     REPO = os.getenv("REPO", "")
     ndnm = n["name"]
     ndpath = n["path"]
     ndip = n["public_ip"] if n["public_ip"] else n["private_ip"]
     pg = db_settings["pg_version"]
+    spock = db_settings["spock_version"]
     try:
         ndport = str(n["port"])
     except Exception:
@@ -283,19 +286,18 @@ def ssh_install(cluster_name, db, db_settings, db_user, db_passwd, n, primary, p
         os.environ["REPO"] = REPO
     
     verbose = db_settings.get("log_level", "info")
-        
-    print_install_hdr(cluster_name, db, db_user, num_nodes, n["name"],
-                      n["path"], ndip, n["port"], REPO, primary, primary_name)
+    if install == True:   
+        print_install_hdr(cluster_name, db, db_user, num_nodes, n["name"],
+                          n["path"], ndip, n["port"], REPO, primary, primary_name)
 
-    install_py = "install.py"
-    spock = db_settings["spock_version"]
+        install_py = "install.py"
 
-    cmd0 = f"export REPO={REPO}; "
-    cmd1 = f"mkdir -p {ndpath}; cd {ndpath}; "
-    cmd2 = f'python3 -c "\\$(curl -fsSL {REPO}/{install_py})"'
-   
-    message = f"Installing pgedge"
-    run_cmd(cmd0 + cmd1 + cmd2, n, message=message, verbose=verbose)
+        cmd0 = f"export REPO={REPO}; "
+        cmd1 = f"mkdir -p {ndpath}; cd {ndpath}; "
+        cmd2 = f'python3 -c "\\$(curl -fsSL {REPO}/{install_py})"'
+       
+        message = f"Installing pgedge"
+        run_cmd(cmd0 + cmd1 + cmd2, n, message=message, verbose=verbose)
 
     nc = os.path.join(ndpath, "pgedge", "pgedge ")
     parms = f" -U {db_user} -P {db_passwd} -d {db} --port {ndport}"
@@ -368,7 +370,7 @@ def ssh_cross_wire_pgedge(cluster_name, db, db_settings, db_user, db_passwd, nod
     result = run_cmd(cmd, prov_n, message=message, verbose=verbose, capture_output=True)
     print(f"\n{result.stdout}")
 
-def ssh_install_pgedge(cluster_name, db_name, db_settings, db_user, db_password, nodes, primary, primary_name, verbose):
+def ssh_install_pgedge(cluster_name, db_name, db_settings, db_user, db_password, nodes, install, primary, primary_name, verbose):
     """
     Install and configure pgEdge on a list of nodes.
 
@@ -389,7 +391,7 @@ def ssh_install_pgedge(cluster_name, db_name, db_settings, db_user, db_password,
 
     for n in nodes:
         ssh_install(
-            cluster_name, db_name, db_settings, db_user, db_password, n, primary, primary_name, count
+            cluster_name, db_name, db_settings, db_user, db_password, n, install, primary, primary_name, count
         )
 
 
@@ -557,7 +559,7 @@ def update_json(cluster_name, db_json):
     except Exception:
         util.exit_message("Unable to update JSON file", 1)
 
-def init(cluster_name):
+def init(cluster_name, install=True):
     """
     Initialize a cluster via Cluster Configuration JSON file.
 
@@ -582,7 +584,7 @@ def init(cluster_name):
 
     ssh_install_pgedge(
         cluster_name, db[0]["db_name"], db_settings, db[0]["db_user"],
-        db[0]["db_password"], nodes, True, " ", verbose
+        db[0]["db_password"], nodes, install, True, " ", verbose
     )
     ssh_cross_wire_pgedge(
         cluster_name, db[0]["db_name"], db_settings, db[0]["db_user"],
@@ -742,7 +744,7 @@ def add_node(cluster_name, source_node, target_node, repo1_path=None, backup_id=
 
 
     rc = ssh_install_pgedge(cluster_name, db[0]["db_name"], db_settings, db[0]["db_user"],
-                            db[0]["db_password"], [new_node_data], True, source_node, verbose)
+                            db[0]["db_password"], [new_node_data], install, True, source_node, verbose)
 
     os_user = new_node_data["os_user"]
     repo1_type = new_node_data.get("repo1_type", "posix")
