@@ -128,7 +128,7 @@ INSERT INTO categories VALUES (9,  87, 'Management & Monitoring', 'Manage/Monito
 INSERT INTO projects VALUES ('hub', 'app', 0, 0, 'hub', 0, 'https://github.com/pgedge/cli','',0,'','','','');
 INSERT INTO releases VALUES ('hub', 1, 'hub',  '', '', 'hidden', '', 1, '', '', '');
 
-INSERT INTO versions VALUES ('hub', '24.9.3',    '',  1, '20240916', '', '', '');
+INSERT INTO versions VALUES ('hub', '24.9.3',    '',  1, '20240912', '', '', '');
 INSERT INTO versions VALUES ('hub', '24.9.2',    '',  0, '20240910', '', '', '');
 INSERT INTO versions VALUES ('hub', '24.9.1',    '',  0, '20240909', '', '', '');
 INSERT INTO versions VALUES ('hub', '24.7.7',    '',  0, '20240820', '', '', '');
@@ -151,25 +151,25 @@ INSERT INTO versions VALUES ('pg13', '13.15-1', 'amd', 0, '20240509','', '', '')
 
 INSERT INTO releases VALUES ('pg14', 1, 'pg', '', '', 'prod', 
   '<font size=-1>New in <a href=https://www.postgresql.org/docs/14/release-14.html>2021</a></font>', 1, 'POSTGRES', '', '');
-INSERT INTO versions VALUES ('pg14', '14.13-2', 'amd, arm', 1, '20240916', '','','');
+INSERT INTO versions VALUES ('pg14', '14.13-2', 'amd, arm', 1, '20240912', '','','');
 INSERT INTO versions VALUES ('pg14', '14.13-1', 'amd, arm', 0, '20240808', '','','');
 INSERT INTO versions VALUES ('pg14', '14.12-3', 'amd, arm', 0, '20240710', '','','');
 
 INSERT INTO releases VALUES ('pg15', 2, 'pg', '', '', 'prod', 
   '<font size=-1>New in <a href=https://www.postgresql.org/docs/15/release-15.html>2022</a></font>', 1, 'POSTGRES', '', '');
-INSERT INTO versions VALUES ('pg15', '15.8-2',  'amd, arm', 1, '20240916','', '', '');
+INSERT INTO versions VALUES ('pg15', '15.8-2',  'amd, arm', 1, '20240912','', '', '');
 INSERT INTO versions VALUES ('pg15', '15.8-1',  'amd, arm', 0, '20240808','', '', '');
 INSERT INTO versions VALUES ('pg15', '15.7-3',  'amd, arm', 0, '20240710','', '', '');
 
 INSERT INTO releases VALUES ('pg16', 2, 'pg', '', '', 'prod', 
   '<font size=-1>New in <a href=https://www.postgresql.org/docs/16/release-16.html>2023!</a></font>', 1, 'POSTGRES', '', '');
-INSERT INTO versions VALUES ('pg16', '16.4-2',  'amd, arm', 1, '20240916','', '', '');
+INSERT INTO versions VALUES ('pg16', '16.4-2',  'amd, arm', 1, '20240912','', '', '');
 INSERT INTO versions VALUES ('pg16', '16.4-1',  'amd, arm', 0, '20240808','', '', '');
 INSERT INTO versions VALUES ('pg16', '16.3-3',  'amd, arm', 0, '20240710','', '', '');
 
 INSERT INTO releases VALUES ('pg17', 2, 'pg', '', '', 'test', 
   '<font size=-1>New in <a href=https://www.postgresql.org/docs/17/release-17.html>2024!</a></font>', 1, 'POSTGRES', '', '');
-INSERT INTO versions VALUES ('pg17', '17rc1-2',    'amd, arm', 1, '20240916','', '', '');
+INSERT INTO versions VALUES ('pg17', '17rc1-2',    'amd, arm', 1, '20240912','', '', '');
 
 -- ## PGML ###############################
 INSERT INTO projects VALUES ('pgml', 'ext', 4, 0, '', 0, 'https://github.com/postgresml/postgresml',
@@ -259,7 +259,7 @@ INSERT INTO releases VALUES ('audit-pg17', 10, 'audit', 'pgAudit', '', 'prod', '
 INSERT INTO releases VALUES ('audit-pg16', 10, 'audit', 'pgAudit', '', 'prod', '', 1, 'POSTGRES', '', '');
 INSERT INTO releases VALUES ('audit-pg15', 10, 'audit', 'pgAudit', '', 'prod', '', 1, 'POSTGRES', '', '');
 
-INSERT INTO versions VALUES ('audit-pg17', '17.0-1',  'amd, arm', 1, '20240916', 'pg17', '', 'https://github.com/pgaudit/pgaudit/releases/tag/17.0');
+INSERT INTO versions VALUES ('audit-pg17', '17.0-1',  'amd, arm', 1, '20240912', 'pg17', '', 'https://github.com/pgaudit/pgaudit/releases/tag/17.0');
 INSERT INTO versions VALUES ('audit-pg16', '16.0-1',  'amd, arm', 1, '20230914', 'pg16', '', 'https://github.com/pgaudit/pgaudit/releases/tag/16.0');
 INSERT INTO versions VALUES ('audit-pg15', '1.7.0-1', 'amd, arm', 1, '20230914', 'pg15', '', 'https://github.com/pgaudit/pgaudit/releases/tag/1.7.0');
 
@@ -422,9 +422,9 @@ INSERT INTO releases VALUES ('setuser-pg17', 3, 'setuser', 'SetUser', '', 'prod'
 INSERT INTO releases VALUES ('setuser-pg16', 3, 'setuser', 'SetUser', '', 'prod', '', 1, 'POSTGRES', '', '');
 INSERT INTO releases VALUES ('setuser-pg15', 3, 'setuser', 'SetUser', '', 'prod', '', 1, 'POSTGRES', '', '');
 
-INSERT INTO versions VALUES ('setuser-pg17', '4.1.0-1', 'amd, arm', 1, '20240916', 'pg17', '', '');
-INSERT INTO versions VALUES ('setuser-pg16', '4.1.0-1', 'amd, arm', 1, '20240916', 'pg16', '', '');
-INSERT INTO versions VALUES ('setuser-pg15', '4.1.0-1', 'amd, arm', 1, '20240916', 'pg15', '', '');
+INSERT INTO versions VALUES ('setuser-pg17', '4.1.0-1', 'amd, arm', 1, '20240912', 'pg17', '', '');
+INSERT INTO versions VALUES ('setuser-pg16', '4.1.0-1', 'amd, arm', 1, '20240912', 'pg16', '', '');
+INSERT INTO versions VALUES ('setuser-pg15', '4.1.0-1', 'amd, arm', 1, '20240912', 'pg15', '', '');
 
 INSERT INTO versions VALUES ('setuser-pg16', '4.0.1-1', 'amd, arm', 0, '20240612', 'pg16', '', '');
 INSERT INTO versions VALUES ('setuser-pg15', '4.0.1-1', 'amd, arm', 0, '20240612', 'pg15', '', '');
@@ -470,7 +470,7 @@ INSERT INTO versions VALUES ('badger', '11.8', '', 0, '20220408', '', '', '');
 INSERT INTO projects VALUES ('ctlibs', 'pge', 0, 0, '', 3, 'https://github.com/pgedge/cli',
   'ctlibs',  0, 'ctlibs.png', 'ctlibs', 'https://github.com/pgedge/cli', '');
 INSERT INTO releases VALUES ('ctlibs', 2, 'ctlibs',  'pgEdge Libs', '', 'prod', '', 1, '', '', '');
-INSERT INTO versions VALUES ('ctlibs', '1.5', '', 1, '20240916', '', '', '');
+INSERT INTO versions VALUES ('ctlibs', '1.5', '', 1, '20240912', '', '', '');
 INSERT INTO versions VALUES ('ctlibs', '1.4', '', 0, '20240806', '', '', '');
 
 -- ## PGCAT #############################
@@ -491,7 +491,7 @@ INSERT INTO projects VALUES ('backrest', 'pge', 11, 0, '', 3, 'http://pgbackrest
   'backrest',  0, 'backrest.png', 'Backup & Restore', 'http://pgbackrest.org', 'pg_backrest, pgbackrest');
 INSERT INTO releases VALUES ('backrest', 2, 'backrest',  'pgBackRest', '', 'prod', '', 1, 'MIT', '', '');
 
-INSERT INTO versions VALUES ('backrest', '2.53.1-1', 'amd, arm', 1, '20240916', '', '', '');
+INSERT INTO versions VALUES ('backrest', '2.53.1-1', 'amd, arm', 1, '20240912', '', '', '');
 INSERT INTO versions VALUES ('backrest', '2.53-1',   'amd, arm', 0, '20240729', '', '', '');
 INSERT INTO versions VALUES ('backrest', '2.52-1',   'amd, arm', 0, '20240612', '', '', '');
 
