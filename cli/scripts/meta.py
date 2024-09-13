@@ -8,6 +8,13 @@ from semantic_version import Version
 import api, util
 import datetime
 
+def verify_metadata():
+    util.message("meta.verify_metadata()", "debug")
+    data = []
+    sql = ""
+
+    return(True)
+
 
 def get_extension_meta(component):
     data = []

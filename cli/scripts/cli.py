@@ -979,6 +979,13 @@ if (args[1] == "help") or (args[1] == "--help"):
     exit_cleanly(0)
 
 ## process global parameters #################
+
+if "--verify-metadata" in args:
+    if meta.verify_metadata():
+        util.exit_message("Looking reaaalll good :-)", 0)
+    else:
+        util.exit_message("Clean up our act :-)", 1)
+
 os.environ["isPreload"] = "True"
 if "--no-preload" in args:
     args.remove("--no-preload")
@@ -1026,10 +1033,6 @@ p_home = ""
 p_user = ""
 p_passwd = ""
 p_host_name = ""
-
-if "--deprecate-nc" in args:
-    args.remove("--deprecate-nc")
-    util.message(f"'nc', 'nodectl', & 'ctl' commands deprecated in favor of 'pgedge'", "warning")
 
 isVERBOSE = False
 if "--verbose" in args:
