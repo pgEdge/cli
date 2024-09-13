@@ -87,7 +87,6 @@ def check_pre_reqs(User, Passwd, db, port, pg_major, pg_minor, spock, autostart)
     if kount < 3:
         sys.exit(1)
 
-
     if spock:
        util.message(f"  Verify spock '{spock}' is valid and unique")
        ns = util.num_spocks(pg_major, spock, True)
@@ -95,6 +94,35 @@ def check_pre_reqs(User, Passwd, db, port, pg_major, pg_minor, spock, autostart)
            util.exit_message(f"No available version of spock like '{spock}*' for pg{pg_major}")
        elif ns > 1:
            util.exit_message(f"More than 1 spock version available matching '{spock}*'")
+
+
+def inputPgVer(p_default):
+    util.message(f"setup.inputPgVer({p_default})", "debug")
+    
+    while True:
+        try:
+            pgver = input(f"  PG Version({p_default}): ")
+        except KeyboardInterrupt:
+            util.exit_message("cancelled")
+        except Exception:
+            return(None)
+
+        if pgver == "":
+            pgver = p_default
+
+        if verifyPgVer(pgver):
+            return(pgver)
+
+
+def verifyPgVer(p_pgver):
+    util.message(f"setup.verifyPgVer({p_pgver}", "debug")
+
+    if (p_pgver >= "14") and (p_pgver <= "17"):
+        return(True)
+
+    util.message("Must be 14, 15, 16, or 17", "error")
+    return(False)
+
 
 
 def inputUser():
@@ -254,12 +282,6 @@ def setup_pgedge(User=None, Passwd=None, dbName=None, port=None, pg_ver=None, sp
     if not port:
         port = os.getenv("pgePort", "5432")
 
-    df_pg = util.get_default_pg()
-    if not pg_ver:
-        pg_ver = os.getenv("pgN", df_pg)
-
-    pg_major, pg_minor = parse_pg(pg_ver)
-
     if autostart is False:
         autos = os.getenv("isAutoStart")
         if autos == "True":
@@ -267,14 +289,27 @@ def setup_pgedge(User=None, Passwd=None, dbName=None, port=None, pg_ver=None, sp
         else:
            autostart = False 
 
+    interactive = False
     if User is None:
+        interactive = True
         User = inputUser()
 
     if Passwd is None:
+        interactive = True
         Passwd = inputPasswd()
 
     if dbName is None:
+        interactive = True
         dbName = inputDbname()
+
+    df_pg = util.get_default_pg()
+    df_pg = os.getenv("pgN", df_pg)
+    if (pg_ver is None) and (interactive is True):
+        pg_ver = inputPgVer(p_default=df_pg)
+    else:
+        pg_ver = df_pg
+
+    pg_major, pg_minor = parse_pg(pg_ver)
 
     check_pre_reqs(User, Passwd, dbName, port, pg_major, pg_minor, spock_ver, autostart)
 
