@@ -102,7 +102,7 @@ def inputUser():
 
     while True:
         try:
-            user = input("DB Owner: ")
+            user = input("        DB Owner: ")
         except KeyboardInterrupt:
             util.exit_message("cancelled")
         except Exception:
@@ -136,7 +136,7 @@ def inputPasswd():
     util.message(f"setup.inputPasswd()", "debug")
     while True:
         try:
-            passwd = getpass.getpass("Password: ")
+            passwd = getpass.getpass("        Password: ")
             passwd2 = getpass.getpass("Confirm Password: ")
 
             if passwd != passwd2:
@@ -175,7 +175,7 @@ def inputDbname():
     util.message(f"setup.inputDbname()", "debug")
     while True:
         try:
-            dbname = input(" DB Name: ")
+            dbname = input("         DB Name: ")
         except KeyboardInterrupt:
             util.exit_message("cancelled")
         except Exception:
