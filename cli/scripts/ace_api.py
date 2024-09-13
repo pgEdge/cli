@@ -4,8 +4,10 @@ from flask import Flask, jsonify, request
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.jobstores.memory import MemoryJobStore
 from apscheduler.executors.pool import ProcessPoolExecutor
+from apscheduler.triggers.cron import CronTrigger
 
 import ace
+import ace_cli
 import ace_config as config
 import ace_core
 import ace_db
@@ -16,6 +18,8 @@ from ace_data_models import (
     TableDiffTask,
     TableRepairTask,
 )
+from ace_exceptions import AceException
+from ace_timeparse import parse_time_string
 
 app = Flask(__name__)
 
@@ -453,6 +457,64 @@ def task_status_api():
     return jsonify(task_details)
 
 
+def validate_table_diff_schedule(schedule_config):
+    for schedule in schedule_config:
+        if "table_name" not in schedule or "cluster_name" not in schedule:
+            raise AceException(
+                "table_name and cluster_name are required for every entry in "
+                "schedule_config"
+            )
+        if "crontab_schedule" not in schedule:
+            if "run_frequency" not in schedule:
+                raise AceException(
+                    "Either crontab_schedule or run_frequency must be specified "
+                    "for every table in schedule_config"
+                )
+            else:
+                try:
+                    parse_time_string(schedule["run_frequency"])
+                except Exception as e:
+                    raise AceException(
+                        f"Invalid run_frequency: {schedule['run_frequency']}. "
+                        f"Error: {e}"
+                    )
+                schedule["crontab_schedule"] = None
+
+
+def create_schedules():
+    schedules = config.schedule_config
+
+    for schedule in schedules:
+        args = {
+            "dbname": schedule.get("args", {}).get("dbname"),
+            "block_rows": schedule.get("args", {}).get("block_rows"),
+            "max_cpu_ratio": schedule.get("args", {}).get("max_cpu_ratio"),
+            "batch_size": schedule.get("args", {}).get("batch_size"),
+            "nodes": schedule.get("args", {}).get("nodes"),
+        }
+        cron_schedule = schedule.get("crontab_schedule", None)
+        if cron_schedule:
+            scheduler.add_job(
+                ace_cli.table_diff_cli,
+                CronTrigger.from_crontab(cron_schedule),
+                args=[schedule["cluster_name"], schedule["table_name"]],
+                kwargs=args,
+            )
+        else:
+            interval = parse_time_string(schedule.get("run_frequency"))
+            scheduler.add_job(
+                ace_cli.table_diff_cli,
+                'interval',
+                weeks=interval.weeks if hasattr(interval, 'weeks') else 0,
+                days=interval.days if hasattr(interval, 'days') else 0,
+                hours=interval.hours if hasattr(interval, 'hours') else 0,
+                minutes=interval.minutes if hasattr(interval, 'minutes') else 0,
+                seconds=interval.seconds if hasattr(interval, 'seconds') else 0,
+                args=[schedule["cluster_name"], schedule["table_name"]],
+                kwargs=args,
+            )
+
+
 """
 Starts the ACE API server.
 
@@ -476,6 +538,8 @@ Returns:
 
 def start_ace():
     ace_db.create_ace_tables()
+    validate_table_diff_schedule(config.schedule_config)
+    create_schedules()
 
     # Since the scheduler is a BackgroundScheduler,
     # start() will not block
