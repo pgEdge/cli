@@ -19,3 +19,63 @@ BLOCK_OK = 0
 MAX_DIFFS_EXCEEDED = 1
 BLOCK_MISMATCH = 2
 BLOCK_ERROR = 3
+
+
+"""
+Table-diff scheduling options
+
+Specify a list of tables and their crontab schedules or run_frequency as a string.
+run_frequency can be string like "1 h", "5 min" or "30 s".
+If the crontab_schedule is specified, run_frequency is ignored.
+
+"""
+schedule_config = [
+    {
+        "cluster_name": "eqn-t9da",
+        "table_name": "public.t1",
+        # "crontab_schedule": "0 0 * * *",
+        "run_frequency": "30s",
+        "enabled": True,
+        "args": {
+            "max_cpu_ratio": 0.7,
+            "batch_size": 1000,
+            "block_rows": 10000,
+            "nodes": "all",
+            "output": "json",
+            "quiet": False,
+            "dbname": "demo",
+        },
+    },
+    {
+        "cluster_name": "eqn-t9da",
+        "table_name": "public.t2",
+        # "crontab_schedule": "0 0 * * *",
+        "run_frequency": "45s",
+        "enabled": True,
+        "args": {
+            "max_cpu_ratio": 0.7,
+            "batch_size": 1000,
+            "block_rows": 10000,
+            "nodes": "all",
+            "output": "json",
+            "quiet": False,
+            "dbname": "demo",
+        },
+    },
+    {
+        "cluster_name": "eqn-t9da",
+        "table_name": "public.t3",
+        # "crontab_schedule": "0 0 * * *",
+        "run_frequency": "1min",
+        "enabled": True,
+        "args": {
+            "max_cpu_ratio": 0.7,
+            "batch_size": 1000,
+            "block_rows": 10000,
+            "nodes": "all",
+            "output": "json",
+            "quiet": False,
+            "dbname": "demo",
+        },
+    },
+]
