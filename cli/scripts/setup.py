@@ -27,8 +27,8 @@ def osSys(cmd, fatal_exit=True, is_silent=False):
 
 
 def check_pre_reqs(User, Passwd, db, port, pg_major, pg_minor, spock, autostart):
-    util.message(f"setup.check_pre_reqs(User={User}, db={db}, port={port}, pg_major={pg_major}, " + \
-        f"pg_minor={pg_minor}, spock={spock}, autostart={autostart}", "debug")
+    util.message(f"setup.check_pre_reqs(User={User}, Passwd={Passwd}, db={db}, port={port}, " + \
+        f"pg_major={pg_major}, pg_minor={pg_minor}, spock={spock}, autostart={autostart}", "debug")
 
     util.message("#### Checking for Pre-Req's #########################")
 
@@ -297,6 +297,7 @@ def setup_pgedge(User=None, Passwd=None, dbName=None, port=None, pg_ver=None, sp
     if Passwd is None:
         interactive = True
         Passwd = inputPasswd()
+        os.environ["pgePasswd"] = Passwd
 
     if dbName is None:
         interactive = True
