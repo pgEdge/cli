@@ -1,4 +1,7 @@
 DROP VIEW  IF EXISTS v_versions;
+DROP VIEW  IF EXISTS v_product_details;
+
+DROP TABLE IF EXISTS product_projects;
 
 DROP TABLE IF EXISTS versions;
 DROP TABLE IF EXISTS extensions;
@@ -48,6 +51,19 @@ CREATE TABLE releases (
   FOREIGN KEY (project) REFERENCES projects(project)
 );
 
+
+CREATE TABLE product_projects (
+  product        TEXT     NOT NULL,
+  seqnce         SMALLINT NOT NULL,
+  project        TEXT     NOT NULL,
+  PRIMARY KEY (product, seqnce)
+);
+INSERT INTO product_projects VALUES ('ha', 1, 'backrest');
+INSERT INTO product_projects VALUES ('ha', 2, 'patroni');
+INSERT INTO product_projects VALUES ('mm', 1, 'spock');
+INSERT INTO product_projects VALUES ('mm', 2, 'snowflake');
+INSERT INTO product_projects VALUES ('ai', 1, 'pgml');
+INSERT INTO product_projects VALUES ('ai', 2, 'vector');
 
 CREATE TABLE extensions (
   component      TEXT NOT NULL PRIMARY KEY,
@@ -112,6 +128,15 @@ CREATE VIEW v_versions AS
     FROM projects p, releases r, versions v
    WHERE p.project = r.project
      AND r.component = v.component;
+
+CREATE VIEW v_product_details AS
+SELECT p.product, p.seqnce, p.project, r.component, v.version,
+       v.platform, v.parent as pg_ver
+  FROM product_projects p, releases r, versions v
+ WHERE p.project = r.project AND r.component = v.component
+   AND v.is_current = 1
+ORDER BY 1, 2;
+
 
 INSERT INTO categories VALUES (0,   0, 'Hidden', 'NotShown');
 INSERT INTO categories VALUES (1,  10, 'Postgres', 'Postgres');
