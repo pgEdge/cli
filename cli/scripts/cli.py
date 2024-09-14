@@ -980,12 +980,6 @@ if (args[1] == "help") or (args[1] == "--help"):
 
 ## process global parameters #################
 
-if "--verify-metadata" in args:
-    if meta.verify_metadata():
-        util.exit_message("Looking reaaalll good :-)", 0)
-    else:
-        util.exit_message("Clean up our act :-)", 1)
-
 os.environ["isPreload"] = "True"
 if "--no-preload" in args:
     args.remove("--no-preload")

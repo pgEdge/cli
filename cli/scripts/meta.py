@@ -2,18 +2,25 @@
 #  Copyright 2022-2024 PGEDGE  All rights reserved. #
 
 
-import sys, os, sqlite3, json
+import sys, os, sqlite3, json, prettytable
 from semantic_version import Version
 
 import api, util
 import datetime
 
-def verify_metadata():
-    util.message("meta.verify_metadata()", "debug")
-    data = []
-    sql = ""
 
-    return(True)
+def pretty_sql(sql):
+    data = []
+
+    try:
+        c = con.cursor()
+        c.execute(sql)
+        myTbl = prettytable.from_db_cursor(c)
+    except Exception as e:
+        util.exit_message(str(e))
+
+    print(myTbl)
+
 
 
 def get_extension_meta(component):
