@@ -1,5 +1,5 @@
 DROP VIEW  IF EXISTS v_versions;
-DROP VIEW  IF EXISTS v_product_details;
+DROP VIEW  IF EXISTS v_products;
 
 DROP TABLE IF EXISTS product_projects;
 
@@ -129,7 +129,7 @@ CREATE VIEW v_versions AS
    WHERE p.project = r.project
      AND r.component = v.component;
 
-CREATE VIEW v_product_details AS
+CREATE VIEW v_products AS
 SELECT p.product, p.seqnce, p.project, r.component, v.version,
        v.platform, v.parent as pg_ver
   FROM product_projects p, releases r, versions v
