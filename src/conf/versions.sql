@@ -58,12 +58,12 @@ CREATE TABLE product_projects (
   project        TEXT     NOT NULL,
   PRIMARY KEY (product, seqnce)
 );
-INSERT INTO product_projects VALUES ('ha', 1, 'backrest');
+INSERT INTO product_projects VALUES ('ha', 1, 'etcd');
 INSERT INTO product_projects VALUES ('ha', 2, 'patroni');
-INSERT INTO product_projects VALUES ('mm', 1, 'spock');
-INSERT INTO product_projects VALUES ('mm', 2, 'snowflake');
+INSERT INTO product_projects VALUES ('ha', 3, 'backrest');
 INSERT INTO product_projects VALUES ('ai', 1, 'pgml');
 INSERT INTO product_projects VALUES ('ai', 2, 'vector');
+INSERT INTO product_projects VALUES ('ai', 3, 'miniofdw - parquet_s3_fdw');
 
 CREATE TABLE extensions (
   component      TEXT NOT NULL PRIMARY KEY,
