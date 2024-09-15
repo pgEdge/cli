@@ -16,6 +16,16 @@ CREATE TABLE categories (
   description TEXT     NOT NULL,
   short_desc  TEXT     NOT NULL
 );
+INSERT INTO categories VALUES (0,   0, 'Hidden', 'NotShown');
+INSERT INTO categories VALUES (1,  10, 'Postgres', 'Postgres');
+INSERT INTO categories VALUES (11, 30, 'Applications', 'Applications');
+INSERT INTO categories VALUES (10, 15, 'Streaming Change Data Capture', 'CDC');
+INSERT INTO categories VALUES (2,  12, 'Legacy RDBMS', 'Legacy');
+INSERT INTO categories VALUES (6,  20, 'Oracle Migration & Compatibility', 'OracleMig');
+INSERT INTO categories VALUES (4,  11, 'Extensions', 'Extensions');
+INSERT INTO categories VALUES (5,  25, 'Data Integration', 'Integration');
+INSERT INTO categories VALUES (3,  80, 'Database Developers', 'Developers');
+INSERT INTO categories VALUES (9,  87, 'Management & Monitoring', 'Manage/Monitor');
 
 
 CREATE TABLE projects (
@@ -51,19 +61,6 @@ CREATE TABLE releases (
   FOREIGN KEY (project) REFERENCES projects(project)
 );
 
-
-CREATE TABLE product_projects (
-  product        TEXT     NOT NULL,
-  seqnce         SMALLINT NOT NULL,
-  project        TEXT     NOT NULL,
-  PRIMARY KEY (product, seqnce)
-);
-INSERT INTO product_projects VALUES ('ha', 1, 'etcd');
-INSERT INTO product_projects VALUES ('ha', 2, 'patroni');
-INSERT INTO product_projects VALUES ('ha', 3, 'backrest');
-INSERT INTO product_projects VALUES ('ai', 1, 'pgml');
-INSERT INTO product_projects VALUES ('ai', 2, 'vector');
-INSERT INTO product_projects VALUES ('ai', 3, 'miniofdw - parquet_s3_fdw');
 
 CREATE TABLE extensions (
   component      TEXT NOT NULL PRIMARY KEY,
@@ -129,25 +126,27 @@ CREATE VIEW v_versions AS
    WHERE p.project = r.project
      AND r.component = v.component;
 
+CREATE TABLE products (
+  product        TEXT     NOT NULL,
+  seqnce         SMALLINT NOT NULL,
+  project        TEXT     NOT NULL,
+  PRIMARY KEY (product, seqnce)
+);
+INSERT INTO products VALUES ('ha', 1, 'etcd');
+INSERT INTO products VALUES ('ha', 2, 'patroni');
+INSERT INTO products VALUES ('ha', 3, 'backrest');
+INSERT INTO products VALUES ('ai', 1, 'pgml');
+INSERT INTO products VALUES ('ai', 2, 'vector');
+INSERT INTO products VALUES ('ai', 3, 'aifdw');
+
 CREATE VIEW v_products AS
 SELECT p.product, p.seqnce, p.project, r.component, v.version,
        v.platform, v.parent as pg_ver
-  FROM product_projects p, releases r, versions v
+  FROM products p, releases r, versions v
  WHERE p.project = r.project AND r.component = v.component
    AND v.is_current = 1
 ORDER BY 1, 2;
 
-
-INSERT INTO categories VALUES (0,   0, 'Hidden', 'NotShown');
-INSERT INTO categories VALUES (1,  10, 'Postgres', 'Postgres');
-INSERT INTO categories VALUES (11, 30, 'Applications', 'Applications');
-INSERT INTO categories VALUES (10, 15, 'Streaming Change Data Capture', 'CDC');
-INSERT INTO categories VALUES (2,  12, 'Legacy RDBMS', 'Legacy');
-INSERT INTO categories VALUES (6,  20, 'Oracle Migration & Compatibility', 'OracleMig');
-INSERT INTO categories VALUES (4,  11, 'Extensions', 'Extensions');
-INSERT INTO categories VALUES (5,  25, 'Data Integration', 'Integration');
-INSERT INTO categories VALUES (3,  80, 'Database Developers', 'Developers');
-INSERT INTO categories VALUES (9,  87, 'Management & Monitoring', 'Manage/Monitor');
 
 -- ## HUB ################################
 INSERT INTO projects VALUES ('hub', 'app', 0, 0, 'hub', 0, 'https://github.com/pgedge/cli','',0,'','','','');
@@ -502,20 +501,19 @@ INSERT INTO versions VALUES ('ctlibs', '1.4', '', 0, '20240806', '', '', '');
 -- ## PGCAT #############################
 INSERT INTO projects VALUES ('pgcat', 'pge', 11, 5433, '', 3, 'https://github.com/pgedge/pgcat/tags',
   'cat',  0, 'pgcat.png', 'Connection Pooler', 'https://github.com/pgedge/pgcat', 'pg_cat, cat');
-INSERT INTO releases VALUES ('pgcat', 2, 'pgcat',  'pgCat', '', 'prod', '', 1, 'MIT', '', '');
-INSERT INTO versions VALUES ('pgcat', '1.2.0', 'amd, arm', 1, '20240905', '', '', '');
-INSERT INTO versions VALUES ('pgcat', '1.1.1', 'amd, arm', 0, '20240108', '', '', '');
+INSERT INTO releases VALUES ('pgcat', 2, 'pgcat',  'pgCat', '', 'test', '', 1, 'MIT', '', '');
+INSERT INTO versions VALUES ('pgcat', '1.2.0', 'amd, arm', 1, '20240905', '', 'EL', '');
 
 -- ## BOUNCER ###########################
 INSERT INTO projects VALUES ('bouncer', 'pge', 11, 5433, '', 3, 'http://pgbouncer.org',
   'bouncer',  0, 'bouncer.png', 'Lightweight Connnection Pooler', 'http://pgbouncer.org', 'pg_bouncer, pgbouncer');
-INSERT INTO releases VALUES ('bouncer', 2, 'bouncer',  'pgBouncer', '', 'prod', '', 1, 'POSTGRES', '', '');
-INSERT INTO versions VALUES ('bouncer', '1.23.1-1', 'amd, arm', 1, '20240820', '', '', '');
+INSERT INTO releases VALUES ('bouncer', 2, 'bouncer',  'pgBouncer', '', 'test', '', 1, 'POSTGRES', '', '');
+INSERT INTO versions VALUES ('bouncer', '1.23.1-1', 'amd, arm', 1, '20240820', '', 'EL', '');
 
 -- ## BACKREST ##########################
 INSERT INTO projects VALUES ('backrest', 'pge', 11, 0, '', 3, 'http://pgbackrest.org',
   'backrest',  0, 'backrest.png', 'Backup & Restore', 'http://pgbackrest.org', 'pg_backrest, pgbackrest');
-INSERT INTO releases VALUES ('backrest', 2, 'backrest',  'pgBackRest', '', 'prod', '', 1, 'MIT', '', '');
+INSERT INTO releases VALUES ('backrest', 2, 'backrest',  'pgBackRest', '', 'test', '', 1, 'MIT', 'EL', '');
 
 INSERT INTO versions VALUES ('backrest', '2.53.1-1', 'amd, arm', 1, '20240912', '', '', '');
 INSERT INTO versions VALUES ('backrest', '2.53-1',   'amd, arm', 0, '20240729', '', '', '');
@@ -524,18 +522,24 @@ INSERT INTO versions VALUES ('backrest', '2.52-1',   'amd, arm', 0, '20240612', 
 -- ## FIREWALLD #########################
 INSERT INTO projects VALUES ('firewalld', 'app', 11, 0, '', 4, 'https://firewalld.org',
   'firewalld', 0, 'firewalld.png', 'OS Firewall', 'https://github.com/firewalld/firewalld', '');
-INSERT INTO releases VALUES ('firewalld', 1, 'firewalld', 'Firewalld', '', 'ent', '', 1, 'GPLv2', '', '');
-INSERT INTO versions VALUES ('firewalld', '1.2', '', 1, '20231101', '', '', '');
+INSERT INTO releases VALUES ('firewalld', 1, 'firewalld', 'Firewalld', '', 'test', '', 1, 'GPLv2', '', '');
+INSERT INTO versions VALUES ('firewalld', '1.2', '', 1, '20231101', '', 'EL', '');
 
 -- ## PATRONI ###########################
-INSERT INTO projects VALUES ('patroni', 'app', 11, 0, 'etcd', 4, 'https://github.com/pgedge/pgedge-patroni/release',
+INSERT INTO projects VALUES ('patroni', 'app', 11, 0, '', 4, 'https://github.com/pgedge/pgedge-patroni/release',
   'patroni', 0, 'patroni.png', 'HA', 'https://github.com/pgedge/pgedge-patroni', 'pg_patroni, pgedge_patroni');
-INSERT INTO releases VALUES ('patroni', 1, 'patroni', 'pgEdge Patroni', '', 'ent', '', 1, 'POSTGRES', '', '');
+INSERT INTO releases VALUES ('patroni', 1, 'patroni', 'pgEdge Patroni', '', 'test', '', 1, 'POSTGRES', '', '');
 INSERT INTO versions VALUES ('patroni', '3.2.2.1-1', '', 1, '20240401', '', 'EL', '');
 
 -- ## ETCD ##############################
 INSERT INTO projects VALUES ('etcd', 'app', 11, 2379, '', 4, 'https://github.com/etcd-io/etcd/tags',
   'etcd', 0, 'etcd.png', 'HA', 'https://github.com/etcd-io/etcd', '');
-INSERT INTO releases VALUES ('etcd', 1, 'etcd', 'Etcd', '', 'ent', '', 1, 'POSTGRES', '', '');
+INSERT INTO releases VALUES ('etcd', 1, 'etcd', 'Etcd', '', 'test', '', 1, 'POSTGRES', '', '');
 INSERT INTO versions VALUES ('etcd', '3.5.12-2', 'amd, arm', 1, '20240328', '', 'EL', '');
+
+-- ## MINIO #############################
+INSERT INTO projects VALUES ('minio', 'app', 11, 9000, '', 4, 'https://github.com/minio/minio/tags',
+  'minio', 0, 'minio.png', 'HA', 'https://github.com/minio/minio', '');
+INSERT INTO releases VALUES ('minio', 1, 'minio', 'MinIO', '', 'test', '', 1, 'AGPLv3', '', '');
+INSERT INTO versions VALUES ('minio', '24.9.13', 'amd, arm', 1, '20240916', '', 'EL', '');
 
