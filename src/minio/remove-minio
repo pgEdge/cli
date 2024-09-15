@@ -1,0 +1,6 @@
+sudo systemctl stop minio
+sudo systemctl disable minio
+
+sudo rm -f /etc/default/minio
+
+sudo rm -f /etc/systemd/system/minio.service 
