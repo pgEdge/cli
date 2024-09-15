@@ -27,10 +27,10 @@ def osSys(cmd, fatal_exit=True, is_silent=False):
 
 
 def check_pre_reqs(User, Passwd, db, port, pg_major, pg_minor, spock, autostart):
-    util.message(f"setup.check_pre_reqs(User={User}, db={db}, port={port}, pg_major={pg_major}, " + \
-        f"pg_minor={pg_minor}, spock={spock}, autostart={autostart}", "debug")
+    util.message(f"setup.check_pre_reqs(User={User}, Passwd={Passwd}, db={db}, port={port}, " + \
+        f"pg_major={pg_major}, pg_minor={pg_minor}, spock={spock}, autostart={autostart}", "debug")
 
-    util.message("#### Checking for Pre-Req's #########################")
+    util.message("#### Checking for Pre-Req's ###############")
 
     platf = util.get_platform()
 
@@ -58,7 +58,7 @@ def check_pre_reqs(User, Passwd, db, port, pg_major, pg_minor, spock, autostart)
     if pg_major not in util.VALID_PG:
         util.exit_message(f"pg {pg_major} must be in {util.VALID_PG}")
 
-    if pg_minor:
+    if pg_minor > "":
        num_pg_mins = util.num_pg_minors(pg_minor, True)
        if num_pg_mins == 0:
            util.exit_message(f"No available version of pg like '{pg_minor}*'")
@@ -87,7 +87,6 @@ def check_pre_reqs(User, Passwd, db, port, pg_major, pg_minor, spock, autostart)
     if kount < 3:
         sys.exit(1)
 
-
     if spock:
        util.message(f"  Verify spock '{spock}' is valid and unique")
        ns = util.num_spocks(pg_major, spock, True)
@@ -96,13 +95,55 @@ def check_pre_reqs(User, Passwd, db, port, pg_major, pg_minor, spock, autostart)
        elif ns > 1:
            util.exit_message(f"More than 1 spock version available matching '{spock}*'")
 
+    setup_info = f"""
+######### pgEdge Setup Info ###########
+#      User: {User}
+#  Database: {db}:{port}
+#  Postgres: {pg_major} {pg_minor}
+#     Spock: {spock}
+# Autostart: {autostart}
+#  Platform: {util.get_ctlib_dir()}
+#######################################
+"""
+    util.message(setup_info, "info")
+
+
+
+def inputPgVer(p_default):
+    util.message(f"setup.inputPgVer({p_default})", "debug")
+    
+    while True:
+        try:
+            pgver = input(f"  PG Version({p_default}): ")
+        except KeyboardInterrupt:
+            util.exit_message("cancelled")
+        except Exception:
+            return(None)
+
+        if pgver == "":
+            pgver = p_default
+
+        if verifyPgVer(pgver):
+            return(pgver)
+
+
+def verifyPgVer(p_pgver):
+    util.message(f"setup.verifyPgVer({p_pgver}", "debug")
+
+    if (p_pgver >= "14") and (p_pgver <= "17"):
+        return(True)
+
+    util.message("Must be 14, 15, 16, or 17", "error")
+    return(False)
+
+
 
 def inputUser():
     util.message(f"setup.inputUser()", "debug")
 
     while True:
         try:
-            user = input("DB Owner: ")
+            user = input("        DB Owner: ")
         except KeyboardInterrupt:
             util.exit_message("cancelled")
         except Exception:
@@ -136,7 +177,7 @@ def inputPasswd():
     util.message(f"setup.inputPasswd()", "debug")
     while True:
         try:
-            passwd = getpass.getpass("Password: ")
+            passwd = getpass.getpass("        Password: ")
             passwd2 = getpass.getpass("Confirm Password: ")
 
             if passwd != passwd2:
@@ -175,7 +216,7 @@ def inputDbname():
     util.message(f"setup.inputDbname()", "debug")
     while True:
         try:
-            dbname = input(" DB Name: ")
+            dbname = input("         DB Name: ")
         except KeyboardInterrupt:
             util.exit_message("cancelled")
         except Exception:
@@ -210,22 +251,22 @@ def verifyDbname(p_db):
     return (True)
 
 
-def parse_pg(pg):
-   if pg is None:
-     return(None, None)
+def parse_pg(pg=""):
+    if pg == "":
+        return("", "")
 
-   pg = str(pg)
+    pg = str(pg)
 
-   pg_major = pg
-   pg_minor = None
-   if "." in pg:
-     pg_minor = str(pg)
-     pg_major = str(pg)[:2]
+    pg_major = pg
+    pg_minor = ""
+    if "." in pg:
+        pg_minor = str(pg)
+        pg_major = str(pg)[:2]
    
-   return(pg_major, pg_minor)
+    return(pg_major, pg_minor)
 
 
-def setup_pgedge(User=None, Passwd=None, dbName=None, port=None, pg_ver=None, spock_ver=None, autostart=False):
+def setup_pgedge(User=None, Passwd=None, dbName=None, port=None, pg_ver=None, spock_ver=None, autostart=False, interactive=False, yes=False):
     """Install pgEdge node (including postgres, spock, and snowflake-sequences)
 
        Install pgEdge node (including postgres, spock, and snowflake-sequences)
@@ -238,27 +279,22 @@ def setup_pgedge(User=None, Passwd=None, dbName=None, port=None, pg_ver=None, sp
        :param pg_ver: Defaults to latest prod version of pg, such as 16.  May be pinned to a specific pg version such as 16.4
        :param spock_ver: Defaults to latest prod version of spock, such as 4.0.  May be pinned to a specific spock version such as 4.0.1
        :param autostart: Defaults to False
+       :param interactive: Defaults to False
+       :param yes: Accept input parms without prompting to confirm (always set to True when interactive is false)
     """
 
     if os.getenv("isAutoStart", "") == "True":
         autostart = True
 
-    pgeExt = os.getenv("pgeExtensions", None)
-    if pgeExt:
-        extensions = pgeExt
-
-
     util.message(f"setup.pgedge(User={User}, Passwd='***', dbName={dbName}, port={port}, \n" + \
-                 f"    pg_ver={pg_ver}, spock_ver={spock_ver}, autostart={autostart})", "debug")
+                 f"    pg_ver={pg_ver}, spock_ver={spock_ver}, autostart={autostart}, interactive={interactive}, yes={yes})", "debug")
+
+    if interactive is False:
+        # don't prompt to continue unless in interactive mode
+        yes = True
 
     if not port:
         port = os.getenv("pgePort", "5432")
-
-    df_pg = util.get_default_pg()
-    if not pg_ver:
-        pg_ver = os.getenv("pgN", df_pg)
-
-    pg_major, pg_minor = parse_pg(pg_ver)
 
     if autostart is False:
         autos = os.getenv("isAutoStart")
@@ -267,23 +303,38 @@ def setup_pgedge(User=None, Passwd=None, dbName=None, port=None, pg_ver=None, sp
         else:
            autostart = False 
 
-    if User is None:
+    if User is None and interactive:
         User = inputUser()
 
-    if Passwd is None:
+    if Passwd is None and interactive:
         Passwd = inputPasswd()
+        # pg installer will need the passwd securely sent to it
+        os.environ["pgePasswd"] = Passwd
 
-    if dbName is None:
+    if dbName is None and interactive:
         dbName = inputDbname()
+
+    if pg_ver is None:
+       df_pg = util.get_default_pg()
+       if interactive:
+          pg_ver = inputPgVer(df_pg)
+       else:
+          pg_ver = df_pg
+
+    pg_major, pg_minor = parse_pg(pg_ver)
 
     check_pre_reqs(User, Passwd, dbName, port, pg_major, pg_minor, spock_ver, autostart)
 
-    pause = 2
-    pg_full = f"pg{pg_major}"
+    if interactive and yes is False:
+        print("")
+        y_or_n = input("Continue y/N: ")
+        y_or_n = y_or_n.lower()
+        if y_or_n in ['y', 'yes']:
+            pass
+        else:
+            util.exit_message("Goodbye!", 0)
 
-    if pg_minor:
-        pg_full = f"pg{pg_major} {pg_minor}"
-    osSys(f"{CTL} install {pg_full}")
+    osSys(f"{CTL} install {pg_major} {pg_minor}")
 
     if util.is_empty_writable_dir("/data") == 0:
         util.message("## symlink empty local data directory to empty /data ###")
@@ -301,10 +352,10 @@ def setup_pgedge(User=None, Passwd=None, dbName=None, port=None, pg_ver=None, sp
         osSys(f"{CTL} config {pg_maj} --port={port}")
 
         osSys(f"{CTL} start {pg_maj}")
-        time.sleep(pause)
 
+        time.sleep(2)
         db.create(dbName, User, Passwd, pg_major, spock_ver)
-        time.sleep(pause)
+        time.sleep(2)
 
 
 if __name__ == "__main__":

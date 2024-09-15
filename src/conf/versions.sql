@@ -1,4 +1,7 @@
 DROP VIEW  IF EXISTS v_versions;
+DROP VIEW  IF EXISTS v_products;
+
+DROP TABLE IF EXISTS product_projects;
 
 DROP TABLE IF EXISTS versions;
 DROP TABLE IF EXISTS extensions;
@@ -48,6 +51,19 @@ CREATE TABLE releases (
   FOREIGN KEY (project) REFERENCES projects(project)
 );
 
+
+CREATE TABLE product_projects (
+  product        TEXT     NOT NULL,
+  seqnce         SMALLINT NOT NULL,
+  project        TEXT     NOT NULL,
+  PRIMARY KEY (product, seqnce)
+);
+INSERT INTO product_projects VALUES ('ha', 1, 'etcd');
+INSERT INTO product_projects VALUES ('ha', 2, 'patroni');
+INSERT INTO product_projects VALUES ('ha', 3, 'backrest');
+INSERT INTO product_projects VALUES ('ai', 1, 'pgml');
+INSERT INTO product_projects VALUES ('ai', 2, 'vector');
+INSERT INTO product_projects VALUES ('ai', 3, 'miniofdw - parquet_s3_fdw');
 
 CREATE TABLE extensions (
   component      TEXT NOT NULL PRIMARY KEY,
@@ -113,6 +129,15 @@ CREATE VIEW v_versions AS
    WHERE p.project = r.project
      AND r.component = v.component;
 
+CREATE VIEW v_products AS
+SELECT p.product, p.seqnce, p.project, r.component, v.version,
+       v.platform, v.parent as pg_ver
+  FROM product_projects p, releases r, versions v
+ WHERE p.project = r.project AND r.component = v.component
+   AND v.is_current = 1
+ORDER BY 1, 2;
+
+
 INSERT INTO categories VALUES (0,   0, 'Hidden', 'NotShown');
 INSERT INTO categories VALUES (1,  10, 'Postgres', 'Postgres');
 INSERT INTO categories VALUES (11, 30, 'Applications', 'Applications');
@@ -128,7 +153,8 @@ INSERT INTO categories VALUES (9,  87, 'Management & Monitoring', 'Manage/Monito
 INSERT INTO projects VALUES ('hub', 'app', 0, 0, 'hub', 0, 'https://github.com/pgedge/cli','',0,'','','','');
 INSERT INTO releases VALUES ('hub', 1, 'hub',  '', '', 'hidden', '', 1, '', '', '');
 
-INSERT INTO versions VALUES ('hub', '24.9.3',    '',  1, '20240912', '', '', '');
+INSERT INTO versions VALUES ('hub', '24.9.4',    '',  1, '20240916', '', '', '');
+INSERT INTO versions VALUES ('hub', '24.9.3',    '',  0, '20240912', '', '', '');
 INSERT INTO versions VALUES ('hub', '24.9.2',    '',  0, '20240910', '', '', '');
 INSERT INTO versions VALUES ('hub', '24.9.1',    '',  0, '20240909', '', '', '');
 INSERT INTO versions VALUES ('hub', '24.7.7',    '',  0, '20240820', '', '', '');
