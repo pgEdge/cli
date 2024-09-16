@@ -1106,7 +1106,7 @@ if __name__ == "__main__":
 
     # Create a StreamHandler for stdout
     stream_handler = logging.StreamHandler(sys.stdout)
-    stream_handler.setLevel(logging.DEBUG)
+    stream_handler.setLevel(logging.INFO)
     formatter = logging.Formatter(
         "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
     )
