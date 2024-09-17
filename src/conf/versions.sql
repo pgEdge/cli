@@ -1,7 +1,7 @@
 DROP VIEW  IF EXISTS v_versions;
 DROP VIEW  IF EXISTS v_products;
 
-DROP TABLE IF EXISTS product_projects;
+DROP TABLE IF EXISTS products;
 
 DROP TABLE IF EXISTS versions;
 DROP TABLE IF EXISTS extensions;
