@@ -79,6 +79,11 @@ INSERT INTO extensions VALUES ('spock40', 'spock', 1, 'spock',
    max_wal_senders=16 | hot_standby_feedback=on | wal_sender_timeout=5s |
    track_commit_timestamp=on | spock.conflict_resolution=last_update_wins | 
    spock.save_resolutions=on | spock.conflict_log_level=DEBUG');
+INSERT INTO extensions VALUES ('spock41', 'spock', 1, 'spock',
+  'wal_level=logical | max_worker_processes=12 | max_replication_slots=16 |
+   max_wal_senders=16 | hot_standby_feedback=on | wal_sender_timeout=5s |
+   track_commit_timestamp=on | spock.conflict_resolution=last_update_wins | 
+   spock.save_resolutions=on | spock.conflict_log_level=DEBUG');
 INSERT INTO extensions VALUES ('lolor',     'lolor',     0, '',          '');
 INSERT INTO extensions VALUES ('postgis',   'postgis',   1, 'postgis-3', '');
 INSERT INTO extensions VALUES ('setuser',   'set_user',  1, 'set_user',  '');
@@ -152,7 +157,7 @@ ORDER BY 1, 2;
 INSERT INTO projects VALUES ('hub', 'app', 0, 0, 'hub', 0, 'https://github.com/pgedge/cli','',0,'','','','');
 INSERT INTO releases VALUES ('hub', 1, 'hub',  '', '', 'hidden', '', 1, '', '', '');
 
-INSERT INTO versions VALUES ('hub', '24.9.4',    '',  1, '20240916', '', '', '');
+INSERT INTO versions VALUES ('hub', '24.9.4',    '',  1, '20240917', '', '', '');
 INSERT INTO versions VALUES ('hub', '24.9.3',    '',  0, '20240912', '', '', '');
 INSERT INTO versions VALUES ('hub', '24.9.2',    '',  0, '20240910', '', '', '');
 INSERT INTO versions VALUES ('hub', '24.9.1',    '',  0, '20240909', '', '', '');
@@ -403,17 +408,21 @@ INSERT INTO versions VALUES ('spock33-pg16', '3.3.5-1', 'amd, arm', 0, '20240607
 INSERT INTO releases VALUES ('spock40-pg14', 4, 'spock', 'Spock', '', 'prod', '', 1, 'pgEdge Community', '', '');
 INSERT INTO releases VALUES ('spock40-pg15', 4, 'spock', 'Spock', '', 'prod', '', 1, 'pgEdge Community', '', '');
 INSERT INTO releases VALUES ('spock40-pg16', 4, 'spock', 'Spock', '', 'prod', '', 1, 'pgEdge Community', '', '');
-INSERT INTO releases VALUES ('spock40-pg17', 4, 'spock', 'Spock', '', 'test', '', 1, 'pgEdge Community', '', '');
+INSERT INTO releases VALUES ('spock40-pg17', 4, 'spock', 'Spock', '', 'prod', '', 1, 'pgEdge Community', '', '');
 
-INSERT INTO versions VALUES ('spock40-pg14', '4.0.1-1', 'amd, arm', 1, '20240801', 'pg14', '', '');
-INSERT INTO versions VALUES ('spock40-pg15', '4.0.1-1', 'amd, arm', 1, '20240801', 'pg15', '', '');
-INSERT INTO versions VALUES ('spock40-pg16', '4.0.1-1', 'amd, arm', 1, '20240801', 'pg16', '', '');
-INSERT INTO versions VALUES ('spock40-pg17', '4.0.1-1', 'amd, arm', 1, '20240801', 'pg17', '', '');
+INSERT INTO versions VALUES ('spock40-pg14', '4.0.3-1', 'amd, arm', 1, '20240917', 'pg14', '', '');
+INSERT INTO versions VALUES ('spock40-pg15', '4.0.3-1', 'amd, arm', 1, '20240917', 'pg15', '', '');
+INSERT INTO versions VALUES ('spock40-pg16', '4.0.3-1', 'amd, arm', 1, '20240917', 'pg16', '', '');
+INSERT INTO versions VALUES ('spock40-pg17', '4.0.3-1', 'amd, arm', 1, '20240917', 'pg17', '', '');
 
-INSERT INTO versions VALUES ('spock40-pg14', '4.0.0-1', 'amd, arm', 0, '20240710', 'pg14', '', '');
-INSERT INTO versions VALUES ('spock40-pg15', '4.0.0-1', 'amd, arm', 0, '20240710', 'pg15', '', '');
-INSERT INTO versions VALUES ('spock40-pg16', '4.0.0-1', 'amd, arm', 0, '20240708', 'pg16', '', '');
-INSERT INTO versions VALUES ('spock40-pg17', '4.0.0-1', 'amd, arm', 0, '20240708', 'pg17', '', '');
+INSERT INTO versions VALUES ('spock40-pg14', '4.0.1-1', 'amd, arm', 0, '20240801', 'pg14', '', '');
+INSERT INTO versions VALUES ('spock40-pg15', '4.0.1-1', 'amd, arm', 0, '20240801', 'pg15', '', '');
+INSERT INTO versions VALUES ('spock40-pg16', '4.0.1-1', 'amd, arm', 0, '20240801', 'pg16', '', '');
+INSERT INTO versions VALUES ('spock40-pg17', '4.0.1-1', 'amd, arm', 0, '20240801', 'pg17', '', '');
+
+-- ## SPOCK41 ###########################
+INSERT INTO releases VALUES ('spock41-pg17', 4, 'spock', 'Spock', '', 'test', '', 1, 'pgEdge Community', '', '');
+INSERT INTO versions VALUES ('spock41-pg17', '4.1.0.1-1', 'amd, arm', 1, '20240917', 'pg17', '', '');
 
 -- ## LOLOR #############################
 INSERT INTO projects VALUES ('lolor', 'pge', 4, 0, '', 1, 'https://github.com/pgedge/lolor/tags',
@@ -541,5 +550,5 @@ INSERT INTO versions VALUES ('etcd', '3.5.12-2', 'amd, arm', 1, '20240328', '', 
 INSERT INTO projects VALUES ('minio', 'app', 11, 9000, '', 4, 'https://github.com/minio/minio/tags',
   'minio', 0, 'minio.png', 'HA', 'https://github.com/minio/minio', '');
 INSERT INTO releases VALUES ('minio', 1, 'minio', 'MinIO', '', 'test', '', 1, 'AGPLv3', '', '');
-INSERT INTO versions VALUES ('minio', '24.9.13', 'amd, arm', 1, '20240916', '', 'EL', '');
+INSERT INTO versions VALUES ('minio', '24.9.13', 'amd, arm', 0, '20240917', '', 'EL', '');
 

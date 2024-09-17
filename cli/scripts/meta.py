@@ -2,11 +2,16 @@
 #  Copyright 2022-2024 PGEDGE  All rights reserved. #
 
 
-import sys, os, sqlite3, json, prettytable
+import sys, os, sqlite3, json
 from semantic_version import Version
 
 import api, util
 import datetime
+
+try:
+    import prettytable
+except Exception:
+    pass
 
 
 def get_product(product, platf=None, pgv=None):

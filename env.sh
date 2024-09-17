@@ -5,7 +5,8 @@ bundle=pgedge
 api=pgedge
 ctlibsV=1.5
 
-spock40V=4.0.1-1
+spock41V=4.1.0.1-1
+spock40V=4.0.3-1
 spock33V=3.3.6-1
 
 lolorV=1.2-1
