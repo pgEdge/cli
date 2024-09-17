@@ -158,8 +158,6 @@ INSERT INTO projects VALUES ('hub', 'app', 0, 0, 'hub', 0, 'https://github.com/p
 INSERT INTO releases VALUES ('hub', 1, 'hub',  '', '', 'hidden', '', 1, '', '', '');
 
 INSERT INTO versions VALUES ('hub', '24.9.4',    '',  1, '20240917', '', '', '');
-INSERT INTO versions VALUES ('hub', '24.9.3',    '',  0, '20240912', '', '', '');
-INSERT INTO versions VALUES ('hub', '24.9.2',    '',  0, '20240910', '', '', '');
 INSERT INTO versions VALUES ('hub', '24.9.1',    '',  0, '20240909', '', '', '');
 INSERT INTO versions VALUES ('hub', '24.7.7',    '',  0, '20240820', '', '', '');
 INSERT INTO versions VALUES ('hub', '24.7.6',    '',  0, '20240731', '', '', '');
@@ -279,7 +277,7 @@ INSERT INTO versions VALUES ('postgrest', '12.0.2-1', 'amd, arm', 0, '20240212',
 -- ## PROMPGEXP ##########################
 INSERT INTO projects VALUES ('prompgexp', 'pge', 11, 9187, 'golang', 0, 'https://github.com/prometheus-community/postgres_exporter/releases',
   'prompgexp', 0, 'prometheus.png', 'Prometheus PG Exporter', 'https://github.com/prometheus-community/postgres_exporter', 'postgres_exporter, prometheus, exporter');
-INSERT INTO releases VALUES ('prompgexp', 9, 'prompgexp', 'Prometheus Postgres Exporter', '', 'prod', '', 1, 'Apache', '', '');
+INSERT INTO releases VALUES ('prompgexp', 9, 'prompgexp', 'Prometheus Postgres Exporter', '', 'test', '', 1, 'Apache', '', '');
 INSERT INTO versions VALUES ('prompgexp', '0.15.0', 'amd, arm', 1, '20240521', '', '', 'https://github.com/prometheus-community/postgres_exporter');
 
 -- ## AUDIT ##############################
@@ -422,7 +420,7 @@ INSERT INTO versions VALUES ('spock40-pg17', '4.0.1-1', 'amd, arm', 0, '20240801
 
 -- ## SPOCK41 ###########################
 INSERT INTO releases VALUES ('spock41-pg17', 4, 'spock', 'Spock', '', 'test', '', 1, 'pgEdge Community', '', '');
-INSERT INTO versions VALUES ('spock41-pg17', '4.1.0.1-1', 'amd, arm', 1, '20240917', 'pg17', '', '');
+INSERT INTO versions VALUES ('spock41-pg17', '4.1.0.1-1', 'amd, arm', 0, '20240917', 'pg17', '', '');
 
 -- ## LOLOR #############################
 INSERT INTO projects VALUES ('lolor', 'pge', 4, 0, '', 1, 'https://github.com/pgedge/lolor/tags',
