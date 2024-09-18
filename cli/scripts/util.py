@@ -104,12 +104,12 @@ def get_default_spock(pgv):
 def get_cpu_info():
     try:
         import cpuinfo
+        cpui = cpuinfo.get_cpu_info()
+        vcpu = cpui["count"]
+        brand = cpui["brand_raw"]
     except Exception:
         return(0,'?')
 
-    cpui = cpuinfo.get_cpu_info()
-    vcpu = cpui["count"]
-    brand = cpui["brand_raw"]
 
     return(vcpu, brand)
 
