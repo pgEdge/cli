@@ -55,7 +55,7 @@ if [ $arch == "x86_64" ]; then
 else
   arch=arm
 fi
-py_path="py3.9-$arch py3.10-$arch py3.11-$arch py3.12-$arch osx"
+py_path="py3.9-$arch py3.10-$arch py3.11-$arch py3.12-$arch py3.11-osx"
 lib="None"
 set_pythonpath "$py_path"
 

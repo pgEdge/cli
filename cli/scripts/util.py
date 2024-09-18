@@ -116,7 +116,7 @@ def get_cpu_info():
 
 def get_ctlib_dir():
     if platform.system() == "Darwin":
-        return("osx")
+        return("py3.11-osx")
 
     plat_os = "amd"
     if platform.machine() == "aarch64":
