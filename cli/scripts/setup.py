@@ -28,6 +28,12 @@ def setup_pgedge(User=None, Passwd=None, dbName=None, port=None, pg_ver=None, sp
        :param yes: Accept input parms without prompting to confirm (always set to True when interactive is false)
     """
 
+    pgN = os.getenv("pgN", "")
+    if (pgN > "" ) and (pg_ver is None):
+        util.message("parm '--pg' is deprecated.  use '--pg_ver' instead", "warning")
+        pg_ver = pgN
+
+
     if os.getenv("isAutoStart", "") == "True":
         autostart = True
 
