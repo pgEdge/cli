@@ -1078,6 +1078,104 @@ def schema_diff_checks(sc_task: SchemaDiffTask) -> SchemaDiffTask:
     return sc_task
 
 
+def update_spock_exception_checks(
+    cluster_name: str, node_name: str, entry: dict, dbname: str = None
+) -> None:
+
+    if not cluster_name or not node_name:
+        raise AceException("cluster_name and node_name are required fields")
+
+    if not entry:
+        raise AceException("entry containing exception details is a required field")
+
+    found = check_cluster_exists(cluster_name)
+    if not found:
+        raise AceException(f"Cluster {cluster_name} not found")
+
+    db, pg, node_info = cluster.load_json(cluster_name)
+
+    if node_name not in [nd["name"] for nd in node_info]:
+        raise AceException(f'Specified nodename "{node_name}" not present in cluster')
+
+    cluster_nodes = []
+    combined_json = {}
+    database = {}
+
+    if dbname:
+        for db_entry in db:
+            if db_entry["db_name"] == dbname:
+                database = db_entry
+                break
+    else:
+        database = db[0]
+
+    if not database:
+        raise AceException(
+            f"Database '{dbname}' " + f"not found in cluster '{cluster_name}'"
+        )
+
+    # Combine db and cluster_nodes into a single json
+    for node in node_info:
+        combined_json = {**database, **node}
+        cluster_nodes.append(combined_json)
+
+    if not isinstance(entry, dict):
+        try:
+            entry = json.loads(entry)
+        except json.JSONDecodeError:
+            raise AceException("entry must be a valid JSON string")
+
+    remote_origin = entry.get("remote_origin", None)
+    remote_commit_ts = entry.get("remote_commit_ts", None)
+    remote_xid = entry.get("remote_xid", None)
+    status = entry.get("status", None)
+    resolution_details = entry.get("resolution_details", None)
+    command_counter = entry.get("command_counter", None)
+
+    if not remote_origin or not remote_commit_ts or not remote_xid or not status:
+        raise AceException(
+            "remote_origin, remote_commit_ts, remote_xid, status are required fields"
+        )
+
+    if status not in ["PENDING", "RESOLVED", "UNRESOLVED"]:
+        raise AceException("status must be one of PENDING, RESOLVED, or UNRESOLVED")
+
+    if command_counter is not None and not isinstance(command_counter, int):
+        raise AceException("command_counter must be an integer")
+
+    if not isinstance(resolution_details, dict):
+        try:
+            resolution_details = json.loads(resolution_details)
+        except json.JSONDecodeError:
+            raise AceException("resolution_details must be a valid JSON string")
+
+    conn: psycopg.Connection = None
+    """
+    We will attempt to establish a connection to the specified node with
+    autocommit set to False. This is because we want to make sure that
+    both the updates to spock.exception_status and spock.exception_status_detail
+    are executed together.
+    """
+    try:
+        for node in cluster_nodes:
+            if node["name"] == node_name:
+                conn = psycopg.connect(
+                    dbname=node["db_name"],
+                    user=node["db_user"],
+                    password=node["db_password"],
+                    host=node["public_ip"],
+                    port=node["port"],
+                    autocommit=False,
+                )
+    except Exception as e:
+        raise AceException(
+            "Error in exception_status_checks() Couldn't connect to specified node"
+            + str(e)
+        )
+
+    return conn
+
+
 def handle_task_exception(task, task_context):
     task.scheduler.task_status = "FAILED"
     task.scheduler.finished_at = datetime.now()
@@ -1127,6 +1225,7 @@ if __name__ == "__main__":
             "repset-diff": ace_cli.repset_diff_cli,
             "schema-diff": ace_cli.schema_diff_cli,
             "spock-diff": ace_cli.spock_diff_cli,
+            "spock-exception-update": ace_cli.update_spock_exception_cli,
             "start": ace_api.start_ace,
         }
     )

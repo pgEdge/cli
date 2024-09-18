@@ -1831,3 +1831,92 @@ def schema_diff(sc_task: SchemaDiffTask) -> None:
     sc_task.scheduler.task_context = {"diffs": task_context}
 
     ace_db.update_ace_task(sc_task)
+
+
+def update_spock_exception(entry: dict, conn: psycopg.Connection) -> None:
+
+    remote_origin = entry.get("remote_origin", None)
+    remote_commit_ts = entry.get("remote_commit_ts", None)
+    remote_xid = entry.get("remote_xid", None)
+    status = entry.get("status", None)
+    resolution_details = entry.get("resolution_details", None)
+    command_counter = entry.get("command_counter", None)
+
+    try:
+        if not command_counter:
+            """
+            If the command_counter is not specified, we are not only updating the
+            exception status in spock.exception_status, but also all exceptions
+            that belong to this trio of (remote_origin, remote_commit_ts, remote_xid)
+            """
+
+            # We will first update spock.exception_status here
+            update_sql = """
+            UPDATE spock.exception_status
+            SET status = %s,
+                resolution_details = %s,
+                resolved_at = %s
+            WHERE remote_origin = %s
+                AND remote_commit_ts = %s
+                AND remote_xid = %s;
+            """
+
+            params = (
+                status,
+                json.dumps(resolution_details),
+                datetime.now(),
+                remote_origin,
+                remote_commit_ts,
+                remote_xid,
+            )
+
+            cur = conn.cursor()
+            cur.execute(update_sql, params)
+
+            # Now we will update all exceptions that belong to this trio
+            update_sql = """
+            UPDATE spock.exception_status_detail
+            SET status = %s,
+                resolution_details = %s,
+                resolved_at = %s
+            WHERE remote_origin = %s
+                AND remote_commit_ts = %s
+                AND remote_xid = %s;
+            """
+
+            cur.execute(update_sql, params)
+            conn.commit()
+
+        else:
+            """
+            If the command_counter is specified, we are only updating the
+            exception status in spock.exception_status_detail
+            """
+
+            update_sql = """
+            UPDATE spock.exception_status_detail
+            SET status = %s,
+                resolution_details = %s,
+                resolved_at = %s
+            WHERE command_counter = %s
+                AND remote_origin = %s
+                AND remote_commit_ts = %s
+                AND remote_xid = %s;
+            """
+
+            params = (
+                status,
+                json.dumps(resolution_details),
+                datetime.now(),
+                command_counter,
+                remote_origin,
+                remote_commit_ts,
+                remote_xid,
+            )
+
+            cur = conn.cursor()
+            cur.execute(update_sql, params)
+            conn.commit()
+
+    except Exception as e:
+        raise AceException(f"Error while updating exception status: {str(e)}")
