@@ -45,7 +45,6 @@ done
 ./bp.sh
 
 # remove large ctlib tarballs of different architecture
-rm -v $OUT/*ctlibs*osx.tgz
 if [ `arch` == "aarch64" ]; then
   rm -f $OUT/*ctlibs*amd.tgz
 else
