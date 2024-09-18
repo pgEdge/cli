@@ -1073,7 +1073,7 @@ if "-U" in args and not_fire:
         args.remove(usr)
         os.environ["pgeUser"] = usr
 
-if "-P" in args and not_fire:
+if "-P" in args:
     passwd = get_next_arg("-P")
     if passwd > "":
         args.remove("-P")

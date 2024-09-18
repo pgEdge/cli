@@ -37,8 +37,13 @@ def setup_pgedge(User=None, Passwd=None, dbName=None, port=None, pg_ver=None, sp
     if os.getenv("isAutoStart", "") == "True":
         autostart = True
 
+    pgePasswd = os.getenv("pgePasswd", "")
+    if (pgePasswd > "" ) and (Passwd is None):
+        util.message("over-riding Passwd with $pgePasswd", "debug")
+        Passwd = pgePasswd
+
     util.message(f"""
-setup.pgedge(User={User}, Passwd='***', dbName={dbName}, port={port}, pg_ver={pg_ver},
+setup.pgedge(User={User}, Passwd={Passwd}, dbName={dbName}, port={port}, pg_ver={pg_ver},
   spock_ver={spock_ver}, autostart={autostart}, interactive={interactive}, yes={yes})
 """, "debug")
 
