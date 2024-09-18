@@ -31,8 +31,10 @@ def setup_pgedge(User=None, Passwd=None, dbName=None, port=None, pg_ver=None, sp
     if os.getenv("isAutoStart", "") == "True":
         autostart = True
 
-    util.message(f"setup.pgedge(User={User}, Passwd='***', dbName={dbName}, port={port}, \n" + \
-                 f"    pg_ver={pg_ver}, spock_ver={spock_ver}, autostart={autostart}, interactive={interactive}, yes={yes})", "debug")
+    util.message(f"""
+setup.pgedge(User={User}, Passwd='***', dbName={dbName}, port={port}, pg_ver={pg_ver},
+  spock_ver={spock_ver}, autostart={autostart}, interactive={interactive}, yes={yes})
+""", "debug")
 
     if interactive is False:
         # don't prompt to continue unless in interactive mode
@@ -72,14 +74,14 @@ def setup_pgedge(User=None, Passwd=None, dbName=None, port=None, pg_ver=None, sp
         User, Passwd, dbName, port, pg_major, pg_minor, spock_ver, autostart)
 
     if interactive and yes is False:
-        y_or_n = input("Do you want to contine? [Y/n] ")
+        y_or_n = input("Do you want to continue? [Y/n] ")
         y_or_n = y_or_n.lower()
         if y_or_n in ['y', 'yes', '' ]:
             pass
         else:
             util.exit_message("Goodbye!", 0)
 
-    setup_core.osSys(f"{CTL} install {pg_major} {pg_minor}")
+    setup_core.osSys(f"{CTL} install pg{pg_major} {pg_minor}")
 
     if util.is_empty_writable_dir("/data") == 0:
         util.message("## symlink empty local data directory to empty /data ###")
