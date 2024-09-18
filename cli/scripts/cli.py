@@ -1082,7 +1082,7 @@ if "-P" in args:
 
 if "-p" in args:
     port = get_next_arg("-p")
-    if port > "" and not_fire:
+    if port > "":
         args.remove("-p")
         args.remove(port)
         os.environ["pgePort"] = port

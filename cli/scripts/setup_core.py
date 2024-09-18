@@ -37,20 +37,19 @@ f"""setup_core.check_pre_reqs(User={User}, Passwd={Passwd}, db={db}, port={port}
         if autostart:
             util.autostart_verify_prereqs()
     
-    ##util.message("  Verify Python 3.9+")
     p3_minor_ver = util.get_python_minor_version()
     if p3_minor_ver < 9:
         util.exit_message("Python version must be greater than 3.9")
 
-    ##util.message("  Verify non-root user")
     if util.is_admin():
         util.exit_message(
             "You must install as non-root user with passwordless sudo privleges")
 
-    ##util.message(f"  Verify port {port} availability")
+    if not verifyPort(port):
+        sys.exit(1)
+
     if util.is_socket_busy(int(port)):
         util.exit_message(f"Port {port} is unavailable")
-    ##util.message(f"    - Using port {port}")
 
     if pg_major not in util.VALID_PG:
         util.exit_message(f"pg {pg_major} must be in {util.VALID_PG}")
@@ -64,7 +63,6 @@ f"""setup_core.check_pre_reqs(User={User}, Passwd={Passwd}, db={db}, port={port}
                f"{num_pg_mins} versions available matching '{pg_minor}*'")
 
     data_dir = f"data/pg{pg_major}"
-    ##util.message("  Verify empty data directory '" + data_dir + "'")
     if os.path.exists(data_dir):
         dir = os.listdir(data_dir)
         if len(dir) != 0:
@@ -117,7 +115,6 @@ f"""setup_core.check_pre_reqs(User={User}, Passwd={Passwd}, db={db}, port={port}
     util.message(setup_info, "info")
 
 
-
 def inputPgVer(p_default):
     util.message(f"setup_core.inputPgVer({p_default})", "debug")
     
@@ -137,13 +134,47 @@ def inputPgVer(p_default):
 
 
 def verifyPgVer(p_pgver):
-    util.message(f"setup_core.verifyPgVer({p_pgver}", "debug")
+    util.message(f"setup_core.verifyPgVer({p_pgver})", "debug")
 
     if (p_pgver >= "14") and (p_pgver <= "17"):
         return(True)
 
     util.message("Must be 14, 15, 16, or 17", "error")
     return(False)
+
+
+def inputPort ():
+    util.message("setup_core.inputPort()", "debug")
+    
+    while True:
+        try:
+            port  = input(f"  Port(5432): ")
+        except KeyboardInterrupt:
+            util.exit_message("cancelled")
+        except Exception:
+            return(None)
+
+        if port  == "":
+            port = "5432"
+
+        if verifyPort(port):
+            return(port)
+
+
+def verifyPort(p_port):
+    util.message(f"setup_core.verifyPort({p_port})", "debug")
+
+    try:
+        i_port = int(p_port)
+    except Exception:
+        util.message("Port must be numeric", "error")
+        return(False)
+
+    if (i_port < 0) or (i_port > 65535):
+        util.message("Port must be >= 0 and <= 65535", "error")
+        return(False)
+
+    return(True)
 
 
 

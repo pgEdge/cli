@@ -30,17 +30,23 @@ def setup_pgedge(User=None, Passwd=None, dbName=None, port=None, pg_ver=None, sp
 
     pgN = os.getenv("pgN", "")
     if (pgN > "" ) and (pg_ver is None):
-        util.message("parm '--pg' is deprecated.  use '--pg_ver' instead", "warning")
+        util.message("over-riding 'pg_ver' with ENV", "debug")
         pg_ver = pgN
 
 
     if os.getenv("isAutoStart", "") == "True":
+        util.message("over-riding 'autostart' with ENV", "debug")
         autostart = True
 
     pgePasswd = os.getenv("pgePasswd", "")
     if (pgePasswd > "" ) and (Passwd is None):
-        util.message("over-riding Passwd with $pgePasswd", "debug")
+        util.message("over-riding 'Passwd' with ENV", "debug")
         Passwd = pgePasswd
+
+    pgePort = os.getenv("pgePort", "")
+    if (pgePort > "" ) and (port is None):
+        util.message("over-riding 'port' with ENV", "debug")
+        port = pgePort
 
     util.message(f"""
 setup.pgedge(User={User}, Passwd={Passwd}, dbName={dbName}, port={port}, pg_ver={pg_ver},
@@ -50,9 +56,6 @@ setup.pgedge(User={User}, Passwd={Passwd}, dbName={dbName}, port={port}, pg_ver=
     if interactive is False:
         # don't prompt to continue unless in interactive mode
         yes = True
-
-    if not port:
-        port = os.getenv("pgePort", "5432")
 
     if autostart is False:
         autos = os.getenv("isAutoStart")
@@ -68,6 +71,12 @@ setup.pgedge(User={User}, Passwd={Passwd}, dbName={dbName}, port={port}, pg_ver=
         Passwd = setup_core.inputPasswd()
         # pg installer will need the passwd securely sent to it
         os.environ["pgePasswd"] = Passwd
+
+    if port is None :
+        if interactive:
+            port = setup_core.inputPort()
+        else:
+            port = "5432"
 
     if dbName is None and interactive:
         dbName = setup_core.inputDbname()
