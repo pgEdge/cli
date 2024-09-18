@@ -302,7 +302,7 @@ def ssh_install(cluster_name, db, db_settings, db_user, db_passwd, n, install, p
     nc = os.path.join(ndpath, "pgedge", "pgedge ")
     parms = f" -U {db_user} -P {db_passwd} -d {db} --port {ndport}"
     if pg is not None and pg != '':
-        parms = parms + f" --pg {pg}"
+        parms = parms + f" --pg_ver {pg}"
     if spock is not None and spock != '':
         parms = parms + f" --spock_ver {spock}"
     if db_settings["auto_start"] == "on":
@@ -533,7 +533,7 @@ def create_spock_db(nodes, db, db_settings):
     for n in nodes:
         ip = n["public_ip"] if "public_ip" in n else n["ip_address"]
         nc = n["path"] + os.sep + "pgedge" + os.sep + "pgedge "
-        cmd = nc + " db create -U " + db["db_user"] + " -d " + db["db_name"] + " -p " + db["db_password"]
+        cmd = nc + " db create -U " + db["db_user"] + " -d " + db["db_name"] + " -P " + db["db_password"]
         util.echo_cmd(cmd, host=ip, usr=n["os_user"], key=n["ssh_key"])
         if db_settings["auto_ddl"] == "on":
             cmd = nc + " db guc-set spock.enable_ddl_replication on;"
