@@ -56,10 +56,10 @@ class TableDiffTask:
     # status of each table-diff task (for now)
     skip_db_update: bool = False
 
-    scheduler: Task = field(default=Task)
+    scheduler: Task = field(default_factory=Task)
 
     # Derived fields
-    fields: DerivedFields = field(default=DerivedFields)
+    fields: DerivedFields = field(default_factory=DerivedFields)
 
 
 @dataclass
@@ -85,10 +85,10 @@ class TableRepairTask:
     upsert_only: bool
 
     # Task-specific parameters
-    scheduler: Task = field(default=Task)
+    scheduler: Task = field(default_factory=Task)
 
     # Derived fields
-    fields: DerivedFields = field(default=DerivedFields)
+    fields: DerivedFields = field(default_factory=DerivedFields)
 
 
 @dataclass
@@ -114,10 +114,10 @@ class RepsetDiffTask:
     invoke_method: str = "CLI"
 
     # Task-specific parameters
-    scheduler: Task = field(default=Task)
+    scheduler: Task = field(default_factory=Task)
 
     # Derived fields
-    fields: DerivedFields = field(default=DerivedFields)
+    fields: DerivedFields = field(default_factory=DerivedFields)
 
 
 @dataclass
@@ -133,10 +133,10 @@ class SpockDiffTask:
     quiet_mode: bool
 
     # Task-specific parameters
-    scheduler: Task = field(default=Task)
+    scheduler: Task = field(default_factory=Task)
 
     # Derived fields
-    fields: DerivedFields = field(default=DerivedFields)
+    fields: DerivedFields = field(default_factory=DerivedFields)
 
 
 @dataclass
@@ -153,7 +153,7 @@ class SchemaDiffTask:
     quiet_mode: bool
 
     # Task-specific parameters
-    scheduler: Task = field(default=Task)
+    scheduler: Task = field(default_factory=Task)
 
     # Derived fields
-    fields: DerivedFields = field(default=DerivedFields)
+    fields: DerivedFields = field(default_factory=DerivedFields)
