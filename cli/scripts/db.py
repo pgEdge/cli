@@ -60,14 +60,11 @@ def create(db=None, User=None, Passwd=None, pg=None, spock=None):
     util.echo_cmd(f"{nc} install snowflake-pg{pg} --no-restart")
 
     if spock is None:
-       if pg == "17":
-           major_ver = util.DEFAULT_SPOCK_17
-       else:
-           major_ver = util.DEFAULT_SPOCK
-       ver = ""
+        major_ver = util.get_default_spock(pg)
+        ver = ""
     else:
-       major_ver = f"{str(spock)[:1]}{str(spock)[2:3:1]}"
-       ver = spock
+        major_ver = f"{str(spock)[:1]}{str(spock)[2:3:1]}"
+        ver = spock
 
     spock_comp = f"spock{major_ver}-pg{pg}"
     st8 = util.get_comp_state(spock_comp)

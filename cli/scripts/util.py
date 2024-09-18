@@ -94,6 +94,13 @@ DEBUG = 10
 DEBUG2 = 9
 
 
+def get_default_spock(pgv):
+    if pgv == "17":
+       return(DEFAULT_SPOCK_17)
+
+    return(DEFAULT_SPOCK)
+
+
 def get_cpu_info():
     try:
         import cpuinfo

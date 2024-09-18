@@ -86,21 +86,30 @@ f"""setup_core.check_pre_reqs(User={User}, Passwd={Passwd}, db={db}, port={port}
         sys.exit(1)
 
     if spock:
-       util.message(f"  Verify spock '{spock}' is valid and unique")
-       ns = util.num_spocks(pg_major, spock, True)
-       if ns == 0:
-           util.exit_message(
-               f"No available version of spock like '{spock}*' for pg{pg_major}")
-       elif ns > 1:
-           util.exit_message(
-               f"More than 1 spock version available matching '{spock}*'")
+        util.message(f"  Verify spock '{spock}' is valid and unique")
+        ns = util.num_spocks(pg_major, spock, True)
+        if ns == 0:
+            util.exit_message(
+                f"No available version of spock like '{spock}*' for pg{pg_major}")
+        elif ns > 1:
+            util.exit_message(
+                f"More than 1 spock version available matching '{spock}*'")
+        spock_display = spock
+    else:
+        sd = util.get_default_spock(pg_major)
+        spock_display = f"{sd[0]}.{sd[1]}"
+
+    if pg_minor > " ":
+        pg_display = pg_minor
+    else:
+        pg_display = pg_major
 
     setup_info = f"""
 ######### pgEdge Setup Info ###########
 #      User: {User}
 #  Database: {db}:{port}
-#  Postgres: {pg_major} {pg_minor}
-#     Spock: {spock}
+#  Postgres: {pg_display}
+#     Spock: {spock_display}
 # Autostart: {autostart}
 #  Platform: {util.get_ctlib_dir()}
 #######################################
