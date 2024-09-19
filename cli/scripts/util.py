@@ -137,9 +137,8 @@ def get_gpu_info():
     except Exception:
         return ""
 
-    stat = str(stat)
-    stat = stat.replace("\n", "")
-    stat = stat.replace("[0] ", "")
+    stat = str(stat).replace("[0] ", "")
+    stat = " ".join(stat.split())
 
     return(stat)
 
