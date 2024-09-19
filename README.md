@@ -12,7 +12,7 @@ Get started quickly by taking a look at our [tutorials](https://github.com/pgEdg
 Check out our [commands](https://github.com/pgEdge/pgedge/tree/main?tab=readme-ov-file#cli-commands) to learn more about our multi-master power at your fingertips. :-)
 
 
-# To setup a dev environment to contribute to this project:
+# To setup a dev environment:
 
 1.) Clone this repo
 
