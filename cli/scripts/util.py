@@ -100,7 +100,7 @@ def py3_check():
 
     ctlib_path = f"{MY_LIBS}/{ctlib_dir}"
     if not os.path.exists(f"{ctlib_path}"):
-        message(f"Missing runtime libs directory '{ctlib_path}'", "warning")
+        message(f"Missing runtime libs: {ctlib_dir}", "warning")
         return(False)
 
     py3_v = f"{sys.version_info[0]}.{sys.version_info[1]}"
@@ -3380,7 +3380,7 @@ def http_get_file(
         else:
             print("\n" + "ERROR: " + str(e))
             print("       " + msg)
-        my_logger.error("URL Error while dowloading file %s (%s)", p_file_name, str(e))
+        my_logger.error("URL Error while downloading file %s (%s)", p_file_name, str(e))
         if file_exists and not f.closed:
             f.close()
         delete_file(file_name_partial)
@@ -3397,7 +3397,7 @@ def http_get_file(
         else:
             print("\n" + str(e))
         my_logger.error(
-            "Timeout Error while dowloading file %s (%s)", p_file_name, str(e)
+            "Timeout Error while downloading file %s (%s)", p_file_name, str(e)
         )
         if file_exists and not f.closed:
             f.close()
@@ -3414,7 +3414,7 @@ def http_get_file(
             print(json.dumps([json_dict]))
         else:
             print("\n" + str(e))
-        my_logger.error("IO Error while dowloading file %s (%s)", p_file_name, str(e))
+        my_logger.error("IO Error while downloading file %s (%s)", p_file_name, str(e))
         if file_exists and not f.closed:
             f.close()
         delete_file(file_name_partial)
@@ -3431,7 +3431,7 @@ def http_get_file(
             print(json.dumps([json_dict]))
         else:
             print("Download Cancelled")
-        my_logger.error("Cancelled dowloading file %s ", p_file_name)
+        my_logger.error("Cancelled downloading file %s ", p_file_name)
         if file_exists and not f.closed:
             f.close()
         delete_file(file_name_partial)
@@ -3448,7 +3448,7 @@ def http_get_file(
         else:
             print("\n" + str(e))
         my_logger.error(
-            "Value Error while dowloading file %s (%s)", p_file_name, str(e)
+            "Value Error while downloading file %s (%s)", p_file_name, str(e)
         )
         if file_exists and not f.closed:
             f.close()
