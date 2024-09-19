@@ -487,7 +487,7 @@ def json_template(cluster_name, db, num_nodes, usr, passwd, pg, port):
     pgedge_json["auto_start"] = "off"
 
     spock_json = {}
-    spock_json["spock_version"] = "4.0.1"
+    spock_json["spock_version"] = ""
     spock_json["auto_ddl"] = "off"
     pgedge_json["spock"] = spock_json
 

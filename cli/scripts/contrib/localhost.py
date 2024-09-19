@@ -188,7 +188,7 @@ def cluster_create(
             "pg_version": pg,
             "auto_start": "off",
             "spock": {
-                "spock_version": "4.0.1",
+                "spock_version": "",
                 "auto_ddl": auto_ddl
             },
             "databases": [
