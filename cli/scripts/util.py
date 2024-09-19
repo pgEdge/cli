@@ -114,6 +114,14 @@ def get_cpu_info():
     return(vcpu, brand)
 
 
+def remove_old_ctlib_dirs():
+    message("Removing any old ctlib directories", "info")
+
+    lib_dir_mask = f"{MY_HOME}/hub/scripts/lib/py3.*-???"
+
+    echo_cmd(f"rm -rf {lib_dir_mask}")
+    
+
 def get_ctlib_dir():
     if platform.system() == "Darwin":
         return("py3.11-osx")
