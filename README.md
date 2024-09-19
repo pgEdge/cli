@@ -1,4 +1,4 @@
-# The Command Line Interface (CLI) for pgEdge
+# The CLI for pgEdge
 
 This is the pgEdge Command Line Interface (CLI) for managing components. 
 Take a look at our main pgEdge [repo](https://github.com/pgEdge/pgedge) for tips and example CLI commands.
