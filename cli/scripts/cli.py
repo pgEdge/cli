@@ -74,6 +74,8 @@ fire_list = [
     "upgrade-cli"
 ]
 
+py3_check_list  = ["info", "spock", "cluster", "localhost"]
+
 fire_contrib = ["localhost"]
 
 native_list = ["backrest", "ansible", "patroni", "etcd", "bouncer"]
@@ -86,7 +88,6 @@ mode_list_advanced = [
     "download",
     "useradd",
     "spock",
-    "downgrade",
     "pgbin",
     "psql",
     "pg_isready",
@@ -1299,6 +1300,9 @@ if p_mode == "pgbin":
         sys.exit(0)
 
     sys.exit(1)
+
+if p_mode in py3_check_list:
+    util.py3_check()
 
 ## FIRE LIST ###############################################################
 if (p_mode in fire_list) or (p_mode in fire_contrib):

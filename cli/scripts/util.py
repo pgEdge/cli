@@ -12,6 +12,7 @@ DEFAULT_SPOCK = "40"
 DEFAULT_SPOCK_17 = "40"
 MY_CMD = os.getenv("MY_CMD", None)
 MY_HOME = os.getenv("MY_HOME", None)
+MY_LIBS = f"{MY_HOME}/hub/scripts/lib"
 MY_LITE = os.getenv("MY_LITE", None)
 BACKUP_DIR = os.path.join(MY_HOME, "data", "conf", "backup")
 BACKUP_TARGET_DIR = os.path.join(BACKUP_DIR, time.strftime("%Y%m%d%H%M"))
@@ -94,6 +95,22 @@ DEBUG = 10
 DEBUG2 = 9
 
 
+def py3_check():
+    ctlib_dir = get_ctlib_dir()
+
+    ctlib_path = f"{MY_LIBS}/{ctlib_dir}"
+    if not os.path.exists(f"{ctlib_path}"):
+        message(f"Missing runtime libs directory '{ctlib_path}'", "warning")
+        return(False)
+
+    py3_v = f"{sys.version_info[0]}.{sys.version_info[1]}"
+    if not py3_v in ctlib_dir:
+        message(f"Mismatch between Python versions: '{py3_v}' not in '{ctlib_dir}'", "warning")
+        return(False)
+
+    return(True)
+
+
 def get_default_spock(pgv):
     if pgv == "17":
        return(DEFAULT_SPOCK_17)
@@ -110,7 +127,6 @@ def get_cpu_info():
     except Exception:
         return(0,'?')
 
-
     return(vcpu, brand)
 
 
@@ -125,7 +141,7 @@ def get_gpu_info():
     stat = stat.replace("\n", "")
     stat = stat.replace("[0] ", "")
 
-    return str(stat).replace("\n","")
+    return(stat)
 
 
 
