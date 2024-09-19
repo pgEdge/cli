@@ -4,8 +4,8 @@
 import os
 import time
 
-MY_VERSION = "24.9.6"
-MY_CODENAME = "Constellation"
+MY_VERSION = "24.10.0"
+MY_CODENAME = "Nebula??"
 
 DEFAULT_PG = "16"
 DEFAULT_SPOCK = "40"
