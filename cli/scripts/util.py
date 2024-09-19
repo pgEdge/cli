@@ -114,6 +114,21 @@ def get_cpu_info():
     return(vcpu, brand)
 
 
+def get_gpu_info():
+    try:
+        cmd = "gpustat --no-color --no-processes --no-header 2> /dev/null | head -1"
+        stat = str(subprocess.check_output(cmd, shell=True), "utf-8")
+    except Exception:
+        return ""
+
+    stat = str(stat)
+    stat = stat.replace("\n", "")
+    stat = stat.replace("[0] ", "")
+
+    return str(stat).replace("\n","")
+
+
+
 def remove_old_ctlib_dirs():
     message("Removing any old ctlib directories", "info")
 
