@@ -1475,7 +1475,11 @@ def exit_message(p_msg, p_rc=1, p_isJSON=None):
 # print codified message to stdout & logfile
 def message(p_msg, p_state="info", p_isJSON=None, quiet_mode=False):
     if p_isJSON is None:
-        p_isJSON = isJSON
+        isJSON = os.getenv("isJson", "False")
+        if isJSON == "True":
+            p_isJSON = True
+        else:
+            p_isJSON = False
 
     if p_msg is None:
         return
