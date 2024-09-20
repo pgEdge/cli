@@ -65,7 +65,7 @@ download_n_unpack(my_file, REPO, "CLI " + VER + " ...", True)
 cmd = "pgedge" + os.sep + "pgedge "
 os.system(cmd + "set GLOBAL REPO " + REPO)
 os.system(cmd + "update --silent")
-os.system(cmd + "info")
+os.system(cmd + "info --silent")
 os.system(cmd + "install ctlibs")
 
 print("\npgedge cli installed.\n")

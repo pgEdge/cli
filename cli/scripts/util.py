@@ -96,6 +96,9 @@ DEBUG2 = 9
 
 
 def py3_check():
+    if os.getenv("isSilent", "False") == "True":
+        return(True)
+
     ctlib_dir = get_ctlib_dir()
 
     ctlib_path = f"{MY_LIBS}/{ctlib_dir}"

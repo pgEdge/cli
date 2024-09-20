@@ -27,7 +27,7 @@ fi
 cd $outp
 
 ./$api set GLOBAL REPO http://localhost:8000
-./$api info
+./$api info --silent
 if [ `arch` == "i386" ]; then
   echo "Skipping CTLIBS for `arch`"
 else
