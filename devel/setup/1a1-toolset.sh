@@ -27,16 +27,18 @@ install-apt-toolset () {
 
 
 yum="sudo dnf -y install"
-apt="sudo apt-get install -y"
 PLATFORM=`cat /etc/os-release | grep PLATFORM_ID | cut -d: -f2 | tr -d '\"'`
 echo "## $PLATFORM ##"
 
 if [ "$PLATFORM" == "el8" ]; then
+  $yum python39 python39-pip python39-devel
+  sudo update-alternatives --set python3 /usr/bin/python3.9
   sudo dnf config-manager --set-enabled powertools
   $yum @ruby:3.0
 fi
 
 if [ "$PLATFORM" == "el9" ]; then
+  $yum python3 python3-pip python3-devel
   sudo dnf config-manager --set-enabled crb
   $yum ruby
 fi
@@ -50,7 +52,7 @@ if [ "$PLATFORM" == "el9"  ] &&  [ `arch` == "aarch64" ]; then
 fi
 
 if [ $el_supported == "yes" ]; then
-  $yum python39 python39-pip python39-devel gcc-toolset-13
+  $yum gcc-toolset-13
   $yum git wget curl pigz sqlite which zip
 
   $yum cpan
@@ -80,10 +82,12 @@ if [ $el_supported == "yes" ]; then
   gem install fpm
 
   install_rust
-
-  sudo update-alternatives --set python3 /usr/bin/python3.9
 fi
 
+
+#### Debian based systems ##########################
+
+apt="sudo apt-get install -y"
 
 apt --version > /dev/null 2>&1
 rc=$?
