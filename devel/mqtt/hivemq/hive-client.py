@@ -4,16 +4,18 @@ import os, sys, time
 import paho.mqtt.client as paho
 from paho import mqtt
 
-from dotenv.main import load_dotenv
+try:
+    from dotenv.main import load_dotenv
+    load_dotenv("./env.sh")
 
-load_dotenv("./hive-env.sh")
-
-# Global Variables
-BROKER_HOST = os.getenv("BROKER_HOST")
-BROKER_PORT = int(os.getenv("BROKER_PORT"))
-BROKER_USER = os.getenv("BROKER_USER")
-BROKER_PASSWD = os.getenv("BROKER_PASSWD")
-TOPIC = os.getenv("TOPIC")
+    BROKER_HOST = os.getenv("BROKER_HOST")
+    BROKER_PORT = int(os.getenv("BROKER_PORT"))
+    BROKER_USER = os.getenv("BROKER_USER")
+    BROKER_PASSWD = os.getenv("BROKER_PASSWD")
+    TOPIC = os.getenv("TOPIC")
+except Exception as e:
+    print(f"ERROR loading ENV: {e}")
+    sys.exit(1)
 
 # setting callbacks for different events to see if it works, print the message etc.
 def on_connect(client, userdata, flags, rc, properties=None):

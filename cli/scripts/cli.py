@@ -1061,39 +1061,32 @@ if "--pause" in args and not_fire:
 if "--pg" in args:
     pgn = str(get_next_arg("--pg"))
     if pgn >= "14" and pgn <= "17":
-        os.environ["pgN"] = pgn
+        util.setenv("pgeN", pgn)
         args.remove("--pg")
         args.remove(pgn)
     else:
         util.exit_message(f"invalid --pg parm {pgn}", 1)
 
-if "-U" in args and not_fire:
+if "-U" in args:
     usr = get_next_arg("-U")
-    if usr > "" and not_fire:
+    if usr > "":
         args.remove("-U")
         args.remove(usr)
-        os.environ["pgeUser"] = usr
+        util.setenv("pgeUser", usr)
 
 if "-P" in args:
     passwd = get_next_arg("-P")
     if passwd > "":
         args.remove("-P")
         args.remove(passwd)
-        os.environ["pgePasswd"] = passwd
+        util.setenv("pgePasswd", passwd)
 
 if "-p" in args:
     port = get_next_arg("-p")
     if port > "":
         args.remove("-p")
         args.remove(port)
-        os.environ["pgePort"] = port
-
-if "--location" in args and not_fire:
-    loct = get_next_arg("--location")
-    if loct > "" and not_fire:
-        args.remove("--location")
-        args.remove(loct)
-        os.environ["pgeLocation"] = loct
+        util.setenv("pgePort", port)
 
 isTIME = False
 if "-t" in args and not_fire:
@@ -1156,17 +1149,17 @@ if "--fips" in args and "install" in args and not_fire:
 isAUTOSTART = False
 if "--autostart" in args and "install" in args and not_fire:
     isAUTOSTART = True
-    os.environ["isAutoStart"] = "True"
+    util.setenv("isAutoStart", "True")
     args.remove("--autostart")
 
 if "--rm-data" in args and not_fire:
-    os.environ["isRM_DATA"] = "True"
+    util.setenv("isRM_DATA", "True")
     args.remove("--rm-data")
 
 isSILENT = False
 if "--silent" in args and not_fire:
     isSILENT = True
-    os.environ["isSilent"] = "True"
+    util.setenv("isSilent", "True")
     args.remove("--silent")
 
 if len(args) == 1:

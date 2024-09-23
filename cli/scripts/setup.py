@@ -30,22 +30,27 @@ def setup_pgedge(User=None, Passwd=None, dbName=None, port=None, pg_ver=None, sp
 
     pgN = os.getenv("pgN", "")
     if (pgN > "" ) and (pg_ver is None):
-        util.message("over-riding 'pg_ver' with ENV", "debug")
+        util.message(f"over-riding 'pg_ver' with ENV pgN={pgN}", "debug")
         pg_ver = pgN
 
 
     if os.getenv("isAutoStart", "") == "True":
-        util.message("over-riding 'autostart' with ENV", "debug")
+        util.message(f"over-riding 'autostart' with ENV isAutoStart={isAutoStart}", "debug")
         autostart = True
+
+    pgeUser = os.getenv("pgeUser", "")
+    if (pgeUser > "" ) and (User is None):
+        util.message(f"over-riding 'User' with ENV pgeUser={pgeUser}", "debug")
+        User = pgeUser
 
     pgePasswd = os.getenv("pgePasswd", "")
     if (pgePasswd > "" ) and (Passwd is None):
-        util.message("over-riding 'Passwd' with ENV", "debug")
+        util.message(f"over-riding 'Passwd' with ENV pgePasswd={pgePasswd}", "debug")
         Passwd = pgePasswd
 
     pgePort = os.getenv("pgePort", "")
     if (pgePort > "" ) and (port is None):
-        util.message("over-riding 'port' with ENV", "debug")
+        util.message(f"over-riding 'port' with ENV pgePort={pgePort}", "debug")
         port = pgePort
 
     util.message(f"""

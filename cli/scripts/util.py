@@ -5,7 +5,7 @@ import os
 import time
 
 MY_VERSION = "24.10.0"
-MY_CODENAME = "Nebula??"
+MY_CODENAME = "Constellation"
 
 DEFAULT_PG = "16"
 DEFAULT_SPOCK = "40"
@@ -93,6 +93,10 @@ if os.path.exists(platform_lib_path):
 COMMAND = 15
 DEBUG = 10
 DEBUG2 = 9
+
+
+def setenv(env, val):
+    os.environ[str(env)] = str(val)
 
 
 def py3_check():
