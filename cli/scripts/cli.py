@@ -165,7 +165,7 @@ ignore_comp_list = (
 no_log_commands = ["status", "info", "list", "top", "get", "metrics-check"]
 
 lock_commands = (
-    ["install", "remove", "update", "upgrade", "downgrade", "service"]
+    ["install", "remove", "update", "upgrade", "service"]
     + fire_list
     + fire_contrib
     + native_list
@@ -439,14 +439,6 @@ def install_comp(p_app, p_ver=0, p_rver=None, p_re_install=False):
         tar.close
         if isJSON:
             util.message("Unpack complete")
-
-
-def downgrade_component(p_comp):
-    present_version = meta.get_version(p_comp)
-    present_state = util.get_comp_state(p_comp)
-    server_port = util.get_comp_port(p_comp)
-    print("Downgrade " + p_comp + " v" + present_version)
-    return 1
 
 
 def upgrade_component(p_comp):
@@ -1742,7 +1734,6 @@ if p_mode == "enable" or p_mode == "disable":
 
 ## CONFIG, INIT, RELOAD ##################################
 if p_mode in ["config", "init", "reload"]:
-    util.message(f"'{p_mode}' '{p_comp} from cli.py", "debug")
     util.check_server(p_comp, p_mode)
     sys.exit(util.run_script(p_comp, f"{p_mode}-{p_comp}", extra_args))
 
@@ -1760,14 +1751,6 @@ if (p_mode == "start"):
 if (p_mode == "restart"):
     args.insert(0,p_mode)
     fire_away("service", args)
-
-## DOWNGRADE ################################################
-if p_mode == "downgrade":
-    rc = downgrade_component(p_comp)
-    if rc == 1:
-        msg = "Nothing to downgrade."
-        print(msg)
-        my_logger.info(msg)
 
 ## UPGRADE ##################################################
 if p_mode == "upgrade":
