@@ -80,20 +80,8 @@ def create(db=None, User=None, Passwd=None, pg=None, spock=None):
     rc4 = util.echo_cmd(ncb + '"psql -q -c \\"' + cmd + '\\" ' + str(db) + '"')
 
     rcs = rc1 + rc2 + rc3 + rc4
-    if rcs == 0:
-        status = "success"
-    else:
-        status = "error"
-
-    return_json = {}
-    return_json["status"] = status
-    return_json["db_name"] = db
-    return_json["users"] = []
-
-    user_json = {}
-    user_json["user"] = User
-    user_json["passwd"] = Passwd
-    return_json["users"].append(user_json)
+    if rcs != 0:
+        util.exit_message("Unable to complete db.create()")
 
     return
 
@@ -178,7 +166,6 @@ def set_readonly(readonly="off"):
         util.exit_exception(e)
 
     sys.exit(0)
-
 
 
 if __name__ == "__main__":
