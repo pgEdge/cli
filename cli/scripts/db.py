@@ -43,17 +43,17 @@ def create(db=None, User=None, Passwd=None, pg=None, spock=None):
         util.exit_message("db.create() must have parms of -User & -db")
 
     cmd = "CREATE ROLE " + User + " PASSWORD '" + Passwd + "' " + privs
-    rc1 = util.echo_cmd(ncb + '"psql -q -c \\"' + cmd + '\\" postgres"')
+    util.echo_cmd(ncb + '"psql -q -c \\"' + cmd + '\\" postgres"')
     cmd = (
         "CREATE ROLE replicator PASSWORD '"
         + Passwd
         + "' "
         + "SUPERUSER LOGIN REPLICATION"
     )
-    rc1 = util.echo_cmd(ncb + '"psql -q -c \\"' + cmd + '\\" postgres"')
+    util.echo_cmd(ncb + '"psql -q -c \\"' + cmd + '\\" postgres"')
 
     cmd = "createdb '" + db + "' --owner='" + User + "'"
-    rc2 = util.echo_cmd(ncb + '"' + cmd + '"')
+    rc1 = util.echo_cmd(ncb + '"' + cmd + '"')
 
     util.echo_cmd(f"{nc} tune pg{pg}")
 
@@ -71,15 +71,15 @@ def create(db=None, User=None, Passwd=None, pg=None, spock=None):
 
     if st8 in ("Installed", "Enabled"):
         cmd = "CREATE EXTENSION spock"
-        rc3 = util.echo_cmd(ncb + '"psql -q -c \\"' + cmd + '\\" ' + str(db) + '"')
+        rc2 = util.echo_cmd(ncb + '"psql -q -c \\"' + cmd + '\\" ' + str(db) + '"')
     else:
         spock_comp = f"spock{major_ver}-pg{pg} {ver}"
-        rc3 = util.echo_cmd(nc + "install " + spock_comp + " -d " + str(db))
+        rc2 = util.echo_cmd(nc + "install " + spock_comp + " -d " + str(db))
 
     cmd = "CREATE EXTENSION snowflake"
-    rc4 = util.echo_cmd(ncb + '"psql -q -c \\"' + cmd + '\\" ' + str(db) + '"')
+    rc3 = util.echo_cmd(ncb + '"psql -q -c \\"' + cmd + '\\" ' + str(db) + '"')
 
-    rcs = rc1 + rc2 + rc3 + rc4
+    rcs = rc1 + rc2 + rc3
     if rcs != 0:
         util.exit_message("Unable to complete db.create()")
 
