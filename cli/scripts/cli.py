@@ -989,8 +989,10 @@ if "--no-restart" in args:
     args.remove("--no-restart")
     os.environ["isRestart"] = "False"
 
-isJSON = False
-os.environ["isJson"] = "False"
+if os.getenv("isJson") == "True":
+    isJSON = True
+else:
+    isJSON = False
 if "--json" in args:
     isJSON = True
     args.remove("--json")
