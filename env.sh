@@ -6,7 +6,7 @@ api=pgedge
 ctlibsV=1.6
 
 spock41V=4.1devel-1
-spock40V=4.0.4-1
+spock40V=4.0.5-1
 spock33V=3.3.6-1
 
 lolorV=1.2-1
