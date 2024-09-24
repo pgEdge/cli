@@ -419,8 +419,10 @@ INSERT INTO versions VALUES ('spock40-pg16', '4.0.1-1', 'amd, arm', 0, '20240801
 INSERT INTO versions VALUES ('spock40-pg17', '4.0.1-1', 'amd, arm', 0, '20240801', 'pg17', '', '');
 
 -- ## SPOCK41 ###########################
+INSERT INTO releases VALUES ('spock41-pg16', 4, 'spock', 'Spock', '', 'test', '', 1, 'pgEdge Community', '', '');
 INSERT INTO releases VALUES ('spock41-pg17', 4, 'spock', 'Spock', '', 'test', '', 1, 'pgEdge Community', '', '');
-INSERT INTO versions VALUES ('spock41-pg17', '4.1.0.1-1', 'amd, arm', 0, '20240917', 'pg17', '', '');
+INSERT INTO versions VALUES ('spock41-pg16', '4.1devel-1',   'amd, arm', 1, '20241001', 'pg16', '', '');
+INSERT INTO versions VALUES ('spock41-pg17', '4.1devel-1',   'amd, arm', 1, '20241001', 'pg17', '', '');
 
 -- ## LOLOR #############################
 INSERT INTO projects VALUES ('lolor', 'pge', 4, 0, '', 1, 'https://github.com/pgedge/lolor/tags',
