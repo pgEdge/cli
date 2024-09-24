@@ -533,7 +533,7 @@ def create_spock_db(nodes, db, db_settings):
     for n in nodes:
         ip = n["public_ip"] if "public_ip" in n else n["ip_address"]
         nc = n["path"] + os.sep + "pgedge" + os.sep + "pgedge "
-        cmd = nc + " db create -U " + db["db_user"] + " -d " + db["db_name"] + " -P " + db["db_password"]
+        cmd = nc + " db create --User=" + db["db_user"] + " --db=" + db["db_name"] + " --Passwd=" + db["db_password"]
         util.echo_cmd(cmd, host=ip, usr=n["os_user"], key=n["ssh_key"])
         if db_settings["auto_ddl"] == "on":
             cmd = nc + " db guc-set spock.enable_ddl_replication on;"
