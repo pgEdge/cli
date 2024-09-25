@@ -30,7 +30,7 @@ If the crontab_schedule is specified, run_frequency is ignored.
 Minimum run_frequency is 5 minutes.
 
 """
-jobs = [
+schedule_jobs = [
     {
         "name": "t1",
         "cluster_name": "eqn-t9da",
@@ -89,3 +89,16 @@ schedule_config = [
         "rerun_after": "1h",
     },
 ]
+
+
+"""
+ACE auto-repair options
+"""
+
+auto_repair_config = {
+    "enabled": True,
+    "cluster_name": "eqn-t9da",
+    "dbname": "demo",
+    "poll_interval": "1h",
+    "status_update_interval": "10m",
+}
