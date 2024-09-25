@@ -237,7 +237,7 @@ INSERT INTO versions VALUES ('pljava-pg16', '1.6.4-1',  'amd, arm',  0, '2023060
 
 -- ## MQTTCLIENT #########################
 INSERT INTO projects VALUES ('mqttclient', 'dev', 4, 0, '', 0, 'https://github.com/pgedge/mqttclient/tags',
-  'mqttclient', 1, 'mqtt.png', 'Secure MQTT Client', 'https://github.com/pgedge/mqttclient', 'mqttclient', dbgapi');
+  'mqttclient', 1, 'mqtt.png', 'Secure MQTT Client', 'https://github.com/pgedge/mqttclient', '');
 INSERT INTO releases VALUES ('mqttclient-pg16', 2, 'mqttclient', 'MQTT Client', '', 'test', '', 1, 'POSTGRES', '', '');
 INSERT INTO releases VALUES ('mqttclient-pg17', 2, 'mqttclient', 'MQTT Client', '', 'test', '', 1, 'POSTGRES', '', '');
 
