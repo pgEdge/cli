@@ -12,7 +12,8 @@ from mpire import WorkerPool
 from mpire.utils import make_single_arguments
 from ordered_set import OrderedSet
 from psycopg import sql
-from psycopg.rows import dict_row
+from psycopg.rows import dict_row, class_row
+from dateutil import parser
 
 import ace
 import ace_db
@@ -20,6 +21,7 @@ import cluster
 import util
 import ace_config as config
 from ace_data_models import (
+    AutoRepairTask,
     RepsetDiffTask,
     SchemaDiffTask,
     SpockDiffTask,
@@ -1920,3 +1922,249 @@ def update_spock_exception(entry: dict, conn: psycopg.Connection) -> None:
 
     except Exception as e:
         raise AceException(f"Error while updating exception status: {str(e)}")
+
+
+# TODO:
+# - Simple and composite primary keys
+# - Datatypes
+# - Quoted column names
+# - Quoted table names
+def auto_repair():
+    """
+    This is the core function that orchestrates the auto-repair process. The
+    auto-repair feature periodically polls the exception_log table, runs a
+    table-diff against the remote_origin node, and attempts to repair the
+    exception by making a decision on which node to use as the source of truth.
+    We only need the cluster_name here, since we need to query each node for the
+    exception_log and take action depending on it.
+
+    The tricky part here is deciding which node to use as the source of truth. It
+    is worth noting here that this decision, for now (the ACE 2.0 release), will
+    only happen for INSERT/UPDATE/DELETE exceptions. Why? Handling auto-ddl and
+    other exception types is far more complex, and will be implemented in a
+    future release.
+
+    Let us now look at the INSERT/UPDATE/DELETE scenarios:
+
+        INSERT:
+        An insert operation can error out on a subscriber if the row with the
+        same primary key or unique constraint already exists on the subscriber.
+        In such a scenario, the subscriber node could either be ahead or behind
+        the origin node. Since we cannot make this distinction, we need to adopt
+        a different strategy for choosing the source of truth.
+
+        UPDATE:
+        An update transaction coming from a remote_origin can error out on a
+        subscriber if the original row to be updated is not yet available, or no
+        longer exists. If it is not yet available, we can simply use the
+        remote_origin node as the source of truth during repair. However, if it
+        is no longer available, we can't know if the subscriber node is ahead or
+        behind the origin node. Not only is this an issue, determining if the row
+        is as yet unavailable, or if it is no longer available (because of a
+        local or a remote delete), is non-trivial.
+
+        DELETE:
+        It's the same case for deletes. We can't ascertain if the row is as yet
+        unavailable, or if it is no longer available (because of a local or a
+        remote delete), or if the row was locally inserted and not yet committed.
+        However, a saving grace here is that we do not need to make this
+        distinction. Why? Because in the current version of Spock (4.0.1), there
+        is no global ordering of transactions. It is possible for a delete
+        transaction that happened after an insert/update transaction (on the
+        cluster level) to be processed before the insert/update transaction, thus
+        resulting in an incorrect end state for the cluster. That is why, we can
+        avoid making this distinction.
+
+    So, how do we tackle this? In all three cases above, we have uncertainties
+    that prevent us from definitively determining the source of truth. However,
+    we have certain functions that can help us make this decision. Specifically,
+    it's the spock.xact_commit_timestamp_origin() function. This function returns
+    the commit timestamp, as well as the origin node of a transaction. With this,
+    here's a strategy we can employ:
+
+        INSERT:
+        We can use the spock.xact_commit_timestamp_origin() function to get the
+        commit timestamp of the transaction. With this, we simply need compare
+        the local commit timestamp with the origin commit timestamp to determine
+        the source of truth.
+
+        UPDATE/DELETE:
+        TBD
+    """
+
+    cluster_name = config.auto_repair_config["cluster_name"]
+    dbname = config.auto_repair_config["dbname"]
+
+    # We have already run the necessary checks, so we can proceed here.
+    db, pg, node_info = cluster.load_json(cluster_name)
+
+    cluster_nodes = []
+    combined_json = {}
+    database = next(
+        (db_entry for db_entry in db if db_entry["db_name"] == dbname), None
+    )
+
+    for node in node_info:
+        combined_json = {**database, **node}
+        cluster_nodes.append(combined_json)
+
+    get_exception_sql = """
+    SELECT
+        el.remote_origin,
+        el.remote_commit_ts,
+        el.command_counter,
+        el.remote_xid,
+        el.local_origin,
+        el.local_commit_ts,
+        el.table_schema,
+        el.table_name,
+        el.operation,
+        el.local_tup,
+        el.remote_old_tup,
+        el.remote_new_tup,
+        el.ddl_statement,
+        el.ddl_user,
+        el.error_message,
+        el.retry_errored_at
+    FROM
+        spock.exception_log el
+    INNER JOIN
+        spock.exception_status_detail esd
+    ON
+        el.remote_origin = esd.remote_origin
+        AND el.remote_commit_ts = esd.remote_commit_ts
+        AND el.remote_xid = esd.remote_xid
+        AND esd.status = 'PENDING';
+    """
+
+    commit_timestamp_sql = """
+    SELECT
+    spock.xact_commit_timestamp_origin(%s::xid)
+    """
+
+    oid_sql = """
+    SELECT
+        node_id,
+        node_name
+    FROM
+        spock.node;
+    """
+
+    # We will construct a dictionary to map OIDs to node names
+    oid_to_node_name = {}
+    conn_map = {}
+
+    for node in cluster_nodes:
+        params = {
+            "dbname": node["db_name"],
+            "host": node["public_ip"],
+            "port": node["port"],
+            "user": node["db_user"],
+            "password": node["db_password"],
+            "options": f"-c statement_timeout={config.STATEMENT_TIMEOUT}",
+        }
+        try:
+            conn_map[node["name"]] = psycopg.connect(**params)
+            cur = conn_map[node["name"]].cursor(row_factory=dict_row)
+            cur.execute(oid_sql)
+            oid_to_node_name = {
+                row["node_id"]: row["node_name"] for row in cur.fetchall()
+            }
+        except Exception as e:
+            raise AceException(f"Error while getting OIDs: {str(e)}")
+
+    for node in cluster_nodes:
+        try:
+            conn = conn_map[node["name"]]
+            cur = conn.cursor(row_factory=class_row(AutoRepairTask))
+            cur.execute(get_exception_sql)
+            exceptions = cur.fetchall()
+        except Exception as e:
+            raise AceException(f"Error while getting exceptions: {str(e)}")
+
+        for exception in exceptions:
+            pkey = ace.get_key(conn, exception.table_schema, exception.table_name)
+            # We handle only INSERT exceptions for now
+            if exception.operation != "INSERT":
+                continue
+
+            # We will first get the local commit timestamp of the transaction
+            # that created the record and eventually caused the exception.
+
+            xmin_sql = f"""
+            SELECT
+                xmin
+            FROM
+                {exception.table_schema}.{exception.table_name}
+            WHERE
+                {pkey} = {next((tup['value'] 
+                                for tup in exception.remote_new_tup
+                                if tup['attname'] == pkey), None)}
+            """
+
+            local_commit_ts = None
+
+            try:
+                cur = conn.cursor()
+                cur.execute(xmin_sql)
+                xmin = cur.fetchone()[0]
+                print(f"XMIN: {xmin}")
+                cur.execute(commit_timestamp_sql, (str(xmin),))
+                local_commit_ts = parser.parse(cur.fetchone()[0][0])
+                print(f"Local commit timestamp: {local_commit_ts}")
+            except Exception as e:
+                raise AceException(
+                    f"Error while getting local commit timestamp: {str(e)}"
+                )
+
+            # Now, we can compare local_commit_ts and remote_commit_ts
+            if local_commit_ts < exception.remote_commit_ts:
+                # The local node is behind the origin node
+                # We will use the origin node as the source of truth
+
+                # The remote_new_tup will have
+                # {"value": ..., "attname": ..., "atttype": ...}
+                # We need to convert this to a tuple that can be used to update
+                # the local row
+
+                # XXX: Handle composite primary keys and quoted stuff!
+                update_sql = f"""
+                UPDATE {exception.table_schema}.{exception.table_name}
+                SET {", ".join([f"{tup['attname']} = {tup['value']}"
+                                for tup in exception.remote_new_tup])}
+                WHERE {pkey} = {next((tup['value'] 
+                                for tup in exception.remote_new_tup
+                                if tup['attname'] == pkey), None)}
+                """
+
+                try:
+                    cur = conn.cursor()
+                    cur.execute(update_sql)
+                    conn.commit()
+                except Exception as e:
+                    raise AceException(f"Error while updating local table: {str(e)}")
+
+                # Now, we need to update the exception status to "RESOLVED"
+                update_exception_status_sql = """
+                UPDATE spock.exception_status_detail
+                SET status = 'RESOLVED'
+                WHERE remote_origin = %s
+                    AND remote_commit_ts = %s
+                    AND remote_xid = %s;
+                """
+
+                try:
+                    cur = conn.cursor()
+                    cur.execute(
+                        update_exception_status_sql,
+                        (
+                            exception.remote_origin,
+                            exception.remote_commit_ts,
+                            exception.remote_xid,
+                        ),
+                    )
+                    conn.commit()
+                except Exception as e:
+                    raise AceException(
+                        f"Error while updating exception status: {str(e)}"
+                    )

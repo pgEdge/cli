@@ -12,13 +12,14 @@ import subprocess
 from datetime import datetime
 import logging
 
+import ace_core
 import fire
 import psycopg
 
 import cluster
 import util
 import ace_db
-import ace_api
+import ace_daemon
 import ace_config as config
 from ace_data_models import (
     RepsetDiffTask,
@@ -1226,6 +1227,7 @@ if __name__ == "__main__":
             "schema-diff": ace_cli.schema_diff_cli,
             "spock-diff": ace_cli.spock_diff_cli,
             "spock-exception-update": ace_cli.update_spock_exception_cli,
-            "start": ace_api.start_ace,
+            "start": ace_daemon.start_ace,
+            "auto-repair": ace_core.auto_repair,
         }
     )
