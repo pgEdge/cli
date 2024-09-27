@@ -7,7 +7,7 @@ devel/pg/postgresml/
 devel/repo/cleanREMOTE
 devel/repo/local
 
-devel/mqtt/hivemq/env.sh
+devel/mqttclient/
 
 src/packages/*.rpm
 src/packages/*.deb
