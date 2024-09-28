@@ -99,6 +99,6 @@ auto_repair_config = {
     "enabled": True,
     "cluster_name": "eqn-t9da",
     "dbname": "demo",
-    "poll_interval": "1h",
-    "status_update_interval": "10m",
+    "poll_interval": "1m",
+    "status_update_interval": "1m",
 }

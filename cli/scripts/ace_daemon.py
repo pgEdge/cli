@@ -559,6 +559,7 @@ begins by inserting records into those two tables.
 def populate_exception_status_tables():
 
     cluster_name = config.auto_repair_config["cluster_name"]
+    dbname = config.auto_repair_config["dbname"]
 
     found = ace.check_cluster_exists(cluster_name)
     if not found:
@@ -568,12 +569,19 @@ def populate_exception_status_tables():
 
     cluster_nodes = []
     combined_json = {}
-    database = config.auto_repair_config["dbname"]
+    database = next(
+        (db_entry for db_entry in db if db_entry["db_name"] == dbname), None
+    )
 
     for node in node_info:
         combined_json = {**database, **node}
         cluster_nodes.append(combined_json)
 
+    # Step 1: Populate the top-level exception_status table
+    # by looking at the exception_log table.
+    # This will only insert one record per
+    # (remote_origin, remote_commit_ts, remote_xid)
+    # trio in the exception_log table.
     exception_sql_step1 = """
     MERGE INTO
         spock.exception_status es
@@ -605,6 +613,15 @@ def populate_exception_status_tables():
     );
     """
 
+    # Step 2: Populate the exception_status_detail table
+    # by looking at the exception_log table.
+    # This will insert one record per failing operation in a
+    # transaction.
+    # There can be multiple entries for the same
+    # (remote_origin, remote_commit_ts, remote_xid)
+    # trio, but only one entry per
+    # (remote_origin, remote_commit_ts, remote_xid, command_counter)
+    # in the exception_log table.
     exception_sql_step2 = """
     MERGE INTO
         spock.exception_status_detail esd
@@ -638,6 +655,24 @@ def populate_exception_status_tables():
     );
     """
 
+    # Step 3: Update the status of the (remote_origin, remote_commit_ts, remote_xid)
+    # trio in the exception_status table to 'RESOLVED' if all the
+    # commands that belong to that trio have been resolved.
+    exception_sql_step3 = """
+    UPDATE spock.exception_status es
+    SET
+        status = 'RESOLVED'
+    FROM (
+        SELECT remote_xid
+        FROM spock.exception_status_detail esd
+        GROUP BY remote_xid
+        HAVING COUNT(*) = COUNT(CASE WHEN status = 'RESOLVED' THEN 1 END)
+    ) AS subquery
+    WHERE
+        es.remote_xid = subquery.remote_xid
+        AND es.status != 'RESOLVED';
+    """
+
     for node in cluster_nodes:
         params = {
             "dbname": node["db_name"],
@@ -654,6 +689,7 @@ def populate_exception_status_tables():
         try:
             cur.execute(exception_sql_step1)
             cur.execute(exception_sql_step2)
+            cur.execute(exception_sql_step3)
             conn.commit()
         except Exception as e:
             raise AceException(
@@ -665,14 +701,12 @@ def populate_exception_status_tables():
             conn.close()
 
 
-def validate_auto_repair_config():
+def validate_auto_repair_config(
+    cluster_name, dbname, poll_interval, status_update_interval
+):
 
-    cluster_name = config.auto_repair_config.get("cluster_name", None)
-    dbname = config.auto_repair_config.get("dbname", None)
-    poll_interval = config.auto_repair_config.get("poll_interval", None)
-    status_update_interval = config.auto_repair_config.get(
-        "status_update_interval", None
-    )
+    poll_interval_datetime = None
+    status_update_interval_datetime = None
 
     if not cluster_name:
         raise AceException("cluster_name is required in auto_repair_config")
@@ -688,8 +722,8 @@ def validate_auto_repair_config():
         raise AceException("poll_interval is required in auto_repair_config")
 
     try:
-        parse_time_string(poll_interval)
-        parse_time_string(status_update_interval)
+        poll_interval_datetime = parse_time_string(poll_interval)
+        status_update_interval_datetime = parse_time_string(status_update_interval)
     except Exception as e:
         raise AceException(
             f"Invalid poll_interval or status_update_interval: {poll_interval} or "
@@ -701,8 +735,14 @@ def validate_auto_repair_config():
     if dbname not in [db_entry["db_name"] for db_entry in db]:
         raise AceException(f"Database {dbname} not found in cluster {cluster_name}")
 
+    return poll_interval_datetime, status_update_interval_datetime
 
-def validate_table_diff_schedule(jobs, schedule_config):
+
+def validate_table_diff_schedule():
+
+    jobs = config.schedule_jobs
+    schedule_config = config.schedule_config
+
     job_names = []
 
     for job in jobs:
@@ -778,6 +818,128 @@ def create_schedules():
 
 
 """
+Validates the table-diff schedule and starts daemons.
+"""
+
+
+def start_scheduling_daemons():
+
+    try:
+        validate_table_diff_schedule()
+        create_schedules()
+    except AceException:
+        raise
+    except Exception as e:
+        raise AceException(f"Unexpected error starting scheduling daemons: {e}")
+
+
+"""
+Validates the auto-repair config and starts daemons.
+
+It starts the background processes to periodically
+populate the exception_status and exception_status_detail tables,
+monitor for new exceptions in those tables, and execute the auto-repair
+process.
+"""
+
+
+def start_auto_repair_daemon():
+    poll_interval_datetime = None
+    update_interval_datetime = None
+
+    auto_repair_config = config.auto_repair_config
+    if not auto_repair_config["enabled"]:
+        return
+
+    cluster_name = auto_repair_config.get("cluster_name", None)
+    dbname = auto_repair_config.get("dbname", None)
+
+    # The poll_interval is for polling the exception_log table
+    # for new exceptions periodically.
+    poll_interval = auto_repair_config.get("poll_interval", None)
+
+    # The status_update_interval is for updating the
+    # exception_status and exception_status_detail tables.
+    # This is only temporary since an upcoming version of Spock
+    # will auto-populate these tables using triggers.
+    status_update_interval = auto_repair_config.get("status_update_interval", None)
+
+    try:
+        poll_interval_datetime, update_interval_datetime = validate_auto_repair_config(
+            cluster_name, dbname, poll_interval, status_update_interval
+        )
+    except AceException as e:
+        util.exit_message(f"Error validating auto-repair config: {e}")
+
+    try:
+        scheduler.add_job(
+            populate_exception_status_tables,
+            trigger="interval",
+            weeks=(
+                update_interval_datetime.weeks
+                if hasattr(update_interval_datetime, "weeks")
+                else 0
+            ),
+            days=(
+                update_interval_datetime.days
+                if hasattr(update_interval_datetime, "days")
+                else 0
+            ),
+            hours=(
+                update_interval_datetime.hours
+                if hasattr(update_interval_datetime, "hours")
+                else 0
+            ),
+            minutes=(
+                update_interval_datetime.minutes
+                if hasattr(update_interval_datetime, "minutes")
+                else 0
+            ),
+            seconds=(
+                update_interval_datetime.seconds
+                if hasattr(update_interval_datetime, "seconds")
+                else 0
+            ),
+            max_instances=1,
+            replace_existing=True,
+        )
+
+        scheduler.add_job(
+            ace_core.auto_repair,
+            trigger="interval",
+            weeks=(
+                poll_interval_datetime.weeks
+                if hasattr(poll_interval_datetime, "weeks")
+                else 0
+            ),
+            days=(
+                poll_interval_datetime.days
+                if hasattr(poll_interval_datetime, "days")
+                else 0
+            ),
+            hours=(
+                poll_interval_datetime.hours
+                if hasattr(poll_interval_datetime, "hours")
+                else 0
+            ),
+            minutes=(
+                poll_interval_datetime.minutes
+                if hasattr(poll_interval_datetime, "minutes")
+                else 0
+            ),
+            seconds=(
+                poll_interval_datetime.seconds
+                if hasattr(poll_interval_datetime, "seconds")
+                else 0
+            ),
+            max_instances=1,
+            replace_existing=True,
+        )
+    except Exception as e:
+        raise AceException(f"Error starting auto-repair process: {e}")
+
+
+"""
 Starts the ACE API server.
 
 This function performs the following tasks:
@@ -813,31 +975,15 @@ def start_ace():
     # scheduler.add_listener(ace.error_listener, EVENT_JOB_ERROR)
 
     try:
-        # Validate and start the table-diff schedules
-        validate_table_diff_schedule(config.schedule_jobs, config.schedule_config)
-        create_schedules()
-
-        # Validate and start the auto-repair schedule
-        validate_auto_repair_config()
-        update_interval = parse_time_string(
-            config.auto_repair_config["status_update_interval"]
-        )
-        scheduler.add_job(
-            populate_exception_status_tables,
-            trigger="interval",
-            weeks=(update_interval.weeks if hasattr(update_interval, "weeks") else 0),
-            days=(update_interval.days if hasattr(update_interval, "days") else 0),
-            hours=(update_interval.hours if hasattr(update_interval, "hours") else 0),
-            minutes=(
-                update_interval.minutes if hasattr(update_interval, "minutes") else 0
-            ),
-            seconds=(
-                update_interval.seconds if hasattr(update_interval, "seconds") else 0
-            ),
-            max_instances=1,
-            replace_existing=True,
-        )
+        # Validate the table-diff schedule and start the daemon
+        start_scheduling_daemons()
     except AceException as e:
-        util.exit_message(f"Error creating schedules: {e}")
+        util.exit_message(f"Error starting scheduling daemons: {e}")
+
+    try:
+        # Validate the auto-repair config and start the daemon
+        start_auto_repair_daemon()
+    except AceException as e:
+        util.exit_message(f"Error starting auto-repair daemon: {e}")
 
     app.run(host="127.0.0.1", port=5000)

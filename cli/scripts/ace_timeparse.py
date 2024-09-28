@@ -17,7 +17,7 @@ def parse_time_string(time_str):
     """
     # Define a regular expression pattern to match the input format
     pattern = (
-        r"^(\d+)\s*(s|sec(s)?|second(s)?|min(s)?|minute(s)?|"
+        r"^(\d+)\s*(s|sec(s)?|second(s)?|m|min(s)?|minute(s)?|"
         r"h|hr(s)?|hour(s)?|w|wk(s)?|week(s)?)$"
     )
 
@@ -40,7 +40,7 @@ def parse_time_string(time_str):
     # Convert to timedelta based on the unit
     if unit in ["s", "sec", "secs", "seconds"]:
         frequency = timedelta(seconds=value)
-    elif unit in ["min", "mins", "minutes"]:
+    elif unit in ["m", "min", "mins", "minutes"]:
         frequency = timedelta(minutes=value)
     elif unit in ["h", "hr", "hrs", "hours"]:
         frequency = timedelta(hours=value)
@@ -49,7 +49,7 @@ def parse_time_string(time_str):
     else:
         raise ValueError(f"Unsupported time unit: {unit}")
 
-    if frequency < timedelta(minutes=5):
-        raise ValueError("Minimum frequency is 5 minutes")
+    # if frequency < timedelta(minutes=5):
+    #     raise ValueError("Minimum frequency is 5 minutes")
 
     return frequency
