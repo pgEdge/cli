@@ -229,7 +229,7 @@ INSERT INTO versions VALUES ('pljava-pg16', '1.6.4-1',  'amd, arm',  0, '2023060
 INSERT INTO projects VALUES ('m2m', 'dev', 4, 8433, '', 0, 'https://github.com/pgedge/m2m/tags',
   'm2m', 0, 'mqtt.png', 'MQTT Client', 'https://github.com/pgedge/m2m', '');
 INSERT INTO releases VALUES ('m2m', 2, 'm2m', 'MQTT Client', '', 'test', '', 1, 'POSTGRES', '', '');
-INSERT INTO versions VALUES ('m2m', '0.9.1-1,  '',  1, '20241001', '', '', '');
+INSERT INTO versions VALUES ('m2m', '0.9.1-1',  '',  1, '20241001', '', '', '');
 
 -- ## PLDEBUGGER #########################
 INSERT INTO projects VALUES ('pldebugger', 'dev', 4, 0, '', 0, 'https://github.com/EnterpriseDB/pldebugger/tags',

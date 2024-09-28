@@ -1,0 +1,6 @@
+sudo systemctl stop m2m
+sudo systemctl disable m2m
+
+sudo rm -f /etc/default/m2m
+
+sudo rm -f /etc/systemd/system/m2m.service
