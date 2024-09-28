@@ -225,14 +225,11 @@ INSERT INTO releases VALUES ('pljava-pg16', 7, 'pljava', 'PL/Java', '', 'test', 
 INSERT INTO versions VALUES ('pljava-pg15', '1.6.4-1',  'amd, arm',  0, '20230608', 'pg15', '', '');
 INSERT INTO versions VALUES ('pljava-pg16', '1.6.4-1',  'amd, arm',  0, '20230608', 'pg16', '', '');
 
--- ## MQTTCLIENT #########################
-INSERT INTO projects VALUES ('mqttclient', 'dev', 4, 0, '', 0, 'https://github.com/pgedge/mqttclient/tags',
-  'mqttclient', 1, 'mqtt.png', 'Secure MQTT Client', 'https://github.com/pgedge/mqttclient', '');
-INSERT INTO releases VALUES ('mqttclient-pg16', 2, 'mqttclient', 'MQTT Client', '', 'test', '', 1, 'POSTGRES', '', '');
-INSERT INTO releases VALUES ('mqttclient-pg17', 2, 'mqttclient', 'MQTT Client', '', 'test', '', 1, 'POSTGRES', '', '');
-
-INSERT INTO versions VALUES ('mqttclient-pg17', '0.9-1',  'amd, arm',  1, '20241001', 'pg17', '', '');
-INSERT INTO versions VALUES ('mqttclient-pg16', '0.9-1',  'amd, arm',  1, '20241001', 'pg16', '', '');
+-- ## M2M ################################
+INSERT INTO projects VALUES ('m2m', 'dev', 4, 8433, '', 0, 'https://github.com/pgedge/m2m/tags',
+  'm2m', 0, 'mqtt.png', 'MQTT Client', 'https://github.com/pgedge/m2m', '');
+INSERT INTO releases VALUES ('m2m', 2, 'm2m', 'MQTT Client', '', 'test', '', 1, 'POSTGRES', '', '');
+INSERT INTO versions VALUES ('m2m', '0.9.1-1,  '',  1, '20241001', '', '', '');
 
 -- ## PLDEBUGGER #########################
 INSERT INTO projects VALUES ('pldebugger', 'dev', 4, 0, '', 0, 'https://github.com/EnterpriseDB/pldebugger/tags',
