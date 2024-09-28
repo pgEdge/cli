@@ -21,6 +21,7 @@ gpustat==1.1.1
 py-cpuinfo==9.0.0
 prettytable==3.11.0
 Flask==3.0.3
+paho-mqtt==2.1.0
 
 ## ACE Advanced #####
 tqdm==4.66.4

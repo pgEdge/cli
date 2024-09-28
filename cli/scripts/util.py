@@ -95,6 +95,21 @@ DEBUG = 10
 DEBUG2 = 9
 
 
+## get a required environment variable
+def getreqenv(p_env, isInt=False):
+    val = os.getenv(p_env)
+    if val is None:
+        exit_message(f"Missing Required Env '{p_env}'")
+
+    if isInt is True:
+        try:
+            val1 = int(val)
+            return(val1)
+        except Exception:
+            exit_message(f"Required Env '{p_env}={val}' must be an integer")
+
+    return(val)
+
 def setenv(env, val):
     os.environ[str(env)] = str(val)
 

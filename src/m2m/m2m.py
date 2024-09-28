@@ -4,22 +4,17 @@ import os, sys, time
 import paho.mqtt.client as paho
 from paho import mqtt
 
-try:
-    from dotenv.main import load_dotenv
-    load_dotenv("./env.sh")
+import util
 
-    BROKER_HOST = os.getenv("BROKER_HOST")
-    BROKER_PORT = int(os.getenv("BROKER_PORT"))
-    BROKER_USER = os.getenv("BROKER_USER")
-    BROKER_PASSWD = os.getenv("BROKER_PASSWD")
-    TOPIC = os.getenv("TOPIC")
-    PGEDGE_HOME = os.getenv("PGEDGE_HOME")
-except Exception as e:
-    print(f"ERROR loading ENV: {e}")
-    sys.exit(1)
+BROKER_HOST = util.getreqenv("M2M_BROKER_HOST")
+BROKER_PORT = util.getreqenv("M2M_BROKER_PORT", isInt=True)
+BROKER_USER = util.getreqenv("M2M_BROKER_USER")
+BROKER_PASSWD = util.getreqenv("M2M_BROKER_PASSWD")
+TOPIC = util.getreqenv("M2M_TOPIC")
+
 
 def run_cli_command(cmd):
-    os.system(f"{PGEDGE_HOME}/pgedge {cmd} --json")
+    os.system(f"{os.getenv('MY_HOME')}/pgedge {cmd} --json")
 
 def on_connect(client, userdata, flags, rc, properties=None):
     print("CONNACK received with code %s." % rc)

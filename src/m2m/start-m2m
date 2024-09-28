@@ -1,1 +1,8 @@
+#!/usr/bin/env bash
+cd "$(dirname "$0")"
+
+python3 m2m.py &
+
+exit
+
 sudo systemctl start m2m
