@@ -1927,8 +1927,7 @@ def update_spock_exception(entry: dict, conn: psycopg.Connection) -> None:
 # TODO:
 # - Simple and composite primary keys
 # - Datatypes
-# - Quoted column names
-# - Quoted table names
+# - Exception storms
 def auto_repair():
     """
     This is the core function that orchestrates the auto-repair process. The
@@ -1977,10 +1976,10 @@ def auto_repair():
 
     So, how do we tackle this? In all three cases above, we have uncertainties
     that prevent us from definitively determining the source of truth. However,
-    we have certain functions that can help us make this decision. Specifically,
-    it's the spock.xact_commit_timestamp_origin() function. This function returns
-    the commit timestamp, as well as the origin node of a transaction. With this,
-    here's a strategy we can employ:
+    we have certain functions in Spock that can help us make this decision.
+    Specifically, it's the spock.xact_commit_timestamp_origin() function. This
+    function returns the commit timestamp, as well as the origin node of a
+    transaction. With this, here's a strategy we can employ:
 
         INSERT:
         We can use the spock.xact_commit_timestamp_origin() function to get the
@@ -2037,11 +2036,6 @@ def auto_repair():
         AND esd.status = 'PENDING';
     """
 
-    commit_timestamp_sql = """
-    SELECT
-    spock.xact_commit_timestamp_origin(%s::xid)
-    """
-
     oid_sql = """
     SELECT
         node_id,
@@ -2051,7 +2045,7 @@ def auto_repair():
     """
 
     # We will construct a dictionary to map OIDs to node names
-    oid_to_node_name = {}
+    # oid_to_node_name = {}
     conn_map = {}
 
     for node in cluster_nodes:
@@ -2067,85 +2061,113 @@ def auto_repair():
             conn_map[node["name"]] = psycopg.connect(**params)
             cur = conn_map[node["name"]].cursor(row_factory=dict_row)
             cur.execute(oid_sql)
-            oid_to_node_name = {
-                row["node_id"]: row["node_name"] for row in cur.fetchall()
-            }
+            # oid_to_node_name = {
+            #    row["node_id"]: row["node_name"] for row in cur.fetchall()
+            # }
         except Exception as e:
             raise AceException(f"Error while getting OIDs: {str(e)}")
 
     for node in cluster_nodes:
         try:
             conn = conn_map[node["name"]]
-            cur = conn.cursor(row_factory=class_row(AutoRepairTask))
-            cur.execute(get_exception_sql)
-            exceptions = cur.fetchall()
+            exp_cur = conn.cursor(row_factory=class_row(AutoRepairTask))
+            sql_cur = conn.cursor()
+            exp_cur.execute(get_exception_sql)
+            exceptions = exp_cur.fetchall()
         except Exception as e:
             raise AceException(f"Error while getting exceptions: {str(e)}")
 
+        # XXX: handle exception storms
         for exception in exceptions:
             pkey = ace.get_key(conn, exception.table_schema, exception.table_name)
+
             # We handle only INSERT exceptions for now
-            if exception.operation != "INSERT":
-                continue
+            if exception.operation == "INSERT":
+                # We will first get the local commit timestamp of the transaction
+                # that created the record and eventually caused the exception.
 
-            # We will first get the local commit timestamp of the transaction
-            # that created the record and eventually caused the exception.
-
-            xmin_sql = f"""
-            SELECT
-                xmin
-            FROM
-                {exception.table_schema}.{exception.table_name}
-            WHERE
-                {pkey} = {next((tup['value'] 
-                                for tup in exception.remote_new_tup
-                                if tup['attname'] == pkey), None)}
-            """
-
-            local_commit_ts = None
-
-            try:
-                cur = conn.cursor()
-                cur.execute(xmin_sql)
-                xmin = cur.fetchone()[0]
-                print(f"XMIN: {xmin}")
-                cur.execute(commit_timestamp_sql, (str(xmin),))
-                local_commit_ts = parser.parse(cur.fetchone()[0][0])
-                print(f"Local commit timestamp: {local_commit_ts}")
-            except Exception as e:
-                raise AceException(
-                    f"Error while getting local commit timestamp: {str(e)}"
+                local_ts_sql = sql.SQL(
+                    """
+                SELECT
+                    spock.xact_commit_timestamp_origin(xmin)
+                FROM
+                    {}.{}
+                WHERE
+                    {} = {}
+                """
+                ).format(
+                    sql.Identifier(exception.table_schema),
+                    sql.Identifier(exception.table_name),
+                    sql.Identifier(pkey),
+                    sql.Literal(
+                        next(
+                            tup["value"]
+                            for tup in exception.remote_new_tup
+                            if tup["attname"] == pkey
+                        )
+                    ),
                 )
 
-            # Now, we can compare local_commit_ts and remote_commit_ts
-            if local_commit_ts < exception.remote_commit_ts:
-                # The local node is behind the origin node
-                # We will use the origin node as the source of truth
-
-                # The remote_new_tup will have
-                # {"value": ..., "attname": ..., "atttype": ...}
-                # We need to convert this to a tuple that can be used to update
-                # the local row
-
-                # XXX: Handle composite primary keys and quoted stuff!
-                update_sql = f"""
-                UPDATE {exception.table_schema}.{exception.table_name}
-                SET {", ".join([f"{tup['attname']} = {tup['value']}"
-                                for tup in exception.remote_new_tup])}
-                WHERE {pkey} = {next((tup['value'] 
-                                for tup in exception.remote_new_tup
-                                if tup['attname'] == pkey), None)}
-                """
+                local_commit_ts = None
 
                 try:
-                    cur = conn.cursor()
-                    cur.execute(update_sql)
-                    conn.commit()
+                    sql_cur.execute(local_ts_sql)
+                    local_commit_ts = parser.parse(sql_cur.fetchone()[0][0])
+                    print(f"Local commit timestamp: {local_commit_ts}")
                 except Exception as e:
-                    raise AceException(f"Error while updating local table: {str(e)}")
+                    raise AceException(
+                        f"Error while getting local commit timestamp: {str(e)}"
+                    )
+
+                # Now, we can compare local_commit_ts and remote_commit_ts
+                # XXX: Handle equal timestamps. Maybe consult spock.node for
+                # the tiebraker?
+                if local_commit_ts < exception.remote_commit_ts:
+                    # The local node is behind the origin node
+                    # We will use the origin node as the source of truth
+
+                    # The remote_new_tup will have
+                    # {"value": ..., "attname": ..., "atttype": ...}
+                    # We need to convert this to a tuple that can be used to update
+                    # the local row
+
+                    # XXX: Handle composite primary keys
+                    update_sql = sql.SQL(
+                        """
+                    UPDATE {}.{}
+                    SET {}
+                    WHERE {} = {}
+                    """
+                    ).format(
+                        sql.Identifier(exception.table_schema),
+                        sql.Identifier(exception.table_name),
+                        sql.SQL(", ").join(
+                            sql.SQL("{} = {}").format(
+                                sql.Identifier(tup["attname"]),
+                                sql.Literal(tup["value"]),
+                            )
+                            for tup in exception.remote_new_tup
+                        ),
+                        sql.Identifier(pkey),
+                        sql.Literal(
+                            next(
+                                tup["value"]
+                                for tup in exception.remote_new_tup
+                                if tup["attname"] == pkey
+                            )
+                        ),
+                    )
+
+                    try:
+                        sql_cur.execute(update_sql)
+                        conn.commit()
+                    except Exception as e:
+                        raise AceException(
+                            f"Error while updating local table: {str(e)}"
+                        )
 
                 # Now, we need to update the exception status to "RESOLVED"
-                update_exception_status_sql = """
+                update_exception_detail_sql = """
                 UPDATE spock.exception_status_detail
                 SET status = 'RESOLVED'
                 WHERE remote_origin = %s
@@ -2154,9 +2176,8 @@ def auto_repair():
                 """
 
                 try:
-                    cur = conn.cursor()
-                    cur.execute(
-                        update_exception_status_sql,
+                    sql_cur.execute(
+                        update_exception_detail_sql,
                         (
                             exception.remote_origin,
                             exception.remote_commit_ts,
