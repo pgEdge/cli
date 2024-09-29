@@ -12,9 +12,12 @@ BROKER_USER = util.getreqenv("M2M_BROKER_USER")
 BROKER_PASSWD = util.getreqenv("M2M_BROKER_PASSWD")
 TOPIC = util.getreqenv("M2M_TOPIC")
 
+MY_HOME = util.getreqenv("MY_HOME")
+MY_DATA = util.getreqenv("MY_DATA")
+
 
 def run_cli_command(cmd):
-    os.system(f"{os.getenv('MY_HOME')}/pgedge {cmd} --json")
+    os.system(f"{MY_HOME}/pgedge {cmd} --json")
 
 def on_connect(client, userdata, flags, rc, properties=None):
     print("CONNACK received with code %s." % rc)
@@ -29,6 +32,13 @@ def on_message(client, userdata, msg):
     payload = msg.payload
     run_cli_command(payload.decode("utf-8"))
 
+
+m2m_pidfile = f"{MY_DATA}/m2m.pid"
+this_pid = os.getpid()
+if os.path.exists(m2m_pidfile):
+    util.exit_message(f"Process already running. (check '{m2m_pidfile}')", 0)
+else:
+    os.system(f"echo '{this_pid}' > {m2m_pidfile}")
 
 client = paho.Client(client_id="", userdata=None, protocol=paho.MQTTv5)
 client.on_connect = on_connect
