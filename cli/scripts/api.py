@@ -22,7 +22,7 @@ if os.path.exists(platform_lib_path):
     if platform_lib_path not in sys.path:
         sys.path.append(platform_lib_path)
 
-import util
+import util, meta
 
 
 class bcolors:
@@ -382,9 +382,9 @@ def info(p_json, p_home, p_repo, print_flag=True):
         time_diff = int(util.timedelta_total_seconds(datetime.now() - last_upd_dt))
         last_update_readable = util.get_readable_time_diff(str(time_diff), precision=2)
 
-    versions_sql = util.get_versions_sql()
-
     os_pkg_mgr = util.get_pkg_mgr()
+
+    node_id = meta.get_node_id()
 
     if p_json:
         infoJsonArray = []
@@ -407,18 +407,18 @@ def info(p_json, p_home, p_repo, print_flag=True):
         infoJson["last_update_utc"] = last_update_utc
         if last_update_local:
             infoJson["last_update_readable"] = last_update_readable
-        infoJson["unique_id"] = unique_id
         infoJson["repo"] = p_repo
-        infoJson["versions_sql"] = versions_sql
         infoJson["system_memory_in_kb"] = system_memory_in_kbytes
         infoJson["python3_ver"] = util.python3_ver()
         infoJson["glibc_ver"] = glibcV
+        infoJson["node_id"] = node_id
+        infoJson["ctlib_ver"] = ctlib_ver
 
-        infoJson["region"] = region
-        infoJson["az"] = az
-        infoJson["instance_id"] = instance_id
-        infoJson["flavor"] = flavor
-        infoJson["private_ip"] = private_ip
+        infoJson["cloud_region"] = region
+        infoJson["cloud_az"] = az
+        infoJson["cloud_instance_id"] = instance_id
+        infoJson["cloud_flavor"] = flavor
+        infoJson["cloud_private_ip"] = private_ip
         infoJsonArray.append(infoJson)
         if print_flag:
             print(json.dumps(infoJsonArray, sort_keys=True, indent=2))
@@ -460,6 +460,8 @@ def info(p_json, p_home, p_repo, print_flag=True):
         cores_model = f", vCPU {cores}, {cpu_model}"
 
     print(f"#{bold_start}     Machine:{bold_end} {mem}{cores_model}")
+
+    print(f"#{bold_start}      NodeID:{bold_end} {node_id}")
 
     if gpu_info > "":
         print(f"#{bold_start}    GPU Info:{bold_end} {gpu_info}")

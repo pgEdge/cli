@@ -95,7 +95,6 @@ DEBUG = 10
 DEBUG2 = 9
 
 
-## get a required environment variable
 def getreqenv(p_env, isInt=False):
     val = os.getenv(p_env)
     if val is None:
@@ -1712,10 +1711,6 @@ def update_hosts(p_host, p_unique_id, updated=False):
             + "'"
         )
     return
-
-
-def get_versions_sql():
-    return get_value("GLOBAL", "VERSIONS", "versions.sql")
 
 
 def get_stage():
