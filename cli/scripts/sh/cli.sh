@@ -13,8 +13,9 @@ script=`basename "$this"`
 my_home=`cd "$config_bin"; pwd`
 
 export MY_HOME="$my_home"
-export MY_LOGS=$MY_HOME/data/logs/cli_log.out
-export MY_LITE=$MY_HOME/data/conf/db_local.db
+export MY_DATA=$MY_HOME/data
+export MY_LOGS=$MY_DATA/logs/cli_log.out
+export MY_LITE=$MY_DATA/conf/db_local.db
 export MY_CMD=pgedge
 
 
@@ -55,7 +56,7 @@ if [ $arch == "x86_64" ]; then
 else
   arch=arm
 fi
-py_path="py3.9-$arch py3.10-$arch py3.11-$arch py3.12-$arch osx"
+py_path="py3.9-$arch py3.10-$arch py3.11-$arch py3.12-$arch py3.11-osx"
 lib="None"
 set_pythonpath "$py_path"
 

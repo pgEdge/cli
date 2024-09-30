@@ -43,60 +43,45 @@ def create(db=None, User=None, Passwd=None, pg=None, spock=None):
         util.exit_message("db.create() must have parms of -User & -db")
 
     cmd = "CREATE ROLE " + User + " PASSWORD '" + Passwd + "' " + privs
-    rc1 = util.echo_cmd(ncb + '"psql -q -c \\"' + cmd + '\\" postgres"')
+    util.echo_cmd(ncb + '"psql -q -c \\"' + cmd + '\\" postgres"')
     cmd = (
         "CREATE ROLE replicator PASSWORD '"
         + Passwd
         + "' "
         + "SUPERUSER LOGIN REPLICATION"
     )
-    rc1 = util.echo_cmd(ncb + '"psql -q -c \\"' + cmd + '\\" postgres"')
+    util.echo_cmd(ncb + '"psql -q -c \\"' + cmd + '\\" postgres"')
 
     cmd = "createdb '" + db + "' --owner='" + User + "'"
-    rc2 = util.echo_cmd(ncb + '"' + cmd + '"')
+    rc1 = util.echo_cmd(ncb + '"' + cmd + '"')
 
     util.echo_cmd(f"{nc} tune pg{pg}")
 
     util.echo_cmd(f"{nc} install snowflake-pg{pg} --no-restart")
 
     if spock is None:
-       if pg == "17":
-           major_ver = util.DEFAULT_SPOCK_17
-       else:
-           major_ver = util.DEFAULT_SPOCK
-       ver = ""
+        major_ver = util.get_default_spock(pg)
+        ver = ""
     else:
-       major_ver = f"{str(spock)[:1]}{str(spock)[2:3:1]}"
-       ver = spock
+        major_ver = f"{str(spock)[:1]}{str(spock)[2:3:1]}"
+        ver = spock
 
     spock_comp = f"spock{major_ver}-pg{pg}"
     st8 = util.get_comp_state(spock_comp)
 
     if st8 in ("Installed", "Enabled"):
         cmd = "CREATE EXTENSION spock"
-        rc3 = util.echo_cmd(ncb + '"psql -q -c \\"' + cmd + '\\" ' + str(db) + '"')
+        rc2 = util.echo_cmd(ncb + '"psql -q -c \\"' + cmd + '\\" ' + str(db) + '"')
     else:
         spock_comp = f"spock{major_ver}-pg{pg} {ver}"
-        rc3 = util.echo_cmd(nc + "install " + spock_comp + " -d " + str(db))
+        rc2 = util.echo_cmd(nc + "install " + spock_comp + " -d " + str(db))
 
     cmd = "CREATE EXTENSION snowflake"
-    rc4 = util.echo_cmd(ncb + '"psql -q -c \\"' + cmd + '\\" ' + str(db) + '"')
+    rc3 = util.echo_cmd(ncb + '"psql -q -c \\"' + cmd + '\\" ' + str(db) + '"')
 
-    rcs = rc1 + rc2 + rc3 + rc4
-    if rcs == 0:
-        status = "success"
-    else:
-        status = "error"
-
-    return_json = {}
-    return_json["status"] = status
-    return_json["db_name"] = db
-    return_json["users"] = []
-
-    user_json = {}
-    user_json["user"] = User
-    user_json["passwd"] = Passwd
-    return_json["users"].append(user_json)
+    rcs = rc1 + rc2 + rc3
+    if rcs != 0:
+        util.exit_message("Unable to complete db.create()")
 
     return
 
@@ -181,7 +166,6 @@ def set_readonly(readonly="off"):
         util.exit_exception(e)
 
     sys.exit(0)
-
 
 
 if __name__ == "__main__":

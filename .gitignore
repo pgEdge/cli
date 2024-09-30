@@ -7,6 +7,8 @@ devel/pg/postgresml/
 devel/repo/cleanREMOTE
 devel/repo/local
 
+devel/m2m/
+
 src/packages/*.rpm
 src/packages/*.deb
 

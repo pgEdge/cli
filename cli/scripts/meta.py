@@ -8,6 +8,96 @@ from semantic_version import Version
 import api, util
 import datetime
 
+try:
+    import prettytable
+except Exception:
+    pass
+
+
+def reset_node_id():
+    node_id = util.get_uuid()
+    node_id = str(node_id).replace("-", "")
+    node_id = f"id-{node_id}"
+    sql = "UPDATE hosts SET unique_id = ? WHERE host = 'localhost'"
+    try:
+        c = con.cursor()
+        c.execute(sql, [node_id])
+        con.commit()
+        c.close()
+    except Exception as e:
+        fatal_error(e, sql, "meta.get_node_id()")
+
+    return(node_id)
+
+
+def get_node_id():
+    sql = "SELECT unique_id FROM hosts WHERE host = 'localhost'"
+    try:
+        c = con.cursor()
+        c.execute(sql)
+        data = c.fetchone()
+        node_id = str(data[0])
+    except Exception as e:
+        fatal_error(e, sql, "get_product")
+
+    if node_id == "None":
+        return(reset_node_id())
+
+    return(node_id)
+     
+
+def get_product(product, platf=None, pgv=None):
+    sql = f"""
+SELECT product, component, platform, pg_ver
+  FROM v_products
+"""
+
+    try:
+        c = con.cursor()
+        c.execute(sql)
+        data = c.fetchall()
+    except Exception as e:
+        fatal_error(e, sql, "get_product")
+
+    if len(data) == 0:
+        util.exit_message(f"Invalid product '{product}'")
+
+    for d in data:
+        if product:
+            if not product == str(d[0]):
+                continue
+
+        d_comp = str(d[1])
+        if platf:
+            d_platf = str(d[2])
+            if d_platf == "" or d_platf in platf:
+                pass
+            else:
+                util.exit_message(f"'{d_comp}' not available for {platf}")
+
+        if pgv:
+            d_pgv = str(d[3])
+            if d_pgv == "" or d_pgv == pg_ver:
+                pass
+            else:
+                util.exit_message(f"'{d_comp}' not available for {platf}")
+
+    return data
+
+
+def pretty_sql(sql):
+    data = []
+
+    try:
+        c = con.cursor()
+        c.execute(sql)
+        myTbl = prettytable.from_db_cursor(c)
+    except Exception as e:
+        util.exit_message(str(e))
+
+    print(myTbl)
+
+
 
 def get_extension_meta(component):
     data = []

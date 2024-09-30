@@ -1,17 +1,18 @@
-hubV=24.9.3
-hubVV=24.09-3
+hubV=24.10.1
+hubVV=24.10-1
 
 bundle=pgedge
 api=pgedge
-ctlibsV=1.5
+ctlibsV=1.6
 
-spock40V=4.0.1-1
+spock41V=4.1devel-1
+spock40V=4.0.5-1
 spock33V=3.3.6-1
 
 lolorV=1.2-1
 snwflkV=2.2-1
 
-P17=17rc1-2
+P17=17.0-1
 P16=16.4-2
 P15=15.8-2
 P14=14.13-2
@@ -28,7 +29,7 @@ prompgexpV=0.15.0
 backrestV=2.53.1-1
 wal2jV=2.6.0-1
 
-##curlV=2.2.2-1
+m2mV=0.9.2-1
 citusV=12.1.5-1
 orafceV=4.10.3-1
 v8V=3.2.2-1

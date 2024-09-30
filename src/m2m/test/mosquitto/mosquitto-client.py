@@ -30,7 +30,7 @@ logger.setLevel(logging.INFO) # Debugging for this file.
 
 
 def run_nodectl_command(cmd):
-    nc = "../../out/posix/nodectl "
+    nc = "../../out/posix/pgedge  "
 
     sh_cmd = nc + str(cmd) + " --json"
 

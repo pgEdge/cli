@@ -350,6 +350,7 @@ initPG () {
     initC "bouncer"      "bouncer"      "$bouncerV"  "$outPlat" "postgres/bouncer"  "" "" "nil"
     initC "backrest"     "backrest"     "$backrestV" "$outPlat" "postgres/backrest" "" "" "nil"
     initC "etcd"         "etcd"         "$etcdV"     "$outPlat" "etcd"              "" "" "nil"
+    #initC "minio"        "minio"        "$minioV"    "$outPlat" "minio"             "" "" "nil"
     initC "pgcat"        "pgcat"        "$catV"      "$outPlat" "postgres/pgcat"    "" "" "nil"
     initC "patroni"      "patroni"      "$patroniV"  ""         "patroni"           "" "" "nil"
     initC "firewalld"    "firewalld"    "$firwldV"   ""         "firewalld"         "" "" "nil"
@@ -358,11 +359,13 @@ initPG () {
   if [ "$pgM" == "17" ]; then
     initC "audit-pg$pgM"      "audit"      "$audit17V"   "$outPlat" "postgres/audit"     "" "" "nil"
     initC "hintplan-pg$pgM"   "hintplan"   "$hint17V"    "$outPlat" "postgres/hintplan"  "" "" "nil"
+    initC "spock41-pg$pgM"    "spock41"    "$spock41V"   "$outPlat" "postgres/spock41"   "" "" "nil"
   fi
 
   if [ "$pgM" == "16" ]; then
     initC "audit-pg$pgM"      "audit"      "$audit16V"   "$outPlat" "postgres/audit"     "" "" "nil"
     initC "hintplan-pg$pgM"   "hintplan"   "$hint16V"    "$outPlat" "postgres/hintplan"  "" "" "nil"
+    initC "spock41-pg$pgM"    "spock41"    "$spock41V"   "$outPlat" "postgres/spock41"   "" "" "nil"
     if [ `arch` == "x86_64" ]; then
       initC "pgml-pg$pgM"     "pgml"       "$pgmlV"      "$outPlat" "postgres/pgml"      "" "" "nil"
     fi
@@ -401,6 +404,7 @@ initPG () {
   fi
 
   initC "prompgexp"    "prompgexp"    "$prompgexpV" "$outPlat" "postgres/prompgexp" "" "" "nil"
+  initC "m2m"          "m2m"          "$m2mV"       ""         "m2m"                "" "" "Y"
 
   ## initC "postgrest"    "postgrest"    "$postgrestV" "$outPlat" "postgres/postgrest" "" "" "nil"
   ## initC "prest"        "prest"        "$prestV"    "$outPlat" "pREST"             "" "" "nil"

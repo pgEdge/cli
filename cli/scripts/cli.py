@@ -74,6 +74,8 @@ fire_list = [
     "upgrade-cli"
 ]
 
+py3_check_list  = ["info", "spock", "cluster", "localhost"]
+
 fire_contrib = ["localhost"]
 
 native_list = ["backrest", "ansible", "patroni", "etcd", "bouncer"]
@@ -86,7 +88,6 @@ mode_list_advanced = [
     "download",
     "useradd",
     "spock",
-    "downgrade",
     "pgbin",
     "psql",
     "pg_isready",
@@ -164,7 +165,7 @@ ignore_comp_list = (
 no_log_commands = ["status", "info", "list", "top", "get", "metrics-check"]
 
 lock_commands = (
-    ["install", "remove", "update", "upgrade", "downgrade", "service"]
+    ["install", "remove", "update", "upgrade", "service"]
     + fire_list
     + fire_contrib
     + native_list
@@ -438,14 +439,6 @@ def install_comp(p_app, p_ver=0, p_rver=None, p_re_install=False):
         tar.close
         if isJSON:
             util.message("Unpack complete")
-
-
-def downgrade_component(p_comp):
-    present_version = meta.get_version(p_comp)
-    present_state = util.get_comp_state(p_comp)
-    server_port = util.get_comp_port(p_comp)
-    print("Downgrade " + p_comp + " v" + present_version)
-    return 1
 
 
 def upgrade_component(p_comp):
@@ -974,11 +967,16 @@ installed_comp_list = meta.get_component_list()
 available_comp_list = meta.get_available_component_list()
 download_count = 0
 
+not_fire = False;
+if str(args[1]) not in (fire_list + fire_contrib):
+    not_fire = True;
+
 if (args[1] == "help") or (args[1] == "--help"):
     print(get_help_text())
     exit_cleanly(0)
 
 ## process global parameters #################
+
 os.environ["isPreload"] = "True"
 if "--no-preload" in args:
     args.remove("--no-preload")
@@ -991,8 +989,10 @@ if "--no-restart" in args:
     args.remove("--no-restart")
     os.environ["isRestart"] = "False"
 
-isJSON = False
-os.environ["isJson"] = "False"
+if os.getenv("isJson") == "True":
+    isJSON = True
+else:
+    isJSON = False
 if "--json" in args:
     isJSON = True
     args.remove("--json")
@@ -1027,10 +1027,6 @@ p_user = ""
 p_passwd = ""
 p_host_name = ""
 
-if "--deprecate-nc" in args:
-    args.remove("--deprecate-nc")
-    util.message(f"'nc', 'nodectl', & 'ctl' commands deprecated in favor of 'pgedge'", "warning")
-
 isVERBOSE = False
 if "--verbose" in args:
     isVERBOSE = True
@@ -1042,12 +1038,12 @@ if isVERBOSE:
     os.environ["isVerbose"] = "True"
 
 isYES = False
-if "-y" in args:
+if "-y" in args and not_fire:
     isYES = True
     args.remove("-y")
     os.environ["isYes"] = "True"
 
-if "--pause" in args:
+if "--pause" in args and not_fire:
     pause = str(get_next_arg("--pause"))
     if pause.isnumeric():
         os.environ["pgePause"] = str(pause)
@@ -1059,7 +1055,7 @@ if "--pause" in args:
 if "--pg" in args:
     pgn = str(get_next_arg("--pg"))
     if pgn >= "14" and pgn <= "17":
-        os.environ["pgN"] = pgn
+        util.setenv("pgeN", pgn)
         args.remove("--pg")
         args.remove(pgn)
     else:
@@ -1068,35 +1064,26 @@ if "--pg" in args:
 if "-U" in args:
     usr = get_next_arg("-U")
     if usr > "":
-        if (str(args[1]) not in fire_list) and (str(args[1]) not in fire_contrib):
-            args.remove("-U")
-            args.remove(usr)
-        os.environ["pgeUser"] = usr
+        args.remove("-U")
+        args.remove(usr)
+        util.setenv("pgeUser", usr)
 
 if "-P" in args:
     passwd = get_next_arg("-P")
     if passwd > "":
-        if (str(args[1]) not in fire_list) and (str(args[1]) not in fire_contrib):
-            args.remove("-P")
-            args.remove(passwd)
-        os.environ["pgePasswd"] = passwd
+        args.remove("-P")
+        args.remove(passwd)
+        util.setenv("pgePasswd", passwd)
 
 if "-p" in args:
     port = get_next_arg("-p")
     if port > "":
         args.remove("-p")
         args.remove(port)
-        os.environ["pgePort"] = port
-
-if "--location" in args:
-    loct = get_next_arg("--location")
-    if loct > "":
-        args.remove("--location")
-        args.remove(loct)
-        os.environ["pgeLocation"] = loct
+        util.setenv("pgePort", port)
 
 isTIME = False
-if "-t" in args:
+if "-t" in args and not_fire:
     isTIME = True
     args.remove("-t")
     os.environ["isTime"] = "True"
@@ -1105,30 +1092,28 @@ PGNAME = ""
 i = 0
 while i < len(args):
     arg = args[i]
-    if arg == "-d":
+    if arg == "-d" and not_fire:
         if i < (len(args) - 1):
             PGNAME = args[i + 1]
             os.environ["pgName"] = PGNAME
-            fire_full = fire_list + fire_contrib
-            if str(args[1]) not in fire_full:
-                args.remove(PGNAME)
-                args.remove("-d")
+            args.remove(PGNAME)
+            args.remove("-d")
             break
     i += 1
 
-if "--test" in args:
+if "--test" in args and not_fire:
     util.isTEST = True
     os.environ["isTest"] = "True"
     args.remove("--test")
 
 isSTART = False
-if "--start" in args:
+if "--start" in args and not_fire:
     isSTART = True
     os.environ["isSTART"] = "True"
     args.remove("--start")
 
 isDISABLED = False
-if "--disabled" in args:
+if "--disabled" in args and not_fire:
     isDISABLED = True
     os.environ["isDISABLED"] = "True"
     args.remove("--disabled")
@@ -1136,56 +1121,40 @@ if "--disabled" in args:
 if util.get_stage() == "test":
     util.isTEST = True
 
-if "--old" in args:
+if "--old" in args and not_fire:
     util.isSHOWDUPS = True
     args.remove("--old")
-if "--show-duplicates" in args:
+if "--show-duplicates" in args and not_fire:
     util.isSHOWDUPS = True
     args.remove("--show-duplicates")
 
 isSVCS = False
-if "--svcs" in args and "list" in args:
+if "--svcs" in args and "list" in args and not_fire:
     isSVCS = True
     os.environ["isSVCS"] = "True"
     args.remove("--svcs")
 
 isFIPS = False
-if "--fips" in args and "install" in args:
+if "--fips" in args and "install" in args and not_fire:
     isFIPS = True
     os.environ["isFIPS"] = "True"
     args.remove("--fips")
 
 isAUTOSTART = False
-if "--autostart" in args and "install" in args:
+if "--autostart" in args and "install" in args and not_fire:
     isAUTOSTART = True
-    os.environ["isAutoStart"] = "True"
+    util.setenv("isAutoStart", "True")
     args.remove("--autostart")
 
-if "--rm-data" in args:
-    os.environ["isRM_DATA"] = "True"
+if "--rm-data" in args and not_fire:
+    util.setenv("isRM_DATA", "True")
     args.remove("--rm-data")
 
 isSILENT = False
-if "--silent" in args:
+if "--silent" in args and not_fire:
     isSILENT = True
-    os.environ["isSilent"] = "True"
+    util.setenv("isSilent", "True")
     args.remove("--silent")
-
-arg = None
-if "--extensions" in args:
-    arg = "--extensions"
-elif "--extension" in args:
-    arg = "--extension"
-elif "--ext" in args:
-    arg = "--ext"
-if arg:
-    ext  = get_next_arg(arg)
-    if ext in ["core", "all"]:
-        args.remove(arg)
-        args.remove(ext)
-        os.environ["pgeExtensions"] = ext 
-    else:
-        util.exit_message(f"Invalid --extensions parm '{ext}'")
 
 if len(args) == 1:
     util.exit_message("Nothing to do", 1, isJSON)
@@ -1318,6 +1287,9 @@ if p_mode == "pgbin":
         sys.exit(0)
 
     sys.exit(1)
+
+if p_mode in py3_check_list:
+    util.py3_check()
 
 ## FIRE LIST ###############################################################
 if (p_mode in fire_list) or (p_mode in fire_contrib):
@@ -1764,7 +1736,6 @@ if p_mode == "enable" or p_mode == "disable":
 
 ## CONFIG, INIT, RELOAD ##################################
 if p_mode in ["config", "init", "reload"]:
-    util.message(f"'{p_mode}' '{p_comp} from cli.py", "debug")
     util.check_server(p_comp, p_mode)
     sys.exit(util.run_script(p_comp, f"{p_mode}-{p_comp}", extra_args))
 
@@ -1782,14 +1753,6 @@ if (p_mode == "start"):
 if (p_mode == "restart"):
     args.insert(0,p_mode)
     fire_away("service", args)
-
-## DOWNGRADE ################################################
-if p_mode == "downgrade":
-    rc = downgrade_component(p_comp)
-    if rc == 1:
-        msg = "Nothing to downgrade."
-        print(msg)
-        my_logger.info(msg)
 
 ## UPGRADE ##################################################
 if p_mode == "upgrade":

@@ -22,7 +22,7 @@ if os.path.exists(platform_lib_path):
     if platform_lib_path not in sys.path:
         sys.path.append(platform_lib_path)
 
-import util
+import util, meta
 
 
 class bcolors:
@@ -44,17 +44,6 @@ italic_start = bcolors.ITALIC
 italic_end = bcolors.ENDC
 table_header_style = bcolors.BOLD + bcolors.BACKGROUND
 error_start = bcolors.FAIL
-
-
-def get_gpu_status():
-    try:
-        cmd = "gpustat --no-color --no-processes --no-header 2> /dev/null | head -1"
-        stat = str(subprocess.check_output(cmd, shell=True), "utf-8")
-    except Exception:
-        return ""
-
-    return str(stat).replace("\n","")
-
 
 
 def format_help(p_input):
@@ -384,7 +373,7 @@ def info(p_json, p_home, p_repo, print_flag=True):
     os2 = os2.replace(" (Final)", "")
     os2 = os2.replace(" (Core)", "")
 
-    gpu_status = get_gpu_status()
+    gpu_info = util.get_gpu_info()
 
     ver = util.get_version()
     [last_update_utc, last_update_local, unique_id] = util.read_hosts("localhost")
@@ -393,9 +382,9 @@ def info(p_json, p_home, p_repo, print_flag=True):
         time_diff = int(util.timedelta_total_seconds(datetime.now() - last_upd_dt))
         last_update_readable = util.get_readable_time_diff(str(time_diff), precision=2)
 
-    versions_sql = util.get_versions_sql()
-
     os_pkg_mgr = util.get_pkg_mgr()
+
+    node_id = meta.get_node_id()
 
     if p_json:
         infoJsonArray = []
@@ -418,18 +407,18 @@ def info(p_json, p_home, p_repo, print_flag=True):
         infoJson["last_update_utc"] = last_update_utc
         if last_update_local:
             infoJson["last_update_readable"] = last_update_readable
-        infoJson["unique_id"] = unique_id
         infoJson["repo"] = p_repo
-        infoJson["versions_sql"] = versions_sql
         infoJson["system_memory_in_kb"] = system_memory_in_kbytes
         infoJson["python3_ver"] = util.python3_ver()
         infoJson["glibc_ver"] = glibcV
+        infoJson["node_id"] = node_id
+        infoJson["ctlib_ver"] = ctlib_ver
 
-        infoJson["region"] = region
-        infoJson["az"] = az
-        infoJson["instance_id"] = instance_id
-        infoJson["flavor"] = flavor
-        infoJson["private_ip"] = private_ip
+        infoJson["cloud_region"] = region
+        infoJson["cloud_az"] = az
+        infoJson["cloud_instance_id"] = instance_id
+        infoJson["cloud_flavor"] = flavor
+        infoJson["cloud_private_ip"] = private_ip
         infoJsonArray.append(infoJson)
         if print_flag:
             print(json.dumps(infoJsonArray, sort_keys=True, indent=2))
@@ -460,7 +449,11 @@ def info(p_json, p_home, p_repo, print_flag=True):
 
     print(f"#{bold_start} User & Host:{bold_end} " +
               f"{p_user}{admin_display}  {host_display}  {p_home}")
-    print(f"#{bold_start}          OS:{bold_end} {os2}{glibc_v_display} {ctlib_ver}")
+
+    if ctlib_ver == "":
+        ctlib_ver == "?"
+    py3_display = f"Python {util.python3_ver()} ({ctlib_ver})"
+    print(f"#{bold_start}          OS:{bold_end} {os2}{glibc_v_display} {py3_display}")
 
     cores_model = ""
     if cores != "0":
@@ -468,12 +461,10 @@ def info(p_json, p_home, p_repo, print_flag=True):
 
     print(f"#{bold_start}     Machine:{bold_end} {mem}{cores_model}")
 
-    if gpu_status > "":
-        print(f"#{bold_start}  GPU Status:{bold_end} {gpu_status}")
+    print(f"#{bold_start}      NodeID:{bold_end} {node_id}")
 
-
-    print(f"#{bold_start}     Python3:{bold_end} {util.python3_ver()}")
-
+    if gpu_info > "":
+        print(f"#{bold_start}    GPU Info:{bold_end} {gpu_info}")
 
     if instance_id > "" and not cloud_name == "unknown":
         print(f"#{bold_start}  Cloud Info:{bold_end} " +

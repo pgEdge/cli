@@ -4,7 +4,7 @@
 import os
 import time
 
-MY_VERSION = "24.9.3"
+MY_VERSION = "24.10.1"
 MY_CODENAME = "Constellation"
 
 DEFAULT_PG = "16"
@@ -12,6 +12,7 @@ DEFAULT_SPOCK = "40"
 DEFAULT_SPOCK_17 = "40"
 MY_CMD = os.getenv("MY_CMD", None)
 MY_HOME = os.getenv("MY_HOME", None)
+MY_LIBS = f"{MY_HOME}/hub/scripts/lib"
 MY_LITE = os.getenv("MY_LITE", None)
 BACKUP_DIR = os.path.join(MY_HOME, "data", "conf", "backup")
 BACKUP_TARGET_DIR = os.path.join(BACKUP_DIR, time.strftime("%Y%m%d%H%M"))
@@ -94,22 +95,87 @@ DEBUG = 10
 DEBUG2 = 9
 
 
+def getreqenv(p_env, isInt=False):
+    val = os.getenv(p_env)
+    if val is None:
+        exit_message(f"Missing Required Env '{p_env}'")
+
+    if isInt is True:
+        try:
+            val1 = int(val)
+            return(val1)
+        except Exception:
+            exit_message(f"Required Env '{p_env}={val}' must be an integer")
+
+    return(val)
+
+def setenv(env, val):
+    os.environ[str(env)] = str(val)
+
+
+def py3_check():
+    if os.getenv("isSilent", "False") == "True":
+        return(True)
+
+    ctlib_dir = get_ctlib_dir()
+
+    ctlib_path = f"{MY_LIBS}/{ctlib_dir}"
+    if not os.path.exists(f"{ctlib_path}"):
+        message(f"Missing runtime libs: {ctlib_dir}", "warning")
+        return(False)
+
+    py3_v = f"{sys.version_info[0]}.{sys.version_info[1]}"
+    if not py3_v in ctlib_dir:
+        message(f"Mismatch between Python versions: '{py3_v}' not in '{ctlib_dir}'", "warning")
+        return(False)
+
+    return(True)
+
+
+def get_default_spock(pgv):
+    if pgv == "17":
+       return(DEFAULT_SPOCK_17)
+
+    return(DEFAULT_SPOCK)
+
+
 def get_cpu_info():
     try:
         import cpuinfo
+        cpui = cpuinfo.get_cpu_info()
+        vcpu = cpui["count"]
+        brand = cpui["brand_raw"]
     except Exception:
         return(0,'?')
-
-    cpui = cpuinfo.get_cpu_info()
-    vcpu = cpui["count"]
-    brand = cpui["brand_raw"]
 
     return(vcpu, brand)
 
 
+def get_gpu_info():
+    try:
+        cmd = "gpustat --no-color --no-processes --no-header 2> /dev/null | head -1"
+        stat = str(subprocess.check_output(cmd, shell=True), "utf-8")
+    except Exception:
+        return ""
+
+    stat = str(stat).replace("[0] ", "")
+    stat = " ".join(stat.split())
+
+    return(stat)
+
+
+
+def remove_old_ctlib_dirs():
+    message("Removing any old ctlib directories", "info")
+
+    lib_dir_mask = f"{MY_HOME}/hub/scripts/lib/py3.*-???"
+
+    echo_cmd(f"rm -rf {lib_dir_mask}")
+    
+
 def get_ctlib_dir():
     if platform.system() == "Darwin":
-        return("osx")
+        return("py3.11-osx")
 
     plat_os = "amd"
     if platform.machine() == "aarch64":
@@ -1427,7 +1493,11 @@ def exit_message(p_msg, p_rc=1, p_isJSON=None):
 # print codified message to stdout & logfile
 def message(p_msg, p_state="info", p_isJSON=None, quiet_mode=False):
     if p_isJSON is None:
-        p_isJSON = isJSON
+        isJSON = os.getenv("isJson", "False")
+        if isJSON == "True":
+            p_isJSON = True
+        else:
+            p_isJSON = False
 
     if p_msg is None:
         return
@@ -1641,10 +1711,6 @@ def update_hosts(p_host, p_unique_id, updated=False):
             + "'"
         )
     return
-
-
-def get_versions_sql():
-    return get_value("GLOBAL", "VERSIONS", "versions.sql")
 
 
 def get_stage():
@@ -3334,7 +3400,7 @@ def http_get_file(
         else:
             print("\n" + "ERROR: " + str(e))
             print("       " + msg)
-        my_logger.error("URL Error while dowloading file %s (%s)", p_file_name, str(e))
+        my_logger.error("URL Error while downloading file %s (%s)", p_file_name, str(e))
         if file_exists and not f.closed:
             f.close()
         delete_file(file_name_partial)
@@ -3351,7 +3417,7 @@ def http_get_file(
         else:
             print("\n" + str(e))
         my_logger.error(
-            "Timeout Error while dowloading file %s (%s)", p_file_name, str(e)
+            "Timeout Error while downloading file %s (%s)", p_file_name, str(e)
         )
         if file_exists and not f.closed:
             f.close()
@@ -3368,7 +3434,7 @@ def http_get_file(
             print(json.dumps([json_dict]))
         else:
             print("\n" + str(e))
-        my_logger.error("IO Error while dowloading file %s (%s)", p_file_name, str(e))
+        my_logger.error("IO Error while downloading file %s (%s)", p_file_name, str(e))
         if file_exists and not f.closed:
             f.close()
         delete_file(file_name_partial)
@@ -3385,7 +3451,7 @@ def http_get_file(
             print(json.dumps([json_dict]))
         else:
             print("Download Cancelled")
-        my_logger.error("Cancelled dowloading file %s ", p_file_name)
+        my_logger.error("Cancelled downloading file %s ", p_file_name)
         if file_exists and not f.closed:
             f.close()
         delete_file(file_name_partial)
@@ -3402,7 +3468,7 @@ def http_get_file(
         else:
             print("\n" + str(e))
         my_logger.error(
-            "Value Error while dowloading file %s (%s)", p_file_name, str(e)
+            "Value Error while downloading file %s (%s)", p_file_name, str(e)
         )
         if file_exists and not f.closed:
             f.close()

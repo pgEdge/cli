@@ -3,7 +3,7 @@
 
 import sys, os, tarfile, platform
 
-VER = "24.9.3"
+VER = "24.10.1"
 REPO = os.getenv("REPO", "https://pgedge-upstream.s3.amazonaws.com/REPO")
 
 if sys.version_info < (3, 9):
@@ -65,7 +65,7 @@ download_n_unpack(my_file, REPO, "CLI " + VER + " ...", True)
 cmd = "pgedge" + os.sep + "pgedge "
 os.system(cmd + "set GLOBAL REPO " + REPO)
 os.system(cmd + "update --silent")
-os.system(cmd + "info")
+os.system(cmd + "info --silent")
 os.system(cmd + "install ctlibs")
 
 print("\npgedge cli installed.\n")

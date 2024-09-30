@@ -217,6 +217,24 @@ def clean():
     util.exit_message(msg, 0)
 
 
+def verify_metadata(Project="", Stage="prod", IsCurrent=0):
+
+    sql = f"""
+SELECT r.project, r.component, r.stage, v.version, v.platform, 
+        v.is_current, v.release_date, p.port as default_port
+  FROM projects p, releases r, versions v
+ WHERE p.project = r.project
+   AND r.component = v.component
+   AND p.project like '{Project}%'
+   AND r.stage like '{Stage}%'
+   AND v.is_current >= {IsCurrent}
+ORDER BY 1, 2, 3, 7"""
+
+    util.message(f"{sql}", "debug")
+
+    meta.pretty_sql(sql)
+
+
 if __name__ == "__main__":
     fire.Fire(
         {
@@ -226,6 +244,7 @@ if __name__ == "__main__":
             "remove": remove,
             "upgrade": upgrade,
             "clean": clean,
+            "verify-metadata": verify_metadata,
             "download": download,
         }
     )
