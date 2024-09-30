@@ -4,8 +4,10 @@ from flask import Flask, jsonify, request
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.jobstores.memory import MemoryJobStore
 from apscheduler.executors.pool import ProcessPoolExecutor
+from apscheduler.triggers.cron import CronTrigger
 
 import ace
+import ace_cli
 import ace_config as config
 import ace_core
 import ace_db
@@ -16,6 +18,9 @@ from ace_data_models import (
     TableDiffTask,
     TableRepairTask,
 )
+from ace_exceptions import AceException
+from ace_timeparse import parse_time_string
+import util
 
 app = Flask(__name__)
 
@@ -454,6 +459,168 @@ def task_status_api():
 
 
 """
+Update the exception status for a spock exception on a node.
+
+This API endpoint allows updating the exception status for a given node
+in a specified cluster. It requires the cluster name and node name as
+query parameters, and the exception status details in the request body.
+
+API Method: POST
+
+Args:
+    cluster_name (str): The name of the cluster (required query parameter).
+    node_name (str): The name of the node (required query parameter).
+
+Request Body:
+    A JSON object containing the exception status details. The structure
+    should match the requirements of the ace.exception_status_checks()
+    and ace_core.update_exception_status() functions.
+
+    A sample entry is shown below:
+    {
+        "remote_origin": "origin1",
+        "remote_commit_ts": "2023-06-01T12:00:00Z",
+        "remote_xid": "123456",
+        "command_counter": 1,
+        "status": "RESOLVED",
+        "resolution_details": {"details": "Issue fixed"}
+    }
+
+    If the command_counter is omitted, then the exception status is updated
+    for all exceptions with the same (remote_origin, remote_commit_ts, remote_xid)
+    in spock.exception_status_detail, in addition to updating spock.exception_status.
+
+Returns:
+    JSON: A JSON object containing a success message or error details.
+
+Raises:
+    400 Bad Request: If required parameters are missing or invalid.
+    415 Unsupported Media Type: If the request content type is not JSON.
+    500 Internal Server Error: If an unexpected error occurs during processing.
+
+Example:
+    POST /ace/exception-status?cluster_name=mycluster&node_name=node1
+    {
+        "remote_origin": "origin1",
+        "remote_commit_ts": "2023-06-01T12:00:00Z",
+        "remote_xid": "123456",
+        "status": "RESOLVED",
+        "resolution_details": {"details": "Issue fixed"}
+    }
+
+Response:
+    {
+        "message": "Exception status updated successfully"
+    }
+"""
+
+
+@app.route("/ace/update-spock-exception", methods=["POST"])
+def update_spock_exception_api():
+    cluster_name = request.args.get("cluster_name")
+    node_name = request.args.get("node_name")
+
+    if not cluster_name or not node_name:
+        return jsonify(
+            {"error": "cluster_name and node_name are required parameters"}
+        ), 400
+
+    entry = request.json
+
+    if not entry:
+        return (
+            jsonify(
+                {"error": "Exception status entry is required in the request body"}
+            ),
+            400,
+        )
+
+    try:
+        conn = ace.update_spock_exception_checks(cluster_name, node_name, entry)
+        ace_core.update_spock_exception(entry, conn)
+        return jsonify({"message": "Exception status updated successfully"}), 200
+    except AceException as e:
+        return jsonify({"error": str(e)}), 400
+    except Exception as e:
+        return jsonify({"error": f"Unexpected error: {str(e)}"}), 500
+
+
+def validate_table_diff_schedule(jobs, schedule_config):
+    job_names = []
+
+    for job in jobs:
+        job_names.append(job["name"])
+        if "table_name" not in job or "cluster_name" not in job:
+            raise AceException(
+                "table_name and cluster_name are required for every job in the schedule"
+            )
+
+    for schedule in schedule_config:
+        if schedule["job_name"] not in job_names:
+            raise AceException(
+                f"Job {schedule['job_name']} not found in job definitions"
+            )
+
+        if not schedule.get("crontab_schedule", None):
+            if not schedule.get("run_frequency", None):
+                raise AceException(
+                    "Either crontab_schedule or run_frequency must be specified "
+                    "for every job in schedule_config"
+                )
+            else:
+                try:
+                    parse_time_string(schedule["run_frequency"])
+                except Exception as e:
+                    raise AceException(
+                        f"Invalid run_frequency: {schedule['run_frequency']}. "
+                        f"Error: {e}"
+                    )
+                schedule["crontab_schedule"] = None
+
+
+def create_schedules():
+    schedules = config.schedule_config
+    jobs = config.jobs
+
+    for schedule in schedules:
+        enabled = schedule.get("enabled", False)
+
+        if not enabled:
+            continue
+
+        job = next((job for job in jobs if job["name"] == schedule["job_name"]), None)
+        cluster_name = job["cluster_name"]
+        table_name = job["table_name"]
+        args = job.get("args", {})
+        cron_schedule = schedule.get("crontab_schedule", None)
+
+        if cron_schedule:
+            scheduler.add_job(
+                ace_cli.table_diff_cli,
+                CronTrigger.from_crontab(cron_schedule),
+                args=[cluster_name, table_name],
+                kwargs=args,
+                max_instances=1,
+                replace_existing=True,
+            )
+        else:
+            interval = parse_time_string(schedule.get("run_frequency"))
+            scheduler.add_job(
+                ace_cli.table_diff_cli,
+                "interval",
+                weeks=interval.weeks if hasattr(interval, "weeks") else 0,
+                days=interval.days if hasattr(interval, "days") else 0,
+                hours=interval.hours if hasattr(interval, "hours") else 0,
+                minutes=interval.minutes if hasattr(interval, "minutes") else 0,
+                seconds=interval.seconds if hasattr(interval, "seconds") else 0,
+                args=[cluster_name, table_name],
+                kwargs=args,
+                max_instances=1,
+                replace_existing=True,
+            )
+
+
+"""
 Starts the ACE API server.
 
 This function performs the following tasks:
@@ -488,4 +655,11 @@ def start_ace():
     # a BackgroundScheduler with add_job() will automatically
     # run the job in the background.
     # scheduler.add_listener(listener, EVENT_JOB_ADDED)
-    app.run(host="127.0.0.1", port=5000, debug=True)
+
+    try:
+        validate_table_diff_schedule(config.jobs, config.schedule_config)
+        create_schedules()
+    except AceException as e:
+        util.exit_message(f"Error creating schedules: {e}")
+
+    app.run(host="127.0.0.1", port=5000)

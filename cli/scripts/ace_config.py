@@ -19,3 +19,73 @@ BLOCK_OK = 0
 MAX_DIFFS_EXCEEDED = 1
 BLOCK_MISMATCH = 2
 BLOCK_ERROR = 3
+
+
+"""
+Table-diff scheduling options
+
+Specify a list of tables and their crontab schedules or run_frequency as a string.
+run_frequency can be string like "1 h", "5 min" or "30 s".
+If the crontab_schedule is specified, run_frequency is ignored.
+Minimum run_frequency is 5 minutes.
+
+"""
+jobs = [
+    {
+        "name": "t1",
+        "cluster_name": "eqn-t9da",
+        "table_name": "public.t1",
+    },
+    {
+        "name": "t2",
+        "cluster_name": "eqn-t9da",
+        "table_name": "public.t2",
+        "args": {
+            "max_cpu_ratio": 0.7,
+            "batch_size": 1000,
+            "block_rows": 10000,
+            "nodes": "all",
+            "output": "json",
+            "quiet": False,
+            "dbname": "demo",
+        },
+    },
+    {
+        "name": "t3",
+        "cluster_name": "eqn-t9da",
+        "table_name": "public.t3",
+        "args": {
+            "max_cpu_ratio": 0.7,
+            "batch_size": 1000,
+            "block_rows": 10000,
+            "nodes": "all",
+            "output": "json",
+            "quiet": False,
+            "dbname": "demo",
+        },
+    },
+]
+
+schedule_config = [
+    {
+        "job_name": "t1",
+        "crontab_schedule": "0 0 * * *",
+        "run_frequency": "30s",
+        "enabled": False,
+        "rerun_after": "1h",
+    },
+    {
+        "job_name": "t2",
+        "crontab_schedule": "0 0 * * *",
+        "run_frequency": "5s",
+        "enabled": False,
+        "rerun_after": "1h",
+    },
+    {
+        "job_name": "t3",
+        "crontab_schedule": "0 0 * * *",
+        "run_frequency": "30s",
+        "enabled": False,
+        "rerun_after": "1h",
+    },
+]

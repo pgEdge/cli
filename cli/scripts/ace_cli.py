@@ -1,4 +1,5 @@
 from datetime import datetime
+import json
 import ace_config as config
 import ace_core
 import ace_db
@@ -382,3 +383,18 @@ def schema_diff_cli(cluster_name, schema_name, nodes="all", dbname=None, quiet=F
         util.exit_message(str(e))
     except Exception as e:
         util.exit_message(f"Unexpected error while running schema diff: {e}")
+
+
+def update_spock_exception_cli(cluster_name, node_name, entry, dbname=None) -> None:
+
+    try:
+        conn = ace.update_spock_exception_checks(cluster_name, node_name, entry, dbname)
+        ace_core.update_spock_exception(entry, conn)
+    except AceException as e:
+        util.exit_message(str(e))
+    except json.JSONDecodeError:
+        util.exit_message("Exception entry is not a valid JSON")
+    except Exception as e:
+        util.exit_message(f"Unexpected error while running exception status: {e}")
+
+    util.message("Spock exception status updated successfully", p_state="success")
