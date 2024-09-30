@@ -974,7 +974,7 @@ def table_repair(tr_task: TableRepairTask):
 
             # FIXME: Do not use harcoded version numbers
             # Read required version numbers from a config file
-            if spock_version >= 4.0:
+            if spock_version >= config.SPOCK_REPAIR_MODE_MIN_VERSION:
                 cur.execute("SELECT spock.repair_mode(true);")
         except Exception as e:
             context = {"errors": [f"Could not set repair mode: {str(e)}"]}
@@ -1855,12 +1855,14 @@ def update_spock_exception(entry: dict, conn: psycopg.Connection) -> None:
             # We will first update spock.exception_status here
             update_sql = """
             UPDATE spock.exception_status
-            SET status = %s,
-                resolution_details = %s,
-                resolved_at = %s
-            WHERE remote_origin = %s
-                AND remote_commit_ts = %s
-                AND remote_xid = %s;
+            SET
+                status              = %s,
+                resolution_details  = %s,
+                resolved_at         = %s
+            WHERE
+                remote_origin         = %s
+                AND remote_commit_ts  = %s
+                AND remote_xid        = %s;
             """
 
             params = (
@@ -1878,12 +1880,14 @@ def update_spock_exception(entry: dict, conn: psycopg.Connection) -> None:
             # Now we will update all exceptions that belong to this trio
             update_sql = """
             UPDATE spock.exception_status_detail
-            SET status = %s,
-                resolution_details = %s,
-                resolved_at = %s
-            WHERE remote_origin = %s
-                AND remote_commit_ts = %s
-                AND remote_xid = %s;
+            SET
+                status              = %s,
+                resolution_details  = %s,
+                resolved_at         = %s
+            WHERE
+                remote_origin         = %s
+                AND remote_commit_ts  = %s
+                AND remote_xid        = %s;
             """
 
             cur.execute(update_sql, params)
@@ -1897,13 +1901,15 @@ def update_spock_exception(entry: dict, conn: psycopg.Connection) -> None:
 
             update_sql = """
             UPDATE spock.exception_status_detail
-            SET status = %s,
-                resolution_details = %s,
-                resolved_at = %s
-            WHERE command_counter = %s
-                AND remote_origin = %s
-                AND remote_commit_ts = %s
-                AND remote_xid = %s;
+            SET
+                status              = %s,
+                resolution_details  = %s,
+                resolved_at         = %s
+            WHERE
+                command_counter         = %s
+                AND remote_origin       = %s
+                AND remote_commit_ts    = %s
+                AND remote_xid          = %s;
             """
 
             params = (
@@ -1925,8 +1931,7 @@ def update_spock_exception(entry: dict, conn: psycopg.Connection) -> None:
 
 
 # TODO:
-# - Simple and composite primary keys
-# - Datatypes
+# - Datatypes?
 # - Exception storms
 def auto_repair():
     """
@@ -2044,8 +2049,22 @@ def auto_repair():
         spock.node;
     """
 
+    repair_mode_sql = "SELECT spock.repair_mode(%s);"
+
+    update_exception_detail_sql = """
+    UPDATE spock.exception_status_detail
+    SET
+        status              = %s,
+        resolved_at         = %s,
+        resolution_details  = %s
+    WHERE
+        remote_origin         = %s
+        AND remote_commit_ts  = %s
+        AND remote_xid        = %s;
+    """
+
     # We will construct a dictionary to map OIDs to node names
-    # oid_to_node_name = {}
+    oid_to_node_name = {}
     conn_map = {}
 
     for node in cluster_nodes:
@@ -2061,9 +2080,9 @@ def auto_repair():
             conn_map[node["name"]] = psycopg.connect(**params)
             cur = conn_map[node["name"]].cursor(row_factory=dict_row)
             cur.execute(oid_sql)
-            # oid_to_node_name = {
-            #    row["node_id"]: row["node_name"] for row in cur.fetchall()
-            # }
+            oid_to_node_name = {
+                row["node_id"]: row["node_name"] for row in cur.fetchall()
+            }
         except Exception as e:
             raise AceException(f"Error while getting OIDs: {str(e)}")
 
@@ -2081,32 +2100,59 @@ def auto_repair():
         for exception in exceptions:
             pkey = ace.get_key(conn, exception.table_schema, exception.table_name)
 
+            simple_primary_key = True if len(pkey.split(",")) == 1 else False
+
             # We handle only INSERT exceptions for now
             if exception.operation == "INSERT":
                 # We will first get the local commit timestamp of the transaction
                 # that created the record and eventually caused the exception.
 
-                local_ts_sql = sql.SQL(
-                    """
-                SELECT
-                    spock.xact_commit_timestamp_origin(xmin)
-                FROM
-                    {}.{}
-                WHERE
-                    {} = {}
-                """
-                ).format(
-                    sql.Identifier(exception.table_schema),
-                    sql.Identifier(exception.table_name),
-                    sql.Identifier(pkey),
-                    sql.Literal(
-                        next(
-                            tup["value"]
-                            for tup in exception.remote_new_tup
-                            if tup["attname"] == pkey
-                        )
-                    ),
-                )
+                if simple_primary_key:
+                    local_ts_sql = sql.SQL(
+                        """
+                        SELECT
+                            spock.xact_commit_timestamp_origin(xmin)
+                        FROM
+                            {schema}.{table}
+                        WHERE
+                            ({pkey}) = ({pkey_value})
+                        """
+                    ).format(
+                        schema=sql.Identifier(exception.table_schema),
+                        table=sql.Identifier(exception.table_name),
+                        pkey=sql.Identifier(pkey),
+                        pkey_value=sql.Literal(
+                            next(
+                                tup["value"]
+                                for tup in exception.remote_new_tup
+                                if tup["attname"] == pkey
+                            )
+                        ),
+                    )
+                else:
+                    local_ts_sql = sql.SQL(
+                        """
+                        SELECT
+                            spock.xact_commit_timestamp_origin(xmin)
+                        FROM
+                            {schema}.{table}
+                        WHERE
+                            ({pkey}) = ({pkey_value})
+                        """
+                    ).format(
+                        schema=sql.Identifier(exception.table_schema),
+                        table=sql.Identifier(exception.table_name),
+                        pkey=sql.SQL(", ").join(
+                            sql.Identifier(col.strip()) for col in pkey.split(",")
+                        ),
+                        pkey_value=sql.SQL(", ").join(
+                            [
+                                sql.Literal(tup["value"])
+                                for tup in exception.remote_new_tup
+                                if tup["attname"] in pkey.split(",")
+                            ]
+                        ),
+                    )
 
                 local_commit_ts = None
 
@@ -2123,7 +2169,7 @@ def auto_repair():
                 # XXX: Handle equal timestamps. Maybe consult spock.node for
                 # the tiebraker?
                 if local_commit_ts < exception.remote_commit_ts:
-                    # The local node is behind the origin node
+                    # The local node is behind the remote origin node
                     # We will use the origin node as the source of truth
 
                     # The remote_new_tup will have
@@ -2131,61 +2177,132 @@ def auto_repair():
                     # We need to convert this to a tuple that can be used to update
                     # the local row
 
-                    # XXX: Handle composite primary keys
-                    update_sql = sql.SQL(
-                        """
-                    UPDATE {}.{}
-                    SET {}
-                    WHERE {} = {}
-                    """
-                    ).format(
-                        sql.Identifier(exception.table_schema),
-                        sql.Identifier(exception.table_name),
-                        sql.SQL(", ").join(
-                            sql.SQL("{} = {}").format(
-                                sql.Identifier(tup["attname"]),
-                                sql.Literal(tup["value"]),
-                            )
-                            for tup in exception.remote_new_tup
-                        ),
-                        sql.Identifier(pkey),
-                        sql.Literal(
-                            next(
-                                tup["value"]
+                    if simple_primary_key:
+                        update_sql = sql.SQL(
+                            """
+                            UPDATE
+                                {schema}.{table}
+                            SET
+                                {set_clause}
+                            WHERE
+                                {pkey} = {pkey_value}
+                            """
+                        ).format(
+                            schema=sql.Identifier(exception.table_schema),
+                            table=sql.Identifier(exception.table_name),
+                            set_clause=sql.SQL(", ").join(
+                                sql.SQL("{} = {}").format(
+                                    sql.Identifier(tup["attname"]),
+                                    sql.Literal(tup["value"]),
+                                )
                                 for tup in exception.remote_new_tup
-                                if tup["attname"] == pkey
-                            )
-                        ),
-                    )
+                            ),
+                            pkey=sql.Identifier(pkey),
+                            pkey_value=sql.Literal(
+                                next(
+                                    tup["value"]
+                                    for tup in exception.remote_new_tup
+                                    if tup["attname"] == pkey
+                                )
+                            ),
+                        )
+                    else:
+                        update_sql = sql.SQL(
+                            """
+                            UPDATE
+                                {schema}.{table}
+                            SET
+                                {set_clause}
+                            WHERE
+                                ({pkey}) = ({pkey_value})
+                            """
+                        ).format(
+                            schema=sql.Identifier(exception.table_schema),
+                            table=sql.Identifier(exception.table_name),
+                            set_clause=sql.SQL(", ").join(
+                                sql.SQL("{} = {}").format(
+                                    sql.Identifier(tup["attname"]),
+                                    sql.Literal(tup["value"]),
+                                )
+                                for tup in exception.remote_new_tup
+                            ),
+                            pkey=sql.SQL(", ").join(
+                                sql.Identifier(col.strip()) for col in pkey.split(",")
+                            ),
+                            pkey_value=sql.SQL(", ").join(
+                                [
+                                    sql.Literal(tup["value"])
+                                    for tup in exception.remote_new_tup
+                                    if tup["attname"] in pkey.split(",")
+                                ]
+                            ),
+                        )
 
                     try:
+                        sql_cur.execute(repair_mode_sql, (True,))
                         sql_cur.execute(update_sql)
+                        sql_cur.execute(repair_mode_sql, (False,))
                         conn.commit()
                     except Exception as e:
                         raise AceException(
-                            f"Error while updating local table: {str(e)}"
+                            "Error while updating local table"
+                            f" {exception.table_schema}.{exception.table_name}:"
+                            f" {str(e)}"
                         )
 
-                # Now, we need to update the exception status to "RESOLVED"
-                update_exception_detail_sql = """
-                UPDATE spock.exception_status_detail
-                SET status = 'RESOLVED'
-                WHERE remote_origin = %s
-                    AND remote_commit_ts = %s
-                    AND remote_xid = %s;
-                """
-
-                try:
-                    sql_cur.execute(
-                        update_exception_detail_sql,
-                        (
-                            exception.remote_origin,
-                            exception.remote_commit_ts,
-                            exception.remote_xid,
-                        ),
-                    )
-                    conn.commit()
-                except Exception as e:
-                    raise AceException(
-                        f"Error while updating exception status: {str(e)}"
-                    )
+                    # Now, we need to update the exception status to "RESOLVED"
+                    try:
+                        sql_cur.execute(
+                            update_exception_detail_sql,
+                            (
+                                "RESOLVED",
+                                datetime.now(),
+                                json.dumps(
+                                    {
+                                        "action_taken": "INSERT_EXCEPTION_REPAIRED",
+                                        "details": "The local record was updated"
+                                        " with values from the remote origin node "
+                                        f"({oid_to_node_name[exception.remote_origin]})"
+                                        " since it had a later commit timestamp"
+                                        " than the local record.",
+                                    }
+                                ),
+                                exception.remote_origin,
+                                exception.remote_commit_ts,
+                                exception.remote_xid,
+                            ),
+                        )
+                        conn.commit()
+                    except Exception as e:
+                        raise AceException(
+                            f"Error while updating exception status: {str(e)}"
+                        )
+                else:
+                    # If the local record is ahead of the remote origin node,
+                    # we will update the exception status to "RESOLVED", and
+                    # log the details in the resolution_details field.
+                    try:
+                        sql_cur.execute(
+                            update_exception_detail_sql,
+                            (
+                                "RESOLVED",
+                                datetime.now(),
+                                json.dumps(
+                                    {
+                                        "action_taken": "NONE",
+                                        "details": "The local record was ahead of the"
+                                        " remote origin node "
+                                        f"({oid_to_node_name[exception.remote_origin]})"
+                                        " and was, therefore, not updated.",
+                                    }
+                                ),
+                                exception.remote_origin,
+                                exception.remote_commit_ts,
+                                exception.remote_xid,
+                            ),
+                        )
+                        conn.commit()
+                    except Exception as e:
+                        raise AceException(
+                            f"Error while updating exception status: {str(e)}"
+                        )
