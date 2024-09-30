@@ -20,6 +20,9 @@ MAX_DIFFS_EXCEEDED = 1
 BLOCK_MISMATCH = 2
 BLOCK_ERROR = 3
 
+# Spock-related options
+SPOCK_REPAIR_MODE_MIN_VERSION = 4.0
+
 
 """
 Table-diff scheduling options
@@ -99,6 +102,6 @@ auto_repair_config = {
     "enabled": True,
     "cluster_name": "eqn-t9da",
     "dbname": "demo",
-    "poll_interval": "1m",
-    "status_update_interval": "1m",
+    "poll_interval": "10s",
+    "status_update_interval": "10s",
 }

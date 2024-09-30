@@ -1,4 +1,5 @@
 from datetime import datetime
+import json
 
 from flask import Flask, jsonify, request
 from apscheduler.schedulers.background import BackgroundScheduler
@@ -585,7 +586,8 @@ def populate_exception_status_tables():
     exception_sql_step1 = """
     MERGE INTO
         spock.exception_status es
-    USING (
+    USING
+    (
         SELECT
             remote_origin,
             remote_commit_ts,
@@ -593,19 +595,22 @@ def populate_exception_status_tables():
         FROM
             spock.exception_log
     ) el
-    ON (
+    ON
+    (
         es.remote_origin = el.remote_origin
         AND es.remote_commit_ts = el.remote_commit_ts
         AND es.remote_xid = el.remote_xid
     )
     WHEN NOT MATCHED THEN
-    INSERT (
+    INSERT
+    (
         remote_origin,
         remote_commit_ts,
         remote_xid,
         status
     )
-    VALUES (
+    VALUES
+    (
         el.remote_origin,
         el.remote_commit_ts,
         el.remote_xid,
@@ -625,7 +630,8 @@ def populate_exception_status_tables():
     exception_sql_step2 = """
     MERGE INTO
         spock.exception_status_detail esd
-    USING (
+    USING
+    (
         SELECT
             remote_origin,
             remote_commit_ts,
@@ -633,20 +639,23 @@ def populate_exception_status_tables():
             remote_xid
         FROM spock.exception_log
     ) el
-    ON (
+    ON
+    (
         esd.remote_origin = el.remote_origin
         AND esd.remote_commit_ts = el.remote_commit_ts
         AND esd.command_counter = el.command_counter
     )
     WHEN NOT MATCHED THEN
-    INSERT (
+    INSERT
+    (
         remote_origin,
         remote_commit_ts,
         command_counter,
         remote_xid,
         status
     )
-    VALUES (
+    VALUES
+    (
         el.remote_origin,
         el.remote_commit_ts,
         el.command_counter,
@@ -658,11 +667,16 @@ def populate_exception_status_tables():
     # Step 3: Update the status of the (remote_origin, remote_commit_ts, remote_xid)
     # trio in the exception_status table to 'RESOLVED' if all the
     # commands that belong to that trio have been resolved.
+    # TODO: The resolution_details here should be more specific to the
+    # actions that ACE took to resolve the exception.
     exception_sql_step3 = """
     UPDATE spock.exception_status es
     SET
-        status = 'RESOLVED'
-    FROM (
+        status = %s,
+        resolved_at = %s,
+        resolution_details = %s
+    FROM
+    (
         SELECT remote_xid
         FROM spock.exception_status_detail esd
         GROUP BY remote_xid
@@ -689,7 +703,21 @@ def populate_exception_status_tables():
         try:
             cur.execute(exception_sql_step1)
             cur.execute(exception_sql_step2)
-            cur.execute(exception_sql_step3)
+            cur.execute(
+                exception_sql_step3,
+                (
+                    "RESOLVED",
+                    datetime.now(),
+                    json.dumps(
+                        {
+                            "details": "All transaction operations auto-resolved"
+                            " by ACE. For specific details, check the"
+                            " resolution_details column in the"
+                            " exception_status_detail table."
+                        }
+                    ),
+                ),
+            )
             conn.commit()
         except Exception as e:
             raise AceException(
