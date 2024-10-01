@@ -27,10 +27,11 @@ fi
 cd $outp
 
 ./$api set GLOBAL REPO http://localhost:8000
-./$api info --silent
-./$api set PGEDGE CLIENT_ID client1
-./$api set PGEDGE CLUSTER_ID cluster1
-./$api set PGEDGE NODE_ID node1
+
+if [ -f ~/keys/m2m-config.sh ]; then
+    ~/keys/m2m-config.sh
+fi
+
 if [ `arch` == "i386" ]; then
   echo "Skipping CTLIBS for `arch`"
 else
@@ -39,4 +40,6 @@ else
   fi
   ./$api install ctlibs
 fi
+
+./$api info
 

@@ -6,11 +6,15 @@ from paho import mqtt
 
 import util
 
-BROKER_HOST = util.getreqenv("M2M_BROKER_HOST")
-BROKER_PORT = util.getreqenv("M2M_BROKER_PORT", isInt=True)
-BROKER_USER = util.getreqenv("M2M_BROKER_USER")
-BROKER_PASSWD = util.getreqenv("M2M_BROKER_PASSWD")
-TOPIC = util.getreqenv("M2M_TOPIC")
+BROKER_HOST = util.getreqval("PGEDGE", "BROKER_HOST")
+BROKER_PORT = util.getreqval("PGEDGE", "BROKER_PORT", isInt=True)
+BROKER_USER = util.getreqval("PGEDGE", "BROKER_USER")
+BROKER_PASSWD = util.getreqval("PGEDGE", "BROKER_PASSWD")
+CLIENT = util.getreqval("PGEDGE","CLIENT_ID" )
+CLUSTER = util.getreqval("PGEDGE", "CLUSTER_ID")
+NODE = util.getreqval("PGEDGE", "NODE_ID")
+
+TOPIC = f"pgedge/cli/{CLIENT}/{CLUSTER}/{NODE}"
 
 MY_HOME = util.getreqenv("MY_HOME")
 MY_DATA = util.getreqenv("MY_DATA")
@@ -19,19 +23,29 @@ MY_DATA = util.getreqenv("MY_DATA")
 def run_cli_command(cmd):
     os.system(f"{MY_HOME}/pgedge {cmd} --json")
 
+
 def on_connect(client, userdata, flags, rc, properties=None):
-    print("CONNACK received with code %s." % rc)
+    util.message(f"m2m on_connect() CONNACK received with code {rc}.", "debug")
+
 
 def on_publish(client, userdata, mid, properties=None):
-    print("mid: " + str(mid))
+    util.message(f"m2m on_publish() {mid}.", "debug")
+
 
 def on_subscribe(client, userdata, mid, granted_qos, properties=None):
-    print("Subscribed: " + str(mid) + " " + str(granted_qos))
+    util.message(f"m2m on_subscribe() {mid}  {granted_qos}", "debug")
+
 
 def on_message(client, userdata, msg):
     payload = msg.payload
-    run_cli_command(payload.decode("utf-8"))
+    cmd = payload.decode("utf-8")
 
+    util.message(f"m2m on_message({cmd})", "debug")
+
+    run_cli_command(cmd)
+
+
+## MAINLINE ########################################################
 
 m2m_pidfile = f"{MY_DATA}/m2m.pid"
 this_pid = os.getpid()
@@ -51,6 +65,6 @@ client.on_subscribe = on_subscribe
 client.on_message = on_message
 client.on_publish = on_publish
 
-client.subscribe(f"{TOPIC}/#", qos=0)
+client.subscribe(TOPIC, qos=0)
 
 client.loop_forever()

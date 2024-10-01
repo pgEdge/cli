@@ -95,6 +95,21 @@ DEBUG = 10
 DEBUG2 = 9
 
 
+def getreqval(p_section, p_key, isInt=False):
+    val = get_value(p_section, p_val)
+    if val == "":
+        exit_message(f"Missing Setting for '{p_section} {p_key}'")
+
+    if isInt is True:
+        try:
+            val1 = int(val)
+            return(val1)
+        except Exception:
+            exit_message(f"Required Setting '{p_section} {p_key}' must be an integer")
+
+    return(val)
+
+
 def getreqenv(p_env, isInt=False):
     val = os.getenv(p_env)
     if val is None:
@@ -108,6 +123,7 @@ def getreqenv(p_env, isInt=False):
             exit_message(f"Required Env '{p_env}={val}' must be an integer")
 
     return(val)
+
 
 def setenv(env, val):
     os.environ[str(env)] = str(val)
