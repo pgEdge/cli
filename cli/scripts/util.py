@@ -144,7 +144,14 @@ def get_cpu_info():
         import cpuinfo
         cpui = cpuinfo.get_cpu_info()
         vcpu = cpui["count"]
-        brand = cpui["brand_raw"]
+        try:
+            brand = cpui["brand_raw"]
+        except Exception:
+            try:
+                brand = cpui["vendor_id_raw"]
+            except Exception:
+                brand = "??"
+
     except Exception:
         return(0,'?')
 
