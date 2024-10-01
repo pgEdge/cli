@@ -384,7 +384,9 @@ def info(p_json, p_home, p_repo, print_flag=True):
 
     os_pkg_mgr = util.get_pkg_mgr()
 
-    node_id = meta.get_node_id()
+    client_id = util.get_value("PGEDGE", "CLIENT_ID")
+    cluster_id = util.get_value("PGEDGE", "CLUSTER_ID")
+    node_id = util.get_value("PGEDGE", "NODE_ID")
 
     if p_json:
         infoJsonArray = []
@@ -411,7 +413,10 @@ def info(p_json, p_home, p_repo, print_flag=True):
         infoJson["system_memory_in_kb"] = system_memory_in_kbytes
         infoJson["python3_ver"] = util.python3_ver()
         infoJson["glibc_ver"] = glibcV
-        infoJson["node_id"] = node_id
+
+        infoJson["pgedge_client_id"] = client_id
+        infoJson["pgedge_cluster_id"] = cluster_id
+        infoJson["pgedge_node_id"] = node_id
         infoJson["ctlib_ver"] = ctlib_ver
 
         infoJson["cloud_region"] = region
@@ -461,8 +466,9 @@ def info(p_json, p_home, p_repo, print_flag=True):
 
     print(f"#{bold_start}     Machine:{bold_end} {mem}{cores_model}")
 
-    print(f"#{bold_start}      NodeID:{bold_end} {node_id}")
-
+    if os.path.exists(f"{util.getreqenv('MY_HOME')}/m2m"):
+        print(f"#{bold_start}      M2M ID:{bold_end} {client_id}/{cluster_id}/{node_id}")
+      
     if gpu_info > "":
         print(f"#{bold_start}    GPU Info:{bold_end} {gpu_info}")
 

@@ -14,38 +14,6 @@ except Exception:
     pass
 
 
-def reset_node_id():
-    node_id = util.get_uuid()
-    node_id = str(node_id).replace("-", "")
-    node_id = f"id-{node_id}"
-    sql = "UPDATE hosts SET unique_id = ? WHERE host = 'localhost'"
-    try:
-        c = con.cursor()
-        c.execute(sql, [node_id])
-        con.commit()
-        c.close()
-    except Exception as e:
-        fatal_error(e, sql, "meta.get_node_id()")
-
-    return(node_id)
-
-
-def get_node_id():
-    sql = "SELECT unique_id FROM hosts WHERE host = 'localhost'"
-    try:
-        c = con.cursor()
-        c.execute(sql)
-        data = c.fetchone()
-        node_id = str(data[0])
-    except Exception as e:
-        fatal_error(e, sql, "get_product")
-
-    if node_id == "None":
-        return(reset_node_id())
-
-    return(node_id)
-     
-
 def get_product(product, platf=None, pgv=None):
     sql = f"""
 SELECT product, component, platform, pg_ver

@@ -28,6 +28,9 @@ cd $outp
 
 ./$api set GLOBAL REPO http://localhost:8000
 ./$api info --silent
+./$api set PGEDGE CLIENT_ID client1
+./$api set PGEDGE CLUSTER_ID cluster1
+./$api set PGEDGE NODE_ID node1
 if [ `arch` == "i386" ]; then
   echo "Skipping CTLIBS for `arch`"
 else
