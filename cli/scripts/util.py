@@ -96,7 +96,7 @@ DEBUG2 = 9
 
 
 def getreqval(p_section, p_key, isInt=False):
-    val = get_value(p_section, p_val)
+    val = get_value(p_section, p_key)
     if val == "":
         exit_message(f"Missing Setting for '{p_section} {p_key}'")
 
