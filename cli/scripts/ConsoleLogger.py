@@ -4,7 +4,8 @@
 import os
 import sys
 
-LOG_FILENAME = os.getenv('MY_LOGS')
+MY_LOGS = util.getreqenv("MY_LOGS")
+LOG_FILENAME = f"{MY_LOGS}/cli_log.out"
 
 
 class ConsoleLogger(object):

@@ -10,13 +10,40 @@ MY_CODENAME = "Constellation"
 DEFAULT_PG = "16"
 DEFAULT_SPOCK = "40"
 DEFAULT_SPOCK_17 = "40"
-MY_CMD = os.getenv("MY_CMD", None)
-MY_HOME = os.getenv("MY_HOME", None)
-MY_LIBS = f"{MY_HOME}/hub/scripts/lib"
-MY_LITE = os.getenv("MY_LITE", None)
-BACKUP_DIR = os.path.join(MY_HOME, "data", "conf", "backup")
-BACKUP_TARGET_DIR = os.path.join(BACKUP_DIR, time.strftime("%Y%m%d%H%M"))
 VALID_PG = ["14", "15", "16", "17"]
+ONE_DAY = 86400
+ONE_WEEK = ONE_DAY * 7
+
+## required environment variables
+MY_CMD = os.getenv("MY_CMD")
+MY_HOME = os.getenv("MY_HOME")
+MY_LOGS = os.getenv('MY_LOGS')
+MY_LITE = os.getenv("MY_LITE")
+MY_DATA = os.getenv("MY_DATA")
+
+MY_LIBS = f"{MY_HOME}/hub/scripts/lib"
+BACKUP_DIR = f"{MY_DATA}/conf/backup"
+TIME = time.strftime("%Y%m%d%H%M")
+BACKUP_TARGET_DIR = f"{BACKUP_DIR}/{TIME}"
+LOG_FILENAME = f"{MY_LOGS}/cli_log.out"
+
+################ Logging Configuration ############
+COMMAND = 15
+DEBUG = 10
+DEBUG2 = 9
+
+isDebug=0
+LOG_LEVEL = COMMAND
+pgeDebug = int(os.getenv('pgeDebug', '0'))
+if pgeDebug == 1:
+    LOG_LEVEL = DEBUG
+    isDebug = 1
+elif pgeDebug == 2:
+    LOG_LEVEL = DEBUG2
+    isDebug = 2
+
+if not os.path.isdir(MY_LOGS):
+    os.mkdir(MY_LOGS)
 
 import sys
 import socket
@@ -75,9 +102,6 @@ isEXTENSIONS = False
 if os.environ.get("isExtensions", "False") == "True":
     isEXTENSIONS = True
 
-ONE_DAY = 86400
-ONE_WEEK = ONE_DAY * 7
-
 scripts_lib_path = os.path.join(os.path.dirname(__file__), "lib")
 if scripts_lib_path not in sys.path:
     sys.path.append(scripts_lib_path)
@@ -87,12 +111,6 @@ platform_lib_path = os.path.join(scripts_lib_path, this_platform_system)
 if os.path.exists(platform_lib_path):
     if platform_lib_path not in sys.path:
         sys.path.append(platform_lib_path)
-
-################ Logging Configuration ############
-# Custom Logging
-COMMAND = 15
-DEBUG = 10
-DEBUG2 = 9
 
 
 def getreqval(p_section, p_key, isInt=False):
@@ -398,26 +416,6 @@ def command(self, message, *args, **kws):
         self._log(COMMAND, message, args, **kws)
 
 my_logger = logging.getLogger()
-LOG_FILENAME = os.getenv('MY_LOGS')
-if not LOG_FILENAME:
-   MY_HOME = os.getenv("MY_HOME")
-   LOG_FILENAME = os.path.join(MY_HOME, "data", "logs","cli_log.out")
-LOG_DIRECTORY = os.path.split(LOG_FILENAME)[0]
-
-isDebug=0
-pgeDebug = int(os.getenv('pgeDebug', '0'))
-if pgeDebug == 1:
-    LOG_LEVEL = DEBUG
-    isDebug = 1
-elif pgeDebug == 2:
-    LOG_LEVEL = DEBUG2
-    isDebug = 2
-else:
-    LOG_LEVEL = COMMAND
-    isDebug = 0
-
-if not os.path.isdir(LOG_DIRECTORY):
-    os.mkdir(LOG_DIRECTORY)
 
 logging.addLevelName(COMMAND, "COMMAND")
 logging.Logger.command = command
