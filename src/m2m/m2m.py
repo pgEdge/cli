@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-import os, sys, time
+import os, sys, time, subprocess
 import paho.mqtt.client as paho
 from paho import mqtt
 
@@ -10,18 +10,23 @@ BROKER_HOST = util.getreqval("PGEDGE", "BROKER_HOST")
 BROKER_PORT = util.getreqval("PGEDGE", "BROKER_PORT", isInt=True)
 BROKER_USER = util.getreqval("PGEDGE", "BROKER_USER")
 BROKER_PASSWD = util.getreqval("PGEDGE", "BROKER_PASSWD")
+
 CLIENT = util.getreqval("PGEDGE","CLIENT_ID" )
 CLUSTER = util.getreqval("PGEDGE", "CLUSTER_ID")
 NODE = util.getreqval("PGEDGE", "NODE_ID")
-
-TOPIC = f"pgedge/cli/{CLIENT}/{CLUSTER}/{NODE}"
+TOPIC = f"cli/{CLIENT}/{CLUSTER}/{NODE}"
 
 MY_HOME = util.getreqenv("MY_HOME")
 MY_DATA = util.getreqenv("MY_DATA")
+MY_LOGS = util.getreqenv("MY_LOGS")
 
 
 def run_cli_command(cmd):
-    os.system(f"{MY_HOME}/pgedge {cmd} --json")
+    ## os.system(f"{MY_HOME}/pgedge {cmd} --json")
+    full_cmd = f"{MY_HOME}/pgedge {cmd} --json"
+    process = subprocess.Popen(full_cmd, stdout=subprocess.PIPE)
+    for line in iter(process.stdout.readline, ""):
+        sys.stdout.write(line)
 
 
 def on_connect(client, userdata, flags, rc, properties=None):

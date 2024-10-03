@@ -467,7 +467,12 @@ def info(p_json, p_home, p_repo, print_flag=True):
     print(f"#{bold_start}     Machine:{bold_end} {mem}{cores_model}")
 
     if os.path.exists(f"{util.getreqenv('MY_HOME')}/m2m"):
-        print(f"#{bold_start}      M2M ID:{bold_end} {client_id}/{cluster_id}/{node_id}")
+        if client_id == "":
+            m2m_display = "(not setup)"
+        else:
+            m2m_display = f"{client_id}/{cluster_id}/{node_id}"
+
+        print(f"#{bold_start}         M2M:{bold_end} {m2m_display}")
       
     if gpu_info > "":
         print(f"#{bold_start}    GPU Info:{bold_end} {gpu_info}")
