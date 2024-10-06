@@ -905,7 +905,7 @@ def get_list(p_isJSON, p_comp=None, p_return=False):
             return jsonList
 
         if p_isJSON:
-            print(json.dumps(jsonList, sort_keys=True, indent=2))
+            print(json.dumps(jsonList))
         else:
             if len(jsonList) >= 1:
                 print(api.format_data_to_table(jsonList, keys, headers))

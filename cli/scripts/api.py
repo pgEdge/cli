@@ -426,7 +426,7 @@ def info(p_json, p_home, p_repo, print_flag=True):
         infoJson["cloud_private_ip"] = private_ip
         infoJsonArray.append(infoJson)
         if print_flag:
-            print(json.dumps(infoJsonArray, sort_keys=True, indent=2))
+            print(json.dumps(infoJsonArray))
             return
         else:
             return infoJson

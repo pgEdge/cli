@@ -255,17 +255,7 @@ def get_depend_list(p_list, p_display=True):
         comp = str(c[4:])
         sorted_depend_list.append(c[4:])
 
-    msg = "  " + str(sorted_depend_list)
-    my_logger.info(msg)
-    if isJSON:
-        dictDeplist = {}
-        dictDeplist["state"] = "deplist"
-        dictDeplist["component"] = p_list
-        dictDeplist["deps"] = sorted_depend_list
-        msg = json.dumps([dictDeplist])
-    if p_display:
-        if not isSILENT:
-            print(msg)
+    util.message(f"depend_list = {sorted_depend_list}")
     return sorted_depend_list
 
 
@@ -1521,7 +1511,7 @@ if p_mode == "info":
                 if not isJSON:
                     api.info_component(compDict, kount)
             if isJSON:
-                print(json.dumps(compJson, sort_keys=True, indent=2))
+                print(json.dumps(compJson))
         except Exception as e:
             fatal_sql_error(e, sql, "INFO")
     exit_cleanly(0)
@@ -1539,13 +1529,7 @@ if p_mode in ["download", "clean", "list", "remove"]:
 ## INSTALL ################################################
 if p_mode == "install":
     if p_comp == "all":
-        msg = "You must specify component to install."
-        my_logger.error(msg)
-        return_code = 1
-        if isJSON:
-            return_code = 0
-            msg = '[{"status":"error","msg":"' + msg + '"}]'
-        util.exit_message(msg, return_code)
+        util.exit_message("You must specify component to install")
 
     if meta.get_stage(p_comp) == "included":
         util.exit_message(
@@ -1589,14 +1573,7 @@ if p_mode == "install":
                 util.copy_extension_files(c, parent)
             script_name = "install-" + c
             util.run_script(c, script_name, meta.get_current_version(c))
-            if isJSON:
-                json_dict = {}
-                json_dict["state"] = "install"
-                json_dict["status"] = "complete"
-                json_dict["msg"] = "Successfully installed the component."
-                json_dict["component"] = c
-                msg = json.dumps([json_dict])
-                print(msg)
+            util.message("Successfully installed component")
             if c in p_comp_list or p_comp_list[0] == "all":
                 component_installed = True
                 installed_commponents.append(c)
