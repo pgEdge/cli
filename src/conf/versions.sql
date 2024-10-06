@@ -143,6 +143,7 @@ INSERT INTO products VALUES ('ha', 3, 'backrest');
 INSERT INTO products VALUES ('ai', 1, 'pgml');
 INSERT INTO products VALUES ('ai', 2, 'vector');
 INSERT INTO products VALUES ('ai', 3, 'aifdw');
+INSERT INTO products VALUES ('ace', 1, 'ace');
 
 CREATE VIEW v_products AS
 SELECT p.product, p.seqnce, p.project, r.component, v.version,
@@ -531,6 +532,13 @@ INSERT INTO releases VALUES ('backrest', 2, 'backrest',  'pgBackRest', '', 'test
 INSERT INTO versions VALUES ('backrest', '2.53.1-1', 'amd, arm', 1, '20240912', '', '', '');
 INSERT INTO versions VALUES ('backrest', '2.53-1',   'amd, arm', 0, '20240729', '', '', '');
 INSERT INTO versions VALUES ('backrest', '2.52-1',   'amd, arm', 0, '20240612', '', '', '');
+
+
+-- ## ACE ##########################
+INSERT INTO projects VALUES ('ace', 'pge', 11, 5000, '', 3, 'http://github.com/pgedge/cli/cli/scripts/ace.py',
+  'ace',  0, '', 'Anti Chaos Engine for pgEdge', 'https://github.com/pgedge/cli/cli/scripts/ace.py', 'ace');
+INSERT INTO releases VALUES ('ace', 2, 'ace',  'ACE', '', 'test', '', 1, 'POSTGRES', '', '');
+INSERT INTO versions VALUES ('ace', '2.0', '', 1, '20241002', '', '', '');
 
 -- ## FIREWALLD #########################
 INSERT INTO projects VALUES ('firewalld', 'app', 11, 0, '', 4, 'https://firewalld.org',
