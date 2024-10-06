@@ -119,30 +119,6 @@ def guc_show(guc_name):
     sys.exit(0)
 
 
-def test_io():
-    """ Use the 'fio' Flexible IO Tester on pg data directory """
-
-    if platform.system() != "Linux":
-        util.exit_message("Must run on Linux w 'fio' package installed")
-
-    rc = os.system("fio --version >/dev/null 2>&1")
-    if rc != 0:
-        util.exit_message("Missing 'fio'. In Rocky install via: \n" + \
-          "  'dnf --enablerepo=devel install fio' \n" + \
-          "or in Ubuntu perhaps via: \n" + \
-          "  'apt install fio'")
-
-    fio_cmd = "-rw=write -bs=8Ki -fsync=1 -runtime=2s -size=2GB -directory=/tmp -name=test_io  --output-format=json"
-
-    j_out_file = "/tmp/test_io.json"
-    rc =  os.system(f"fio {fio_cmd} > {j_out_file}")
-
-    j_out = util.get_parsed_json(j_out_file)
-
-    print(json.dumps(j_out, indent=2))
-
-
-
 def set_readonly(readonly="off"):
     """Turn PG read-only mode 'on' or 'off'."""
 
@@ -174,7 +150,6 @@ if __name__ == "__main__":
             "create": create,
             "guc-set": guc_set,
             "guc-show": guc_show,
-            "set-readonly": set_readonly,
-            "test-io": test_io
+            "set-readonly": set_readonly
         }
     )
