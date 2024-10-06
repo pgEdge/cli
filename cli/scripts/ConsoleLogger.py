@@ -4,7 +4,7 @@
 import os
 import sys
 
-MY_LOGS = util.getreqenv("MY_LOGS")
+MY_LOGS =os.getenv("MY_LOGS")
 LOG_FILENAME = f"{MY_LOGS}/cli_log.out"
 
 
