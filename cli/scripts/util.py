@@ -3225,7 +3225,10 @@ def get_linux_hostname():
 
 
 def get_host_ip():
-    return "127.0.0.1"
+    try:
+        return(getoutput("hostname -I"))
+    except Exception:
+        return("127.0.0.1")
 
 
 def make_uri(in_name):

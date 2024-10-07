@@ -310,16 +310,8 @@ def info(p_json, p_home, p_repo, print_flag=True):
         host_ip = private_ip
     else:
         host_ip = util.get_host_ip()
-    wmic_path = (
-        os.getenv("SYSTEMROOT", "")
-        + os.sep
-        + "System32"
-        + os.sep
-        + "wbem"
-        + os.sep
-        + "wmic"
-    )
-    host_display = util.get_host_short()
+    
+    hostname = util.get_host_short()
 
     # Check the OS & Resources ########################################
     plat = util.get_os()
@@ -384,9 +376,9 @@ def info(p_json, p_home, p_repo, print_flag=True):
 
     os_pkg_mgr = util.get_pkg_mgr()
 
-    client_id = util.get_value("PGEDGE", "CLIENT_ID")
-    cluster_id = util.get_value("PGEDGE", "CLUSTER_ID")
-    node_id = util.get_value("PGEDGE", "NODE_ID")
+    m2m_customer  = util.get_value("M2M", "CUSTOMER")
+    m2m_cluster = util.get_value("M2M", "CLUSTER")
+    m2m_node = util.get_value("M2M", "NODE")
 
     if p_json:
         infoJsonArray = []
@@ -394,29 +386,27 @@ def info(p_json, p_home, p_repo, print_flag=True):
         infoJson["version"] = ver
         infoJson["home"] = p_home
         infoJson["user"] = p_user
-        infoJson["host"] = host_display
-        infoJson["host_short"] = util.get_host_short()
-        infoJson["host_long"] = util.get_host()
+        infoJson["hostname"] = hostname
         infoJson["host_ip"] = host_ip
         infoJson["os"] = unicode(
             str(os2), sys.getdefaultencoding(), errors="ignore"
         ).strip()
         infoJson["os_pkg_mgr"] = os_pkg_mgr
         infoJson["os_major_ver"] = os_major_ver
-        infoJson["os_memory_mb"] = round_mem
+        infoJson["os_memory_gb"] = round_mem
         infoJson["cores"] = system_cpu_cores
         infoJson["arch"] = arch
         infoJson["last_update_utc"] = last_update_utc
         if last_update_local:
             infoJson["last_update_readable"] = last_update_readable
         infoJson["repo"] = p_repo
-        infoJson["system_memory_in_kb"] = system_memory_in_kbytes
         infoJson["python3_ver"] = util.python3_ver()
         infoJson["glibc_ver"] = glibcV
 
-        infoJson["pgedge_client_id"] = client_id
-        infoJson["pgedge_cluster_id"] = cluster_id
-        infoJson["pgedge_node_id"] = node_id
+        infoJson["m2m_customer"] = m2m_customer
+        infoJson["m2m_cluster"] = m2m_cluster
+        infoJson["m2m_node"] = m2m_node
+
         infoJson["ctlib_ver"] = ctlib_ver
 
         infoJson["cloud_region"] = region
@@ -453,7 +443,7 @@ def info(p_json, p_home, p_repo, print_flag=True):
     print(f"#{bold_start}     Version:{bold_end} {ver_display}")
 
     print(f"#{bold_start} User & Host:{bold_end} " +
-              f"{p_user}{admin_display}  {host_display}  {p_home}")
+              f"{p_user}{admin_display}  {hostname}  {host_ip}  {p_home}")
 
     if ctlib_ver == "":
         ctlib_ver == "?"
@@ -470,7 +460,7 @@ def info(p_json, p_home, p_repo, print_flag=True):
         if client_id == "":
             m2m_display = "(not setup)"
         else:
-            m2m_display = f"{client_id}/{cluster_id}/{node_id}"
+            m2m_display = f"{m2m_customer}/{m2m_cluster}/{m2m_node}"
 
         print(f"#{bold_start}         M2M:{bold_end} {m2m_display}")
       

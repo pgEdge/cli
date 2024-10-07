@@ -6,15 +6,15 @@ from paho import mqtt
 
 import util
 
-BROKER_HOST = util.getreqval("PGEDGE", "BROKER_HOST")
-BROKER_PORT = util.getreqval("PGEDGE", "BROKER_PORT", isInt=True)
-BROKER_USER = util.getreqval("PGEDGE", "BROKER_USER")
-BROKER_PASSWD = util.getreqval("PGEDGE", "BROKER_PASSWD")
+HOST = util.getreqval"M2M", "HOST")
+PORT = util.getreqval("M2M", "PORT", isInt=True)
+USER = util.getreqval("M2M", "USER")
+PASSWD = util.getreqval("M2M", "PASSWD")
+CUSTOMER = util.getreqval("M2M","CUSTOMER" )
+CLUSTER = util.getreqval("M2M", "CLUSTER")
+NODE = util.getreqval("M2M", "NODE")
 
-CLIENT = util.getreqval("PGEDGE","CLIENT_ID" )
-CLUSTER = util.getreqval("PGEDGE", "CLUSTER_ID")
-NODE = util.getreqval("PGEDGE", "NODE_ID")
-TOPIC = f"cli/{CLIENT}/{CLUSTER}/{NODE}"
+TOPIC = f"cli/{CUSTOMER}/{CLUSTER}/{NODE}"
 
 MY_HOME = util.getreqenv("MY_HOME")
 MY_DATA = util.getreqenv("MY_DATA")
@@ -22,7 +22,6 @@ MY_LOGS = util.getreqenv("MY_LOGS")
 
 
 def run_cli_command(cmd):
-    ## os.system(f"{MY_HOME}/pgedge {cmd} --json")
     full_cmd = f"{MY_HOME}/pgedge {cmd} --json"
     process = subprocess.Popen(full_cmd, stdout=subprocess.PIPE)
     for line in iter(process.stdout.readline, ""):
@@ -63,8 +62,8 @@ client = paho.Client(client_id="", userdata=None, protocol=paho.MQTTv5)
 client.on_connect = on_connect
 
 client.tls_set(tls_version=mqtt.client.ssl.PROTOCOL_TLS)
-client.username_pw_set(BROKER_USER, BROKER_PASSWD)
-client.connect(BROKER_HOST, BROKER_PORT)
+client.username_pw_set(USER, PASSWD)
+client.connect(HOST, PORT)
 
 client.on_subscribe = on_subscribe
 client.on_message = on_message
