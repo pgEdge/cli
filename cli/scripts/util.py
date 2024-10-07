@@ -1487,7 +1487,7 @@ def get_owner_name(p_path=None):
 def get_anonymous_info():
     jsonInfo = api.info(True, "", "", False)
     os = jsonInfo["os"]
-    mem = str(jsonInfo["os_memory_mb"])
+    mem = str(jsonInfo["os_memory_gb"])
     cores = str(jsonInfo["cores"])
     arch = jsonInfo["arch"]
     anon = f"({os}; {mem}; {cores}; {arch})"
@@ -3226,7 +3226,7 @@ def get_linux_hostname():
 
 def get_host_ip():
     try:
-        return(getoutput("hostname -I"))
+        return(getoutput('hostname -I | cut -d " " -f1'))
     except Exception:
         return("127.0.0.1")
 
