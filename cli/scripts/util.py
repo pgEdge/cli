@@ -5,7 +5,7 @@ import os
 import time
 
 MY_VERSION = "24.11.0"
-MY_CODENAME = "Constellation"
+MY_CODENAME = "devel"
 
 DEFAULT_PG = "16"
 DEFAULT_SPOCK = "40"
@@ -15,7 +15,7 @@ ONE_DAY = 86400
 ONE_WEEK = ONE_DAY * 7
 
 ## required environment variables
-MY_CMD = os.getenv("MY_CMD")
+MY_CMD  = os.getenv("MY_CMD")
 MY_HOME = os.getenv("MY_HOME")
 MY_LOGS = os.getenv('MY_LOGS')
 MY_LITE = os.getenv("MY_LITE")

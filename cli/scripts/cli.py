@@ -255,7 +255,7 @@ def get_depend_list(p_list, p_display=True):
         comp = str(c[4:])
         sorted_depend_list.append(c[4:])
 
-    util.message(f"depend_list = {sorted_depend_list}")
+    util.message(f"depend_list = {sorted_depend_list}", "debug")
     return sorted_depend_list
 
 
