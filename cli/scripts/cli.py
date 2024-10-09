@@ -920,7 +920,7 @@ if "--pause" in args and not_fire:
 
 if "--pg" in args:
     pgn = str(get_next_arg("--pg"))
-    if pgn >= "14" and pgn <= "17":
+    if pgn in util.VALID_PG:
         util.setenv("pgeN", pgn)
         args.remove("--pg")
         args.remove(pgn)

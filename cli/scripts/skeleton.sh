@@ -64,11 +64,6 @@ function test15 {
 }
 
 
-function test14 {
-  install_pgedge
-}
-
-
 cd ../..
 pgV="pg$1"
 
@@ -78,10 +73,8 @@ elif [ "$pgV" == "pg16" ]; then
   test16
 elif [ "$pgV" == "pg15" ]; then
   test15
-elif [ "$pgV" == "pg14" ]; then
-  test14
 else
-  echo "ERROR: Invalid parm, must be one of '14' thru '17'"
+  echo "ERROR: Invalid parm, must be one of '15' thru '17'"
   exit 1
 fi
 

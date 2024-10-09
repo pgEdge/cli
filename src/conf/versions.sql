@@ -170,12 +170,6 @@ INSERT INTO versions VALUES ('hub', '24.7.4',    '',  0, '20240710', '', '', '')
 INSERT INTO projects VALUES ('pg', 'pge', 1, 5432, '', 1, 'https://github.com/postgres/postgres/tags',
  'postgres', 0, 'postgresql.png', 'Best RDBMS', 'https://postgresql.org', '');
 
-INSERT INTO releases VALUES ('pg14', 1, 'pg', '', '', 'prod', 
-  '<font size=-1>New in <a href=https://www.postgresql.org/docs/14/release-14.html>2021</a></font>', 1, 'POSTGRES', '', '');
-INSERT INTO versions VALUES ('pg14', '14.13-2', 'amd, arm', 1, '20240912', '','','');
-INSERT INTO versions VALUES ('pg14', '14.13-1', 'amd, arm', 0, '20240808', '','','');
-INSERT INTO versions VALUES ('pg14', '14.12-3', 'amd, arm', 0, '20240710', '','','');
-
 INSERT INTO releases VALUES ('pg15', 2, 'pg', '', '', 'prod', 
   '<font size=-1>New in <a href=https://www.postgresql.org/docs/15/release-15.html>2022</a></font>', 1, 'POSTGRES', '', '');
 INSERT INTO versions VALUES ('pg15', '15.8-2',  'amd, arm', 1, '20240912','', '', '');
@@ -373,12 +367,10 @@ INSERT INTO versions VALUES ('vector-pg16', '0.7.1-1', 'amd, arm', 0, '20240612'
 -- ## SNOWFLAKE #########################
 INSERT INTO projects VALUES ('snowflake', 'pge', 4, 0, '', 1, 'https://github.com/pgedge/snowflake/tags',
   'snowflake', 1, 'snowflake.png', 'Snowflake Sequences', 'https://github.com/pgedge/snowflake/', 'pg_snowflake, pgsnowflake');
-INSERT INTO releases VALUES ('snowflake-pg14', 4, 'snowflake', 'Snowflake', '', 'prod', '', 1, 'POSTGRES', '', '');
 INSERT INTO releases VALUES ('snowflake-pg15', 4, 'snowflake', 'Snowflake', '', 'prod', '', 1, 'POSTGRES', '', '');
 INSERT INTO releases VALUES ('snowflake-pg16', 4, 'snowflake', 'Snowflake', '', 'prod', '', 1, 'POSTGRES', '', '');
 INSERT INTO releases VALUES ('snowflake-pg17', 4, 'snowflake', 'Snowflake', '', 'prod', '', 1, 'POSTGRES', '', '');
 
-INSERT INTO versions VALUES ('snowflake-pg14', '2.2-1', 'amd, arm', 1, '20240626', 'pg14', '', '');
 INSERT INTO versions VALUES ('snowflake-pg15', '2.2-1', 'amd, arm', 1, '20240626', 'pg15', '', '');
 INSERT INTO versions VALUES ('snowflake-pg16', '2.2-1', 'amd, arm', 1, '20240626', 'pg16', '', '');
 INSERT INTO versions VALUES ('snowflake-pg17', '2.2-1', 'amd, arm', 1, '20240626', 'pg17', '', '');
@@ -389,35 +381,28 @@ INSERT INTO projects VALUES ('spock', 'pge', 4, 0, '', 1, 'https://github.com/pg
   'spock', 1, 'spock.png', 'Logical Rep w/ Conflict Resolution', 'https://github.com/pgedge/spock/', 'pg_spock, pgsspock, vulcan');
 
 -- ## SPOCK33 ###########################
-INSERT INTO releases VALUES ('spock33-pg14', 4, 'spock', 'Spock', '', 'prod', '', 1, 'pgEdge Community', '', '');
 INSERT INTO releases VALUES ('spock33-pg15', 4, 'spock', 'Spock', '', 'prod', '', 1, 'pgEdge Community', '', '');
 INSERT INTO releases VALUES ('spock33-pg16', 4, 'spock', 'Spock', '', 'prod', '', 1, 'pgEdge Community', '', '');
 
-INSERT INTO versions VALUES ('spock33-pg14', '3.3.6-1', 'amd, arm', 1, '20240820', 'pg14', '', '');
 INSERT INTO versions VALUES ('spock33-pg15', '3.3.6-1', 'amd, arm', 1, '20240820', 'pg15', '', '');
 INSERT INTO versions VALUES ('spock33-pg16', '3.3.6-1', 'amd, arm', 1, '20240820', 'pg16', '', '');
 
-INSERT INTO versions VALUES ('spock33-pg14', '3.3.5-1', 'amd, arm', 0, '20240607', 'pg14', '', '');
 INSERT INTO versions VALUES ('spock33-pg15', '3.3.5-1', 'amd, arm', 0, '20240607', 'pg15', '', '');
 INSERT INTO versions VALUES ('spock33-pg16', '3.3.5-1', 'amd, arm', 0, '20240607', 'pg16', '', '');
 
 -- ## SPOCK40 ###########################
-INSERT INTO releases VALUES ('spock40-pg14', 4, 'spock', 'Spock', '', 'prod', '', 1, 'pgEdge Community', '', '');
 INSERT INTO releases VALUES ('spock40-pg15', 4, 'spock', 'Spock', '', 'prod', '', 1, 'pgEdge Community', '', '');
 INSERT INTO releases VALUES ('spock40-pg16', 4, 'spock', 'Spock', '', 'prod', '', 1, 'pgEdge Community', '', '');
 INSERT INTO releases VALUES ('spock40-pg17', 4, 'spock', 'Spock', '', 'prod', '', 1, 'pgEdge Community', '', '');
 
-INSERT INTO versions VALUES ('spock40-pg14', '4.0.5-1', 'amd, arm', 1, '20240924', 'pg14', '', '');
 INSERT INTO versions VALUES ('spock40-pg15', '4.0.5-1', 'amd, arm', 1, '20240924', 'pg15', '', '');
 INSERT INTO versions VALUES ('spock40-pg16', '4.0.5-1', 'amd, arm', 1, '20240924', 'pg16', '', '');
 INSERT INTO versions VALUES ('spock40-pg17', '4.0.5-1', 'amd, arm', 1, '20240924', 'pg17', '', '');
 
-INSERT INTO versions VALUES ('spock40-pg14', '4.0.4-1', 'amd, arm', 0, '20240919', 'pg14', '', '');
 INSERT INTO versions VALUES ('spock40-pg15', '4.0.4-1', 'amd, arm', 0, '20240919', 'pg15', '', '');
 INSERT INTO versions VALUES ('spock40-pg16', '4.0.4-1', 'amd, arm', 0, '20240919', 'pg16', '', '');
 INSERT INTO versions VALUES ('spock40-pg17', '4.0.4-1', 'amd, arm', 0, '20240919', 'pg17', '', '');
 
-INSERT INTO versions VALUES ('spock40-pg14', '4.0.1-1', 'amd, arm', 0, '20240801', 'pg14', '', '');
 INSERT INTO versions VALUES ('spock40-pg15', '4.0.1-1', 'amd, arm', 0, '20240801', 'pg15', '', '');
 INSERT INTO versions VALUES ('spock40-pg16', '4.0.1-1', 'amd, arm', 0, '20240801', 'pg16', '', '');
 INSERT INTO versions VALUES ('spock40-pg17', '4.0.1-1', 'amd, arm', 0, '20240801', 'pg17', '', '');
@@ -431,12 +416,10 @@ INSERT INTO versions VALUES ('spock41-pg17', '4.1devel-1',   'amd, arm', 1, '202
 -- ## LOLOR #############################
 INSERT INTO projects VALUES ('lolor', 'pge', 4, 0, '', 1, 'https://github.com/pgedge/lolor/tags',
   'spock', 1, 'spock.png', 'Logical Replication of Large Objects', 'https://github.com/pgedge/lolor/#spock', 'lola, lolah, kinks');
-INSERT INTO releases VALUES ('lolor-pg14', 4, 'lolor', 'LgObjLOgicalRep', '', 'prod', '', 1, 'pgEdge Community', '', '');
 INSERT INTO releases VALUES ('lolor-pg15', 4, 'lolor', 'LgObjLOgicalRep', '', 'prod', '', 1, 'pgEdge Community', '', '');
 INSERT INTO releases VALUES ('lolor-pg16', 4, 'lolor', 'LgObjLOgicalRep', '', 'prod', '', 1, 'pgEdge Community', '', '');
 INSERT INTO releases VALUES ('lolor-pg17', 4, 'lolor', 'LgObjLOgicalRep', '', 'prod', '', 1, 'pgEdge Community', '', '');
 
-INSERT INTO versions VALUES ('lolor-pg14', '1.2-1', 'amd, arm', 1, '20240521', 'pg14', '', '');
 INSERT INTO versions VALUES ('lolor-pg15', '1.2-1', 'amd, arm', 1, '20240521', 'pg15', '', '');
 INSERT INTO versions VALUES ('lolor-pg16', '1.2-1', 'amd, arm', 1, '20240521', 'pg16', '', '');
 INSERT INTO versions VALUES ('lolor-pg17', '1.2-1', 'amd, arm', 1, '20240521', 'pg17', '', '');

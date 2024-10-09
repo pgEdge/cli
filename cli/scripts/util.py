@@ -10,7 +10,7 @@ MY_CODENAME = "devel"
 DEFAULT_PG = "16"
 DEFAULT_SPOCK = "40"
 DEFAULT_SPOCK_17 = "40"
-VALID_PG = ["14", "15", "16", "17"]
+VALID_PG = ["15", "16", "17"]
 ONE_DAY = 86400
 ONE_WEEK = ONE_DAY * 7
 
@@ -1463,7 +1463,7 @@ def delete_service_win(svcName):
 
 
 def is_postgres(p_comp):
-    pgXX = ["pg11", "pg12", "pg13", "pg14", "pg15", "pg16", "pg17"]
+    pgXX = ["pg15", "pg16", "pg17"]
     if p_comp in pgXX:
         return True
 

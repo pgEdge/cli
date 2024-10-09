@@ -16,7 +16,6 @@ snwflkV=2.2-1
 P17=17.0-1
 P16=16.4-2
 P15=15.8-2
-P14=14.13-2
 
 pgmlV=2.9.3-1
 vectorV=0.7.4-1
@@ -140,13 +139,7 @@ checkCmd () {
 
 
 setPGV () {
-  if [ "$1" == "12" ]; then
-    pgV=$P12
-  elif [ "$1" == "13" ]; then
-    pgV=$P13
-  elif [ "$1" == "14" ]; then
-    pgV=$P14
-  elif [ "$1" == "15" ]; then
+  if [ "$1" == "15" ]; then
     pgV=$P15
   elif [ "$1" == "16" ]; then
     pgV=$P16
