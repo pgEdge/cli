@@ -1,4 +1,7 @@
 #!/usr/bin/env bash
+
+./pgedge stop m2m --silent
+
 cd "$(dirname "$0")"
 
-python3 m2m.py &
+python3 ../hub/scripts/m2m.py &

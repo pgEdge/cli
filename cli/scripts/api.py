@@ -457,7 +457,7 @@ def info(p_json, p_home, p_repo, print_flag=True):
     print(f"#{bold_start}     Machine:{bold_end} {mem}{cores_model}")
 
     if os.path.exists(f"{util.getreqenv('MY_HOME')}/m2m"):
-        if client_id == "":
+        if m2m_customer == "":
             m2m_display = "(not setup)"
         else:
             m2m_display = f"{m2m_customer}/{m2m_cluster}/{m2m_node}"

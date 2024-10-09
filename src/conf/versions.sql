@@ -228,10 +228,10 @@ INSERT INTO versions VALUES ('pljava-pg15', '1.6.4-1',  'amd, arm',  0, '2023060
 INSERT INTO versions VALUES ('pljava-pg16', '1.6.4-1',  'amd, arm',  0, '20230608', 'pg16', '', '');
 
 -- ## M2M ################################
-INSERT INTO projects VALUES ('m2m', 'dev', 4, 8883, '', 0, 'https://github.com/pgedge/m2m/tags',
-  'm2m', 0, 'mqtt.png', 'MQTT Client', 'https://github.com/pgedge/m2m', '');
-INSERT INTO releases VALUES ('m2m', 2, 'm2m', 'MQTT Client', '', 'test', '', 1, 'POSTGRES', '', '');
-INSERT INTO versions VALUES ('m2m', '0.9.3-1',  '',  1, '20241001', '', '', '');
+INSERT INTO projects VALUES ('m2m', 'dev', 4, 8883, '', 0, 'https://github.com/pgedge/cli/tags',
+  'm2m', 0, 'mqtt.png', 'MQTT Client', 'https://github.com/pgedge/cli', '');
+INSERT INTO releases VALUES ('m2m', 2, 'm2m', 'MQTT Client', '', 'test', '', 1, 'PGEDGE', '', '');
+INSERT INTO versions VALUES ('m2m', '0.9.4-1',  '',  1, '20241009', '', '', '');
 
 -- ## PLDEBUGGER #########################
 INSERT INTO projects VALUES ('pldebugger', 'dev', 4, 0, '', 0, 'https://github.com/EnterpriseDB/pldebugger/tags',
@@ -361,8 +361,8 @@ INSERT INTO versions VALUES ('cron-pg15', '1.6.3-1', 'amd, arm', 0, '20230729', 
 -- ## VECTOR ############################
 INSERT INTO projects VALUES ('vector', 'pge', 4, 0, '', 1, 'https://github.com/pgedge/vector/tags',
   'vector', 1, 'vector.png', 'Vector & Embeddings', 'https://github.com/pgedge/vector/#vector', 'pg_vector, pgvector');
-INSERT INTO releases VALUES ('vector-pg15', 4, 'vector', 'pgVector', '', 'prod', '', 1, 'pgEdge Community', '', '');
-INSERT INTO releases VALUES ('vector-pg16', 4, 'vector', 'pgVector', '', 'prod', '', 1, 'pgEdge Community', '', '');
+INSERT INTO releases VALUES ('vector-pg15', 4, 'vector', 'pgVector', '', 'prod', '', 1, 'POSTGRES', '', '');
+INSERT INTO releases VALUES ('vector-pg16', 4, 'vector', 'pgVector', '', 'prod', '', 1, 'POSTGRES', '', '');
 
 INSERT INTO versions VALUES ('vector-pg15', '0.7.4-1', 'amd, arm', 1, '20240820', 'pg15', '', '');
 INSERT INTO versions VALUES ('vector-pg16', '0.7.4-1', 'amd, arm', 1, '20240820', 'pg16', '', '');
@@ -537,7 +537,7 @@ INSERT INTO versions VALUES ('backrest', '2.52-1',   'amd, arm', 0, '20240612', 
 -- ## ACE ##########################
 INSERT INTO projects VALUES ('ace', 'pge', 11, 5000, '', 3, 'http://github.com/pgedge/cli/cli/scripts/ace.py',
   'ace',  0, '', 'Anti Chaos Engine for pgEdge', 'https://github.com/pgedge/cli/cli/scripts/ace.py', 'ace');
-INSERT INTO releases VALUES ('ace', 2, 'ace',  'ACE', '', 'test', '', 1, 'POSTGRES', '', '');
+INSERT INTO releases VALUES ('ace', 2, 'ace',  'ACE', '', 'test', '', 1, 'PGEDGE', '', '');
 INSERT INTO versions VALUES ('ace', '2.0', '', 1, '20241002', '', '', '');
 
 -- ## FIREWALLD #########################
