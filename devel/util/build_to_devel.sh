@@ -3,6 +3,11 @@ cd "$(dirname "$0")"
 
 PLATFORM=`cat /etc/os-release | grep PLATFORM_ID | cut -d: -f2 | tr -d '\"'`
 
+if [ ! `pwd` == "$DEV" ]; then
+   echo "This is NOT the directory to run this script."
+   exit 1
+fi
+
 cmd () {
   echo "# $1"
   $1
