@@ -1016,7 +1016,10 @@ if "--rm-data" in args and not_fire:
     util.setenv("isRM_DATA", "True")
     args.remove("--rm-data")
 
-isSILENT = False
+if os.getenv("isSilent") == "True":
+    isSILENT = True
+else:
+    isSILENT = False
 if "--silent" in args and not_fire:
     isSILENT = True
     util.setenv("isSilent", "True")

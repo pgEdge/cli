@@ -1581,7 +1581,8 @@ def message(p_msg, p_state="info", p_isJSON=None, quiet_mode=False):
         my_logger.info(p_msg)
         if log_level_num >= cur_level:
             if not p_isJSON:
-                print(p_msg)
+                if isSILENT is False: 
+                    print(p_msg)
                 return
             else:
                 jsn_msg = p_msg
