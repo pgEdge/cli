@@ -310,6 +310,8 @@ def info(p_json, p_home, p_repo, print_flag=True):
         host_ip = private_ip
     else:
         host_ip = util.get_host_ip()
+
+    host_address = util.get_host_address()
     
     hostname = util.get_host_short()
 
@@ -386,8 +388,9 @@ def info(p_json, p_home, p_repo, print_flag=True):
         infoJson["version"] = ver
         infoJson["home"] = p_home
         infoJson["user"] = p_user
-        infoJson["hostname"] = hostname
+        infoJson["host_name"] = hostname
         infoJson["host_ip"] = host_ip
+        infoJson["host_address"] = host_address
         infoJson["os"] = unicode(
             str(os2), sys.getdefaultencoding(), errors="ignore"
         ).strip()
@@ -442,8 +445,8 @@ def info(p_json, p_home, p_repo, print_flag=True):
     print("#" * INFO_WIDTH)
     print(f"#{bold_start}     Version:{bold_end} {ver_display}")
 
-    print(f"#{bold_start} User & Host:{bold_end} " +
-              f"{p_user}{admin_display}  {hostname}  {host_ip}  {p_home}")
+    print(f"#{bold_start}        User:{bold_end} {p_user}{admin_display}  {p_home}")
+    print(f"#{bold_start}        Host:{bold_end} {hostname}  {host_ip}  {host_address}")
 
     if ctlib_ver == "":
         ctlib_ver == "?"

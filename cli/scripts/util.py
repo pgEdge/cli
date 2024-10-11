@@ -72,11 +72,12 @@ from shutil import copy2
 from semantic_version import Version
 
 try:
+    import psutil
     from tqdm import tqdm
     import psycopg
 except Exception:
-    # only used for advanced functionality
-    # and may throw errors in some cases before ctlibs is loaded
+    # used for advanced functionality
+    # will throw errors before ctlibs is loaded
     pass
 
 from log_helpers import bcolours, characters
@@ -2996,8 +2997,6 @@ def kill_pid(pid):
 
 # Terminate a process tree with the PID
 def kill_process_tree(pid):
-    import psutil
-
     process = psutil.Process(pid)
     for proc in process.children(recursive=True):
         proc.kill()
@@ -3006,8 +3005,6 @@ def kill_process_tree(pid):
 
 
 def is_pid_running(p_pid):
-    import psutil
-
     return psutil.pid_exists(int(p_pid))
 
 
@@ -3230,6 +3227,19 @@ def get_host_ip():
         return(getoutput('hostname -I | cut -d " " -f1'))
     except Exception:
         return("127.0.0.1")
+
+
+def get_host_address():
+    try:
+        nics = psutil.net_if_addrs()
+        for i in nics:
+            if i == "lo":
+                continue
+            for j in nics[i]:
+                if j.family == 17:
+                    return(str(j.address))
+    except Exception as e:
+        return("00:00:00:00:00:00")
 
 
 def make_uri(in_name):
