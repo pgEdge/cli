@@ -3,7 +3,7 @@ hubVV=24.11-1
 
 bundle=pgedge
 api=pgedge
-ctlibsV=1.6
+ctlibsV=1.7
 aceV=2.0
 
 spock41V=4.1devel-1

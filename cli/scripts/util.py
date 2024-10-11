@@ -3239,7 +3239,9 @@ def get_host_address():
                 if j.family == 17:
                     return(str(j.address))
     except Exception as e:
-        return("00:00:00:00:00:00")
+        pass
+
+    return("00:00:00:00:00:00")
 
 
 def make_uri(in_name):
