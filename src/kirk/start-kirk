@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+
+./pgedge stop kirk --silent
+
+cd "$(dirname "$0")"
+
+python3 ../hub/scripts/kirk.py &

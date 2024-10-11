@@ -6,13 +6,13 @@ from paho import mqtt
 
 import util
 
-HOST = util.getreqval("M2M", "HOST")
-PORT = util.getreqval("M2M", "PORT", isInt=True)
-USER = util.getreqval("M2M", "USER")
-PASSWD = util.getreqval("M2M", "PASSWD")
-CUSTOMER = util.getreqval("M2M","CUSTOMER" )
-CLUSTER = util.getreqval("M2M", "CLUSTER")
-NODE = util.getreqval("M2M", "NODE")
+HOST = util.getreqval("KIRK", "HOST")
+PORT = util.getreqval("KIRK", "PORT", isInt=True)
+USER = util.getreqval("KIRK", "USER")
+PASSWD = util.getreqval("KIRK", "PASSWD")
+CUSTOMER = util.getreqval("KIRK","CUSTOMER" )
+CLUSTER = util.getreqval("KIRK", "CLUSTER")
+NODE = util.getreqval("KIRK", "NODE")
 
 TOPIC = f"cli/{CUSTOMER}/{CLUSTER}/{NODE}"
 
@@ -94,34 +94,34 @@ def publish_message(p_msg):
 
 
 def on_connect(client, userdata, flags, rc, properties=None):
-    util.message(f"m2m on_connect() CONNACK received with code {rc}.", "debug")
+    util.message(f"kirk on_connect() CONNACK received with code {rc}.", "debug")
 
 
 def on_publish(client, userdata, mid, properties=None):
-    util.message(f"m2m on_publish() {mid}.", "debug")
+    util.message(f"kirk on_publish() {mid}.", "debug")
 
 
 def on_subscribe(client, userdata, mid, granted_qos, properties=None):
-    util.message(f"m2m on_subscribe() {mid}  {granted_qos}", "debug")
+    util.message(f"kirk on_subscribe() {mid}  {granted_qos}", "debug")
 
 
 def on_message(client, userdata, msg):
     payload = msg.payload
     cmd = payload.decode("utf-8")
 
-    util.message(f"m2m on_message({cmd})", "debug")
+    util.message(f"kirk on_message({cmd})", "debug")
 
     run_cli_command(cmd)
 
 
 ## MAINLINE ########################################################
 
-m2m_pidfile = f"{MY_DATA}/m2m.pid"
+pidfile = f"{MY_DATA}/kirk.pid"
 this_pid = os.getpid()
-if os.path.exists(m2m_pidfile):
-    util.exit_message(f"Process already running. (check '{m2m_pidfile}')", 0)
+if os.path.exists(pidfile):
+    util.exit_message(f"Process already running. (check '{pidfile}')", 0)
 else:
-    os.system(f"echo '{this_pid}' > {m2m_pidfile}")
+    os.system(f"echo '{this_pid}' > {pidfile}")
 
 client = paho.Client(client_id="", userdata=None, protocol=paho.MQTTv5)
 client.on_connect = on_connect

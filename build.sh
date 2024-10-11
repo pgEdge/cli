@@ -404,7 +404,7 @@ initPG () {
   fi
 
   initC "prompgexp"    "prompgexp"    "$prompgexpV" "$outPlat" "postgres/prompgexp" "" "" "nil"
-  initC "m2m"          "m2m"          "$m2mV"       ""         "m2m"                "" "" "Y"
+  initC "kirk"         "kirk"         "$kirkV"      ""         "kirk"               "" "" "Y"
   initC "ace"          "ace"          "$aceV"       ""         "ace"                "" "" "Y"
 
   ## initC "postgrest"    "postgrest"    "$postgrestV" "$outPlat" "postgres/postgrest" "" "" "nil"

@@ -378,9 +378,9 @@ def info(p_json, p_home, p_repo, print_flag=True):
 
     os_pkg_mgr = util.get_pkg_mgr()
 
-    m2m_customer  = util.get_value("M2M", "CUSTOMER")
-    m2m_cluster = util.get_value("M2M", "CLUSTER")
-    m2m_node = util.get_value("M2M", "NODE")
+    kirk_customer  = util.get_value("KIRK", "CUSTOMER")
+    kirk_cluster = util.get_value("KIRK", "CLUSTER")
+    kirk_node = util.get_value("KIRK", "NODE")
 
     if p_json:
         infoJsonArray = []
@@ -406,9 +406,9 @@ def info(p_json, p_home, p_repo, print_flag=True):
         infoJson["python3_ver"] = util.python3_ver()
         infoJson["glibc_ver"] = glibcV
 
-        infoJson["m2m_customer"] = m2m_customer
-        infoJson["m2m_cluster"] = m2m_cluster
-        infoJson["m2m_node"] = m2m_node
+        infoJson["kirk_customer"] = kirk_customer
+        infoJson["kirk_cluster"] = kirk_cluster
+        infoJson["kirk_node"] = kirk_node
 
         infoJson["ctlib_ver"] = ctlib_ver
 
@@ -459,13 +459,13 @@ def info(p_json, p_home, p_repo, print_flag=True):
 
     print(f"#{bold_start}     Machine:{bold_end} {mem}{cores_model}")
 
-    if os.path.exists(f"{util.getreqenv('MY_HOME')}/m2m"):
-        if m2m_customer == "":
-            m2m_display = "(not setup)"
+    if os.path.exists(f"{util.getreqenv('MY_HOME')}/kirk"):
+        if kirk_customer == "":
+            kirk_display = "(not setup)"
         else:
-            m2m_display = f"{m2m_customer}/{m2m_cluster}/{m2m_node}"
+            kirk_display = f"{kirk_customer} / {kirk_cluster} / {kirk_node}"
 
-        print(f"#{bold_start}         M2M:{bold_end} {m2m_display}")
+        print(f"#{bold_start}        Kirk:{bold_end} {kirk_display}")
       
     if gpu_info > "":
         print(f"#{bold_start}    GPU Info:{bold_end} {gpu_info}")

@@ -4,7 +4,7 @@ import util
 
 
 def whack_pidfile():
-    os.system(f"rm -f {util.getreqenv('MY_DATA')}/m2m.pid")
+    os.system(f"rm -f {util.getreqenv('MY_DATA')}/kirk.pid")
 
 
 processes = psutil.process_iter()
@@ -12,8 +12,8 @@ for process in processes:
     try:
         if process.name() == "python3":
             cmdline = str(process.cmdline()[1])
-            if cmdline.endswith("m2m.py"):
-                util.message(f"killing m2m pid {process.pid}")
+            if cmdline.endswith("kirk.py"):
+                util.message(f"killing kirk pid {process.pid}")
                 process.terminate()
                 whack_pidfile()
                 sys.exit(0)
@@ -22,5 +22,5 @@ for process in processes:
         sys.exit(1)
 
 whack_pidfile()
-util.message("m2m not running")
+util.message("kirk not running")
 sys.exit(0)

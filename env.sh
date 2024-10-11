@@ -3,8 +3,10 @@ hubVV=24.11-1
 
 bundle=pgedge
 api=pgedge
+
 ctlibsV=1.7
 aceV=2.0
+kirkV=0.9.5-1
 
 spock41V=4.1devel-1
 spock40V=4.0.5-1
@@ -27,7 +29,6 @@ prompgexpV=0.15.0
 backrestV=2.53.1-1
 wal2jV=2.6.0-1
 
-m2mV=0.9.4-1
 citusV=12.1.5-1
 orafceV=4.10.3-1
 v8V=3.2.2-1

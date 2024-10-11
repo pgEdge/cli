@@ -221,11 +221,11 @@ INSERT INTO releases VALUES ('pljava-pg16', 7, 'pljava', 'PL/Java', '', 'test', 
 INSERT INTO versions VALUES ('pljava-pg15', '1.6.4-1',  'amd, arm',  0, '20230608', 'pg15', '', '');
 INSERT INTO versions VALUES ('pljava-pg16', '1.6.4-1',  'amd, arm',  0, '20230608', 'pg16', '', '');
 
--- ## M2M ################################
-INSERT INTO projects VALUES ('m2m', 'dev', 4, 8883, '', 0, 'https://github.com/pgedge/cli/tags',
-  'm2m', 0, 'mqtt.png', 'MQTT Client', 'https://github.com/pgedge/cli', '');
-INSERT INTO releases VALUES ('m2m', 2, 'm2m', 'MQTT Client', '', 'test', '', 1, 'PGEDGE', '', '');
-INSERT INTO versions VALUES ('m2m', '0.9.4-1',  '',  1, '20241009', '', '', '');
+-- ## KIRK ###############################
+INSERT INTO projects VALUES ('kirk', 'dev', 11, 8883, '', 0, 'https://github.com/pgedge/cli/tags',
+  'kirk', 0, 'mqtt.png', 'MQTT Client', 'https://github.com/pgedge/cli', '');
+INSERT INTO releases VALUES ('kirk', 2, 'kirk', 'MQTT Client', '', 'test', '', 1, 'PGEDGE', '', '');
+INSERT INTO versions VALUES ('kirk', '0.9.5-1',  '',  1, '20241015', '', '', '');
 
 -- ## PLDEBUGGER #########################
 INSERT INTO projects VALUES ('pldebugger', 'dev', 4, 0, '', 0, 'https://github.com/EnterpriseDB/pldebugger/tags',
@@ -462,7 +462,7 @@ INSERT INTO versions VALUES ('postgis-pg16', '3.4.2-1', 'amd, arm', 1, '20240307
 INSERT INTO projects VALUES ('pgadmin4', 'app', 11, 443, '', 1, 'https://www.pgadmin.org/news/',
   'pgadmin4', 0, 'pgadmin.png', 'PostgreSQL Tools', 'https://pgadmin.org', 'pgadmin, admin');
 INSERT INTO releases VALUES ('pgadmin4', 2, 'pgadmin4', 'pgAdmin 4', '', 'test', '', 1, 'POSTGRES', '', '');
-INSERT INTO versions VALUES ('pgadmin4', '8.x', '', 1, '20240108', '', '', '');
+INSERT INTO versions VALUES ('pgadmin4', '8.x', '', 0, '20240108', '', '', '');
 
 -- ## PARTMAN ###########################
 INSERT INTO projects VALUES ('partman', 'ext', 4, 0, '', 4, 'https://github.com/pgpartman/pg_partman/tags',
@@ -491,7 +491,7 @@ INSERT INTO versions VALUES ('badger', '11.8', '', 0, '20220408', '', '', '');
 INSERT INTO projects VALUES ('ctlibs', 'pge', 0, 0, '', 3, 'https://github.com/pgedge/cli',
   'ctlibs',  0, 'ctlibs.png', 'ctlibs', 'https://github.com/pgedge/cli', '');
 INSERT INTO releases VALUES ('ctlibs', 2, 'ctlibs',  'pgEdge Libs', '', 'prod', '', 1, '', '', '');
-INSERT INTO versions VALUES ('ctlibs', '1.7', '', 1, '20241011', '', '', '');
+INSERT INTO versions VALUES ('ctlibs', '1.7', '', 1, '20241015', '', '', '');
 INSERT INTO versions VALUES ('ctlibs', '1.6', '', 0, '20240925', '', '', '');
 INSERT INTO versions VALUES ('ctlibs', '1.5', '', 0, '20240912', '', '', '');
 
@@ -527,7 +527,7 @@ INSERT INTO versions VALUES ('ace', '2.0', '', 1, '20241002', '', '', '');
 INSERT INTO projects VALUES ('firewalld', 'app', 11, 0, '', 4, 'https://firewalld.org',
   'firewalld', 0, 'firewalld.png', 'OS Firewall', 'https://github.com/firewalld/firewalld', '');
 INSERT INTO releases VALUES ('firewalld', 1, 'firewalld', 'Firewalld', '', 'test', '', 1, 'GPLv2', '', '');
-INSERT INTO versions VALUES ('firewalld', '1.2', '', 1, '20231101', '', 'EL', '');
+INSERT INTO versions VALUES ('firewalld', '1.2', '', 0, '20231101', '', 'EL', '');
 
 -- ## PATRONI ###########################
 INSERT INTO projects VALUES ('patroni', 'app', 11, 0, '', 4, 'https://github.com/pgedge/pgedge-patroni/release',
