@@ -4,12 +4,9 @@
 SPOCK_REPO=spock-private
 SPOCK_BRANCH=main
 
-v12=12.20
-v13=13.16
-v14=14.13
 v15=15.8
 v16=16.4
-v17=17rc1
+v17=17.0
 
 UNAME=`uname`
 
@@ -117,13 +114,7 @@ makeInstall () {
 
 options=""
 PGV=$1
-if [ "$PGV" == "12" ]; then
-  downBuild $v12
-elif [ "$PGV" == "13" ]; then
-  downBuild $v13
-elif [ "$PGV" == "14" ]; then
-  downBuild $v14
-elif [ "$PGV" == "15" ]; then
+if [ "$PGV" == "15" ]; then
   #options="--without-zstd --without-lz4 --without-icu"
   downBuild $v15
 elif [ "$PGV" == "16" ]; then
@@ -133,7 +124,7 @@ elif [ "$PGV" == "17" ]; then
   #options="--without-zstd --without-lz4 --without-icu"
   downBuild $v17
 else
-  echo "ERROR: Incorrect PG version.  Must be between 12 & 17"
+  echo "ERROR: Incorrect PG version.  Must be between 15 & 17"
   exit 1
 fi
  
