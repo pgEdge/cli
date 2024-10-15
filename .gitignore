@@ -3,6 +3,7 @@ out/
 devel/pg/src
 devel/pg/1*
 devel/pg/postgresml/
+devel/pgml-containers/ub22/kirk-config.sh
 
 src/packages/*.rpm
 src/packages/*.deb
