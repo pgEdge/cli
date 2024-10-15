@@ -6,25 +6,26 @@ from paho import mqtt
 
 import util
 
-HOST = util.getreqval("KIRK", "HOST")
+HOST = util.getreqval("KIRK", "HOST", verbose=True)
 PORT = util.getreqval("KIRK", "PORT", isInt=True)
-USER = util.getreqval("KIRK", "USER")
+USER = util.getreqval("KIRK", "USER", verbose=True)
 PASSWD = util.getreqval("KIRK", "PASSWD")
-CUSTOMER = util.getreqval("KIRK","CUSTOMER" )
-CLUSTER = util.getreqval("KIRK", "CLUSTER")
-NODE = util.getreqval("KIRK", "NODE")
+CUSTOMER = util.getreqval("KIRK","CUSTOMER", verbose=True )
+CLUSTER = util.getreqval("KIRK", "CLUSTER", verbose=True)
+NODE = util.getreqval("KIRK", "NODE", verbose=True)
 
 TOPIC = f"cli/{CUSTOMER}/{CLUSTER}/{NODE}"
 
-MY_HOME = util.getreqenv("MY_HOME")
 MY_DATA = util.getreqenv("MY_DATA")
 MY_LOGS = util.getreqenv("MY_LOGS")
+MY_HOME = util.getreqenv("MY_HOME")
+MY_CMD = util.getreqenv("MY_CMD") 
 
 
-def run_cli_command(p_cmd):
-    """Run a command while capturing the live output"""
+def run_command(p_cmd):
+    """Run a command while capturing the output stream of messages"""
 
-    cmd = f"{os.getenv('PSX')}/pgedge {p_cmd} --json"
+    cmd = f"{MY_HOME}/{MY_CMD} {p_cmd} --json"
     cmd_l = cmd.split()
     err_kount = 0
 
@@ -57,35 +58,37 @@ def run_cli_command(p_cmd):
 
 
 def process_output_line(p_line, p_cmd):
+    """Process each output line."""
     
-  if p_line == "":
-      return(0)
+    if p_line == "":
+        return(0)
 
-  rc = 0
-  try:
-      jj = json.loads(p_line)
-      if p_line.startswith('[{"type": "error",'):
-          rc = 1
-      elif p_line.startswith('[{"type"'):
-          pass
-      elif p_cmd in ["info", "list"]:
-          ## these data commands pass "funky" json
-          pass
-      else:
-          ## this is a funky line thats ignored (for now)
-          pass
+    rc = 0
+    try:
+        jj = json.loads(p_line)
+        if p_line.startswith('[{"type": "error",'):
+            rc = 1
+        elif p_line.startswith('[{"type"'):
+            pass
+        elif p_cmd in ["info", "list"]:
+            ## these data commands pass custom json 
+            pass
+        else:
+            ## this is a funky line thats ignored (for now)
+            util.mesage(f"ignoring this json line for now: '{p_line}'", "debug")
+            pass
 
-  except Exception as e:
-      util.message(f"turn it into json: {e}", "debug")
-      ## turn it into json info
-      out_j = {}
-      out_j["type"] = "info"
-      out_j["msg"] = p_line
-      print(f"[{json.dumps(out_j)}]")
-      return(0)
+    except Exception as e:
+        util.message(f"turn it into json: {e}", "debug")
+        ## turn it into json info
+        out_j = {}
+        out_j["type"] = "info"
+        out_j["msg"] = p_line
+        print(f"[{json.dumps(out_j)}]")
+        return(0)
 
-  publish_message(p_line)
-  return(rc)
+    publish_message(p_line)
+    return(rc)
 
 
 def publish_message(p_msg):
@@ -94,7 +97,17 @@ def publish_message(p_msg):
 
 
 def on_connect(client, userdata, flags, rc, properties=None):
-    util.message(f"kirk on_connect() CONNACK received with code {rc}.", "debug")
+    if rc == 0:
+        util.message("Connection succesful.")
+        client.subscribe(TOPIC, qos=0)
+    else:
+        util.message(f"Connection failed: {rc}")
+
+
+def on_disconnect(client, userdata, rc, properties=None):
+    #if rc != 0:
+    #    util.message(f"Unexpected disconnection with rc = {rc}")
+    pass
 
 
 def on_publish(client, userdata, mid, properties=None):
@@ -111,7 +124,7 @@ def on_message(client, userdata, msg):
 
     util.message(f"kirk on_message({cmd})", "debug")
 
-    run_cli_command(cmd)
+    run_command(cmd)
 
 
 ## MAINLINE ########################################################
@@ -125,15 +138,22 @@ else:
 
 client = paho.Client(client_id="", userdata=None, protocol=paho.MQTTv5)
 client.on_connect = on_connect
-
-client.tls_set(tls_version=mqtt.client.ssl.PROTOCOL_TLS)
-client.username_pw_set(USER, PASSWD)
-client.connect(HOST, PORT)
-
+client.on_disconnect = on_disconnect
 client.on_subscribe = on_subscribe
 client.on_message = on_message
 client.on_publish = on_publish
 
-client.subscribe(TOPIC, qos=0)
+client.tls_set(tls_version=mqtt.client.ssl.PROTOCOL_TLS)
+client.username_pw_set(USER, PASSWD)
+
+while True:
+    try:
+        client.connect(HOST, PORT)
+        time.sleep(1)
+        break
+    except Exception as e:
+        util.message(f"unable to connect: {(e)}", "warn")
+        time.sleep(5)
 
 client.loop_forever()
+

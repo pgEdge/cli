@@ -222,10 +222,10 @@ INSERT INTO versions VALUES ('pljava-pg15', '1.6.4-1',  'amd, arm',  0, '2023060
 INSERT INTO versions VALUES ('pljava-pg16', '1.6.4-1',  'amd, arm',  0, '20230608', 'pg16', '', '');
 
 -- ## KIRK ###############################
-INSERT INTO projects VALUES ('kirk', 'dev', 11, 8883, '', 0, 'https://github.com/pgedge/cli/tags',
-  'kirk', 0, 'mqtt.png', 'MQTT Client', 'https://github.com/pgedge/cli', '');
+INSERT INTO projects VALUES ('kirk', 'dev', 11, 8883, '', 0, 'https://github.com/pgedge/cli/kirk',
+  'kirk', 0, 'mqtt.png', 'MQTT Client', 'https://github.com/pgedge/cli/kirk', '');
 INSERT INTO releases VALUES ('kirk', 2, 'kirk', 'MQTT Client', '', 'test', '', 1, 'PGEDGE', '', '');
-INSERT INTO versions VALUES ('kirk', '0.9.5-1',  '',  1, '20241015', '', '', '');
+INSERT INTO versions VALUES ('kirk', '24.11.0', '',  1, '20241101', '', '', '');
 
 -- ## PLDEBUGGER #########################
 INSERT INTO projects VALUES ('pldebugger', 'dev', 4, 0, '', 0, 'https://github.com/EnterpriseDB/pldebugger/tags',

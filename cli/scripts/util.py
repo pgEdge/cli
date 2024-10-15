@@ -114,10 +114,13 @@ if os.path.exists(platform_lib_path):
         sys.path.append(platform_lib_path)
 
 
-def getreqval(p_section, p_key, isInt=False):
+def getreqval(p_section, p_key, isInt=False, verbose=False):
     val = get_value(p_section, p_key)
     if val == "":
         exit_message(f"Missing Setting for '{p_section} {p_key}'")
+
+    if verbose is True:
+        message(f"# {p_section} {p_key}: {val}")
 
     if isInt is True:
         try:
