@@ -1,5 +1,5 @@
-hubV=24.10.1
-hubVV=24.10-1
+hubV=24.10.2
+hubVV=24.10-2
 
 bundle=pgedge
 api=pgedge
