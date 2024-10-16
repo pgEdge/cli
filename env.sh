@@ -56,7 +56,7 @@ audit15V=1.7.0-1
 audit16V=16.0-1
 audit17V=17.0-1
 
-postgisV=3.4.2-1
+postgisV=3.5.0-1
 
 pljavaV=1.6.4-1
 debuggerV=1.8-1

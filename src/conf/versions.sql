@@ -209,9 +209,14 @@ INSERT INTO projects VALUES ('plv8', 'dev', 4, 0, '', 0, 'https://github.com/plv
   'plv8',   1, 'v8.png', 'Javascript Stored Procedures', 'https://github.com/plv8/plv8', 'pl_v8');
 INSERT INTO releases VALUES ('plv8-pg15', 4, 'plv8', 'PL/V8', '', 'prod', '', 1, 'POSTGRES', '', '');
 INSERT INTO releases VALUES ('plv8-pg16', 4, 'plv8', 'PL/V8', '', 'prod', '', 1, 'POSTGRES', '', '');
+INSERT INTO releases VALUES ('plv8-pg17', 4, 'plv8', 'PL/V8', '', 'prod', '', 1, 'POSTGRES', '', '');
 
-INSERT INTO versions VALUES ('plv8-pg15', '3.2.2-1', 'amd, arm', 1, '20240523', 'pg15', '', '');
-INSERT INTO versions VALUES ('plv8-pg16', '3.2.2-1', 'amd, arm', 1, '20240214', 'pg16', '', '');
+INSERT INTO versions VALUES ('plv8-pg15', '3.2.3-1', 'amd, arm', 1, '20241101', 'pg15', '', '');
+INSERT INTO versions VALUES ('plv8-pg16', '3.2.3-1', 'amd, arm', 1, '20241101', 'pg16', '', '');
+INSERT INTO versions VALUES ('plv8-pg17', '3.2.3-1', 'amd, arm', 1, '20241101', 'pg17', '', '');
+
+INSERT INTO versions VALUES ('plv8-pg15', '3.2.2-1', 'amd, arm', 0, '20240523', 'pg15', '', '');
+INSERT INTO versions VALUES ('plv8-pg16', '3.2.2-1', 'amd, arm', 0, '20240214', 'pg16', '', '');
 
 -- ## PLJAVA #############################
 INSERT INTO projects VALUES ('pljava', 'dev', 4, 0, '', 0, 'https://github.com/tada/pljava/releases', 
@@ -455,8 +460,14 @@ INSERT INTO projects VALUES ('postgis', 'ext', 4, 1, '', 3, 'http://postgis.net/
   'postgis', 1, 'postgis.png', 'Spatial Extensions', 'http://postgis.net', 'spatial, geospatial, geo_spatial');
 INSERT INTO releases VALUES ('postgis-pg15', 3, 'postgis', 'PostGIS', '', 'prod', '', 1, 'GPLv2', '', '');
 INSERT INTO releases VALUES ('postgis-pg16', 3, 'postgis', 'PostGIS', '', 'prod', '', 1, 'GPLv2', '', '');
-INSERT INTO versions VALUES ('postgis-pg15', '3.4.2-1', 'amd, arm', 1, '20240307', 'pg15', '', 'https://git.osgeo.org/gitea/postgis/postgis/raw/tag/3.4.2/NEWS');
-INSERT INTO versions VALUES ('postgis-pg16', '3.4.2-1', 'amd, arm', 1, '20240307', 'pg16', '', 'https://git.osgeo.org/gitea/postgis/postgis/raw/tag/3.4.2/NEWS');
+INSERT INTO releases VALUES ('postgis-pg17', 3, 'postgis', 'PostGIS', '', 'prod', '', 1, 'GPLv2', '', '');
+
+INSERT INTO versions VALUES ('postgis-pg15', '3.5.0-1', 'amd, arm', 1, '20241101', 'pg15', '', 'https://git.osgeo.org/gitea/postgis/postgis/raw/tag/3.5.0/NEWS');
+INSERT INTO versions VALUES ('postgis-pg16', '3.5.0-1', 'amd, arm', 1, '20241101', 'pg16', '', 'https://git.osgeo.org/gitea/postgis/postgis/raw/tag/3.5.0/NEWS');
+INSERT INTO versions VALUES ('postgis-pg17', '3.5.0-1', 'amd, arm', 1, '20241101', 'pg17', '', 'https://git.osgeo.org/gitea/postgis/postgis/raw/tag/3.5.0/NEWS');
+
+INSERT INTO versions VALUES ('postgis-pg15', '3.4.2-1', 'amd, arm', 0, '20240307', 'pg15', '', 'https://git.osgeo.org/gitea/postgis/postgis/raw/tag/3.4.2/NEWS');
+INSERT INTO versions VALUES ('postgis-pg16', '3.4.2-1', 'amd, arm', 0, '20240307', 'pg16', '', 'https://git.osgeo.org/gitea/postgis/postgis/raw/tag/3.4.2/NEWS');
 
 -- ## PGADMIN4 ##########################
 INSERT INTO projects VALUES ('pgadmin4', 'app', 11, 443, '', 1, 'https://www.pgadmin.org/news/',
