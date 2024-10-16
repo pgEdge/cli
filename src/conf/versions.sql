@@ -197,12 +197,14 @@ INSERT INTO projects VALUES ('orafce', 'ext', 4, 0, '', 0, 'https://github.com/o
   'orafce', 1, 'larry.png', 'Ora Built-in Packages', 'https://github.com/orafce/orafce#orafce---oracles-compatibility-functions-and-packages', 'orafice, oraface');
 INSERT INTO releases VALUES ('orafce-pg15', 2, 'orafce', 'OraFCE', '', 'prod', '', 1, 'POSTGRES', '', '');
 INSERT INTO releases VALUES ('orafce-pg16', 2, 'orafce', 'OraFCE', '', 'prod', '', 1, 'POSTGRES', '', '');
+INSERT INTO releases VALUES ('orafce-pg17', 2, 'orafce', 'OraFCE', '', 'prod', '', 1, 'POSTGRES', '', '');
 
-INSERT INTO versions VALUES ('orafce-pg15', '4.10.3-1',   'amd, arm', 1, '20240729', 'pg15', '', '');
-INSERT INTO versions VALUES ('orafce-pg16', '4.10.3-1',   'amd, arm', 1, '20240729', 'pg16', '', '');
+INSERT INTO versions VALUES ('orafce-pg15', '4.13.4-1',   'amd, arm', 1, '20241101', 'pg15', '', '');
+INSERT INTO versions VALUES ('orafce-pg16', '4.13.4-1',   'amd, arm', 1, '20241101', 'pg16', '', '');
+INSERT INTO versions VALUES ('orafce-pg17', '4.13.4-1',   'amd, arm', 1, '20241101', 'pg17', '', '');
 
-INSERT INTO versions VALUES ('orafce-pg15', '4.10.0-1',   'amd, arm', 0, '20240516', 'pg15', '', '');
-INSERT INTO versions VALUES ('orafce-pg16', '4.10.0-1',   'amd, arm', 0, '20240516', 'pg16', '', '');
+INSERT INTO versions VALUES ('orafce-pg15', '4.10.3-1',   'amd, arm', 0, '20240729', 'pg15', '', '');
+INSERT INTO versions VALUES ('orafce-pg16', '4.10.3-1',   'amd, arm', 0, '20240729', 'pg16', '', '');
 
 -- ## PLV8 ###############################
 INSERT INTO projects VALUES ('plv8', 'dev', 4, 0, '', 0, 'https://github.com/plv8/plv8/tags',

@@ -17,7 +17,13 @@ function test_common_17 {
   ./pgedge install cron-$pgV
   ./pgedge install audit-$pgV         -d demo
   ./pgedge install hintplan-$pgV      -d demo
+  ./pgedge install postgis-$pgV       -d demo
+  ./pgedge install plv8-$pgV          -d demo
+  ./pgedge install setuser-$pgV       -d demo
+  ./pgedge install orafce-$pgV        -d demo
 
+  ## extensions that dont always play nice with others
+  # ./pgedge install citus-$pgV         -d demo
   # ./pgedge install plprofiler-$pgV
   # ./pgedge install pldebugger-$pgV    -d demo
 }
@@ -25,22 +31,11 @@ function test_common_17 {
 
 ## extensions common to pg15 & pg16
 function test_common_16 {
-
   ./pgedge install hypopg-$pgV        -d demo
-  ./pgedge install orafce-$pgV        -d demo
   ./pgedge install partman-$pgV       -d demo
-  ./pgedge install postgis-$pgV       -d demo
-  ./pgedge install vector-$pgV        -d demo
   ./pgedge install timescaledb-$pgV   -d demo
-  ./pgedge install setuser-$pgV       -d demo
   ./pgedge install permissions-$pgV   -d demo
-
-  ./pgedge install plv8-$pgV          -d demo
-
-  #./pgedge install pljava-$pgV        -d demo
-
-  ## extensions that dont always play nice with others
-  # ./pgedge install citus-$pgV         -d demo
+  ./pgedge install vector-$pgV        -d demo
 }
 
 
