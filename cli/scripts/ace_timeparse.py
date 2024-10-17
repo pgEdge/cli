@@ -49,7 +49,7 @@ def parse_time_string(time_str):
     else:
         raise ValueError(f"Unsupported time unit: {unit}")
 
-    # if frequency < timedelta(minutes=5):
-    #     raise ValueError("Minimum frequency is 5 minutes")
+    if frequency < timedelta(minutes=5):
+        raise ValueError("Minimum frequency is 5 minutes")
 
     return frequency
