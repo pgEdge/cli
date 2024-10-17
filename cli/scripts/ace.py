@@ -561,7 +561,8 @@ def table_diff_checks(td_task: TableDiffTask) -> TableDiffTask:
         curr_key = get_key(conn, l_schema, l_table)
 
         if not curr_cols:
-            raise AceException(f"Invalid table name '{td_task._table_name}'")
+            hostname = conn.info.host
+            raise AceException(f"Table '{td_task._table_name}' not found on {hostname}")
         if not curr_key:
             raise AceException(f"No primary key found for '{td_task._table_name}'")
 
@@ -753,7 +754,8 @@ def table_repair_checks(tr_task: TableRepairTask) -> TableRepairTask:
         curr_key = get_key(conn, l_schema, l_table)
 
         if not curr_cols:
-            raise AceException(f"Invalid table name '{tr_task._table_name}'")
+            hostname = conn.info.host
+            raise AceException(f"Table '{tr_task._table_name}' not found on {hostname}")
         if not curr_key:
             raise AceException(f"No primary key found for '{tr_task._table_name}'")
 
