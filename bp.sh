@@ -27,7 +27,11 @@ fi
 cd $outp
 
 ./$api set GLOBAL REPO http://localhost:8000
-./$api info --silent
+
+if [ -f ~/keys/m2m-config.sh ]; then
+    ~/keys/m2m-config.sh
+fi
+
 if [ `arch` == "i386" ]; then
   echo "Skipping CTLIBS for `arch`"
 else
@@ -36,4 +40,6 @@ else
   fi
   ./$api install ctlibs
 fi
+
+./$api info
 

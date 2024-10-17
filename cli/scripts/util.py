@@ -4,19 +4,46 @@
 import os
 import time
 
-MY_VERSION = "24.10.1"
-MY_CODENAME = "Constellation"
+MY_VERSION = "24.11.0"
+MY_CODENAME = "devel"
 
 DEFAULT_PG = "16"
 DEFAULT_SPOCK = "40"
 DEFAULT_SPOCK_17 = "40"
-MY_CMD = os.getenv("MY_CMD", None)
-MY_HOME = os.getenv("MY_HOME", None)
+VALID_PG = ["15", "16", "17"]
+ONE_DAY = 86400
+ONE_WEEK = ONE_DAY * 7
+
+## required environment variables
+MY_CMD  = os.getenv("MY_CMD")
+MY_HOME = os.getenv("MY_HOME")
+MY_LOGS = os.getenv('MY_LOGS')
+MY_LITE = os.getenv("MY_LITE")
+MY_DATA = os.getenv("MY_DATA")
+
 MY_LIBS = f"{MY_HOME}/hub/scripts/lib"
-MY_LITE = os.getenv("MY_LITE", None)
-BACKUP_DIR = os.path.join(MY_HOME, "data", "conf", "backup")
-BACKUP_TARGET_DIR = os.path.join(BACKUP_DIR, time.strftime("%Y%m%d%H%M"))
-VALID_PG = ["14", "15", "16", "17"]
+BACKUP_DIR = f"{MY_DATA}/conf/backup"
+TIME = time.strftime("%Y%m%d%H%M")
+BACKUP_TARGET_DIR = f"{BACKUP_DIR}/{TIME}"
+LOG_FILENAME = f"{MY_LOGS}/cli_log.out"
+
+################ Logging Configuration ############
+COMMAND = 15
+DEBUG = 10
+DEBUG2 = 9
+
+isDebug=0
+LOG_LEVEL = COMMAND
+pgeDebug = int(os.getenv('pgeDebug', '0'))
+if pgeDebug == 1:
+    LOG_LEVEL = DEBUG
+    isDebug = 1
+elif pgeDebug == 2:
+    LOG_LEVEL = DEBUG2
+    isDebug = 2
+
+if not os.path.isdir(MY_LOGS):
+    os.mkdir(MY_LOGS)
 
 import sys
 import socket
@@ -45,11 +72,12 @@ from shutil import copy2
 from semantic_version import Version
 
 try:
+    import psutil
     from tqdm import tqdm
     import psycopg
 except Exception:
-    # only used for advanced functionality
-    # and may throw errors in some cases before ctlibs is loaded
+    # used for advanced functionality
+    # will throw errors before ctlibs is loaded
     pass
 
 from log_helpers import bcolours, characters
@@ -75,9 +103,6 @@ isEXTENSIONS = False
 if os.environ.get("isExtensions", "False") == "True":
     isEXTENSIONS = True
 
-ONE_DAY = 86400
-ONE_WEEK = ONE_DAY * 7
-
 scripts_lib_path = os.path.join(os.path.dirname(__file__), "lib")
 if scripts_lib_path not in sys.path:
     sys.path.append(scripts_lib_path)
@@ -88,11 +113,23 @@ if os.path.exists(platform_lib_path):
     if platform_lib_path not in sys.path:
         sys.path.append(platform_lib_path)
 
-################ Logging Configuration ############
-# Custom Logging
-COMMAND = 15
-DEBUG = 10
-DEBUG2 = 9
+
+def getreqval(p_section, p_key, isInt=False, verbose=False):
+    val = get_value(p_section, p_key)
+    if val == "":
+        exit_message(f"Missing Setting for '{p_section} {p_key}'")
+
+    if verbose is True:
+        message(f"# {p_section} {p_key}: {val}")
+
+    if isInt is True:
+        try:
+            val1 = int(val)
+            return(val1)
+        except Exception:
+            exit_message(f"Required Setting '{p_section} {p_key}' must be an integer")
+
+    return(val)
 
 
 def getreqenv(p_env, isInt=False):
@@ -108,6 +145,7 @@ def getreqenv(p_env, isInt=False):
             exit_message(f"Required Env '{p_env}={val}' must be an integer")
 
     return(val)
+
 
 def setenv(env, val):
     os.environ[str(env)] = str(val)
@@ -144,7 +182,14 @@ def get_cpu_info():
         import cpuinfo
         cpui = cpuinfo.get_cpu_info()
         vcpu = cpui["count"]
-        brand = cpui["brand_raw"]
+        try:
+            brand = cpui["brand_raw"]
+        except Exception:
+            try:
+                brand = cpui["vendor_id_raw"]
+            except Exception:
+                brand = "??"
+
     except Exception:
         return(0,'?')
 
@@ -375,26 +420,6 @@ def command(self, message, *args, **kws):
         self._log(COMMAND, message, args, **kws)
 
 my_logger = logging.getLogger()
-LOG_FILENAME = os.getenv('MY_LOGS')
-if not LOG_FILENAME:
-   MY_HOME = os.getenv("MY_HOME")
-   LOG_FILENAME = os.path.join(MY_HOME, "data", "logs","cli_log.out")
-LOG_DIRECTORY = os.path.split(LOG_FILENAME)[0]
-
-isDebug=0
-pgeDebug = int(os.getenv('pgeDebug', '0'))
-if pgeDebug == 1:
-    LOG_LEVEL = DEBUG
-    isDebug = 1
-elif pgeDebug == 2:
-    LOG_LEVEL = DEBUG2
-    isDebug = 2
-else:
-    LOG_LEVEL = COMMAND
-    isDebug = 0
-
-if not os.path.isdir(LOG_DIRECTORY):
-    os.mkdir(LOG_DIRECTORY)
 
 logging.addLevelName(COMMAND, "COMMAND")
 logging.Logger.command = command
@@ -1442,7 +1467,7 @@ def delete_service_win(svcName):
 
 
 def is_postgres(p_comp):
-    pgXX = ["pg11", "pg12", "pg13", "pg14", "pg15", "pg16", "pg17"]
+    pgXX = ["pg15", "pg16", "pg17"]
     if p_comp in pgXX:
         return True
 
@@ -1466,7 +1491,7 @@ def get_owner_name(p_path=None):
 def get_anonymous_info():
     jsonInfo = api.info(True, "", "", False)
     os = jsonInfo["os"]
-    mem = str(jsonInfo["os_memory_mb"])
+    mem = str(jsonInfo["os_memory_gb"])
     cores = str(jsonInfo["cores"])
     arch = jsonInfo["arch"]
     anon = f"({os}; {mem}; {cores}; {arch})"
@@ -1560,7 +1585,8 @@ def message(p_msg, p_state="info", p_isJSON=None, quiet_mode=False):
         my_logger.info(p_msg)
         if log_level_num >= cur_level:
             if not p_isJSON:
-                print(p_msg)
+                if isSILENT is False: 
+                    print(p_msg)
                 return
             else:
                 jsn_msg = p_msg
@@ -2974,8 +3000,6 @@ def kill_pid(pid):
 
 # Terminate a process tree with the PID
 def kill_process_tree(pid):
-    import psutil
-
     process = psutil.Process(pid)
     for proc in process.children(recursive=True):
         proc.kill()
@@ -2984,8 +3008,6 @@ def kill_process_tree(pid):
 
 
 def is_pid_running(p_pid):
-    import psutil
-
     return psutil.pid_exists(int(p_pid))
 
 
@@ -3204,7 +3226,25 @@ def get_linux_hostname():
 
 
 def get_host_ip():
-    return "127.0.0.1"
+    try:
+        return(getoutput('hostname -I | cut -d " " -f1'))
+    except Exception:
+        return("127.0.0.1")
+
+
+def get_host_address():
+    try:
+        nics = psutil.net_if_addrs()
+        for i in nics:
+            if i == "lo":
+                continue
+            for j in nics[i]:
+                if j.family == 17:
+                    return(str(j.address))
+    except Exception as e:
+        pass
+
+    return("00:00:00:00:00:00")
 
 
 def make_uri(in_name):

@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+
+log_dir=$MY_LOGS/kirk
+mkdir -p $log_dir
+log=$log_dir/kirk.log
+
+echo "" >> $log
+echo "#######  Stopping KIRK: `date`  #######" | tee -a $log
+rm -f $MY_DATA/kirk.pid
+
+pid=`ps aux | grep [k]irk.py | awk '{print $2}'`
+if [ "$pid" == "" ]; then
+  echo "# kirk not running" | tee -a $log
+else
+  echo "# killing pid $pid" | tee -a $log
+  kill -9 $pid
+fi

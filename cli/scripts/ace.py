@@ -1227,7 +1227,6 @@ if __name__ == "__main__":
             "schema-diff": ace_cli.schema_diff_cli,
             "spock-diff": ace_cli.spock_diff_cli,
             "spock-exception-update": ace_cli.update_spock_exception_cli,
-            "start": ace_daemon.start_ace,
             "auto-repair": ace_core.auto_repair,
         }
     )

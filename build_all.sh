@@ -20,16 +20,14 @@ else
   majorV=$1
 fi
 
-if [ "$majorV" == "14" ]; then
-  minorV=$P14
-elif [ "$majorV" == "15" ]; then
+if [ "$majorV" == "15" ]; then
   minorV=$P15
 elif [ "$majorV" == "16" ]; then
   minorV=$P16
 elif [ "$majorV" == "17" ]; then
   minorV=$P17
 else
-  echo "ERROR: pg must be 14-17"
+  echo "ERROR: pg must be 15-17"
   exit 1
 fi
 

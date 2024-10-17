@@ -1,9 +1,12 @@
-hubV=24.10.1
-hubVV=24.10-1
+hubV=24.11.0
+hubVV=24.11-0
 
 bundle=pgedge
 api=pgedge
-ctlibsV=1.6
+
+ctlibsV=1.7
+aceV=2.0
+kirkV=$hubV 
 
 spock41V=4.1devel-1
 spock40V=4.0.5-1
@@ -15,7 +18,6 @@ snwflkV=2.2-1
 P17=17.0-1
 P16=16.4-2
 P15=15.8-2
-P14=14.13-2
 
 pgmlV=2.9.3-1
 vectorV=0.7.4-1
@@ -23,16 +25,13 @@ bouncerV=1.23.1-1
 catV=1.2.0
 firwldV=1.2
 adminV=8.x
-##prestV=1.4.2
-##postgrestV=12.0.2-1
 prompgexpV=0.15.0
 backrestV=2.53.1-1
 wal2jV=2.6.0-1
 
-m2mV=0.9.2-1
 citusV=12.1.5-1
-orafceV=4.10.3-1
-v8V=3.2.2-1
+orafceV=4.13.4-1
+v8V=3.2.3-1
 setuserV=4.1.0-1
 permissionsV=1.3-1
 
@@ -57,7 +56,7 @@ audit15V=1.7.0-1
 audit16V=16.0-1
 audit17V=17.0-1
 
-postgisV=3.4.2-1
+postgisV=3.5.0-1
 
 pljavaV=1.6.4-1
 debuggerV=1.8-1
@@ -141,13 +140,7 @@ checkCmd () {
 
 
 setPGV () {
-  if [ "$1" == "12" ]; then
-    pgV=$P12
-  elif [ "$1" == "13" ]; then
-    pgV=$P13
-  elif [ "$1" == "14" ]; then
-    pgV=$P14
-  elif [ "$1" == "15" ]; then
+  if [ "$1" == "15" ]; then
     pgV=$P15
   elif [ "$1" == "16" ]; then
     pgV=$P16

@@ -1,0 +1,24 @@
+#!/usr/bin/env bash
+
+log_dir=$MY_LOGS/kirk
+mkdir -p $log_dir
+log=$log_dir/kirk.log
+
+kirk_py=$MY_HOME/hub/scripts/kirk.py
+
+echo "" >> $log
+echo "#######  Starting KIRK: `date`  #######" | tee -a $log
+
+pid=`ps aux | grep [k]irk.py | awk '{print $2}'`
+if [ "$pid" == "" ]; then
+  python3 $kirk_py >> $log 2>&1 &
+  sleep 1
+  if [ -f "$MY_DATA/kirk.pid" ]; then
+    echo "# pid `cat $MY_DATA/kirk.pid`" | tee -a $log
+  else
+    echo "kirk not started, see log $log" | tee -a $log
+  fi
+else
+  echo "# kirk already running ($pid)" | tee -a $log
+fi
+

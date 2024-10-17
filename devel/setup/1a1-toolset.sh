@@ -41,6 +41,7 @@ if [ "$PLATFORM" == "el9" ]; then
   $yum python3 python3-pip python3-devel
   sudo dnf config-manager --set-enabled crb
   $yum ruby
+  $yum geos-devel proj-devel gdal
 fi
 
 el_supported=no
@@ -73,8 +74,6 @@ if [ $el_supported == "yes" ]; then
   $yum ncurses-compat-libs systemd-devel
   $yum unixODBC-devel protobuf-c-devel libyaml-devel
   $yum lz4-devel libzstd-devel krb5-devel
-
-  $yum geos-devel proj-devel gdal
 
   $yum sqlite-devel patchelf
 

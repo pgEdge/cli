@@ -30,7 +30,7 @@ cmd () {
 ## MAINLINE ###################################
 
 if [ "$vers" == "" ] || [ "$vers" == "all" ]; then
-  vers="14 15 16 17"
+  vers="15 16 17"
   echo "# default to rebuilding pg \"$vers\""
   cmd "rm -f $OUT/*"
 fi

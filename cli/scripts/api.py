@@ -310,16 +310,10 @@ def info(p_json, p_home, p_repo, print_flag=True):
         host_ip = private_ip
     else:
         host_ip = util.get_host_ip()
-    wmic_path = (
-        os.getenv("SYSTEMROOT", "")
-        + os.sep
-        + "System32"
-        + os.sep
-        + "wbem"
-        + os.sep
-        + "wmic"
-    )
-    host_display = util.get_host_short()
+
+    host_address = util.get_host_address()
+    
+    hostname = util.get_host_short()
 
     # Check the OS & Resources ########################################
     plat = util.get_os()
@@ -384,7 +378,9 @@ def info(p_json, p_home, p_repo, print_flag=True):
 
     os_pkg_mgr = util.get_pkg_mgr()
 
-    node_id = meta.get_node_id()
+    kirk_customer  = util.get_value("KIRK", "CUSTOMER")
+    kirk_cluster = util.get_value("KIRK", "CLUSTER")
+    kirk_node = util.get_value("KIRK", "NODE")
 
     if p_json:
         infoJsonArray = []
@@ -392,26 +388,28 @@ def info(p_json, p_home, p_repo, print_flag=True):
         infoJson["version"] = ver
         infoJson["home"] = p_home
         infoJson["user"] = p_user
-        infoJson["host"] = host_display
-        infoJson["host_short"] = util.get_host_short()
-        infoJson["host_long"] = util.get_host()
+        infoJson["host_name"] = hostname
         infoJson["host_ip"] = host_ip
+        infoJson["host_address"] = host_address
         infoJson["os"] = unicode(
             str(os2), sys.getdefaultencoding(), errors="ignore"
         ).strip()
         infoJson["os_pkg_mgr"] = os_pkg_mgr
         infoJson["os_major_ver"] = os_major_ver
-        infoJson["os_memory_mb"] = round_mem
+        infoJson["os_memory_gb"] = round_mem
         infoJson["cores"] = system_cpu_cores
         infoJson["arch"] = arch
         infoJson["last_update_utc"] = last_update_utc
         if last_update_local:
             infoJson["last_update_readable"] = last_update_readable
         infoJson["repo"] = p_repo
-        infoJson["system_memory_in_kb"] = system_memory_in_kbytes
         infoJson["python3_ver"] = util.python3_ver()
         infoJson["glibc_ver"] = glibcV
-        infoJson["node_id"] = node_id
+
+        infoJson["kirk_customer"] = kirk_customer
+        infoJson["kirk_cluster"] = kirk_cluster
+        infoJson["kirk_node"] = kirk_node
+
         infoJson["ctlib_ver"] = ctlib_ver
 
         infoJson["cloud_region"] = region
@@ -421,7 +419,7 @@ def info(p_json, p_home, p_repo, print_flag=True):
         infoJson["cloud_private_ip"] = private_ip
         infoJsonArray.append(infoJson)
         if print_flag:
-            print(json.dumps(infoJsonArray, sort_keys=True, indent=2))
+            print(json.dumps(infoJsonArray))
             return
         else:
             return infoJson
@@ -447,8 +445,8 @@ def info(p_json, p_home, p_repo, print_flag=True):
     print("#" * INFO_WIDTH)
     print(f"#{bold_start}     Version:{bold_end} {ver_display}")
 
-    print(f"#{bold_start} User & Host:{bold_end} " +
-              f"{p_user}{admin_display}  {host_display}  {p_home}")
+    print(f"#{bold_start}        User:{bold_end} {p_user}{admin_display}  {p_home}")
+    print(f"#{bold_start}        Host:{bold_end} {hostname}  {host_ip}  {host_address}")
 
     if ctlib_ver == "":
         ctlib_ver == "?"
@@ -461,8 +459,14 @@ def info(p_json, p_home, p_repo, print_flag=True):
 
     print(f"#{bold_start}     Machine:{bold_end} {mem}{cores_model}")
 
-    print(f"#{bold_start}      NodeID:{bold_end} {node_id}")
+    if os.path.exists(f"{util.getreqenv('MY_HOME')}/kirk"):
+        if kirk_customer == "":
+            kirk_display = "(not setup)"
+        else:
+            kirk_display = f"{kirk_customer} / {kirk_cluster} / {kirk_node}"
 
+        print(f"#{bold_start}        Kirk:{bold_end} {kirk_display}")
+      
     if gpu_info > "":
         print(f"#{bold_start}    GPU Info:{bold_end} {gpu_info}")
 

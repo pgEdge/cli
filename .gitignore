@@ -3,11 +3,7 @@ out/
 devel/pg/src
 devel/pg/1*
 devel/pg/postgresml/
-
-devel/repo/cleanREMOTE
-devel/repo/local
-
-devel/m2m/
+devel/pgml-containers/ub22/kirk-config.sh
 
 src/packages/*.rpm
 src/packages/*.deb

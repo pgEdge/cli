@@ -255,17 +255,7 @@ def get_depend_list(p_list, p_display=True):
         comp = str(c[4:])
         sorted_depend_list.append(c[4:])
 
-    msg = "  " + str(sorted_depend_list)
-    my_logger.info(msg)
-    if isJSON:
-        dictDeplist = {}
-        dictDeplist["state"] = "deplist"
-        dictDeplist["component"] = p_list
-        dictDeplist["deps"] = sorted_depend_list
-        msg = json.dumps([dictDeplist])
-    if p_display:
-        if not isSILENT:
-            print(msg)
+    util.message(f"depend_list = {sorted_depend_list}", "debug")
     return sorted_depend_list
 
 
@@ -335,16 +325,7 @@ def install_comp(p_app, p_ver=0, p_rver=None, p_re_install=False):
     if parent != "":
         parent_state = util.get_comp_state(parent)
         if parent_state == "NotInstalled":
-            errmsg = "{0} has to be installed before installing {1}".format(
-                parent, p_app
-            )
-            if isJSON:
-                json_dict = {}
-                json_dict["state"] = "error"
-                json_dict["msg"] = errmsg
-                errmsg = json.dumps([json_dict])
-            print(errmsg)
-            exit_cleanly(1)
+            util.exit_message(f"{parent} has to be installed before installing {p_app}")
 
     state = util.get_comp_state(p_app)
     
@@ -356,9 +337,7 @@ def install_comp(p_app, p_ver=0, p_rver=None, p_re_install=False):
         if p_ver == 0:
             ver = meta.get_latest_ver_plat(p_app)
             if ver == "-1":
-                util.exit_message(
-                    f"{p_app} not available on {util.get_pf()} platform", 1
-                )
+                util.exit_message( f"{p_app} not available on {util.get_pf()} platform")
         else:
             ver = p_ver
 
@@ -372,27 +351,20 @@ def install_comp(p_app, p_ver=0, p_rver=None, p_re_install=False):
         conf_cache = "data" + os.sep + "conf" + os.sep + "cache"
         file = base_name + ".tgz"
         zip_file = conf_cache + os.sep + file
-        json_dict = {}
-        json_dict["component"] = p_app
-        json_dict["file"] = file
-        if isJSON:
-            json_dict["state"] = "download"
-            json_dict["status"] = "start"
-            print(json.dumps([json_dict]))
+
+
+        if not isSILENT:
+            util.message(f"Starting download of {file}")
 
         if os.path.exists(zip_file) and is_downloaded(base_name, p_app):
-            msg = "File is already downloaded."
-            my_logger.info(msg)
-            if isJSON:
-                json_dict["status"] = "complete"
-                msg = json.dumps([json_dict])
-            if not isSILENT:
-                print(msg)
+            util.message("File already downloaded")
+
         elif not retrieve_comp(base_name, p_app):
             exit_cleanly(1)
 
         if not isSILENT:
-            util.message("\nUnpacking " + file)
+            util.message("Unpacking " + file)
+
         full_file = conf_cache + os.sep + file
 
         if platform.system() in ("Linux", "Darwin"):
@@ -409,32 +381,11 @@ def install_comp(p_app, p_ver=0, p_rver=None, p_re_install=False):
         except KeyboardInterrupt:
             temp_tar_dir = os.path.join(MY_HOME, p_app)
             util.delete_dir(temp_tar_dir)
-            msg = "Unpacking cancelled for file %s" % file
-            my_logger.error(msg)
-            return_code = 1
-            if isJSON:
-                json_dict = {}
-                json_dict["state"] = "unpack"
-                json_dict["status"] = "cancelled"
-                json_dict["component"] = p_app
-                json_dict["msg"] = msg
-                msg = json.dumps([json_dict])
-                return_code = 0
-            util.exit_message(msg, return_code)
+            util.exit_message(f"Unpacking cancelled for file {file}")
         except Exception as e:
             temp_tar_dir = os.path.join(MY_HOME, p_app)
             util.delete_dir(temp_tar_dir)
-            util.message("Unpacking failed for file %s" % str(e), "error")
-            my_logger.error(traceback.format_exc())
-            return_code = 1
-            if isJSON:
-                json_dict = {}
-                json_dict["state"] = "error"
-                json_dict["component"] = p_app
-                json_dict["msg"] = str(e)
-                msg = json.dumps([json_dict])
-                return_code = 0
-            util.exit_message(msg, return_code)
+            util.exit_message(f"Unpacking failed for file {file}  {str(e)}")
 
         tar.close
         if isJSON:
@@ -537,23 +488,6 @@ def upgrade_component(p_comp):
     if rc == 0:
         meta.update_component_version(p_comp, update_version)
         util.run_script(p_comp, "update-" + p_comp, "update")
-        if isJSON:
-            msg = (
-                "updated "
-                + p_comp
-                + " from ("
-                + present_version
-                + ") to ("
-                + update_version
-                + ")"
-            )
-            print(
-                '[{"status": "complete", "state": "update", "component": "'
-                + p_comp
-                + '","msg":"'
-                + msg
-                + '"}]'
-            )
 
     if server_running:
         util.run_script(p_comp, "start-" + p_comp, "start")
@@ -574,37 +508,11 @@ def unpack_comp(p_app, p_old_ver, p_new_ver):
     zip_file = os.path.join(MY_HOME, "conf", "cache", file)
 
     if os.path.exists(zip_file) and is_downloaded(base_name, p_app):
-        msg = "File is already downloaded."
-        my_logger.info(msg)
-        if isJSON:
-            json_dict = {}
-            json_dict["state"] = "download"
-            json_dict["component"] = p_app
-            json_dict["status"] = "complete"
-            json_dict["file"] = file
-            msg = json.dumps([json_dict])
-        print(msg)
+        util.message("File already downloaded")
     elif not retrieve_comp(base_name, p_app):
         return 1
 
-    msg = " Unpacking " + p_app + "(" + p_new_ver + ") over (" + p_old_ver + ")"
-    my_logger.info(msg)
-
-    file = base_name + ".tgz"
-
-    if isJSON:
-        print(
-            '[{"state":"unpack","status":"start","component":"'
-            + p_app
-            + '","msg":"'
-            + msg
-            + '","file":"'
-            + file
-            + '"}]'
-        )
-    else:
-        if not isSILENT:
-            print(msg)
+    util.message(f" Unpacking {p_app} ({p_new_ver}) over ({p_old_ver})")
 
     return_value = 0
 
@@ -619,31 +527,11 @@ def unpack_comp(p_app, p_old_ver, p_new_ver):
         tar.extractall(path=new_comp_dir)
     except KeyboardInterrupt as e:
         util.delete_dir(new_comp_dir)
-        msg = "Unpacking cancelled for file %s" % file
-        if isJSON:
-            json_dict = {}
-            json_dict["state"] = "unpack"
-            json_dict["status"] = "cancelled"
-            json_dict["component"] = p_app
-            json_dict["msg"] = msg
-            msg = json.dumps([json_dict])
-        if not isSILENT:
-            print(msg)
-        my_logger.error(msg)
+        util.message("Unpacking cancelled for {file}", "error")
         return 1
     except Exception as e:
         util.delete_dir(new_comp_dir)
-        msg = "Unpacking failed for file %s" % str(e)
-        if isJSON:
-            json_dict = {}
-            json_dict["state"] = "error"
-            json_dict["component"] = p_app
-            json_dict["msg"] = str(e)
-            msg = json.dumps([json_dict])
-        if not isSILENT:
-            print(msg)
-        my_logger.error(msg)
-        my_logger.error(traceback.format_exc())
+        util.message("Unpacking failed for {file}", "error")
         return 1
 
     tar.close
@@ -667,17 +555,7 @@ def unpack_comp(p_app, p_old_ver, p_new_ver):
             my_logger.info("copying new extension files : " + manifest_file_name)
             util.copy_extension_files(p_app, parent, upgrade=True)
         except Exception as e:
-            error_msg = "Error while upgrading the " + p_app + " : " + str(e)
-            my_logger.error(error_msg)
-            my_logger.error(traceback.format_exc())
-            if isJSON:
-                json_dict = {}
-                json_dict["state"] = "error"
-                json_dict["component"] = p_app
-                json_dict["msg"] = str(e)
-                error_msg = json.dumps([json_dict])
-            if not isSILENT:
-                print(error_msg)
+            util.message(f"Error while upgrading {p_app} :  {str(e)}", "error")
             return_value = 1
     else:
         try:
@@ -703,19 +581,7 @@ def unpack_comp(p_app, p_old_ver, p_new_ver):
             my_logger.info(p_app + " upgrade completed.")
 
         except Exception as upgrade_exception:
-            error_msg = (
-                "Error while upgrading the " + p_app + " : " + str(upgrade_exception)
-            )
-            my_logger.error(error_msg)
-            my_logger.error(traceback.format_exc())
-            if isJSON:
-                json_dict = {}
-                json_dict["state"] = "error"
-                json_dict["component"] = p_app
-                json_dict["msg"] = str(upgrade_exception)
-                error_msg = json.dumps([json_dict])
-            if not isSILENT:
-                print(error_msg)
+            util.message(f"Error while upgrading {p_app} :  {str(upgrade_exception)}", "error")
             return_value = 1
 
     if os.path.exists(os.path.join(MY_HOME, new_comp_dir)):
@@ -1054,7 +920,7 @@ if "--pause" in args and not_fire:
 
 if "--pg" in args:
     pgn = str(get_next_arg("--pg"))
-    if pgn >= "14" and pgn <= "17":
+    if pgn in util.VALID_PG:
         util.setenv("pgeN", pgn)
         args.remove("--pg")
         args.remove(pgn)
@@ -1150,7 +1016,10 @@ if "--rm-data" in args and not_fire:
     util.setenv("isRM_DATA", "True")
     args.remove("--rm-data")
 
-isSILENT = False
+if os.getenv("isSilent") == "True":
+    isSILENT = True
+else:
+    isSILENT = False
 if "--silent" in args and not_fire:
     isSILENT = True
     util.setenv("isSilent", "True")
@@ -1521,7 +1390,7 @@ if p_mode == "info":
                 if not isJSON:
                     api.info_component(compDict, kount)
             if isJSON:
-                print(json.dumps(compJson, sort_keys=True, indent=2))
+                print(json.dumps(compJson))
         except Exception as e:
             fatal_sql_error(e, sql, "INFO")
     exit_cleanly(0)
@@ -1539,13 +1408,7 @@ if p_mode in ["download", "clean", "list", "remove"]:
 ## INSTALL ################################################
 if p_mode == "install":
     if p_comp == "all":
-        msg = "You must specify component to install."
-        my_logger.error(msg)
-        return_code = 1
-        if isJSON:
-            return_code = 0
-            msg = '[{"status":"error","msg":"' + msg + '"}]'
-        util.exit_message(msg, return_code)
+        util.exit_message("You must specify component to install")
 
     if meta.get_stage(p_comp) == "included":
         util.exit_message(
@@ -1589,14 +1452,7 @@ if p_mode == "install":
                 util.copy_extension_files(c, parent)
             script_name = "install-" + c
             util.run_script(c, script_name, meta.get_current_version(c))
-            if isJSON:
-                json_dict = {}
-                json_dict["state"] = "install"
-                json_dict["status"] = "complete"
-                json_dict["msg"] = "Successfully installed the component."
-                json_dict["component"] = c
-                msg = json.dumps([json_dict])
-                print(msg)
+            util.message("Successfully installed component")
             if c in p_comp_list or p_comp_list[0] == "all":
                 component_installed = True
                 installed_commponents.append(c)
