@@ -383,7 +383,7 @@ initPG () {
     initC "setuser-pg$pgM"    "setuser"    "$setuserV"   "$outPlat" "postgres/setuser"    "" "" "nil"
     initC "orafce-pg$pgM"     "orafce"     "$orafceV"    "$outPlat" "postgres/orafce"     "" "" "nil"
     initC "postgis-pg$pgM"    "postgis"    "$postgisV"   "$outPlat" "postgres/postgis"    "" "" "nil"
-    #initC "plv8-pg$pgM"       "plv8"       "$v8V"        "$outPlat" "postgres/plv8"       "" "" "nil"
+    initC "plv8-pg$pgM"       "plv8"       "$v8V"        "$outPlat" "postgres/plv8"       "" "" "nil"
   fi
 
   if [ "$pgM" == "15" ] || [ "$pgM" == "16" ]; then
