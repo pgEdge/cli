@@ -1,10 +1,12 @@
 from datetime import datetime
+import json
 
 from flask import Flask, jsonify, request
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.jobstores.memory import MemoryJobStore
 from apscheduler.executors.pool import ProcessPoolExecutor
 from apscheduler.triggers.cron import CronTrigger
+import psycopg
 
 import ace
 import ace_cli
@@ -20,6 +22,7 @@ from ace_data_models import (
 )
 from ace_exceptions import AceException
 from ace_timeparse import parse_time_string
+import cluster
 import util
 
 app = Flask(__name__)
@@ -521,9 +524,10 @@ def update_spock_exception_api():
     node_name = request.args.get("node_name")
 
     if not cluster_name or not node_name:
-        return jsonify(
-            {"error": "cluster_name and node_name are required parameters"}
-        ), 400
+        return (
+            jsonify({"error": "cluster_name and node_name are required parameters"}),
+            400,
+        )
 
     entry = request.json
 
@@ -545,7 +549,228 @@ def update_spock_exception_api():
         return jsonify({"error": f"Unexpected error: {str(e)}"}), 500
 
 
-def validate_table_diff_schedule(jobs, schedule_config):
+"""
+In the current release of Spock (4.0.1), we do not have a trigger that
+auto-populates the exception_status and the exception_status_detail tables
+from the exception_log table. So, we periodically execute a transaction that
+begins by inserting records into those two tables.
+"""
+
+
+def populate_exception_status_tables():
+
+    cluster_name = config.auto_repair_config["cluster_name"]
+    dbname = config.auto_repair_config["dbname"]
+
+    found = ace.check_cluster_exists(cluster_name)
+    if not found:
+        raise AceException(f"Cluster {cluster_name} not found")
+
+    db, pg, node_info = cluster.load_json(cluster_name)
+
+    cluster_nodes = []
+    combined_json = {}
+    database = next(
+        (db_entry for db_entry in db if db_entry["db_name"] == dbname), None
+    )
+
+    for node in node_info:
+        combined_json = {**database, **node}
+        cluster_nodes.append(combined_json)
+
+    # Step 1: Populate the top-level exception_status table
+    # by looking at the exception_log table.
+    # This will only insert one record per
+    # (remote_origin, remote_commit_ts, remote_xid)
+    # trio in the exception_log table.
+    exception_sql_step1 = """
+    MERGE INTO
+        spock.exception_status es
+    USING
+    (
+        SELECT
+            remote_origin,
+            remote_commit_ts,
+            remote_xid
+        FROM
+            spock.exception_log
+    ) el
+    ON
+    (
+        es.remote_origin = el.remote_origin
+        AND es.remote_commit_ts = el.remote_commit_ts
+        AND es.remote_xid = el.remote_xid
+    )
+    WHEN NOT MATCHED THEN
+    INSERT
+    (
+        remote_origin,
+        remote_commit_ts,
+        remote_xid,
+        status
+    )
+    VALUES
+    (
+        el.remote_origin,
+        el.remote_commit_ts,
+        el.remote_xid,
+        'PENDING'
+    );
+    """
+
+    # Step 2: Populate the exception_status_detail table
+    # by looking at the exception_log table.
+    # This will insert one record per failing operation in a
+    # transaction.
+    # There can be multiple entries for the same
+    # (remote_origin, remote_commit_ts, remote_xid)
+    # trio, but only one entry per
+    # (remote_origin, remote_commit_ts, remote_xid, command_counter)
+    # in the exception_log table.
+    exception_sql_step2 = """
+    MERGE INTO
+        spock.exception_status_detail esd
+    USING
+    (
+        SELECT
+            remote_origin,
+            remote_commit_ts,
+            command_counter,
+            remote_xid
+        FROM spock.exception_log
+    ) el
+    ON
+    (
+        esd.remote_origin = el.remote_origin
+        AND esd.remote_commit_ts = el.remote_commit_ts
+        AND esd.command_counter = el.command_counter
+    )
+    WHEN NOT MATCHED THEN
+    INSERT
+    (
+        remote_origin,
+        remote_commit_ts,
+        command_counter,
+        remote_xid,
+        status
+    )
+    VALUES
+    (
+        el.remote_origin,
+        el.remote_commit_ts,
+        el.command_counter,
+        el.remote_xid,
+        'PENDING'
+    );
+    """
+
+    # Step 3: Update the status of the (remote_origin, remote_commit_ts, remote_xid)
+    # trio in the exception_status table to 'RESOLVED' if all the
+    # commands that belong to that trio have been resolved.
+    # TODO: The resolution_details here should be more specific to the
+    # actions that ACE took to resolve the exception.
+    exception_sql_step3 = """
+    UPDATE spock.exception_status es
+    SET
+        status = %s,
+        resolved_at = %s,
+        resolution_details = %s
+    FROM
+    (
+        SELECT remote_xid
+        FROM spock.exception_status_detail esd
+        GROUP BY remote_xid
+        HAVING COUNT(*) = COUNT(CASE WHEN status = 'RESOLVED' THEN 1 END)
+    ) AS subquery
+    WHERE
+        es.remote_xid = subquery.remote_xid
+        AND es.status != 'RESOLVED';
+    """
+
+    for node in cluster_nodes:
+        params = {
+            "dbname": node["db_name"],
+            "user": node["db_user"],
+            "password": node["db_password"],
+            "host": node["public_ip"],
+            "port": node["port"],
+            "options": f"-c statement_timeout={config.STATEMENT_TIMEOUT}",
+        }
+
+        conn = psycopg.connect(**params)
+        cur = conn.cursor()
+
+        try:
+            cur.execute(exception_sql_step1)
+            cur.execute(exception_sql_step2)
+            cur.execute(
+                exception_sql_step3,
+                (
+                    "RESOLVED",
+                    datetime.now(),
+                    json.dumps(
+                        {
+                            "details": "All transaction operations auto-resolved"
+                            " by ACE. For specific details, check the"
+                            " resolution_details column in the"
+                            " exception_status_detail table."
+                        }
+                    ),
+                ),
+            )
+            conn.commit()
+        except Exception as e:
+            raise AceException(
+                f"Error while populating exception status tables on"
+                f" node {node['name']}: {str(e)}"
+            )
+        finally:
+            cur.close()
+            conn.close()
+
+
+def validate_auto_repair_config(
+    cluster_name, dbname, poll_interval, status_update_interval
+):
+
+    poll_interval_datetime = None
+    status_update_interval_datetime = None
+
+    if not cluster_name:
+        raise AceException("cluster_name is required in auto_repair_config")
+
+    found = ace.check_cluster_exists(cluster_name)
+    if not found:
+        raise AceException(f"Cluster {cluster_name} not found")
+
+    if not dbname:
+        raise AceException("dbname is required in auto_repair_config")
+
+    if not poll_interval:
+        raise AceException("poll_interval is required in auto_repair_config")
+
+    try:
+        poll_interval_datetime = parse_time_string(poll_interval)
+        status_update_interval_datetime = parse_time_string(status_update_interval)
+    except Exception as e:
+        raise AceException(
+            f"Invalid poll_interval or status_update_interval: {poll_interval} or "
+            f"{status_update_interval}. Error: {e}"
+        )
+
+    db, pg, node_info = cluster.load_json(cluster_name)
+
+    if dbname not in [db_entry["db_name"] for db_entry in db]:
+        raise AceException(f"Database {dbname} not found in cluster {cluster_name}")
+
+    return poll_interval_datetime, status_update_interval_datetime
+
+
+def validate_table_diff_schedule():
+
+    jobs = config.schedule_jobs
+    schedule_config = config.schedule_config
+
     job_names = []
 
     for job in jobs:
@@ -580,7 +805,7 @@ def validate_table_diff_schedule(jobs, schedule_config):
 
 def create_schedules():
     schedules = config.schedule_config
-    jobs = config.jobs
+    jobs = config.schedule_jobs
 
     for schedule in schedules:
         enabled = schedule.get("enabled", False)
@@ -621,6 +846,128 @@ def create_schedules():
 
 
 """
+Validates the table-diff schedule and starts daemons.
+"""
+
+
+def start_scheduling_daemons():
+
+    try:
+        validate_table_diff_schedule()
+        create_schedules()
+    except AceException:
+        raise
+    except Exception as e:
+        raise AceException(f"Unexpected error starting scheduling daemons: {e}")
+
+
+"""
+Validates the auto-repair config and starts daemons.
+
+It starts the background processes to periodically
+populate the exception_status and exception_status_detail tables,
+monitor for new exceptions in those tables, and execute the auto-repair
+process.
+"""
+
+
+def start_auto_repair_daemon():
+    poll_interval_datetime = None
+    update_interval_datetime = None
+
+    auto_repair_config = config.auto_repair_config
+    if not auto_repair_config["enabled"]:
+        return
+
+    cluster_name = auto_repair_config.get("cluster_name", None)
+    dbname = auto_repair_config.get("dbname", None)
+
+    # The poll_interval is for polling the exception_log table
+    # for new exceptions periodically.
+    poll_interval = auto_repair_config.get("poll_interval", None)
+
+    # The status_update_interval is for updating the
+    # exception_status and exception_status_detail tables.
+    # This is only temporary since an upcoming version of Spock
+    # will auto-populate these tables using triggers.
+    status_update_interval = auto_repair_config.get("status_update_interval", None)
+
+    try:
+        poll_interval_datetime, update_interval_datetime = validate_auto_repair_config(
+            cluster_name, dbname, poll_interval, status_update_interval
+        )
+    except AceException as e:
+        util.exit_message(f"Error validating auto-repair config: {e}")
+
+    try:
+        scheduler.add_job(
+            populate_exception_status_tables,
+            trigger="interval",
+            weeks=(
+                update_interval_datetime.weeks
+                if hasattr(update_interval_datetime, "weeks")
+                else 0
+            ),
+            days=(
+                update_interval_datetime.days
+                if hasattr(update_interval_datetime, "days")
+                else 0
+            ),
+            hours=(
+                update_interval_datetime.hours
+                if hasattr(update_interval_datetime, "hours")
+                else 0
+            ),
+            minutes=(
+                update_interval_datetime.minutes
+                if hasattr(update_interval_datetime, "minutes")
+                else 0
+            ),
+            seconds=(
+                update_interval_datetime.seconds
+                if hasattr(update_interval_datetime, "seconds")
+                else 0
+            ),
+            max_instances=1,
+            replace_existing=True,
+        )
+
+        scheduler.add_job(
+            ace_core.auto_repair,
+            trigger="interval",
+            weeks=(
+                poll_interval_datetime.weeks
+                if hasattr(poll_interval_datetime, "weeks")
+                else 0
+            ),
+            days=(
+                poll_interval_datetime.days
+                if hasattr(poll_interval_datetime, "days")
+                else 0
+            ),
+            hours=(
+                poll_interval_datetime.hours
+                if hasattr(poll_interval_datetime, "hours")
+                else 0
+            ),
+            minutes=(
+                poll_interval_datetime.minutes
+                if hasattr(poll_interval_datetime, "minutes")
+                else 0
+            ),
+            seconds=(
+                poll_interval_datetime.seconds
+                if hasattr(poll_interval_datetime, "seconds")
+                else 0
+            ),
+            max_instances=1,
+            replace_existing=True,
+        )
+    except Exception as e:
+        raise AceException(f"Error starting auto-repair process: {e}")
+
+
+"""
 Starts the ACE API server.
 
 This function performs the following tasks:
@@ -631,7 +978,6 @@ This function performs the following tasks:
 The API server is configured to:
 - Listen on localhost (127.0.0.1)
 - Use port 5000
-- Run in debug mode
 
 Note: The scheduler is a BackgroundScheduler, so start() does not block execution.
 Future versions may require manual event listening for job management.
@@ -647,7 +993,6 @@ def start_ace():
     # Since the scheduler is a BackgroundScheduler,
     # start() will not block
     scheduler.start()
-    # ace.scheduler.add_listener(ace.error_listener, EVENT_JOB_ERROR)
 
     # A listener is needed for the upcoming 4.0.0 release
     # of apscheduler. We will need to manually listen to
@@ -655,11 +1000,18 @@ def start_ace():
     # a BackgroundScheduler with add_job() will automatically
     # run the job in the background.
     # scheduler.add_listener(listener, EVENT_JOB_ADDED)
+    # scheduler.add_listener(ace.error_listener, EVENT_JOB_ERROR)
 
     try:
-        validate_table_diff_schedule(config.jobs, config.schedule_config)
-        create_schedules()
+        # Validate the table-diff schedule and start the daemon
+        start_scheduling_daemons()
     except AceException as e:
-        util.exit_message(f"Error creating schedules: {e}")
+        util.exit_message(f"Error starting scheduling daemons: {e}")
+
+    try:
+        # Validate the auto-repair config and start the daemon
+        start_auto_repair_daemon()
+    except AceException as e:
+        util.exit_message(f"Error starting auto-repair daemon: {e}")
 
     app.run(host="127.0.0.1", port=5000)

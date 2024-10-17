@@ -1,3 +1,4 @@
+from collections import defaultdict
 from dataclasses import dataclass, field
 from datetime import datetime
 
@@ -157,3 +158,23 @@ class SchemaDiffTask:
 
     # Derived fields
     fields: DerivedFields = field(default_factory=DerivedFields)
+
+
+@dataclass
+class AutoRepairTask:
+    remote_origin: int
+    remote_commit_ts: datetime
+    command_counter: int
+    remote_xid: int
+    local_origin: int
+    local_commit_ts: datetime
+    table_schema: str
+    table_name: str
+    operation: str
+    local_tup: defaultdict
+    remote_old_tup: defaultdict
+    remote_new_tup: defaultdict
+    ddl_statement: str
+    ddl_user: str
+    error_message: str
+    retry_errored_at: datetime
