@@ -1,5 +1,6 @@
 from datetime import datetime
 import json
+import traceback
 import ace_config as config
 import ace_core
 import ace_db
@@ -80,6 +81,7 @@ def table_diff_cli(
     except AceException as e:
         util.exit_message(str(e))
     except Exception as e:
+        traceback.print_exc()
         util.exit_message(f"Unexpected error while running table diff: {e}")
 
 

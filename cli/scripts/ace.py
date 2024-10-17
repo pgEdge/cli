@@ -175,7 +175,7 @@ def get_cols(p_con, p_schema, p_table):
 
     col_lst = []
     for row in rows:
-        col_lst.append(str(row[1]))
+        col_lst.append(str(row[0]))
 
     return ",".join(col_lst)
 
@@ -530,6 +530,7 @@ def table_diff_checks(td_task: TableDiffTask) -> TableDiffTask:
                     "host": nd["public_ip"],
                     "port": nd.get("port", 5432),
                     "options": f"-c statement_timeout={config.STATEMENT_TIMEOUT}",
+                    "application_name": "ACE",
                 }
 
                 if nd["db_password"]:
@@ -722,6 +723,7 @@ def table_repair_checks(tr_task: TableRepairTask) -> TableRepairTask:
                 "host": nd["public_ip"],
                 "port": nd.get("port", 5432),
                 "options": f"-c statement_timeout={config.STATEMENT_TIMEOUT}",
+                "application_name": "ACE",
             }
 
             if nd["db_password"]:
@@ -913,6 +915,7 @@ def repset_diff_checks(rd_task: RepsetDiffTask) -> RepsetDiffTask:
                     "host": nd["public_ip"],
                     "port": nd.get("port", 5432),
                     "options": f"-c statement_timeout={config.STATEMENT_TIMEOUT}",
+                    "application_name": "ACE",
                 }
                 if nd["db_password"]:
                     params["password"] = nd["db_password"]
@@ -1049,6 +1052,7 @@ def spock_diff_checks(sd_task: SpockDiffTask) -> SpockDiffTask:
                     "host": nd["public_ip"],
                     "port": nd.get("port", 5432),
                     "options": f"-c statement_timeout={config.STATEMENT_TIMEOUT}",
+                    "application_name": "ACE",
                 }
                 if nd["db_password"]:
                     params["password"] = nd["db_password"]
@@ -1236,6 +1240,7 @@ def update_spock_exception_checks(
                     "host": node["public_ip"],
                     "port": node["port"],
                     "options": f"-c statement_timeout={config.STATEMENT_TIMEOUT}",
+                    "application_name": "ACE",
                 }
                 if node["db_password"]:
                     params["password"] = node["db_password"]
