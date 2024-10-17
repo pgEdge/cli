@@ -142,10 +142,18 @@ def get_row_count(p_con, p_schema, p_table):
 
 def get_cols(p_con, p_schema, p_table):
     sql = """
-    SELECT ordinal_position, column_name
-    FROM information_schema.columns
-    WHERE table_schema = %s and table_name = %s
-    ORDER BY 1, 2
+    SELECT
+        A.ATTNAME COLUMN_NAME
+    FROM
+        PG_INDEX I
+        JOIN PG_CLASS C ON C.OID = I.INDRELID
+        JOIN PG_ATTRIBUTE A ON A.ATTRELID = C.OID
+        AND A.ATTNUM = ANY (I.INDKEY)
+        JOIN PG_NAMESPACE N ON N.OID = C.RELNAMESPACE
+    WHERE
+        N.NSPNAME       = %s
+        AND C.RELNAME   = %s
+        AND I.INDISPRIMARY
     """
 
     try:
