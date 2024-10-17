@@ -4,10 +4,10 @@ from math import ceil
 import os
 from datetime import datetime
 from itertools import combinations
-from multiprocessing import Manager, cpu_count
 from concurrent.futures import ThreadPoolExecutor
 
 import psycopg
+from multiprocessing import Manager, cpu_count
 from mpire import WorkerPool
 from mpire.utils import make_single_arguments
 from ordered_set import OrderedSet
@@ -15,6 +15,7 @@ from psycopg import sql
 from psycopg.rows import dict_row, class_row
 from dateutil import parser
 
+import pgpasslib
 import ace
 import ace_db
 import cluster
@@ -54,11 +55,25 @@ def init_db_connection(shared_objects, worker_state):
         params = {
             "dbname": node["db_name"],
             "user": node["db_user"],
-            "password": node["db_password"],
             "host": node["public_ip"],
             "port": node.get("port", 5432),
             "options": f"-c statement_timeout={config.STATEMENT_TIMEOUT}",
         }
+        if node["db_password"]:
+            params["password"] = node["db_password"]
+        else:
+            pgpass = pgpasslib.getpass(
+                host=node["name"],
+                user=node["db_user"],
+                dbname=node["db_name"],
+                port=node["port"],
+            )
+            if not pgpass:
+                raise AceException(
+                    f"No password found for {node['name']} in"
+                    f" {shared_objects['cluster_name']}.json or ~/.pgpass"
+                )
+            params["password"] = pgpass
 
         worker_state[node["name"]] = psycopg.connect(**params).cursor()
 
@@ -1689,7 +1704,7 @@ def spock_diff(sd_task: SpockDiffTask) -> None:
                     print(" - Not in a replication set")
                     hints.append(
                         "Hint: Tables not in replication set might not have"
-                        "primary keys, or you need to run repset-add-table"
+                        " primary keys, or you need to run repset-add-table"
                     )
                 else:
                     print(" - " + table["set_name"])
@@ -2073,9 +2088,23 @@ def auto_repair():
             "host": node["public_ip"],
             "port": node["port"],
             "user": node["db_user"],
-            "password": node["db_password"],
             "options": f"-c statement_timeout={config.STATEMENT_TIMEOUT}",
         }
+        if node["db_password"]:
+            params["password"] = node["db_password"]
+        else:
+            pgpass = pgpasslib.getpass(
+                host=node["name"],
+                user=node["db_user"],
+                dbname=node["db_name"],
+                port=node["port"],
+            )
+            if not pgpass:
+                raise AceException(
+                    f"No password found for {node['name']} in"
+                    f" {cluster_name}.json or ~/.pgpass"
+                )
+            params["password"] = pgpass
         try:
             conn_map[node["name"]] = psycopg.connect(**params)
             cur = conn_map[node["name"]].cursor(row_factory=dict_row)
