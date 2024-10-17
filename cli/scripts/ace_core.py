@@ -58,6 +58,7 @@ def init_db_connection(shared_objects, worker_state):
             "host": node["public_ip"],
             "port": node.get("port", 5432),
             "options": f"-c statement_timeout={config.STATEMENT_TIMEOUT}",
+            "application_name": "ACE",
         }
         if node["db_password"]:
             params["password"] = node["db_password"]
@@ -2089,6 +2090,7 @@ def auto_repair():
             "port": node["port"],
             "user": node["db_user"],
             "options": f"-c statement_timeout={config.STATEMENT_TIMEOUT}",
+            "application_name": "ACE",
         }
         if node["db_password"]:
             params["password"] = node["db_password"]
