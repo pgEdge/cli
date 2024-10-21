@@ -318,12 +318,14 @@ INSERT INTO projects VALUES ('timescaledb', 'ext', 4, 0, '',0, 'https://github.c
   'timescaledb', 1, 'timescaledb.png', 'Timeseries Extension', 'https://github.com/timescaledb/timescaledb', 'timescale_db, time_scale_db');
 INSERT INTO releases VALUES ('timescaledb-pg15', 10, 'timescaledb', 'TimescaleDB', '', 'test', '', 1, 'POSTGRES', '', '');
 INSERT INTO releases VALUES ('timescaledb-pg16', 10, 'timescaledb', 'TimescaleDB', '', 'test', '', 1, 'POSTGRES', '', '');
+INSERT INTO releases VALUES ('timescaledb-pg17', 10, 'timescaledb', 'TimescaleDB', '', 'test', '', 1, 'POSTGRES', '', '');
 
-INSERT INTO versions VALUES ('timescaledb-pg15', '2.16.1-1', 'amd, arm', 1, '20240820', 'pg15', '', '');
-INSERT INTO versions VALUES ('timescaledb-pg16', '2.16.1-1', 'amd, arm', 1, '20240820', 'pg16', '', '');
+INSERT INTO versions VALUES ('timescaledb-pg15', '2.17.0-1', 'amd, arm', 1, '20241021', 'pg15', '', '');
+INSERT INTO versions VALUES ('timescaledb-pg16', '2.17.0-1', 'amd, arm', 1, '20241021', 'pg16', '', '');
+INSERT INTO versions VALUES ('timescaledb-pg17', '2.17.0-1', 'amd, arm', 1, '20241021', 'pg17', '', '');
 
-INSERT INTO versions VALUES ('timescaledb-pg15', '2.15.3-1', 'amd, arm', 0, '20240729', 'pg15', '', '');
-INSERT INTO versions VALUES ('timescaledb-pg16', '2.15.3-1', 'amd, arm', 0, '20240729', 'pg16', '', '');
+INSERT INTO versions VALUES ('timescaledb-pg15', '2.16.1-1', 'amd, arm', 0, '20240820', 'pg15', '', '');
+INSERT INTO versions VALUES ('timescaledb-pg16', '2.16.1-1', 'amd, arm', 0, '20240820', 'pg16', '', '');
 
 -- ## CURL ##############################
 INSERT INTO projects VALUES ('curl', 'ext', 4, 0, '',0, 'https://github.com/pg_curl/pg_curl/releases',
@@ -438,7 +440,7 @@ INSERT INTO projects VALUES ('permissions', 'ext', 4, 1, '', 3, 'https://github.
   'permissions', 1, 'permissions.png', 'Improved permissions views', 'https://github.com/cybertec-postgresql/permissions', 'set_user');
 INSERT INTO releases VALUES ('permissions-pg15', 3, 'permissions', 'Permissions', '', 'prod', '', 1, 'POSTGRES', '', '');
 INSERT INTO releases VALUES ('permissions-pg16', 3, 'permissions', 'Permissions', '', 'prod', '', 1, 'POSTGRES', '', '');
-INSERT INTO releases VALUES ('permissions-pg16', 3, 'permissions', 'Permissions', '', 'prod', '', 1, 'POSTGRES', '', '');
+INSERT INTO releases VALUES ('permissions-pg17', 3, 'permissions', 'Permissions', '', 'prod', '', 1, 'POSTGRES', '', '');
 
 INSERT INTO versions VALUES ('permissions-pg15', '1.3-1', 'amd, arm', 1, '20240729', 'pg15', '', '');
 INSERT INTO versions VALUES ('permissions-pg16', '1.3-1', 'amd, arm', 1, '20240729', 'pg16', '', '');

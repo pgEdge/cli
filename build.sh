@@ -386,6 +386,7 @@ initPG () {
     initC "plv8-pg$pgM"       "plv8"       "$v8V"        "$outPlat" "postgres/plv8"       "" "" "nil"
     initC "vector-pg$pgM"     "vector"     "$vectorV"    "$outPlat" "postgres/vector"     "" "" "nil"
     initC "permissions-pg$pgM" "permissions" "$permissionsV" "$outPlat" "postgres/permissions" "" "" "nil"
+    initC "timescaledb-pg$pgM" "timescaledb" "$timescaleV"   "$outPlat" "postgres/timescale"   "" "" "nil"
   fi
 
   if [ "$pgM" == "15" ] || [ "$pgM" == "16" ]; then
@@ -393,7 +394,6 @@ initPG () {
     initC "hypopg-pg$pgM"      "hypopg"     "$hypoV"      "$outPlat" "postgres/hypopg"     "" "" "nil"
     initC "partman-pg$pgM"     "partman"    "$partmanV"   "$outPlat" "postgres/partman"    "" "" "nil"
     initC "citus-pg$pgM"       "citus"       "$citusV"       "$outPlat" "postgres/citus"       "" "" "nil"
-    initC "timescaledb-pg$pgM" "timescaledb" "$timescaleV"   "$outPlat" "postgres/timescale"   "" "" "nil"
   fi
 
   initC "prompgexp"    "prompgexp"    "$prompgexpV" "$outPlat" "postgres/prompgexp" "" "" "nil"
