@@ -21,6 +21,7 @@ function test_common_17 {
   ./pgedge install plv8-$pgV          -d demo
   ./pgedge install setuser-$pgV       -d demo
   ./pgedge install orafce-$pgV        -d demo
+  ./pgedge install vector-$pgV        -d demo
 
   ## extensions that dont always play nice with others
   # ./pgedge install citus-$pgV         -d demo
@@ -35,7 +36,6 @@ function test_common_16 {
   ./pgedge install partman-$pgV       -d demo
   ./pgedge install timescaledb-$pgV   -d demo
   ./pgedge install permissions-$pgV   -d demo
-  ./pgedge install vector-$pgV        -d demo
 }
 
 

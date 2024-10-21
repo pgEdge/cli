@@ -158,7 +158,7 @@ ORDER BY 1, 2;
 INSERT INTO projects VALUES ('hub', 'app', 0, 0, 'hub', 0, 'https://github.com/pgedge/cli','',0,'','','','');
 INSERT INTO releases VALUES ('hub', 1, 'hub',  '', '', 'hidden', '', 1, '', '', '');
 
-INSERT INTO versions VALUES ('hub', '24.11.0',   '',  1, '20241101', '', '', '');
+INSERT INTO versions VALUES ('hub', '24.11.0',   '',  1, '20241021', '', '', '');
 INSERT INTO versions VALUES ('hub', '24.10.1',   '',  0, '20240926', '', '', '');
 INSERT INTO versions VALUES ('hub', '24.10.0',   '',  0, '20240924', '', '', '');
 INSERT INTO versions VALUES ('hub', '24.9.6',    '',  0, '20240919', '', '', '');
@@ -199,9 +199,9 @@ INSERT INTO releases VALUES ('orafce-pg15', 2, 'orafce', 'OraFCE', '', 'prod', '
 INSERT INTO releases VALUES ('orafce-pg16', 2, 'orafce', 'OraFCE', '', 'prod', '', 1, 'POSTGRES', '', '');
 INSERT INTO releases VALUES ('orafce-pg17', 2, 'orafce', 'OraFCE', '', 'prod', '', 1, 'POSTGRES', '', '');
 
-INSERT INTO versions VALUES ('orafce-pg15', '4.13.4-1',   'amd, arm', 1, '20241101', 'pg15', '', '');
-INSERT INTO versions VALUES ('orafce-pg16', '4.13.4-1',   'amd, arm', 1, '20241101', 'pg16', '', '');
-INSERT INTO versions VALUES ('orafce-pg17', '4.13.4-1',   'amd, arm', 1, '20241101', 'pg17', '', '');
+INSERT INTO versions VALUES ('orafce-pg15', '4.13.4-1',   'amd, arm', 1, '20241021', 'pg15', '', '');
+INSERT INTO versions VALUES ('orafce-pg16', '4.13.4-1',   'amd, arm', 1, '20241021', 'pg16', '', '');
+INSERT INTO versions VALUES ('orafce-pg17', '4.13.4-1',   'amd, arm', 1, '20241021', 'pg17', '', '');
 
 INSERT INTO versions VALUES ('orafce-pg15', '4.10.3-1',   'amd, arm', 0, '20240729', 'pg15', '', '');
 INSERT INTO versions VALUES ('orafce-pg16', '4.10.3-1',   'amd, arm', 0, '20240729', 'pg16', '', '');
@@ -213,9 +213,9 @@ INSERT INTO releases VALUES ('plv8-pg15', 4, 'plv8', 'PL/V8', '', 'prod', '', 1,
 INSERT INTO releases VALUES ('plv8-pg16', 4, 'plv8', 'PL/V8', '', 'prod', '', 1, 'POSTGRES', '', '');
 INSERT INTO releases VALUES ('plv8-pg17', 4, 'plv8', 'PL/V8', '', 'prod', '', 1, 'POSTGRES', '', '');
 
-INSERT INTO versions VALUES ('plv8-pg15', '3.2.3-1', 'amd, arm', 1, '20241101', 'pg15', '', '');
-INSERT INTO versions VALUES ('plv8-pg16', '3.2.3-1', 'amd, arm', 1, '20241101', 'pg16', '', '');
-INSERT INTO versions VALUES ('plv8-pg17', '3.2.3-1', 'amd, arm', 1, '20241101', 'pg17', '', '');
+INSERT INTO versions VALUES ('plv8-pg15', '3.2.3-1', 'amd, arm', 1, '20241021', 'pg15', '', '');
+INSERT INTO versions VALUES ('plv8-pg16', '3.2.3-1', 'amd, arm', 1, '20241021', 'pg16', '', '');
+INSERT INTO versions VALUES ('plv8-pg17', '3.2.3-1', 'amd, arm', 1, '20241021', 'pg17', '', '');
 
 INSERT INTO versions VALUES ('plv8-pg15', '3.2.2-1', 'amd, arm', 0, '20240523', 'pg15', '', '');
 INSERT INTO versions VALUES ('plv8-pg16', '3.2.2-1', 'amd, arm', 0, '20240214', 'pg16', '', '');
@@ -232,7 +232,7 @@ INSERT INTO versions VALUES ('pljava-pg16', '1.6.4-1',  'amd, arm',  0, '2023060
 INSERT INTO projects VALUES ('kirk', 'dev', 11, 8883, '', 0, 'https://github.com/pgedge/cli/kirk',
   'kirk', 0, 'mqtt.png', 'MQTT Client', 'https://github.com/pgedge/cli/kirk', '');
 INSERT INTO releases VALUES ('kirk', 2, 'kirk', 'MQTT Client', '', 'test', '', 1, 'PGEDGE', '', '');
-INSERT INTO versions VALUES ('kirk', '24.11.0', '',  1, '20241101', '', '', '');
+INSERT INTO versions VALUES ('kirk', '24.11.0', '',  1, '20241021', '', '', '');
 
 -- ## PLDEBUGGER #########################
 INSERT INTO projects VALUES ('pldebugger', 'dev', 4, 0, '', 0, 'https://github.com/EnterpriseDB/pldebugger/tags',
@@ -364,9 +364,11 @@ INSERT INTO projects VALUES ('vector', 'pge', 4, 0, '', 1, 'https://github.com/p
   'vector', 1, 'vector.png', 'Vector & Embeddings', 'https://github.com/pgedge/vector/#vector', 'pg_vector, pgvector');
 INSERT INTO releases VALUES ('vector-pg15', 4, 'vector', 'pgVector', '', 'prod', '', 1, 'POSTGRES', '', '');
 INSERT INTO releases VALUES ('vector-pg16', 4, 'vector', 'pgVector', '', 'prod', '', 1, 'POSTGRES', '', '');
+INSERT INTO releases VALUES ('vector-pg17', 4, 'vector', 'pgVector', '', 'prod', '', 1, 'POSTGRES', '', '');
 
 INSERT INTO versions VALUES ('vector-pg15', '0.7.4-1', 'amd, arm', 1, '20240820', 'pg15', '', '');
 INSERT INTO versions VALUES ('vector-pg16', '0.7.4-1', 'amd, arm', 1, '20240820', 'pg16', '', '');
+INSERT INTO versions VALUES ('vector-pg17', '0.7.4-1', 'amd, arm', 1, '20241021', 'pg17', '', '');
 
 INSERT INTO versions VALUES ('vector-pg15', '0.7.1-1', 'amd, arm', 0, '20240612', 'pg15', '', '');
 INSERT INTO versions VALUES ('vector-pg16', '0.7.1-1', 'amd, arm', 0, '20240612', 'pg16', '', '');
@@ -464,9 +466,9 @@ INSERT INTO releases VALUES ('postgis-pg15', 3, 'postgis', 'PostGIS', '', 'prod'
 INSERT INTO releases VALUES ('postgis-pg16', 3, 'postgis', 'PostGIS', '', 'prod', '', 1, 'GPLv2', '', '');
 INSERT INTO releases VALUES ('postgis-pg17', 3, 'postgis', 'PostGIS', '', 'prod', '', 1, 'GPLv2', '', '');
 
-INSERT INTO versions VALUES ('postgis-pg15', '3.5.0-1', 'amd, arm', 1, '20241101', 'pg15', '', 'https://git.osgeo.org/gitea/postgis/postgis/raw/tag/3.5.0/NEWS');
-INSERT INTO versions VALUES ('postgis-pg16', '3.5.0-1', 'amd, arm', 1, '20241101', 'pg16', '', 'https://git.osgeo.org/gitea/postgis/postgis/raw/tag/3.5.0/NEWS');
-INSERT INTO versions VALUES ('postgis-pg17', '3.5.0-1', 'amd, arm', 1, '20241101', 'pg17', '', 'https://git.osgeo.org/gitea/postgis/postgis/raw/tag/3.5.0/NEWS');
+INSERT INTO versions VALUES ('postgis-pg15', '3.5.0-1', 'amd, arm', 1, '20241021', 'pg15', '', 'https://git.osgeo.org/gitea/postgis/postgis/raw/tag/3.5.0/NEWS');
+INSERT INTO versions VALUES ('postgis-pg16', '3.5.0-1', 'amd, arm', 1, '20241021', 'pg16', '', 'https://git.osgeo.org/gitea/postgis/postgis/raw/tag/3.5.0/NEWS');
+INSERT INTO versions VALUES ('postgis-pg17', '3.5.0-1', 'amd, arm', 1, '20241021', 'pg17', '', 'https://git.osgeo.org/gitea/postgis/postgis/raw/tag/3.5.0/NEWS');
 
 INSERT INTO versions VALUES ('postgis-pg15', '3.4.2-1', 'amd, arm', 0, '20240307', 'pg15', '', 'https://git.osgeo.org/gitea/postgis/postgis/raw/tag/3.4.2/NEWS');
 INSERT INTO versions VALUES ('postgis-pg16', '3.4.2-1', 'amd, arm', 0, '20240307', 'pg16', '', 'https://git.osgeo.org/gitea/postgis/postgis/raw/tag/3.4.2/NEWS');
