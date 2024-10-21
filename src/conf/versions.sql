@@ -158,7 +158,8 @@ ORDER BY 1, 2;
 INSERT INTO projects VALUES ('hub', 'app', 0, 0, 'hub', 0, 'https://github.com/pgedge/cli','',0,'','','','');
 INSERT INTO releases VALUES ('hub', 1, 'hub',  '', '', 'hidden', '', 1, '', '', '');
 
-INSERT INTO versions VALUES ('hub', '24.11.0',   '',  1, '20241021', '', '', '');
+INSERT INTO versions VALUES ('hub', '24.11.1',   '',  1, '20241101', '', '', '');
+INSERT INTO versions VALUES ('hub', '24.11.0',   '',  0, '20241021', '', '', '');
 INSERT INTO versions VALUES ('hub', '24.10.1',   '',  0, '20240926', '', '', '');
 INSERT INTO versions VALUES ('hub', '24.10.0',   '',  0, '20240924', '', '', '');
 INSERT INTO versions VALUES ('hub', '24.9.6',    '',  0, '20240919', '', '', '');
