@@ -10,11 +10,17 @@ set -x
 
 cargo install cargo-pgrx --version $cargoV --force
 
-rm -rf postgresml
-git clone https://github.com/postgresml/postgresml
-cd postgresml/
-git checkout v$pgmlV
-git submodule update --init --recursive
+dir=pgml-$ver
+file=$dir.tar.gz
+rm -rf $dir
+rm -f $file
+
+cp $IN/$file .
+tar -xf $file
+rm $file
+mv $dir pgml
+cd pgml
+
 
 cargo pgrx init --pg$pgMajorV $pgbin/pg_config
 cd pgml-extension
