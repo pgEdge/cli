@@ -1,7 +1,4 @@
 DROP VIEW  IF EXISTS v_versions;
-DROP VIEW  IF EXISTS v_products;
-
-DROP TABLE IF EXISTS products;
 
 DROP TABLE IF EXISTS versions;
 DROP TABLE IF EXISTS extensions;
@@ -130,29 +127,6 @@ CREATE VIEW v_versions AS
     FROM projects p, releases r, versions v
    WHERE p.project = r.project
      AND r.component = v.component;
-
-CREATE TABLE products (
-  product        TEXT     NOT NULL,
-  seqnce         SMALLINT NOT NULL,
-  project        TEXT     NOT NULL,
-  PRIMARY KEY (product, seqnce)
-);
-INSERT INTO products VALUES ('ha', 1, 'etcd');
-INSERT INTO products VALUES ('ha', 2, 'patroni');
-INSERT INTO products VALUES ('ha', 3, 'backrest');
-INSERT INTO products VALUES ('ai', 1, 'pgml');
-INSERT INTO products VALUES ('ai', 2, 'vector');
-INSERT INTO products VALUES ('ai', 3, 'aifdw');
-INSERT INTO products VALUES ('ace', 1, 'ace');
-
-CREATE VIEW v_products AS
-SELECT p.product, p.seqnce, p.project, r.component, v.version,
-       v.platform, v.parent as pg_ver
-  FROM products p, releases r, versions v
- WHERE p.project = r.project AND r.component = v.component
-   AND v.is_current = 1
-ORDER BY 1, 2;
-
 
 -- ## HUB ################################
 INSERT INTO projects VALUES ('hub', 'app', 0, 0, 'hub', 0, 'https://github.com/pgedge/cli','',0,'','','','');

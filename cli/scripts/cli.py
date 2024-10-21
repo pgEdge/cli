@@ -776,6 +776,23 @@ def cli_lock():
     return False
 
 
+def process_multiple_commands(p_args):
+    cmd = ""
+    is_colon = False
+    x = 1
+    while x < len(p_args):
+        if p_args[x] == ":":
+            is_colon = True
+            util.cmd_system(cmd)
+            cmd = ""
+        else:
+            cmd = str(cmd) + " " + str(p_args[x])
+
+        x = x + 1
+
+    util.cmd_system(cmd)
+
+
 ####################################################################
 ########                    MAINLINE                      ##########
 ####################################################################
@@ -791,7 +808,15 @@ connL = sqlite3.connect(db_local)
 
 args = sys.argv
 
+if args[1] == "install" and args[2] == "ai-edition":
+   process_multiple_commands(['', 'install', 'pgml-pg16', ':', 'install', 'vector-pg16'])
+   exit_cleanly(0)
+
 ## process multiple commands seperated by ' : ' ###############
+if ":" in args:
+   process_multiple_commands(args)
+   exit_cleanly(0)
+
 cmd = ""
 is_colon = False
 x = 1
