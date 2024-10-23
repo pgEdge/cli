@@ -16,6 +16,7 @@ import ace_core
 import pgpasslib
 import fire
 import psycopg
+from psycopg.rows import dict_row
 
 import cluster
 import util
@@ -143,17 +144,12 @@ def get_row_count(p_con, p_schema, p_table):
 def get_cols(p_con, p_schema, p_table):
     sql = """
     SELECT
-        A.ATTNAME COLUMN_NAME
+        column_name
     FROM
-        PG_INDEX I
-        JOIN PG_CLASS C ON C.OID = I.INDRELID
-        JOIN PG_ATTRIBUTE A ON A.ATTRELID = C.OID
-        AND A.ATTNUM = ANY (I.INDKEY)
-        JOIN PG_NAMESPACE N ON N.OID = C.RELNAMESPACE
+        information_schema.columns
     WHERE
-        N.NSPNAME       = %s
-        AND C.RELNAME   = %s
-        AND I.INDISPRIMARY
+        table_schema = %s
+        AND table_name = %s
     """
 
     try:
@@ -182,13 +178,19 @@ def get_cols(p_con, p_schema, p_table):
 
 def get_key(p_con, p_schema, p_table):
     sql = """
-    SELECT C.COLUMN_NAME
-    FROM INFORMATION_SCHEMA.TABLE_CONSTRAINTS T,
-    INFORMATION_SCHEMA.CONSTRAINT_COLUMN_USAGE C
-    WHERE c.constraint_name = t.constraint_name
-    AND c.table_schema = t.constraint_schema
-    AND c.table_schema = %s AND c.table_name = %s
-    AND T.CONSTRAINT_TYPE='PRIMARY KEY'
+    SELECT
+        kcu.column_name
+    FROM
+        information_schema.table_constraints tc
+    JOIN
+        information_schema.key_column_usage kcu
+    ON
+        tc.constraint_name = kcu.constraint_name
+        AND tc.table_schema = kcu.table_schema
+    WHERE
+        tc.constraint_type = 'PRIMARY KEY'
+        AND tc.table_schema = %s
+        AND tc.table_name = %s
     """
 
     try:
@@ -285,11 +287,106 @@ def check_cluster_exists(cluster_name, base_dir="cluster"):
     return True if os.path.exists(cluster_dir) else False
 
 
+def check_user_privileges(conn, username, schema, table, required_privileges=[]):
+    """
+    In most cases, the ace user provisioned in production will have limited access
+    to the tables. We will use this function to check for specific privileges when
+    an ACE module is invoked.
+    - table-diff, repset-diff, table-rerun need SELECT
+    - table-repair needs SELECT, INSERT, UPDATE, DELETE
+    - table-repair with --upsert-only needs SELECT, INSERT, UPDATE
+    """
+
+    # This query will give us the privilege type and whether the user has that
+    # specific privilege or not.
+    query = """
+    WITH params AS (
+        SELECT %s::text AS username,
+               %s::text AS schema_name,
+               %s::text AS table_name
+    ),
+    table_check AS (
+        SELECT table_schema, table_name
+        FROM information_schema.tables
+        WHERE table_schema = (SELECT schema_name FROM params)
+          AND table_name = (SELECT table_name FROM params)
+    )
+    SELECT
+        CASE
+            WHEN EXISTS (SELECT 1 FROM table_check)
+            THEN has_table_privilege(
+                (SELECT username FROM params),
+                (SELECT schema_name || '.' || table_name FROM params),
+                'SELECT'
+            )
+            ELSE FALSE
+        END AS table_select,
+        CASE
+            WHEN EXISTS (SELECT 1 FROM table_check)
+            THEN has_table_privilege(
+                (SELECT username FROM params),
+                (SELECT schema_name || '.' || table_name FROM params),
+                'INSERT'
+            )
+            ELSE FALSE
+        END AS table_insert,
+        CASE
+            WHEN EXISTS (SELECT 1 FROM table_check)
+            THEN has_table_privilege(
+                (SELECT username FROM params),
+                (SELECT schema_name || '.' || table_name FROM params),
+                'UPDATE'
+            )
+            ELSE FALSE
+        END AS table_update,
+        CASE
+            WHEN EXISTS (SELECT 1 FROM table_check)
+            THEN has_table_privilege(
+                (SELECT username FROM params),
+                (SELECT schema_name || '.' || table_name FROM params),
+                'DELETE'
+            )
+            ELSE FALSE
+        END AS table_delete,
+        has_table_privilege(
+            (SELECT username FROM params),
+            'information_schema.columns',
+            'SELECT'
+        ) AS columns_select,
+        has_table_privilege(
+            (SELECT username FROM params),
+            'information_schema.table_constraints',
+            'SELECT'
+        ) AS table_constraints_select,
+        has_table_privilege(
+            (SELECT username FROM params),
+            'information_schema.key_column_usage',
+            'SELECT'
+        ) AS key_column_usage_select;
+    """
+
+    if required_privileges:
+        # Transform required_privileges to column names we use in the query
+        required_privileges = [f"table_{p.lower()}" for p in required_privileges]
+
+    cur = conn.cursor(row_factory=dict_row)
+    cur.execute(query, (username, schema, table))
+    results = cur.fetchone()
+
+    if not required_privileges:
+        return all(results.values()), {k: v for k, v in results.items() if not v}
+    else:
+        return all([results[p] for p in required_privileges]), {
+            k: v for k, v in results.items() if not v
+        }
+
+
 def write_diffs_json(diff_dict, row_types, quiet_mode=False):
 
     def convert_to_json_type(item: str, type: str):
         try:
-            if any([s in type for s in ["char", "text", "time"]]):
+            # If the type is bytea, we're anyway converting it to hex
+            if any([s in type for s in ["char", "text", "time", "bytea"]]):
                 return item
             else:
                 item = ast.literal_eval(item)
@@ -517,6 +614,7 @@ def table_diff_checks(td_task: TableDiffTask) -> TableDiffTask:
 
     conn_params = []
     conn_list = []
+    required_privileges = ["SELECT"]
 
     try:
         for nd in cluster_nodes:
@@ -549,11 +647,31 @@ def table_diff_checks(td_task: TableDiffTask) -> TableDiffTask:
                         )
                     params["password"] = pgpass
 
+                conn = psycopg.connect(**params)
+
+                authorised, missing_privileges = check_user_privileges(
+                    conn, nd["db_user"], l_schema, l_table, required_privileges
+                )
+
+                missing_privs = [
+                    m.split("_")[1].upper()
+                    for m in missing_privileges
+                    if m.split("_")[1].upper() in required_privileges
+                ]
+                exception_msg = (
+                    f"User \"{nd['db_user']}\" does not have the necessary privileges"
+                    f" to run {', '.join(missing_privs)} "
+                    f"on table \"{l_schema}.{l_table}\" on node \"{nd['name']}\""
+                )
+
+                if not authorised:
+                    raise AceException(exception_msg)
+
                 conn_list.append(psycopg.connect(**params))
                 conn_params.append(params)
 
     except Exception as e:
-        raise AceException("Error in table_diff() Getting Connections:" + str(e), 1)
+        raise e
 
     util.message(
         "Connections successful to nodes in cluster",

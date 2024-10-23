@@ -306,8 +306,14 @@ def compare_checksums(shared_objects, worker_state, batches):
                 # Transform all elements in t1_result and t2_result into strings before
                 # consolidating them into a set
                 # TODO: Test and add support for different datatypes here
-                t1_result = [tuple(str(x) for x in row) for row in t1_result]
-                t2_result = [tuple(str(x) for x in row) for row in t2_result]
+                t1_result = [
+                    tuple(x.hex() if isinstance(x, bytes) else str(x) for x in row)
+                    for row in t1_result
+                ]
+                t2_result = [
+                    tuple(x.hex() if isinstance(x, bytes) else str(x) for x in row)
+                    for row in t2_result
+                ]
 
                 # Collect results into OrderedSets for comparison
                 t1_set = OrderedSet(t1_result)
