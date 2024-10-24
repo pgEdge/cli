@@ -653,6 +653,10 @@ def table_diff_checks(td_task: TableDiffTask) -> TableDiffTask:
                     conn, nd["db_user"], l_schema, l_table, required_privileges
                 )
 
+                # Missing privileges come back as table_<privilege>, but we use
+                # "SELECT/INSERT/UPDATE/DELETE" in the required_privileges list
+                # So, we're simply formatting it correctly here for the exception
+                # message
                 missing_privs = [
                     m.split("_")[1].upper()
                     for m in missing_privileges
@@ -832,6 +836,10 @@ def table_repair_checks(tr_task: TableRepairTask) -> TableRepairTask:
     conns = {}
     conn_params = []
     host_map = {}
+    required_privileges = ["SELECT", "INSERT", "UPDATE"]
+
+    if not tr_task.upsert_only:
+        required_privileges.append("DELETE")
 
     try:
         for nd in cluster_nodes:
@@ -860,13 +868,33 @@ def table_repair_checks(tr_task: TableRepairTask) -> TableRepairTask:
                     )
                 params["password"] = pgpass
 
+            conn = psycopg.connect(**params)
+
+            authorised, missing_privileges = check_user_privileges(
+                conn, nd["db_user"], l_schema, l_table, required_privileges
+            )
+
+            missing_privs = [
+                m.split("_")[1].upper()
+                for m in missing_privileges
+                if m.split("_")[1].upper() in required_privileges
+            ]
+            exception_msg = (
+                f"User \"{nd['db_user']}\" does not have the necessary privileges"
+                f" to run {', '.join(missing_privs)} "
+                f"on table \"{l_schema}.{l_table}\" on node \"{nd['name']}\""
+            )
+
+            if not authorised:
+                raise AceException(exception_msg)
+
             # Use port number to support localhost clusters
             host_map[nd["public_ip"] + ":" + params["port"]] = nd["name"]
             conn_params.append(params)
             conns[nd["name"]] = psycopg.connect(**params)
 
     except Exception as e:
-        raise AceException("Error in diff_tbls() Getting Connections:" + str(e), 1)
+        raise e
 
     util.message(
         "Connections successful to nodes in cluster",
