@@ -8,9 +8,13 @@ export PGRX_IGNORE_RUST_VERSIONS=1
 set -e
 set -x
 
-cargo install cargo-pgrx --version $cargoV --force
+cargo-pgrx --version
+rc=$?
+if [ ! "$rc" == "0" ]; then
+  cargo install cargo-pgrx --version $cargoV --force
+fi
 
-dir=pgml-$ver
+dir=pgml-$pgmlV
 file=$dir.tar.gz
 rm -rf $dir
 rm -f $file
