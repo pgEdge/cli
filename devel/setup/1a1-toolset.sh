@@ -11,7 +11,6 @@ install_rust () {
 
 
 install-apt-toolset () {
-  $apt podman podman-compose
   $apt ruby squashfs-tools
   sudo gem install fpm
 

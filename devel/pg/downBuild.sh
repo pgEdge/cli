@@ -103,7 +103,7 @@ makeInstall () {
     sleep 2
   fi
 
-  cmd="make -j8"
+  cmd="make -j4"
   echoCmd "$cmd"
   sleep 1
   echoCmd "make install"
