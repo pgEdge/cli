@@ -1,0 +1,2 @@
+
+python3 kirk-ui.py > kirk-ui.log 2>&1 &

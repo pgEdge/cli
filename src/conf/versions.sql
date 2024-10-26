@@ -1,3 +1,8 @@
+
+DROP TABLE IF EXISTS hub_version;
+CREATE TABLE hub_version(version TEXT NOT NULL PRIMARY KEY);
+INSERT INTO hub_version VALUES ('24.11.1');
+
 DROP VIEW  IF EXISTS v_versions;
 
 DROP TABLE IF EXISTS versions;
@@ -5,7 +10,6 @@ DROP TABLE IF EXISTS extensions;
 DROP TABLE IF EXISTS releases;
 DROP TABLE IF EXISTS projects;
 DROP TABLE IF EXISTS categories;
-
 
 CREATE TABLE categories (
   category    INTEGER  NOT NULL PRIMARY KEY,
@@ -132,7 +136,7 @@ CREATE VIEW v_versions AS
 INSERT INTO projects VALUES ('hub', 'app', 0, 0, 'hub', 0, 'https://github.com/pgedge/cli','',0,'','','','');
 INSERT INTO releases VALUES ('hub', 1, 'hub',  '', '', 'hidden', '', 1, '', '', '');
 
-INSERT INTO versions VALUES ('hub', '24.11.1',   '',  1, '20241101', '', '', '');
+INSERT INTO versions VALUES ('hub', (select version from hub_version),   '',  1, '20241101', '', '', '');
 INSERT INTO versions VALUES ('hub', '24.11.0',   '',  0, '20241021', '', '', '');
 INSERT INTO versions VALUES ('hub', '24.10.1',   '',  0, '20240926', '', '', '');
 INSERT INTO versions VALUES ('hub', '24.10.0',   '',  0, '20240924', '', '', '');
@@ -207,7 +211,7 @@ INSERT INTO versions VALUES ('pljava-pg16', '1.6.4-1',  'amd, arm',  0, '2023060
 INSERT INTO projects VALUES ('kirk', 'dev', 11, 8883, '', 0, 'https://github.com/pgedge/cli/kirk',
   'kirk', 0, 'mqtt.png', 'MQTT Client', 'https://github.com/pgedge/cli/kirk', '');
 INSERT INTO releases VALUES ('kirk', 2, 'kirk', 'MQTT Client', '', 'test', '', 1, 'PGEDGE', '', '');
-INSERT INTO versions VALUES ('kirk', '24.11.0', '',  1, '20241021', '', '', '');
+INSERT INTO versions VALUES ('kirk', (select version from hub_version), '',  1, '20241101', '', '', '');
 
 -- ## PLDEBUGGER #########################
 INSERT INTO projects VALUES ('pldebugger', 'dev', 4, 0, '', 0, 'https://github.com/EnterpriseDB/pldebugger/tags',
