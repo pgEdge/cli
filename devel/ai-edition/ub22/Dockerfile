@@ -26,7 +26,7 @@ COPY reqs.ub22  /tmp/requirements.txt
 RUN which pip3
 RUN pip3 install -r /tmp/requirements.txt
 
-ARG CACHEBUST=3
+ARG CACHEBUST=5
 
 ENV REPO=http://host.docker.internal:8000
 RUN wget $REPO/install.py
