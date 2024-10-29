@@ -808,14 +808,15 @@ connL = sqlite3.connect(db_local)
 
 args = sys.argv
 
-if args[1] == "install" and args[2] == "ai-edition":
-   process_multiple_commands(['', 'install', 'pgml-pg16', ':', 'install', 'vector-pg16'])
-   exit_cleanly(0)
+if len(args) == 3:
+    if args[1] == "install" and args[2] == "ai-edition":
+        process_multiple_commands(['', 'install', 'pgml-pg16', ':', 'install', 'vector-pg16'])
+        exit_cleanly(0)
 
 ## process multiple commands seperated by ' : ' ###############
 if ":" in args:
-   process_multiple_commands(args)
-   exit_cleanly(0)
+    process_multiple_commands(args)
+    exit_cleanly(0)
 
 cmd = ""
 is_colon = False
