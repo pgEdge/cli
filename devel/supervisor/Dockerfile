@@ -15,6 +15,10 @@ RUN echo '%sudo ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
 RUN chown pgedge:sudo /opt
 COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
+COPY kirk-config.sh /home/pgedge/.kirk.conf
+RUN chown pgedge:sudo /home/pgedge/.kirk.conf
+RUN chmod 700 /home/pgedge/.kirk.conf
+
 #ARG DATA_DIR="/data/pgdata"
 #RUN mkdir -p ${DATA_DIR} \
 #    && chown -R pgedge:sudo /data \
