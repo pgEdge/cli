@@ -199,14 +199,6 @@ INSERT INTO versions VALUES ('plv8-pg17', '3.2.3-1', 'amd, arm', 1, '20241021', 
 INSERT INTO versions VALUES ('plv8-pg15', '3.2.2-1', 'amd, arm', 0, '20240523', 'pg15', '', '');
 INSERT INTO versions VALUES ('plv8-pg16', '3.2.2-1', 'amd, arm', 0, '20240214', 'pg16', '', '');
 
--- ## PLJAVA #############################
-INSERT INTO projects VALUES ('pljava', 'dev', 4, 0, '', 0, 'https://github.com/tada/pljava/releases', 
-  'pljava', 1, 'pljava.png', 'Java Stored Procedures', 'https://github.com/tada/pljava', 'pl_java');
-INSERT INTO releases VALUES ('pljava-pg15', 7, 'pljava', 'PL/Java', '', 'test', '', 1, 'POSTGRES', '', '');
-INSERT INTO releases VALUES ('pljava-pg16', 7, 'pljava', 'PL/Java', '', 'test', '', 1, 'POSTGRES', '', '');
-INSERT INTO versions VALUES ('pljava-pg15', '1.6.4-1',  'amd, arm',  0, '20230608', 'pg15', '', '');
-INSERT INTO versions VALUES ('pljava-pg16', '1.6.4-1',  'amd, arm',  0, '20230608', 'pg16', '', '');
-
 -- ## KIRK ###############################
 INSERT INTO projects VALUES ('kirk', 'dev', 11, 8883, '', 0, 'https://github.com/pgedge/cli/kirk',
   'kirk', 0, 'mqtt.png', 'MQTT Client', 'https://github.com/pgedge/cli/kirk', '');
@@ -240,18 +232,6 @@ INSERT INTO versions VALUES ('plprofiler-pg15', '4.2.5-1', 'amd, arm', 1, '20240
 
 INSERT INTO versions VALUES ('plprofiler-pg16', '4.2.4-1', 'amd, arm', 0, '20230914', 'pg16', '', '');
 INSERT INTO versions VALUES ('plprofiler-pg15', '4.2.4-1', 'amd, arm', 0, '20230914', 'pg15', '', '');
-
--- ## PREST ##############################
-INSERT INTO projects VALUES ('prest', 'pge', 11, 3000, '', 0, 'https://github.com/prest/prest/release',
-  'prest', 0, 'prest.png', 'a RESTful API', 'https://prest.org', 'p_rest');
-INSERT INTO releases VALUES ('prest', 9, 'prest', 'pREST', '', 'test', '', 1, 'MIT', '', '');
-INSERT INTO versions VALUES ('prest', '1.4.2', 'amd, arm', 0, '20240221', '', '', '');
-
--- ## POSTGREST ##########################
-INSERT INTO projects VALUES ('postgrest', 'pge', 11, 3000, '', 0, 'https://github.com/postgrest/postgrest/tags',
-  'postgrest', 0, 'postgrest.png', 'a RESTful API', 'https://postgrest.org', 'post_grest');
-INSERT INTO releases VALUES ('postgrest', 9, 'postgrest', 'PostgREST', '', 'test', '', 1, 'MIT', '', '');
-INSERT INTO versions VALUES ('postgrest', '12.0.2-1', 'amd, arm', 0, '20240212', '', 'EL9', 'https://postgrest.org');
 
 -- ## PROMPGEXP ##########################
 INSERT INTO projects VALUES ('prompgexp', 'pge', 11, 9187, 'golang', 0, 'https://github.com/prometheus-community/postgres_exporter/releases',
@@ -305,14 +285,6 @@ INSERT INTO versions VALUES ('timescaledb-pg17', '2.17.0-1', 'amd, arm', 1, '202
 
 INSERT INTO versions VALUES ('timescaledb-pg15', '2.16.1-1', 'amd, arm', 0, '20240820', 'pg15', '', '');
 INSERT INTO versions VALUES ('timescaledb-pg16', '2.16.1-1', 'amd, arm', 0, '20240820', 'pg16', '', '');
-
--- ## CURL ##############################
-INSERT INTO projects VALUES ('curl', 'ext', 4, 0, '',0, 'https://github.com/pg_curl/pg_curl/releases',
-  'curl', 1, 'curl.png', 'Invoke JSON Services', 'https://github.com/pg_curl/pg_curl', 'pg_curl');
-INSERT INTO releases VALUES ('curl-pg15', 10, 'curl', 'pgCron', '', 'test', '', 1, 'POSTGRES', '', '');
-INSERT INTO releases VALUES ('curl-pg16', 10, 'curl', 'pgCron', '', 'test', '', 1, 'POSTGRES', '', '');
-INSERT INTO versions VALUES ('curl-pg15', '2.2.2-1',  'amd, arm', 0, '20240130', 'pg15', '', '');
-INSERT INTO versions VALUES ('curl-pg16', '2.2.2-1',  'amd, arm', 0, '20240130', 'pg16', '', '');
 
 -- ## CITUS #############################
 INSERT INTO projects VALUES ('citus', 'pge', 4, 0, '',0, 'https://github.com/citusdata/citus/releases',
@@ -479,12 +451,6 @@ INSERT INTO releases VALUES ('hypopg-pg16', 99, 'hypopg', 'HypoPG', '', 'prod','
 INSERT INTO versions VALUES ('hypopg-pg15', '1.4.1-1',  'amd, arm', 1, '20240509', 'pg15', '', '');
 INSERT INTO versions VALUES ('hypopg-pg16', '1.4.1-1',  'amd, arm', 1, '20230509', 'pg16', '', '');
 
--- ## BADGER ############################
-INSERT INTO projects VALUES ('badger', 'app', 4, 0, '', 6, 'https://github.com/darold/pgbadger/releases',
-  'badger', 0, 'badger.png', 'Performance Reporting', 'https://pgbadger.darold.net', 'pg_badger');
-INSERT INTO releases VALUES ('badger', 101, 'badger','pgBadger','', 'test', '', 1, 'POSTGRES', '', '');
-INSERT INTO versions VALUES ('badger', '11.8', '', 0, '20220408', '', '', '');
-
 -- ## CTLIBS ############################
 INSERT INTO projects VALUES ('ctlibs', 'pge', 0, 0, '', 3, 'https://github.com/pgedge/cli',
   'ctlibs',  0, 'ctlibs.png', 'ctlibs', 'https://github.com/pgedge/cli', '');
@@ -521,12 +487,6 @@ INSERT INTO projects VALUES ('ace', 'pge', 11, 5000, '', 3, 'http://github.com/p
 INSERT INTO releases VALUES ('ace', 2, 'ace',  'ACE', '', 'test', '', 1, 'PGEDGE', '', '');
 INSERT INTO versions VALUES ('ace', '2.0', '', 1, '20241002', '', '', '');
 
--- ## FIREWALLD #########################
-INSERT INTO projects VALUES ('firewalld', 'app', 11, 0, '', 4, 'https://firewalld.org',
-  'firewalld', 0, 'firewalld.png', 'OS Firewall', 'https://github.com/firewalld/firewalld', '');
-INSERT INTO releases VALUES ('firewalld', 1, 'firewalld', 'Firewalld', '', 'test', '', 1, 'GPLv2', '', '');
-INSERT INTO versions VALUES ('firewalld', '1.2', '', 0, '20231101', '', 'EL', '');
-
 -- ## PATRONI ###########################
 INSERT INTO projects VALUES ('patroni', 'app', 11, 0, '', 4, 'https://github.com/pgedge/pgedge-patroni/release',
   'patroni', 0, 'patroni.png', 'HA', 'https://github.com/pgedge/pgedge-patroni', 'pg_patroni, pgedge_patroni');
@@ -538,10 +498,4 @@ INSERT INTO projects VALUES ('etcd', 'app', 11, 2379, '', 4, 'https://github.com
   'etcd', 0, 'etcd.png', 'HA', 'https://github.com/etcd-io/etcd', '');
 INSERT INTO releases VALUES ('etcd', 1, 'etcd', 'Etcd', '', 'test', '', 1, 'POSTGRES', '', '');
 INSERT INTO versions VALUES ('etcd', '3.5.12-2', 'amd, arm', 1, '20240328', '', 'EL', '');
-
--- ## MINIO #############################
-INSERT INTO projects VALUES ('minio', 'app', 11, 9000, '', 4, 'https://github.com/minio/minio/tags',
-  'minio', 0, 'minio.png', 'HA', 'https://github.com/minio/minio', '');
-INSERT INTO releases VALUES ('minio', 1, 'minio', 'MinIO', '', 'test', '', 1, 'AGPLv3', '', '');
-INSERT INTO versions VALUES ('minio', '24.9.13', 'amd, arm', 0, '20240917', '', 'EL', '');
 
