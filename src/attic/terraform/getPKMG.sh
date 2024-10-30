@@ -1,1 +1,0 @@
-../bts/getPKMG.sh
