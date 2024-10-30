@@ -1,12 +1,13 @@
 #!/usr/bin/env bash
+cd "$(dirname "$0")"
 
-log_dir=$MY_LOGS/kirk
-mkdir -p $log_dir
-log=$log_dir/kirk.log
+echo "not implemented"
+exit 1
+
+log=$MY_LOGS/kirk.log
 
 echo "" >> $log
 echo "#######  Stopping KIRK: `date`  #######" | tee -a $log
-rm -f $MY_DATA/kirk.pid
 
 pid=`ps aux | grep [k]irk.py | awk '{print $2}'`
 if [ "$pid" == "" ]; then

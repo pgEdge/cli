@@ -26,7 +26,6 @@ def run_command(p_cmd):
     """Run a command while capturing the output stream of messages"""
 
     cmd = f"{MY_HOME}/{MY_CMD} {p_cmd} --json"
-    cmd_l = cmd.split()
 
     result = subprocess.run(cmd, text=True, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
@@ -37,7 +36,6 @@ def run_command(p_cmd):
             jj = json.loads(ln)
             ret_j.append(jj)
         except Exception as e:
-            print(f"DEBUG: exceptional line: '{ln}' len = {len(ln)}")
             if len(ln) > 0:
                 ret_j.append(ln)
 
@@ -47,82 +45,11 @@ def run_command(p_cmd):
     publish_message(json.dumps(ret_j))
     return(0)
 
-
     out_p = str(subprocess.check_output(cmd, shell=True), "utf-8")
     for ln in out_p.splitlines():
         publish_message(ln)
 
     return(0)
-
-    ### the below is test code and never (presently) executed
-    ###  it is an attempt to iterate thru a stream of stdout messages
-    ###  as they occur in order to give interactive feedback.  The
-    ###  problem seems that of thread blocking/interference between
-    ###  PAHO and looping thru the subprocess.Popen)
-    try:
-      process = subprocess.Popen(
-        cmd_l,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.STDOUT
-      )
-      while True:
-        line = process.stdout.readline()
-        if not line and process.poll() is not None:
-            break
-
-        clean_line = line.decode().strip()
-        print(f"DEBUG: stdout.clean_line {clean_line}")
-
-        rc = process_output_line(clean_line, str(cmd_l[1]))
-        err_kount = err_kount + rc
-
-    except Exception as e:
-        print(f"ERROR: Processing output: {e}")
-        return(1)
-
-    publish_message('[{"rc": "' + str(err_kount) + '"}]')
-
-    if err_kount > 0:
-        return(1)
-
-    return(0)
-
-
-def process_output_line(p_line, p_cmd):
-    """Process each output line."""
-    
-    if p_line == "":
-        return(0)
-
-    rc = 0
-    try:
-        jj = json.loads(p_line)
-        if p_line.startswith('[{"type": "error",'):
-            rc = 1
-        elif p_line.startswith('[{"type"'):
-            pass
-        elif p_cmd in ["info", "list"]:
-            ## these data commands pass custom json 
-            pass
-        else:
-            ## this is a funky line thats ignored (for now)
-            util.mesage(f"ignoring this json line for now: '{p_line}'", "debug")
-            pass
-
-    except Exception as e:
-        util.message(f"turn it into json: {e}", "debug")
-        ## turn it into json info
-        out_a = []
-        out_j = {}
-        out_j["type"] = "info"
-        out_j["msg"] = p_line
-        out_a.append(out_j)
-        print(json.dumps(out_a))
-        return(0)
-
-    print("DEBUG2 process output line")
-    publish_message(p_line)
-    return(rc)
 
 
 def publish_message(p_msg):
@@ -139,8 +66,6 @@ def on_connect(client, userdata, flags, rc, properties=None):
 
 
 def on_disconnect(client, userdata, rc, properties=None):
-    #if rc != 0:
-    #    util.message(f"Unexpected disconnection with rc = {rc}")
     pass
 
 
@@ -162,13 +87,6 @@ def on_message(client, userdata, msg):
 
 
 ## MAINLINE ########################################################
-
-pidfile = f"{MY_DATA}/kirk.pid"
-this_pid = os.getpid()
-if os.path.exists(pidfile):
-    util.exit_message(f"Process already running. (check '{pidfile}')", 0)
-else:
-    os.system(f"echo '{this_pid}' > {pidfile}")
 
 client = paho.Client(client_id="", userdata=None, protocol=paho.MQTTv5)
 client.on_connect = on_connect
