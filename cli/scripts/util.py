@@ -1600,10 +1600,9 @@ def message(p_msg, p_state="info", p_isJSON=None, quiet_mode=False):
     if jsn_msg != None:
         msg = p_msg.replace("\n", "")
         if msg.strip() > "":
-            json_dict = {}
-            json_dict["state"] = p_state
-            json_dict["msg"] = msg
-            print(json.dumps([json_dict]))
+            json_d = {}
+            json_d[p_state] = str(msg)
+            print(json.dumps(json_d))
 
     return
 

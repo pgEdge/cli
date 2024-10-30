@@ -27,8 +27,38 @@ def run_command(p_cmd):
 
     cmd = f"{MY_HOME}/{MY_CMD} {p_cmd} --json"
     cmd_l = cmd.split()
-    err_kount = 0
 
+    result = subprocess.run(cmd, text=True, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+
+    rso = result.stdout
+    ret_j = []
+    for ln in rso.splitlines():
+        try:
+            jj = json.loads(ln)
+            ret_j.append(jj)
+        except Exception as e:
+            print(f"DEBUG: exceptional line: '{ln}' len = {len(ln)}")
+            if len(ln) > 0:
+                ret_j.append(ln)
+
+    rc_j = {}
+    rc_j["rc"] = str(result.returncode)
+    ret_j.append(rc_j)
+    publish_message(json.dumps(ret_j))
+    return(0)
+
+
+    out_p = str(subprocess.check_output(cmd, shell=True), "utf-8")
+    for ln in out_p.splitlines():
+        publish_message(ln)
+
+    return(0)
+
+    ### the below is test code and never (presently) executed
+    ###  it is an attempt to iterate thru a stream of stdout messages
+    ###  as they occur in order to give interactive feedback.  The
+    ###  problem seems that of thread blocking/interference between
+    ###  PAHO and looping thru the subprocess.Popen)
     try:
       process = subprocess.Popen(
         cmd_l,
@@ -41,6 +71,7 @@ def run_command(p_cmd):
             break
 
         clean_line = line.decode().strip()
+        print(f"DEBUG: stdout.clean_line {clean_line}")
 
         rc = process_output_line(clean_line, str(cmd_l[1]))
         err_kount = err_kount + rc
@@ -81,25 +112,28 @@ def process_output_line(p_line, p_cmd):
     except Exception as e:
         util.message(f"turn it into json: {e}", "debug")
         ## turn it into json info
+        out_a = []
         out_j = {}
         out_j["type"] = "info"
         out_j["msg"] = p_line
-        print(f"[{json.dumps(out_j)}]")
+        out_a.append(out_j)
+        print(json.dumps(out_a))
         return(0)
 
+    print("DEBUG2 process output line")
     publish_message(p_line)
     return(rc)
 
 
 def publish_message(p_msg):
     print(p_msg)
-    client.publish(topic=f"{TOPIC}/out", payload=p_msg, qos=0)
+    client.publish(topic=f"{TOPIC}/out", payload=p_msg, qos=1)
 
 
 def on_connect(client, userdata, flags, rc, properties=None):
     if rc == 0:
         util.message("Connection succesful.")
-        client.subscribe(TOPIC, qos=0)
+        client.subscribe(TOPIC, qos=1)
     else:
         util.message(f"Connection failed: {rc}")
 
