@@ -4,7 +4,7 @@ hubVV=24.11-1
 bundle=pgedge
 api=pgedge
 
-ctlibsV=1.7
+ctlibsV=1.7.1
 aceV=2.0
 kirkV=$hubV 
 
