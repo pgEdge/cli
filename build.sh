@@ -393,7 +393,6 @@ initPG () {
 
   initC "prompgexp"    "prompgexp"    "$prompgexpV" "$outPlat" "postgres/prompgexp" "" "" "nil"
   initC "kirk"         "kirk"         "$kirkV"      ""         "kirk"               "" "" "Y"
-  initC "kirk-ui"      "kirk-ui"      "$kirkV"      ""         "kirk-ui"            "" "" "Y"
   initC "ace"          "ace"          "$aceV"       ""         "ace"                "" "" "Y"
 
   ## initC "postgrest"    "postgrest"    "$postgrestV" "$outPlat" "postgres/postgrest" "" "" "nil"
