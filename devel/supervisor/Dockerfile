@@ -34,9 +34,8 @@ RUN python3 install.py
 RUN rm install.py
 
 WORKDIR $LOCT/pgedge
-RUN ./$CMD install pg16 pg17 kirk --disabled
+RUN ./$CMD install pg16 kirk --disabled
 RUN ./$CMD install spock40-pg16 snowflake-pg16  --disabled
-RUN ./$CMD install spock40-pg17 snowflake-pg17  --disabled
 
 EXPOSE 5432
 
