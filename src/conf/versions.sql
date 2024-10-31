@@ -311,12 +311,13 @@ INSERT INTO releases VALUES ('vector-pg15', 4, 'vector', 'pgVector', '', 'prod',
 INSERT INTO releases VALUES ('vector-pg16', 4, 'vector', 'pgVector', '', 'prod', '', 1, 'POSTGRES', '', '');
 INSERT INTO releases VALUES ('vector-pg17', 4, 'vector', 'pgVector', '', 'prod', '', 1, 'POSTGRES', '', '');
 
-INSERT INTO versions VALUES ('vector-pg15', '0.7.4-1', 'amd, arm', 1, '20240820', 'pg15', '', '');
-INSERT INTO versions VALUES ('vector-pg16', '0.7.4-1', 'amd, arm', 1, '20240820', 'pg16', '', '');
-INSERT INTO versions VALUES ('vector-pg17', '0.7.4-1', 'amd, arm', 1, '20241021', 'pg17', '', '');
+INSERT INTO versions VALUES ('vector-pg15', '0.8.0-1', 'amd, arm', 1, '20241101', 'pg15', '', '');
+INSERT INTO versions VALUES ('vector-pg16', '0.8.0-1', 'amd, arm', 1, '20241101', 'pg16', '', '');
+INSERT INTO versions VALUES ('vector-pg17', '0.8.0-1', 'amd, arm', 1, '20241101', 'pg17', '', '');
 
-INSERT INTO versions VALUES ('vector-pg15', '0.7.1-1', 'amd, arm', 0, '20240612', 'pg15', '', '');
-INSERT INTO versions VALUES ('vector-pg16', '0.7.1-1', 'amd, arm', 0, '20240612', 'pg16', '', '');
+INSERT INTO versions VALUES ('vector-pg15', '0.7.4-1', 'amd, arm', 0, '20240820', 'pg15', '', '');
+INSERT INTO versions VALUES ('vector-pg16', '0.7.4-1', 'amd, arm', 0, '20240820', 'pg16', '', '');
+INSERT INTO versions VALUES ('vector-pg17', '0.7.4-1', 'amd, arm', 0, '20241021', 'pg17', '', '');
 
 -- ## SNOWFLAKE #########################
 INSERT INTO projects VALUES ('snowflake', 'pge', 4, 0, '', 1, 'https://github.com/pgedge/snowflake/tags',

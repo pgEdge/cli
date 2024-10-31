@@ -19,7 +19,7 @@ P17=17.0-1
 P16=16.4-2
 P15=15.8-2
 
-vectorV=0.7.4-1
+vectorV=0.8.0-1
 bouncerV=1.23.1-1
 catV=1.2.0
 adminV=8.x
