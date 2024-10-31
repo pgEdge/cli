@@ -366,9 +366,6 @@ initPG () {
     initC "audit-pg$pgM"      "audit"      "$audit16V"   "$outPlat" "postgres/audit"     "" "" "nil"
     initC "hintplan-pg$pgM"   "hintplan"   "$hint16V"    "$outPlat" "postgres/hintplan"  "" "" "nil"
     initC "spock41-pg$pgM"    "spock41"    "$spock41V"   "$outPlat" "postgres/spock41"   "" "" "nil"
-    if [ `arch` == "x86_64" ]; then
-      initC "pgml-pg$pgM"     "pgml"       "$pgmlV"      "$outPlat" "postgres/pgml"      "" "" "nil"
-    fi
   fi
 
   if [ "$pgM" == "15" ]; then

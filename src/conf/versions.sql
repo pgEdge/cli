@@ -89,7 +89,6 @@ INSERT INTO extensions VALUES ('lolor',     'lolor',     0, '',          '');
 INSERT INTO extensions VALUES ('postgis',   'postgis',   1, 'postgis-3', '');
 INSERT INTO extensions VALUES ('setuser',   'set_user',  1, 'set_user',  '');
 INSERT INTO extensions VALUES ('orafce',    'orafce',    1, 'orafce',    '');
-INSERT INTO extensions VALUES ('pgml',      'pgml',      1, 'pgml',      'pgml.venv=~/venv');
 INSERT INTO extensions VALUES ('snowflake', 'snowflake', 1, 'snowflake', '');
 
 INSERT INTO extensions VALUES ('vector',    'vector',       0, '',               '');
@@ -106,7 +105,6 @@ INSERT INTO extensions VALUES ('hypopg',    'hypopg',       1, 'hypopg',        
 INSERT INTO extensions VALUES ('plv8',      'plv8',         0, '',               '');
 INSERT INTO extensions VALUES ('pldebugger','pldbgapi',     1, 'plugin_debugger','');
 INSERT INTO extensions VALUES ('plprofiler','plprofiler',   1, 'plprofiler',     '');
-INSERT INTO extensions VALUES ('curl',      'pg_curl',      1, 'pg_curl',        '');
 
 
 CREATE TABLE versions (
@@ -164,12 +162,6 @@ INSERT INTO versions VALUES ('pg16', '16.3-3',  'amd, arm', 0, '20240710','', ''
 INSERT INTO releases VALUES ('pg17', 2, 'pg', '', '', 'prod', 
   '<font size=-1>New in <a href=https://www.postgresql.org/docs/17/release-17.html>2024!</a></font>', 1, 'POSTGRES', '', '');
 INSERT INTO versions VALUES ('pg17', '17.0-1',    'amd, arm', 1, '20240926','', '', '');
-
--- ## PGML ###############################
-INSERT INTO projects VALUES ('pgml', 'ext', 4, 0, '', 0, 'https://github.com/postgresml/postgresml',
-  'pgml', 1, 'pgml.png', 'GPU Driven AI', 'https://github.com/postgresml/postgresml', '');
-INSERT INTO releases VALUES ('pgml-pg16', 2, 'pgml', 'pgML', '', 'test', '', 1, 'MIT', '', '');
-INSERT INTO versions VALUES ('pgml-pg16', '2.9.3-1',   'amd', 1, '20240905', 'pg16', 'PGML', '');
 
 -- ## ORAFCE #############################
 INSERT INTO projects VALUES ('orafce', 'ext', 4, 0, '', 0, 'https://github.com/orafce/orafce/releases',
