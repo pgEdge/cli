@@ -77,7 +77,7 @@ do
   fi
 done
 
-set_libpath "14 15 16 17"
+set_libpath "15 16 17"
 
 python3 --version > /dev/null 2>&1
 rc=$?
@@ -90,8 +90,12 @@ v=`python3 --version | cut -d' ' -f2 | cut -d'.' -f1,2`
 if [ $v == "3.9" ] || [ $v == "3.10" ] || [ $v == "3.11" ] || [ $v == "3.12" ]; then
   cat /dev/null
 else
-  echo "Python$v not supported"
-  exit 1
+  if [ $v == "3.13" ]; then
+    echo "WARNING: Support for Python$v is experimental"
+  else
+    echo "Python$v not supported"
+    exit 1
+  fi
 fi
 
 python3 -W ignore -u "$MY_HOME/hub/scripts/cli.py" "$@"

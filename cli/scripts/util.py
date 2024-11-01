@@ -229,7 +229,7 @@ def get_ctlib_dir():
         return f"py3.10-{plat_os}"
     elif os.path.exists("/usr/bin/python3.11"):
         return f"py3.11-{plat_os}"
-    elif os.path.exists("/usr/bin/python3.12"):
+    elif os.path.exists("/usr/bin/python3.12") or os.path.exists("/usr/bin/python3.13"):
         return f"py3.12-{plat_os}"
 
     return "unsupported"
