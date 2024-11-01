@@ -1,7 +1,7 @@
 
-DROP TABLE IF EXISTS hub_version;
-CREATE TABLE hub_version(version TEXT NOT NULL PRIMARY KEY);
-INSERT INTO hub_version VALUES ('24.11.1');
+DROP TABLE IF EXISTS hub;
+CREATE TABLE hub(v TEXT NOT NULL PRIMARY KEY, c TEXT NOT NULL, d TEXT NOT NULL);
+INSERT INTO hub VALUES ('24.11.1', 'devel',  '20241101');
 
 DROP VIEW  IF EXISTS v_versions;
 
@@ -134,7 +134,7 @@ CREATE VIEW v_versions AS
 INSERT INTO projects VALUES ('hub', 'app', 0, 0, 'hub', 0, 'https://github.com/pgedge/cli','',0,'','','','');
 INSERT INTO releases VALUES ('hub', 1, 'hub',  '', '', 'hidden', '', 1, '', '', '');
 
-INSERT INTO versions VALUES ('hub', (select version from hub_version),   '',  1, '20241101', '', '', '');
+INSERT INTO versions VALUES ('hub', (select v from hub), '',  1, (select d from hub), '', '', '');
 INSERT INTO versions VALUES ('hub', '24.11.0',   '',  0, '20241021', '', '', '');
 INSERT INTO versions VALUES ('hub', '24.10.1',   '',  0, '20240926', '', '', '');
 INSERT INTO versions VALUES ('hub', '24.10.0',   '',  0, '20240924', '', '', '');
@@ -195,7 +195,7 @@ INSERT INTO versions VALUES ('plv8-pg16', '3.2.2-1', 'amd, arm', 0, '20240214', 
 INSERT INTO projects VALUES ('kirk', 'dev', 11, 8883, '', 0, 'https://github.com/pgedge/cli/kirk',
   'kirk', 0, 'mqtt.png', 'MQTT Client', 'https://github.com/pgedge/cli/kirk', '');
 INSERT INTO releases VALUES ('kirk', 2, 'kirk', 'MQTT Client', '', 'test', '', 1, 'PGEDGE', '', '');
-INSERT INTO versions VALUES ('kirk', (select version from hub_version), '',  1, '20241101', '', '', '');
+INSERT INTO versions VALUES ('kirk', (select v from hub), '',  1, (select d from hub), '', '', '');
 
 -- ## PLDEBUGGER #########################
 INSERT INTO projects VALUES ('pldebugger', 'dev', 4, 0, '', 0, 'https://github.com/EnterpriseDB/pldebugger/tags',
@@ -473,12 +473,11 @@ INSERT INTO versions VALUES ('backrest', '2.53.1-1', 'amd, arm', 1, '20240912', 
 INSERT INTO versions VALUES ('backrest', '2.53-1',   'amd, arm', 0, '20240729', '', '', '');
 INSERT INTO versions VALUES ('backrest', '2.52-1',   'amd, arm', 0, '20240612', '', '', '');
 
-
 -- ## ACE ##########################
 INSERT INTO projects VALUES ('ace', 'pge', 11, 5000, '', 3, 'http://github.com/pgedge/cli/cli/scripts/ace.py',
   'ace',  0, '', 'Anti Chaos Engine for pgEdge', 'https://github.com/pgedge/cli/cli/scripts/ace.py', 'ace');
 INSERT INTO releases VALUES ('ace', 2, 'ace',  'ACE', '', 'test', '', 1, 'PGEDGE', '', '');
-INSERT INTO versions VALUES ('ace', '2.0', '', 1, '20241002', '', '', '');
+INSERT INTO versions VALUES ('ace', (select v from hub), '',  1, (select d from hub), '', '', '');
 
 -- ## PATRONI ###########################
 INSERT INTO projects VALUES ('patroni', 'app', 11, 0, '', 4, 'https://github.com/pgedge/pgedge-patroni/release',

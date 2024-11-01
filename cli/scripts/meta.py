@@ -53,6 +53,16 @@ SELECT product, component, platform, pg_ver
     return data
 
 
+def get_my_version():
+    data = exec_sql("SELECT v FROM hub")
+    return(str(data[0]))
+
+
+def get_my_codename():
+    data = exec_sql("SELECT c FROM hub")
+    return(str(data[0]))
+
+
 def pretty_sql(sql):
     data = []
 
@@ -175,7 +185,7 @@ def exec_sql_list(sql):
     return data
 
 
-def exec_sql(sql, in_vars, commit=True):
+def exec_sql(sql, in_vars=[], commit=True):
     try:
         c = con.cursor()
         sql_type_list = sql.split()

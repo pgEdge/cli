@@ -369,7 +369,7 @@ def info(p_json, p_home, p_repo, print_flag=True):
 
     gpu_info = util.get_gpu_info()
 
-    ver = util.get_version()
+    ver = meta.get_my_version()
     [last_update_utc, last_update_local, unique_id] = util.read_hosts("localhost")
     if last_update_local:
         last_upd_dt = datetime.strptime(last_update_local, "%Y-%m-%d %H:%M:%S")
@@ -437,10 +437,7 @@ def info(p_json, p_home, p_repo, print_flag=True):
         glibc_v_display = f", glibc-{glibcV},"
 
 
-    if util.MY_CODENAME > " ":
-       ver_display = f"pgEdge {util.format_ver(ver)} ({util.MY_CODENAME})"
-    else:
-       ver_display = f"pgEdge {util.format_ver(ver)}"
+    ver_display = f"pgEdge {util.format_ver(ver)} ({meta.get_my_codename()})"
    
     print("#" * INFO_WIDTH)
     print(f"#{bold_start}     Version:{bold_end} {ver_display}")

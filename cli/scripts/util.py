@@ -4,9 +4,6 @@
 import os
 import time
 
-MY_VERSION = "24.11.1"
-MY_CODENAME = "devel"
-
 DEFAULT_PG = "16"
 DEFAULT_SPOCK = "40"
 DEFAULT_SPOCK_17 = "40"
@@ -2757,10 +2754,6 @@ def pretty_rounder(p_num, p_scale):
     return rounded
 
 
-def get_version():
-    return MY_VERSION
-
-
 def get_depend():
     dep = []
     try:
@@ -3288,7 +3281,7 @@ def urlEncodeNonAscii(b):
 
 
 def http_headers():
-    user_agent = "CLI/" + get_version() + " " + get_anonymous_info()
+    user_agent = "CLI/" + meta.get_my_version() + " " + get_anonymous_info()
     headers = {"User-Agent": urlEncodeNonAscii(user_agent)}
     return headers
 
