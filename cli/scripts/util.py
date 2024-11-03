@@ -111,6 +111,27 @@ if os.path.exists(platform_lib_path):
         sys.path.append(platform_lib_path)
 
 
+def get_process_manager():
+    pm = ""
+    PROC_MGR = get_value("GLOBAL", "PROC_MGR")
+    if os.path.exists("/usr/bin/systemd"):
+        if PROC_MGR == "systemd":
+            pm = "SYSTEMD"
+        else:
+            pm = "systemd"
+        
+    if os.path.exists("/usr/bin/supervisord"):
+        if len(pm) > 0:
+            pm = pm + "/"
+
+        if PROC_MGR == "supervisord":
+            pm = pm + "SUPERVISORD"
+        else:
+            pm = pm + "supervisord"
+
+    return(pm) 
+
+
 def getreqval(p_section, p_key, isInt=False, verbose=False):
     val = get_value(p_section, p_key)
     if val == "":

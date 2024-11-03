@@ -382,6 +382,8 @@ def info(p_json, p_home, p_repo, print_flag=True):
     kirk_cluster = util.get_value("KIRK", "CLUSTER")
     kirk_node = util.get_value("KIRK", "NODE")
 
+    proc_mgr = util.get_process_manager()
+
     if p_json:
         infoJsonArray = []
         infoJson = {}
@@ -391,6 +393,7 @@ def info(p_json, p_home, p_repo, print_flag=True):
         infoJson["host_name"] = hostname
         infoJson["host_ip"] = host_ip
         infoJson["host_address"] = host_address
+        infoJson["process_manager"] = proc_mgr
         infoJson["os"] = unicode(
             str(os2), sys.getdefaultencoding(), errors="ignore"
         ).strip()
@@ -443,7 +446,7 @@ def info(p_json, p_home, p_repo, print_flag=True):
     print(f"#{bold_start}     Version:{bold_end} {ver_display}")
 
     print(f"#{bold_start}        User:{bold_end} {p_user}{admin_display}  {p_home}")
-    print(f"#{bold_start}        Host:{bold_end} {hostname}  {host_ip}  {host_address}")
+    print(f"#{bold_start}        Host:{bold_end} {hostname}  {host_ip}  {host_address}  {proc_mgr}")
 
     if ctlib_ver == "":
         ctlib_ver == "?"
