@@ -111,7 +111,7 @@ if (args.autostart is None) or (autostart == args.autostart):
 
 systemsvc = "pg" + pgver[2:4]
 if args.autostart == "off":
-    startup.remove_linux(systemsvc, pgver)
+    startup.remove_proc(systemsvc)
 else:
     pg_ctl = os.path.join(MY_HOME, pgver, "bin", "pg_ctl")
     pgdata = util.get_column("datadir", pgver)
@@ -120,10 +120,9 @@ else:
     cmd_reload = pg_ctl + " reload -D " + pgdata
     cmd_status = pg_ctl + " status -D " + pgdata
     cmd_log = "-l " + pgdata + "/pgstartup.log"
-    # svcuser = util.get_column('svcuser', pgver)
     svcuser = util.get_user()
-    startup.config_linux(
-        pgver, systemsvc, svcuser, cmd_start, cmd_log, cmd_stop, cmd_reload, cmd_status)
+    startup.config_proc_mgr(
+        pgver, systemsvc, svcuser, cmd_start, cmd_stop, cmd_reload, cmd_status)
         ##p_env=f"LD_LIBRARY_PATH={os.path.join(MY_HOME, pgver, 'lib')}"
     util.set_column("svcname", pgver, systemsvc)
 

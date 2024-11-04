@@ -40,7 +40,7 @@ stop_cmd = pg_ctl + ' stop -s -w -m immediate -D "' + datadir + '"'
 
 autostart = util.get_column("autostart", pgver)
 if autostart == "on":
-    rc = startup.stop_linux("pg" + pgver[2:4])
+    rc = startup.stop_proc("pg" + pgver[2:4])
 else:
     rc = util.system(stop_cmd)
 

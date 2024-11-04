@@ -42,12 +42,12 @@ def useradd_linux(p_user):
 
 
 def config_proc_mgr(
-    p_comp, p_svc, p_user, p_start, p_log="", p_stop="", p_reload="", is_pg=True):
+    p_comp, p_svc, p_user, p_start, p_stop="", p_reload="", is_pg=True):
 
     if PROC_MGR == "supervisord":
-        config_supervisord(p_comp, p_svc, p_user, p_start)
+        config_supervisord(p_comp, p_user, p_start)
     else:
-        config_systemd(p_comp, p_svc, p_user, p_start, p_slog, p_stop, p_reload, is_pg)
+        config_systemd(p_comp, p_svc, p_user, p_start, p_stop, p_reload, is_pg)
 
     return
 
@@ -58,21 +58,39 @@ def config_supervisord(
     p_start
 ):
 
-    sys_svc_file = os.path.join(util.get_supervisord_dir(),  + ".service")
-    pass
+    supv_dir = f"{util.MY_DATA}/supevisord"
+    os.system = f"mkdir -p {supv_dir}"
+
+    f = f"{p_comp}.conf"
+    sys_svc_file = os.path.join(supv_dir, f)
+    unit_file = tempfile.mktemp(f)
+    fh = open(unit_file, "w")
+
+    fh.write(f"[program:{p_comp}]\n")
+    fh.write(f"command={p_start}")
+    fh.write("autostart=true\nautorestart=true\nstopsignal=INT\n")
+
+    fh.close()
+    os.system(f"sudo mv {unit_file} {sys_svc_file}")
+
+    if os.getenv("pgeDebug") == "1":
+        util.message("##### sys_svc_file = {sys_svc_file} #####", "debug")
+        os.system(f"cat {sys_svc_file}")
+        util.message("##############################", "debug")
+
+    return(0)
 
 
 def config_systemd(p_comp, p_systemsvc, p_svc_user, p_start, p_stop="", p_reload="", is_pg=True):
 
-    pg_bin_dir = os.path.join(util.MY_HOME, p_comp, "bin")
-    util.create_symlinks("/usr/bin", pg_bin_dir)
+    ##pg_bin_dir = os.path.join(util.MY_HOME, p_comp, "bin")
+    ##util.create_symlinks("/usr/bin", pg_bin_dir)
 
-    sys_svc_file = os.path.join(util.get_systemd_dir(), f"{p_systemsvc}.service")
-
-    util.message(f"{p_comp} config autostart {sys_svc_file}")
-
-    unit_file = tempfile.mktemp(".service")
+    f = f"{p_systemsvc}.service"
+    sys_svc_file = os.path.join(util.get_systemd_dir(), f)
+    unit_file = tempfile.mktemp(f)
     fh = open(unit_file, "w")
+
     fh.write("[Unit]\n")
     fh.write(f"Description=pgEdge {p_comp}\n")
     if is_pg:
@@ -96,9 +114,15 @@ def config_systemd(p_comp, p_systemsvc, p_svc_user, p_start, p_stop="", p_reload
     fh.write("\n")
     fh.write("[Install]\n")
     fh.write("WantedBy=multi-user.target\n")
-    fh.close()
 
+    fh.close()
     os.system(f"sudo mv {unit_file} {sys_svc_file}")
+
+    if os.getenv("pgeDebug") == "1":
+        util.message("##### sys_svc_file = {sys_svc_file} #####", "debug")
+        os.system(f"cat {sys_svc_file}")
+        util.message("##############################", "debug")
+
     return util.echo_cmd(f"sudo systemctl enable {p_systemsvc}")
 
 
