@@ -350,10 +350,8 @@ initPG () {
     initC "bouncer"      "bouncer"      "$bouncerV"  "$outPlat" "postgres/bouncer"  "" "" "nil"
     initC "backrest"     "backrest"     "$backrestV" "$outPlat" "postgres/backrest" "" "" "nil"
     initC "etcd"         "etcd"         "$etcdV"     "$outPlat" "etcd"              "" "" "nil"
-    #initC "minio"        "minio"        "$minioV"    "$outPlat" "minio"             "" "" "nil"
     initC "pgcat"        "pgcat"        "$catV"      "$outPlat" "postgres/pgcat"    "" "" "nil"
     initC "patroni"      "patroni"      "$patroniV"  ""         "patroni"           "" "" "nil"
-    initC "firewalld"    "firewalld"    "$firwldV"   ""         "firewalld"         "" "" "nil"
   fi
 
   if [ "$pgM" == "17" ]; then
