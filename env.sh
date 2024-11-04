@@ -18,10 +18,10 @@ P15=15.8-2
 P14=14.13-2
 
 pgmlV=2.9.3-1
-vectorV=0.7.4-1
+vectorV=0.8.0-1
 bouncerV=1.23.1-1
 catV=1.2.0
-firwldV=1.2
+##firwldV=1.2
 adminV=8.x
 ##prestV=1.4.2
 ##postgrestV=12.0.2-1
@@ -31,8 +31,8 @@ wal2jV=2.6.0-1
 
 mqttclient=0.9-1
 citusV=12.1.5-1
-orafceV=4.10.3-1
-v8V=3.2.2-1
+orafceV=4.13.4-1
+v8V=3.2.3-1
 setuserV=4.1.0-1
 permissionsV=1.3-1
 
@@ -41,7 +41,7 @@ permissionsV=1.3-1
 ## ora2pgV=23.1
 
 hypoV=1.4.1-1
-timescaleV=2.16.1-1
+timescaleV=2.17.0-1
 profV=4.2.5-1
 bulkloadV=3.1.19-1
 partmanV=5.0.1-1
@@ -57,7 +57,7 @@ audit15V=1.7.0-1
 audit16V=16.0-1
 audit17V=17.0-1
 
-postgisV=3.4.2-1
+postgisV=3.5.0-1
 
 pljavaV=1.6.4-1
 debuggerV=1.8-1
