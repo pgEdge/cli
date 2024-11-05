@@ -56,7 +56,7 @@ cmd "git status"
 cmd "git pull"
 
 step 3a "building $vers #########################"
-./rebuild_all.sh "$vers" tgz
+./make_tgz.sh  "$vers" y y
 
 step 4 "copy OUT to HIST (outDir) #############"
 cmd "cp $OUT/* $outDir"
