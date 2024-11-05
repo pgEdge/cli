@@ -2,19 +2,13 @@
 cd "$(dirname "$0")"
 
 TGZ_REPO="https://pgedge-upstream.s3.amazonaws.com/REPO"
-set -e
+set -ex
 
 source env.sh
 
 vers="$1"
-pkg="$2"
-
-if [ ! "$pkg" == "" ]; then
-  if [ ! "$pkg" == "tgz" ]; then
-    echo "# ERROR: package_type \'$pkg\' not supported (must be 'tgz')"
-    exit 1
-  fi
-fi
+rebuild_flag="$2"
+tgz_flag="$3"
 
 cmd () {
   echo "# $1"
@@ -29,17 +23,19 @@ cmd () {
 
 ## MAINLINE ###################################
 
-if [ "$vers" == "" ] || [ "$vers" == "all" ]; then
-  vers="15 16 17"
-  echo "# default to rebuilding pg \"$vers\""
-  cmd "rm -f $OUT/*"
-fi
+if [ "$rebuild_flag" == "y" ]; then
+  if [ "$vers" == "" ] || [ "$vers" == "all" ]; then
+    vers="15 16 17"
+    echo "# default to rebuilding pg \"$vers\""
+    cmd "rm -f $OUT/*"
+  fi
 
-for ver in ${vers}; do
-  echo ""
-  cmd "rm -f $OUT/*pg$ver*"
-  cmd "./build_all.sh $ver"
-done
+  for ver in ${vers}; do
+    echo ""
+    cmd "rm -f $OUT/*pg$ver*"
+    cmd "./build_all.sh $ver"
+  done
+fi
 
 # copy all ctlib versions into OUT
 ./bp.sh
@@ -51,27 +47,37 @@ else
   rm -f $OUT/*ctlibs*arm.tgz
 fi
 
-if [ "$pkg" == "tgz" ] && [ "$1" == "all" ]; then
-  bndl="pgedge-$hubVV-$OS.tgz"
+bndl="pgedge-$hubVV-$OS.tgz"
 
-  cd /tmp
+cd /tmp
 
-  rm -f $bndl
-  rm -rf pgedge
+rm -f $bndl
+rm -rf pgedge
 
-  cp $CLI/install.py /tmp/.
-  python3 install.py
-  cmd "pgedge/pgedge set GLOBAL REPO $TGZ_REPO"
+cp $CLI/install.py /tmp/.
+python3 install.py
+cmd "pgedge/pgedge set GLOBAL REPO $TGZ_REPO"
 
-  cmd "cp -v  $PGE/src/repo/* $OUT/."
-  cmd "cp $OUT/* pgedge/data/conf/cache/."
+cache=pgedge/data/conf/cache
+cmd "cp -v  $PGE/src/repo/* $OUT/."
+cmd "cp $OUT/* $cache/."
 
-  tar --use-compress-program="pigz -8 --recursive" -cf $bndl pgedge
+cmd "cp -r $DEVEL/packages $cache/."
 
-  rm -f install.py
-  rm -rf pgedge
-
-  mv /tmp/$bndl $OUT/.
-  ls -lh /$OUT/$bndl
+if [ ! "tgz_flag" == "y" ]; then
+  echo ""
+  echo "############ NOT running pigz ################"
+  echo ""
+  exit 0
+else
+  echo "RUNNING pigz..."
 fi
+
+tar --use-compress-program="pigz -8 --recursive" -cf $bndl pgedge
+
+rm -f install.py
+rm -rf pgedge
+
+mv /tmp/$bndl $OUT/.
+ls -lh /$OUT/$bndl
 
