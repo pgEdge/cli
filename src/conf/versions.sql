@@ -134,7 +134,8 @@ CREATE VIEW v_versions AS
 INSERT INTO projects VALUES ('hub', 'app', 0, 0, 'hub', 0, 'https://github.com/pgedge/cli','',0,'','','','');
 INSERT INTO releases VALUES ('hub', 1, 'hub',  '', '', 'hidden', '', 1, '', '', '');
 
-INSERT INTO versions VALUES ('hub', '24.10.4',   '',  1, '20241105', '', '', '');
+INSERT INTO versions VALUES ('hub', '24.10.5',   '',  1, '20241107', '', '', '');
+INSERT INTO versions VALUES ('hub', '24.10.4',   '',  0, '20241105', '', '', '');
 INSERT INTO versions VALUES ('hub', '24.10.3',   '',  0, '20241104', '', '', '');
 INSERT INTO versions VALUES ('hub', '24.10.2',   '',  0, '20241002', '', '', '');
 INSERT INTO versions VALUES ('hub', '24.9.6',    '',  0, '20240919', '', '', '');
