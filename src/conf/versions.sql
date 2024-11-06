@@ -364,9 +364,6 @@ INSERT INTO releases VALUES ('permissions-pg16', 3, 'permissions', 'Permissions'
 INSERT INTO versions VALUES ('permissions-pg15', '1.3-1', 'amd, arm', 1, '20240729', 'pg15', '', '');
 INSERT INTO versions VALUES ('permissions-pg16', '1.3-1', 'amd, arm', 1, '20240729', 'pg16', '', '');
 
-INSERT INTO versions VALUES ('permissions-pg15', '1.2-1', 'amd, arm', 0, '20240612', 'pg15', '', '');
-INSERT INTO versions VALUES ('permissions-pg16', '1.2-1', 'amd, arm', 0, '20240612', 'pg16', '', '');
-
 -- ## SETUSER ###########################
 INSERT INTO projects VALUES ('setuser', 'ext', 4, 1, '', 3, 'https://github.com/pgaudit/set_user',
   'setuser', 1, 'setuser.png', 'Superuser privilege logging', 'https://github.com/pgaudit/set_user', 'set_user');
@@ -377,9 +374,6 @@ INSERT INTO releases VALUES ('setuser-pg15', 3, 'setuser', 'SetUser', '', 'prod'
 INSERT INTO versions VALUES ('setuser-pg17', '4.1.0-1', 'amd, arm', 1, '20240912', 'pg17', '', '');
 INSERT INTO versions VALUES ('setuser-pg16', '4.1.0-1', 'amd, arm', 1, '20240912', 'pg16', '', '');
 INSERT INTO versions VALUES ('setuser-pg15', '4.1.0-1', 'amd, arm', 1, '20240912', 'pg15', '', '');
-
-INSERT INTO versions VALUES ('setuser-pg16', '4.0.1-1', 'amd, arm', 0, '20240612', 'pg16', '', '');
-INSERT INTO versions VALUES ('setuser-pg15', '4.0.1-1', 'amd, arm', 0, '20240612', 'pg15', '', '');
 
 -- ## POSTGIS ###########################
 INSERT INTO projects VALUES ('postgis', 'ext', 4, 1, '', 3, 'http://postgis.net/source',
