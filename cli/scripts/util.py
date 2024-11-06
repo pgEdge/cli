@@ -43,6 +43,7 @@ from datetime import datetime, timedelta
 from urllib import request as urllib2
 from shutil import copy2
 from semantic_version import Version
+from tqdm import tqdm
 
 try:
     from tqdm import tqdm

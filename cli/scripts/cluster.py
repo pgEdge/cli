@@ -11,11 +11,8 @@ import time
 import sys
 import getpass
 from ipaddress import ip_address
-try:
-    import etcd
-    import patroni
-except Exception:
-    pass
+import etcd
+import ha_patroni
 
 BASE_DIR = "cluster"
 
@@ -139,7 +136,7 @@ def load_json(cluster_name):
     if "databases" not in pgedge:
         util.exit_message("databases key is missing")
 
-    for database in pgedge.get("databases"):
+    for database in pgedge.get("databases", []):
         if set(database.keys()) != {"db_name", "db_user", "db_password"}:
             util.exit_message("Each database entry must contain db_name, db_user, and db_password")
 
@@ -148,7 +145,6 @@ def load_json(cluster_name):
             "db_user": database["db_user"],
             "db_password": database["db_password"]
         })
-
 
     # Extract node information
     nodes = []
@@ -166,12 +162,12 @@ def load_json(cluster_name):
             "path": group.get("path", ""),
             "os_user": os_user,
             "ssh_key": ssh_key,
-            "backrest": group.get("backrest", {})
+            "backrest": group.get("backrest", {}),
+            "sub_nodes": []  # Initialize sub_nodes list
         }
 
         if not node_info["public_ip"] and not node_info["private_ip"]:
             util.exit_message(f"Node '{node_info['name']}' must have either a public_ip or private_ip defined.")
-        nodes.append(node_info)
 
         # Process sub_nodes
         for sub_node in group.get("sub_nodes", []):
@@ -188,7 +184,12 @@ def load_json(cluster_name):
 
             if not sub_node_info["public_ip"] and not sub_node_info["private_ip"]:
                 util.exit_message(f"Sub-node '{sub_node_info['name']}' must have either a public_ip or private_ip defined.")
-            nodes.append(sub_node_info)
+
+            # Add sub-node to the node's sub_nodes list
+            node_info["sub_nodes"].append(sub_node_info)
+
+        # Append main node (with its sub_nodes) to nodes list
+        nodes.append(node_info)
 
     return db, db_settings, nodes
 
@@ -285,7 +286,9 @@ def ssh_install(cluster_name, db, db_settings, db_user, db_passwd, n, install, p
         REPO = "https://pgedge-upstream.s3.amazonaws.com/REPO"
         os.environ["REPO"] = REPO
     
-    verbose = db_settings.get("log_level", "info")
+    parsed_json = get_cluster_json(cluster_name)
+    verbose = parsed_json.get("log_level", "info")
+    print("    ,,," + verbose)
     if install == True:   
         print_install_hdr(cluster_name, db, db_user, num_nodes, n["name"],
                           n["path"], ndip, n["port"], REPO, primary, primary_name)
@@ -575,9 +578,7 @@ def init(cluster_name, install=True):
     json_validate(cluster_name)
     db, db_settings, nodes = load_json(cluster_name)
     parsed_json = get_cluster_json(cluster_name)
-
     verbose = parsed_json.get("log_level", "info")
-
     for nd in nodes:
         message = f"Checking ssh on {nd['public_ip'] if nd['public_ip'] else nd['private_ip']}"
         run_cmd(cmd="hostname", node=nd, message=message, verbose=verbose)
@@ -599,16 +600,6 @@ def init(cluster_name, install=True):
                 database["db_password"], nodes, verbose
            )
 
-    pg_ver = db_settings["pg_version"]
-    for node in nodes:
-        system_identifier = get_system_identifier(db[0], node)
-        if "sub_nodes" in node:
-            for n in node["sub_nodes"]:
-                ssh_install(
-                    cluster_name, db[0]["db_name"], db_settings, db[0]["db_user"],
-                    db[0]["db_password"], n, False, " "
-                )
-
     # Process backrest installation and settings if present
     for nd in nodes:
         if nd.get('backrest'):
@@ -621,9 +612,26 @@ def init(cluster_name, install=True):
                 cmd = cmd + f"{nd['path']}/pgedge/pgedge set BACKUP {setting_name} {setting_value};"
             run_cmd(cmd, nd, message, verbose=verbose)
 
-    if any("sub_nodes" in node for node in nodes):
-        configure_etcd(cluster_name, system_identifier)
-        configure_patroni(cluster_name)
+    pg_ver = db_settings["pg_version"]
+    for node in nodes:
+        system_identifier = get_system_identifier(db[0], node)
+        if "sub_nodes" in node:
+            for n in node["sub_nodes"]:
+                ssh_install(
+                    cluster_name, db[0]["db_name"], db_settings, db[0]["db_user"],
+                    db[0]["db_password"], n, install, False, " ", verbose
+               )
+                manage_node(n, "stop", f"pg{pg_ver}", verbose)
+
+                pgdata = f"{node['path']}/pgedge/data/pg{pg_ver}"
+                cmd = f"rm -rf {pgdata}"
+                message = f"Removing old data directory"
+                run_cmd(cmd, n, message=message, verbose=verbose)
+            
+            sub_nodes = node["sub_nodes"]
+        
+            etcd.configure_etcd(node, sub_nodes,system_identifier)
+            ha_patroni.configure_patroni(node, sub_nodes, db[0], db_settings)
 
 def add_db(cluster_name, database_name, username, password):
     """Add a database to an existing pgEdge cluster.
@@ -642,7 +650,9 @@ def add_db(cluster_name, database_name, username, password):
     json_validate(cluster_name)
     db, db_settings, nodes = load_json(cluster_name)
     pg = db_settings["pg_version"]
-    verbose = db_settings.get("log_level", "info")
+    
+    parsed_json = get_cluster_json(cluster_name)
+    verbose = parsed_json.get("log_level", "info")
 
     db_json = {
         "db_user": username,
@@ -1252,7 +1262,8 @@ def list_nodes(cluster_name):
     json_validate(cluster_name)
     db, db_settings, nodes = load_json(cluster_name)
     dbname = db[0]["db_name"]
-    verbose = db_settings.get("log_level", "info")
+    parsed_json = get_cluster_json(cluster_name)
+    verbose = parsed_json.get("log_level", "info")
     for n in nodes:
         ndpath = n["path"]
         cmd = f'{ndpath}/pgedge/pgedge spock node-list {dbname}'

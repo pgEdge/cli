@@ -1309,7 +1309,7 @@ if p_mode in native_list:
     elif p_mode == "etcd":
        bin_path = os.path.join(MY_HOME, "etcd", "etcd.py")
     elif p_mode == "patroni":
-       bin_path = os.path.join(MY_HOME, "patroni", "patroni.py")
+       bin_path = os.path.join(MY_HOME, "patroni", "ha_patroni.py")
     elif p_mode == "ansible":
        bin_path = "/usr/local/bin/ansible"
 
