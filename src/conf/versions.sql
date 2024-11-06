@@ -104,7 +104,6 @@ INSERT INTO extensions VALUES ('hypopg',    'hypopg',       1, 'hypopg',        
 INSERT INTO extensions VALUES ('plv8',      'plv8',         0, '',               '');
 INSERT INTO extensions VALUES ('pldebugger','pldbgapi',     1, 'plugin_debugger','');
 INSERT INTO extensions VALUES ('plprofiler','plprofiler',   1, 'plprofiler',     '');
-INSERT INTO extensions VALUES ('curl',      'pg_curl',      1, 'pg_curl',        '');
 
 
 CREATE TABLE versions (
@@ -147,12 +146,6 @@ INSERT INTO versions VALUES ('hub', '24.7.4',    '',  0, '20240710', '', '', '')
 INSERT INTO projects VALUES ('pg', 'pge', 1, 5432, '', 1, 'https://github.com/postgres/postgres/tags',
  'postgres', 0, 'postgresql.png', 'Best RDBMS', 'https://postgresql.org', '');
 
-INSERT INTO releases VALUES ('pg14', 1, 'pg', '', '', 'prod', 
-  '<font size=-1>New in <a href=https://www.postgresql.org/docs/14/release-14.html>2021</a></font>', 1, 'POSTGRES', '', '');
-INSERT INTO versions VALUES ('pg14', '14.13-2', 'amd, arm', 1, '20240912', '','','');
-INSERT INTO versions VALUES ('pg14', '14.13-1', 'amd, arm', 0, '20240808', '','','');
-INSERT INTO versions VALUES ('pg14', '14.12-3', 'amd, arm', 0, '20240710', '','','');
-
 INSERT INTO releases VALUES ('pg15', 2, 'pg', '', '', 'prod', 
   '<font size=-1>New in <a href=https://www.postgresql.org/docs/15/release-15.html>2022</a></font>', 1, 'POSTGRES', '', '');
 INSERT INTO versions VALUES ('pg15', '15.8-2',  'amd, arm', 1, '20240912','', '', '');
@@ -169,12 +162,6 @@ INSERT INTO releases VALUES ('pg17', 2, 'pg', '', '', 'prod',
   '<font size=-1>New in <a href=https://www.postgresql.org/docs/17/release-17.html>2024!</a></font>', 1, 'POSTGRES', '', '');
 INSERT INTO versions VALUES ('pg17', '17.0-1',    'amd, arm', 1, '20240926','', '', '');
 
--- ## PGML ###############################
-INSERT INTO projects VALUES ('pgml', 'ext', 4, 0, '', 0, 'https://github.com/postgresml/postgresml',
-  'pgml', 1, 'pgml.png', 'GPU Driven AI', 'https://github.com/postgresml/postgresml', '');
-INSERT INTO releases VALUES ('pgml-pg16', 2, 'pgml', 'pgML', '', 'test', '', 1, 'MIT', '', '');
-INSERT INTO versions VALUES ('pgml-pg16', '2.9.3-1',   'amd', 1, '20240905', 'pg16', 'PGML', '');
-
 -- ## ORAFCE #############################
 INSERT INTO projects VALUES ('orafce', 'ext', 4, 0, '', 0, 'https://github.com/orafce/orafce/releases',
   'orafce', 1, 'larry.png', 'Ora Built-in Packages', 'https://github.com/orafce/orafce#orafce---oracles-compatibility-functions-and-packages', 'orafice, oraface');
@@ -185,12 +172,6 @@ INSERT INTO releases VALUES ('orafce-pg17', 2, 'orafce', 'OraFCE', '', 'prod', '
 INSERT INTO versions VALUES ('orafce-pg15', '4.13.4-1',   'amd, arm', 1, '20241104', 'pg15', '', '');
 INSERT INTO versions VALUES ('orafce-pg16', '4.13.4-1',   'amd, arm', 1, '20241104', 'pg16', '', '');
 INSERT INTO versions VALUES ('orafce-pg17', '4.13.4-1',   'amd, arm', 1, '20241104', 'pg17', '', '');
-
-INSERT INTO versions VALUES ('orafce-pg15', '4.10.3-1',   'amd, arm', 0, '20240729', 'pg15', '', '');
-INSERT INTO versions VALUES ('orafce-pg16', '4.10.3-1',   'amd, arm', 0, '20240729', 'pg16', '', '');
-
-INSERT INTO versions VALUES ('orafce-pg15', '4.10.0-1',   'amd, arm', 0, '20240516', 'pg15', '', '');
-INSERT INTO versions VALUES ('orafce-pg16', '4.10.0-1',   'amd, arm', 0, '20240516', 'pg16', '', '');
 
 -- ## PLV8 ###############################
 INSERT INTO projects VALUES ('plv8', 'dev', 4, 0, '', 0, 'https://github.com/plv8/plv8/tags',
@@ -203,26 +184,6 @@ INSERT INTO versions VALUES ('plv8-pg15', '3.2.3-1', 'amd, arm', 1, '20241104', 
 INSERT INTO versions VALUES ('plv8-pg16', '3.2.3-1', 'amd, arm', 1, '20241104', 'pg16', '', '');
 INSERT INTO versions VALUES ('plv8-pg17', '3.2.3-1', 'amd, arm', 1, '20241104', 'pg17', '', '');
 
-INSERT INTO versions VALUES ('plv8-pg15', '3.2.2-1', 'amd, arm', 0, '20240523', 'pg15', '', '');
-INSERT INTO versions VALUES ('plv8-pg16', '3.2.2-1', 'amd, arm', 0, '20240214', 'pg16', '', '');
-
--- ## PLJAVA #############################
-INSERT INTO projects VALUES ('pljava', 'dev', 4, 0, '', 0, 'https://github.com/tada/pljava/releases', 
-  'pljava', 1, 'pljava.png', 'Java Stored Procedures', 'https://github.com/tada/pljava', 'pl_java');
-INSERT INTO releases VALUES ('pljava-pg15', 7, 'pljava', 'PL/Java', '', 'test', '', 1, 'POSTGRES', '', '');
-INSERT INTO releases VALUES ('pljava-pg16', 7, 'pljava', 'PL/Java', '', 'test', '', 1, 'POSTGRES', '', '');
-INSERT INTO versions VALUES ('pljava-pg15', '1.6.4-1',  'amd, arm',  0, '20230608', 'pg15', '', '');
-INSERT INTO versions VALUES ('pljava-pg16', '1.6.4-1',  'amd, arm',  0, '20230608', 'pg16', '', '');
-
--- ## MQTTCLIENT #########################
-INSERT INTO projects VALUES ('mqttclient', 'dev', 4, 0, '', 0, 'https://github.com/pgedge/mqttclient/tags',
-  'mqttclient', 1, 'mqtt.png', 'Secure MQTT Client', 'https://github.com/pgedge/mqttclient', '');
-INSERT INTO releases VALUES ('mqttclient-pg16', 2, 'mqttclient', 'MQTT Client', '', 'test', '', 1, 'POSTGRES', '', '');
-INSERT INTO releases VALUES ('mqttclient-pg17', 2, 'mqttclient', 'MQTT Client', '', 'test', '', 1, 'POSTGRES', '', '');
-
-INSERT INTO versions VALUES ('mqttclient-pg17', '0.9-1',  'amd, arm',  1, '20241001', 'pg17', '', '');
-INSERT INTO versions VALUES ('mqttclient-pg16', '0.9-1',  'amd, arm',  1, '20241001', 'pg16', '', '');
-
 -- ## PLDEBUGGER #########################
 INSERT INTO projects VALUES ('pldebugger', 'dev', 4, 0, '', 0, 'https://github.com/EnterpriseDB/pldebugger/tags',
   'pldebugger', 1, 'debugger.png', 'Stored Procedure Debugger', 'https://github.com/EnterpriseDB/pldebugger', 'pl_debugger, dbgapi');
@@ -234,9 +195,6 @@ INSERT INTO versions VALUES ('pldebugger-pg17', '1.8-1',  'amd, arm',  1, '20240
 INSERT INTO versions VALUES ('pldebugger-pg16', '1.8-1',  'amd, arm',  1, '20240905', 'pg16', '', '');
 INSERT INTO versions VALUES ('pldebugger-pg15', '1.8-1',  'amd, arm',  1, '20240905', 'pg15', '', '');
 
-INSERT INTO versions VALUES ('pldebugger-pg16', '1.6-1',  'amd, arm',  0, '20231112', 'pg16', '', '');
-INSERT INTO versions VALUES ('pldebugger-pg15', '1.6-1',  'amd, arm',  0, '20231112', 'pg15', '', '');
-
 -- ## PLPROFILER #########################
 INSERT INTO projects VALUES ('plprofiler', 'dev', 4, 0, '', 7, 'https://github.com/bigsql/plprofiler/tags',
   'plprofiler', 1, 'plprofiler.png', 'Stored Procedure Profiler', 'https://github.com/bigsql/plprofiler#plprofiler', 'pl_profiler');
@@ -247,21 +205,6 @@ INSERT INTO releases VALUES ('plprofiler-pg17', 0, 'plprofiler',    'PL/Profiler
 INSERT INTO versions VALUES ('plprofiler-pg17', '4.2.5-1', 'amd, arm', 1, '20240820', 'pg17', '', '');
 INSERT INTO versions VALUES ('plprofiler-pg16', '4.2.5-1', 'amd, arm', 1, '20240820', 'pg16', '', '');
 INSERT INTO versions VALUES ('plprofiler-pg15', '4.2.5-1', 'amd, arm', 1, '20240820', 'pg15', '', '');
-
-INSERT INTO versions VALUES ('plprofiler-pg16', '4.2.4-1', 'amd, arm', 0, '20230914', 'pg16', '', '');
-INSERT INTO versions VALUES ('plprofiler-pg15', '4.2.4-1', 'amd, arm', 0, '20230914', 'pg15', '', '');
-
--- ## PREST ##############################
-INSERT INTO projects VALUES ('prest', 'pge', 11, 3000, '', 0, 'https://github.com/prest/prest/release',
-  'prest', 0, 'prest.png', 'a RESTful API', 'https://prest.org', 'p_rest');
-INSERT INTO releases VALUES ('prest', 9, 'prest', 'pREST', '', 'test', '', 1, 'MIT', '', '');
-INSERT INTO versions VALUES ('prest', '1.4.2', 'amd, arm', 0, '20240221', '', '', '');
-
--- ## POSTGREST ##########################
-INSERT INTO projects VALUES ('postgrest', 'pge', 11, 3000, '', 0, 'https://github.com/postgrest/postgrest/tags',
-  'postgrest', 0, 'postgrest.png', 'a RESTful API', 'https://postgrest.org', 'post_grest');
-INSERT INTO releases VALUES ('postgrest', 9, 'postgrest', 'PostgREST', '', 'test', '', 1, 'MIT', '', '');
-INSERT INTO versions VALUES ('postgrest', '12.0.2-1', 'amd, arm', 0, '20240212', '', 'EL9', 'https://postgrest.org');
 
 -- ## PROMPGEXP ##########################
 INSERT INTO projects VALUES ('prompgexp', 'pge', 11, 9187, 'golang', 0, 'https://github.com/prometheus-community/postgres_exporter/releases',
@@ -299,9 +242,6 @@ INSERT INTO versions VALUES ('hintplan-pg17', '1.7.0-1', 'amd, arm', 1, '2024091
 INSERT INTO versions VALUES ('hintplan-pg16', '1.6.1-1', 'amd, arm', 1, '20240910', 'pg16', '', '');
 INSERT INTO versions VALUES ('hintplan-pg15', '1.5.2-1', 'amd, arm', 1, '20240910', 'pg15', '', '');
 
-INSERT INTO versions VALUES ('hintplan-pg16', '1.6.0-1', 'amd, arm', 0, '20230927', 'pg16', '', '');
-INSERT INTO versions VALUES ('hintplan-pg15', '1.5.1-1', 'amd, arm', 0, '20230927', 'pg15', '', '');
-
 -- ## TIMESCALEDB #######################
 INSERT INTO projects VALUES ('timescaledb', 'ext', 4, 0, '',0, 'https://github.com/timescale/timescaledb/releases',
   'timescaledb', 1, 'timescaledb.png', 'Timeseries Extension', 'https://github.com/timescaledb/timescaledb', 'timescale_db, time_scale_db');
@@ -312,12 +252,6 @@ INSERT INTO releases VALUES ('timescaledb-pg17', 10, 'timescaledb', 'TimescaleDB
 INSERT INTO versions VALUES ('timescaledb-pg15', '2.17.0-1', 'amd, arm', 1, '20241104', 'pg15', '', '');
 INSERT INTO versions VALUES ('timescaledb-pg16', '2.17.0-1', 'amd, arm', 1, '20241104', 'pg16', '', '');
 INSERT INTO versions VALUES ('timescaledb-pg17', '2.17.0-1', 'amd, arm', 1, '20241104', 'pg17', '', '');
-
-INSERT INTO versions VALUES ('timescaledb-pg15', '2.16.1-1', 'amd, arm', 0, '20240820', 'pg15', '', '');
-INSERT INTO versions VALUES ('timescaledb-pg16', '2.16.1-1', 'amd, arm', 0, '20240820', 'pg16', '', '');
-
-INSERT INTO versions VALUES ('timescaledb-pg15', '2.15.3-1', 'amd, arm', 0, '20240729', 'pg15', '', '');
-INSERT INTO versions VALUES ('timescaledb-pg16', '2.15.3-1', 'amd, arm', 0, '20240729', 'pg16', '', '');
 
 -- ## CURL ##############################
 INSERT INTO projects VALUES ('curl', 'ext', 4, 0, '',0, 'https://github.com/pg_curl/pg_curl/releases',
@@ -336,9 +270,6 @@ INSERT INTO releases VALUES ('citus-pg16', 10, 'citus', 'Citus', '', 'test', '',
 INSERT INTO versions VALUES ('citus-pg15', '12.1.5-1', 'amd, arm', 1, '20240729', 'pg15', '', '');
 INSERT INTO versions VALUES ('citus-pg16', '12.1.5-1', 'amd, arm', 1, '20240729', 'pg16', '', '');
 
-INSERT INTO versions VALUES ('citus-pg15', '12.1.4-1', 'amd, arm', 0, '20240612', 'pg15', '', '');
-INSERT INTO versions VALUES ('citus-pg16', '12.1.4-1', 'amd, arm', 0, '20240612', 'pg16', '', '');
-
 -- ## CRON ##############################
 INSERT INTO projects VALUES ('cron', 'ext', 4, 0, '',0, 'https://github.com/citusdata/pg_cron/releases',
   'cron', 1, 'cron.png', 'Background Job Scheduler', 'https://github.com/citusdata/pg_cron', 'pg_cron, pgcron');
@@ -349,9 +280,6 @@ INSERT INTO releases VALUES ('cron-pg15', 10, 'cron', 'pgCron', '', 'prod', '', 
 INSERT INTO versions VALUES ('cron-pg17', '1.6.4-1', 'amd, arm', 1, '20240910', 'pg17', '', '');
 INSERT INTO versions VALUES ('cron-pg16', '1.6.4-1', 'amd, arm', 1, '20240815', 'pg16', '', '');
 INSERT INTO versions VALUES ('cron-pg15', '1.6.4-1', 'amd, arm', 1, '20240815', 'pg15', '', '');
-
-INSERT INTO versions VALUES ('cron-pg16', '1.6.3-1', 'amd, arm', 0, '20230729', 'pg16', '', '');
-INSERT INTO versions VALUES ('cron-pg15', '1.6.3-1', 'amd, arm', 0, '20230729', 'pg15', '', '');
 
 
 -- ## VECTOR ############################
@@ -373,12 +301,10 @@ INSERT INTO versions VALUES ('vector-pg17', '0.7.4-1', 'amd, arm', 0, '20241021'
 -- ## SNOWFLAKE #########################
 INSERT INTO projects VALUES ('snowflake', 'pge', 4, 0, '', 1, 'https://github.com/pgedge/snowflake/tags',
   'snowflake', 1, 'snowflake.png', 'Snowflake Sequences', 'https://github.com/pgedge/snowflake/', 'pg_snowflake, pgsnowflake');
-INSERT INTO releases VALUES ('snowflake-pg14', 4, 'snowflake', 'Snowflake', '', 'prod', '', 1, 'POSTGRES', '', '');
 INSERT INTO releases VALUES ('snowflake-pg15', 4, 'snowflake', 'Snowflake', '', 'prod', '', 1, 'POSTGRES', '', '');
 INSERT INTO releases VALUES ('snowflake-pg16', 4, 'snowflake', 'Snowflake', '', 'prod', '', 1, 'POSTGRES', '', '');
 INSERT INTO releases VALUES ('snowflake-pg17', 4, 'snowflake', 'Snowflake', '', 'prod', '', 1, 'POSTGRES', '', '');
 
-INSERT INTO versions VALUES ('snowflake-pg14', '2.2-1', 'amd, arm', 1, '20240626', 'pg14', '', '');
 INSERT INTO versions VALUES ('snowflake-pg15', '2.2-1', 'amd, arm', 1, '20240626', 'pg15', '', '');
 INSERT INTO versions VALUES ('snowflake-pg16', '2.2-1', 'amd, arm', 1, '20240626', 'pg16', '', '');
 INSERT INTO versions VALUES ('snowflake-pg17', '2.2-1', 'amd, arm', 1, '20240626', 'pg17', '', '');
@@ -389,35 +315,24 @@ INSERT INTO projects VALUES ('spock', 'pge', 4, 0, '', 1, 'https://github.com/pg
   'spock', 1, 'spock.png', 'Logical Rep w/ Conflict Resolution', 'https://github.com/pgedge/spock/', 'pg_spock, pgsspock, vulcan');
 
 -- ## SPOCK33 ###########################
-INSERT INTO releases VALUES ('spock33-pg14', 4, 'spock', 'Spock', '', 'prod', '', 1, 'pgEdge Community', '', '');
 INSERT INTO releases VALUES ('spock33-pg15', 4, 'spock', 'Spock', '', 'prod', '', 1, 'pgEdge Community', '', '');
 INSERT INTO releases VALUES ('spock33-pg16', 4, 'spock', 'Spock', '', 'prod', '', 1, 'pgEdge Community', '', '');
 
-INSERT INTO versions VALUES ('spock33-pg14', '3.3.6-1', 'amd, arm', 1, '20240820', 'pg14', '', '');
 INSERT INTO versions VALUES ('spock33-pg15', '3.3.6-1', 'amd, arm', 1, '20240820', 'pg15', '', '');
 INSERT INTO versions VALUES ('spock33-pg16', '3.3.6-1', 'amd, arm', 1, '20240820', 'pg16', '', '');
 
-INSERT INTO versions VALUES ('spock33-pg14', '3.3.5-1', 'amd, arm', 0, '20240607', 'pg14', '', '');
 INSERT INTO versions VALUES ('spock33-pg15', '3.3.5-1', 'amd, arm', 0, '20240607', 'pg15', '', '');
 INSERT INTO versions VALUES ('spock33-pg16', '3.3.5-1', 'amd, arm', 0, '20240607', 'pg16', '', '');
 
 -- ## SPOCK40 ###########################
-INSERT INTO releases VALUES ('spock40-pg14', 4, 'spock', 'Spock', '', 'prod', '', 1, 'pgEdge Community', '', '');
 INSERT INTO releases VALUES ('spock40-pg15', 4, 'spock', 'Spock', '', 'prod', '', 1, 'pgEdge Community', '', '');
 INSERT INTO releases VALUES ('spock40-pg16', 4, 'spock', 'Spock', '', 'prod', '', 1, 'pgEdge Community', '', '');
 INSERT INTO releases VALUES ('spock40-pg17', 4, 'spock', 'Spock', '', 'prod', '', 1, 'pgEdge Community', '', '');
 
-INSERT INTO versions VALUES ('spock40-pg14', '4.0.5-1', 'amd, arm', 1, '20240924', 'pg14', '', '');
 INSERT INTO versions VALUES ('spock40-pg15', '4.0.5-1', 'amd, arm', 1, '20240924', 'pg15', '', '');
 INSERT INTO versions VALUES ('spock40-pg16', '4.0.5-1', 'amd, arm', 1, '20240924', 'pg16', '', '');
 INSERT INTO versions VALUES ('spock40-pg17', '4.0.5-1', 'amd, arm', 1, '20240924', 'pg17', '', '');
 
-INSERT INTO versions VALUES ('spock40-pg14', '4.0.4-1', 'amd, arm', 0, '20240919', 'pg14', '', '');
-INSERT INTO versions VALUES ('spock40-pg15', '4.0.4-1', 'amd, arm', 0, '20240919', 'pg15', '', '');
-INSERT INTO versions VALUES ('spock40-pg16', '4.0.4-1', 'amd, arm', 0, '20240919', 'pg16', '', '');
-INSERT INTO versions VALUES ('spock40-pg17', '4.0.4-1', 'amd, arm', 0, '20240919', 'pg17', '', '');
-
-INSERT INTO versions VALUES ('spock40-pg14', '4.0.1-1', 'amd, arm', 0, '20240801', 'pg14', '', '');
 INSERT INTO versions VALUES ('spock40-pg15', '4.0.1-1', 'amd, arm', 0, '20240801', 'pg15', '', '');
 INSERT INTO versions VALUES ('spock40-pg16', '4.0.1-1', 'amd, arm', 0, '20240801', 'pg16', '', '');
 INSERT INTO versions VALUES ('spock40-pg17', '4.0.1-1', 'amd, arm', 0, '20240801', 'pg17', '', '');
@@ -425,18 +340,17 @@ INSERT INTO versions VALUES ('spock40-pg17', '4.0.1-1', 'amd, arm', 0, '20240801
 -- ## SPOCK41 ###########################
 INSERT INTO releases VALUES ('spock41-pg16', 4, 'spock', 'Spock', '', 'test', '', 1, 'pgEdge Community', '', '');
 INSERT INTO releases VALUES ('spock41-pg17', 4, 'spock', 'Spock', '', 'test', '', 1, 'pgEdge Community', '', '');
+
 INSERT INTO versions VALUES ('spock41-pg16', '4.1devel-1',   'amd, arm', 1, '20241001', 'pg16', '', '');
 INSERT INTO versions VALUES ('spock41-pg17', '4.1devel-1',   'amd, arm', 1, '20241001', 'pg17', '', '');
 
 -- ## LOLOR #############################
 INSERT INTO projects VALUES ('lolor', 'pge', 4, 0, '', 1, 'https://github.com/pgedge/lolor/tags',
   'spock', 1, 'spock.png', 'Logical Replication of Large Objects', 'https://github.com/pgedge/lolor/#spock', 'lola, lolah, kinks');
-INSERT INTO releases VALUES ('lolor-pg14', 4, 'lolor', 'LgObjLOgicalRep', '', 'prod', '', 1, 'pgEdge Community', '', '');
 INSERT INTO releases VALUES ('lolor-pg15', 4, 'lolor', 'LgObjLOgicalRep', '', 'prod', '', 1, 'pgEdge Community', '', '');
 INSERT INTO releases VALUES ('lolor-pg16', 4, 'lolor', 'LgObjLOgicalRep', '', 'prod', '', 1, 'pgEdge Community', '', '');
 INSERT INTO releases VALUES ('lolor-pg17', 4, 'lolor', 'LgObjLOgicalRep', '', 'prod', '', 1, 'pgEdge Community', '', '');
 
-INSERT INTO versions VALUES ('lolor-pg14', '1.2-1', 'amd, arm', 1, '20240521', 'pg14', '', '');
 INSERT INTO versions VALUES ('lolor-pg15', '1.2-1', 'amd, arm', 1, '20240521', 'pg15', '', '');
 INSERT INTO versions VALUES ('lolor-pg16', '1.2-1', 'amd, arm', 1, '20240521', 'pg16', '', '');
 INSERT INTO versions VALUES ('lolor-pg17', '1.2-1', 'amd, arm', 1, '20240521', 'pg17', '', '');
@@ -481,13 +395,6 @@ INSERT INTO versions VALUES ('postgis-pg17', '3.5.0-1', 'amd, arm', 1, '20241021
 INSERT INTO versions VALUES ('postgis-pg15', '3.4.2-1', 'amd, arm', 0, '20240307', 'pg15', '', 'https://git.osgeo.org/gitea/postgis/postgis/raw/tag/3.4.2/NEWS');
 INSERT INTO versions VALUES ('postgis-pg16', '3.4.2-1', 'amd, arm', 0, '20240307', 'pg16', '', 'https://git.osgeo.org/gitea/postgis/postgis/raw/tag/3.4.2/NEWS');
 
-
--- ## PGADMIN4 ##########################
-INSERT INTO projects VALUES ('pgadmin4', 'app', 11, 443, '', 1, 'https://www.pgadmin.org/news/',
-  'pgadmin4', 0, 'pgadmin.png', 'PostgreSQL Tools', 'https://pgadmin.org', 'pgadmin, admin');
-INSERT INTO releases VALUES ('pgadmin4', 2, 'pgadmin4', 'pgAdmin 4', '', 'test', '', 1, 'POSTGRES', '', '');
-INSERT INTO versions VALUES ('pgadmin4', '8.x', '', 1, '20240108', '', '', '');
-
 -- ## PARTMAN ###########################
 INSERT INTO projects VALUES ('partman', 'ext', 4, 0, '', 4, 'https://github.com/pgpartman/pg_partman/tags',
   'partman', 1, 'partman.png', 'Partition Management', 'https://github.com/pgpartman/pg_partman#pg-partition-manager', 'pg_partman, partition_manager');
@@ -505,19 +412,11 @@ INSERT INTO releases VALUES ('hypopg-pg16', 99, 'hypopg', 'HypoPG', '', 'prod','
 INSERT INTO versions VALUES ('hypopg-pg15', '1.4.1-1',  'amd, arm', 1, '20240509', 'pg15', '', '');
 INSERT INTO versions VALUES ('hypopg-pg16', '1.4.1-1',  'amd, arm', 1, '20230509', 'pg16', '', '');
 
--- ## BADGER ############################
-INSERT INTO projects VALUES ('badger', 'app', 4, 0, '', 6, 'https://github.com/darold/pgbadger/releases',
-  'badger', 0, 'badger.png', 'Performance Reporting', 'https://pgbadger.darold.net', 'pg_badger');
-INSERT INTO releases VALUES ('badger', 101, 'badger','pgBadger','', 'test', '', 1, 'POSTGRES', '', '');
-INSERT INTO versions VALUES ('badger', '11.8', '', 0, '20220408', '', '', '');
-
 -- ## CTLIBS ############################
 INSERT INTO projects VALUES ('ctlibs', 'pge', 0, 0, '', 3, 'https://github.com/pgedge/cli',
   'ctlibs',  0, 'ctlibs.png', 'ctlibs', 'https://github.com/pgedge/cli', '');
 INSERT INTO releases VALUES ('ctlibs', 2, 'ctlibs',  'pgEdge Libs', '', 'prod', '', 1, '', '', '');
 INSERT INTO versions VALUES ('ctlibs', '1.6', '', 1, '20240925', '', '', '');
-INSERT INTO versions VALUES ('ctlibs', '1.5', '', 0, '20240912', '', '', '');
-INSERT INTO versions VALUES ('ctlibs', '1.4', '', 0, '20240806', '', '', '');
 
 -- ## PGCAT #############################
 INSERT INTO projects VALUES ('pgcat', 'pge', 11, 5433, '', 3, 'https://github.com/pgedge/pgcat/tags',
@@ -538,24 +437,17 @@ INSERT INTO releases VALUES ('backrest', 2, 'backrest',  'pgBackRest', '', 'test
 
 INSERT INTO versions VALUES ('backrest', '2.53.1-1', 'amd, arm', 1, '20240912', '', '', '');
 INSERT INTO versions VALUES ('backrest', '2.53-1',   'amd, arm', 0, '20240729', '', '', '');
-INSERT INTO versions VALUES ('backrest', '2.52-1',   'amd, arm', 0, '20240612', '', '', '');
-
--- ## FIREWALLD #########################
-INSERT INTO projects VALUES ('firewalld', 'app', 11, 0, '', 4, 'https://firewalld.org',
-  'firewalld', 0, 'firewalld.png', 'OS Firewall', 'https://github.com/firewalld/firewalld', '');
-INSERT INTO releases VALUES ('firewalld', 1, 'firewalld', 'Firewalld', '', 'test', '', 1, 'GPLv2', '', '');
-INSERT INTO versions VALUES ('firewalld', '1.2', '', 1, '20231101', '', 'EL', '');
 
 -- ## PATRONI ###########################
 INSERT INTO projects VALUES ('patroni', 'app', 11, 0, '', 4, 'https://github.com/pgedge/pgedge-patroni/release',
   'patroni', 0, 'patroni.png', 'HA', 'https://github.com/pgedge/pgedge-patroni', 'pg_patroni, pgedge_patroni');
-INSERT INTO releases VALUES ('patroni', 1, 'patroni', 'pgEdge Patroni', '', 'test', '', 1, 'POSTGRES', '', '');
+INSERT INTO releases VALUES ('patroni', 1, 'patroni', 'pgEdge Patroni', '', 'prod', '', 1, 'POSTGRES', '', '');
 INSERT INTO versions VALUES ('patroni', '3.2.2.1-1', '', 1, '20240401', '', 'EL', '');
 
 -- ## ETCD ##############################
 INSERT INTO projects VALUES ('etcd', 'app', 11, 2379, '', 4, 'https://github.com/etcd-io/etcd/tags',
   'etcd', 0, 'etcd.png', 'HA', 'https://github.com/etcd-io/etcd', '');
-INSERT INTO releases VALUES ('etcd', 1, 'etcd', 'Etcd', '', 'test', '', 1, 'POSTGRES', '', '');
+INSERT INTO releases VALUES ('etcd', 1, 'etcd', 'Etcd', '', 'prod', '', 1, 'POSTGRES', '', '');
 INSERT INTO versions VALUES ('etcd', '3.5.12-2', 'amd, arm', 1, '20240328', '', 'EL', '');
 
 -- ## MINIO #############################
