@@ -18,6 +18,7 @@ except Exception:
     pass
 
 BASE_DIR = "cluster"
+DEFAULT_REPO = "https://pgedge-download.s3.amazonaws.com/REPO"
 
 def run_cmd(cmd, node, message, verbose, capture_output=False, ignore=False, important=False):
     """
@@ -191,9 +192,10 @@ def load_json(cluster_name):
 
         if not node_info["public_ip"] and not node_info["private_ip"]:
             util.exit_message(f"Node '{node_info['name']}' must have either a public_ip or private_ip defined.")
-        nodes.append(node_info)
+       
 
         # Process sub_nodes
+        sub_node_list=[]
         for sub_node in group.get("sub_nodes", []):
             sub_node_info = {
                 "name": sub_node.get("name", ""),
@@ -208,7 +210,10 @@ def load_json(cluster_name):
 
             if not sub_node_info["public_ip"] and not sub_node_info["private_ip"]:
                 util.exit_message(f"Sub-node '{sub_node_info['name']}' must have either a public_ip or private_ip defined.")
-            nodes.append(sub_node_info)
+            sub_node_list.append(sub_node_info)
+        node_info["sub_nodes"] = (sub_node_list)
+
+        nodes.append(node_info)
 
     return db, db_settings, nodes
 
@@ -229,8 +234,8 @@ def json_validate(cluster_name):
     if "spock" not in parsed_json["pgedge"] or "spock_version" not in parsed_json["pgedge"]["spock"]:
         util.exit_message("spock_version is missing")
 
-    if parsed_json["json_version"] != "1.0":
-        util.exit_message("jason_version must be 1.0")
+    if parsed_json["json_version"] != "1.1":
+        util.exit_message("jason_version must be 1.1")
  
     # Check for databases
     if "databases" not in parsed_json["pgedge"]:
@@ -248,7 +253,6 @@ def json_validate(cluster_name):
             util.exit_message("Node configuration is incomplete")
 
         # Validate IP addresses
-        ## To do HERE
         public_ip = node.get("public_ip", "")
         private_ip = node.get("private_ip", "")
         if not public_ip and not private_ip:
@@ -307,7 +311,7 @@ def ssh_install(cluster_name, db, db_settings, db_user, db_passwd, n, install):
         ndport = "5432"
 
     if REPO == "":
-        REPO = "https://pgedge-upstream.s3.amazonaws.com/REPO"
+        REPO = DEFAULT_REPO
         os.environ["REPO"] = REPO
 
     verbose = db_settings.get("log_level", "info")
@@ -316,7 +320,8 @@ def ssh_install(cluster_name, db, db_settings, db_user, db_passwd, n, install):
                           n["path"], ndip, n["port"], REPO)
 
         install_py = "install.py"      
-
+        
+        message = f"Installing pgedge"
         cmd0 = f"export REPO={REPO}; "
         cmd1 = f"mkdir -p {ndpath}; cd {ndpath}; "
         cmd2 = f'python3 -c "\\$(curl -fsSL {REPO}/{install_py})"'
@@ -325,7 +330,7 @@ def ssh_install(cluster_name, db, db_settings, db_user, db_passwd, n, install):
     nc = os.path.join(ndpath, "pgedge", "pgedge ")
     cmd = f"{nc} install pg{pg}"
     
-    message=f"Installing pg{pg} on {ndnm}",
+    message=f"Installing pg{pg} on {ndnm}"
     run_cmd(cmd, n, message=message, verbose=verbose)
 
 
@@ -417,7 +422,7 @@ def ssh_install_pgedge(cluster_name, db, db_settings, db_user, db_passwd, nodes,
             ndport = "5432"
 
         if REPO == "":
-            REPO = "https://pgedge-upstream.s3.amazonaws.com/REPO"
+            REPO = DEFAULT_REPO
             os.environ["REPO"] = REPO
 
         if install == True:  
@@ -481,9 +486,10 @@ def remove(cluster_name, force=False):
         util.echo_cmd(cmd, host=nd["public_ip"], usr=nd["os_user"],
                       key=nd["ssh_key"])
     if force == True:
-        util.message("\n## Ensure that pgEdge root directory is gone")
-        cmd = f"rm -rf {nd['path']}{os.sep}pgedge"
-        util.echo_cmd(cmd, host=nd["public_ip"], usr=nd["os_user"],
+        for nd in nodes:
+            util.message("\n## Ensure that pgEdge root directory is gone")
+            cmd = f"rm -rf {nd['path']}{os.sep}pgedge"
+            util.echo_cmd(cmd, host=nd["public_ip"], usr=nd["os_user"],
                           key=nd["ssh_key"])
 
 
@@ -666,14 +672,14 @@ def init(cluster_name, install=True):
     pg_ver = db_settings["pg_version"]
     for node in nodes:
         system_identifier = get_system_identifier(db[0], node)
-        if "subnodes" in node:
-            for n in node["subnodes"]:
+        if "sub_nodes" in node:
+            for n in node["sub_nodes"]:
                 ssh_install(
                     cluster_name, db[0]["db_name"], db_settings, db[0]["db_user"],
-                    db[0]["db_password"], n, install, install, False, " "
+                    db[0]["db_password"], n, install
                 )
 
-    if any("subnodes" in node for node in nodes):
+    if any("sub_nodes" in node for node in nodes):
         configure_etcd(cluster_name, system_identifier)
         configure_patroni(cluster_name)
 
@@ -763,7 +769,7 @@ def add_node(cluster_name, source_node, target_node, repo1_path=None, backup_id=
 
 
     rc = ssh_install_pgedge(cluster_name, db[0]["db_name"], db_settings, db[0]["db_user"],
-                            db[0]["db_password"], [new_node_data], install, True, source_node, verbose)
+                            db[0]["db_password"], [new_node_data], install, verbose)
 
     os_user = new_node_data["os_user"]
     repo1_type = new_node_data.get("repo1_type", "posix")
