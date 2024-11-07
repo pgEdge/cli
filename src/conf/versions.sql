@@ -455,6 +455,12 @@ INSERT INTO projects VALUES ('kirk', 'dev', 11, 8883, '', 0, 'https://github.com
 INSERT INTO releases VALUES ('kirk', 2, 'kirk', 'MQTT Client', '', 'test', '', 1, 'PGEDGE', '', '');
 INSERT INTO versions VALUES ('kirk', (select v from hub), '',  1, (select d from hub), '', '', '');
 
+-- ## ACE ##########################
+INSERT INTO projects VALUES ('ace', 'pge', 11, 5000, '', 3, 'http://github.com/pgedge/cli/cli/scripts/ace.py',
+  'ace',  0, '', 'Anti Chaos Engine for pgEdge', 'https://github.com/pgedge/cli/cli/scripts/ace.py', 'ace');
+INSERT INTO releases VALUES ('ace', 2, 'ace',  'ACE', '', 'test', '', 1, 'PGEDGE', '', '');
+INSERT INTO versions VALUES ('ace', (select v from hub), '',  1, (select d from hub), '', '', '');
+
 -- ## MINIO #############################
 INSERT INTO projects VALUES ('minio', 'app', 11, 9000, '', 4, 'https://github.com/minio/minio/tags',
   'minio', 0, 'minio.png', 'HA', 'https://github.com/minio/minio', '');

@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+cd "$(dirname "$0")"
+
+echo "not implemented"
+exit 1
+
+log=$MY_LOGS/kirk.log
+
+echo "" >> $log
+echo "#######  Stopping KIRK: `date`  #######" | tee -a $log
+
+pid=`ps aux | grep [k]irk.py | awk '{print $2}'`
+if [ "$pid" == "" ]; then
+  echo "# kirk not running" | tee -a $log
+else
+  echo "# killing pid $pid" | tee -a $log
+  kill -9 $pid
+fi
