@@ -2,9 +2,10 @@
 cd "$(dirname "$0")"
 
 TGZ_REPO="https://pgedge-upstream.s3.amazonaws.com/REPO"
-set -ex
 
 source env.sh
+
+set -ex
 
 vers="$1"
 rebuild_flag="$2"
@@ -63,6 +64,7 @@ cmd "cp -v  $PGE/src/repo/* $OUT/."
 cmd "cp $OUT/* $cache/."
 
 cmd "cp -r $DEVEL/packages $cache/."
+cmd "python3 pgedge/hub/scripts/get_old.py"
 
 if [ ! "tgz_flag" == "y" ]; then
   echo ""

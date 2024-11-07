@@ -1,6 +1,9 @@
 
-import os, sys, sqlite3, platform
+import os
+from pathlib import Path
+os.chdir(Path(__file__).parent)
 
+import sys, sqlite3, platform
 
 PROD_BUCKET="s3://pgedge-download/REPO"
 
