@@ -395,9 +395,6 @@ INSERT INTO versions VALUES ('postgis-pg15', '3.5.0-1', 'amd, arm', 1, '20241021
 INSERT INTO versions VALUES ('postgis-pg16', '3.5.0-1', 'amd, arm', 1, '20241021', 'pg16', '', 'https://git.osgeo.org/gitea/postgis/postgis/raw/tag/3.5.0/NEWS');
 INSERT INTO versions VALUES ('postgis-pg17', '3.5.0-1', 'amd, arm', 1, '20241021', 'pg17', '', 'https://git.osgeo.org/gitea/postgis/postgis/raw/tag/3.5.0/NEWS');
 
-INSERT INTO versions VALUES ('postgis-pg15', '3.4.2-1', 'amd, arm', 0, '20240307', 'pg15', '', 'https://git.osgeo.org/gitea/postgis/postgis/raw/tag/3.4.2/NEWS');
-INSERT INTO versions VALUES ('postgis-pg16', '3.4.2-1', 'amd, arm', 0, '20240307', 'pg16', '', 'https://git.osgeo.org/gitea/postgis/postgis/raw/tag/3.4.2/NEWS');
-
 -- ## PARTMAN ###########################
 INSERT INTO projects VALUES ('partman', 'ext', 4, 0, '', 4, 'https://github.com/pgpartman/pg_partman/tags',
   'partman', 1, 'partman.png', 'Partition Management', 'https://github.com/pgpartman/pg_partman#pg-partition-manager', 'pg_partman, partition_manager');
