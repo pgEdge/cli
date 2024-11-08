@@ -340,6 +340,7 @@ initPG () {
     initC "lolor-pg$pgM"      "lolor"      "$lolorV"     "$outPlat" "postgres/lolor"     "" "" "nil"
     initC "snowflake-pg$pgM"  "snowflake"  "$snwflkV"    "$outPlat" "postgres/snowflake" "" "" "nil"
     initC "spock40-pg$pgM"    "spock40"    "$spock40V"   "$outPlat" "postgres/spock40"   "" "" "nil"
+    initC "spock40-pg$pgM"    "spock40"    "$spock40V1"  "$outPlat" "postgres/spock40"   "" "" "nil"
   fi
 
   if [ "$pgM" \> "13" ] && [ "$pgM" \< "17" ]; then
@@ -436,7 +437,6 @@ do
             outDir="$OPTARG"
             setupOutdir
             OS_TYPE="POSIX"
-
 
             cp $CLI/sh/cli.sh     ./pgedge
 
