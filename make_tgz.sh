@@ -64,7 +64,7 @@ cmd "cp -v  $PGE/src/repo/* $OUT/."
 cmd "cp $OUT/* $cache/."
 
 cmd "cp -r $DEVEL/packages $cache/."
-cmd "python3 pgedge/hub/scripts/get_old.py"
+##cmd "python3 pgedge/hub/scripts/get_old.py"
 
 if [ ! "$tgz_flag" == "y" ]; then
   echo ""
