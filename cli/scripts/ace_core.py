@@ -40,7 +40,7 @@ def run_query(worker_state, host, query):
     return results
 
 
-def init_db_connection(shared_objects, worker_state):
+def init_conn_pool(shared_objects, worker_state):
     db, pg, node_info = cluster.load_json(shared_objects["cluster_name"])
 
     cluster_nodes = []
@@ -77,6 +77,16 @@ def init_db_connection(shared_objects, worker_state):
             params["password"] = pgpass
 
         worker_state[node["name"]] = psycopg.connect(**params).cursor()
+
+
+def close_conn_pool(shared_objects, worker_state):
+    try:
+        for host, cur in worker_state.items():
+            conn = cur.connection
+            cur.close()
+            conn.close()
+    except Exception as e:
+        raise AceException(f"Error closing connection pool: {e}")
 
 
 # Accepts list of pkeys and values and generates a where clause that in the form
@@ -564,7 +574,8 @@ def table_diff(td_task: TableDiffTask):
             for result in pool.imap_unordered(
                 compare_checksums,
                 make_single_arguments(batches),
-                worker_init=init_db_connection,
+                worker_init=init_conn_pool,
+                worker_exit=close_conn_pool,
                 progress_bar=True if not td_task.quiet_mode else False,
                 iterable_len=len(batches),
                 progress_bar_style="rich",
@@ -1410,7 +1421,7 @@ def table_rerun_async(td_task: TableDiffTask) -> None:
             for result in pool.imap_unordered(
                 compare_checksums,
                 make_single_arguments(blocks),
-                worker_init=init_db_connection,
+                worker_init=init_conn_pool,
                 progress_bar=True if not td_task.quiet_mode else False,
                 iterable_len=len(blocks),
                 progress_bar_style="rich",
