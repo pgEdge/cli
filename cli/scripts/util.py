@@ -43,10 +43,15 @@ from datetime import datetime, timedelta
 from urllib import request as urllib2
 from shutil import copy2
 from semantic_version import Version
-from tqdm import tqdm
 
 try:
     from tqdm import tqdm
+    has_tqdm = True
+except ImportError:
+    has_tqdm = False
+    pass
+
+try:
     import psycopg
 except Exception:
     # only used for advanced functionality
@@ -4092,9 +4097,13 @@ def run_rcommand(cmd, message="", host="", usr="", key="", verbose="info", max_a
     return result
 
 def wait_with_dots(message, duration=5):
-    for _ in tqdm(range(duration), desc="Progress", ncols=100):
-        time.sleep(1)
-
+    print(message)
+    if has_tqdm:
+        for _ in tqdm(range(duration), desc="Progress", ncols=100):
+            time.sleep(1)
+    else:
+        for _ in range(duration):
+            time.sleep(1)
 
 def echo_action(action, status=None, e=False, important=False):
     now = datetime.now()

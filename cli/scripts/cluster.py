@@ -13,7 +13,7 @@ import getpass
 from ipaddress import ip_address
 try:
     import etcd
-    import patroni
+    import ha_patroni
 except Exception:
     pass
 
@@ -296,6 +296,44 @@ def json_validate(cluster_name):
     util.message(f"Cluster json's cluster/{cluster_name}/{cluster_name}.json file structure is valid.", "success")
 
 
+def ssh_setup(cluster_name, db, db_settings, db_user, db_passwd, n, install):
+    REPO = os.getenv("REPO", "")
+    ndnm = n["name"]
+    ndpath = n["path"]
+    ndip = n["public_ip"]
+    pg = db_settings["pg_version"]
+    spock = db_settings["spock_version"]
+    verbose = db_settings.get("log_level", "info")
+    try:
+        ndport = str(n["port"])
+    except Exception:
+        ndport = "5432"
+
+    nc = os.path.join(ndpath, "pgedge", "pgedge ")
+    parms = f" -U {db_user} -P {db_passwd} -d {db} --port {ndport}"
+    if pg is not None and pg != '':
+        parms = parms + f" --pg {pg}"
+    if spock is not None and spock != '':
+        parms = parms + f" --spock_ver {spock}"
+    if db_settings["auto_start"] == "on":
+        parms = f"{parms} --autostart"
+    
+    cmd = f"{nc} setup {parms}"
+    message = f"Setup pgedge"
+    run_cmd(cmd, n, message=message, verbose=verbose)
+        
+    if db_settings["auto_ddl"] == "on":
+        cmd = nc + " db guc-set spock.enable_ddl_replication on;"
+        cmd = cmd + " " + nc + " db guc-set spock.include_ddl_repset on;"
+        cmd = cmd + " " + nc + " db guc-set spock.allow_ddl_from_functions on;"
+        
+        message = f"Setup spock"
+        run_cmd(cmd, n, message=message, verbose=verbose)
+        
+    if db_settings["auto_ddl"] == "on":
+        util.message("#")
+    return 0
+
 def ssh_install(cluster_name, db, db_settings, db_user, db_passwd, n, install):
     if install is None: 
         install=True
@@ -332,6 +370,8 @@ def ssh_install(cluster_name, db, db_settings, db_user, db_passwd, n, install):
     
     message=f"Installing pg{pg} on {ndnm}"
     run_cmd(cmd, n, message=message, verbose=verbose)
+    
+    return 0
 
 
 def ssh_cross_wire_pgedge(cluster_name, db, db_settings, db_user, db_passwd,
@@ -671,17 +711,27 @@ def init(cluster_name, install=True):
 
     pg_ver = db_settings["pg_version"]
     for node in nodes:
-        system_identifier = get_system_identifier(db[0], node)
         if "sub_nodes" in node:
             for n in node["sub_nodes"]:
                 ssh_install(
                     cluster_name, db[0]["db_name"], db_settings, db[0]["db_user"],
                     db[0]["db_password"], n, install
                 )
+                ssh_setup(
+                    cluster_name, db[0]["db_name"], db_settings, db[0]["db_user"],
+                    db[0]["db_password"], n, install
+                )
+                manage_node(n, "stop", f"pg{pg_ver}", verbose)
 
-    if any("sub_nodes" in node for node in nodes):
-        configure_etcd(cluster_name, system_identifier)
-        configure_patroni(cluster_name)
+                pgdata = f"{node['path']}/pgedge/data/pg{pg_ver}"
+                cmd = f"rm -rf {pgdata}"
+                message = f"Removing old data directory"
+                run_cmd(cmd, n, message=message, verbose=verbose)
+            
+            sub_nodes = node["sub_nodes"]
+        
+            etcd.configure_etcd(node, sub_nodes)
+            ha_patroni.configure_patroni(node, sub_nodes, db[0], db_settings)
 
 
 def add_node(cluster_name, source_node, target_node, repo1_path=None, backup_id=None, script=" ", stanza=" ", install=True):
@@ -1249,29 +1299,6 @@ def check_wal_rec(n, dbname, stanza, verbose, timeout=600, interval=1):
         time.sleep(interval)
         lag_bytes = int(extract_psql_value(result.stdout, "total_all_flushed"))
 
-
-def get_system_identifier(db, n):
-    cmd = "SELECT system_identifier FROM pg_control_system()"
-    try:
-        op = util.psql_cmd_output(
-            cmd, 
-            f"{n['path']}/pgedge/pgedge", 
-            db["name"], 
-            "",
-            host=n["public_ip"], 
-            usr=n["os_user"], 
-            key=n["ssh_key"]
-        )
-        lines = op.splitlines()
-        for line in lines:
-            # Look for the line that appears after the header line
-            if line.strip() and line.strip().isdigit():
-                system_identifier = line.strip()
-                return system_identifier
-        raise ValueError("System identifier not found in the output")
-    except Exception as e:
-        return str(e)
-    
 
 def replication_all_tables(cluster_name, database_name=None):
     """Add all tables in the database to replication on every node"""

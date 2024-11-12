@@ -86,10 +86,10 @@ def etcd_conf(primary_node, nodes):
             key=node["ssh_key"]
         )
 
-def init(cluster_name, system_identifier):
+def init(cluster_name):
     db, db_settings, primary_nodes = util.load_json(cluster_name)
     for node in primary_nodes:
-        configure_etcd(node, node["subnodes"], system_identifier)
+        configure_etcd(node, node["subnodes"])
 
 def etcd_command(cluster_name, node, cmd, args=None):
     if validate_config(cluster_name) == 'False':
@@ -106,20 +106,7 @@ def etcd_command(cluster_name, node, cmd, args=None):
                 host=nd['public_ip'], cluster=cluster
             )
 
-def set_system_identifier_in_etcd(n, system_identifier):
-    return
-    etcd_value = f'{{"init": true, "system_identifier": "{system_identifier}"}}'
-    etcd_key = "/service/postgres/initialize"
-    cmd = f'{ETCDCTL} put {etcd_key} {etcd_value}'
-    print(cmd)
-    util.run_rcommand(
-        cmd,
-        message=f"ETCD Setting node identifier",
-        host=n["private_ip"], usr=n["os_user"],
-        key=n["ssh_key"]
-    )
-
-def configure_etcd(primary_node, nodes, system_identifier):
+def configure_etcd(primary_node, nodes):
     node_ips = [node['private_ip'] for node in nodes]
     node_names = [node['name'] for node in nodes]
 
@@ -175,8 +162,6 @@ def configure_etcd(primary_node, nodes, system_identifier):
     )
     util.wait_with_dots("Wait to start etcd", 15) 
 
-    set_system_identifier_in_etcd(primary_node, system_identifier)
-    
     util.run_rcommand(
         f"{ETCDCTL} --endpoints=http://{primary_node['private_ip']}:2379 endpoint health",
         message="Healthcheck ETCD's primary node",
