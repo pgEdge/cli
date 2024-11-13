@@ -79,6 +79,8 @@ def init_conn_pool(shared_objects, worker_state):
         worker_state[node["name"]] = psycopg.connect(**params).cursor()
 
 
+# Ignore the type checker warning for shared_objects.
+# It is unused in this function, but is required by the mpire library.
 def close_conn_pool(shared_objects, worker_state):
     try:
         for host, cur in worker_state.items():
@@ -1038,6 +1040,8 @@ def table_repair(tr_task: TableRepairTask):
                 try:
                     if any([s in col_type for s in ["char", "text", "vector"]]):
                         modified_row += (elem,)
+                    elif col_type == "bytea":
+                        modified_row += (bytes.fromhex(elem),)
                     else:
                         item = ast.literal_eval(elem)
                         if col_type == "jsonb":
