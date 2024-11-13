@@ -275,9 +275,7 @@ def get_row_types(conn, table_name):
     finally:
         conn.commit()
         if not table_types:
-            util.exit_message(
-                "Error: couldn't connect to source of truth or find any columns"
-            )
+            raise AceException("Error: could not fetch column types")
 
     return table_types
 
