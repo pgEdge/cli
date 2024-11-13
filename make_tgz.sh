@@ -62,9 +62,9 @@ cmd "pgedge/pgedge set GLOBAL REPO $TGZ_REPO"
 cache=pgedge/data/conf/cache
 cmd "cp -v  $PGE/src/repo/* $OUT/."
 cmd "cp $OUT/* $cache/."
+cmd "cp $HIST/out_old/* $cache/."
 
 cmd "cp -r $DEVEL/packages $cache/."
-##cmd "python3 pgedge/hub/scripts/get_old.py"
 
 if [ ! "$tgz_flag" == "y" ]; then
   echo ""
