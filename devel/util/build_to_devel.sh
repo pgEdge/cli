@@ -1,8 +1,6 @@
 #!/bin/bash
 cd "$(dirname "$0")"
 
-PLATFORM=`cat /etc/os-release | grep PLATFORM_ID | cut -d: -f2 | tr -d '\"'`
-
 cmd () {
   echo "# $1"
   $1
@@ -30,13 +28,19 @@ echo "#     now = $now"
 run_day=`date +%j`
 echo "# run_day = $run_day"
 
-vers=$1
+vers="$1"
+cleaner="$2"
 echo "#     vers = \"$vers\""
 
 
 if [ ! "$#" == "1" ]; then
-  echo "ERROR: One parm must be specified such as '15 16'"
-  exit 1
+  if [ "$#" == "2" ] && [ "$2" == "--clean" ]; then
+    echo "WARNING: we will be cleaning out the REPO"
+    sleep 5
+  else
+    echo "ERROR: Parm must be specified such as '15 16 17'"
+    exit 1
+  fi
 fi
 
 if [ "$vers" == "" ]; then
@@ -64,10 +68,15 @@ cmd "cd $outDir"
 cmd "ls"
 sleep 3
 
-step 5 "copy to S3 ############################"
+step 5 "check if cleanup S3 ###################"
+if [ "$cleaner" == "--clean" ]; then
+  cmd "aws --region $REGION s3 rm --recursive $BUCKET/REPO"
+fi
+
+step 6 "copy to S3 ############################"
 flags="--acl public-read --storage-class STANDARD --recursive"
 cmd "aws --region $REGION s3 cp . $BUCKET/REPO $flags"
 
-step 6 "Goodbye! ##############################"
+step 7 "Goodbye! ##############################"
 exit 0
 
