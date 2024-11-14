@@ -379,6 +379,53 @@ def check_user_privileges(conn, username, schema, table, required_privileges=[])
         }
 
 
+# looks through a table to ensure that no `btyea` column is too large
+# returns (true, _) if it is ok to proceed, (false, rowname) if there is a problem
+def check_byte_size( task: TableDiffTask ) -> tuple[bool, str]:
+    conns = {}
+    try:
+        for params in task.fields.conn_params:
+            conns[task.fields.host_map[params["host"] + ":" + params["port"]]] = (
+                psycopg.connect(**params)
+            )
+    except Exception as e:
+        context = {"errors": [str(e)]}
+        handle_task_exception(task, context)
+        raise e
+
+    # Gets types of each column in table
+    try:
+        table_types = get_row_types(
+            next(iter(conns.values())),
+            task.fields.l_table,
+        )
+    except Exception as e:
+        context = {"errors": [f"Could not get row types: {str(e)}"]}
+        handle_task_exception(task, context)
+        raise e
+
+    # Gets byte size from each bytea in each connection
+    byte_sql = "SELECT AVG(pg_column_size({c_name})) AS avg_size_in_bytes FROM {t_name};"
+    try:
+        for _, conn in conns.items():
+            cur = conn.cursor()
+            for col_name, col_type in table_types.items():
+                if "bytea" in col_type:
+                    cur.execute(byte_sql.format(c_name = col_name, t_name = task.fields.l_table))
+                    size = cur.fetchone()[0]
+                    print(size)
+                    # If max size greater than (1 MB = 10^6 B)?? return false
+                    if size > 10**6: return False, col_name
+    except Exception as e:
+        context = {"errors": [f"Could not read average byte size of some column: {str(e)}"]}
+        handle_task_exception(task, context)
+        raise e
+
+    # Everything ok
+    return True, ""
+
+
+
 def write_diffs_json(diff_dict, row_types, quiet_mode=False):
 
     def convert_to_json_type(item: str, type: str):
@@ -612,6 +659,7 @@ def table_diff_checks(td_task: TableDiffTask) -> TableDiffTask:
 
     conn_params = []
     conn_list = []
+    host_map = {}
     required_privileges = ["SELECT"]
 
     try:
@@ -671,6 +719,7 @@ def table_diff_checks(td_task: TableDiffTask) -> TableDiffTask:
 
                 conn_list.append(psycopg.connect(**params))
                 conn_params.append(params)
+                host_map[nd["public_ip"] + ":" + params["port"]] = nd["name"]
 
     except Exception as e:
         raise e
@@ -749,6 +798,7 @@ def table_diff_checks(td_task: TableDiffTask) -> TableDiffTask:
     td_task.fields.l_table = l_table
     td_task.fields.node_list = node_list
     td_task.fields.database = database
+    td_task.fields.host_map = host_map
 
     return td_task
 
