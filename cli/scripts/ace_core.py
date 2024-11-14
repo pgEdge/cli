@@ -518,6 +518,16 @@ def table_diff(td_task: TableDiffTask):
 
     start_time = datetime.now()
 
+    # Checks to see if there is a `bytea` dataype that is too large
+    byte_check, byte_row_name = ace.check_byte_size( td_task )
+    if not byte_check:
+        util.message(
+            f"Refusing to perform table-diff. Data in {byte_row_name} of {td_task._table_name} is larger than 1 MB",
+            p_state="warning",
+            quiet_mode=td_task.quiet_mode,
+        )
+        return
+
     """
     Generate offsets for each process to work on.
     We go up to the max rows among all nodes because we want our set difference logic
