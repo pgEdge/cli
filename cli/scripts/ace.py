@@ -237,7 +237,7 @@ def parse_nodes(nodes, quiet_mode=False) -> list:
     return node_list
 
 
-def get_row_types(conn, table_name):
+def get_col_types(conn, table_name):
     """
     Here we are grabbing the name and data type of each row from table from the
     given conn. Using this complex query instead of a simpler one since this
@@ -379,51 +379,38 @@ def check_user_privileges(conn, username, schema, table, required_privileges=[])
         }
 
 
-# looks through a table to ensure that no `btyea` column is too large
-# returns (true, _) if it is ok to proceed, (false, rowname) if there is a problem
-def check_byte_size( task: TableDiffTask ) -> tuple[bool, str]:
-    conns = {}
-    try:
-        for params in task.fields.conn_params:
-            conns[task.fields.host_map[params["host"] + ":" + params["port"]]] = (
-                psycopg.connect(**params)
-            )
-    except Exception as e:
-        context = {"errors": [str(e)]}
-        handle_task_exception(task, context)
-        raise e
-
-    # Gets types of each column in table
-    try:
-        table_types = get_row_types(
-            next(iter(conns.values())),
-            task.fields.l_table,
-        )
-    except Exception as e:
-        context = {"errors": [f"Could not get row types: {str(e)}"]}
-        handle_task_exception(task, context)
-        raise e
-
+# Looks through a table to ensure that no `bytea` column is too large
+# Returns (true, _) if it is ok to proceed, (false, rowname) otherwise
+def check_column_size(conn_list: list, task: TableDiffTask) -> tuple[bool, str]:
     # Gets byte size from each bytea in each connection
-    byte_sql = "SELECT AVG(pg_column_size({c_name})) AS avg_size_in_bytes FROM {t_name};"
+    byte_sql = (
+        "SELECT AVG(pg_column_size({c_name})) AS avg_size_in_bytes FROM {t_name};"
+    )
     try:
-        for _, conn in conns.items():
+        for conn in conn_list:
             cur = conn.cursor()
+            hostname = conn.info.host
+            port = conn.info.port
+            col_types_key = f"{hostname}:{port}"
+            table_types = task.fields.col_types[col_types_key]
             for col_name, col_type in table_types.items():
                 if "bytea" in col_type:
-                    cur.execute(byte_sql.format(c_name = col_name, t_name = task.fields.l_table))
+                    cur.execute(
+                        byte_sql.format(c_name=col_name, t_name=task.fields.l_table)
+                    )
                     size = cur.fetchone()[0]
-                    print(size)
                     # If max size greater than (1 MB = 10^6 B)?? return false
-                    if size > 10**6: return False, col_name
+                    if size > 10**6:
+                        return False, col_name
     except Exception as e:
-        context = {"errors": [f"Could not read average byte size of some column: {str(e)}"]}
+        context = {
+            "errors": [f"Could not read average byte size of some column: {str(e)}"]
+        }
         handle_task_exception(task, context)
         raise e
 
     # Everything ok
     return True, ""
-
 
 
 def write_diffs_json(diff_dict, row_types, quiet_mode=False):
@@ -730,19 +717,31 @@ def table_diff_checks(td_task: TableDiffTask) -> TableDiffTask:
         quiet_mode=td_task.quiet_mode,
     )
 
+    # Psycopg connection objects cannot be pickled easily,
+    # so, we send the connection parameters instead
+    td_task.fields.conn_params = conn_params
+    td_task.fields.host_map = host_map
+
     cols = None
     key = None
 
-    # TODO: Check column types here?
     for conn in conn_list:
         curr_cols = get_cols(conn, l_schema, l_table)
         curr_key = get_key(conn, l_schema, l_table)
+        col_types = get_col_types(conn, l_table)
+        hostname = conn.info.host
+        port = conn.info.port
+        col_types_key = f"{hostname}:{port}"
 
         if not curr_cols:
-            hostname = conn.info.host
             raise AceException(f"Table '{td_task._table_name}' not found on {hostname}")
         if not curr_key:
             raise AceException(f"No primary key found for '{td_task._table_name}'")
+
+        if not td_task.fields.col_types:
+            td_task.fields.col_types = {}
+
+        td_task.fields.col_types[col_types_key] = col_types
 
         if (not cols) and (not key):
             cols = curr_cols
@@ -755,11 +754,54 @@ def table_diff_checks(td_task: TableDiffTask) -> TableDiffTask:
         cols = curr_cols
         key = curr_key
 
+    if td_task.fields.col_types and len(td_task.fields.col_types) > 1:
+        ref_node = list(td_task.fields.col_types.keys())[0]
+        ref_types = td_task.fields.col_types[ref_node]
+
+        for node, types in td_task.fields.col_types.items():
+            if types != ref_types:
+                mismatched_cols = {
+                    col: (ref_types[col], types[col])
+                    for col in ref_types
+                    if col in types and types[col] != ref_types[col]
+                }
+                util.message(
+                    "Warning: Column types mismatch detected between"
+                    f" {ref_node} and {node}:\n"
+                    + "\n".join(
+                        [
+                            f"  Column '{col}': {ref_node}={t1}, {node}={t2}"
+                            for col, (t1, t2) in mismatched_cols.items()
+                        ]
+                    ),
+                    p_state="warning",
+                    quiet_mode=td_task.quiet_mode,
+                )
+
     util.message(
         f"Table {td_task._table_name} is comparable across nodes",
         p_state="success",
         quiet_mode=td_task.quiet_mode,
     )
+
+    """
+    We populate the remaining derived fields of TableDiffTask here
+    """
+    td_task.fields.cols = cols
+    td_task.fields.key = key
+    td_task.fields.l_schema = l_schema
+    td_task.fields.l_table = l_table
+    td_task.fields.node_list = node_list
+    td_task.fields.database = database
+    td_task.fields.host_map = host_map
+
+    # Checks to see if there is a `bytea` dataype that is too large
+    byte_check, byte_row_name = check_column_size(conn_list, td_task)
+    if not byte_check:
+        raise AceException(
+            f"Refusing to perform table-diff. Data in column {byte_row_name} of"
+            f" table {td_task._table_name} is larger than 1 MB"
+        )
 
     if td_task.diff_file_path:
         if not os.path.exists(td_task.diff_file_path):
@@ -780,25 +822,6 @@ def table_diff_checks(td_task: TableDiffTask) -> TableDiffTask:
                 raise AceException("Contents of diff file improperly formatted")
         except Exception as e:
             raise AceException(f"Contents of diff file improperly formatted: {e}")
-
-    """
-    Now that the inputs have been checked and processed, we will populate the
-    TableDiffArgs object with the processed values and return it
-    """
-
-    """
-    We populate the derived fields of TableDiffTask here
-    """
-    # Psycopg connection objects cannot be pickled easily,
-    # so, we send the connection parameters instead
-    td_task.fields.conn_params = conn_params
-    td_task.fields.cols = cols
-    td_task.fields.key = key
-    td_task.fields.l_schema = l_schema
-    td_task.fields.l_table = l_table
-    td_task.fields.node_list = node_list
-    td_task.fields.database = database
-    td_task.fields.host_map = host_map
 
     return td_task
 

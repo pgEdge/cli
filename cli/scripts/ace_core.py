@@ -389,8 +389,6 @@ def compare_checksums(shared_objects, worker_state, batches):
 def table_diff(td_task: TableDiffTask):
     """Efficiently compare tables across cluster using checksums and blocks of rows"""
 
-    global result_queue, diff_dict, row_diff_count
-
     simple_primary_key = True
     if len(td_task.fields.key.split(",")) > 1:
         simple_primary_key = False
@@ -398,13 +396,10 @@ def table_diff(td_task: TableDiffTask):
     row_count = 0
     total_rows = 0
     conn_with_max_rows = None
-    table_types = None
 
     try:
         for params in td_task.fields.conn_params:
             conn = psycopg.connect(**params)
-            if not table_types:
-                table_types = ace.get_row_types(conn, td_task.fields.l_table)
 
             rows = ace.get_row_count(
                 conn, td_task.fields.l_schema, td_task.fields.l_table
@@ -517,16 +512,6 @@ def table_diff(td_task: TableDiffTask):
     procs = max_procs if total_blocks > max_procs else total_blocks
 
     start_time = datetime.now()
-
-    # Checks to see if there is a `bytea` dataype that is too large
-    byte_check, byte_row_name = ace.check_byte_size( td_task )
-    if not byte_check:
-        util.message(
-            f"Refusing to perform table-diff. Data in {byte_row_name} of {td_task._table_name} is larger than 1 MB",
-            p_state="warning",
-            quiet_mode=td_task.quiet_mode,
-        )
-        return
 
     """
     Generate offsets for each process to work on.
@@ -667,7 +652,7 @@ def table_diff(td_task: TableDiffTask):
         try:
             if td_task.output == "json":
                 td_task.diff_file_path = ace.write_diffs_json(
-                    diff_dict, table_types, quiet_mode=td_task.quiet_mode
+                    diff_dict, td_task.fields.col_types, quiet_mode=td_task.quiet_mode
                 )
             elif td_task.output == "csv":
                 ace.write_diffs_csv(diff_dict)
