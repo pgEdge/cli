@@ -30,6 +30,7 @@ class DerivedFields:
     node_list: list = None
     host_map: dict = None
     table_list: list = None
+    col_types: dict = None
 
 
 @dataclass
