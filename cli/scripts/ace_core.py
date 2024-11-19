@@ -937,7 +937,7 @@ def table_repair(tr_task: TableRepairTask):
 
     # Gets types of each column in table
     try:
-        table_types = ace.get_row_types(
+        table_types = ace.get_col_types(
             conns[tr_task.source_of_truth],
             tr_task.fields.l_table,
         )
@@ -1259,7 +1259,7 @@ def table_rerun_temptable(td_task: TableDiffTask) -> None:
     task_id = ace_db.generate_task_id()
 
     try:
-        diff_args = TableDiffTask(
+        diff_task = TableDiffTask(
             cluster_name=td_task.cluster_name,
             _table_name=f"public.{temp_table_name}",
             _dbname=td_task._dbname,
@@ -1270,8 +1270,13 @@ def table_rerun_temptable(td_task: TableDiffTask) -> None:
             batch_size=td_task.batch_size,
             quiet_mode=td_task.quiet_mode,
         )
-        diff_args.scheduler.task_id = task_id
-        diff_task = ace.table_diff_checks(diff_args)
+
+        diff_task.scheduler.task_id = task_id
+        diff_task.scheduler.task_type = "table-rerun"
+        diff_task.scheduler.task_status = "RUNNING"
+        diff_task.scheduler.started_at = datetime.now()
+
+        diff_task = ace.table_diff_checks(diff_task)
         ace_db.create_ace_task(task=diff_task)
         table_diff(diff_task)
     except Exception as e:
@@ -1298,18 +1303,6 @@ def table_rerun_temptable(td_task: TableDiffTask) -> None:
 
 
 def table_rerun_async(td_task: TableDiffTask) -> None:
-    table_types = None
-
-    try:
-        for params in td_task.fields.conn_params:
-            conn = psycopg.connect(**params)
-            if not table_types:
-                table_types = ace.get_row_types(conn, td_task.fields.l_table)
-    except Exception as e:
-        context = {"errors": [f"Could not connect to nodes: {str(e)}"]}
-        ace.handle_task_exception(td_task, context)
-        raise e
-
     # load diff data and validate
     try:
         diff_data = json.load(open(td_task.diff_file_path, "r"))
@@ -1421,6 +1414,7 @@ def table_rerun_async(td_task: TableDiffTask) -> None:
                 compare_checksums,
                 make_single_arguments(blocks),
                 worker_init=init_conn_pool,
+                worker_exit=close_conn_pool,
                 progress_bar=True if not td_task.quiet_mode else False,
                 iterable_len=len(blocks),
                 progress_bar_style="rich",
@@ -1498,7 +1492,7 @@ def table_rerun_async(td_task: TableDiffTask) -> None:
         try:
             if td_task.output == "json":
                 td_task.diff_file_path = ace.write_diffs_json(
-                    diff_dict, table_types, quiet_mode=td_task.quiet_mode
+                    diff_dict, td_task.fields.col_types, quiet_mode=td_task.quiet_mode
                 )
 
             elif td_task.output == "csv":
