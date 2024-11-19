@@ -28,8 +28,8 @@ echo "#     now = $now"
 run_day=`date +%j`
 echo "# run_day = $run_day"
 
-vers="$1"
-cleaner="$2"
+vers="15 16 17"
+cleaner="$1"
 echo "#     vers = \"$vers\""
 
 
@@ -59,8 +59,8 @@ cmd "cd $PGE"
 cmd "git status"
 cmd "git pull"
 
-step 3a "building $vers #########################"
-./make_tgz.sh  "$vers" y y
+step 3a "building tgz bundle ####################"
+./make_tgz.sh
 
 step 4 "copy OUT to HIST (outDir) #############"
 cmd "cp $OUT/* $outDir"

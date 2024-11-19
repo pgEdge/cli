@@ -7,10 +7,6 @@ source env.sh
 
 set -ex
 
-vers="$1"
-rebuild_flag="$2"
-tgz_flag="$3"
-
 cmd () {
   echo "# $1"
   $1
@@ -23,6 +19,13 @@ cmd () {
 }
 
 ## MAINLINE ###################################
+
+vers="15 16 17"
+cmd "rm -f $OUT/*"
+for ver in ${vers}; do
+  echo ""
+  cmd "./build_all.sh $ver"
+done
 
 ./bp.sh
 
