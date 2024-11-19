@@ -1,5 +1,5 @@
-hubV=24.10.318
-hubVV=24.10-318
+hubV=24.10.324
+hubVV=24.10-324
 
 aceV=$hubV
 kirkV=$hubV
