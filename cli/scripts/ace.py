@@ -296,7 +296,8 @@ def check_user_privileges(conn, username, schema, table, required_privileges=[])
     """
 
     # This query will give us the privilege type and whether the user has that
-    # specific privilege or not.
+    # specific privilege or not. We use quote_ident to properly handle
+    # case-sensitive identifiers.
     query = """
     WITH params AS (
         SELECT %s::text AS username,
@@ -304,17 +305,21 @@ def check_user_privileges(conn, username, schema, table, required_privileges=[])
                %s::text AS table_name
     ),
     table_check AS (
-        SELECT table_schema, table_name
-        FROM information_schema.tables
-        WHERE table_schema = (SELECT schema_name FROM params)
-          AND table_name = (SELECT table_name FROM params)
+        SELECT c.relname as table_name, n.nspname as table_schema
+        FROM pg_class c
+        JOIN pg_namespace n ON n.oid = c.relnamespace
+        WHERE n.nspname = (SELECT schema_name FROM params)
+          AND c.relname = (SELECT table_name FROM params)
     )
     SELECT
         CASE
             WHEN EXISTS (SELECT 1 FROM table_check)
             THEN has_table_privilege(
                 (SELECT username FROM params),
-                (SELECT schema_name || '.' || table_name FROM params),
+                (
+                    SELECT quote_ident(table_schema) || '.' || quote_ident(table_name)
+                    FROM table_check
+                ),
                 'SELECT'
             )
             ELSE FALSE
@@ -323,7 +328,10 @@ def check_user_privileges(conn, username, schema, table, required_privileges=[])
             WHEN EXISTS (SELECT 1 FROM table_check)
             THEN has_table_privilege(
                 (SELECT username FROM params),
-                (SELECT schema_name || '.' || table_name FROM params),
+                (
+                    SELECT quote_ident(table_schema) || '.' || quote_ident(table_name)
+                    FROM table_check
+                ),
                 'INSERT'
             )
             ELSE FALSE
@@ -332,7 +340,10 @@ def check_user_privileges(conn, username, schema, table, required_privileges=[])
             WHEN EXISTS (SELECT 1 FROM table_check)
             THEN has_table_privilege(
                 (SELECT username FROM params),
-                (SELECT schema_name || '.' || table_name FROM params),
+                (
+                    SELECT quote_ident(table_schema) || '.' || quote_ident(table_name)
+                    FROM table_check
+                ),
                 'UPDATE'
             )
             ELSE FALSE
@@ -341,7 +352,10 @@ def check_user_privileges(conn, username, schema, table, required_privileges=[])
             WHEN EXISTS (SELECT 1 FROM table_check)
             THEN has_table_privilege(
                 (SELECT username FROM params),
-                (SELECT schema_name || '.' || table_name FROM params),
+                (
+                    SELECT quote_ident(table_schema) || '.' || quote_ident(table_name)
+                    FROM table_check
+                ),
                 'DELETE'
             )
             ELSE FALSE
@@ -384,8 +398,10 @@ def check_user_privileges(conn, username, schema, table, required_privileges=[])
 def check_column_size(conn_list: list, task: TableDiffTask) -> tuple[bool, str]:
     # Gets byte size from each bytea in each connection
     byte_sql = (
-        "SELECT AVG(pg_column_size({c_name})) AS avg_size_in_bytes FROM {t_name};"
+        'SELECT AVG(pg_column_size("{c_name}")) AS avg_size_in_bytes '
+        'FROM "{s_name}"."{t_name}";'
     )
+
     try:
         for conn in conn_list:
             cur = conn.cursor()
@@ -396,7 +412,11 @@ def check_column_size(conn_list: list, task: TableDiffTask) -> tuple[bool, str]:
             for col_name, col_type in table_types.items():
                 if "bytea" in col_type:
                     cur.execute(
-                        byte_sql.format(c_name=col_name, t_name=task.fields.l_table)
+                        byte_sql.format(
+                            c_name=col_name,
+                            s_name=task.fields.l_schema,
+                            t_name=task.fields.l_table,
+                        )
                     )
                     size = cur.fetchone()[0]
                     # If max size greater than (1 MB = 10^6 B)?? return false
