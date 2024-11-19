@@ -32,17 +32,6 @@ vers="15 16 17"
 cleaner="$1"
 echo "#     vers = \"$vers\""
 
-
-if [ ! "$#" == "1" ]; then
-  if [ "$#" == "2" ] && [ "$2" == "--clean" ]; then
-    echo "WARNING: we will be cleaning out the REPO"
-    sleep 5
-  else
-    echo "ERROR: Parm must be specified such as '15 16 17'"
-    exit 1
-  fi
-fi
-
 if [ "$vers" == "" ]; then
    echo "ERROR: Parm 1 must be space delimited string of versions"
    exit 1
