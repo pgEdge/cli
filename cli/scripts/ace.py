@@ -413,7 +413,7 @@ def check_column_size(conn_list: list, task: TableDiffTask) -> tuple[bool, str]:
     return True, ""
 
 
-def write_diffs_json(diff_dict, row_types, quiet_mode=False):
+def write_diffs_json(diff_dict, col_types, quiet_mode=False):
 
     def convert_to_json_type(item: str, type: str):
         try:
@@ -453,12 +453,15 @@ def write_diffs_json(diff_dict, row_types, quiet_mode=False):
 
     filename = os.path.join(dirname, diff_filename)
 
+    # Since we have column types for all nodes, we can just take the first one
+    col_types = next(iter(col_types.values()))
+
     # Converts diff so that values are correct json type
     write_dict = {
         node_pair: {
             node: [
                 {
-                    key: convert_to_json_type(val, row_types[key])
+                    key: convert_to_json_type(val, col_types[key])
                     for key, val in row.items()
                 }
                 for row in rows
