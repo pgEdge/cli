@@ -1,7 +1,7 @@
 #!/bin/bash
 cd "$(dirname "$0")"
 
-TGZ_REPO="https://pgedge-upstream.s3.amazonaws.com/REPO"
+TGZ_REPO="https://pgedge-download.s3.amazonaws.com/REPO"
 
 source env.sh
 
@@ -24,21 +24,6 @@ cmd () {
 
 ## MAINLINE ###################################
 
-if [ "$rebuild_flag" == "y" ]; then
-  if [ "$vers" == "" ] || [ "$vers" == "all" ]; then
-    vers="15 16 17"
-    echo "# default to rebuilding pg \"$vers\""
-    cmd "rm -f $OUT/*"
-  fi
-
-  for ver in ${vers}; do
-    echo ""
-    cmd "rm -f $OUT/*pg$ver*"
-    cmd "./build_all.sh $ver"
-  done
-fi
-
-# copy all ctlib versions into OUT
 ./bp.sh
 
 # remove large ctlib tarballs of different architecture
@@ -65,16 +50,9 @@ cmd "cp $OUT/* $cache/."
 cmd "cp $HIST/out_old/* $cache/."
 
 cmd "cp -r $DEVEL/packages $cache/."
+cmd "python3 pgedge/hub/scripts/get_old.py"
 
-if [ ! "$tgz_flag" == "y" ]; then
-  echo ""
-  echo "############ NOT running pigz ################"
-  echo ""
-  exit 0
-else
-  echo "RUNNING pigz..."
-fi
-
+echo "RUNNING pigz..."
 tar --use-compress-program="pigz -8 --recursive" -cf $bndl pgedge
 
 rm -f install.py
