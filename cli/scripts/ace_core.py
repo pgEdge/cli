@@ -1256,28 +1256,13 @@ def table_rerun_temptable(td_task: TableDiffTask) -> None:
         ace.handle_task_exception(td_task, context)
         raise e
 
-    task_id = ace_db.generate_task_id()
-
     try:
-        diff_task = TableDiffTask(
-            cluster_name=td_task.cluster_name,
-            _table_name=f"public.{temp_table_name}",
-            _dbname=td_task._dbname,
-            block_rows=td_task.block_rows,
-            max_cpu_ratio=td_task.max_cpu_ratio,
-            output=td_task.output,
-            _nodes=td_task._nodes,
-            batch_size=td_task.batch_size,
-            quiet_mode=td_task.quiet_mode,
-        )
+        diff_task = td_task
+        diff_task._table_name    = f"public.{temp_table_name}"
+        diff_task.fields.l_table = temp_table_name
 
-        diff_task.scheduler.task_id = task_id
-        diff_task.scheduler.task_type = "table-rerun"
-        diff_task.scheduler.task_status = "RUNNING"
-        diff_task.scheduler.started_at = datetime.now()
-
-        diff_task = ace.table_diff_checks(diff_task)
-        ace_db.create_ace_task(task=diff_task)
+        # diff_task = ace.table_diff_checks(diff_task)
+        # ace_db.create_ace_task(task=diff_task)
         table_diff(diff_task)
     except Exception as e:
         context = {"errors": [f"Could not run table diff: {str(e)}"]}
