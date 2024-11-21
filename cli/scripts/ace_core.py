@@ -98,14 +98,16 @@ def generate_where_clause(primary_keys, id_values):
     if len(primary_keys) == 1:
         # Single primary key
         id_values_list = ", ".join(repr(val) for val in id_values)
-        query = f"{primary_keys[0]} IN ({id_values_list})"
+        # Wrap column name in double quotes to preserve case
+        query = f'"{primary_keys[0]}" IN ({id_values_list})'
 
     else:
         # Composite primary key
         conditions = ", ".join(
             f"({', '.join(repr(val) for val in id_tuple)})" for id_tuple in id_values
         )
-        key_columns = ", ".join(primary_keys)
+        # Wrap each column name in double quotes to preserve case
+        key_columns = ", ".join(f'"{key}"' for key in primary_keys)
         query = f"({key_columns}) IN ({conditions})"
 
     return query
@@ -1208,6 +1210,9 @@ def table_rerun_temptable(td_task: TableDiffTask) -> None:
     diff_keys = set()
     key = td_task.fields.key.split(",")
 
+    # Strip any existing quotes from key names
+    key = [k.strip('"') for k in key]
+
     # Simple pkey
     if len(key) == 1:
         for node_pair in diff_data.keys():
@@ -1225,27 +1230,53 @@ def table_rerun_temptable(td_task: TableDiffTask) -> None:
                 diff_keys.add(tuple(row[key_component] for key_component in key))
 
     temp_table_name = f"temp_{td_task.scheduler.task_id.lower()}_rerun"
-    table_qry = f"create table {temp_table_name} as "
     schema = td_task._table_name.split(".")[0]
-    table = td_task._table_name.split(".")[1]
-    table_qry += f'SELECT * FROM "{schema}"."{table}" WHERE ' + generate_where_clause(
-        key, diff_keys
+    table = td_task._table_name.split(".")[1].strip('"')
+
+    # Use proper quoting for schema and table names
+    table_qry = (
+        f'CREATE TABLE {temp_table_name} AS SELECT * FROM "{schema}"."{table}" WHERE '
     )
-    clean_qry = f"drop table {temp_table_name}"
+    table_qry += generate_where_clause(key, diff_keys)
+    clean_qry = f"DROP TABLE {temp_table_name}"
 
     if len(key) == 1:
-        pkey_qry = f"ALTER TABLE {temp_table_name} ADD PRIMARY KEY ({key[0]});"
+        # Quote the column name for single primary key
+        pkey_qry = f'ALTER TABLE {temp_table_name} ADD PRIMARY KEY ("{key[0]}")'
     else:
-        pkey_columns = ", ".join(key)
-        pkey_qry = f"ALTER TABLE {temp_table_name} ADD PRIMARY KEY ({pkey_columns});"
+        # Quote each column name for composite primary key
+        pkey_columns = ", ".join(f'"{k}"' for k in key)
+        pkey_qry = f"ALTER TABLE {temp_table_name} ADD PRIMARY KEY ({pkey_columns})"
 
     conn_list = []
+    required_privileges = ["CREATE"]
 
     try:
         for params in td_task.fields.conn_params:
             conn_list.append(psycopg.connect(**params))
 
         for con in conn_list:
+            authorised, missing_privileges = ace.check_user_privileges(
+                con, con.info.user, schema, table, required_privileges
+            )
+            # Missing privileges come back as table_<privilege>, but we use
+            # "CREATE/SELECT/INSERT/UPDATE/DELETE" in the required_privileges list
+            # So, we're simply formatting it correctly here for the exception
+            # message
+            missing_privs = [
+                m.split("_")[1].upper()
+                for m in missing_privileges
+                if m.split("_")[1].upper() in required_privileges
+            ]
+            exception_msg = (
+                f'User "{con.info.user}" does not have the necessary privileges'
+                f" to run {', '.join(missing_privs)} "
+                f'on table "{schema}.{table}" on node "{con.info.host}"'
+            )
+
+            if not authorised:
+                raise AceException(exception_msg)
+
             cur = con.cursor()
             cur.execute(table_qry)
             cur.execute(pkey_qry)
@@ -1258,7 +1289,7 @@ def table_rerun_temptable(td_task: TableDiffTask) -> None:
 
     try:
         diff_task = td_task
-        diff_task._table_name    = f"public.{temp_table_name}"
+        diff_task._table_name = f"public.{temp_table_name}"
         diff_task.fields.l_table = temp_table_name
 
         # diff_task = ace.table_diff_checks(diff_task)

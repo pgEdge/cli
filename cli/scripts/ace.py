@@ -725,6 +725,7 @@ def table_diff_checks(td_task: TableDiffTask) -> TableDiffTask:
                 if not curr_cols:
                     raise AceException(
                         f"Table '{td_task._table_name}' not found on {hostname}"
+                        ", or the current user does not have adequate privileges"
                     )
                 if not curr_key:
                     raise AceException(
@@ -754,7 +755,7 @@ def table_diff_checks(td_task: TableDiffTask) -> TableDiffTask:
                 )
 
                 # Missing privileges come back as table_<privilege>, but we use
-                # "SELECT/INSERT/UPDATE/DELETE" in the required_privileges list
+                # "CREATE/SELECT/INSERT/UPDATE/DELETE" in the required_privileges list
                 # So, we're simply formatting it correctly here for the exception
                 # message
                 missing_privs = [
