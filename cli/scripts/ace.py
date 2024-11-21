@@ -324,6 +324,11 @@ def check_user_privileges(conn, username, schema, table, required_privileges=[])
             )
             ELSE FALSE
         END AS table_select,
+        has_schema_privilege(
+            (SELECT username FROM params),
+            (SELECT schema_name FROM params),
+            'CREATE'
+        ) AS table_create,
         CASE
             WHEN EXISTS (SELECT 1 FROM table_check)
             THEN has_table_privilege(
@@ -667,6 +672,8 @@ def table_diff_checks(td_task: TableDiffTask) -> TableDiffTask:
             if not any(filter(lambda x: x["name"] == n, cluster_nodes)):
                 raise AceException("Specified nodenames not present in cluster")
 
+    cols = None
+    key = None
     conn_params = []
     conn_list = []
     host_map = {}
@@ -674,39 +681,76 @@ def table_diff_checks(td_task: TableDiffTask) -> TableDiffTask:
 
     try:
         for nd in cluster_nodes:
+            hostname = nd["name"]
+            host_ip = nd["public_ip"]
+            user = nd["db_user"]
+            dbname = nd["db_name"]
+            db_password = nd["db_password"]
+            port = nd.get("port", 5432)
+
             if td_task._nodes == "all":
                 node_list.append(nd["name"])
 
             if (node_list and nd["name"] in node_list) or (not node_list):
                 params = {
-                    "dbname": nd["db_name"],
-                    "user": nd["db_user"],
-                    "host": nd["public_ip"],
-                    "port": nd.get("port", 5432),
+                    "dbname": dbname,
+                    "user": user,
+                    "host": host_ip,
+                    "port": port,
                     "options": f"-c statement_timeout={config.STATEMENT_TIMEOUT}",
                     "application_name": "ACE",
                 }
 
-                if nd["db_password"]:
-                    params["password"] = nd["db_password"]
+                if db_password:
+                    params["password"] = db_password
                 else:
                     pgpass = pgpasslib.getpass(
-                        host=nd["name"],
-                        user=nd["db_user"],
-                        dbname=nd["db_name"],
-                        port=nd.get("port", 5432),
+                        host=hostname,
+                        user=user,
+                        dbname=dbname,
+                        port=port,
                     )
                     if not pgpass:
                         raise AceException(
-                            f"No password found for {nd['name']} in"
+                            f"No password found for {hostname} in"
                             f" {td_task.cluster_name}.json or ~/.pgpass"
                         )
                     params["password"] = pgpass
 
                 conn = psycopg.connect(**params)
 
+                curr_cols = get_cols(conn, l_schema, l_table)
+                curr_key = get_key(conn, l_schema, l_table)
+
+                if not curr_cols:
+                    raise AceException(
+                        f"Table '{td_task._table_name}' not found on {hostname}"
+                    )
+                if not curr_key:
+                    raise AceException(
+                        f"No primary key found for '{td_task._table_name}'"
+                    )
+
+                if (not cols) and (not key):
+                    cols = curr_cols
+                    key = curr_key
+
+                if (curr_cols != cols) or (curr_key != key):
+                    raise AceException("Table schemas don't match")
+
+                cols = curr_cols
+                key = curr_key
+
+                col_types = get_col_types(conn, l_table)
+                col_types_key = f"{host_ip}:{port}"
+
+                if not td_task.fields.col_types:
+                    td_task.fields.col_types = {}
+
+                td_task.fields.col_types[col_types_key] = col_types
+
                 authorised, missing_privileges = check_user_privileges(
-                    conn, nd["db_user"], l_schema, l_table, required_privileges
+                    conn, user, l_schema, l_table, required_privileges
                 )
 
                 # Missing privileges come back as table_<privilege>, but we use
@@ -719,17 +763,17 @@ def table_diff_checks(td_task: TableDiffTask) -> TableDiffTask:
                     if m.split("_")[1].upper() in required_privileges
                 ]
                 exception_msg = (
-                    f"User \"{nd['db_user']}\" does not have the necessary privileges"
+                    f'User "{user}" does not have the necessary privileges'
                     f" to run {', '.join(missing_privs)} "
-                    f"on table \"{l_schema}.{l_table}\" on node \"{nd['name']}\""
+                    f'on table "{l_schema}.{l_table}" on node "{hostname}"'
                 )
 
                 if not authorised:
                     raise AceException(exception_msg)
 
-                conn_list.append(psycopg.connect(**params))
+                conn_list.append(conn)
                 conn_params.append(params)
-                host_map[nd["public_ip"] + ":" + params["port"]] = nd["name"]
+                host_map[host_ip + ":" + str(port)] = hostname
 
     except Exception as e:
         raise e
@@ -744,38 +788,6 @@ def table_diff_checks(td_task: TableDiffTask) -> TableDiffTask:
     # so, we send the connection parameters instead
     td_task.fields.conn_params = conn_params
     td_task.fields.host_map = host_map
-
-    cols = None
-    key = None
-
-    for conn in conn_list:
-        curr_cols = get_cols(conn, l_schema, l_table)
-        curr_key = get_key(conn, l_schema, l_table)
-        col_types = get_col_types(conn, l_table)
-        hostname = conn.info.host
-        port = conn.info.port
-        col_types_key = f"{hostname}:{port}"
-
-        if not curr_cols:
-            raise AceException(f"Table '{td_task._table_name}' not found on {hostname}")
-        if not curr_key:
-            raise AceException(f"No primary key found for '{td_task._table_name}'")
-
-        if not td_task.fields.col_types:
-            td_task.fields.col_types = {}
-
-        td_task.fields.col_types[col_types_key] = col_types
-
-        if (not cols) and (not key):
-            cols = curr_cols
-            key = curr_key
-            continue
-
-        if (curr_cols != cols) or (curr_key != key):
-            raise AceException("Table schemas don't match")
-
-        cols = curr_cols
-        key = curr_key
 
     if td_task.fields.col_types and len(td_task.fields.col_types) > 1:
         ref_node = list(td_task.fields.col_types.keys())[0]
@@ -927,6 +939,8 @@ def table_repair_checks(tr_task: TableRepairTask) -> TableRepairTask:
             f"Source of truth node {tr_task.source_of_truth} not present in cluster"
         )
 
+    cols = None
+    key = None
     conns = {}
     conn_params = []
     host_map = {}
@@ -937,35 +951,70 @@ def table_repair_checks(tr_task: TableRepairTask) -> TableRepairTask:
 
     try:
         for nd in cluster_nodes:
+            hostname = nd["name"]
+            host_ip = nd["public_ip"]
+            user = nd["db_user"]
+            dbname = nd["db_name"]
+            db_password = nd["db_password"]
+            port = nd.get("port", 5432)
+
             params = {
-                "dbname": nd["db_name"],
-                "user": nd["db_user"],
-                "host": nd["public_ip"],
-                "port": nd.get("port", 5432),
+                "dbname": dbname,
+                "user": user,
+                "host": host_ip,
+                "port": port,
                 "options": f"-c statement_timeout={config.STATEMENT_TIMEOUT}",
                 "application_name": "ACE",
             }
 
-            if nd["db_password"]:
-                params["password"] = nd["db_password"]
+            if db_password:
+                params["password"] = db_password
             else:
                 pgpass = pgpasslib.getpass(
-                    host=nd["name"],
-                    user=nd["db_user"],
-                    dbname=nd["db_name"],
-                    port=nd.get("port", 5432),
+                    host=hostname,
+                    user=user,
+                    dbname=dbname,
+                    port=port,
                 )
                 if not pgpass:
                     raise AceException(
-                        f"No password found for {nd['name']} in"
+                        f"No password found for {hostname} in"
                         f" {tr_task.cluster_name}.json or ~/.pgpass"
                     )
                 params["password"] = pgpass
 
             conn = psycopg.connect(**params)
 
+            curr_cols = get_cols(conn, l_schema, l_table)
+            curr_key = get_key(conn, l_schema, l_table)
+
+            if not curr_cols:
+                raise AceException(
+                    f"Table '{tr_task._table_name}' not found on {hostname}"
+                )
+            if not curr_key:
+                raise AceException(f"No primary key found for '{tr_task._table_name}'")
+
+            if (not cols) and (not key):
+                cols = curr_cols
+                key = curr_key
+
+            if (curr_cols != cols) or (curr_key != key):
+                raise AceException("Table schemas don't match")
+
+            cols = curr_cols
+            key = curr_key
+
+            col_types = get_col_types(conn, l_table)
+            col_types_key = f"{host_ip}:{str(port)}"
+
+            if not tr_task.fields.col_types:
+                tr_task.fields.col_types = {}
+
+            tr_task.fields.col_types[col_types_key] = col_types
+
             authorised, missing_privileges = check_user_privileges(
-                conn, nd["db_user"], l_schema, l_table, required_privileges
+                conn, user, l_schema, l_table, required_privileges
             )
 
             missing_privs = [
@@ -974,57 +1023,26 @@ def table_repair_checks(tr_task: TableRepairTask) -> TableRepairTask:
                 if m.split("_")[1].upper() in required_privileges
             ]
             exception_msg = (
-                f"User \"{nd['db_user']}\" does not have the necessary privileges"
+                f'User "{user}" does not have the necessary privileges'
                 f" to run {', '.join(missing_privs)} "
-                f"on table \"{l_schema}.{l_table}\" on node \"{nd['name']}\""
+                f'on table "{l_schema}.{l_table}" on node "{hostname}"'
             )
 
             if not authorised:
                 raise AceException(exception_msg)
 
-            # Use port number to support localhost clusters
-            host_map[nd["public_ip"] + ":" + params["port"]] = nd["name"]
+            conns[hostname] = conn
             conn_params.append(params)
-            conns[nd["name"]] = psycopg.connect(**params)
+            host_map[f"{host_ip}:{str(port)}"] = hostname
 
     except Exception as e:
+        # Clean up connections before re-raising
+        for conn in conns.values():
+            try:
+                conn.close()
+            except Exception:
+                pass
         raise e
-
-    util.message(
-        "Connections successful to nodes in cluster",
-        p_state="success",
-        quiet_mode=tr_task.quiet_mode,
-    )
-
-    cols = None
-    key = None
-
-    for conn in conns.values():
-        curr_cols = get_cols(conn, l_schema, l_table)
-        curr_key = get_key(conn, l_schema, l_table)
-
-        if not curr_cols:
-            hostname = conn.info.host
-            raise AceException(f"Table '{tr_task._table_name}' not found on {hostname}")
-        if not curr_key:
-            raise AceException(f"No primary key found for '{tr_task._table_name}'")
-
-        if (not cols) and (not key):
-            cols = curr_cols
-            key = curr_key
-            continue
-
-        if (curr_cols != cols) or (curr_key != key):
-            raise AceException("Table schemas don't match")
-
-        cols = curr_cols
-        key = curr_key
-
-    util.message(
-        f"Table {tr_task._table_name} is comparable across nodes",
-        p_state="success",
-        quiet_mode=tr_task.quiet_mode,
-    )
 
     """
     Derived fields for TableRepairTask
