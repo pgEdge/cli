@@ -700,11 +700,18 @@ def table_repair(tr_task: TableRepairTask):
     start_time = datetime.now()
     conns = {}
 
+    # Instead of adding another dependency (bidict) to ace, we'll simply store the
+    # host_ip:port of the source of truth node.
+    source_of_truth_node_key = None
+
     try:
         for params in tr_task.fields.conn_params:
-            conns[tr_task.fields.host_map[params["host"] + ":" + params["port"]]] = (
-                psycopg.connect(**params)
-            )
+            hostname_key = params["host"] + ":" + params["port"]
+            node_hostname = tr_task.fields.host_map[hostname_key]
+            if tr_task.source_of_truth == node_hostname:
+                source_of_truth_node_key = hostname_key
+
+            conns[node_hostname] = psycopg.connect(**params)
     except Exception as e:
         context = {"errors": [str(e)]}
         ace.handle_task_exception(tr_task, context)
@@ -935,16 +942,7 @@ def table_repair(tr_task: TableRepairTask):
     total_upserted = {}
     total_deleted = {}
 
-    # Gets types of each column in table
-    try:
-        table_types = ace.get_col_types(
-            conns[tr_task.source_of_truth],
-            tr_task.fields.l_table,
-        )
-    except Exception as e:
-        context = {"errors": [f"Could not get row types: {str(e)}"]}
-        ace.handle_task_exception(tr_task, context)
-        raise e
+    col_types = tr_task.fields.col_types[source_of_truth_node_key]
 
     if tr_task.upsert_only:
         deletes_skipped = dict()
@@ -1030,7 +1028,7 @@ def table_repair(tr_task: TableRepairTask):
         for row in rows_to_upsert_json:
             modified_row = tuple()
             for col_name in cols_list:
-                col_type = table_types[col_name]
+                col_type = col_types[col_name]
                 elem = row[col_name]
                 try:
                     if any([s in col_type for s in ["char", "text", "vector"]]):
@@ -1228,7 +1226,9 @@ def table_rerun_temptable(td_task: TableDiffTask) -> None:
 
     temp_table_name = f"temp_{td_task.scheduler.task_id.lower()}_rerun"
     table_qry = f"create table {temp_table_name} as "
-    table_qry += f"SELECT * FROM {td_task._table_name} WHERE " + generate_where_clause(
+    schema = td_task._table_name.split(".")[0]
+    table = td_task._table_name.split(".")[1]
+    table_qry += f'SELECT * FROM "{schema}"."{table}" WHERE ' + generate_where_clause(
         key, diff_keys
     )
     clean_qry = f"drop table {temp_table_name}"
