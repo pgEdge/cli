@@ -1,5 +1,8 @@
-hubV=24.11.1
-hubVV=24.11-1
+hubV=24.10.7
+hubVV=24.10-7
+
+aceV=$hubV
+kirkV=$hubV
 
 bundle=pgedge
 api=pgedge
@@ -8,21 +11,29 @@ ctlibsV=1.7
 aceV=2.0
 kirkV=$hubV 
 
-spock41V=4.1devel-1
+spock41V=4.1devel-2
+
 spock40V=4.0.6-1
+spock40V1=4.0.5-1
+
 spock33V=3.3.6-1
 
 lolorV=1.2-1
 snwflkV=2.2-1
 
-P17=17.0-1
-P16=16.4-2
-P15=15.8-2
+P17=17.2-1
+P171=17.0-1
+
+P16=16.6-1
+P161=16.4-2
+
+P15=15.10-1
+P151=15.8-2
 
 vectorV=0.8.0-1
+
 bouncerV=1.23.1-1
 catV=1.2.0
-adminV=8.x
 prompgexpV=0.15.0
 backrestV=2.53.1-1
 wal2jV=2.6.0-1
@@ -42,7 +53,7 @@ hint15V=1.5.2-1
 hint16V=1.6.1-1
 hint17V=1.7.0-1
 
-patroniV=3.2.2.1-1
+patroniV=3.2.2.2-1
 etcdV=3.5.12-2
 
 audit15V=1.7.0-1
@@ -84,17 +95,11 @@ if [[ $OS == "Linux" ]]; then
   if [ `arch` == "aarch64" ]; then
     OS=arm
     outDir=a64
-    ##outPlat=arm9
     outPlat=arm
   else
     OS=amd
     outDir=l64
     outPlat=amd
-    ##if [ "$isEL8" == "True" ]; then
-    ##  outPlat=el8
-    ##else 
-    ##  outPlat=el9
-    ##fi
   fi
   sudo="sudo"
 elif [[ $OS == "Darwin" ]]; then

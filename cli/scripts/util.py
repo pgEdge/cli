@@ -4,6 +4,9 @@
 import os
 import time
 
+MY_VERSION = "24.10.7"
+MY_CODENAME = "Constellation"
+
 DEFAULT_PG = "16"
 DEFAULT_SPOCK = "40"
 DEFAULT_SPOCK_17 = "40"
@@ -19,28 +22,10 @@ MY_LITE = os.getenv("MY_LITE")
 MY_DATA = os.getenv("MY_DATA")
 
 MY_LIBS = f"{MY_HOME}/hub/scripts/lib"
-BACKUP_DIR = f"{MY_DATA}/conf/backup"
-TIME = time.strftime("%Y%m%d%H%M")
-BACKUP_TARGET_DIR = f"{BACKUP_DIR}/{TIME}"
-LOG_FILENAME = f"{MY_LOGS}/cli_log.out"
-
-################ Logging Configuration ############
-COMMAND = 15
-DEBUG = 10
-DEBUG2 = 9
-
-isDebug=0
-LOG_LEVEL = COMMAND
-pgeDebug = int(os.getenv('pgeDebug', '0'))
-if pgeDebug == 1:
-    LOG_LEVEL = DEBUG
-    isDebug = 1
-elif pgeDebug == 2:
-    LOG_LEVEL = DEBUG2
-    isDebug = 2
-
-if not os.path.isdir(MY_LOGS):
-    os.mkdir(MY_LOGS)
+MY_LITE = os.getenv("MY_LITE", None)
+BACKUP_DIR = os.path.join(MY_HOME, "data", "conf", "backup")
+BACKUP_TARGET_DIR = os.path.join(BACKUP_DIR, time.strftime("%Y%m%d%H%M"))
+VALID_PG = ["15", "16", "17"]
 
 import sys
 import socket

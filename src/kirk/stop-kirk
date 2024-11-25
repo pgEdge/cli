@@ -1,9 +1,6 @@
 #!/usr/bin/env bash
 cd "$(dirname "$0")"
 
-echo "not implemented"
-exit 1
-
 log=$MY_LOGS/kirk.log
 
 echo "" >> $log
