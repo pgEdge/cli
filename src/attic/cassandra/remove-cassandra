@@ -1,5 +1,0 @@
-
-set -x
-
-sudo yum remove cassandra
-

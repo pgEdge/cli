@@ -6,7 +6,7 @@ psycopg==3.1.19; platform_system=="Darwin"
 psycopg-binary==3.1.19; platform_system=="Darwin"
 psycopg==3.2.3; platform_system=="Linux"
 psycopg-binary==3.2.3; platform_system=="Linux"
-psutil==6.0.0
+psutil==6.1.0
 pypsutil==0.2.0
 semantic_version==2.10.0
 six==1.16.0
@@ -20,15 +20,11 @@ charset_normalizer==3.3.2
 gpustat==1.1.1
 py-cpuinfo==9.0.0
 prettytable==3.11.0
-Flask==3.0.3
-
-## M2M ##############
-paho-mqtt<2.0
-Flask-MQTT==1.2.1
-Flask-SocketIO==5.4.1
-Flask-Bootstrap==3.3.7.1
+paho-mqtt==2.1.0
+supervisor==4.2.5
 
 ## ACE Advanced #####
+Flask==3.0.3
 tqdm==4.66.5
 ordered-set==4.1.0
 mpire[dashboard]==2.10.2

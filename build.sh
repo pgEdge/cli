@@ -350,10 +350,8 @@ initPG () {
     initC "bouncer"      "bouncer"      "$bouncerV"  "$outPlat" "postgres/bouncer"  "" "" "nil"
     initC "backrest"     "backrest"     "$backrestV" "$outPlat" "postgres/backrest" "" "" "nil"
     initC "etcd"         "etcd"         "$etcdV"     "$outPlat" "etcd"              "" "" "nil"
-    #initC "minio"        "minio"        "$minioV"    "$outPlat" "minio"             "" "" "nil"
     initC "pgcat"        "pgcat"        "$catV"      "$outPlat" "postgres/pgcat"    "" "" "nil"
     initC "patroni"      "patroni"      "$patroniV"  ""         "patroni"           "" "" "nil"
-    initC "firewalld"    "firewalld"    "$firwldV"   ""         "firewalld"         "" "" "nil"
   fi
 
   if [ "$pgM" == "17" ]; then
@@ -366,9 +364,6 @@ initPG () {
     initC "audit-pg$pgM"      "audit"      "$audit16V"   "$outPlat" "postgres/audit"     "" "" "nil"
     initC "hintplan-pg$pgM"   "hintplan"   "$hint16V"    "$outPlat" "postgres/hintplan"  "" "" "nil"
     initC "spock41-pg$pgM"    "spock41"    "$spock41V"   "$outPlat" "postgres/spock41"   "" "" "nil"
-    if [ `arch` == "x86_64" ]; then
-      initC "pgml-pg$pgM"     "pgml"       "$pgmlV"      "$outPlat" "postgres/pgml"      "" "" "nil"
-    fi
   fi
 
   if [ "$pgM" == "15" ]; then
@@ -384,16 +379,16 @@ initPG () {
     initC "orafce-pg$pgM"     "orafce"     "$orafceV"    "$outPlat" "postgres/orafce"     "" "" "nil"
     initC "postgis-pg$pgM"    "postgis"    "$postgisV"   "$outPlat" "postgres/postgis"    "" "" "nil"
     initC "plv8-pg$pgM"       "plv8"       "$v8V"        "$outPlat" "postgres/plv8"       "" "" "nil"
+    initC "vector-pg$pgM"     "vector"     "$vectorV"    "$outPlat" "postgres/vector"     "" "" "nil"
+    initC "permissions-pg$pgM" "permissions" "$permissionsV" "$outPlat" "postgres/permissions" "" "" "nil"
+    initC "timescaledb-pg$pgM" "timescaledb" "$timescaleV"   "$outPlat" "postgres/timescale"   "" "" "nil"
   fi
 
   if [ "$pgM" == "15" ] || [ "$pgM" == "16" ]; then
-    initC "vector-pg$pgM"     "vector"     "$vectorV"    "$outPlat" "postgres/vector"     "" "" "nil"
-    initC "wal2json-pg$pgM"   "wal2json"   "$wal2jV"     "$outPlat" "postgres/wal2json"   "" "" "nil"
-    initC "hypopg-pg$pgM"     "hypopg"     "$hypoV"      "$outPlat" "postgres/hypopg"     "" "" "nil"
-    initC "partman-pg$pgM"    "partman"    "$partmanV"   "$outPlat" "postgres/partman"    "" "" "nil"
+    initC "wal2json-pg$pgM"    "wal2json"   "$wal2jV"     "$outPlat" "postgres/wal2json"   "" "" "nil"
+    initC "hypopg-pg$pgM"      "hypopg"     "$hypoV"      "$outPlat" "postgres/hypopg"     "" "" "nil"
+    initC "partman-pg$pgM"     "partman"    "$partmanV"   "$outPlat" "postgres/partman"    "" "" "nil"
     initC "citus-pg$pgM"       "citus"       "$citusV"       "$outPlat" "postgres/citus"       "" "" "nil"
-    initC "timescaledb-pg$pgM" "timescaledb" "$timescaleV"   "$outPlat" "postgres/timescale"   "" "" "nil"
-    initC "permissions-pg$pgM" "permissions" "$permissionsV" "$outPlat" "postgres/permissions" "" "" "nil"
   fi
 
   initC "prompgexp"    "prompgexp"    "$prompgexpV" "$outPlat" "postgres/prompgexp" "" "" "nil"

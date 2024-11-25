@@ -4,9 +4,6 @@
 import os
 import time
 
-MY_VERSION = "24.11.0"
-MY_CODENAME = "devel"
-
 DEFAULT_PG = "16"
 DEFAULT_SPOCK = "40"
 DEFAULT_SPOCK_17 = "40"
@@ -112,6 +109,27 @@ platform_lib_path = os.path.join(scripts_lib_path, this_platform_system)
 if os.path.exists(platform_lib_path):
     if platform_lib_path not in sys.path:
         sys.path.append(platform_lib_path)
+
+
+def get_process_manager():
+    pm = ""
+    PROC_MGR = get_value("GLOBAL", "PROC_MGR")
+    if os.path.exists("/usr/bin/systemd"):
+        if PROC_MGR == "systemd":
+            pm = "SYSTEMD"
+        else:
+            pm = "systemd"
+        
+    if os.path.exists("/usr/bin/supervisord"):
+        if len(pm) > 0:
+            pm = pm + "/"
+
+        if PROC_MGR == "supervisord":
+            pm = pm + "SUPERVISORD"
+        else:
+            pm = pm + "supervisord"
+
+    return(pm) 
 
 
 def getreqval(p_section, p_key, isInt=False, verbose=False):
@@ -232,7 +250,7 @@ def get_ctlib_dir():
         return f"py3.10-{plat_os}"
     elif os.path.exists("/usr/bin/python3.11"):
         return f"py3.11-{plat_os}"
-    elif os.path.exists("/usr/bin/python3.12"):
+    elif os.path.exists("/usr/bin/python3.12") or os.path.exists("/usr/bin/python3.13"):
         return f"py3.12-{plat_os}"
 
     return "unsupported"
@@ -1600,10 +1618,9 @@ def message(p_msg, p_state="info", p_isJSON=None, quiet_mode=False):
     if jsn_msg != None:
         msg = p_msg.replace("\n", "")
         if msg.strip() > "":
-            json_dict = {}
-            json_dict["state"] = p_state
-            json_dict["msg"] = msg
-            print(json.dumps([json_dict]))
+            json_d = {}
+            json_d[p_state] = str(msg)
+            print(json.dumps(json_d))
 
     return
 
@@ -2758,10 +2775,6 @@ def pretty_rounder(p_num, p_scale):
     return rounded
 
 
-def get_version():
-    return MY_VERSION
-
-
 def get_depend():
     dep = []
     try:
@@ -2797,45 +2810,6 @@ def get_depend():
 def process_sql_file(p_file, p_json):
     isSilent = os.environ.get("isSilent", None)
 
-    #rc = True
-    #
-    # verify the hub version ##################
-    #file = open(p_file, "r")
-    #cmd = ""
-    #for line in file:
-    #    line_strip = line.strip()
-    #    if line_strip == "":
-    #        continue
-    #    cmd = cmd + line
-    #    if line_strip.endswith(";"):
-    #        if ("hub" in cmd) and ("INSERT INTO versions" in cmd) and ("1," in cmd):
-    #            cmdList = cmd.split(",")
-    #            newHubV = Version.coerce(cmdList[1].strip().replace("'", ""))
-    #            oldHubV = Version.coerce(get_version())
-    #            msg_frag = f"'hub' from v{oldHubV} to v{newHubV}."
-    #            if newHubV == oldHubV:
-    #                msg = f"'hub' is v{newHubV}"
-    #            if newHubV > oldHubV:
-    #                msg = "Automatic updating " + msg_frag
-    #            if newHubV < oldHubV:
-    #                msg = "ENVIRONMENT ERROR:  Cannot downgrade " + msg_frag
-    #                rc = False
-    #            if p_json:
-    #                print('[{"status":"wip","msg":"' + msg + '"}]')
-    #            else:
-    #                if not isSilent:
-    #                    print(msg)
-    #            my_logger.info(msg)
-    #            break
-    #        cmd = ""
-    #file.close()
-    #
-    #if rc == False:
-    #    if p_json:
-    #        print('[{"status":"completed","has_updates":0}]')
-    #    return False
-
-    # process the file ##########################
     file = open(p_file, "r")
     cmd = ""
     for line in file:
@@ -3328,7 +3302,7 @@ def urlEncodeNonAscii(b):
 
 
 def http_headers():
-    user_agent = "CLI/" + get_version() + " " + get_anonymous_info()
+    user_agent = "CLI/" + meta.get_my_version() + " " + get_anonymous_info()
     headers = {"User-Agent": urlEncodeNonAscii(user_agent)}
     return headers
 
