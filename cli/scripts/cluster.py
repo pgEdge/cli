@@ -282,7 +282,7 @@ def ssh_install(cluster_name, db, db_settings, db_user, db_passwd, n, install, p
         ndport = "5432"
 
     if REPO == "":
-        REPO = "https://pgedge-upstream.s3.amazonaws.com/REPO"
+        REPO = "https://pgedge-download.s3.amazonaws.com/REPO"
         os.environ["REPO"] = REPO
     
     verbose = db_settings.get("log_level", "info")

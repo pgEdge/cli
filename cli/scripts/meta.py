@@ -14,55 +14,6 @@ except Exception:
     pass
 
 
-def get_product(product, platf=None, pgv=None):
-    sql = f"""
-SELECT product, component, platform, pg_ver
-  FROM v_products
-"""
-
-    try:
-        c = con.cursor()
-        c.execute(sql)
-        data = c.fetchall()
-    except Exception as e:
-        fatal_error(e, sql, "get_product")
-
-    if len(data) == 0:
-        util.exit_message(f"Invalid product '{product}'")
-
-    for d in data:
-        if product:
-            if not product == str(d[0]):
-                continue
-
-        d_comp = str(d[1])
-        if platf:
-            d_platf = str(d[2])
-            if d_platf == "" or d_platf in platf:
-                pass
-            else:
-                util.exit_message(f"'{d_comp}' not available for {platf}")
-
-        if pgv:
-            d_pgv = str(d[3])
-            if d_pgv == "" or d_pgv == pg_ver:
-                pass
-            else:
-                util.exit_message(f"'{d_comp}' not available for {platf}")
-
-    return data
-
-
-def get_my_version():
-    data = exec_sql("SELECT v FROM hub")
-    return(str(data[0]))
-
-
-def get_my_codename():
-    data = exec_sql("SELECT c FROM hub")
-    return(str(data[0]))
-
-
 def pretty_sql(sql):
     data = []
 
