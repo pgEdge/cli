@@ -6,7 +6,7 @@ RUN apt update && \
 		lsb-release curl wget  ca-certificates \
 		gnupg coreutils sudo openssl \
 		vim python3-dev python3-virtualenv python3-pip \
-                git wget curl sqlite libopenblas-dev
+                git wget curl sqlite libopenblas-dev jq
 
 ENV TZ=UTC
 ENV DEBIAN_FRONTEND=noninteractive
@@ -16,12 +16,7 @@ RUN adduser mledge sudo
 RUN echo '%sudo ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
 
 USER mledge
-
 WORKDIR /home/mledge
-ENV REPO=http://host.docker.internal:8000
-RUN wget $REPO/install.py
-RUN python3 install.py
-RUN rm install.py
 
 ENV VIRTUAL_ENV=/home/mledge/venv
 RUN virtualenv $VIRTUAL_ENV
@@ -31,9 +26,20 @@ COPY reqs.ub22  /tmp/requirements.txt
 RUN which pip3
 RUN pip3 install -r /tmp/requirements.txt
 
+ARG CACHEBUST=5
+
+ENV REPO=http://host.docker.internal:8000
+RUN wget $REPO/install.py
+RUN python3 install.py
+RUN rm install.py
+
 WORKDIR /home/mledge/pgedge
-COPY install_pgml.py .
-RUN python3 install_pgml.py
+COPY install_pgedge_ai.py .
+RUN python3 install_pgedge_ai.py
+RUN rm install_pgedge_ai.py
+
+COPY kirk-config.sh .
+RUN ./kirk-config.sh
 
 EXPOSE 5432
 

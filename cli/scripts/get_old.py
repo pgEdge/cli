@@ -1,12 +1,18 @@
 
-import os, sys, sqlite3, platform
+import os
+from pathlib import Path
+os.chdir(Path(__file__).parent)
 
+import sys, sqlite3, platform
 
 PROD_BUCKET="s3://pgedge-download/REPO"
 
 conf_dir="../../data/conf"
 meta_data_db=f"{conf_dir}/db_local.db"
-cache_dir=f"{conf_dir}/cache"
+
+cache_dir=f"{os.getenv('HIST')}/out_old"
+os.system(f"rm -rf {cache_dir}")
+os.system(f"mkdir {cache_dir}")
 
 
 try:

@@ -1,30 +1,43 @@
-hubV=24.10.5
-hubVV=24.10-5
+hubV=24.10.7
+hubVV=24.10-7
+
+aceV=$hubV
+kirkV=$hubV
 
 bundle=pgedge
 api=pgedge
-ctlibsV=1.6
 
-spock41V=4.1devel-1
-spock40V=4.0.5-1
+ctlibsV=1.7
+aceV=2.0
+kirkV=$hubV 
+
+spock41V=4.1devel-2
+
+spock40V=4.0.6-1
+spock40V1=4.0.5-1
+
 spock33V=3.3.6-1
 
 lolorV=1.2-1
 snwflkV=2.2-1
 
-P17=17.0-1
-P16=16.6-1
-P15=15.8-2
+P17=17.2-1
+P171=17.0-1
 
-pgmlV=2.9.3-1
+P16=16.6-1
+P161=16.4-2
+
+P15=15.10-1
+P151=15.8-2
+
 vectorV=0.8.0-1
+
 bouncerV=1.23.1-1
 catV=1.2.0
 prompgexpV=0.15.0
 backrestV=2.53.1-1
 wal2jV=2.6.0-1
 
-mqttclient=0.9-1
 citusV=12.1.5-1
 orafceV=4.13.4-1
 v8V=3.2.3-1
@@ -34,7 +47,6 @@ permissionsV=1.3-1
 hypoV=1.4.1-1
 timescaleV=2.17.0-1
 profV=4.2.5-1
-bulkloadV=3.1.19-1
 partmanV=5.0.1-1
 
 hint15V=1.5.2-1
@@ -50,7 +62,6 @@ audit17V=17.0-1
 
 postgisV=3.5.0-1
 
-pljavaV=1.6.4-1
 debuggerV=1.8-1
 cronV=1.6.4-1
 

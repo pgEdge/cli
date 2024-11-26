@@ -345,6 +345,24 @@ def ssh_setup(cluster_name, db, db_settings, db_user, db_passwd, n, install):
     except Exception:
         ndport = "5432"
 
+    if REPO == "":
+        REPO = "https://pgedge-download.s3.amazonaws.com/REPO"
+        os.environ["REPO"] = REPO
+    
+    verbose = db_settings.get("log_level", "info")
+    if install == True:   
+        print_install_hdr(cluster_name, db, db_user, num_nodes, n["name"],
+                          n["path"], ndip, n["port"], REPO, primary, primary_name)
+
+        install_py = "install.py"
+
+        cmd0 = f"export REPO={REPO}; "
+        cmd1 = f"mkdir -p {ndpath}; cd {ndpath}; "
+        cmd2 = f'python3 -c "\\$(curl -fsSL {REPO}/{install_py})"'
+       
+        message = f"Installing pgedge"
+        run_cmd(cmd0 + cmd1 + cmd2, n, message=message, verbose=verbose)
+
     nc = os.path.join(ndpath, "pgedge", "pgedge ")
     parms = f" -U {db_user} -P {db_passwd} -d {db} --port {ndport}"
     if pg is not None and pg != '':

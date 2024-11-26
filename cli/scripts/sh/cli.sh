@@ -13,8 +13,9 @@ script=`basename "$this"`
 my_home=`cd "$config_bin"; pwd`
 
 export MY_HOME="$my_home"
-export MY_LOGS=$MY_HOME/data/logs/cli_log.out
-export MY_LITE=$MY_HOME/data/conf/db_local.db
+export MY_DATA=$MY_HOME/data
+export MY_LOGS=$MY_DATA/logs
+export MY_LITE=$MY_DATA/conf/db_local.db
 export MY_CMD=pgedge
 
 
@@ -76,7 +77,7 @@ do
   fi
 done
 
-set_libpath "14 15 16 17"
+set_libpath "15 16 17"
 
 python3 --version > /dev/null 2>&1
 rc=$?
@@ -89,8 +90,12 @@ v=`python3 --version | cut -d' ' -f2 | cut -d'.' -f1,2`
 if [ $v == "3.9" ] || [ $v == "3.10" ] || [ $v == "3.11" ] || [ $v == "3.12" ]; then
   cat /dev/null
 else
-  echo "Python$v not supported"
-  exit 1
+  if [ $v == "3.13" ]; then
+    echo "WARNING: Support for Python$v is experimental"
+  else
+    echo "Python$v not supported"
+    exit 1
+  fi
 fi
 
 python3 -W ignore -u "$MY_HOME/hub/scripts/cli.py" "$@"

@@ -136,10 +136,10 @@ def inputPgVer(p_default):
 def verifyPgVer(p_pgver):
     util.message(f"setup_core.verifyPgVer({p_pgver})", "debug")
 
-    if (p_pgver >= "14") and (p_pgver <= "17"):
+    if (p_pgver >= "15") and (p_pgver <= "17"):
         return(True)
 
-    util.message("Must be 14, 15, 16, or 17", "error")
+    util.message("Must be 15, 16, or 17", "error")
     return(False)
 
 

@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+cd "$(dirname "$0")"
+
+log=$MY_LOGS/kirk.log
+
+echo "" >> $log
+echo "#######  Starting KIRK: `date`  #######" | tee -a $log
+
+#pid=`ps aux | grep [k]irk.py | awk '{print $2}'`
+#if [ "$pid" == "" ]; then
+  ##python3 kirk.py  >> $log 2>&1 &
+  python3 kirk.py
+#else
+#  echo "# kirk already running ($pid)" | tee -a $log
+#fi
+

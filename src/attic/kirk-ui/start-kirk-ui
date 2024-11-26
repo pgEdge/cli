@@ -1,0 +1,23 @@
+#!/usr/bin/env bash
+cd "$(dirname "$0")"
+
+log_dir=$MY_LOGS/kirk
+mkdir -p $log_dir
+log=$log_dir/kirk-ui.log
+
+echo "" >> $log
+echo "#######  Starting KIRK-UI: `date`  #######" | tee -a $log
+
+pid=`ps aux | grep [k]irk-ui.py | awk '{print $2}'`
+if [ "$pid" == "" ]; then
+  python3 kirk-ui.py >> $log 2>&1 &
+  sleep 1
+  if [ -f "$MY_DATA/kirk-ui.pid" ]; then
+    echo "# pid `cat $MY_DATA/kirk-ui.pid`" | tee -a $log
+  else
+    echo "kirk-ui not started, see log $log" | tee -a $log
+  fi
+else
+  echo "# kirk-ui already running ($pid)" | tee -a $log
+fi
+

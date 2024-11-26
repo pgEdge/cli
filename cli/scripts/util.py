@@ -4,14 +4,23 @@
 import os
 import time
 
-MY_VERSION = "24.10.5"
+MY_VERSION = "24.10.7"
 MY_CODENAME = "Constellation"
 
 DEFAULT_PG = "16"
 DEFAULT_SPOCK = "40"
 DEFAULT_SPOCK_17 = "40"
-MY_CMD = os.getenv("MY_CMD", None)
-MY_HOME = os.getenv("MY_HOME", None)
+VALID_PG = ["15", "16", "17"]
+ONE_DAY = 86400
+ONE_WEEK = ONE_DAY * 7
+
+## required environment variables
+MY_CMD  = os.getenv("MY_CMD")
+MY_HOME = os.getenv("MY_HOME")
+MY_LOGS = os.getenv('MY_LOGS')
+MY_LITE = os.getenv("MY_LITE")
+MY_DATA = os.getenv("MY_DATA")
+
 MY_LIBS = f"{MY_HOME}/hub/scripts/lib"
 MY_LITE = os.getenv("MY_LITE", None)
 BACKUP_DIR = os.path.join(MY_HOME, "data", "conf", "backup")
@@ -45,6 +54,7 @@ from shutil import copy2
 from semantic_version import Version
 
 try:
+    import psutil
     from tqdm import tqdm
     has_tqdm = True
 except ImportError:
@@ -54,8 +64,8 @@ except ImportError:
 try:
     import psycopg
 except Exception:
-    # only used for advanced functionality
-    # and may throw errors in some cases before ctlibs is loaded
+    # used for advanced functionality
+    # will throw errors before ctlibs is loaded
     pass
 
 from log_helpers import bcolours, characters
@@ -81,9 +91,6 @@ isEXTENSIONS = False
 if os.environ.get("isExtensions", "False") == "True":
     isEXTENSIONS = True
 
-ONE_DAY = 86400
-ONE_WEEK = ONE_DAY * 7
-
 scripts_lib_path = os.path.join(os.path.dirname(__file__), "lib")
 if scripts_lib_path not in sys.path:
     sys.path.append(scripts_lib_path)
@@ -94,11 +101,59 @@ if os.path.exists(platform_lib_path):
     if platform_lib_path not in sys.path:
         sys.path.append(platform_lib_path)
 
-################ Logging Configuration ############
-# Custom Logging
-COMMAND = 15
-DEBUG = 10
-DEBUG2 = 9
+
+def get_process_manager():
+    pm = ""
+    PROC_MGR = get_value("GLOBAL", "PROC_MGR")
+    if os.path.exists("/usr/bin/systemd"):
+        if PROC_MGR == "systemd":
+            pm = "SYSTEMD"
+        else:
+            pm = "systemd"
+        
+    if os.path.exists("/usr/bin/supervisord"):
+        if len(pm) > 0:
+            pm = pm + "/"
+
+        if PROC_MGR == "supervisord":
+            pm = pm + "SUPERVISORD"
+        else:
+            pm = pm + "supervisord"
+
+    return(pm) 
+
+
+def getreqval(p_section, p_key, isInt=False, verbose=False):
+    val = get_value(p_section, p_key)
+    if val == "":
+        exit_message(f"Missing Setting for '{p_section} {p_key}'")
+
+    if verbose is True:
+        message(f"# {p_section} {p_key}: {val}")
+
+    if isInt is True:
+        try:
+            val1 = int(val)
+            return(val1)
+        except Exception:
+            exit_message(f"Required Setting '{p_section} {p_key}' must be an integer")
+
+    return(val)
+
+
+def getreqenv(p_env, isInt=False):
+    val = os.getenv(p_env)
+    if val is None:
+        exit_message(f"Missing Required Env '{p_env}'")
+
+    if isInt is True:
+        try:
+            val1 = int(val)
+            return(val1)
+        except Exception:
+            exit_message(f"Required Env '{p_env}={val}' must be an integer")
+
+    return(val)
 
 
 def setenv(env, val):
@@ -136,7 +191,14 @@ def get_cpu_info():
         import cpuinfo
         cpui = cpuinfo.get_cpu_info()
         vcpu = cpui["count"]
-        brand = cpui["brand_raw"]
+        try:
+            brand = cpui["brand_raw"]
+        except Exception:
+            try:
+                brand = cpui["vendor_id_raw"]
+            except Exception:
+                brand = "??"
+
     except Exception:
         return(0,'?')
 
@@ -179,7 +241,7 @@ def get_ctlib_dir():
         return f"py3.10-{plat_os}"
     elif os.path.exists("/usr/bin/python3.11"):
         return f"py3.11-{plat_os}"
-    elif os.path.exists("/usr/bin/python3.12"):
+    elif os.path.exists("/usr/bin/python3.12") or os.path.exists("/usr/bin/python3.13"):
         return f"py3.12-{plat_os}"
 
     return "unsupported"
@@ -367,26 +429,6 @@ def command(self, message, *args, **kws):
         self._log(COMMAND, message, args, **kws)
 
 my_logger = logging.getLogger()
-LOG_FILENAME = os.getenv('MY_LOGS')
-if not LOG_FILENAME:
-   MY_HOME = os.getenv("MY_HOME")
-   LOG_FILENAME = os.path.join(MY_HOME, "data", "logs","cli_log.out")
-LOG_DIRECTORY = os.path.split(LOG_FILENAME)[0]
-
-isDebug=0
-pgeDebug = int(os.getenv('pgeDebug', '0'))
-if pgeDebug == 1:
-    LOG_LEVEL = DEBUG
-    isDebug = 1
-elif pgeDebug == 2:
-    LOG_LEVEL = DEBUG2
-    isDebug = 2
-else:
-    LOG_LEVEL = COMMAND
-    isDebug = 0
-
-if not os.path.isdir(LOG_DIRECTORY):
-    os.mkdir(LOG_DIRECTORY)
 
 logging.addLevelName(COMMAND, "COMMAND")
 logging.Logger.command = command
@@ -1434,7 +1476,7 @@ def delete_service_win(svcName):
 
 
 def is_postgres(p_comp):
-    pgXX = ["pg11", "pg12", "pg13", "pg14", "pg15", "pg16", "pg17"]
+    pgXX = ["pg15", "pg16", "pg17"]
     if p_comp in pgXX:
         return True
 
@@ -1458,7 +1500,7 @@ def get_owner_name(p_path=None):
 def get_anonymous_info():
     jsonInfo = api.info(True, "", "", False)
     os = jsonInfo["os"]
-    mem = str(jsonInfo["os_memory_mb"])
+    mem = str(jsonInfo["os_memory_gb"])
     cores = str(jsonInfo["cores"])
     arch = jsonInfo["arch"]
     anon = f"({os}; {mem}; {cores}; {arch})"
@@ -1552,7 +1594,8 @@ def message(p_msg, p_state="info", p_isJSON=None, quiet_mode=False):
         my_logger.info(p_msg)
         if log_level_num >= cur_level:
             if not p_isJSON:
-                print(p_msg)
+                if isSILENT is False: 
+                    print(p_msg)
                 return
             else:
                 jsn_msg = p_msg
@@ -1566,10 +1609,9 @@ def message(p_msg, p_state="info", p_isJSON=None, quiet_mode=False):
     if jsn_msg != None:
         msg = p_msg.replace("\n", "")
         if msg.strip() > "":
-            json_dict = {}
-            json_dict["state"] = p_state
-            json_dict["msg"] = msg
-            print(json.dumps([json_dict]))
+            json_d = {}
+            json_d[p_state] = str(msg)
+            print(json.dumps(json_d))
 
     return
 
@@ -1703,10 +1745,6 @@ def update_hosts(p_host, p_unique_id, updated=False):
             + "'"
         )
     return
-
-
-def get_versions_sql():
-    return get_value("GLOBAL", "VERSIONS", "versions.sql")
 
 
 def get_stage():
@@ -2728,10 +2766,6 @@ def pretty_rounder(p_num, p_scale):
     return rounded
 
 
-def get_version():
-    return MY_VERSION
-
-
 def get_depend():
     dep = []
     try:
@@ -2767,45 +2801,6 @@ def get_depend():
 def process_sql_file(p_file, p_json):
     isSilent = os.environ.get("isSilent", None)
 
-    #rc = True
-    #
-    # verify the hub version ##################
-    #file = open(p_file, "r")
-    #cmd = ""
-    #for line in file:
-    #    line_strip = line.strip()
-    #    if line_strip == "":
-    #        continue
-    #    cmd = cmd + line
-    #    if line_strip.endswith(";"):
-    #        if ("hub" in cmd) and ("INSERT INTO versions" in cmd) and ("1," in cmd):
-    #            cmdList = cmd.split(",")
-    #            newHubV = Version.coerce(cmdList[1].strip().replace("'", ""))
-    #            oldHubV = Version.coerce(get_version())
-    #            msg_frag = f"'hub' from v{oldHubV} to v{newHubV}."
-    #            if newHubV == oldHubV:
-    #                msg = f"'hub' is v{newHubV}"
-    #            if newHubV > oldHubV:
-    #                msg = "Automatic updating " + msg_frag
-    #            if newHubV < oldHubV:
-    #                msg = "ENVIRONMENT ERROR:  Cannot downgrade " + msg_frag
-    #                rc = False
-    #            if p_json:
-    #                print('[{"status":"wip","msg":"' + msg + '"}]')
-    #            else:
-    #                if not isSilent:
-    #                    print(msg)
-    #            my_logger.info(msg)
-    #            break
-    #        cmd = ""
-    #file.close()
-    #
-    #if rc == False:
-    #    if p_json:
-    #        print('[{"status":"completed","has_updates":0}]')
-    #    return False
-
-    # process the file ##########################
     file = open(p_file, "r")
     cmd = ""
     for line in file:
@@ -2970,8 +2965,6 @@ def kill_pid(pid):
 
 # Terminate a process tree with the PID
 def kill_process_tree(pid):
-    import psutil
-
     process = psutil.Process(pid)
     for proc in process.children(recursive=True):
         proc.kill()
@@ -2980,8 +2973,6 @@ def kill_process_tree(pid):
 
 
 def is_pid_running(p_pid):
-    import psutil
-
     return psutil.pid_exists(int(p_pid))
 
 
@@ -3200,7 +3191,25 @@ def get_linux_hostname():
 
 
 def get_host_ip():
-    return "127.0.0.1"
+    try:
+        return(getoutput('hostname -I | cut -d " " -f1'))
+    except Exception:
+        return("127.0.0.1")
+
+
+def get_host_address():
+    try:
+        nics = psutil.net_if_addrs()
+        for i in nics:
+            if i == "lo":
+                continue
+            for j in nics[i]:
+                if j.family == 17:
+                    return(str(j.address))
+    except Exception as e:
+        pass
+
+    return("00:00:00:00:00:00")
 
 
 def make_uri(in_name):
@@ -3284,7 +3293,7 @@ def urlEncodeNonAscii(b):
 
 
 def http_headers():
-    user_agent = "CLI/" + get_version() + " " + get_anonymous_info()
+    user_agent = "CLI/" + meta.get_my_version() + " " + get_anonymous_info()
     headers = {"User-Agent": urlEncodeNonAscii(user_agent)}
     return headers
 

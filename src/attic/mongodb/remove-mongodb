@@ -1,9 +1,0 @@
-
-set -x
-
-sudo apt-get autoremove -y mongodb-org*
-
-sudo rm -f /etc/apt/sources.list.d/mongodb-org*
-
-sudo rm -rf /var/lib/mongodb
-sudo rm -rf /var/log/mongodb
