@@ -219,6 +219,7 @@ def configure_patroni(primary_node, nodes, db, db_settings):
             host=node["private_ip"], usr=node["os_user"], key=node["ssh_key"]
         )
     
+    util.wait_with_dots("Checking etcd health", 60) 
     util.echo_cmd(
         PATRONI_MEMBERES_LIST,
         host=primary_node["private_ip"], usr=primary_node["os_user"], key=primary_node["ssh_key"]

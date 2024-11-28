@@ -170,7 +170,7 @@ def configure_etcd(primary_node, nodes):
         max_attempts=3
     )
 
-    util.wait_with_dots("Wait to start etcd", 15) 
+    util.wait_with_dots("Checking etcd health", 15) 
     for i, node in enumerate(nodes):
         util.run_rcommand(
             f"{ETCDCTL} member add {node_names[i]} "
