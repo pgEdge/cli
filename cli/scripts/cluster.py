@@ -1,9 +1,7 @@
-
 #  Copyright 2022-2024 PGEDGE  All rights reserved. #
-
-import os
 import json
 import datetime
+import os
 import util
 import fire
 import meta
@@ -596,12 +594,6 @@ def add_db(cluster_name, database_name, username, password):
     util.message(f"## Updating cluster '{cluster_name}' json definition file")
     update_json(cluster_name, db_json)
 
-import os
-import json
-import datetime
-import getpass
-from ipaddress import ip_address
-
 def json_create(cluster_name, num_nodes, db, usr, passwd, pg=None, port=None):
     """
     Create a Cluster Configuration JSON file with validations for HA, BackRest, and Spock.
@@ -749,9 +741,10 @@ def json_create(cluster_name, num_nodes, db, usr, passwd, pg=None, port=None):
             "is_active": "on"
         }
 
-        node_ip = input(f"  IP address for Node {n} (leave blank for default '{default_ip}'): ").strip() or default_ip
-        node_json["public_ip"] = node_ip
-        node_json["private_ip"] = node_ip
+        public_ip = input(f"  Public IP address for Node {n} (leave blank for default '{default_ip}'): ").strip() or default_ip
+        private_ip = input(f"  Private IP address for Node {n} (leave blank to use public IP '{public_ip}'): ").strip() or public_ip
+        node_json["public_ip"] = public_ip
+        node_json["private_ip"] = private_ip
 
         node_default_port = default_port + n - 1
         node_port_input = input(f"  PostgreSQL port for Node {n} (leave blank for default '{node_default_port}'): ").strip()
@@ -798,9 +791,10 @@ def json_create(cluster_name, num_nodes, db, usr, passwd, pg=None, port=None):
                     "is_active": "off"
                 }
 
-                replica_ip = input(f"    IP address of replica Node {i} (leave blank for default '{default_ip}'): ").strip() or default_ip
-                sub_node_json["public_ip"] = replica_ip
-                sub_node_json["private_ip"] = replica_ip
+                public_ip = input(f"    Public IP address of replica Node {i} (leave blank for default '{default_ip}'): ").strip() or default_ip
+                private_ip = input(f"    Private IP address of replica Node {i} (leave blank to use public IP '{public_ip}'): ").strip() or public_ip
+                sub_node_json["public_ip"] = public_ip
+                sub_node_json["private_ip"] = private_ip
 
                 replica_port_input = input(f"    PostgreSQL port of replica Node {i} (leave blank for default '{current_replica_port}'): ").strip()
                 if not replica_port_input:
@@ -840,7 +834,7 @@ def json_create(cluster_name, num_nodes, db, usr, passwd, pg=None, port=None):
                     validation_errors.append(f"Invalid port number {port_int} for node {node.get('name')}.")
             except ValueError:
                 validation_errors.append(f"Port must be a valid number for node {node.get('name')}.")
-        
+
         public_ip = node.get("public_ip", "")
         private_ip = node.get("private_ip", "")
         if not public_ip and not private_ip:
@@ -852,7 +846,7 @@ def json_create(cluster_name, num_nodes, db, usr, passwd, pg=None, port=None):
                 ip_address(private_ip)
         except ValueError:
             validation_errors.append(f"Invalid IP address provided for node {node.get('name')}.")
-        
+
         for sub_node in node.get("sub_nodes", []):
             if not sub_node.get("name"):
                 validation_errors.append("Sub-node name is missing.")
@@ -865,7 +859,7 @@ def json_create(cluster_name, num_nodes, db, usr, passwd, pg=None, port=None):
                         validation_errors.append(f"Invalid port number {port_int} for sub-node {sub_node.get('name')}.")
                 except ValueError:
                     validation_errors.append(f"Port must be a valid number for sub-node {sub_node.get('name')}.")
-            
+
             public_ip = sub_node.get("public_ip", "")
             private_ip = sub_node.get("private_ip", "")
             if not public_ip and not private_ip:
@@ -910,6 +904,7 @@ def json_create(cluster_name, num_nodes, db, usr, passwd, pg=None, port=None):
         print(f"\nCluster configuration saved to {cluster_file}")
     except Exception as e:
         util.exit_message(f"Unable to create JSON file: {e}", 1)
+
 
 def create_spock_db(nodes,db,db_settings):
     for n in nodes:
