@@ -9,29 +9,35 @@ import json
 import util
 import fire
 import time
-
-base_dir = "cluster"
+import warnings
 
 def start(verbose=False):
     util.run_rcommand(
         f"sudo systemctl daemon-reload", 
         message="", verbose=verbose
     )
-    time.sleep(3)
     util.run_rcommand(
-        f"sudo systemctl start etcd", 
+        f"sudo systemctl start patroni",
         message="", verbose=verbose
     )
 
 def stop(verbose=False):
     util.run_rcommand(
-        f"sudo systemctl stop etcd", 
+        f"sudo systemctl daemon-reload", 
+        message="", verbose=verbose
+    )
+    util.run_rcommand(
+        f"sudo systemctl stop patroni",
         message="", verbose=verbose
     )
 
 def status(verbose=False):
     util.run_rcommand(
-        f"sudo systemctl status etcd", 
+        f"sudo systemctl daemon-reload", 
+        message="", verbose=verbose
+    )
+    util.run_rcommand(
+        f"sudo systemctl status patroni",
         message="", verbose=verbose
     )
 

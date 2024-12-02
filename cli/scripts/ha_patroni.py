@@ -69,7 +69,10 @@ bootstrap:
   postgresql:
     use_pg_rewind: true
     use_slots: true
-  
+    parameters:
+        wal_keep_size: 64MB
+        wal_keep_segments: 0
+
   pg_hba:
     - host replication replicator 0.0.0.0/0 trust
     - host all all 0.0.0.0/0 trust
@@ -98,28 +101,6 @@ recovery_conf:
 """
 
 
-def start(verbose=False):
-    util.run_rcommand(
-        f"sudo systemctl daemon-reload", 
-        message="", verbose=verbose
-    )
-    util.run_rcommand(
-        f"sudo systemctl start patroni",
-        message="", verbose=verbose
-    )
-
-def stop(verbose=False):
-    util.run_rcommand(
-        f"sudo systemctl stop patroni",
-        message="", verbose=verbose
-    )
-
-def status(verbose=False):
-    util.run_rcommand(
-        f"sudo systemctl status patroni",
-        message="", verbose=verbose
-    )
-
 def init(cluster_name):
     db, db_settings, primary_nodes = util.load_json(cluster_name)
     for node in primary_nodes:
@@ -139,7 +120,7 @@ def patroni_command(cluster_name, node, cmd, args=None):
             util.run_rcommand(
                 f"{PATRONICTL} -c /etc/patroni/patroni.yaml {cmd}",
                 message=f"Running patronictl {cmd} on {nd['name']}",
-                host=nd['ip_address'], usr=nd['os_user'], key=nd['ssh_key']
+                host=nd['private_ip'], usr=nd['os_user'], key=nd['ssh_key']
             )
     if knt == 0:
         util.message("# nothing to do")
@@ -148,11 +129,11 @@ def update_node_yaml(node, db, db_settings):
     pg_ver = db_settings["pg_version"]
     
     replacements = {
-        "IP_NODE": node['local_ip'],
+        "IP_NODE": node['private_ip'],
         "PG_PORT": node['port'],
-        "SUPER_USER": db[0]['username'],
-        "SUPER_PASSWORD": db[0]['password'],
-        "NODE_NAME": node['name'],
+        "SUPER_USER": db['db_user'],
+        "SUPER_PASSWORD": db['db_password'],
+        "NODE_NAME": node['private_ip'],
         "REPLICATOR_USER": "replicator",
         "REPLICATOR_PASSWORD": "replicator",
         "PGDATA": os.path.join(
@@ -176,21 +157,20 @@ def update_node_yaml(node, db, db_settings):
     util.run_rcommand(
         cmd, 
         message="Updating Patroni YAML configuration",
-        host=node["ip_address"], usr=node["os_user"], key=node["ssh_key"]
+        host=node["private_ip"], usr=node["os_user"], key=node["ssh_key"]
     )
 
 def configure_node(node, db, db_settings, pg_ver, remove=False):
-    
     util.run_rcommand(
         f"{node['path']}/pgedge/pgedge patroni stop",
         message=f"Stopping old Patroni on node {node['name']}",
-        host=node["ip_address"], usr=node["os_user"], key=node["ssh_key"]
+        host=node["private_ip"], usr=node["os_user"], key=node["ssh_key"]
     )
     
     util.run_rcommand(
         f"{node['path']}/pgedge/pgedge install patroni",
         message=f"Installing Patroni on node {node['name']}",
-        host=node["ip_address"], usr=node["os_user"], key=node["ssh_key"]
+        host=node["private_ip"], usr=node["os_user"], key=node["ssh_key"]
     )
     update_node_yaml(node, db, db_settings)
    
@@ -201,37 +181,48 @@ def configure_patroni(primary_node, nodes, db, db_settings):
     util.run_rcommand(
         f"echo 'host replication replicator 0.0.0.0/0 trust' >> {pgdata}/pg_hba.conf",
         message=f"Adding replication entry to pg_hba.conf of {primary_node['name']}",
-        host=primary_node["ip_address"], usr=primary_node["os_user"], key=primary_node["ssh_key"]
+        host=primary_node["private_ip"], usr=primary_node["os_user"], key=primary_node["ssh_key"]
     )
     util.run_rcommand(
         f"{primary_node['path']}/pgedge/pgedge restart",
         message=f"Restarting postgres on node {primary_node['name']}",
-        host=primary_node["ip_address"], usr=primary_node["os_user"], key=primary_node["ssh_key"]
+        host=primary_node["private_ip"], usr=primary_node["os_user"], key=primary_node["ssh_key"]
     )
-    util.run_rcommand(
-        PATRONI_MEMBERES_REOME,
-        message=f"Removing old patroni cluster on {primary_node['name']}",
-        host=primary_node["ip_address"], usr=primary_node["os_user"], key=primary_node["ssh_key"]
-    ) 
+    #util.run_rcommand(
+    #    PATRONI_MEMBERES_REOME,
+    #    message=f"Removing old patroni cluster on {primary_node['name']}",
+    #    host=primary_node["private_ip"], usr=primary_node["os_user"], key=primary_node["ssh_key"]
+    #) 
     configure_node(primary_node, db, db_settings, pg_ver, True)
     
     util.run_rcommand(
+        f"sudo systemctl daemon-reload", 
+        message="",
+        host=primary_node["private_ip"], usr=primary_node["os_user"], key=primary_node["ssh_key"]
+    )
+    util.run_rcommand(
         f"{primary_node['path']}/pgedge/pgedge patroni start",
         message=f"Starting Patroni on node {primary_node['name']}",
-        host=primary_node["ip_address"], usr=primary_node["os_user"], key=primary_node["ssh_key"]
+        host=primary_node["private_ip"], usr=primary_node["os_user"], key=primary_node["ssh_key"]
     )
 
     for node in nodes:
         configure_node(node, db, db_settings, pg_ver)
         util.run_rcommand(
+            f"sudo systemctl daemon-reload", 
+            message="",
+            host=node["private_ip"], usr=node["os_user"], key=node["ssh_key"]
+        )
+        util.run_rcommand(
             f"{node['path']}/pgedge/pgedge patroni start",
             message=f"Starting Patroni on node {node['name']}",
-            host=node["ip_address"], usr=node["os_user"], key=node["ssh_key"]
+            host=node["private_ip"], usr=node["os_user"], key=node["ssh_key"]
         )
     
+    util.wait_with_dots("Checking etcd health", 60) 
     util.echo_cmd(
         PATRONI_MEMBERES_LIST,
-        host=primary_node["ip_address"], usr=primary_node["os_user"], key=primary_node["ssh_key"]
+        host=primary_node["private_ip"], usr=primary_node["os_user"], key=primary_node["ssh_key"]
     )
 
 if __name__ == "__main__":

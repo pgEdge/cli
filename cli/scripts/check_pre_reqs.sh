@@ -22,8 +22,6 @@ isEL () {
       return
   fi
 
-  echoX "ERROR: must be Enterprise Linux"
-  exit 1
 }
 
 

@@ -25,6 +25,7 @@ def write_patroni_yaml():
     util.osSys(f"sudo chown {usrUsr} /etc/patroni")
 
 def configure_patroni():
+    util.osSys("pip install click")
     util.osSys("/usr/local/patroni/patroni.py --version")
     util.osSys("/usr/local/patroni/patronictl.py version")
     util.osSys("sudo cp patroni.service /etc/systemd/system/")
