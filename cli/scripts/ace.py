@@ -440,13 +440,49 @@ def check_column_size(conn_list: list, task: TableDiffTask) -> tuple[bool, str]:
 
 def write_diffs_json(diff_dict, col_types, quiet_mode=False):
 
+    # TODO: Need to revisit this.
     def convert_to_json_type(item: str, type: str):
         try:
-            # If the type is bytea, we're anyway converting it to hex
-            if any([s in type for s in ["char", "text", "time", "bytea"]]):
+            # List of types that should be treated as strings
+            string_types = [
+                "char",
+                "text",
+                "time",
+                "bytea",
+                "uuid",
+                "date",
+                "timestamp",
+                "interval",
+                "inet",
+                "macaddr",
+                "xml",
+                "money",
+                "point",
+                "line",
+                "polygon",
+            ]
+
+            # Types that can be directly represented in JSON
+            json_compatible_types = [
+                "json",
+                "jsonb",
+                "boolean",
+                "integer",
+                "bigint",
+                "smallint",
+                "numeric",
+                "real",
+                "double precision",
+            ]
+
+            type_lower = type.lower()
+            if any(s in type_lower for s in string_types):
                 return item
+            elif any(s in type_lower for s in json_compatible_types):
+                # For JSON-compatible types, parse them into their native Python types
+                return ast.literal_eval(item)
             else:
-                item = ast.literal_eval(item)
+                # Default to treating as string if type is unknown
                 return item
 
         except Exception as e:
