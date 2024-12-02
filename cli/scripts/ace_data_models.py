@@ -1,3 +1,4 @@
+from collections import defaultdict
 from dataclasses import dataclass, field
 from datetime import datetime
 
@@ -29,6 +30,7 @@ class DerivedFields:
     node_list: list = None
     host_map: dict = None
     table_list: list = None
+    col_types: dict = None
 
 
 @dataclass
@@ -56,10 +58,10 @@ class TableDiffTask:
     # status of each table-diff task (for now)
     skip_db_update: bool = False
 
-    scheduler: Task = field(default=Task)
+    scheduler: Task = field(default_factory=Task)
 
     # Derived fields
-    fields: DerivedFields = field(default=DerivedFields)
+    fields: DerivedFields = field(default_factory=DerivedFields)
 
 
 @dataclass
@@ -85,10 +87,10 @@ class TableRepairTask:
     upsert_only: bool
 
     # Task-specific parameters
-    scheduler: Task = field(default=Task)
+    scheduler: Task = field(default_factory=Task)
 
     # Derived fields
-    fields: DerivedFields = field(default=DerivedFields)
+    fields: DerivedFields = field(default_factory=DerivedFields)
 
 
 @dataclass
@@ -114,10 +116,10 @@ class RepsetDiffTask:
     invoke_method: str = "CLI"
 
     # Task-specific parameters
-    scheduler: Task = field(default=Task)
+    scheduler: Task = field(default_factory=Task)
 
     # Derived fields
-    fields: DerivedFields = field(default=DerivedFields)
+    fields: DerivedFields = field(default_factory=DerivedFields)
 
 
 @dataclass
@@ -133,10 +135,10 @@ class SpockDiffTask:
     quiet_mode: bool
 
     # Task-specific parameters
-    scheduler: Task = field(default=Task)
+    scheduler: Task = field(default_factory=Task)
 
     # Derived fields
-    fields: DerivedFields = field(default=DerivedFields)
+    fields: DerivedFields = field(default_factory=DerivedFields)
 
 
 @dataclass
@@ -153,7 +155,27 @@ class SchemaDiffTask:
     quiet_mode: bool
 
     # Task-specific parameters
-    scheduler: Task = field(default=Task)
+    scheduler: Task = field(default_factory=Task)
 
     # Derived fields
-    fields: DerivedFields = field(default=DerivedFields)
+    fields: DerivedFields = field(default_factory=DerivedFields)
+
+
+@dataclass
+class AutoRepairTask:
+    remote_origin: int
+    remote_commit_ts: datetime
+    command_counter: int
+    remote_xid: int
+    local_origin: int
+    local_commit_ts: datetime
+    table_schema: str
+    table_name: str
+    operation: str
+    local_tup: defaultdict
+    remote_old_tup: defaultdict
+    remote_new_tup: defaultdict
+    ddl_statement: str
+    ddl_user: str
+    error_message: str
+    retry_errored_at: datetime

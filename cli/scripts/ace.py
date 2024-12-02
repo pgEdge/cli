@@ -12,13 +12,15 @@ import subprocess
 from datetime import datetime
 import logging
 
+import ace_core
+import pgpasslib
 import fire
 import psycopg
+from psycopg.rows import dict_row
 
 import cluster
 import util
 import ace_db
-import ace_api
 import ace_config as config
 from ace_data_models import (
     RepsetDiffTask,
@@ -141,10 +143,13 @@ def get_row_count(p_con, p_schema, p_table):
 
 def get_cols(p_con, p_schema, p_table):
     sql = """
-    SELECT ordinal_position, column_name
-    FROM information_schema.columns
-    WHERE table_schema = %s and table_name = %s
-    ORDER BY 1, 2
+    SELECT
+        column_name
+    FROM
+        information_schema.columns
+    WHERE
+        table_schema = %s
+        AND table_name = %s
     """
 
     try:
@@ -166,20 +171,26 @@ def get_cols(p_con, p_schema, p_table):
 
     col_lst = []
     for row in rows:
-        col_lst.append(str(row[1]))
+        col_lst.append(str(row[0]))
 
     return ",".join(col_lst)
 
 
 def get_key(p_con, p_schema, p_table):
     sql = """
-    SELECT C.COLUMN_NAME
-    FROM INFORMATION_SCHEMA.TABLE_CONSTRAINTS T,
-    INFORMATION_SCHEMA.CONSTRAINT_COLUMN_USAGE C
-    WHERE c.constraint_name = t.constraint_name
-    AND c.table_schema = t.constraint_schema
-    AND c.table_schema = %s AND c.table_name = %s
-    AND T.CONSTRAINT_TYPE='PRIMARY KEY'
+    SELECT
+        kcu.column_name
+    FROM
+        information_schema.table_constraints tc
+    JOIN
+        information_schema.key_column_usage kcu
+    ON
+        tc.constraint_name = kcu.constraint_name
+        AND tc.table_schema = kcu.table_schema
+    WHERE
+        tc.constraint_type = 'PRIMARY KEY'
+        AND tc.table_schema = %s
+        AND tc.table_name = %s
     """
 
     try:
@@ -226,7 +237,7 @@ def parse_nodes(nodes, quiet_mode=False) -> list:
     return node_list
 
 
-def get_row_types(conn, table_name):
+def get_col_types(conn, table_name):
     """
     Here we are grabbing the name and data type of each row from table from the
     given conn. Using this complex query instead of a simpler one since this
@@ -264,9 +275,7 @@ def get_row_types(conn, table_name):
     finally:
         conn.commit()
         if not table_types:
-            util.exit_message(
-                "Error: couldn't connect to source of truth or find any columns"
-            )
+            raise AceException("Error: could not fetch column types")
 
     return table_types
 
@@ -276,14 +285,204 @@ def check_cluster_exists(cluster_name, base_dir="cluster"):
     return True if os.path.exists(cluster_dir) else False
 
 
-def write_diffs_json(diff_dict, row_types, quiet_mode=False):
+def check_user_privileges(conn, username, schema, table, required_privileges=[]):
+    """
+    In most cases, the ace user provisioned in production will have limited access
+    to the tables. We will use this function to check for specific privileges when
+    an ACE module is invoked.
+    - table-diff, repset-diff, table-rerun need SELECT
+    - table-repair needs SELECT, INSERT, UPDATE, DELETE
+    - table-repair with --upsert-only needs SELECT, INSERT, UPDATE
+    """
 
+    # This query will give us the privilege type and whether the user has that
+    # specific privilege or not. We use quote_ident to properly handle
+    # case-sensitive identifiers.
+    query = """
+    WITH params AS (
+        SELECT %s::text AS username,
+               %s::text AS schema_name,
+               %s::text AS table_name
+    ),
+    table_check AS (
+        SELECT c.relname as table_name, n.nspname as table_schema
+        FROM pg_class c
+        JOIN pg_namespace n ON n.oid = c.relnamespace
+        WHERE n.nspname = (SELECT schema_name FROM params)
+          AND c.relname = (SELECT table_name FROM params)
+    )
+    SELECT
+        CASE
+            WHEN EXISTS (SELECT 1 FROM table_check)
+            THEN has_table_privilege(
+                (SELECT username FROM params),
+                (
+                    SELECT quote_ident(table_schema) || '.' || quote_ident(table_name)
+                    FROM table_check
+                ),
+                'SELECT'
+            )
+            ELSE FALSE
+        END AS table_select,
+        has_schema_privilege(
+            (SELECT username FROM params),
+            (SELECT schema_name FROM params),
+            'CREATE'
+        ) AS table_create,
+        CASE
+            WHEN EXISTS (SELECT 1 FROM table_check)
+            THEN has_table_privilege(
+                (SELECT username FROM params),
+                (
+                    SELECT quote_ident(table_schema) || '.' || quote_ident(table_name)
+                    FROM table_check
+                ),
+                'INSERT'
+            )
+            ELSE FALSE
+        END AS table_insert,
+        CASE
+            WHEN EXISTS (SELECT 1 FROM table_check)
+            THEN has_table_privilege(
+                (SELECT username FROM params),
+                (
+                    SELECT quote_ident(table_schema) || '.' || quote_ident(table_name)
+                    FROM table_check
+                ),
+                'UPDATE'
+            )
+            ELSE FALSE
+        END AS table_update,
+        CASE
+            WHEN EXISTS (SELECT 1 FROM table_check)
+            THEN has_table_privilege(
+                (SELECT username FROM params),
+                (
+                    SELECT quote_ident(table_schema) || '.' || quote_ident(table_name)
+                    FROM table_check
+                ),
+                'DELETE'
+            )
+            ELSE FALSE
+        END AS table_delete,
+        has_table_privilege(
+            (SELECT username FROM params),
+            'information_schema.columns',
+            'SELECT'
+        ) AS columns_select,
+        has_table_privilege(
+            (SELECT username FROM params),
+            'information_schema.table_constraints',
+            'SELECT'
+        ) AS table_constraints_select,
+        has_table_privilege(
+            (SELECT username FROM params),
+            'information_schema.key_column_usage',
+            'SELECT'
+        ) AS key_column_usage_select;
+    """
+
+    if required_privileges:
+        # Transform required_privileges to column names we use in the query
+        required_privileges = [f"table_{p.lower()}" for p in required_privileges]
+
+    cur = conn.cursor(row_factory=dict_row)
+    cur.execute(query, (username, schema, table))
+    results = cur.fetchone()
+
+    if not required_privileges:
+        return all(results.values()), {k: v for k, v in results.items() if not v}
+    else:
+        return all([results[p] for p in required_privileges]), {
+            k: v for k, v in results.items() if not v
+        }
+
+
+# Looks through a table to ensure that no `bytea` column is too large
+# Returns (true, _) if it is ok to proceed, (false, rowname) otherwise
+def check_column_size(conn_list: list, task: TableDiffTask) -> tuple[bool, str]:
+    # Gets byte size from each bytea in each connection
+    byte_sql = (
+        'SELECT AVG(pg_column_size("{c_name}")) AS avg_size_in_bytes '
+        'FROM "{s_name}"."{t_name}";'
+    )
+
+    try:
+        for conn in conn_list:
+            cur = conn.cursor()
+            hostname = conn.info.host
+            port = conn.info.port
+            col_types_key = f"{hostname}:{port}"
+            table_types = task.fields.col_types[col_types_key]
+            for col_name, col_type in table_types.items():
+                if "bytea" in col_type:
+                    cur.execute(
+                        byte_sql.format(
+                            c_name=col_name,
+                            s_name=task.fields.l_schema,
+                            t_name=task.fields.l_table,
+                        )
+                    )
+                    size = cur.fetchone()[0]
+                    # If max size greater than (1 MB = 10^6 B)?? return false
+                    if size > 10**6:
+                        return False, col_name
+    except Exception as e:
+        context = {
+            "errors": [f"Could not read average byte size of some column: {str(e)}"]
+        }
+        handle_task_exception(task, context)
+        raise e
+
+    # Everything ok
+    return True, ""
+
+
+def write_diffs_json(diff_dict, col_types, quiet_mode=False):
+
+    # TODO: Need to revisit this.
     def convert_to_json_type(item: str, type: str):
         try:
-            if any([s in type for s in ["char", "text", "time"]]):
+            # List of types that should be treated as strings
+            string_types = [
+                "char",
+                "text",
+                "time",
+                "bytea",
+                "uuid",
+                "date",
+                "timestamp",
+                "interval",
+                "inet",
+                "macaddr",
+                "xml",
+                "money",
+                "point",
+                "line",
+                "polygon",
+            ]
+
+            # Types that can be directly represented in JSON
+            json_compatible_types = [
+                "json",
+                "jsonb",
+                "boolean",
+                "integer",
+                "bigint",
+                "smallint",
+                "numeric",
+                "real",
+                "double precision",
+            ]
+
+            type_lower = type.lower()
+            if any(s in type_lower for s in string_types):
                 return item
+            elif any(s in type_lower for s in json_compatible_types):
+                # For JSON-compatible types, parse them into their native Python types
+                return ast.literal_eval(item)
             else:
-                item = ast.literal_eval(item)
+                # Default to treating as string if type is unknown
                 return item
 
         except Exception as e:
@@ -315,12 +514,15 @@ def write_diffs_json(diff_dict, row_types, quiet_mode=False):
 
     filename = os.path.join(dirname, diff_filename)
 
+    # Since we have column types for all nodes, we can just take the first one
+    col_types = next(iter(col_types.values()))
+
     # Converts diff so that values are correct json type
     write_dict = {
         node_pair: {
             node: [
                 {
-                    key: convert_to_json_type(val, row_types[key])
+                    key: convert_to_json_type(val, col_types[key])
                     for key, val in row.items()
                 }
                 for row in rows
@@ -444,8 +646,8 @@ def table_diff_checks(td_task: TableDiffTask) -> TableDiffTask:
         node_list = parse_nodes(td_task._nodes)
     except ValueError as e:
         raise AceException(
-            "Nodes should be a comma-separated list of nodenames " +
-            f"\n\tE.g., --nodes=\"n1,n2\". Error: {e}"
+            "Nodes should be a comma-separated list of nodenames "
+            + f'\n\tE.g., --nodes="n1,n2". Error: {e}'
         )
 
     if len(node_list) > 3:
@@ -489,8 +691,8 @@ def table_diff_checks(td_task: TableDiffTask) -> TableDiffTask:
 
     if not database:
         raise AceException(
-            f"Database '{td_task._dbname}' " +
-            f"not found in cluster '{td_task.cluster_name}'"
+            f"Database '{td_task._dbname}' "
+            + f"not found in cluster '{td_task.cluster_name}'"
         )
 
     # Combine db and cluster_nodes into a single json
@@ -506,28 +708,112 @@ def table_diff_checks(td_task: TableDiffTask) -> TableDiffTask:
             if not any(filter(lambda x: x["name"] == n, cluster_nodes)):
                 raise AceException("Specified nodenames not present in cluster")
 
+    cols = None
+    key = None
     conn_params = []
     conn_list = []
+    host_map = {}
+    required_privileges = ["SELECT"]
 
     try:
         for nd in cluster_nodes:
+            hostname = nd["name"]
+            host_ip = nd["public_ip"]
+            user = nd["db_user"]
+            dbname = nd["db_name"]
+            db_password = nd["db_password"]
+            port = nd.get("port", 5432)
+
             if td_task._nodes == "all":
                 node_list.append(nd["name"])
 
             if (node_list and nd["name"] in node_list) or (not node_list):
                 params = {
-                    "dbname": nd["db_name"],
-                    "user": nd["db_user"],
-                    "password": nd["db_password"],
-                    "host": nd["public_ip"],
-                    "port": nd.get("port", 5432),
+                    "dbname": dbname,
+                    "user": user,
+                    "host": host_ip,
+                    "port": port,
                     "options": f"-c statement_timeout={config.STATEMENT_TIMEOUT}",
+                    "application_name": "ACE",
                 }
-                conn_list.append(psycopg.connect(**params))
+
+                if db_password:
+                    params["password"] = db_password
+                else:
+                    pgpass = pgpasslib.getpass(
+                        host=hostname,
+                        user=user,
+                        dbname=dbname,
+                        port=port,
+                    )
+                    if not pgpass:
+                        raise AceException(
+                            f"No password found for {hostname} in"
+                            f" {td_task.cluster_name}.json or ~/.pgpass"
+                        )
+                    params["password"] = pgpass
+
+                conn = psycopg.connect(**params)
+
+                curr_cols = get_cols(conn, l_schema, l_table)
+                curr_key = get_key(conn, l_schema, l_table)
+
+                if not curr_cols:
+                    raise AceException(
+                        f"Table '{td_task._table_name}' not found on {hostname}"
+                        ", or the current user does not have adequate privileges"
+                    )
+                if not curr_key:
+                    raise AceException(
+                        f"No primary key found for '{td_task._table_name}'"
+                    )
+
+                if (not cols) and (not key):
+                    cols = curr_cols
+                    key = curr_key
+
+                if (curr_cols != cols) or (curr_key != key):
+                    raise AceException("Table schemas don't match")
+
+                cols = curr_cols
+                key = curr_key
+
+                col_types = get_col_types(conn, l_table)
+                col_types_key = f"{host_ip}:{port}"
+
+                if not td_task.fields.col_types:
+                    td_task.fields.col_types = {}
+
+                td_task.fields.col_types[col_types_key] = col_types
+
+                authorised, missing_privileges = check_user_privileges(
+                    conn, user, l_schema, l_table, required_privileges
+                )
+
+                # Missing privileges come back as table_<privilege>, but we use
+                # "CREATE/SELECT/INSERT/UPDATE/DELETE" in the required_privileges list
+                # So, we're simply formatting it correctly here for the exception
+                # message
+                missing_privs = [
+                    m.split("_")[1].upper()
+                    for m in missing_privileges
+                    if m.split("_")[1].upper() in required_privileges
+                ]
+                exception_msg = (
+                    f'User "{user}" does not have the necessary privileges'
+                    f" to run {', '.join(missing_privs)} "
+                    f'on table "{l_schema}.{l_table}" on node "{hostname}"'
+                )
+
+                if not authorised:
+                    raise AceException(exception_msg)
+
+                conn_list.append(conn)
                 conn_params.append(params)
+                host_map[host_ip + ":" + str(port)] = hostname
 
     except Exception as e:
-        raise AceException("Error in table_diff() Getting Connections:" + str(e), 1)
+        raise e
 
     util.message(
         "Connections successful to nodes in cluster",
@@ -535,35 +821,59 @@ def table_diff_checks(td_task: TableDiffTask) -> TableDiffTask:
         quiet_mode=td_task.quiet_mode,
     )
 
-    cols = None
-    key = None
+    # Psycopg connection objects cannot be pickled easily,
+    # so, we send the connection parameters instead
+    td_task.fields.conn_params = conn_params
+    td_task.fields.host_map = host_map
 
-    # TODO: Check column types here?
-    for conn in conn_list:
-        curr_cols = get_cols(conn, l_schema, l_table)
-        curr_key = get_key(conn, l_schema, l_table)
+    if td_task.fields.col_types and len(td_task.fields.col_types) > 1:
+        ref_node = list(td_task.fields.col_types.keys())[0]
+        ref_types = td_task.fields.col_types[ref_node]
 
-        if not curr_cols:
-            raise AceException(f"Invalid table name '{td_task._table_name}'")
-        if not curr_key:
-            raise AceException(f"No primary key found for '{td_task._table_name}'")
-
-        if (not cols) and (not key):
-            cols = curr_cols
-            key = curr_key
-            continue
-
-        if (curr_cols != cols) or (curr_key != key):
-            raise AceException("Table schemas don't match")
-
-        cols = curr_cols
-        key = curr_key
+        for node, types in td_task.fields.col_types.items():
+            if types != ref_types:
+                mismatched_cols = {
+                    col: (ref_types[col], types[col])
+                    for col in ref_types
+                    if col in types and types[col] != ref_types[col]
+                }
+                util.message(
+                    "Warning: Column types mismatch detected between"
+                    f" {ref_node} and {node}:\n"
+                    + "\n".join(
+                        [
+                            f"  Column '{col}': {ref_node}={t1}, {node}={t2}"
+                            for col, (t1, t2) in mismatched_cols.items()
+                        ]
+                    ),
+                    p_state="warning",
+                    quiet_mode=td_task.quiet_mode,
+                )
 
     util.message(
         f"Table {td_task._table_name} is comparable across nodes",
         p_state="success",
         quiet_mode=td_task.quiet_mode,
     )
+
+    """
+    We populate the remaining derived fields of TableDiffTask here
+    """
+    td_task.fields.cols = cols
+    td_task.fields.key = key
+    td_task.fields.l_schema = l_schema
+    td_task.fields.l_table = l_table
+    td_task.fields.node_list = node_list
+    td_task.fields.database = database
+    td_task.fields.host_map = host_map
+
+    # Checks to see if there is a `bytea` dataype that is too large
+    byte_check, byte_row_name = check_column_size(conn_list, td_task)
+    if not byte_check:
+        raise AceException(
+            f"Refusing to perform table-diff. Data in column {byte_row_name} of"
+            f" table {td_task._table_name} is larger than 1 MB"
+        )
 
     if td_task.diff_file_path:
         if not os.path.exists(td_task.diff_file_path):
@@ -584,24 +894,6 @@ def table_diff_checks(td_task: TableDiffTask) -> TableDiffTask:
                 raise AceException("Contents of diff file improperly formatted")
         except Exception as e:
             raise AceException(f"Contents of diff file improperly formatted: {e}")
-
-    """
-    Now that the inputs have been checked and processed, we will populate the
-    TableDiffArgs object with the processed values and return it
-    """
-
-    """
-    We populate the derived fields of TableDiffTask here
-    """
-    # Psycopg connection objects cannot be pickled easily,
-    # so, we send the connection parameters instead
-    td_task.fields.conn_params = conn_params
-    td_task.fields.cols = cols
-    td_task.fields.key = key
-    td_task.fields.l_schema = l_schema
-    td_task.fields.l_table = l_table
-    td_task.fields.node_list = node_list
-    td_task.fields.database = database
 
     return td_task
 
@@ -669,8 +961,8 @@ def table_repair_checks(tr_task: TableRepairTask) -> TableRepairTask:
 
     if not database:
         raise AceException(
-            f"Database '{tr_task._dbname}' " +
-            f"not found in cluster '{tr_task.cluster_name}'"
+            f"Database '{tr_task._dbname}' "
+            + f"not found in cluster '{tr_task.cluster_name}'"
         )
 
     # Combine db and cluster_nodes into a single json
@@ -684,63 +976,110 @@ def table_repair_checks(tr_task: TableRepairTask) -> TableRepairTask:
             f"Source of truth node {tr_task.source_of_truth} not present in cluster"
         )
 
+    cols = None
+    key = None
     conns = {}
     conn_params = []
     host_map = {}
+    required_privileges = ["SELECT", "INSERT", "UPDATE"]
+
+    if not tr_task.upsert_only:
+        required_privileges.append("DELETE")
 
     try:
         for nd in cluster_nodes:
+            hostname = nd["name"]
+            host_ip = nd["public_ip"]
+            user = nd["db_user"]
+            dbname = nd["db_name"]
+            db_password = nd["db_password"]
+            port = nd.get("port", 5432)
+
             params = {
-                "dbname": nd["db_name"],
-                "user": nd["db_user"],
-                "password": nd["db_password"],
-                "host": nd["public_ip"],
-                "port": nd.get("port", 5432),
+                "dbname": dbname,
+                "user": user,
+                "host": host_ip,
+                "port": port,
                 "options": f"-c statement_timeout={config.STATEMENT_TIMEOUT}",
+                "application_name": "ACE",
             }
 
-            # Use port number to support localhost clusters
-            host_map[nd["public_ip"] + ":" + params["port"]] = nd["name"]
-            conn_params.append(params)
-            conns[nd["name"]] = psycopg.connect(**params)
+            if db_password:
+                params["password"] = db_password
+            else:
+                pgpass = pgpasslib.getpass(
+                    host=hostname,
+                    user=user,
+                    dbname=dbname,
+                    port=port,
+                )
+                if not pgpass:
+                    raise AceException(
+                        f"No password found for {hostname} in"
+                        f" {tr_task.cluster_name}.json or ~/.pgpass"
+                    )
+                params["password"] = pgpass
 
-    except Exception as e:
-        raise AceException("Error in diff_tbls() Getting Connections:" + str(e), 1)
+            conn = psycopg.connect(**params)
 
-    util.message(
-        "Connections successful to nodes in cluster",
-        p_state="success",
-        quiet_mode=tr_task.quiet_mode,
-    )
+            curr_cols = get_cols(conn, l_schema, l_table)
+            curr_key = get_key(conn, l_schema, l_table)
 
-    cols = None
-    key = None
+            if not curr_cols:
+                raise AceException(
+                    f"Table '{tr_task._table_name}' not found on {hostname}"
+                )
+            if not curr_key:
+                raise AceException(f"No primary key found for '{tr_task._table_name}'")
 
-    for conn in conns.values():
-        curr_cols = get_cols(conn, l_schema, l_table)
-        curr_key = get_key(conn, l_schema, l_table)
+            if (not cols) and (not key):
+                cols = curr_cols
+                key = curr_key
 
-        if not curr_cols:
-            raise AceException(f"Invalid table name '{tr_task._table_name}'")
-        if not curr_key:
-            raise AceException(f"No primary key found for '{tr_task._table_name}'")
+            if (curr_cols != cols) or (curr_key != key):
+                raise AceException("Table schemas don't match")
 
-        if (not cols) and (not key):
             cols = curr_cols
             key = curr_key
-            continue
 
-        if (curr_cols != cols) or (curr_key != key):
-            raise AceException("Table schemas don't match")
+            col_types = get_col_types(conn, l_table)
+            col_types_key = f"{host_ip}:{str(port)}"
 
-        cols = curr_cols
-        key = curr_key
+            if not tr_task.fields.col_types:
+                tr_task.fields.col_types = {}
 
-    util.message(
-        f"Table {tr_task._table_name} is comparable across nodes",
-        p_state="success",
-        quiet_mode=tr_task.quiet_mode,
-    )
+            tr_task.fields.col_types[col_types_key] = col_types
+
+            authorised, missing_privileges = check_user_privileges(
+                conn, user, l_schema, l_table, required_privileges
+            )
+
+            missing_privs = [
+                m.split("_")[1].upper()
+                for m in missing_privileges
+                if m.split("_")[1].upper() in required_privileges
+            ]
+            exception_msg = (
+                f'User "{user}" does not have the necessary privileges'
+                f" to run {', '.join(missing_privs)} "
+                f'on table "{l_schema}.{l_table}" on node "{hostname}"'
+            )
+
+            if not authorised:
+                raise AceException(exception_msg)
+
+            conns[hostname] = conn
+            conn_params.append(params)
+            host_map[f"{host_ip}:{str(port)}"] = hostname
+
+    except Exception as e:
+        # Clean up connections before re-raising
+        for conn in conns.values():
+            try:
+                conn.close()
+            except Exception:
+                pass
+        raise e
 
     """
     Derived fields for TableRepairTask
@@ -806,8 +1145,8 @@ def repset_diff_checks(rd_task: RepsetDiffTask) -> RepsetDiffTask:
         node_list = parse_nodes(rd_task._nodes)
     except ValueError as e:
         raise AceException(
-            "Nodes should be a comma-separated list of nodenames " +
-            f"\n\tE.g., --nodes=\"n1,n2\". Error: {e}"
+            "Nodes should be a comma-separated list of nodenames "
+            + f'\n\tE.g., --nodes="n1,n2". Error: {e}'
         )
 
     if len(node_list) > 3:
@@ -843,8 +1182,8 @@ def repset_diff_checks(rd_task: RepsetDiffTask) -> RepsetDiffTask:
 
     if not database:
         raise AceException(
-            f"Database '{rd_task._dbname}' " +
-            f"not found in cluster '{rd_task.cluster_name}'"
+            f"Database '{rd_task._dbname}' "
+            + f"not found in cluster '{rd_task.cluster_name}'"
         )
 
     # Combine db and cluster_nodes into a single json
@@ -865,15 +1204,30 @@ def repset_diff_checks(rd_task: RepsetDiffTask) -> RepsetDiffTask:
                 node_list.append(nd["name"])
 
             if (node_list and nd["name"] in node_list) or (not node_list):
-                psql_conn = psycopg.connect(
-                    dbname=nd["db_name"],
-                    user=nd["db_user"],
-                    password=nd["db_password"],
-                    host=nd["public_ip"],
-                    port=nd.get("port", 5432),
-                    options=f"-c statement_timeout={config.STATEMENT_TIMEOUT}",
-                )
-                conn_list.append(psql_conn)
+                params = {
+                    "dbname": nd["db_name"],
+                    "user": nd["db_user"],
+                    "host": nd["public_ip"],
+                    "port": nd.get("port", 5432),
+                    "options": f"-c statement_timeout={config.STATEMENT_TIMEOUT}",
+                    "application_name": "ACE",
+                }
+                if nd["db_password"]:
+                    params["password"] = nd["db_password"]
+                else:
+                    pgpass = pgpasslib.getpass(
+                        host=nd["name"],
+                        user=nd["db_user"],
+                        dbname=nd["db_name"],
+                        port=nd.get("port", 5432),
+                    )
+                    if not pgpass:
+                        raise AceException(
+                            f"No password found for {nd['name']} in"
+                            f" {rd_task.cluster_name}.json or ~/.pgpass"
+                        )
+                    params["password"] = pgpass
+                conn_list.append(psycopg.connect(**params))
 
     except Exception as e:
         raise AceException("Error in diff_tbls() Getting Connections:" + str(e), 1)
@@ -931,8 +1285,8 @@ def spock_diff_checks(sd_task: SpockDiffTask) -> SpockDiffTask:
         node_list = parse_nodes(sd_task._nodes)
     except ValueError as e:
         raise AceException(
-            "Nodes should be a comma-separated list of nodenames " +
-            f"\n\tE.g., --nodes=\"n1,n2\". Error: {e}"
+            "Nodes should be a comma-separated list of nodenames "
+            + f'\n\tE.g., --nodes="n1,n2". Error: {e}'
         )
 
     if sd_task._nodes != "all" and len(node_list) == 1:
@@ -964,8 +1318,8 @@ def spock_diff_checks(sd_task: SpockDiffTask) -> SpockDiffTask:
 
     if not database:
         raise AceException(
-            f"Database '{sd_task._dbname}' " + 
-            f"not found in cluster '{sd_task.cluster_name}'"
+            f"Database '{sd_task._dbname}' "
+            + f"not found in cluster '{sd_task.cluster_name}'"
         )
 
     # Combine db and cluster_nodes into a single json
@@ -990,11 +1344,27 @@ def spock_diff_checks(sd_task: SpockDiffTask) -> SpockDiffTask:
                 params = {
                     "dbname": nd["db_name"],
                     "user": nd["db_user"],
-                    "password": nd["db_password"],
                     "host": nd["public_ip"],
                     "port": nd.get("port", 5432),
                     "options": f"-c statement_timeout={config.STATEMENT_TIMEOUT}",
+                    "application_name": "ACE",
                 }
+                if nd["db_password"]:
+                    params["password"] = nd["db_password"]
+                else:
+                    pgpass = pgpasslib.getpass(
+                        host=nd["name"],
+                        user=nd["db_user"],
+                        dbname=nd["db_name"],
+                        port=nd.get("port", 5432),
+                    )
+                    if not pgpass:
+                        raise AceException(
+                            f"No password found for {nd['name']} in"
+                            f" {sd_task.cluster_name}.json or ~/.pgpass"
+                        )
+                    params["password"] = pgpass
+
                 psycopg.connect(**params)
                 conn_params.append(params)
                 host_map[nd["public_ip"] + ":" + params["port"]] = nd["name"]
@@ -1018,8 +1388,8 @@ def schema_diff_checks(sc_task: SchemaDiffTask) -> SchemaDiffTask:
         node_list = parse_nodes(sc_task._nodes)
     except ValueError as e:
         raise AceException(
-            "Nodes should be a comma-separated list of nodenames " +
-            f"\n\tE.g., --nodes=\"n1,n2\". Error: {e}"
+            "Nodes should be a comma-separated list of nodenames "
+            + f'\n\tE.g., --nodes="n1,n2". Error: {e}'
         )
 
     if sc_task._nodes != "all" and len(node_list) == 1:
@@ -1048,8 +1418,8 @@ def schema_diff_checks(sc_task: SchemaDiffTask) -> SchemaDiffTask:
 
     if not database:
         raise AceException(
-            f"Database '{sc_task._dbname}' " +
-            f"not found in cluster '{sc_task.cluster_name}'"
+            f"Database '{sc_task._dbname}' "
+            + f"not found in cluster '{sc_task.cluster_name}'"
         )
 
     # Combine db and cluster_nodes into a single json
@@ -1076,6 +1446,123 @@ def schema_diff_checks(sc_task: SchemaDiffTask) -> SchemaDiffTask:
     sc_task.fields.node_list = node_list
 
     return sc_task
+
+
+def update_spock_exception_checks(
+    cluster_name: str, node_name: str, entry: dict, dbname: str = None
+) -> None:
+
+    if not cluster_name or not node_name:
+        raise AceException("cluster_name and node_name are required fields")
+
+    if not entry:
+        raise AceException("entry containing exception details is a required field")
+
+    found = check_cluster_exists(cluster_name)
+    if not found:
+        raise AceException(f"Cluster {cluster_name} not found")
+
+    db, pg, node_info = cluster.load_json(cluster_name)
+
+    if node_name not in [nd["name"] for nd in node_info]:
+        raise AceException(f'Specified nodename "{node_name}" not present in cluster')
+
+    cluster_nodes = []
+    combined_json = {}
+    database = {}
+
+    if dbname:
+        for db_entry in db:
+            if db_entry["db_name"] == dbname:
+                database = db_entry
+                break
+    else:
+        database = db[0]
+
+    if not database:
+        raise AceException(
+            f"Database '{dbname}' " + f"not found in cluster '{cluster_name}'"
+        )
+
+    # Combine db and cluster_nodes into a single json
+    for node in node_info:
+        combined_json = {**database, **node}
+        cluster_nodes.append(combined_json)
+
+    if not isinstance(entry, dict):
+        try:
+            entry = json.loads(entry)
+        except json.JSONDecodeError:
+            raise AceException("entry must be a valid JSON string")
+
+    remote_origin = entry.get("remote_origin", None)
+    remote_commit_ts = entry.get("remote_commit_ts", None)
+    remote_xid = entry.get("remote_xid", None)
+    status = entry.get("status", None)
+    resolution_details = entry.get("resolution_details", None)
+    command_counter = entry.get("command_counter", None)
+
+    if not remote_origin or not remote_commit_ts or not remote_xid or not status:
+        raise AceException(
+            "remote_origin, remote_commit_ts, remote_xid, status are required fields"
+        )
+
+    if status not in ["PENDING", "RESOLVED", "UNRESOLVED"]:
+        raise AceException("status must be one of PENDING, RESOLVED, or UNRESOLVED")
+
+    if command_counter is not None and not isinstance(command_counter, int):
+        raise AceException("command_counter must be an integer")
+
+    if not isinstance(resolution_details, dict):
+        try:
+            resolution_details = json.loads(resolution_details)
+        except json.JSONDecodeError:
+            raise AceException("resolution_details must be a valid JSON string")
+
+    conn: psycopg.Connection = None
+    """
+    We will attempt to establish a connection to the specified node with
+    autocommit set to False. This is because we want to make sure that
+    both the updates to spock.exception_status and spock.exception_status_detail
+    are executed together.
+    """
+    try:
+        for node in cluster_nodes:
+            if node["name"] == node_name:
+                params = {
+                    "dbname": node["db_name"],
+                    "user": node["db_user"],
+                    "host": node["public_ip"],
+                    "port": node["port"],
+                    "options": f"-c statement_timeout={config.STATEMENT_TIMEOUT}",
+                    "application_name": "ACE",
+                }
+                if node["db_password"]:
+                    params["password"] = node["db_password"]
+                else:
+                    pgpass = pgpasslib.getpass(
+                        host=node["name"],
+                        user=node["db_user"],
+                        dbname=node["db_name"],
+                        port=node["port"],
+                    )
+                    if not pgpass:
+                        raise AceException(
+                            f"No password found for {node['name']} in"
+                            f" {cluster_name}.json or ~/.pgpass"
+                        )
+                    params["password"] = pgpass
+
+                conn = psycopg.connect(**params)
+                conn.autocommit = False
+
+    except Exception as e:
+        raise AceException(
+            "Error in exception_status_checks() Couldn't connect to specified node"
+            + str(e)
+        )
+
+    return conn
 
 
 def handle_task_exception(task, task_context):
@@ -1106,7 +1593,7 @@ if __name__ == "__main__":
 
     # Create a StreamHandler for stdout
     stream_handler = logging.StreamHandler(sys.stdout)
-    stream_handler.setLevel(logging.DEBUG)
+    stream_handler.setLevel(logging.INFO)
     formatter = logging.Formatter(
         "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
     )
@@ -1127,6 +1614,7 @@ if __name__ == "__main__":
             "repset-diff": ace_cli.repset_diff_cli,
             "schema-diff": ace_cli.schema_diff_cli,
             "spock-diff": ace_cli.spock_diff_cli,
-            "start": ace_api.start_ace,
+            "spock-exception-update": ace_cli.update_spock_exception_cli,
+            "auto-repair": ace_core.auto_repair,
         }
     )
