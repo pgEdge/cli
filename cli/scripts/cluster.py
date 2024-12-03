@@ -69,7 +69,6 @@ def ssh(cluster_name, node_name):
 
 def set_firewalld(cluster_name):
     """ Open up nodes only to each other on pg port (WIP)"""
-    
     ## install & start firewalld if not present
     rc = util.echo_cmd("sudo firewall-cmd --version")
     if rc != 0:
@@ -191,8 +190,6 @@ def load_json(cluster_name):
 
         if not node_info["public_ip"] and not node_info["private_ip"]:
             util.exit_message(f"Node '{node_info['name']}' must have either a public_ip or private_ip defined.")
-       
-
         # Process sub_nodes
         sub_node_list=[]
         for sub_node in group.get("sub_nodes", []):
@@ -219,7 +216,6 @@ def load_json(cluster_name):
 def save_updated_json(cluster_name, updated_json):
     """
     Save the updated JSON configuration back to the appropriate file.
- 
     Args:
         cluster_name (str): The name of the cluster.
         updated_json (dict): The updated JSON data to be saved.
@@ -238,8 +234,59 @@ def save_updated_json(cluster_name, updated_json):
     print(f"Updated JSON saved to {cluster_path}")
 
 def json_validate(cluster_name):
-    """Validate and update a Cluster Configuration JSON file"""
+    """Validate and update a Cluster Configuration JSON file."""
+
+    # Function to exit with a message
+    class Util:
+        @staticmethod
+        def exit_message(message, code=1):
+            print(f"✘ {message}")
+            sys.exit(code)
+        @staticmethod
+        def message(message, level="info"):
+            print(f"{message}")
+
+    util = Util()
+
+    # Function to get cluster directory and file paths
+    def get_cluster_info(cluster_name):
+        cluster_dir = os.path.join(os.getcwd(), "cluster", cluster_name)
+        cluster_file = os.path.join(cluster_dir, f"{cluster_name}.json")
+        return cluster_dir, cluster_file
+
+    # Load the cluster JSON configuration file
+    def get_cluster_json(cluster_name):
+        cluster_dir, cluster_file = get_cluster_info(cluster_name)
+
+        if not os.path.isdir(cluster_dir):
+            util.exit_message(f"Cluster directory '{cluster_dir}' not found")
+
+        if not os.path.isfile(cluster_file):
+            util.message(f"Cluster file '{cluster_file}' not found", "warning")
+            return None
+
+        try:
+            with open(cluster_file, "r") as f:
+                return json.load(f)
+        except Exception as e:
+            util.exit_message(
+                f"Unable to load cluster definition file '{cluster_file}': {e}"
+            )
+
+    # Save the updated JSON configuration back to the appropriate file
+    def save_updated_json(cluster_name, updated_json):
+        cluster_dir, cluster_file = get_cluster_info(cluster_name)
+        updated_json["update_date"] = datetime.datetime.now().astimezone().isoformat()
+        try:
+            with open(cluster_file, 'w') as json_file:
+                json.dump(updated_json, json_file, indent=2)
+            print(f"Updated JSON saved to {cluster_file}")
+        except Exception as e:
+            util.exit_message(f"Unable to save updated JSON: {e}")
+
     parsed_json = get_cluster_json(cluster_name)
+    if parsed_json is None:
+        util.exit_message("Unable to load cluster JSON")
 
     # Initialize a summary dictionary
     summary = {
@@ -254,19 +301,27 @@ def json_validate(cluster_name):
     for key in required_top_keys:
         if key not in parsed_json:
             util.exit_message(f"{key} is missing")
- 
+
     # Ensure pgedge section is complete
     pgedge_defaults = {
         "pg_version": "16",
-        "spock": {"spock_version": "4.0.5"},
+        "spock": {"spock_version": ""},
         "databases": []
     }
     if "pgedge" not in parsed_json:
         parsed_json["pgedge"] = pgedge_defaults
- 
+
     # Ensure json_version is correct
     if parsed_json.get("json_version") != "1.1":
         parsed_json["json_version"] = "1.1"
+
+    # Validate Spock version
+    pg_version = parsed_json["pgedge"].get("pg_version", "16")
+    spock_version = parsed_json["pgedge"].get("spock", {}).get("spock_version", "")
+    # Allow empty spock_version
+    if spock_version.lower() == "default":
+        util.exit_message("Spock version cannot be 'default'. Please specify a valid version or leave it blank.")
+    # Since we allow any version or empty, no need to validate further
 
     # Validate and update node_groups
     for idx, node in enumerate(parsed_json.get("node_groups", [])):
@@ -278,6 +333,7 @@ def json_validate(cluster_name):
             "port": node.get("port", 5432),
             "is_active": node.get("is_active", "off"),
             "path": node.get("path", "/var/lib/postgresql"),
+            "replicas": node.get("replicas", 0)  # Default to 0 if not present
         }
 
         # Validate subnodes
@@ -294,40 +350,45 @@ def json_validate(cluster_name):
 
     # Save updated JSON
     save_updated_json(cluster_name, parsed_json)
- 
-    # Gather all lines for determining the maximum width
+
     lines = []
-    lines.append(f"#  Updated JSON saved to cluster/{cluster_name}/{cluster_name}.json")
+    lines.append(f"# Updated JSON saved to cluster/{cluster_name}/{cluster_name}.json")
     lines.append(f"Cluster Name: {summary['cluster_name']}")
     lines.append(f"Total Nodes: {summary['total_nodes']}")
+    lines.append(f"PostgreSQL Version: {pg_version}")
+    lines.append(f"Spock Version: {spock_version if spock_version else 'Not specified'}")
     lines.append("Node Details:")
     for node in summary["node_details"]:
         lines.append(f"  Node {node['node_index']}: Public IP={node['public_ip']}, "
                      f"Private IP={node['private_ip']}, Port={node['port']}, "
-                     f"Active={node['is_active']}, Path={node['path']}")
+                     f"Active={node['is_active']}, Path={node['path']}, Replicas={node['replicas']}")
     lines.append("Subnodes Info:")
     for subnode in summary["subnodes_info"]:
         lines.append(f"  {subnode}")
 
-  # Determine the maximum line length
-    max_length = 50
+    # Determine the maximum line length based on actual content
+    max_length = max(len(line.rstrip()) for line in lines)  # Exclude trailing spaces
+
+    # Bold formatting for the display
     bold_start = "\033[1m"
     bold_end = "\033[0m"
 
-    # Create the dynamic border
-    border = "#" * (max_length + 2)  # Add 2 for padding
+    # Create the dynamic border based on max_length
+    border = "#" * (max_length + 4)  # Add padding for aesthetics
 
-    # Display the updated summary
+    # Display the updated summary with borders aligned to content
     print(border)
-    print(f"# {bold_start}Cluster JSON cluster/{cluster_name}/{cluster_name}.json validated {bold_end}")
-    print(f"# {bold_start}Cluster Name{bold_end}       : {summary['cluster_name']}")
-    print(f"# {bold_start}Number of Nodes{bold_end}    : {summary['total_nodes']}")
+    print(f"# {bold_start}Cluster JSON cluster/{cluster_name}/{cluster_name}.json validated{bold_end}".center(max_length + 4))
+    print(f"# {bold_start}Cluster Name{bold_end}       : {summary['cluster_name']}".ljust(max_length + 4))
+    print(f"# {bold_start}Number of Nodes{bold_end}    : {summary['total_nodes']}".ljust(max_length + 4))
+    print(f"# {bold_start}PostgreSQL Version{bold_end} : {pg_version}".ljust(max_length + 4))
+    print(f"# {bold_start}Spock Version{bold_end}      : {spock_version if spock_version else 'Not specified'}".ljust(max_length + 4))
     for node in summary["node_details"]:
         print(f"# {bold_start}Node {node['node_index']}{bold_end}")
         print(f"#      {bold_start}Public IP{bold_end}     : {node['public_ip']}")
         print(f"#      {bold_start}Private IP{bold_end}    : {node['private_ip']}")
         print(f"#      {bold_start}Port{bold_end}          : {node['port']}")
-        print(f"#      {bold_start}Replicas{bold_end}      : {node.get('replicas', 'N/A')}")
+        print(f"#      {bold_start}Replicas{bold_end}      : {node['replicas']}")
     print(border)
 
 def ssh_setup(cluster_name, db, db_settings, db_user, db_passwd, n, install):
@@ -351,61 +412,87 @@ def ssh_setup(cluster_name, db, db_settings, db_user, db_passwd, n, install):
         parms = parms + f" --spock_ver {spock}"
     if db_settings["auto_start"] == "on":
         parms = f"{parms} --autostart"
-    
     cmd = f"{nc} setup {parms}"
     message = f"Setup pgedge"
     run_cmd(cmd, n, message=message, verbose=verbose)
-        
     if db_settings["auto_ddl"] == "on":
         cmd = nc + " db guc-set spock.enable_ddl_replication on;"
         cmd = cmd + " " + nc + " db guc-set spock.include_ddl_repset on;"
         cmd = cmd + " " + nc + " db guc-set spock.allow_ddl_from_functions on;"
-        
         message = f"Setup spock"
         run_cmd(cmd, n, message=message, verbose=verbose)
-        
+
     if db_settings["auto_ddl"] == "on":
         util.message("#")
     return 0
 
-def ssh_install(cluster_name, db, db_settings, db_user, db_passwd, n, install):
-    if install is None: 
-        install=True
-    REPO = os.getenv("REPO", "")
-    ndnm = n["name"]
-    ndpath = n["path"]
-    ndip = n["public_ip"]
-    pg = db_settings["pg_version"]
-    spock = db_settings["spock_version"]
-    try:
-        ndport = str(n["port"])
-    except Exception:
-        ndport = "5432"
+def ssh_install_pgedge(cluster_name, db, db_settings, db_user, db_passwd, nodes, install, verbose):
+    """
+    Install and configure pgEdge on a list of nodes.
 
-    if REPO == "":
-        REPO = DEFAULT_REPO
-        os.environ["REPO"] = REPO
+    Args:
+        cluster_name (str): The name of the cluster.
+        db_name (str): The database name.
+        db_settings (dict): Database settings.
+        db_user (str): The database user.
+        db_password (str): The database user password.
+        nodes (list): The list of nodes.
+        verbose (bool): Verbose output.
+    """
+    if install is None:
+        install = True
 
-    verbose = db_settings.get("log_level", "info")
-    if install == True:  
-        print_install_hdr(cluster_name, db, db_user, len(n), n["name"],
-                          n["path"], ndip, n["port"], REPO)
+    # Calculate the total number of nodes (including sub-nodes)
+    total_nodes = len(nodes)
 
-        install_py = "install.py"      
-        
-        message = f"Installing pgedge"
-        cmd0 = f"export REPO={REPO}; "
-        cmd1 = f"mkdir -p {ndpath}; cd {ndpath}; "
-        cmd2 = f'python3 -c "\\$(curl -fsSL {REPO}/{install_py})"'
-        run_cmd(cmd0 + cmd1 + cmd2, n, message=message, verbose=verbose)    
+    for n in nodes:
+        REPO = os.getenv("REPO", "")
+        if REPO == "":
+            REPO = DEFAULT_REPO
+            os.environ["REPO"] = REPO
 
-    nc = os.path.join(ndpath, "pgedge", "pgedge ")
-    cmd = f"{nc} install pg{pg}"
-    
-    message=f"Installing pg{pg} on {ndnm}"
-    run_cmd(cmd, n, message=message, verbose=verbose)
-    
-    return 0
+        print_install_hdr(
+            cluster_name, db, db_user, total_nodes, n["name"],
+            n["path"], n["public_ip"], n["port"], REPO
+        )
+
+        ndnm = n["name"]
+        ndpath = n["path"]
+        ndip = n["public_ip"]
+        pg = db_settings["pg_version"]
+        spock = db_settings["spock_version"]
+        ndport = str(n.get("port", "5432"))
+
+        if install:
+            install_py = "install.py"
+
+            cmd0 = f"export REPO={REPO}; "
+            cmd1 = f"mkdir -p {ndpath}; cd {ndpath}; "
+            cmd2 = f'python3 -c "\\$(curl -fsSL {REPO}/{install_py})"'
+            message = f"Installing pgEdge on {ndnm}"
+            run_cmd(cmd0 + cmd1 + cmd2, n, message=message, verbose=verbose)
+
+        nc = os.path.join(ndpath, "pgedge", "pgedge ")
+        parms = f" -U {db_user} -P {db_passwd} -d {db} --port {ndport}"
+        if pg:
+            parms += f" --pg {pg}"
+        if spock:
+            parms += f" --spock_ver {spock}"
+        if db_settings.get("auto_start") == "on":
+            parms += " --autostart"
+
+        cmd = f"{nc} setup {parms}"
+        message = f"Setting up pgEdge on {ndnm}"
+        run_cmd(cmd, n, message=message, verbose=verbose)
+
+        if db_settings.get("auto_ddl") == "on":
+            cmd = (
+                f"{nc} db guc-set spock.enable_ddl_replication on;"
+                f" {nc} db guc-set spock.include_ddl_repset on;"
+                f" {nc} db guc-set spock.allow_ddl_from_functions on;"
+            )
+            message = f"Configuring Spock on {ndnm}"
+            run_cmd(cmd, n, message=message, verbose=verbose)
 
 
 def ssh_cross_wire_pgedge(cluster_name, db, db_settings, db_user, db_passwd,
@@ -479,7 +566,7 @@ def ssh_install_pgedge(cluster_name, db, db_settings, db_user, db_passwd, nodes,
         nodes (list): The list of nodes.
         verbose (bool): Verbose output.
     """
-    if install is None: 
+    if install is None:
         install=True
     for n in nodes:
         REPO = os.getenv("REPO", "")
@@ -489,7 +576,7 @@ def ssh_install_pgedge(cluster_name, db, db_settings, db_user, db_passwd, nodes,
         ndpath = n["path"]
         ndip = n["public_ip"]
         pg = db_settings["pg_version"]
-        spock = db_settings["spock_version"]  
+        spock = db_settings["spock_version"]
         try:
             ndport = str(n["port"])
         except Exception:
@@ -499,13 +586,12 @@ def ssh_install_pgedge(cluster_name, db, db_settings, db_user, db_passwd, nodes,
             REPO = DEFAULT_REPO
             os.environ["REPO"] = REPO
 
-        if install == True:  
+        if install == True:
             install_py = "install.py"
 
             cmd0 = f"export REPO={REPO}; "
             cmd1 = f"mkdir -p {ndpath}; cd {ndpath}; "
             cmd2 = f'python3 -c "\\$(curl -fsSL {REPO}/{install_py})"'
-   
             message = f"Installing pgedge"
             run_cmd(cmd0 + cmd1 + cmd2, n, message=message, verbose=verbose)
 
@@ -517,19 +603,15 @@ def ssh_install_pgedge(cluster_name, db, db_settings, db_user, db_passwd, nodes,
             parms = parms + f" --spock_ver {spock}"
         if db_settings["auto_start"] == "on":
             parms = f"{parms} --autostart"
-    
         cmd = f"{nc} setup {parms}"
         message = f"Setup pgedge"
         run_cmd(cmd, n, message=message, verbose=verbose)
-        
         if db_settings["auto_ddl"] == "on":
             cmd = nc + " db guc-set spock.enable_ddl_replication on;"
             cmd = cmd + " " + nc + " db guc-set spock.include_ddl_repset on;"
             cmd = cmd + " " + nc + " db guc-set spock.allow_ddl_from_functions on;"
-        
             message = f"Setup spock"
             run_cmd(cmd, n, message=message, verbose=verbose)
-        
         if db_settings["auto_ddl"] == "on":
             util.message("#")
     return 0
@@ -537,15 +619,13 @@ def ssh_install_pgedge(cluster_name, db, db_settings, db_user, db_passwd, nodes,
 
 def remove(cluster_name, force=False):
     """Remove a test cluster.
-    
     Remove a cluster. This will remove spock subscriptions and nodes, and
-    then stop postgres on each node. If the flag force is set to true, 
+    then stop postgres on each node. If the flag force is set to true,
     then it will also remove the pgedge directory on each node.
     This command requires a JSON file with the same name as the cluster to
-    be in the cluster/<cluster_name>. 
-    
-    Example: cluster remove demo 
-    :param cluster_name: The name of the cluster. 
+    be in the cluster/<cluster_name>.
+    Example: cluster remove demo
+    :param cluster_name: The name of the cluster.
     """
     db, db_settings, nodes = load_json(cluster_name)
 
@@ -569,13 +649,12 @@ def remove(cluster_name, force=False):
 
 def add_db(cluster_name, database_name, username, password):
     """Add a database to an existing pgEdge cluster.
-    
        Create the new database in the cluster, install spock, and create all spock nodes and subscriptions.
        This command requires a JSON file with the same name as the cluster to be in the cluster/<cluster_name>. \n
        Example: cluster add-db demo test admin password
        :param cluster_name: The name of the existing cluster.
        :param database_name: The name of the new database.
-       :param username: The name of the user that will be created and own the db. 
+       :param username: The name of the user that will be created and own the db.
        :param password: The password for the new user.
     """
     util.message(f"## Loading cluster '{cluster_name}' json definition file")
@@ -594,38 +673,101 @@ def add_db(cluster_name, database_name, username, password):
     util.message(f"## Updating cluster '{cluster_name}' json definition file")
     update_json(cluster_name, db_json)
 
-def json_create(cluster_name, num_nodes, db, usr, passwd, pg=None, port=None):
-    """
-    Create a Cluster Configuration JSON file with validations for HA, BackRest, and Spock.
 
-    This function creates a JSON configuration file that can be used to define a cluster.
-    Example: ./pgedge cluster json-create test_cluster 3 mydb myuser mypass
+def json_create(cluster_name, num_nodes, db, usr, passwd, pg_ver=None, port=None):
+    """
+    Create a Cluster Configuration JSON file with options for HA, BackRest, and Spock.
+
+    Usage:
+        ./pgedge cluster json-create CLUSTER_NAME NUM_NODES DB USR PASSWD [pg_ver=PG_VERSION] [--port PORT]
 
     Args:
-        cluster_name (str): The name of the cluster. A directory with this same name will be created in the cluster directory, and the JSON file will have the same name.
+        cluster_name (str): The name of the cluster.
         num_nodes (int): The number of main nodes in the cluster.
         db (str): The database name.
         usr (str): The username of the superuser created for this database.
         passwd (str): The password for the above user.
-        pg (str, optional): The PostgreSQL version of the database. If not provided, the user will be prompted. Defaults to 17.
-        port (int, optional): The starting port number for the database. Defaults to 5432 if not provided.
+        pg_ver (str or int, optional): The PostgreSQL version of the database. Allowed versions are '16' or '17'. Defaults to '17'.
+        port (str or int, optional): The port number for the primary nodes. Must be between 1 and 65535. Defaults to '5432'.
     """
+    # Function to exit with a message
+    class Util:
+        @staticmethod
+        def exit_message(message, code=1):
+            print(f"✘ {message}")
+            sys.exit(code)
 
-    # Validate parameters
-    if not isinstance(cluster_name, str) or not cluster_name:
-        raise ValueError("Invalid cluster name. It must be a non-empty string.")
-    if not isinstance(num_nodes, int) or num_nodes <= 0:
-        raise ValueError("Invalid number of nodes. It must be a positive integer.")
-    if not isinstance(db, str) or not db:
-        raise ValueError("Invalid database name. It must be a non-empty string.")
-    if not isinstance(usr, str) or not usr:
-        raise ValueError("Invalid username. It must be a non-empty string.")
-    if not isinstance(passwd, str) or not passwd:
-        raise ValueError("Invalid password. It must be a non-empty string.")
-    if pg and (not isinstance(pg, str) or pg not in ['16', '17']):
-        raise ValueError("Invalid PostgreSQL version. Allowed versions are '16' and '17'.")
-    if port and (not isinstance(port, int) or port < 1 or port > 65535):
-        raise ValueError("Invalid port number. It must be an integer between 1 and 65535.")
+        @staticmethod
+        def message(message, level="info"):
+            print(f"{message}")
+
+        @staticmethod
+        def get_default_spock(pg_version):
+            default_versions = {
+                16: '',
+                17: ''
+            }
+            return default_versions.get(pg_version, '')
+
+    util = Util()
+
+    # Check if 'json-template' alias was used and display a warning
+    if 'json-template' in sys.argv:
+        util.message(
+            "⚠️  Warning: The 'json-template' command will be deprecated in future releases. "
+            "Please use 'json-create' for creating cluster JSON configurations.",
+            "warning"
+        )
+
+    # Validate and process parameters
+    try:
+        # Ensure required parameters are provided
+        if not cluster_name:
+            raise ValueError("CLUSTER_NAME is required.")
+        if not num_nodes:
+            raise ValueError("NUM_NODES is required.")
+        if not db:
+            raise ValueError("DB is required.")
+        if not usr:
+            raise ValueError("USR is required.")
+        if not passwd:
+            raise ValueError("PASSWD is required.")
+
+        # Convert num_nodes to int
+        try:
+            num_nodes = int(num_nodes)
+            if num_nodes <= 0:
+                raise ValueError("NUM_NODES must be a positive integer.")
+        except ValueError:
+            raise ValueError("NUM_NODES must be a positive integer.")
+
+        # Handle PostgreSQL version
+        if pg_ver is not None:
+            pg_str = str(pg_ver).strip()
+            if pg_str not in ['16', '17']:
+                raise ValueError("Invalid PostgreSQL version. Allowed versions are '16' and '17'.")
+            pg_version_int = int(pg_str)
+        else:
+            pg_version_int = None  # Will prompt later if not provided
+
+        # Handle port number
+        if port is not None:
+            try:
+                port = int(port)
+                if port < 1 or port > 65535:
+                    raise ValueError("PORT must be an integer between 1 and 65535.")
+            except ValueError:
+                raise ValueError("PORT must be an integer between 1 and 65535.")
+        else:
+            port = None  # Will use default later if not provided
+
+    except ValueError as e:
+        print(f"Error: {e}")
+        print("\nUsage:")
+        print("    ./pgedge cluster json-create CLUSTER_NAME NUM_NODES DB USR PASSWD [pg_ver=PG_VERSION] [--port PORT]")
+        print("\nFor more help, run:")
+        print("    ./pgedge cluster json-create --help")
+        sys.exit(1)
 
     # Function to get cluster directory and file paths
     def get_cluster_info(cluster_name):
@@ -633,19 +775,13 @@ def json_create(cluster_name, num_nodes, db, usr, passwd, pg=None, port=None):
         cluster_file = os.path.join(cluster_dir, f"{cluster_name}.json")
         return cluster_dir, cluster_file
 
-    # Function to exit with a message
-    class Util:
-        @staticmethod
-        def exit_message(message, code=1):
-            print(f"✘ {message}")
-            exit(code)
-
-    util = Util()
-
     # Get cluster directory and file paths
     cluster_dir, cluster_file = get_cluster_info(cluster_name)
 
-    os.makedirs(cluster_dir, exist_ok=True)
+    try:
+        os.makedirs(cluster_dir, exist_ok=True)
+    except OSError as e:
+        util.exit_message(f"Error creating directory '{cluster_dir}': {e}")
 
     cluster_json = {
         "json_version": "1.1",
@@ -654,12 +790,12 @@ def json_create(cluster_name, num_nodes, db, usr, passwd, pg=None, port=None):
         "update_date": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S GMT")
     }
 
-    # Prompt for PostgreSQL version if not provided
+    # Handle PostgreSQL version
     while True:
-        if not pg:
-            pg_input = input("PostgreSQL version (16 or 17) [default: 17]: ").strip() or "17"
+        if pg_version_int is not None:
+            pg_input = str(pg_version_int)
         else:
-            pg_input = str(pg).strip()
+            pg_input = input("PostgreSQL version (16 or 17) [default: 17]: ").strip() or "17"
 
         if pg_input in ['16', '17']:
             pg_version_int = int(pg_input)
@@ -673,17 +809,10 @@ def json_create(cluster_name, num_nodes, db, usr, passwd, pg=None, port=None):
     }
 
     # Prompt for Spock version
-    while True:
-        spock_version = input("Spock version (e.g., 4.0.5) or press Enter for 'default': ").strip()
-        if not spock_version:
-            spock_version = "default"
-            break
-
-        version_parts = spock_version.split('.')
-        if len(version_parts) == 3 and all(part.isdigit() for part in version_parts):
-            break
-        else:
-            print("Invalid Spock version format. Expected format: X.Y.Z")
+    spock_version = input("Spock version (e.g., 4.0.5) or press Enter for default: ").strip()
+    if spock_version == "":
+        spock_version = ""
+        
 
     spock_json = {
         "spock_version": spock_version,
@@ -703,6 +832,9 @@ def json_create(cluster_name, num_nodes, db, usr, passwd, pg=None, port=None):
     # Ask if this is an HA Cluster
     ha_cluster_input = input("Is this an HA Cluster? (Y/N): ").strip().lower()
     is_ha_cluster = ha_cluster_input in ['y', 'yes']
+
+    # Store 'is_ha_cluster' in the cluster JSON
+    cluster_json["is_ha_cluster"] = is_ha_cluster
 
     # Ask if BackRest should be enabled
     backrest_enabled_input = input("Do you want to enable BackRest for this cluster? (Y/N): ").strip().lower()
@@ -729,12 +861,12 @@ def json_create(cluster_name, num_nodes, db, usr, passwd, pg=None, port=None):
     node_groups = []
     os_user = getpass.getuser()
     default_ip = "127.0.0.1"
-    default_port = port if port else 5432
+    default_port = port if port is not None else 5432
 
     current_replica_port = 6432  # Starting port for replica nodes
 
     for n in range(1, num_nodes + 1):
-        print(f"Configuring Node {n}")
+        print(f"\nConfiguring Node {n}")
         node_json = {
             "ssh": {"os_user": os_user, "private_key": ""},
             "name": f"n{n}",
@@ -746,19 +878,26 @@ def json_create(cluster_name, num_nodes, db, usr, passwd, pg=None, port=None):
         node_json["public_ip"] = public_ip
         node_json["private_ip"] = private_ip
 
-        node_default_port = default_port + n - 1
-        node_port_input = input(f"  PostgreSQL port for Node {n} (leave blank for default '{node_default_port}'): ").strip()
-        if not node_port_input:
-            node_port = node_default_port
+        # Set node_port based on the port flag or default
+        if port is not None:
+            node_port = port
+            print(f"  Using port {node_port} for Node {n} ")
         else:
-            try:
-                node_port = int(node_port_input)
-                if node_port < 1 or node_port > 65535:
-                    print("  Invalid port number. Using default port.")
+            node_default_port = default_port + n - 1
+            while True:
+                node_port_input = input(f"  PostgreSQL port for Node {n} (leave blank for default '{node_default_port}'): ").strip()
+                if not node_port_input:
                     node_port = node_default_port
-            except ValueError:
-                print("  Invalid port input. Using default port.")
-                node_port = node_default_port
+                    break
+                else:
+                    try:
+                        node_port = int(node_port_input)
+                        if node_port < 1 or node_port > 65535:
+                            print("  Invalid port number. Please enter a number between 1 and 65535.")
+                            continue
+                        break
+                    except ValueError:
+                        print("  Invalid port input. Please enter a valid integer.")
         node_json["port"] = str(node_port)
 
         node_json["path"] = f"/home/{os_user}/{cluster_name}/n{n}"
@@ -767,8 +906,8 @@ def json_create(cluster_name, num_nodes, db, usr, passwd, pg=None, port=None):
 
         if is_ha_cluster:
             while True:
+                replicas_for_node_input = input(f"  Number of replica nodes for Node {n}: ").strip()
                 try:
-                    replicas_for_node_input = input(f"  Number of replica nodes for Node {n}: ").strip()
                     replicas_for_node = int(replicas_for_node_input)
                     if replicas_for_node < 0:
                         print("  Number of replicas cannot be negative. Please enter 0 or a positive integer.")
@@ -776,13 +915,13 @@ def json_create(cluster_name, num_nodes, db, usr, passwd, pg=None, port=None):
                     break
                 except ValueError:
                     print("  Invalid input. Please enter a numeric value.")
-                    continue
         else:
             replicas_for_node = 0
 
         node_json["replicas"] = replicas_for_node
 
         if replicas_for_node > 0:
+            node_json["sub_nodes"] = []
             for i in range(1, replicas_for_node + 1):
                 print(f"\n  Configuring Replica Node {i} for Node {n}:")
                 sub_node_json = {
@@ -796,30 +935,34 @@ def json_create(cluster_name, num_nodes, db, usr, passwd, pg=None, port=None):
                 sub_node_json["public_ip"] = public_ip
                 sub_node_json["private_ip"] = private_ip
 
-                replica_port_input = input(f"    PostgreSQL port of replica Node {i} (leave blank for default '{current_replica_port}'): ").strip()
-                if not replica_port_input:
-                    replica_port = current_replica_port
-                else:
-                    try:
-                        replica_port = int(replica_port_input)
-                        if replica_port < 1 or replica_port > 65535:
-                            print("    Invalid port number. Using default port.")
-                            replica_port = current_replica_port
-                    except ValueError:
-                        print("    Invalid port input. Using default port.")
+                while True:
+                    replica_port_input = input(f"    PostgreSQL port of replica Node {i} (leave blank for default '{current_replica_port}'): ").strip()
+                    if not replica_port_input:
                         replica_port = current_replica_port
+                        current_replica_port += 1
+                        break
+                    else:
+                        try:
+                            replica_port = int(replica_port_input)
+                            if replica_port < 1 or replica_port > 65535:
+                                print("    Invalid port number. Please enter a number between 1 and 65535.")
+                                continue
+                            current_replica_port = replica_port + 1
+                            break
+                        except ValueError:
+                            print("    Invalid port input. Please enter a valid integer.")
                 sub_node_json["port"] = str(replica_port)
                 sub_node_json["path"] = f"/home/{os_user}/{cluster_name}/{sub_node_json['name']}"
                 if backrest_enabled:
                     sub_node_json["backrest"] = backrest_json
 
-                node_json.setdefault("sub_nodes", []).append(sub_node_json)
-                current_replica_port += 1
+                node_json["sub_nodes"].append(sub_node_json)
 
         node_groups.append(node_json)
 
     cluster_json["node_groups"] = node_groups
 
+    # Validate configuration
     validation_errors = []
 
     for node in node_groups:
@@ -871,6 +1014,7 @@ def json_create(cluster_name, num_nodes, db, usr, passwd, pg=None, port=None):
                     ip_address(private_ip)
             except ValueError:
                 validation_errors.append(f"Invalid IP address provided for sub-node {sub_node.get('name')}.")
+
     if validation_errors:
         print("\nValidation Errors:")
         for error in validation_errors:
@@ -883,13 +1027,13 @@ def json_create(cluster_name, num_nodes, db, usr, passwd, pg=None, port=None):
     print("\n" + "#" * 80)
     print(f"#     {bold_start}Version{bold_end}        : pgEdge 24.10-5 (Constellation)")
     print(f"# {bold_start}User & Host{bold_end}        : {os_user}    {os.getcwd()}")
-    print(f"#          {bold_start}OS{bold_end}        : Rocky Linux9.4 (Blue Onyx), glibc-2.34, Python 3.9.18 ()")
-    print(f"#     {bold_start}Machine{bold_end}        : 7 GB")
-    print(f"#    {bold_start}Repo URL{bold_end}        : http://localhost:8000")
+    print(f"#          {bold_start}OS{bold_end}        : Linux, Python {sys.version.split()[0]}")
+    print(f"#     {bold_start}Machine{bold_end}        : N/A")
+    print(f"#    {bold_start}Repo URL{bold_end}        : N/A")
     print(f"# {bold_start}Last Update{bold_end}        : None")
     print(f"# {bold_start}Cluster Name{bold_end}       : {cluster_name}")
     print(f"# {bold_start}PostgreSQL Version{bold_end} : {pg_version_int}")
-    print(f"# {bold_start}Spock Version{bold_end}      : {spock_version}")
+    print(f"# {bold_start}Spock Version{bold_end}      : {spock_version if spock_version else 'Not specified'}")
     print(f"# {bold_start}HA Cluster{bold_end}         : {'Yes' if is_ha_cluster else 'No'}")
     print(f"# {bold_start}BackRest Enabled{bold_end}   : {'Yes' if backrest_enabled else 'No'}")
     print("#" * 80)
@@ -949,73 +1093,84 @@ def init(cluster_name, install=True):
 
     Args:
         cluster_name (str): The name of the cluster.
-        install (bool): True by default, 
+        install (bool): True by default,
     """
     util.message(f"## Loading cluster '{cluster_name}' json definition file")
     db, db_settings, nodes = load_json(cluster_name)
     parsed_json = get_cluster_json(cluster_name)
-   
-    if parsed_json.get("log_level"):
-       verbose = parsed_json["log_level"]
-    else:
-       verbose = "none"
 
-    for nd in nodes:
+    # Retrieve the 'is_ha_cluster' flag from the cluster JSON
+    is_ha_cluster = parsed_json.get("is_ha_cluster", False)
+
+    # Set the log level
+    verbose = parsed_json.get("log_level", "info")
+
+    # Combine all nodes and sub-nodes into a single list
+    all_nodes = nodes.copy()
+    for node in nodes:
+        if "sub_nodes" in node and node["sub_nodes"]:
+            all_nodes.extend(node["sub_nodes"])
+
+    # Check SSH connectivity for all nodes
+    for nd in all_nodes:
         message = f"Checking ssh on {nd['public_ip']}"
         run_cmd(cmd="hostname", node=nd, message=message, verbose=verbose)
 
+    # Install pgEdge on all nodes
     ssh_install_pgedge(
         cluster_name, db[0]["db_name"], db_settings, db[0]["db_user"],
-        db[0]["db_password"], nodes, install, verbose
+        db[0]["db_password"], all_nodes, install, verbose
     )
+
+    # Cross-wire Spock on all nodes
     ssh_cross_wire_pgedge(
         cluster_name, db[0]["db_name"], db_settings, db[0]["db_user"],
-        db[0]["db_password"], nodes, verbose
+        db[0]["db_password"], all_nodes, verbose
     )
 
+    # Handle additional databases if any
     if len(db) > 1:
         for database in db[1:]:
-            create_spock_db(nodes, database, db_settings)
+            create_spock_db(all_nodes, database, db_settings)
             ssh_cross_wire_pgedge(
                 cluster_name, database["db_name"], db_settings, database["db_user"],
-                database["db_password"], nodes, verbose
+                database["db_password"], all_nodes, verbose
             )
 
-    pg_ver = db_settings["pg_version"]
-    for node in nodes:
-        if "sub_nodes" in node:
-            for n in node["sub_nodes"]:
-                ssh_install(
-                    cluster_name, db[0]["db_name"], db_settings, db[0]["db_user"],
-                    db[0]["db_password"], n, install
-                )
-                ssh_setup(
-                    cluster_name, db[0]["db_name"], db_settings, db[0]["db_user"],
-                    db[0]["db_password"], n, install
-                )
-                manage_node(n, "stop", f"pg{pg_ver}", verbose)
+    # Proceed with HA-specific configuration only if 'is_ha_cluster' is True
+    if is_ha_cluster:
+        pg_ver = db_settings["pg_version"]
 
-                pgdata = f"{node['path']}/pgedge/data/pg{pg_ver}"
-                cmd = f"rm -rf {pgdata}"
-                message = f"Removing old data directory"
-                run_cmd(cmd, n, message=message, verbose=verbose)
-            
-            sub_nodes = node["sub_nodes"]
-        
-            etcd.configure_etcd(node, sub_nodes)
-            ha_patroni.configure_patroni(node, sub_nodes, db[0], db_settings)
+        # HA-specific configuration
+        for node in nodes:
+            if "sub_nodes" in node and node["sub_nodes"]:
+                sub_nodes = node["sub_nodes"]
+
+                # Stop and clean sub-nodes
+                for n in sub_nodes:
+                    manage_node(n, "stop", f"pg{pg_ver}", verbose)
+
+                    # Remove old data directory
+                    pgdata = f"{n['path']}/pgedge/data/pg{pg_ver}"
+                    cmd = f"rm -rf {pgdata}"
+                    message = f"Removing old data directory on {n['name']}"
+                    run_cmd(cmd, n, message=message, verbose=verbose)
+
+                # Configure Etcd and Patroni for HA
+                etcd.configure_etcd(node, sub_nodes)
+                ha_patroni.configure_patroni(node, sub_nodes, db[0], db_settings)
 
 
 def add_node(cluster_name, source_node, target_node, repo1_path=None, backup_id=None, script=" ", stanza=" ", install=True):
     """
-    Adds a new node to a cluster, copying configurations from a specified 
+    Adds a new node to a cluster, copying configurations from a specified
     source node.
 
     Args:
-        cluster_name (str): The name of the cluster to which the node is being 
+        cluster_name (str): The name of the cluster to which the node is being
                             added.
         source_node (str): The node from which configurations are copied.
-        target_node (str): The new node. 
+        target_node (str): The new node.
         repo1_path (str): The repo1 path to use.
         backup_id (str): Backup ID.
         stanza (str): Stanza name.
@@ -1023,7 +1178,6 @@ def add_node(cluster_name, source_node, target_node, repo1_path=None, backup_id=
     """
     if (repo1_path and not backup_id) or (backup_id and not repo1_path):
         util.exit_message("Both repo1_path and backup_id must be supplied together.")
-    
     json_validate(cluster_name)
     db, db_settings, nodes = load_json(cluster_name)
 
@@ -1071,17 +1225,17 @@ def add_node(cluster_name, source_node, target_node, repo1_path=None, backup_id=
 
     if "public_ip" not in new_node_data and "private_ip" not in new_node_data:
         util.exit_message("Both public_ip and private_ip are missing in target node data.")
-    
+
     if "public_ip" in source_node_data and "private_ip" in source_node_data:
         source_node_data["ip_address"] = source_node_data["public_ip"]
     else:
         source_node_data["ip_address"] = source_node_data.get("public_ip", source_node_data.get("private_ip"))
-    
+
     if "public_ip" in new_node_data and "private_ip" in new_node_data:
         new_node_data["ip_address"] = new_node_data["public_ip"]
     else:
         new_node_data["ip_address"] = new_node_data.get("public_ip", new_node_data.get("private_ip"))
-    
+
     # Fetch backrest settings from cluster JSON
     backrest_settings = cluster_data.get("backrest", {})
     stanza = backrest_settings.get("stanza", f"pg{pg}")
@@ -1182,7 +1336,6 @@ def add_node(cluster_name, source_node, target_node, repo1_path=None, backup_id=
 
     message = f"Restoring backup"
     run_cmd(cmd, new_node_data, message=message, verbose=verbose)
-    
 
     pgd = f'{new_node_data["path"]}/pgedge/data/pg{pg}'
     pgc = f'{pgd}/postgresql.conf'
@@ -1203,7 +1356,6 @@ def add_node(cluster_name, source_node, target_node, repo1_path=None, backup_id=
            f'\'pg_stat_statements, snowflake, spock\'" >> {pgc}')
     message = f"Setting shared_preload_libraries"
     run_cmd(cmd, new_node_data, message=message, verbose=verbose)
-    
 
     cmd = (f'{new_node_data["path"]}/pgedge/pgedge backrest configure_replica {stanza} '
            f'{new_node_data["path"]}/pgedge/data/pg{pg} {source_node_data["ip_address"]} '
@@ -1227,8 +1379,6 @@ def add_node(cluster_name, source_node, target_node, repo1_path=None, backup_id=
             v4 = True
 
     set_cluster_readonly(nodes, True, db[0]['db_name'], f"pg{pg}", v4, verbose)
-    
-    
     manage_node(new_node_data, "start", f"pg{pg}", verbose)
     time.sleep(5)
 
@@ -1313,7 +1463,6 @@ def json_validate_add_node(data):
     required_keys = ["json_version", "node_groups"]
     node_group_keys = ["ssh", "name", "is_active", "public_ip", "private_ip", "port", "path"]
     ssh_keys = ["os_user", "private_key"]
-    
     if "json_version" not in data or data["json_version"] == "1.0":
         util.exit_message("Invalid or missing JSON version.")
 
@@ -1331,7 +1480,6 @@ def json_validate_add_node(data):
             if ssh_key not in ssh_info:
                 util.exit_message(f"Key '{ssh_key}' missing from ssh configuration.")
 
-                
         if "public_ip" not in group and "private_ip" not in group:
             util.exit_message("Both 'public_ip' and 'private_ip' are missing from node group.")
 
@@ -1380,7 +1528,7 @@ def remove_node(cluster_name, node_name):
                        f"./pgedge spock sub-drop {sub_name} {dbname}")
                 message = f"Dropping subscription {sub_name}"
                 run_cmd(cmd, node, message=message, verbose=verbose, ignore=True)
-            
+
             cmd = (f"cd {node['path']}/pgedge/; "
                    f"./pgedge spock node-drop {node['name']} {dbname}")
             message = f"Dropping node {node['name']}"
@@ -1624,14 +1772,13 @@ def replication_check(cluster_name, show_spock_tables=False, database_name=None)
 
 def command(cluster_name, node, cmd, args=None):
     """Run './pgedge' commands on one or 'all' nodes.
-    
-       Run './pgedge' commands on one or all of the nodes in a cluster. 
-       This command requires a JSON file with the same name as the cluster to be in the cluster/<cluster_name>. \n 
+       Run './pgedge' commands on one or all of the nodes in a cluster.
+       This command requires a JSON file with the same name as the cluster to be in the cluster/<cluster_name>. \n
        Example: cluster command demo n1 "status"
        Example: cluster command demo all "spock repset-add-table default '*' db[0]["name"]"
        :param cluster_name: The name of the cluster.
        :param node: The node to run the command on. Can be the node name or all.
-       :param cmd: The command to run on every node, excluding the beginning './pgedge' 
+       :param cmd: The command to run on every node, excluding the beginning './pgedge'
     """
 
     db, db_settings, nodes = load_json(
@@ -1657,9 +1804,8 @@ def command(cluster_name, node, cmd, args=None):
 
 def app_install(cluster_name, app_name, database_name=None, factor=1):
     """Install test application [ pgbench | northwind ].
-    
-       Install a test application on all of the nodes in a cluster. 
-       This command requires a JSON file with the same name as the cluster to be in the cluster/<cluster_name>. \n 
+       Install a test application on all of the nodes in a cluster.
+       This command requires a JSON file with the same name as the cluster to be in the cluster/<cluster_name>. \n
        Example: cluster app-install pgbench
        :param cluster_name: The name of the cluster.
        :param node: The application name, pgbench or northwind.
@@ -1722,9 +1868,8 @@ def ssh_un_cross_wire(cluster_name, db, db_settings, db_user, db_passwd, nodes):
 
 def app_remove(cluster_name, app_name, database_name=None):
     """Remove test application from cluster.
-    
-       Remove a test application from all of the nodes in a cluster. 
-       This command requires a JSON file with the same name as the cluster to be in the cluster/<cluster_name>. \n 
+       Remove a test application from all of the nodes in a cluster.
+       This command requires a JSON file with the same name as the cluster to be in the cluster/<cluster_name>. \n
        Example: cluster app-remove pgbench
        :param cluster_name: The name of the cluster.
        :param node: The application name, pgbench or northwind.
@@ -1832,20 +1977,33 @@ def validate_json(json_data):
     validate_keys(json_data, required_keys)
 
 
-def print_install_hdr(cluster_name, db, db_user, count, name, path, ip, port, repo):
+def print_install_hdr(cluster_name, db, db_user, total_nodes, name, path, ip, port, repo):
+    """
+    Print the installation header with node and cluster information.
 
-    node = {
+    Args:
+        cluster_name (str): The name of the cluster.
+        db (str): The database name.
+        db_user (str): The database user.
+        total_nodes (int): The total number of nodes in the cluster (including sub-nodes).
+        name (str): The name of the current node.
+        path (str): The installation path on the node.
+        ip (str): The IP address of the node.
+        port (str): The port number on the node.
+        repo (str): The repository URL.
+    """
+    node_info = {
         "REPO": repo,
         "Cluster Name": cluster_name,
-        "Name": name,
-        "Host": ip,
+        "Node Name": name,
+        "Host IP": ip,
         "Port": port,
-        "Path": path,
+        "Installation Path": path,
         "Database": db,
         "Database User": db_user,
-        "Number of Nodes": count,
+        "Total Nodes": total_nodes,
     }
-    util.echo_node(node)
+    util.echo_node(node_info)
 
 if __name__ == "__main__":
     fire.Fire(
@@ -1865,6 +2023,6 @@ if __name__ == "__main__":
             "set-firewalld": set_firewalld,
             "ssh": ssh,
             "app-install": app_install,
-            "app-remove": app_remove
+            "app-remove": app_remove,
         }
     )
