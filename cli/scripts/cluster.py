@@ -235,10 +235,6 @@ def save_updated_json(cluster_name, updated_json):
 
 def json_validate(cluster_name):
     """Validate and update a Cluster Configuration JSON file."""
-    import os
-    import json
-    import datetime
-    import sys
 
     # Function to exit with a message
     class Util:
