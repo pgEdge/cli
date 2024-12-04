@@ -457,7 +457,7 @@ def ssh_setup(cluster_name, db, db_settings, db_user, db_passwd, n, install):
     nc = os.path.join(ndpath, "pgedge", "pgedge ")
     parms = f" -U {db_user} -P {db_passwd} -d {db} --port {ndport}"
     if pg is not None and pg != "":
-        parms = parms + f" --pg {pg}"
+        parms = parms + f" --pg_ver {pg}"
     if spock is not None and spock != "":
         parms = parms + f" --spock_ver {spock}"
     if db_settings["auto_start"] == "on":
@@ -535,7 +535,7 @@ def ssh_install_pgedge(
         nc = os.path.join(ndpath, "pgedge", "pgedge ")
         parms = f" -U {db_user} -P {db_passwd} -d {db} --port {ndport}"
         if pg:
-            parms += f" --pg {pg}"
+            parms += f" --pg_ver {pg}"
         if spock:
             parms += f" --spock_ver {spock}"
         if db_settings.get("auto_start") == "on":
@@ -674,7 +674,7 @@ def ssh_install_pgedge(
         nc = os.path.join(ndpath, "pgedge", "pgedge ")
         parms = f" -U {db_user} -P {db_passwd} -d {db} --port {ndport}"
         if pg is not None and pg != "":
-            parms = parms + f" --pg {pg}"
+            parms = parms + f" --pg_ver {pg}"
         if spock is not None and spock != "":
             parms = parms + f" --spock_ver {spock}"
         if db_settings["auto_start"] == "on":
