@@ -275,6 +275,39 @@ def wildcard_component(p_component):
     return p_comp
 
 
+def get_default_pg():
+    data = []
+    sql = (
+        "SELECT version FROM versions \n"
+        + " WHERE component LIKE 'pg%' AND is_current >= 1"
+    )
+    try:
+        c = con.cursor()
+        c.execute(sql)
+        data = c.fetchall()
+    except Exception as e:
+        fatal_error(e, sql, "get_default_pg")
+    return data
+
+
+def get_default_spock(pgv):
+    data = []
+    sql = (
+        "SELECT version FROM versions \n"
+        + " WHERE parent = 'pg"
+        + pgv
+        + "' \n"
+        + "   AND component LIKE 'spock%' AND is_current >= 1"
+    )
+    try:
+        c = con.cursor()
+        c.execute(sql)
+        data = c.fetchall()
+    except Exception as e:
+        fatal_error(e, sql, "get_default_spock")
+    return data
+
+
 #############################################################################
 # expand the prefix for a component's version number into the full version
 #  number for the most recent version that matches
