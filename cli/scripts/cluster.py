@@ -271,6 +271,8 @@ def json_validate(cluster_name):
 
     util = Util()
 
+    pg_default, pgs = meta.get_default_pg()
+
     # Function to get cluster directory and file paths
     def get_cluster_info(cluster_name):
         cluster_dir = os.path.join(os.getcwd(), "cluster", cluster_name)
@@ -327,7 +329,7 @@ def json_validate(cluster_name):
 
     # Ensure pgedge section is complete
     pgedge_defaults = {
-        "pg_version": 16,
+        "pg_version": pg_default,
         "spock": {"spock_version": ""},
         "databases": [],
     }
@@ -339,7 +341,7 @@ def json_validate(cluster_name):
         parsed_json["json_version"] = "1.1"
 
     # Validate Spock version
-    pg_version = parsed_json["pgedge"].get("pg_version", 16)
+    pg_version = parsed_json["pgedge"].get("pg_version", pg_default)
     spock_version = parsed_json["pgedge"].get("spock", {}).get("spock_version", "")
     # Allow empty spock_version
     if spock_version.lower() == "default":
@@ -786,12 +788,12 @@ def json_create(
         def message(message, level="info"):
             print(f"{message}")
 
-        @staticmethod
-        def get_default_spock(pg_version):
-            default_versions = {16: "", 17: ""}
-            return default_versions.get(pg_version, "")
-
     util = Util()
+    pg_default, pgs = meta.get_default_pg()
+    if not pg_ver:
+        spock_default, spocks = meta.get_default_spock(str(pg_default))
+    else:
+        spock_default, spocks = meta.get_default_spock(str(pg_ver))
 
     # Check if 'json-template' alias was used and display a warning
     if "json-template" in sys.argv:
@@ -826,9 +828,9 @@ def json_create(
         # Handle PostgreSQL version
         if pg_ver is not None:
             pg_str = str(pg_ver).strip()
-            if pg_str not in ["16", "17"]:
+            if pg_str not in pgs:
                 raise ValueError(
-                    "Invalid PostgreSQL version. Allowed versions are '16' and '17'."
+                    f"Invalid PostgreSQL version. Allowed versions are {pgs}."
                 )
             pg_version_int = int(pg_str)
         else:
@@ -878,34 +880,40 @@ def json_create(
 
     # Handle PostgreSQL version
     if force:
-        pg_version_int = 16
+        pg_version_int = pg_default
     else:
         while True:
             if pg_version_int is not None:
                 pg_input = str(pg_version_int)
             else:
                 pg_input = (
-                    input(f"PostgreSQL version (16 or 17) [default: 16]: ").strip()
-                    or "17"
+                    input(f"PostgreSQL version {pgs} [default: {pg_ver}]: ").strip()
+                    or pg_default
                 )
 
-            if pg_input in ["16", "17"]:
+            if pg_input in pgs:
                 pg_version_int = int(pg_input)
                 break
             else:
-                print("Invalid PostgreSQL version. Allowed versions are 16 and 17.")
+                print(f"Invalid PostgreSQL version. Allowed versions are: {pgs}.")
 
     pgedge_json = {"pg_version": str(pg_version_int), "auto_start": "off"}
 
     # Prompt for Spock version
     if force:
-        spock_version = ""
+        spock_version = spock_default
     else:
-        spock_version = input(
-            "Spock version (e.g., 4.0.5) or press Enter for default: "
-        ).strip()
-        if spock_version == "":
-            spock_version = ""
+        while True:
+            spock_version = (
+                input(
+                    f"Spock version (e.g., {spocks}) or press Enter for default: "
+                ).strip()
+                or spock_default
+            )
+            if spock_version not in spocks:
+                print(f"Invalid spock version. Allowed versions are: {spocks}.")
+            else:
+                break
 
     spock_json = {"spock_version": spock_version, "auto_ddl": "off"}
     pgedge_json["spock"] = spock_json
@@ -1003,7 +1011,8 @@ def json_create(
             node_port = default_port
             default_port = default_port + 1
         else:
-            node_default_port = default_port + n - 1
+            node_default_port = default_port
+            ## + n - 1
             while True:
                 node_port_input = input(
                     f"  PostgreSQL port for Node {n} (leave blank for default '{node_default_port}'): "
