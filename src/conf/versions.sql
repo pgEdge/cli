@@ -1,7 +1,7 @@
 
 DROP TABLE IF EXISTS hub;
 CREATE TABLE hub(v TEXT NOT NULL PRIMARY KEY, c TEXT NOT NULL, d TEXT NOT NULL);
-INSERT INTO hub VALUES ('24.12.0', 'Constellation',  '20241202');
+INSERT INTO hub VALUES ('24.12.1', 'Constellation',  '20241205');
 
 DROP VIEW  IF EXISTS v_versions;
 DROP VIEW  IF EXISTS v_products;
@@ -333,17 +333,18 @@ INSERT INTO releases VALUES ('spock40-pg15', 4, 'spock', 'Spock', '', 'prod', ''
 INSERT INTO releases VALUES ('spock40-pg16', 4, 'spock', 'Spock', '', 'prod', '', 1, 'pgEdge Community', '', '');
 INSERT INTO releases VALUES ('spock40-pg17', 4, 'spock', 'Spock', '', 'prod', '', 1, 'pgEdge Community', '', '');
 
-INSERT INTO versions VALUES ('spock40-pg15', '4.0.6-1', 'amd, arm', 1, '20241108', 'pg15', '', '');
-INSERT INTO versions VALUES ('spock40-pg16', '4.0.6-1', 'amd, arm', 1, '20241108', 'pg16', '', '');
-INSERT INTO versions VALUES ('spock40-pg17', '4.0.6-1', 'amd, arm', 1, '20241108', 'pg17', '', '');
+INSERT INTO versions VALUES ('spock40-pg15', '4.0.7-1', 'amd, arm', 1, '20241205', 'pg15', '', '');
+INSERT INTO versions VALUES ('spock40-pg16', '4.0.7-1', 'amd, arm', 1, '20241205', 'pg16', '', '');
+INSERT INTO versions VALUES ('spock40-pg17', '4.0.7-1', 'amd, arm', 1, '20241205', 'pg17', '', '');
+
+INSERT INTO versions VALUES ('spock40-pg15', '4.0.6-1', 'amd, arm', 0, '20241108', 'pg15', '', '');
+INSERT INTO versions VALUES ('spock40-pg16', '4.0.6-1', 'amd, arm', 0, '20241108', 'pg16', '', '');
+INSERT INTO versions VALUES ('spock40-pg17', '4.0.6-1', 'amd, arm', 0, '20241108', 'pg17', '', '');
 
 INSERT INTO versions VALUES ('spock40-pg15', '4.0.5-1', 'amd, arm', 0, '20240924', 'pg15', '', '');
 INSERT INTO versions VALUES ('spock40-pg16', '4.0.5-1', 'amd, arm', 0, '20240924', 'pg16', '', '');
 INSERT INTO versions VALUES ('spock40-pg17', '4.0.5-1', 'amd, arm', 0, '20240924', 'pg17', '', '');
 
-INSERT INTO versions VALUES ('spock40-pg15', '4.0.1-1', 'amd, arm', 0, '20240801', 'pg15', '', '');
-INSERT INTO versions VALUES ('spock40-pg16', '4.0.1-1', 'amd, arm', 0, '20240801', 'pg16', '', '');
-INSERT INTO versions VALUES ('spock40-pg17', '4.0.1-1', 'amd, arm', 0, '20240801', 'pg17', '', '');
 
 -- ## SPOCK41 ###########################
 INSERT INTO releases VALUES ('spock41-pg16', 4, 'spock', 'Spock', '', 'test', '', 1, 'pgEdge Community', '', '');
