@@ -327,7 +327,7 @@ def json_validate(cluster_name):
 
     # Ensure pgedge section is complete
     pgedge_defaults = {
-        "pg_version": "16",
+        "pg_version": 16,
         "spock": {"spock_version": ""},
         "databases": [],
     }
@@ -339,7 +339,7 @@ def json_validate(cluster_name):
         parsed_json["json_version"] = "1.1"
 
     # Validate Spock version
-    pg_version = parsed_json["pgedge"].get("pg_version", "16")
+    pg_version = parsed_json["pgedge"].get("pg_version", 16)
     spock_version = parsed_json["pgedge"].get("spock", {}).get("spock_version", "")
     # Allow empty spock_version
     if spock_version.lower() == "default":
@@ -771,7 +771,7 @@ def json_create(
         db (str): The database name.
         usr (str): The username of the superuser created for this database.
         passwd (str): The password for the above user.
-        pg_ver (str or int, optional): The PostgreSQL version of the database. Allowed versions are '16' or '17'. Defaults to '17'.
+        pg_ver (str or int, optional): The PostgreSQL version of the database.
         port (str or int, optional): The port number for the primary nodes. Must be between 1 and 65535. Defaults to '5432'.
     """
 
@@ -885,7 +885,7 @@ def json_create(
                 pg_input = str(pg_version_int)
             else:
                 pg_input = (
-                    input("PostgreSQL version (16 or 17) [default: 17]: ").strip()
+                    input(f"PostgreSQL version (16 or 17) [default: 16]: ").strip()
                     or "17"
                 )
 
@@ -1001,6 +1001,7 @@ def json_create(
             print(f"  Using port {node_port} for Node {n} ")
         elif force:
             node_port = default_port
+            default_port = default_port + 1
         else:
             node_default_port = default_port + n - 1
             while True:
@@ -1967,18 +1968,39 @@ def extract_psql_value(psql_output: str, alias: str) -> str:
     return ""
 
 
-def set_cluster_readonly(nodes, readonly, dbname, stanza, verbose):
+def set_cluster_readonly(nodes, readonly, dbname, stanza, v4, verbose):
+    """Set the cluster to readonly mode."""
     action = "Setting" if readonly else "Removing"
-    func_call = (
-        "spock.set_cluster_readonly()" if readonly else "spock.unset_cluster_readonly()"
-    )
 
-    sql_cmd = f"SELECT {func_call}"
+    if v4:
+        sql_cmd = (
+            'ALTER SYSTEM SET spock.readonly TO \\\\"all\\\\"'
+            if readonly
+            else 'ALTER SYSTEM SET spock.readonly TO \\\\"off\\\\"'
+        )
+        for node in nodes:
+            cmd = f"{node['path']}/pgedge/pgedge psql '{sql_cmd}' {dbname}"
+            message = f"{action} readonly mode from cluster"
+            run_cmd(cmd, node=node, message=message, verbose=verbose, important=True)
 
-    for node in nodes:
-        cmd = f"{node['path']}/pgedge/pgedge psql '{sql_cmd}' {dbname}"
-        message = f"{action} readonly mode from cluster"
-        run_cmd(cmd, node=node, message=message, verbose=verbose, important=True)
+        sql_cmd = "select pg_reload_conf()"
+        for node in nodes:
+            cmd = f"{node['path']}/pgedge/pgedge psql '{sql_cmd}' {dbname}"
+            message = f"Reload configuration pg_reload_conf()"
+            run_cmd(cmd, node=node, message=message, verbose=verbose, important=False)
+    else:
+        func_call = (
+            "spock.set_cluster_readonly()"
+            if readonly
+            else "spock.unset_cluster_readonly()"
+        )
+
+        sql_cmd = f"SELECT {func_call}"
+
+        for node in nodes:
+            cmd = f"{node['path']}/pgedge/pgedge psql '{sql_cmd}' {dbname}"
+            message = f"{action} readonly mode from cluster"
+            run_cmd(cmd, node=node, message=message, verbose=verbose, important=True)
 
 
 def check_cluster_lag(n, dbname, stanza, verbose, timeout=600, interval=1):
