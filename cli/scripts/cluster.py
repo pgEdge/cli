@@ -1894,11 +1894,14 @@ def create_node(node, dbname, verbose):
     """
     Creates a new node in the database cluster.
     """
-    ndip = node["private_ip"] if node["private_ip"] else node["public_ip"]
+    ip = node["public_ip"] if "public_ip" in node else node["private_ip"]
+    if not ip:
+        util.exit_message(f"Node '{node['name']}' does not have a valid IP address.")
+
     cmd = (
         f"cd {node['path']}/pgedge/; "
         f"./pgedge spock node-create {node['name']} "
-        f"'host={ndip} user=pgedge dbname={dbname} "
+        f"'host={ip} user={node['os_user']} dbname={dbname} "
         f"port={node['port']}' {dbname}"
     )
     message = f"Creating new node {node['name']}"
@@ -1911,11 +1914,15 @@ def create_sub_new(nodes, n, dbname, verbose):
     """
     for node in nodes:
         sub_name = f"sub_{n['name']}{node['name']}"
-        ndip = node["private_ip"] if node["private_ip"] else node["public_ip"]
+        ip = node["public_ip"] if "public_ip" in node else node["private_ip"]
+        if not ip:
+            util.exit_message(
+                f"Node '{node['name']}' does not have a valid IP address."
+            )
         cmd = (
             f"cd {n['path']}/pgedge/; "
             f"./pgedge spock sub-create {sub_name} "
-            f"'host={ndip} user=pgedge dbname={dbname} "
+            f"'host={ip} user={node['os_user']} dbname={dbname} "
             f"port={node['port']}' {dbname}"
         )
         message = f"Creating new subscriptions {sub_name}"
@@ -1928,13 +1935,17 @@ def create_sub(nodes, new_node, dbname, verbose):
     """
     for n in nodes:
         sub_name = f"sub_{n['name']}{new_node['name']}"
-        ndip = (
-            new_node["private_ip"] if new_node["private_ip"] else new_node["public_ip"]
+        ip = (
+            new_node["public_ip"] if "public_ip" in new_node else new_node["private_ip"]
         )
+        if not ip:
+            util.exit_message(
+                f"Node '{new_node['name']}' does not have a valid IP address."
+            )
         cmd = (
             f"cd {n['path']}/pgedge/; "
             f"./pgedge spock sub-create {sub_name} "
-            f"'host={ndip} user=pgedge dbname={dbname} "
+            f"'host={ip} user={new_node['os_user']} dbname={dbname} "
             f"port={new_node['port']}' {dbname}"
         )
         message = f"Creating subscriptions {sub_name}"
