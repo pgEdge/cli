@@ -1,4 +1,3 @@
-
 #  Copyright 2022-2024 PGEDGE  All rights reserved. #
 
 
@@ -27,11 +26,12 @@ def pretty_sql(sql):
     print(myTbl)
 
 
-
 def get_extension_meta(component):
     data = []
-    sql = "SELECT extension_name, is_preload, preload_name, default_conf\n" + \
-         f"  FROM extensions WHERE component = '{component}'"
+    sql = (
+        "SELECT extension_name, is_preload, preload_name, default_conf\n"
+        + f"  FROM extensions WHERE component = '{component}'"
+    )
     try:
         c = con.cursor()
         c.execute(sql)
@@ -277,35 +277,49 @@ def wildcard_component(p_component):
 
 def get_default_pg():
     data = []
+    avail_pg = []
+    default_pg = util.DEFAULT_PG
     sql = (
         "SELECT version FROM versions \n"
-        + " WHERE component LIKE 'pg%' AND is_current >= 1"
+        + " WHERE component LIKE 'pg%' "
+        + " AND length(component) = 4 "
+        + " AND is_current >= 1"
     )
     try:
         c = con.cursor()
         c.execute(sql)
         data = c.fetchall()
+        for comp in data:
+            avail_pg.append(comp[0][0:2])
     except Exception as e:
         fatal_error(e, sql, "get_default_pg")
-    return data
+    return default_pg, avail_pg
 
 
 def get_default_spock(pgv):
     data = []
+    avail_spock = []
+    default_spock = util.DEFAULT_SPOCK
     sql = (
         "SELECT version FROM versions \n"
         + " WHERE parent = 'pg"
         + pgv
         + "' \n"
-        + "   AND component LIKE 'spock%' AND is_current >= 1"
+        + "   AND component LIKE 'spock%'"
+        + "   AND version not LIKE '%devel%'"
     )
     try:
         c = con.cursor()
         c.execute(sql)
         data = c.fetchall()
+        for comp in data:
+            spock_ver_minor = comp[0][0:5]
+            avail_spock.append(spock_ver_minor)
+            if f"{default_spock[0]}.{default_spock[1]}" in spock_ver_minor:
+                default_spock = spock_ver_minor
     except Exception as e:
         fatal_error(e, sql, "get_default_spock")
-    return data
+    return default_spock, avail_spock
 
 
 #############################################################################
@@ -404,7 +418,9 @@ def list_components():
     r_comp = []
     try:
         c = con.cursor()
-        cols = "component, project, version, platform, port, status, install_dt, autostart"
+        cols = (
+            "component, project, version, platform, port, status, install_dt, autostart"
+        )
         sql = f"SELECT {cols} FROM components"
         c.execute(sql)
         t_comp = c.fetchall()
@@ -635,7 +651,7 @@ def get_list(p_isJSON, p_comp=None, p_return=False):
         + "       c.datadir, p.is_extension, \n"
         + "       coalesce((select parent from versions where c.component = component and c.version = version),'') as parent, \n"
         + "       coalesce((select release_date from versions "
-        +  "       where c.component = component and c.version = version),'20200101'), \n"
+        + "       where c.component = component and c.version = version),'20200101'), \n"
         + "       c.install_dt, r.disp_name, \n"
         + "       coalesce((select release_date from versions where c.component = component and is_current = 1),'20200101'), \n"
         + "       r.is_available, r.available_ver, '' as pre_reqs \n"

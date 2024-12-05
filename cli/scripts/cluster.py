@@ -271,6 +271,8 @@ def json_validate(cluster_name):
 
     util = Util()
 
+    pg_default, pgs = meta.get_default_pg()
+
     # Function to get cluster directory and file paths
     def get_cluster_info(cluster_name):
         cluster_dir = os.path.join(os.getcwd(), "cluster", cluster_name)
@@ -327,7 +329,7 @@ def json_validate(cluster_name):
 
     # Ensure pgedge section is complete
     pgedge_defaults = {
-        "pg_version": "16",
+        "pg_version": pg_default,
         "spock": {"spock_version": ""},
         "databases": [],
     }
@@ -339,7 +341,7 @@ def json_validate(cluster_name):
         parsed_json["json_version"] = "1.1"
 
     # Validate Spock version
-    pg_version = parsed_json["pgedge"].get("pg_version", "16")
+    pg_version = parsed_json["pgedge"].get("pg_version", pg_default)
     spock_version = parsed_json["pgedge"].get("spock", {}).get("spock_version", "")
     # Allow empty spock_version
     if spock_version.lower() == "default":
@@ -771,7 +773,7 @@ def json_create(
         db (str): The database name.
         usr (str): The username of the superuser created for this database.
         passwd (str): The password for the above user.
-        pg_ver (str or int, optional): The PostgreSQL version of the database. Allowed versions are '16' or '17'. Defaults to '17'.
+        pg_ver (str or int, optional): The PostgreSQL version of the database.
         port (str or int, optional): The port number for the primary nodes. Must be between 1 and 65535. Defaults to '5432'.
     """
 
@@ -786,12 +788,12 @@ def json_create(
         def message(message, level="info"):
             print(f"{message}")
 
-        @staticmethod
-        def get_default_spock(pg_version):
-            default_versions = {16: "", 17: ""}
-            return default_versions.get(pg_version, "")
-
     util = Util()
+    pg_default, pgs = meta.get_default_pg()
+    if not pg_ver:
+        spock_default, spocks = meta.get_default_spock(str(pg_default))
+    else:
+        spock_default, spocks = meta.get_default_spock(str(pg_ver))
 
     # Check if 'json-template' alias was used and display a warning
     if "json-template" in sys.argv:
@@ -826,9 +828,9 @@ def json_create(
         # Handle PostgreSQL version
         if pg_ver is not None:
             pg_str = str(pg_ver).strip()
-            if pg_str not in ["16", "17"]:
+            if pg_str not in pgs:
                 raise ValueError(
-                    "Invalid PostgreSQL version. Allowed versions are '16' and '17'."
+                    f"Invalid PostgreSQL version. Allowed versions are {pgs}."
                 )
             pg_version_int = int(pg_str)
         else:
@@ -878,34 +880,40 @@ def json_create(
 
     # Handle PostgreSQL version
     if force:
-        pg_version_int = 16
+        pg_version_int = pg_default
     else:
         while True:
             if pg_version_int is not None:
                 pg_input = str(pg_version_int)
             else:
                 pg_input = (
-                    input("PostgreSQL version (16 or 17) [default: 17]: ").strip()
-                    or "17"
+                    input(f"PostgreSQL version {pgs} [default: {pg_ver}]: ").strip()
+                    or pg_default
                 )
 
-            if pg_input in ["16", "17"]:
+            if pg_input in pgs:
                 pg_version_int = int(pg_input)
                 break
             else:
-                print("Invalid PostgreSQL version. Allowed versions are 16 and 17.")
+                print(f"Invalid PostgreSQL version. Allowed versions are: {pgs}.")
 
     pgedge_json = {"pg_version": str(pg_version_int), "auto_start": "off"}
 
     # Prompt for Spock version
     if force:
-        spock_version = ""
+        spock_version = spock_default
     else:
-        spock_version = input(
-            "Spock version (e.g., 4.0.5) or press Enter for default: "
-        ).strip()
-        if spock_version == "":
-            spock_version = ""
+        while True:
+            spock_version = (
+                input(
+                    f"Spock version (e.g., {spocks}) or press Enter for default: "
+                ).strip()
+                or spock_default
+            )
+            if spock_version not in spocks:
+                print(f"Invalid spock version. Allowed versions are: {spocks}.")
+            else:
+                break
 
     spock_json = {"spock_version": spock_version, "auto_ddl": "off"}
     pgedge_json["spock"] = spock_json
@@ -1001,8 +1009,10 @@ def json_create(
             print(f"  Using port {node_port} for Node {n} ")
         elif force:
             node_port = default_port
+            default_port = default_port + 1
         else:
-            node_default_port = default_port + n - 1
+            node_default_port = default_port
+            ## + n - 1
             while True:
                 node_port_input = input(
                     f"  PostgreSQL port for Node {n} (leave blank for default '{node_default_port}'): "
@@ -1884,11 +1894,14 @@ def create_node(node, dbname, verbose):
     """
     Creates a new node in the database cluster.
     """
-    ndip = node["private_ip"] if node["private_ip"] else node["public_ip"]
+    ip = node["public_ip"] if "public_ip" in node else node["private_ip"]
+    if not ip:
+        util.exit_message(f"Node '{node['name']}' does not have a valid IP address.")
+
     cmd = (
         f"cd {node['path']}/pgedge/; "
         f"./pgedge spock node-create {node['name']} "
-        f"'host={ndip} user=pgedge dbname={dbname} "
+        f"'host={ip} user={node['os_user']} dbname={dbname} "
         f"port={node['port']}' {dbname}"
     )
     message = f"Creating new node {node['name']}"
@@ -1901,11 +1914,15 @@ def create_sub_new(nodes, n, dbname, verbose):
     """
     for node in nodes:
         sub_name = f"sub_{n['name']}{node['name']}"
-        ndip = node["private_ip"] if node["private_ip"] else node["public_ip"]
+        ip = node["public_ip"] if "public_ip" in node else node["private_ip"]
+        if not ip:
+            util.exit_message(
+                f"Node '{node['name']}' does not have a valid IP address."
+            )
         cmd = (
             f"cd {n['path']}/pgedge/; "
             f"./pgedge spock sub-create {sub_name} "
-            f"'host={ndip} user=pgedge dbname={dbname} "
+            f"'host={ip} user={node['os_user']} dbname={dbname} "
             f"port={node['port']}' {dbname}"
         )
         message = f"Creating new subscriptions {sub_name}"
@@ -1918,13 +1935,17 @@ def create_sub(nodes, new_node, dbname, verbose):
     """
     for n in nodes:
         sub_name = f"sub_{n['name']}{new_node['name']}"
-        ndip = (
-            new_node["private_ip"] if new_node["private_ip"] else new_node["public_ip"]
+        ip = (
+            new_node["public_ip"] if "public_ip" in new_node else new_node["private_ip"]
         )
+        if not ip:
+            util.exit_message(
+                f"Node '{new_node['name']}' does not have a valid IP address."
+            )
         cmd = (
             f"cd {n['path']}/pgedge/; "
             f"./pgedge spock sub-create {sub_name} "
-            f"'host={ndip} user=pgedge dbname={dbname} "
+            f"'host={ip} user={new_node['os_user']} dbname={dbname} "
             f"port={new_node['port']}' {dbname}"
         )
         message = f"Creating subscriptions {sub_name}"
@@ -1967,18 +1988,39 @@ def extract_psql_value(psql_output: str, alias: str) -> str:
     return ""
 
 
-def set_cluster_readonly(nodes, readonly, dbname, stanza, verbose):
+def set_cluster_readonly(nodes, readonly, dbname, stanza, v4, verbose):
+    """Set the cluster to readonly mode."""
     action = "Setting" if readonly else "Removing"
-    func_call = (
-        "spock.set_cluster_readonly()" if readonly else "spock.unset_cluster_readonly()"
-    )
 
-    sql_cmd = f"SELECT {func_call}"
+    if v4:
+        sql_cmd = (
+            'ALTER SYSTEM SET spock.readonly TO \\\\"all\\\\"'
+            if readonly
+            else 'ALTER SYSTEM SET spock.readonly TO \\\\"off\\\\"'
+        )
+        for node in nodes:
+            cmd = f"{node['path']}/pgedge/pgedge psql '{sql_cmd}' {dbname}"
+            message = f"{action} readonly mode from cluster"
+            run_cmd(cmd, node=node, message=message, verbose=verbose, important=True)
 
-    for node in nodes:
-        cmd = f"{node['path']}/pgedge/pgedge psql '{sql_cmd}' {dbname}"
-        message = f"{action} readonly mode from cluster"
-        run_cmd(cmd, node=node, message=message, verbose=verbose, important=True)
+        sql_cmd = "select pg_reload_conf()"
+        for node in nodes:
+            cmd = f"{node['path']}/pgedge/pgedge psql '{sql_cmd}' {dbname}"
+            message = f"Reload configuration pg_reload_conf()"
+            run_cmd(cmd, node=node, message=message, verbose=verbose, important=False)
+    else:
+        func_call = (
+            "spock.set_cluster_readonly()"
+            if readonly
+            else "spock.unset_cluster_readonly()"
+        )
+
+        sql_cmd = f"SELECT {func_call}"
+
+        for node in nodes:
+            cmd = f"{node['path']}/pgedge/pgedge psql '{sql_cmd}' {dbname}"
+            message = f"{action} readonly mode from cluster"
+            run_cmd(cmd, node=node, message=message, verbose=verbose, important=True)
 
 
 def check_cluster_lag(n, dbname, stanza, verbose, timeout=600, interval=1):
