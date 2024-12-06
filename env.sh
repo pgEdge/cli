@@ -11,7 +11,6 @@ ctlibsV=1.6
 spock41V=4.1devel-2
 
 spock40V=4.0.6-1
-spock40V1=4.0.5-1
 
 spock33V=3.3.6-1
 
