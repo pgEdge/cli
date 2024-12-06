@@ -1,5 +1,5 @@
-hubV=24.10.7
-hubVV=24.10-7
+hubV=24.10.8
+hubVV=24.10-8
 
 aceV=$hubV
 kirkV=$hubV
@@ -10,7 +10,7 @@ ctlibsV=1.6
 
 spock41V=4.1devel-2
 
-spock40V=4.0.6-1
+spock40V=4.0.7-1
 
 spock33V=3.3.6-1
 
