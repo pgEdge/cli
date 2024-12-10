@@ -53,6 +53,7 @@ def table_diff_cli(
     output="json",
     nodes="all",
     batch_size=config.BATCH_SIZE_DEFAULT,
+    table_filter=None,
     quiet=False,
 ):
 
@@ -69,6 +70,7 @@ def table_diff_cli(
             _nodes=nodes,
             batch_size=batch_size,
             quiet_mode=quiet,
+            table_filter=table_filter,
         )
         raw_args.scheduler.task_id = task_id
         raw_args.scheduler.task_type = "table-diff"

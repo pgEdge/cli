@@ -398,6 +398,7 @@ def table_diff(td_task: TableDiffTask):
     row_count = 0
     total_rows = 0
     conn_with_max_rows = None
+    conn_list = []
 
     try:
         for params in td_task.fields.conn_params:
@@ -410,6 +411,8 @@ def table_diff(td_task: TableDiffTask):
             if rows > row_count:
                 row_count = rows
                 conn_with_max_rows = conn
+
+            conn_list.append(conn)
     except Exception as e:
         context = {"total_rows": total_rows, "mismatch": False, "errors": [str(e)]}
         ace.handle_task_exception(td_task, context)
@@ -680,6 +683,13 @@ def table_diff(td_task: TableDiffTask):
         p_state="info",
         quiet_mode=td_task.quiet_mode,
     )
+
+    # We need to delete the view if it was created
+    if td_task.table_filter:
+        for conn in conn_list:
+            conn.execute(sql.SQL("DROP VIEW IF EXISTS {view_name}").format(
+                view_name=sql.Identifier(f"{td_task.scheduler.task_id}_view"),
+            ))
 
     td_task.scheduler.task_status = "COMPLETED"
     td_task.scheduler.finished_at = datetime.now()

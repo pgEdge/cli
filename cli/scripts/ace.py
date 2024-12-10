@@ -17,6 +17,7 @@ import pgpasslib
 import fire
 import psycopg
 from psycopg.rows import dict_row
+from psycopg import sql
 
 import cluster
 import util
@@ -820,6 +821,45 @@ def table_diff_checks(td_task: TableDiffTask) -> TableDiffTask:
                 conn_params.append(params)
                 host_map[host_ip + ":" + str(port)] = hostname
 
+                # TODO:
+                # 1. Add filter information to the task context in the scheduler.
+                # 2. Keep track of the original table name
+
+                # Now we will create a view for the table filter if necessary
+                if td_task.table_filter:
+
+                    # We're going to be using parameterised queries here
+                    # to prevent SQL injections.
+                    view_sql = sql.SQL(
+                        """
+                        CREATE VIEW {view_name} AS
+                        SELECT * FROM {l_schema}.{l_table}
+                        WHERE {where_clause}
+                    """
+                    ).format(
+                        view_name=sql.Identifier(
+                            f"{td_task.scheduler.task_id}_{l_table}_filtered"
+                        ),
+                        l_schema=sql.Identifier(l_schema),
+                        l_table=sql.Identifier(l_table),
+                        where_clause=sql.SQL(td_task.table_filter),
+                    )
+                    cur = conn.cursor()
+                    cur.execute(view_sql)
+                    conn.commit()
+
+                    # Now, we need to check if the view actually has any rows
+                    view_sql = sql.SQL("SELECT COUNT(*) FROM {view_name}").format(
+                        view_name=sql.Identifier(
+                            f"{td_task.scheduler.task_id}_{l_table}_filtered"
+                        ),
+                    )
+                    cur = conn.cursor()
+                    cur.execute(view_sql)
+                    row_count = cur.fetchone()[0]
+                    if row_count == 0:
+                        raise AceException("Table filter produced no rows")
+
     except Exception as e:
         raise e
 
@@ -902,6 +942,10 @@ def table_diff_checks(td_task: TableDiffTask) -> TableDiffTask:
                 raise AceException("Contents of diff file improperly formatted")
         except Exception as e:
             raise AceException(f"Contents of diff file improperly formatted: {e}")
+
+    # Finally, we will replace the table name with the view name if necessary
+    if td_task.table_filter:
+        td_task.fields.l_table = f"{td_task.scheduler.task_id}_{l_table}_filtered"
 
     return td_task
 
