@@ -1026,24 +1026,72 @@ def table_repair(tr_task: TableRepairTask):
         ast.literal_eval() will give us {'key1': 'val1', 'key2': 'val2'} and
         [1, 2, 3] respectively.
         """
+
+        # List of types that should be treated as strings
+        string_types = [
+            "char",
+            "text",
+            "time",
+            "bytea",
+            "uuid",
+            "date",
+            "timestamp",
+            "interval",
+            "inet",
+            "macaddr",
+            "xml",
+            "money",
+            "point",
+            "line",
+            "polygon",
+            "vector",
+        ]
+
+        # Types that can be directly represented in JSON
+        json_compatible_types = [
+            "json",
+            "jsonb",
+            "boolean",
+            "integer",
+            "bigint",
+            "smallint",
+            "numeric",
+            "real",
+            "double precision",
+        ]
+
         upsert_tuples = []
         for row in rows_to_upsert_json:
             modified_row = tuple()
             for col_name in cols_list:
                 col_type = col_types[col_name]
                 elem = row[col_name]
+
                 try:
-                    if any([s in col_type for s in ["char", "text", "vector"]]):
-                        modified_row += (elem,)
-                    elif col_type == "bytea":
-                        modified_row += (bytes.fromhex(elem),)
-                    else:
+                    type_lower = col_type.lower()
+
+                    if (
+                        not elem
+                        or elem == ""
+                        or elem.lower() == "null"
+                        or elem.lower() == "none"
+                    ):
+                        modified_row += (None,)
+                    elif any(s in type_lower for s in string_types):
+                        if type_lower == "bytea":
+                            modified_row += (bytes.fromhex(elem),)
+                        else:
+                            modified_row += (elem,)
+                    elif any(s in type_lower for s in json_compatible_types):
                         item = ast.literal_eval(elem)
-                        if col_type == "jsonb":
+                        if type_lower == "jsonb":
                             item = json.dumps(item)
                         modified_row += (item,)
+                    else:
+                        modified_row += (elem,)
 
                 except (ValueError, SyntaxError):
+                    # If conversion fails, use the original value
                     modified_row += (elem,)
 
             upsert_tuples.append(modified_row)
@@ -2302,9 +2350,9 @@ def auto_repair():
                         conn.commit()
                     except Exception as e:
                         raise AceException(
-                            "Error while updating local table"
-                            f" {exception.table_schema}.{exception.table_name}:"
-                            f" {str(e)}"
+                            f"Error while updating local table"
+                            f" {exception.table_schema}.{exception.table_name}: "
+                            f"{str(e)}"
                         )
 
                     # Now, we need to update the exception status to "RESOLVED"

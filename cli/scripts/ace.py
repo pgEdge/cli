@@ -476,10 +476,18 @@ def write_diffs_json(diff_dict, col_types, quiet_mode=False):
             ]
 
             type_lower = type.lower()
-            if any(s in type_lower for s in string_types):
+
+            if (
+                not item
+                or item == ""
+                or item.lower() == "null"
+                or item.lower() == "none"
+            ):
+                return None
+            elif any(s in type_lower for s in string_types):
                 return item
             elif any(s in type_lower for s in json_compatible_types):
-                # For JSON-compatible types, parse them into their native Python types
+                # For JSON-compatible types, parse them using AST
                 return ast.literal_eval(item)
             else:
                 # Default to treating as string if type is unknown
