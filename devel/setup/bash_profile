@@ -33,5 +33,5 @@ export REPO=http://localhost:8000
 export CONN="-U user1 -P pword1 -d db1"
 
 source ~/venv/bin/activate
-#source scl_source enable gcc-toolset-13
+source scl_source enable gcc-toolset-13
 

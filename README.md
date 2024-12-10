@@ -18,9 +18,13 @@ Check out our [commands](https://github.com/pgEdge/pgedge/tree/main?tab=readme-o
 
 2.) cd cli/devel/setup
 
-3.) run `./1-cli.sh`
+3.) run `./10-toolset.sh` through `30-bashrc.sh`
 
-4.) configure your ~/.aws/config credentials
+4.) source ~/.bashrc
 
-5.) run `1d-pull-IN.sh` to retrieve REPO files
+5.) run `40-awscli.sh` to install aws in virtual env
+
+6.) configure your ~/.aws/config credentials
+
+7.) run `1d-pull-IN.sh` to retrieve REPO files
 
