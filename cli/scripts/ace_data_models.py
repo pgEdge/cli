@@ -46,6 +46,7 @@ class TableDiffTask:
     max_cpu_ratio: float
     output: str
     batch_size: int
+    table_filter: str
     quiet_mode: bool
 
     # For table-diff, the diff_file_path is

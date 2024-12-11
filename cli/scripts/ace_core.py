@@ -336,6 +336,16 @@ def compare_checksums(shared_objects, worker_state, batches):
                 t1_diff = t1_set - t2_set
                 t2_diff = t2_set - t1_set
 
+                # It is possible that the hash mismatch is a false negative.
+                # E.g., if there are extraneous spaces in the JSONB column.
+                # In this case, we can still consider the block to be OK.
+                if not t1_diff and not t2_diff:
+                    result_dict = create_result_dict(
+                        node_pair, batch, config.BLOCK_OK, "BLOCK_OK"
+                    )
+                    result_queue.append(result_dict)
+                    continue
+
                 node_pair_key = f"{host1}/{host2}"
 
                 if node_pair_key not in diff_dict:
@@ -398,6 +408,7 @@ def table_diff(td_task: TableDiffTask):
     row_count = 0
     total_rows = 0
     conn_with_max_rows = None
+    conn_list = []
 
     try:
         for params in td_task.fields.conn_params:
@@ -410,6 +421,8 @@ def table_diff(td_task: TableDiffTask):
             if rows > row_count:
                 row_count = rows
                 conn_with_max_rows = conn
+
+            conn_list.append(conn)
     except Exception as e:
         context = {"total_rows": total_rows, "mismatch": False, "errors": [str(e)]}
         ace.handle_task_exception(td_task, context)
@@ -680,6 +693,13 @@ def table_diff(td_task: TableDiffTask):
         p_state="info",
         quiet_mode=td_task.quiet_mode,
     )
+
+    # We need to delete the view if it was created
+    if td_task.table_filter:
+        for conn in conn_list:
+            conn.execute(sql.SQL("DROP VIEW IF EXISTS {view_name}").format(
+                view_name=sql.Identifier(f"{td_task.scheduler.task_id}_view"),
+            ))
 
     td_task.scheduler.task_status = "COMPLETED"
     td_task.scheduler.finished_at = datetime.now()
@@ -1084,7 +1104,7 @@ def table_repair(tr_task: TableRepairTask):
                             modified_row += (elem,)
                     elif any(s in type_lower for s in json_compatible_types):
                         item = ast.literal_eval(elem)
-                        if type_lower == "jsonb":
+                        if type_lower == "jsonb" or type_lower == "json":
                             item = json.dumps(item)
                         modified_row += (item,)
                     else:
