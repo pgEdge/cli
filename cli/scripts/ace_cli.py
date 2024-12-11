@@ -184,6 +184,7 @@ def table_rerun_cli(
     dbname=None,
     quiet=False,
     behavior="multiprocessing",
+    table_filter=None,
 ):
 
     task_id = ace_db.generate_task_id()
@@ -198,6 +199,7 @@ def table_rerun_cli(
             output="json",
             _nodes="all",
             batch_size=config.BATCH_SIZE_DEFAULT,
+            table_filter=table_filter,
             quiet_mode=quiet,
             diff_file_path=diff_file,
         )

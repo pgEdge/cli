@@ -336,6 +336,16 @@ def compare_checksums(shared_objects, worker_state, batches):
                 t1_diff = t1_set - t2_set
                 t2_diff = t2_set - t1_set
 
+                # It is possible that the hash mismatch is a false negative.
+                # E.g., if there are extraneous spaces in the JSONB column.
+                # In this case, we can still consider the block to be OK.
+                if not t1_diff and not t2_diff:
+                    result_dict = create_result_dict(
+                        node_pair, batch, config.BLOCK_OK, "BLOCK_OK"
+                    )
+                    result_queue.append(result_dict)
+                    continue
+
                 node_pair_key = f"{host1}/{host2}"
 
                 if node_pair_key not in diff_dict:
@@ -1094,7 +1104,7 @@ def table_repair(tr_task: TableRepairTask):
                             modified_row += (elem,)
                     elif any(s in type_lower for s in json_compatible_types):
                         item = ast.literal_eval(elem)
-                        if type_lower == "jsonb":
+                        if type_lower == "jsonb" or type_lower == "json":
                             item = json.dumps(item)
                         modified_row += (item,)
                     else:
