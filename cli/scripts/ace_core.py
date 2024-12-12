@@ -697,9 +697,11 @@ def table_diff(td_task: TableDiffTask):
     # We need to delete the view if it was created
     if td_task.table_filter:
         for conn in conn_list:
-            conn.execute(sql.SQL("DROP VIEW IF EXISTS {view_name}").format(
-                view_name=sql.Identifier(f"{td_task.scheduler.task_id}_view"),
-            ))
+            conn.execute(
+                sql.SQL("DROP VIEW IF EXISTS {view_name}").format(
+                    view_name=sql.Identifier(f"{td_task.scheduler.task_id}_view"),
+                )
+            )
 
     td_task.scheduler.task_status = "COMPLETED"
     td_task.scheduler.finished_at = datetime.now()
@@ -743,7 +745,7 @@ def table_repair(tr_task: TableRepairTask):
         report = dict()
         now = datetime.now()
         report["operation_type"] = "table-repair"
-        report["mode"] = "LIVE-RUN"
+        report["mode"] = "LIVE_RUN"
         report["time_stamp"] = (
             now.strftime("%Y-%m-%d %H:%M:%S") + f"{now.microsecond // 1000:03d}"
         )
@@ -760,6 +762,39 @@ def table_repair(tr_task: TableRepairTask):
         }
         report["database_credentials_used"] = tr_task.fields.database
         report["changes"] = dict()
+
+    def generate_report():
+        now = datetime.now()
+        report_folder = "reports"
+        report["run_time"] = util.round_timedelta(
+            datetime.now() - start_time
+        ).total_seconds()
+
+        if not os.path.exists(report_folder):
+            os.mkdir(report_folder)
+
+        dirname = now.strftime("%Y-%m-%d")
+        diff_file_suffix = now.strftime("%H%M%S") + f"{now.microsecond // 1000:03d}"
+        if tr_task.dry_run:
+            diff_filename = "dry_run_report_" + diff_file_suffix + ".json"
+        else:
+            diff_filename = "repair_report_" + diff_file_suffix + ".json"
+
+        dirname = os.path.join(report_folder, dirname)
+
+        if not os.path.exists(dirname):
+            os.mkdir(dirname)
+
+        filename = os.path.join(dirname, diff_filename)
+
+        try:
+            json.dump(report, open(filename, "w"), default=str, indent=2)
+        except Exception as e:
+            context = {"errors": [f"Could not write report: {str(e)}"]}
+            ace.handle_task_exception(tr_task, context)
+            raise e
+
+        util.message(f"Wrote report to {filename}", quiet_mode=tr_task.quiet_mode)
 
     """
     If the diff-file is not a valid json, then we throw an error message and exit.
@@ -937,6 +972,11 @@ def table_repair(tr_task: TableRepairTask):
 
     if tr_task.dry_run:
         dry_run_msg = "######## DRY RUN ########\n\n"
+
+        # Create report structure even for dry run
+        if tr_task.generate_report:
+            report["operation_type"] = "DRY_RUN"
+
         for node in other_nodes:
             if not tr_task.upsert_only:
                 dry_run_msg += (
@@ -944,6 +984,13 @@ def table_repair(tr_task: TableRepairTask):
                     + f"{len(full_rows_to_upsert[node])} rows and delete "
                     + f"{len(full_rows_to_delete[node])} rows on { node }\n"
                 )
+
+                # Add to report if enabled
+                if tr_task.generate_report:
+                    report["changes"][node] = {
+                        "would_upsert": list(full_rows_to_upsert[node].values()),
+                        "would_delete": list(full_rows_to_delete[node].values()),
+                    }
             else:
                 dry_run_msg += (
                     "Repair would have attempted to upsert "
@@ -956,9 +1003,21 @@ def table_repair(tr_task: TableRepairTask):
                         + f"{len(full_rows_to_delete[node])} rows on { node }"
                         + f" not present on { tr_task.source_of_truth }\n"
                     )
-        dry_run_msg += "\n######## END DRY RUN ########"
 
+                # Add to report if enabled
+                if tr_task.generate_report:
+                    report["changes"][node] = {
+                        "would_upsert": list(full_rows_to_upsert[node].values()),
+                        "skipped_deletes": list(full_rows_to_delete[node].values()),
+                    }
+
+        dry_run_msg += "\n######## END DRY RUN ########"
         util.message(dry_run_msg, p_state="alert", quiet_mode=tr_task.quiet_mode)
+
+        # Generate report if requested
+        if tr_task.generate_report:
+            generate_report()
+
         return
 
     total_upserted = {}
@@ -1200,32 +1259,7 @@ def table_repair(tr_task: TableRepairTask):
     )
 
     if tr_task.generate_report:
-        now = datetime.now()
-        report_folder = "reports"
-        report["run_time"] = run_time
-
-        if not os.path.exists(report_folder):
-            os.mkdir(report_folder)
-
-        dirname = now.strftime("%Y-%m-%d")
-        diff_file_suffix = now.strftime("%H%M%S") + f"{now.microsecond // 1000:03d}"
-        diff_filename = "report_" + diff_file_suffix + ".json"
-
-        dirname = os.path.join(report_folder, dirname)
-
-        if not os.path.exists(dirname):
-            os.mkdir(dirname)
-
-        filename = os.path.join(dirname, diff_filename)
-
-        try:
-            json.dump(report, open(filename, "w"), default=str, indent=2)
-        except Exception as e:
-            context = {"errors": [f"Could not write report: {str(e)}"]}
-            ace.handle_task_exception(tr_task, context)
-            raise e
-
-        print(f"Wrote report to {filename}")
+        generate_report()
 
     util.message("*** SUMMARY ***\n", p_state="info", quiet_mode=tr_task.quiet_mode)
 
