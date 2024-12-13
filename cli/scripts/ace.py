@@ -676,9 +676,9 @@ def table_diff_checks(td_task: TableDiffTask) -> TableDiffTask:
             "Invalid value range for ACE_MAX_CPU_RATIO or --max_cpu_ratio"
         )
 
-    if td_task.output not in ["csv", "json"]:
+    if td_task.output not in ["csv", "json", "html"]:
         raise AceException(
-            "table-diff currently supports only csv and json output formats"
+            "table-diff currently supports only csv, json and html output formats"
         )
 
     node_list = []

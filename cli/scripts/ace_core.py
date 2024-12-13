@@ -18,6 +18,7 @@ from dateutil import parser
 import pgpasslib
 import ace
 import ace_db
+import ace_html_reporter
 import cluster
 import util
 import ace_config as config
@@ -679,13 +680,18 @@ def table_diff(td_task: TableDiffTask):
             )
 
         try:
-            if td_task.output == "json":
+            if td_task.output == "json" or td_task.output == "html":
                 td_task.diff_file_path = ace.write_diffs_json(
                     td_task,
                     diff_dict,
                     td_task.fields.col_types,
                     quiet_mode=td_task.quiet_mode,
                 )
+
+                if td_task.output == "html":
+                    ace_html_reporter.generate_html(
+                        td_task.diff_file_path, td_task.fields.key.split(",")
+                    )
             elif td_task.output == "csv":
                 ace.write_diffs_csv(diff_dict)
         except Exception as e:
