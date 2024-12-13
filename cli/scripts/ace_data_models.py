@@ -54,6 +54,8 @@ class TableDiffTask:
     # and is not mandatory
     diff_file_path: str = None
 
+    diff_summary: dict = field(default_factory=dict)
+
     # If we're invoking table-diff from repset-diff,
     # we don't need to update the database with the
     # status of each table-diff task (for now)

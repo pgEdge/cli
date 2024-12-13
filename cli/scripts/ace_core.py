@@ -612,6 +612,19 @@ def table_diff(td_task: TableDiffTask):
         ace.handle_task_exception(td_task, context)
         raise e
 
+    run_time = util.round_timedelta(datetime.now() - start_time).total_seconds()
+    run_time_str = f"{run_time:.2f}"
+
+    td_task.scheduler.task_status = "COMPLETED"
+    td_task.scheduler.finished_at = datetime.now()
+    td_task.scheduler.time_taken = run_time
+    td_task.scheduler.task_context = {
+        "total_rows": total_rows,
+        "mismatch": mismatch,
+        "diffs_summary": td_task.diff_summary if mismatch else {},
+        "errors": [],
+    }
+
     for result in result_queue:
         if result["status_code"] == config.BLOCK_MISMATCH:
             mismatch = True
@@ -658,6 +671,7 @@ def table_diff(td_task: TableDiffTask):
             diff_count = max(
                 len(diff_dict[node_pair][node1]), len(diff_dict[node_pair][node2])
             )
+            td_task.diff_summary[node_pair] = diff_count
             util.message(
                 f"FOUND {diff_count} DIFFS BETWEEN {node1} AND {node2}",
                 p_state="warning",
@@ -667,7 +681,10 @@ def table_diff(td_task: TableDiffTask):
         try:
             if td_task.output == "json":
                 td_task.diff_file_path = ace.write_diffs_json(
-                    diff_dict, td_task.fields.col_types, quiet_mode=td_task.quiet_mode
+                    td_task,
+                    diff_dict,
+                    td_task.fields.col_types,
+                    quiet_mode=td_task.quiet_mode,
                 )
             elif td_task.output == "csv":
                 ace.write_diffs_csv(diff_dict)
@@ -684,9 +701,6 @@ def table_diff(td_task: TableDiffTask):
         util.message(
             "TABLES MATCH OK\n", p_state="success", quiet_mode=td_task.quiet_mode
         )
-
-    run_time = util.round_timedelta(datetime.now() - start_time).total_seconds()
-    run_time_str = f"{run_time:.2f}"
 
     util.message(
         f"TOTAL ROWS CHECKED = {total_rows}\nRUN TIME = {run_time_str} seconds",
@@ -709,6 +723,7 @@ def table_diff(td_task: TableDiffTask):
     td_task.scheduler.task_context = {
         "total_rows": total_rows,
         "mismatch": mismatch,
+        "diffs_summary": td_task.diff_summary if mismatch else {},
         "errors": [],
     }
 

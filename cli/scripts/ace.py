@@ -439,7 +439,7 @@ def check_column_size(conn_list: list, task: TableDiffTask) -> tuple[bool, str]:
     return True, ""
 
 
-def write_diffs_json(diff_dict, col_types, quiet_mode=False):
+def write_diffs_json(td_task, diff_dict, col_types, quiet_mode=False):
 
     # TODO: Need to revisit this.
     def convert_to_json_type(item: str, type: str):
@@ -541,11 +541,42 @@ def write_diffs_json(diff_dict, col_types, quiet_mode=False):
         for node_pair, nodes_data in diff_dict.items()
     }
 
+    # Depending on whether we have simple or a composite primary key,
+    # we will sort the diffs.
+
+    for node_pair in write_dict.keys():
+        for node in write_dict[node_pair].keys():
+            if len(td_task.fields.key.split(",")) == 1:
+                write_dict[node_pair][node] = sorted(
+                    write_dict[node_pair][node], key=lambda x: x[td_task.fields.key]
+                )
+            else:
+                write_dict[node_pair][node] = sorted(
+                    write_dict[node_pair][node],
+                    key=lambda x: tuple(x[k] for k in td_task.fields.key.split(",")),
+                )
+
+    output_json = dict({"diffs": write_dict})
+    output_json["summary"] = {
+        "task_id": td_task.scheduler.task_id,
+        "schema_name": td_task._table_name.split(".")[0],
+        "table_name": td_task._table_name.split(".")[1],
+        "nodes": td_task._nodes,
+        "block_rows": td_task.block_rows,
+        "max_cpu_ratio": td_task.max_cpu_ratio,
+        "batch_size": td_task.batch_size,
+        "start_time": td_task.scheduler.started_at,
+        "end_time": td_task.scheduler.finished_at,
+        "time_taken": td_task.scheduler.time_taken,
+        "total_rows_checked": td_task.scheduler.task_context["total_rows"],
+        "diff_count": td_task.diff_summary,
+    }
+
     if not quiet_mode:
         with open(filename, "w") as f:
-            f.write(json.dumps(write_dict, default=str))
+            f.write(json.dumps(output_json, default=str, indent=2))
     else:
-        print(json.dumps(write_dict, default=str))
+        print(json.dumps(output_json, default=str))
 
     util.message(
         f"Diffs written out to" f" {util.set_colour(filename, 'blue')}",
