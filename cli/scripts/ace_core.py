@@ -1040,10 +1040,10 @@ def table_repair(tr_task: TableRepairTask):
             WHERE
             """
 
-            for k in keys_list:
-                delete_sql += f' "{k}" = %s AND'
-
-            delete_sql = delete_sql[:-3] + ";"
+            where_conditions = []
+            for key in keys_list:
+                where_conditions.append(f'"{key}" = %s')
+            delete_sql += " AND ".join(where_conditions) + ";"
 
         try:
             conn = conns[divergent_node]
@@ -1274,6 +1274,153 @@ def table_repair(tr_task: TableRepairTask):
     ace_db.update_ace_task(tr_task)
 
 
+def table_repair_fix_nulls(tr_task: TableRepairTask) -> None:
+    """Fix null values between nodes by synchronizing non-null values.
+
+    For rows with the same primary key across nodes:
+    - If node1 has null in col1 but node2 has non-null in col1, update node1's col1
+    - If node2 has null in col3 but node1 has non-null in col3, update node2's col3
+    """
+    start_time = datetime.now()
+    conns = {}
+    simple_primary_key = True
+    keys_list = tr_task.fields.key.split(",")
+
+    if len(keys_list) > 1:
+        simple_primary_key = False
+
+    try:
+        for params in tr_task.fields.conn_params:
+            hostname_key = params["host"] + ":" + params["port"]
+            node_hostname = tr_task.fields.host_map[hostname_key]
+            conns[node_hostname] = psycopg.connect(**params)
+    except Exception as e:
+        context = {"errors": [str(e)]}
+        ace.handle_task_exception(tr_task, context)
+        raise e
+
+    diff_json = ace.check_diff_file_format(tr_task.diff_file_path, tr_task)
+
+    def generate_where_clause(row, keys):
+        """Generate SQL WHERE clause for primary key(s)"""
+        if simple_primary_key:
+            return sql.SQL("{} = {}").format(
+                sql.Identifier(keys[0]), sql.Literal(row[keys[0]])
+            )
+        else:
+            conditions = []
+            for key in keys:
+                conditions.append(
+                    sql.SQL("{} = {}").format(
+                        sql.Identifier(key), sql.Literal(row[key])
+                    )
+                )
+            return sql.SQL(" AND ").join(conditions)
+
+    def update_row(conn, updates, where_clause):
+        """Execute UPDATE query with the specified updates"""
+        if not updates:  # Skip if no updates needed
+            return
+
+        set_items = []
+        for col, val in updates.items():
+            set_items.append(
+                sql.SQL("{} = {}").format(sql.Identifier(col), sql.Literal(val))
+            )
+
+        update_sql = sql.SQL(
+            """
+            UPDATE {table_name}
+            SET {set_clause}
+            WHERE {where_clause}
+        """
+        ).format(
+            table_name=sql.SQL("{}.{}").format(
+                sql.Identifier(tr_task.fields.l_schema),
+                sql.Identifier(tr_task.fields.l_table),
+            ),
+            set_clause=sql.SQL(", ").join(set_items),
+            where_clause=where_clause,
+        )
+
+        with conn.cursor() as cur:
+            cur.execute(update_sql)
+
+    # Process each node pair
+    for node_pair, pair_diffs in diff_json.items():
+        node1, node2 = node_pair.split("/")
+        node1_rows = pair_diffs[node1]
+        node2_rows = pair_diffs[node2]
+
+        # TODO: Will this work if the primary key is a crazy value like a json?
+        # Create lookup dictionaries for faster access
+        def get_key_tuple(row):
+            return tuple(row[key] for key in keys_list)
+
+        node1_dict = {get_key_tuple(row): row for row in node1_rows}
+        node2_dict = {get_key_tuple(row): row for row in node2_rows}
+
+        # Find common keys between nodes
+        common_keys = set(node1_dict.keys()) & set(node2_dict.keys())
+
+        # Process each row that exists in both nodes
+        for key in common_keys:
+            row1 = node1_dict[key]
+            row2 = node2_dict[key]
+
+            # Collect updates needed for each node
+            node1_updates = {}
+            node2_updates = {}
+
+            # Compare all columns in both rows
+            all_columns = set(row1.keys()) | set(row2.keys())
+            for col in all_columns:
+                if col in keys_list:  # Skip primary key columns
+                    continue
+
+                val1 = row1.get(col)
+                val2 = row2.get(col)
+
+                # If one node has null and other has non-null, update the null value
+                if (val1 is None or val1 == "") and val2 is not None:
+                    node1_updates[col] = val2
+                elif (val2 is None or val2 == "") and val1 is not None:
+                    node2_updates[col] = val1
+
+            # Apply updates if needed
+            if node1_updates:
+                where_clause = generate_where_clause(row1, keys_list)
+                update_row(conns[node1], node1_updates, where_clause)
+                print(f"Updated {node1} for key={key}: {node1_updates}")
+
+            if node2_updates:
+                where_clause = generate_where_clause(row2, keys_list)
+                update_row(conns[node2], node2_updates, where_clause)
+                print(f"Updated {node2} for key={key}: {node2_updates}")
+
+            # Commit changes for each row
+            if node1_updates or node2_updates:
+                for conn in conns.values():
+                    conn.commit()
+
+    end_time = datetime.now()
+    run_time = util.round_timedelta(end_time - start_time).total_seconds()
+    run_time_str = f"{run_time:.2f}"
+
+    util.message(
+        f"Successfully corrected nulls in {tr_task._table_name} in cluster"
+        f" {tr_task.cluster_name}\n",
+        p_state="success",
+        quiet_mode=tr_task.quiet_mode,
+    )
+
+    util.message(
+        f"RUN TIME = {run_time_str} seconds",
+        p_state="info",
+        quiet_mode=tr_task.quiet_mode,
+    )
+
+
 def table_rerun_temptable(td_task: TableDiffTask) -> None:
 
     # load diff data and validate
@@ -1290,8 +1437,7 @@ def table_rerun_temptable(td_task: TableDiffTask) -> None:
             nd1, nd2 = node_pair.split("/")
 
             for row in (
-                diff_data["diffs"][node_pair][nd1]
-                + diff_data["diffs"][node_pair][nd2]
+                diff_data["diffs"][node_pair][nd1] + diff_data["diffs"][node_pair][nd2]
             ):
                 diff_keys.add(row[key[0]])
 
@@ -1301,8 +1447,7 @@ def table_rerun_temptable(td_task: TableDiffTask) -> None:
             nd1, nd2 = node_pair.split("/")
 
             for row in (
-                diff_data["diffs"][node_pair][nd1]
-                + diff_data["diffs"][node_pair][nd2]
+                diff_data["diffs"][node_pair][nd1] + diff_data["diffs"][node_pair][nd2]
             ):
                 diff_keys.add(tuple(row[key_component] for key_component in key))
 
@@ -1415,8 +1560,7 @@ def table_rerun_async(td_task: TableDiffTask) -> None:
             nd1, nd2 = node_pair.split("/")
 
             for row in (
-                diff_data["diffs"][node_pair][nd1]
-                + diff_data["diffs"][node_pair][nd2]
+                diff_data["diffs"][node_pair][nd1] + diff_data["diffs"][node_pair][nd2]
             ):
                 if row[key[0]] not in diff_kset:
                     diff_kset.add(row[key[0]])
@@ -1427,8 +1571,7 @@ def table_rerun_async(td_task: TableDiffTask) -> None:
             nd1, nd2 = node_pair.split("/")
 
             for row in (
-                diff_data["diffs"][node_pair][nd1]
-                + diff_data["diffs"][node_pair][nd2]
+                diff_data["diffs"][node_pair][nd1] + diff_data["diffs"][node_pair][nd2]
             ):
                 element = tuple(row[key_component] for key_component in key)
                 if element not in diff_kset:
