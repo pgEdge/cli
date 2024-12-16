@@ -46,7 +46,8 @@ def generate_html(diff_file, pkey_list):
             }
 
             body {
-                font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+                font-family: -apple-system, BlinkMacSystemFont, "Segoe UI",
+                Helvetica, Arial, sans-serif;
                 line-height: 1.5;
                 color: var(--text-primary);
                 background-color: var(--bg-secondary);
@@ -225,7 +226,7 @@ def generate_html(diff_file, pkey_list):
                 .container {
                     padding: 0 0.5rem;
                 }
-                
+
                 .summary-grid {
                     grid-template-columns: 1fr;
                 }

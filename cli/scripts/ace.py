@@ -439,6 +439,68 @@ def check_column_size(conn_list: list, task: TableDiffTask) -> tuple[bool, str]:
     return True, ""
 
 
+def check_diff_file_format(diff_file_path: str, task) -> dict:
+    """
+    If the diff-file is not a valid json, then we throw an error message and exit.
+    However, if the diff-file is a valid json, it's a slightly trickier case.
+    Our diff-file is a json of the form:
+    {
+        "diffs": {
+            "node1/node2": {
+                "node1": [{"col1": "val1", "col2": "val2", ...}, ...],
+                "node2": [{"col1": "val1", "col2": "val2", ...}, ...]
+            },
+            "node1/node3": {
+                "node1": [{"col1": "val1", "col2": "val2", ...}, ...],
+                "node3": [{"col1": "val1", "col2": "val2", ...}, ...]
+            }
+        },
+        "summary": {...}
+
+    }
+
+    We need to make sure that the root-level keys are of the form "node1/node2" and
+    that the inner keys have the corresponding node names. E.g., if the root-level key
+    is "node1/node2", then the inner keys should be "node1" and "node2".
+
+    A simple way we achieve this is by iterating over the root keys and checking if the
+    inner keys are contained in the list when the root key is split by "/". If not, we
+    throw an error message and exit.
+
+    TODO: It might be possible that the diff file has different cols compared to the
+    target table. We need to handle this case.
+    """
+    try:
+        diff_json = json.loads(open(diff_file_path, "r").read())
+    except Exception as e:
+        context = {"errors": [f"Could not load diff file as JSON: {str(e)}"]}
+        handle_task_exception(task, context)
+        raise e
+
+    try:
+        if any(
+            [
+                set(list(diff_json["diffs"][k].keys())) != set(k.split("/"))
+                for k in diff_json["diffs"].keys()
+            ]
+        ):
+            raise AceException("Contents of diff file improperly formatted")
+
+        diff_json = {
+            node_pair: {
+                node: [{key: str(val) for key, val in row.items()} for row in rows]
+                for node, rows in nodes_data.items()
+            }
+            for node_pair, nodes_data in diff_json["diffs"].items()
+        }
+    except Exception as e:
+        context = {"errors": [f"Could not read diff file: {str(e)}"]}
+        handle_task_exception(task, context)
+        raise e
+
+    return diff_json
+
+
 def write_diffs_json(td_task, diff_dict, col_types, quiet_mode=False):
 
     # TODO: Need to revisit this.
@@ -955,24 +1017,7 @@ def table_diff_checks(td_task: TableDiffTask) -> TableDiffTask:
         )
 
     if td_task.diff_file_path:
-        if not os.path.exists(td_task.diff_file_path):
-            raise AceException(f"Diff file {td_task.diff_file_path} not found")
-
-        try:
-            diff_data = json.load(open(td_task.diff_file_path, "r"))
-        except Exception as e:
-            raise AceException(f"Could not load diff file as JSON: {e}")
-
-        try:
-            if any(
-                [
-                    set(list(diff_data[k].keys())) != set(k.split("/"))
-                    for k in diff_data.keys()
-                ]
-            ):
-                raise AceException("Contents of diff file improperly formatted")
-        except Exception as e:
-            raise AceException(f"Contents of diff file improperly formatted: {e}")
+        check_diff_file_format(td_task.diff_file_path, td_task)
 
     # Finally, we will replace the table name with the view name if necessary
     if td_task.table_filter:

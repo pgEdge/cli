@@ -817,59 +817,7 @@ def table_repair(tr_task: TableRepairTask):
 
         util.message(f"Wrote report to {filename}", quiet_mode=tr_task.quiet_mode)
 
-    """
-    If the diff-file is not a valid json, then we throw an error message and exit.
-    However, if the diff-file is a valid json, it's a slightly trickier case.
-    Our diff-file is a json of the form:
-    {
-        "node1/node2": {
-            "node1": [{"col1": "val1", "col2": "val2", ...}, ...],
-            "node2": [{"col1": "val1", "col2": "val2", ...}, ...]
-        },
-        "node1/node3": {
-            "node1": [{"col1": "val1", "col2": "val2", ...}, ...],
-            "node3": [{"col1": "val1", "col2": "val2", ...}, ...]
-        }
-    }
-
-    We need to make sure that the root-level keys are of the form "node1/node2" and
-    that the inner keys have the corresponding node names. E.g., if the root-level key
-    is "node1/node2", then the inner keys should be "node1" and "node2".
-
-    A simple way we achieve this is by iterating over the root keys and checking if the
-    inner keys are contained in the list when the root key is split by "/". If not, we
-    throw an error message and exit.
-
-    TODO: It might be possible that the diff file has different cols compared to the
-    target table. We need to handle this case.
-    """
-    try:
-        diff_json = json.loads(open(tr_task.diff_file_path, "r").read())
-    except Exception as e:
-        context = {"errors": [f"Could not load diff file as JSON: {str(e)}"]}
-        ace.handle_task_exception(tr_task, context)
-        raise e
-
-    try:
-        if any(
-            [
-                set(list(diff_json[k].keys())) != set(k.split("/"))
-                for k in diff_json.keys()
-            ]
-        ):
-            raise AceException("Contents of diff file improperly formatted")
-
-        diff_json = {
-            node_pair: {
-                node: [{key: str(val) for key, val in row.items()} for row in rows]
-                for node, rows in nodes_data.items()
-            }
-            for node_pair, nodes_data in diff_json.items()
-        }
-    except Exception as e:
-        context = {"errors": [f"Could not read diff file: {str(e)}"]}
-        ace.handle_task_exception(tr_task, context)
-        raise e
+    diff_json = ace.check_diff_file_format(tr_task.diff_file_path, tr_task)
 
     # Remove metadata columsn "_Spock_CommitTS_" and "_Spock_CommitOrigin_"
     # from cols_list
@@ -1338,18 +1286,24 @@ def table_rerun_temptable(td_task: TableDiffTask) -> None:
 
     # Simple pkey
     if len(key) == 1:
-        for node_pair in diff_data.keys():
+        for node_pair in diff_data["diffs"].keys():
             nd1, nd2 = node_pair.split("/")
 
-            for row in diff_data[node_pair][nd1] + diff_data[node_pair][nd2]:
+            for row in (
+                diff_data["diffs"][node_pair][nd1]
+                + diff_data["diffs"][node_pair][nd2]
+            ):
                 diff_keys.add(row[key[0]])
 
     # Comp pkey
     else:
-        for node_pair in diff_data.keys():
+        for node_pair in diff_data["diffs"].keys():
             nd1, nd2 = node_pair.split("/")
 
-            for row in diff_data[node_pair][nd1] + diff_data[node_pair][nd2]:
+            for row in (
+                diff_data["diffs"][node_pair][nd1]
+                + diff_data["diffs"][node_pair][nd2]
+            ):
                 diff_keys.add(tuple(row[key_component] for key_component in key))
 
     temp_table_name = f"temp_{td_task.scheduler.task_id.lower()}_rerun"
@@ -1457,19 +1411,25 @@ def table_rerun_async(td_task: TableDiffTask) -> None:
 
     # Simple pkey
     if simple_primary_key == 1:
-        for node_pair in diff_data.keys():
+        for node_pair in diff_data["diffs"].keys():
             nd1, nd2 = node_pair.split("/")
 
-            for row in diff_data[node_pair][nd1] + diff_data[node_pair][nd2]:
+            for row in (
+                diff_data["diffs"][node_pair][nd1]
+                + diff_data["diffs"][node_pair][nd2]
+            ):
                 if row[key[0]] not in diff_kset:
                     diff_kset.add(row[key[0]])
                     diff_keys.append(row[key[0]])
     # Comp pkey
     else:
-        for node_pair in diff_data.keys():
+        for node_pair in diff_data["diffs"].keys():
             nd1, nd2 = node_pair.split("/")
 
-            for row in diff_data[node_pair][nd1] + diff_data[node_pair][nd2]:
+            for row in (
+                diff_data["diffs"][node_pair][nd1]
+                + diff_data["diffs"][node_pair][nd2]
+            ):
                 element = tuple(row[key_component] for key_component in key)
                 if element not in diff_kset:
                     diff_kset.add(element)
@@ -1597,6 +1557,17 @@ def table_rerun_async(td_task: TableDiffTask) -> None:
             f"Errors: {errors_list}"
         )
 
+    run_time = util.round_timedelta(datetime.now() - start_time).total_seconds()
+    run_time_str = f"{run_time:.2f}"
+
+    td_task.scheduler.task_status = "COMPLETED"
+    td_task.scheduler.finished_at = datetime.now()
+    td_task.scheduler.time_taken = run_time
+    td_task.scheduler.task_context = {
+        "total_rows": total_rows,
+        "mismatch": mismatch,
+    }
+
     # Mismatch is True if there is a block mismatch or if we have
     # estimated that diffs may be greater than max allowed diffs
     if mismatch:
@@ -1620,18 +1591,25 @@ def table_rerun_async(td_task: TableDiffTask) -> None:
         for node_pair in diff_dict.keys():
             node1, node2 = node_pair.split("/")
             diff_count = max(
-                len(diff_dict[node_pair][node1]), len(diff_dict[node_pair][node2])
+                len(diff_dict[node_pair][node1]),
+                len(diff_dict[node_pair][node2]),
             )
+            td_task.diff_summary[node_pair] = diff_count
             util.message(
                 f"FOUND {diff_count} DIFFS BETWEEN {node1} AND {node2}",
                 p_state="warning",
                 quiet_mode=td_task.quiet_mode,
             )
 
+        td_task.scheduler.task_context["diff_summary"] = td_task.diff_summary
+
         try:
             if td_task.output == "json":
                 td_task.diff_file_path = ace.write_diffs_json(
-                    diff_dict, td_task.fields.col_types, quiet_mode=td_task.quiet_mode
+                    td_task,
+                    diff_dict,
+                    td_task.fields.col_types,
+                    quiet_mode=td_task.quiet_mode,
                 )
 
             elif td_task.output == "csv":
@@ -1646,21 +1624,12 @@ def table_rerun_async(td_task: TableDiffTask) -> None:
             "TABLES MATCH OK\n", p_state="success", quiet_mode=td_task.quiet_mode
         )
 
-    run_time = util.round_timedelta(datetime.now() - start_time).total_seconds()
-    run_time_str = f"{run_time:.2f}"
-
     util.message(
         f"TOTAL ROWS CHECKED = {total_rows}\nRUN TIME = {run_time_str} seconds",
         p_state="info",
         quiet_mode=td_task.quiet_mode,
     )
 
-    td_task.scheduler.task_status = "COMPLETED"
-    td_task.scheduler.finished_at = datetime.now()
-    td_task.scheduler.time_taken = run_time
-    td_task.scheduler.task_context = json.dumps(
-        {"total_rows": total_rows, "mismatch": mismatch}
-    )
     ace_db.update_ace_task(td_task)
 
 

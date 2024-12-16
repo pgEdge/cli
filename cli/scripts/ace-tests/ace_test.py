@@ -252,12 +252,13 @@ class TestSimple:
 
             # Verify the number of differences matches our modifications
             assert (
-                len(diff_data["n1/n2"]["n2"]) == 50
-            ), f"Expected 50 differences, but found {len(diff_data['n1/n2']['n2'])}"
+                len(diff_data["diffs"]["n1/n2"]["n2"]) == 50
+            ), "Expected 50 differences,"
+            f" but found {len(diff_data['diffs']['n1/n2']['n2'])}"
 
             # Verify each modified row is present in the diff
             diff_indices = {
-                diff[key_column] for diff in diff_data["n1/n2"]["n2"]
+                diff[key_column] for diff in diff_data["diffs"]["n1/n2"]["n2"]
             }  # Set of indices from diff file
 
             assert (
@@ -265,13 +266,13 @@ class TestSimple:
             ), "Modified rows don't match diff file records"
 
             # Verify the differences are correctly reported
-            for diff in diff_data["n1/n2"]["n2"]:
+            for diff in diff_data["diffs"]["n1/n2"]["n2"]:
                 assert diff[column_name].endswith(
                     "-modified"
                 ), f"Modified row {diff[key_column]} doesn't have expected suffix"
 
             # Verify the control rows are not modified
-            for diff in diff_data["n1/n2"]["n1"]:
+            for diff in diff_data["diffs"]["n1/n2"]["n1"]:
                 assert not diff[column_name].endswith(
                     "-modified"
                 ), f"Control row {diff[key_column]} shouldn't have modification suffix"
@@ -371,9 +372,9 @@ class TestSimple:
             diff_data = json.load(f)
 
         # Verify the diff file is correct
-        assert len(diff_data["n1/n2"]["n2"]) == 100, "Expected 100 differences"
+        assert len(diff_data["diffs"]["n1/n2"]["n2"]) == 100, "Expected 100 differences"
 
-        for diff in diff_data["n1/n2"]["n2"]:
+        for diff in diff_data["diffs"]["n1/n2"]["n2"]:
             assert diff["city"] == "Casablanca", "Expected city to be 'Casablanca'"
 
     @pytest.mark.parametrize("table_name", ["public.customers"])
@@ -407,10 +408,10 @@ class TestSimple:
             diff_data = json.load(f)
 
         # Verify we still have 100 diffs
-        assert len(diff_data["n1/n2"]["n2"]) == 100, "Expected 100 differences"
+        assert len(diff_data["diffs"]["n1/n2"]["n2"]) == 100, "Expected 100 differences"
 
         # Verify the diffs are correct
-        for diff in diff_data["n1/n2"]["n2"]:
+        for diff in diff_data["diffs"]["n1/n2"]["n2"]:
             assert diff["city"] == "Casablanca", "Expected city to be 'Casablanca'"
 
         # Now that we have verified diffs through both methods, we can use repair
@@ -795,17 +796,20 @@ class TestDataTypes(TestSimple):
 
             # Verify number of differences
             assert (
-                len(diff_data["n1/n2"]["n2"]) == 3
-            ), f"Expected 50 differences, found {len(diff_data['n1/n2']['n2'])}"
+                len(diff_data["diffs"]["n1/n2"]["n2"]) == 3
+            ), "Expected 3 differences,"
+            f" found {len(diff_data['diffs']['n1/n2']['n2'])}"
 
             # Verify modified rows are in diff
-            diff_indices = {str(diff["id"]) for diff in diff_data["n1/n2"]["n2"]}
+            diff_indices = {
+                str(diff["id"]) for diff in diff_data["diffs"]["n1/n2"]["n2"]
+            }
             assert (
                 modified_indices == diff_indices
             ), "Modified rows don't match diff file records"
 
             # Verify the differences are correctly reported
-            for diff in diff_data["n1/n2"]["n2"]:
+            for diff in diff_data["diffs"]["n1/n2"]["n2"]:
                 if column_name == "json_col":
                     assert (
                         diff[column_name].get("test") == "modified"
@@ -903,11 +907,11 @@ class TestDataTypes(TestSimple):
             diff_data = json.load(f)
 
         assert (
-            len(diff_data["n1/n2"]["n2"]) == 3
-        ), f"Expected 3 differences, found {len(diff_data['n1/n2']['n2'])}"
+            len(diff_data["diffs"]["n1/n2"]["n2"]) == 3
+        ), f"Expected 3 differences, found {len(diff_data['diffs']['n1/n2']['n2'])}"
 
         # Verify the differences are correctly reported
-        for diff in diff_data["n1/n2"]["n2"]:
+        for diff in diff_data["diffs"]["n1/n2"]["n2"]:
             if column_name == "json_col":
                 assert (
                     diff[column_name].get("rerun") == "modified"
@@ -1003,11 +1007,11 @@ class TestDataTypes(TestSimple):
             diff_data = json.load(f)
 
         assert (
-            len(diff_data["n1/n2"]["n2"]) == 3
-        ), f"Expected 3 differences, found {len(diff_data['n1/n2']['n2'])}"
+            len(diff_data["diffs"]["n1/n2"]["n2"]) == 3
+        ), f"Expected 3 differences, found {len(diff_data['diffs']['n1/n2']['n2'])}"
 
         # Verify the differences are correctly reported
-        for diff in diff_data["n1/n2"]["n2"]:
+        for diff in diff_data["diffs"]["n1/n2"]["n2"]:
             if column_name == "json_col":
                 assert (
                     diff[column_name].get("multiproc") == "modified"
@@ -1078,7 +1082,7 @@ class TestTableFilter:
             cur = conn.cursor()
             cur.execute(
                 f"""
-                UPDATE customers 
+                UPDATE customers
                 SET {column_name} = {column_name} || '-modified'
                 WHERE index < 50
                 RETURNING index, {column_name}
@@ -1114,9 +1118,10 @@ class TestTableFilter:
 
             # Verify all differences are within filter range
             assert (
-                len(diff_data["n1/n2"]["n2"]) == 49
-            ), f"Expected 49 differences, found {len(diff_data['n1/n2']['n2'])}"
-            for diff in diff_data["n1/n2"]["n2"]:
+                len(diff_data["diffs"]["n1/n2"]["n2"]) == 49
+            ), "Expected 49 differences,"
+            f" found {len(diff_data['diffs']['n1/n2']['n2'])}"
+            for diff in diff_data["diffs"]["n1/n2"]["n2"]:
                 assert (
                     diff["index"] < 100
                 ), f"Found diff outside filter range: index = {diff['index']}"
@@ -1194,7 +1199,7 @@ class TestTableFilter:
             cur = conn.cursor()
             cur.execute(
                 """
-                UPDATE customers 
+                UPDATE customers
                 SET city = 'FilterCity'
                 WHERE index < 50
             """
@@ -1227,9 +1232,7 @@ class TestTableFilter:
             )
             captured = capsys.readouterr()
             output = captured.out
-            clean_output = re.sub(
-                r"\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])", "", output
-            )
+            clean_output = re.sub(r"\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])", "", output)
 
             match = re.search(r"diffs written out to (.+\.json)", clean_output.lower())
             assert match, "Diff file path not found in output"
@@ -1244,9 +1247,9 @@ class TestTableFilter:
                 diff_data = json.load(f)
 
             assert (
-                len(diff_data["n1/n2"]["n2"]) == 49
+                len(diff_data["diffs"]["n1/n2"]["n2"]) == 49
             ), f"Expected 49 differences for {behavior}"
-            for diff in diff_data["n1/n2"]["n2"]:
+            for diff in diff_data["diffs"]["n1/n2"]["n2"]:
                 assert (
                     diff["index"] < 100
                 ), f"Found diff outside filter range in {behavior}"
