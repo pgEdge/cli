@@ -157,7 +157,7 @@ def remove_old_ctlib_dirs():
     lib_dir_mask = f"{MY_HOME}/hub/scripts/lib/py3.*-???"
 
     echo_cmd(f"rm -rf {lib_dir_mask}")
-    
+
 
 def get_ctlib_dir():
     if platform.system() == "Darwin":
@@ -415,7 +415,7 @@ def num_pg_minors(pg_minor, is_display=False):
             + f" WHERE component LIKE 'pg%' AND version LIKE '{pg_minor}%'\n"
             + f"   AND platform LIKE '%{get_el_ver()}%'"
         )
-    
+
         c.execute(sql)
         data = c.fetchall()
         c.close()
@@ -1134,7 +1134,7 @@ def disable_extension(p_ext, p_pg):
 
     if is_preload == "1":
         remove_pgconf_keyval(p_pg, "shared_preload_libraries", preload_name)
-    
+
     update_component_state(p_ext, "disabled")
 
     return(0)
@@ -1144,7 +1144,7 @@ def create_extension(p_pg, p_ext, p_reboot=False, p_extension="", p_enable=True)
     message(f"util.create_extension(" + \
         f"{p_pg}, {p_ext}, p_reboot={p_reboot}, p_extension='{p_extension}', p_enable={p_enable})", "debug")
 
-    if p_ext > " " and p_enable is True: 
+    if p_ext > " " and p_enable is True:
         rc = change_pgconf_keyval(p_pg, "shared_preload_libraries", p_ext)
 
     isRestart = os.getenv("isRestart")
@@ -2091,10 +2091,10 @@ def put_pgconf_auto(p_pgver, p_conf):
 
 def get_pgconf_value(p_pgver, p_key):
     config_file = get_pgconf_filename(p_pgver)
-    
-    if config_file == "":  
+
+    if config_file == "":
         return False
-    
+
     parameter_value = None
 
     with open(config_file, 'r') as conf_file:
@@ -2625,10 +2625,10 @@ def write_pgenv_file(
         ##    "    export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/lib64/perl5/CORE \n"
         ##)
         ##file.write("fi \n")
-      
+
         ##libpath=os.path.join(p_pghome, "lib")
         ##file.write(f"export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:{libpath} \n")
-       
+
         if os.path.exists("/etc/lsb-release"):
             # ubuntu xterm incompatible with el8 xterm key mappings
             file.write("export TERM=vt100\n")
@@ -3085,7 +3085,7 @@ def get_cpu():
         if pfm == "arm64":
             return("osx")
 
-    message(f"'{sys} - {pfm}' is not supported.", "warning")   
+    message(f"'{sys} - {pfm}' is not supported.", "warning")
     return("???")
 
 
@@ -3923,7 +3923,7 @@ def run_script(componentName, scriptName, scriptParm):
 
     componentDir = componentName
     is_ext = meta.is_extension(componentName)
-    if is_ext: 
+    if is_ext:
         componentDir = componentName[-4:]
         componentName = componentName[:-5]
 
@@ -3934,17 +3934,17 @@ def run_script(componentName, scriptName, scriptParm):
 
     if os.path.isfile(scriptFile):
         cmd = "bash"
-    else:   
-        cmd = sys.executable + " -u" 
-        scriptFile = scriptFile + ".py" 
+    else:
+        cmd = sys.executable + " -u"
+        scriptFile = scriptFile + ".py"
 
-    scriptFileFound = False 
+    scriptFileFound = False
     if os.path.isfile(scriptFile):
         scriptFileFound = True
 
     message(f"  - scriptFile='{scriptFile}', {scriptFileFound}", "debug")
 
-    rc = 0  
+    rc = 0
     compState = get_comp_state(componentName)
 
     if is_ext and scriptName.startswith("disable"):
@@ -3952,7 +3952,7 @@ def run_script(componentName, scriptName, scriptParm):
         compState = "Disabled"
 
     if compState in ["Enabled", "NotInstalled"]:
-        if is_ext: 
+        if is_ext:
             rc = config_extension(p_pg=componentDir, p_comp=componentName)
         else:
             if scriptFileFound is True:
@@ -3963,7 +3963,7 @@ def run_script(componentName, scriptName, scriptParm):
         print(f"Error running {scriptName}")
         exit_cleanly(1)
 
-    return 
+    return
 
 
 def update_component_state(p_app, p_mode, p_ver=None):
@@ -4064,7 +4064,7 @@ def run_rcommand(cmd, message="", host="", usr="", key="", verbose="info", max_a
     if host == "":
         host = "127.0.0.1"
     message = f"{host} : {message}"
-    
+
     echo_action(message, important=important)
     attempts = 0
     while attempts < max_attempts:
@@ -4072,10 +4072,10 @@ def run_rcommand(cmd, message="", host="", usr="", key="", verbose="info", max_a
         if result.returncode == 0:
             break
         attempts += 1
-        time.sleep(5) 
+        time.sleep(5)
     if verbose == "debug":
-        print (result.stdout) 
-        print (result.stderr) 
+        print (result.stdout)
+        print (result.stderr)
     if result.returncode == 0:
         status = "ok"
         echo_action(message, status, important=important)
@@ -4086,7 +4086,7 @@ def run_rcommand(cmd, message="", host="", usr="", key="", verbose="info", max_a
         else:
             status = "fail"
             echo_action(message, status, important=important)
-            print (result.stdout) 
+            print (result.stdout)
             exit(0)
     return result
 
@@ -4145,10 +4145,10 @@ def echo_node(node):
     total_length = max_key_length + max_value_length + 4  # for ': ' and some padding
     bold_hashes = "\033[1m" + "#" * total_length + "\033[0m"
     print(bold_hashes)
-    
+
     for key, value in node.items():
         print(f"# \033[1m{key.rjust(max_key_length)}:\033[0m {value}")
-    
+
     print(bold_hashes)
 
 def run_command(command_args, max_attempts=1, timeout=None, capture_output=True, env=None, cwd=None, verbose=False):

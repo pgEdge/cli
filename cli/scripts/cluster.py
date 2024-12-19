@@ -1477,7 +1477,7 @@ def add_node(
     repo1_retention_full = backrest_settings.get("repo1-retention-full", "7")
     log_level_console = backrest_settings.get("log-level-console", "info")
     repo1_cipher_type = backrest_settings.get("repo1-cipher-type", "aes-256-cbc")
-       
+
     rc = ssh_install_pgedge(
         cluster_name,
         db[0]["db_name"],
@@ -1498,12 +1498,12 @@ def add_node(
         cmd = f"{source_node_data['path']}/pgedge/pgedge install backrest"
         message = f"Installing backrest"
         run_cmd(cmd, source_node_data, message=message, verbose=verbose)
-    
+
 
         repo1_path_default = f"/var/lib/pgbackrest/{source_node_data['name']}"
-        
+
         repo1_path = backrest_settings.get("repo1-path", f"{repo1_path_default}")
-       
+
         cmd = f"sudo rm -rf {repo1_path}"
         message = f"Removing the repo-path"
         run_cmd(cmd, source_node_data, message=message, verbose=verbose)
