@@ -8,6 +8,7 @@ import meta
 import time
 import sys
 import getpass
+import re
 from tabulate import tabulate
 from ipaddress import ip_address
 
@@ -1245,11 +1246,11 @@ def create_spock_db(nodes, db, db_settings):
         cmd = (
             nc
             + " db create -U "
-            + db["username"]
+            + db["db_user"]
             + " -d "
-            + db["name"]
+            + db["db_name"]
             + " -p "
-            + db["password"]
+            + db["db_password"]
         )
         util.echo_cmd(cmd, host=ip, usr=n["os_user"], key=n["ssh_key"])
         if db_settings["auto_ddl"] == "on":
@@ -1422,7 +1423,7 @@ def add_node(
             json_validate_add_node(target_node_data)
     except Exception as e:
         util.exit_message(
-            f"Unable to load new node jsaon def file '{target_file_name}\n{e}"
+            f"Unable to load new node json def file '{target_node_file}\n{e}"
         )
 
     # Retrieve source node data
@@ -1434,6 +1435,7 @@ def add_node(
 
     for group in target_node_data.get("node_groups", []):
         ssh_info = group.get("ssh")
+        backrest_info = group.get("backrest")
         os_user = ssh_info.get("os_user", "")
         ssh_key = ssh_info.get("private_key", "")
 
@@ -1469,12 +1471,13 @@ def add_node(
         )
 
     # Fetch backrest settings from cluster JSON
-    backrest_settings = cluster_data.get("backrest", {})
+    backrest_settings = source_node_data.get("backrest", {})
+
     stanza = backrest_settings.get("stanza", f"pg{pg}")
     repo1_retention_full = backrest_settings.get("repo1-retention-full", "7")
     log_level_console = backrest_settings.get("log-level-console", "info")
     repo1_cipher_type = backrest_settings.get("repo1-cipher-type", "aes-256-cbc")
-
+       
     rc = ssh_install_pgedge(
         cluster_name,
         db[0]["db_name"],
@@ -1495,8 +1498,12 @@ def add_node(
         cmd = f"{source_node_data['path']}/pgedge/pgedge install backrest"
         message = f"Installing backrest"
         run_cmd(cmd, source_node_data, message=message, verbose=verbose)
+    
 
-        repo1_path = f"/var/lib/pgbackrest/{source_node_data['name']}"
+        repo1_path_default = f"/var/lib/pgbackrest/{source_node_data['name']}"
+        
+        repo1_path = backrest_settings.get("repo1-path", f"{repo1_path_default}")
+       
         cmd = f"sudo rm -rf {repo1_path}"
         message = f"Removing the repo-path"
         run_cmd(cmd, source_node_data, message=message, verbose=verbose)
@@ -1642,8 +1649,8 @@ def add_node(
     terminate_cluster_transactions(nodes, db[0]["db_name"], f"pg{pg}", verbose)
 
     spock = db_settings["spock_version"]
-    v4 = False
-    spock_maj = 3
+    v4 = True
+    spock_maj = 4
     if spock:
         ver = [int(x) for x in spock.split(".")]
         spock_maj = ver[0]
@@ -1662,21 +1669,57 @@ def add_node(
     message = f"Promoting standby to primary"
     run_cmd(cmd, new_node_data, message=message, verbose=verbose)
 
-    sql_cmd = "DROP extension spock cascade"
+    # Fetch all subscription names directly
+    sql_cmd = "SELECT sub_name FROM spock.subscription"
     cmd = f"{new_node_data['path']}/pgedge/pgedge psql '{sql_cmd}' {db[0]['db_name']}"
-    message = f"DROP extension spock cascade"
-    run_cmd(cmd, new_node_data, message=message, verbose=verbose)
+    message = "Fetch existing subscriptions"
+    result = run_cmd(cmd, node=new_node_data, message=message, verbose=verbose, capture_output=True)
 
-    parms = f"spock{spock_maj}{spock_min}" if spock else "spock"
+    subscriptions = [
+        re.sub(r'\x1b\[[0-9;]*m', '', line.strip())  # Remove escape sequences
+        for line in result.stdout.splitlines()[2:]   # Skip header lines
+        if line.strip() and not line.strip().startswith("(")  # Exclude metadata lines
+    ]
 
-    cmd = f'cd {new_node_data["path"]}/pgedge/; ./pgedge install {parms}'
-    message = f"Re-installing spock"
-    run_cmd(cmd, new_node_data, message=message, verbose=verbose)
+    # Remove any remaining blank or invalid entries
+    subscriptions = [sub for sub in subscriptions if sub]
 
-    sql_cmd = "CREATE EXTENSION spock"
+    # Drop each subscription if any exist
+    if subscriptions:
+        for sub_name in subscriptions:
+            cmd = f"{new_node_data['path']}/pgedge/pgedge spock sub-drop {sub_name} {db[0]['db_name']}"
+            message = f"Dropping old subscription {sub_name}"
+            run_cmd(cmd, node=new_node_data, message=message, verbose=verbose)
+    else:
+        print("No subscriptions to drop.")
+
+
+    # Check the number of nodes
+    sql_cmd = "SELECT node_name FROM spock.node"
     cmd = f"{new_node_data['path']}/pgedge/pgedge psql '{sql_cmd}' {db[0]['db_name']}"
-    message = f"Create extension spock"
-    run_cmd(cmd, new_node_data, message=message, verbose=verbose)
+    message = "Check if there are nodes"
+    result = run_cmd(cmd, node=new_node_data, message=message, verbose=verbose, capture_output=True)
+
+    # Parse node names from the output
+    print(f"\nRaw output:\n{result.stdout}")
+    nodes_list = [
+        re.sub(r'\x1b\[[0-9;]*m', '', line.strip())  # Remove escape sequences
+        for line in result.stdout.splitlines()[2:]   # Skip header lines
+        if line.strip() and not line.strip().startswith("(")  # Exclude metadata lines
+    ]
+
+    # Remove any remaining blank or invalid entries
+    nodes_list = [node for node in nodes_list if node]
+
+    # Drop each node if any exist
+    if nodes_list:
+        for node_name in nodes_list:
+            cmd = f"{new_node_data['path']}/pgedge/pgedge spock node-drop {node_name} {db[0]['db_name']}"
+            message = f"Dropping node {node_name}"
+            run_cmd(cmd, node=new_node_data, message=message, verbose=verbose)
+    else:
+        print("No nodes to drop.")
+
 
     create_node(new_node_data, db[0]["db_name"], verbose)
 

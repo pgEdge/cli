@@ -3,7 +3,6 @@ import subprocess
 import os
 import fire
 import util
-import util
 import json
 import sys
 from datetime import datetime
@@ -316,15 +315,17 @@ def run_external_command(command, **kwargs):
             full_command.append(str(value))
         else:
             print(f"Invalid key-value pair ignored: key={key}, value={value}")
-    print(f"Full command to be executed: {' '.join(full_command)}")
+    
+    print(f"Full command to be executed:\n {' '.join(full_command)}")
+    
     try:
         result = subprocess.run(full_command, check=True, text=True, capture_output=True)
         print("Command executed successfully.")
         print(result.stdout)
     except subprocess.CalledProcessError as e:
-        print(f"Command execution failed: {e.stderr}")
+        util.exit_message(f"Failed: {e.stderr}'")
     except Exception as e:
-        print(f"Exception occurred during command execution: {str(e)}")
+        util.exit_message(f"Failed:{str(e)}")
 
 def create_stanza(stanza, verbose=True):
     """Create the required stanza for pgBackRest."""
