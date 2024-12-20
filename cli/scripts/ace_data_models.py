@@ -88,6 +88,7 @@ class TableRepairTask:
     dry_run: bool
     generate_report: bool
     upsert_only: bool
+    fix_nulls: bool
 
     # Task-specific parameters
     scheduler: Task = field(default_factory=Task)

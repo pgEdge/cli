@@ -488,7 +488,7 @@ def check_diff_file_format(diff_file_path: str, task) -> dict:
 
         diff_json = {
             node_pair: {
-                node: [{key: str(val) for key, val in row.items()} for row in rows]
+                node: [{key: val for key, val in row.items()} for row in rows]
                 for node, rows in nodes_data.items()
             }
             for node_pair, nodes_data in diff_json["diffs"].items()
@@ -1034,7 +1034,10 @@ def table_repair_checks(tr_task: TableRepairTask) -> TableRepairTask:
     if not tr_task.diff_file_path:
         raise AceException("diff_file is a required argument")
 
-    if not tr_task.source_of_truth:
+    if type(tr_task.fix_nulls) is not bool:
+        raise AceException("fix_nulls should be True (1) or False (0)")
+
+    if not tr_task.source_of_truth and not tr_task.fix_nulls:
         raise AceException("source_of_truth is a required argument")
 
     # Check if diff_file exists on disk

@@ -103,6 +103,11 @@ Args:
         the repair. Defaults to False.
     upsert_only (bool, optional): If True, only performs upsert operations,
         skipping deletions. Defaults to False.
+    fix_nulls (bool, optional): If True, fixes null values in the table columns
+        by looking at the corresponding column in the other nodes. Does not need
+        the source of truth to be specified. Must be used only in special cases.
+        This is not a recommended option for repairing divergence. Defaults to
+        False.
 
 Raises:
     AceException: If there's an error specific to the ACE operation.
@@ -125,6 +130,7 @@ def table_repair_cli(
     quiet=False,
     generate_report=False,
     upsert_only=False,
+    fix_nulls=False,
 ):
 
     task_id = ace_db.generate_task_id()
@@ -140,6 +146,7 @@ def table_repair_cli(
             quiet_mode=quiet,
             generate_report=generate_report,
             upsert_only=upsert_only,
+            fix_nulls=fix_nulls,
         )
         raw_args.scheduler.task_id = task_id
         raw_args.scheduler.task_type = "table-repair"
@@ -147,7 +154,11 @@ def table_repair_cli(
         raw_args.scheduler.started_at = datetime.now()
         tr_task = ace.table_repair_checks(raw_args)
         ace_db.create_ace_task(task=tr_task)
-        ace_core.table_repair(tr_task)
+
+        if fix_nulls:
+            ace_core.table_repair_fix_nulls(tr_task)
+        else:
+            ace_core.table_repair(tr_task)
     except AceException as e:
         util.exit_message(str(e))
     except Exception as e:

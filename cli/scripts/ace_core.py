@@ -16,6 +16,7 @@ from psycopg.rows import dict_row, class_row
 from dateutil import parser
 
 import pgpasslib
+from tqdm.rich import tqdm
 import ace
 import ace_db
 import ace_html_reporter
@@ -1040,18 +1041,16 @@ def table_repair(tr_task: TableRepairTask):
             WHERE
             """
 
-            for k in keys_list:
-                delete_sql += f' "{k}" = %s AND'
-
-            delete_sql = delete_sql[:-3] + ";"
+            where_conditions = []
+            for key in keys_list:
+                where_conditions.append(f'"{key}" = %s')
+            delete_sql += " AND ".join(where_conditions) + ";"
 
         try:
             conn = conns[divergent_node]
             cur = conn.cursor()
             spock_version = ace.get_spock_version(conn)
 
-            # FIXME: Do not use harcoded version numbers
-            # Read required version numbers from a config file
             if spock_version >= config.SPOCK_REPAIR_MODE_MIN_VERSION:
                 cur.execute("SELECT spock.repair_mode(true);")
         except Exception as e:
@@ -1113,7 +1112,7 @@ def table_repair(tr_task: TableRepairTask):
             modified_row = tuple()
             for col_name in cols_list:
                 col_type = col_types[col_name]
-                elem = row[col_name]
+                elem = str(row[col_name])
 
                 try:
                     type_lower = col_type.lower()
@@ -1274,6 +1273,335 @@ def table_repair(tr_task: TableRepairTask):
     ace_db.update_ace_task(tr_task)
 
 
+"""
+This is a special case of table-repair where updates have propagated to nodes,
+but some columns have null values. We consult the diff file and fill in the nulls
+with the values from the other node--and, we do it on both sides.
+
+For example, if we have a table with columns `id`, `fname`, `lname`, and `age`,
+and we have a diff file that shows that `fname` and `lname` are updated on node1,
+but `age` is null on node1 and non-null on node2. Also suppose that lname is null
+on node2 and non-null on node1.
+
+We will fill in the null `age` values on node1 with the non-null `age` values from
+node2. We will also fill in the null `lname` values on node2 with the non-null
+`lname` values from node1.
+
+This can very quickly become an expensive operation if there are many rows with
+null values. So, we take a different approach here. We create a temporary table
+to store the values that need to be updated. We then perform a single UPDATE with
+a JOIN to efficiently update all rows at once.
+
+"""
+
+
+def table_repair_fix_nulls(tr_task: TableRepairTask) -> None:
+    """Fix null values between nodes by synchronizing non-null values.
+
+    Creates a temporary table to store values that need to be updated, then
+    performs a single UPDATE with a JOIN to efficiently update all rows at once.
+    """
+    start_time = datetime.now()
+    conns = {}
+    simple_primary_key = True
+    keys_list = tr_task.fields.key.split(",")
+
+    if len(keys_list) > 1:
+        simple_primary_key = False
+
+    try:
+        for params in tr_task.fields.conn_params:
+            hostname_key = params["host"] + ":" + params["port"]
+            node_hostname = tr_task.fields.host_map[hostname_key]
+            conns[node_hostname] = psycopg.connect(**params)
+    except Exception as e:
+        context = {"errors": [str(e)]}
+        ace.handle_task_exception(tr_task, context)
+        raise e
+
+    diff_json = ace.check_diff_file_format(tr_task.diff_file_path, tr_task)
+
+    # We are working with the assumption that column types are the same across nodes
+    col_types = next(iter(tr_task.fields.col_types.values()))
+
+    # Create temp table SQL--this will store the values that need to be updated
+    if simple_primary_key:
+        create_temp_sql = sql.SQL(
+            """
+            CREATE TEMP TABLE {null_updates} (
+                pkey {pkey_type},
+                column_name text,
+                column_value text
+            )
+        """
+        ).format(
+            null_updates=sql.Identifier(f"{tr_task.scheduler.task_id}_null_updates"),
+            pkey_type=sql.SQL(col_types[keys_list[0]]),
+        )
+    else:
+        create_temp_sql = sql.SQL(
+            """
+            CREATE TEMP TABLE {null_updates} (
+                {pkey_columns},
+                column_name text,
+                column_value text
+            )
+        """
+        ).format(
+            null_updates=sql.Identifier(f"{tr_task.scheduler.task_id}_null_updates"),
+            pkey_columns=sql.SQL(",\n").join(
+                sql.SQL("{} {}").format(sql.Identifier(key), sql.SQL(col_types[key]))
+                for key in keys_list
+            ),
+        )
+
+    node_pairs = list(diff_json.items())
+    total_pairs = len(node_pairs)
+
+    if not tr_task.quiet_mode:
+        util.message("\nRepairing null values:", p_state="info")
+        progress = tqdm(
+            total=100,
+            desc="Overall progress",
+            unit="%",
+        )
+        progress_pct = 0
+        progress_step = 100.0 / (total_pairs * 2)
+
+    for pair_idx, (node_pair, pair_diffs) in enumerate(node_pairs):
+        node1, node2 = node_pair.split("/")
+        node1_rows = pair_diffs[node1]
+        node2_rows = pair_diffs[node2]
+
+        if not tr_task.quiet_mode:
+            util.message(f"\nProcessing node pair {node_pair}", p_state="info")
+
+        # Create lookup dictionaries for faster access
+        def get_key_tuple(row):
+            return tuple(row[key] for key in keys_list)
+
+        node1_dict = {get_key_tuple(row): row for row in node1_rows}
+        node2_dict = {get_key_tuple(row): row for row in node2_rows}
+
+        # Find common keys between nodes
+        common_keys = set(node1_dict.keys()) & set(node2_dict.keys())
+
+        for node, conn in [(node1, conns[node1]), (node2, conns[node2])]:
+            if not tr_task.quiet_mode:
+                util.message(f"Processing node {node}", p_state="info")
+
+            try:
+                with conn.cursor() as cur:
+                    cur.execute(create_temp_sql)
+
+                    # Prepare batch insert into temp table
+                    insert_values = []
+                    for key in common_keys:
+                        row1 = node1_dict[key]
+                        row2 = node2_dict[key]
+
+                        # Compare all columns
+                        for col in set(row1.keys()) | set(row2.keys()):
+                            # TODO: What if the primary key itself, or one of
+                            # the keys in a composite pkey, is null?
+                            if col in keys_list:  # Skip primary key columns
+                                continue
+
+                            val1 = row1.get(col)
+                            val2 = row2.get(col)
+
+                            # If this node has null and other has non-null
+                            if (
+                                node == node1
+                                and (val1 is None or val1 == "")
+                                and val2 is not None
+                            ):
+                                # Handle JSON values
+                                if isinstance(val2, (dict, list)):
+                                    val2 = json.dumps(val2)
+
+                                if simple_primary_key:
+                                    insert_values.append((key[0], col, val2))
+                                else:
+                                    insert_values.append(key + (col, val2))
+                            elif (
+                                node == node2
+                                and (val2 is None or val2 == "")
+                                and val1 is not None
+                            ):
+                                # Handle JSON values
+                                if isinstance(val1, (dict, list)):
+                                    val1 = json.dumps(val1)
+
+                                if simple_primary_key:
+                                    insert_values.append((key[0], col, val1))
+                                else:
+                                    insert_values.append(key + (col, val1))
+
+                    # Batch insert into temp table
+                    if simple_primary_key:
+                        cur.executemany(
+                            sql.SQL(
+                                "INSERT INTO {null_updates} VALUES (%s, %s, %s)"
+                            ).format(
+                                null_updates=sql.Identifier(
+                                    f"{tr_task.scheduler.task_id}_null_updates"
+                                )
+                            ),
+                            insert_values,
+                        )
+                    else:
+                        placeholders = sql.SQL(", ").join(
+                            [sql.SQL("%s")] * (len(keys_list) + 2)
+                        )
+                        query = sql.SQL(
+                            "INSERT INTO {null_updates} VALUES ({placeholders})"
+                        ).format(
+                            null_updates=sql.Identifier(
+                                f"{tr_task.scheduler.task_id}_null_updates"
+                            ),
+                            placeholders=placeholders,
+                        )
+                        cur.executemany(query, insert_values)
+
+                    # Get unique columns that need updates
+                    cur.execute(
+                        sql.SQL(
+                            "SELECT DISTINCT column_name FROM {null_updates}"
+                        ).format(
+                            null_updates=sql.Identifier(
+                                f"{tr_task.scheduler.task_id}_null_updates"
+                            )
+                        )
+                    )
+                    columns_to_update = [row[0] for row in cur.fetchall()]
+
+                    if not tr_task.quiet_mode:
+                        if columns_to_update:
+                            util.message(
+                                f"Updating {len(columns_to_update)} columns on {node}",
+                                p_state="info",
+                            )
+                        else:
+                            util.message(
+                                f"No updates needed for {node}", p_state="info"
+                            )
+
+                    # Perform the UPDATE with dynamic column setting
+                    update_sql = sql.SQL(
+                        """
+                        UPDATE {table_name} t
+                        SET {column} = u.column_value::{type}
+                        FROM {null_updates} u
+                        WHERE {join_condition}
+                        AND u.column_name = {column_name}
+                    """
+                    )
+
+                    for col in columns_to_update:
+                        if simple_primary_key:
+                            join_cond = sql.SQL("t.{} = u.pkey").format(
+                                sql.Identifier(keys_list[0])
+                            )
+                        else:
+                            join_cond = sql.SQL(" AND ").join(
+                                sql.SQL("t.{} = u.{}").format(
+                                    sql.Identifier(key), sql.Identifier(key)
+                                )
+                                for key in keys_list
+                            )
+
+                        update_sql_formatted = update_sql.format(
+                            null_updates=sql.Identifier(
+                                f"{tr_task.scheduler.task_id}_null_updates"
+                            ),
+                            table_name=sql.SQL("{}.{}").format(
+                                sql.Identifier(tr_task.fields.l_schema),
+                                sql.Identifier(tr_task.fields.l_table),
+                            ),
+                            column=sql.Identifier(col),
+                            # Remove [] suffix while casting
+                            type=sql.SQL(col_types[col].replace("[]", "")),
+                            join_condition=join_cond,
+                            column_name=sql.Literal(col),
+                        )
+
+                        # For array types, we need to convert the string representation
+                        # from Python list format "[1,2,3]" to Postgres array
+                        # format "{1,2,3}"
+                        if col_types[col].endswith("[]"):
+                            update_sql_formatted = sql.SQL(
+                                """
+                                UPDATE {table_name} t
+                                SET {column} = string_to_array(
+                                    trim(both '[]' from u.column_value), 
+                                    ','
+                                )::{type}[]
+                                FROM {null_updates} u
+                                WHERE {join_condition}
+                                AND u.column_name = {column_name}
+                            """
+                            ).format(
+                                null_updates=sql.Identifier(
+                                    f"{tr_task.scheduler.task_id}_null_updates"
+                                ),
+                                table_name=sql.SQL("{}.{}").format(
+                                    sql.Identifier(tr_task.fields.l_schema),
+                                    sql.Identifier(tr_task.fields.l_table),
+                                ),
+                                column=sql.Identifier(col),
+                                type=sql.SQL(col_types[col].replace("[]", "")),
+                                join_condition=join_cond,
+                                column_name=sql.Literal(col),
+                            )
+
+                        cur.execute(update_sql_formatted)
+
+                    # Cleanup
+                    cur.execute(
+                        sql.SQL("DROP TABLE {null_updates}").format(
+                            null_updates=sql.Identifier(
+                                f"{tr_task.scheduler.task_id}_null_updates"
+                            )
+                        )
+                    )
+                    conn.commit()
+
+                    if not tr_task.quiet_mode:
+                        # Update progress after processing each node
+                        progress_pct += progress_step
+                        progress.n = int(progress_pct)
+                        progress.refresh()
+
+            except Exception as e:
+                conn.rollback()
+                context = {"errors": [f"Error updating nulls on {node}: {str(e)}"]}
+                ace.handle_task_exception(tr_task, context)
+                raise e
+
+    if not tr_task.quiet_mode:
+        progress.n = 100
+        progress.refresh()
+        progress.close()
+
+    end_time = datetime.now()
+    run_time = util.round_timedelta(end_time - start_time).total_seconds()
+    run_time_str = f"{run_time:.2f}"
+
+    util.message(
+        f"\nSuccessfully corrected nulls in {tr_task._table_name} in cluster"
+        f" {tr_task.cluster_name}\n",
+        p_state="success",
+        quiet_mode=tr_task.quiet_mode,
+    )
+
+    util.message(
+        f"RUN TIME = {run_time_str} seconds",
+        p_state="info",
+        quiet_mode=tr_task.quiet_mode,
+    )
+
+
 def table_rerun_temptable(td_task: TableDiffTask) -> None:
 
     # load diff data and validate
@@ -1290,8 +1618,7 @@ def table_rerun_temptable(td_task: TableDiffTask) -> None:
             nd1, nd2 = node_pair.split("/")
 
             for row in (
-                diff_data["diffs"][node_pair][nd1]
-                + diff_data["diffs"][node_pair][nd2]
+                diff_data["diffs"][node_pair][nd1] + diff_data["diffs"][node_pair][nd2]
             ):
                 diff_keys.add(row[key[0]])
 
@@ -1301,8 +1628,7 @@ def table_rerun_temptable(td_task: TableDiffTask) -> None:
             nd1, nd2 = node_pair.split("/")
 
             for row in (
-                diff_data["diffs"][node_pair][nd1]
-                + diff_data["diffs"][node_pair][nd2]
+                diff_data["diffs"][node_pair][nd1] + diff_data["diffs"][node_pair][nd2]
             ):
                 diff_keys.add(tuple(row[key_component] for key_component in key))
 
@@ -1415,8 +1741,7 @@ def table_rerun_async(td_task: TableDiffTask) -> None:
             nd1, nd2 = node_pair.split("/")
 
             for row in (
-                diff_data["diffs"][node_pair][nd1]
-                + diff_data["diffs"][node_pair][nd2]
+                diff_data["diffs"][node_pair][nd1] + diff_data["diffs"][node_pair][nd2]
             ):
                 if row[key[0]] not in diff_kset:
                     diff_kset.add(row[key[0]])
@@ -1427,8 +1752,7 @@ def table_rerun_async(td_task: TableDiffTask) -> None:
             nd1, nd2 = node_pair.split("/")
 
             for row in (
-                diff_data["diffs"][node_pair][nd1]
-                + diff_data["diffs"][node_pair][nd2]
+                diff_data["diffs"][node_pair][nd1] + diff_data["diffs"][node_pair][nd2]
             ):
                 element = tuple(row[key_component] for key_component in key)
                 if element not in diff_kset:
