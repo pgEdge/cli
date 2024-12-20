@@ -1335,9 +1335,7 @@ def table_repair_fix_nulls(tr_task: TableRepairTask) -> None:
             )
         """
         ).format(
-            null_updates=sql.Identifier(
-                f"{tr_task.scheduler.task_id}_null_updates"
-            ),
+            null_updates=sql.Identifier(f"{tr_task.scheduler.task_id}_null_updates"),
             pkey_type=sql.SQL(col_types[keys_list[0]]),
         )
     else:
@@ -1350,13 +1348,11 @@ def table_repair_fix_nulls(tr_task: TableRepairTask) -> None:
             )
         """
         ).format(
-            null_updates=sql.Identifier(
-                f"{tr_task.scheduler.task_id}_null_updates"
-            ),
+            null_updates=sql.Identifier(f"{tr_task.scheduler.task_id}_null_updates"),
             pkey_columns=sql.SQL(",\n").join(
                 sql.SQL("{} {}").format(sql.Identifier(key), sql.SQL(col_types[key]))
                 for key in keys_list
-            )
+            ),
         )
 
     node_pairs = list(diff_json.items())
@@ -1420,6 +1416,10 @@ def table_repair_fix_nulls(tr_task: TableRepairTask) -> None:
                                 and (val1 is None or val1 == "")
                                 and val2 is not None
                             ):
+                                # Handle JSON values
+                                if isinstance(val2, (dict, list)):
+                                    val2 = json.dumps(val2)
+
                                 if simple_primary_key:
                                     insert_values.append((key[0], col, val2))
                                 else:
@@ -1429,6 +1429,10 @@ def table_repair_fix_nulls(tr_task: TableRepairTask) -> None:
                                 and (val2 is None or val2 == "")
                                 and val1 is not None
                             ):
+                                # Handle JSON values
+                                if isinstance(val1, (dict, list)):
+                                    val1 = json.dumps(val1)
+
                                 if simple_primary_key:
                                     insert_values.append((key[0], col, val1))
                                 else:
@@ -1447,18 +1451,18 @@ def table_repair_fix_nulls(tr_task: TableRepairTask) -> None:
                             insert_values,
                         )
                     else:
-                        placeholders = ",".join(["%s"] * (len(keys_list) + 2))
-                        cur.executemany(
-                            sql.SQL(
-                                "INSERT INTO {null_updates} VALUES ({placeholders})"
-                            ).format(
-                                null_updates=sql.Identifier(
-                                    f"{tr_task.scheduler.task_id}_null_updates"
-                                ),
-                                placeholders=sql.Literal(placeholders),
-                            ),
-                            insert_values,
+                        placeholders = sql.SQL(", ").join(
+                            [sql.SQL("%s")] * (len(keys_list) + 2)
                         )
+                        query = sql.SQL(
+                            "INSERT INTO {null_updates} VALUES ({placeholders})"
+                        ).format(
+                            null_updates=sql.Identifier(
+                                f"{tr_task.scheduler.task_id}_null_updates"
+                            ),
+                            placeholders=placeholders,
+                        )
+                        cur.executemany(query, insert_values)
 
                     # Get unique columns that need updates
                     cur.execute(
@@ -1507,8 +1511,37 @@ def table_repair_fix_nulls(tr_task: TableRepairTask) -> None:
                                 for key in keys_list
                             )
 
-                        cur.execute(
-                            update_sql.format(
+                        update_sql_formatted = update_sql.format(
+                            null_updates=sql.Identifier(
+                                f"{tr_task.scheduler.task_id}_null_updates"
+                            ),
+                            table_name=sql.SQL("{}.{}").format(
+                                sql.Identifier(tr_task.fields.l_schema),
+                                sql.Identifier(tr_task.fields.l_table),
+                            ),
+                            column=sql.Identifier(col),
+                            # Remove [] suffix while casting
+                            type=sql.SQL(col_types[col].replace("[]", "")),
+                            join_condition=join_cond,
+                            column_name=sql.Literal(col),
+                        )
+
+                        # For array types, we need to convert the string representation
+                        # from Python list format "[1,2,3]" to Postgres array
+                        # format "{1,2,3}"
+                        if col_types[col].endswith("[]"):
+                            update_sql_formatted = sql.SQL(
+                                """
+                                UPDATE {table_name} t
+                                SET {column} = string_to_array(
+                                    trim(both '[]' from u.column_value), 
+                                    ','
+                                )::{type}[]
+                                FROM {null_updates} u
+                                WHERE {join_condition}
+                                AND u.column_name = {column_name}
+                            """
+                            ).format(
                                 null_updates=sql.Identifier(
                                     f"{tr_task.scheduler.task_id}_null_updates"
                                 ),
@@ -1517,11 +1550,12 @@ def table_repair_fix_nulls(tr_task: TableRepairTask) -> None:
                                     sql.Identifier(tr_task.fields.l_table),
                                 ),
                                 column=sql.Identifier(col),
-                                type=sql.SQL(col_types[col]),
+                                type=sql.SQL(col_types[col].replace("[]", "")),
                                 join_condition=join_cond,
                                 column_name=sql.Literal(col),
                             )
-                        )
+
+                        cur.execute(update_sql_formatted)
 
                     # Cleanup
                     cur.execute(
