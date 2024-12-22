@@ -1102,10 +1102,14 @@ def table_repair_checks(tr_task: TableRepairTask) -> TableRepairTask:
         cluster_nodes.append(combined_json)
 
     # Check to see if source_of_truth node is present in cluster
-    if not any(node.get("name") == tr_task.source_of_truth for node in cluster_nodes):
-        raise AceException(
-            f"Source of truth node {tr_task.source_of_truth} not present in cluster"
-        )
+    if tr_task.source_of_truth and not tr_task.fix_nulls:
+        # Separating out the conditions to make it easier on the eyes
+        if not any(
+            node.get("name") == tr_task.source_of_truth for node in cluster_nodes
+        ):
+            raise AceException(
+                f"Source of truth node {tr_task.source_of_truth} not present in cluster"
+            )
 
     cols = None
     key = None
