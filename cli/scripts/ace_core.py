@@ -16,7 +16,7 @@ from psycopg.rows import dict_row, class_row
 from dateutil import parser
 
 import pgpasslib
-from tqdm.rich import tqdm
+from tqdm import tqdm
 import ace
 import ace_db
 import ace_html_reporter

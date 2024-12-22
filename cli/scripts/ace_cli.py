@@ -122,9 +122,9 @@ Returns:
 
 def table_repair_cli(
     cluster_name,
-    diff_file,
-    source_of_truth,
     table_name,
+    diff_file,
+    source_of_truth=None,
     dbname=None,
     dry_run=False,
     quiet=False,
