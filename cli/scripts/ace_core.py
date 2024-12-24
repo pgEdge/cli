@@ -341,7 +341,9 @@ def compare_checksums(shared_objects, worker_state, batches):
                 # It is possible that the hash mismatch is a false negative.
                 # E.g., if there are extraneous spaces in the JSONB column.
                 # In this case, we can still consider the block to be OK.
-                if not t1_diff and not t2_diff:
+                if (not t1_diff and not t2_diff) or (
+                    len(t1_diff) == 0 and len(t2_diff) == 0
+                ):
                     result_dict = create_result_dict(
                         node_pair, batch, config.BLOCK_OK, "BLOCK_OK"
                     )
