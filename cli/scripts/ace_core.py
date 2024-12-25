@@ -15,7 +15,6 @@ from psycopg import sql
 from psycopg.rows import dict_row, class_row
 from dateutil import parser
 
-import pgpasslib
 from tqdm import tqdm
 import ace
 import ace_db
@@ -33,6 +32,7 @@ from ace_data_models import (
 )
 
 from ace_exceptions import AceException
+import ace_auth as auth
 
 
 def run_query(worker_state, host, query):
@@ -47,6 +47,7 @@ def init_conn_pool(shared_objects, worker_state):
 
     cluster_nodes = []
     database = shared_objects["database"]
+    td_task = shared_objects["td_task"]
 
     # Combine db and cluster_nodes into a single json
     for node in node_info:
@@ -54,31 +55,13 @@ def init_conn_pool(shared_objects, worker_state):
         cluster_nodes.append(combined_json)
 
     for node in cluster_nodes:
-        params = {
-            "dbname": node["db_name"],
-            "user": node["db_user"],
-            "host": node["public_ip"],
-            "port": node.get("port", 5432),
-            "options": f"-c statement_timeout={config.STATEMENT_TIMEOUT}",
-            "application_name": "ACE",
-        }
-        if node["db_password"]:
-            params["password"] = node["db_password"]
-        else:
-            pgpass = pgpasslib.getpass(
-                host=node["name"],
-                user=node["db_user"],
-                dbname=node["db_name"],
-                port=node["port"],
+        try:
+            _, conn = td_task.connection_pool.get_cluster_node_connection(
+                node, shared_objects["cluster_name"]
             )
-            if not pgpass:
-                raise AceException(
-                    f"No password found for {node['name']} in"
-                    f" {shared_objects['cluster_name']}.json or ~/.pgpass"
-                )
-            params["password"] = pgpass
-
-        worker_state[node["name"]] = psycopg.connect(**params).cursor()
+            worker_state[node["name"]] = conn.cursor()
+        except auth.AuthenticationError as e:
+            raise AceException(str(e))
 
 
 # Ignore the type checker warning for shared_objects.
@@ -416,7 +399,16 @@ def table_diff(td_task: TableDiffTask):
 
     try:
         for params in td_task.fields.conn_params:
-            conn = psycopg.connect(**params)
+            node_info = {
+                "public_ip": params["host"],
+                "port": params["port"],
+                "db_name": params["dbname"],
+                "db_user": params["user"],
+                "db_password": params.get("password", None),
+            }
+            _, conn = td_task.connection_pool.get_cluster_node_connection(
+                node_info, td_task.cluster_name
+            )
 
             rows = ace.get_row_count(
                 conn, td_task.fields.l_schema, td_task.fields.l_table
@@ -563,6 +555,7 @@ def table_diff(td_task: TableDiffTask):
         "diff_dict": diff_dict,
         "row_diff_count": row_diff_count,
         "lock": lock,
+        "td_task": td_task,
     }
 
     util.message(
@@ -719,12 +712,23 @@ def table_diff(td_task: TableDiffTask):
 
     # We need to delete the view if it was created
     if td_task.table_filter:
-        for conn in conn_list:
+        for param in td_task.fields.conn_params:
+            node_info = {
+                "public_ip": param["host"],
+                "port": param["port"],
+                "db_user": param["user"],
+                "db_name": param["dbname"],
+                "db_password": param.get("password", None),
+            }
+            _, conn = td_task.connection_pool.get_cluster_node_connection(
+                node_info, td_task.cluster_name
+            )
             conn.execute(
                 sql.SQL("DROP VIEW IF EXISTS {view_name}").format(
                     view_name=sql.Identifier(f"{td_task.scheduler.task_id}_view"),
                 )
             )
+            conn.commit()
 
     td_task.scheduler.task_status = "COMPLETED"
     td_task.scheduler.finished_at = datetime.now()
@@ -754,12 +758,22 @@ def table_repair(tr_task: TableRepairTask):
 
     try:
         for params in tr_task.fields.conn_params:
-            hostname_key = params["host"] + ":" + params["port"]
+            node_info = {
+                "public_ip": params["host"],
+                "port": params["port"],
+                "db_user": params["user"],
+                "db_name": params["dbname"],
+                "db_password": params.get("password", None),
+            }
+            hostname_key = node_info["public_ip"] + ":" + node_info["port"]
             node_hostname = tr_task.fields.host_map[hostname_key]
             if tr_task.source_of_truth == node_hostname:
                 source_of_truth_node_key = hostname_key
 
-            conns[node_hostname] = psycopg.connect(**params)
+            _, conn = tr_task.connection_pool.get_cluster_node_connection(
+                node_info, tr_task.cluster_name
+            )
+            conns[node_hostname] = conn
     except Exception as e:
         context = {"errors": [str(e)]}
         ace.handle_task_exception(tr_task, context)
@@ -1313,9 +1327,20 @@ def table_repair_fix_nulls(tr_task: TableRepairTask) -> None:
 
     try:
         for params in tr_task.fields.conn_params:
-            hostname_key = params["host"] + ":" + params["port"]
+            node_info = {
+                "public_ip": params["host"],
+                "port": params["port"],
+                "db_user": params["user"],
+                "db_name": params["dbname"],
+                "db_password": params.get("password", None),
+            }
+
+            hostname_key = node_info["public_ip"] + ":" + node_info["port"]
             node_hostname = tr_task.fields.host_map[hostname_key]
-            conns[node_hostname] = psycopg.connect(**params)
+            _, conn = tr_task.connection_pool.get_cluster_node_connection(
+                node_info, tr_task.cluster_name
+            )
+            conns[node_hostname] = conn
     except Exception as e:
         context = {"errors": [str(e)]}
         ace.handle_task_exception(tr_task, context)
@@ -1536,7 +1561,7 @@ def table_repair_fix_nulls(tr_task: TableRepairTask) -> None:
                                 """
                                 UPDATE {table_name} t
                                 SET {column} = string_to_array(
-                                    trim(both '[]' from u.column_value), 
+                                    trim(both '[]' from u.column_value),
                                     ','
                                 )::{type}[]
                                 FROM {null_updates} u
@@ -1658,7 +1683,17 @@ def table_rerun_temptable(td_task: TableDiffTask) -> None:
 
     try:
         for params in td_task.fields.conn_params:
-            conn_list.append(psycopg.connect(**params))
+            node_info = {
+                "public_ip": params["host"],
+                "port": params["port"],
+                "db_user": params["user"],
+                "db_name": params["dbname"],
+                "db_password": params.get("password", None),
+            }
+            _, conn = td_task.connection_pool.get_cluster_node_connection(
+                node_info, td_task.cluster_name
+            )
+            conn_list.append(conn)
 
         for con in conn_list:
             authorised, missing_privileges = ace.check_user_privileges(
@@ -1706,11 +1741,20 @@ def table_rerun_temptable(td_task: TableDiffTask) -> None:
         raise e
 
     try:
-        for con in conn_list:
-            cur = con.cursor()
+        for params in td_task.fields.conn_params:
+            node_info = {
+                "public_ip": params["host"],
+                "port": params["port"],
+                "db_user": params["user"],
+                "db_name": params["dbname"],
+                "db_password": params.get("password", None),
+            }
+
+            _, conn = td_task.connection_pool.get_cluster_node_connection(
+                node_info, td_task.cluster_name
+            )
+            cur = conn.cursor()
             cur.execute(clean_qry)
-            cur.close()
-            con.commit()
     except Exception as e:
         context = {"errors": [f"Could not clean up temp table: {str(e)}"]}
         ace.handle_task_exception(td_task, context)
@@ -1815,6 +1859,7 @@ def table_rerun_async(td_task: TableDiffTask) -> None:
         "diff_dict": diff_dict,
         "row_diff_count": row_diff_count,
         "lock": lock,
+        "td_task": td_task,
     }
 
     util.message(
@@ -2010,6 +2055,7 @@ def repset_diff(rd_task: RepsetDiffTask) -> None:
                 "mismatch": td_task.scheduler.task_context["mismatch"],
                 "diff_file_path": getattr(td_task, "diff_file_path", None),
             }
+            td_task.connection_pool.close_all()
         except Exception as e:
             errors_encountered = True
             status = {
@@ -2046,9 +2092,17 @@ def spock_diff(sd_task: SpockDiffTask) -> None:
 
     try:
         for params in sd_task.fields.conn_params:
-            conns[sd_task.fields.host_map[params["host"] + ":" + params["port"]]] = (
-                psycopg.connect(**params, row_factory=dict_row)
+            node_info = {
+                "public_ip": params["host"],
+                "port": params["port"],
+                "db_user": params["user"],
+                "db_name": params["dbname"],
+                "db_password": params.get("password", None),
+            }
+            _, conn = sd_task.connection_pool.get_cluster_node_connection(
+                node_info, sd_task.cluster_name
             )
+            conns[sd_task.fields.host_map[params["host"] + ":" + params["port"]]] = conn
     except Exception as e:
         context = {"errors": [f"Could not connect to nodes: {str(e)}"]}
         ace.handle_task_exception(sd_task, context)
@@ -2528,31 +2582,9 @@ def auto_repair():
     conn_map = {}
 
     for node in cluster_nodes:
-        params = {
-            "dbname": node["db_name"],
-            "host": node["public_ip"],
-            "port": node["port"],
-            "user": node["db_user"],
-            "options": f"-c statement_timeout={config.STATEMENT_TIMEOUT}",
-            "application_name": "ACE",
-        }
-        if node["db_password"]:
-            params["password"] = node["db_password"]
-        else:
-            pgpass = pgpasslib.getpass(
-                host=node["name"],
-                user=node["db_user"],
-                dbname=node["db_name"],
-                port=node["port"],
-            )
-            if not pgpass:
-                raise AceException(
-                    f"No password found for {node['name']} in"
-                    f" {cluster_name}.json or ~/.pgpass"
-                )
-            params["password"] = pgpass
         try:
-            conn_map[node["name"]] = psycopg.connect(**params)
+            _, conn = auth.get_cluster_node_connection(node, cluster_name)
+            conn_map[node["name"]] = conn
             cur = conn_map[node["name"]].cursor(row_factory=dict_row)
             cur.execute(oid_sql)
             oid_to_node_name = {

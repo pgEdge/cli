@@ -80,6 +80,7 @@ def table_diff_cli(
         td_task = ace.table_diff_checks(raw_args)
         ace_db.create_ace_task(task=td_task)
         ace_core.table_diff(td_task)
+        td_task.connection_pool.close_all()
     except AceException as e:
         util.exit_message(str(e))
     except Exception as e:
@@ -159,6 +160,8 @@ def table_repair_cli(
             ace_core.table_repair_fix_nulls(tr_task)
         else:
             ace_core.table_repair(tr_task)
+
+        tr_task.connection_pool.close_all()
     except AceException as e:
         util.exit_message(str(e))
     except Exception as e:
@@ -232,6 +235,8 @@ def table_rerun_cli(
             ace_core.table_rerun_temptable(td_task)
         else:
             util.exit_message(f"Invalid behavior: {behavior}")
+
+        td_task.connection_pool.close_all()
     except AceException as e:
         util.exit_message(str(e))
     except Exception as e:
@@ -303,6 +308,10 @@ def repset_diff_cli(
         rd_task = ace.repset_diff_checks(raw_args)
         ace_db.create_ace_task(task=rd_task)
         ace_core.repset_diff(rd_task)
+
+        # TODO: Figure out a way to handle repset-level connection pooling
+        # This close_all() is redundant currently
+        rd_task.connection_pool.close_all()
     except AceException as e:
         util.exit_message(str(e))
     except Exception as e:
@@ -351,6 +360,7 @@ def spock_diff_cli(
         spock_diff_task = ace.spock_diff_checks(raw_args)
         ace_db.create_ace_task(task=spock_diff_task)
         ace_core.spock_diff(spock_diff_task)
+        spock_diff_task.connection_pool.close_all()
     except AceException as e:
         util.exit_message(str(e))
     except Exception as e:
@@ -396,6 +406,7 @@ def schema_diff_cli(cluster_name, schema_name, nodes="all", dbname=None, quiet=F
         sd_task = ace.schema_diff_checks(raw_args)
         ace_db.create_ace_task(task=sd_task)
         ace_core.schema_diff(sd_task)
+        sd_task.connection_pool.close_all()
     except AceException as e:
         util.exit_message(str(e))
     except Exception as e:

@@ -2,6 +2,8 @@ from collections import defaultdict
 from dataclasses import dataclass, field
 from datetime import datetime
 
+from ace_auth import ConnectionPool
+
 """
 Use a dataclass to store the raw and processed inputs from the user
 """
@@ -54,6 +56,8 @@ class TableDiffTask:
     # and is not mandatory
     diff_file_path: str = None
 
+    connection_pool: ConnectionPool = field(default_factory=ConnectionPool)
+
     diff_summary: dict = field(default_factory=dict)
 
     # If we're invoking table-diff from repset-diff,
@@ -90,6 +94,8 @@ class TableRepairTask:
     upsert_only: bool
     fix_nulls: bool
 
+    connection_pool: ConnectionPool = field(default_factory=ConnectionPool)
+
     # Task-specific parameters
     scheduler: Task = field(default_factory=Task)
 
@@ -119,6 +125,8 @@ class RepsetDiffTask:
 
     invoke_method: str = "CLI"
 
+    connection_pool: ConnectionPool = field(default_factory=ConnectionPool)
+
     # Task-specific parameters
     scheduler: Task = field(default_factory=Task)
 
@@ -137,6 +145,8 @@ class SpockDiffTask:
     _nodes: str
     _dbname: str
     quiet_mode: bool
+
+    connection_pool: ConnectionPool = field(default_factory=ConnectionPool)
 
     # Task-specific parameters
     scheduler: Task = field(default_factory=Task)
@@ -158,6 +168,8 @@ class SchemaDiffTask:
     _dbname: str
     quiet_mode: bool
 
+    connection_pool: ConnectionPool = field(default_factory=ConnectionPool)
+
     # Task-specific parameters
     scheduler: Task = field(default_factory=Task)
 
@@ -165,6 +177,7 @@ class SchemaDiffTask:
     fields: DerivedFields = field(default_factory=DerivedFields)
 
 
+# TODO: Handle connection pool for auto-repair tasks!!
 @dataclass
 class AutoRepairTask:
     remote_origin: int

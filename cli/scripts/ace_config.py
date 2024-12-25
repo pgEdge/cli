@@ -1,7 +1,15 @@
 import os
 
+"""
+
+** ACE CLI and common configuration options **
+
+"""
+
+# ==============================================================================
 # Postgres options
 STATEMENT_TIMEOUT = 60000
+CONNECTION_TIMEOUT = 10000
 
 
 #  Default values for ACE table-diff
@@ -23,6 +31,16 @@ BLOCK_ERROR = 3
 # Spock-related options
 SPOCK_REPAIR_MODE_MIN_VERSION = 4.0
 
+# ==============================================================================
+
+"""
+
+** ACE Background Service Options **
+
+"""
+
+LISTEN_ADDRESS = "0.0.0.0"
+LISTEN_PORT = 5000
 
 """
 Table-diff scheduling options
@@ -94,9 +112,7 @@ schedule_config = [
 ]
 
 
-"""
-ACE auto-repair options
-"""
+# ACE auto-repair options
 
 auto_repair_config = {
     "enabled": True,
@@ -106,3 +122,10 @@ auto_repair_config = {
     "status_update_interval": "1000s",
 }
 
+# Cert-based auth options
+
+ACE_USER_CERT_FILE = "data/pki/admin-cert/admin.crt"
+ACE_USER_KEY_FILE = "data/pki/admin-cert/admin.key"
+CA_CERT_FILE = "data/pki/ca.crt"
+
+# ==============================================================================

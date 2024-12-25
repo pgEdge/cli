@@ -13,7 +13,6 @@ from datetime import datetime
 import logging
 
 import ace_core
-import pgpasslib
 import fire
 import psycopg
 from psycopg.rows import dict_row
@@ -31,6 +30,7 @@ from ace_data_models import (
     TableRepairTask,
 )
 import ace_cli
+import ace_auth as auth
 from ace_exceptions import AceException
 
 
@@ -818,44 +818,20 @@ def table_diff_checks(td_task: TableDiffTask) -> TableDiffTask:
     required_privileges = ["SELECT"]
 
     try:
-        for nd in cluster_nodes:
-            hostname = nd["name"]
-            host_ip = nd["public_ip"]
-            user = nd["db_user"]
-            dbname = nd["db_name"]
-            db_password = nd["db_password"]
-            port = nd.get("port", 5432)
+        for node_info in cluster_nodes:
+            hostname = node_info["name"]
+            host_ip = node_info["public_ip"]
+            user = node_info["db_user"]
+            port = node_info.get("port", 5432)
 
             if td_task._nodes == "all":
-                node_list.append(nd["name"])
+                node_list.append(node_info["name"])
 
-            if (node_list and nd["name"] in node_list) or (not node_list):
-                params = {
-                    "dbname": dbname,
-                    "user": user,
-                    "host": host_ip,
-                    "port": port,
-                    "options": f"-c statement_timeout={config.STATEMENT_TIMEOUT}",
-                    "application_name": "ACE",
-                }
+            if (node_list and node_info["name"] in node_list) or (not node_list):
 
-                if db_password:
-                    params["password"] = db_password
-                else:
-                    pgpass = pgpasslib.getpass(
-                        host=hostname,
-                        user=user,
-                        dbname=dbname,
-                        port=port,
-                    )
-                    if not pgpass:
-                        raise AceException(
-                            f"No password found for {hostname} in"
-                            f" {td_task.cluster_name}.json or ~/.pgpass"
-                        )
-                    params["password"] = pgpass
-
-                conn = psycopg.connect(**params)
+                params, conn = td_task.connection_pool.get_cluster_node_connection(
+                    node_info, td_task.cluster_name
+                )
 
                 curr_cols = get_cols(conn, l_schema, l_table)
                 curr_key = get_key(conn, l_schema, l_table)
@@ -1126,36 +1102,11 @@ def table_repair_checks(tr_task: TableRepairTask) -> TableRepairTask:
             hostname = nd["name"]
             host_ip = nd["public_ip"]
             user = nd["db_user"]
-            dbname = nd["db_name"]
-            db_password = nd["db_password"]
             port = nd.get("port", 5432)
 
-            params = {
-                "dbname": dbname,
-                "user": user,
-                "host": host_ip,
-                "port": port,
-                "options": f"-c statement_timeout={config.STATEMENT_TIMEOUT}",
-                "application_name": "ACE",
-            }
-
-            if db_password:
-                params["password"] = db_password
-            else:
-                pgpass = pgpasslib.getpass(
-                    host=hostname,
-                    user=user,
-                    dbname=dbname,
-                    port=port,
-                )
-                if not pgpass:
-                    raise AceException(
-                        f"No password found for {hostname} in"
-                        f" {tr_task.cluster_name}.json or ~/.pgpass"
-                    )
-                params["password"] = pgpass
-
-            conn = psycopg.connect(**params)
+            params, conn = tr_task.connection_pool.get_cluster_node_connection(
+                nd, tr_task.cluster_name
+            )
 
             curr_cols = get_cols(conn, l_schema, l_table)
             curr_key = get_key(conn, l_schema, l_table)
@@ -1339,30 +1290,8 @@ def repset_diff_checks(rd_task: RepsetDiffTask) -> RepsetDiffTask:
                 node_list.append(nd["name"])
 
             if (node_list and nd["name"] in node_list) or (not node_list):
-                params = {
-                    "dbname": nd["db_name"],
-                    "user": nd["db_user"],
-                    "host": nd["public_ip"],
-                    "port": nd.get("port", 5432),
-                    "options": f"-c statement_timeout={config.STATEMENT_TIMEOUT}",
-                    "application_name": "ACE",
-                }
-                if nd["db_password"]:
-                    params["password"] = nd["db_password"]
-                else:
-                    pgpass = pgpasslib.getpass(
-                        host=nd["name"],
-                        user=nd["db_user"],
-                        dbname=nd["db_name"],
-                        port=nd.get("port", 5432),
-                    )
-                    if not pgpass:
-                        raise AceException(
-                            f"No password found for {nd['name']} in"
-                            f" {rd_task.cluster_name}.json or ~/.pgpass"
-                        )
-                    params["password"] = pgpass
-                conn_list.append(psycopg.connect(**params))
+                _, conn = auth.get_cluster_node_connection(nd, rd_task.cluster_name)
+                conn_list.append(conn)
 
     except Exception as e:
         raise AceException("Error in diff_tbls() Getting Connections:" + str(e), 1)
@@ -1476,31 +1405,9 @@ def spock_diff_checks(sd_task: SpockDiffTask) -> SpockDiffTask:
                 node_list.append(nd["name"])
 
             if (node_list and nd["name"] in node_list) or (not node_list):
-                params = {
-                    "dbname": nd["db_name"],
-                    "user": nd["db_user"],
-                    "host": nd["public_ip"],
-                    "port": nd.get("port", 5432),
-                    "options": f"-c statement_timeout={config.STATEMENT_TIMEOUT}",
-                    "application_name": "ACE",
-                }
-                if nd["db_password"]:
-                    params["password"] = nd["db_password"]
-                else:
-                    pgpass = pgpasslib.getpass(
-                        host=nd["name"],
-                        user=nd["db_user"],
-                        dbname=nd["db_name"],
-                        port=nd.get("port", 5432),
-                    )
-                    if not pgpass:
-                        raise AceException(
-                            f"No password found for {nd['name']} in"
-                            f" {sd_task.cluster_name}.json or ~/.pgpass"
-                        )
-                    params["password"] = pgpass
-
-                psycopg.connect(**params)
+                params, conn = auth.get_cluster_node_connection(
+                    nd, sd_task.cluster_name
+                )
                 conn_params.append(params)
                 host_map[nd["public_ip"] + ":" + params["port"]] = nd["name"]
 
@@ -1664,31 +1571,7 @@ def update_spock_exception_checks(
     try:
         for node in cluster_nodes:
             if node["name"] == node_name:
-                params = {
-                    "dbname": node["db_name"],
-                    "user": node["db_user"],
-                    "host": node["public_ip"],
-                    "port": node["port"],
-                    "options": f"-c statement_timeout={config.STATEMENT_TIMEOUT}",
-                    "application_name": "ACE",
-                }
-                if node["db_password"]:
-                    params["password"] = node["db_password"]
-                else:
-                    pgpass = pgpasslib.getpass(
-                        host=node["name"],
-                        user=node["db_user"],
-                        dbname=node["db_name"],
-                        port=node["port"],
-                    )
-                    if not pgpass:
-                        raise AceException(
-                            f"No password found for {node['name']} in"
-                            f" {cluster_name}.json or ~/.pgpass"
-                        )
-                    params["password"] = pgpass
-
-                conn = psycopg.connect(**params)
+                _, conn = auth.get_cluster_node_connection(node, cluster_name)
                 conn.autocommit = False
 
     except Exception as e:

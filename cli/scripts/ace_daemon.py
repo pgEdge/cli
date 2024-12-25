@@ -24,6 +24,7 @@ from ace_exceptions import AceException
 from ace_timeparse import parse_time_string
 import cluster
 import util
+from ace_auth import require_client_cert
 
 app = Flask(__name__)
 
@@ -54,7 +55,8 @@ Returns:
 """
 
 
-@app.route("/ace/table-diff", methods=["GET"])
+@app.route("/ace/table-diff", methods=["POST"])
+@require_client_cert
 def table_diff_api():
     cluster_name = request.args.get("cluster_name")
     table_name = request.args.get("table_name")
@@ -91,6 +93,9 @@ def table_diff_api():
         raw_args.scheduler.started_at = datetime.now()
         td_task = ace.table_diff_checks(raw_args)
 
+        # Use the client certificate CN as the role
+        td_task.client_role = request.client_cn
+
         ace_db.create_ace_task(task=td_task)
         scheduler.add_job(
             ace_core.table_diff,
@@ -124,7 +129,8 @@ Returns:
 """
 
 
-@app.route("/ace/table-repair", methods=["GET"])
+@app.route("/ace/table-repair", methods=["POST"])
+@require_client_cert
 def table_repair_api():
     cluster_name = request.args.get("cluster_name")
     diff_file = request.args.get("diff_file")
@@ -193,7 +199,8 @@ Returns:
 """
 
 
-@app.route("/ace/table-rerun", methods=["GET"])
+@app.route("/ace/table-rerun", methods=["POST"])
+@require_client_cert
 def table_rerun_api():
     cluster_name = request.args.get("cluster_name")
     diff_file = request.args.get("diff_file")
@@ -277,7 +284,8 @@ Returns:
 """
 
 
-@app.route("/ace/repset-diff", methods=["GET"])
+@app.route("/ace/repset-diff", methods=["POST"])
+@require_client_cert
 def repset_diff_api():
     cluster_name = request.args.get("cluster_name")
     repset_name = request.args.get("repset_name")
@@ -342,7 +350,8 @@ Returns:
 """
 
 
-@app.route("/ace/spock-diff", methods=["GET"])
+@app.route("/ace/spock-diff", methods=["POST"])
+@require_client_cert
 def spock_diff_api():
     cluster_name = request.args.get("cluster_name")
     dbname = request.args.get("dbname", None)
@@ -393,7 +402,8 @@ Returns:
 """
 
 
-@app.route("/ace/schema-diff", methods=["GET"])
+@app.route("/ace/schema-diff", methods=["POST"])
+@require_client_cert
 def schema_diff_api():
     cluster_name = request.args.get("cluster_name")
     schema_name = request.args.get("schema_name")
@@ -444,6 +454,7 @@ Returns:
 
 
 @app.route("/ace/task-status", methods=["GET"])
+@require_client_cert
 def task_status_api():
     task_id = request.args.get("task_id")
 
@@ -519,6 +530,7 @@ Response:
 
 
 @app.route("/ace/update-spock-exception", methods=["POST"])
+@require_client_cert
 def update_spock_exception_api():
     cluster_name = request.args.get("cluster_name")
     node_name = request.args.get("node_name")
@@ -976,7 +988,7 @@ This function performs the following tasks:
 3. Runs the Flask application to serve the API.
 
 The API server is configured to:
-- Listen on localhost (127.0.0.1)
+- Listen on all interfaces (0.0.0.0)
 - Use port 5000
 
 Note: The scheduler is a BackgroundScheduler, so start() does not block execution.
@@ -1014,4 +1026,4 @@ def start_ace():
     except AceException as e:
         util.exit_message(f"Error starting auto-repair daemon: {e}")
 
-    app.run(host="127.0.0.1", port=5000)
+    app.run(host="0.0.0.0", port=5000)
