@@ -66,7 +66,7 @@ class ConnectionPool:
 
     # TODO: What happens when different scheduling jobs need the same connection?
     def get_cluster_node_connection(
-        self, node_info, cluster_name=None, invoke_method="cli"
+        self, node_info, cluster_name=None, invoke_method="cli", client_role=None
     ):
         """
         Create a database connection to a cluster node with proper authentication.
@@ -81,6 +81,7 @@ class ConnectionPool:
                 - name: Node name
             cluster_name: Name of the cluster (for error messages)
             invoke_method: Either "cli" or "api" to determine auth method
+            client_role: Role to switch to after connection (used in API mode)
 
         Returns:
             tuple: (connection_params, connection)
@@ -94,20 +95,6 @@ class ConnectionPool:
             db_user = node_info["db_user"]
             dbname = node_info["db_name"]
 
-            # Check connection pool first
-            conn = self.get_connection(host, port, db_user, dbname)
-            if conn:
-                # Still need to return params for pickling
-                params = {
-                    "dbname": dbname,
-                    "user": db_user,
-                    "host": host,
-                    "port": port,
-                    "options": f"-c statement_timeout={config.STATEMENT_TIMEOUT}",
-                    "application_name": "ACE",
-                }
-                return params, conn
-
             params = {
                 "dbname": dbname,
                 "user": db_user,
@@ -119,9 +106,41 @@ class ConnectionPool:
                 "keepalives_idle": 30,
                 "keepalives_interval": 10,
                 "keepalives_count": 5,
+                "connect_timeout": config.CONNECTION_TIMEOUT,
             }
 
-            if invoke_method == "cli":
+            # Check connection pool first
+            conn = self.get_connection(host, port, db_user, dbname)
+            if conn:
+                # If we're in API mode we have to switch to the user's role
+                # for security reasons. However, if ACE is being invoked through
+                # the CLI, we don't have to worry about this.
+                if config.USE_CERT_AUTH and client_role:
+                    with conn.cursor() as cur:
+                        cur.execute(f"SET ROLE {client_role}")
+                return params, conn
+
+            if config.USE_CERT_AUTH:
+                if config.ACE_USER_CERT_FILE and config.ACE_USER_KEY_FILE:
+                    params.update(
+                        {
+                            "sslmode": "verify-full",
+                            "sslcert": config.ACE_USER_CERT_FILE,
+                            "sslkey": config.ACE_USER_KEY_FILE,
+                            "sslrootcert": config.CA_CERT_FILE,
+                        }
+                    )
+                else:
+                    raise AuthenticationError(
+                        "Client certificate authentication is enabled but no"
+                        "certificate files are provided"
+                    )
+            else:
+                if invoke_method == "api":
+                    raise AuthenticationError(
+                        "Client certificate authentication needs to be enabled"
+                        "for API usage"
+                    )
                 # Handle password authentication
                 if node_info["db_password"]:
                     params["password"] = node_info["db_password"]
@@ -139,19 +158,13 @@ class ConnectionPool:
                         raise AuthenticationError(msg)
                     params["password"] = pgpass
 
-            elif invoke_method == "api":
-                # Add SSL parameters if using certificate auth
-                if config.ACE_USER_CERT_FILE and config.ACE_USER_KEY_FILE:
-                    params.update(
-                        {
-                            "sslmode": "verify-full",
-                            "sslcert": config.ACE_USER_CERT_FILE,
-                            "sslkey": config.ACE_USER_KEY_FILE,
-                            "sslrootcert": config.CA_CERT_FILE,
-                        }
-                    )
-
             conn = psycopg.connect(**params)
+
+            # Here again, we need to switch to the user's role if we're in API mode
+            if config.USE_CERT_AUTH and client_role:
+                with conn.cursor() as cur:
+                    cur.execute(f"SET ROLE {client_role}")
+
             self.add_connection(host, port, db_user, dbname, conn)
             return params, conn
 
@@ -224,13 +237,17 @@ def verify_client_cert(cert_data, ca_cert_path=None):
         if not cert:
             raise CertificateVerificationError("Invalid certificate format")
 
-        if cert.not_valid_after <= cert.not_valid_before:
+        if cert.not_valid_after_utc <= cert.not_valid_before_utc:
             raise CertificateVerificationError(
                 "Certificate has invalid validity period"
             )
 
-        current_time = datetime.datetime.now()
-        if current_time < cert.not_valid_before or current_time > cert.not_valid_after:
+        # Use timezone-aware datetime for comparison
+        current_time = datetime.datetime.now(datetime.timezone.utc)
+        if (
+            current_time < cert.not_valid_before_utc
+            or current_time > cert.not_valid_after_utc
+        ):
             raise CertificateVerificationError("Certificate is not currently valid")
 
         return True

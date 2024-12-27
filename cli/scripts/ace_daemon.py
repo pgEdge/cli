@@ -1,5 +1,6 @@
 from datetime import datetime
 import json
+import ssl
 
 from flask import Flask, jsonify, request
 from apscheduler.schedulers.background import BackgroundScheduler
@@ -66,6 +67,7 @@ def table_diff_api():
     output = request.args.get("output", "json")
     nodes = request.args.get("nodes", "all")
     batch_size = request.args.get("batch_size", config.BATCH_SIZE_DEFAULT, type=int)
+    table_filter = request.args.get("table_filter", None)
     quiet = request.args.get("quiet", False)
 
     if not cluster_name or not table_name:
@@ -83,23 +85,28 @@ def table_diff_api():
             output=output,
             _nodes=nodes,
             batch_size=batch_size,
+            table_filter=table_filter,
             quiet_mode=quiet,
             skip_db_update=False,
+            invoke_method="api",
         )
 
         raw_args.scheduler.task_id = task_id
         raw_args.scheduler.task_type = "table-diff"
         raw_args.scheduler.task_status = "RUNNING"
         raw_args.scheduler.started_at = datetime.now()
-        td_task = ace.table_diff_checks(raw_args)
 
-        # Use the client certificate CN as the role
-        td_task.client_role = request.client_cn
+        # Store the client's role (CN from their certificate)
+        raw_args.client_role = request.client_cn
 
-        ace_db.create_ace_task(task=td_task)
+        # Validate basic inputs without establishing connections
+        ace.validate_table_diff_inputs(raw_args)
+        ace_db.create_ace_task(task=raw_args)
+
+        # Pass the task to the background job where full validation will occur
         scheduler.add_job(
             ace_core.table_diff,
-            args=(td_task,),
+            args=(raw_args,),
         )
 
         return jsonify({"task_id": task_id, "submitted_at": datetime.now().isoformat()})
@@ -141,12 +148,21 @@ def table_repair_api():
     quiet = request.args.get("quiet", False)
     generate_report = request.args.get("generate_report", False)
     upsert_only = request.args.get("upsert_only", False)
+    fix_nulls = request.args.get("fix_nulls", False)
 
-    if not cluster_name or not diff_file or not source_of_truth or not table_name:
+    if not cluster_name or not diff_file or not table_name:
         return jsonify(
             {
                 "error": "cluster_name, diff_file, source_of_truth, and table_name"
                 "are required parameters"
+            }
+        )
+
+    if not fix_nulls and not source_of_truth:
+        return jsonify(
+            {
+                "error": "source_of_truth is required when fix_nulls mode is "
+                "not enabled"
             }
         )
 
@@ -163,15 +179,19 @@ def table_repair_api():
             quiet_mode=quiet,
             generate_report=generate_report,
             upsert_only=upsert_only,
+            invoke_method="api",
+            fix_nulls=fix_nulls,
         )
         raw_args.scheduler.task_id = task_id
         raw_args.scheduler.task_type = "table-repair"
         raw_args.scheduler.task_status = "RUNNING"
         raw_args.scheduler.started_at = datetime.now()
-        tr_task = ace.table_repair_checks(raw_args)
-        ace_db.create_ace_task(task=tr_task)
+        raw_args.client_role = request.client_cn
 
-        scheduler.add_job(ace_core.table_repair, args=(tr_task,))
+        ace.validate_table_repair_inputs(raw_args)
+        ace_db.create_ace_task(task=raw_args)
+        scheduler.add_job(ace_core.table_repair, args=(raw_args,))
+
         return jsonify({"task_id": task_id, "submitted_at": datetime.now().isoformat()})
     except Exception as e:
         return jsonify({"error": str(e)})
@@ -231,24 +251,27 @@ def table_rerun_api():
             batch_size=config.BATCH_SIZE_DEFAULT,
             quiet_mode=quiet,
             diff_file_path=diff_file,
+            invoke_method="api",
         )
         raw_args.scheduler.task_id = task_id
         raw_args.scheduler.task_type = "table-rerun"
         raw_args.scheduler.task_status = "RUNNING"
         raw_args.scheduler.started_at = datetime.now()
-        td_task = ace.table_diff_checks(raw_args)
-        ace_db.create_ace_task(task=td_task)
+        raw_args.client_role = request.client_cn
+
+        ace.validate_table_diff_inputs(raw_args)
+        ace_db.create_ace_task(task=raw_args)
     except Exception as e:
         return jsonify({"error": str(e)})
 
     try:
         if behavior == "multiprocessing":
-            scheduler.add_job(ace_core.table_rerun_async, args=(td_task,))
+            scheduler.add_job(ace_core.table_rerun_async, args=(raw_args,))
             return jsonify(
                 {"task_id": task_id, "submitted_at": datetime.now().isoformat()}
             )
         elif behavior == "hostdb":
-            scheduler.add_job(ace_core.table_rerun_temptable, args=(td_task,))
+            scheduler.add_job(ace_core.table_rerun_temptable, args=(raw_args,))
             return jsonify(
                 {"task_id": task_id, "submitted_at": datetime.now().isoformat()}
             )
@@ -317,16 +340,19 @@ def repset_diff_api():
             batch_size=batch_size,
             quiet_mode=quiet,
             skip_tables=skip_tables,
-            invoke_method="API",
+            invoke_method="api",
         )
 
         raw_args.scheduler.task_id = task_id
         raw_args.scheduler.task_type = "repset-diff"
         raw_args.scheduler.task_status = "RUNNING"
         raw_args.scheduler.started_at = datetime.now()
-        rd_task = ace.repset_diff_checks(raw_args)
-        ace_db.create_ace_task(task=rd_task)
-        scheduler.add_job(ace_core.repset_diff, args=(rd_task,))
+        raw_args.client_role = request.client_cn
+
+        ace.validate_repset_diff_inputs(raw_args)
+        ace_db.create_ace_task(task=raw_args)
+        scheduler.add_job(ace_core.repset_diff, args=(raw_args,))
+
         return jsonify({"task_id": task_id, "submitted_at": datetime.now().isoformat()})
     except Exception as e:
         return jsonify({"error": str(e)})
@@ -369,15 +395,19 @@ def spock_diff_api():
             _dbname=dbname,
             _nodes=nodes,
             quiet_mode=quiet,
+            invoke_method="api",
         )
 
         raw_args.scheduler.task_id = task_id
         raw_args.scheduler.task_type = "spock-diff"
         raw_args.scheduler.task_status = "RUNNING"
         raw_args.scheduler.started_at = datetime.now()
-        sd_task = ace.spock_diff_checks(raw_args)
-        ace_db.create_ace_task(task=sd_task)
-        scheduler.add_job(ace_core.spock_diff, args=(sd_task,))
+        raw_args.client_role = request.client_cn
+
+        ace.validate_spock_diff_inputs(raw_args)
+        ace_db.create_ace_task(task=raw_args)
+        scheduler.add_job(ace_core.spock_diff, args=(raw_args,))
+
         return jsonify({"task_id": task_id, "submitted_at": datetime.now().isoformat()})
     except Exception as e:
         return jsonify({"error": str(e)})
@@ -426,6 +456,7 @@ def schema_diff_api():
             _dbname=dbname,
             _nodes=nodes,
             quiet_mode=quiet,
+            invoke_method="api",
         )
 
         raw_args.scheduler.task_id = task_id
@@ -990,6 +1021,7 @@ This function performs the following tasks:
 The API server is configured to:
 - Listen on all interfaces (0.0.0.0)
 - Use port 5000
+- Support TLS connections using configured certificates
 
 Note: The scheduler is a BackgroundScheduler, so start() does not block execution.
 Future versions may require manual event listening for job management.
@@ -1026,4 +1058,20 @@ def start_ace():
     except AceException as e:
         util.exit_message(f"Error starting auto-repair daemon: {e}")
 
-    app.run(host="0.0.0.0", port=5000)
+    # Create SSL context for TLS support
+    try:
+        ssl_context = ssl.create_default_context(purpose=ssl.Purpose.CLIENT_AUTH)
+        ssl_context.verify_mode = ssl.CERT_REQUIRED
+        ssl_context.load_cert_chain(
+            certfile=config.ACE_USER_CERT_FILE, keyfile=config.ACE_USER_KEY_FILE
+        )
+        ssl_context.load_verify_locations(cafile=config.CA_CERT_FILE)
+    except Exception as e:
+        util.exit_message(f"Error configuring SSL context: {e}")
+
+    app.run(
+        host="0.0.0.0",
+        port=5000,
+        ssl_context=ssl_context,
+        debug=config.DEBUG_MODE,
+    )

@@ -8,8 +8,8 @@ import os
 
 # ==============================================================================
 # Postgres options
-STATEMENT_TIMEOUT = 60000
-CONNECTION_TIMEOUT = 10000
+STATEMENT_TIMEOUT = 60000  # in milliseconds
+CONNECTION_TIMEOUT = 10  # in seconds
 
 
 #  Default values for ACE table-diff
@@ -124,8 +124,11 @@ auto_repair_config = {
 
 # Cert-based auth options
 
-ACE_USER_CERT_FILE = "data/pki/admin-cert/admin.crt"
-ACE_USER_KEY_FILE = "data/pki/admin-cert/admin.key"
-CA_CERT_FILE = "data/pki/ca.crt"
+USE_CERT_AUTH = True
+ACE_USER_CERT_FILE = "data/pg16/pki/admin-cert/admin.crt"
+ACE_USER_KEY_FILE = "data/pg16/pki/admin-cert/admin.key"
+CA_CERT_FILE = "data/pg16/pki/ca.crt"
+
+DEBUG_MODE = True
 
 # ==============================================================================

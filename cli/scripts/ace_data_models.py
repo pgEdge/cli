@@ -56,6 +56,11 @@ class TableDiffTask:
     # and is not mandatory
     diff_file_path: str = None
 
+    invoke_method: str = "cli"
+
+    # Client role from certificate CN when invoked via API
+    client_role: str = None
+
     connection_pool: ConnectionPool = field(default_factory=ConnectionPool)
 
     diff_summary: dict = field(default_factory=dict)
@@ -94,6 +99,11 @@ class TableRepairTask:
     upsert_only: bool
     fix_nulls: bool
 
+    invoke_method: str = "cli"
+
+    # Client role from certificate CN when invoked via API
+    client_role: str = None
+
     connection_pool: ConnectionPool = field(default_factory=ConnectionPool)
 
     # Task-specific parameters
@@ -123,7 +133,10 @@ class RepsetDiffTask:
     quiet_mode: bool
     skip_tables: any
 
-    invoke_method: str = "CLI"
+    invoke_method: str = "cli"
+
+    # Client role from certificate CN when invoked via API
+    client_role: str = None
 
     connection_pool: ConnectionPool = field(default_factory=ConnectionPool)
 
@@ -145,6 +158,11 @@ class SpockDiffTask:
     _nodes: str
     _dbname: str
     quiet_mode: bool
+
+    invoke_method: str = "cli"
+
+    # Client role from certificate CN when invoked via API
+    client_role: str = None
 
     connection_pool: ConnectionPool = field(default_factory=ConnectionPool)
 
@@ -169,6 +187,11 @@ class SchemaDiffTask:
     quiet_mode: bool
 
     connection_pool: ConnectionPool = field(default_factory=ConnectionPool)
+
+    # Client role from certificate CN when invoked via API
+    client_role: str = None
+
+    invoke_method: str = "cli"
 
     # Task-specific parameters
     scheduler: Task = field(default_factory=Task)

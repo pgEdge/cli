@@ -71,6 +71,7 @@ def table_diff_cli(
             batch_size=batch_size,
             quiet_mode=quiet,
             table_filter=table_filter,
+            invoke_method="cli",
         )
         raw_args.scheduler.task_id = task_id
         raw_args.scheduler.task_type = "table-diff"
@@ -148,6 +149,7 @@ def table_repair_cli(
             generate_report=generate_report,
             upsert_only=upsert_only,
             fix_nulls=fix_nulls,
+            invoke_method="cli",
         )
         raw_args.scheduler.task_id = task_id
         raw_args.scheduler.task_type = "table-repair"
@@ -216,6 +218,7 @@ def table_rerun_cli(
             table_filter=table_filter,
             quiet_mode=quiet,
             diff_file_path=diff_file,
+            invoke_method="cli",
         )
         raw_args.scheduler.task_id = task_id
         raw_args.scheduler.task_type = "table-rerun"
@@ -298,7 +301,7 @@ def repset_diff_cli(
             _nodes=nodes,
             batch_size=batch_size,
             quiet_mode=quiet,
-            invoke_method="CLI",
+            invoke_method="cli",
             skip_tables=skip_tables,
         )
         raw_args.scheduler.task_id = task_id
@@ -352,6 +355,7 @@ def spock_diff_cli(
             _dbname=dbname,
             _nodes=nodes,
             quiet_mode=quiet,
+            invoke_method="cli",
         )
         raw_args.scheduler.task_id = task_id
         raw_args.scheduler.task_type = "spock-diff"
@@ -398,6 +402,7 @@ def schema_diff_cli(cluster_name, schema_name, nodes="all", dbname=None, quiet=F
             _dbname=dbname,
             _nodes=nodes,
             quiet_mode=quiet,
+            invoke_method="cli",
         )
         raw_args.scheduler.task_id = task_id
         raw_args.scheduler.task_type = "schema-diff"

@@ -57,7 +57,14 @@ def init_conn_pool(shared_objects, worker_state):
     for node in cluster_nodes:
         try:
             _, conn = td_task.connection_pool.get_cluster_node_connection(
-                node, shared_objects["cluster_name"]
+                node,
+                shared_objects["cluster_name"],
+                invoke_method=td_task.invoke_method,
+                client_role=(
+                    td_task.client_role
+                    if config.USE_CERT_AUTH and td_task.invoke_method == "api"
+                    else None
+                ),
             )
             worker_state[node["name"]] = conn.cursor()
         except auth.AuthenticationError as e:
@@ -388,6 +395,8 @@ def compare_checksums(shared_objects, worker_state, batches):
 def table_diff(td_task: TableDiffTask):
     """Efficiently compare tables across cluster using checksums and blocks of rows"""
 
+    td_task = ace.table_diff_checks(td_task, skip_validation=True)
+
     simple_primary_key = True
     if len(td_task.fields.key.split(",")) > 1:
         simple_primary_key = False
@@ -407,7 +416,14 @@ def table_diff(td_task: TableDiffTask):
                 "db_password": params.get("password", None),
             }
             _, conn = td_task.connection_pool.get_cluster_node_connection(
-                node_info, td_task.cluster_name
+                node_info,
+                td_task.cluster_name,
+                invoke_method=td_task.invoke_method,
+                client_role=(
+                    td_task.client_role
+                    if (config.USE_CERT_AUTH and td_task.invoke_method == "api")
+                    else None
+                ),
             )
 
             rows = ace.get_row_count(
@@ -721,7 +737,14 @@ def table_diff(td_task: TableDiffTask):
                 "db_password": param.get("password", None),
             }
             _, conn = td_task.connection_pool.get_cluster_node_connection(
-                node_info, td_task.cluster_name
+                node_info,
+                td_task.cluster_name,
+                invoke_method=td_task.invoke_method,
+                client_role=(
+                    td_task.client_role
+                    if config.USE_CERT_AUTH and td_task.invoke_method == "api"
+                    else None
+                ),
             )
             conn.execute(
                 sql.SQL("DROP VIEW IF EXISTS {view_name}").format(
@@ -743,11 +766,11 @@ def table_diff(td_task: TableDiffTask):
     if not td_task.skip_db_update:
         ace_db.update_ace_task(td_task)
 
-    return td_task
-
 
 def table_repair(tr_task: TableRepairTask):
     """Apply changes from a table-diff source of truth to destination table"""
+
+    tr_task = ace.table_repair_checks(tr_task, skip_validation=True)
 
     start_time = datetime.now()
     conns = {}
@@ -771,7 +794,14 @@ def table_repair(tr_task: TableRepairTask):
                 source_of_truth_node_key = hostname_key
 
             _, conn = tr_task.connection_pool.get_cluster_node_connection(
-                node_info, tr_task.cluster_name
+                node_info,
+                tr_task.cluster_name,
+                invoke_method=tr_task.invoke_method,
+                client_role=(
+                    tr_task.client_role
+                    if config.USE_CERT_AUTH and tr_task.invoke_method == "api"
+                    else None
+                ),
             )
             conns[node_hostname] = conn
     except Exception as e:
@@ -1338,7 +1368,14 @@ def table_repair_fix_nulls(tr_task: TableRepairTask) -> None:
             hostname_key = node_info["public_ip"] + ":" + node_info["port"]
             node_hostname = tr_task.fields.host_map[hostname_key]
             _, conn = tr_task.connection_pool.get_cluster_node_connection(
-                node_info, tr_task.cluster_name
+                node_info,
+                tr_task.cluster_name,
+                invoke_method=tr_task.invoke_method,
+                client_role=(
+                    tr_task.client_role
+                    if config.USE_CERT_AUTH and tr_task.invoke_method == "api"
+                    else None
+                ),
             )
             conns[node_hostname] = conn
     except Exception as e:
@@ -1691,7 +1728,14 @@ def table_rerun_temptable(td_task: TableDiffTask) -> None:
                 "db_password": params.get("password", None),
             }
             _, conn = td_task.connection_pool.get_cluster_node_connection(
-                node_info, td_task.cluster_name
+                node_info,
+                td_task.cluster_name,
+                invoke_method=td_task.invoke_method,
+                client_role=(
+                    td_task.client_role
+                    if config.USE_CERT_AUTH and td_task.invoke_method == "api"
+                    else None
+                ),
             )
             conn_list.append(conn)
 
@@ -1751,7 +1795,14 @@ def table_rerun_temptable(td_task: TableDiffTask) -> None:
             }
 
             _, conn = td_task.connection_pool.get_cluster_node_connection(
-                node_info, td_task.cluster_name
+                node_info,
+                td_task.cluster_name,
+                invoke_method=td_task.invoke_method,
+                client_role=(
+                    td_task.client_role
+                    if config.USE_CERT_AUTH and td_task.invoke_method == "api"
+                    else None
+                ),
             )
             cur = conn.cursor()
             cur.execute(clean_qry)
@@ -1984,7 +2035,7 @@ def table_rerun_async(td_task: TableDiffTask) -> None:
                 )
 
             elif td_task.output == "csv":
-                ace.write_diffs_csv()
+                ace.write_diffs_csv(diff_dict)
         except Exception as e:
             context = {"errors": [f"Could not write diffs to file: {str(e)}"]}
             ace.handle_task_exception(td_task, context)
@@ -2006,6 +2057,8 @@ def table_rerun_async(td_task: TableDiffTask) -> None:
 
 def repset_diff(rd_task: RepsetDiffTask) -> None:
     """Loop thru a replication-sets tables and run table-diff on them"""
+
+    rd_task = ace.repset_diff_checks(rd_task, skip_validation=True)
 
     rd_task_context = []
     rd_start_time = datetime.now()
@@ -2045,7 +2098,7 @@ def repset_diff(rd_task: RepsetDiffTask) -> None:
             )
 
             td_task = ace.table_diff_checks(td_task)
-            td_task = table_diff(td_task)
+            table_diff(td_task)
             run_time = util.round_timedelta(datetime.now() - start_time).total_seconds()
             status = {
                 "table": table,
@@ -2083,6 +2136,8 @@ def repset_diff(rd_task: RepsetDiffTask) -> None:
 def spock_diff(sd_task: SpockDiffTask) -> None:
     """Compare spock meta data setup on different cluster nodes"""
 
+    sd_task = ace.spock_diff_checks(sd_task, skip_validation=True)
+
     conns = {}
     compare_spock = []
     task_context = {}
@@ -2100,7 +2155,14 @@ def spock_diff(sd_task: SpockDiffTask) -> None:
                 "db_password": params.get("password", None),
             }
             _, conn = sd_task.connection_pool.get_cluster_node_connection(
-                node_info, sd_task.cluster_name
+                node_info,
+                sd_task.cluster_name,
+                invoke_method=sd_task.invoke_method,
+                client_role=(
+                    sd_task.client_role
+                    if config.USE_CERT_AUTH and sd_task.invoke_method == "api"
+                    else None
+                ),
             )
             conns[sd_task.fields.host_map[params["host"] + ":" + params["port"]]] = conn
     except Exception as e:
