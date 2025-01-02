@@ -392,10 +392,11 @@ def compare_checksums(shared_objects, worker_state, batches):
                 result_queue.append(result_dict)
 
 
-def table_diff(td_task: TableDiffTask):
+def table_diff(td_task: TableDiffTask, skip_all_checks: bool = False):
     """Efficiently compare tables across cluster using checksums and blocks of rows"""
 
-    td_task = ace.table_diff_checks(td_task, skip_validation=True)
+    if not skip_all_checks:
+        td_task = ace.table_diff_checks(td_task, skip_validation=True)
 
     simple_primary_key = True
     if len(td_task.fields.key.split(",")) > 1:
@@ -1347,6 +1348,9 @@ def table_repair_fix_nulls(tr_task: TableRepairTask) -> None:
     Creates a temporary table to store values that need to be updated, then
     performs a single UPDATE with a JOIN to efficiently update all rows at once.
     """
+
+    tr_task = ace.table_repair_checks(tr_task, skip_validation=True)
+
     start_time = datetime.now()
     conns = {}
     simple_primary_key = True
@@ -1668,6 +1672,8 @@ def table_repair_fix_nulls(tr_task: TableRepairTask) -> None:
 
 def table_rerun_temptable(td_task: TableDiffTask) -> None:
 
+    td_task = ace.table_diff_checks(td_task, skip_validation=True)
+
     # load diff data and validate
     diff_data = json.load(open(td_task.diff_file_path, "r"))
     diff_keys = set()
@@ -1776,9 +1782,7 @@ def table_rerun_temptable(td_task: TableDiffTask) -> None:
         diff_task._table_name = f"public.{temp_table_name}"
         diff_task.fields.l_table = temp_table_name
 
-        # diff_task = ace.table_diff_checks(diff_task)
-        # ace_db.create_ace_task(task=diff_task)
-        table_diff(diff_task)
+        table_diff(diff_task, skip_all_checks=True)
     except Exception as e:
         context = {"errors": [f"Could not run table diff: {str(e)}"]}
         ace.handle_task_exception(td_task, context)
@@ -1819,6 +1823,9 @@ def table_rerun_temptable(td_task: TableDiffTask) -> None:
 
 
 def table_rerun_async(td_task: TableDiffTask) -> None:
+
+    td_task = ace.table_diff_checks(td_task, skip_validation=True)
+
     # load diff data and validate
     try:
         diff_data = json.load(open(td_task.diff_file_path, "r"))
