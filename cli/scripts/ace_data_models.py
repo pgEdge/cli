@@ -202,7 +202,7 @@ class SchemaDiffTask:
 
 # TODO: Handle connection pool for auto-repair tasks!!
 @dataclass
-class AutoRepairTask:
+class ExceptionLogEntry:
     remote_origin: int
     remote_commit_ts: datetime
     command_counter: int
@@ -219,3 +219,21 @@ class AutoRepairTask:
     ddl_user: str
     error_message: str
     retry_errored_at: datetime
+
+
+@dataclass
+class AutoRepairTask:
+    cluster_name: str
+    dbname: str
+    poll_interval: int
+    status_update_interval: int
+
+    exp_log_entries: list[ExceptionLogEntry] = field(default_factory=list)
+
+    connection_pool: ConnectionPool = field(default_factory=ConnectionPool)
+
+    # Derived fields
+    fields: DerivedFields = field(default_factory=DerivedFields)
+
+    # Task-specific parameters
+    scheduler: Task = field(default_factory=Task)

@@ -1,5 +1,5 @@
 import os
-
+from datetime import timedelta
 """
 
 ** ACE CLI and common configuration options **
@@ -41,6 +41,9 @@ SPOCK_REPAIR_MODE_MIN_VERSION = 4.0
 
 LISTEN_ADDRESS = "0.0.0.0"
 LISTEN_PORT = 5000
+
+# Smallest interval that can be used for any ACE background service
+MIN_RUN_FREQUENCY = timedelta(minutes=5)
 
 """
 Table-diff scheduling options
@@ -118,17 +121,17 @@ auto_repair_config = {
     "enabled": True,
     "cluster_name": "eqn-t9da",
     "dbname": "demo",
-    "poll_interval": "1000s",
-    "status_update_interval": "1000s",
+    "poll_interval": "10m",
+    "status_update_interval": "15m",
 }
 
 # Cert-based auth options
 
-USE_CERT_AUTH = True
+USE_CERT_AUTH = False
 ACE_USER_CERT_FILE = "data/pg16/pki/admin-cert/admin.crt"
 ACE_USER_KEY_FILE = "data/pg16/pki/admin-cert/admin.key"
 CA_CERT_FILE = "data/pg16/pki/ca.crt"
 
-DEBUG_MODE = True
+DEBUG_MODE = False
 
 # ==============================================================================

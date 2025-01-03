@@ -292,24 +292,20 @@ def table_rerun_api():
         if behavior == "multiprocessing":
             scheduler.add_job(ace_core.table_rerun_async, args=(raw_args,))
             now = datetime.now()
-            return (
-                jsonify(
-                    {
-                        "task_id": task_id,
-                        "submitted_at": now.isoformat(),
-                    }
-                )
+            return jsonify(
+                {
+                    "task_id": task_id,
+                    "submitted_at": now.isoformat(),
+                }
             )
         elif behavior == "hostdb":
             scheduler.add_job(ace_core.table_rerun_temptable, args=(raw_args,))
             now = datetime.now()
-            return (
-                jsonify(
-                    {
-                        "task_id": task_id,
-                        "submitted_at": now.isoformat(),
-                    }
-                )
+            return jsonify(
+                {
+                    "task_id": task_id,
+                    "submitted_at": now.isoformat(),
+                }
             )
         else:
             return jsonify({"error": f"Invalid behavior: {behavior}"}), 400
@@ -393,13 +389,11 @@ def repset_diff_api():
         scheduler.add_job(ace_core.repset_diff, args=(raw_args,))
 
         now = datetime.now()
-        return (
-            jsonify(
-                {
-                    "task_id": task_id,
-                    "submitted_at": now.isoformat(),
-                }
-            )
+        return jsonify(
+            {
+                "task_id": task_id,
+                "submitted_at": now.isoformat(),
+            }
         )
     except Exception as e:
         return jsonify({"error": str(e)}), 400
@@ -459,13 +453,11 @@ def spock_diff_api():
         scheduler.add_job(ace_core.spock_diff, args=(raw_args,))
 
         now = datetime.now()
-        return (
-            jsonify(
-                {
-                    "task_id": task_id,
-                    "submitted_at": now.isoformat(),
-                }
-            )
+        return jsonify(
+            {
+                "task_id": task_id,
+                "submitted_at": now.isoformat(),
+            }
         )
     except Exception as e:
         return jsonify({"error": str(e)}), 400
@@ -529,13 +521,11 @@ def schema_diff_api():
         scheduler.add_job(ace_core.schema_diff, args=(sd_task,))
 
         now = datetime.now()
-        return (
-            jsonify(
-                {
-                    "task_id": task_id,
-                    "submitted_at": now.isoformat(),
-                }
-            )
+        return jsonify(
+            {
+                "task_id": task_id,
+                "submitted_at": now.isoformat(),
+            }
         )
     except Exception as e:
         return jsonify({"error": str(e)}), 400
@@ -704,6 +694,7 @@ def populate_exception_status_tables():
         SELECT
             remote_origin,
             remote_commit_ts,
+            retry_errored_at,
             remote_xid
         FROM
             spock.exception_log
@@ -719,6 +710,7 @@ def populate_exception_status_tables():
     (
         remote_origin,
         remote_commit_ts,
+        retry_errored_at,
         remote_xid,
         status
     )
@@ -726,6 +718,7 @@ def populate_exception_status_tables():
     (
         el.remote_origin,
         el.remote_commit_ts,
+        el.retry_errored_at,
         el.remote_xid,
         'PENDING'
     );
@@ -749,6 +742,7 @@ def populate_exception_status_tables():
             remote_origin,
             remote_commit_ts,
             command_counter,
+            retry_errored_at,
             remote_xid
         FROM spock.exception_log
     ) el
@@ -764,6 +758,7 @@ def populate_exception_status_tables():
         remote_origin,
         remote_commit_ts,
         command_counter,
+        retry_errored_at,
         remote_xid,
         status
     )
@@ -772,6 +767,7 @@ def populate_exception_status_tables():
         el.remote_origin,
         el.remote_commit_ts,
         el.command_counter,
+        el.retry_errored_at,
         el.remote_xid,
         'PENDING'
     );
@@ -1129,19 +1125,20 @@ def start_ace():
         util.exit_message(f"Error starting auto-repair daemon: {e}")
 
     # Create SSL context for TLS support
-    try:
-        ssl_context = ssl.create_default_context(purpose=ssl.Purpose.CLIENT_AUTH)
-        ssl_context.verify_mode = ssl.CERT_REQUIRED
-        ssl_context.load_cert_chain(
-            certfile=config.ACE_USER_CERT_FILE, keyfile=config.ACE_USER_KEY_FILE
-        )
-        ssl_context.load_verify_locations(cafile=config.CA_CERT_FILE)
-    except Exception as e:
-        util.exit_message(f"Error configuring SSL context: {e}")
+    if config.USE_CERT_AUTH:
+        try:
+            ssl_context = ssl.create_default_context(purpose=ssl.Purpose.CLIENT_AUTH)
+            ssl_context.verify_mode = ssl.CERT_REQUIRED
+            ssl_context.load_cert_chain(
+                certfile=config.ACE_USER_CERT_FILE, keyfile=config.ACE_USER_KEY_FILE
+            )
+            ssl_context.load_verify_locations(cafile=config.CA_CERT_FILE)
+        except Exception as e:
+            util.exit_message(f"Error configuring SSL context: {e}")
 
     app.run(
         host="0.0.0.0",
         port=5000,
-        ssl_context=ssl_context,
+        ssl_context=ssl_context if config.USE_CERT_AUTH else None,
         debug=config.DEBUG_MODE,
     )

@@ -29,6 +29,7 @@ from ace_data_models import (
     SpockDiffTask,
     TableDiffTask,
     TableRepairTask,
+    ExceptionLogEntry,
 )
 
 from ace_exceptions import AceException
@@ -2579,16 +2580,26 @@ def auto_repair():
         TBD
     """
 
-    cluster_name = config.auto_repair_config["cluster_name"]
-    dbname = config.auto_repair_config["dbname"]
+    ar_task = AutoRepairTask(
+        cluster_name=config.auto_repair_config["cluster_name"],
+        dbname=config.auto_repair_config["dbname"],
+        poll_interval=config.auto_repair_config["poll_interval"],
+        status_update_interval=config.auto_repair_config["status_update_interval"],
+    )
+
+    ar_task.scheduler.task_id = ace_db.generate_task_id()
+    ar_task.scheduler.task_type = "AUTO_REPAIR"
+    ar_task.scheduler.task_status = "RUNNING"
+    ar_task.scheduler.started_at = datetime.now()
+    ace_db.create_ace_task(ar_task)
 
     # We have already run the necessary checks, so we can proceed here.
-    db, pg, node_info = cluster.load_json(cluster_name)
+    db, pg, node_info = cluster.load_json(ar_task.cluster_name)
 
     cluster_nodes = []
     combined_json = {}
     database = next(
-        (db_entry for db_entry in db if db_entry["db_name"] == dbname), None
+        (db_entry for db_entry in db if db_entry["db_name"] == ar_task.dbname), None
     )
 
     for node in node_info:
@@ -2652,7 +2663,9 @@ def auto_repair():
 
     for node in cluster_nodes:
         try:
-            _, conn = auth.get_cluster_node_connection(node, cluster_name)
+            _, conn = ar_task.connection_pool.get_cluster_node_connection(
+                node, ar_task.cluster_name
+            )
             conn_map[node["name"]] = conn
             cur = conn_map[node["name"]].cursor(row_factory=dict_row)
             cur.execute(oid_sql)
@@ -2662,17 +2675,25 @@ def auto_repair():
         except Exception as e:
             raise AceException(f"Error while getting OIDs: {str(e)}")
 
+    contexts = []
     for node in cluster_nodes:
+
+        context = {}
+        context["node"] = node["name"]
+        context["exception_info"] = []
+
         try:
             conn = conn_map[node["name"]]
-            exp_cur = conn.cursor(row_factory=class_row(AutoRepairTask))
+            exp_cur = conn.cursor(row_factory=class_row(ExceptionLogEntry))
             sql_cur = conn.cursor()
             exp_cur.execute(get_exception_sql)
             exceptions = exp_cur.fetchall()
         except Exception as e:
             raise AceException(f"Error while getting exceptions: {str(e)}")
 
-        # XXX: handle exception storms
+        # TODO: handle exception storms
+        # TODO: Handle cases when the record corresponding to the exception
+        # is no longer present
         for exception in exceptions:
             pkey = ace.get_key(conn, exception.table_schema, exception.table_name)
 
@@ -2680,6 +2701,13 @@ def auto_repair():
 
             # We handle only INSERT exceptions for now
             if exception.operation == "INSERT":
+
+                exception_log_entry = exception.__dict__
+                exception_log_entry["pkey"] = pkey
+
+                node_exp_context = {}
+                node_exp_context["exception_log_entry"] = exception_log_entry
+
                 # We will first get the local commit timestamp of the transaction
                 # that created the record and eventually caused the exception.
 
@@ -2741,10 +2769,22 @@ def auto_repair():
                         f"Error while getting local commit timestamp: {str(e)}"
                     )
 
+                resolution_details = {}
+                resolution_details["local_commit_ts"] = local_commit_ts
+                resolution_details["remote_commit_ts"] = exception.remote_commit_ts
+
                 # Now, we can compare local_commit_ts and remote_commit_ts
                 # XXX: Handle equal timestamps. Maybe consult spock.node for
                 # the tiebraker?
                 if local_commit_ts < exception.remote_commit_ts:
+
+                    resolution_details["action_taken"] = "INSERT_EXCEPTION_REPAIRED"
+                    resolution_details["details"] = (
+                        "The local record was updated"
+                        + " with values from the remote origin node "
+                        + f"({oid_to_node_name[exception.remote_origin]})"
+                    )
+
                     # The local node is behind the remote origin node
                     # We will use the origin node as the source of truth
 
@@ -2857,6 +2897,13 @@ def auto_repair():
                     # If the local record is ahead of the remote origin node,
                     # we will update the exception status to "RESOLVED", and
                     # log the details in the resolution_details field.
+                    resolution_details["action_taken"] = "NONE"
+                    resolution_details["details"] = (
+                        "The local record was ahead of the"
+                        " remote origin node "
+                        f"({oid_to_node_name[exception.remote_origin]})"
+                    )
+
                     try:
                         sql_cur.execute(
                             update_exception_detail_sql,
@@ -2882,3 +2929,17 @@ def auto_repair():
                         raise AceException(
                             f"Error while updating exception status: {str(e)}"
                         )
+
+                node_exp_context["resolution_details"] = resolution_details
+                context["exception_info"].append(node_exp_context)
+
+        contexts.append(context)
+
+    ar_task.scheduler.task_context = contexts
+    ar_task.scheduler.task_status = "COMPLETED"
+    ar_task.scheduler.finished_at = datetime.now()
+    ar_task.scheduler.task_time_taken = (
+        ar_task.scheduler.finished_at - ar_task.scheduler.started_at
+    )
+
+    ace_db.update_ace_task(ar_task)

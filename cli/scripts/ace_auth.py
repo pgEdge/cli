@@ -64,7 +64,6 @@ class ConnectionPool:
                 pass
         self._connections[key] = conn
 
-    # TODO: What happens when different scheduling jobs need the same connection?
     def get_cluster_node_connection(
         self, node_info, cluster_name=None, invoke_method="cli", client_role=None
     ):
