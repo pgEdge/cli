@@ -60,7 +60,7 @@ def table_diff_cli(
     task_id = ace_db.generate_task_id()
 
     try:
-        raw_args = TableDiffTask(
+        td_task = TableDiffTask(
             cluster_name=cluster_name,
             _table_name=table_name,
             _dbname=dbname,
@@ -71,15 +71,17 @@ def table_diff_cli(
             batch_size=batch_size,
             quiet_mode=quiet,
             table_filter=table_filter,
+            invoke_method="cli",
         )
-        raw_args.scheduler.task_id = task_id
-        raw_args.scheduler.task_type = "table-diff"
-        raw_args.scheduler.task_status = "RUNNING"
-        raw_args.scheduler.started_at = datetime.now()
+        td_task.scheduler.task_id = task_id
+        td_task.scheduler.task_type = "table-diff"
+        td_task.scheduler.task_status = "RUNNING"
+        td_task.scheduler.started_at = datetime.now()
 
-        td_task = ace.table_diff_checks(raw_args)
+        ace.validate_table_diff_inputs(td_task)
         ace_db.create_ace_task(task=td_task)
         ace_core.table_diff(td_task)
+        td_task.connection_pool.close_all()
     except AceException as e:
         util.exit_message(str(e))
     except Exception as e:
@@ -131,12 +133,13 @@ def table_repair_cli(
     generate_report=False,
     upsert_only=False,
     fix_nulls=False,
+    fire_triggers=False,
 ):
 
     task_id = ace_db.generate_task_id()
 
     try:
-        raw_args = TableRepairTask(
+        tr_task = TableRepairTask(
             cluster_name=cluster_name,
             diff_file_path=diff_file,
             source_of_truth=source_of_truth,
@@ -147,18 +150,23 @@ def table_repair_cli(
             generate_report=generate_report,
             upsert_only=upsert_only,
             fix_nulls=fix_nulls,
+            fire_triggers=fire_triggers,
+            invoke_method="cli",
         )
-        raw_args.scheduler.task_id = task_id
-        raw_args.scheduler.task_type = "table-repair"
-        raw_args.scheduler.task_status = "RUNNING"
-        raw_args.scheduler.started_at = datetime.now()
-        tr_task = ace.table_repair_checks(raw_args)
+        tr_task.scheduler.task_id = task_id
+        tr_task.scheduler.task_type = "table-repair"
+        tr_task.scheduler.task_status = "RUNNING"
+        tr_task.scheduler.started_at = datetime.now()
+
+        ace.validate_table_repair_inputs(tr_task)
         ace_db.create_ace_task(task=tr_task)
 
         if fix_nulls:
             ace_core.table_repair_fix_nulls(tr_task)
         else:
             ace_core.table_repair(tr_task)
+
+        tr_task.connection_pool.close_all()
     except AceException as e:
         util.exit_message(str(e))
     except Exception as e:
@@ -201,7 +209,7 @@ def table_rerun_cli(
     task_id = ace_db.generate_task_id()
 
     try:
-        raw_args = TableDiffTask(
+        td_task = TableDiffTask(
             cluster_name=cluster_name,
             _table_name=table_name,
             _dbname=dbname,
@@ -213,12 +221,14 @@ def table_rerun_cli(
             table_filter=table_filter,
             quiet_mode=quiet,
             diff_file_path=diff_file,
+            invoke_method="cli",
         )
-        raw_args.scheduler.task_id = task_id
-        raw_args.scheduler.task_type = "table-rerun"
-        raw_args.scheduler.task_status = "RUNNING"
-        raw_args.scheduler.started_at = datetime.now()
-        td_task = ace.table_diff_checks(raw_args)
+        td_task.scheduler.task_id = task_id
+        td_task.scheduler.task_type = "table-rerun"
+        td_task.scheduler.task_status = "RUNNING"
+        td_task.scheduler.started_at = datetime.now()
+
+        ace.validate_table_diff_inputs(td_task)
         ace_db.create_ace_task(task=td_task)
     except AceException as e:
         util.exit_message(str(e))
@@ -232,6 +242,8 @@ def table_rerun_cli(
             ace_core.table_rerun_temptable(td_task)
         else:
             util.exit_message(f"Invalid behavior: {behavior}")
+
+        td_task.connection_pool.close_all()
     except AceException as e:
         util.exit_message(str(e))
     except Exception as e:
@@ -283,7 +295,7 @@ def repset_diff_cli(
     task_id = ace_db.generate_task_id()
 
     try:
-        raw_args = RepsetDiffTask(
+        rd_task = RepsetDiffTask(
             cluster_name=cluster_name,
             _dbname=dbname,
             repset_name=repset_name,
@@ -293,16 +305,21 @@ def repset_diff_cli(
             _nodes=nodes,
             batch_size=batch_size,
             quiet_mode=quiet,
-            invoke_method="CLI",
+            invoke_method="cli",
             skip_tables=skip_tables,
         )
-        raw_args.scheduler.task_id = task_id
-        raw_args.scheduler.task_type = "repset-diff"
-        raw_args.scheduler.task_status = "RUNNING"
-        raw_args.scheduler.started_at = datetime.now()
-        rd_task = ace.repset_diff_checks(raw_args)
+        rd_task.scheduler.task_id = task_id
+        rd_task.scheduler.task_type = "repset-diff"
+        rd_task.scheduler.task_status = "RUNNING"
+        rd_task.scheduler.started_at = datetime.now()
+
+        ace.validate_repset_diff_inputs(rd_task)
         ace_db.create_ace_task(task=rd_task)
         ace_core.repset_diff(rd_task)
+
+        # TODO: Figure out a way to handle repset-level connection pooling
+        # This close_all() is redundant currently
+        rd_task.connection_pool.close_all()
     except AceException as e:
         util.exit_message(str(e))
     except Exception as e:
@@ -338,19 +355,22 @@ def spock_diff_cli(
     task_id = ace_db.generate_task_id()
 
     try:
-        raw_args = SpockDiffTask(
+        sd_task = SpockDiffTask(
             cluster_name=cluster_name,
             _dbname=dbname,
             _nodes=nodes,
             quiet_mode=quiet,
+            invoke_method="cli",
         )
-        raw_args.scheduler.task_id = task_id
-        raw_args.scheduler.task_type = "spock-diff"
-        raw_args.scheduler.task_status = "RUNNING"
-        raw_args.scheduler.started_at = datetime.now()
-        spock_diff_task = ace.spock_diff_checks(raw_args)
-        ace_db.create_ace_task(task=spock_diff_task)
-        ace_core.spock_diff(spock_diff_task)
+        sd_task.scheduler.task_id = task_id
+        sd_task.scheduler.task_type = "spock-diff"
+        sd_task.scheduler.task_status = "RUNNING"
+        sd_task.scheduler.started_at = datetime.now()
+
+        ace.validate_spock_diff_inputs(sd_task)
+        ace_db.create_ace_task(task=sd_task)
+        ace_core.spock_diff(sd_task)
+        sd_task.connection_pool.close_all()
     except AceException as e:
         util.exit_message(str(e))
     except Exception as e:
@@ -382,20 +402,23 @@ def schema_diff_cli(cluster_name, schema_name, nodes="all", dbname=None, quiet=F
     task_id = ace_db.generate_task_id()
 
     try:
-        raw_args = SchemaDiffTask(
+        sc_task = SchemaDiffTask(
             cluster_name=cluster_name,
             schema_name=schema_name,
             _dbname=dbname,
             _nodes=nodes,
             quiet_mode=quiet,
+            invoke_method="cli",
         )
-        raw_args.scheduler.task_id = task_id
-        raw_args.scheduler.task_type = "schema-diff"
-        raw_args.scheduler.task_status = "RUNNING"
-        raw_args.scheduler.started_at = datetime.now()
-        sd_task = ace.schema_diff_checks(raw_args)
-        ace_db.create_ace_task(task=sd_task)
-        ace_core.schema_diff(sd_task)
+        sc_task.scheduler.task_id = task_id
+        sc_task.scheduler.task_type = "schema-diff"
+        sc_task.scheduler.task_status = "RUNNING"
+        sc_task.scheduler.started_at = datetime.now()
+
+        ace.schema_diff_checks(sc_task)
+        ace_db.create_ace_task(task=sc_task)
+        ace_core.schema_diff(sc_task)
+        sc_task.connection_pool.close_all()
     except AceException as e:
         util.exit_message(str(e))
     except Exception as e:

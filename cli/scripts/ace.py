@@ -13,7 +13,7 @@ from datetime import datetime
 import logging
 
 import ace_core
-import pgpasslib
+import ace_daemon
 import fire
 import psycopg
 from psycopg.rows import dict_row
@@ -31,6 +31,7 @@ from ace_data_models import (
     TableRepairTask,
 )
 import ace_cli
+from ace_auth import ConnectionPool
 from ace_exceptions import AceException
 
 
@@ -700,8 +701,11 @@ def write_diffs_csv(diff_dict):
         )
 
 
-def table_diff_checks(td_task: TableDiffTask) -> TableDiffTask:
-
+def validate_table_diff_inputs(td_task: TableDiffTask) -> None:
+    """
+    Validates the basic inputs for a table diff task without establishing connections.
+    Raises AceException if validation fails.
+    """
     if not td_task.cluster_name or not td_task._table_name:
         raise AceException("cluster_name and table_name are required arguments")
 
@@ -810,52 +814,62 @@ def table_diff_checks(td_task: TableDiffTask) -> TableDiffTask:
             if not any(filter(lambda x: x["name"] == n, cluster_nodes)):
                 raise AceException("Specified nodenames not present in cluster")
 
+    # Store basic task information
+    td_task.fields.l_schema = l_schema
+    td_task.fields.l_table = l_table
+    td_task.fields.node_list = node_list
+    td_task.fields.database = database
+    td_task.fields.cluster_nodes = cluster_nodes
+
+
+def table_diff_checks(
+    td_task: TableDiffTask, skip_validation: bool = False
+) -> TableDiffTask:
+    """
+    Validates and prepares a table diff task.
+
+    This function performs full validation including database connections
+    and privilege checks. It should be called in the worker process.
+
+    Returns:
+        The validated and prepared task
+    """
+    # First do basic validation
+    if not skip_validation:
+        validate_table_diff_inputs(td_task)
+
+    # Now do connection-specific validation
     cols = None
     key = None
     conn_params = []
     conn_list = []
     host_map = {}
     required_privileges = ["SELECT"]
+    l_schema = td_task.fields.l_schema
+    l_table = td_task.fields.l_table
 
     try:
-        for nd in cluster_nodes:
-            hostname = nd["name"]
-            host_ip = nd["public_ip"]
-            user = nd["db_user"]
-            dbname = nd["db_name"]
-            db_password = nd["db_password"]
-            port = nd.get("port", 5432)
+        for node_info in td_task.fields.cluster_nodes:
+            hostname = node_info["name"]
+            host_ip = node_info["public_ip"]
+            user = node_info["db_user"]
+            port = node_info.get("port", 5432)
 
             if td_task._nodes == "all":
-                node_list.append(nd["name"])
+                td_task.fields.node_list.append(node_info["name"])
 
-            if (node_list and nd["name"] in node_list) or (not node_list):
-                params = {
-                    "dbname": dbname,
-                    "user": user,
-                    "host": host_ip,
-                    "port": port,
-                    "options": f"-c statement_timeout={config.STATEMENT_TIMEOUT}",
-                    "application_name": "ACE",
-                }
-
-                if db_password:
-                    params["password"] = db_password
-                else:
-                    pgpass = pgpasslib.getpass(
-                        host=hostname,
-                        user=user,
-                        dbname=dbname,
-                        port=port,
-                    )
-                    if not pgpass:
-                        raise AceException(
-                            f"No password found for {hostname} in"
-                            f" {td_task.cluster_name}.json or ~/.pgpass"
-                        )
-                    params["password"] = pgpass
-
-                conn = psycopg.connect(**params)
+            if (
+                td_task.fields.node_list
+                and node_info["name"] in td_task.fields.node_list
+            ) or (not td_task.fields.node_list):
+                params, conn = td_task.connection_pool.get_cluster_node_connection(
+                    node_info,
+                    td_task.cluster_name,
+                    invoke_method=td_task.invoke_method,
+                    client_role=(
+                        td_task.client_role if td_task.invoke_method == "api" else None
+                    ),
+                )
 
                 curr_cols = get_cols(conn, l_schema, l_table)
                 curr_key = get_key(conn, l_schema, l_table)
@@ -889,7 +903,11 @@ def table_diff_checks(td_task: TableDiffTask) -> TableDiffTask:
                 td_task.fields.col_types[col_types_key] = col_types
 
                 authorised, missing_privileges = check_user_privileges(
-                    conn, user, l_schema, l_table, required_privileges
+                    conn,
+                    user,
+                    l_schema,
+                    l_table,
+                    required_privileges,
                 )
 
                 # Missing privileges come back as table_<privilege>, but we use
@@ -904,7 +922,8 @@ def table_diff_checks(td_task: TableDiffTask) -> TableDiffTask:
                 exception_msg = (
                     f'User "{user}" does not have the necessary privileges'
                     f" to run {', '.join(missing_privs)} "
-                    f'on table "{l_schema}.{l_table}" on node "{hostname}"'
+                    f'on table "{l_schema}.{l_table}" '
+                    f'on node "{hostname}"'
                 )
 
                 if not authorised:
@@ -966,6 +985,8 @@ def table_diff_checks(td_task: TableDiffTask) -> TableDiffTask:
     # so, we send the connection parameters instead
     td_task.fields.conn_params = conn_params
     td_task.fields.host_map = host_map
+    td_task.fields.cols = cols
+    td_task.fields.key = key
 
     if td_task.fields.col_types and len(td_task.fields.col_types) > 1:
         ref_node = list(td_task.fields.col_types.keys())[0]
@@ -997,23 +1018,12 @@ def table_diff_checks(td_task: TableDiffTask) -> TableDiffTask:
         quiet_mode=td_task.quiet_mode,
     )
 
-    """
-    We populate the remaining derived fields of TableDiffTask here
-    """
-    td_task.fields.cols = cols
-    td_task.fields.key = key
-    td_task.fields.l_schema = l_schema
-    td_task.fields.l_table = l_table
-    td_task.fields.node_list = node_list
-    td_task.fields.database = database
-    td_task.fields.host_map = host_map
-
     # Checks to see if there is a `bytea` dataype that is too large
     byte_check, byte_row_name = check_column_size(conn_list, td_task)
     if not byte_check:
         raise AceException(
-            f"Refusing to perform table-diff. Data in column {byte_row_name} of"
-            f" table {td_task._table_name} is larger than 1 MB"
+            f"Refusing to perform table-diff. Data in column {byte_row_name} "
+            f"of table {td_task._table_name} is larger than 1 MB"
         )
 
     if td_task.diff_file_path:
@@ -1021,13 +1031,18 @@ def table_diff_checks(td_task: TableDiffTask) -> TableDiffTask:
 
     # Finally, we will replace the table name with the view name if necessary
     if td_task.table_filter:
-        td_task.fields.l_table = f"{td_task.scheduler.task_id}_{l_table}_filtered"
+        td_task.fields.l_table = (
+            f"{td_task.scheduler.task_id}_{td_task.fields.l_table}_filtered"
+        )
 
     return td_task
 
 
-def table_repair_checks(tr_task: TableRepairTask) -> TableRepairTask:
-
+def validate_table_repair_inputs(tr_task: TableRepairTask) -> None:
+    """
+    Validates the basic inputs for a table repair task without establishing connections.
+    Raises AceException if validation fails.
+    """
     if not tr_task.cluster_name:
         raise AceException("cluster_name is a required argument")
 
@@ -1036,6 +1051,9 @@ def table_repair_checks(tr_task: TableRepairTask) -> TableRepairTask:
 
     if type(tr_task.fix_nulls) is not bool:
         raise AceException("fix_nulls should be True (1) or False (0)")
+
+    if type(tr_task.fire_triggers) is not bool:
+        raise AceException("fire_triggers should be True (1) or False (0)")
 
     if not tr_task.source_of_truth and not tr_task.fix_nulls:
         raise AceException("source_of_truth is a required argument")
@@ -1111,9 +1129,31 @@ def table_repair_checks(tr_task: TableRepairTask) -> TableRepairTask:
                 f"Source of truth node {tr_task.source_of_truth} not present in cluster"
             )
 
+    # Store basic task information
+    tr_task.fields.l_schema = l_schema
+    tr_task.fields.l_table = l_table
+    tr_task.fields.database = database
+    tr_task.fields.cluster_nodes = cluster_nodes
+
+
+def table_repair_checks(
+    tr_task: TableRepairTask, skip_validation: bool = False
+) -> TableRepairTask:
+    """
+    Validates and prepares a table repair task.
+
+    This function performs full validation including database connections
+    and privilege checks. It should be called in the worker process.
+
+    Returns:
+        The validated and prepared task
+    """
+    if not skip_validation:
+        validate_table_repair_inputs(tr_task)
+
+    # Now do connection-specific validation
     cols = None
     key = None
-    conns = {}
     conn_params = []
     host_map = {}
     required_privileges = ["SELECT", "INSERT", "UPDATE"]
@@ -1122,43 +1162,21 @@ def table_repair_checks(tr_task: TableRepairTask) -> TableRepairTask:
         required_privileges.append("DELETE")
 
     try:
-        for nd in cluster_nodes:
+        for nd in tr_task.fields.cluster_nodes:
             hostname = nd["name"]
             host_ip = nd["public_ip"]
             user = nd["db_user"]
-            dbname = nd["db_name"]
-            db_password = nd["db_password"]
             port = nd.get("port", 5432)
 
-            params = {
-                "dbname": dbname,
-                "user": user,
-                "host": host_ip,
-                "port": port,
-                "options": f"-c statement_timeout={config.STATEMENT_TIMEOUT}",
-                "application_name": "ACE",
-            }
+            params, conn = tr_task.connection_pool.get_cluster_node_connection(
+                nd,
+                tr_task.cluster_name,
+                invoke_method=tr_task.invoke_method,
+                client_role=(tr_task.client_role if config.USE_CERT_AUTH else None),
+            )
 
-            if db_password:
-                params["password"] = db_password
-            else:
-                pgpass = pgpasslib.getpass(
-                    host=hostname,
-                    user=user,
-                    dbname=dbname,
-                    port=port,
-                )
-                if not pgpass:
-                    raise AceException(
-                        f"No password found for {hostname} in"
-                        f" {tr_task.cluster_name}.json or ~/.pgpass"
-                    )
-                params["password"] = pgpass
-
-            conn = psycopg.connect(**params)
-
-            curr_cols = get_cols(conn, l_schema, l_table)
-            curr_key = get_key(conn, l_schema, l_table)
+            curr_cols = get_cols(conn, tr_task.fields.l_schema, tr_task.fields.l_table)
+            curr_key = get_key(conn, tr_task.fields.l_schema, tr_task.fields.l_table)
 
             if not curr_cols:
                 raise AceException(
@@ -1177,7 +1195,7 @@ def table_repair_checks(tr_task: TableRepairTask) -> TableRepairTask:
             cols = curr_cols
             key = curr_key
 
-            col_types = get_col_types(conn, l_table)
+            col_types = get_col_types(conn, tr_task.fields.l_table)
             col_types_key = f"{host_ip}:{str(port)}"
 
             if not tr_task.fields.col_types:
@@ -1186,7 +1204,11 @@ def table_repair_checks(tr_task: TableRepairTask) -> TableRepairTask:
             tr_task.fields.col_types[col_types_key] = col_types
 
             authorised, missing_privileges = check_user_privileges(
-                conn, user, l_schema, l_table, required_privileges
+                conn,
+                user,
+                tr_task.fields.l_schema,
+                tr_task.fields.l_table,
+                required_privileges,
             )
 
             missing_privs = [
@@ -1197,42 +1219,38 @@ def table_repair_checks(tr_task: TableRepairTask) -> TableRepairTask:
             exception_msg = (
                 f'User "{user}" does not have the necessary privileges'
                 f" to run {', '.join(missing_privs)} "
-                f'on table "{l_schema}.{l_table}" on node "{hostname}"'
+                f'on table "{tr_task.fields.l_schema}.{tr_task.fields.l_table}" '
+                f'on node "{hostname}"'
             )
 
             if not authorised:
                 raise AceException(exception_msg)
 
-            conns[hostname] = conn
             conn_params.append(params)
-            host_map[f"{host_ip}:{str(port)}"] = hostname
+            host_map[host_ip + ":" + str(port)] = hostname
 
     except Exception as e:
-        # Clean up connections before re-raising
-        for conn in conns.values():
-            try:
-                conn.close()
-            except Exception:
-                pass
         raise e
 
-    """
-    Derived fields for TableRepairTask
-    """
-    tr_task.fields.cluster_nodes = cluster_nodes
-    tr_task.fields.database = database
-    tr_task.fields.cols = cols
-    tr_task.fields.key = key
-    tr_task.fields.l_schema = l_schema
-    tr_task.fields.l_table = l_table
+    util.message(
+        "Connections successful to nodes in cluster",
+        p_state="success",
+        quiet_mode=tr_task.quiet_mode,
+    )
+
     tr_task.fields.conn_params = conn_params
     tr_task.fields.host_map = host_map
+    tr_task.fields.cols = cols
+    tr_task.fields.key = key
 
     return tr_task
 
 
-def repset_diff_checks(rd_task: RepsetDiffTask) -> RepsetDiffTask:
-
+def validate_repset_diff_inputs(rd_task: RepsetDiffTask) -> None:
+    """
+    Validates the basic inputs for a repset diff task without establishing connections.
+    Raises AceException if validation fails.
+    """
     if type(rd_task.block_rows) is str:
         try:
             rd_task.block_rows = int(rd_task.block_rows)
@@ -1331,38 +1349,52 @@ def repset_diff_checks(rd_task: RepsetDiffTask) -> RepsetDiffTask:
             if not any(filter(lambda x: x["name"] == n, cluster_nodes)):
                 raise AceException("Specified nodenames not present in cluster")
 
+    # Store basic task information
+    rd_task.fields.cluster_nodes = cluster_nodes
+    rd_task.fields.database = database
+    rd_task.fields.node_list = node_list
+
+    if rd_task.skip_tables is None:
+        rd_task.skip_tables = set()
+    elif isinstance(rd_task.skip_tables, str):
+        rd_task.skip_tables = {rd_task.skip_tables}
+    else:
+        rd_task.skip_tables = set(rd_task.skip_tables)
+
+
+def repset_diff_checks(
+    rd_task: RepsetDiffTask, skip_validation: bool = False
+) -> RepsetDiffTask:
+    """
+    Validates and prepares a repset diff task.
+
+    This function performs full validation including database connections
+    and privilege checks. It should be called in the worker process.
+
+    Returns:
+        The validated and prepared task
+    """
+    if not skip_validation:
+        validate_repset_diff_inputs(rd_task)
+
+    # Now do connection-specific validation
     conn_list = []
 
     try:
-        for nd in cluster_nodes:
+        for nd in rd_task.fields.cluster_nodes:
             if rd_task._nodes == "all":
-                node_list.append(nd["name"])
+                rd_task.fields.node_list.append(nd["name"])
 
-            if (node_list and nd["name"] in node_list) or (not node_list):
-                params = {
-                    "dbname": nd["db_name"],
-                    "user": nd["db_user"],
-                    "host": nd["public_ip"],
-                    "port": nd.get("port", 5432),
-                    "options": f"-c statement_timeout={config.STATEMENT_TIMEOUT}",
-                    "application_name": "ACE",
-                }
-                if nd["db_password"]:
-                    params["password"] = nd["db_password"]
-                else:
-                    pgpass = pgpasslib.getpass(
-                        host=nd["name"],
-                        user=nd["db_user"],
-                        dbname=nd["db_name"],
-                        port=nd.get("port", 5432),
-                    )
-                    if not pgpass:
-                        raise AceException(
-                            f"No password found for {nd['name']} in"
-                            f" {rd_task.cluster_name}.json or ~/.pgpass"
-                        )
-                    params["password"] = pgpass
-                conn_list.append(psycopg.connect(**params))
+            if (
+                rd_task.fields.node_list and nd["name"] in rd_task.fields.node_list
+            ) or (not rd_task.fields.node_list):
+                _, conn = rd_task.connection_pool.get_cluster_node_connection(
+                    nd,
+                    rd_task.cluster_name,
+                    invoke_method=rd_task.invoke_method,
+                    client_role=(rd_task.client_role if config.USE_CERT_AUTH else None),
+                )
+                conn_list.append(conn)
 
     except Exception as e:
         raise AceException("Error in diff_tbls() Getting Connections:" + str(e), 1)
@@ -1401,20 +1433,14 @@ def repset_diff_checks(rd_task: RepsetDiffTask) -> RepsetDiffTask:
     # Convert fetched rows into a list of strings
     rd_task.table_list = [table[0] for table in tables]
 
-    rd_task.fields.cluster_nodes = cluster_nodes
-    rd_task.fields.database = database
-
-    if rd_task.skip_tables is None:
-        rd_task.skip_tables = set()
-    elif isinstance(rd_task.skip_tables, str):
-        rd_task.skip_tables = {rd_task.skip_tables}
-    else:
-        rd_task.skip_tables = set(rd_task.skip_tables)
-
     return rd_task
 
 
-def spock_diff_checks(sd_task: SpockDiffTask) -> SpockDiffTask:
+def validate_spock_diff_inputs(sd_task: SpockDiffTask) -> None:
+    """
+    Validates the basic inputs for a spock diff task without establishing connections.
+    Raises AceException if validation fails.
+    """
     node_list = []
     try:
         node_list = parse_nodes(sd_task._nodes)
@@ -1467,48 +1493,52 @@ def spock_diff_checks(sd_task: SpockDiffTask) -> SpockDiffTask:
             if not any(filter(lambda x: x["name"] == n, cluster_nodes)):
                 raise AceException("Specified nodenames not present in cluster")
 
+    # Store basic task information
+    sd_task.fields.cluster_nodes = cluster_nodes
+    sd_task.fields.database = database
+    sd_task.fields.node_list = node_list
+
+
+def spock_diff_checks(
+    sd_task: SpockDiffTask, skip_validation: bool = False
+) -> SpockDiffTask:
+    """
+    Validates and prepares a spock diff task.
+
+    This function performs full validation including database connections.
+    It should be called in the worker process.
+
+    Returns:
+        The validated and prepared task
+    """
+    # First do basic validation
+    if not skip_validation:
+        validate_spock_diff_inputs(sd_task)
+
+    # Now do connection-specific validation
     conn_params = []
     host_map = {}
 
     try:
-        for nd in cluster_nodes:
+        for nd in sd_task.fields.cluster_nodes:
             if sd_task._nodes == "all":
-                node_list.append(nd["name"])
+                sd_task.fields.node_list.append(nd["name"])
 
-            if (node_list and nd["name"] in node_list) or (not node_list):
-                params = {
-                    "dbname": nd["db_name"],
-                    "user": nd["db_user"],
-                    "host": nd["public_ip"],
-                    "port": nd.get("port", 5432),
-                    "options": f"-c statement_timeout={config.STATEMENT_TIMEOUT}",
-                    "application_name": "ACE",
-                }
-                if nd["db_password"]:
-                    params["password"] = nd["db_password"]
-                else:
-                    pgpass = pgpasslib.getpass(
-                        host=nd["name"],
-                        user=nd["db_user"],
-                        dbname=nd["db_name"],
-                        port=nd.get("port", 5432),
-                    )
-                    if not pgpass:
-                        raise AceException(
-                            f"No password found for {nd['name']} in"
-                            f" {sd_task.cluster_name}.json or ~/.pgpass"
-                        )
-                    params["password"] = pgpass
-
-                psycopg.connect(**params)
+            if (
+                sd_task.fields.node_list and nd["name"] in sd_task.fields.node_list
+            ) or (not sd_task.fields.node_list):
+                params, conn = sd_task.connection_pool.get_cluster_node_connection(
+                    nd,
+                    sd_task.cluster_name,
+                    invoke_method=sd_task.invoke_method,
+                    client_role=(sd_task.client_role if config.USE_CERT_AUTH else None),
+                )
                 conn_params.append(params)
-                host_map[nd["public_ip"] + ":" + params["port"]] = nd["name"]
+                host_map[nd["public_ip"] + ":" + str(params["port"])] = nd["name"]
 
     except Exception as e:
         raise AceException("Error in spock_diff() Getting Connections:" + str(e), 1)
 
-    sd_task.fields.cluster_nodes = cluster_nodes
-    sd_task.fields.database = database
     sd_task.fields.conn_params = conn_params
     sd_task.fields.host_map = host_map
 
@@ -1587,6 +1617,10 @@ def update_spock_exception_checks(
     cluster_name: str, node_name: str, entry: dict, dbname: str = None
 ) -> None:
 
+    # This module doesn't necessitate the need to create a task object, so we
+    # simply create a standalone instance of ConnectionPool here
+    conn_pool = ConnectionPool()
+
     if not cluster_name or not node_name:
         raise AceException("cluster_name and node_name are required fields")
 
@@ -1664,31 +1698,8 @@ def update_spock_exception_checks(
     try:
         for node in cluster_nodes:
             if node["name"] == node_name:
-                params = {
-                    "dbname": node["db_name"],
-                    "user": node["db_user"],
-                    "host": node["public_ip"],
-                    "port": node["port"],
-                    "options": f"-c statement_timeout={config.STATEMENT_TIMEOUT}",
-                    "application_name": "ACE",
-                }
-                if node["db_password"]:
-                    params["password"] = node["db_password"]
-                else:
-                    pgpass = pgpasslib.getpass(
-                        host=node["name"],
-                        user=node["db_user"],
-                        dbname=node["db_name"],
-                        port=node["port"],
-                    )
-                    if not pgpass:
-                        raise AceException(
-                            f"No password found for {node['name']} in"
-                            f" {cluster_name}.json or ~/.pgpass"
-                        )
-                    params["password"] = pgpass
-
-                conn = psycopg.connect(**params)
+                # FIXME: Figure out connection handling here
+                _, conn = conn_pool.get_cluster_node_connection(node, cluster_name)
                 conn.autocommit = False
 
     except Exception as e:
@@ -1728,7 +1739,7 @@ if __name__ == "__main__":
 
     # Create a StreamHandler for stdout
     stream_handler = logging.StreamHandler(sys.stdout)
-    stream_handler.setLevel(logging.INFO)
+    stream_handler.setLevel(logging.DEBUG if config.DEBUG_MODE else logging.INFO)
     formatter = logging.Formatter(
         "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
     )
@@ -1736,7 +1747,7 @@ if __name__ == "__main__":
 
     # Get the apscheduler logger and add the handler
     apscheduler_logger = logging.getLogger("apscheduler")
-    apscheduler_logger.setLevel(logging.INFO)
+    apscheduler_logger.setLevel(logging.DEBUG if config.DEBUG_MODE else logging.INFO)
     apscheduler_logger.addHandler(stream_handler)
 
     ace_db.create_ace_tables()
@@ -1751,5 +1762,6 @@ if __name__ == "__main__":
             "spock-diff": ace_cli.spock_diff_cli,
             "spock-exception-update": ace_cli.update_spock_exception_cli,
             "auto-repair": ace_core.auto_repair,
+            "start": ace_daemon.start_ace,
         }
     )

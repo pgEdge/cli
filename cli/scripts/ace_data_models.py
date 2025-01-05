@@ -2,6 +2,8 @@ from collections import defaultdict
 from dataclasses import dataclass, field
 from datetime import datetime
 
+from ace_auth import ConnectionPool
+
 """
 Use a dataclass to store the raw and processed inputs from the user
 """
@@ -54,6 +56,13 @@ class TableDiffTask:
     # and is not mandatory
     diff_file_path: str = None
 
+    invoke_method: str = "cli"
+
+    # Client role from certificate CN when invoked via API
+    client_role: str = None
+
+    connection_pool: ConnectionPool = field(default_factory=ConnectionPool)
+
     diff_summary: dict = field(default_factory=dict)
 
     # If we're invoking table-diff from repset-diff,
@@ -89,6 +98,14 @@ class TableRepairTask:
     generate_report: bool
     upsert_only: bool
     fix_nulls: bool
+    fire_triggers: bool
+
+    invoke_method: str = "cli"
+
+    # Client role from certificate CN when invoked via API
+    client_role: str = None
+
+    connection_pool: ConnectionPool = field(default_factory=ConnectionPool)
 
     # Task-specific parameters
     scheduler: Task = field(default_factory=Task)
@@ -117,7 +134,12 @@ class RepsetDiffTask:
     quiet_mode: bool
     skip_tables: any
 
-    invoke_method: str = "CLI"
+    invoke_method: str = "cli"
+
+    # Client role from certificate CN when invoked via API
+    client_role: str = None
+
+    connection_pool: ConnectionPool = field(default_factory=ConnectionPool)
 
     # Task-specific parameters
     scheduler: Task = field(default_factory=Task)
@@ -137,6 +159,13 @@ class SpockDiffTask:
     _nodes: str
     _dbname: str
     quiet_mode: bool
+
+    invoke_method: str = "cli"
+
+    # Client role from certificate CN when invoked via API
+    client_role: str = None
+
+    connection_pool: ConnectionPool = field(default_factory=ConnectionPool)
 
     # Task-specific parameters
     scheduler: Task = field(default_factory=Task)
@@ -158,6 +187,13 @@ class SchemaDiffTask:
     _dbname: str
     quiet_mode: bool
 
+    connection_pool: ConnectionPool = field(default_factory=ConnectionPool)
+
+    # Client role from certificate CN when invoked via API
+    client_role: str = None
+
+    invoke_method: str = "cli"
+
     # Task-specific parameters
     scheduler: Task = field(default_factory=Task)
 
@@ -165,8 +201,9 @@ class SchemaDiffTask:
     fields: DerivedFields = field(default_factory=DerivedFields)
 
 
+# TODO: Handle connection pool for auto-repair tasks!!
 @dataclass
-class AutoRepairTask:
+class ExceptionLogEntry:
     remote_origin: int
     remote_commit_ts: datetime
     command_counter: int
@@ -183,3 +220,21 @@ class AutoRepairTask:
     ddl_user: str
     error_message: str
     retry_errored_at: datetime
+
+
+@dataclass
+class AutoRepairTask:
+    cluster_name: str
+    dbname: str
+    poll_frequency: str
+    repair_frequency: str
+
+    exp_log_entries: list[ExceptionLogEntry] = field(default_factory=list)
+
+    connection_pool: ConnectionPool = field(default_factory=ConnectionPool)
+
+    # Derived fields
+    fields: DerivedFields = field(default_factory=DerivedFields)
+
+    # Task-specific parameters
+    scheduler: Task = field(default_factory=Task)

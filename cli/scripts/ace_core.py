@@ -15,7 +15,6 @@ from psycopg import sql
 from psycopg.rows import dict_row, class_row
 from dateutil import parser
 
-import pgpasslib
 from tqdm import tqdm
 import ace
 import ace_db
@@ -30,9 +29,11 @@ from ace_data_models import (
     SpockDiffTask,
     TableDiffTask,
     TableRepairTask,
+    ExceptionLogEntry,
 )
 
 from ace_exceptions import AceException
+import ace_auth as auth
 
 
 def run_query(worker_state, host, query):
@@ -47,6 +48,7 @@ def init_conn_pool(shared_objects, worker_state):
 
     cluster_nodes = []
     database = shared_objects["database"]
+    td_task = shared_objects["td_task"]
 
     # Combine db and cluster_nodes into a single json
     for node in node_info:
@@ -54,31 +56,20 @@ def init_conn_pool(shared_objects, worker_state):
         cluster_nodes.append(combined_json)
 
     for node in cluster_nodes:
-        params = {
-            "dbname": node["db_name"],
-            "user": node["db_user"],
-            "host": node["public_ip"],
-            "port": node.get("port", 5432),
-            "options": f"-c statement_timeout={config.STATEMENT_TIMEOUT}",
-            "application_name": "ACE",
-        }
-        if node["db_password"]:
-            params["password"] = node["db_password"]
-        else:
-            pgpass = pgpasslib.getpass(
-                host=node["name"],
-                user=node["db_user"],
-                dbname=node["db_name"],
-                port=node["port"],
+        try:
+            _, conn = td_task.connection_pool.get_cluster_node_connection(
+                node,
+                shared_objects["cluster_name"],
+                invoke_method=td_task.invoke_method,
+                client_role=(
+                    td_task.client_role
+                    if config.USE_CERT_AUTH and td_task.invoke_method == "api"
+                    else None
+                ),
             )
-            if not pgpass:
-                raise AceException(
-                    f"No password found for {node['name']} in"
-                    f" {shared_objects['cluster_name']}.json or ~/.pgpass"
-                )
-            params["password"] = pgpass
-
-        worker_state[node["name"]] = psycopg.connect(**params).cursor()
+            worker_state[node["name"]] = conn.cursor()
+        except auth.AuthenticationError as e:
+            raise AceException(str(e))
 
 
 # Ignore the type checker warning for shared_objects.
@@ -402,8 +393,11 @@ def compare_checksums(shared_objects, worker_state, batches):
                 result_queue.append(result_dict)
 
 
-def table_diff(td_task: TableDiffTask):
+def table_diff(td_task: TableDiffTask, skip_all_checks: bool = False):
     """Efficiently compare tables across cluster using checksums and blocks of rows"""
+
+    if not skip_all_checks:
+        td_task = ace.table_diff_checks(td_task, skip_validation=True)
 
     simple_primary_key = True
     if len(td_task.fields.key.split(",")) > 1:
@@ -416,7 +410,23 @@ def table_diff(td_task: TableDiffTask):
 
     try:
         for params in td_task.fields.conn_params:
-            conn = psycopg.connect(**params)
+            node_info = {
+                "public_ip": params["host"],
+                "port": params["port"],
+                "db_name": params["dbname"],
+                "db_user": params["user"],
+                "db_password": params.get("password", None),
+            }
+            _, conn = td_task.connection_pool.get_cluster_node_connection(
+                node_info,
+                td_task.cluster_name,
+                invoke_method=td_task.invoke_method,
+                client_role=(
+                    td_task.client_role
+                    if (config.USE_CERT_AUTH and td_task.invoke_method == "api")
+                    else None
+                ),
+            )
 
             rows = ace.get_row_count(
                 conn, td_task.fields.l_schema, td_task.fields.l_table
@@ -563,6 +573,7 @@ def table_diff(td_task: TableDiffTask):
         "diff_dict": diff_dict,
         "row_diff_count": row_diff_count,
         "lock": lock,
+        "td_task": td_task,
     }
 
     util.message(
@@ -719,12 +730,30 @@ def table_diff(td_task: TableDiffTask):
 
     # We need to delete the view if it was created
     if td_task.table_filter:
-        for conn in conn_list:
+        for param in td_task.fields.conn_params:
+            node_info = {
+                "public_ip": param["host"],
+                "port": param["port"],
+                "db_user": param["user"],
+                "db_name": param["dbname"],
+                "db_password": param.get("password", None),
+            }
+            _, conn = td_task.connection_pool.get_cluster_node_connection(
+                node_info,
+                td_task.cluster_name,
+                invoke_method=td_task.invoke_method,
+                client_role=(
+                    td_task.client_role
+                    if config.USE_CERT_AUTH and td_task.invoke_method == "api"
+                    else None
+                ),
+            )
             conn.execute(
                 sql.SQL("DROP VIEW IF EXISTS {view_name}").format(
                     view_name=sql.Identifier(f"{td_task.scheduler.task_id}_view"),
                 )
             )
+            conn.commit()
 
     td_task.scheduler.task_status = "COMPLETED"
     td_task.scheduler.finished_at = datetime.now()
@@ -739,11 +768,11 @@ def table_diff(td_task: TableDiffTask):
     if not td_task.skip_db_update:
         ace_db.update_ace_task(td_task)
 
-    return td_task
-
 
 def table_repair(tr_task: TableRepairTask):
     """Apply changes from a table-diff source of truth to destination table"""
+
+    tr_task = ace.table_repair_checks(tr_task, skip_validation=True)
 
     start_time = datetime.now()
     conns = {}
@@ -754,12 +783,29 @@ def table_repair(tr_task: TableRepairTask):
 
     try:
         for params in tr_task.fields.conn_params:
-            hostname_key = params["host"] + ":" + params["port"]
+            node_info = {
+                "public_ip": params["host"],
+                "port": params["port"],
+                "db_user": params["user"],
+                "db_name": params["dbname"],
+                "db_password": params.get("password", None),
+            }
+            hostname_key = node_info["public_ip"] + ":" + node_info["port"]
             node_hostname = tr_task.fields.host_map[hostname_key]
             if tr_task.source_of_truth == node_hostname:
                 source_of_truth_node_key = hostname_key
 
-            conns[node_hostname] = psycopg.connect(**params)
+            _, conn = tr_task.connection_pool.get_cluster_node_connection(
+                node_info,
+                tr_task.cluster_name,
+                invoke_method=tr_task.invoke_method,
+                client_role=(
+                    tr_task.client_role
+                    if config.USE_CERT_AUTH and tr_task.invoke_method == "api"
+                    else None
+                ),
+            )
+            conns[node_hostname] = conn
     except Exception as e:
         context = {"errors": [str(e)]}
         ace.handle_task_exception(tr_task, context)
@@ -1055,6 +1101,10 @@ def table_repair(tr_task: TableRepairTask):
 
             if spock_version >= config.SPOCK_REPAIR_MODE_MIN_VERSION:
                 cur.execute("SELECT spock.repair_mode(true);")
+                if tr_task.fire_triggers:
+                    cur.execute("SET session_replication_role = 'local';")
+                else:
+                    cur.execute("SET session_replication_role = 'replica';")
         except Exception as e:
             context = {"errors": [f"Could not set repair mode: {str(e)}"]}
             ace.handle_task_exception(tr_task, context)
@@ -1303,6 +1353,9 @@ def table_repair_fix_nulls(tr_task: TableRepairTask) -> None:
     Creates a temporary table to store values that need to be updated, then
     performs a single UPDATE with a JOIN to efficiently update all rows at once.
     """
+
+    tr_task = ace.table_repair_checks(tr_task, skip_validation=True)
+
     start_time = datetime.now()
     conns = {}
     simple_primary_key = True
@@ -1313,9 +1366,27 @@ def table_repair_fix_nulls(tr_task: TableRepairTask) -> None:
 
     try:
         for params in tr_task.fields.conn_params:
-            hostname_key = params["host"] + ":" + params["port"]
+            node_info = {
+                "public_ip": params["host"],
+                "port": params["port"],
+                "db_user": params["user"],
+                "db_name": params["dbname"],
+                "db_password": params.get("password", None),
+            }
+
+            hostname_key = node_info["public_ip"] + ":" + node_info["port"]
             node_hostname = tr_task.fields.host_map[hostname_key]
-            conns[node_hostname] = psycopg.connect(**params)
+            _, conn = tr_task.connection_pool.get_cluster_node_connection(
+                node_info,
+                tr_task.cluster_name,
+                invoke_method=tr_task.invoke_method,
+                client_role=(
+                    tr_task.client_role
+                    if config.USE_CERT_AUTH and tr_task.invoke_method == "api"
+                    else None
+                ),
+            )
+            conns[node_hostname] = conn
     except Exception as e:
         context = {"errors": [str(e)]}
         ace.handle_task_exception(tr_task, context)
@@ -1536,7 +1607,7 @@ def table_repair_fix_nulls(tr_task: TableRepairTask) -> None:
                                 """
                                 UPDATE {table_name} t
                                 SET {column} = string_to_array(
-                                    trim(both '[]' from u.column_value), 
+                                    trim(both '[]' from u.column_value),
                                     ','
                                 )::{type}[]
                                 FROM {null_updates} u
@@ -1606,6 +1677,8 @@ def table_repair_fix_nulls(tr_task: TableRepairTask) -> None:
 
 def table_rerun_temptable(td_task: TableDiffTask) -> None:
 
+    td_task = ace.table_diff_checks(td_task, skip_validation=True)
+
     # load diff data and validate
     diff_data = json.load(open(td_task.diff_file_path, "r"))
     diff_keys = set()
@@ -1658,7 +1731,24 @@ def table_rerun_temptable(td_task: TableDiffTask) -> None:
 
     try:
         for params in td_task.fields.conn_params:
-            conn_list.append(psycopg.connect(**params))
+            node_info = {
+                "public_ip": params["host"],
+                "port": params["port"],
+                "db_user": params["user"],
+                "db_name": params["dbname"],
+                "db_password": params.get("password", None),
+            }
+            _, conn = td_task.connection_pool.get_cluster_node_connection(
+                node_info,
+                td_task.cluster_name,
+                invoke_method=td_task.invoke_method,
+                client_role=(
+                    td_task.client_role
+                    if config.USE_CERT_AUTH and td_task.invoke_method == "api"
+                    else None
+                ),
+            )
+            conn_list.append(conn)
 
         for con in conn_list:
             authorised, missing_privileges = ace.check_user_privileges(
@@ -1697,20 +1787,34 @@ def table_rerun_temptable(td_task: TableDiffTask) -> None:
         diff_task._table_name = f"public.{temp_table_name}"
         diff_task.fields.l_table = temp_table_name
 
-        # diff_task = ace.table_diff_checks(diff_task)
-        # ace_db.create_ace_task(task=diff_task)
-        table_diff(diff_task)
+        table_diff(diff_task, skip_all_checks=True)
     except Exception as e:
         context = {"errors": [f"Could not run table diff: {str(e)}"]}
         ace.handle_task_exception(td_task, context)
         raise e
 
     try:
-        for con in conn_list:
-            cur = con.cursor()
+        for params in td_task.fields.conn_params:
+            node_info = {
+                "public_ip": params["host"],
+                "port": params["port"],
+                "db_user": params["user"],
+                "db_name": params["dbname"],
+                "db_password": params.get("password", None),
+            }
+
+            _, conn = td_task.connection_pool.get_cluster_node_connection(
+                node_info,
+                td_task.cluster_name,
+                invoke_method=td_task.invoke_method,
+                client_role=(
+                    td_task.client_role
+                    if config.USE_CERT_AUTH and td_task.invoke_method == "api"
+                    else None
+                ),
+            )
+            cur = conn.cursor()
             cur.execute(clean_qry)
-            cur.close()
-            con.commit()
     except Exception as e:
         context = {"errors": [f"Could not clean up temp table: {str(e)}"]}
         ace.handle_task_exception(td_task, context)
@@ -1724,6 +1828,9 @@ def table_rerun_temptable(td_task: TableDiffTask) -> None:
 
 
 def table_rerun_async(td_task: TableDiffTask) -> None:
+
+    td_task = ace.table_diff_checks(td_task, skip_validation=True)
+
     # load diff data and validate
     try:
         diff_data = json.load(open(td_task.diff_file_path, "r"))
@@ -1815,6 +1922,7 @@ def table_rerun_async(td_task: TableDiffTask) -> None:
         "diff_dict": diff_dict,
         "row_diff_count": row_diff_count,
         "lock": lock,
+        "td_task": td_task,
     }
 
     util.message(
@@ -1939,7 +2047,7 @@ def table_rerun_async(td_task: TableDiffTask) -> None:
                 )
 
             elif td_task.output == "csv":
-                ace.write_diffs_csv()
+                ace.write_diffs_csv(diff_dict)
         except Exception as e:
             context = {"errors": [f"Could not write diffs to file: {str(e)}"]}
             ace.handle_task_exception(td_task, context)
@@ -1961,6 +2069,8 @@ def table_rerun_async(td_task: TableDiffTask) -> None:
 
 def repset_diff(rd_task: RepsetDiffTask) -> None:
     """Loop thru a replication-sets tables and run table-diff on them"""
+
+    rd_task = ace.repset_diff_checks(rd_task, skip_validation=True)
 
     rd_task_context = []
     rd_start_time = datetime.now()
@@ -2000,7 +2110,7 @@ def repset_diff(rd_task: RepsetDiffTask) -> None:
             )
 
             td_task = ace.table_diff_checks(td_task)
-            td_task = table_diff(td_task)
+            table_diff(td_task)
             run_time = util.round_timedelta(datetime.now() - start_time).total_seconds()
             status = {
                 "table": table,
@@ -2010,6 +2120,7 @@ def repset_diff(rd_task: RepsetDiffTask) -> None:
                 "mismatch": td_task.scheduler.task_context["mismatch"],
                 "diff_file_path": getattr(td_task, "diff_file_path", None),
             }
+            td_task.connection_pool.close_all()
         except Exception as e:
             errors_encountered = True
             status = {
@@ -2037,6 +2148,8 @@ def repset_diff(rd_task: RepsetDiffTask) -> None:
 def spock_diff(sd_task: SpockDiffTask) -> None:
     """Compare spock meta data setup on different cluster nodes"""
 
+    sd_task = ace.spock_diff_checks(sd_task, skip_validation=True)
+
     conns = {}
     compare_spock = []
     task_context = {}
@@ -2046,9 +2159,24 @@ def spock_diff(sd_task: SpockDiffTask) -> None:
 
     try:
         for params in sd_task.fields.conn_params:
-            conns[sd_task.fields.host_map[params["host"] + ":" + params["port"]]] = (
-                psycopg.connect(**params, row_factory=dict_row)
+            node_info = {
+                "public_ip": params["host"],
+                "port": params["port"],
+                "db_user": params["user"],
+                "db_name": params["dbname"],
+                "db_password": params.get("password", None),
+            }
+            _, conn = sd_task.connection_pool.get_cluster_node_connection(
+                node_info,
+                sd_task.cluster_name,
+                invoke_method=sd_task.invoke_method,
+                client_role=(
+                    sd_task.client_role
+                    if config.USE_CERT_AUTH and sd_task.invoke_method == "api"
+                    else None
+                ),
             )
+            conns[sd_task.fields.host_map[params["host"] + ":" + params["port"]]] = conn
     except Exception as e:
         context = {"errors": [f"Could not connect to nodes: {str(e)}"]}
         ace.handle_task_exception(sd_task, context)
@@ -2456,16 +2584,26 @@ def auto_repair():
         TBD
     """
 
-    cluster_name = config.auto_repair_config["cluster_name"]
-    dbname = config.auto_repair_config["dbname"]
+    ar_task = AutoRepairTask(
+        cluster_name=config.auto_repair_config["cluster_name"],
+        dbname=config.auto_repair_config["dbname"],
+        poll_frequency=config.auto_repair_config["poll_frequency"],
+        repair_frequency=config.auto_repair_config["repair_frequency"],
+    )
+
+    ar_task.scheduler.task_id = ace_db.generate_task_id()
+    ar_task.scheduler.task_type = "AUTO_REPAIR"
+    ar_task.scheduler.task_status = "RUNNING"
+    ar_task.scheduler.started_at = datetime.now()
+    ace_db.create_ace_task(ar_task)
 
     # We have already run the necessary checks, so we can proceed here.
-    db, pg, node_info = cluster.load_json(cluster_name)
+    db, pg, node_info = cluster.load_json(ar_task.cluster_name)
 
     cluster_nodes = []
     combined_json = {}
     database = next(
-        (db_entry for db_entry in db if db_entry["db_name"] == dbname), None
+        (db_entry for db_entry in db if db_entry["db_name"] == ar_task.dbname), None
     )
 
     for node in node_info:
@@ -2528,31 +2666,11 @@ def auto_repair():
     conn_map = {}
 
     for node in cluster_nodes:
-        params = {
-            "dbname": node["db_name"],
-            "host": node["public_ip"],
-            "port": node["port"],
-            "user": node["db_user"],
-            "options": f"-c statement_timeout={config.STATEMENT_TIMEOUT}",
-            "application_name": "ACE",
-        }
-        if node["db_password"]:
-            params["password"] = node["db_password"]
-        else:
-            pgpass = pgpasslib.getpass(
-                host=node["name"],
-                user=node["db_user"],
-                dbname=node["db_name"],
-                port=node["port"],
-            )
-            if not pgpass:
-                raise AceException(
-                    f"No password found for {node['name']} in"
-                    f" {cluster_name}.json or ~/.pgpass"
-                )
-            params["password"] = pgpass
         try:
-            conn_map[node["name"]] = psycopg.connect(**params)
+            _, conn = ar_task.connection_pool.get_cluster_node_connection(
+                node, ar_task.cluster_name
+            )
+            conn_map[node["name"]] = conn
             cur = conn_map[node["name"]].cursor(row_factory=dict_row)
             cur.execute(oid_sql)
             oid_to_node_name = {
@@ -2561,17 +2679,25 @@ def auto_repair():
         except Exception as e:
             raise AceException(f"Error while getting OIDs: {str(e)}")
 
+    contexts = []
     for node in cluster_nodes:
+
+        context = {}
+        context["node"] = node["name"]
+        context["exception_info"] = []
+
         try:
             conn = conn_map[node["name"]]
-            exp_cur = conn.cursor(row_factory=class_row(AutoRepairTask))
+            exp_cur = conn.cursor(row_factory=class_row(ExceptionLogEntry))
             sql_cur = conn.cursor()
             exp_cur.execute(get_exception_sql)
             exceptions = exp_cur.fetchall()
         except Exception as e:
             raise AceException(f"Error while getting exceptions: {str(e)}")
 
-        # XXX: handle exception storms
+        # TODO: handle exception storms
+        # TODO: Handle cases when the record corresponding to the exception
+        # is no longer present
         for exception in exceptions:
             pkey = ace.get_key(conn, exception.table_schema, exception.table_name)
 
@@ -2579,6 +2705,13 @@ def auto_repair():
 
             # We handle only INSERT exceptions for now
             if exception.operation == "INSERT":
+
+                exception_log_entry = exception.__dict__
+                exception_log_entry["pkey"] = pkey
+
+                node_exp_context = {}
+                node_exp_context["exception_log_entry"] = exception_log_entry
+
                 # We will first get the local commit timestamp of the transaction
                 # that created the record and eventually caused the exception.
 
@@ -2640,10 +2773,22 @@ def auto_repair():
                         f"Error while getting local commit timestamp: {str(e)}"
                     )
 
+                resolution_details = {}
+                resolution_details["local_commit_ts"] = local_commit_ts
+                resolution_details["remote_commit_ts"] = exception.remote_commit_ts
+
                 # Now, we can compare local_commit_ts and remote_commit_ts
                 # XXX: Handle equal timestamps. Maybe consult spock.node for
                 # the tiebraker?
                 if local_commit_ts < exception.remote_commit_ts:
+
+                    resolution_details["action_taken"] = "INSERT_EXCEPTION_REPAIRED"
+                    resolution_details["details"] = (
+                        "The local record was updated"
+                        + " with values from the remote origin node "
+                        + f"({oid_to_node_name[exception.remote_origin]})"
+                    )
+
                     # The local node is behind the remote origin node
                     # We will use the origin node as the source of truth
 
@@ -2756,6 +2901,13 @@ def auto_repair():
                     # If the local record is ahead of the remote origin node,
                     # we will update the exception status to "RESOLVED", and
                     # log the details in the resolution_details field.
+                    resolution_details["action_taken"] = "NONE"
+                    resolution_details["details"] = (
+                        "The local record was ahead of the"
+                        " remote origin node "
+                        f"({oid_to_node_name[exception.remote_origin]})"
+                    )
+
                     try:
                         sql_cur.execute(
                             update_exception_detail_sql,
@@ -2781,3 +2933,17 @@ def auto_repair():
                         raise AceException(
                             f"Error while updating exception status: {str(e)}"
                         )
+
+                node_exp_context["resolution_details"] = resolution_details
+                context["exception_info"].append(node_exp_context)
+
+        contexts.append(context)
+
+    ar_task.scheduler.task_context = contexts
+    ar_task.scheduler.task_status = "COMPLETED"
+    ar_task.scheduler.finished_at = datetime.now()
+    ar_task.scheduler.task_time_taken = (
+        ar_task.scheduler.finished_at - ar_task.scheduler.started_at
+    )
+
+    ace_db.update_ace_task(ar_task)
