@@ -162,6 +162,7 @@ def table_repair_api():
     generate_report = data.get("generate_report", False)
     upsert_only = data.get("upsert_only", False)
     fix_nulls = data.get("fix_nulls", False)
+    fire_triggers = data.get("fire_triggers", False)
 
     if not cluster_name or not diff_file or not table_name:
         return (
@@ -200,6 +201,7 @@ def table_repair_api():
             upsert_only=upsert_only,
             invoke_method="api",
             fix_nulls=fix_nulls,
+            fire_triggers=fire_triggers,
         )
         raw_args.scheduler.task_id = task_id
         raw_args.scheduler.task_type = "table-repair"
@@ -841,11 +843,11 @@ def populate_exception_status_tables():
 
 
 def validate_auto_repair_config(
-    cluster_name, dbname, poll_interval, status_update_interval
+    cluster_name, dbname, poll_frequency, repair_frequency
 ):
 
-    poll_interval_datetime = None
-    status_update_interval_datetime = None
+    poll_freq_datetime = None
+    repair_freq_datetime = None
 
     if not cluster_name:
         raise AceException("cluster_name is required in auto_repair_config")
@@ -857,16 +859,16 @@ def validate_auto_repair_config(
     if not dbname:
         raise AceException("dbname is required in auto_repair_config")
 
-    if not poll_interval:
-        raise AceException("poll_interval is required in auto_repair_config")
+    if not poll_frequency:
+        raise AceException("poll_frequency is required in auto_repair_config")
 
     try:
-        poll_interval_datetime = parse_time_string(poll_interval)
-        status_update_interval_datetime = parse_time_string(status_update_interval)
+        poll_freq_datetime = parse_time_string(poll_frequency)
+        repair_freq_datetime = parse_time_string(repair_frequency)
     except Exception as e:
         raise AceException(
-            f"Invalid poll_interval or status_update_interval: {poll_interval} or "
-            f"{status_update_interval}. Error: {e}"
+            f"Invalid poll_frequency or repair_frequency: {poll_frequency} or "
+            f"{repair_frequency}. Error: {e}"
         )
 
     db, pg, node_info = cluster.load_json(cluster_name)
@@ -874,7 +876,7 @@ def validate_auto_repair_config(
     if dbname not in [db_entry["db_name"] for db_entry in db]:
         raise AceException(f"Database {dbname} not found in cluster {cluster_name}")
 
-    return poll_interval_datetime, status_update_interval_datetime
+    return poll_freq_datetime, repair_freq_datetime
 
 
 def validate_table_diff_schedule():
@@ -983,8 +985,8 @@ process.
 
 
 def start_auto_repair_daemon():
-    poll_interval_datetime = None
-    update_interval_datetime = None
+    poll_freq_datetime = None
+    repair_freq_datetime = None
 
     auto_repair_config = config.auto_repair_config
     if not auto_repair_config["enabled"]:
@@ -993,19 +995,16 @@ def start_auto_repair_daemon():
     cluster_name = auto_repair_config.get("cluster_name", None)
     dbname = auto_repair_config.get("dbname", None)
 
-    # The poll_interval is for polling the exception_log table
+    # The poll_frequency is for polling the exception_log table
     # for new exceptions periodically.
-    poll_interval = auto_repair_config.get("poll_interval", None)
+    poll_frequency = auto_repair_config.get("poll_frequency", None)
 
-    # The status_update_interval is for updating the
-    # exception_status and exception_status_detail tables.
-    # This is only temporary since an upcoming version of Spock
-    # will auto-populate these tables using triggers.
-    status_update_interval = auto_repair_config.get("status_update_interval", None)
+    # How often the auto-repair job fires
+    repair_frequency = auto_repair_config.get("repair_frequency", None)
 
     try:
-        poll_interval_datetime, update_interval_datetime = validate_auto_repair_config(
-            cluster_name, dbname, poll_interval, status_update_interval
+        poll_freq_datetime, repair_freq_datetime = validate_auto_repair_config(
+            cluster_name, dbname, poll_frequency, repair_frequency
         )
     except AceException as e:
         util.exit_message(f"Error validating auto-repair config: {e}")
@@ -1015,28 +1014,28 @@ def start_auto_repair_daemon():
             populate_exception_status_tables,
             trigger="interval",
             weeks=(
-                update_interval_datetime.weeks
-                if hasattr(update_interval_datetime, "weeks")
+                poll_freq_datetime.weeks
+                if hasattr(poll_freq_datetime, "weeks")
                 else 0
             ),
             days=(
-                update_interval_datetime.days
-                if hasattr(update_interval_datetime, "days")
+                poll_freq_datetime.days
+                if hasattr(poll_freq_datetime, "days")
                 else 0
             ),
             hours=(
-                update_interval_datetime.hours
-                if hasattr(update_interval_datetime, "hours")
+                poll_freq_datetime.hours
+                if hasattr(poll_freq_datetime, "hours")
                 else 0
             ),
             minutes=(
-                update_interval_datetime.minutes
-                if hasattr(update_interval_datetime, "minutes")
+                poll_freq_datetime.minutes
+                if hasattr(poll_freq_datetime, "minutes")
                 else 0
             ),
             seconds=(
-                update_interval_datetime.seconds
-                if hasattr(update_interval_datetime, "seconds")
+                poll_freq_datetime.seconds
+                if hasattr(poll_freq_datetime, "seconds")
                 else 0
             ),
             max_instances=1,
@@ -1047,28 +1046,28 @@ def start_auto_repair_daemon():
             ace_core.auto_repair,
             trigger="interval",
             weeks=(
-                poll_interval_datetime.weeks
-                if hasattr(poll_interval_datetime, "weeks")
+                repair_freq_datetime.weeks
+                if hasattr(repair_freq_datetime, "weeks")
                 else 0
             ),
             days=(
-                poll_interval_datetime.days
-                if hasattr(poll_interval_datetime, "days")
+                repair_freq_datetime.days
+                if hasattr(repair_freq_datetime, "days")
                 else 0
             ),
             hours=(
-                poll_interval_datetime.hours
-                if hasattr(poll_interval_datetime, "hours")
+                repair_freq_datetime.hours
+                if hasattr(repair_freq_datetime, "hours")
                 else 0
             ),
             minutes=(
-                poll_interval_datetime.minutes
-                if hasattr(poll_interval_datetime, "minutes")
+                repair_freq_datetime.minutes
+                if hasattr(repair_freq_datetime, "minutes")
                 else 0
             ),
             seconds=(
-                poll_interval_datetime.seconds
-                if hasattr(poll_interval_datetime, "seconds")
+                repair_freq_datetime.seconds
+                if hasattr(repair_freq_datetime, "seconds")
                 else 0
             ),
             max_instances=1,

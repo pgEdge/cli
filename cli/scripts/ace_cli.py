@@ -133,6 +133,7 @@ def table_repair_cli(
     generate_report=False,
     upsert_only=False,
     fix_nulls=False,
+    fire_triggers=False,
 ):
 
     task_id = ace_db.generate_task_id()
@@ -149,6 +150,7 @@ def table_repair_cli(
             generate_report=generate_report,
             upsert_only=upsert_only,
             fix_nulls=fix_nulls,
+            fire_triggers=fire_triggers,
             invoke_method="cli",
         )
         tr_task.scheduler.task_id = task_id

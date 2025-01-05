@@ -1101,6 +1101,10 @@ def table_repair(tr_task: TableRepairTask):
 
             if spock_version >= config.SPOCK_REPAIR_MODE_MIN_VERSION:
                 cur.execute("SELECT spock.repair_mode(true);")
+                if tr_task.fire_triggers:
+                    cur.execute("SET session_replication_role = 'local';")
+                else:
+                    cur.execute("SET session_replication_role = 'replica';")
         except Exception as e:
             context = {"errors": [f"Could not set repair mode: {str(e)}"]}
             ace.handle_task_exception(tr_task, context)
@@ -2583,8 +2587,8 @@ def auto_repair():
     ar_task = AutoRepairTask(
         cluster_name=config.auto_repair_config["cluster_name"],
         dbname=config.auto_repair_config["dbname"],
-        poll_interval=config.auto_repair_config["poll_interval"],
-        status_update_interval=config.auto_repair_config["status_update_interval"],
+        poll_frequency=config.auto_repair_config["poll_frequency"],
+        repair_frequency=config.auto_repair_config["repair_frequency"],
     )
 
     ar_task.scheduler.task_id = ace_db.generate_task_id()

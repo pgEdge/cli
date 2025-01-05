@@ -98,6 +98,7 @@ class TableRepairTask:
     generate_report: bool
     upsert_only: bool
     fix_nulls: bool
+    fire_triggers: bool
 
     invoke_method: str = "cli"
 
@@ -225,8 +226,8 @@ class ExceptionLogEntry:
 class AutoRepairTask:
     cluster_name: str
     dbname: str
-    poll_interval: int
-    status_update_interval: int
+    poll_frequency: str
+    repair_frequency: str
 
     exp_log_entries: list[ExceptionLogEntry] = field(default_factory=list)
 

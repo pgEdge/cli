@@ -1052,6 +1052,9 @@ def validate_table_repair_inputs(tr_task: TableRepairTask) -> None:
     if type(tr_task.fix_nulls) is not bool:
         raise AceException("fix_nulls should be True (1) or False (0)")
 
+    if type(tr_task.fire_triggers) is not bool:
+        raise AceException("fire_triggers should be True (1) or False (0)")
+
     if not tr_task.source_of_truth and not tr_task.fix_nulls:
         raise AceException("source_of_truth is a required argument")
 
