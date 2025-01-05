@@ -250,27 +250,41 @@ Rerun with host database comparison:
 
 ACE provides a REST API for programmatic access. The API server runs on localhost:5000 by default. An SSH tunnel is required to access the API from outside the host machine for security purposes.
 
+Note: All API endpoints require client certificate authentication. The certificates must be properly configured in `ace_config.py`.
+
 ### Table Diff API
 
 Initiates a table diff operation.
 
-**Endpoint:** `GET /ace/table-diff`
+**Endpoint:** `POST /ace/table-diff`
 
-**Parameters:**
-- `cluster_name` (required): Name of the cluster
-- `table_name` (required): Fully qualified table name (schema.table)
-- `dbname` (optional): Database name
-- `block_rows` (optional): Number of rows per block (default: 10000)
-- `max_cpu_ratio` (optional): Maximum CPU usage ratio (default: 0.8)
-- `output` (optional): Output format ["json", "csv", "html"] (default: "json")
-- `nodes` (optional): Nodes to include ("all" or comma-separated list)
-- `batch_size` (optional): Batch size for processing (default: 50)
-- `table_filter` (optional): SQL WHERE clause to filter rows for comparison
-- `quiet` (optional): Suppress output (default: false)
+**Request Body:**
+```json
+{
+    "cluster_name": "my_cluster",        // required
+    "table_name": "public.users",        // required
+    "dbname": "mydb",                    // optional
+    "block_rows": 10000,                 // optional, default: 10000
+    "max_cpu_ratio": 0.8,                // optional, default: 0.6
+    "output": "json",                    // optional, default: "json"
+    "nodes": "all",                      // optional, default: "all"
+    "batch_size": 50,                    // optional, default: 1
+    "table_filter": "id < 1000",         // optional
+    "quiet": false                       // optional, default: false
+}
+```
 
 **Example Request:**
 ```bash
-curl "http://localhost:5000/ace/table-diff?cluster_name=my_cluster&table_name=public.users&output=html"
+curl -X POST "http://localhost:5000/ace/table-diff" \
+  -H "Content-Type: application/json" \
+  --cert /path/to/client.crt \
+  --key /path/to/client.key \
+  -d '{
+    "cluster_name": "my_cluster",
+    "table_name": "public.users",
+    "output": "html"
+  }'
 ```
 
 **Example Response:**
@@ -285,22 +299,37 @@ curl "http://localhost:5000/ace/table-diff?cluster_name=my_cluster&table_name=pu
 
 Initiates a table repair operation.
 
-**Endpoint:** `GET /ace/table-repair`
+**Endpoint:** `POST /ace/table-repair`
 
-**Parameters:**
-- `cluster_name` (required): Name of the cluster
-- `diff_file` (required): Path to the diff file
-- `source_of_truth` (required): Source node for repairs
-- `table_name` (required): Fully qualified table name
-- `dbname` (optional): Database name
-- `dry_run` (optional): Simulate repairs (default: false)
-- `quiet` (optional): Suppress output (default: false)
-- `generate_report` (optional): Create detailed report (default: false)
-- `upsert_only` (optional): Skip deletions (default: false)
+**Request Body:**
+```json
+{
+    "cluster_name": "my_cluster",        // required
+    "diff_file": "/path/to/diff.json",   // required
+    "source_of_truth": "primary",        // required unless fix_nulls is true
+    "table_name": "public.users",        // required
+    "dbname": "mydb",                    // optional
+    "dry_run": false,                    // optional, default: false
+    "quiet": false,                      // optional, default: false
+    "generate_report": false,            // optional, default: false
+    "upsert_only": false,                // optional, default: false
+    "fix_nulls": false,                  // optional, default: false
+    "fire_triggers": false               // optional, default: false
+}
+```
 
 **Example Request:**
 ```bash
-curl "http://localhost:5000/ace/table-repair?cluster_name=my_cluster&diff_file=/path/to/diff.json&source_of_truth=primary&table_name=public.users"
+curl -X POST "http://localhost:5000/ace/table-repair" \
+  -H "Content-Type: application/json" \
+  --cert /path/to/client.crt \
+  --key /path/to/client.key \
+  -d '{
+    "cluster_name": "my_cluster",
+    "diff_file": "/path/to/diff.json",
+    "source_of_truth": "primary",
+    "table_name": "public.users"
+  }'
 ```
 
 **Example Response:**
@@ -315,19 +344,31 @@ curl "http://localhost:5000/ace/table-repair?cluster_name=my_cluster&diff_file=/
 
 Reruns a previous table diff operation.
 
-**Endpoint:** `GET /ace/table-rerun`
+**Endpoint:** `POST /ace/table-rerun`
 
-**Parameters:**
-- `cluster_name` (required): Name of the cluster
-- `diff_file` (required): Path to the previous diff file
-- `table_name` (required): Fully qualified table name
-- `dbname` (optional): Database name
-- `quiet` (optional): Suppress output (default: false)
-- `behavior` (optional): Processing behavior ["multiprocessing", "hostdb"]
+**Request Body:**
+```json
+{
+    "cluster_name": "my_cluster",        // required
+    "diff_file": "/path/to/diff.json",   // required
+    "table_name": "public.users",        // required
+    "dbname": "mydb",                    // optional
+    "quiet": false,                      // optional, default: false
+    "behavior": "multiprocessing"        // optional, default: "multiprocessing"
+}
+```
 
 **Example Request:**
 ```bash
-curl "http://localhost:5000/ace/table-rerun?cluster_name=my_cluster&diff_file=/path/to/diff.json&table_name=public.users"
+curl -X POST "http://localhost:5000/ace/table-rerun" \
+  -H "Content-Type: application/json" \
+  --cert /path/to/client.crt \
+  --key /path/to/client.key \
+  -d '{
+    "cluster_name": "my_cluster",
+    "diff_file": "/path/to/diff.json",
+    "table_name": "public.users"
+  }'
 ```
 
 **Example Response:**
@@ -342,11 +383,16 @@ curl "http://localhost:5000/ace/table-rerun?cluster_name=my_cluster&diff_file=/p
 
 Retrieves the status of a submitted task.
 
-**Endpoint:** `GET /ace/task-status/<task_id>`
+**Endpoint:** `GET /ace/task-status`
+
+**Query Parameters:**
+- `task_id` (required): The ID of the task to check
 
 **Example Request:**
 ```bash
-curl "http://localhost:5000/ace/task-status/td_20240315_123456"
+curl "http://localhost:5000/ace/task-status?task_id=td_20240315_123456" \
+  --cert /path/to/client.crt \
+  --key /path/to/client.key
 ```
 
 **Example Response:**
@@ -354,18 +400,68 @@ curl "http://localhost:5000/ace/task-status/td_20240315_123456"
 {
     "task_id": "td_20240315_123456",
     "task_type": "table-diff",
-    "status": "COMPLETED",
+    "task_status": "COMPLETED",
     "started_at": "2024-03-15T12:34:56.789Z",
     "finished_at": "2024-03-15T12:35:01.234Z",
     "time_taken": 4.445,
-    "result": {
+    "task_context": {
         "diff_file": "/path/to/output.json",
         "total_rows": 10000,
-        "mismatched_rows": 5
+        "mismatched_rows": 5,
         "summary": {
-
+            // Additional task-specific details
         }
     }
+}
+```
+
+### Spock Exception Update API
+
+Updates the status of a Spock exception.
+
+**Endpoint:** `POST /ace/update-spock-exception`
+
+**Request Body:**
+```json
+{
+    "cluster_name": "my_cluster",                   // required
+    "node_name": "node1",                           // required
+    "dbname": "mydb",                               // optional
+    "exception_details": {                          // required
+        "remote_origin": "origin_oid",              // required
+        "remote_commit_ts": "2024-03-15T12:34:56Z", // required
+        "remote_xid": "123456",                     // required
+        "command_counter": 1,                       // optional
+        "status": "RESOLVED",                       // required
+        "resolution_details": {                     // optional
+            "details": "Issue fixed"
+        }
+    }
+}
+```
+
+**Example Request:**
+```bash
+curl -X POST "http://localhost:5000/ace/update-spock-exception" \
+  -H "Content-Type: application/json" \
+  --cert /path/to/client.crt \
+  --key /path/to/client.key \
+  -d '{
+    "cluster_name": "my_cluster",
+    "node_name": "node1",
+    "exception_details": {
+        "remote_origin": "origin1",
+        "remote_commit_ts": "2024-03-15T12:34:56Z",
+        "remote_xid": "123456",
+        "status": "RESOLVED"
+    }
+  }'
+```
+
+**Example Response:**
+```json
+{
+    "message": "Exception status updated successfully"
 }
 ```
 
@@ -382,7 +478,8 @@ All API endpoints return error responses in the following format:
 Common HTTP status codes:
 - 200: Success
 - 400: Bad Request (missing or invalid parameters)
-- 404: Not Found (invalid cluster or task ID)
+- 401: Unauthorized (missing or invalid client certificate)
+- 415: Unsupported Media Type (request body is not JSON)
 - 500: Internal Server Error
 
 ## Scheduled Operations (Beta)
@@ -514,11 +611,11 @@ Auto-repair settings are defined in `ace_config.py`:
 
 ```python
 auto_repair_config = {
-    "enabled": True,
-    "cluster_name": "my_cluster",
-    "dbname": "mydb",
-    "poll_interval": "1000s",
-    "status_update_interval": "1000s"
+    "enabled": False,
+    "cluster_name": "eqn-t9da",
+    "dbname": "demo",
+    "poll_frequency": "10m",
+    "repair_frequency": "15m"
 }
 ```
 
@@ -527,15 +624,19 @@ auto_repair_config = {
 - `enabled`: Enable/disable auto-repair functionality (default: False)
 - `cluster_name`: Name of the cluster to monitor
 - `dbname`: Database name to monitor
-- `poll_interval`: How often the Spock exception log is polled to check for new exceptions.
-- `status_update_interval`: How often the Spock exception status and detail tables are updated with the latest exception status.
+- `poll_frequency`: How often to poll the exception_log table and populate the exception_status and exception_status_detail tables
+- `repair_frequency`: How often to repair exceptions that have been detected
 
 ### Time Intervals
 
-Both `poll_interval` and `status_update_interval` accept time strings in the format:
+Both `poll_frequency` and `repair_frequency` accept time strings in the format:
 - `<number>s`: Seconds (e.g., "60s")
 - `<number>m`: Minutes (e.g., "5m")
 - `<number>h`: Hours (e.g., "1h")
+- `<number>w`: Weeks (e.g., "1w")
+
+Note: The minimum frequency allowed is 5 minutes. However, it can be modified by
+editing the `MIN_RUN_FREQUENCY` variable in `ace_config.py`.
 
 ### Usage
 
@@ -543,12 +644,6 @@ The auto-repair daemon starts automatically when ACE is started.
 
 ```bash
 ./pgedge start ace
-```
-
-To stop the auto-repair daemon:
-
-```bash
-./pgedge stop ace
 ```
 
 ### Common Use Cases
@@ -560,3 +655,27 @@ E.g., bidding, reservations, etc., where insert-insert conflicts are likely to a
 ### Limitations and Considerations
 - The auto-repair daemon is currently limited to handling insert-insert conflicts only.
 - Handling other types of conflicts is planned for future releases.
+
+
+## Client Certificate Authentication
+
+Setting up client-based-certificate authentication is *mandatory* to be able to
+to use the ACE APIs. It can also be enabled for the CLI modules.
+
+Please refer to [Cert Auth with EasyRSA](https://docs.google.com/document/d/17SmNVx2Ootdc32ZEuW9qXlNpGIyhHOBfpJGRbXwHeP0/edit?usp=sharing) to set up the
+server and client certificates.
+
+Create a client certificate separately for ACE--with all necessary privileges on
+tables, schemas, and databases that you want to use with ACE. Each external user
+can have their own client certificate--typically with lower privilges. The client's 
+role will then needed to be granted to the ACE user. E.g., if the ACE user
+(with higher privileges) has a certificate with `ace_user` as the common name,
+and the external user has a certificate with `external_user` as the common name,
+then the `external_user` role will need to be granted to `ace_user`.
+
+```sql
+GRANT external_user TO ace_user;
+```
+
+This is required since ACE will attempt to use `SET ROLE` to switch to the external
+user's role before performing any operations.
