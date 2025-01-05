@@ -564,67 +564,71 @@ def task_status_api():
 
 
 """
-Update the exception status for a spock exception on a node.
-
-This API endpoint allows updating the exception status for a given node
-in a specified cluster. It requires the cluster name and node name as
-query parameters, and the exception status details in the request body.
+Manually update the exception status on a node. Typically, the auto-repair
+module will handle insert-insert exceptions and update the status, but for other
+types of exceptions, this API endpoint can be used to manually update the status.
 
 API Method: POST
 
-Args:
-    cluster_name (str): The name of the cluster (required query parameter).
-    node_name (str): The name of the node (required query parameter).
-
 Request Body:
-    A JSON object containing the exception status details. The structure
-    should match the requirements of the ace.exception_status_checks()
-    and ace_core.update_exception_status() functions.
+    A JSON object containing:
+    - cluster_name (str): The name of the cluster (required)
+    - node_name (str): The name of the node (required)
+    - dbname (str): Optional database name
+    - exception_details: An object containing the exception status details (required).
+      - cluster_name (str): The name of the cluster (required)
+      - node_name (str): The name of the node (required)
+      - dbname (str): Optional database name
+      - exception_details: An object containing the exception status details (required).
+        - remote_origin (str): The node origin (OID) of the remote transaction that
+          caused the exception (required)
+        - remote_commit_ts (str): The commit timestamp of the remote transaction
+          that caused the exception (required)
+        - remote_xid (str): The transaction ID of the remote transaction that
+          caused the exception (required)
+        - command_counter (int): The command counter of the exception (optional)
+        - status (str): The status of the exception (required)
+        - resolution_details (dict): The details of the resolution (optional)
 
-    A sample entry is shown below:
+    Example request body:
     {
-        "remote_origin": "origin1",
-        "remote_commit_ts": "2023-06-01T12:00:00Z",
-        "remote_xid": "123456",
-        "command_counter": 1,
-        "status": "RESOLVED",
-        "resolution_details": {"details": "Issue fixed"}
+        "cluster_name": "mycluster",
+        "node_name": "node1",
+        "dbname": "mydb",
+        "exception_details": {
+            "remote_origin": "origin1",
+            "remote_commit_ts": "2023-06-01T12:00:00Z",
+            "remote_xid": "123456",
+            "command_counter": 1,
+            "status": "RESOLVED",
+            "resolution_details": {"details": "Issue fixed"}
+        }
     }
-
-    If the command_counter is omitted, then the exception status is updated
-    for all exceptions with the same (remote_origin, remote_commit_ts, remote_xid)
-    in spock.exception_status_detail, in addition to updating spock.exception_status.
 
 Returns:
-    JSON: A JSON object containing a success message or error details.
+    JSON object containing:
+        - A success message or error details
+        - Appropriate HTTP status code
 
 Raises:
-    400 Bad Request: If required parameters are missing or invalid.
-    415 Unsupported Media Type: If the request content type is not JSON.
-    500 Internal Server Error: If an unexpected error occurs during processing.
-
-Example:
-    POST /ace/exception-status?cluster_name=mycluster&node_name=node1
-    {
-        "remote_origin": "origin1",
-        "remote_commit_ts": "2023-06-01T12:00:00Z",
-        "remote_xid": "123456",
-        "status": "RESOLVED",
-        "resolution_details": {"details": "Issue fixed"}
-    }
-
-Response:
-    {
-        "message": "Exception status updated successfully"
-    }
+    400 Bad Request: If required parameters are missing or invalid
+    415 Unsupported Media Type: If the request content type is not JSON
+    500 Internal Server Error: If an unexpected error occurs during processing
 """
 
 
 @app.route("/ace/update-spock-exception", methods=["POST"])
 @require_client_cert
 def update_spock_exception_api():
-    cluster_name = request.args.get("cluster_name")
-    node_name = request.args.get("node_name")
+    if not request.is_json:
+        return jsonify({"error": "Request must be JSON"}), 415
+
+    data = request.json
+
+    cluster_name = data.get("cluster_name")
+    node_name = data.get("node_name")
+    dbname = data.get("dbname")
+    exception_details = data.get("exception_details")
 
     if not cluster_name or not node_name:
         return (
@@ -632,19 +636,17 @@ def update_spock_exception_api():
             400,
         )
 
-    entry = request.json
-
-    if not entry:
-        return (
-            jsonify(
-                {"error": "Exception status entry is required in the request body"}
-            ),
-            400,
-        )
+    if not exception_details:
+        return jsonify({"error": "exception_details is required"}), 400
 
     try:
-        conn = ace.update_spock_exception_checks(cluster_name, node_name, entry)
-        ace_core.update_spock_exception(entry, conn)
+        conn = ace.update_spock_exception_checks(
+            cluster_name,
+            node_name,
+            exception_details,
+            dbname,
+        )
+        ace_core.update_spock_exception(exception_details, conn)
         return jsonify({"message": "Exception status updated successfully"}), 200
     except AceException as e:
         return jsonify({"error": str(e)}), 400

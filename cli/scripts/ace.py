@@ -31,7 +31,7 @@ from ace_data_models import (
     TableRepairTask,
 )
 import ace_cli
-import ace_auth as auth
+from ace_auth import ConnectionPool
 from ace_exceptions import AceException
 
 
@@ -1614,6 +1614,10 @@ def update_spock_exception_checks(
     cluster_name: str, node_name: str, entry: dict, dbname: str = None
 ) -> None:
 
+    # This module doesn't necessitate the need to create a task object, so we
+    # simply create a standalone instance of ConnectionPool here
+    conn_pool = ConnectionPool()
+
     if not cluster_name or not node_name:
         raise AceException("cluster_name and node_name are required fields")
 
@@ -1692,7 +1696,7 @@ def update_spock_exception_checks(
         for node in cluster_nodes:
             if node["name"] == node_name:
                 # FIXME: Figure out connection handling here
-                _, conn = auth.get_cluster_node_connection(node, cluster_name)
+                _, conn = conn_pool.get_cluster_node_connection(node, cluster_name)
                 conn.autocommit = False
 
     except Exception as e:
