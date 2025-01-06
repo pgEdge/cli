@@ -989,7 +989,7 @@ def start_auto_repair_daemon():
     repair_freq_datetime = None
 
     auto_repair_config = config.auto_repair_config
-    if not auto_repair_config["enabled"]:
+    if (not auto_repair_config) or (not auto_repair_config.get("enabled")):
         return
 
     cluster_name = auto_repair_config.get("cluster_name", None)
