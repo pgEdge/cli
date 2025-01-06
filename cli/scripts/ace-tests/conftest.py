@@ -1,17 +1,37 @@
 # flake8: disable=unused-import
-import pytest
+
+import concurrent.futures
+import importlib.util
 import os
 import sys
-import importlib.util
-import concurrent.futures
-import test_config as config
-
+import pytest
 import psycopg
+import test_config
+
+# Set up paths
+os.environ["PGEDGE_HOME"] = test_config.PGEDGE_HOME
+sys.path.append(test_config.PGEDGE_HOME)
+sys.path.append(os.path.join(test_config.PGEDGE_HOME, "hub", "scripts"))
+import ace_config
+
+# Override certificate paths with absolute paths
+PKI_BASE = os.path.join(test_config.PGEDGE_HOME, "data", "pg16", "pki")
+ace_config.CA_CERT_FILE = os.path.join(PKI_BASE, "ca.crt")
+ace_config.ACE_USER_CERT_FILE = os.path.join(
+    PKI_BASE, "ace_user-cert", "ace_user.crt"
+)
+ace_config.ACE_USER_KEY_FILE = os.path.join(
+    PKI_BASE, "ace_user-cert", "ace_user.key"
+)
 
 # Sets Environment Variables for Commands
-os.environ["MY_HOME"] = config.PGEDGE_HOME
-os.environ["MY_LOGS"] = os.path.join(config.PGEDGE_HOME, "data", "logs", "cli_log.out")
-os.environ["MY_LITE"] = os.path.join(config.PGEDGE_HOME, "data", "conf", "db_local.db")
+os.environ["MY_HOME"] = test_config.PGEDGE_HOME
+os.environ["MY_LOGS"] = os.path.join(
+    test_config.PGEDGE_HOME, "data", "logs", "cli_log.out"
+)
+os.environ["MY_LITE"] = os.path.join(
+    test_config.PGEDGE_HOME, "data", "conf", "db_local.db"
+)
 os.environ["MY_CMD"] = "pgedge"
 
 
@@ -37,7 +57,7 @@ def load_mod(mod: str):
 
 @pytest.fixture(scope="session", autouse=True)
 def set_run_dir():
-    os.chdir(config.PGEDGE_HOME)
+    os.chdir(test_config.PGEDGE_HOME)
 
 
 @pytest.fixture(scope="session")
@@ -55,6 +75,11 @@ def nodes():
     return ["n1", "n2", "n3"]
 
 
+@pytest.fixture(scope="session")
+def config():
+    return ace_config
+
+
 @pytest.fixture(scope="class")
 def diff_file_path():
     """Fixture to store and share the diff file path between tests"""
@@ -66,7 +91,7 @@ def diff_file_path():
 
 
 @pytest.fixture(scope="session")
-def prepare_databases(nodes):
+def prepare_databases(config, nodes):
     """Setup fixture that prepares all databases before running tests"""
 
     def prepare_node(node):
@@ -90,15 +115,25 @@ def prepare_databases(nodes):
         """
 
         try:
-            # Get connection for node using ace_core
-            conn = psycopg.connect(host=node, dbname="demo", user="admin")
+            params = {
+                "host": node if node != "n1" else "localhost",
+                "dbname": "demo",
+                "user": "admin",
+            }
+            if config.USE_CERT_AUTH:
+                params["sslmode"] = "verify-full"
+                params["sslrootcert"] = config.CA_CERT_FILE
+                params["sslcert"] = config.ACE_USER_CERT_FILE
+                params["sslkey"] = config.ACE_USER_KEY_FILE
+
+            conn = psycopg.connect(**params)
             cur = conn.cursor()
 
             # Creating the tables first
             cur.execute(customers_sql)
 
             # Loading the data
-            with open(config.CUSTOMERS_CSV, "r") as f:
+            with open(test_config.CUSTOMERS_CSV, "r") as f:
                 with cur.copy(
                     "COPY customers FROM STDIN CSV HEADER DELIMITER ','"
                 ) as copy:
@@ -129,7 +164,7 @@ def prepare_databases(nodes):
 
 
 @pytest.fixture(scope="session", autouse=True)
-def cleanup_databases(prepare_databases):
+def cleanup_databases(config, prepare_databases):
     """Cleanup all databases after running tests"""
     # Yield to let the tests run first
     yield
@@ -142,7 +177,18 @@ def cleanup_databases(prepare_databases):
 
     for node in nodes:
         try:
-            conn = psycopg.connect(host=node, dbname="demo", user="admin")
+            params = {
+                "host": node if node != "n1" else "localhost",
+                "dbname": "demo",
+                "user": "admin",
+            }
+            if config.USE_CERT_AUTH:
+                params["sslmode"] = "verify-full"
+                params["sslrootcert"] = config.CA_CERT_FILE
+                params["sslcert"] = config.ACE_USER_CERT_FILE
+                params["sslkey"] = config.ACE_USER_KEY_FILE
+
+            conn = psycopg.connect(**params)
             cur = conn.cursor()
             cur.execute(drop_customers_sql)
             conn.commit()
@@ -150,3 +196,21 @@ def cleanup_databases(prepare_databases):
             conn.close()
         except Exception as e:
             print(f"Failed to cleanup node {node}: {str(e)}")
+
+
+def pytest_configure(config):
+    """Register custom markers."""
+    config.addinivalue_line(
+        "markers",
+        "abstract_base: mark a test class as an abstract base class "
+        "that should not be run directly",
+    )
+
+
+def pytest_collection_modifyitems(items):
+    """Skip tests marked as abstract_base if they are in the base class."""
+    for item in items:
+        if item.get_closest_marker("abstract_base"):
+            # Only skip if the test is in TestSimple class directly
+            if item.cls and item.cls.__name__ == "TestSimple":
+                item.add_marker(pytest.mark.skip(reason="Abstract base class"))

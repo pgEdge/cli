@@ -1,10 +1,10 @@
 import pytest
 import psycopg
-from test_simple import TestSimple
+from test_simple_base import TestSimpleBase
 
 
 @pytest.mark.usefixtures("prepare_databases", "setup_composite_keys")
-class TestCompositeKeys(TestSimple):
+class TestCompositeKeys(TestSimpleBase):
     """Group of tests for composite primary keys"""
 
     @pytest.fixture(scope="class", autouse=True)

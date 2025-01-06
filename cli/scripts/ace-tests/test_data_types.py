@@ -2,11 +2,11 @@ import pytest
 import psycopg
 import json
 import re
-from test_simple import TestSimple
+from test_simple_base import TestSimpleBase
 
 
 @pytest.mark.usefixtures("prepare_databases", "setup_datatypes")
-class TestDataTypes(TestSimple):
+class TestDataTypes(TestSimpleBase):
     """Group of tests for various PostgreSQL data types"""
 
     @pytest.fixture(scope="class", autouse=True)
