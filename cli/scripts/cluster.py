@@ -1828,87 +1828,116 @@ def json_validate_add_node(data):
 
 
 def remove_node(cluster_name, node_name):
-    """Remove a node from the cluster configuration."""
+    """Remove a node  from the cluster configuration."""
+
     json_validate(cluster_name)
     db, db_settings, nodes = load_json(cluster_name)
     cluster_data = get_cluster_json(cluster_name)
     if cluster_data is None:
         util.exit_message("Cluster data is missing.")
 
+
+    all_node_names = set(n.get("name") for n in nodes if n.get("name"))
+    for group in cluster_data.get("node_groups", []):
+        for sub_nd in group.get("sub_nodes", []):
+            if "name" in sub_nd:
+                all_node_names.add(sub_nd["name"])
+
+    if node_name not in all_node_names:
+        util.exit_message(
+            f"ERROR: Node '{node_name}' does not exist in cluster '{cluster_name}'."
+        )
+
     pg = db_settings["pg_version"]
     pgV = f"pg{pg}"
-
-    db, db_settings, nodes = load_json(cluster_name)
     dbname = db[0]["db_name"]
     verbose = cluster_data.get("log_level", "info")
 
+
     for node in nodes:
-        os_user = node["os_user"]
-        ssh_key = node["ssh_key"]
         message = f"Checking ssh on {node['public_ip']}"
         cmd = "hostname"
         run_cmd(cmd, node, message=message, verbose=verbose)
 
-    for node in nodes:
-        if node.get("name") != node_name:
-            sub_name = f"sub_{node['name']}{node_name}"
+
+    for nA in nodes:
+        nA_name = nA.get("name")
+        if not nA_name:
+            continue
+
+        # Subscription name "sub_nA_node_name"
+        sub_name_1 = f"sub_{nA_name}{node_name}"
+        cmd_1 = (
+            f"cd {nA['path']}/pgedge/; "
+            f"./pgedge spock sub-drop {sub_name_1} {dbname}"
+        )
+        msg_1 = f"Dropping subscription {sub_name_1} on node {nA_name}"
+        run_cmd(cmd_1, nA, message=msg_1, verbose=verbose, ignore=True)
+
+        # Subscription name "sub_node_name_nA"
+        sub_name_2 = f"sub_{node_name}{nA_name}"
+        cmd_2 = (
+            f"cd {nA['path']}/pgedge/; "
+            f"./pgedge spock sub-drop {sub_name_2} {dbname}"
+        )
+        msg_2 = f"Dropping subscription {sub_name_2} on node {nA_name}"
+        run_cmd(cmd_2, nA, message=msg_2, verbose=verbose, ignore=True)
+
+    for nA in nodes:
+        if nA.get("name") == node_name:
             cmd = (
-                f"cd {node['path']}/pgedge/; "
-                f"./pgedge spock sub-drop {sub_name} {dbname}"
+                f"cd {nA['path']}/pgedge/; "
+                f"./pgedge spock node-drop {nA['name']} {dbname}"
             )
-            message = f"Dropping subscriptions {sub_name}"
-            run_cmd(cmd, node, message=message, verbose=verbose, ignore=True)
+            message = f"Dropping spock node {nA['name']}"
+            run_cmd(cmd, nA, message=message, verbose=verbose, ignore=True)
 
-    sub_names = []
-    for node in nodes:
-        if node.get("name") != node_name:
-            sub_name = f"sub_{node_name}{node['name']}"
-            sub_names.append(sub_name)
 
-    for node in nodes:
-        if node.get("name") == node_name:
-            for sub_name in sub_names:
-                cmd = (
-                    f"cd {node['path']}/pgedge/; "
-                    f"./pgedge spock sub-drop {sub_name} {dbname}"
-                )
-                message = f"Dropping subscription {sub_name}"
-                run_cmd(cmd, node, message=message, verbose=verbose, ignore=True)
-
-            cmd = (
-                f"cd {node['path']}/pgedge/; "
-                f"./pgedge spock node-drop {node['name']} {dbname}"
-            )
-            message = f"Dropping node {node['name']}"
-            run_cmd(cmd, node, message=message, verbose=verbose, ignore=True)
-
-    for node in nodes:
-        if node.get("name") == node_name:
-            manage_node(node, "stop", pgV, verbose)
+    for nA in nodes:
+        if nA.get("name") == node_name:
+            manage_node(nA, "stop", pgV, verbose)
         else:
-            cmd = f'cd {node["path"]}/pgedge/; ./pgedge spock node-list {dbname}'
-            message = f"Listing spock nodes"
+            cmd = (
+                f"cd {nA['path']}/pgedge/; "
+                f"./pgedge spock node-list {dbname}"
+            )
+            message = f"Listing spock nodes on {nA['name']}"
             result = run_cmd(
-                cmd, node=node, message=message, verbose=verbose, capture_output=True
+                cmd,
+                node=nA,
+                message=message,
+                verbose=verbose,
+                capture_output=True
             )
             print(f"\n{result.stdout}")
 
+
     empty_groups = []
-    for group in cluster_data["node_groups"]:
+    for group in list(cluster_data["node_groups"]):
+        # If the entire group is named exactly like the node, remove it
         if group["name"] == node_name:
             cluster_data["node_groups"].remove(group)
             continue
-        for node in group.get("sub_nodes", []):
-            if node["name"] == node_name:
-                group["sub_nodes"].remove(node)
-        if not group.get("sub_nodes") and group["name"] == node_name:
+
+        # Otherwise, remove references in sub_nodes
+        sub_nodes = group.get("sub_nodes", [])
+        for s_nd in list(sub_nodes):
+            if s_nd["name"] == node_name:
+                sub_nodes.remove(s_nd)
+
+        # If sub_nodes is empty and group is specifically for node_name, remove it
+        if not sub_nodes and group["name"] == node_name:
             empty_groups.append(group)
 
-    # Remove empty connection groups
+    # Remove empty groups that matched the node_name
     for group in empty_groups:
-        cluster_data["node_groups"].remove(group)
+        if group in cluster_data["node_groups"]:
+            cluster_data["node_groups"].remove(group)
 
     write_cluster_json(cluster_name, cluster_data)
+
+    print(f"Node '{node_name}' has been successfully removed from cluster '{cluster_name}'.")
+
 
 
 def manage_node(node, action, pgV, verbose):
