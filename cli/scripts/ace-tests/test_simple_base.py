@@ -15,7 +15,12 @@ class TestSimpleBase:
     @pytest.mark.parametrize("column_name", ["first_name"])
     @pytest.mark.parametrize("key_column", ["index"])
     def _introduce_differences(
-        self, config, node, table_name, column_name, key_column,
+        self,
+        ace_conf,
+        node,
+        table_name,
+        column_name,
+        key_column,
     ):
         """Helper method to introduce differences in a table
 
@@ -32,14 +37,20 @@ class TestSimpleBase:
             "host": node if node != "n1" else "localhost",
             "dbname": "demo",
             "user": "admin",
+            "application_name": "ace-tests",
         }
-        if config.USE_CERT_AUTH:
+        if ace_conf.USE_CERT_AUTH:
             params["sslmode"] = "verify-full"
-            params["sslrootcert"] = config.CA_CERT_FILE
-            params["sslcert"] = config.ACE_USER_CERT_FILE
-            params["sslkey"] = config.ACE_USER_KEY_FILE
+            params["sslrootcert"] = ace_conf.CA_CERT_FILE
+            params["sslcert"] = ace_conf.ACE_USER_CERT_FILE
+            params["sslkey"] = ace_conf.ACE_USER_KEY_FILE
 
         conn = psycopg.connect(**params)
+
+        # TODO: Find a way to assert that the connection is using SSL
+        if ace_conf.USE_CERT_AUTH:
+            pass
+
         cur = conn.cursor()
 
         # Note: column_name should be quoted if it contains uppercase
@@ -65,7 +76,7 @@ class TestSimpleBase:
 
         return {row[0] for row in modified_rows}  # Return set of modified indices
 
-    def test_database_connectivity(self, config, nodes):
+    def test_database_connectivity(self, ace_conf, nodes):
         """Test that we can connect to all prepared databases"""
         for node in nodes:
             try:
@@ -73,15 +84,21 @@ class TestSimpleBase:
                     "host": node if node != "n1" else "localhost",
                     "dbname": "demo",
                     "user": "admin",
+                    "application_name": "ace-tests",
                 }
-                if config.USE_CERT_AUTH:
+                if ace_conf.USE_CERT_AUTH:
                     params["sslmode"] = "verify-full"
-                    params["sslrootcert"] = config.CA_CERT_FILE
-                    params["sslcert"] = config.ACE_USER_CERT_FILE
-                    params["sslkey"] = config.ACE_USER_KEY_FILE
+                    params["sslrootcert"] = ace_conf.CA_CERT_FILE
+                    params["sslcert"] = ace_conf.ACE_USER_CERT_FILE
+                    params["sslkey"] = ace_conf.ACE_USER_KEY_FILE
 
                 conn = psycopg.connect(**params)
                 assert conn is not None
+
+                # TODO: Find a way to assert that the connection is using SSL
+                if ace_conf.USE_CERT_AUTH:
+                    pass
+
                 conn.close()
             except Exception as e:
                 pytest.fail(f"Failed to connect to node {node}: {str(e)}")
@@ -104,7 +121,7 @@ class TestSimpleBase:
         self,
         cli,
         capsys,
-        config,
+        ace_conf,
         table_name,
         column_name,
         key_column,
@@ -114,7 +131,7 @@ class TestSimpleBase:
         try:
             # Introduce differences using the helper method
             modified_indices = self._introduce_differences(
-                config, "n2", table_name, column_name, key_column
+                ace_conf, "n2", table_name, column_name, key_column
             )
 
             # Execute table diff and verify results
@@ -194,7 +211,7 @@ class TestSimpleBase:
     @pytest.mark.parametrize("table_name", ["public.customers"])
     @pytest.mark.parametrize("key_column", ["index"])
     def test_table_rerun_temptable(
-        self, cli, capsys, config, table_name, key_column, diff_file_path
+        self, cli, capsys, ace_conf, table_name, key_column, diff_file_path
     ):
         """Test table rerun temptable on cluster eqn-t9da for specified table"""
 
@@ -207,14 +224,20 @@ class TestSimpleBase:
                 "host": "n2",
                 "dbname": "demo",
                 "user": "admin",
+                "application_name": "ace-tests",
             }
-            if config.USE_CERT_AUTH:
+            if ace_conf.USE_CERT_AUTH:
                 params["sslmode"] = "verify-full"
-                params["sslrootcert"] = config.CA_CERT_FILE
-                params["sslcert"] = config.ACE_USER_CERT_FILE
-                params["sslkey"] = config.ACE_USER_KEY_FILE
+                params["sslrootcert"] = ace_conf.CA_CERT_FILE
+                params["sslcert"] = ace_conf.ACE_USER_CERT_FILE
+                params["sslkey"] = ace_conf.ACE_USER_KEY_FILE
 
             conn = psycopg.connect(**params)
+
+            # TODO: Find a way to assert that the connection is using SSL
+            if ace_conf.USE_CERT_AUTH:
+                pass
+
             cur = conn.cursor()
             cur.execute(
                 f"""

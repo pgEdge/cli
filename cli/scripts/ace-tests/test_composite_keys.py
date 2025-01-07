@@ -88,10 +88,10 @@ class TestCompositeKeys(TestSimpleBase):
     @pytest.mark.parametrize("column_name", ["first_name"])
     @pytest.mark.parametrize("key_column", ["InDeX"])
     def test_table_diff_with_differences(
-        self, cli, capsys, table_name, column_name, key_column, diff_file_path
+        self, cli, capsys, ace_conf, table_name, column_name, key_column, diff_file_path
     ):
         return super().test_table_diff_with_differences(
-            cli, capsys, table_name, column_name, key_column, diff_file_path
+            cli, capsys, ace_conf, table_name, column_name, key_column, diff_file_path
         )
 
     @pytest.mark.parametrize("table_name", ["public.customers"])
@@ -103,10 +103,10 @@ class TestCompositeKeys(TestSimpleBase):
     @pytest.mark.parametrize("table_name", ["public.customers"])
     @pytest.mark.parametrize("key_column", ["InDeX"])
     def test_table_rerun_temptable(
-        self, cli, capsys, table_name, key_column, diff_file_path
+        self, cli, capsys, ace_conf, table_name, key_column, diff_file_path
     ):
         return super().test_table_rerun_temptable(
-            cli, capsys, table_name, key_column, diff_file_path
+            cli, capsys, ace_conf, table_name, key_column, diff_file_path
         )
 
     @pytest.mark.parametrize("table_name", ["public.customers"])
