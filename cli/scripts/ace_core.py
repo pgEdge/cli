@@ -2078,7 +2078,7 @@ def repset_diff(rd_task: RepsetDiffTask) -> None:
 
     for table in rd_task.table_list:
 
-        if table.split(".")[1] in rd_task.skip_tables:
+        if table in rd_task.skip_tables:
             util.message(
                 f"\nSKIPPING TABLE {table}",
                 p_state="info",
@@ -2107,9 +2107,10 @@ def repset_diff(rd_task: RepsetDiffTask) -> None:
                 _nodes=rd_task._nodes,
                 batch_size=rd_task.batch_size,
                 skip_db_update=True,
+                table_filter=None,
             )
 
-            td_task = ace.table_diff_checks(td_task)
+            ace.validate_table_diff_inputs(td_task)
             table_diff(td_task)
             run_time = util.round_timedelta(datetime.now() - start_time).total_seconds()
             status = {
