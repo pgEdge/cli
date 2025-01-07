@@ -3,7 +3,6 @@ import subprocess
 import os
 import fire
 import util
-import util
 import json
 import sys
 from datetime import datetime
@@ -27,11 +26,11 @@ def fetch_config():
     """Fetch and return the configuration from system settings."""
     config = {}
     params = [
-        "stanza","restore_path", "backup-type", "repo1-retention-full", 
-        "repo1-retention-full-type", "repo1-path", "repo1-host-user", 
-        "repo1-host", "repo1-cipher-type", "log-level-console", 
-        "repo1-type", "process-max", "compress-level", "pg1-path", 
-        "pg1-user", "pg1-database", "db-socket-path", "pg1-port", 
+        "stanza","restore_path", "backup-type", "repo1-retention-full",
+        "repo1-retention-full-type", "repo1-path", "repo1-host-user",
+        "repo1-host", "repo1-cipher-type", "log-level-console",
+        "repo1-type", "process-max", "compress-level", "pg1-path",
+        "pg1-user", "pg1-database", "db-socket-path", "pg1-port",
         "pg1-host"
     ]
     for param in params:
@@ -74,19 +73,19 @@ def backup(stanza, type="full", verbose=True):
             return
 
     command = [
-        "pgbackrest", 
-        "--stanza", stanza, 
+        "pgbackrest",
+        "--stanza", stanza,
         "--type", type,
         "--repo1-type", config['repo1-type'],
-        "--pg1-path", config['pg1-path'], 
+        "--pg1-path", config['pg1-path'],
         "--repo1-path", config['repo1-path'],
-        "--db-socket-path", config['db-socket-path'], 
+        "--db-socket-path", config['db-socket-path'],
         "backup"
     ]
 
     # Optional configuration keys
     optional_keys = [
-        'repo1-retention-full', 'repo1-retention-full-type', 
+        'repo1-retention-full', 'repo1-retention-full-type',
         'repo1-cipher-type', 'log-level-console', 'process-max', 'compress-level'
     ]
 
@@ -124,7 +123,7 @@ def restore(stanza, data_dir=None, backup_label=None, recovery_target_time=None,
         return
 
     command = [
-        "pgbackrest", "--stanza", stanza, "restore", 
+        "pgbackrest", "--stanza", stanza, "restore",
         "--pg1-path", data_dir
     ]
 
@@ -137,7 +136,7 @@ def restore(stanza, data_dir=None, backup_label=None, recovery_target_time=None,
 
     # Optional configuration keys
     optional_keys = [
-        'repo1-cipher-type', 
+        'repo1-cipher-type',
         'log-level-console', 'process-max', 'repo1-type'
     ]
 
@@ -241,7 +240,7 @@ def list_backups():
 
     # Optional configuration keys
     optional_keys = [
-        'repo1-path', 'repo1-type', 
+        'repo1-path', 'repo1-type',
         'repo1-cipher-type', 'log-level-console'
     ]
 
@@ -316,15 +315,17 @@ def run_external_command(command, **kwargs):
             full_command.append(str(value))
         else:
             print(f"Invalid key-value pair ignored: key={key}, value={value}")
-    print(f"Full command to be executed: {' '.join(full_command)}")
+
+    print(f"Full command to be executed:\n {' '.join(full_command)}")
+
     try:
         result = subprocess.run(full_command, check=True, text=True, capture_output=True)
         print("Command executed successfully.")
         print(result.stdout)
     except subprocess.CalledProcessError as e:
-        print(f"Command execution failed: {e.stderr}")
+        util.exit_message(f"Failed: {e.stderr}'")
     except Exception as e:
-        print(f"Exception occurred during command execution: {str(e)}")
+        util.exit_message(f"Failed:{str(e)}")
 
 def create_stanza(stanza, verbose=True):
     """Create the required stanza for pgBackRest."""
@@ -340,18 +341,18 @@ def create_stanza(stanza, verbose=True):
             return
 
     command = [
-        "pgbackrest", 
-        "--stanza", stanza, 
-        "--pg1-path", config['pg1-path'], 
+        "pgbackrest",
+        "--stanza", stanza,
+        "--pg1-path", config['pg1-path'],
         "--repo1-path", config['repo1-path'],
-        "--repo1-type", config['repo1-type'], 
-        "--db-socket-path", config['db-socket-path'], 
+        "--repo1-type", config['repo1-type'],
+        "--db-socket-path", config['db-socket-path'],
         "stanza-create"
     ]
 
     # Optional configuration keys
     optional_keys = [
-        'repo1-cipher-type', 
+        'repo1-cipher-type',
         'log-level-console'
     ]
 
