@@ -4155,7 +4155,7 @@ def run_command(command_args, max_attempts=1, timeout=None, capture_output=True,
     attempts = 0
     output, error = "", ""
 
-    verbose = True
+    
     while attempts < max_attempts:
         try:
             attempts += 1

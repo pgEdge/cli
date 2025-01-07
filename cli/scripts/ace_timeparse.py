@@ -1,6 +1,8 @@
 import re
 from datetime import timedelta
 
+import ace_config as config
+
 
 def parse_time_string(time_str):
     """
@@ -49,7 +51,7 @@ def parse_time_string(time_str):
     else:
         raise ValueError(f"Unsupported time unit: {unit}")
 
-    if frequency < timedelta(minutes=5):
+    if frequency < config.MIN_RUN_FREQUENCY:
         raise ValueError("Minimum frequency is 5 minutes")
 
     return frequency

@@ -144,7 +144,7 @@ def update_ace_task(task: Union[TableDiffTask, TableRepairTask, RepsetDiffTask])
               """
 
         # Prepare data outside of the execute call
-        task_context = json.dumps(task.scheduler.task_context)
+        task_context = json.dumps(task.scheduler.task_context, default=str)
         started_at = task.scheduler.started_at.isoformat(timespec="milliseconds")
         finished_at = task.scheduler.finished_at.isoformat(timespec="milliseconds")
 
