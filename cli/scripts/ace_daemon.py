@@ -842,9 +842,7 @@ def populate_exception_status_tables():
             conn.close()
 
 
-def validate_auto_repair_config(
-    cluster_name, dbname, poll_frequency, repair_frequency
-):
+def validate_auto_repair_config(cluster_name, dbname, poll_frequency, repair_frequency):
 
     poll_freq_datetime = None
     repair_freq_datetime = None
@@ -888,9 +886,15 @@ def validate_table_diff_schedule():
 
     for job in jobs:
         job_names.append(job["name"])
-        if "table_name" not in job or "cluster_name" not in job:
+        if "cluster_name" not in job:
             raise AceException(
-                "table_name and cluster_name are required for every job in the schedule"
+                "cluster_name is a required field for jobs in the schedule"
+            )
+
+        if ("table_name" not in job) and ("repset_name" not in job):
+            raise AceException(
+                "Either table_name or repset_name is a required field for"
+                " jobs in the schedule"
             )
 
     for schedule in schedule_config:
@@ -919,6 +923,24 @@ def validate_table_diff_schedule():
 def create_schedules():
     schedules = config.schedule_config
     jobs = config.schedule_jobs
+    repset_diff = False
+
+    # Define valid parameters for each job type
+    valid_table_diff_params = {
+        "dbname",
+        "block_rows",
+        "max_cpu_ratio",
+        "output",
+        "nodes",
+        "batch_size",
+        "table_filter",
+        "quiet",
+    }
+
+    # Most args stay the same for repset-diff, but we add
+    # skip_tables and remove table_filter.
+    valid_repset_diff_params = valid_table_diff_params - {"table_filter"}
+    valid_repset_diff_params.add("skip_tables")
 
     for schedule in schedules:
         enabled = schedule.get("enabled", False)
@@ -927,34 +949,58 @@ def create_schedules():
             continue
 
         job = next((job for job in jobs if job["name"] == schedule["job_name"]), None)
+
+        if not job:
+            # This should never happen because we validate
+            raise AceException(
+                f"Job {schedule['job_name']} not found in job definitions"
+            )
+
         cluster_name = job["cluster_name"]
-        table_name = job["table_name"]
-        args = job.get("args", {})
+        table_name = job.get("table_name", None)
+        repset_name = job.get("repset_name", None)
+
+        # If table_name is None, it has to be a repset-diff job
+        # because of our checks above.
+        if not table_name:
+            repset_diff = True
+
+        kwargs = job.get("args", {})
+
+        # Filter out invalid kwargs based on job type
+        if not repset_diff:
+            kwargs = {k: v for k, v in kwargs.items() if k in valid_table_diff_params}
+        else:
+            kwargs = {k: v for k, v in kwargs.items() if k in valid_repset_diff_params}
+
         cron_schedule = schedule.get("crontab_schedule", None)
+
+        if not repset_diff:
+            job = ace_cli.table_diff_cli
+            args = [cluster_name, table_name]
+        else:
+            job = ace_cli.repset_diff_cli
+            args = [cluster_name, repset_name]
 
         if cron_schedule:
             scheduler.add_job(
-                ace_cli.table_diff_cli,
+                job,
                 CronTrigger.from_crontab(cron_schedule),
-                args=[cluster_name, table_name],
-                kwargs=args,
-                max_instances=1,
-                replace_existing=True,
+                args=args,
+                kwargs=kwargs,
             )
         else:
             interval = parse_time_string(schedule.get("run_frequency"))
             scheduler.add_job(
-                ace_cli.table_diff_cli,
+                job,
                 "interval",
                 weeks=interval.weeks if hasattr(interval, "weeks") else 0,
                 days=interval.days if hasattr(interval, "days") else 0,
                 hours=interval.hours if hasattr(interval, "hours") else 0,
                 minutes=interval.minutes if hasattr(interval, "minutes") else 0,
                 seconds=interval.seconds if hasattr(interval, "seconds") else 0,
-                args=[cluster_name, table_name],
-                kwargs=args,
-                max_instances=1,
-                replace_existing=True,
+                args=args,
+                kwargs=kwargs,
             )
 
 
@@ -1014,19 +1060,13 @@ def start_auto_repair_daemon():
             populate_exception_status_tables,
             trigger="interval",
             weeks=(
-                poll_freq_datetime.weeks
-                if hasattr(poll_freq_datetime, "weeks")
-                else 0
+                poll_freq_datetime.weeks if hasattr(poll_freq_datetime, "weeks") else 0
             ),
             days=(
-                poll_freq_datetime.days
-                if hasattr(poll_freq_datetime, "days")
-                else 0
+                poll_freq_datetime.days if hasattr(poll_freq_datetime, "days") else 0
             ),
             hours=(
-                poll_freq_datetime.hours
-                if hasattr(poll_freq_datetime, "hours")
-                else 0
+                poll_freq_datetime.hours if hasattr(poll_freq_datetime, "hours") else 0
             ),
             minutes=(
                 poll_freq_datetime.minutes
