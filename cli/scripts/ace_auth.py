@@ -4,11 +4,17 @@ from functools import wraps
 from flask import request, jsonify
 import psycopg
 import pgpasslib
-from cryptography import x509
+from cryptography import x509, __version__ as crypto_version
 from cryptography.hazmat.backends import default_backend
+from packaging import version
 
 import ace_config as config
 from ace_exceptions import CertificateVerificationError, AuthenticationError
+
+# not_valid_before is deprecated from this version on
+# we will use the _utc equivalents unless we're dealing with an older version
+CRYPTO_VERSION_WITH_UTC = version.parse("37.0.0")
+USE_UTC_SUFFIX = version.parse(crypto_version) >= CRYPTO_VERSION_WITH_UTC
 
 
 class ConnectionPool:
@@ -41,6 +47,9 @@ class ConnectionPool:
                     cur.execute("BEGIN")
                     cur.execute("SELECT 1")
                     cur.execute("COMMIT")
+
+                    # Reset role here. We'll handle privilege dropping later
+                    cur.execute("RESET ROLE")
                 return conn
             except Exception:
                 # If any error occurs, remove the connection
@@ -65,7 +74,12 @@ class ConnectionPool:
         self._connections[key] = conn
 
     def get_cluster_node_connection(
-        self, node_info, cluster_name=None, invoke_method="cli", client_role=None
+        self,
+        node_info,
+        cluster_name=None,
+        invoke_method="cli",
+        client_role=None,
+        drop_privileges=True,
     ):
         """
         Create a database connection to a cluster node with proper authentication.
@@ -114,9 +128,10 @@ class ConnectionPool:
                 # If we're in API mode we have to switch to the user's role
                 # for security reasons. However, if ACE is being invoked through
                 # the CLI, we don't have to worry about this.
-                if config.USE_CERT_AUTH and client_role:
-                    with conn.cursor() as cur:
-                        cur.execute(f"SET ROLE {client_role}")
+                if drop_privileges:
+                    if config.USE_CERT_AUTH and client_role:
+                        with conn.cursor() as cur:
+                            cur.execute(f"SET ROLE {client_role}")
                 return params, conn
 
             if config.USE_CERT_AUTH:
@@ -160,9 +175,10 @@ class ConnectionPool:
             conn = psycopg.connect(**params)
 
             # Here again, we need to switch to the user's role if we're in API mode
-            if config.USE_CERT_AUTH and client_role:
-                with conn.cursor() as cur:
-                    cur.execute(f"SET ROLE {client_role}")
+            if drop_privileges:
+                if config.USE_CERT_AUTH and client_role:
+                    with conn.cursor() as cur:
+                        cur.execute(f"SET ROLE {client_role}")
 
             self.add_connection(host, port, db_user, dbname, conn)
             return params, conn
@@ -173,6 +189,11 @@ class ConnectionPool:
             raise AuthenticationError(
                 f"Failed to connect to node {node_info['public_ip']}: {str(e)}"
             )
+
+    def drop_privileges(self, conn, client_role):
+        if config.USE_CERT_AUTH and client_role:
+            with conn.cursor() as cur:
+                cur.execute(f"SET ROLE {client_role}")
 
     def close_all(self):
         """Close all connections in the pool."""
@@ -236,7 +257,15 @@ def verify_client_cert(cert_data, ca_cert_path=None):
         if not cert:
             raise CertificateVerificationError("Invalid certificate format")
 
-        if cert.not_valid_after_utc <= cert.not_valid_before_utc:
+        # Use appropriate attribute names based on cryptography version
+        not_valid_before = (
+            cert.not_valid_before_utc if USE_UTC_SUFFIX else cert.not_valid_before
+        )
+        not_valid_after = (
+            cert.not_valid_after_utc if USE_UTC_SUFFIX else cert.not_valid_after
+        )
+
+        if not_valid_after <= not_valid_before:
             raise CertificateVerificationError(
                 "Certificate has invalid validity period"
             )
@@ -244,8 +273,8 @@ def verify_client_cert(cert_data, ca_cert_path=None):
         # Use timezone-aware datetime for comparison
         current_time = datetime.datetime.now(datetime.timezone.utc)
         if (
-            current_time < cert.not_valid_before_utc
-            or current_time > cert.not_valid_after_utc
+            current_time < not_valid_before
+            or current_time > not_valid_after
         ):
             raise CertificateVerificationError("Certificate is not currently valid")
 

@@ -795,6 +795,8 @@ def table_repair(tr_task: TableRepairTask):
             if tr_task.source_of_truth == node_hostname:
                 source_of_truth_node_key = hostname_key
 
+            # We will not drop privileges just yet, since we need to set
+            # spock.repair_mode(true) and session_replication_role
             _, conn = tr_task.connection_pool.get_cluster_node_connection(
                 node_info,
                 tr_task.cluster_name,
@@ -804,6 +806,7 @@ def table_repair(tr_task: TableRepairTask):
                     if config.USE_CERT_AUTH and tr_task.invoke_method == "api"
                     else None
                 ),
+                drop_privileges=False,
             )
             conns[node_hostname] = conn
     except Exception as e:
@@ -1048,6 +1051,48 @@ def table_repair(tr_task: TableRepairTask):
 
     for divergent_node in other_nodes:
 
+        try:
+            conn = conns[divergent_node]
+            cur = conn.cursor()
+            spock_version = ace.get_spock_version(conn)
+
+            if spock_version >= config.SPOCK_REPAIR_MODE_MIN_VERSION:
+                cur.execute("SELECT spock.repair_mode(true);")
+                if tr_task.fire_triggers:
+                    cur.execute("SET session_replication_role = 'local';")
+                else:
+                    cur.execute("SET session_replication_role = 'replica';")
+
+            # The cursor we created earlier had superuser privileges.
+            # We need to close and recreate it.
+            cur.close()
+        except Exception as e:
+            context = {"errors": [f"Could not set repair mode: {str(e)}"]}
+            ace.handle_task_exception(tr_task, context)
+            raise e
+
+        """
+        The assumption we make here is that the credentials provided to ACE
+        are superuser credentials. This is required since we need to have access
+        to the spock schema as well as set the session_replication_role parameter.
+
+        Non-privileged users intending to use ACE must be provided with client
+        certificates, and should only be allowed to invoke ACE via the API.
+        Anybody who has access to the instance/container running ACE, and can use
+        the CLI is assumed to be a superuser.
+        """
+        tr_task.connection_pool.drop_privileges(
+            conn,
+            (
+                tr_task.client_role
+                if config.USE_CERT_AUTH and tr_task.invoke_method == "api"
+                else None
+            ),
+        )
+
+        # Now this will have lower privileges
+        cur = conn.cursor()
+
         rows_to_upsert_json = full_rows_to_upsert[divergent_node].values()
         delete_keys = list(full_rows_to_delete[divergent_node].keys())
 
@@ -1093,22 +1138,6 @@ def table_repair(tr_task: TableRepairTask):
             for key in keys_list:
                 where_conditions.append(f'"{key}" = %s')
             delete_sql += " AND ".join(where_conditions) + ";"
-
-        try:
-            conn = conns[divergent_node]
-            cur = conn.cursor()
-            spock_version = ace.get_spock_version(conn)
-
-            if spock_version >= config.SPOCK_REPAIR_MODE_MIN_VERSION:
-                cur.execute("SELECT spock.repair_mode(true);")
-                if tr_task.fire_triggers:
-                    cur.execute("SET session_replication_role = 'local';")
-                else:
-                    cur.execute("SET session_replication_role = 'replica';")
-        except Exception as e:
-            context = {"errors": [f"Could not set repair mode: {str(e)}"]}
-            ace.handle_task_exception(tr_task, context)
-            raise e
 
         if tr_task.generate_report:
             report["changes"][divergent_node] = dict()
@@ -1211,8 +1240,24 @@ def table_repair(tr_task: TableRepairTask):
             elif delete_keys and tr_task.upsert_only:
                 deletes_skipped[divergent_node] = delete_keys
 
-            if spock_version >= 4.0:
-                cur.execute("SELECT spock.repair_mode(false);")
+            if spock_version >= config.SPOCK_REPAIR_MODE_MIN_VERSION:
+                # Temporarily elevate privileges to disable repair mode
+                with conn.cursor() as super_cur:
+                    # Reset to superuser role
+                    super_cur.execute("RESET ROLE")
+                    super_cur.execute("SELECT spock.repair_mode(false);")
+
+                # This is not really necessary here since we're done repairing,
+                # but we'll have it just in case.
+                if tr_task.invoke_method == "api":
+                    tr_task.connection_pool.drop_privileges(
+                        conn,
+                        (
+                            tr_task.client_role
+                            if config.USE_CERT_AUTH and tr_task.invoke_method == "api"
+                            else None
+                        ),
+                    )
 
             conn.commit()
         except Exception as e:

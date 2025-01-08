@@ -1,17 +1,24 @@
 # flake8: disable=unused-import
-import pytest
+
+import concurrent.futures
+import importlib.util
 import os
 import sys
-import importlib.util
-import concurrent.futures
-import test_config as config
-
+import pytest
 import psycopg
+import test_config
+from test_simple_base import TestSimpleBase
+from test_simple import TestSimple
 
-# Sets Environment Variables for Commands
-os.environ["MY_HOME"] = config.PGEDGE_HOME
-os.environ["MY_LOGS"] = os.path.join(config.PGEDGE_HOME, "data", "logs", "cli_log.out")
-os.environ["MY_LITE"] = os.path.join(config.PGEDGE_HOME, "data", "conf", "db_local.db")
+# Set up paths
+os.environ["PGEDGE_HOME"] = test_config.PGEDGE_HOME
+os.environ["MY_HOME"] = test_config.PGEDGE_HOME
+os.environ["MY_LOGS"] = os.path.join(
+    test_config.PGEDGE_HOME, "data", "logs", "cli_log.out"
+)
+os.environ["MY_LITE"] = os.path.join(
+    test_config.PGEDGE_HOME, "data", "conf", "db_local.db"
+)
 os.environ["MY_CMD"] = "pgedge"
 
 
@@ -37,7 +44,7 @@ def load_mod(mod: str):
 
 @pytest.fixture(scope="session", autouse=True)
 def set_run_dir():
-    os.chdir(config.PGEDGE_HOME)
+    os.chdir(test_config.PGEDGE_HOME)
 
 
 @pytest.fixture(scope="session")
@@ -51,8 +58,40 @@ def core():
 
 
 @pytest.fixture(scope="session")
+def ace_daemon():
+    return load_mod("ace_daemon")
+
+
+@pytest.fixture(scope="session")
 def nodes():
     return ["n1", "n2", "n3"]
+
+
+@pytest.fixture(scope="session")
+def ace_conf():
+    class Config:
+        pass
+
+    ace_config = Config()
+    ace_config.CA_CERT_FILE = os.path.join(
+        test_config.PGEDGE_HOME, "data", "pg16", "pki", "ca.crt"
+    )
+    ace_config.ACE_USER_CERT_FILE = os.path.join(
+        test_config.PGEDGE_HOME, "data", "pg16", "pki", "ace_user-cert", "ace_user.crt"
+    )
+    ace_config.ACE_USER_KEY_FILE = os.path.join(
+        test_config.PGEDGE_HOME, "data", "pg16", "pki", "ace_user-cert", "ace_user.key"
+    )
+
+    ace_config.ADMIN_CERT_FILE = os.path.join(
+        test_config.PGEDGE_HOME, "data", "pg16", "pki", "admin-cert", "admin.crt"
+    )
+    ace_config.ADMIN_KEY_FILE = os.path.join(
+        test_config.PGEDGE_HOME, "data", "pg16", "pki", "admin-cert", "admin.key"
+    )
+
+    ace_config.USE_CERT_AUTH = True
+    return ace_config
 
 
 @pytest.fixture(scope="class")
@@ -66,7 +105,7 @@ def diff_file_path():
 
 
 @pytest.fixture(scope="session")
-def prepare_databases(nodes):
+def prepare_databases(ace_conf, nodes):
     """Setup fixture that prepares all databases before running tests"""
 
     def prepare_node(node):
@@ -90,15 +129,31 @@ def prepare_databases(nodes):
         """
 
         try:
-            # Get connection for node using ace_core
-            conn = psycopg.connect(host=node, dbname="demo", user="admin")
+            params = {
+                "host": node if node != "n1" else "localhost",
+                "dbname": "demo",
+                "user": "admin",
+                "application_name": "ace-tests",
+            }
+            if ace_conf.USE_CERT_AUTH:
+                params["sslmode"] = "verify-full"
+                params["sslrootcert"] = ace_conf.CA_CERT_FILE
+                params["sslcert"] = ace_conf.ADMIN_CERT_FILE
+                params["sslkey"] = ace_conf.ADMIN_KEY_FILE
+
+            conn = psycopg.connect(**params)
+
+            # TODO: Find a way to assert that the connection is using SSL
+            if ace_conf.USE_CERT_AUTH:
+                pass
+
             cur = conn.cursor()
 
             # Creating the tables first
             cur.execute(customers_sql)
 
             # Loading the data
-            with open(config.CUSTOMERS_CSV, "r") as f:
+            with open(test_config.CUSTOMERS_CSV, "r") as f:
                 with cur.copy(
                     "COPY customers FROM STDIN CSV HEADER DELIMITER ','"
                 ) as copy:
@@ -129,7 +184,7 @@ def prepare_databases(nodes):
 
 
 @pytest.fixture(scope="session", autouse=True)
-def cleanup_databases(prepare_databases):
+def cleanup_databases(ace_conf, prepare_databases):
     """Cleanup all databases after running tests"""
     # Yield to let the tests run first
     yield
@@ -142,7 +197,24 @@ def cleanup_databases(prepare_databases):
 
     for node in nodes:
         try:
-            conn = psycopg.connect(host=node, dbname="demo", user="admin")
+            params = {
+                "host": node if node != "n1" else "localhost",
+                "dbname": "demo",
+                "user": "admin",
+                "application_name": "ace-tests",
+            }
+            if ace_conf.USE_CERT_AUTH:
+                params["sslmode"] = "verify-full"
+                params["sslrootcert"] = ace_conf.CA_CERT_FILE
+                params["sslcert"] = ace_conf.ADMIN_CERT_FILE
+                params["sslkey"] = ace_conf.ADMIN_KEY_FILE
+
+            conn = psycopg.connect(**params)
+
+            # TODO: Find a way to assert that the connection is using SSL
+            if ace_conf.USE_CERT_AUTH:
+                pass
+
             cur = conn.cursor()
             cur.execute(drop_customers_sql)
             conn.commit()
@@ -150,3 +222,34 @@ def cleanup_databases(prepare_databases):
             conn.close()
         except Exception as e:
             print(f"Failed to cleanup node {node}: {str(e)}")
+
+
+def pytest_configure(config):
+    """Register custom markers."""
+    config.addinivalue_line(
+        "markers",
+        "abstract_base: mark a test class as an abstract base class "
+        "that should not be run directly",
+    )
+
+
+def pytest_collection_modifyitems(items):
+    """Skip tests marked as abstract_base if they are in the base class."""
+    for item in items:
+        if item.get_closest_marker("abstract_base"):
+            # Skip only if the test is in TestSimpleBase class directly
+            # or if the test method is not overridden in the child class
+            if item.cls and (
+                (
+                    item.cls.__name__ == "TestSimpleBase"
+                    and (
+                        issubclass(item.cls, TestSimpleBase)
+                        and item.function.__qualname__.startswith("TestSimpleBase.")
+                    )
+                )
+                or (
+                    issubclass(item.cls, TestSimple)
+                    and item.function.__qualname__.startswith("TestSimple.")
+                )
+            ):
+                item.add_marker(pytest.mark.skip(reason="Abstract base class"))

@@ -79,6 +79,10 @@ class TestCompositeKeys(TestSimple):
         except Exception as e:
             pytest.fail(f"Failed to setup/cleanup composite key: {str(e)}")
 
+    def test_database_connectivity(self, ace_conf, nodes):
+        """Test that we can connect to all prepared databases"""
+        return super().test_database_connectivity(ace_conf, nodes)
+
     # Override the table_name parameter for all parameterized tests
     @pytest.mark.parametrize("table_name", ["public.customers"])
     def test_simple_table_diff(self, cli, capsys, table_name):
@@ -88,10 +92,10 @@ class TestCompositeKeys(TestSimple):
     @pytest.mark.parametrize("column_name", ["first_name"])
     @pytest.mark.parametrize("key_column", ["InDeX"])
     def test_table_diff_with_differences(
-        self, cli, capsys, table_name, column_name, key_column, diff_file_path
+        self, cli, capsys, ace_conf, table_name, column_name, key_column, diff_file_path
     ):
         return super().test_table_diff_with_differences(
-            cli, capsys, table_name, column_name, key_column, diff_file_path
+            cli, capsys, ace_conf, table_name, column_name, key_column, diff_file_path
         )
 
     @pytest.mark.parametrize("table_name", ["public.customers"])
@@ -103,10 +107,10 @@ class TestCompositeKeys(TestSimple):
     @pytest.mark.parametrize("table_name", ["public.customers"])
     @pytest.mark.parametrize("key_column", ["InDeX"])
     def test_table_rerun_temptable(
-        self, cli, capsys, table_name, key_column, diff_file_path
+        self, cli, capsys, ace_conf, table_name, key_column, diff_file_path
     ):
         return super().test_table_rerun_temptable(
-            cli, capsys, table_name, key_column, diff_file_path
+            cli, capsys, ace_conf, table_name, key_column, diff_file_path
         )
 
     @pytest.mark.parametrize("table_name", ["public.customers"])

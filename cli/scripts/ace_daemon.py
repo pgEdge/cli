@@ -278,6 +278,7 @@ def table_rerun_api():
             quiet_mode=quiet,
             diff_file_path=diff_file,
             invoke_method="api",
+            table_filter=None,
         )
         raw_args.scheduler.task_id = task_id
         raw_args.scheduler.task_type = "table-rerun"
