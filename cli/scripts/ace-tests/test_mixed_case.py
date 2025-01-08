@@ -1,10 +1,10 @@
 import pytest
 import psycopg
-from test_simple_base import TestSimpleBase
+from test_simple import TestSimple
 
 
 @pytest.mark.usefixtures("prepare_databases", "setup_mixed_case")
-class TestMixedCaseNames(TestSimpleBase):
+class TestMixedCaseNames(TestSimple):
     """Group of tests for mixed case table and column names"""
 
     @pytest.fixture(scope="class", autouse=True)

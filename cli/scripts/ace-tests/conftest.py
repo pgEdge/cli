@@ -7,6 +7,8 @@ import sys
 import pytest
 import psycopg
 import test_config
+from test_simple_base import TestSimpleBase
+from test_simple import TestSimple
 
 # Set up paths
 os.environ["PGEDGE_HOME"] = test_config.PGEDGE_HOME
@@ -56,6 +58,11 @@ def core():
 
 
 @pytest.fixture(scope="session")
+def ace_daemon():
+    return load_mod("ace_daemon")
+
+
+@pytest.fixture(scope="session")
 def nodes():
     return ["n1", "n2", "n3"]
 
@@ -70,11 +77,19 @@ def ace_conf():
         test_config.PGEDGE_HOME, "data", "pg16", "pki", "ca.crt"
     )
     ace_config.ACE_USER_CERT_FILE = os.path.join(
-        test_config.PGEDGE_HOME, "data", "pg16", "pki", "admin-cert", "admin.crt"
+        test_config.PGEDGE_HOME, "data", "pg16", "pki", "ace_user-cert", "ace_user.crt"
     )
     ace_config.ACE_USER_KEY_FILE = os.path.join(
+        test_config.PGEDGE_HOME, "data", "pg16", "pki", "ace_user-cert", "ace_user.key"
+    )
+
+    ace_config.ADMIN_CERT_FILE = os.path.join(
+        test_config.PGEDGE_HOME, "data", "pg16", "pki", "admin-cert", "admin.crt"
+    )
+    ace_config.ADMIN_KEY_FILE = os.path.join(
         test_config.PGEDGE_HOME, "data", "pg16", "pki", "admin-cert", "admin.key"
     )
+
     ace_config.USE_CERT_AUTH = True
     return ace_config
 
@@ -123,8 +138,8 @@ def prepare_databases(ace_conf, nodes):
             if ace_conf.USE_CERT_AUTH:
                 params["sslmode"] = "verify-full"
                 params["sslrootcert"] = ace_conf.CA_CERT_FILE
-                params["sslcert"] = ace_conf.ACE_USER_CERT_FILE
-                params["sslkey"] = ace_conf.ACE_USER_KEY_FILE
+                params["sslcert"] = ace_conf.ADMIN_CERT_FILE
+                params["sslkey"] = ace_conf.ADMIN_KEY_FILE
 
             conn = psycopg.connect(**params)
 
@@ -191,11 +206,11 @@ def cleanup_databases(ace_conf, prepare_databases):
             if ace_conf.USE_CERT_AUTH:
                 params["sslmode"] = "verify-full"
                 params["sslrootcert"] = ace_conf.CA_CERT_FILE
-                params["sslcert"] = ace_conf.ACE_USER_CERT_FILE
-                params["sslkey"] = ace_conf.ACE_USER_KEY_FILE
+                params["sslcert"] = ace_conf.ADMIN_CERT_FILE
+                params["sslkey"] = ace_conf.ADMIN_KEY_FILE
 
             conn = psycopg.connect(**params)
-            
+
             # TODO: Find a way to assert that the connection is using SSL
             if ace_conf.USE_CERT_AUTH:
                 pass
@@ -222,6 +237,19 @@ def pytest_collection_modifyitems(items):
     """Skip tests marked as abstract_base if they are in the base class."""
     for item in items:
         if item.get_closest_marker("abstract_base"):
-            # Only skip if the test is in TestSimple class directly
-            if item.cls and item.cls.__name__ == "TestSimpleBase":
+            # Skip only if the test is in TestSimpleBase class directly
+            # or if the test method is not overridden in the child class
+            if item.cls and (
+                (
+                    item.cls.__name__ == "TestSimpleBase"
+                    and (
+                        issubclass(item.cls, TestSimpleBase)
+                        and item.function.__qualname__.startswith("TestSimpleBase.")
+                    )
+                )
+                or (
+                    issubclass(item.cls, TestSimple)
+                    and item.function.__qualname__.startswith("TestSimple.")
+                )
+            ):
                 item.add_marker(pytest.mark.skip(reason="Abstract base class"))

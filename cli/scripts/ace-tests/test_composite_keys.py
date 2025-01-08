@@ -1,10 +1,10 @@
 import pytest
 import psycopg
-from test_simple_base import TestSimpleBase
+from test_simple import TestSimple
 
 
 @pytest.mark.usefixtures("prepare_databases", "setup_composite_keys")
-class TestCompositeKeys(TestSimpleBase):
+class TestCompositeKeys(TestSimple):
     """Group of tests for composite primary keys"""
 
     @pytest.fixture(scope="class", autouse=True)
@@ -78,6 +78,10 @@ class TestCompositeKeys(TestSimpleBase):
 
         except Exception as e:
             pytest.fail(f"Failed to setup/cleanup composite key: {str(e)}")
+
+    def test_database_connectivity(self, ace_conf, nodes):
+        """Test that we can connect to all prepared databases"""
+        return super().test_database_connectivity(ace_conf, nodes)
 
     # Override the table_name parameter for all parameterized tests
     @pytest.mark.parametrize("table_name", ["public.customers"])
