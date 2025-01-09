@@ -495,6 +495,7 @@ def schema_diff_api():
     schema_name = data.get("schema_name")
     dbname = data.get("dbname")
     nodes = data.get("nodes", "all")
+    ddl_only = data.get("ddl_only", True)
     quiet = data.get("quiet", False)
 
     task_id = ace_db.generate_task_id()
@@ -512,6 +513,7 @@ def schema_diff_api():
             _dbname=dbname,
             _nodes=nodes,
             quiet_mode=quiet,
+            ddl_only=ddl_only,
             invoke_method="api",
         )
 
