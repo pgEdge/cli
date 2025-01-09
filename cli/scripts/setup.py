@@ -110,7 +110,7 @@ setup.pgedge(User={User}, Passwd={Passwd}, dbName={dbName}, port={port}, pg_ver=
 
     if util.is_empty_writable_dir("/data") == 0:
         util.message("## symlink empty local data directory to empty /data ###")
-        setup_core.osSys("rm -rf data; ln -s /data data")
+        setup_core.osSys("mv data/* /data/; rm -rf data; ln -s /data data")
 
     if dbName is None:
         pass

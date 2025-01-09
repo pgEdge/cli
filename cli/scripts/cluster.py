@@ -58,9 +58,9 @@ def run_cmd(
 def ssh(cluster_name, node_name):
     """An SSH Terminal session into the specified node"""
     json_validate(cluster_name)
-    cluster = load_json(cluster_name)
+    db, db_settings, nodes = load_json(cluster_name)
 
-    for nd in cluster["node_groups"]:
+    for nd in nodes:
         if node_name == nd["name"]:
             ip = nd["public_ip"] if "public_ip" in nd else nd["private_ip"]
             if not ip:
@@ -1499,7 +1499,6 @@ def add_node(
         message = f"Installing backrest"
         run_cmd(cmd, source_node_data, message=message, verbose=verbose)
 
-
         repo1_path_default = f"/var/lib/pgbackrest/{source_node_data['name']}"
 
         repo1_path = backrest_settings.get("repo1-path", f"{repo1_path_default}")
@@ -1673,11 +1672,13 @@ def add_node(
     sql_cmd = "SELECT sub_name FROM spock.subscription"
     cmd = f"{new_node_data['path']}/pgedge/pgedge psql '{sql_cmd}' {db[0]['db_name']}"
     message = "Fetch existing subscriptions"
-    result = run_cmd(cmd, node=new_node_data, message=message, verbose=verbose, capture_output=True)
+    result = run_cmd(
+        cmd, node=new_node_data, message=message, verbose=verbose, capture_output=True
+    )
 
     subscriptions = [
-        re.sub(r'\x1b\[[0-9;]*m', '', line.strip())  # Remove escape sequences
-        for line in result.stdout.splitlines()[2:]   # Skip header lines
+        re.sub(r"\x1b\[[0-9;]*m", "", line.strip())  # Remove escape sequences
+        for line in result.stdout.splitlines()[2:]  # Skip header lines
         if line.strip() and not line.strip().startswith("(")  # Exclude metadata lines
     ]
 
@@ -1693,18 +1694,19 @@ def add_node(
     else:
         print("No subscriptions to drop.")
 
-
     # Check the number of nodes
     sql_cmd = "SELECT node_name FROM spock.node"
     cmd = f"{new_node_data['path']}/pgedge/pgedge psql '{sql_cmd}' {db[0]['db_name']}"
     message = "Check if there are nodes"
-    result = run_cmd(cmd, node=new_node_data, message=message, verbose=verbose, capture_output=True)
+    result = run_cmd(
+        cmd, node=new_node_data, message=message, verbose=verbose, capture_output=True
+    )
 
     # Parse node names from the output
     print(f"\nRaw output:\n{result.stdout}")
     nodes_list = [
-        re.sub(r'\x1b\[[0-9;]*m', '', line.strip())  # Remove escape sequences
-        for line in result.stdout.splitlines()[2:]   # Skip header lines
+        re.sub(r"\x1b\[[0-9;]*m", "", line.strip())  # Remove escape sequences
+        for line in result.stdout.splitlines()[2:]  # Skip header lines
         if line.strip() and not line.strip().startswith("(")  # Exclude metadata lines
     ]
 
@@ -1719,7 +1721,6 @@ def add_node(
             run_cmd(cmd, node=new_node_data, message=message, verbose=verbose)
     else:
         print("No nodes to drop.")
-
 
     create_node(new_node_data, db[0]["db_name"], verbose)
 
@@ -2428,6 +2429,28 @@ def print_install_hdr(
     util.echo_node(node_info)
 
 
+def app_mattermost(cluster_name):
+    """Helper function for a Mattermost instalation"""
+    db, db_settings, nodes = load_json(cluster_name)
+    rc = 0
+    cmd = f"psql 'CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_poststats_userid ON poststats(userid)' "
+    for nd in nodes:
+        rc = util.echo_cmd(
+            nd["path"]
+            + os.sep
+            + "pgedge"
+            + os.sep
+            + "pgedge "
+            + cmd
+            + db[0]["db_name"],
+            host=nd["public_ip"],
+            usr=nd["os_user"],
+            key=nd["ssh_key"],
+        )
+
+    return rc
+
+
 if __name__ == "__main__":
     fire.Fire(
         {
@@ -2447,5 +2470,6 @@ if __name__ == "__main__":
             "ssh": ssh,
             "app-install": app_install,
             "app-remove": app_remove,
+            "app-mattermost": app_mattermost,
         }
     )
