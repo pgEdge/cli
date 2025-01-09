@@ -28,8 +28,8 @@ mpire[dashboard]==2.10.2
 rich==13.9.4
 apscheduler==3.10.4
 pandas==2.2.3
-pyopenssl>=24.3.0
-packaging>=23.1
+pyopenssl==24.3.0
+packaging==23.1
 
 ## pgEdge-HA ########
 cdiff==1.0

@@ -969,10 +969,15 @@ def create_schedules():
         kwargs = job.get("args", {})
 
         # Filter out invalid kwargs based on job type
-        if not repset_diff:
-            kwargs = {k: v for k, v in kwargs.items() if k in valid_table_diff_params}
-        else:
-            kwargs = {k: v for k, v in kwargs.items() if k in valid_repset_diff_params}
+        if kwargs:
+            if not repset_diff:
+                kwargs = {
+                    k: v for k, v in kwargs.items() if k in valid_table_diff_params
+                }
+            else:
+                kwargs = {
+                    k: v for k, v in kwargs.items() if k in valid_repset_diff_params
+                }
 
         cron_schedule = schedule.get("crontab_schedule", None)
 
