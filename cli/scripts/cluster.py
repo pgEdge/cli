@@ -719,7 +719,7 @@ def remove(cluster_name, force=False):
 
     util.message("\n## Ensure that PG is stopped.")
     for nd in nodes:
-        cmd = f"{nd['path']}{os.sep}pgedge stop 2> {os.sep}dev{os.sep}null"
+        cmd = nd["path"] + os.sep + "pgedge" + os.sep + "pgedge stop"
         util.echo_cmd(cmd, host=nd["public_ip"], usr=nd["os_user"], key=nd["ssh_key"])
     if force == True:
         for nd in nodes:
