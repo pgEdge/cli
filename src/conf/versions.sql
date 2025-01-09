@@ -1,7 +1,7 @@
 
 DROP TABLE IF EXISTS hub;
 CREATE TABLE hub(v TEXT NOT NULL PRIMARY KEY, c TEXT NOT NULL, d TEXT NOT NULL);
-INSERT INTO hub VALUES ('24.12.1', 'Constellation',  '20241205');
+INSERT INTO hub VALUES ('25.0.0', 'Constellation',  '20250109');
 
 DROP VIEW  IF EXISTS v_versions;
 DROP VIEW  IF EXISTS v_products;
@@ -139,14 +139,13 @@ INSERT INTO projects VALUES ('hub', 'app', 0, 0, 'hub', 0, 'https://github.com/p
 INSERT INTO releases VALUES ('hub', 1, 'hub',  '', '', 'hidden', '', 1, '', '', '');
 
 INSERT INTO versions VALUES ('hub', (select v from hub), '',  1, (select d from hub), '', '', '');
+INSERT INTO versions VALUES ('hub', '24.10.9',   '',  0, '20241206', '', '', '');
+INSERT INTO versions VALUES ('hub', '24.10.7',   '',  0, '20241125', '', '', '');
+INSERT INTO versions VALUES ('hub', '24.10.6',   '',  0, '20241120', '', '', '');
 INSERT INTO versions VALUES ('hub', '24.10.5',   '',  0, '20241107', '', '', '');
 INSERT INTO versions VALUES ('hub', '24.10.4',   '',  0, '20241105', '', '', '');
 INSERT INTO versions VALUES ('hub', '24.10.3',   '',  0, '20241104', '', '', '');
 INSERT INTO versions VALUES ('hub', '24.10.2',   '',  0, '20241002', '', '', '');
-INSERT INTO versions VALUES ('hub', '24.9.6',    '',  0, '20240919', '', '', '');
-INSERT INTO versions VALUES ('hub', '24.7.7',    '',  0, '20240820', '', '', '');
-INSERT INTO versions VALUES ('hub', '24.7.6',    '',  0, '20240731', '', '', '');
-INSERT INTO versions VALUES ('hub', '24.7.4',    '',  0, '20240710', '', '', '');
 
 -- ## PG #################################
 INSERT INTO projects VALUES ('pg', 'pge', 1, 5432, '', 1, 'https://github.com/postgres/postgres/tags',
@@ -333,17 +332,18 @@ INSERT INTO releases VALUES ('spock40-pg15', 4, 'spock', 'Spock', '', 'prod', ''
 INSERT INTO releases VALUES ('spock40-pg16', 4, 'spock', 'Spock', '', 'prod', '', 1, 'pgEdge Community', '', '');
 INSERT INTO releases VALUES ('spock40-pg17', 4, 'spock', 'Spock', '', 'prod', '', 1, 'pgEdge Community', '', '');
 
-INSERT INTO versions VALUES ('spock40-pg15', '4.0.7-1', 'amd, arm', 1, '20241205', 'pg15', '', '');
-INSERT INTO versions VALUES ('spock40-pg16', '4.0.7-1', 'amd, arm', 1, '20241205', 'pg16', '', '');
-INSERT INTO versions VALUES ('spock40-pg17', '4.0.7-1', 'amd, arm', 1, '20241205', 'pg17', '', '');
+INSERT INTO versions VALUES ('spock40-pg15', '4.0.9-1', 'amd, arm', 1, '20241226', 'pg15', '', '');
+INSERT INTO versions VALUES ('spock40-pg16', '4.0.9-1', 'amd, arm', 1, '20241226', 'pg16', '', '');
+INSERT INTO versions VALUES ('spock40-pg17', '4.0.9-1', 'amd, arm', 1, '20241226', 'pg17', '', '');
 
-INSERT INTO versions VALUES ('spock40-pg15', '4.0.6-1', 'amd, arm', 0, '20241108', 'pg15', '', '');
-INSERT INTO versions VALUES ('spock40-pg16', '4.0.6-1', 'amd, arm', 0, '20241108', 'pg16', '', '');
-INSERT INTO versions VALUES ('spock40-pg17', '4.0.6-1', 'amd, arm', 0, '20241108', 'pg17', '', '');
+INSERT INTO versions VALUES ('spock40-pg15', '4.0.8-1', 'amd, arm', 0, '20241218', 'pg15', '', '');
+INSERT INTO versions VALUES ('spock40-pg16', '4.0.8-1', 'amd, arm', 0, '20241218', 'pg16', '', '');
+INSERT INTO versions VALUES ('spock40-pg17', '4.0.8-1', 'amd, arm', 0, '20241218', 'pg17', '', '');
 
-INSERT INTO versions VALUES ('spock40-pg15', '4.0.5-1', 'amd, arm', 0, '20240924', 'pg15', '', '');
-INSERT INTO versions VALUES ('spock40-pg16', '4.0.5-1', 'amd, arm', 0, '20240924', 'pg16', '', '');
-INSERT INTO versions VALUES ('spock40-pg17', '4.0.5-1', 'amd, arm', 0, '20240924', 'pg17', '', '');
+INSERT INTO versions VALUES ('spock40-pg15', '4.0.7-1', 'amd, arm', 0, '20241205', 'pg15', '', '');
+INSERT INTO versions VALUES ('spock40-pg16', '4.0.7-1', 'amd, arm', 0, '20241205', 'pg16', '', '');
+INSERT INTO versions VALUES ('spock40-pg17', '4.0.7-1', 'amd, arm', 0, '20241205', 'pg17', '', '');
+
 
 
 -- ## SPOCK41 ###########################
