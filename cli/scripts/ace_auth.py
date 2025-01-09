@@ -13,7 +13,8 @@ from ace_exceptions import CertificateVerificationError, AuthenticationError
 
 # not_valid_before is deprecated from this version on
 # we will use the _utc equivalents unless we're dealing with an older version
-CRYPTO_VERSION_WITH_UTC = version.parse("37.0.0")
+# https://cryptography.io/en/latest/x509/reference/#cryptography.x509.Certificate.not_valid_before_utc
+CRYPTO_VERSION_WITH_UTC = version.parse("42.0.0")
 USE_UTC_SUFFIX = version.parse(crypto_version) >= CRYPTO_VERSION_WITH_UTC
 
 
