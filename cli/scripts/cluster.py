@@ -751,7 +751,7 @@ def add_db(cluster_name, database_name, username, password):
     db_json["name"] = database_name
 
     util.message(f"## Creating database {database_name}")
-    create_spock_db(nodes, db_json, db_settings)
+    create_spock_db(nodes, db_json, db_settings, True)
     ssh_cross_wire_pgedge(
         cluster_name, database_name, db_settings, username, password, nodes, verbose
     )
@@ -1239,21 +1239,32 @@ def json_create(
         util.exit_message(f"Unable to create JSON file: {e}", 1)
 
 
-def create_spock_db(nodes, db, db_settings):
+def create_spock_db(nodes, db, db_settings, initial=True):
     for n in nodes:
         ip = n["public_ip"] if "public_ip" in n else n["private_ip"]
         nc = n["path"] + os.sep + "pgedge" + os.sep + "pgedge "
-        cmd = (
-            nc
-            + " db create -U "
-            + db["db_user"]
-            + " -d "
-            + db["db_name"]
-            + " -p "
-            + db["db_password"]
-        )
+        if initial:
+            cmd = (
+                nc
+                + " db create -U "
+                + db["db_user"]
+                + " -d "
+                + db["db_name"]
+                + " -p "
+                + db["db_password"]
+            )
+        else:
+            cmd = (
+                nc
+                + " db create --User "
+                + db["db_user"]
+                + " --db "
+                + db["db_name"]
+                + " --Passwd "
+                + db["db_password"]
+            )
         util.echo_cmd(cmd, host=ip, usr=n["os_user"], key=n["ssh_key"])
-        if db_settings["auto_ddl"] == "on":
+        if db_settings["auto_ddl"] == "on" and initial:
             cmd = nc + " db guc-set spock.enable_ddl_replication on;"
             cmd = cmd + " " + nc + " db guc-set spock.include_ddl_repset on;"
             cmd = cmd + " " + nc + " db guc-set spock.allow_ddl_from_functions on;"
@@ -1341,7 +1352,7 @@ def init(cluster_name, install=True):
     # Handle additional databases if any
     if len(db) > 1:
         for database in db[1:]:
-            create_spock_db(all_nodes, database, db_settings)
+            create_spock_db(all_nodes, database, db_settings, False)
             ssh_cross_wire_pgedge(
                 cluster_name,
                 database["db_name"],
