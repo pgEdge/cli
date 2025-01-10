@@ -397,7 +397,9 @@ Returns:
 """
 
 
-def schema_diff_cli(cluster_name, schema_name, nodes="all", dbname=None, quiet=False):
+def schema_diff_cli(
+    cluster_name, schema_name, nodes="all", dbname=None, ddl_only=True, quiet=False
+):
 
     task_id = ace_db.generate_task_id()
 
@@ -407,6 +409,7 @@ def schema_diff_cli(cluster_name, schema_name, nodes="all", dbname=None, quiet=F
             schema_name=schema_name,
             _dbname=dbname,
             _nodes=nodes,
+            ddl_only=ddl_only,
             quiet_mode=quiet,
             invoke_method="cli",
         )
