@@ -2444,7 +2444,7 @@ def app_mattermost(cluster_name):
     """Helper function for a Mattermost instalation"""
     db, db_settings, nodes = load_json(cluster_name)
     rc = 0
-    cmd = f"psql 'CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_poststats_userid ON poststats(userid)' "
+    cmd = "psql 'CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_poststats_userid ON poststats(userid)' "
     for nd in nodes:
         rc = util.echo_cmd(
             nd["path"]
