@@ -58,9 +58,9 @@ def run_cmd(
 def ssh(cluster_name, node_name):
     """An SSH Terminal session into the specified node"""
     json_validate(cluster_name)
-    cluster = load_json(cluster_name)
+    db, db_settings, nodes = load_json(cluster_name)
 
-    for nd in cluster["node_groups"]:
+    for nd in nodes:
         if node_name == nd["name"]:
             ip = nd["public_ip"] if "public_ip" in nd else nd["private_ip"]
             if not ip:
@@ -719,7 +719,7 @@ def remove(cluster_name, force=False):
 
     util.message("\n## Ensure that PG is stopped.")
     for nd in nodes:
-        cmd = f"{nd['path']}{os.sep}pgedge stop 2> {os.sep}dev{os.sep}null"
+        cmd = nd["path"] + os.sep + "pgedge" + os.sep + "pgedge stop"
         util.echo_cmd(cmd, host=nd["public_ip"], usr=nd["os_user"], key=nd["ssh_key"])
     if force == True:
         for nd in nodes:
@@ -751,7 +751,7 @@ def add_db(cluster_name, database_name, username, password):
     db_json["name"] = database_name
 
     util.message(f"## Creating database {database_name}")
-    create_spock_db(nodes, db_json, db_settings)
+    create_spock_db(nodes, db_json, db_settings, True)
     ssh_cross_wire_pgedge(
         cluster_name, database_name, db_settings, username, password, nodes, verbose
     )
@@ -1239,21 +1239,32 @@ def json_create(
         util.exit_message(f"Unable to create JSON file: {e}", 1)
 
 
-def create_spock_db(nodes, db, db_settings):
+def create_spock_db(nodes, db, db_settings, initial=True):
     for n in nodes:
         ip = n["public_ip"] if "public_ip" in n else n["private_ip"]
         nc = n["path"] + os.sep + "pgedge" + os.sep + "pgedge "
-        cmd = (
-            nc
-            + " db create -U "
-            + db["db_user"]
-            + " -d "
-            + db["db_name"]
-            + " -p "
-            + db["db_password"]
-        )
+        if initial:
+            cmd = (
+                nc
+                + " db create -U "
+                + db["db_user"]
+                + " -d "
+                + db["db_name"]
+                + " -p "
+                + db["db_password"]
+            )
+        else:
+            cmd = (
+                nc
+                + " db create --User "
+                + db["db_user"]
+                + " --db "
+                + db["db_name"]
+                + " --Passwd "
+                + db["db_password"]
+            )
         util.echo_cmd(cmd, host=ip, usr=n["os_user"], key=n["ssh_key"])
-        if db_settings["auto_ddl"] == "on":
+        if db_settings["auto_ddl"] == "on" and initial:
             cmd = nc + " db guc-set spock.enable_ddl_replication on;"
             cmd = cmd + " " + nc + " db guc-set spock.include_ddl_repset on;"
             cmd = cmd + " " + nc + " db guc-set spock.allow_ddl_from_functions on;"
@@ -1341,7 +1352,7 @@ def init(cluster_name, install=True):
     # Handle additional databases if any
     if len(db) > 1:
         for database in db[1:]:
-            create_spock_db(all_nodes, database, db_settings)
+            create_spock_db(all_nodes, database, db_settings, False)
             ssh_cross_wire_pgedge(
                 cluster_name,
                 database["db_name"],
@@ -1498,7 +1509,6 @@ def add_node(
         cmd = f"{source_node_data['path']}/pgedge/pgedge install backrest"
         message = f"Installing backrest"
         run_cmd(cmd, source_node_data, message=message, verbose=verbose)
-
 
         repo1_path_default = f"/var/lib/pgbackrest/{source_node_data['name']}"
 
@@ -1673,11 +1683,13 @@ def add_node(
     sql_cmd = "SELECT sub_name FROM spock.subscription"
     cmd = f"{new_node_data['path']}/pgedge/pgedge psql '{sql_cmd}' {db[0]['db_name']}"
     message = "Fetch existing subscriptions"
-    result = run_cmd(cmd, node=new_node_data, message=message, verbose=verbose, capture_output=True)
+    result = run_cmd(
+        cmd, node=new_node_data, message=message, verbose=verbose, capture_output=True
+    )
 
     subscriptions = [
-        re.sub(r'\x1b\[[0-9;]*m', '', line.strip())  # Remove escape sequences
-        for line in result.stdout.splitlines()[2:]   # Skip header lines
+        re.sub(r"\x1b\[[0-9;]*m", "", line.strip())  # Remove escape sequences
+        for line in result.stdout.splitlines()[2:]  # Skip header lines
         if line.strip() and not line.strip().startswith("(")  # Exclude metadata lines
     ]
 
@@ -1693,18 +1705,19 @@ def add_node(
     else:
         print("No subscriptions to drop.")
 
-
     # Check the number of nodes
     sql_cmd = "SELECT node_name FROM spock.node"
     cmd = f"{new_node_data['path']}/pgedge/pgedge psql '{sql_cmd}' {db[0]['db_name']}"
     message = "Check if there are nodes"
-    result = run_cmd(cmd, node=new_node_data, message=message, verbose=verbose, capture_output=True)
+    result = run_cmd(
+        cmd, node=new_node_data, message=message, verbose=verbose, capture_output=True
+    )
 
     # Parse node names from the output
     print(f"\nRaw output:\n{result.stdout}")
     nodes_list = [
-        re.sub(r'\x1b\[[0-9;]*m', '', line.strip())  # Remove escape sequences
-        for line in result.stdout.splitlines()[2:]   # Skip header lines
+        re.sub(r"\x1b\[[0-9;]*m", "", line.strip())  # Remove escape sequences
+        for line in result.stdout.splitlines()[2:]  # Skip header lines
         if line.strip() and not line.strip().startswith("(")  # Exclude metadata lines
     ]
 
@@ -1719,7 +1732,6 @@ def add_node(
             run_cmd(cmd, node=new_node_data, message=message, verbose=verbose)
     else:
         print("No nodes to drop.")
-
 
     create_node(new_node_data, db[0]["db_name"], verbose)
 
@@ -2428,6 +2440,28 @@ def print_install_hdr(
     util.echo_node(node_info)
 
 
+def app_mattermost(cluster_name):
+    """Helper function for a Mattermost instalation"""
+    db, db_settings, nodes = load_json(cluster_name)
+    rc = 0
+    cmd = "psql 'CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_poststats_userid ON poststats(userid)' "
+    for nd in nodes:
+        rc = util.echo_cmd(
+            nd["path"]
+            + os.sep
+            + "pgedge"
+            + os.sep
+            + "pgedge "
+            + cmd
+            + db[0]["db_name"],
+            host=nd["public_ip"],
+            usr=nd["os_user"],
+            key=nd["ssh_key"],
+        )
+
+    return rc
+
+
 if __name__ == "__main__":
     fire.Fire(
         {
@@ -2447,5 +2481,6 @@ if __name__ == "__main__":
             "ssh": ssh,
             "app-install": app_install,
             "app-remove": app_remove,
+            "app-mattermost": app_mattermost,
         }
     )
