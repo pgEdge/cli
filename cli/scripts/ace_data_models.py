@@ -187,6 +187,8 @@ class SchemaDiffTask:
     _dbname: str
     quiet_mode: bool
 
+    ddl_only: bool
+
     connection_pool: ConnectionPool = field(default_factory=ConnectionPool)
 
     # Client role from certificate CN when invoked via API

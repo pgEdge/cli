@@ -278,6 +278,7 @@ def table_rerun_api():
             quiet_mode=quiet,
             diff_file_path=diff_file,
             invoke_method="api",
+            table_filter=None,
         )
         raw_args.scheduler.task_id = task_id
         raw_args.scheduler.task_type = "table-rerun"
@@ -494,6 +495,7 @@ def schema_diff_api():
     schema_name = data.get("schema_name")
     dbname = data.get("dbname")
     nodes = data.get("nodes", "all")
+    ddl_only = data.get("ddl_only", True)
     quiet = data.get("quiet", False)
 
     task_id = ace_db.generate_task_id()
@@ -511,6 +513,7 @@ def schema_diff_api():
             _dbname=dbname,
             _nodes=nodes,
             quiet_mode=quiet,
+            ddl_only=ddl_only,
             invoke_method="api",
         )
 
@@ -968,10 +971,15 @@ def create_schedules():
         kwargs = job.get("args", {})
 
         # Filter out invalid kwargs based on job type
-        if not repset_diff:
-            kwargs = {k: v for k, v in kwargs.items() if k in valid_table_diff_params}
-        else:
-            kwargs = {k: v for k, v in kwargs.items() if k in valid_repset_diff_params}
+        if kwargs:
+            if not repset_diff:
+                kwargs = {
+                    k: v for k, v in kwargs.items() if k in valid_table_diff_params
+                }
+            else:
+                kwargs = {
+                    k: v for k, v in kwargs.items() if k in valid_repset_diff_params
+                }
 
         cron_schedule = schedule.get("crontab_schedule", None)
 

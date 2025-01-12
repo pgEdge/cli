@@ -1547,7 +1547,6 @@ def spock_diff_checks(
 
 def schema_diff_checks(sc_task: SchemaDiffTask) -> SchemaDiffTask:
 
-    util.message(f"## Validating cluster {sc_task.cluster_name} exists")
     node_list = []
     try:
         node_list = parse_nodes(sc_task._nodes)
