@@ -170,6 +170,7 @@ def table_repair_cli(
     except AceException as e:
         util.exit_message(str(e))
     except Exception as e:
+        traceback.print_exc()
         util.exit_message(f"Unexpected error while running table repair: {e}")
 
 
@@ -233,6 +234,7 @@ def table_rerun_cli(
     except AceException as e:
         util.exit_message(str(e))
     except Exception as e:
+        traceback.print_exc()
         util.exit_message(f"Unexpected error while running table rerun: {e}")
 
     try:
@@ -247,6 +249,7 @@ def table_rerun_cli(
     except AceException as e:
         util.exit_message(str(e))
     except Exception as e:
+        traceback.print_exc()
         util.exit_message(f"Unexpected error while running table rerun: {e}")
 
 
@@ -325,6 +328,7 @@ def repset_diff_cli(
     except AceException as e:
         util.exit_message(str(e))
     except Exception as e:
+        traceback.print_exc()
         util.exit_message(f"Unexpected error while running repset diff: {e}")
 
 
@@ -376,6 +380,7 @@ def spock_diff_cli(
     except AceException as e:
         util.exit_message(str(e))
     except Exception as e:
+        traceback.print_exc()
         util.exit_message(f"Unexpected error while running spock diff: {e}")
 
 
@@ -453,6 +458,7 @@ def update_spock_exception_cli(cluster_name, node_name, entry, dbname=None) -> N
     except json.JSONDecodeError:
         util.exit_message("Exception entry is not a valid JSON")
     except Exception as e:
+        traceback.print_exc()
         util.exit_message(f"Unexpected error while running exception status: {e}")
 
     util.message("Spock exception status updated successfully", p_state="success")

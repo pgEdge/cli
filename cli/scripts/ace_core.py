@@ -1262,12 +1262,15 @@ def table_repair(tr_task: TableRepairTask):
 
             conn.commit()
         except Exception as e:
+            conn.rollback()
             context = {"errors": [f"Could not perform repairs: {str(e)}"]}
             ace.handle_task_exception(tr_task, context)
             raise e
+        finally:
+            if cur:
+                cur.close()
 
     if tr_task.upsert_only:
-
         def compare_values(val1: dict, val2: dict) -> bool:
             if val1.keys() != val2.keys():
                 return False
@@ -1276,17 +1279,18 @@ def table_repair(tr_task: TableRepairTask):
             return True
 
         upsert_dict = dict()
-        for nd_name, values in deletes_skipped.items():
-            for value in values:
+        for nd_name, keys in deletes_skipped.items():
+            for key in keys:
                 if simple_primary_key:
-                    full_key = value[tr_task.key]
+                    full_key = key
                 else:
-                    full_key = tuple(value[pkey_part] for pkey_part in keys_list)
+                    full_key = tuple(pkey_part for pkey_part in key)
 
                 if full_key not in upsert_dict:
-                    upsert_dict[full_key] = value, {nd_name}
-
-                elif not compare_values(value, upsert_dict[full_key][0]):
+                    upsert_dict[full_key] = full_rows_to_delete[nd_name][key], {nd_name}
+                elif not compare_values(
+                    full_rows_to_delete[nd_name][key], upsert_dict[full_key][0]
+                ):
                     upsert_dict[full_key][1].add(nd_name)
                 else:
                     upsert_dict[full_key][1].add(nd_name)
@@ -1338,12 +1342,13 @@ def table_repair(tr_task: TableRepairTask):
 
     print()
 
-    for node in other_nodes:
-        util.message(
-            f"{node} DELETED = {len(full_rows_to_delete[node])} rows",
-            p_state="info",
-            quiet_mode=tr_task.quiet_mode,
-        )
+    if not tr_task.upsert_only:
+        for node in other_nodes:
+            util.message(
+                f"{node} DELETED = {len(full_rows_to_delete[node])} rows",
+                p_state="info",
+                quiet_mode=tr_task.quiet_mode,
+            )
 
     util.message(
         f"RUN TIME = {run_time_str} seconds",
