@@ -290,6 +290,7 @@ def repset_diff_cli(
     batch_size=config.BATCH_SIZE_DEFAULT,
     quiet=False,
     skip_tables=None,
+    skip_file=None,
 ):
 
     task_id = ace_db.generate_task_id()
@@ -307,6 +308,7 @@ def repset_diff_cli(
             quiet_mode=quiet,
             invoke_method="cli",
             skip_tables=skip_tables,
+            skip_file=skip_file,
         )
         rd_task.scheduler.task_id = task_id
         rd_task.scheduler.task_type = "repset-diff"
@@ -315,7 +317,7 @@ def repset_diff_cli(
 
         ace.validate_repset_diff_inputs(rd_task)
         ace_db.create_ace_task(task=rd_task)
-        ace_core.repset_diff(rd_task)
+        ace_core.multi_table_diff(rd_task)
 
         # TODO: Figure out a way to handle repset-level connection pooling
         # This close_all() is redundant currently
@@ -398,7 +400,14 @@ Returns:
 
 
 def schema_diff_cli(
-    cluster_name, schema_name, nodes="all", dbname=None, ddl_only=True, quiet=False
+    cluster_name,
+    schema_name,
+    nodes="all",
+    dbname=None,
+    ddl_only=True,
+    skip_tables=None,
+    skip_file=None,
+    quiet=False,
 ):
 
     task_id = ace_db.generate_task_id()
@@ -410,6 +419,8 @@ def schema_diff_cli(
             _dbname=dbname,
             _nodes=nodes,
             ddl_only=ddl_only,
+            skip_tables=skip_tables,
+            skip_file=skip_file,
             quiet_mode=quiet,
             invoke_method="cli",
         )
@@ -420,11 +431,15 @@ def schema_diff_cli(
 
         ace.schema_diff_checks(sc_task)
         ace_db.create_ace_task(task=sc_task)
-        ace_core.schema_diff(sc_task)
+        if ddl_only:
+            ace_core.schema_diff_objects(sc_task)
+        else:
+            ace_core.multi_table_diff(sc_task)
         sc_task.connection_pool.close_all()
     except AceException as e:
         util.exit_message(str(e))
     except Exception as e:
+        traceback.print_exc()
         util.exit_message(f"Unexpected error while running schema diff: {e}")
 
 

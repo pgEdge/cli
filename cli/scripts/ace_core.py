@@ -2,6 +2,7 @@ import ast
 import json
 from math import ceil
 import os
+from typing import Union
 from datetime import datetime
 from itertools import combinations
 from concurrent.futures import ThreadPoolExecutor
@@ -2112,22 +2113,27 @@ def table_rerun_async(td_task: TableDiffTask) -> None:
     ace_db.update_ace_task(td_task)
 
 
-def repset_diff(rd_task: RepsetDiffTask) -> None:
-    """Loop thru a replication-sets tables and run table-diff on them"""
+def multi_table_diff(task: Union[RepsetDiffTask, SchemaDiffTask]) -> None:
+    """
+    Reusable module for both repset-diff and schema-diff
+    """
 
-    rd_task = ace.repset_diff_checks(rd_task, skip_validation=True)
+    if isinstance(task, RepsetDiffTask):
+        task = ace.repset_diff_checks(task, skip_validation=True)
+    elif isinstance(task, SchemaDiffTask):
+        task = ace.schema_diff_checks(task, skip_validation=True)
 
     rd_task_context = []
     rd_start_time = datetime.now()
     errors_encountered = False
 
-    for table in rd_task.table_list:
+    for table in task.table_list:
 
-        if table in rd_task.skip_tables:
+        if table in task.skip_tables:
             util.message(
                 f"\nSKIPPING TABLE {table}",
                 p_state="info",
-                quiet_mode=rd_task.quiet_mode,
+                quiet_mode=task.quiet_mode,
             )
 
             continue
@@ -2137,20 +2143,22 @@ def repset_diff(rd_task: RepsetDiffTask) -> None:
             util.message(
                 f"\n\nCHECKING TABLE {table}...\n",
                 p_state="info",
-                quiet_mode=rd_task.quiet_mode,
+                quiet_mode=task.quiet_mode,
             )
 
             td_task = TableDiffTask(
-                cluster_name=rd_task.cluster_name,
+                cluster_name=task.cluster_name,
                 _table_name=table,
-                _dbname=rd_task._dbname,
-                fields=rd_task.fields,
-                quiet_mode=rd_task.quiet_mode,
-                block_rows=rd_task.block_rows,
-                max_cpu_ratio=rd_task.max_cpu_ratio,
-                output=rd_task.output,
-                _nodes=rd_task._nodes,
-                batch_size=rd_task.batch_size,
+                _dbname=task._dbname,
+                fields=task.fields,
+                quiet_mode=task.quiet_mode,
+                block_rows=getattr(task, "block_rows", config.BLOCK_ROWS_DEFAULT),
+                max_cpu_ratio=getattr(
+                    task, "max_cpu_ratio", config.MAX_CPU_RATIO_DEFAULT
+                ),
+                output=getattr(task, "output", "json"),
+                _nodes=getattr(task, "_nodes", "all"),
+                batch_size=getattr(task, "batch_size", config.BATCH_SIZE_DEFAULT),
                 skip_db_update=True,
                 table_filter=None,
             )
@@ -2175,20 +2183,20 @@ def repset_diff(rd_task: RepsetDiffTask) -> None:
                 "error": str(e),
             }
             util.message(
-                f"Repset-diff failed for table {table} with: {str(e)}",
+                f"{task.scheduler.task_type} failed for table {table} with: {str(e)}",
                 p_state="warning",
             )
 
         rd_task_context.append(status)
 
-    rd_task.scheduler.task_status = "COMPLETED" if not errors_encountered else "FAILED"
-    rd_task.scheduler.finished_at = datetime.now()
-    rd_task.scheduler.task_context = rd_task_context
-    rd_task.scheduler.time_taken = util.round_timedelta(
+    task.scheduler.task_status = "COMPLETED" if not errors_encountered else "FAILED"
+    task.scheduler.finished_at = datetime.now()
+    task.scheduler.task_context = rd_task_context
+    task.scheduler.time_taken = util.round_timedelta(
         datetime.now() - rd_start_time
     ).total_seconds()
 
-    ace_db.update_ace_task(rd_task)
+    ace_db.update_ace_task(task)
 
 
 def spock_diff(sd_task: SpockDiffTask) -> None:
@@ -2384,7 +2392,7 @@ def spock_diff(sd_task: SpockDiffTask) -> None:
     return task_context
 
 
-def schema_diff(sc_task: SchemaDiffTask) -> None:
+def schema_diff_objects(sc_task: SchemaDiffTask) -> None:
     """
     Schema-diff for DDL-only. We compare tables, functions, triggers, indexes,
     and constraints.
