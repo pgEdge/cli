@@ -1,6 +1,7 @@
 from collections import defaultdict
 from dataclasses import dataclass, field
 from datetime import datetime
+from typing import Union
 
 from ace_auth import ConnectionPool
 
@@ -132,7 +133,9 @@ class RepsetDiffTask:
     output: str
     batch_size: int
     quiet_mode: bool
-    skip_tables: any
+
+    skip_tables: Union[str, list]
+    skip_file: str
 
     invoke_method: str = "cli"
 
@@ -188,6 +191,9 @@ class SchemaDiffTask:
     quiet_mode: bool
 
     ddl_only: bool
+
+    skip_tables: Union[str, list]
+    skip_file: str
 
     connection_pool: ConnectionPool = field(default_factory=ConnectionPool)
 
