@@ -1,5 +1,6 @@
 import os
 from datetime import timedelta
+
 """
 
 ** ACE CLI and common configuration options **
@@ -201,6 +202,13 @@ USE_CERT_AUTH = False
 ACE_USER_CERT_FILE = ""
 ACE_USER_KEY_FILE = ""
 CA_CERT_FILE = ""
+
+# Prior to version 42.0.0 of cryptography, the not_valid_before and not_valid_after
+# fields in the certificate object returned a naive datetime object.
+# These fields were deprecated starting with version 42.0.0.
+# If the user has a pre- 42.0.0 version of cryptography, we need to support it
+# correctly.
+USE_NAIVE_DATETIME = False
 
 DEBUG_MODE = False
 
