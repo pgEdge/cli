@@ -30,7 +30,8 @@ class TestDataTypes(TestSimple):
                         json_col JSONB,
                         bytea_col BYTEA,
                         point_col POINT,
-                        text_col TEXT
+                        text_col TEXT,
+                        text_array_col TEXT[]
                     )
                 """
                 )
@@ -47,7 +48,8 @@ class TestDataTypes(TestSimple):
                         '{"key": "value", "nested": {"foo": "bar"}}',
                         decode('DEADBEEF', 'hex'),
                         point(1.5, 2.5),
-                        'sample text'
+                        'sample text',
+                        ARRAY['apple', 'banana', 'cherry']
                     ),
                     (
                         'b0eebc99-9c0b-4ef8-bb6d-6bb9bd380a12',
@@ -57,7 +59,8 @@ class TestDataTypes(TestSimple):
                         '{"numbers": [1, 2, 3], "active": true}',
                         decode('BADDCAFE', 'hex'),
                         point(3.7, 4.2),
-                        'another sample'
+                        'another sample',
+                        ARRAY['dog', 'cat', 'bird']
                     ),
                     (
                         'c0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13',
@@ -67,7 +70,8 @@ class TestDataTypes(TestSimple):
                         '{"empty": true}',
                         NULL,
                         point(0, 0),
-                        'third sample'
+                        'third sample',
+                        ARRAY[]::TEXT[]
                     )
                 """
                 )
@@ -106,6 +110,7 @@ class TestDataTypes(TestSimple):
             ("bytea_col", "decode('FEEDFACE', 'hex')"),
             ("point_col", "point(99.9, 99.9)"),
             ("text_col", "'modified-text'"),
+            ("text_array_col", "ARRAY['modified', 'text', 'array']"),
         ],
     )
     @pytest.mark.parametrize("key_column", ["id"])
@@ -188,6 +193,15 @@ class TestDataTypes(TestSimple):
                         98,
                         97,
                     ], f"Modified row {diff['id']} doesn't have expected array value"
+                elif column_name == "text_array_col":
+                    assert diff[column_name] == [
+                        "modified",
+                        "text",
+                        "array",
+                    ], (
+                        f"Modified row {diff['id']} doesn't have expected "
+                        "text array value"
+                    )
                 elif column_name == "point_col":
                     assert (
                         diff[column_name] == "(99.9,99.9)"
@@ -224,6 +238,7 @@ class TestDataTypes(TestSimple):
             ("bytea_col", "decode('ABCDEF12', 'hex')"),
             ("point_col", "point(88.8, 88.8)"),
             ("text_col", "'rerun-modified'"),
+            ("text_array_col", "ARRAY['rerun', 'modified', 'array']"),
         ],
     )
     def test_table_rerun_temptable(
@@ -298,6 +313,12 @@ class TestDataTypes(TestSimple):
                     22,
                     33,
                 ], f"Modified row {diff['id']} doesn't have expected array value"
+            elif column_name == "text_array_col":
+                assert diff[column_name] == [
+                    "rerun",
+                    "modified",
+                    "array",
+                ], f"Modified row {diff['id']} doesn't have expected text array value"
             elif column_name == "point_col":
                 assert (
                     diff[column_name] == "(88.8,88.8)"
@@ -325,6 +346,7 @@ class TestDataTypes(TestSimple):
             ("bytea_col", "decode('98765432', 'hex')"),
             ("point_col", "point(77.7, 77.7)"),
             ("text_col", "'multiproc-modified'"),
+            ("text_array_col", "ARRAY['multiproc', 'modified', 'array']"),
         ],
     )
     def test_table_rerun_multiprocessing(
@@ -404,6 +426,12 @@ class TestDataTypes(TestSimple):
                     55,
                     66,
                 ], f"Modified row {diff['id']} doesn't have expected array value"
+            elif column_name == "text_array_col":
+                assert diff[column_name] == [
+                    "multiproc",
+                    "modified",
+                    "array",
+                ], f"Modified row {diff['id']} doesn't have expected text array value"
             elif column_name == "point_col":
                 assert (
                     diff[column_name] == "(77.7,77.7)"
@@ -419,3 +447,98 @@ class TestDataTypes(TestSimple):
                     "76.543",
                     "multiproc-modified",
                 ), f"Modified row {diff['id']} doesn't have expected value"
+
+    @pytest.mark.parametrize("table_name", ["public.datatypes_test"])
+    @pytest.mark.parametrize(
+        "column_name,test_value,expected_value",
+        [
+            ("int_col", "9999", 9999),
+            ("float_col", "123.456", 123.456),
+            ("array_col", "ARRAY[99, 98, 97]", [99, 98, 97]),
+            ("json_col", '\'{"test": "modified"}\'', {"test": "modified"}),
+            ("bytea_col", "decode('FEEDFACE', 'hex')", b'\xfe\xed\xfa\xce'),
+            ("point_col", "point(99.9, 99.9)", "(99.9,99.9)"),
+            ("text_col", "'modified-text'", "modified-text"),
+            (
+                "text_array_col",
+                "ARRAY['modified', 'text', 'array']",
+                ["modified", "text", "array"]
+            ),
+        ],
+    )
+    def test_table_repair_datatypes(
+        self,
+        cli,
+        capsys,
+        table_name,
+        column_name,
+        test_value,
+        expected_value,
+        diff_file_path,
+    ):
+        """Test table repair with various data types"""
+        try:
+            # First introduce differences on n2
+            conn = psycopg.connect(host="n2", dbname="demo", user="admin")
+            cur = conn.cursor()
+            cur.execute(
+                f"""
+                UPDATE datatypes_test
+                SET {column_name} = {test_value}
+                WHERE id IN (
+                    SELECT id
+                    FROM datatypes_test
+                )
+            """
+            )
+            conn.commit()
+            cur.close()
+            conn.close()
+
+            # Run table-diff to get the diff file
+            cli.table_diff_cli("eqn-t9da", table_name)
+            captured = capsys.readouterr()
+            clean_output = re.sub(
+                r"\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])",
+                "",
+                captured.out
+            )
+            match = re.search(r"diffs written out to (.+\.json)", clean_output.lower())
+            assert match, "Diff file path not found in output"
+            diff_file_path.path = match.group(1)
+
+            # Run table-repair using n2 as source of truth
+            cli.table_repair_cli(
+                "eqn-t9da",
+                table_name,
+                diff_file_path.path,
+                source_of_truth="n2"
+            )
+
+            # Verify the repair worked by checking values on n1
+            conn = psycopg.connect(host="n1", dbname="demo", user="admin")
+            cur = conn.cursor()
+            cur.execute(
+                f"SELECT {column_name} FROM datatypes_test "
+                "WHERE id = 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11'"
+            )
+            repaired_value = cur.fetchone()[0]
+            cur.close()
+            conn.close()
+
+            # Compare with expected value
+            if column_name == "bytea_col":
+                assert (
+                    repaired_value == expected_value
+                ), "Repaired bytea value doesn't match expected value"
+            elif column_name == "point_col":
+                assert (
+                    str(repaired_value) == expected_value
+                ), "Repaired point value doesn't match expected value"
+            else:
+                assert (
+                    repaired_value == expected_value
+                ), f"Repaired value doesn't match expected value for {column_name}"
+
+        except Exception as e:
+            pytest.fail(f"Test failed: {str(e)}")

@@ -1206,6 +1206,8 @@ def table_repair(tr_task: TableRepairTask):
                         or elem.lower() == "none"
                     ):
                         modified_row += (None,)
+                    elif "[]" in type_lower:
+                        modified_row += (ast.literal_eval(elem),)
                     elif any(s in type_lower for s in string_types):
                         if type_lower == "bytea":
                             modified_row += (bytes.fromhex(elem),)

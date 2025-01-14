@@ -587,11 +587,13 @@ def write_diffs_json(td_task, diff_dict, col_types, quiet_mode=False):
                 or item.lower() == "none"
             ):
                 return None
-            elif any(s in type_lower for s in string_types):
-                return item
+            elif "[]" in type_lower:
+                return ast.literal_eval(item)
             elif any(s in type_lower for s in json_compatible_types):
                 # For JSON-compatible types, parse them using AST
                 return ast.literal_eval(item)
+            elif any(s in type_lower for s in string_types):
+                return item
             else:
                 # Default to treating as string if type is unknown
                 return item
