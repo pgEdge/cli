@@ -572,6 +572,22 @@ def check_diff_file_format(diff_file_path: str, task) -> dict:
         handle_task_exception(task, context)
         raise e
 
+    compare_keys = diff_json["summary"]["compare_keys"]
+
+    if compare_keys:
+        if not task.compare_keys:
+            raise AceException(
+                "--compare-keys was used to perform the table-diff. "
+                f"Please rerun {task.scheduler.task_type} with "
+                f"--compare-keys={','.join(compare_keys)}"
+            )
+        elif sorted(compare_keys) != sorted(task.compare_keys):
+            raise AceException(
+                "compare_keys in diff file and task do not match. Please rerun"
+                f" {task.scheduler.task_type} with "
+                f"--compare-keys={','.join(compare_keys)}"
+            )
+
     try:
         if any(
             [
@@ -729,6 +745,8 @@ def write_diffs_json(td_task, diff_dict, col_types, quiet_mode=False):
         "time_taken": td_task.scheduler.time_taken,
         "total_rows_checked": td_task.scheduler.task_context["total_rows"],
         "diff_count": td_task.diff_summary,
+        "table_filter": td_task.table_filter,
+        "compare_keys": td_task.compare_keys,
     }
 
     if not quiet_mode:
