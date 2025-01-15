@@ -74,6 +74,7 @@ def table_diff_api():
     batch_size = data.get("batch_size", config.BATCH_SIZE_DEFAULT)
     table_filter = data.get("table_filter")
     quiet = data.get("quiet", False)
+    compare_keys = data.get("compare_keys")
 
     if not cluster_name or not table_name:
         return (
@@ -96,6 +97,7 @@ def table_diff_api():
             table_filter=table_filter,
             quiet_mode=quiet,
             skip_db_update=False,
+            compare_keys=compare_keys,
             invoke_method="api",
         )
 
@@ -163,6 +165,7 @@ def table_repair_api():
     upsert_only = data.get("upsert_only", False)
     fix_nulls = data.get("fix_nulls", False)
     fire_triggers = data.get("fire_triggers", False)
+    compare_keys = data.get("compare_keys")
 
     if not cluster_name or not diff_file or not table_name:
         return (
@@ -202,6 +205,7 @@ def table_repair_api():
             invoke_method="api",
             fix_nulls=fix_nulls,
             fire_triggers=fire_triggers,
+            compare_keys=compare_keys,
         )
         raw_args.scheduler.task_id = task_id
         raw_args.scheduler.task_type = "table-repair"
@@ -251,6 +255,7 @@ def table_rerun_api():
     dbname = data.get("dbname")
     quiet = data.get("quiet", False)
     behavior = data.get("behavior", "multiprocessing")
+    compare_keys = data.get("compare_keys")
 
     if not cluster_name or not diff_file or not table_name:
         return (
@@ -279,6 +284,7 @@ def table_rerun_api():
             diff_file_path=diff_file,
             invoke_method="api",
             table_filter=None,
+            compare_keys=compare_keys,
         )
         raw_args.scheduler.task_id = task_id
         raw_args.scheduler.task_type = "table-rerun"

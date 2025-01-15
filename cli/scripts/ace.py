@@ -219,6 +219,61 @@ def get_key(p_con, p_schema, p_table):
     return ",".join(key_lst)
 
 
+def get_custom_keys(p_con, p_schema, p_table, compare_keys):
+    # We want to throw an error in two cases:
+    # 1. The columns specified in compare_keys do not exist
+    # 2. The columns specified in compare_keys do not have a unique constraint
+    #
+    # We could have had an overly complex query, but running two separate queries
+    # is simpler.
+
+    exists_sql = """
+    SELECT
+        count(1)
+    FROM
+        information_schema.columns
+    WHERE
+        table_schema = %s
+        AND table_name = %s
+        AND column_name = ANY(%s);
+    """
+
+    unique_sql = """
+    SELECT NOT EXISTS (
+        SELECT 1
+        FROM
+            information_schema.table_constraints tc
+        JOIN
+            information_schema.key_column_usage kcu
+        ON
+            tc.constraint_name = kcu.constraint_name
+            AND tc.table_schema = kcu.table_schema
+        WHERE
+            tc.table_schema = %s
+            AND tc.table_name = %s
+            AND kcu.column_name = ANY(%s)
+            AND tc.constraint_type != 'UNIQUE'
+    ) AS all_unique;
+    """
+
+    # We need to do this roundabout thing because psycopg3 needs ANY to be a nested
+    # list, and doesn't make using IN easy.
+    compare_keys = list(list(compare_keys))
+
+    try:
+        cur = p_con.cursor()
+        cur.execute(exists_sql, (p_schema, p_table, compare_keys))
+        exists_count = cur.fetchone()[0]
+
+        cur.execute(unique_sql, (p_schema, p_table, compare_keys))
+        all_unique = cur.fetchone()[0]
+        cur.close()
+    except Exception as e:
+        util.exit_message("Error in get_custom_keys():\n" + str(e), 1)
+
+    return exists_count == len(compare_keys) and all_unique
+
+
 def parse_nodes(nodes, quiet_mode=False) -> list:
     node_list = []
     if type(nodes) is str and nodes != "all":
@@ -788,6 +843,18 @@ def validate_table_diff_inputs(td_task: TableDiffTask) -> None:
             "table-diff currently supports only csv, json and html output formats"
         )
 
+    if td_task.compare_keys:
+        if (
+            type(td_task.compare_keys) is not str
+            and type(td_task.compare_keys) is not tuple
+        ):
+            raise AceException(
+                "compare_keys should be a comma-separated list of columns"
+            )
+
+        if type(td_task.compare_keys) is str:
+            td_task.compare_keys = td_task.compare_keys.split(",")
+
     node_list = []
     try:
         node_list = parse_nodes(td_task._nodes)
@@ -912,8 +979,23 @@ def table_diff_checks(
                     ),
                 )
 
+                if not td_task.fields.orig_key:
+                    td_task.fields.orig_key = get_key(conn, l_schema, l_table)
+
                 curr_cols = get_cols(conn, l_schema, l_table)
-                curr_key = get_key(conn, l_schema, l_table)
+
+                if td_task.compare_keys:
+                    present_and_unique = get_custom_keys(
+                        conn, l_schema, l_table, td_task.compare_keys
+                    )
+                    if not present_and_unique:
+                        raise AceException(
+                            "The columns specified in compare_keys do not exist"
+                            " or do not have a unique constraint"
+                        )
+                    curr_key = ",".join(td_task.compare_keys)
+                else:
+                    curr_key = get_key(conn, l_schema, l_table)
 
                 if not curr_cols:
                     raise AceException(
@@ -1117,6 +1199,18 @@ def validate_table_repair_inputs(tr_task: TableRepairTask) -> None:
     elif type(tr_task.dry_run) is not bool:
         raise AceException("Dry run should be True (1) or False (0)")
 
+    if tr_task.compare_keys:
+        if (
+            type(tr_task.compare_keys) is not str
+            and type(tr_task.compare_keys) is not tuple
+        ):
+            raise AceException(
+                "compare_keys should be a comma-separated list of columns"
+            )
+
+        if type(tr_task.compare_keys) is str:
+            tr_task.compare_keys = tr_task.compare_keys.split(",")
+
     found = check_cluster_exists(tr_task.cluster_name)
     if found:
         util.message(
@@ -1217,7 +1311,23 @@ def table_repair_checks(
             )
 
             curr_cols = get_cols(conn, tr_task.fields.l_schema, tr_task.fields.l_table)
-            curr_key = get_key(conn, tr_task.fields.l_schema, tr_task.fields.l_table)
+
+            if tr_task.compare_keys:
+                present_and_unique = get_custom_keys(
+                    conn,
+                    tr_task.fields.l_schema,
+                    tr_task.fields.l_table,
+                    tr_task.compare_keys,
+                )
+                if not present_and_unique:
+                    raise AceException(
+                        "compare_keys are not unique and present in the table"
+                    )
+                curr_key = ",".join(tr_task.compare_keys)
+            else:
+                curr_key = get_key(
+                    conn, tr_task.fields.l_schema, tr_task.fields.l_table
+                )
 
             if not curr_cols:
                 raise AceException(

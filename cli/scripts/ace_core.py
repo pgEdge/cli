@@ -135,13 +135,15 @@ def compare_checksums(shared_objects, worker_state, batches):
     if row_diff_count.value >= config.MAX_DIFF_ROWS:
         return
 
-    p_key = shared_objects["p_key"]
+    p_key_cols = shared_objects["p_key"].split(",")
     schema_name = shared_objects["schema_name"]
     table_name = shared_objects["table_name"]
     node_list = shared_objects["node_list"]
     cols = shared_objects["cols_list"]
     simple_primary_key = shared_objects["simple_primary_key"]
     mode = shared_objects["mode"]
+    using_compare_keys = shared_objects["using_compare_keys"]
+    original_key_cols = shared_objects["original_key"].split(",")
 
     for batch in batches:
         where_clause = str()
@@ -153,13 +155,15 @@ def compare_checksums(shared_objects, worker_state, batches):
                 if pkey1 is not None:
                     where_clause_temp.append(
                         sql.SQL("{p_key} >= {pkey1}").format(
-                            p_key=sql.Identifier(p_key), pkey1=sql.Literal(pkey1)
+                            p_key=sql.Identifier(p_key_cols[0]),
+                            pkey1=sql.Literal(pkey1),
                         )
                     )
                 if pkey2 is not None:
                     where_clause_temp.append(
                         sql.SQL("{p_key} < {pkey2}").format(
-                            p_key=sql.Identifier(p_key), pkey2=sql.Literal(pkey2)
+                            p_key=sql.Identifier(p_key_cols[0]),
+                            pkey2=sql.Literal(pkey2),
                         )
                     )
             else:
@@ -174,7 +178,7 @@ def compare_checksums(shared_objects, worker_state, batches):
                             p_key=sql.SQL(", ").join(
                                 [
                                     sql.Identifier(col.strip())
-                                    for col in p_key.split(",")
+                                    for col in p_key_cols
                                 ]
                             ),
                             pkey1=sql.SQL(", ").join(
@@ -189,7 +193,7 @@ def compare_checksums(shared_objects, worker_state, batches):
                             p_key=sql.SQL(", ").join(
                                 [
                                     sql.Identifier(col.strip())
-                                    for col in p_key.split(",")
+                                    for col in p_key_cols
                                 ]
                             ),
                             pkey2=sql.SQL(", ").join(
@@ -201,31 +205,28 @@ def compare_checksums(shared_objects, worker_state, batches):
             where_clause = sql.SQL(" AND ").join(where_clause_temp)
 
         elif mode == "rerun":
-            keys = p_key.split(",")
-            where_clause = sql.SQL(generate_where_clause(keys, batch))
+            where_clause = sql.SQL(generate_where_clause(p_key_cols, batch))
 
         else:
             raise Exception(f"Mode {mode} not recognized in compare_checksums")
 
-        if simple_primary_key:
+        if using_compare_keys:
+            # Exclude primary key columns from the hash calculation
+            compare_cols = [col for col in cols if col not in original_key_cols]
+
             hash_sql = sql.SQL(
-                "SELECT md5(cast(array_agg(t.* ORDER BY {p_key}) AS text)) FROM"
-                "(SELECT * FROM {table_name} WHERE {where_clause}) t"
+                "SELECT md5(cast(array_agg(t.* ORDER BY {p_key}) AS text)) FROM "
+                "(SELECT {compare_cols} FROM {table_name} WHERE {where_clause}) t"
             ).format(
-                p_key=sql.Identifier(p_key),
-                table_name=sql.SQL("{}.{}").format(
-                    sql.Identifier(schema_name),
-                    sql.Identifier(table_name),
+                p_key=(
+                    sql.Identifier(p_key_cols[0])
+                    if simple_primary_key
+                    else sql.SQL(", ").join(
+                        [sql.Identifier(col.strip()) for col in p_key_cols]
+                    )
                 ),
-                where_clause=where_clause,
-            )
-        else:
-            hash_sql = sql.SQL(
-                "SELECT md5(cast(array_agg(t.* ORDER BY {p_key}) AS text)) FROM"
-                "(SELECT * FROM {table_name} WHERE {where_clause}) t"
-            ).format(
-                p_key=sql.SQL(", ").join(
-                    [sql.Identifier(col.strip()) for col in p_key.split(",")]
+                compare_cols=sql.SQL(", ").join(
+                    [sql.Identifier(col) for col in compare_cols]
                 ),
                 table_name=sql.SQL("{}.{}").format(
                     sql.Identifier(schema_name),
@@ -234,13 +235,55 @@ def compare_checksums(shared_objects, worker_state, batches):
                 where_clause=where_clause,
             )
 
-        block_sql = sql.SQL("SELECT * FROM {table_name} WHERE {where_clause}").format(
-            table_name=sql.SQL("{}.{}").format(
-                sql.Identifier(schema_name),
-                sql.Identifier(table_name),
-            ),
-            where_clause=where_clause,
-        )
+            block_sql = sql.SQL(
+                "SELECT {compare_cols} FROM {table_name} WHERE {where_clause}"
+            ).format(
+                compare_cols=sql.SQL(", ").join(
+                    [sql.Identifier(col) for col in compare_cols]
+                ),
+                table_name=sql.SQL("{}.{}").format(
+                    sql.Identifier(schema_name),
+                    sql.Identifier(table_name),
+                ),
+                where_clause=where_clause,
+            )
+        else:
+            if simple_primary_key:
+                hash_sql = sql.SQL(
+                    "SELECT md5(cast(array_agg(t.* ORDER BY {p_key}) AS text)) FROM"
+                    "(SELECT * FROM {table_name} WHERE {where_clause}) t"
+                ).format(
+                    p_key=sql.Identifier(p_key_cols[0]),
+                    table_name=sql.SQL("{}.{}").format(
+                        sql.Identifier(schema_name),
+                        sql.Identifier(table_name),
+                    ),
+                    where_clause=where_clause,
+                )
+            else:
+                hash_sql = sql.SQL(
+                    "SELECT md5(cast(array_agg(t.* ORDER BY {p_key}) AS text)) FROM"
+                    "(SELECT * FROM {table_name} WHERE {where_clause}) t"
+                ).format(
+                    p_key=sql.SQL(", ").join(
+                        [sql.Identifier(col.strip()) for col in p_key_cols]
+                    ),
+                    table_name=sql.SQL("{}.{}").format(
+                        sql.Identifier(schema_name),
+                        sql.Identifier(table_name),
+                    ),
+                    where_clause=where_clause,
+                )
+
+            block_sql = sql.SQL(
+                "SELECT * FROM {table_name} WHERE {where_clause}"
+            ).format(
+                table_name=sql.SQL("{}.{}").format(
+                    sql.Identifier(schema_name),
+                    sql.Identifier(table_name),
+                ),
+                where_clause=where_clause,
+            )
 
         for node_pair in combinations(node_list, 2):
             host1 = node_pair[0]
@@ -575,6 +618,8 @@ def table_diff(td_task: TableDiffTask, skip_all_checks: bool = False):
         "row_diff_count": row_diff_count,
         "lock": lock,
         "td_task": td_task,
+        "using_compare_keys": bool(td_task.compare_keys),
+        "original_key": td_task.fields.orig_key,
     }
 
     util.message(
@@ -1273,6 +1318,7 @@ def table_repair(tr_task: TableRepairTask):
                 cur.close()
 
     if tr_task.upsert_only:
+
         def compare_values(val1: dict, val2: dict) -> bool:
             if val1.keys() != val2.keys():
                 return False
@@ -1976,6 +2022,10 @@ def table_rerun_async(td_task: TableDiffTask) -> None:
         "row_diff_count": row_diff_count,
         "lock": lock,
         "td_task": td_task,
+        "using_compare_keys": bool(td_task.compare_keys),
+        "primary_key": td_task.fields.key,
+        "original_key": td_task.fields.orig_key,
+        "compare_keys": td_task.compare_keys,
     }
 
     util.message(

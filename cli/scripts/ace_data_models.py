@@ -27,6 +27,7 @@ class DerivedFields:
     l_schema: str = None
     l_table: str = None
     key: str = None
+    orig_key: str = None
     cols: list = None
     conn_params: list = None
     database: str = None
@@ -36,6 +37,9 @@ class DerivedFields:
     col_types: dict = None
 
 
+# TODO:
+# - Make optional fields optional here as well
+# - Pull out tuning params into a separate class
 @dataclass
 class TableDiffTask:
     # Unprocessed fields
@@ -51,6 +55,11 @@ class TableDiffTask:
     batch_size: int
     table_filter: str
     quiet_mode: bool
+
+    # If we have secondary unique constraints, or if the pkey is a sequence,
+    # we provide an option here for the user to specify the columns to be
+    # used for the comparison.
+    compare_keys: Union[str, list[str]] = None
 
     # For table-diff, the diff_file_path is
     # obtained after the run of table-diff,
@@ -100,6 +109,8 @@ class TableRepairTask:
     upsert_only: bool
     fix_nulls: bool
     fire_triggers: bool
+
+    compare_keys: Union[str, list[str]] = None
 
     invoke_method: str = "cli"
 

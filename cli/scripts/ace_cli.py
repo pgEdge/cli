@@ -31,7 +31,17 @@ Args:
     nodes (str, optional): Nodes to include in the diff. Defaults to "all".
     batch_size (int, optional): Size of each batch. Defaults to
         config.BATCH_SIZE_DEFAULT.
+    table_filter (str, optional):
+        The where clause to use to compare a subset of rows.
+        Defaults to None.
     quiet (bool, optional): Whether to suppress output. Defaults to False.
+    compare_keys (str, optional):
+        Columns to use for the comparison. Defaults to None.
+        If the table has secondary unique constraints, or if the pkey is a
+        sequence, compare_keys could be used to specify which columns to use
+        while doing the diff.
+        Note: This *will* override the use of primary key columns in the diff.
+
 
 Raises:
     AceException: If there's an error specific to the ACE operation.
@@ -55,6 +65,7 @@ def table_diff_cli(
     batch_size=config.BATCH_SIZE_DEFAULT,
     table_filter=None,
     quiet=False,
+    compare_keys=None,
 ):
 
     task_id = ace_db.generate_task_id()
@@ -72,6 +83,7 @@ def table_diff_cli(
             quiet_mode=quiet,
             table_filter=table_filter,
             invoke_method="cli",
+            compare_keys=compare_keys,
         )
         td_task.scheduler.task_id = task_id
         td_task.scheduler.task_type = "table-diff"
@@ -134,6 +146,7 @@ def table_repair_cli(
     upsert_only=False,
     fix_nulls=False,
     fire_triggers=False,
+    compare_keys=None,
 ):
 
     task_id = ace_db.generate_task_id()
@@ -152,6 +165,7 @@ def table_repair_cli(
             fix_nulls=fix_nulls,
             fire_triggers=fire_triggers,
             invoke_method="cli",
+            compare_keys=compare_keys,
         )
         tr_task.scheduler.task_id = task_id
         tr_task.scheduler.task_type = "table-repair"
@@ -205,6 +219,7 @@ def table_rerun_cli(
     quiet=False,
     behavior="multiprocessing",
     table_filter=None,
+    compare_keys=None,
 ):
 
     task_id = ace_db.generate_task_id()
@@ -223,6 +238,7 @@ def table_rerun_cli(
             quiet_mode=quiet,
             diff_file_path=diff_file,
             invoke_method="cli",
+            compare_keys=compare_keys,
         )
         td_task.scheduler.task_id = task_id
         td_task.scheduler.task_type = "table-rerun"

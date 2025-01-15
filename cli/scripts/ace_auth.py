@@ -31,7 +31,7 @@ class ConnectionPool:
     """Manages database connections to avoid creating duplicate connections."""
 
     def __init__(self):
-        self._connections = {}  # {(host, port, db_user, dbname): conn}
+        self._connections = {}
 
     def get_connection(self, host, port, db_user, dbname):
         """
@@ -42,18 +42,16 @@ class ConnectionPool:
         key = (host, port, db_user, dbname)
         conn = self._connections.get(key)
 
-        # Check if connection is still alive and valid
+        # If the connection exists, we need to execute a dummy transaction
+        # to ensure it's still valid.
         if conn:
             try:
-                # First check if connection is closed
                 if conn.closed:
                     del self._connections[key]
                     return None
 
-                # Then check if connection is still valid with a transaction
                 with conn.cursor() as cur:
-                    # Start a transaction to ensure connection is truly alive
-                    conn.rollback()  # Clear any previous transaction state
+                    conn.rollback()
                     cur.execute("BEGIN")
                     cur.execute("SELECT 1")
                     cur.execute("COMMIT")
@@ -62,7 +60,6 @@ class ConnectionPool:
                     cur.execute("RESET ROLE")
                 return conn
             except Exception:
-                # If any error occurs, remove the connection
                 if key in self._connections:
                     try:
                         conn.close()
