@@ -239,6 +239,45 @@ def parse_nodes(nodes, quiet_mode=False) -> list:
     return node_list
 
 
+def parse_skip_list(skip_list: str, skip_file: str) -> list:
+    """
+    Utility function to parse skip_list and skip_file.
+    If both skip_list and skip_file are provided, we'll use a
+    union of the two.
+    """
+
+    table_regex = re.compile(r"^[a-z]+\.[a-zA-Z0-9_]+$")
+    skip_tables_list = []
+
+    if (skip_list and type(skip_list) is not str) or (
+        skip_file and type(skip_file) is not str
+    ):
+        raise AceException("Invalid value type for skip_tables")
+
+    if skip_file and not os.path.exists(skip_file):
+        raise AceException(f"Skip file {skip_file} not found")
+
+    if skip_list:
+        raw_list = skip_list.split(",")
+        for item in raw_list:
+            if table_regex.match(item):
+                skip_tables_list.append(item)
+            else:
+                util.message(f"Ignoring invalid table name {item}", p_state="warning")
+
+    if skip_file:
+        with open(skip_file, "r") as f:
+            for line in f:
+                if table_regex.match(line.strip()):
+                    skip_tables_list.append(line.strip())
+                else:
+                    util.message(
+                        f"Ignoring invalid table name {line.strip()}", p_state="warning"
+                    )
+
+    return skip_tables_list
+
+
 def get_col_types(conn, table_name):
     """
     Here we are grabbing the name and data type of each row from table from the
@@ -548,11 +587,13 @@ def write_diffs_json(td_task, diff_dict, col_types, quiet_mode=False):
                 or item.lower() == "none"
             ):
                 return None
-            elif any(s in type_lower for s in string_types):
-                return item
+            elif "[]" in type_lower:
+                return ast.literal_eval(item)
             elif any(s in type_lower for s in json_compatible_types):
                 # For JSON-compatible types, parse them using AST
                 return ast.literal_eval(item)
+            elif any(s in type_lower for s in string_types):
+                return item
             else:
                 # Default to treating as string if type is unknown
                 return item
@@ -1339,7 +1380,6 @@ def validate_repset_diff_inputs(rd_task: RepsetDiffTask) -> None:
             + f"not found in cluster '{rd_task.cluster_name}'"
         )
 
-    # Combine db and cluster_nodes into a single json
     for node in node_info:
         combined_json = {**database, **node}
         cluster_nodes.append(combined_json)
@@ -1349,17 +1389,10 @@ def validate_repset_diff_inputs(rd_task: RepsetDiffTask) -> None:
             if not any(filter(lambda x: x["name"] == n, cluster_nodes)):
                 raise AceException("Specified nodenames not present in cluster")
 
-    # Store basic task information
     rd_task.fields.cluster_nodes = cluster_nodes
     rd_task.fields.database = database
     rd_task.fields.node_list = node_list
-
-    if rd_task.skip_tables is None:
-        rd_task.skip_tables = set()
-    elif isinstance(rd_task.skip_tables, str):
-        rd_task.skip_tables = {rd_task.skip_tables}
-    else:
-        rd_task.skip_tables = set(rd_task.skip_tables)
+    rd_task.skip_tables = parse_skip_list(rd_task.skip_tables, rd_task.skip_file)
 
 
 def repset_diff_checks(
@@ -1431,7 +1464,9 @@ def repset_diff_checks(
         )
 
     # Convert fetched rows into a list of strings
-    rd_task.table_list = [table[0] for table in tables]
+    rd_task.table_list = [
+        table[0] for table in tables if table[0] not in rd_task.skip_tables
+    ]
 
     return rd_task
 
@@ -1545,7 +1580,7 @@ def spock_diff_checks(
     return sd_task
 
 
-def schema_diff_checks(sc_task: SchemaDiffTask) -> SchemaDiffTask:
+def validate_schema_diff_inputs(sc_task: SchemaDiffTask) -> SchemaDiffTask:
 
     node_list = []
     try:
@@ -1608,6 +1643,84 @@ def schema_diff_checks(sc_task: SchemaDiffTask) -> SchemaDiffTask:
     sc_task.fields.cluster_nodes = cluster_nodes
     sc_task.fields.database = database
     sc_task.fields.node_list = node_list
+    sc_task.skip_tables = parse_skip_list(sc_task.skip_tables, sc_task.skip_file)
+
+    return sc_task
+
+
+def schema_diff_checks(
+    sc_task: SchemaDiffTask, skip_validation: bool = False
+) -> SchemaDiffTask:
+    """
+    Validates and prepares a schema diff task.
+
+    This function performs full validation including database connections
+    and privilege checks. It should be called in the worker process.
+
+    Returns:
+        The validated and prepared task
+    """
+    if not skip_validation:
+        validate_schema_diff_inputs(sc_task)
+
+    conn_list = []
+
+    try:
+        for nd in sc_task.fields.cluster_nodes:
+            if sc_task._nodes == "all":
+                sc_task.fields.node_list.append(nd["name"])
+
+            if (
+                sc_task.fields.node_list and nd["name"] in sc_task.fields.node_list
+            ) or (not sc_task.fields.node_list):
+                _, conn = sc_task.connection_pool.get_cluster_node_connection(
+                    nd,
+                    sc_task.cluster_name,
+                    invoke_method=sc_task.invoke_method,
+                    client_role=(sc_task.client_role if config.USE_CERT_AUTH else None),
+                )
+                conn_list.append(conn)
+
+    except Exception as e:
+        raise AceException("Error in schema_diff() Getting Connections:" + str(e), 1)
+
+    util.message(
+        "Connections successful to nodes in cluster",
+        p_state="success",
+        quiet_mode=sc_task.quiet_mode,
+    )
+
+    # Connecting to any one of the nodes in the cluster should suffice
+    conn = conn_list[0]
+    cur = conn.cursor()
+
+    # Check if schema exists
+    schema_sql = "SELECT EXISTS (SELECT 1 from pg_namespace where nspname = %s);"
+    cur.execute(schema_sql, (sc_task.schema_name,))
+    schema_exists = cur.fetchone()[0]
+    if not schema_exists:
+        raise AceException(f"Schema {sc_task.schema_name} not found")
+
+    # Using the 'base table' type coz we don't need views and temp tables
+    table_list_sql = """
+        SELECT
+            concat_ws('.', table_schema, table_name) as table_name
+        FROM
+            information_schema.tables
+        WHERE
+            table_schema = %s
+        AND
+            table_type = 'BASE TABLE';
+    """
+    cur.execute(table_list_sql, (sc_task.schema_name,))
+    table_list = cur.fetchall()
+
+    if not table_list:
+        raise AceException(f"Schema {sc_task.schema_name} is empty")
+
+    sc_task.table_list = [
+        table[0] for table in table_list if table[0] not in sc_task.skip_tables
+    ]
 
     return sc_task
 

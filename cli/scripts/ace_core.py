@@ -2,6 +2,7 @@ import ast
 import json
 from math import ceil
 import os
+from typing import Union
 from datetime import datetime
 from itertools import combinations
 from concurrent.futures import ThreadPoolExecutor
@@ -1205,6 +1206,8 @@ def table_repair(tr_task: TableRepairTask):
                         or elem.lower() == "none"
                     ):
                         modified_row += (None,)
+                    elif "[]" in type_lower:
+                        modified_row += (ast.literal_eval(elem),)
                     elif any(s in type_lower for s in string_types):
                         if type_lower == "bytea":
                             modified_row += (bytes.fromhex(elem),)
@@ -1261,12 +1264,15 @@ def table_repair(tr_task: TableRepairTask):
 
             conn.commit()
         except Exception as e:
+            conn.rollback()
             context = {"errors": [f"Could not perform repairs: {str(e)}"]}
             ace.handle_task_exception(tr_task, context)
             raise e
+        finally:
+            if cur:
+                cur.close()
 
     if tr_task.upsert_only:
-
         def compare_values(val1: dict, val2: dict) -> bool:
             if val1.keys() != val2.keys():
                 return False
@@ -1275,17 +1281,18 @@ def table_repair(tr_task: TableRepairTask):
             return True
 
         upsert_dict = dict()
-        for nd_name, values in deletes_skipped.items():
-            for value in values:
+        for nd_name, keys in deletes_skipped.items():
+            for key in keys:
                 if simple_primary_key:
-                    full_key = value[tr_task.key]
+                    full_key = key
                 else:
-                    full_key = tuple(value[pkey_part] for pkey_part in keys_list)
+                    full_key = tuple(pkey_part for pkey_part in key)
 
                 if full_key not in upsert_dict:
-                    upsert_dict[full_key] = value, {nd_name}
-
-                elif not compare_values(value, upsert_dict[full_key][0]):
+                    upsert_dict[full_key] = full_rows_to_delete[nd_name][key], {nd_name}
+                elif not compare_values(
+                    full_rows_to_delete[nd_name][key], upsert_dict[full_key][0]
+                ):
                     upsert_dict[full_key][1].add(nd_name)
                 else:
                     upsert_dict[full_key][1].add(nd_name)
@@ -1337,12 +1344,13 @@ def table_repair(tr_task: TableRepairTask):
 
     print()
 
-    for node in other_nodes:
-        util.message(
-            f"{node} DELETED = {len(full_rows_to_delete[node])} rows",
-            p_state="info",
-            quiet_mode=tr_task.quiet_mode,
-        )
+    if not tr_task.upsert_only:
+        for node in other_nodes:
+            util.message(
+                f"{node} DELETED = {len(full_rows_to_delete[node])} rows",
+                p_state="info",
+                quiet_mode=tr_task.quiet_mode,
+            )
 
     util.message(
         f"RUN TIME = {run_time_str} seconds",
@@ -2112,22 +2120,27 @@ def table_rerun_async(td_task: TableDiffTask) -> None:
     ace_db.update_ace_task(td_task)
 
 
-def repset_diff(rd_task: RepsetDiffTask) -> None:
-    """Loop thru a replication-sets tables and run table-diff on them"""
+def multi_table_diff(task: Union[RepsetDiffTask, SchemaDiffTask]) -> None:
+    """
+    Reusable module for both repset-diff and schema-diff
+    """
 
-    rd_task = ace.repset_diff_checks(rd_task, skip_validation=True)
+    if isinstance(task, RepsetDiffTask):
+        task = ace.repset_diff_checks(task, skip_validation=True)
+    elif isinstance(task, SchemaDiffTask):
+        task = ace.schema_diff_checks(task, skip_validation=True)
 
     rd_task_context = []
     rd_start_time = datetime.now()
     errors_encountered = False
 
-    for table in rd_task.table_list:
+    for table in task.table_list:
 
-        if table in rd_task.skip_tables:
+        if table in task.skip_tables:
             util.message(
                 f"\nSKIPPING TABLE {table}",
                 p_state="info",
-                quiet_mode=rd_task.quiet_mode,
+                quiet_mode=task.quiet_mode,
             )
 
             continue
@@ -2137,20 +2150,22 @@ def repset_diff(rd_task: RepsetDiffTask) -> None:
             util.message(
                 f"\n\nCHECKING TABLE {table}...\n",
                 p_state="info",
-                quiet_mode=rd_task.quiet_mode,
+                quiet_mode=task.quiet_mode,
             )
 
             td_task = TableDiffTask(
-                cluster_name=rd_task.cluster_name,
+                cluster_name=task.cluster_name,
                 _table_name=table,
-                _dbname=rd_task._dbname,
-                fields=rd_task.fields,
-                quiet_mode=rd_task.quiet_mode,
-                block_rows=rd_task.block_rows,
-                max_cpu_ratio=rd_task.max_cpu_ratio,
-                output=rd_task.output,
-                _nodes=rd_task._nodes,
-                batch_size=rd_task.batch_size,
+                _dbname=task._dbname,
+                fields=task.fields,
+                quiet_mode=task.quiet_mode,
+                block_rows=getattr(task, "block_rows", config.BLOCK_ROWS_DEFAULT),
+                max_cpu_ratio=getattr(
+                    task, "max_cpu_ratio", config.MAX_CPU_RATIO_DEFAULT
+                ),
+                output=getattr(task, "output", "json"),
+                _nodes=getattr(task, "_nodes", "all"),
+                batch_size=getattr(task, "batch_size", config.BATCH_SIZE_DEFAULT),
                 skip_db_update=True,
                 table_filter=None,
             )
@@ -2175,20 +2190,20 @@ def repset_diff(rd_task: RepsetDiffTask) -> None:
                 "error": str(e),
             }
             util.message(
-                f"Repset-diff failed for table {table} with: {str(e)}",
+                f"{task.scheduler.task_type} failed for table {table} with: {str(e)}",
                 p_state="warning",
             )
 
         rd_task_context.append(status)
 
-    rd_task.scheduler.task_status = "COMPLETED" if not errors_encountered else "FAILED"
-    rd_task.scheduler.finished_at = datetime.now()
-    rd_task.scheduler.task_context = rd_task_context
-    rd_task.scheduler.time_taken = util.round_timedelta(
+    task.scheduler.task_status = "COMPLETED" if not errors_encountered else "FAILED"
+    task.scheduler.finished_at = datetime.now()
+    task.scheduler.task_context = rd_task_context
+    task.scheduler.time_taken = util.round_timedelta(
         datetime.now() - rd_start_time
     ).total_seconds()
 
-    ace_db.update_ace_task(rd_task)
+    ace_db.update_ace_task(task)
 
 
 def spock_diff(sd_task: SpockDiffTask) -> None:
@@ -2384,7 +2399,7 @@ def spock_diff(sd_task: SpockDiffTask) -> None:
     return task_context
 
 
-def schema_diff(sc_task: SchemaDiffTask) -> None:
+def schema_diff_objects(sc_task: SchemaDiffTask) -> None:
     """
     Schema-diff for DDL-only. We compare tables, functions, triggers, indexes,
     and constraints.

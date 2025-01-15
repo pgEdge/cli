@@ -759,6 +759,23 @@ def add_db(cluster_name, database_name, username, password):
     update_json(cluster_name, db_json)
 
 
+def json_template(cluster_name, db, num_nodes, usr, passwd, pg, port):
+    """Create a template for a Cluster Configuration JSON file.
+   
+       Create a JSON configuration file template that can be modified to fully define a remote cluster. \n
+       Example: cluster define-remote demo db 3 lcusr lcpasswd 16 5432
+       :param cluster_name: The name of the cluster. A directory with this same name will be created in the cluster directory, and the JSON file will have the same name.
+       :param db: The database name.
+       :param num_nodes: The number of nodes in the cluster.
+       :param usr: The username of the superuser created for this database.
+       :param passwd: The password for the above user.
+       :param pg: The postgres version of the database.
+       :param port1: The port number for the database.
+    """
+    json_create(cluster_name, num_nodes, db, usr, passwd, pg, port, True)
+
+
+
 def json_create(
     cluster_name, num_nodes, db, usr, passwd, pg_ver=None, port=None, force=False
 ):
@@ -2496,7 +2513,7 @@ if __name__ == "__main__":
         {
             "json-validate": json_validate,
             "json-create": json_create,
-            "json-template": json_create,
+            "json-template": json_template,
             "init": init,
             "list-nodes": list_nodes,
             "add-node": add_node,
