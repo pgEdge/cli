@@ -43,7 +43,7 @@ f"""setup_core.check_pre_reqs(User={User}, Passwd={Passwd}, db={db}, port={port}
 
     if util.is_admin():
         util.exit_message(
-            "You must install as non-root user with passwordless sudo privleges")
+            "You must install as non-root user with passwordless sudo privileges")
 
     if not verifyPort(port):
         sys.exit(1)
