@@ -544,17 +544,23 @@ def get_table_list(table, db, pg_v):
     elif len(l_tbl) == 1:
         w_table = str(l_tbl[0])
 
-    sql = (
-        "SELECT table_schema || '.' || table_name as schema_table,('\"' ||table_schema || '\".\"' ||table_name||'\"')::regclass::oid as table_oid \n"
-        + "  FROM information_schema.tables\n"
-        + " WHERE TABLE_TYPE = 'BASE TABLE' \n"
-        + " AND table_schema NOT IN ('spock','pg_catalog','information_schema')"
-    )
+    sql = f"""SELECT a.table_schema || '.' || a.table_name as schema_table,
+          ('\"' || a.table_schema || '\".\"' || a.table_name||'\"')::regclass::oid as table_oid
+          FROM information_schema.tables a
+          LEFT JOIN spock.tables b
+             ON b.nspname=a.table_schema
+             AND b.relname = a.table_name
+          WHERE a.TABLE_TYPE = 'BASE TABLE'
+             AND a.table_schema NOT IN
+                 ('spock','pg_catalog','information_schema')
+             AND b.set_name IS NULL """
 
     if w_schema:
-        sql = sql + "\n   AND table_schema = '" + w_schema + "'"
+        sql = f""" {sql}
+             AND a.table_schema = '{w_schema}'"""
 
-    sql = sql + "\n   AND table_name ILIKE '" + w_table.replace("*", "%") + "'"
+    sql = f""" {sql} 
+             AND table_name ILIKE '{w_table.replace("*", "%")}'"""
 
     con = get_pg_connection(pg_v, db, get_user())
 

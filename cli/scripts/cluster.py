@@ -812,6 +812,7 @@ def json_create(
         spock_default, spocks = meta.get_default_spock(str(pg_default))
     else:
         spock_default, spocks = meta.get_default_spock(str(pg_ver))
+        pg_default = pg_ver
 
     # Check if 'json-template' alias was used and display a warning
     if "json-template" in sys.argv:
@@ -1025,6 +1026,7 @@ def json_create(
         if port is not None:
             node_port = port
             print(f"  Using port {node_port} for Node {n} ")
+            port = port + 1
         elif force:
             node_port = default_port
             default_port = default_port + 1
@@ -1757,6 +1759,15 @@ def add_node(
 
     create_sub(nodes, new_node_data, db[0]["db_name"], verbose)
     create_sub_new(nodes, new_node_data, db[0]["db_name"], verbose)
+
+    nc = os.path.join(new_node_data['path'], "pgedge", "pgedge ")
+    cmd = f'{nc} spock repset-add-table default "*" {db[0]["db_name"]}'
+
+    message = f"Adding all tables to repset"
+    run_cmd(cmd, new_node_data, message=message, verbose=verbose)
+
+    cmd = f'{nc} spock repset-add-table default_insert_only "*" {db[0]["db_name"]}'
+    run_cmd(cmd, new_node_data, message=message, verbose=verbose)
 
     if v4:
         set_cluster_readonly(nodes, False, db[0]["db_name"], f"pg{pg}", v4, verbose)
