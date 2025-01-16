@@ -176,10 +176,7 @@ def compare_checksums(shared_objects, worker_state, batches):
                     where_clause_temp.append(
                         sql.SQL("({p_key}) >= ({pkey1})").format(
                             p_key=sql.SQL(", ").join(
-                                [
-                                    sql.Identifier(col.strip())
-                                    for col in p_key_cols
-                                ]
+                                [sql.Identifier(col.strip()) for col in p_key_cols]
                             ),
                             pkey1=sql.SQL(", ").join(
                                 [sql.Literal(val) for val in pkey1]
@@ -191,10 +188,7 @@ def compare_checksums(shared_objects, worker_state, batches):
                     where_clause_temp.append(
                         sql.SQL("({p_key}) < ({pkey2})").format(
                             p_key=sql.SQL(", ").join(
-                                [
-                                    sql.Identifier(col.strip())
-                                    for col in p_key_cols
-                                ]
+                                [sql.Identifier(col.strip()) for col in p_key_cols]
                             ),
                             pkey2=sql.SQL(", ").join(
                                 [sql.Literal(val) for val in pkey2]
@@ -403,8 +397,20 @@ def compare_checksums(shared_objects, worker_state, batches):
                         else:
                             temp_dict[host2] = []
 
-                        temp_dict[host1] += [dict(zip(cols, row)) for row in t1_diff]
-                        temp_dict[host2] += [dict(zip(cols, row)) for row in t2_diff]
+                        if using_compare_keys:
+                            temp_dict[host1] += [
+                                dict(zip(compare_cols, row)) for row in t1_diff
+                            ]
+                            temp_dict[host2] += [
+                                dict(zip(compare_cols, row)) for row in t2_diff
+                            ]
+                        else:
+                            temp_dict[host1] += [
+                                dict(zip(cols, row)) for row in t1_diff
+                            ]
+                            temp_dict[host2] += [
+                                dict(zip(cols, row)) for row in t2_diff
+                            ]
 
                         diff_dict[node_pair_key] = temp_dict
 
@@ -1238,6 +1244,10 @@ def table_repair(tr_task: TableRepairTask):
         for row in rows_to_upsert_json:
             modified_row = tuple()
             for col_name in cols_list:
+
+                if col_name in tr_task.fields.orig_key.split(","):
+                    continue
+
                 col_type = col_types[col_name]
                 elem = str(row[col_name])
 

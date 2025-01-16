@@ -1328,6 +1328,11 @@ def table_repair_checks(
                 client_role=(tr_task.client_role if config.USE_CERT_AUTH else None),
             )
 
+            if not tr_task.fields.orig_key:
+                tr_task.fields.orig_key = get_key(
+                    conn, tr_task.fields.l_schema, tr_task.fields.l_table
+                )
+
             curr_cols = get_cols(conn, tr_task.fields.l_schema, tr_task.fields.l_table)
 
             if tr_task.compare_keys:
