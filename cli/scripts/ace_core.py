@@ -1227,14 +1227,8 @@ def table_repair(tr_task: TableRepairTask):
 
             upsert_tuples.append(modified_row)
 
-        # Performing the upsert
         try:
-            cur.executemany(update_sql, upsert_tuples)
-            if tr_task.generate_report:
-                report["changes"][divergent_node]["upserted_rows"] = [
-                    dict(zip(cols_list, tup)) for tup in upsert_tuples
-                ]
-
+            # Let's first delete rows to avoid secondary unique key violations
             if delete_keys and not tr_task.upsert_only:
                 # Performing the deletes
                 cur.executemany(delete_sql, delete_keys)
@@ -1242,6 +1236,13 @@ def table_repair(tr_task: TableRepairTask):
                     report["changes"][divergent_node]["deleted_rows"] = delete_keys
             elif delete_keys and tr_task.upsert_only:
                 deletes_skipped[divergent_node] = delete_keys
+
+            # Now perform the upsert
+            cur.executemany(update_sql, upsert_tuples)
+            if tr_task.generate_report:
+                report["changes"][divergent_node]["upserted_rows"] = [
+                    dict(zip(cols_list, tup)) for tup in upsert_tuples
+                ]
 
             if spock_version >= config.SPOCK_REPAIR_MODE_MIN_VERSION:
                 # Temporarily elevate privileges to disable repair mode
