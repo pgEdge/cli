@@ -164,7 +164,7 @@ def load_json(cluster_name):
     db_settings = {
         "pg_version": pgedge.get("pg_version", ""),
         "spock_version": pgedge.get("spock", {}).get("spock_version", ""),
-        "auto_ddl": pgedge.get("spock", {}).get("auto_ddl", "off"),
+        "auto_ddl": pgedge.get("spock", {}).get("auto_ddl", "on"),
         "auto_start": pgedge.get("auto_start", "on"),
     }
 
@@ -746,12 +746,12 @@ def add_db(cluster_name, database_name, username, password):
     verbose = db_settings.get("log_level", "none")
 
     db_json = {}
-    db_json["username"] = username
-    db_json["password"] = password
-    db_json["name"] = database_name
+    db_json["db_user"] = username
+    db_json["db_password"] = password
+    db_json["db_name"] = database_name
 
     util.message(f"## Creating database {database_name}")
-    create_spock_db(nodes, db_json, db_settings, True)
+    create_spock_db(nodes, db_json, db_settings, initial=False)
     ssh_cross_wire_pgedge(
         cluster_name, database_name, db_settings, username, password, nodes, verbose
     )
@@ -934,7 +934,7 @@ def json_create(
             else:
                 break
 
-    spock_json = {"spock_version": spock_version, "auto_ddl": "off"}
+    spock_json = {"spock_version": spock_version, "auto_ddl": "on"}
     pgedge_json["spock"] = spock_json
 
     database_json = [{"db_name": db, "db_user": usr, "db_password": passwd}]
@@ -1313,7 +1313,7 @@ def update_json(cluster_name, db_json):
         f"cp {cluster_dir}{os.sep}{cluster_name}.json {cluster_dir}{os.sep}backup/{cluster_name}_{timeof}.json"
     )
     text_file = open(cluster_dir + os.sep + cluster_name + ".json", "w")
-    parsed_json["database"]["databases"].append(db_json)
+    parsed_json["pgedge"]["databases"].append(db_json)
     try:
         text_file.write(json.dumps(parsed_json, indent=2))
         text_file.close()
