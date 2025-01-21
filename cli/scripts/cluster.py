@@ -2280,6 +2280,7 @@ def check_cluster_lag(n, dbname, stanza, verbose, timeout=600, interval=1):
         if time.time() - start_time > timeout:
             return
 
+        time.sleep(2)
         cmd = f"{n['path']}/pgedge/pgedge psql '{sql_cmd}' {dbname}"
         message = f"Checking lag time of new cluster"
         result = run_cmd(
