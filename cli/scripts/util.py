@@ -579,10 +579,7 @@ def get_table_list(table, db, pg_v):
     except Exception as e:
         exit_exception(e)
 
-    if len(ret) > 0:
-        return ret
-
-    exit_message(f"Could not find table that matches {table}", 1)
+    return ret
 
 
 def get_seq_list(seq, db, pg_v):

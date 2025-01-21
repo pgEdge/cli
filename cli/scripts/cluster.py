@@ -943,7 +943,7 @@ def json_create(
     cluster_json["pgedge"] = pgedge_json
 
     # Ask if this is an HA Cluster
-    if force:
+    if True:
         is_ha_cluster = False
     else:
         ha_cluster_input = input("Is this an HA Cluster? (Y/N): ").strip().lower()
@@ -1513,8 +1513,10 @@ def init(cluster_name, install=True):
                 f"--stanza '{stanza}' "
                 f"--pg1-path '{pg1_path}' "
                 f"--repo1-cipher-type {repo1_cipher_type} "
-                f"--pg1-port {port}"
+                f"--pg1-port {port} "
+                f"--repo1-path {repo1_path} "
             )
+
             run_cmd(
                 cmd_create_stanza,
                 node=node,
@@ -1692,11 +1694,7 @@ def add_node(
 
         repo1_path_default = f"/var/lib/pgbackrest/{source_node_data['name']}"
 
-        repo1_path = backrest_settings.get("repo1-path", f"{repo1_path_default}")
-
-        cmd = f"sudo rm -rf {repo1_path}"
-        message = f"Removing the repo-path"
-        run_cmd(cmd, source_node_data, message=message, verbose=verbose)
+        repo1_path = backrest_settings.get("repo1_path", f"{repo1_path_default}")
 
         args = (
             f"--repo1-path {repo1_path} --stanza {stanza} "
@@ -2282,6 +2280,7 @@ def check_cluster_lag(n, dbname, stanza, verbose, timeout=600, interval=1):
         if time.time() - start_time > timeout:
             return
 
+        time.sleep(2)
         cmd = f"{n['path']}/pgedge/pgedge psql '{sql_cmd}' {dbname}"
         message = f"Checking lag time of new cluster"
         result = run_cmd(
