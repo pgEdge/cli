@@ -357,6 +357,7 @@ def repset_diff_api():
     batch_size = data.get("batch_size", config.BATCH_SIZE_DEFAULT)
     quiet = data.get("quiet", False)
     skip_tables = data.get("skip_tables")
+    skip_file = data.get("skip_file")
 
     if not cluster_name or not repset_name:
         return (
@@ -378,6 +379,7 @@ def repset_diff_api():
             batch_size=batch_size,
             quiet_mode=quiet,
             skip_tables=skip_tables,
+            skip_file=skip_file,
             invoke_method="api",
         )
 
@@ -389,7 +391,7 @@ def repset_diff_api():
 
         ace.validate_repset_diff_inputs(raw_args)
         ace_db.create_ace_task(task=raw_args)
-        scheduler.add_job(ace_core.repset_diff, args=(raw_args,))
+        scheduler.add_job(ace_core.multi_table_diff, args=(raw_args,))
 
         now = datetime.now()
         return jsonify(
@@ -495,6 +497,7 @@ def schema_diff_api():
     schema_name = data.get("schema_name")
     dbname = data.get("dbname")
     nodes = data.get("nodes", "all")
+    ddl_only = data.get("ddl_only", True)
     quiet = data.get("quiet", False)
 
     task_id = ace_db.generate_task_id()
@@ -512,6 +515,7 @@ def schema_diff_api():
             _dbname=dbname,
             _nodes=nodes,
             quiet_mode=quiet,
+            ddl_only=ddl_only,
             invoke_method="api",
         )
 
@@ -519,9 +523,15 @@ def schema_diff_api():
         raw_args.scheduler.task_type = "schema-diff"
         raw_args.scheduler.task_status = "RUNNING"
         raw_args.scheduler.started_at = datetime.now()
-        sd_task = ace.schema_diff_checks(raw_args)
-        ace_db.create_ace_task(task=sd_task)
-        scheduler.add_job(ace_core.schema_diff, args=(sd_task,))
+        raw_args.client_role = request.client_cn
+
+        sc_task = ace.validate_schema_diff_inputs(raw_args)
+        ace_db.create_ace_task(task=sc_task)
+
+        if ddl_only:
+            scheduler.add_job(ace_core.schema_diff_objects, args=(sc_task,))
+        else:
+            scheduler.add_job(ace_core.multi_table_diff, args=(sc_task,))
 
         now = datetime.now()
         return jsonify(
@@ -547,6 +557,9 @@ Returns:
 """
 
 
+# TODO: Allow only user-owned tasks to be retrieved
+# i.e., a user should not be able to retrieve someone else's task
+# This is not as critical as it may seem, since task_id is hard to guess
 @app.route("/ace/task-status", methods=["GET"])
 @require_client_cert
 def task_status_api():
@@ -969,10 +982,15 @@ def create_schedules():
         kwargs = job.get("args", {})
 
         # Filter out invalid kwargs based on job type
-        if not repset_diff:
-            kwargs = {k: v for k, v in kwargs.items() if k in valid_table_diff_params}
-        else:
-            kwargs = {k: v for k, v in kwargs.items() if k in valid_repset_diff_params}
+        if kwargs:
+            if not repset_diff:
+                kwargs = {
+                    k: v for k, v in kwargs.items() if k in valid_table_diff_params
+                }
+            else:
+                kwargs = {
+                    k: v for k, v in kwargs.items() if k in valid_repset_diff_params
+                }
 
         cron_schedule = schedule.get("crontab_schedule", None)
 

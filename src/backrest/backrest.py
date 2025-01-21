@@ -319,7 +319,7 @@ def run_external_command(command, **kwargs):
     print(f"Full command to be executed:\n {' '.join(full_command)}")
 
     try:
-        result = subprocess.run(full_command, check=True, text=True, capture_output=True)
+        result = subprocess.run(full_command, check=False, text=True, capture_output=True)
         print("Command executed successfully.")
         print(result.stdout)
     except subprocess.CalledProcessError as e:

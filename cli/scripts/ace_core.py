@@ -2,6 +2,7 @@ import ast
 import json
 from math import ceil
 import os
+from typing import Union
 from datetime import datetime
 from itertools import combinations
 from concurrent.futures import ThreadPoolExecutor
@@ -1205,6 +1206,8 @@ def table_repair(tr_task: TableRepairTask):
                         or elem.lower() == "none"
                     ):
                         modified_row += (None,)
+                    elif "[]" in type_lower:
+                        modified_row += (ast.literal_eval(elem),)
                     elif any(s in type_lower for s in string_types):
                         if type_lower == "bytea":
                             modified_row += (bytes.fromhex(elem),)
@@ -1224,14 +1227,8 @@ def table_repair(tr_task: TableRepairTask):
 
             upsert_tuples.append(modified_row)
 
-        # Performing the upsert
         try:
-            cur.executemany(update_sql, upsert_tuples)
-            if tr_task.generate_report:
-                report["changes"][divergent_node]["upserted_rows"] = [
-                    dict(zip(cols_list, tup)) for tup in upsert_tuples
-                ]
-
+            # Let's first delete rows to avoid secondary unique key violations
             if delete_keys and not tr_task.upsert_only:
                 # Performing the deletes
                 cur.executemany(delete_sql, delete_keys)
@@ -1239,6 +1236,13 @@ def table_repair(tr_task: TableRepairTask):
                     report["changes"][divergent_node]["deleted_rows"] = delete_keys
             elif delete_keys and tr_task.upsert_only:
                 deletes_skipped[divergent_node] = delete_keys
+
+            # Now perform the upsert
+            cur.executemany(update_sql, upsert_tuples)
+            if tr_task.generate_report:
+                report["changes"][divergent_node]["upserted_rows"] = [
+                    dict(zip(cols_list, tup)) for tup in upsert_tuples
+                ]
 
             if spock_version >= config.SPOCK_REPAIR_MODE_MIN_VERSION:
                 # Temporarily elevate privileges to disable repair mode
@@ -1261,12 +1265,15 @@ def table_repair(tr_task: TableRepairTask):
 
             conn.commit()
         except Exception as e:
+            conn.rollback()
             context = {"errors": [f"Could not perform repairs: {str(e)}"]}
             ace.handle_task_exception(tr_task, context)
             raise e
+        finally:
+            if cur:
+                cur.close()
 
     if tr_task.upsert_only:
-
         def compare_values(val1: dict, val2: dict) -> bool:
             if val1.keys() != val2.keys():
                 return False
@@ -1275,17 +1282,18 @@ def table_repair(tr_task: TableRepairTask):
             return True
 
         upsert_dict = dict()
-        for nd_name, values in deletes_skipped.items():
-            for value in values:
+        for nd_name, keys in deletes_skipped.items():
+            for key in keys:
                 if simple_primary_key:
-                    full_key = value[tr_task.key]
+                    full_key = key
                 else:
-                    full_key = tuple(value[pkey_part] for pkey_part in keys_list)
+                    full_key = tuple(pkey_part for pkey_part in key)
 
                 if full_key not in upsert_dict:
-                    upsert_dict[full_key] = value, {nd_name}
-
-                elif not compare_values(value, upsert_dict[full_key][0]):
+                    upsert_dict[full_key] = full_rows_to_delete[nd_name][key], {nd_name}
+                elif not compare_values(
+                    full_rows_to_delete[nd_name][key], upsert_dict[full_key][0]
+                ):
                     upsert_dict[full_key][1].add(nd_name)
                 else:
                     upsert_dict[full_key][1].add(nd_name)
@@ -1337,12 +1345,13 @@ def table_repair(tr_task: TableRepairTask):
 
     print()
 
-    for node in other_nodes:
-        util.message(
-            f"{node} DELETED = {len(full_rows_to_delete[node])} rows",
-            p_state="info",
-            quiet_mode=tr_task.quiet_mode,
-        )
+    if not tr_task.upsert_only:
+        for node in other_nodes:
+            util.message(
+                f"{node} DELETED = {len(full_rows_to_delete[node])} rows",
+                p_state="info",
+                quiet_mode=tr_task.quiet_mode,
+            )
 
     util.message(
         f"RUN TIME = {run_time_str} seconds",
@@ -2112,22 +2121,27 @@ def table_rerun_async(td_task: TableDiffTask) -> None:
     ace_db.update_ace_task(td_task)
 
 
-def repset_diff(rd_task: RepsetDiffTask) -> None:
-    """Loop thru a replication-sets tables and run table-diff on them"""
+def multi_table_diff(task: Union[RepsetDiffTask, SchemaDiffTask]) -> None:
+    """
+    Reusable module for both repset-diff and schema-diff
+    """
 
-    rd_task = ace.repset_diff_checks(rd_task, skip_validation=True)
+    if isinstance(task, RepsetDiffTask):
+        task = ace.repset_diff_checks(task, skip_validation=True)
+    elif isinstance(task, SchemaDiffTask):
+        task = ace.schema_diff_checks(task, skip_validation=True)
 
     rd_task_context = []
     rd_start_time = datetime.now()
     errors_encountered = False
 
-    for table in rd_task.table_list:
+    for table in task.table_list:
 
-        if table in rd_task.skip_tables:
+        if table in task.skip_tables:
             util.message(
                 f"\nSKIPPING TABLE {table}",
                 p_state="info",
-                quiet_mode=rd_task.quiet_mode,
+                quiet_mode=task.quiet_mode,
             )
 
             continue
@@ -2137,20 +2151,22 @@ def repset_diff(rd_task: RepsetDiffTask) -> None:
             util.message(
                 f"\n\nCHECKING TABLE {table}...\n",
                 p_state="info",
-                quiet_mode=rd_task.quiet_mode,
+                quiet_mode=task.quiet_mode,
             )
 
             td_task = TableDiffTask(
-                cluster_name=rd_task.cluster_name,
+                cluster_name=task.cluster_name,
                 _table_name=table,
-                _dbname=rd_task._dbname,
-                fields=rd_task.fields,
-                quiet_mode=rd_task.quiet_mode,
-                block_rows=rd_task.block_rows,
-                max_cpu_ratio=rd_task.max_cpu_ratio,
-                output=rd_task.output,
-                _nodes=rd_task._nodes,
-                batch_size=rd_task.batch_size,
+                _dbname=task._dbname,
+                fields=task.fields,
+                quiet_mode=task.quiet_mode,
+                block_rows=getattr(task, "block_rows", config.BLOCK_ROWS_DEFAULT),
+                max_cpu_ratio=getattr(
+                    task, "max_cpu_ratio", config.MAX_CPU_RATIO_DEFAULT
+                ),
+                output=getattr(task, "output", "json"),
+                _nodes=getattr(task, "_nodes", "all"),
+                batch_size=getattr(task, "batch_size", config.BATCH_SIZE_DEFAULT),
                 skip_db_update=True,
                 table_filter=None,
             )
@@ -2175,20 +2191,20 @@ def repset_diff(rd_task: RepsetDiffTask) -> None:
                 "error": str(e),
             }
             util.message(
-                f"Repset-diff failed for table {table} with: {str(e)}",
+                f"{task.scheduler.task_type} failed for table {table} with: {str(e)}",
                 p_state="warning",
             )
 
         rd_task_context.append(status)
 
-    rd_task.scheduler.task_status = "COMPLETED" if not errors_encountered else "FAILED"
-    rd_task.scheduler.finished_at = datetime.now()
-    rd_task.scheduler.task_context = rd_task_context
-    rd_task.scheduler.time_taken = util.round_timedelta(
+    task.scheduler.task_status = "COMPLETED" if not errors_encountered else "FAILED"
+    task.scheduler.finished_at = datetime.now()
+    task.scheduler.task_context = rd_task_context
+    task.scheduler.time_taken = util.round_timedelta(
         datetime.now() - rd_start_time
     ).total_seconds()
 
-    ace_db.update_ace_task(rd_task)
+    ace_db.update_ace_task(task)
 
 
 def spock_diff(sd_task: SpockDiffTask) -> None:
@@ -2384,80 +2400,347 @@ def spock_diff(sd_task: SpockDiffTask) -> None:
     return task_context
 
 
-def schema_diff(sc_task: SchemaDiffTask) -> None:
-    """Compare Postgres schemas on different cluster nodes"""
+def schema_diff_objects(sc_task: SchemaDiffTask) -> None:
+    """
+    Schema-diff for DDL-only. We compare tables, functions, triggers, indexes,
+    and constraints.
+    """
 
-    sql1 = ""
-    l_schema = sc_task.schema_name
-    file_list = []
     task_context = {}
-
     sc_task_start_time = datetime.now()
+    conns = {}
 
     try:
-        for nd in sc_task.fields.cluster_nodes:
-            if nd["name"] in sc_task.fields.node_list:
-                sql1 = ace.write_pg_dump(
-                    nd["public_ip"], nd["db_name"], nd["port"], nd["name"], l_schema
-                )
-                file_list.append(sql1)
+        for node in sc_task.fields.cluster_nodes:
+            _, conn = sc_task.connection_pool.get_cluster_node_connection(
+                node,
+                sc_task.cluster_name,
+                invoke_method=sc_task.invoke_method,
+                client_role=(
+                    sc_task.client_role
+                    if config.USE_CERT_AUTH and sc_task.invoke_method == "api"
+                    else None
+                ),
+            )
+            hostname_key = node["public_ip"] + ":" + node["port"]
+            conns[hostname_key] = conn
     except Exception as e:
         context = {"errors": [f"Could not connect to nodes: {str(e)}"]}
         ace.handle_task_exception(sc_task, context)
         raise e
 
-    if os.stat(file_list[0]).st_size == 0:
-        context = {
-            "errors": [
-                f"Schema {sc_task.schema_name} does not exist on node "
-                f"{sc_task.fields.node_list[0]}"
-            ]
+    table_sql = """
+    SELECT
+        c.relname as table_name,
+        a.attname as column_name,
+        pg_catalog.format_type(a.atttypid, a.atttypmod) as data_type,
+        a.attnotnull as not_null,
+        pg_get_expr(d.adbin, d.adrelid) as default_value,
+        CASE
+            WHEN co.contype = 'p' THEN true
+            ELSE false
+        END as is_primary_key
+    FROM pg_catalog.pg_class c
+    JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace
+    LEFT JOIN pg_catalog.pg_attribute a ON a.attrelid = c.oid
+    LEFT JOIN pg_catalog.pg_attrdef d ON (d.adrelid = c.oid AND d.adnum = a.attnum)
+    LEFT JOIN pg_catalog.pg_constraint co ON (co.conrelid = c.oid
+        AND a.attnum = ANY(co.conkey) AND co.contype = 'p')
+    WHERE n.nspname = %s
+        AND c.relkind = 'r'
+        AND a.attnum > 0
+        AND NOT a.attisdropped
+    ORDER BY c.relname, a.attnum;
+    """
+
+    function_sql = """
+    SELECT
+        p.proname as function_name,
+        pg_get_functiondef(p.oid) as definition
+    FROM pg_catalog.pg_proc p
+    JOIN pg_catalog.pg_namespace n ON n.oid = p.pronamespace
+    WHERE n.nspname = %s
+    ORDER BY p.proname;
+    """
+
+    trigger_sql = """
+    SELECT
+        t.tgname as trigger_name,
+        pg_get_triggerdef(t.oid) as definition,
+        c.relname as table_name
+    FROM pg_catalog.pg_trigger t
+    JOIN pg_catalog.pg_class c ON c.oid = t.tgrelid
+    JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace
+    WHERE n.nspname = %s
+        AND NOT t.tgisinternal
+    ORDER BY t.tgname;
+    """
+
+    index_sql = """
+    SELECT
+        c.relname as index_name,
+        t.relname as table_name,
+        pg_get_indexdef(c.oid) as definition
+    FROM pg_catalog.pg_class c
+    JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace
+    JOIN pg_catalog.pg_index i ON i.indexrelid = c.oid
+    JOIN pg_catalog.pg_class t ON t.oid = i.indrelid
+    WHERE n.nspname = %s
+        AND c.relkind = 'i'
+        AND t.relkind = 'r'
+    ORDER BY c.relname;
+    """
+
+    constraint_sql = """
+    SELECT
+        co.conname as constraint_name,
+        c.relname as table_name,
+        pg_get_constraintdef(co.oid) as definition
+    FROM pg_catalog.pg_constraint co
+    JOIN pg_catalog.pg_class c ON c.oid = co.conrelid
+    JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace
+    WHERE n.nspname = %s
+        AND co.contype != 'p'
+    ORDER BY co.conname;
+    """
+
+    schema_objects = {}
+
+    # First, we simply collect all objects from each node
+    for node_name, conn in conns.items():
+        cur = conn.cursor(row_factory=dict_row)
+        schema_objects[node_name] = {
+            "tables": {},
+            "functions": {},
+            "triggers": {},
+            "indexes": {},
+            "constraints": {},
         }
-        ace.handle_task_exception(sc_task, context)
-        raise AceException(
-            f"Schema {sc_task.schema_name} does not exist on node "
-            f"{sc_task.fields.node_list[0]}"
+
+        try:
+            cur.execute(table_sql, (sc_task.schema_name,))
+            for row in cur.fetchall():
+                table_name = row["table_name"]
+                if table_name not in schema_objects[node_name]["tables"]:
+                    schema_objects[node_name]["tables"][table_name] = []
+                schema_objects[node_name]["tables"][table_name].append(row)
+
+            cur.execute(function_sql, (sc_task.schema_name,))
+            for row in cur.fetchall():
+                schema_objects[node_name]["functions"][row["function_name"]] = row[
+                    "definition"
+                ]
+
+            cur.execute(trigger_sql, (sc_task.schema_name,))
+            for row in cur.fetchall():
+                schema_objects[node_name]["triggers"][row["trigger_name"]] = {
+                    "definition": row["definition"],
+                    "table_name": row["table_name"],
+                }
+
+            cur.execute(index_sql, (sc_task.schema_name,))
+            for row in cur.fetchall():
+                schema_objects[node_name]["indexes"][row["index_name"]] = {
+                    "definition": row["definition"],
+                    "table_name": row["table_name"],
+                }
+
+            cur.execute(constraint_sql, (sc_task.schema_name,))
+            for row in cur.fetchall():
+                schema_objects[node_name]["constraints"][row["constraint_name"]] = {
+                    "definition": row["definition"],
+                    "table_name": row["table_name"],
+                }
+
+        except Exception as e:
+            context = {
+                "errors": [f"Error collecting schema info from {node_name}: {str(e)}"]
+            }
+            ace.handle_task_exception(sc_task, context)
+            raise e
+
+    node_pairs = list(combinations(conns.keys(), 2))
+
+    for node1, node2 in node_pairs:
+        diff_key = f"{node1}/{node2}"
+        task_context[diff_key] = {
+            "tables": {"missing": {}, "different": {}},
+            "functions": {"missing": {}, "different": {}},
+            "triggers": {"missing": {}, "different": {}},
+            "indexes": {"missing": {}, "different": {}},
+            "constraints": {"missing": {}, "different": {}},
+        }
+
+        tables1 = set(schema_objects[node1]["tables"].keys())
+        tables2 = set(schema_objects[node2]["tables"].keys())
+
+        task_context[diff_key]["tables"]["missing"][node1] = list(tables2 - tables1)
+        task_context[diff_key]["tables"]["missing"][node2] = list(tables1 - tables2)
+
+        for table in tables1 & tables2:
+            cols1 = {
+                col["column_name"]: col
+                for col in schema_objects[node1]["tables"][table]
+            }
+            cols2 = {
+                col["column_name"]: col
+                for col in schema_objects[node2]["tables"][table]
+            }
+
+            # Find columns that exist in one table but not the other
+            cols_only_in_1 = set(cols1.keys()) - set(cols2.keys())
+            cols_only_in_2 = set(cols2.keys()) - set(cols1.keys())
+
+            # Columns that exist on both nodes, but may potentially have
+            # differences.
+            # We can also infer cols_only_in_1 and cols_only_in_2 from
+            # common_cols, but simplicity ftw.
+            common_cols = set(cols1.keys()) & set(cols2.keys())
+
+            has_differences = False
+            differences = {node1: [], node2: []}
+
+            if cols_only_in_1:
+                has_differences = True
+                differences[node1].extend([cols1[c] for c in cols_only_in_1])
+
+            if cols_only_in_2:
+                has_differences = True
+                differences[node2].extend([cols2[c] for c in cols_only_in_2])
+
+            for col in common_cols:
+                if cols1[col] != cols2[col]:
+                    has_differences = True
+                    differences[node1].extend([cols1[col]])
+                    differences[node2].extend([cols2[col]])
+
+            if has_differences:
+                task_context[diff_key]["tables"]["different"][table] = differences
+
+        funcs1 = set(schema_objects[node1]["functions"].keys())
+        funcs2 = set(schema_objects[node2]["functions"].keys())
+
+        task_context[diff_key]["functions"]["missing"][node1] = list(funcs2 - funcs1)
+        task_context[diff_key]["functions"]["missing"][node2] = list(funcs1 - funcs2)
+
+        for func in funcs1 & funcs2:
+            if (
+                schema_objects[node1]["functions"][func]
+                != schema_objects[node2]["functions"][func]
+            ):
+                task_context[diff_key]["functions"]["different"][func] = {
+                    node1: schema_objects[node1]["functions"][func],
+                    node2: schema_objects[node2]["functions"][func],
+                }
+
+        trigs1 = set(schema_objects[node1]["triggers"].keys())
+        trigs2 = set(schema_objects[node2]["triggers"].keys())
+
+        task_context[diff_key]["triggers"]["missing"][node1] = list(trigs2 - trigs1)
+        task_context[diff_key]["triggers"]["missing"][node2] = list(trigs1 - trigs2)
+
+        for trig in trigs1 & trigs2:
+            if (
+                schema_objects[node1]["triggers"][trig]
+                != schema_objects[node2]["triggers"][trig]
+            ):
+                task_context[diff_key]["triggers"]["different"][trig] = {
+                    node1: schema_objects[node1]["triggers"][trig],
+                    node2: schema_objects[node2]["triggers"][trig],
+                }
+
+        idx1 = set(schema_objects[node1]["indexes"].keys())
+        idx2 = set(schema_objects[node2]["indexes"].keys())
+
+        task_context[diff_key]["indexes"]["missing"][node1] = list(idx2 - idx1)
+        task_context[diff_key]["indexes"]["missing"][node2] = list(idx1 - idx2)
+
+        for idx in idx1 & idx2:
+            if (
+                schema_objects[node1]["indexes"][idx]
+                != schema_objects[node2]["indexes"][idx]
+            ):
+                task_context[diff_key]["indexes"]["different"][idx] = {
+                    node1: schema_objects[node1]["indexes"][idx],
+                    node2: schema_objects[node2]["indexes"][idx],
+                }
+
+        cons1 = set(schema_objects[node1]["constraints"].keys())
+        cons2 = set(schema_objects[node2]["constraints"].keys())
+
+        task_context[diff_key]["constraints"]["missing"][node1] = list(cons2 - cons1)
+        task_context[diff_key]["constraints"]["missing"][node2] = list(cons1 - cons2)
+
+        for con in cons1 & cons2:
+            if (
+                schema_objects[node1]["constraints"][con]
+                != schema_objects[node2]["constraints"][con]
+            ):
+                cons1_def = schema_objects[node1]["constraints"][con]
+                cons2_def = schema_objects[node2]["constraints"][con]
+                task_context[diff_key]["constraints"]["different"][con] = {
+                    node1: cons1_def,
+                    node2: cons2_def,
+                }
+
+        util.message(
+            f"\nComparing nodes {node1} and {node2}:",
+            p_state="info",
+            quiet_mode=sc_task.quiet_mode,
         )
 
-    try:
-        for n in range(1, len(file_list)):
-            cmd = "diff " + file_list[0] + "  " + file_list[n] + " > /tmp/diff.txt"
-            util.message("\n## Running # " + cmd + "\n")
-            rc = os.system(cmd)
-            if os.stat(file_list[n]).st_size == 0:
-                raise AceException(
-                    f"Schema {sc_task.schema_name} does not exist on node "
-                    f"{sc_task.fields.node_list[n]}"
-                )
-            context_key = (
-                sc_task.fields.node_list[0] + "/" + sc_task.fields.node_list[n]
-            )
-            if rc == 0:
-                task_context[context_key] = {
-                    "mismatch": False,
-                    "message": f"Schemas are the same between "
-                    f"{sc_task.fields.node_list[0]} and {sc_task.fields.node_list[n]}",
-                }
+        has_differences = False
+        for obj_type in ["tables", "functions", "triggers", "indexes", "constraints"]:
+            missing_count = len(
+                task_context[diff_key][obj_type]["missing"][node1]
+            ) + len(task_context[diff_key][obj_type]["missing"][node2])
+            diff_count = len(task_context[diff_key][obj_type]["different"])
+
+            # We're only going to be printing out the summary here, just like
+            # in table-diff. For more details, users will need to look at the
+            # diff files.
+            if missing_count > 0 or diff_count > 0:
+                has_differences = True
                 util.message(
-                    f"SCHEMAS ARE THE SAME- between {sc_task.fields.node_list[0]} "
-                    f"and {sc_task.fields.node_list[n]} !!",
-                    p_state="success",
+                    f"  {obj_type.capitalize()}:",
+                    p_state="warning",
+                    quiet_mode=sc_task.quiet_mode,
                 )
-            else:
-                task_context[context_key] = {
-                    "mismatch": True,
-                    "message": f"Schemas are different between "
-                    f"{sc_task.fields.node_list[0]} and {sc_task.fields.node_list[n]}",
-                }
-                ace.prRed(
-                    f"\u2718   SCHEMAS ARE NOT THE SAME- between "
-                    f"{sc_task.fields.node_list[0]}"
-                    f" and {sc_task.fields.node_list[n]}!!"
-                )
-    except Exception as e:
-        context = {"errors": [f"Error while comparing schemas: {str(e)}"]}
-        ace.handle_task_exception(sc_task, context)
-        raise e
+                if missing_count > 0:
+                    util.message(
+                        f"    - Missing: {missing_count}",
+                        p_state="warning",
+                        quiet_mode=sc_task.quiet_mode,
+                    )
+                if diff_count > 0:
+                    util.message(
+                        f"    - Different: {diff_count}",
+                        p_state="warning",
+                        quiet_mode=sc_task.quiet_mode,
+                    )
+
+        if not has_differences:
+            util.message(
+                "  No differences found",
+                p_state="success",
+                quiet_mode=sc_task.quiet_mode,
+            )
+        else:
+            # TODO: Really need to figure out the dir structure here
+            diff_base_path = f"diffs/{datetime.now().strftime('%Y-%m-%d')}"
+            timestamp = datetime.now().strftime("%H-%M-%S")
+            file_name = f"{diff_base_path}/schema_diff-{node1}-{node2}-{timestamp}.json"
+
+            os.makedirs(os.path.dirname(file_name), exist_ok=True)
+
+            with open(file_name, "w") as f:
+                json.dump(task_context, f, indent=4)
+
+            util.message(
+                f"Schema diffs have been saved to {file_name}",
+                p_state="info",
+                quiet_mode=sc_task.quiet_mode,
+            )
 
     sc_task.scheduler.task_status = "COMPLETED"
     sc_task.scheduler.finished_at = datetime.now()

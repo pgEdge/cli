@@ -4,17 +4,27 @@ from functools import wraps
 from flask import request, jsonify
 import psycopg
 import pgpasslib
-from cryptography import x509, __version__ as crypto_version
 from cryptography.hazmat.backends import default_backend
-from packaging import version
+from cryptography import x509
 
 import ace_config as config
 from ace_exceptions import CertificateVerificationError, AuthenticationError
 
-# not_valid_before is deprecated from this version on
-# we will use the _utc equivalents unless we're dealing with an older version
-CRYPTO_VERSION_WITH_UTC = version.parse("37.0.0")
-USE_UTC_SUFFIX = version.parse(crypto_version) >= CRYPTO_VERSION_WITH_UTC
+# TODO: Add this back once cloud fixes their dependencies
+# if config.USE_NAIVE_DATETIME:
+#     from packaging import version
+#     # not_valid_before is deprecated from this version on
+#     # we will use the _utc equivalents unless we're dealing with an older version
+#     # https://cryptography.io/en/latest/x509/reference/#cryptography.x509.Certificate.not_valid_before_utc
+#     CRYPTO_VERSION_WITH_UTC = version.parse("42.0.0")
+#     USE_UTC_SUFFIX = version.parse(crypto_version) >= CRYPTO_VERSION_WITH_UTC
+# else:
+#     # If you're using a version of cryptography that doesn't support the timezone
+#     # aware datetime objects, and USE_NAIVE_DATETIME is still set to False,
+#     # this will break.
+#     USE_UTC_SUFFIX = True
+
+USE_UTC_SUFFIX = True if not config.USE_NAIVE_DATETIME else False
 
 
 class ConnectionPool:
