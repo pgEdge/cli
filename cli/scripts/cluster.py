@@ -1332,6 +1332,8 @@ def init(cluster_name, install=True):
     3. Installs pgEdge on all nodes.
     4. Configures Spock for replication.
     5. Integrates pgBackRest on nodes where it is enabled.
+       - Creates unique stanza names: {cluster_name}_stanza_{node_name}
+       - Removes --pg1-port from set_postgresqlconf / set_hbaconf to avoid errors.
     6. Creates an initial full backup using pgBackRest.
     7. Performs HA-specific configurations if enabled.
     8. Finalizes and saves the cluster configuration.
@@ -1340,7 +1342,7 @@ def init(cluster_name, install=True):
         cluster_name (str): The name of the cluster.
         install (bool): Whether to install pgEdge on nodes. Defaults to True.
     """
-    # Load cluster configuration
+    # 1. Load cluster configuration
     util.message(f"## Loading cluster '{cluster_name}' JSON definition file", "info")
     db, db_settings, nodes = load_json(cluster_name)
     parsed_json = get_cluster_json(cluster_name)
@@ -1348,25 +1350,22 @@ def init(cluster_name, install=True):
     if parsed_json is None:
         util.exit_message("Unable to load cluster JSON", 1)
 
-    # Retrieve the 'is_ha_cluster' flag from the cluster JSON
     is_ha_cluster = parsed_json.get("is_ha_cluster", False)
-
-    # Set the log level
     verbose = parsed_json.get("log_level", "info")
 
-    # Combine all nodes and sub-nodes into a single list
+    # 2. Combine all nodes and sub-nodes into a single list
     all_nodes = nodes.copy()
     for node in nodes:
         if "sub_nodes" in node and node["sub_nodes"]:
             all_nodes.extend(node["sub_nodes"])
 
-    # Check SSH connectivity for all nodes
+    # 3. Check SSH connectivity for all nodes
     util.message("## Checking SSH connectivity for all nodes", "info")
     for nd in all_nodes:
         message = f"Checking SSH connectivity on {nd['public_ip']}"
         run_cmd(cmd="hostname", node=nd, message=message, verbose=verbose)
 
-    # Install pgEdge on all nodes
+    # 4. Install pgEdge on all nodes
     util.message("## Installing pgEdge on all nodes", "info")
     ssh_install_pgedge(
         cluster_name,
@@ -1379,7 +1378,7 @@ def init(cluster_name, install=True):
         verbose,
     )
 
-    # Configure Spock replication on all nodes
+    # 5. Configure Spock replication on all nodes (for the first DB)
     util.message("## Configuring Spock replication on all nodes", "info")
     ssh_cross_wire_pgedge(
         cluster_name,
@@ -1391,7 +1390,7 @@ def init(cluster_name, install=True):
         verbose,
     )
 
-    # Handle additional databases if any
+    # If additional databases exist, configure them as well
     if len(db) > 1:
         util.message("## Configuring additional databases", "info")
         for database in db[1:]:
@@ -1406,28 +1405,31 @@ def init(cluster_name, install=True):
                 verbose,
             )
 
-    # ### BackRest Configuration Integration ###
-    # Configure BackRest on all nodes if enabled
+    # 6. Integrate pgBackRest (if "backrest" block is present) on each node
     util.message("## Integrating pgBackRest into the cluster", "info")
-    for node in all_nodes:
+    cluster_name_from_json = parsed_json["cluster_name"]
+
+    for idx, node in enumerate(all_nodes, start=1):
         backrest = node.get("backrest")
         if backrest:
             util.message(f"### Configuring BackRest for node '{node['name']}'", "info")
 
-            # Extract BackRest settings with defaults
-            stanza = backrest.get("stanza", f"pg{db_settings['pg_version']}")
+            # Here we override the JSON stanza with: {cluster_name}_stanza_{node_name}
+            stanza = f"{cluster_name_from_json}_stanza_{node['name']}"
+
+            # Load additional backrest settings from JSON
             repo1_retention_full = backrest.get("repo1_retention_full", "7")
             log_level_console = backrest.get("log_level_console", "info")
-            repo1_cipher_type = backrest.get("repo1_cipher_type", "aes-256-cbc")
+            # JSON uses "repo1_cipher-type" with a hyphen:
+            repo1_cipher_type = backrest.get("repo1_cipher-type", "aes-256-cbc")
             repo1_path = backrest.get("repo1_path", f"/var/lib/pgbackrest/{node['name']}")
-            repo1_type = backrest.get("repo1_type", "posix")  # Ensure this is correctly set
-            archive_mode = backrest.get("archive_mode", "on")
+            repo1_type = backrest.get("repo1_type", "posix")  # or "s3", etc.
 
             pg_version = db_settings["pg_version"]
             pg1_path = f"{node['path']}/pgedge/data/pg{pg_version}"
-            port = node["port"]
+            port = node["port"]  # The custom port from JSON
 
-            # 1. Install BackRest
+            # -- (a) Install pgBackRest
             cmd_install_backrest = (
                 f"cd {node['path']}/pgedge && ./pgedge install backrest"
             )
@@ -1438,12 +1440,14 @@ def init(cluster_name, install=True):
                 verbose=verbose,
             )
 
-            # 2. Set Backup Configuration using set_postgresqlconf
-            # Pass all 4 required parameters with flags
+            # -- (b) set_postgresqlconf (NO --pg1-port here, since the script doesn't accept it)
             cmd_set_postgresqlconf = (
                 f"cd {node['path']}/pgedge && "
-                f"./pgedge backrest set_postgresqlconf --stanza {stanza} "
-                f"--pg1-path {pg1_path} --repo1-path {repo1_path} --repo1-type {repo1_type}"
+                f"./pgedge backrest set_postgresqlconf "
+                f"--stanza {stanza} "
+                f"--pg1-path {pg1_path} "
+                f"--repo1-path {repo1_path} "
+                f"--repo1-type {repo1_type}"
             )
             run_cmd(
                 cmd_set_postgresqlconf,
@@ -1452,9 +1456,10 @@ def init(cluster_name, install=True):
                 verbose=verbose,
             )
 
-            # 3. Set pg_hba.conf for BackRest
+            # -- (c) set_hbaconf (NO --pg1-port here, for same reason)
             cmd_set_hbaconf = (
-                f"cd {node['path']}/pgedge && ./pgedge backrest set_hbaconf"
+                f"cd {node['path']}/pgedge && "
+                f"./pgedge backrest set_hbaconf"
             )
             run_cmd(
                 cmd_set_hbaconf,
@@ -1463,7 +1468,7 @@ def init(cluster_name, install=True):
                 verbose=verbose,
             )
 
-            # 4. Reload PostgreSQL Configuration
+            # -- (d) Reload PostgreSQL configuration
             sql_reload_conf = "select pg_reload_conf()"
             cmd_reload_conf = (
                 f"cd {node['path']}/pgedge && "
@@ -1476,7 +1481,7 @@ def init(cluster_name, install=True):
                 verbose=verbose,
             )
 
-            # 5. Handle repo1_type S3 if applicable
+            # -- (e) If 'repo1_type' is 's3', export necessary env vars (S3 keys, etc.)
             if repo1_type.lower() == "s3":
                 required_env_vars = [
                     "PGBACKREST_REPO1_S3_KEY",
@@ -1484,16 +1489,12 @@ def init(cluster_name, install=True):
                     "PGBACKREST_REPO1_S3_KEY_SECRET",
                     "PGBACKREST_REPO1_CIPHER_PASS",
                 ]
-                missing_env_vars = [
-                    var for var in required_env_vars if var not in os.environ
-                ]
+                missing_env_vars = [var for var in required_env_vars if var not in os.environ]
                 if missing_env_vars:
                     util.exit_message(
                         f"Environment variables {', '.join(missing_env_vars)} must be set for S3 BackRest configuration.",
                         1,
                     )
-
-                # Export S3 environment variables on the node
                 s3_exports = " && ".join(
                     [f"export {var}={os.environ[var]}" for var in required_env_vars]
                 )
@@ -1505,12 +1506,14 @@ def init(cluster_name, install=True):
                     verbose=verbose,
                 )
 
-            # 6. Create BackRest Stanza
-            # Pass the stanza and pg1_path using flags
+            # -- (f) stanza-create (USE --pg1-port here, because it connects to DB)
             cmd_create_stanza = (
                 f"cd {node['path']}/pgedge && "
-                f"./pgedge backrest command stanza-create --stanza '{stanza}' --pg1-path '{pg1_path}' "
+                f"./pgedge backrest command stanza-create "
+                f"--stanza '{stanza}' "
+                f"--pg1-path '{pg1_path}' "
                 f"--repo1-cipher-type {repo1_cipher_type} "
+                f"--pg1-port {port}"
             )
             run_cmd(
                 cmd_create_stanza,
@@ -1519,14 +1522,18 @@ def init(cluster_name, install=True):
                 verbose=verbose,
             )
 
-            # 7. Create a Full BackRest Backup
-            # Ensure that the 'repo1_path' used here matches the one set in 'set_postgresqlconf'
+            # -- (g) Full backup (again, pass port)
             backrest_backup_args = (
-                f"--repo1-path {repo1_path} --stanza {stanza} "
-                f"--pg1-path {pg1_path} --repo1-type {repo1_type} "
-                f"--log-level-console {log_level_console} --pg1-port {port} "
-                f"--db-socket-path /tmp --repo1-cipher-type {repo1_cipher_type} "
-                f"--repo1-retention-full {repo1_retention_full} --type=full"
+                f"--repo1-path {repo1_path} "
+                f"--stanza {stanza} "
+                f"--pg1-path {pg1_path} "
+                f"--repo1-type {repo1_type} "
+                f"--log-level-console {log_level_console} "
+                f"--pg1-port {port} "
+                f"--db-socket-path /tmp "
+                f"--repo1-cipher-type {repo1_cipher_type} "
+                f"--repo1-retention-full {repo1_retention_full} "
+                f"--type=full"
             )
             cmd_create_backup = (
                 f"cd {node['path']}/pgedge && "
@@ -1538,11 +1545,11 @@ def init(cluster_name, install=True):
                 message="Creating full BackRest backup",
                 verbose=verbose,
             )
-    # Proceed with HA-specific configuration only if 'is_ha_cluster' is True
+
+    # 7. If it's an HA cluster, handle Patroni/etcd, etc.
     if is_ha_cluster:
         pg_ver = db_settings["pg_version"]
 
-        # HA-specific configuration
         for node in nodes:
             if "sub_nodes" in node and node["sub_nodes"]:
                 sub_nodes = node["sub_nodes"]
@@ -1550,17 +1557,14 @@ def init(cluster_name, install=True):
                 # Stop and clean sub-nodes
                 for n in sub_nodes:
                     manage_node(n, "stop", f"pg{pg_ver}", verbose)
-
-                    # Remove old data directory
                     pgdata = f"{n['path']}/pgedge/data/pg{pg_ver}"
                     cmd = f"rm -rf {pgdata}"
                     message = f"Removing old data directory on {n['name']}"
                     run_cmd(cmd, n, message=message, verbose=verbose)
 
-                # Configure Etcd and Patroni for HA
+                # Configure etcd and Patroni
                 etcd.configure_etcd(node, sub_nodes)
                 ha_patroni.configure_patroni(node, sub_nodes, db[0], db_settings)
-
 
 
 def add_node(
