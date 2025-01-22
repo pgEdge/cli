@@ -2057,88 +2057,140 @@ def json_validate_add_node(data):
 
 
 def remove_node(cluster_name, node_name):
-    """Remove a node from the cluster configuration."""
+    """
+    Remove a node (or subnode) from the cluster configuration. This will:
+      1) Remove all subscriptions referencing that node (as subscriber or provider).
+      2) DROP the node from Spock’s node list.
+      3) DROP EXTENSION spock CASCADE on the removed node.
+      4) Stop PostgreSQL on the removed node.
+      5) Remove it from the cluster JSON file.
+    """
+    # 1) Validate the cluster JSON
     json_validate(cluster_name)
+
+    # 2) Load the cluster data (includes the "node_groups")
     db, db_settings, nodes = load_json(cluster_name)
     cluster_data = get_cluster_json(cluster_name)
     if cluster_data is None:
         util.exit_message("Cluster data is missing.")
 
+    # For simplicity, we only handle the first DB (consistent with other cluster code)
     pg = db_settings["pg_version"]
     pgV = f"pg{pg}"
-
-    db, db_settings, nodes = load_json(cluster_name)
     dbname = db[0]["db_name"]
+    db_user = db[0]["db_user"]
+    db_password = db[0]["db_password"]
+    # Build path to psql
+    # e.g. /path/to/pgedge/pg17/bin/psql
+    # We'll do this dynamically for each node as needed.
+
+    # Log level
     verbose = cluster_data.get("log_level", "info")
 
-    for node in nodes:
-        os_user = node["os_user"]
-        ssh_key = node["ssh_key"]
-        message = f"Checking ssh on {node['public_ip']}"
-        cmd = "hostname"
-        run_cmd(cmd, node, message=message, verbose=verbose)
+    # 3) Verify SSH connectivity on all existing nodes
+    for nd in nodes:
+        message = f"Checking SSH connectivity on {nd['public_ip']}"
+        run_cmd(cmd="hostname", node=nd, message=message, verbose=verbose)
 
-    for node in nodes:
-        if node.get("name") != node_name:
-            sub_name = f"sub_{node['name']}{node_name}"
+    # ------------------------------------------------------------------------
+    # A) Drop all subscriptions on OTHER nodes that name 'node_name' as provider
+    #    By convention: sub_{subscriberNode}{providerNode}
+    # ------------------------------------------------------------------------
+    for nd in nodes:
+        if nd["name"] != node_name:
+            # subscription named sub_{nd['name']}{node_name} physically lives on nd
+            sub_name = f"sub_{nd['name']}{node_name}"
             cmd = (
-                f"cd {node['path']}/pgedge/; "
+                f"cd {nd['path']}/pgedge/; "
                 f"./pgedge spock sub-drop {sub_name} {dbname}"
             )
-            message = f"Dropping subscriptions {sub_name}"
-            run_cmd(cmd, node, message=message, verbose=verbose, ignore=True)
+            message = f"Dropping subscription {sub_name} on node {nd['name']}"
+            run_cmd(cmd, node=nd, message=message, verbose=verbose, ignore=True)
 
-    sub_names = []
-    for node in nodes:
-        if node.get("name") != node_name:
-            sub_name = f"sub_{node_name}{node['name']}"
-            sub_names.append(sub_name)
+    # ------------------------------------------------------------------------
+    # B) Drop all subscriptions on THE node being removed
+    #    that name that node as subscriber, i.e. sub_{node_name}{otherNode}
+    # ------------------------------------------------------------------------
+    subs_to_drop_on_removed_node = []
+    for nd in nodes:
+        if nd["name"] != node_name:
+            subs_to_drop_on_removed_node.append(f"sub_{node_name}{nd['name']}")
 
-    for node in nodes:
-        if node.get("name") == node_name:
-            for sub_name in sub_names:
+    # Now actually drop them on the node being removed
+    for nd in nodes:
+        if nd["name"] == node_name:
+            for sub_name in subs_to_drop_on_removed_node:
                 cmd = (
-                    f"cd {node['path']}/pgedge/; "
+                    f"cd {nd['path']}/pgedge/; "
                     f"./pgedge spock sub-drop {sub_name} {dbname}"
                 )
-                message = f"Dropping subscription {sub_name}"
-                run_cmd(cmd, node, message=message, verbose=verbose, ignore=True)
+                message = f"Dropping subscription {sub_name} on node {node_name}"
+                run_cmd(cmd, node=nd, message=message, verbose=verbose, ignore=True)
 
+            # Drop node from Spock metadata
             cmd = (
-                f"cd {node['path']}/pgedge/; "
-                f"./pgedge spock node-drop {node['name']} {dbname}"
+                f"cd {nd['path']}/pgedge/; "
+                f"./pgedge spock node-drop {nd['name']} {dbname}"
             )
-            message = f"Dropping node {node['name']}"
-            run_cmd(cmd, node, message=message, verbose=verbose, ignore=True)
+            message = f"Dropping spock node {nd['name']}"
+            run_cmd(cmd, node=nd, message=message, verbose=verbose, ignore=True)
 
-    for node in nodes:
-        if node.get("name") == node_name:
-            manage_node(node, "stop", pgV, verbose)
-        else:
-            cmd = f'cd {node["path"]}/pgedge/; ./pgedge spock node-list {dbname}'
-            message = f"Listing spock nodes"
-            result = run_cmd(
-                cmd, node=node, message=message, verbose=verbose, capture_output=True
+            # ----------------------------------------------------------------
+            # C) Drop the Spock extension (with CASCADE), using inline psql
+            # ----------------------------------------------------------------
+            psql_path = f"{nd['path']}/pgedge/pg{pg}/bin/psql"
+            drop_spock_cmd = (
+                f"PGPASSWORD='{db_password}' "
+                f"{psql_path} -U {db_user} -p {nd['port']} -d {dbname} "
+                f'-c "DROP EXTENSION IF EXISTS spock CASCADE;"'
             )
+            message = f"Dropping Spock extension on {node_name}"
+            run_cmd(drop_spock_cmd, node=nd, message=message, verbose=verbose, ignore=True)
+
+            # ----------------------------------------------------------------
+            # D) Stop PostgreSQL on that node
+            # ----------------------------------------------------------------
+            manage_node(nd, "stop", pgV, verbose)
+
+    # ------------------------------------------------------------------------
+    # For debugging, we show node-list on the surviving nodes
+    # ------------------------------------------------------------------------
+    for nd in nodes:
+        if nd["name"] != node_name:
+            cmd = f'cd {nd["path"]}/pgedge/; ./pgedge spock node-list {dbname}'
+            message = f"Listing spock nodes on {nd['name']}"
+            result = run_cmd(cmd, node=nd, message=message, verbose=verbose, capture_output=True)
             print(f"\n{result.stdout}")
 
+    # ------------------------------------------------------------------------
+    # E) Remove the node (or subnode) from cluster_data["node_groups"]
+    # ------------------------------------------------------------------------
     empty_groups = []
     for group in cluster_data["node_groups"]:
+        # If entire group name matches node_name, remove the group
         if group["name"] == node_name:
             cluster_data["node_groups"].remove(group)
             continue
-        for node in group.get("sub_nodes", []):
-            if node["name"] == node_name:
-                group["sub_nodes"].remove(node)
-        if not group.get("sub_nodes") and group["name"] == node_name:
+        # Otherwise, see if node_name is in sub_nodes
+        sub_nodes = group.get("sub_nodes", [])
+        for sub_nd in list(sub_nodes):
+            if sub_nd["name"] == node_name:
+                sub_nodes.remove(sub_nd)
+        # If sub_nodes is now empty, track if group is worthless
+        if len(sub_nodes) == 0 and group["name"] != node_name:
             empty_groups.append(group)
 
-    # Remove empty connection groups
-    for group in empty_groups:
-        cluster_data["node_groups"].remove(group)
+    # Remove any now-empty node groups
+    for grp in empty_groups:
+        if grp in cluster_data["node_groups"]:
+            cluster_data["node_groups"].remove(grp)
 
+    # ------------------------------------------------------------------------
+    # F) Write out the updated cluster JSON
+    # ------------------------------------------------------------------------
     write_cluster_json(cluster_name, cluster_data)
 
+    util.message(f"Node '{node_name}' removed successfully from cluster '{cluster_name}'.", "info")
 
 def manage_node(node, action, pgV, verbose):
     """
