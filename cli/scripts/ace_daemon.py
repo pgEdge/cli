@@ -218,6 +218,8 @@ def table_repair_api():
 
         if fix_nulls:
             scheduler.add_job(ace_core.table_repair_fix_nulls, args=(raw_args,))
+        elif bidirectional:
+            scheduler.add_job(ace_core.table_repair_bidirectional, args=(raw_args,))
         else:
             scheduler.add_job(ace_core.table_repair, args=(raw_args,))
 

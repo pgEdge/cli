@@ -167,6 +167,8 @@ def table_repair_cli(
 
         if fix_nulls:
             ace_core.table_repair_fix_nulls(tr_task)
+        elif bidirectional:
+            ace_core.table_repair_bidirectional(tr_task)
         else:
             ace_core.table_repair(tr_task)
 

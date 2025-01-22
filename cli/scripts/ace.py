@@ -560,72 +560,162 @@ def check_diff_file_format(diff_file_path: str, task) -> dict:
     return diff_json
 
 
-def write_diffs_json(td_task, diff_dict, col_types, quiet_mode=False):
-
+def convert_pg_type_to_json(item: str, type: str):
+    """
+    Converts a value from a postgres column to a json-compatible type.
+    """
     # TODO: Need to revisit this.
-    def convert_to_json_type(item: str, type: str):
-        try:
-            # List of types that should be treated as strings
-            string_types = [
-                "char",
-                "text",
-                "time",
-                "bytea",
-                "uuid",
-                "date",
-                "timestamp",
-                "interval",
-                "inet",
-                "macaddr",
-                "xml",
-                "money",
-                "point",
-                "line",
-                "polygon",
-            ]
+    try:
+        # List of types that should be treated as strings
+        string_types = [
+            "char",
+            "text",
+            "time",
+            "bytea",
+            "uuid",
+            "date",
+            "timestamp",
+            "interval",
+            "inet",
+            "macaddr",
+            "xml",
+            "money",
+            "point",
+            "line",
+            "polygon",
+        ]
 
-            # Types that can be directly represented in JSON
-            json_compatible_types = [
-                "json",
-                "jsonb",
-                "boolean",
-                "integer",
-                "bigint",
-                "smallint",
-                "numeric",
-                "real",
-                "double precision",
-            ]
+        # Types that can be directly represented in JSON
+        json_compatible_types = [
+            "json",
+            "jsonb",
+            "boolean",
+            "integer",
+            "bigint",
+            "smallint",
+            "numeric",
+            "real",
+            "double precision",
+        ]
 
-            type_lower = type.lower()
+        type_lower = type.lower()
 
-            if (
-                not item
-                or item == ""
-                or item.lower() == "null"
-                or item.lower() == "none"
-            ):
-                return None
-            elif "[]" in type_lower:
-                return ast.literal_eval(item)
-            elif any(s in type_lower for s in json_compatible_types):
-                # For JSON-compatible types, parse them using AST
-                return ast.literal_eval(item)
-            elif any(s in type_lower for s in string_types):
-                return item
-            else:
-                # Default to treating as string if type is unknown
-                return item
+        if (
+            not item
+            or item == ""
+            or item.lower() == "null"
+            or item.lower() == "none"
+        ):
+            return None
+        elif "[]" in type_lower:
+            return ast.literal_eval(item)
+        elif any(s in type_lower for s in json_compatible_types):
+            # For JSON-compatible types, parse them using AST
+            return ast.literal_eval(item)
+        elif any(s in type_lower for s in string_types):
+            return item
+        else:
+            # Default to treating as string if type is unknown
+            return item
 
-        except Exception as e:
-            util.message(
-                f"Could not convert value {item} to {type} while writing to json: {e}",
-                p_state="warning",
-                quiet_mode=quiet_mode,
-            )
+    except Exception as e:
+        raise AceException(
+            f"Could not convert value {item} to {type} while writing to json: {e}"
+        )
 
-        return item
 
+def convert_json_to_pg_type(rows, cols_list, col_types) -> list[tuple]:
+    """
+    Converts a value from a json column to a postgres-compatible type.
+
+    We had previously converted all rows to strings for computing set differences.
+    We now need to convert them back to their original types before upserting.
+    psycopg3 will internally handle type conversions from lists/arrays to their
+    respective types in Postgres.
+
+    So, if an element in a row is a list or a json that is represented as:
+    '{"key1": "val1", "key2": "val2"}' or '[1, 2, 3]', we need to use the
+    abstract syntax tree module to convert them back to their original types.
+    ast.literal_eval() will give us {'key1': 'val1', 'key2': 'val2'} and
+    [1, 2, 3] respectively.
+    """
+
+    # List of types that should be treated as strings
+    string_types = [
+        "char",
+        "text",
+        "time",
+        "bytea",
+        "uuid",
+        "date",
+        "timestamp",
+        "interval",
+        "inet",
+        "macaddr",
+        "xml",
+        "money",
+        "point",
+        "line",
+        "polygon",
+        "vector",
+    ]
+
+    # Types that can be directly represented in JSON
+    json_compatible_types = [
+        "json",
+        "jsonb",
+        "boolean",
+        "integer",
+        "bigint",
+        "smallint",
+        "numeric",
+        "real",
+        "double precision",
+    ]
+
+    repair_tuples = []
+
+    for row in rows:
+        modified_row = tuple()
+        for col_name in cols_list:
+            col_type = col_types[col_name]
+            elem = str(row[col_name])
+
+            try:
+                type_lower = col_type.lower()
+
+                if (
+                    not elem
+                    or elem == ""
+                    or elem.lower() == "null"
+                    or elem.lower() == "none"
+                ):
+                    modified_row += (None,)
+                elif "[]" in type_lower:
+                    modified_row += (ast.literal_eval(elem),)
+                elif any(s in type_lower for s in string_types):
+                    if type_lower == "bytea":
+                        modified_row += (bytes.fromhex(elem),)
+                    else:
+                        modified_row += (elem,)
+                elif any(s in type_lower for s in json_compatible_types):
+                    item = ast.literal_eval(elem)
+                    if type_lower == "jsonb" or type_lower == "json":
+                        item = json.dumps(item)
+                    modified_row += (item,)
+                else:
+                    modified_row += (elem,)
+
+            except (ValueError, SyntaxError):
+                # If conversion fails, use the original value
+                modified_row += (elem,)
+
+        repair_tuples.append(modified_row)
+
+    return repair_tuples
+
+
+def write_diffs_json(td_task, diff_dict, col_types, quiet_mode=False):
     """
     All diff runs from ACE will be stored in diffs/<date>/diffs_<time>.json
     Each day will have its own directory and each run will have its own file
@@ -654,7 +744,7 @@ def write_diffs_json(td_task, diff_dict, col_types, quiet_mode=False):
         node_pair: {
             node: [
                 {
-                    key: convert_to_json_type(val, col_types[key])
+                    key: convert_pg_type_to_json(val, col_types[key])
                     for key, val in row.items()
                 }
                 for row in rows

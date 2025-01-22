@@ -133,7 +133,10 @@ In some special cases, you may want to use the `--fix-nulls` option to fix NULL 
 - `--quiet`: Suppress non-essential output
 - `--generate-report`: Create a detailed report of repair operations
 - `--upsert-only`: Only perform inserts/updates, skip deletions
-- `--insert-only`: Only perform inserts, skip updates and deletions
+- `--insert-only`: Only perform inserts, skip updates and deletions. Note: This
+  option uses `INSERT INTO ... ON CONFLICT DO NOTHING`. So, if there are
+  identical rows with different values, this option alone is not enough to fully
+  repair the table.
 - `--fix-nulls`: Fix NULL values by comparing across nodes (special use case)
 
 ### Examples

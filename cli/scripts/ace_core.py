@@ -1,4 +1,3 @@
-import ast
 import json
 from math import ceil
 import os
@@ -1151,89 +1150,9 @@ def table_repair(tr_task: TableRepairTask):
         if tr_task.generate_report:
             report["changes"][divergent_node] = dict()
 
-        """
-        We had previously converted all rows to strings for computing set differences.
-        We now need to convert them back to their original types before upserting.
-        psycopg3 will internally handle type conversions from lists/arrays to their
-        respective types in Postgres.
-
-        So, if an element in a row is a list or a json that is represented as:
-        '{"key1": "val1", "key2": "val2"}' or '[1, 2, 3]', we need to use the
-        abstract syntax tree module to convert them back to their original types.
-        ast.literal_eval() will give us {'key1': 'val1', 'key2': 'val2'} and
-        [1, 2, 3] respectively.
-        """
-
-        # List of types that should be treated as strings
-        string_types = [
-            "char",
-            "text",
-            "time",
-            "bytea",
-            "uuid",
-            "date",
-            "timestamp",
-            "interval",
-            "inet",
-            "macaddr",
-            "xml",
-            "money",
-            "point",
-            "line",
-            "polygon",
-            "vector",
-        ]
-
-        # Types that can be directly represented in JSON
-        json_compatible_types = [
-            "json",
-            "jsonb",
-            "boolean",
-            "integer",
-            "bigint",
-            "smallint",
-            "numeric",
-            "real",
-            "double precision",
-        ]
-
-        upsert_tuples = []
-        for row in rows_to_upsert_json:
-            modified_row = tuple()
-            for col_name in cols_list:
-                col_type = col_types[col_name]
-                elem = str(row[col_name])
-
-                try:
-                    type_lower = col_type.lower()
-
-                    if (
-                        not elem
-                        or elem == ""
-                        or elem.lower() == "null"
-                        or elem.lower() == "none"
-                    ):
-                        modified_row += (None,)
-                    elif "[]" in type_lower:
-                        modified_row += (ast.literal_eval(elem),)
-                    elif any(s in type_lower for s in string_types):
-                        if type_lower == "bytea":
-                            modified_row += (bytes.fromhex(elem),)
-                        else:
-                            modified_row += (elem,)
-                    elif any(s in type_lower for s in json_compatible_types):
-                        item = ast.literal_eval(elem)
-                        if type_lower == "jsonb" or type_lower == "json":
-                            item = json.dumps(item)
-                        modified_row += (item,)
-                    else:
-                        modified_row += (elem,)
-
-                except (ValueError, SyntaxError):
-                    # If conversion fails, use the original value
-                    modified_row += (elem,)
-
-            upsert_tuples.append(modified_row)
+        upsert_tuples = ace.convert_json_to_pg_type(
+            rows_to_upsert_json, cols_list, col_types
+        )
 
         try:
             # Let's first delete rows to avoid secondary unique key violations
@@ -1455,6 +1374,7 @@ def table_repair_fix_nulls(tr_task: TableRepairTask) -> None:
                     if config.USE_CERT_AUTH and tr_task.invoke_method == "api"
                     else None
                 ),
+                drop_privileges=False,
             )
             conns[node_hostname] = conn
     except Exception as e:
@@ -1530,10 +1450,36 @@ def table_repair_fix_nulls(tr_task: TableRepairTask) -> None:
         common_keys = set(node1_dict.keys()) & set(node2_dict.keys())
 
         for node, conn in [(node1, conns[node1]), (node2, conns[node2])]:
+            spock_version = None
+            try:
+                spock_version = ace.get_spock_version(conn)
+                super_cur = conn.cursor()
+
+                if spock_version >= config.SPOCK_REPAIR_MODE_MIN_VERSION:
+                    super_cur.execute("SELECT spock.repair_mode(true);")
+                    if tr_task.fire_triggers:
+                        super_cur.execute("SET session_replication_role = 'local';")
+                    else:
+                        super_cur.execute("SET session_replication_role = 'replica';")
+
+                super_cur.close()
+            except Exception as e:
+                context = {"errors": [f"Error setting repair mode on {node}: {str(e)}"]}
+                ace.handle_task_exception(tr_task, context)
+                raise e
+
             if not tr_task.quiet_mode:
                 util.message(f"Processing node {node}", p_state="info")
 
             try:
+                tr_task.connection_pool.drop_privileges(
+                    conn,
+                    client_role=(
+                        tr_task.client_role
+                        if config.USE_CERT_AUTH and tr_task.invoke_method == "api"
+                        else None
+                    ),
+                )
                 with conn.cursor() as cur:
                     cur.execute(create_temp_sql)
 
@@ -1716,6 +1662,20 @@ def table_repair_fix_nulls(tr_task: TableRepairTask) -> None:
                         progress.n = int(progress_pct)
                         progress.refresh()
 
+                if spock_version >= config.SPOCK_REPAIR_MODE_MIN_VERSION:
+                    with conn.cursor() as super_cur:
+                        super_cur.execute("RESET ROLE")
+                        super_cur.execute("SELECT spock.repair_mode(false);")
+
+                tr_task.connection_pool.drop_privileges(
+                    conn,
+                    client_role=(
+                        tr_task.client_role
+                        if config.USE_CERT_AUTH and tr_task.invoke_method == "api"
+                        else None
+                    ),
+                )
+
             except Exception as e:
                 conn.rollback()
                 context = {"errors": [f"Error updating nulls on {node}: {str(e)}"]}
@@ -1755,6 +1715,10 @@ def table_repair_bidirectional(tr_task: TableRepairTask) -> None:
     For example, if n1 has IDs 1-15, and n2 has IDs 1-10 and 16-20:
     After repair, both n1 and n2 will end up with IDs 1-20
 
+    Note: This option uses `INSERT INTO ... ON CONFLICT DO NOTHING`. So, if there are
+    identical rows with different values, this option alone is not enough to fully
+    repair the table.
+
     Args:
         tr_task: The table repair task configuration
     """
@@ -1790,6 +1754,7 @@ def table_repair_bidirectional(tr_task: TableRepairTask) -> None:
                     if config.USE_CERT_AUTH and tr_task.invoke_method == "api"
                     else None
                 ),
+                drop_privileges=False,
             )
             conns[node_hostname] = conn
     except Exception as e:
@@ -1807,15 +1772,17 @@ def table_repair_bidirectional(tr_task: TableRepairTask) -> None:
     node_pairs = list(diff_json.items())
     total_pairs = len(node_pairs)
 
-    if not tr_task.quiet_mode:
-        util.message("\nPerforming bidirectional repair:", p_state="info")
-        progress = tqdm(
-            total=100,
-            desc="Overall progress",
-            unit="%",
-        )
-        progress_pct = 0
-        progress_step = 100.0 / (total_pairs * 2)
+    util.message(
+        "\nPerforming bidirectional repair:",
+        p_state="info",
+        quiet_mode=tr_task.quiet_mode,
+    )
+
+    progress = tqdm(
+        total=100,
+        desc="Overall progress",
+        unit="%",
+    )
 
     table_name_sql = f'{tr_task.fields.l_schema}."{tr_task.fields.l_table}"'
     if simple_primary_key:
@@ -1830,45 +1797,15 @@ def table_repair_bidirectional(tr_task: TableRepairTask) -> None:
         ON CONFLICT
         ({','.join(['"' + col + '"' for col in keys_list])}) DO NOTHING;"""
 
-    # List of types that should be treated as strings
-    string_types = [
-        "char",
-        "text",
-        "time",
-        "bytea",
-        "uuid",
-        "date",
-        "timestamp",
-        "interval",
-        "inet",
-        "macaddr",
-        "xml",
-        "money",
-        "point",
-        "line",
-        "polygon",
-        "vector",
-    ]
-
-    # Types that can be directly represented in JSON
-    json_compatible_types = [
-        "json",
-        "jsonb",
-        "boolean",
-        "integer",
-        "bigint",
-        "smallint",
-        "numeric",
-        "real",
-        "double precision",
-    ]
-
     if tr_task.dry_run:
         dry_run_msg = "######## DRY RUN ########\n\n"
         if tr_task.generate_report:
             report["operation_type"] = "DRY_RUN"
 
-    for pair_idx, (node_pair, pair_diffs) in enumerate(node_pairs):
+    progress_pct = 0
+    progress_step = 100.0 / (total_pairs * 2)
+
+    for _, (node_pair, pair_diffs) in enumerate(node_pairs):
         node1, node2 = node_pair.split("/")
         node1_rows = pair_diffs[node1]
         node2_rows = pair_diffs[node2]
@@ -1889,6 +1826,9 @@ def table_repair_bidirectional(tr_task: TableRepairTask) -> None:
         node1_only_keys = set(node1_dict.keys()) - set(node2_dict.keys())
         node2_only_keys = set(node2_dict.keys()) - set(node1_dict.keys())
 
+        n1_inserts = [node2_dict[key] for key in node2_only_keys]
+        n2_inserts = [node1_dict[key] for key in node1_only_keys]
+
         if tr_task.dry_run:
             dry_run_msg += f"Node pair: {node_pair}\n"
             dry_run_msg += f"Rows unique to {node1}: {len(node1_only_keys)}\n"
@@ -1896,76 +1836,60 @@ def table_repair_bidirectional(tr_task: TableRepairTask) -> None:
 
             if tr_task.generate_report:
                 report["changes"][node_pair] = {
-                    f"{node1}_only": [node1_dict[key] for key in node1_only_keys],
-                    f"{node2}_only": [node2_dict[key] for key in node2_only_keys],
+                    f"{node1}_only": n1_inserts,
+                    f"{node2}_only": n2_inserts,
                 }
             continue
 
-        for node, conn, source_dict, target_node in [
-            (node1, conns[node1], node2_dict, node2),
-            (node2, conns[node2], node1_dict, node1),
-        ]:
+        def perform_inserts(target_node, conn, insert_rows):
             util.message(
-                f"Processing node {node}", p_state="info", quiet_mode=tr_task.quiet_mode
+                f"Processing node {target_node}",
+                p_state="info",
+                quiet_mode=tr_task.quiet_mode,
             )
 
             try:
-                cur = conn.cursor()
+                super_cur = conn.cursor()
                 spock_version = ace.get_spock_version(conn)
 
                 if spock_version >= config.SPOCK_REPAIR_MODE_MIN_VERSION:
-                    cur.execute("SELECT spock.repair_mode(true);")
+                    super_cur.execute("SELECT spock.repair_mode(true);")
                     if tr_task.fire_triggers:
-                        cur.execute("SET session_replication_role = 'local';")
+                        super_cur.execute("SET session_replication_role = 'local';")
                     else:
-                        cur.execute("SET session_replication_role = 'replica';")
+                        super_cur.execute("SET session_replication_role = 'replica';")
 
-                insert_tuples = []
-                for key in (
-                    set(source_dict.keys()) - set(node1_dict.keys())
-                    if node == node1
-                    else set(source_dict.keys()) - set(node2_dict.keys())
-                ):
-                    row = source_dict[key]
-                    modified_row = tuple()
-                    for col_name in cols_list:
-                        col_type = col_types[col_name]
-                        elem = str(row[col_name])
+                super_cur.close()
 
-                        try:
-                            type_lower = col_type.lower()
+                tr_task.connection_pool.drop_privileges(
+                    conn,
+                    client_role=(
+                        tr_task.client_role
+                        if config.USE_CERT_AUTH and tr_task.invoke_method == "api"
+                        else None
+                    ),
+                )
+            except Exception as e:
+                context = {
+                    "errors": [
+                        f"Could not set repair mode and"
+                        f" drop privileges on {target_node}: {str(e)}"
+                    ]
+                }
+                ace.handle_task_exception(tr_task, context)
+                raise e
 
-                            if (
-                                not elem
-                                or elem == ""
-                                or elem.lower() == "null"
-                                or elem.lower() == "none"
-                            ):
-                                modified_row += (None,)
-                            elif "[]" in type_lower:
-                                modified_row += (ast.literal_eval(elem),)
-                            elif any(s in type_lower for s in string_types):
-                                if type_lower == "bytea":
-                                    modified_row += (bytes.fromhex(elem),)
-                                else:
-                                    modified_row += (elem,)
-                            elif any(s in type_lower for s in json_compatible_types):
-                                item = ast.literal_eval(elem)
-                                if type_lower == "jsonb" or type_lower == "json":
-                                    item = json.dumps(item)
-                                modified_row += (item,)
-                            else:
-                                modified_row += (elem,)
-
-                        except (ValueError, SyntaxError):
-                            modified_row += (elem,)
-
-                    insert_tuples.append(modified_row)
+            try:
+                # We need this lower-privileged cursor to perform the inserts
+                cur = conn.cursor()
+                insert_tuples = ace.convert_json_to_pg_type(
+                    insert_rows, cols_list, col_types
+                )
 
                 if insert_tuples:
                     cur.executemany(insert_sql, insert_tuples)
                     if tr_task.generate_report:
-                        report["changes"][node] = {
+                        report["changes"][target_node] = {
                             "inserted_rows": [
                                 dict(zip(cols_list, tup)) for tup in insert_tuples
                             ]
@@ -1978,31 +1902,33 @@ def table_repair_bidirectional(tr_task: TableRepairTask) -> None:
                         super_cur.execute("RESET ROLE")
                         super_cur.execute("SELECT spock.repair_mode(false);")
 
-                    if tr_task.invoke_method == "api":
-                        tr_task.connection_pool.drop_privileges(
-                            conn,
-                            (
-                                tr_task.client_role
-                                if config.USE_CERT_AUTH
-                                and tr_task.invoke_method == "api"
-                                else None
-                            ),
-                        )
+                tr_task.connection_pool.drop_privileges(
+                    conn,
+                    (
+                        tr_task.client_role
+                        if config.USE_CERT_AUTH and tr_task.invoke_method == "api"
+                        else None
+                    ),
+                )
 
                 conn.commit()
                 cur.close()
 
-                if not tr_task.quiet_mode:
-                    progress_pct += progress_step
-                    progress.n = int(progress_pct)
-                    progress.refresh()
-
             except Exception as e:
                 conn.rollback()
-                error_msg = f"Error during bidirectional repair on {node}: {str(e)}"
+                error_msg = "Error during bidirectional repair on"
+                f" {target_node}: {str(e)}"
                 context = {"errors": [error_msg]}
                 ace.handle_task_exception(tr_task, context)
                 raise e
+
+        perform_inserts(target_node=node1, conn=conns[node1], insert_rows=n1_inserts)
+        perform_inserts(target_node=node2, conn=conns[node2], insert_rows=n2_inserts)
+
+        if not tr_task.quiet_mode:
+            progress_pct += progress_step
+            progress.n = int(progress_pct)
+            progress.refresh()
 
     if tr_task.dry_run:
         dry_run_msg += "\n######## END DRY RUN ########"
