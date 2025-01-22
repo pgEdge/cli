@@ -2062,7 +2062,7 @@ def remove_node(cluster_name, node_name, force=False):
       2) DROP the node from Spock’s node list.
       3) DROP EXTENSION spock CASCADE on the removed node.
       4) Stop PostgreSQL on the removed node.
-      5) Remove it from the cluster JSON file.
+      5) Remove ONLY the specified node/subnode from the cluster JSON.
       6) If force=True, also remove the pgedge directory on that node or subnode.
       7) Ensure the node name actually exists in the cluster before removal.
     """
@@ -2085,7 +2085,7 @@ def remove_node(cluster_name, node_name, force=False):
     # Log level
     verbose = cluster_data.get("log_level", "info")
 
-    # ---- NEW CHECK: Make sure the node actually exists ----
+    # ---- CHECK: Make sure the node actually exists ----
     node_names = [nd["name"] for nd in nodes]
     if node_name not in node_names:
         util.exit_message(f"Node '{node_name}' does not exist in cluster '{cluster_name}'.")
@@ -2112,7 +2112,7 @@ def remove_node(cluster_name, node_name, force=False):
 
     # ------------------------------------------------------------------------
     # B) Drop all subscriptions on THE node being removed
-    #    that name that node as subscriber, i.e. sub_{node_name}{otherNode}
+    #    That name that node as subscriber, i.e. sub_{node_name}{otherNode}
     # ------------------------------------------------------------------------
     subs_to_drop_on_removed_node = []
     for nd in nodes:
@@ -2174,27 +2174,20 @@ def remove_node(cluster_name, node_name, force=False):
             print(f"\n{result.stdout}")
 
     # ------------------------------------------------------------------------
-    # F) Remove the node (or subnode) from cluster_data["node_groups"]
+    # F) Remove ONLY the specified node (or subnode) from cluster_data["node_groups"]
     # ------------------------------------------------------------------------
-    empty_groups = []
-    for group in cluster_data["node_groups"]:
-        # If entire group name matches node_name, remove the group
+    for group in list(cluster_data["node_groups"]):
+        # If the group name *is* the node_name, remove the entire group
         if group["name"] == node_name:
             cluster_data["node_groups"].remove(group)
-            continue
-        # Otherwise, see if node_name is in sub_nodes
-        sub_nodes = group.get("sub_nodes", [])
-        for sub_nd in list(sub_nodes):
-            if sub_nd["name"] == node_name:
-                sub_nodes.remove(sub_nd)
-        # If sub_nodes is now empty, track if group is worthless
-        if len(sub_nodes) == 0 and group["name"] != node_name:
-            empty_groups.append(group)
-
-    # Remove any now-empty node groups
-    for grp in empty_groups:
-        if grp in cluster_data["node_groups"]:
-            cluster_data["node_groups"].remove(grp)
+        else:
+            # Otherwise, check for sub_nodes
+            sub_nodes = group.get("sub_nodes", [])
+            for sub_nd in list(sub_nodes):
+                if sub_nd["name"] == node_name:
+                    sub_nodes.remove(sub_nd)
+            # We do NOT remove the entire group even if it's now empty:
+            # we only want to remove the requested node or subnode.
 
     # ------------------------------------------------------------------------
     # G) Write out the updated cluster JSON
