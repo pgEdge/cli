@@ -2055,8 +2055,7 @@ def json_validate_add_node(data):
 
     util.message(f"New node json file structure is valid.", "success")
 
-
-def remove_node(cluster_name, node_name):
+def remove_node(cluster_name, node_name, force=False):
     """
     Remove a node (or subnode) from the cluster configuration. This will:
       1) Remove all subscriptions referencing that node (as subscriber or provider).
@@ -2064,6 +2063,8 @@ def remove_node(cluster_name, node_name):
       3) DROP EXTENSION spock CASCADE on the removed node.
       4) Stop PostgreSQL on the removed node.
       5) Remove it from the cluster JSON file.
+      6) If force=True, also remove the pgedge directory on that node or subnode.
+      7) Ensure the node name actually exists in the cluster before removal.
     """
     # 1) Validate the cluster JSON
     json_validate(cluster_name)
@@ -2080,12 +2081,14 @@ def remove_node(cluster_name, node_name):
     dbname = db[0]["db_name"]
     db_user = db[0]["db_user"]
     db_password = db[0]["db_password"]
-    # Build path to psql
-    # e.g. /path/to/pgedge/pg17/bin/psql
-    # We'll do this dynamically for each node as needed.
 
     # Log level
     verbose = cluster_data.get("log_level", "info")
+
+    # ---- NEW CHECK: Make sure the node actually exists ----
+    node_names = [nd["name"] for nd in nodes]
+    if node_name not in node_names:
+        util.exit_message(f"Node '{node_name}' does not exist in cluster '{cluster_name}'.")
 
     # 3) Verify SSH connectivity on all existing nodes
     for nd in nodes:
@@ -2152,6 +2155,14 @@ def remove_node(cluster_name, node_name):
             # ----------------------------------------------------------------
             manage_node(nd, "stop", pgV, verbose)
 
+            # ----------------------------------------------------------------
+            # E) If --force was provided, remove the pgedge directory
+            # ----------------------------------------------------------------
+            if force:
+                cmd = f"rm -rf {nd['path']}"
+                message = f"Removing pgedge directory on node {node_name}"
+                run_cmd(cmd, node=nd, message=message, verbose=verbose, ignore=True)
+
     # ------------------------------------------------------------------------
     # For debugging, we show node-list on the surviving nodes
     # ------------------------------------------------------------------------
@@ -2163,7 +2174,7 @@ def remove_node(cluster_name, node_name):
             print(f"\n{result.stdout}")
 
     # ------------------------------------------------------------------------
-    # E) Remove the node (or subnode) from cluster_data["node_groups"]
+    # F) Remove the node (or subnode) from cluster_data["node_groups"]
     # ------------------------------------------------------------------------
     empty_groups = []
     for group in cluster_data["node_groups"]:
@@ -2186,7 +2197,7 @@ def remove_node(cluster_name, node_name):
             cluster_data["node_groups"].remove(grp)
 
     # ------------------------------------------------------------------------
-    # F) Write out the updated cluster JSON
+    # G) Write out the updated cluster JSON
     # ------------------------------------------------------------------------
     write_cluster_json(cluster_name, cluster_data)
 
