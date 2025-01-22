@@ -1567,7 +1567,37 @@ def init(cluster_name, install=True):
                 # Configure etcd and Patroni
                 etcd.configure_etcd(node, sub_nodes)
                 ha_patroni.configure_patroni(node, sub_nodes, db[0], db_settings)
+    # ----------------------------------------------------------------------
+    # Create the Spock extension and configure DDL replication
+    # without putting multiple ALTER SYSTEMs inside a single transaction.
+    # ----------------------------------------------------------------------
+    pg_ver = db_settings["pg_version"]
+    for nd in all_nodes:
+        # Path to psql in "pg17/bin", "pg16/bin", etc.
+        psql_path = f"{nd['path']}/pgedge/pg{pg_ver}/bin/psql"
 
+        for database_info in db:
+            db_name = database_info["db_name"]
+            db_user = database_info["db_user"]
+            db_password = database_info["db_password"]
+
+            spock_cmd = (
+                f"PGPASSWORD='{db_password}' "
+                f"{psql_path} -U {db_user} -p {nd['port']} -d {db_name} "
+                f'-c "ALTER SYSTEM SET spock.enable_ddl_replication=on;" '
+                f'-c "ALTER SYSTEM SET spock.include_ddl_repset=on;" '
+                f'-c "ALTER SYSTEM SET spock.allow_ddl_from_functions=on;" '
+                f'-c "SELECT pg_reload_conf();"'
+            )
+            message = (
+                f"Applying Spock DDL replication settings on {nd['name']} "
+                f"for database '{db_name}'"
+            )
+            run_cmd(spock_cmd, nd, message=message, verbose=False)
+    # ----------------------------------------------------------------------
+
+    util.message("## Cluster initialization complete.")
+ 
 
 def add_node(
     cluster_name,
