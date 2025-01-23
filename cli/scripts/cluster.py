@@ -1295,10 +1295,20 @@ def create_spock_db(nodes, db, db_settings, initial=True):
             )
         util.echo_cmd(cmd, host=ip, usr=n["os_user"], key=n["ssh_key"])
         if db_settings["auto_ddl"] == "on" and initial:
-            cmd = nc + " db guc-set spock.enable_ddl_replication on;"
-            cmd = cmd + " " + nc + " db guc-set spock.include_ddl_repset on;"
-            cmd = cmd + " " + nc + " db guc-set spock.allow_ddl_from_functions on;"
-            util.echo_cmd(cmd, host=ip, usr=n["os_user"], key=n["ssh_key"])
+            spock_cmd = (
+                f"PGPASSWORD='{db_password}' "
+                f"{psql_path} -U {db_user} -p {nd['port']} -d {db_name} "
+                f'-c "ALTER SYSTEM SET spock.enable_ddl_replication=on;" '
+                f'-c "ALTER SYSTEM SET spock.include_ddl_repset=on;" '
+                f'-c "ALTER SYSTEM SET spock.allow_ddl_from_functions=on;" '
+                f'-c "SELECT pg_reload_conf();"'
+            )
+            message = (
+                f"Applying Spock DDL replication settings on {nd['name']} "
+                f"for database '{db_name}'"
+            )
+            run_cmd(spock_cmd, n, message=message, verbose=False)
+            # ---------------------------------------------------------------
 
 
 def update_json(cluster_name, db_json):
