@@ -600,12 +600,7 @@ def convert_pg_type_to_json(item: str, type: str):
 
         type_lower = type.lower()
 
-        if (
-            not item
-            or item == ""
-            or item.lower() == "null"
-            or item.lower() == "none"
-        ):
+        if not item or item == "" or item.lower() == "null" or item.lower() == "none":
             return None
         elif "[]" in type_lower:
             return ast.literal_eval(item)
@@ -957,6 +952,9 @@ def validate_table_diff_inputs(td_task: TableDiffTask) -> None:
             continue
         combined_json = {**database, **node}
         cluster_nodes.append(combined_json)
+
+    if not node_list:
+        node_list = [node["name"] for node in cluster_nodes]
 
     if td_task._nodes == "all" and len(cluster_nodes) > 3:
         raise AceException("Table-diff only supports up to three way comparison")
