@@ -4,7 +4,7 @@
 import os
 import time
 
-MY_VERSION = "24.10.9"
+MY_VERSION = "24.10.10"
 MY_CODENAME = "Constellation"
 
 DEFAULT_PG = "16"
