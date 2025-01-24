@@ -32,6 +32,10 @@ BLOCK_ERROR = 3
 # The minimum version of Spock that supports the repair mode
 SPOCK_REPAIR_MODE_MIN_VERSION = 4.0
 
+
+# ACE Merkle Tree options
+MTREE_BLOCK_SIZE = 100000
+
 # ==============================================================================
 
 """

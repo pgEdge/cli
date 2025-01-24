@@ -14,6 +14,7 @@ import logging
 
 import ace_core
 import ace_daemon
+import ace_mtree
 import fire
 import psycopg
 from psycopg.rows import dict_row
@@ -905,8 +906,6 @@ def table_diff_checks(
             ) or (not td_task.fields.node_list):
                 params, conn = td_task.connection_pool.get_cluster_node_connection(
                     node_info,
-                    td_task.cluster_name,
-                    invoke_method=td_task.invoke_method,
                     client_role=(
                         td_task.client_role if td_task.invoke_method == "api" else None
                     ),
@@ -1211,8 +1210,6 @@ def table_repair_checks(
 
             params, conn = tr_task.connection_pool.get_cluster_node_connection(
                 nd,
-                tr_task.cluster_name,
-                invoke_method=tr_task.invoke_method,
                 client_role=(tr_task.client_role if config.USE_CERT_AUTH else None),
             )
 
@@ -1423,8 +1420,6 @@ def repset_diff_checks(
             ) or (not rd_task.fields.node_list):
                 _, conn = rd_task.connection_pool.get_cluster_node_connection(
                     nd,
-                    rd_task.cluster_name,
-                    invoke_method=rd_task.invoke_method,
                     client_role=(rd_task.client_role if config.USE_CERT_AUTH else None),
                 )
                 conn_list.append(conn)
@@ -1564,8 +1559,6 @@ def spock_diff_checks(
             ) or (not sd_task.fields.node_list):
                 params, conn = sd_task.connection_pool.get_cluster_node_connection(
                     nd,
-                    sd_task.cluster_name,
-                    invoke_method=sd_task.invoke_method,
                     client_role=(sd_task.client_role if config.USE_CERT_AUTH else None),
                 )
                 conn_params.append(params)
@@ -1675,8 +1668,6 @@ def schema_diff_checks(
             ) or (not sc_task.fields.node_list):
                 _, conn = sc_task.connection_pool.get_cluster_node_connection(
                     nd,
-                    sc_task.cluster_name,
-                    invoke_method=sc_task.invoke_method,
                     client_role=(sc_task.client_role if config.USE_CERT_AUTH else None),
                 )
                 conn_list.append(conn)
@@ -1811,7 +1802,7 @@ def update_spock_exception_checks(
         for node in cluster_nodes:
             if node["name"] == node_name:
                 # FIXME: Figure out connection handling here
-                _, conn = conn_pool.get_cluster_node_connection(node, cluster_name)
+                _, conn = conn_pool.get_cluster_node_connection(node)
                 conn.autocommit = False
 
     except Exception as e:
@@ -1875,5 +1866,6 @@ if __name__ == "__main__":
             "spock-exception-update": ace_cli.update_spock_exception_cli,
             "auto-repair": ace_core.auto_repair,
             "start": ace_daemon.start_ace,
+            "build-mtree": ace_mtree.build_mtree,
         }
     )

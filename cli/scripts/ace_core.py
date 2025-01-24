@@ -60,8 +60,6 @@ def init_conn_pool(shared_objects, worker_state):
         try:
             _, conn = td_task.connection_pool.get_cluster_node_connection(
                 node,
-                shared_objects["cluster_name"],
-                invoke_method=td_task.invoke_method,
                 client_role=(
                     td_task.client_role
                     if config.USE_CERT_AUTH and td_task.invoke_method == "api"
@@ -420,8 +418,6 @@ def table_diff(td_task: TableDiffTask, skip_all_checks: bool = False):
             }
             _, conn = td_task.connection_pool.get_cluster_node_connection(
                 node_info,
-                td_task.cluster_name,
-                invoke_method=td_task.invoke_method,
                 client_role=(
                     td_task.client_role
                     if (config.USE_CERT_AUTH and td_task.invoke_method == "api")
@@ -741,8 +737,6 @@ def table_diff(td_task: TableDiffTask, skip_all_checks: bool = False):
             }
             _, conn = td_task.connection_pool.get_cluster_node_connection(
                 node_info,
-                td_task.cluster_name,
-                invoke_method=td_task.invoke_method,
                 client_role=(
                     td_task.client_role
                     if config.USE_CERT_AUTH and td_task.invoke_method == "api"
@@ -800,8 +794,6 @@ def table_repair(tr_task: TableRepairTask):
             # spock.repair_mode(true) and session_replication_role
             _, conn = tr_task.connection_pool.get_cluster_node_connection(
                 node_info,
-                tr_task.cluster_name,
-                invoke_method=tr_task.invoke_method,
                 client_role=(
                     tr_task.client_role
                     if config.USE_CERT_AUTH and tr_task.invoke_method == "api"
@@ -1432,8 +1424,6 @@ def table_repair_fix_nulls(tr_task: TableRepairTask) -> None:
             node_hostname = tr_task.fields.host_map[hostname_key]
             _, conn = tr_task.connection_pool.get_cluster_node_connection(
                 node_info,
-                tr_task.cluster_name,
-                invoke_method=tr_task.invoke_method,
                 client_role=(
                     tr_task.client_role
                     if config.USE_CERT_AUTH and tr_task.invoke_method == "api"
@@ -1794,8 +1784,6 @@ def table_rerun_temptable(td_task: TableDiffTask) -> None:
             }
             _, conn = td_task.connection_pool.get_cluster_node_connection(
                 node_info,
-                td_task.cluster_name,
-                invoke_method=td_task.invoke_method,
                 client_role=(
                     td_task.client_role
                     if config.USE_CERT_AUTH and td_task.invoke_method == "api"
@@ -1859,8 +1847,6 @@ def table_rerun_temptable(td_task: TableDiffTask) -> None:
 
             _, conn = td_task.connection_pool.get_cluster_node_connection(
                 node_info,
-                td_task.cluster_name,
-                invoke_method=td_task.invoke_method,
                 client_role=(
                     td_task.client_role
                     if config.USE_CERT_AUTH and td_task.invoke_method == "api"
@@ -2230,8 +2216,6 @@ def spock_diff(sd_task: SpockDiffTask) -> None:
             }
             _, conn = sd_task.connection_pool.get_cluster_node_connection(
                 node_info,
-                sd_task.cluster_name,
-                invoke_method=sd_task.invoke_method,
                 client_role=(
                     sd_task.client_role
                     if config.USE_CERT_AUTH and sd_task.invoke_method == "api"
@@ -2414,8 +2398,6 @@ def schema_diff_objects(sc_task: SchemaDiffTask) -> None:
         for node in sc_task.fields.cluster_nodes:
             _, conn = sc_task.connection_pool.get_cluster_node_connection(
                 node,
-                sc_task.cluster_name,
-                invoke_method=sc_task.invoke_method,
                 client_role=(
                     sc_task.client_role
                     if config.USE_CERT_AUTH and sc_task.invoke_method == "api"
@@ -2996,9 +2978,7 @@ def auto_repair():
 
     for node in cluster_nodes:
         try:
-            _, conn = ar_task.connection_pool.get_cluster_node_connection(
-                node, ar_task.cluster_name
-            )
+            _, conn = ar_task.connection_pool.get_cluster_node_connection(node)
             conn_map[node["name"]] = conn
             cur = conn_map[node["name"]].cursor(row_factory=dict_row)
             cur.execute(oid_sql)
