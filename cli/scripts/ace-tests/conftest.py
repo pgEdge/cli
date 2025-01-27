@@ -1,9 +1,9 @@
 # flake8: disable=unused-import
 
-import concurrent.futures
 import importlib.util
 import os
 import sys
+from time import sleep
 import pytest
 import psycopg
 import test_config
@@ -105,7 +105,7 @@ def diff_file_path():
 
 
 @pytest.fixture(scope="session")
-def prepare_databases(ace_conf, nodes):
+def prepare_databases(nodes):
     """Setup fixture that prepares all databases before running tests"""
 
     def prepare_node(node):
@@ -128,6 +128,13 @@ def prepare_databases(ace_conf, nodes):
         );
         """
 
+        node_create_sql = f"""
+        SELECT spock.node_create('{node}', 'host={node} user=test dbname=demo')
+        """
+        repset_create_sql = """
+        SELECT spock.repset_create('test_repset')
+        """
+
         try:
             params = {
                 "host": node if node != "n1" else "localhost",
@@ -135,29 +142,21 @@ def prepare_databases(ace_conf, nodes):
                 "user": "admin",
                 "application_name": "ace-tests",
             }
-            if ace_conf.USE_CERT_AUTH:
-                params["sslmode"] = "verify-full"
-                params["sslrootcert"] = ace_conf.CA_CERT_FILE
-                params["sslcert"] = ace_conf.ADMIN_CERT_FILE
-                params["sslkey"] = ace_conf.ADMIN_KEY_FILE
 
             conn = psycopg.connect(**params)
-
-            # TODO: Find a way to assert that the connection is using SSL
-            if ace_conf.USE_CERT_AUTH:
-                pass
-
             cur = conn.cursor()
 
             # Creating the tables first
             cur.execute(customers_sql)
 
-            # Loading the data
             with open(test_config.CUSTOMERS_CSV, "r") as f:
                 with cur.copy(
                     "COPY customers FROM STDIN CSV HEADER DELIMITER ','"
                 ) as copy:
                     copy.write(f.read())
+
+            cur.execute(node_create_sql)
+            cur.execute(repset_create_sql)
 
             conn.commit()
 
@@ -172,29 +171,140 @@ def prepare_databases(ace_conf, nodes):
             print(f"Error executing SQL on node {node}: {str(e)}")
             return False
 
-    with concurrent.futures.ThreadPoolExecutor(max_workers=len(nodes)) as executor:
-        results = list(executor.map(prepare_node, nodes))
+    for node in nodes:
+        prepare_node(node)
 
-    # If database setup fails, we should fail the entire test suite
-    if not all(results):
-        pytest.fail("Database preparation failed")
+    def prepare_spock(node):
+        sub_sql = """
+        SELECT
+        spock.sub_create
+        ('sub_{provider_node}{node}', 'host={provider_node} user=test dbname=demo')
+        """
 
-    # Return the nodes for use in tests
-    return nodes
+        sub_add_sql = """
+        SELECT spock.sub_add_repset('sub_{provider_node}{node}', 'test_repset')
+        """
+
+        repset_add_customers_sql = """
+        SELECT spock.repset_add_table('test_repset', 'customers')
+        """
+
+        try:
+            params = {
+                "host": node if node != "n1" else "localhost",
+                "dbname": "demo",
+                "user": "admin",
+                "application_name": "ace-tests",
+            }
+
+            conn = psycopg.connect(**params)
+            cur = conn.cursor()
+
+            for provider_node in nodes:
+                if node != provider_node:
+                    cur.execute(sub_sql.format(provider_node=provider_node, node=node))
+                    cur.execute(
+                        sub_add_sql.format(provider_node=provider_node, node=node)
+                    )
+
+            cur.execute(repset_add_customers_sql)
+
+            conn.commit()
+
+            print(f"Successfully prepared Spock on node {node}")
+
+            cur.close()
+            conn.close()
+            return True
+        except Exception as e:
+            print(f"Error preparing Spock on node {node}: {str(e)}")
+            return False
+
+    for node in nodes:
+        prepare_spock(node)
+
+    sleep(5)
 
 
 @pytest.fixture(scope="session", autouse=True)
-def cleanup_databases(ace_conf, prepare_databases):
+def cleanup_databases(nodes):
     """Cleanup all databases after running tests"""
+
     # Yield to let the tests run first
     yield
 
     # Cleanup code that runs after all tests complete
     drop_customers_sql = "DROP TABLE IF EXISTS customers CASCADE;"
 
-    # prepare_databases returns the nodes list
-    nodes = prepare_databases
+    repset_remove_customers = """
+    SELECT spock.repset_remove_table('test_repset', 'customers')
+    """
 
+    sub_remove_sql = """
+    SELECT spock.sub_remove_repset('sub_{provider_node}{node}', 'test_repset')
+    """
+
+    sub_drop_sql = """
+    SELECT spock.sub_drop('sub_{provider_node}{node}')
+    """
+
+    repset_drop_sql = """
+    SELECT spock.repset_drop('test_repset')
+    """
+
+    node_drop_sql = """
+    SELECT spock.node_drop('{node}')
+    """
+
+    for node in nodes:
+        other_nodes = [n for n in nodes if n != node]
+        try:
+            params = {
+                "host": node if node != "n1" else "localhost",
+                "dbname": "demo",
+                "user": "admin",
+                "application_name": "ace-tests",
+            }
+
+            conn = psycopg.connect(**params)
+            cur = conn.cursor()
+
+            cur.execute(repset_remove_customers)
+            print("remove customers from test_repset", cur.fetchone())
+
+            for provider_node in other_nodes:
+                cur.execute(
+                    sub_remove_sql.format(provider_node=provider_node, node=node)
+                )
+                print(
+                    "remove subscription for",
+                    provider_node,
+                    "on",
+                    node,
+                    cur.fetchone(),
+                )
+                cur.execute(sub_drop_sql.format(provider_node=provider_node, node=node))
+                print(
+                    "drop subscription for",
+                    provider_node,
+                    "on",
+                    node,
+                    cur.fetchone(),
+                )
+
+            cur.execute(repset_drop_sql)
+            print("drop repset", cur.fetchone())
+
+            cur.execute(drop_customers_sql)
+            print("drop customers", cur.statusmessage)
+
+            conn.commit()
+            cur.close()
+            conn.close()
+        except Exception as e:
+            print(f"Failed to cleanup node {node}: {str(e)}")
+
+    # We need to drop nodes *after* we've dropped subs and repsets
     for node in nodes:
         try:
             params = {
@@ -203,20 +313,11 @@ def cleanup_databases(ace_conf, prepare_databases):
                 "user": "admin",
                 "application_name": "ace-tests",
             }
-            if ace_conf.USE_CERT_AUTH:
-                params["sslmode"] = "verify-full"
-                params["sslrootcert"] = ace_conf.CA_CERT_FILE
-                params["sslcert"] = ace_conf.ADMIN_CERT_FILE
-                params["sslkey"] = ace_conf.ADMIN_KEY_FILE
 
             conn = psycopg.connect(**params)
-
-            # TODO: Find a way to assert that the connection is using SSL
-            if ace_conf.USE_CERT_AUTH:
-                pass
-
             cur = conn.cursor()
-            cur.execute(drop_customers_sql)
+            cur.execute(node_drop_sql.format(node=node))
+            print("drop node", cur.fetchone())
             conn.commit()
             cur.close()
             conn.close()

@@ -47,6 +47,12 @@ class TestTableRepairFixNulls:
                     """
                     )
 
+                repset_add_nulls_sql = """
+                SELECT spock.repset_add_table('test_repset', 'simple_nulls')
+                """
+                cur.execute(repset_add_nulls_sql)
+                print("add nulls to test_repset", cur.fetchone())
+
                 conn.commit()
                 cur.close()
                 conn.close()
@@ -57,7 +63,12 @@ class TestTableRepairFixNulls:
             for node in nodes:
                 conn = psycopg.connect(host=node, dbname="demo", user="admin")
                 cur = conn.cursor()
-                cur.execute("DROP TABLE IF EXISTS simple_nulls")
+                repset_remove_nulls = """
+                SELECT spock.repset_remove_table('test_repset', 'simple_nulls')
+                """
+                cur.execute(repset_remove_nulls)
+                print("remove nulls from test_repset", cur.fetchone())
+                cur.execute("DROP TABLE IF EXISTS simple_nulls CASCADE")
                 conn.commit()
                 cur.close()
                 conn.close()
@@ -116,6 +127,12 @@ class TestTableRepairFixNulls:
                     """
                     )
 
+                repset_add_nulls_sql = """
+                SELECT spock.repset_add_table('test_repset', 'composite_nulls')
+                """
+                cur.execute(repset_add_nulls_sql)
+                print("add nulls to test_repset", cur.fetchone())
+
                 conn.commit()
                 cur.close()
                 conn.close()
@@ -126,7 +143,12 @@ class TestTableRepairFixNulls:
             for node in nodes:
                 conn = psycopg.connect(host=node, dbname="demo", user="admin")
                 cur = conn.cursor()
-                cur.execute("DROP TABLE IF EXISTS composite_nulls")
+                repset_remove_nulls = """
+                SELECT spock.repset_remove_table('test_repset', 'composite_nulls')
+                """
+                cur.execute(repset_remove_nulls)
+                print("remove nulls from test_repset", cur.fetchone())
+                cur.execute("DROP TABLE IF EXISTS composite_nulls CASCADE")
                 conn.commit()
                 cur.close()
                 conn.close()
@@ -174,6 +196,12 @@ class TestTableRepairFixNulls:
                     """
                     )
 
+                repset_add_nulls_sql = """
+                SELECT spock.repset_add_table('test_repset', '"MixedCaseNulls"')
+                """
+                cur.execute(repset_add_nulls_sql)
+                print("add nulls to test_repset", cur.fetchone())
+
                 conn.commit()
                 cur.close()
                 conn.close()
@@ -184,7 +212,12 @@ class TestTableRepairFixNulls:
             for node in nodes:
                 conn = psycopg.connect(host=node, dbname="demo", user="admin")
                 cur = conn.cursor()
-                cur.execute('DROP TABLE IF EXISTS "MixedCaseNulls"')
+                repset_remove_nulls = """
+                SELECT spock.repset_remove_table('test_repset', '"MixedCaseNulls"')
+                """
+                cur.execute(repset_remove_nulls)
+                print("remove nulls from test_repset", cur.fetchone())
+                cur.execute('DROP TABLE IF EXISTS "MixedCaseNulls" CASCADE')
                 conn.commit()
                 cur.close()
                 conn.close()
@@ -241,6 +274,12 @@ class TestTableRepairFixNulls:
                     """
                     )
 
+                repset_add_nulls_sql = """
+                SELECT spock.repset_add_table('test_repset', 'datatype_nulls')
+                """
+                cur.execute(repset_add_nulls_sql)
+                print("add nulls to test_repset", cur.fetchone())
+
                 conn.commit()
                 cur.close()
                 conn.close()
@@ -251,7 +290,12 @@ class TestTableRepairFixNulls:
             for node in nodes:
                 conn = psycopg.connect(host=node, dbname="demo", user="admin")
                 cur = conn.cursor()
-                cur.execute("DROP TABLE IF EXISTS datatype_nulls")
+                repset_remove_nulls = """
+                SELECT spock.repset_remove_table('test_repset', 'datatype_nulls')
+                """
+                cur.execute(repset_remove_nulls)
+                print("remove nulls from test_repset", cur.fetchone())
+                cur.execute("DROP TABLE IF EXISTS datatype_nulls CASCADE")
                 conn.commit()
                 cur.close()
                 conn.close()

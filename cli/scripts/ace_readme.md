@@ -133,6 +133,10 @@ In some special cases, you may want to use the `--fix-nulls` option to fix NULL 
 - `--quiet`: Suppress non-essential output
 - `--generate-report`: Create a detailed report of repair operations
 - `--upsert-only`: Only perform inserts/updates, skip deletions
+- `--insert-only`: Only perform inserts, skip updates and deletions. Note: This
+  option uses `INSERT INTO ... ON CONFLICT DO NOTHING`. So, if there are
+  identical rows with different values, this option alone is not enough to fully
+  repair the table.
 - `--fix-nulls`: Fix NULL values by comparing across nodes (special use case)
 
 ### Examples
@@ -167,9 +171,12 @@ Conservative repair (updates only):
 
 ### Best Practices
 
-1. Ensure MAX_ALLOWED_DIFFS have not exceeded during table-diff. Otherwise, table-repair will only be able to partially repair the table.
+1. Table-repair can only repair rows found in the diff file. If `MAX_ALLOWED_DIFFS`
+is exceeded during table-diff, table-repair will only be able to partially repair the table.
+Sometimes, this may even be desirable if you want to repair the table in batches.
+You'd have to do a `diff->repair->diff->repair` cycle until no more differences are reported.
 2. Run with `--dry-run` first to review proposed changes
-3. Use `--upsert-only` for critical tables where data deletion may be risky
+3. Use `--upsert-only` or `--insert-only` for critical tables where data deletion may be risky
 4. Verify table structure and constraints before repair
 
 ### Common Use Cases
