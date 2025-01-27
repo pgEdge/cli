@@ -52,6 +52,7 @@ class TestTableFilter:
             # Introduce differences only within the filter range
             conn = psycopg.connect(host="n2", dbname="demo", user="admin")
             cur = conn.cursor()
+            cur.execute("SELECT spock.repair_mode(true)")
             cur.execute(
                 f"""
                 UPDATE customers
@@ -178,6 +179,7 @@ class TestTableFilter:
         try:
             conn = psycopg.connect(host="n2", dbname="demo", user="admin")
             cur = conn.cursor()
+            cur.execute("SELECT spock.repair_mode(true)")
             cur.execute(
                 """
                 UPDATE customers

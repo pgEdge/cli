@@ -11,20 +11,6 @@ class TestReplication:
     """Group of tests for various PostgreSQL data types"""
 
     test_data = {
-        "public.datatypes_test": {
-            "key_column": "id",
-            "row": {
-                "id": "d0eebc99-9c0b-4ef8-bb6d-6bb9bd380a14",
-                "int_col": 999,
-                "float_col": 9.99,
-                "array_col": [9, 9, 9],
-                "json_col": {"test": "value"},
-                "bytea_col": b"test",
-                "point_col": "(9.9,9.9)",
-                "text_col": "test replication",
-                "text_array_col": ["test", "array"],
-            },
-        },
         "public.customers": {
             "key_column": "index",
             "row": {
@@ -44,9 +30,7 @@ class TestReplication:
         },
     }
 
-    @pytest.mark.parametrize(
-        "table_name", ["public.datatypes_test", "public.customers"]
-    )
+    @pytest.mark.parametrize("table_name", ["public.customers"])
     def test_replication(
         self,
         cli,

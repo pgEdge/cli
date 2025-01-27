@@ -128,20 +128,6 @@ def prepare_databases(nodes):
         );
         """
 
-        datatypes_sql = """
-        CREATE TABLE datatypes_test (
-            id UUID PRIMARY KEY,
-            int_col INTEGER,
-            float_col DOUBLE PRECISION,
-            array_col INTEGER[],
-            json_col JSONB,
-            bytea_col BYTEA,
-            point_col POINT,
-            text_col TEXT,
-            text_array_col TEXT[]
-        );
-        """
-
         node_create_sql = f"""
         SELECT spock.node_create('{node}', 'host={node} user=test dbname=demo')
         """
@@ -162,46 +148,6 @@ def prepare_databases(nodes):
 
             # Creating the tables first
             cur.execute(customers_sql)
-            cur.execute(datatypes_sql)
-
-            cur.execute(
-                """
-                INSERT INTO datatypes_test VALUES
-                (
-                    'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11',
-                    42,
-                    3.14159,
-                    ARRAY[1, 2, 3, 4, 5],
-                    '{"key": "value", "nested": {"foo": "bar"}}',
-                    decode('DEADBEEF', 'hex'),
-                    point(1.5, 2.5),
-                    'sample text',
-                    ARRAY['apple', 'banana', 'cherry']
-                ),
-                (
-                    'b0eebc99-9c0b-4ef8-bb6d-6bb9bd380a12',
-                    100,
-                    2.71828,
-                    ARRAY[10, 20, 30],
-                    '{"numbers": [1, 2, 3], "active": true}',
-                    decode('BADDCAFE', 'hex'),
-                    point(3.7, 4.2),
-                    'another sample',
-                    ARRAY['dog', 'cat', 'bird']
-                ),
-                (
-                    'c0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13',
-                    -17,
-                    0.577216,
-                    ARRAY[]::INTEGER[],
-                    '{"empty": true}',
-                    NULL,
-                    point(0, 0),
-                    'third sample',
-                    ARRAY[]::TEXT[]
-                )
-            """
-            )
 
             with open(test_config.CUSTOMERS_CSV, "r") as f:
                 with cur.copy(
@@ -243,10 +189,6 @@ def prepare_databases(nodes):
         SELECT spock.repset_add_table('test_repset', 'customers')
         """
 
-        repset_add_datatypes_sql = """
-        SELECT spock.repset_add_table('test_repset', 'datatypes_test')
-        """
-
         try:
             params = {
                 "host": node if node != "n1" else "localhost",
@@ -266,7 +208,6 @@ def prepare_databases(nodes):
                     )
 
             cur.execute(repset_add_customers_sql)
-            cur.execute(repset_add_datatypes_sql)
 
             conn.commit()
 
@@ -294,14 +235,9 @@ def cleanup_databases(nodes):
 
     # Cleanup code that runs after all tests complete
     drop_customers_sql = "DROP TABLE IF EXISTS customers CASCADE;"
-    drop_datatypes_sql = "DROP TABLE IF EXISTS datatypes_test CASCADE;"
 
     repset_remove_customers = """
     SELECT spock.repset_remove_table('test_repset', 'customers')
-    """
-
-    repset_remove_datatypes = """
-    SELECT spock.repset_remove_table('test_repset', 'datatypes_test')
     """
 
     sub_remove_sql = """
@@ -335,8 +271,6 @@ def cleanup_databases(nodes):
 
             cur.execute(repset_remove_customers)
             print("remove customers from test_repset", cur.fetchone())
-            cur.execute(repset_remove_datatypes)
-            print("remove datatypes from test_repset", cur.fetchone())
 
             for provider_node in other_nodes:
                 cur.execute(
@@ -363,8 +297,6 @@ def cleanup_databases(nodes):
 
             cur.execute(drop_customers_sql)
             print("drop customers", cur.statusmessage)
-            cur.execute(drop_datatypes_sql)
-            print("drop datatypes", cur.statusmessage)
 
             conn.commit()
             cur.close()

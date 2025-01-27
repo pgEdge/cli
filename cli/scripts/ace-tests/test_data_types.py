@@ -9,6 +9,103 @@ from test_simple import TestSimple
 class TestDataTypes(TestSimple):
     """Group of tests for various PostgreSQL data types"""
 
+    @pytest.fixture(scope="class", autouse=True)
+    def setup_datatypes(self, nodes):
+        """Setup fixture to create and populate a table with various data types"""
+        try:
+            # Create table with various data types on all nodes
+            for node in nodes:
+                print(f"Setting up datatypes test table on node {node}")
+                conn = psycopg.connect(host=node, dbname="demo", user="admin")
+                cur = conn.cursor()
+
+                # Create the table with various data types
+                cur.execute(
+                    """
+                    CREATE TABLE IF NOT EXISTS datatypes_test (
+                        id UUID PRIMARY KEY,
+                        int_col INTEGER,
+                        float_col DOUBLE PRECISION,
+                        array_col INTEGER[],
+                        json_col JSONB,
+                        bytea_col BYTEA,
+                        point_col POINT,
+                        text_col TEXT,
+                        text_array_col TEXT[]
+                    )
+                """
+                )
+
+                # Insert sample data
+                cur.execute(
+                    """
+                    INSERT INTO datatypes_test VALUES
+                    (
+                        'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11',
+                        42,
+                        3.14159,
+                        ARRAY[1, 2, 3, 4, 5],
+                        '{"key": "value", "nested": {"foo": "bar"}}',
+                        decode('DEADBEEF', 'hex'),
+                        point(1.5, 2.5),
+                        'sample text',
+                        ARRAY['apple', 'banana', 'cherry']
+                    ),
+                    (
+                        'b0eebc99-9c0b-4ef8-bb6d-6bb9bd380a12',
+                        100,
+                        2.71828,
+                        ARRAY[10, 20, 30],
+                        '{"numbers": [1, 2, 3], "active": true}',
+                        decode('BADDCAFE', 'hex'),
+                        point(3.7, 4.2),
+                        'another sample',
+                        ARRAY['dog', 'cat', 'bird']
+                    ),
+                    (
+                        'c0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13',
+                        -17,
+                        0.577216,
+                        ARRAY[]::INTEGER[],
+                        '{"empty": true}',
+                        NULL,
+                        point(0, 0),
+                        'third sample',
+                        ARRAY[]::TEXT[]
+                    )
+                """
+                )
+
+                repset_add_datatypes_sql = """
+                SELECT spock.repset_add_table('test_repset', 'datatypes_test')
+                """
+                cur.execute(repset_add_datatypes_sql)
+                print("add datatypes to test_repset", cur.fetchone())
+
+                conn.commit()
+                cur.close()
+                conn.close()
+
+            yield  # Let the tests run
+
+            # Cleanup: drop the test table
+            for node in nodes:
+                conn = psycopg.connect(host=node, dbname="demo", user="admin")
+                cur = conn.cursor()
+                repset_remove_datatypes = """
+                SELECT spock.repset_remove_table('test_repset', 'datatypes_test')
+                """
+                cur.execute(repset_remove_datatypes)
+                print("remove datatypes from test_repset", cur.fetchone())
+
+                cur.execute("DROP TABLE IF EXISTS datatypes_test CASCADE")
+                conn.commit()
+                cur.close()
+                conn.close()
+
+        except Exception as e:
+            pytest.fail(f"Failed to setup/cleanup datatypes test: {str(e)}")
+
     # Override the table_name parameter for all parameterized tests
     @pytest.mark.parametrize("table_name", ["public.datatypes_test"])
     def test_simple_table_diff(self, cli, capsys, table_name):
@@ -42,10 +139,11 @@ class TestDataTypes(TestSimple):
     ):
         """Test table diff with differences for each data type"""
         try:
-            # Introduce differences using SQL that works for any data type
+            # Introduce differences using spock.repair_mode(true)
             conn = psycopg.connect(host="n2", dbname="demo", user="admin")
             cur = conn.cursor()
 
+            cur.execute("SELECT spock.repair_mode(true)")
             # Get random rows to modify
             cur.execute(
                 f"""
@@ -171,6 +269,7 @@ class TestDataTypes(TestSimple):
         try:
             conn = psycopg.connect(host="n2", dbname="demo", user="admin")
             cur = conn.cursor()
+            cur.execute("SELECT spock.repair_mode(true)")
             cur.execute(
                 f"""
                 UPDATE datatypes_test
@@ -278,6 +377,7 @@ class TestDataTypes(TestSimple):
         try:
             conn = psycopg.connect(host="n2", dbname="demo", user="admin")
             cur = conn.cursor()
+            cur.execute("SELECT spock.repair_mode(true)")
             cur.execute(
                 f"""
                 UPDATE datatypes_test
@@ -396,6 +496,7 @@ class TestDataTypes(TestSimple):
             # First introduce differences on n2
             conn = psycopg.connect(host="n2", dbname="demo", user="admin")
             cur = conn.cursor()
+            cur.execute("SELECT spock.repair_mode(true)")
             cur.execute(
                 f"""
                 UPDATE datatypes_test

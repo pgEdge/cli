@@ -1179,6 +1179,41 @@ def table_diff_checks(
     return td_task
 
 
+def check_repair_option_compatibility(tr_task: TableRepairTask) -> None:
+    """
+    Checks if the repair options specified are compatible.
+    """
+
+    if tr_task.bidirectional:
+        if tr_task.upsert_only:
+            raise AceException("bidirectional and upsert_only cannot be used together")
+        if tr_task.fix_nulls:
+            raise AceException("bidirectional and fix_nulls cannot be used together")
+
+    if tr_task.fix_nulls:
+        if tr_task.insert_only:
+            raise AceException("insert_only and fix_nulls cannot be used together")
+        if tr_task.upsert_only:
+            raise AceException("upsert_only and fix_nulls cannot be used together")
+
+    if tr_task.upsert_only:
+        if tr_task.insert_only:
+            raise AceException("insert_only and upsert_only cannot be used together")
+
+
+def check_if_sot_is_needed(tr_task: TableRepairTask) -> bool:
+    """
+    Checks if the source of truth is needed for the table repair task.
+    """
+
+    if tr_task.fix_nulls:
+        return False
+    elif tr_task.bidirectional and tr_task.insert_only:
+        return False
+
+    return True
+
+
 def validate_table_repair_inputs(tr_task: TableRepairTask) -> None:
     """
     Validates the basic inputs for a table repair task without establishing connections.
@@ -1197,19 +1232,22 @@ def validate_table_repair_inputs(tr_task: TableRepairTask) -> None:
     tr_task.insert_only = parse_bool_field("insert_only", tr_task.insert_only)
     tr_task.upsert_only = parse_bool_field("upsert_only", tr_task.upsert_only)
 
-    if not tr_task.source_of_truth and not tr_task.fix_nulls:
-        raise AceException("source_of_truth is a required argument")
+    # Using a helper function here to avoid clutter
+    check_repair_option_compatibility(tr_task)
+
+    sot_needed = check_if_sot_is_needed(tr_task)
+    if sot_needed:
+        if not tr_task.source_of_truth:
+            raise AceException("source_of_truth is a required argument")
 
     # Check if diff_file exists on disk
     if not os.path.exists(tr_task.diff_file_path):
         raise AceException(f"Diff file {tr_task.diff_file_path} does not exist")
 
-    if tr_task.bidirectional:
-        if not tr_task.insert_only and not tr_task.upsert_only:
-            raise AceException(
-                "insert_only or upsert_only must be True (1) when"
-                "bidirectional is True (1)"
-            )
+    if tr_task.bidirectional and not tr_task.insert_only:
+        raise AceException(
+            "insert_only must be True (1) when bidirectional is True (1)"
+        )
 
     found = check_cluster_exists(tr_task.cluster_name)
     if found:
