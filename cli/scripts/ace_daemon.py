@@ -160,9 +160,11 @@ def table_repair_api():
     dry_run = data.get("dry_run", False)
     quiet = data.get("quiet", False)
     generate_report = data.get("generate_report", False)
+    insert_only = data.get("insert_only", False)
     upsert_only = data.get("upsert_only", False)
     fix_nulls = data.get("fix_nulls", False)
     fire_triggers = data.get("fire_triggers", False)
+    bidirectional = data.get("bidirectional", False)
 
     if not cluster_name or not diff_file or not table_name:
         return (
@@ -198,10 +200,12 @@ def table_repair_api():
             dry_run=dry_run,
             quiet_mode=quiet,
             generate_report=generate_report,
+            insert_only=insert_only,
             upsert_only=upsert_only,
-            invoke_method="api",
             fix_nulls=fix_nulls,
             fire_triggers=fire_triggers,
+            bidirectional=bidirectional,
+            invoke_method="api",
         )
         raw_args.scheduler.task_id = task_id
         raw_args.scheduler.task_type = "table-repair"
@@ -211,7 +215,13 @@ def table_repair_api():
 
         ace.validate_table_repair_inputs(raw_args)
         ace_db.create_ace_task(task=raw_args)
-        scheduler.add_job(ace_core.table_repair, args=(raw_args,))
+
+        if fix_nulls:
+            scheduler.add_job(ace_core.table_repair_fix_nulls, args=(raw_args,))
+        elif bidirectional:
+            scheduler.add_job(ace_core.table_repair_bidirectional, args=(raw_args,))
+        else:
+            scheduler.add_job(ace_core.table_repair, args=(raw_args,))
 
         return jsonify({"task_id": task_id, "submitted_at": datetime.now().isoformat()})
     except Exception as e:

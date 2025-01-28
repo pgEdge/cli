@@ -51,6 +51,7 @@ class TestSimpleBase(abc.ABC):
             pass
 
         cur = conn.cursor()
+        cur.execute("SELECT spock.repair_mode(true)")
 
         # Note: column_name should be quoted if it contains uppercase
         cur.execute(

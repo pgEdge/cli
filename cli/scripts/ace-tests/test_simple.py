@@ -171,6 +171,7 @@ class TestSimple(TestSimpleBase):
                 pass
 
             cur = conn.cursor()
+            cur.execute("SELECT spock.repair_mode(true)")
             cur.execute(
                 f"""
                 UPDATE {schema}.\"{table}\"

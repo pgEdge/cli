@@ -16,7 +16,7 @@ class TestAPI(TestSimpleBase):
         daemon_thread = threading.Thread(target=ace_daemon.start_ace)
         daemon_thread.daemon = True  # Set as daemon so it exits when main thread exits
         daemon_thread.start()
-        time.sleep(2)  # Give the daemon time to start
+        time.sleep(2)
 
     def _get_api_base_url(self):
         return "https://localhost:5000/ace"
