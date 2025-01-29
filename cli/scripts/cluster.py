@@ -1416,12 +1416,12 @@ def init(cluster_name, install=True):
             )
 
     # 6. Integrate pgBackRest (if "backrest" block is present) on each node
-    util.message("## Integrating pgBackRest into the cluster", "info")
     cluster_name_from_json = parsed_json["cluster_name"]
 
     for idx, node in enumerate(all_nodes, start=1):
         backrest = node.get("backrest")
         if backrest:
+            util.message("## Integrating pgBackRest into the cluster", "info")
             util.message(f"### Configuring BackRest for node '{node['name']}'", "info")
 
             # Here we override the JSON stanza with: {cluster_name}_stanza_{node_name}
@@ -2638,11 +2638,19 @@ def print_install_hdr(
     util.echo_node(node_info)
 
 
-def app_mattermost(cluster_name):
-    """Helper function for a Mattermost instalation"""
+def app_concurrent_index(cluster_name, db_name, index_name, table_name, col):
+    """Helper function for a Creating concurrent index when auto_ddl is on"""
     db, db_settings, nodes = load_json(cluster_name)
     rc = 0
-    cmd = "psql 'CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_poststats_userid ON poststats(userid)' "
+    found_db_name = None
+    cmd = f"psql 'CREATE INDEX CONCURRENTLY IF NOT EXISTS {index_name} ON {table_name}({col})' "
+    for d in db:
+        if d["db_name"] == db_name:
+            found_db_name = db_name
+
+    if not found_db_name:
+        util.exit_message(f"Could not find db {db_name} in cluster {cluster_name}", 1) 
+
     for nd in nodes:
         rc = util.echo_cmd(
             nd["path"]
@@ -2651,7 +2659,7 @@ def app_mattermost(cluster_name):
             + os.sep
             + "pgedge "
             + cmd
-            + db[0]["db_name"],
+            + found_db_name,
             host=nd["public_ip"],
             usr=nd["os_user"],
             key=nd["ssh_key"],
@@ -2679,6 +2687,6 @@ if __name__ == "__main__":
             "ssh": ssh,
             "app-install": app_install,
             "app-remove": app_remove,
-            "app-mattermost": app_mattermost,
+            "app-concurrent-index": app_concurrent_index,
         }
     )
