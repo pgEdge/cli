@@ -37,7 +37,7 @@ jobs:
 
     - name: Wait for PostgreSQL to be ready
       run: |
-        echo "Waiting for PostgreSQL to be ready..."
+        echo "Waiting for Postgres to be ready..."
         for i in {1..30}; do
           if pg_isready -h localhost -p 5432 -U postgres; then
             echo "PostgreSQL is ready!"
