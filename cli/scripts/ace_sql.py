@@ -12,7 +12,7 @@ CREATE_METADATA_TABLE = """
 """
 
 CREATE_MTREE_TABLE = """
-    CREATE TABLE IF NOT EXISTS ace_mtree_{schema}_{table} (
+    CREATE TABLE ace_mtree_{schema}_{table} (
         node_level integer NOT NULL,
         node_position bigint NOT NULL,
         range_start {pkey_type},
@@ -311,4 +311,11 @@ BUILD_PARENT_NODES = """
         RETURNING 1
     )
     SELECT count(*) FROM inserted;
+"""
+
+INSERT_BLOCK_RANGES = """
+    INSERT INTO ace_mtree_{schema}_{table}
+        (node_level, node_position, range_start, range_end, last_modified)
+    VALUES
+        (0, %s, %s, %s, current_timestamp);
 """

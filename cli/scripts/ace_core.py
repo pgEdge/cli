@@ -4,7 +4,7 @@ import os
 from typing import Union
 from datetime import datetime
 from itertools import combinations
-from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor
+from concurrent.futures import ThreadPoolExecutor
 
 import psycopg
 from multiprocessing import Manager, cpu_count
