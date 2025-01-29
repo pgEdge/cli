@@ -9,7 +9,7 @@ import time
 import sys
 import getpass
 import re
-from tabulate import tabulate
+from tabulate import tabulate # type: ignore
 from ipaddress import ip_address
 
 try:
@@ -338,8 +338,8 @@ def json_validate(cluster_name):
         parsed_json["pgedge"] = pgedge_defaults
 
     # Ensure json_version is correct
-    if parsed_json.get("json_version") != "1.1":
-        parsed_json["json_version"] = "1.1"
+    if parsed_json.get("json_version") != "1.0":
+        parsed_json["json_version"] = "1.0"
 
     # Validate Spock version
     pg_version = parsed_json["pgedge"].get("pg_version", pg_default)
@@ -349,7 +349,10 @@ def json_validate(cluster_name):
         util.exit_message(
             "Spock version cannot be 'default'. Please specify a valid version or leave it blank."
         )
-    # Since we allow any version or empty, no need to validate further
+
+    # Fetch databases info (if any)
+    databases = parsed_json["pgedge"].get("databases", [])
+    summary["databases"] = databases
 
     # Validate and update node_groups
     for idx, node in enumerate(parsed_json.get("node_groups", [])):
@@ -368,7 +371,7 @@ def json_validate(cluster_name):
         sub_nodes = node.get("sub_nodes", [])
         subnode_count = len(sub_nodes) if isinstance(sub_nodes, list) else 0
         if subnode_count > 0:
-            subnode_info = f"Node {idx + 1} Subnodes: {subnode_count}"  # Start numbering subnodes from 1
+            subnode_info = f"Node {idx + 1} Subnodes: {subnode_count}"
         else:
             subnode_info = f"Node {idx + 1} Subnodes: None"
         summary["subnodes_info"].append(subnode_info)
@@ -387,6 +390,24 @@ def json_validate(cluster_name):
     lines.append(
         f"Spock Version: {spock_version if spock_version else 'Not specified'}"
     )
+
+    #
+    # 1) TEXTUAL SUMMARY DATABASE DISPLAY
+    #
+    if len(databases) == 0:
+        lines.append("Databases: None")
+    elif len(databases) == 1:
+        db = databases[0]
+        lines.append(f"Database: {db.get('db_name', '')}")
+        lines.append(f"    User: {db.get('db_user', '')}")
+    else:
+        # Two or more databases
+        i = 1
+        for db in databases:
+            lines.append(f"Database {i}: {db.get('db_name', '')}")
+            lines.append(f"     User: {db.get('db_user', '')}")
+            i += 1
+
     lines.append("Node Details:")
     for node in summary["node_details"]:
         lines.append(
@@ -435,6 +456,35 @@ def json_validate(cluster_name):
             max_length + 4
         )
     )
+
+    #
+    # 2) BORDERED SUMMARY DATABASE DISPLAY
+    #
+    if len(databases) == 0:
+        print(
+            f"# {bold_start}Databases{bold_end}          : None".ljust(
+                max_length + 4
+            )
+        )
+    elif len(databases) == 1:
+        db = databases[0]
+        print(
+            f"# {bold_start}Database{bold_end}           : {db.get('db_name','')}".ljust(
+                max_length + 4
+            )
+        )
+        # Align "User" nicely
+        user_line = f"#      {bold_start}User{bold_end}          : {db.get('db_user','')}"
+        print(user_line.ljust(max_length + 4))
+    else:
+        # Two or more databases
+        print(f"# {bold_start}Databases{bold_end}:".ljust(max_length + 4))
+        for i, db in enumerate(databases, start=1):
+            db_line = f"#  {bold_start} Database {i} {bold_end}      : {db.get('db_name','')}"
+            user_line = f"# {bold_start}     User   {bold_end}       : {db.get('db_user','')}"
+            print(db_line.ljust(max_length + 4))
+            print(user_line.ljust(max_length + 4))
+
     for node in summary["node_details"]:
         print(f"# {bold_start}Node {node['node_index']}{bold_end}")
         print(f"#      {bold_start}Public IP{bold_end}     : {node['public_ip']}")
@@ -443,119 +493,84 @@ def json_validate(cluster_name):
         print(f"#      {bold_start}Replicas{bold_end}      : {node['replicas']}")
     print(border)
 
-
-def ssh_setup(cluster_name, db, db_settings, db_user, db_passwd, n, install):
-    REPO = os.getenv("REPO", "")
-    ndnm = n["name"]
-    ndpath = n["path"]
-    ndip = n["public_ip"]
-    pg = db_settings["pg_version"]
-    spock = db_settings["spock_version"]
-    verbose = db_settings.get("log_level", "info")
-    try:
-        ndport = str(n["port"])
-    except Exception:
-        ndport = "5432"
-
-    nc = os.path.join(ndpath, "pgedge", "pgedge ")
-    parms = f" -U {db_user} -P {db_passwd} -d {db} --port {ndport}"
-    if pg is not None and pg != "":
-        parms = parms + f" --pg_ver {pg}"
-    if spock is not None and spock != "":
-        parms = parms + f" --spock_ver {spock}"
-    if db_settings["auto_start"] == "on":
-        parms = f"{parms} --autostart"
-    cmd = f"{nc} setup {parms}"
-    message = f"Setup pgedge"
-    run_cmd(cmd, n, message=message, verbose=verbose)
-    if db_settings["auto_ddl"] == "on":
-        cmd = nc + " db guc-set spock.enable_ddl_replication on;"
-        cmd = cmd + " " + nc + " db guc-set spock.include_ddl_repset on;"
-        cmd = cmd + " " + nc + " db guc-set spock.allow_ddl_from_functions on;"
-        message = f"Setup spock"
-        run_cmd(cmd, n, message=message, verbose=verbose)
-
-    if db_settings["auto_ddl"] == "on":
-        util.message("#")
-    return 0
-
-
 def ssh_install_pgedge(
-    cluster_name, db, db_settings, db_user, db_passwd, nodes, install, verbose
+    cluster_name,db_name, db_settings, db_user, db_passwd, nodes, install, verbose
 ):
     """
     Install and configure pgEdge on a list of nodes.
 
     Args:
         cluster_name (str): The name of the cluster.
-        db_name (str): The database name.
-        db_settings (dict): Database settings.
+        db (str): The database name.
+        db_settings (dict): Database settings (including auto_ddl).
         db_user (str): The database user.
-        db_password (str): The database user password.
-        nodes (list): The list of nodes.
-        verbose (bool): Verbose output.
+        db_passwd (str): The database user password.
+        nodes (list): The list of nodes (each node is a dict).
+        install (bool): Whether or not to perform 'pgedge install'.
+        verbose (bool): Whether to produce verbose output.
     """
+
     if install is None:
         install = True
 
-    # Calculate the total number of nodes (including sub-nodes)
+    # Count total nodes (including sub-nodes, if needed)
     total_nodes = len(nodes)
 
     for n in nodes:
-        REPO = os.getenv("REPO", "")
-        if REPO == "":
-            REPO = DEFAULT_REPO
-            os.environ["REPO"] = REPO
-
-        print_install_hdr(
-            cluster_name,
-            db,
-            db_user,
-            total_nodes,
-            n["name"],
-            n["path"],
-            n["public_ip"],
-            n["port"],
-            REPO,
-        )
+        # Fall back to default repo if none provided
+        REPO = os.getenv("REPO", "") or DEFAULT_REPO
+        os.environ["REPO"] = REPO
 
         ndnm = n["name"]
         ndpath = n["path"]
-        ndip = n["public_ip"]
+        ndip = n["public_ip"] or n["private_ip"]
+        ndport = str(n.get("port", "5432"))
         pg = db_settings["pg_version"]
         spock = db_settings["spock_version"]
-        ndport = str(n.get("port", "5432"))
 
+        # Print an informational header
+        print_install_hdr(
+            cluster_name,
+            db_name,
+            db_user,
+            total_nodes,
+            ndnm,
+            ndpath,
+            ndip,
+            ndport,
+            REPO
+        )
+
+        # 1) Optionally install pgEdge software
         if install:
             install_py = "install.py"
-
             cmd0 = f"export REPO={REPO}; "
             cmd1 = f"mkdir -p {ndpath}; cd {ndpath}; "
             cmd2 = f'python3 -c "\\$(curl -fsSL {REPO}/{install_py})"'
             message = f"Installing pgEdge on {ndnm}"
             run_cmd(cmd0 + cmd1 + cmd2, n, message=message, verbose=verbose)
 
+        # 2) Run pgEdge setup command
         nc = os.path.join(ndpath, "pgedge", "pgedge ")
-        parms = f" -U {db_user} -P {db_passwd} -d {db} --port {ndport}"
+        setup_parms = f" -U {db_user} -P {db_passwd} -d {db_name} --port {ndport}"
         if pg:
-            parms += f" --pg_ver {pg}"
+            setup_parms += f" --pg_ver {pg}"
         if spock:
-            parms += f" --spock_ver {spock}"
+            setup_parms += f" --spock_ver {spock}"
         if db_settings.get("auto_start") == "on":
-            parms += " --autostart"
+            setup_parms += " --autostart"
 
-        cmd = f"{nc} setup {parms}"
+        cmd_setup = f"{nc} setup {setup_parms}"
         message = f"Setting up pgEdge on {ndnm}"
-        run_cmd(cmd, n, message=message, verbose=verbose)
-
+        run_cmd(cmd_setup, n, message=message, verbose=verbose)
         if db_settings.get("auto_ddl") == "on":
-            cmd = (
-                f"{nc} db guc-set spock.enable_ddl_replication on;"
-                f" {nc} db guc-set spock.include_ddl_repset on;"
-                f" {nc} db guc-set spock.allow_ddl_from_functions on;"
-            )
-            message = f"Configuring Spock on {ndnm}"
-            run_cmd(cmd, n, message=message, verbose=verbose)
+            # Build the minimal db dict and call create_spock_db
+            spock_db = {
+                "db_name": db_name,
+                "db_user": db_user,
+                "db_password": db_passwd
+            }
+            create_spock_db([n], spock_db, db_settings, initial=True)
 
 
 def ssh_cross_wire_pgedge(
@@ -620,80 +635,6 @@ def ssh_cross_wire_pgedge(
     print(result.stdout)
 
 
-def ssh_install_pgedge(
-    cluster_name, db, db_settings, db_user, db_passwd, nodes, install, verbose
-):
-    """
-    Install and configure pgEdge on a list of nodes.
-
-    Args:
-        cluster_name (str): The name of the cluster.
-        db_name (str): The database name.
-        db_settings (dict): Database settings.
-        db_user (str): The database user.
-        db_password (str): The database user password.
-        nodes (list): The list of nodes.
-        verbose (bool): Verbose output.
-    """
-    if install is None:
-        install = True
-    for n in nodes:
-        REPO = os.getenv("REPO", "")
-        print("\n")
-        print_install_hdr(
-            cluster_name,
-            db,
-            db_user,
-            len(nodes),
-            n["name"],
-            n["path"],
-            n["public_ip"],
-            n["port"],
-            REPO,
-        )
-        ndnm = n["name"]
-        ndpath = n["path"]
-        ndip = n["public_ip"]
-        pg = db_settings["pg_version"]
-        spock = db_settings["spock_version"]
-        try:
-            ndport = str(n["port"])
-        except Exception:
-            ndport = "5432"
-
-        if REPO == "":
-            REPO = DEFAULT_REPO
-            os.environ["REPO"] = REPO
-
-        if install == True:
-            install_py = "install.py"
-
-            cmd0 = f"export REPO={REPO}; "
-            cmd1 = f"mkdir -p {ndpath}; cd {ndpath}; "
-            cmd2 = f'python3 -c "\\$(curl -fsSL {REPO}/{install_py})"'
-            message = f"Installing pgedge"
-            run_cmd(cmd0 + cmd1 + cmd2, n, message=message, verbose=verbose)
-
-        nc = os.path.join(ndpath, "pgedge", "pgedge ")
-        parms = f" -U {db_user} -P {db_passwd} -d {db} --port {ndport}"
-        if pg is not None and pg != "":
-            parms = parms + f" --pg_ver {pg}"
-        if spock is not None and spock != "":
-            parms = parms + f" --spock_ver {spock}"
-        if db_settings["auto_start"] == "on":
-            parms = f"{parms} --autostart"
-        cmd = f"{nc} setup {parms}"
-        message = f"Setup pgedge"
-        run_cmd(cmd, n, message=message, verbose=verbose)
-        if db_settings["auto_ddl"] == "on":
-            cmd = nc + " db guc-set spock.enable_ddl_replication on;"
-            cmd = cmd + " " + nc + " db guc-set spock.include_ddl_repset on;"
-            cmd = cmd + " " + nc + " db guc-set spock.allow_ddl_from_functions on;"
-            message = f"Setup spock"
-            run_cmd(cmd, n, message=message, verbose=verbose)
-        if db_settings["auto_ddl"] == "on":
-            util.message("#")
-    return 0
 
 
 def remove(cluster_name, force=False):
@@ -891,7 +832,7 @@ def json_create(
         util.exit_message(f"Error creating directory '{cluster_dir}': {e}")
 
     cluster_json = {
-        "json_version": "1.1",
+        "json_version": "1.0",
         "cluster_name": cluster_name,
         "log_level": "debug",
         "update_date": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S GMT"),
@@ -1268,48 +1209,99 @@ def json_create(
     except Exception as e:
         util.exit_message(f"Unable to create JSON file: {e}", 1)
 
-
 def create_spock_db(nodes, db, db_settings, initial=True):
-    for n in nodes:
-        ip = n["public_ip"] if "public_ip" in n else n["private_ip"]
-        nc = n["path"] + os.sep + "pgedge" + os.sep + "pgedge "
-        if initial:
-            cmd = (
-                nc
-                + " db create -U "
-                + db["db_user"]
-                + " -d "
-                + db["db_name"]
-                + " -p "
-                + db["db_password"]
-            )
-        else:
-            cmd = (
-                nc
-                + " db create --User "
-                + db["db_user"]
-                + " --db "
-                + db["db_name"]
-                + " --Passwd "
-                + db["db_password"]
-            )
-        util.echo_cmd(cmd, host=ip, usr=n["os_user"], key=n["ssh_key"])
-        if db_settings["auto_ddl"] == "on" and initial:
-            spock_cmd = (
-                f"PGPASSWORD='{db_password}' "
-                f"{psql_path} -U {db_user} -p {nd['port']} -d {db_name} "
-                f'-c "ALTER SYSTEM SET spock.enable_ddl_replication=on;" '
-                f'-c "ALTER SYSTEM SET spock.include_ddl_repset=on;" '
-                f'-c "ALTER SYSTEM SET spock.allow_ddl_from_functions=on;" '
-                f'-c "SELECT pg_reload_conf();"'
-            )
-            message = (
-                f"Applying Spock DDL replication settings on {nd['name']} "
-                f"for database '{db_name}'"
-            )
-            run_cmd(spock_cmd, n, message=message, verbose=False)
-            # ---------------------------------------------------------------
+    """
+    Create a database on each node using the specified credentials.
+    If 'auto_ddl' is on (and this is the initial call), also set Spock GUCs
+    via 'db guc-set' for DDL replication.
 
+    :param nodes: List of node dicts with entries like:
+                  {
+                    "name": str,
+                    "public_ip": str (or None),
+                    "private_ip": str (or None),
+                    "port": int,
+                    "path": str,
+                    "os_user": str,
+                    "ssh_key": str
+                  }
+    :param db: Dictionary with keys:
+                  {
+                    "db_name": str,
+                    "db_user": str,
+                    "db_password": str
+                  }
+    :param db_settings: Dict that may contain:
+                        {
+                          "auto_ddl": "on"/"off",
+                          ...
+                        }
+    :param initial: If True, set spock.* GUCs for DDL replication. 
+                    If False, just create the DB.
+    """
+
+    db_name = db["db_name"]
+    db_user = db["db_user"]
+    db_pass = db["db_password"]
+
+    auto_ddl = db_settings.get("auto_ddl", "off")
+
+    for n in nodes:
+        # Choose whichever IP is present
+        ip = n.get("public_ip") or n.get("private_ip")
+        port = str(n.get("port", 5432))
+
+        # Full path to pgedge CLI. Example: "/home/ubuntu/n1/pgedge/pgedge"
+        pgedge_cli = os.path.join(n["path"], "pgedge", "pgedge")
+
+        #
+        # 1) Create DB using "pgedge db create"
+        #
+        # The pgEdge CLI syntax requires:
+        #   pgedge db create -User <USER> -db <DB> -Passwd <PASSWORD> --Port=<PORT>
+        #
+        create_cmd = (
+            f"{pgedge_cli} db create "
+            f"-User {db_user} "
+            f"-db {db_name} "
+            f"-Passwd {db_pass} "
+            f"--Port={port}"
+        )
+
+        # Use run_cmd(..., ignore=True) to avoid errors if DB already exists
+        run_cmd(
+            cmd=create_cmd,
+            node=n,
+            message=f"Creating DB '{db_name}' (if missing) on node '{n['name']}'",
+            verbose=False,
+            ignore=True
+        )
+
+        #
+        # 2) If auto_ddl=on and initial, set spock.* GUCs using "db guc-set"
+        #
+        # The snippet you provided:
+        #    cmd = (
+        #       f"{pgedge_cli} db guc-set spock.enable_ddl_replication on;"
+        #       f" {pgedge_cli} db guc-set spock.include_ddl_repset on;"
+        #       f" {pgedge_cli} db guc-set spock.allow_ddl_from_functions on;"
+        #    )
+        # does not require specifying the DB name or port.
+        #
+        if auto_ddl == "on" and initial:
+            guc_cmd = (
+                f"{pgedge_cli} db guc-set spock.enable_ddl_replication on;"
+                f" {pgedge_cli} db guc-set spock.include_ddl_repset on;"
+                f" {pgedge_cli} db guc-set spock.allow_ddl_from_functions on;"
+            )
+
+            run_cmd(
+                cmd=guc_cmd,
+                node=n,
+                message=f"Configuring Spock GUCs on node '{n['name']}'",
+                verbose=False,
+                ignore=False
+            )
 
 def update_json(cluster_name, db_json):
     """Update the cluster JSON configuration with new database information."""
