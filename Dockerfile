@@ -14,7 +14,7 @@ WORKDIR /home/postgres/snowflake
 
 COPY . /home/postgres/snowflake/
 
-RUN USE_PGXS=1 make && USE_PGXS=1 make install
+#RUN USE_PGXS=1 make && USE_PGXS=1 make install
 
 EXPOSE 5432
 
