@@ -4,7 +4,7 @@ import os
 from typing import Union
 from datetime import datetime
 from itertools import combinations
-from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor
 
 import psycopg
 from multiprocessing import Manager, cpu_count
@@ -336,25 +336,23 @@ def compare_checksums(shared_objects, worker_state, batches):
                 if node_pair_key not in diff_dict:
                     diff_dict[node_pair_key] = {}
 
+                # Update diff_dict with the results of the diff
+                if len(t1_diff) > 0 or len(t2_diff) > 0:
+                    temp_dict = {}
+                    if host1 in diff_dict[node_pair_key]:
+                        temp_dict[host1] = diff_dict[node_pair_key][host1]
+                    else:
+                        temp_dict[host1] = []
+                    if host2 in diff_dict[node_pair_key]:
+                        temp_dict[host2] = diff_dict[node_pair_key][host2]
+                    else:
+                        temp_dict[host2] = []
+
+                    temp_dict[host1] += [dict(zip(cols, row)) for row in t1_diff]
+                    temp_dict[host2] += [dict(zip(cols, row)) for row in t2_diff]
+
                 with lock:
-                    # Update diff_dict with the results of the diff
-                    if len(t1_diff) > 0 or len(t2_diff) > 0:
-                        temp_dict = {}
-                        if host1 in diff_dict[node_pair_key]:
-                            temp_dict[host1] = diff_dict[node_pair_key][host1]
-                        else:
-                            temp_dict[host1] = []
-                        if host2 in diff_dict[node_pair_key]:
-                            temp_dict[host2] = diff_dict[node_pair_key][host2]
-                        else:
-                            temp_dict[host2] = []
-
-                        temp_dict[host1] += [dict(zip(cols, row)) for row in t1_diff]
-                        temp_dict[host2] += [dict(zip(cols, row)) for row in t2_diff]
-
-                        diff_dict[node_pair_key] = temp_dict
-
-                    # Update row_diff_count with the number of diffs
+                    diff_dict[node_pair_key] = temp_dict
                     row_diff_count.value += max(len(t1_diff), len(t2_diff))
 
                 if row_diff_count.value >= config.MAX_DIFF_ROWS:

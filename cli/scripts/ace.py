@@ -1006,19 +1006,15 @@ def table_diff_checks(
             user = node_info["db_user"]
             port = node_info.get("port", 5432)
 
-            if td_task._nodes == "all":
-                td_task.fields.node_list.append(node_info["name"])
-
-            if (
-                td_task.fields.node_list
-                and node_info["name"] in td_task.fields.node_list
-            ) or (not td_task.fields.node_list):
+            if node_info["name"] in td_task.fields.node_list:
                 params, conn = td_task.connection_pool.get_cluster_node_connection(
                     node_info,
                     client_role=(
                         td_task.client_role if td_task.invoke_method == "api" else None
                     ),
                 )
+            else:
+                continue
 
             curr_cols = get_cols(conn, l_schema, l_table)
             curr_key = get_key(conn, l_schema, l_table)
