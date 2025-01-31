@@ -2016,5 +2016,6 @@ if __name__ == "__main__":
             "auto-repair": ace_core.auto_repair,
             "start": ace_daemon.start_ace,
             "build-mtree": ace_mtree.build_mtree,
+            "update-mtree": ace_mtree.update_mtree,
         }
     )

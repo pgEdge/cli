@@ -33,7 +33,10 @@ CREATE_BLOCK_ID_FUNCTION = """
     RETURNS bigint AS $$
     DECLARE
         pos bigint;
+        last_pos bigint;
+        last_block_end {pkey_type};
     BEGIN
+        -- First try to find the exact block this key belongs to
         SELECT node_position INTO pos
         FROM ace_mtree_{schema}_{table}
         WHERE node_level = 0
@@ -42,12 +45,27 @@ CREATE_BLOCK_ID_FUNCTION = """
         ORDER BY node_position
         LIMIT 1;
 
+        -- If no block found, this key might be beyond the last block
+        -- In this case, we should return the last block
         IF pos IS NULL THEN
-            SELECT node_position INTO pos
+            SELECT node_position, range_end
+            INTO last_pos, last_block_end
             FROM ace_mtree_{schema}_{table}
             WHERE node_level = 0
-            ORDER BY node_position
+            ORDER BY node_position DESC
             LIMIT 1;
+
+            IF {pkey_name} >= last_block_end OR last_block_end IS NULL THEN
+                RETURN last_pos;
+            ELSE
+                -- Otherwise return the first block
+                SELECT node_position INTO pos
+                FROM ace_mtree_{schema}_{table}
+                WHERE node_level = 0
+                ORDER BY node_position
+                LIMIT 1;
+                RETURN pos;
+            END IF;
         END IF;
 
         RETURN pos;
@@ -55,27 +73,158 @@ CREATE_BLOCK_ID_FUNCTION = """
     $$ LANGUAGE plpgsql STABLE;
 """
 
+CREATE_SPLIT_BLOCK_FUNCTION = """
+    CREATE OR REPLACE FUNCTION split_block_if_needed_{schema}_{table}(block_pos bigint)
+    RETURNS void AS $$
+    DECLARE
+        block_size bigint;
+        target_size bigint;
+        split_key {pkey_type};
+        old_end {pkey_type};
+        new_pos bigint;
+        max_pos bigint;
+    BEGIN
+        target_size := {block_size};
+
+        SELECT count(*) INTO block_size
+        FROM {schema}.{table} t
+        JOIN ace_mtree_{schema}_{table} mt
+            ON mt.node_level = 0
+            AND mt.node_position = block_pos
+            AND t.{pkey} >= mt.range_start
+            AND (t.{pkey} < mt.range_end OR mt.range_end IS NULL);
+
+        -- If block is more than 2x target size, split it
+        IF block_size > 2 * target_size THEN
+            -- Up for debate, but median should work for most cases
+            WITH ordered_keys AS (
+                SELECT t.{pkey},
+                       row_number() OVER (ORDER BY t.{pkey}) as rn
+                FROM {schema}.{table} t
+                JOIN ace_mtree_{schema}_{table} mt
+                    ON mt.node_level = 0
+                    AND mt.node_position = block_pos
+                    AND t.{pkey} >= mt.range_start
+                    AND (t.{pkey} < mt.range_end OR mt.range_end IS NULL)
+            )
+            SELECT {pkey} INTO split_key
+            FROM ordered_keys
+            WHERE rn = block_size/2;
+
+            SELECT range_end, COALESCE(
+                (
+                    SELECT
+                        max(node_position)
+                    FROM
+                        ace_mtree_{schema}_{table}
+                    WHERE
+                        node_level = 0
+                ),
+                0
+            ) INTO old_end, max_pos
+            FROM ace_mtree_{schema}_{table}
+            WHERE node_level = 0 AND node_position = block_pos;
+
+            -- Always use the next available position
+            -- TODO: Will this work for non-integer pkeys?
+            new_pos := max_pos + 1;
+
+            -- Update the existing block's end
+            UPDATE ace_mtree_{schema}_{table}
+            SET range_end = split_key,
+                dirty = true,
+                last_modified = current_timestamp
+            WHERE node_level = 0 AND node_position = block_pos;
+
+            -- Insert the new block
+            INSERT INTO ace_mtree_{schema}_{table}
+                (
+                    node_level,
+                    node_position,
+                    range_start,
+                    range_end,
+                    dirty,
+                    last_modified
+                )
+            VALUES
+                (0, new_pos, split_key, old_end, true, current_timestamp);
+
+            -- Ensure parent nodes exist up to the root
+            -- This is needed for both the original and new block positions
+            -- Until update_mtree is called, this will be a disconnected graph
+            -- instead of a full tree. The full merkle tree structure will be
+            -- restored only when update_mtree is called.
+            -- This is okay since running the new table-diff will call
+            -- update_mtree anyway.
+            WITH RECURSIVE ensure_parents(level, pos) AS (
+                -- Base case: start with both block positions
+                SELECT 0, block_pos
+                UNION
+                SELECT 0, new_pos
+                UNION ALL
+                -- Recursive case: add parent positions
+                SELECT p.level + 1, p.pos / 2
+                FROM ensure_parents p
+                WHERE p.pos > 0
+            )
+            INSERT INTO ace_mtree_{schema}_{table}
+                (node_level, node_position, last_modified)
+            SELECT level, pos, current_timestamp
+            FROM ensure_parents
+            WHERE level > 0
+            ON CONFLICT (node_level, node_position) DO NOTHING;
+        END IF;
+    END;
+    $$ LANGUAGE plpgsql;
+"""
+
 CREATE_TRIGGER_FUNCTION = """
     CREATE OR REPLACE FUNCTION track_dirty_blocks_{schema}_{table}()
     RETURNS trigger AS $$
     DECLARE
         affected_pos bigint;
+        last_block_pos bigint;
+        last_block_end {pkey_type};
     BEGIN
+        IF TG_LEVEL = 'STATEMENT' THEN
+            RETURN NULL;
+        END IF;
+
         IF TG_OP = 'INSERT' THEN
+            -- Get the last block's position and end value
+            SELECT node_position, range_end
+            INTO last_block_pos, last_block_end
+            FROM ace_mtree_{schema}_{table}
+            WHERE node_level = 0
+            ORDER BY node_position DESC
+            LIMIT 1;
+
+            -- If this key is beyond the last block's end, set its range_end to NULL
+            -- Still deciding if this should be null or set to the new value
+            IF NEW.{pkey} > last_block_end AND last_block_end IS NOT NULL THEN
+                UPDATE ace_mtree_{schema}_{table}
+                SET range_end = NULL,
+                    dirty = true,
+                    last_modified = current_timestamp
+                WHERE node_level = 0
+                AND node_position = last_block_pos;
+            END IF;
+
             affected_pos := get_block_id_{schema}_{table}(NEW.{pkey});
+            -- Check if we need to split the block after insert
+            PERFORM split_block_if_needed_{schema}_{table}(affected_pos);
         ELSIF TG_OP = 'DELETE' THEN
             affected_pos := get_block_id_{schema}_{table}(OLD.{pkey});
         ELSIF TG_OP = 'UPDATE' THEN
-            IF get_block_id_{schema}_{table}(OLD.{pkey}) !=
-            get_block_id_{schema}_{table}(NEW.{pkey}) THEN
+            IF OLD.{pkey} IS DISTINCT FROM NEW.{pkey} THEN
                 UPDATE ace_mtree_{schema}_{table}
                 SET dirty = true,
                     last_modified = current_timestamp
-                WHERE node_position IN (
+                WHERE node_level = 0
+                AND node_position IN (
                     get_block_id_{schema}_{table}(OLD.{pkey}),
                     get_block_id_{schema}_{table}(NEW.{pkey})
-                )
-                AND node_level = 0;
+                );
                 RETURN NULL;
             END IF;
             affected_pos := get_block_id_{schema}_{table}(NEW.{pkey});
@@ -84,8 +233,8 @@ CREATE_TRIGGER_FUNCTION = """
         UPDATE ace_mtree_{schema}_{table}
         SET dirty = true,
             last_modified = current_timestamp
-        WHERE node_position = affected_pos
-        AND node_level = 0;
+        WHERE node_level = 0
+        AND node_position = affected_pos;
 
         RETURN NULL;
     END;
@@ -97,7 +246,7 @@ CREATE_TRIGGER = """
     track_dirty_blocks_{schema}_{table}_trigger ON {schema}.{table};
     CREATE TRIGGER track_dirty_blocks_{schema}_{table}_trigger
     AFTER INSERT OR UPDATE OR DELETE ON {schema}.{table}
-    FOR EACH STATEMENT EXECUTE FUNCTION track_dirty_blocks_{schema}_{table}();
+    FOR EACH ROW EXECUTE FUNCTION track_dirty_blocks_{schema}_{table}();
 """
 
 CREATE_XOR_FUNCTION = """
@@ -174,12 +323,13 @@ UPDATE_METADATA = """
         last_updated = EXCLUDED.last_updated;
 """
 
+# TODO: Use SYSTEM for larger tables and BERNOULLI for smaller tables
 CALCULATE_BLOCK_RANGES = """
     WITH sampled_data AS (
         SELECT
             {key}
         FROM {schema}.{table}
-        TABLESAMPLE SYSTEM(1)
+        TABLESAMPLE BERNOULLI(1)
         ORDER BY {key}
     ),
     first_row AS (
@@ -284,6 +434,71 @@ GET_BLOCK_RANGES = """
     FROM ace_mtree_{schema}_{table}
     WHERE node_level = 0
     ORDER BY node_position;
+"""
+
+GET_DIRTY_AND_NEW_BLOCKS = """
+    SELECT node_position, range_start, range_end
+    FROM ace_mtree_{schema}_{table}
+    WHERE node_level = 0
+    AND (dirty = true OR leaf_hash IS NULL)
+    ORDER BY node_position;
+"""
+
+UPDATE_PARENT_NODES = """
+    WITH RECURSIVE node_tree AS (
+        -- Base case: get all affected leaf nodes
+        SELECT
+            node_level,
+            node_position,
+            node_hash,
+            node_position / 2 as parent_position
+        FROM ace_mtree_{schema}_{table}
+        WHERE node_level = 0
+        AND node_position = ANY(%(affected_positions)s)
+
+        UNION ALL
+
+        -- Recursive case: get parent nodes and compute their new hashes
+        SELECT
+            p.node_level,
+            p.node_position,
+            CASE
+                -- If we have both children, XOR their hashes
+                WHEN c2.node_hash IS NOT NULL THEN
+                    c1.node_hash # c2.node_hash
+                -- If we only have one child, use its hash
+                ELSE c1.node_hash
+            END as node_hash,
+            p.node_position / 2 as parent_position
+        FROM ace_mtree_{schema}_{table} p
+        JOIN node_tree c1
+            ON c1.parent_position = p.node_position
+        LEFT JOIN ace_mtree_{schema}_{table} c2
+            ON c2.node_level = c1.node_level
+            AND c2.node_position = (
+                CASE
+                    WHEN c1.node_position %% 2 = 0 THEN c1.node_position + 1
+                    ELSE c1.node_position - 1
+                END
+            )
+        WHERE p.node_level = c1.node_level + 1
+    )
+    UPDATE ace_mtree_{schema}_{table} mt
+    SET
+        node_hash = nt.node_hash,
+        last_modified = current_timestamp
+    FROM node_tree nt
+    WHERE mt.node_level = nt.node_level
+    AND mt.node_position = nt.node_position
+    AND mt.node_level > 0;
+"""
+
+CLEAR_DIRTY_FLAGS = """
+    UPDATE ace_mtree_{schema}_{table}
+    SET dirty = false,
+        last_modified = current_timestamp
+    WHERE node_level = 0
+    AND node_position = ANY(%(node_positions)s);
 """
 
 BUILD_PARENT_NODES = """
