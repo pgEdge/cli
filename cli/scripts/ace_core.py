@@ -19,6 +19,7 @@ from tqdm import tqdm
 import ace
 import ace_db
 import ace_html_reporter
+from cli.scripts.ace_sql import GET_PKEY_OFFSETS
 import cluster
 import util
 import ace_config as config
@@ -421,85 +422,72 @@ def table_diff(td_task: TableDiffTask, skip_all_checks: bool = False):
         )
         return
 
-    # Use conn_with_max_rows to get the first and last primary key values
-    # of every block row. Repeat until we no longer have any more rows.
-    # Store results in pkey_offsets.
+    # # Use conn_with_max_rows to get the first and last primary key values
+    # # of every block row. Repeat until we no longer have any more rows.
+    # # Store results in pkey_offsets.
 
-    if simple_primary_key:
-        pkey_sql = sql.SQL("SELECT {key} FROM {table_name} ORDER BY {key}").format(
-            key=sql.Identifier(td_task.fields.key),
-            table_name=sql.SQL("{}.{}").format(
-                sql.Identifier(td_task.fields.l_schema),
-                sql.Identifier(td_task.fields.l_table),
-            ),
-        )
-    else:
-        pkey_sql = sql.SQL("SELECT {key} FROM {table_name} ORDER BY {key}").format(
-            key=sql.SQL(", ").join(
-                [sql.Identifier(col) for col in td_task.fields.key.split(",")]
-            ),
-            table_name=sql.SQL("{}.{}").format(
-                sql.Identifier(td_task.fields.l_schema),
-                sql.Identifier(td_task.fields.l_table),
-            ),
-        )
+    # if simple_primary_key:
+    #     pkey_sql = sql.SQL("SELECT {key} FROM {table_name} ORDER BY {key}").format(
+    #         key=sql.Identifier(td_task.fields.key),
+    #         table_name=sql.SQL("{}.{}").format(
+    #             sql.Identifier(td_task.fields.l_schema),
+    #             sql.Identifier(td_task.fields.l_table),
+    #         ),
+    #     )
+    # else:
+    #     pkey_sql = sql.SQL("SELECT {key} FROM {table_name} ORDER BY {key}").format(
+    #         key=sql.SQL(", ").join(
+    #             [sql.Identifier(col) for col in td_task.fields.key.split(",")]
+    #         ),
+    #         table_name=sql.SQL("{}.{}").format(
+    #             sql.Identifier(td_task.fields.l_schema),
+    #             sql.Identifier(td_task.fields.l_table),
+    #         ),
+    #     )
 
-    def get_pkey_offsets(conn, pkey_sql, block_rows):
-        pkey_offsets = []
-        cur = conn.cursor()
-        cur.execute(pkey_sql)
-        rows = cur.fetchmany(block_rows)
+    # def get_pkey_offsets(conn, pkey_sql, block_rows):
+    #     pkey_offsets = []
+    #     cur = conn.cursor()
+    #     cur.execute(pkey_sql)
+    #     rows = cur.fetchmany(block_rows)
 
-        if simple_primary_key:
-            rows[:] = [str(x[0]) for x in rows]
-            pkey_offsets.append((None, str(rows[0])))
-            prev_min_offset = str(rows[0])
-            prev_max_offset = str(rows[-1])
-        else:
-            rows[:] = [tuple(str(i) for i in x) for x in rows]
-            pkey_offsets.append((None, rows[0]))
-            prev_min_offset = rows[0]
-            prev_max_offset = rows[-1]
+    #     if simple_primary_key:
+    #         rows[:] = [str(x[0]) for x in rows]
+    #         pkey_offsets.append((None, str(rows[0])))
+    #         prev_min_offset = str(rows[0])
+    #         prev_max_offset = str(rows[-1])
+    #     else:
+    #         rows[:] = [tuple(str(i) for i in x) for x in rows]
+    #         pkey_offsets.append((None, rows[0]))
+    #         prev_min_offset = rows[0]
+    #         prev_max_offset = rows[-1]
 
-        while rows:
-            rows = cur.fetchmany(block_rows)
-            if simple_primary_key:
-                rows[:] = [str(x[0]) for x in rows]
-            else:
-                rows[:] = [tuple(str(i) for i in x) for x in rows]
+    #     while rows:
+    #         rows = cur.fetchmany(block_rows)
+    #         if simple_primary_key:
+    #             rows[:] = [str(x[0]) for x in rows]
+    #         else:
+    #             rows[:] = [tuple(str(i) for i in x) for x in rows]
 
-            if not rows:
-                if prev_max_offset != prev_min_offset:
-                    pkey_offsets.append((prev_min_offset, prev_max_offset))
-                pkey_offsets.append((prev_max_offset, None))
-                break
+    #         if not rows:
+    #             if prev_max_offset != prev_min_offset:
+    #                 pkey_offsets.append((prev_min_offset, prev_max_offset))
+    #             pkey_offsets.append((prev_max_offset, None))
+    #             break
 
-            curr_min_offset = rows[0]
-            pkey_offsets.append((prev_min_offset, curr_min_offset))
-            prev_min_offset = curr_min_offset
-            prev_max_offset = rows[-1]
+    #         curr_min_offset = rows[0]
+    #         pkey_offsets.append((prev_min_offset, curr_min_offset))
+    #         prev_min_offset = curr_min_offset
+    #         prev_max_offset = rows[-1]
 
-        cur.close()
-        return pkey_offsets
+    #     cur.close()
+    #     return pkey_offsets
 
     util.message(
         "Getting primary key offsets for table...",
         p_state="info",
         quiet_mode=td_task.quiet_mode,
     )
-
-    future = ThreadPoolExecutor().submit(
-        get_pkey_offsets, conn_with_max_rows, pkey_sql, td_task.block_rows
-    )
-    pkey_offsets = future.result() if not future.exception() else []
-    if future.exception():
-        context = {
-            "total_rows": total_rows,
-            "mismatch": False,
-            "errors": [str(future.exception())],
-        }
-        ace.handle_task_exception(td_task, context)
-        raise future.exception()
 
     total_blocks = row_count // td_task.block_rows
     total_blocks = total_blocks if total_blocks > 0 else 1
@@ -508,6 +496,26 @@ def table_diff(td_task: TableDiffTask, skip_all_checks: bool = False):
 
     # If we don't have enough blocks to keep all CPUs busy, use fewer processes
     procs = max_procs if total_blocks > max_procs else total_blocks
+
+    try:
+        ref_cur = conn_with_max_rows.cursor()
+        ref_cur.execute(GET_PKEY_OFFSETS.format(
+            schema=sql.Identifier(td_task.fields.l_schema),
+            table=sql.Identifier(td_task.fields.l_table),
+            key=sql.SQL(", ").join(
+                [sql.Identifier(col) for col in td_task.fields.key.split(",")]
+            ),
+            num_blocks=total_blocks,
+        ))
+        pkey_offsets = ref_cur.fetchall()
+    except Exception as e:
+        context = {
+            "total_rows": total_rows,
+            "mismatch": False,
+            "errors": [str(e)],
+        }
+        ace.handle_task_exception(td_task, context)
+        raise e
 
     start_time = datetime.now()
 

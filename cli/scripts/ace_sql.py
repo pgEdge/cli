@@ -534,3 +534,82 @@ INSERT_BLOCK_RANGES = """
     VALUES
         (0, %s, %s, %s, current_timestamp);
 """
+
+# This is the optimised version of the former get_pkey_offsets() in table_diff
+# The Bernoulli sampling method is slow for larger tables and smaller sample sizes.
+# However, we're using it here since regular table-diff should not be used
+# for large tables anyway. Nevertheless, this should give us a significant
+# performance boost over the former get_pkey_offsets() function.
+GET_PKEY_OFFSETS = """
+    WITH sampled_data AS (
+        SELECT {key}
+        FROM {schema}.{table}
+        TABLESAMPLE BERNOULLI(1)
+        ORDER BY {key}
+    ),
+    first_row AS (
+        SELECT {key}
+        FROM {schema}.{table}
+        ORDER BY {key}
+        LIMIT 1
+    ),
+    last_row AS (
+        SELECT {key}
+        FROM {schema}.{table}
+        ORDER BY {key} DESC
+        LIMIT 1
+    ),
+    sample_boundaries AS (
+        SELECT {key},
+            ntile({num_blocks}) OVER (ORDER BY {key}) as bucket
+        FROM sampled_data
+    ),
+    block_starts AS (
+        SELECT DISTINCT ON (bucket)
+            {key}
+        FROM sample_boundaries
+        ORDER BY bucket, {key}
+    ),
+    all_bounds AS (
+        SELECT
+            NULL as {key},
+            -1 as seq
+        UNION ALL
+        SELECT
+            {key},
+            0 as seq
+        FROM first_row
+        UNION ALL
+        SELECT
+            {key},
+            1 as seq
+        FROM block_starts
+        WHERE ({key}) > (SELECT {key} FROM first_row)
+        UNION ALL
+        SELECT
+            {key},
+            2 as seq
+        FROM last_row
+    ),
+    ranges AS (
+        SELECT
+            {key},
+            ARRAY[COALESCE({key}::text, '')] as boundary,
+            LEAD(ARRAY[COALESCE({key}::text, '')])
+                OVER (ORDER BY seq, COALESCE({key}, -1)) as next_boundary,
+            seq
+        FROM all_bounds
+    )
+    SELECT
+        CASE
+            WHEN seq = -1 THEN NULL
+            ELSE NULLIF(boundary, ARRAY['',''])
+        END as range_start,
+        CASE
+            WHEN LEAD(seq) OVER (ORDER BY seq, COALESCE({key}, -1)) IS NULL THEN NULL
+            ELSE next_boundary
+        END as range_end
+    FROM ranges
+    WHERE seq < 3
+    ORDER BY seq, COALESCE({key}, -1);
+"""
