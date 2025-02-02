@@ -545,71 +545,66 @@ GET_PKEY_OFFSETS = """
         SELECT {key}
         FROM {schema}.{table}
         TABLESAMPLE BERNOULLI(1)
-        ORDER BY {key}
+        ORDER BY ROW({key})
     ),
     first_row AS (
         SELECT {key}
         FROM {schema}.{table}
-        ORDER BY {key}
+        ORDER BY ROW({key})
         LIMIT 1
     ),
     last_row AS (
         SELECT {key}
         FROM {schema}.{table}
-        ORDER BY {key} DESC
+        ORDER BY ROW({key}) DESC
         LIMIT 1
     ),
     sample_boundaries AS (
         SELECT {key},
-            ntile({num_blocks}) OVER (ORDER BY {key}) as bucket
+            ntile({num_blocks}) OVER (ORDER BY ROW({key})) as bucket
         FROM sampled_data
     ),
     block_starts AS (
         SELECT DISTINCT ON (bucket)
-            {key}
+            {key},
+            ROW({key})::text as row_text
         FROM sample_boundaries
-        ORDER BY bucket, {key}
+        ORDER BY bucket, ROW({key})
     ),
     all_bounds AS (
-        SELECT
-            NULL as {key},
-            -1 as seq
+        SELECT NULL as range_start,
+               (SELECT string_to_array(TRIM(BOTH '()' FROM ROW({key})::text), ',')
+               FROM first_row) as range_end,
+               -1 as seq
         UNION ALL
         SELECT
-            {key},
+            (SELECT string_to_array(TRIM(BOTH '()' FROM ROW({key})::text), ',')
+            FROM first_row) as range_start,
+            (SELECT string_to_array(TRIM(BOTH '()' FROM ROW({key})::text), ',')
+            FROM block_starts ORDER BY ROW({key}) LIMIT 1) as range_end,
             0 as seq
-        FROM first_row
         UNION ALL
         SELECT
-            {key},
+            string_to_array(TRIM(BOTH '()' FROM row_text), ',') as range_start,
+            CASE
+                WHEN LEAD(row_text) OVER (ORDER BY ROW({key})) IS NULL THEN
+                    (SELECT string_to_array(TRIM(BOTH '()' FROM ROW({key})::text), ',')
+                    FROM last_row)
+                ELSE
+                    string_to_array(TRIM(BOTH '()' FROM LEAD(row_text)
+                    OVER (ORDER BY ROW({key}))), ',')
+            END as range_end,
             1 as seq
         FROM block_starts
-        WHERE ({key}) > (SELECT {key} FROM first_row)
         UNION ALL
         SELECT
-            {key},
+            (SELECT string_to_array(TRIM(BOTH '()' FROM ROW({key})::text), ',')
+            FROM last_row) as range_start,
+            NULL as range_end,
             2 as seq
-        FROM last_row
-    ),
-    ranges AS (
-        SELECT
-            {key},
-            ARRAY[COALESCE({key}::text, '')] as boundary,
-            LEAD(ARRAY[COALESCE({key}::text, '')])
-                OVER (ORDER BY seq, COALESCE({key}, -1)) as next_boundary,
-            seq
-        FROM all_bounds
     )
-    SELECT
-        CASE
-            WHEN seq = -1 THEN NULL
-            ELSE NULLIF(boundary, ARRAY['',''])
-        END as range_start,
-        CASE
-            WHEN LEAD(seq) OVER (ORDER BY seq, COALESCE({key}, -1)) IS NULL THEN NULL
-            ELSE next_boundary
-        END as range_end
-    FROM ranges
-    WHERE seq < 3
-    ORDER BY seq, COALESCE({key}, -1);
+    SELECT range_start,
+           range_end
+    FROM all_bounds
+    ORDER BY seq;
 """

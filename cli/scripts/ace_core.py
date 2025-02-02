@@ -19,7 +19,7 @@ from tqdm import tqdm
 import ace
 import ace_db
 import ace_html_reporter
-from cli.scripts.ace_sql import GET_PKEY_OFFSETS
+from ace_sql import GET_PKEY_OFFSETS
 import cluster
 import util
 import ace_config as config
@@ -44,7 +44,7 @@ def run_query(worker_state, host, query):
     return results
 
 
-def init_conn_pool(worker_id, shared_objects, worker_state):
+def init_conn_pool(shared_objects, worker_state):
 
     td_task = shared_objects["td_task"]
 
@@ -65,7 +65,7 @@ def init_conn_pool(worker_id, shared_objects, worker_state):
 
 # Ignore the type checker warning for shared_objects.
 # It is unused in this function, but is required by the mpire library.
-def close_conn_pool(worker_id, shared_objects, worker_state):
+def close_conn_pool(shared_objects, worker_state):
     try:
         for host, cur in worker_state.items():
             conn = cur.connection
@@ -115,7 +115,7 @@ def create_result_dict(
     }
 
 
-def compare_checksums(worker_id, shared_objects, worker_state, batches):
+def compare_checksums(shared_objects, worker_state, batches):
     p_key = shared_objects["p_key"]
     schema_name = shared_objects["schema_name"]
     table_name = shared_objects["table_name"]
@@ -141,13 +141,13 @@ def compare_checksums(worker_id, shared_objects, worker_state, batches):
                 if pkey1 is not None:
                     where_clause_temp.append(
                         sql.SQL("{p_key} >= {pkey1}").format(
-                            p_key=sql.Identifier(p_key), pkey1=sql.Literal(pkey1)
+                            p_key=sql.Identifier(p_key), pkey1=sql.Literal(pkey1[0])
                         )
                     )
                 if pkey2 is not None:
                     where_clause_temp.append(
                         sql.SQL("{p_key} < {pkey2}").format(
-                            p_key=sql.Identifier(p_key), pkey2=sql.Literal(pkey2)
+                            p_key=sql.Identifier(p_key), pkey2=sql.Literal(pkey2[0])
                         )
                     )
             else:
@@ -422,67 +422,6 @@ def table_diff(td_task: TableDiffTask, skip_all_checks: bool = False):
         )
         return
 
-    # # Use conn_with_max_rows to get the first and last primary key values
-    # # of every block row. Repeat until we no longer have any more rows.
-    # # Store results in pkey_offsets.
-
-    # if simple_primary_key:
-    #     pkey_sql = sql.SQL("SELECT {key} FROM {table_name} ORDER BY {key}").format(
-    #         key=sql.Identifier(td_task.fields.key),
-    #         table_name=sql.SQL("{}.{}").format(
-    #             sql.Identifier(td_task.fields.l_schema),
-    #             sql.Identifier(td_task.fields.l_table),
-    #         ),
-    #     )
-    # else:
-    #     pkey_sql = sql.SQL("SELECT {key} FROM {table_name} ORDER BY {key}").format(
-    #         key=sql.SQL(", ").join(
-    #             [sql.Identifier(col) for col in td_task.fields.key.split(",")]
-    #         ),
-    #         table_name=sql.SQL("{}.{}").format(
-    #             sql.Identifier(td_task.fields.l_schema),
-    #             sql.Identifier(td_task.fields.l_table),
-    #         ),
-    #     )
-
-    # def get_pkey_offsets(conn, pkey_sql, block_rows):
-    #     pkey_offsets = []
-    #     cur = conn.cursor()
-    #     cur.execute(pkey_sql)
-    #     rows = cur.fetchmany(block_rows)
-
-    #     if simple_primary_key:
-    #         rows[:] = [str(x[0]) for x in rows]
-    #         pkey_offsets.append((None, str(rows[0])))
-    #         prev_min_offset = str(rows[0])
-    #         prev_max_offset = str(rows[-1])
-    #     else:
-    #         rows[:] = [tuple(str(i) for i in x) for x in rows]
-    #         pkey_offsets.append((None, rows[0]))
-    #         prev_min_offset = rows[0]
-    #         prev_max_offset = rows[-1]
-
-    #     while rows:
-    #         rows = cur.fetchmany(block_rows)
-    #         if simple_primary_key:
-    #             rows[:] = [str(x[0]) for x in rows]
-    #         else:
-    #             rows[:] = [tuple(str(i) for i in x) for x in rows]
-
-    #         if not rows:
-    #             if prev_max_offset != prev_min_offset:
-    #                 pkey_offsets.append((prev_min_offset, prev_max_offset))
-    #             pkey_offsets.append((prev_max_offset, None))
-    #             break
-
-    #         curr_min_offset = rows[0]
-    #         pkey_offsets.append((prev_min_offset, curr_min_offset))
-    #         prev_min_offset = curr_min_offset
-    #         prev_max_offset = rows[-1]
-
-    #     cur.close()
-    #     return pkey_offsets
-
     util.message(
         "Getting primary key offsets for table...",
         p_state="info",
@@ -499,14 +438,16 @@ def table_diff(td_task: TableDiffTask, skip_all_checks: bool = False):
 
     try:
         ref_cur = conn_with_max_rows.cursor()
-        ref_cur.execute(GET_PKEY_OFFSETS.format(
-            schema=sql.Identifier(td_task.fields.l_schema),
-            table=sql.Identifier(td_task.fields.l_table),
-            key=sql.SQL(", ").join(
-                [sql.Identifier(col) for col in td_task.fields.key.split(",")]
-            ),
-            num_blocks=total_blocks,
-        ))
+        ref_cur.execute(
+            sql.SQL(GET_PKEY_OFFSETS).format(
+                schema=sql.Identifier(td_task.fields.l_schema),
+                table=sql.Identifier(td_task.fields.l_table),
+                key=sql.SQL(", ").join(
+                    [sql.Identifier(col) for col in td_task.fields.key.split(",")]
+                ),
+                num_blocks=total_blocks,
+            )
+        )
         pkey_offsets = ref_cur.fetchall()
     except Exception as e:
         context = {
@@ -526,13 +467,8 @@ def table_diff(td_task: TableDiffTask, skip_all_checks: bool = False):
     """
 
     cols_list = td_task.fields.cols.split(",")
-    cols_list = [col for col in cols_list if not col.startswith("_Spock_")]
 
-    # Shared multiprocessing data structures
     diff_dict = {}
-
-    # Can't pickle the connection pool, so we need to close it here
-    td_task.connection_pool.close_all()
 
     stop_event = Manager().Event()
 
@@ -575,7 +511,6 @@ def table_diff(td_task: TableDiffTask, skip_all_checks: bool = False):
             n_jobs=procs,
             shared_objects=shared_objects,
             use_worker_state=True,
-            pass_worker_id=True,
         ) as pool:
             for result in pool.imap_unordered(
                 compare_checksums,
