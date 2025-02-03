@@ -25,8 +25,8 @@ from ace_sql import (
     INSERT_BLOCK_RANGES,
     CREATE_SPLIT_BLOCK_FUNCTION,
     GET_DIRTY_AND_NEW_BLOCKS,
-    UPDATE_PARENT_NODES,
     CLEAR_DIRTY_FLAGS,
+    CREATE_MERGE_BLOCK_FUNCTION,
 )
 
 
@@ -156,6 +156,16 @@ def create_mtree_objects(conn, schema, table, key, total_rows, num_blocks):
     # Create the split block function before the trigger function
     cur.execute(
         CREATE_SPLIT_BLOCK_FUNCTION.format(
+            schema=schema,
+            table=table,
+            pkey=key,
+            pkey_type=pkey_type,
+            block_size=config.MTREE_BLOCK_SIZE,
+        )
+    )
+
+    cur.execute(
+        CREATE_MERGE_BLOCK_FUNCTION.format(
             schema=schema,
             table=table,
             pkey=key,
@@ -360,7 +370,8 @@ def build_mtree(cluster_name: str, table_name: str, dbname: str = None) -> None:
                 )
 
             print(f"Computing hashes for {len(leaf_blocks)} blocks...")
-            max_workers = int(config.MAX_CPU_RATIO_DEFAULT * os.cpu_count())
+            # TODO: Use MAX_CPU_RATIO here
+            max_workers = int(os.cpu_count())
             n_jobs = min(len(work_items), max_workers)
 
             shared_objects = {
@@ -518,14 +529,31 @@ def update_mtree(cluster_name: str, table_name: str, dbname: str = None) -> None
                         affected_positions.append(result[0])
 
                 if affected_positions:
-                    # Update parent nodes for all affected blocks
                     cur.execute(
-                        UPDATE_PARENT_NODES.format(
+                        """
+                        DELETE FROM ace_mtree_{schema}_{table}
+                        WHERE node_level > 0
+                        """.format(
                             schema=td_task.fields.l_schema,
                             table=td_task.fields.l_table,
-                        ),
-                        {"affected_positions": affected_positions},
+                        )
                     )
+
+                    level = 0
+
+                    while True:
+                        cur.execute(
+                            BUILD_PARENT_NODES.format(
+                                schema=td_task.fields.l_schema,
+                                table=td_task.fields.l_table,
+                            ),
+                            {"node_level": level},
+                        )
+
+                        count = cur.fetchone()[0]
+                        if count <= 1:
+                            break
+                        level += 1
 
                     # Clear dirty flags for updated blocks
                     cur.execute(
@@ -537,7 +565,10 @@ def update_mtree(cluster_name: str, table_name: str, dbname: str = None) -> None
                     )
 
                 conn.commit()
-                print(f"Successfully updated {len(affected_positions)} blocks and their parent nodes")
+                print(
+                    f"Successfully updated {len(affected_positions)} "
+                    "blocks and their parent nodes"
+                )
 
         except Exception as e:
             conn.rollback()
