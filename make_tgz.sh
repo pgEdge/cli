@@ -64,3 +64,6 @@ rm -rf pgedge
 mv /tmp/$bndl $OUT/.
 ls -lh /$OUT/$bndl
 
+# Create the version file (used by CloudFront pgedge-latest-{arch}.tgz redirects) in $OUT
+echo "$hubVV" > "$OUT/pgedge-latest-$OS.version"
+echo "Created version file: $OUT/pgedge-latest-$OS.version"
