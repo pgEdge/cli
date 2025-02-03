@@ -1859,76 +1859,77 @@ def add_node(
     message = f"Promoting standby to primary"
     run_cmd(cmd, new_node_data, message=message, verbose=verbose)
 
-    # Fetch all subscription names directly
-    sql_cmd = "SELECT sub_name FROM spock.subscription"
-    cmd = f"{new_node_data['path']}/pgedge/pgedge psql '{sql_cmd}' {db[0]['db_name']}"
-    message = "Fetch existing subscriptions"
-    result = run_cmd(
-        cmd, node=new_node_data, message=message, verbose=verbose, capture_output=True
-    )
+    for mdb in db:
+        # Fetch all subscription names directly
+        sql_cmd = "SELECT sub_name FROM spock.subscription"
+        cmd = f"{new_node_data['path']}/pgedge/pgedge psql '{sql_cmd}' {mdb['db_name']}"
+        message = "Fetch existing subscriptions"
+        result = run_cmd(
+            cmd, node=new_node_data, message=message, verbose=verbose, capture_output=True
+        )
 
-    subscriptions = [
-        re.sub(r"\x1b\[[0-9;]*m", "", line.strip())  # Remove escape sequences
-        for line in result.stdout.splitlines()[2:]  # Skip header lines
-        if line.strip() and not line.strip().startswith("(")  # Exclude metadata lines
-    ]
+        subscriptions = [
+            re.sub(r"\x1b\[[0-9;]*m", "", line.strip())  # Remove escape sequences
+            for line in result.stdout.splitlines()[2:]  # Skip header lines
+            if line.strip() and not line.strip().startswith("(")  # Exclude metadata lines
+        ]
 
-    # Remove any remaining blank or invalid entries
-    subscriptions = [sub for sub in subscriptions if sub]
+        # Remove any remaining blank or invalid entries
+        subscriptions = [sub for sub in subscriptions if sub]
 
-    # Drop each subscription if any exist
-    if subscriptions:
-        for sub_name in subscriptions:
-            cmd = f"{new_node_data['path']}/pgedge/pgedge spock sub-drop {sub_name} {db[0]['db_name']}"
-            message = f"Dropping old subscription {sub_name}"
-            run_cmd(cmd, node=new_node_data, message=message, verbose=verbose)
-    else:
-        print("No subscriptions to drop.")
+        # Drop each subscription if any exist
+        if subscriptions:
+            for sub_name in subscriptions:
+                cmd = f"{new_node_data['path']}/pgedge/pgedge spock sub-drop {sub_name} {mdb['db_name']}"
+                message = f"Dropping old subscription {sub_name}"
+                run_cmd(cmd, node=new_node_data, message=message, verbose=verbose)
+        else:
+            print("No subscriptions to drop.")
 
-    # Check the number of nodes
-    sql_cmd = "SELECT node_name FROM spock.node"
-    cmd = f"{new_node_data['path']}/pgedge/pgedge psql '{sql_cmd}' {db[0]['db_name']}"
-    message = "Check if there are nodes"
-    result = run_cmd(
-        cmd, node=new_node_data, message=message, verbose=verbose, capture_output=True
-    )
+        # Check the number of nodes
+        sql_cmd = "SELECT node_name FROM spock.node"
+        cmd = f"{new_node_data['path']}/pgedge/pgedge psql '{sql_cmd}' {mdb['db_name']}"
+        message = "Check if there are nodes"
+        result = run_cmd(
+            cmd, node=new_node_data, message=message, verbose=verbose, capture_output=True
+        )
 
-    # Parse node names from the output
-    print(f"\nRaw output:\n{result.stdout}")
-    nodes_list = [
-        re.sub(r"\x1b\[[0-9;]*m", "", line.strip())  # Remove escape sequences
-        for line in result.stdout.splitlines()[2:]  # Skip header lines
-        if line.strip() and not line.strip().startswith("(")  # Exclude metadata lines
-    ]
+        # Parse node names from the output
+        print(f"\nRaw output:\n{result.stdout}")
+        nodes_list = [
+            re.sub(r"\x1b\[[0-9;]*m", "", line.strip())  # Remove escape sequences
+            for line in result.stdout.splitlines()[2:]  # Skip header lines
+            if line.strip() and not line.strip().startswith("(")  # Exclude metadata lines
+        ]
 
-    # Remove any remaining blank or invalid entries
-    nodes_list = [node for node in nodes_list if node]
+        # Remove any remaining blank or invalid entries
+        nodes_list = [node for node in nodes_list if node]
 
-    # Drop each node if any exist
-    if nodes_list:
-        for node_name in nodes_list:
-            cmd = f"{new_node_data['path']}/pgedge/pgedge spock node-drop {node_name} {db[0]['db_name']}"
-            message = f"Dropping node {node_name}"
-            run_cmd(cmd, node=new_node_data, message=message, verbose=verbose)
-    else:
-        print("No nodes to drop.")
+        # Drop each node if any exist
+        if nodes_list:
+            for node_name in nodes_list:
+                cmd = f"{new_node_data['path']}/pgedge/pgedge spock node-drop {node_name} {mdb['db_name']}"
+                message = f"Dropping node {node_name}"
+                run_cmd(cmd, node=new_node_data, message=message, verbose=verbose)
+        else:
+            print("No nodes to drop.")
 
-    create_node(new_node_data, db[0]["db_name"], verbose)
+        create_node(new_node_data, mdb["db_name"], verbose)
 
-    if not v4:
-        set_cluster_readonly(nodes, False, db[0]["db_name"], f"pg{pg}", v4, verbose)
+        if not v4:
+            set_cluster_readonly(nodes, False, mdb["db_name"], f"pg{pg}", v4, verbose)
 
-    create_sub(nodes, new_node_data, db[0]["db_name"], verbose)
-    create_sub_new(nodes, new_node_data, db[0]["db_name"], verbose)
+        create_sub(nodes, new_node_data, mdb["db_name"], verbose)
+        create_sub_new(nodes, new_node_data, mdb["db_name"], verbose)
 
-    nc = os.path.join(new_node_data['path'], "pgedge", "pgedge ")
-    cmd = f'{nc} spock repset-add-table default "*" {db[0]["db_name"]}'
+        nc = os.path.join(new_node_data['path'], "pgedge", "pgedge ")
+        cmd = f'{nc} spock repset-add-table default "*" {mdb["db_name"]}'
 
-    message = f"Adding all tables to repset"
-    run_cmd(cmd, new_node_data, message=message, verbose=verbose)
+        message = f"Adding all tables to repset"
+        run_cmd(cmd, new_node_data, message=message, verbose=verbose)
 
-    cmd = f'{nc} spock repset-add-table default_insert_only "*" {db[0]["db_name"]}'
-    run_cmd(cmd, new_node_data, message=message, verbose=verbose)
+        cmd = f'{nc} spock repset-add-table default_insert_only "*" {mdb["db_name"]}'
+        run_cmd(cmd, new_node_data, message=message, verbose=verbose)
 
     if v4:
         set_cluster_readonly(nodes, False, db[0]["db_name"], f"pg{pg}", v4, verbose)
@@ -2029,7 +2030,10 @@ def json_validate_add_node(data):
 
 
 def remove_node(cluster_name, node_name):
-    """Remove a node from the cluster configuration."""
+    """Remove a node from the cluster configuration.
+       Now also checks for multiple databases on the node, and drops all
+       subscriptions/Spock extension across each database before removal.
+    """
     json_validate(cluster_name)
     db, db_settings, nodes = load_json(cluster_name)
     cluster_data = get_cluster_json(cluster_name)
@@ -2039,10 +2043,13 @@ def remove_node(cluster_name, node_name):
     pg = db_settings["pg_version"]
     pgV = f"pg{pg}"
 
-    db, db_settings, nodes = load_json(cluster_name)
+    # Keep the original single-db variable (do not remove/change)
     dbname = db[0]["db_name"]
     verbose = cluster_data.get("log_level", "info")
 
+    #
+    # 1. Verify SSH connectivity on all nodes
+    #
     for node in nodes:
         os_user = node["os_user"]
         ssh_key = node["ssh_key"]
@@ -2050,62 +2057,105 @@ def remove_node(cluster_name, node_name):
         cmd = "hostname"
         run_cmd(cmd, node, message=message, verbose=verbose)
 
+    #
+    # 2. On OTHER nodes (not being removed), drop any subscriptions that point TO the node being removed
+    #
     for node in nodes:
         if node.get("name") != node_name:
-            sub_name = f"sub_{node['name']}{node_name}"
-            cmd = (
-                f"cd {node['path']}/pgedge/; "
-                f"./pgedge spock sub-drop {sub_name} {dbname}"
-            )
-            message = f"Dropping subscriptions {sub_name}"
-            run_cmd(cmd, node, message=message, verbose=verbose, ignore=True)
-
-    sub_names = []
-    for node in nodes:
-        if node.get("name") != node_name:
-            sub_name = f"sub_{node_name}{node['name']}"
-            sub_names.append(sub_name)
-
-    for node in nodes:
-        if node.get("name") == node_name:
-            for sub_name in sub_names:
+            for db_item in db:
+                sub_db = db_item["db_name"]
+                # Subscription name: sub_{thisNode}{removedNode}
+                sub_name = f"sub_{node['name']}{node_name}"
                 cmd = (
                     f"cd {node['path']}/pgedge/; "
-                    f"./pgedge spock sub-drop {sub_name} {dbname}"
+                    f"./pgedge spock sub-drop {sub_name} {sub_db}"
                 )
-                message = f"Dropping subscription {sub_name}"
+                message = f"Dropping subscription {sub_name} on database {sub_db}"
                 run_cmd(cmd, node, message=message, verbose=verbose, ignore=True)
 
-            cmd = (
-                f"cd {node['path']}/pgedge/; "
-                f"./pgedge spock node-drop {node['name']} {dbname}"
-            )
-            message = f"Dropping node {node['name']}"
-            run_cmd(cmd, node, message=message, verbose=verbose, ignore=True)
+    #
+    # 3. Collect subscription names that *originate from* the node being removed:
+    #    sub_{removedNode}{otherNode}
+    #
+    sub_names = []
+    for n in nodes:
+        if n.get("name") != node_name:
+            sub_name = f"sub_{node_name}{n['name']}"
+            sub_names.append(sub_name)
 
+    #
+    # 4. On the node being removed:
+    #    - Drop all subscriptions that point *from* this node to the other nodes
+    #    - Drop the node itself for each DB
+    #    - Remove the Spock extension from every database (via DROP EXTENSION spock CASCADE)
+    #
+    for node in nodes:
+        if node.get("name") == node_name:
+            # a) Drop all subscriptions from the node being removed
+            for db_item in db:
+                sub_db = db_item["db_name"]
+                for s_name in sub_names:
+                    cmd = (
+                        f"cd {node['path']}/pgedge/; "
+                        f"./pgedge spock sub-drop {s_name} {sub_db}"
+                    )
+                    message = f"Dropping subscription {s_name} on database {sub_db}"
+                    run_cmd(cmd, node, message=message, verbose=verbose, ignore=True)
+
+            # b) Drop the node itself in each database
+            for db_item in db:
+                sub_db = db_item["db_name"]
+                cmd = (
+                    f"cd {node['path']}/pgedge/; "
+                    f"./pgedge spock node-drop {node['name']} {sub_db}"
+                )
+                message = f"Dropping node {node['name']} from database {sub_db}"
+                run_cmd(cmd, node, message=message, verbose=verbose, ignore=True)
+
+            # c) Remove the Spock extension from each database on the node being removed
+            for db_item in db:
+                sub_db = db_item["db_name"]
+                # Use psql to directly DROP EXTENSION spock CASCADE
+                ext_cmd = (
+                    f"cd {node['path']}/pgedge/; "
+                    f"./pgedge psql -d {sub_db} -c 'DROP EXTENSION spock CASCADE'"
+                )
+                ext_message = f"Dropping spock extension from database {sub_db}"
+                run_cmd(ext_cmd, node, message=ext_message, verbose=verbose, ignore=True)
+
+    #
+    # 5. Stop the node being removed; on other nodes, list the spock nodes for each DB
+    #
     for node in nodes:
         if node.get("name") == node_name:
             manage_node(node, "stop", pgV, verbose)
         else:
-            cmd = f'cd {node["path"]}/pgedge/; ./pgedge spock node-list {dbname}'
-            message = f"Listing spock nodes"
-            result = run_cmd(
-                cmd, node=node, message=message, verbose=verbose, capture_output=True
-            )
-            print(f"\n{result.stdout}")
+            for db_item in db:
+                sub_db = db_item["db_name"]
+                cmd = f'cd {node["path"]}/pgedge/; ./pgedge spock node-list {sub_db}'
+                message = f"Listing spock nodes in database {sub_db}"
+                result = run_cmd(
+                    cmd, node=node, message=message, verbose=verbose, capture_output=True
+                )
+                print(f"\n{result.stdout}")
 
+    #
+    # 6. Remove node references from the cluster configuration
+    #
     empty_groups = []
     for group in cluster_data["node_groups"]:
+        # If the entire group name matches node_name, remove the group altogether
         if group["name"] == node_name:
             cluster_data["node_groups"].remove(group)
             continue
-        for node in group.get("sub_nodes", []):
-            if node["name"] == node_name:
-                group["sub_nodes"].remove(node)
+        # Otherwise, remove from sub_nodes if found
+        for sub_node in group.get("sub_nodes", []):
+            if sub_node["name"] == node_name:
+                group["sub_nodes"].remove(sub_node)
+        # Collect empty groups to remove them
         if not group.get("sub_nodes") and group["name"] == node_name:
             empty_groups.append(group)
 
-    # Remove empty connection groups
     for group in empty_groups:
         cluster_data["node_groups"].remove(group)
 
