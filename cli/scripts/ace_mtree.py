@@ -472,6 +472,8 @@ def rebalance_blocks(conn, schema, table, key, blocks):
     blocks = sorted(blocks, key=lambda x: x[0])
     i = 0
 
+    print(blocks)
+
     while i < len(blocks):
         pos, start, end = blocks[i]
         print(f"Processing block {pos} with range {start} to {end}")
@@ -512,6 +514,180 @@ def rebalance_blocks(conn, schema, table, key, blocks):
             (start, end, end),
         )
         count = cur.fetchone()[0]
+
+        # If block is nearly empty, try to merge with either neighbor
+        if count < target_size * MERGE_THRESHOLD:
+            # First check if we can merge with previous block
+            if pos > 0:
+                cur.execute(
+                    f"""
+                    SELECT node_position, range_start, range_end, count(*)
+                    FROM ace_mtree_{schema}_{table} mt
+                    LEFT JOIN {schema}.{table} t
+                    ON t.{key} >= mt.range_start
+                    AND (t.{key} < mt.range_end OR mt.range_end IS NULL)
+                    WHERE mt.node_level = 0
+                    AND mt.node_position = %s
+                    GROUP BY mt.node_position, mt.range_start, mt.range_end
+                    """,
+                    (pos - 1,),
+                )
+                prev_block = cur.fetchone()
+                if prev_block:
+                    prev_pos, prev_start, prev_end, prev_count = prev_block
+                    if (count + prev_count) <= target_size * 2:
+                        # Move blocks to temp positions
+                        cur.execute(
+                            f"""
+                            UPDATE ace_mtree_{schema}_{table}
+                            SET node_position = node_position + %s
+                            WHERE node_level = 0
+                            AND node_position > %s
+                            """,
+                            (TEMP_OFFSET, prev_pos),
+                        )
+
+                        # Merge with previous block - keep full range
+                        cur.execute(
+                            f"""
+                            UPDATE ace_mtree_{schema}_{table}
+                            SET range_end = %s,
+                                dirty = true,
+                                last_modified = current_timestamp
+                            WHERE node_level = 0
+                            AND node_position = %s
+                            """,
+                            (end, prev_pos),
+                        )
+
+                        # Delete current block at its temporary position
+                        cur.execute(
+                            f"""
+                            DELETE FROM ace_mtree_{schema}_{table}
+                            WHERE node_level = 0
+                            AND node_position = %s
+                            """,
+                            (pos + TEMP_OFFSET,),
+                        )
+
+                        # Move remaining blocks back in sequential order
+                        cur.execute(
+                            f"""
+                            UPDATE ace_mtree_{schema}_{table}
+                            SET node_position = pos_seq
+                            FROM (
+                                SELECT node_position,
+                                       row_number() OVER (
+                                           ORDER BY node_position
+                                       ) + %s as pos_seq
+                                FROM ace_mtree_{schema}_{table}
+                                WHERE node_level = 0
+                                AND node_position > %s
+                            ) as seq
+                            WHERE
+                            ace_mtree_{schema}_{table}.node_position = seq.node_position
+                            AND node_level = 0
+                            """,
+                            (prev_pos, prev_pos + TEMP_OFFSET),
+                        )
+
+                        modified_positions.add(prev_pos)
+
+                        blocks = [
+                            (p - 1 if p > pos else p, s, e)
+                            for p, s, e in blocks if p != pos
+                        ]
+                        if not blocks:
+                            break
+                        i -= 1
+                        continue
+
+            # If we couldn't merge with the previous block, try the next block
+            cur.execute(
+                f"""
+                SELECT node_position, range_start, range_end, count(*)
+                FROM ace_mtree_{schema}_{table} mt
+                LEFT JOIN {schema}.{table} t
+                ON t.{key} >= mt.range_start
+                AND (t.{key} < mt.range_end OR mt.range_end IS NULL)
+                WHERE mt.node_level = 0
+                AND mt.node_position = %s
+                GROUP BY mt.node_position, mt.range_start, mt.range_end
+                """,
+                (pos + 1,),
+            )
+            next_block = cur.fetchone()
+            if next_block:
+                next_pos, next_start, next_end, next_count = next_block
+                if (count + next_count) <= target_size * 2:
+                    # Move blocks to temp positions
+                    cur.execute(
+                        f"""
+                        UPDATE ace_mtree_{schema}_{table}
+                        SET node_position = node_position + %s
+                        WHERE node_level = 0
+                        AND node_position > %s
+                        """,
+                        (TEMP_OFFSET, pos),
+                    )
+
+                    # Merge with next block - keep full range
+                    cur.execute(
+                        f"""
+                        UPDATE ace_mtree_{schema}_{table}
+                        SET range_end = %s,
+                            dirty = true,
+                            last_modified = current_timestamp
+                        WHERE node_level = 0
+                        AND node_position = %s
+                        """,
+                        (next_end, pos),
+                    )
+
+                    # Delete next block at its temporary position
+                    cur.execute(
+                        f"""
+                        DELETE FROM ace_mtree_{schema}_{table}
+                        WHERE node_level = 0
+                        AND node_position = %s
+                        """,
+                        (next_pos + TEMP_OFFSET,),
+                    )
+
+                    # Move remaining blocks back in sequential order
+                    cur.execute(
+                        f"""
+                        UPDATE ace_mtree_{schema}_{table}
+                        SET node_position = pos_seq
+                        FROM (
+                            SELECT node_position,
+                                   row_number() OVER (
+                                       ORDER BY node_position
+                                   ) + %s as pos_seq
+                            FROM ace_mtree_{schema}_{table}
+                            WHERE node_level = 0
+                            AND node_position > %s
+                        ) as seq
+                        WHERE
+                        ace_mtree_{schema}_{table}.node_position = seq.node_position
+                        AND node_level = 0
+                        """,
+                        (pos, pos + TEMP_OFFSET),
+                    )
+
+                    modified_positions.add(pos)
+                    blocks = [
+                        (p - 1 if p > next_pos else p, s, e)
+                        for p, s, e in blocks if p != next_pos
+                    ]
+
+                    if not blocks:
+                        break
+
+                    # We've already processed the next block since we couldn't
+                    # find a previous block to merge with
+                    i += 1
+                    continue
 
         if count > target_size * 2:
             # The split point is simply the midpoint of the block
@@ -569,7 +745,9 @@ def rebalance_blocks(conn, schema, table, key, blocks):
                 SET node_position = pos_seq + %s
                 FROM (
                     SELECT node_position,
-                           row_number() OVER (ORDER BY node_position) + %s as pos_seq
+                           row_number() OVER (
+                               ORDER BY node_position
+                           ) + %s as pos_seq
                     FROM ace_mtree_{schema}_{table}
                     WHERE node_level = 0
                     AND node_position > %s
@@ -587,87 +765,6 @@ def rebalance_blocks(conn, schema, table, key, blocks):
             blocks.insert(i + 1, (pos + 1, split_point, end))
             i += 1
             continue
-
-        # Check if block needs merging (less than MERGE_THRESHOLD of target_size)
-        if i < len(blocks) - 1:
-            next_pos, next_start, next_end = blocks[i + 1]
-
-            # Get actual count for next block
-            cur.execute(
-                f"""
-                SELECT count(*)
-                FROM {schema}.{table}
-                WHERE {key} >= %s
-                AND ({key} < %s OR %s::{pkey_type} IS NULL)
-            """,
-                (next_start, next_end, next_end),
-            )
-            next_count = cur.fetchone()[0]
-
-            # Only merge if the block size is below the threshold and the combined
-            # block size doesn't push us over target size * 2
-            if (
-                count < target_size * MERGE_THRESHOLD
-                or next_count < target_size * MERGE_THRESHOLD
-            ) and (count + next_count) <= target_size * 2:
-
-                cur.execute(
-                    f"""
-                    UPDATE ace_mtree_{schema}_{table}
-                    SET node_position = node_position + %s
-                    WHERE node_level = 0
-                    AND node_position > %s
-                """,
-                    (TEMP_OFFSET, pos),
-                )
-
-                # Update current block to include next block's range
-                cur.execute(
-                    f"""
-                    UPDATE ace_mtree_{schema}_{table}
-                    SET range_end = %s,
-                        dirty = true,
-                        last_modified = current_timestamp
-                    WHERE node_level = 0
-                    AND node_position = %s
-                """,
-                    (next_end, pos),
-                )
-
-                # Delete the next block at its temporary position
-                cur.execute(
-                    f"""
-                    DELETE FROM ace_mtree_{schema}_{table}
-                    WHERE node_level = 0
-                    AND node_position = %s
-                """,
-                    (next_pos + TEMP_OFFSET,),
-                )
-
-                # Move remaining blocks back in sequential order
-                cur.execute(
-                    f"""
-                    UPDATE ace_mtree_{schema}_{table}
-                    SET node_position = pos_seq + %s
-                    FROM (
-                        SELECT node_position,
-                               row_number() OVER
-                               (ORDER BY node_position) + %s as pos_seq
-                        FROM ace_mtree_{schema}_{table}
-                        WHERE node_level = 0
-                        AND node_position > %s
-                    ) as seq
-                    WHERE ace_mtree_{schema}_{table}.node_position = seq.node_position
-                    AND node_level = 0
-                """,
-                    (pos, 1, pos + TEMP_OFFSET),
-                )
-
-                modified_positions.add(pos)
-
-                blocks[i] = (pos, start, next_end)
-                blocks.pop(i + 1)
-                continue
 
         i += 1
 
