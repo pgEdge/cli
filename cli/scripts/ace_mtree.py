@@ -4,6 +4,7 @@ import os
 from typing import Tuple, Any
 from dataclasses import dataclass
 
+
 import ace
 import ace_config as config
 from ace_data_models import TableDiffTask
@@ -23,10 +24,8 @@ from ace_sql import (
     GET_BLOCK_RANGES,
     BUILD_PARENT_NODES,
     INSERT_BLOCK_RANGES,
-    CREATE_SPLIT_BLOCK_FUNCTION,
     GET_DIRTY_AND_NEW_BLOCKS,
     CLEAR_DIRTY_FLAGS,
-    CREATE_MERGE_BLOCK_FUNCTION,
 )
 
 
@@ -46,7 +45,7 @@ def init_hash_conn_pool(shared_objects, worker_state):
 
     try:
         # TODO: Investigate why conn_pool.connect() fails here
-        params, conn = conn_pool.get_cluster_node_connection(node)
+        _, conn = conn_pool.get_cluster_node_connection(node)
         worker_state["conn"] = conn
         worker_state["cur"] = conn.cursor()
 
@@ -153,27 +152,6 @@ def create_mtree_objects(conn, schema, table, key, total_rows, num_blocks):
         )
     )
 
-    # Create the split block function before the trigger function
-    cur.execute(
-        CREATE_SPLIT_BLOCK_FUNCTION.format(
-            schema=schema,
-            table=table,
-            pkey=key,
-            pkey_type=pkey_type,
-            block_size=config.MTREE_BLOCK_SIZE,
-        )
-    )
-
-    cur.execute(
-        CREATE_MERGE_BLOCK_FUNCTION.format(
-            schema=schema,
-            table=table,
-            pkey=key,
-            pkey_type=pkey_type,
-            block_size=config.MTREE_BLOCK_SIZE,
-        )
-    )
-
     cur.execute(
         UPDATE_METADATA,
         (
@@ -190,6 +168,7 @@ def create_mtree_objects(conn, schema, table, key, total_rows, num_blocks):
             table=table,
             pkey=key,
             pkey_type=pkey_type,
+            block_size=config.MTREE_BLOCK_SIZE,
         )
     )
     cur.execute(
@@ -445,9 +424,261 @@ def build_mtree(cluster_name: str, table_name: str, dbname: str = None) -> None:
     td_task.connection_pool.close_all()
 
 
+def rebalance_blocks(conn, schema, table, key, blocks):
+    """
+    Rebalance blocks by merging small blocks and splitting large ones.
+    Returns a list of block positions that were modified.
+    """
+    cur = conn.cursor()
+    modified_positions = set()
+    target_size = config.MTREE_BLOCK_SIZE
+
+    # We will trigger a merge if the actual block size is less than 25% of the
+    # target size
+    MERGE_THRESHOLD = 0.25
+
+    # Whenever there is a merge or a split, the node_positions of leaf nodes
+    # become invalid. Now, we cannot simply do a node_position = node_position - 1
+    # since there might be other leaf nodes at that location.
+    # So we move all leaf nodes to a temporary position and then update the
+    # node_positions of the leaf nodes after the rebalancing is done
+    # This temp offset is large enough for the foreseeable future.
+    #
+    # Napkin math: For a conflict to happen with a 10^6 temp offset, and a
+    # block size of say 10^5, we would need 10^11 rows or 100 billion rows in the
+    # table, which is a lot.
+    TEMP_OFFSET = 1_000_000
+
+    # First delete all parent nodes since we'll be modifying the tree structure
+    # This is not expensive at all since computing parent hashes is significantly
+    # cheaper than computing leaf hashes.
+    cur.execute(
+        f"""
+        DELETE FROM ace_mtree_{schema}_{table}
+        WHERE node_level > 0
+        """
+    )
+
+    cur.execute(
+        GET_PKEY_TYPE,
+        (
+            schema,
+            table,
+            key,
+        ),
+    )
+    pkey_type = cur.fetchone()[0]
+
+    blocks = sorted(blocks, key=lambda x: x[0])
+    i = 0
+
+    while i < len(blocks):
+        pos, start, end = blocks[i]
+        print(f"Processing block {pos} with range {start} to {end}")
+
+        # When inserts happen after the range_end of the last block, we mark that
+        # block as dirty and set the range_end to null. So, if we're attempting
+        # to add new blocks at the end, we need to find the actual max value.
+        if i == len(blocks) - 1 and end is None:
+            cur.execute(
+                f"""
+                SELECT max({key})
+                FROM {schema}.{table}
+                WHERE {key} >= %s
+                """,
+                (start,),
+            )
+            max_val = cur.fetchone()[0]
+            if max_val is not None:
+                end = max_val
+                cur.execute(
+                    f"""
+                    UPDATE ace_mtree_{schema}_{table}
+                    SET range_end = %s
+                    WHERE node_level = 0
+                    AND node_position = %s
+                    """,
+                    (end, pos),
+                )
+
+        # Get actual row count for this block
+        cur.execute(
+            f"""
+            SELECT count(*)
+            FROM {schema}.{table}
+            WHERE {key} >= %s
+            AND ({key} < %s OR %s::{pkey_type} IS NULL)
+        """,
+            (start, end, end),
+        )
+        count = cur.fetchone()[0]
+
+        if count > target_size * 2:
+            # The split point is simply the midpoint of the block
+            cur.execute(
+                f"""
+                SELECT {key}
+                FROM {schema}.{table}
+                WHERE {key} >= %s
+                AND ({key} < %s OR %s::{pkey_type} IS NULL)
+                ORDER BY {key}
+                OFFSET %s
+                LIMIT 1
+            """,
+                (start, end, end, count // 2),  # Split at midpoint
+            )
+            split_point = cur.fetchone()[0]
+
+            # Let's move the leaf nodes to temp positions
+            cur.execute(
+                f"""
+                UPDATE ace_mtree_{schema}_{table}
+                SET node_position = node_position + %s
+                WHERE node_level = 0
+                AND node_position > %s
+            """,
+                (TEMP_OFFSET, pos),
+            )
+
+            # Create new block at pos + 1
+            cur.execute(
+                INSERT_BLOCK_RANGES.format(
+                    schema=schema,
+                    table=table,
+                ),
+                (pos + 1, split_point, end),
+            )
+
+            # Update original block
+            cur.execute(
+                f"""
+                UPDATE ace_mtree_{schema}_{table}
+                SET range_end = %s,
+                    dirty = true,
+                    last_modified = current_timestamp
+                WHERE node_level = 0
+                AND node_position = %s
+            """,
+                (split_point, pos),
+            )
+
+            # Move remaining blocks back
+            cur.execute(
+                f"""
+                UPDATE ace_mtree_{schema}_{table}
+                SET node_position = pos_seq + %s
+                FROM (
+                    SELECT node_position,
+                           row_number() OVER (ORDER BY node_position) + %s as pos_seq
+                    FROM ace_mtree_{schema}_{table}
+                    WHERE node_level = 0
+                    AND node_position > %s
+                ) as seq
+                WHERE ace_mtree_{schema}_{table}.node_position = seq.node_position
+                AND node_level = 0
+            """,
+                (pos + 1, 1, pos + TEMP_OFFSET),
+            )
+
+            modified_positions.add(pos)
+            modified_positions.add(pos + 1)
+
+            blocks[i] = (pos, start, split_point)
+            blocks.insert(i + 1, (pos + 1, split_point, end))
+            i += 1
+            continue
+
+        # Check if block needs merging (less than MERGE_THRESHOLD of target_size)
+        if i < len(blocks) - 1:
+            next_pos, next_start, next_end = blocks[i + 1]
+
+            # Get actual count for next block
+            cur.execute(
+                f"""
+                SELECT count(*)
+                FROM {schema}.{table}
+                WHERE {key} >= %s
+                AND ({key} < %s OR %s::{pkey_type} IS NULL)
+            """,
+                (next_start, next_end, next_end),
+            )
+            next_count = cur.fetchone()[0]
+
+            # Only merge if the block size is below the threshold and the combined
+            # block size doesn't push us over target size * 2
+            if (
+                count < target_size * MERGE_THRESHOLD
+                or next_count < target_size * MERGE_THRESHOLD
+            ) and (count + next_count) <= target_size * 2:
+
+                cur.execute(
+                    f"""
+                    UPDATE ace_mtree_{schema}_{table}
+                    SET node_position = node_position + %s
+                    WHERE node_level = 0
+                    AND node_position > %s
+                """,
+                    (TEMP_OFFSET, pos),
+                )
+
+                # Update current block to include next block's range
+                cur.execute(
+                    f"""
+                    UPDATE ace_mtree_{schema}_{table}
+                    SET range_end = %s,
+                        dirty = true,
+                        last_modified = current_timestamp
+                    WHERE node_level = 0
+                    AND node_position = %s
+                """,
+                    (next_end, pos),
+                )
+
+                # Delete the next block at its temporary position
+                cur.execute(
+                    f"""
+                    DELETE FROM ace_mtree_{schema}_{table}
+                    WHERE node_level = 0
+                    AND node_position = %s
+                """,
+                    (next_pos + TEMP_OFFSET,),
+                )
+
+                # Move remaining blocks back in sequential order
+                cur.execute(
+                    f"""
+                    UPDATE ace_mtree_{schema}_{table}
+                    SET node_position = pos_seq + %s
+                    FROM (
+                        SELECT node_position,
+                               row_number() OVER
+                               (ORDER BY node_position) + %s as pos_seq
+                        FROM ace_mtree_{schema}_{table}
+                        WHERE node_level = 0
+                        AND node_position > %s
+                    ) as seq
+                    WHERE ace_mtree_{schema}_{table}.node_position = seq.node_position
+                    AND node_level = 0
+                """,
+                    (pos, 1, pos + TEMP_OFFSET),
+                )
+
+                modified_positions.add(pos)
+
+                blocks[i] = (pos, start, next_end)
+                blocks.pop(i + 1)
+                continue
+
+        i += 1
+
+    conn.commit()
+    return list(modified_positions)
+
+
 def update_mtree(cluster_name: str, table_name: str, dbname: str = None) -> None:
     """
     Update a Merkle tree by recomputing hashes for dirty leaf nodes and new blocks.
+    Also processes any pending block rebalancing operations.
     Uses repeatable read isolation to ensure consistency during the update.
 
     Args:
@@ -496,7 +727,31 @@ def update_mtree(cluster_name: str, table_name: str, dbname: str = None) -> None
 
                 print(f"Found {len(blocks_to_update)} blocks to update")
 
-                # Prepare column list for hash computation
+                # First rebalance blocks if needed
+                rebalance_blocks(
+                    conn,
+                    td_task.fields.l_schema,
+                    td_task.fields.l_table,
+                    td_task.fields.key,
+                    blocks_to_update,
+                )
+
+                # Get final list of blocks to update (including newly modified ones)
+                cur.execute(
+                    GET_DIRTY_AND_NEW_BLOCKS.format(
+                        schema=td_task.fields.l_schema,
+                        table=td_task.fields.l_table,
+                    )
+                )
+                blocks_to_update = cur.fetchall()
+
+                if not blocks_to_update:
+                    print(f"No updates needed for {node['name']}")
+                    conn.commit()
+                    continue
+
+                print(f"Found {len(blocks_to_update)} blocks to update")
+
                 column_list = []
                 for col in td_task.fields.cols.split(","):
                     column_list.append(
@@ -506,7 +761,6 @@ def update_mtree(cluster_name: str, table_name: str, dbname: str = None) -> None
                     )
                 column_expr = ",\n        ".join(column_list)
 
-                # Update each block's hash
                 affected_positions = []
                 for block in blocks_to_update:
                     params = {
@@ -555,7 +809,6 @@ def update_mtree(cluster_name: str, table_name: str, dbname: str = None) -> None
                             break
                         level += 1
 
-                    # Clear dirty flags for updated blocks
                     cur.execute(
                         CLEAR_DIRTY_FLAGS.format(
                             schema=td_task.fields.l_schema,
