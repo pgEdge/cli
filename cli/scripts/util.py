@@ -3795,6 +3795,35 @@ def get_readable_time_diff(amount, units="seconds", precision=0):
     return buf
 
 
+# recursively check and restore all env / extension files during upgrade
+def recursively_copy_old_files(dcmp, diff_files=[], ignore=None):
+    for name in dcmp.left_only:
+        if ignore and name in ignore:
+            continue
+        try:
+            source_file = os.path.join(dcmp.left, name)
+            shutil.move(source_file, dcmp.right)
+        except Exception as e:
+            my_logger.error(
+                "Failed to restore the file %s due to %s"
+                % (os.path.join(dcmp.right, name), str(e))
+            )
+            my_logger.error(traceback.format_exc())
+            diff_files.append([name, dcmp.left, dcmp.right])
+    for sub_dcmp in dcmp.subdirs.values():
+        allfiles = diff_files
+        recursively_copy_old_files(sub_dcmp, allfiles)
+    return diff_files
+
+
+# restore any extensions or env/conf files during upgrade
+def restore_conf_ext_files(src, dst, ignore=None):
+    if os.path.isdir(dst):
+        diff = filecmp.dircmp(src, dst)
+        extension_files_list = recursively_copy_old_files(diff, ignore=ignore)
+    return True
+
+
 def exit_cleanly(p_rc, conn=None):
     if conn:
         try:
@@ -4303,13 +4332,6 @@ def load_json(cluster_name):
         node
     )
 
-BASE_DIR = "cluster"
-# MAINLINE ################################################################
-cL = sqlite3.connect(MY_LITE, check_same_thread=False)
-REPO = get_value("GLOBAL", "REPO")
-
-
-
 def check_directory_status(directory):
     """
     Check if the directory exists and is writable.
@@ -4326,3 +4348,11 @@ def check_directory_status(directory):
     else:
         message = f"Directory {directory} does not exist."
         return {"exists": False, "writable": False, "message": message}
+
+BASE_DIR = "cluster"
+# MAINLINE ################################################################
+cL = sqlite3.connect(MY_LITE, check_same_thread=False)
+REPO = get_value("GLOBAL", "REPO")
+
+
+
