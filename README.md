@@ -1,20 +1,14 @@
-# The CLI for pgEdge
+# The pgEdge Command Line Interface
 
-This is the pgEdge Command Line Interface (CLI) for managing components. 
-Take a look at our main pgEdge [repo](https://github.com/pgEdge/pgedge) for tips and example CLI commands.
+This repo contains the code for the pgEdge Command Line Interface (CLI); for usage information, see the pgEdge [online documentation](https://docs.pgedge.com/).  You can also review the [release notes](https://docs.pgedge.com/platform/pgedge_rel_notes) to learn more about our recent enhancements and fixes.
 
-You can also peruse our [CHANGELOG](https://github.com/pgEdge/pgedge/blob/main/CHANGELOG.md) if you'd like to learn more about our recent enhancements and fixes.
+## Getting Started with pgEdge
 
-# Using the CLI to control a pgEdge cluster
+To learn more about pgEdge and sign up for a pgEdge [Cloud](https://www.pgedge.com/products/pgedge-cloud) or [Platform](https://www.pgedge.com/products/pgedge-platform) account, visit the [pgEdge website](https://www.pgedge.com/).
 
-Get started quickly by taking a look at our [tutorials](https://github.com/pgEdge/pgedge/tree/main/cli/tutorials) to create your own localhost or vm cluster.
+### Creating a Development Environment
 
-Check out our [commands](https://github.com/pgEdge/pgedge/tree/main?tab=readme-ov-file#cli-commands) to learn more about our multi-master power at your fingertips. :-)
-
-
-# To setup a dev environment:
-
-1.) Clone this repo
+1.) Clone this repository
 
 2.) cd cli/devel/setup
 
@@ -27,4 +21,3 @@ Check out our [commands](https://github.com/pgEdge/pgedge/tree/main?tab=readme-o
 6.) configure your ~/.aws/config credentials
 
 7.) run `1d-pull-IN.sh` to retrieve REPO files
-
