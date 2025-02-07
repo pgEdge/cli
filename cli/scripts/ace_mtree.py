@@ -4,10 +4,12 @@ import os
 from typing import Tuple, Any
 from dataclasses import dataclass
 
+from viztracer import VizTracer, log_sparse
+
 
 import ace
 import ace_config as config
-from ace_data_models import TableDiffTask
+from ace_data_models import MerkleTreeTask, TableDiffTask
 from ace_exceptions import AceException
 from ace_sql import (
     CREATE_METADATA_TABLE,
@@ -28,6 +30,8 @@ from ace_sql import (
     CLEAR_DIRTY_FLAGS,
 )
 
+BERNOULLI_THRESHOLD = 10_000_000
+
 
 @dataclass
 class BlockBoundary:
@@ -38,7 +42,7 @@ class BlockBoundary:
     block_end: Tuple[Any, ...]
 
 
-def init_hash_conn_pool(shared_objects, worker_state):
+def init_hash_conn_pool(worker_id, shared_objects, worker_state):
     """Initialize connection pool for hash computation workers"""
     node = shared_objects["node"]
     conn_pool = shared_objects["conn_pool"]
@@ -58,20 +62,24 @@ def init_hash_conn_pool(shared_objects, worker_state):
         raise AceException(f"Error initializing worker connection: {str(e)}")
 
 
-def close_hash_conn_pool(shared_objects, worker_state):
+def close_hash_conn_pool(worker_id, shared_objects, worker_state):
     """Close connection pool for hash computation workers"""
     try:
-        if "cur" in worker_state:
-            worker_state["cur"].close()
-        if "conn" in worker_state:
-            worker_state["conn"].close()
+        worker_state["conn"].commit()
+        worker_state["cur"].close()
+        worker_state["conn"].close()
     except Exception as e:
         raise AceException(f"Error closing worker connection: {str(e)}")
 
 
-def compute_block_hashes(shared_objects, worker_state, args):
+@log_sparse
+def compute_block_hashes(worker_id, shared_objects, worker_state, args):
     """Worker function to compute hashes for a range of blocks"""
     block_boundary, sql = args
+    # init_kwargs = shared_objects["init_kwargs"]
+    # tracer = VizTracer(**init_kwargs)
+    # tracer.register_exit()
+    # tracer.start()
 
     try:
         cur = worker_state["cur"]
@@ -94,7 +102,6 @@ def compute_block_hashes(shared_objects, worker_state, args):
             )
             raise AceException(msg)
 
-        conn.commit()
         return results
 
     except Exception as e:
@@ -106,6 +113,10 @@ def compute_block_hashes(shared_objects, worker_state, args):
             f"end: {block_boundary.block_end}): {str(e)}"
         )
         raise AceException(msg)
+
+    # finally:
+    #     tracer.stop()
+    #     tracer.save(f"worker_{worker_id}.json")
 
 
 def create_mtree_objects(conn, schema, table, key, total_rows, num_blocks):
@@ -181,18 +192,21 @@ def create_mtree_objects(conn, schema, table, key, total_rows, num_blocks):
     conn.commit()
 
 
-def get_row_estimate(conn, schema, table):
+def get_row_estimate(conn, schema, table, analyse=False):
 
     cur = conn.cursor()
-    # cur.execute("BEGIN")
-    # cur.execute("SET parallel_tuple_cost = 0")
-    # cur.execute("SET parallel_setup_cost = 0")
 
-    # print(f"Analyzing {schema}.{table} on node {conn.info.host}")
-    # print("This might take a while...")
+    if analyse:
+        cur.execute("BEGIN")
+        cur.execute("SET parallel_tuple_cost = 0")
+        cur.execute("SET parallel_setup_cost = 0")
 
-    # # TODO: This might take a while so need a different strategy here
-    # cur.execute("ANALYZE {schema}.{table}".format(schema=schema, table=table))
+        print(f"Analyzing {schema}.{table} on node {conn.info.host}")
+        print("This might take a while...")
+
+        # TODO: This might take a while so need a different strategy here
+        cur.execute("ANALYZE {schema}.{table}".format(schema=schema, table=table))
+
     cur.execute(
         ESTIMATE_ROW_COUNT,
         (schema, table),
@@ -204,7 +218,7 @@ def get_row_estimate(conn, schema, table):
     return total_rows, num_blocks
 
 
-def build_mtree(cluster_name: str, table_name: str, dbname: str = None) -> None:
+def build_mtree(mtree_task: MerkleTreeTask) -> None:
     """
     Build a Merkle tree for a table using parallel processing.
     The tree is stored in a separate table for each source table.
@@ -216,21 +230,7 @@ def build_mtree(cluster_name: str, table_name: str, dbname: str = None) -> None:
         dbname (str, optional): Database name. Defaults to None.
     """
 
-    td_task = TableDiffTask(
-        cluster_name=cluster_name,
-        _table_name=table_name,
-        _dbname=dbname,
-        block_rows=config.MTREE_BLOCK_SIZE,
-        max_cpu_ratio=config.MAX_CPU_RATIO_DEFAULT,
-        output="json",
-        _nodes="all",
-        batch_size=config.BATCH_SIZE_DEFAULT,
-        quiet_mode=False,
-        table_filter=None,
-        invoke_method="cli",
-    )
-
-    ace.table_diff_checks(td_task)
+    ace.merkle_tree_checks(mtree_task, skip_validation=True)
 
     # First we need to get the row estimates and blocks from all nodes
     # before we can compute the block ranges.
@@ -241,19 +241,24 @@ def build_mtree(cluster_name: str, table_name: str, dbname: str = None) -> None:
 
     max_blocks = 0
     ref_node = None
+    schema = mtree_task.fields.l_schema
+    table = mtree_task.fields.l_table
+    key = mtree_task.fields.key
+    total_rows = 0
+    num_blocks = 0
 
-    for node in td_task.fields.cluster_nodes:
-        _, conn = td_task.connection_pool.get_cluster_node_connection(node)
+    for node in mtree_task.fields.cluster_nodes:
+        _, conn = mtree_task.connection_pool.get_cluster_node_connection(node)
         try:
             total_rows, num_blocks = get_row_estimate(
-                conn, td_task.fields.l_schema, td_task.fields.l_table
+                conn, schema, table, analyse=mtree_task.analyse
             )
 
             create_mtree_objects(
                 conn,
-                td_task.fields.l_schema,
-                td_task.fields.l_table,
-                td_task.fields.key,
+                schema,
+                table,
+                key,
                 total_rows,
                 num_blocks,
             )
@@ -276,33 +281,56 @@ def build_mtree(cluster_name: str, table_name: str, dbname: str = None) -> None:
     )
     print(msg)
 
-    _, conn = td_task.connection_pool.get_cluster_node_connection(ref_node)
+    # Calculate sample size based on total rows
+    # Tablesample may be an efficient workaround for getting the block ranges,
+    # but it is still very expensive for large tables.
+    # So, here's what we'll do:
+    # If total rows > 1B, we'll sample 0.01% of the rows
+    # If total rows > 100M, we'll sample 0.1% of the rows
+    # Otherwise, we'll sample 1% of the rows
+    sample_percent = (
+        0.01
+        if total_rows > 500_000_000
+        else 0.1
+        if total_rows > 50_000_000
+        else 1.0
+    )
+
+    table_sample_method = (
+        "BERNOULLI" if total_rows < BERNOULLI_THRESHOLD else "SYSTEM"
+    )
+
+    print(f"Using {table_sample_method} with sample percent {sample_percent}")
+
+    _, conn = mtree_task.connection_pool.get_cluster_node_connection(ref_node)
 
     with conn.cursor() as cur:
         cur.execute(
             CALCULATE_BLOCK_RANGES.format(
-                schema=td_task.fields.l_schema,
-                table=td_task.fields.l_table,
-                key=td_task.fields.key,
+                schema=schema,
+                table=table,
+                key=key,
                 num_blocks=max_blocks,
+                table_sample_method=table_sample_method,
+                sample_percent=sample_percent
             )
         )
         cur.execute(
             GET_BLOCK_RANGES.format(
-                schema=td_task.fields.l_schema,
-                table=td_task.fields.l_table,
+                schema=schema,
+                table=table,
             )
         )
         leaf_blocks = cur.fetchall()
         conn.commit()
 
     # We're ready to build the merkle tree
-    schema_table = f"{td_task.fields.l_schema}.{td_task.fields.l_table}"
+    schema_table = f"{schema}.{table}"
     print(f"\nBuilding merkle tree for {schema_table}")
 
-    for node in td_task.fields.cluster_nodes:
+    for node in mtree_task.fields.cluster_nodes:
         print(f"\nProcessing node: {node['name']}")
-        _, conn = td_task.connection_pool.get_cluster_node_connection(node)
+        _, conn = mtree_task.connection_pool.get_cluster_node_connection(node)
 
         try:
             with conn.cursor() as cur:
@@ -310,8 +338,8 @@ def build_mtree(cluster_name: str, table_name: str, dbname: str = None) -> None:
                     for block in leaf_blocks:
                         cur.execute(
                             INSERT_BLOCK_RANGES.format(
-                                schema=td_task.fields.l_schema,
-                                table=td_task.fields.l_table,
+                                schema=schema,
+                                table=table,
                             ),
                             (block[0], block[1], block[2]),
                         )
@@ -323,7 +351,7 @@ def build_mtree(cluster_name: str, table_name: str, dbname: str = None) -> None:
             work_items = []
             for block in leaf_blocks:
                 column_list = []
-                for col in td_task.fields.cols.split(","):
+                for col in mtree_task.fields.cols.split(","):
                     column_list.append(
                         f"CASE WHEN {col} IS NULL THEN 'NULL' "
                         f"WHEN {col}::text = '' THEN 'EMPTY' "
@@ -332,9 +360,9 @@ def build_mtree(cluster_name: str, table_name: str, dbname: str = None) -> None:
                 column_expr = ",\n        ".join(column_list)
 
                 sql = COMPUTE_LEAF_HASHES.format(
-                    schema=td_task.fields.l_schema,
-                    table=td_task.fields.l_table,
-                    key=td_task.fields.key,
+                    schema=schema,
+                    table=table,
+                    key=key,
                     columns=column_expr,
                 )
                 work_items.append(
@@ -353,15 +381,19 @@ def build_mtree(cluster_name: str, table_name: str, dbname: str = None) -> None:
             max_workers = int(os.cpu_count())
             n_jobs = min(len(work_items), max_workers)
 
+            # tracer = VizTracer()
+            # init_kwargs = tracer.init_kwargs
+
             shared_objects = {
                 "node": node,
-                "conn_pool": td_task.connection_pool,
+                "conn_pool": mtree_task.connection_pool,
             }
 
             with WorkerPool(
                 n_jobs=n_jobs,
                 shared_objects=shared_objects,
                 use_worker_state=True,
+                pass_worker_id=True,
             ) as pool:
                 results = list(
                     pool.imap_unordered(
@@ -369,6 +401,7 @@ def build_mtree(cluster_name: str, table_name: str, dbname: str = None) -> None:
                         make_single_arguments(work_items),
                         iterable_len=len(work_items),
                         worker_init=init_hash_conn_pool,
+                        worker_exit=close_hash_conn_pool,
                         progress_bar=True,
                     )
                 )
@@ -378,11 +411,12 @@ def build_mtree(cluster_name: str, table_name: str, dbname: str = None) -> None:
                     raise AceException(
                         f"Failed to compute hashes for {len(failed)} blocks"
                     )
+            # tracer.save()
 
             print("\nBuilding parent nodes...")
 
             # Let's just use a new conn here to be safe
-            _, new_conn = td_task.connection_pool.get_cluster_node_connection(node)
+            _, new_conn = mtree_task.connection_pool.get_cluster_node_connection(node)
             parent_cur = new_conn.cursor()
 
             parent_cur.execute(
@@ -390,8 +424,8 @@ def build_mtree(cluster_name: str, table_name: str, dbname: str = None) -> None:
                 DELETE FROM ace_mtree_{schema}_{table}
                 WHERE node_level > 0
                 """.format(
-                    schema=td_task.fields.l_schema,
-                    table=td_task.fields.l_table,
+                    schema=schema,
+                    table=table,
                 )
             )
 
@@ -399,8 +433,8 @@ def build_mtree(cluster_name: str, table_name: str, dbname: str = None) -> None:
             while True:
                 parent_cur.execute(
                     BUILD_PARENT_NODES.format(
-                        schema=td_task.fields.l_schema,
-                        table=td_task.fields.l_table,
+                        schema=schema,
+                        table=table,
                     ),
                     {"node_level": level},
                 )
@@ -421,7 +455,7 @@ def build_mtree(cluster_name: str, table_name: str, dbname: str = None) -> None:
                 f"Error building Merkle tree on {node['name']}: {str(e)}"
             )
 
-    td_task.connection_pool.close_all()
+    mtree_task.connection_pool.close_all()
 
 
 def rebalance_blocks(conn, schema, table, key, blocks):
@@ -595,7 +629,8 @@ def rebalance_blocks(conn, schema, table, key, blocks):
 
                         blocks = [
                             (p - 1 if p > pos else p, s, e)
-                            for p, s, e in blocks if p != pos
+                            for p, s, e in blocks
+                            if p != pos
                         ]
                         if not blocks:
                             break
@@ -678,7 +713,8 @@ def rebalance_blocks(conn, schema, table, key, blocks):
                     modified_positions.add(pos)
                     blocks = [
                         (p - 1 if p > next_pos else p, s, e)
-                        for p, s, e in blocks if p != next_pos
+                        for p, s, e in blocks
+                        if p != next_pos
                     ]
 
                     if not blocks:
@@ -788,10 +824,10 @@ def update_mtree(cluster_name: str, table_name: str, dbname: str = None) -> None
         _table_name=table_name,
         _dbname=dbname,
         block_rows=config.MTREE_BLOCK_SIZE,
-        max_cpu_ratio=config.MAX_CPU_RATIO_DEFAULT,
+        max_cpu_ratio=config.MAX_CPU_RATIO,
         output="json",
         _nodes="all",
-        batch_size=config.BATCH_SIZE_DEFAULT,
+        batch_size=config.DIFF_BATCH_SIZE,
         quiet_mode=False,
         table_filter=None,
         invoke_method="cli",

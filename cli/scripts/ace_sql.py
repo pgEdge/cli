@@ -236,7 +236,7 @@ CALCULATE_BLOCK_RANGES = """
         SELECT
             {key}
         FROM {schema}.{table}
-        TABLESAMPLE BERNOULLI(1)
+        TABLESAMPLE {table_sample_method}({sample_percent})
         ORDER BY {key}
     ),
     first_row AS (

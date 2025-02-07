@@ -2328,13 +2328,13 @@ def multi_table_diff(task: Union[RepsetDiffTask, SchemaDiffTask]) -> None:
                 _dbname=task._dbname,
                 fields=task.fields,
                 quiet_mode=task.quiet_mode,
-                block_rows=getattr(task, "block_rows", config.BLOCK_ROWS_DEFAULT),
+                block_rows=getattr(task, "block_rows", config.DIFF_BLOCK_SIZE),
                 max_cpu_ratio=getattr(
-                    task, "max_cpu_ratio", config.MAX_CPU_RATIO_DEFAULT
+                    task, "max_cpu_ratio", config.MAX_CPU_RATIO
                 ),
                 output=getattr(task, "output", "json"),
                 _nodes=getattr(task, "_nodes", "all"),
-                batch_size=getattr(task, "batch_size", config.BATCH_SIZE_DEFAULT),
+                batch_size=getattr(task, "batch_size", config.DIFF_BATCH_SIZE),
                 skip_db_update=True,
                 table_filter=None,
             )
