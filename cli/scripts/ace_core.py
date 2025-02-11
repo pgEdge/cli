@@ -19,6 +19,7 @@ from tqdm import tqdm
 import ace
 import ace_db
 import ace_html_reporter
+import pgpasslib
 import cluster
 import util
 import ace_config as config
@@ -32,8 +33,7 @@ from ace_data_models import (
     ExceptionLogEntry,
 )
 
-from ace_exceptions import AceException
-import ace_auth as auth
+from ace_exceptions import AceException, AuthenticationError
 
 
 def run_query(worker_state, host, query):
@@ -43,24 +43,72 @@ def run_query(worker_state, host, query):
     return results
 
 
+# FIXME: Replace with td_task.connection_pool.connect() after merkle trees
+# PR is merged
 def init_conn_pool(shared_objects, worker_state):
 
     td_task = shared_objects["td_task"]
 
     for node in td_task.fields.cluster_nodes:
         try:
-            _, conn = td_task.connection_pool.get_cluster_node_connection(
-                node,
-                shared_objects["cluster_name"],
-                invoke_method=td_task.invoke_method,
-                client_role=(
-                    td_task.client_role
-                    if config.USE_CERT_AUTH and td_task.invoke_method == "api"
-                    else None
-                ),
-            )
+            host = node["public_ip"]
+            port = node.get("port", 5432)
+            db_user = node["db_user"]
+            dbname = node["db_name"]
+
+            params = {
+                "dbname": dbname,
+                "user": db_user,
+                "host": host,
+                "port": port,
+                "options": f"-c statement_timeout={config.STATEMENT_TIMEOUT}",
+                "application_name": "ACE",
+                "keepalives": 1,
+                "keepalives_idle": 30,
+                "keepalives_interval": 10,
+                "keepalives_count": 5,
+                "connect_timeout": config.CONNECTION_TIMEOUT,
+            }
+
+            if config.USE_CERT_AUTH:
+                if config.ACE_USER_CERT_FILE and config.ACE_USER_KEY_FILE:
+                    params.update(
+                        {
+                            "sslmode": "verify-full",
+                            "sslcert": config.ACE_USER_CERT_FILE,
+                            "sslkey": config.ACE_USER_KEY_FILE,
+                            "sslrootcert": config.CA_CERT_FILE,
+                        }
+                    )
+                else:
+                    raise AuthenticationError(
+                        "Client certificate authentication is enabled but no"
+                        "certificate files are provided"
+                    )
+            else:
+                if td_task.client_role is not None:
+                    raise AuthenticationError(
+                        "Client certificate authentication needs to be enabled"
+                        "for API usage"
+                    )
+                # Handle password authentication
+                if node["db_password"]:
+                    params["password"] = node["db_password"]
+                else:
+                    pgpass = pgpasslib.getpass(
+                        host=node["name"],
+                        user=db_user,
+                        dbname=dbname,
+                        port=port,
+                    )
+                    if not pgpass:
+                        msg = f"No password found for {node['name']}"
+                        raise AuthenticationError(msg)
+                    params["password"] = pgpass
+
+            conn = psycopg.connect(**params)
             worker_state[node["name"]] = conn.cursor()
-        except auth.AuthenticationError as e:
+        except AuthenticationError as e:
             raise AceException(str(e))
 
 
@@ -503,6 +551,7 @@ def table_diff(td_task: TableDiffTask, skip_all_checks: bool = False):
             prev_max_offset = rows[-1]
 
         cur.close()
+        conn.close()
         return pkey_offsets
 
     util.message(
@@ -523,6 +572,10 @@ def table_diff(td_task: TableDiffTask, skip_all_checks: bool = False):
         }
         ace.handle_task_exception(td_task, context)
         raise future.exception()
+
+    # We're done with getting table metadata. Closing all connections.
+    for conn in conn_list:
+        conn.close()
 
     total_blocks = row_count // td_task.block_rows
     total_blocks = total_blocks if total_blocks > 0 else 1
@@ -2101,6 +2154,9 @@ def table_rerun_temptable(td_task: TableDiffTask) -> None:
             )
             cur = conn.cursor()
             cur.execute(clean_qry)
+            conn.commit()
+            cur.close()
+            conn.close()
     except Exception as e:
         context = {"errors": [f"Could not clean up temp table: {str(e)}"]}
         ace.handle_task_exception(td_task, context)
