@@ -120,10 +120,10 @@
 
 ## v24.1.7 on 2024-01-31 ###########
   - add util.run_native() for supporting backrest, patroni, ansible and etcd CLI's
-  - bump pgvector from 0.5.1 to [0.6.0](https://github.com/pgvector/pgvector/blob/master/CHANGELOG.md)
-  - improve [DB doc](https://github.com/pgEdge/cli/blob/REL24_1/cli/DB-README.md)
-  - improve [ACE doc](https://github.com/pgEdge/cli/blob/REL24_1/cli/ACE-README.md) 
-  - cleanout nclibs, ddlx, & multicorn2 from versions.sql (not supported yet)
+  - bump pgvector from 0.5.1 to 0.6.0
+  - improve DB doc
+  - improve ACE doc 
+  - cleanout nclibs, ddlx, & multicorn2 from versions.sql
 
 ## v24.1.6 on 2024-01-30 ###########
   - work on build automation
@@ -133,8 +133,8 @@
   - fold in the multicloud POC from multicloud-cli project
   - use newer 'PyYAML', add 'ansible', drop 'supervisor' in 'ctlibs'
   - deprecate 'ctl' for 'pgedge' as CLI name
-  - ACE fixes for json config changes (PR #81 Tej)
-  - More UM refactoring (PR #79 & #80 Cady)
+  - ACE fixes for json config changes
+  - More UM refactoring
   - 'ent' modules are now simply marked 'prod'
   - rename 'secure' module to 'cloud'
   - seperate out 'pgbin-build' from 'nodectl' & rename it to 'cli'
@@ -328,7 +328,7 @@
   - bump pg16 to 16.0 for GA
   - bump oraclefdw 2.6.0 and add support for pg16
   - bump partman to 4.7.4 and add support for pg16
-  - continuous improvements in quality & quantity of test scripts (thank u Susan and team)
+  - continuous improvements in quality & quantity of test scripts
   - fix northwind schema and data to use numeric(9,2) for prices & double for discount (was using real)
   - add support to pg16 for pgCron & pgAudit
   - bump plprofiler to 4.2.4 and support pg15 & pg16
@@ -345,7 +345,7 @@
   - improve efficiency of `ace diff-tables` to handle massive tables w blocks of checksums
   - bump pgcat to 1.1.1 & make available for dev and test
   - add support for plv8 3.2.0 for dev and test
-  - fixed a tricky problem when adding tables to a repset  w/ a wildcard (cady)
+  - fixed a tricky problem when adding tables to a repset  w/ a wildcard
   - Fix missing static lib for uuid-ossp in pg15 & pg16 builds
   - 2nd pass at implementing `spock.db_create()` for supporting Dev Edition reqmnts 
   - WIP: refactor `install-pgedge.py` to use `spock.db_create()`
