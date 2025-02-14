@@ -1,6 +1,6 @@
 # Tutorials
 
-- [Basic Configuration and Usage](tutorials.md#deploying-a-cluster-on-your-localhost)
+- [Deploying a Cluster on your Localhost](tutorials.md#deploying-a-cluster-on-your-localhost)
 - [Manually Configuring a Cluster](tutorials.md#manually-configuring-a-cluster)
 
 ## Deploying a Cluster on your Localhost
