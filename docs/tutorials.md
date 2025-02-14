@@ -4,7 +4,6 @@
 - [Manually Configuring a Cluster](tutorials.md#manually-configuring-a-cluster)
 
 ## Deploying a Cluster on your Localhost
-
 In this tutorial, we'll walk you through the process of creating and modifying a .json file to specify your cluster preferences, and then deploy the cluster with a single command.  This is possibly the simplest way to deploy a cluster for experimentation and test purposes.
 
 ### Installing pgEdge Platform
@@ -21,7 +20,6 @@ Then, install the pgEdge Platform with the command:
 `python3 -c "$(curl -fsSL https://pgedge-download.s3.amazonaws.com/REPO/install.py)"`
 
 Paste the command into your command line client and press `Return`.
-
 
 ### Deploying the Cluster
 
