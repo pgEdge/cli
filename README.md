@@ -7,11 +7,7 @@
 - [CLI Functions](docs/cli_functions.md)
 - [Release Notes](docs/cli_release_notes.md)
 
-## The CLI for pgEdge
-
 This is the pgEdge Command Line Interface (CLI) for managing components. 
-
-Get started quickly by taking a look at our [tutorials](https://github.com/pgEdge/pgedge/tree/main/cli/tutorials) to create your own localhost or vm cluster.
 
 ### Creating a Development Environment
 
