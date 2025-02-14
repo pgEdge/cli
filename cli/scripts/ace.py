@@ -13,6 +13,8 @@ from datetime import datetime
 import logging
 from itertools import chain
 
+from psycopg import ClientCursor
+
 import ace_core
 import ace_daemon
 import fire
@@ -67,6 +69,11 @@ def write_pg_dump(p_ip, p_db, p_port, p_prfx, p_schm, p_base_dir="/tmp"):
     except Exception as e:
         util.exit_exception(e)
     return out_file
+
+
+def print_query(conn, query):
+    client_cur = ClientCursor(conn)
+    print(client_cur.mogrify(query))
 
 
 """

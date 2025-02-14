@@ -1,15 +1,13 @@
+import traceback
 from mpire import WorkerPool
 from mpire.utils import make_single_arguments
 import os
 from typing import Tuple, Any
 from dataclasses import dataclass
 
-from viztracer import VizTracer, log_sparse
-
-
 import ace
 import ace_config as config
-from ace_data_models import MerkleTreeTask, TableDiffTask
+from ace_data_models import MerkleTreeTask
 from ace_exceptions import AceException
 from ace_sql import (
     CREATE_METADATA_TABLE,
@@ -72,14 +70,9 @@ def close_hash_conn_pool(worker_id, shared_objects, worker_state):
         raise AceException(f"Error closing worker connection: {str(e)}")
 
 
-@log_sparse
 def compute_block_hashes(worker_id, shared_objects, worker_state, args):
     """Worker function to compute hashes for a range of blocks"""
     block_boundary, sql = args
-    # init_kwargs = shared_objects["init_kwargs"]
-    # tracer = VizTracer(**init_kwargs)
-    # tracer.register_exit()
-    # tracer.start()
 
     try:
         cur = worker_state["cur"]
@@ -102,6 +95,7 @@ def compute_block_hashes(worker_id, shared_objects, worker_state, args):
             )
             raise AceException(msg)
 
+        conn.commit()
         return results
 
     except Exception as e:
@@ -113,10 +107,6 @@ def compute_block_hashes(worker_id, shared_objects, worker_state, args):
             f"end: {block_boundary.block_end}): {str(e)}"
         )
         raise AceException(msg)
-
-    # finally:
-    #     tracer.stop()
-    #     tracer.save(f"worker_{worker_id}.json")
 
 
 def create_mtree_objects(conn, schema, table, key, total_rows, num_blocks):
@@ -381,9 +371,6 @@ def build_mtree(mtree_task: MerkleTreeTask) -> None:
             max_workers = int(os.cpu_count())
             n_jobs = min(len(work_items), max_workers)
 
-            # tracer = VizTracer()
-            # init_kwargs = tracer.init_kwargs
-
             shared_objects = {
                 "node": node,
                 "conn_pool": mtree_task.connection_pool,
@@ -411,7 +398,6 @@ def build_mtree(mtree_task: MerkleTreeTask) -> None:
                     raise AceException(
                         f"Failed to compute hashes for {len(failed)} blocks"
                     )
-            # tracer.save()
 
             print("\nBuilding parent nodes...")
 
@@ -458,9 +444,241 @@ def build_mtree(mtree_task: MerkleTreeTask) -> None:
     mtree_task.connection_pool.close_all()
 
 
-def rebalance_blocks(conn, schema, table, key, blocks):
+def split_blocks(conn, schema, table, key, blocks):
     """
-    Rebalance blocks by merging small blocks and splitting large ones.
+    Split blocks if they are too large.
+    Returns a list of block positions that were modified.
+    """
+    try:
+        cur = conn.cursor()
+        modified_positions = set()
+        target_size = config.MTREE_BLOCK_SIZE
+
+        # First delete all parent nodes since we'll be modifying the tree structure
+        # This is not expensive at all since computing parent hashes is significantly
+        # cheaper than computing leaf hashes.
+        cur.execute(
+            f"""
+            DELETE FROM ace_mtree_{schema}_{table}
+            WHERE node_level > 0
+            """
+        )
+
+        cur.execute(
+            GET_PKEY_TYPE,
+            (
+                schema,
+                table,
+                key,
+            ),
+        )
+        pkey_type = cur.fetchone()[0]
+
+        blocks = sorted(blocks, key=lambda x: x[0])
+        i = 0
+
+        print(blocks)
+    except Exception as e:
+        conn.rollback()
+        raise AceException(
+            f"Error splitting blocks on {schema}.{table}: {str(e)}"
+        )
+
+    while i < len(blocks):
+        pos, start, end = blocks[i]
+        print(f"Processing block {pos} with range {start} to {end}")
+
+        # When inserts happen after the range_end of the last block, we mark that
+        # block as dirty and set the range_end to null. So, if we're attempting
+        # to add new blocks at the end, we need to find the actual max value.
+        if i == len(blocks) - 1 and end is None:
+            cur.execute(
+                f"""
+                SELECT max({key})
+                FROM {schema}.{table}
+                WHERE {key} >= %s
+                """,
+                (start,),
+            )
+            max_val = cur.fetchone()[0]
+            if max_val is not None:
+                end = max_val
+                cur.execute(
+                    f"""
+                    UPDATE ace_mtree_{schema}_{table}
+                    SET range_end = %s
+                    WHERE node_level = 0
+                    AND node_position = %s
+                    """,
+                    (end, pos),
+                )
+
+        # Get actual row count for this block
+        cur.execute(
+            f"""
+            SELECT count(*)
+            FROM {schema}.{table}
+            WHERE {key} >= %s
+            AND ({key} < %s OR %s::{pkey_type} IS NULL)
+        """,
+            (start, end, end),
+        )
+        count = cur.fetchone()[0]
+
+        if count > target_size * 2:
+            # The split point is simply the midpoint of the block
+            cur.execute(
+                f"""
+                SELECT {key}
+                FROM {schema}.{table}
+                WHERE {key} >= %s
+                AND ({key} < %s OR %s::{pkey_type} IS NULL)
+                ORDER BY {key}
+                OFFSET %s
+                LIMIT 1
+            """,
+                (start, end, end, count // 2),  # Split at midpoint
+            )
+            split_point = cur.fetchone()[0]
+
+            """
+            We're going to be inserting the new block at the end to avoid disrupting
+            the existing parent hashes. Why? Consider this example:
+
+            0: 1-100: x1
+            1: 101-500: x2
+            2: 501-600: x3
+            3: 601-700: x4
+            4: 701-1000: x5
+
+            It's ascii tree would look like this:
+
+                       p6
+                      / \
+                     /   \
+                    /     \
+                   p4     p5
+                  /  \      \
+                 /    \      \
+                /      \      \
+               p1      p2     p3
+              /  \    /  \      \
+             x1   x2 x3   x4    x5
+
+
+            Let's assume our initial blocks are all ~100 rows in size.
+            Now, say many inserts happen in block 101-500, and we need to split it.
+            If we split block 1, and insert the new block right after it, we get:
+
+            0: 1-100: x1
+            1: 101-300: m
+            2: 301-500: n
+            3: 501-600: x3
+            4: 601-700: x4
+            5: 701-1000: x5
+
+            The new tree would look like this:
+            m & n indicate new hashes, and primes (') indicate changed hashes
+
+                        p6'
+                       /  \
+                      /    \
+                     /      \
+                    /        \
+                   p4'       p5'
+                  /  \         \
+                 /    \         \
+                /      \         \
+               p1'     p2'       p3'
+              /  \    /  \      /  \
+             x1   m  n   x3   x4    x5
+
+            While doing a table-diff, we'd have to go all the way down to the leaf
+            nodes to detect which blocks don't match anymore. In other words,
+            even though just 2 leaf blocks' hashes changed, all their parent hashes
+            changed unnecessarily. This is would defeat the purpose of having
+            merkle trees in the first place.
+
+            Instead, if we insert the new block at the end, we retain the
+            parent-child relationships of existing leaf nodes, and only modify them
+            where the split happened.
+
+            With this logic, our new tree would look like this:
+
+            0: 1-100: x1
+            1: 101-300: m
+            2: 501-600: x3
+            3: 601-700: x4
+            4: 701-1000: x5
+            5: 301-500: n
+
+                        p6'
+                       / \
+                      /   \
+                     /     \
+                    /       \
+                   p4'      p5'
+                  /  \        \
+                 /    \        \
+                /      \        \
+               p1'     p2       p3'
+              /  \    /  \     /  \
+             x1   m  x3  x4   x5   n
+
+             In our example, p2 remained unchanged, but in a larger tree, several
+             parent nodes could potentially remain unchanged, thereby speeding-up
+             our diff logic.
+            """
+
+            # Get the next available position at the end
+            cur.execute(
+                f"""
+                SELECT MAX(node_position) + 1
+                FROM ace_mtree_{schema}_{table}
+                WHERE node_level = 0
+                """
+            )
+            new_pos = cur.fetchone()[0]
+
+            # Create new block at the end
+            cur.execute(
+                INSERT_BLOCK_RANGES.format(
+                    schema=schema,
+                    table=table,
+                ),
+                (new_pos, split_point, end),
+            )
+
+            # Update original block
+            cur.execute(
+                f"""
+                UPDATE ace_mtree_{schema}_{table}
+                SET range_end = %s,
+                    dirty = true,
+                    last_modified = current_timestamp
+                WHERE node_level = 0
+                AND node_position = %s
+            """,
+                (split_point, pos),
+            )
+
+            modified_positions.add(pos)
+            modified_positions.add(new_pos)
+
+            blocks[i] = (pos, start, split_point)
+            blocks.insert(i + 1, (new_pos, split_point, end))
+            i += 1
+            continue
+
+        i += 1
+
+    conn.commit()
+    return list(modified_positions)
+
+
+def merge_blocks(conn, schema, table, key, blocks):
+    """
+    Merge blocks if they are too small.
     Returns a list of block positions that were modified.
     """
     cur = conn.cursor()
@@ -471,7 +689,7 @@ def rebalance_blocks(conn, schema, table, key, blocks):
     # target size
     MERGE_THRESHOLD = 0.25
 
-    # Whenever there is a merge or a split, the node_positions of leaf nodes
+    # Whenever there is a merge, the node_positions of leaf nodes
     # become invalid. Now, we cannot simply do a node_position = node_position - 1
     # since there might be other leaf nodes at that location.
     # So we move all leaf nodes to a temporary position and then update the
@@ -481,6 +699,10 @@ def rebalance_blocks(conn, schema, table, key, blocks):
     # Napkin math: For a conflict to happen with a 10^6 temp offset, and a
     # block size of say 10^5, we would need 10^11 rows or 100 billion rows in the
     # table, which is a lot.
+    #
+    # NOTE: This operation is disruptive. It *will* change parent-child relationships,
+    # thereby potentially slowing down table-diff. Use --rebalance=true infrequently,
+    # or during maintenance windows.
     TEMP_OFFSET = 1_000_000
 
     # First delete all parent nodes since we'll be modifying the tree structure
@@ -725,90 +947,11 @@ def rebalance_blocks(conn, schema, table, key, blocks):
                     i += 1
                     continue
 
-        if count > target_size * 2:
-            # The split point is simply the midpoint of the block
-            cur.execute(
-                f"""
-                SELECT {key}
-                FROM {schema}.{table}
-                WHERE {key} >= %s
-                AND ({key} < %s OR %s::{pkey_type} IS NULL)
-                ORDER BY {key}
-                OFFSET %s
-                LIMIT 1
-            """,
-                (start, end, end, count // 2),  # Split at midpoint
-            )
-            split_point = cur.fetchone()[0]
-
-            # Let's move the leaf nodes to temp positions
-            cur.execute(
-                f"""
-                UPDATE ace_mtree_{schema}_{table}
-                SET node_position = node_position + %s
-                WHERE node_level = 0
-                AND node_position > %s
-            """,
-                (TEMP_OFFSET, pos),
-            )
-
-            # Create new block at pos + 1
-            cur.execute(
-                INSERT_BLOCK_RANGES.format(
-                    schema=schema,
-                    table=table,
-                ),
-                (pos + 1, split_point, end),
-            )
-
-            # Update original block
-            cur.execute(
-                f"""
-                UPDATE ace_mtree_{schema}_{table}
-                SET range_end = %s,
-                    dirty = true,
-                    last_modified = current_timestamp
-                WHERE node_level = 0
-                AND node_position = %s
-            """,
-                (split_point, pos),
-            )
-
-            # Move remaining blocks back
-            cur.execute(
-                f"""
-                UPDATE ace_mtree_{schema}_{table}
-                SET node_position = pos_seq + %s
-                FROM (
-                    SELECT node_position,
-                           row_number() OVER (
-                               ORDER BY node_position
-                           ) + %s as pos_seq
-                    FROM ace_mtree_{schema}_{table}
-                    WHERE node_level = 0
-                    AND node_position > %s
-                ) as seq
-                WHERE ace_mtree_{schema}_{table}.node_position = seq.node_position
-                AND node_level = 0
-            """,
-                (pos + 1, 1, pos + TEMP_OFFSET),
-            )
-
-            modified_positions.add(pos)
-            modified_positions.add(pos + 1)
-
-            blocks[i] = (pos, start, split_point)
-            blocks.insert(i + 1, (pos + 1, split_point, end))
-            i += 1
-            continue
-
-        i += 1
-
     conn.commit()
     return list(modified_positions)
 
 
-def update_mtree(cluster_name: str, table_name: str, dbname: str = None) -> None:
+def update_mtree(mtree_task: MerkleTreeTask) -> None:
     """
     Update a Merkle tree by recomputing hashes for dirty leaf nodes and new blocks.
     Also processes any pending block rebalancing operations.
@@ -819,25 +962,17 @@ def update_mtree(cluster_name: str, table_name: str, dbname: str = None) -> None
         table_name (str): Name of the table to update tree for
         dbname (str, optional): Database name. Defaults to None.
     """
-    td_task = TableDiffTask(
-        cluster_name=cluster_name,
-        _table_name=table_name,
-        _dbname=dbname,
-        block_rows=config.MTREE_BLOCK_SIZE,
-        max_cpu_ratio=config.MAX_CPU_RATIO,
-        output="json",
-        _nodes="all",
-        batch_size=config.DIFF_BATCH_SIZE,
-        quiet_mode=False,
-        table_filter=None,
-        invoke_method="cli",
-    )
 
-    ace.table_diff_checks(td_task)
+    ace.merkle_tree_checks(mtree_task, skip_validation=True)
 
-    for node in td_task.fields.cluster_nodes:
+    schema = mtree_task.fields.l_schema
+    table = mtree_task.fields.l_table
+    key = mtree_task.fields.key
+
+    for node in mtree_task.fields.cluster_nodes:
         print(f"\nUpdating Merkle tree on node: {node['name']}")
-        _, conn = td_task.connection_pool.get_cluster_node_connection(node)
+        _, conn = mtree_task.connection_pool.get_cluster_node_connection(node)
+        conn.autocommit = False
 
         try:
             # Start transaction with repeatable read isolation
@@ -847,8 +982,8 @@ def update_mtree(cluster_name: str, table_name: str, dbname: str = None) -> None
                 # Get all dirty and new blocks that need updating
                 cur.execute(
                     GET_DIRTY_AND_NEW_BLOCKS.format(
-                        schema=td_task.fields.l_schema,
-                        table=td_task.fields.l_table,
+                        schema=schema,
+                        table=table,
                     )
                 )
                 blocks_to_update = cur.fetchall()
@@ -860,20 +995,28 @@ def update_mtree(cluster_name: str, table_name: str, dbname: str = None) -> None
 
                 print(f"Found {len(blocks_to_update)} blocks to update")
 
-                # First rebalance blocks if needed
-                rebalance_blocks(
+                split_blocks(
                     conn,
-                    td_task.fields.l_schema,
-                    td_task.fields.l_table,
-                    td_task.fields.key,
+                    schema,
+                    table,
+                    key,
                     blocks_to_update,
                 )
+
+                if mtree_task.rebalance:
+                    merge_blocks(
+                        conn,
+                        schema,
+                        table,
+                        key,
+                        blocks_to_update,
+                    )
 
                 # Get final list of blocks to update (including newly modified ones)
                 cur.execute(
                     GET_DIRTY_AND_NEW_BLOCKS.format(
-                        schema=td_task.fields.l_schema,
-                        table=td_task.fields.l_table,
+                        schema=schema,
+                        table=table,
                     )
                 )
                 blocks_to_update = cur.fetchall()
@@ -886,7 +1029,7 @@ def update_mtree(cluster_name: str, table_name: str, dbname: str = None) -> None
                 print(f"Found {len(blocks_to_update)} blocks to update")
 
                 column_list = []
-                for col in td_task.fields.cols.split(","):
+                for col in mtree_task.fields.cols.split(","):
                     column_list.append(
                         f"CASE WHEN {col} IS NULL THEN 'NULL' "
                         f"WHEN {col}::text = '' THEN 'EMPTY' "
@@ -904,9 +1047,9 @@ def update_mtree(cluster_name: str, table_name: str, dbname: str = None) -> None
 
                     cur.execute(
                         COMPUTE_LEAF_HASHES.format(
-                            schema=td_task.fields.l_schema,
-                            table=td_task.fields.l_table,
-                            key=td_task.fields.key,
+                            schema=schema,
+                            table=table,
+                            key=key,
                             columns=column_expr,
                         ),
                         params,
@@ -921,8 +1064,8 @@ def update_mtree(cluster_name: str, table_name: str, dbname: str = None) -> None
                         DELETE FROM ace_mtree_{schema}_{table}
                         WHERE node_level > 0
                         """.format(
-                            schema=td_task.fields.l_schema,
-                            table=td_task.fields.l_table,
+                            schema=schema,
+                            table=table,
                         )
                     )
 
@@ -931,8 +1074,8 @@ def update_mtree(cluster_name: str, table_name: str, dbname: str = None) -> None
                     while True:
                         cur.execute(
                             BUILD_PARENT_NODES.format(
-                                schema=td_task.fields.l_schema,
-                                table=td_task.fields.l_table,
+                                schema=schema,
+                                table=table,
                             ),
                             {"node_level": level},
                         )
@@ -944,8 +1087,8 @@ def update_mtree(cluster_name: str, table_name: str, dbname: str = None) -> None
 
                     cur.execute(
                         CLEAR_DIRTY_FLAGS.format(
-                            schema=td_task.fields.l_schema,
-                            table=td_task.fields.l_table,
+                            schema=schema,
+                            table=table,
                         ),
                         {"node_positions": affected_positions},
                     )
@@ -958,8 +1101,9 @@ def update_mtree(cluster_name: str, table_name: str, dbname: str = None) -> None
 
         except Exception as e:
             conn.rollback()
+            traceback.print_exc()
             raise AceException(
                 f"Error updating Merkle tree on {node['name']}: {str(e)}"
             )
 
-    td_task.connection_pool.close_all()
+    mtree_task.connection_pool.close_all()

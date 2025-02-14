@@ -336,6 +336,24 @@ COMPUTE_LEAF_HASHES = """
     RETURNING mt.node_position;
 """
 
+# COMPUTE_LEAF_HASHES = """
+#     with block_hash as (
+#         SELECT sum(
+#             ('x' || md5({table}::text))::bit(64)::bigint) %% 9223372036854775807
+#         as hash
+#         FROM {schema}.{table}
+#         WHERE {key} >= %(range_start)s
+#         AND ({key} < %(range_end)s OR %(range_end)s IS NULL)
+#     )
+#     UPDATE ace_mtree_{schema}_{table}
+#     SET leaf_hash = block_hash.hash,
+#         node_hash = block_hash.hash,
+#         last_modified = current_timestamp
+#     FROM block_hash
+#     WHERE node_position = %(node_position)s AND node_level = 0
+#     RETURNING node_position;
+# """
+
 GET_BLOCK_RANGES = """
     SELECT node_position, range_start, range_end
     FROM ace_mtree_{schema}_{table}
