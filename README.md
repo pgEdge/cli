@@ -1,10 +1,16 @@
 # The pgEdge Command Line Interface
 
-This repo contains the code for the pgEdge Command Line Interface (CLI); for usage information, see the pgEdge [online documentation](https://docs.pgedge.com/).  You can also review the [release notes](https://docs.pgedge.com/platform/pgedge_rel_notes) to learn more about our recent enhancements and fixes.
+## Table of Contents
+- [Creating a Development Environment](README.md#creating-a-development-environment)
+- [Advanced Configuration Options](docs/)
+- [CLI Functions](docs/cli_functions.md)
+- [Release Notes](docs/cli_release_notes.md)
 
-## Getting Started with pgEdge
+## The CLI for pgEdge
 
-To learn more about pgEdge and sign up for a pgEdge [Cloud](https://www.pgedge.com/products/pgedge-cloud) or [Platform](https://www.pgedge.com/products/pgedge-platform) account, visit the [pgEdge website](https://www.pgedge.com/).
+This is the pgEdge Command Line Interface (CLI) for managing components. 
+
+Get started quickly by taking a look at our [tutorials](https://github.com/pgEdge/pgedge/tree/main/cli/tutorials) to create your own localhost or vm cluster.
 
 ### Creating a Development Environment
 
