@@ -69,20 +69,6 @@ Commands in the `spock` module include:
 | [sub-wait-for-sync](functions/spock-sub-wait-for-sync.md) | Pause until the subscription is synchronized.
 | [table-wait-for-sync](functions/spock-table-wait-for-sync.md) | Pause until a table finishes synchronizing.
 
-
-
-
-
-#### DB Commands
-
-Commands in the `DB` module include:
-
-| Command  | Description
-|----------|-------------
-| [guc-create](functions/db-create.md) | To create a database owned by a specific user.
-| [guc-set](functions/db-guc-set.md) | Set a GUC value in a PostgreSQL database.
-| [guc-show](functions/db-guc-show.md) | Show the current value of a GUC in a PostgreSQL database.
-
 #### Service Control Commands
 Commands in the `service` module include:
 
@@ -99,7 +85,6 @@ Commands in the `service` module include:
 | [stop](functions/service-stop.md) | Stop a server component.
 
 #### Update Manager Commands
-
 Commands in the `um` module include:
 
 | Command  | Description
