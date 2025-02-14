@@ -2,7 +2,7 @@
 
 ## Table of Contents
 - [Creating a Development Environment](README.md#creating-a-development-environment)
-- [Advanced Configuration Options](docs/cli_configuration.md)
+- [CLI Functions](docs/cli_functions.md)
 - [Tutorials](docs/tutorials.md)
 - [Release Notes](docs/cli_release_notes.md)
 
