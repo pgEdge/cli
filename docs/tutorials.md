@@ -4,26 +4,11 @@
 - [Manually Configuring a Cluster](tutorials.md#manually-configuring-a-cluster)
 
 ## Deploying a Cluster on your Localhost
-In this tutorial, we'll walk you through the process of creating and modifying a .json file to specify your cluster preferences, and then deploy the cluster with a single command.  This is possibly the simplest way to deploy a cluster for experimentation and test purposes.
+In this tutorial, we'll walk you through deploying a cluster with the `localhost` command  This is possibly the simplest way to deploy a cluster for experimentation and test purposes.
 
-### Installing pgEdge Platform
+### Deploying a Cluster
 
-Before starting this tutorial, you should prepare a local host or virtual machine (VM) running EL9 or Ubuntu 22.04. On the host, you should:
-
-* [Set SELinux to `permissive` or `disabled` mode](https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/8/html/using_selinux/changing-selinux-states-and-modes_using-selinux), and reboot the host.
-* Configure [passwordless sudo access](../installing_pgedge.mdx#configuring-passwordless-sudo) for a non-root OS user.
-* Configure [passwordless ssh](../installing_pgedge.mdx#configuring-passwordless-ssh) access for the same non-root OS user.
-* Open any firewalls that could obstruct access between nodes.
-
-Then, install the pgEdge Platform with the command:
-
-`python3 -c "$(curl -fsSL https://pgedge-download.s3.amazonaws.com/REPO/install.py)"`
-
-Paste the command into your command line client and press `Return`.
-
-### Deploying the Cluster
-
-After installing the pgEdge Platform, use the `pgedge localhost cluster-create` command to deploy a cluster (with the `default` replication set and inter-node subscriptions), and create a .json file that describes the cluster configuration. Move into the `pgedge` directory, and invoke the command:
+After [installing the CLI](../README.md), use the `pgedge localhost cluster-create` command to deploy a cluster (with the `default` replication set and inter-node subscriptions), and create a .json file that describes the cluster configuration. Use the command:
 
 ```sql
 ./pgedge localhost cluster-create cluster_name node_count -d db_name -U db_superuser -P password -port1 port -pg pg_version 
@@ -55,8 +40,7 @@ After providing the values for the positional arguments, provide any optional fl
 
 Deploys a cluster described by the `demo.json` file located in the `cluster/demo` directory. The file describes a `3` node cluster with a PostgreSQL `16` database named `lcdb`. The first node of the cluster (`n1`) is listening on port `6432`; `n2` is listening for database connections on `6433` and `n3` is listening for connections on `6434`. The database superuser is named `lcusr`, and the associated password is `1safepassword`.
 
-
-### Starting Replication on the Cluster
+### Starting Replication
 
 For replication to begin, you will need to add tables to the `default` replication set; for our example, we'll use pgbench to add some tables. When you open pgbench or psql, specify the port number and database name to ensure you're working on the correct node.
 
@@ -100,14 +84,13 @@ Then, exit psql:
 db_name=# exit
 ```
  
-On the OS command line for each node (for example, in the `pgedge/cluster/demo/n1/pgedge` directory), use the `pgedge spock repset-add-table` command to add the tables to the system-created replication set (named `default`); the command is followed by your database name (`db_name`):
+On the OS command line for each node, use the `pgedge spock repset-add-table` command to add the tables to the system-created replication set (named `default`); the command is followed by your database name (`db_name`):
 
 ```sql
 ./pgedge spock repset-add-table default 'pgbench_*' db_name
 ```
 
  The fourth table, `pgbench_history`, is excluded from the replication set because it does not have a primary key.
-
 
 ### Checking the Configuration
 
@@ -136,7 +119,6 @@ db_name=# SELECT sub_id, sub_name, sub_slot_name, sub_replication_sets  FROM spo
 ```
 
 The `sub_replication_sets` column shown above displays the system-created replication sets. You can add custom replication sets with the [`spock repset-create`](../pgedge_commands/spock.md) and [`spock sub-add-repset`](../pgedge_commands/spock.md) commands.
-
 
 ### Testing Replication
 
@@ -212,47 +194,34 @@ db_name=# SELECT SUM(tbalance) FROM pgbench_tellers;
 ```
 
 
-  
 ## Manually Configuring a Cluster
 
-This tutorial will walk you through the process of manually configuring each node in a replication scenario. In our example, we'll walk you through creating a two-node multi-master cluster, and then use pgbench to create some tables and perform some read/write activity on the cluster.
-
-### Installing the pgEdge Platform
-
-Before starting this tutorial, you should prepare two (or more) Linux servers running EL9 or Ubuntu 22.04. On each machine, you should:
-
-* [Set SELinux to `permissive` or `disabled` mode on each host](https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/8/html/using_selinux/changing-selinux-states-and-modes_using-selinux), followed by a system reboot.
-* Configure passwordless sudo access for a non-root OS user on each host.
-* Configure passwordless ssh access for the same non-root OS user on each host.
-* Open any firewalls that could obstruct access between your servers.
-
-Create the CLI in a development environment.
+This tutorial will walk you through the process of manually configuring each node in a replication scenario. 
 
 ### Configuring a Cluster
 
-The first command we use will be the [`setup`](functions/setup.md) command. In addition to the clauses we'll use for this tutorial, the `setup` command allows you to include optional clauses to specify details such as a port number for the cluster (`--port=port_number`), PostgreSQL version (`--pg_ver=version`), Spock version (`--spock_ver=version`), and autostart preferences (`--autostart=True|False`). The `setup` command installs:
+After [installing the CLI](../README.md) invoke the [`setup`](functions/setup.md) command. The `setup` command installs:
 
 * PostgreSQL (Postgres).
 * [spock](https://github.com/pgedge/spock), an extension that provides logical, asynchronous, multi-master replication.
-* [snowflake](../advanced/snowflake.md), an extension that provides robust sequences for distributed clusters.
+* [snowflake]([../advanced/snowflake.md](https://github.com/pgedge/spock)), an extension that provides robust sequences for distributed clusters.
 * other extensions that support database management on a distributed cluster.
 
 On each server, move into the `pgedge` directory, and invoke the setup command: 
 
 `./pgedge setup -U db_superuser_name -P db_superuser_password -d db_name`
 
-For example, the following command (invoked by an OS user named `rocky`) installs the pgEdge CLI and creates a PostgreSQL database named `acctg`, with a PostgreSQL database superuser named `admin`, whose password is `1safe_password`:
+For example, the following command (invoked by an OS user named `rocky`) installs the CLI and creates a PostgreSQL database named `acctg`, and creates a PostgreSQL database superuser named `admin`, whose password is `1safe_password`:
 
 `./pgedge setup -U admin -P 1safe_password -d acctg`
 
-The `setup` command  creates a PostgreSQL database superuser with the name and password you provide with the command. The database user cannot be the name of an OS superuser, `pgedge`, or any of the [PostgreSQL reserved words](https://www.postgresql.org/docs/15/sql-keywords-appendix.html). In the examples that follow, that user is named `admin`.
+The database user cannot be the name of an OS superuser, `pgedge`, or any of the [PostgreSQL reserved words](https://www.postgresql.org/docs/15/sql-keywords-appendix.html). 
 
-The `setup` command also creates a [PostgreSQL replication role](https://www.postgresql.org/docs/16/role-attributes.html) with the same name as the OS user that invokes the `setup` command, and adds the username and the scrambled password to the `./pgpass` file. In our example, that user is named `rocky` (the name of the OS user invoking the command). In the steps that follow, this replication user is provided in the connection strings used between nodes for replication.
-
+The `setup` command also creates a [PostgreSQL replication role](https://www.postgresql.org/docs/16/role-attributes.html) with the same name as the OS user that invokes the `setup` command, and adds the username and the scrambled password to the `./pgpass` file. In our example, that user is named `rocky` and is provided in the connection strings used between nodes for replication.
 
 ### Creating Nodes
 
-After installing the CLI and running [setup](functions/setup.md), we'll use [spock node-create](funtions/spock-node-create.md) to create a *replication node* on each host. A replication node is a named collection of databases, tables, and other artifacts that are replicated via a pgEdge subscription. The syntax is:
+Next, we'll use [spock node-create](funtions/spock-node-create.md) to create a *replication node* on each host. A replication node is a named collection of databases, tables, and other artifacts that are replicated via a pgEdge subscription. The syntax is:
 
 `./pgedge spock node-create node_name 'host=IP_address_of_n1 user=replication_user_name dbname=db_name' db_name`
 
@@ -304,7 +273,6 @@ On node `n2`:
 ./pgedge spock sub-create sub_n2n1 'host=10.0.0.5 port=5432 user=rocky dbname=acctg' acctg
 ```
 
-
 ### Adding Tables to the Replication Set
 
 For replication to begin, you will need to add tables to the replication set; for this example, we'll use pgbench to add some tables. When you open pgbench or psql, specify your database name after the utility name.
@@ -315,7 +283,7 @@ On each node, source the PostgreSQL environment variables to add pgbench and psq
 source pg16/pg16.env
 ```
 
-Then, use pgbench to set up a very simple four-table database. At the OS command line, (on each node of your replication set), create the pgbench tables in your database (`db_name`) with the `pgbench` command. You must create the tables on each node in your replication cluster:
+Use pgbench to set up a very simple four-table database. You must create the tables on each node in your replication cluster:
 
 ```sql
 pgbench -i db_name
@@ -341,14 +309,13 @@ Then, exit psql:
 db_name=# exit
 ```
  
-On the OS command line for each node, use the `pgedge spock repset-add-table` command to add the tables to the system-created replication set (named `default`); the command is followed by your database name (`db_name`):
+For each node, use the `spock repset-add-table` command to add the tables to the system-created replication set (named `default`); the command is followed by your database name (`db_name`):
 
 ```sql
 ./pgedge spock repset-add-table default 'pgbench_*' db_name
 ```
 
  The fourth table, `pgbench_history`, is excluded from the replication set because it does not have a primary key.
-
 
 ### Checking the Configuration
 
@@ -375,7 +342,6 @@ db_name=# SELECT sub_id, sub_name, sub_slot_name, sub_replication_sets  FROM spo
 ```
 
 The `sub_replication_sets` column shown above displays the system-created replication sets. You can add custom replication sets with the [`spock repset-create`](../pgedge_commands/spock.md) and [`spock sub-add-repset`](../pgedge_commands/spock.md) commands.
-
 
 ### Testing Replication
 
