@@ -10,19 +10,19 @@ This is the Command Line Interface (CLI) for managing components.
 
 ### Creating a Development Environment
 
-1.) Clone this repository
+1.) Clone this repository.
 
-2.) cd cli/devel/setup
+2.) Move into the setup directory: `cd cli/devel/setup`
 
-3.) run `./10-toolset.sh` through `30-bashrc.sh`
+3.) Run the setup scripts: `./10-toolset.sh` through `30-bashrc.sh`
 
-4.) source ~/.bashrc
+4.) Source the `~/.bashrc` file.
 
-5.) run `40-awscli.sh` to install aws in virtual env
+5.) Run `40-awscli.sh` to install AWS in a virtual environment.
 
-6.) configure your ~/.aws/config credentials
+6.) Configure your `~/.aws/config` credentials.
 
-7.) run `1d-pull-IN.sh` to retrieve REPO files
+7.) Run `50-pull-IN.sh` to retrieve the REPO files.
 
 ### Using the CLI
 
