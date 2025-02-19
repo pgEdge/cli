@@ -60,6 +60,8 @@ def merkle_tree_cli(
             ace_mtree.update_mtree(mtree_task)
         elif mode == "rebalance":
             ace_mtree.update_mtree(mtree_task, rebalance=True)
+        elif mode == "diff":
+            ace_mtree.merkle_tree_diff(mtree_task)
 
         mtree_task.connection_pool.close_all()
     except AceException as e:

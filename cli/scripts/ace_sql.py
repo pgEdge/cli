@@ -484,3 +484,28 @@ GET_PKEY_OFFSETS = """
     FROM all_bounds
     ORDER BY seq;
 """
+
+GET_ROOT_NODE = """
+    SELECT node_position, node_hash
+    FROM ace_mtree_{schema}_{table}
+    WHERE node_level = (
+        SELECT MAX(node_level)
+        FROM ace_mtree_{schema}_{table}
+    )
+"""
+
+GET_NODE_CHILDREN = """
+    SELECT node_level, node_position, node_hash
+    FROM ace_mtree_{schema}_{table}
+    WHERE node_level = %(parent_level)s - 1
+    AND node_position / 2 = %(parent_position)s
+    ORDER BY node_position
+"""
+
+GET_LEAF_RANGES = """
+    SELECT node_position, range_start, range_end
+    FROM ace_mtree_{schema}_{table}
+    WHERE node_level = 0
+    AND node_position = ANY(%(node_positions)s)
+    ORDER BY node_position
+"""

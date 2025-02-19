@@ -46,15 +46,15 @@ def run_query(worker_state, host, query):
 
 def init_conn_pool(shared_objects, worker_state):
 
-    td_task = shared_objects["td_task"]
+    task = shared_objects["task"]
 
-    for node in td_task.fields.cluster_nodes:
+    for node in task.fields.cluster_nodes:
         try:
-            _, conn = td_task.connection_pool.get_cluster_node_connection(
+            _, conn = task.connection_pool.get_cluster_node_connection(
                 node,
                 client_role=(
-                    td_task.client_role
-                    if config.USE_CERT_AUTH and td_task.invoke_method == "api"
+                    task.client_role
+                    if config.USE_CERT_AUTH and task.invoke_method == "api"
                     else None
                 ),
             )
@@ -485,7 +485,7 @@ def table_diff(td_task: TableDiffTask, skip_all_checks: bool = False):
         "block_rows": td_task.block_rows,
         "simple_primary_key": simple_primary_key,
         "mode": "diff",
-        "td_task": td_task,
+        "task": td_task,
         "stop_event": stop_event,
     }
 
@@ -2127,7 +2127,7 @@ def table_rerun_async(td_task: TableDiffTask) -> None:
         "simple_primary_key": simple_primary_key,
         "mode": "rerun",
         "stop_event": stop_event,
-        "td_task": td_task,
+        "task": td_task,
     }
 
     util.message(
