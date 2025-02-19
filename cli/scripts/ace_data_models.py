@@ -97,9 +97,12 @@ class TableRepairTask:
     quiet_mode: bool
     dry_run: bool
     generate_report: bool
+    insert_only: bool
     upsert_only: bool
     fix_nulls: bool
     fire_triggers: bool
+
+    bidirectional: bool
 
     invoke_method: str = "cli"
 

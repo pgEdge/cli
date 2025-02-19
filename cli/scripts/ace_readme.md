@@ -9,8 +9,6 @@ Key features include:
 - Schema comparison
 - Spock configuration validation
 
-### Installing ACE
-
 ACE is installed with the pgEdge Platform installer. The following commands describe installing ACE on a management system that is not a member of a replication cluster:
 
 1. Navigate to the directory where ACE will be installed.
@@ -23,10 +21,6 @@ ACE is installed with the pgEdge Platform installer. The following commands desc
 
 4. [Create and update a cluster_name.json file](https://docs.pgedge.com/platform/installing_pgedge/manage_json), and place the file in `cluster/cluster_name/cluster_name.json` on the ACE host.  For example, if your cluster name is `us_eu_backend`, the cluster definition file for this should be placed in `/pgedge/cluster/us_eu_backend/us_eu_backend.json`.  The .json file must: 
 
-    * Contain connection information for each node in the cluster in the node's stanza.
-    * Identify the user that will be invoking ACE commands in the `db_user` property.  This user must also be the table owner.
-    
-After ensuring that the .json file describes your cluster connections and identifies the ACE user, you're ready to use [ACE commands](#ace-commands).
 
 ## ACE Functions
 

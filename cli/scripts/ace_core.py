@@ -1,4 +1,3 @@
-import ast
 import json
 from math import ceil
 import os
@@ -20,6 +19,7 @@ from tqdm import tqdm
 import ace
 import ace_db
 import ace_html_reporter
+import pgpasslib
 import cluster
 import util
 import ace_config as config
@@ -33,8 +33,7 @@ from ace_data_models import (
     ExceptionLogEntry,
 )
 
-from ace_exceptions import AceException
-import ace_auth as auth
+from ace_exceptions import AceException, AuthenticationError
 
 
 def run_query(worker_state, host, query):
@@ -44,32 +43,72 @@ def run_query(worker_state, host, query):
     return results
 
 
+# FIXME: Replace with td_task.connection_pool.connect() after merkle trees
+# PR is merged
 def init_conn_pool(shared_objects, worker_state):
-    db, pg, node_info = cluster.load_json(shared_objects["cluster_name"])
 
-    cluster_nodes = []
-    database = shared_objects["database"]
     td_task = shared_objects["td_task"]
 
-    # Combine db and cluster_nodes into a single json
-    for node in node_info:
-        combined_json = {**database, **node}
-        cluster_nodes.append(combined_json)
-
-    for node in cluster_nodes:
+    for node in td_task.fields.cluster_nodes:
         try:
-            _, conn = td_task.connection_pool.get_cluster_node_connection(
-                node,
-                shared_objects["cluster_name"],
-                invoke_method=td_task.invoke_method,
-                client_role=(
-                    td_task.client_role
-                    if config.USE_CERT_AUTH and td_task.invoke_method == "api"
-                    else None
-                ),
-            )
+            host = node["public_ip"]
+            port = node.get("port", 5432)
+            db_user = node["db_user"]
+            dbname = node["db_name"]
+
+            params = {
+                "dbname": dbname,
+                "user": db_user,
+                "host": host,
+                "port": port,
+                "options": f"-c statement_timeout={config.STATEMENT_TIMEOUT}",
+                "application_name": "ACE",
+                "keepalives": 1,
+                "keepalives_idle": 30,
+                "keepalives_interval": 10,
+                "keepalives_count": 5,
+                "connect_timeout": config.CONNECTION_TIMEOUT,
+            }
+
+            if config.USE_CERT_AUTH:
+                if config.ACE_USER_CERT_FILE and config.ACE_USER_KEY_FILE:
+                    params.update(
+                        {
+                            "sslmode": "verify-full",
+                            "sslcert": config.ACE_USER_CERT_FILE,
+                            "sslkey": config.ACE_USER_KEY_FILE,
+                            "sslrootcert": config.CA_CERT_FILE,
+                        }
+                    )
+                else:
+                    raise AuthenticationError(
+                        "Client certificate authentication is enabled but no"
+                        "certificate files are provided"
+                    )
+            else:
+                if td_task.client_role is not None:
+                    raise AuthenticationError(
+                        "Client certificate authentication needs to be enabled"
+                        "for API usage"
+                    )
+                # Handle password authentication
+                if node["db_password"]:
+                    params["password"] = node["db_password"]
+                else:
+                    pgpass = pgpasslib.getpass(
+                        host=node["name"],
+                        user=db_user,
+                        dbname=dbname,
+                        port=port,
+                    )
+                    if not pgpass:
+                        msg = f"No password found for {node['name']}"
+                        raise AuthenticationError(msg)
+                    params["password"] = pgpass
+
+            conn = psycopg.connect(**params)
             worker_state[node["name"]] = conn.cursor()
-        except auth.AuthenticationError as e:
+        except AuthenticationError as e:
             raise AceException(str(e))
 
 
@@ -512,6 +551,7 @@ def table_diff(td_task: TableDiffTask, skip_all_checks: bool = False):
             prev_max_offset = rows[-1]
 
         cur.close()
+        conn.close()
         return pkey_offsets
 
     util.message(
@@ -532,6 +572,10 @@ def table_diff(td_task: TableDiffTask, skip_all_checks: bool = False):
         }
         ace.handle_task_exception(td_task, context)
         raise future.exception()
+
+    # We're done with getting table metadata. Closing all connections.
+    for conn in conn_list:
+        conn.close()
 
     total_blocks = row_count // td_task.block_rows
     total_blocks = total_blocks if total_blocks > 0 else 1
@@ -558,6 +602,7 @@ def table_diff(td_task: TableDiffTask, skip_all_checks: bool = False):
     row_diff_count = Manager().Value("I", 0)
     lock = Manager().Lock()
 
+    # TODO: Clean this up
     # Shared variables needed by all workers
     shared_objects = {
         "cluster_name": td_task.cluster_name,
@@ -995,23 +1040,40 @@ def table_repair(tr_task: TableRepairTask):
     if tr_task.dry_run:
         dry_run_msg = "######## DRY RUN ########\n\n"
 
-        # Create report structure even for dry run
         if tr_task.generate_report:
             report["operation_type"] = "DRY_RUN"
 
         for node in other_nodes:
-            if not tr_task.upsert_only:
+            if not tr_task.upsert_only and not tr_task.insert_only:
                 dry_run_msg += (
                     "Repair would have attempted to upsert "
                     + f"{len(full_rows_to_upsert[node])} rows and delete "
                     + f"{len(full_rows_to_delete[node])} rows on { node }\n"
                 )
 
-                # Add to report if enabled
                 if tr_task.generate_report:
                     report["changes"][node] = {
                         "would_upsert": list(full_rows_to_upsert[node].values()),
                         "would_delete": list(full_rows_to_delete[node].values()),
+                    }
+            elif tr_task.insert_only:
+                dry_run_msg += (
+                    "Repair would have attempted to insert "
+                    + f"{len(full_rows_to_upsert[node])} rows on { node }\n"
+                )
+
+                if len(full_rows_to_delete[node]) > 0:
+                    dry_run_msg += (
+                        "There are an additional "
+                        + f"{len(full_rows_to_delete[node])} rows on { node }"
+                        + f" not present on { tr_task.source_of_truth }\n"
+                    )
+
+                if tr_task.generate_report:
+                    report["changes"][node] = {
+                        "would_insert": list(full_rows_to_upsert[node].values()),
+                        "skipped_deletes": list(full_rows_to_delete[node].values()),
+                        "skipped_updates": list(full_rows_to_upsert[node].values()),
                     }
             else:
                 dry_run_msg += (
@@ -1026,7 +1088,6 @@ def table_repair(tr_task: TableRepairTask):
                         + f" not present on { tr_task.source_of_truth }\n"
                     )
 
-                # Add to report if enabled
                 if tr_task.generate_report:
                     report["changes"][node] = {
                         "would_upsert": list(full_rows_to_upsert[node].values()),
@@ -1036,7 +1097,6 @@ def table_repair(tr_task: TableRepairTask):
         dry_run_msg += "\n######## END DRY RUN ########"
         util.message(dry_run_msg, p_state="alert", quiet_mode=tr_task.quiet_mode)
 
-        # Generate report if requested
         if tr_task.generate_report:
             generate_report()
 
@@ -1047,8 +1107,7 @@ def table_repair(tr_task: TableRepairTask):
 
     col_types = tr_task.fields.col_types[source_of_truth_node_key]
 
-    if tr_task.upsert_only:
-        deletes_skipped = dict()
+    deletes_skipped = dict()
 
     for divergent_node in other_nodes:
 
@@ -1107,20 +1166,21 @@ def table_repair(tr_task: TableRepairTask):
             update_sql = f"""
             INSERT INTO {table_name_sql}
             VALUES ({','.join(['%s'] * len(cols_list))})
-            ON CONFLICT ("{tr_task.fields.key}") DO UPDATE SET
-            """
+            ON CONFLICT ("{tr_task.fields.key}") DO """
         else:
             update_sql = f"""
             INSERT INTO {table_name_sql}
             VALUES ({','.join(['%s'] * len(cols_list))})
             ON CONFLICT
-            ({','.join(['"' + col + '"' for col in keys_list])}) DO UPDATE SET
-            """
+            ({','.join(['"' + col + '"' for col in keys_list])}) DO """
 
-        for col in cols_list:
-            update_sql += f'"{col}" = EXCLUDED."{col}", '
-
-        update_sql = update_sql[:-2] + ";"
+        if tr_task.insert_only:
+            update_sql += "NOTHING;"
+        else:
+            update_sql += "UPDATE SET "
+            for col in cols_list:
+                update_sql += f'"{col}" = EXCLUDED."{col}", '
+            update_sql = update_sql[:-2] + ";"
 
         delete_sql = None
 
@@ -1143,98 +1203,18 @@ def table_repair(tr_task: TableRepairTask):
         if tr_task.generate_report:
             report["changes"][divergent_node] = dict()
 
-        """
-        We had previously converted all rows to strings for computing set differences.
-        We now need to convert them back to their original types before upserting.
-        psycopg3 will internally handle type conversions from lists/arrays to their
-        respective types in Postgres.
-
-        So, if an element in a row is a list or a json that is represented as:
-        '{"key1": "val1", "key2": "val2"}' or '[1, 2, 3]', we need to use the
-        abstract syntax tree module to convert them back to their original types.
-        ast.literal_eval() will give us {'key1': 'val1', 'key2': 'val2'} and
-        [1, 2, 3] respectively.
-        """
-
-        # List of types that should be treated as strings
-        string_types = [
-            "char",
-            "text",
-            "time",
-            "bytea",
-            "uuid",
-            "date",
-            "timestamp",
-            "interval",
-            "inet",
-            "macaddr",
-            "xml",
-            "money",
-            "point",
-            "line",
-            "polygon",
-            "vector",
-        ]
-
-        # Types that can be directly represented in JSON
-        json_compatible_types = [
-            "json",
-            "jsonb",
-            "boolean",
-            "integer",
-            "bigint",
-            "smallint",
-            "numeric",
-            "real",
-            "double precision",
-        ]
-
-        upsert_tuples = []
-        for row in rows_to_upsert_json:
-            modified_row = tuple()
-            for col_name in cols_list:
-                col_type = col_types[col_name]
-                elem = str(row[col_name])
-
-                try:
-                    type_lower = col_type.lower()
-
-                    if (
-                        not elem
-                        or elem == ""
-                        or elem.lower() == "null"
-                        or elem.lower() == "none"
-                    ):
-                        modified_row += (None,)
-                    elif "[]" in type_lower:
-                        modified_row += (ast.literal_eval(elem),)
-                    elif any(s in type_lower for s in string_types):
-                        if type_lower == "bytea":
-                            modified_row += (bytes.fromhex(elem),)
-                        else:
-                            modified_row += (elem,)
-                    elif any(s in type_lower for s in json_compatible_types):
-                        item = ast.literal_eval(elem)
-                        if type_lower == "jsonb" or type_lower == "json":
-                            item = json.dumps(item)
-                        modified_row += (item,)
-                    else:
-                        modified_row += (elem,)
-
-                except (ValueError, SyntaxError):
-                    # If conversion fails, use the original value
-                    modified_row += (elem,)
-
-            upsert_tuples.append(modified_row)
+        upsert_tuples = ace.convert_json_to_pg_type(
+            rows_to_upsert_json, cols_list, col_types
+        )
 
         try:
             # Let's first delete rows to avoid secondary unique key violations
-            if delete_keys and not tr_task.upsert_only:
+            if delete_keys and not tr_task.upsert_only and not tr_task.insert_only:
                 # Performing the deletes
                 cur.executemany(delete_sql, delete_keys)
                 if tr_task.generate_report:
                     report["changes"][divergent_node]["deleted_rows"] = delete_keys
-            elif delete_keys and tr_task.upsert_only:
+            elif delete_keys and (tr_task.upsert_only or tr_task.insert_only):
                 deletes_skipped[divergent_node] = delete_keys
 
             # Now perform the upsert
@@ -1274,6 +1254,7 @@ def table_repair(tr_task: TableRepairTask):
                 cur.close()
 
     if tr_task.upsert_only:
+
         def compare_values(val1: dict, val2: dict) -> bool:
             if val1.keys() != val2.keys():
                 return False
@@ -1337,15 +1318,22 @@ def table_repair(tr_task: TableRepairTask):
     util.message("*** SUMMARY ***\n", p_state="info", quiet_mode=tr_task.quiet_mode)
 
     for node in other_nodes:
-        util.message(
-            f"{node} UPSERTED = {len(full_rows_to_upsert[node])} rows",
-            p_state="info",
-            quiet_mode=tr_task.quiet_mode,
-        )
+        if tr_task.insert_only:
+            util.message(
+                f"{node} INSERTED = {len(full_rows_to_upsert[node])} rows",
+                p_state="info",
+                quiet_mode=tr_task.quiet_mode,
+            )
+        else:
+            util.message(
+                f"{node} UPSERTED = {len(full_rows_to_upsert[node])} rows",
+                p_state="info",
+                quiet_mode=tr_task.quiet_mode,
+            )
 
     print()
 
-    if not tr_task.upsert_only:
+    if not tr_task.upsert_only and not tr_task.insert_only:
         for node in other_nodes:
             util.message(
                 f"{node} DELETED = {len(full_rows_to_delete[node])} rows",
@@ -1439,6 +1427,7 @@ def table_repair_fix_nulls(tr_task: TableRepairTask) -> None:
                     if config.USE_CERT_AUTH and tr_task.invoke_method == "api"
                     else None
                 ),
+                drop_privileges=False,
             )
             conns[node_hostname] = conn
     except Exception as e:
@@ -1514,10 +1503,36 @@ def table_repair_fix_nulls(tr_task: TableRepairTask) -> None:
         common_keys = set(node1_dict.keys()) & set(node2_dict.keys())
 
         for node, conn in [(node1, conns[node1]), (node2, conns[node2])]:
+            spock_version = None
+            try:
+                spock_version = ace.get_spock_version(conn)
+                super_cur = conn.cursor()
+
+                if spock_version >= config.SPOCK_REPAIR_MODE_MIN_VERSION:
+                    super_cur.execute("SELECT spock.repair_mode(true);")
+                    if tr_task.fire_triggers:
+                        super_cur.execute("SET session_replication_role = 'local';")
+                    else:
+                        super_cur.execute("SET session_replication_role = 'replica';")
+
+                super_cur.close()
+            except Exception as e:
+                context = {"errors": [f"Error setting repair mode on {node}: {str(e)}"]}
+                ace.handle_task_exception(tr_task, context)
+                raise e
+
             if not tr_task.quiet_mode:
                 util.message(f"Processing node {node}", p_state="info")
 
             try:
+                tr_task.connection_pool.drop_privileges(
+                    conn,
+                    client_role=(
+                        tr_task.client_role
+                        if config.USE_CERT_AUTH and tr_task.invoke_method == "api"
+                        else None
+                    ),
+                )
                 with conn.cursor() as cur:
                     cur.execute(create_temp_sql)
 
@@ -1700,6 +1715,20 @@ def table_repair_fix_nulls(tr_task: TableRepairTask) -> None:
                         progress.n = int(progress_pct)
                         progress.refresh()
 
+                if spock_version >= config.SPOCK_REPAIR_MODE_MIN_VERSION:
+                    with conn.cursor() as super_cur:
+                        super_cur.execute("RESET ROLE")
+                        super_cur.execute("SELECT spock.repair_mode(false);")
+
+                tr_task.connection_pool.drop_privileges(
+                    conn,
+                    client_role=(
+                        tr_task.client_role
+                        if config.USE_CERT_AUTH and tr_task.invoke_method == "api"
+                        else None
+                    ),
+                )
+
             except Exception as e:
                 conn.rollback()
                 context = {"errors": [f"Error updating nulls on {node}: {str(e)}"]}
@@ -1721,6 +1750,262 @@ def table_repair_fix_nulls(tr_task: TableRepairTask) -> None:
         p_state="success",
         quiet_mode=tr_task.quiet_mode,
     )
+
+    util.message(
+        f"RUN TIME = {run_time_str} seconds",
+        p_state="info",
+        quiet_mode=tr_task.quiet_mode,
+    )
+
+
+def table_repair_bidirectional(tr_task: TableRepairTask) -> None:
+    """
+    Perform bidirectional repair between nodes by inserting missing rows.
+
+    This function performs bidirectional repair between nodes in a cluster.
+    For each node pair, it will insert rows that exist in one node but not in the other.
+
+    For example, if n1 has IDs 1-15, and n2 has IDs 1-10 and 16-20:
+    After repair, both n1 and n2 will end up with IDs 1-20
+
+    Note: This option uses `INSERT INTO ... ON CONFLICT DO NOTHING`. So, if there are
+    identical rows with different values, this option alone is not enough to fully
+    repair the table.
+
+    Args:
+        tr_task: The table repair task configuration
+    """
+    tr_task = ace.table_repair_checks(tr_task, skip_validation=True)
+
+    start_time = datetime.now()
+    conns = {}
+    simple_primary_key = True
+    keys_list = tr_task.fields.key.split(",")
+    report = {"operation_type": "REPAIR", "changes": {}}
+
+    if len(keys_list) > 1:
+        simple_primary_key = False
+
+    try:
+        for params in tr_task.fields.conn_params:
+            node_info = {
+                "public_ip": params["host"],
+                "port": params["port"],
+                "db_user": params["user"],
+                "db_name": params["dbname"],
+                "db_password": params.get("password", None),
+            }
+
+            hostname_key = node_info["public_ip"] + ":" + node_info["port"]
+            node_hostname = tr_task.fields.host_map[hostname_key]
+            _, conn = tr_task.connection_pool.get_cluster_node_connection(
+                node_info,
+                tr_task.cluster_name,
+                invoke_method=tr_task.invoke_method,
+                client_role=(
+                    tr_task.client_role
+                    if config.USE_CERT_AUTH and tr_task.invoke_method == "api"
+                    else None
+                ),
+                drop_privileges=False,
+            )
+            conns[node_hostname] = conn
+    except Exception as e:
+        context = {"errors": [str(e)]}
+        ace.handle_task_exception(tr_task, context)
+        raise e
+
+    diff_json = ace.check_diff_file_format(tr_task.diff_file_path, tr_task)
+
+    cols_list = tr_task.fields.cols.split(",")
+    cols_list = [col for col in cols_list if not col.startswith("_Spock_")]
+
+    col_types = next(iter(tr_task.fields.col_types.values()))
+
+    node_pairs = list(diff_json.items())
+    total_pairs = len(node_pairs)
+
+    util.message(
+        "\nPerforming bidirectional repair:",
+        p_state="info",
+        quiet_mode=tr_task.quiet_mode,
+    )
+
+    progress = tqdm(
+        total=100,
+        desc="Overall progress",
+        unit="%",
+    )
+
+    table_name_sql = f'{tr_task.fields.l_schema}."{tr_task.fields.l_table}"'
+    if simple_primary_key:
+        insert_sql = f"""
+        INSERT INTO {table_name_sql}
+        VALUES ({','.join(['%s'] * len(cols_list))})
+        ON CONFLICT ("{tr_task.fields.key}") DO NOTHING;"""
+    else:
+        insert_sql = f"""
+        INSERT INTO {table_name_sql}
+        VALUES ({','.join(['%s'] * len(cols_list))})
+        ON CONFLICT
+        ({','.join(['"' + col + '"' for col in keys_list])}) DO NOTHING;"""
+
+    if tr_task.dry_run:
+        dry_run_msg = "######## DRY RUN ########\n\n"
+        if tr_task.generate_report:
+            report["operation_type"] = "DRY_RUN"
+
+    progress_pct = 0
+    progress_step = 100.0 / (total_pairs * 2)
+
+    for _, (node_pair, pair_diffs) in enumerate(node_pairs):
+        node1, node2 = node_pair.split("/")
+        node1_rows = pair_diffs[node1]
+        node2_rows = pair_diffs[node2]
+
+        util.message(
+            f"\nProcessing node pair {node_pair}",
+            p_state="info",
+            quiet_mode=tr_task.quiet_mode,
+        )
+
+        def get_key_tuple(row):
+            return tuple(row[key] for key in keys_list)
+
+        node1_dict = {get_key_tuple(row): row for row in node1_rows}
+        node2_dict = {get_key_tuple(row): row for row in node2_rows}
+
+        # Find rows unique to each node
+        node1_only_keys = set(node1_dict.keys()) - set(node2_dict.keys())
+        node2_only_keys = set(node2_dict.keys()) - set(node1_dict.keys())
+
+        n1_inserts = [node2_dict[key] for key in node2_only_keys]
+        n2_inserts = [node1_dict[key] for key in node1_only_keys]
+
+        if tr_task.dry_run:
+            dry_run_msg += f"Node pair: {node_pair}\n"
+            dry_run_msg += f"Rows unique to {node1}: {len(node1_only_keys)}\n"
+            dry_run_msg += f"Rows unique to {node2}: {len(node2_only_keys)}\n\n"
+
+            if tr_task.generate_report:
+                report["changes"][node_pair] = {
+                    f"{node1}_only": n1_inserts,
+                    f"{node2}_only": n2_inserts,
+                }
+            continue
+
+        def perform_inserts(target_node, conn, insert_rows):
+            util.message(
+                f"Processing node {target_node}",
+                p_state="info",
+                quiet_mode=tr_task.quiet_mode,
+            )
+
+            try:
+                super_cur = conn.cursor()
+                spock_version = ace.get_spock_version(conn)
+
+                if spock_version >= config.SPOCK_REPAIR_MODE_MIN_VERSION:
+                    super_cur.execute("SELECT spock.repair_mode(true);")
+                    if tr_task.fire_triggers:
+                        super_cur.execute("SET session_replication_role = 'local';")
+                    else:
+                        super_cur.execute("SET session_replication_role = 'replica';")
+
+                super_cur.close()
+
+                tr_task.connection_pool.drop_privileges(
+                    conn,
+                    client_role=(
+                        tr_task.client_role
+                        if config.USE_CERT_AUTH and tr_task.invoke_method == "api"
+                        else None
+                    ),
+                )
+            except Exception as e:
+                context = {
+                    "errors": [
+                        f"Could not set repair mode and"
+                        f" drop privileges on {target_node}: {str(e)}"
+                    ]
+                }
+                ace.handle_task_exception(tr_task, context)
+                raise e
+
+            try:
+                # We need this lower-privileged cursor to perform the inserts
+                cur = conn.cursor()
+                insert_tuples = ace.convert_json_to_pg_type(
+                    insert_rows, cols_list, col_types
+                )
+
+                if insert_tuples:
+                    cur.executemany(insert_sql, insert_tuples)
+                    if tr_task.generate_report:
+                        report["changes"][target_node] = {
+                            "inserted_rows": [
+                                dict(zip(cols_list, tup)) for tup in insert_tuples
+                            ]
+                        }
+
+                if spock_version >= config.SPOCK_REPAIR_MODE_MIN_VERSION:
+                    # Temporarily elevate privileges to disable repair mode
+                    with conn.cursor() as super_cur:
+                        # Reset to superuser role
+                        super_cur.execute("RESET ROLE")
+                        super_cur.execute("SELECT spock.repair_mode(false);")
+
+                tr_task.connection_pool.drop_privileges(
+                    conn,
+                    (
+                        tr_task.client_role
+                        if config.USE_CERT_AUTH and tr_task.invoke_method == "api"
+                        else None
+                    ),
+                )
+
+                conn.commit()
+                cur.close()
+
+            except Exception as e:
+                conn.rollback()
+                error_msg = "Error during bidirectional repair on"
+                f" {target_node}: {str(e)}"
+                context = {"errors": [error_msg]}
+                ace.handle_task_exception(tr_task, context)
+                raise e
+
+        perform_inserts(target_node=node1, conn=conns[node1], insert_rows=n1_inserts)
+        perform_inserts(target_node=node2, conn=conns[node2], insert_rows=n2_inserts)
+
+        if not tr_task.quiet_mode:
+            progress_pct += progress_step
+            progress.n = int(progress_pct)
+            progress.refresh()
+
+    if tr_task.dry_run:
+        dry_run_msg += "\n######## END DRY RUN ########"
+        util.message(dry_run_msg, p_state="alert", quiet_mode=tr_task.quiet_mode)
+
+        if tr_task.generate_report:
+            ace.generate_report(tr_task, report)
+
+        return
+
+    if not tr_task.quiet_mode:
+        progress.n = 100
+        progress.refresh()
+        progress.close()
+
+    end_time = datetime.now()
+    run_time = util.round_timedelta(end_time - start_time).total_seconds()
+    run_time_str = f"{run_time:.2f}"
+
+    msg = (
+        f"\nSuccessfully completed bidirectional repair in {tr_task._table_name} "
+        f"in cluster {tr_task.cluster_name}\n"
+    )
+    util.message(msg, p_state="success", quiet_mode=tr_task.quiet_mode)
 
     util.message(
         f"RUN TIME = {run_time_str} seconds",
@@ -1869,6 +2154,9 @@ def table_rerun_temptable(td_task: TableDiffTask) -> None:
             )
             cur = conn.cursor()
             cur.execute(clean_qry)
+            conn.commit()
+            cur.close()
+            conn.close()
     except Exception as e:
         context = {"errors": [f"Could not clean up temp table: {str(e)}"]}
         ace.handle_task_exception(td_task, context)

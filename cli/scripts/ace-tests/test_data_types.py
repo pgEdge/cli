@@ -5,7 +5,7 @@ import re
 from test_simple import TestSimple
 
 
-@pytest.mark.usefixtures("prepare_databases", "setup_datatypes")
+@pytest.mark.usefixtures("prepare_databases")
 class TestDataTypes(TestSimple):
     """Group of tests for various PostgreSQL data types"""
 
@@ -76,6 +76,12 @@ class TestDataTypes(TestSimple):
                 """
                 )
 
+                repset_add_datatypes_sql = """
+                SELECT spock.repset_add_table('test_repset', 'datatypes_test')
+                """
+                cur.execute(repset_add_datatypes_sql)
+                print("add datatypes to test_repset", cur.fetchone())
+
                 conn.commit()
                 cur.close()
                 conn.close()
@@ -86,7 +92,13 @@ class TestDataTypes(TestSimple):
             for node in nodes:
                 conn = psycopg.connect(host=node, dbname="demo", user="admin")
                 cur = conn.cursor()
-                cur.execute("DROP TABLE IF EXISTS datatypes_test")
+                repset_remove_datatypes = """
+                SELECT spock.repset_remove_table('test_repset', 'datatypes_test')
+                """
+                cur.execute(repset_remove_datatypes)
+                print("remove datatypes from test_repset", cur.fetchone())
+
+                cur.execute("DROP TABLE IF EXISTS datatypes_test CASCADE")
                 conn.commit()
                 cur.close()
                 conn.close()
@@ -127,10 +139,11 @@ class TestDataTypes(TestSimple):
     ):
         """Test table diff with differences for each data type"""
         try:
-            # Introduce differences using SQL that works for any data type
+            # Introduce differences using spock.repair_mode(true)
             conn = psycopg.connect(host="n2", dbname="demo", user="admin")
             cur = conn.cursor()
 
+            cur.execute("SELECT spock.repair_mode(true)")
             # Get random rows to modify
             cur.execute(
                 f"""
@@ -256,6 +269,7 @@ class TestDataTypes(TestSimple):
         try:
             conn = psycopg.connect(host="n2", dbname="demo", user="admin")
             cur = conn.cursor()
+            cur.execute("SELECT spock.repair_mode(true)")
             cur.execute(
                 f"""
                 UPDATE datatypes_test
@@ -363,6 +377,7 @@ class TestDataTypes(TestSimple):
         try:
             conn = psycopg.connect(host="n2", dbname="demo", user="admin")
             cur = conn.cursor()
+            cur.execute("SELECT spock.repair_mode(true)")
             cur.execute(
                 f"""
                 UPDATE datatypes_test
@@ -481,6 +496,7 @@ class TestDataTypes(TestSimple):
             # First introduce differences on n2
             conn = psycopg.connect(host="n2", dbname="demo", user="admin")
             cur = conn.cursor()
+            cur.execute("SELECT spock.repair_mode(true)")
             cur.execute(
                 f"""
                 UPDATE datatypes_test

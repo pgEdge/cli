@@ -11,6 +11,7 @@ import re
 import subprocess
 from datetime import datetime
 import logging
+from itertools import chain
 
 import ace_core
 import ace_daemon
@@ -278,6 +279,24 @@ def parse_skip_list(skip_list: str, skip_file: str) -> list:
     return skip_tables_list
 
 
+def parse_bool_field(field_name: str, field_value) -> bool:
+    if type(field_value) is int:
+        if field_value < 0 or field_value > 1:
+            raise AceException(f"{field_name} should be True (1) or False (0)")
+        field_value = bool(field_value)
+    elif type(field_value) is str:
+        if field_value in ["True", "true", "1", "t"]:
+            field_value = True
+        elif field_value in ["False", "false", "0", "f"]:
+            field_value = False
+        else:
+            raise AceException(f"Invalid value for {field_name}")
+    elif type(field_value) is not bool:
+        raise AceException(f"{field_name} should be True (1) or False (0)")
+
+    return field_value
+
+
 def get_col_types(conn, table_name):
     """
     Here we are grabbing the name and data type of each row from table from the
@@ -444,7 +463,7 @@ def check_user_privileges(conn, username, schema, table, required_privileges=[])
 def check_column_size(conn_list: list, task: TableDiffTask) -> tuple[bool, str]:
     # Gets byte size from each bytea in each connection
     byte_sql = (
-        'SELECT AVG(pg_column_size("{c_name}")) AS avg_size_in_bytes '
+        'SELECT COALESCE(AVG(pg_column_size("{c_name}")), 0) AS avg_size_in_bytes '
         'FROM "{s_name}"."{t_name}";'
     )
 
@@ -541,72 +560,157 @@ def check_diff_file_format(diff_file_path: str, task) -> dict:
     return diff_json
 
 
-def write_diffs_json(td_task, diff_dict, col_types, quiet_mode=False):
-
+def convert_pg_type_to_json(item: str, type: str):
+    """
+    Converts a value from a postgres column to a json-compatible type.
+    """
     # TODO: Need to revisit this.
-    def convert_to_json_type(item: str, type: str):
-        try:
-            # List of types that should be treated as strings
-            string_types = [
-                "char",
-                "text",
-                "time",
-                "bytea",
-                "uuid",
-                "date",
-                "timestamp",
-                "interval",
-                "inet",
-                "macaddr",
-                "xml",
-                "money",
-                "point",
-                "line",
-                "polygon",
-            ]
+    try:
+        # List of types that should be treated as strings
+        string_types = [
+            "char",
+            "text",
+            "time",
+            "bytea",
+            "uuid",
+            "date",
+            "timestamp",
+            "interval",
+            "inet",
+            "macaddr",
+            "xml",
+            "money",
+            "point",
+            "line",
+            "polygon",
+        ]
 
-            # Types that can be directly represented in JSON
-            json_compatible_types = [
-                "json",
-                "jsonb",
-                "boolean",
-                "integer",
-                "bigint",
-                "smallint",
-                "numeric",
-                "real",
-                "double precision",
-            ]
+        # Types that can be directly represented in JSON
+        json_compatible_types = [
+            "json",
+            "jsonb",
+            "boolean",
+            "integer",
+            "bigint",
+            "smallint",
+            "numeric",
+            "real",
+            "double precision",
+        ]
 
-            type_lower = type.lower()
+        type_lower = type.lower()
 
-            if (
-                not item
-                or item == ""
-                or item.lower() == "null"
-                or item.lower() == "none"
-            ):
-                return None
-            elif "[]" in type_lower:
-                return ast.literal_eval(item)
-            elif any(s in type_lower for s in json_compatible_types):
-                # For JSON-compatible types, parse them using AST
-                return ast.literal_eval(item)
-            elif any(s in type_lower for s in string_types):
-                return item
-            else:
-                # Default to treating as string if type is unknown
-                return item
+        if not item or item == "" or item.lower() == "null" or item.lower() == "none":
+            return None
+        elif "[]" in type_lower:
+            return ast.literal_eval(item)
+        elif any(s in type_lower for s in json_compatible_types):
+            # For JSON-compatible types, parse them using AST
+            return ast.literal_eval(item)
+        elif any(s in type_lower for s in string_types):
+            return item
+        else:
+            # Default to treating as string if type is unknown
+            return item
 
-        except Exception as e:
-            util.message(
-                f"Could not convert value {item} to {type} while writing to json: {e}",
-                p_state="warning",
-                quiet_mode=quiet_mode,
-            )
+    except Exception as e:
+        raise AceException(
+            f"Could not convert value {item} to {type} while writing to json: {e}"
+        )
 
-        return item
 
+def convert_json_to_pg_type(rows, cols_list, col_types) -> list[tuple]:
+    """
+    Converts a value from a json column to a postgres-compatible type.
+
+    We had previously converted all rows to strings for computing set differences.
+    We now need to convert them back to their original types before upserting.
+    psycopg3 will internally handle type conversions from lists/arrays to their
+    respective types in Postgres.
+
+    So, if an element in a row is a list or a json that is represented as:
+    '{"key1": "val1", "key2": "val2"}' or '[1, 2, 3]', we need to use the
+    abstract syntax tree module to convert them back to their original types.
+    ast.literal_eval() will give us {'key1': 'val1', 'key2': 'val2'} and
+    [1, 2, 3] respectively.
+    """
+
+    # List of types that should be treated as strings
+    string_types = [
+        "char",
+        "text",
+        "time",
+        "bytea",
+        "uuid",
+        "date",
+        "timestamp",
+        "interval",
+        "inet",
+        "macaddr",
+        "xml",
+        "money",
+        "point",
+        "line",
+        "polygon",
+        "vector",
+    ]
+
+    # Types that can be directly represented in JSON
+    json_compatible_types = [
+        "json",
+        "jsonb",
+        "boolean",
+        "integer",
+        "bigint",
+        "smallint",
+        "numeric",
+        "real",
+        "double precision",
+    ]
+
+    repair_tuples = []
+
+    for row in rows:
+        modified_row = tuple()
+        for col_name in cols_list:
+            col_type = col_types[col_name]
+            elem = str(row[col_name])
+
+            try:
+                type_lower = col_type.lower()
+
+                if (
+                    not elem
+                    or elem == ""
+                    or elem.lower() == "null"
+                    or elem.lower() == "none"
+                ):
+                    modified_row += (None,)
+                elif "[]" in type_lower:
+                    modified_row += (ast.literal_eval(elem),)
+                elif any(s in type_lower for s in string_types):
+                    if type_lower == "bytea":
+                        modified_row += (bytes.fromhex(elem),)
+                    else:
+                        modified_row += (elem,)
+                elif any(s in type_lower for s in json_compatible_types):
+                    item = ast.literal_eval(elem)
+                    if type_lower == "jsonb" or type_lower == "json":
+                        item = json.dumps(item)
+                    modified_row += (item,)
+                else:
+                    modified_row += (elem,)
+
+            except (ValueError, SyntaxError):
+                # If conversion fails, use the original value
+                modified_row += (elem,)
+
+        repair_tuples.append(modified_row)
+
+    return repair_tuples
+
+
+def write_diffs_json(td_task, diff_dict, col_types, quiet_mode=False):
     """
     All diff runs from ACE will be stored in diffs/<date>/diffs_<time>.json
     Each day will have its own directory and each run will have its own file
@@ -635,7 +739,7 @@ def write_diffs_json(td_task, diff_dict, col_types, quiet_mode=False):
         node_pair: {
             node: [
                 {
-                    key: convert_to_json_type(val, col_types[key])
+                    key: convert_pg_type_to_json(val, col_types[key])
                     for key, val in row.items()
                 }
                 for row in rows
@@ -844,8 +948,13 @@ def validate_table_diff_inputs(td_task: TableDiffTask) -> None:
 
     # Combine db and cluster_nodes into a single json
     for node in node_info:
+        if node_list and node["name"] not in node_list:
+            continue
         combined_json = {**database, **node}
         cluster_nodes.append(combined_json)
+
+    if not node_list:
+        node_list = [node["name"] for node in cluster_nodes]
 
     if td_task._nodes == "all" and len(cluster_nodes) > 3:
         raise AceException("Table-diff only supports up to three way comparison")
@@ -896,122 +1005,113 @@ def table_diff_checks(
             user = node_info["db_user"]
             port = node_info.get("port", 5432)
 
-            if td_task._nodes == "all":
-                td_task.fields.node_list.append(node_info["name"])
+            params, conn = td_task.connection_pool.get_cluster_node_connection(
+                node_info,
+                td_task.cluster_name,
+                invoke_method=td_task.invoke_method,
+                client_role=(
+                    td_task.client_role if td_task.invoke_method == "api" else None
+                ),
+            )
 
-            if (
-                td_task.fields.node_list
-                and node_info["name"] in td_task.fields.node_list
-            ) or (not td_task.fields.node_list):
-                params, conn = td_task.connection_pool.get_cluster_node_connection(
-                    node_info,
-                    td_task.cluster_name,
-                    invoke_method=td_task.invoke_method,
-                    client_role=(
-                        td_task.client_role if td_task.invoke_method == "api" else None
-                    ),
+            curr_cols = get_cols(conn, l_schema, l_table)
+            curr_key = get_key(conn, l_schema, l_table)
+
+            if not curr_cols:
+                raise AceException(
+                    f"Table '{td_task._table_name}' not found on {hostname}"
+                    ", or the current user does not have adequate privileges"
                 )
+            if not curr_key:
+                raise AceException(f"No primary key found for '{td_task._table_name}'")
 
-                curr_cols = get_cols(conn, l_schema, l_table)
-                curr_key = get_key(conn, l_schema, l_table)
-
-                if not curr_cols:
-                    raise AceException(
-                        f"Table '{td_task._table_name}' not found on {hostname}"
-                        ", or the current user does not have adequate privileges"
-                    )
-                if not curr_key:
-                    raise AceException(
-                        f"No primary key found for '{td_task._table_name}'"
-                    )
-
-                if (not cols) and (not key):
-                    cols = curr_cols
-                    key = curr_key
-
-                if (curr_cols != cols) or (curr_key != key):
-                    raise AceException("Table schemas don't match")
-
+            if (not cols) and (not key):
                 cols = curr_cols
                 key = curr_key
 
-                col_types = get_col_types(conn, l_table)
-                col_types_key = f"{host_ip}:{port}"
+            if (curr_cols != cols) or (curr_key != key):
+                raise AceException("Table schemas don't match")
 
-                if not td_task.fields.col_types:
-                    td_task.fields.col_types = {}
+            cols = curr_cols
+            key = curr_key
 
-                td_task.fields.col_types[col_types_key] = col_types
+            col_types = get_col_types(conn, l_table)
+            col_types_key = f"{host_ip}:{port}"
 
-                authorised, missing_privileges = check_user_privileges(
-                    conn,
-                    user,
-                    l_schema,
-                    l_table,
-                    required_privileges,
-                )
+            if not td_task.fields.col_types:
+                td_task.fields.col_types = {}
 
-                # Missing privileges come back as table_<privilege>, but we use
-                # "CREATE/SELECT/INSERT/UPDATE/DELETE" in the required_privileges list
-                # So, we're simply formatting it correctly here for the exception
-                # message
-                missing_privs = [
-                    m.split("_")[1].upper()
-                    for m in missing_privileges
-                    if m.split("_")[1].upper() in required_privileges
-                ]
-                exception_msg = (
-                    f'User "{user}" does not have the necessary privileges'
-                    f" to run {', '.join(missing_privs)} "
-                    f'on table "{l_schema}.{l_table}" '
-                    f'on node "{hostname}"'
-                )
+            td_task.fields.col_types[col_types_key] = col_types
 
-                if not authorised:
-                    raise AceException(exception_msg)
+            authorised, missing_privileges = check_user_privileges(
+                conn,
+                user,
+                l_schema,
+                l_table,
+                required_privileges,
+            )
 
-                conn_list.append(conn)
-                conn_params.append(params)
-                host_map[host_ip + ":" + str(port)] = hostname
+            # Missing privileges come back as table_<privilege>, but we use
+            # "CREATE/SELECT/INSERT/UPDATE/DELETE" in the required_privileges list
+            # So, we're simply formatting it correctly here for the exception
+            # message
+            missing_privs = [
+                m.split("_")[1].upper()
+                for m in missing_privileges
+                if m.split("_")[1].upper() in required_privileges
+            ]
+            exception_msg = (
+                f'User "{user}" does not have the necessary privileges'
+                f" to run {', '.join(missing_privs)} "
+                f'on table "{l_schema}.{l_table}" '
+                f'on node "{hostname}"'
+            )
 
-                # TODO:
-                # 1. Add filter information to the task context in the scheduler.
-                # 2. Keep track of the original table name
+            if not authorised:
+                raise AceException(exception_msg)
 
-                # Now we will create a view for the table filter if necessary
-                if td_task.table_filter:
+            conn_list.append(conn)
+            conn_params.append(params)
+            host_map[host_ip + ":" + str(port)] = hostname
 
-                    # We're going to be using parameterised queries here
-                    # to prevent SQL injections.
-                    view_sql = sql.SQL(
-                        """
-                        CREATE VIEW {view_name} AS
-                        SELECT * FROM {l_schema}.{l_table}
-                        WHERE {where_clause}
+            # TODO:
+            # 1. Add filter information to the task context in the scheduler.
+            # 2. Keep track of the original table name
+
+            # Now we will create a view for the table filter if necessary
+            if td_task.table_filter:
+
+                # We're going to be using parameterised queries here
+                # to prevent SQL injections.
+                view_sql = sql.SQL(
                     """
-                    ).format(
-                        view_name=sql.Identifier(
-                            f"{td_task.scheduler.task_id}_{l_table}_filtered"
-                        ),
-                        l_schema=sql.Identifier(l_schema),
-                        l_table=sql.Identifier(l_table),
-                        where_clause=sql.SQL(td_task.table_filter),
-                    )
-                    cur = conn.cursor()
-                    cur.execute(view_sql)
-                    conn.commit()
+                    CREATE VIEW {view_name} AS
+                    SELECT * FROM {l_schema}.{l_table}
+                    WHERE {where_clause}
+                """
+                ).format(
+                    view_name=sql.Identifier(
+                        f"{td_task.scheduler.task_id}_{l_table}_filtered"
+                    ),
+                    l_schema=sql.Identifier(l_schema),
+                    l_table=sql.Identifier(l_table),
+                    where_clause=sql.SQL(td_task.table_filter),
+                )
+                cur = conn.cursor()
+                cur.execute(view_sql)
+                conn.commit()
 
-                    # Now, we need to check if the view actually has any rows
-                    view_sql = sql.SQL("SELECT COUNT(*) FROM {view_name}").format(
-                        view_name=sql.Identifier(
-                            f"{td_task.scheduler.task_id}_{l_table}_filtered"
-                        ),
-                    )
-                    cur = conn.cursor()
-                    cur.execute(view_sql)
-                    row_count = cur.fetchone()[0]
-                    if row_count == 0:
-                        raise AceException("Table filter produced no rows")
+                # Now, we need to check if the view actually has any rows
+                view_sql = sql.SQL("SELECT COUNT(*) FROM {view_name}").format(
+                    view_name=sql.Identifier(
+                        f"{td_task.scheduler.task_id}_{l_table}_filtered"
+                    ),
+                )
+                cur = conn.cursor()
+                cur.execute(view_sql)
+                row_count = cur.fetchone()[0]
+                if row_count == 0:
+                    raise AceException("Table filter produced no rows")
 
     except Exception as e:
         raise e
@@ -1079,6 +1179,41 @@ def table_diff_checks(
     return td_task
 
 
+def check_repair_option_compatibility(tr_task: TableRepairTask) -> None:
+    """
+    Checks if the repair options specified are compatible.
+    """
+
+    if tr_task.bidirectional:
+        if tr_task.upsert_only:
+            raise AceException("bidirectional and upsert_only cannot be used together")
+        if tr_task.fix_nulls:
+            raise AceException("bidirectional and fix_nulls cannot be used together")
+
+    if tr_task.fix_nulls:
+        if tr_task.insert_only:
+            raise AceException("insert_only and fix_nulls cannot be used together")
+        if tr_task.upsert_only:
+            raise AceException("upsert_only and fix_nulls cannot be used together")
+
+    if tr_task.upsert_only:
+        if tr_task.insert_only:
+            raise AceException("insert_only and upsert_only cannot be used together")
+
+
+def check_if_sot_is_needed(tr_task: TableRepairTask) -> bool:
+    """
+    Checks if the source of truth is needed for the table repair task.
+    """
+
+    if tr_task.fix_nulls:
+        return False
+    elif tr_task.bidirectional and tr_task.insert_only:
+        return False
+
+    return True
+
+
 def validate_table_repair_inputs(tr_task: TableRepairTask) -> None:
     """
     Validates the basic inputs for a table repair task without establishing connections.
@@ -1090,32 +1225,29 @@ def validate_table_repair_inputs(tr_task: TableRepairTask) -> None:
     if not tr_task.diff_file_path:
         raise AceException("diff_file is a required argument")
 
-    if type(tr_task.fix_nulls) is not bool:
-        raise AceException("fix_nulls should be True (1) or False (0)")
+    tr_task.fix_nulls = parse_bool_field("fix_nulls", tr_task.fix_nulls)
+    tr_task.fire_triggers = parse_bool_field("fire_triggers", tr_task.fire_triggers)
+    tr_task.dry_run = parse_bool_field("dry_run", tr_task.dry_run)
+    tr_task.bidirectional = parse_bool_field("bidirectional", tr_task.bidirectional)
+    tr_task.insert_only = parse_bool_field("insert_only", tr_task.insert_only)
+    tr_task.upsert_only = parse_bool_field("upsert_only", tr_task.upsert_only)
 
-    if type(tr_task.fire_triggers) is not bool:
-        raise AceException("fire_triggers should be True (1) or False (0)")
+    # Using a helper function here to avoid clutter
+    check_repair_option_compatibility(tr_task)
 
-    if not tr_task.source_of_truth and not tr_task.fix_nulls:
-        raise AceException("source_of_truth is a required argument")
+    sot_needed = check_if_sot_is_needed(tr_task)
+    if sot_needed:
+        if not tr_task.source_of_truth:
+            raise AceException("source_of_truth is a required argument")
 
     # Check if diff_file exists on disk
     if not os.path.exists(tr_task.diff_file_path):
         raise AceException(f"Diff file {tr_task.diff_file_path} does not exist")
 
-    if type(tr_task.dry_run) is int:
-        if tr_task.dry_run < 0 or tr_task.dry_run > 1:
-            raise AceException("Dry run should be True (1) or False (0)")
-        tr_task.dry_run = bool(tr_task.dry_run)
-    elif type(tr_task.dry_run) is str:
-        if tr_task.dry_run in ["True", "true", "1", "t"]:
-            tr_task.dry_run = True
-        elif tr_task.dry_run in ["False", "false", "0", "f"]:
-            tr_task.dry_run = False
-        else:
-            raise AceException("Invalid value for dry_run")
-    elif type(tr_task.dry_run) is not bool:
-        raise AceException("Dry run should be True (1) or False (0)")
+    if tr_task.bidirectional and not tr_task.insert_only:
+        raise AceException(
+            "insert_only must be True (1) when bidirectional is True (1)"
+        )
 
     found = check_cluster_exists(tr_task.cluster_name)
     if found:
@@ -1155,8 +1287,22 @@ def validate_table_repair_inputs(tr_task: TableRepairTask) -> None:
             + f"not found in cluster '{tr_task.cluster_name}'"
         )
 
+    # TODO: Diff file should be read just once. If MAX_DIFF_ROWS is
+    # set to a larger value, reading it once here and then again
+    # in the table-diff core is inefficient.
+    diff_json = json.load(open(tr_task.diff_file_path, "r"))
+
+    if not diff_json:
+        raise AceException("Diff file is empty")
+
+    tr_task.fields.node_list = set(
+        chain.from_iterable(key.split("/") for key in diff_json["diffs"].keys())
+    )
+
     # Combine db and cluster_nodes into a single json
     for node in node_info:
+        if node["name"] not in tr_task.fields.node_list:
+            continue
         combined_json = {**database, **node}
         cluster_nodes.append(combined_json)
 
