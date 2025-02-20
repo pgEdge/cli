@@ -4,7 +4,6 @@ from multiprocessing import Manager
 from datetime import datetime
 import traceback
 import os
-import json
 from typing import Tuple, Any
 from dataclasses import dataclass
 
@@ -12,11 +11,11 @@ from mpire import WorkerPool
 from mpire.utils import make_single_arguments
 from ordered_set import OrderedSet
 from psycopg import sql
+from tqdm import tqdm
 
 import ace_html_reporter
 import util
 import ace
-import ace_db
 import ace_core
 import ace_config as config
 from ace_data_models import MerkleTreeTask
@@ -486,15 +485,15 @@ def split_blocks(conn, schema, table, key, blocks):
 
         blocks = sorted(blocks, key=lambda x: x[0])
         i = 0
-
-        print(blocks)
     except Exception as e:
         conn.rollback()
         raise AceException(f"Error splitting blocks on {schema}.{table}: {str(e)}")
 
+    pbar = tqdm(total=len(blocks), desc="Processing blocks")
+
     while i < len(blocks):
         pos, start, end = blocks[i]
-        print(f"Processing block {pos} with range {start} to {end}")
+        pbar.update(1)
 
         # When inserts happen after the range_end of the last block, we mark that
         # block as dirty and set the range_end to null. So, if we're attempting
@@ -736,11 +735,11 @@ def merge_blocks(conn, schema, table, key, blocks):
     blocks = sorted(blocks, key=lambda x: x[0])
     i = 0
 
-    print(blocks)
+    pbar = tqdm(total=len(blocks), desc="Processing blocks")
 
     while i < len(blocks):
         pos, start, end = blocks[i]
-        print(f"Processing block {pos} with range {start} to {end}")
+        pbar.update(1)
 
         # When inserts happen after the range_end of the last block, we mark that
         # block as dirty and set the range_end to null. So, if we're attempting
