@@ -1,13 +1,17 @@
-import datetime
+from concurrent.futures import ThreadPoolExecutor
 from itertools import combinations
 from multiprocessing import Manager
+from datetime import datetime
 import traceback
 import os
+import json
 from typing import Tuple, Any
 from dataclasses import dataclass
 
 from mpire import WorkerPool
 from mpire.utils import make_single_arguments
+from ordered_set import OrderedSet
+from psycopg import sql
 
 import ace_html_reporter
 import util
@@ -26,6 +30,7 @@ from ace_sql import (
     CREATE_XOR_FUNCTION,
     ESTIMATE_ROW_COUNT,
     GET_PKEY_TYPE,
+    GET_ROW_COUNT_ESTIMATE,
     UPDATE_METADATA,
     CALCULATE_BLOCK_RANGES,
     COMPUTE_LEAF_HASHES,
@@ -1119,8 +1124,6 @@ def find_mismatched_leaves(conn1, conn2, schema, table, parent_level, parent_pos
     """
     mismatched_leaves = []
 
-    print(f"Current level: {parent_level}, position: {parent_position}")
-
     # Get children of this parent node from both nodes
     cur1 = conn1.cursor()
     cur2 = conn2.cursor()
@@ -1141,8 +1144,6 @@ def find_mismatched_leaves(conn1, conn2, schema, table, parent_level, parent_pos
     for child1, child2 in zip(node1_children, node2_children):
         level1, pos1, hash1 = child1
         level2, pos2, hash2 = child2
-        print(f"child 1: {level1}, {pos1}, {hash1}")
-        print(f"child 2: {level2}, {pos2}, {hash2}")
 
         if hash1 != hash2:
             if level1 == 0:
@@ -1157,25 +1158,167 @@ def find_mismatched_leaves(conn1, conn2, schema, table, parent_level, parent_pos
     return mismatched_leaves
 
 
-def get_pkey_batches(conn, schema, table, key, mismatched_positions):
+def get_pkey_batches(node1_conn, node2_conn, schema, table, mismatched_positions):
     """
     Get range_start and range_end values for mismatched leaf nodes
     and format them into batches for parallel processing.
     """
-    cur = conn.cursor()
 
-    cur.execute(
-        GET_LEAF_RANGES.format(schema=schema, table=table),
-        {"node_positions": mismatched_positions},
-    )
-    leaf_ranges = cur.fetchall()
+    with node1_conn.cursor() as cur1, node2_conn.cursor() as cur2:
+        cur1.execute(
+            GET_LEAF_RANGES.format(schema=schema, table=table),
+            {"node_positions": mismatched_positions},
+        )
+        leaf_ranges1 = cur1.fetchall()
+
+        cur2.execute(
+            GET_LEAF_RANGES.format(schema=schema, table=table),
+            {"node_positions": mismatched_positions},
+        )
+        leaf_ranges2 = cur2.fetchall()
 
     batches = []
-    for _, range_start, range_end in leaf_ranges:
-        batch = (range_start, range_end)
+    for (node1_start, node1_end), (node2_start, node2_end) in zip(
+        leaf_ranges1, leaf_ranges2
+    ):
+        batch = ([min(node1_start, node2_start)], [max(node1_end, node2_end)])
         batches.append(batch)
 
     return batches
+
+
+def compare_ranges(shared_objects, worker_state, batches):
+    p_key = shared_objects["p_key"]
+    schema_name = shared_objects["schema_name"]
+    table_name = shared_objects["table_name"]
+    host1, host2 = shared_objects["node_pair"]
+    cols = shared_objects["cols_list"]
+    simple_primary_key = shared_objects["simple_primary_key"]
+    stop_event = shared_objects["stop_event"]
+
+    node_pair = f"{host1}/{host2}"
+    worker_diffs = {}
+    total_diffs = 0
+
+    for batch in batches:
+        if stop_event.is_set():
+            return
+
+        where_clause = str()
+        where_clause_temp = list()
+
+        pkey1, pkey2 = batch
+        if simple_primary_key:
+            if pkey1 is not None:
+                where_clause_temp.append(
+                    sql.SQL("{p_key} >= {pkey1}").format(
+                        p_key=sql.Identifier(p_key), pkey1=sql.Literal(pkey1[0])
+                    )
+                )
+            if pkey2 is not None:
+                where_clause_temp.append(
+                    sql.SQL("{p_key} < {pkey2}").format(
+                        p_key=sql.Identifier(p_key), pkey2=sql.Literal(pkey2[0])
+                    )
+                )
+        else:
+            """
+            This is a slightly more complicated case since we have to split up
+            the primary key and compare them with split values of pkey1 and pkey2
+            """
+
+            if pkey1 is not None:
+                where_clause_temp.append(
+                    sql.SQL("({p_key}) >= ({pkey1})").format(
+                        p_key=sql.SQL(", ").join(
+                            [sql.Identifier(col.strip()) for col in p_key.split(",")]
+                        ),
+                        pkey1=sql.SQL(", ").join([sql.Literal(val) for val in pkey1]),
+                    )
+                )
+
+            if pkey2 is not None:
+                where_clause_temp.append(
+                    sql.SQL("({p_key}) < ({pkey2})").format(
+                        p_key=sql.SQL(", ").join(
+                            [sql.Identifier(col.strip()) for col in p_key.split(",")]
+                        ),
+                        pkey2=sql.SQL(", ").join([sql.Literal(val) for val in pkey2]),
+                    )
+                )
+
+        where_clause = sql.SQL(" AND ").join(where_clause_temp)
+
+        block_sql = sql.SQL("SELECT * FROM {table_name} WHERE {where_clause}").format(
+            table_name=sql.SQL("{}.{}").format(
+                sql.Identifier(schema_name),
+                sql.Identifier(table_name),
+            ),
+            where_clause=where_clause,
+        )
+
+        # Run the block query on both nodes in parallel
+        with ThreadPoolExecutor(max_workers=2) as executor:
+            futures = [
+                executor.submit(ace_core.run_query, worker_state, host1, block_sql),
+                executor.submit(ace_core.run_query, worker_state, host2, block_sql),
+            ]
+            results = [f.result() for f in futures if not f.exception()]
+
+        errors = [f.exception() for f in futures if f.exception()]
+
+        if errors:
+            return {
+                "status": config.BLOCK_ERROR,
+                "errors": [str(error) for error in errors],
+                "batch": batch,
+                "node_pair": node_pair,
+            }
+
+        t1_result, t2_result = results
+
+        # Transform all elements in t1_result and t2_result into strings before
+        # consolidating them into a set
+        # TODO: Test and add support for different datatypes here
+        t1_result = [
+            tuple(x.hex() if isinstance(x, bytes) else str(x) for x in row)
+            for row in t1_result
+        ]
+        t2_result = [
+            tuple(x.hex() if isinstance(x, bytes) else str(x) for x in row)
+            for row in t2_result
+        ]
+
+        # Collect results into OrderedSets for comparison
+        t1_set = OrderedSet(t1_result)
+        t2_set = OrderedSet(t2_result)
+
+        t1_diff = t1_set - t2_set
+        t2_diff = t2_set - t1_set
+
+        # It is possible that the hash mismatch is a false negative.
+        # E.g., if there are extraneous spaces in the JSONB column.
+        # In this case, we can still consider the block to be OK.
+        if (not t1_diff and not t2_diff) or (len(t1_diff) == 0 and len(t2_diff) == 0):
+            continue
+
+        if node_pair not in worker_diffs:
+            worker_diffs[node_pair] = {host1: [], host2: []}
+
+        for row in t1_diff:
+            worker_diffs[node_pair][host1].append(dict(zip(cols, row)))
+        for row in t2_diff:
+            worker_diffs[node_pair][host2].append(dict(zip(cols, row)))
+        total_diffs += max(len(t1_diff), len(t2_diff))
+
+    # Return all diffs found by this worker
+    return {
+        "status": config.BLOCK_OK if total_diffs == 0 else config.BLOCK_MISMATCH,
+        "diffs": worker_diffs,
+        "total_diffs": total_diffs,
+        "batch": batch,
+        "node_pair": node_pair,
+    }
 
 
 def merkle_tree_diff(mtree_task: MerkleTreeTask) -> None:
@@ -1200,6 +1343,8 @@ def merkle_tree_diff(mtree_task: MerkleTreeTask) -> None:
     diffs_exceeded = False
     error_list = []
 
+    total_rows = 0
+
     start_time = datetime.now()
 
     node_pairs = list(combinations(mtree_task.fields.cluster_nodes, 2))
@@ -1213,6 +1358,12 @@ def merkle_tree_diff(mtree_task: MerkleTreeTask) -> None:
         try:
             cur1 = conn1.cursor()
             cur2 = conn2.cursor()
+
+            if not total_rows:
+                cur1.execute(GET_ROW_COUNT_ESTIMATE.format(schema=schema, table=table))
+                row_count = cur1.fetchone()[0]
+                if row_count:
+                    total_rows = row_count * len(mtree_task.fields.node_list)
 
             cur1.execute(GET_ROOT_NODE.format(schema=schema, table=table))
             root1 = cur1.fetchone()
@@ -1257,8 +1408,15 @@ def merkle_tree_diff(mtree_task: MerkleTreeTask) -> None:
                 print("No mismatched leaf nodes found")
                 continue
 
-            batches = get_pkey_batches(conn1, schema, table, key, mismatched_leaves)
-            print(f"Found {len(batches)} mismatched blocks")
+            pkey_batches = get_pkey_batches(
+                conn1, conn2, schema, table, mismatched_leaves
+            )
+            print(f"Found {len(pkey_batches)} mismatched blocks")
+
+            batches = [
+                pkey_batches[i : i + mtree_task.batch_size]
+                for i in range(0, len(pkey_batches), mtree_task.batch_size)
+            ]
 
             max_workers = int(os.cpu_count() * mtree_task.max_cpu_ratio)
             n_jobs = min(len(batches), max_workers)
@@ -1268,12 +1426,9 @@ def merkle_tree_diff(mtree_task: MerkleTreeTask) -> None:
                 "p_key": key,
                 "schema_name": schema,
                 "table_name": table,
-                "node_list": mtree_task.fields.cluster_nodes,
-                "cols_list": mtree_task.fields.cols,
+                "node_pair": (node1["name"], node2["name"]),
+                "cols_list": mtree_task.fields.cols.split(","),
                 "simple_primary_key": simple_primary_key,
-                # We need to use the rerun mode here since we're passing in
-                # sets of pkeys to compare instead of ranges.
-                "mode": "rerun",
                 "stop_event": stop_event,
                 "task": mtree_task,
             }
@@ -1284,7 +1439,7 @@ def merkle_tree_diff(mtree_task: MerkleTreeTask) -> None:
                 use_worker_state=True,
             ) as pool:
                 for result in pool.imap_unordered(
-                    ace_core.compare_checksums,
+                    compare_ranges,
                     make_single_arguments(batches),
                     iterable_len=len(batches),
                     worker_init=ace_core.init_conn_pool,
@@ -1343,14 +1498,14 @@ def merkle_tree_diff(mtree_task: MerkleTreeTask) -> None:
     mtree_task.scheduler.finished_at = datetime.now()
     mtree_task.scheduler.time_taken = run_time
     mtree_task.scheduler.task_context = {
-        "total_rows": "TBD",
+        "total_rows": total_rows,
         "mismatch": mismatch,
         "diffs_summary": mtree_task.diff_summary if mismatch else {},
         "errors": [],
     }
 
     if errors:
-        context = {"total_rows": "TBD", "mismatch": mismatch, "errors": error_list}
+        context = {"total_rows": total_rows, "mismatch": mismatch, "errors": error_list}
         ace.handle_task_exception(mtree_task, context)
 
         # Even though we've updated the task in the DB, we still need to
@@ -1414,7 +1569,7 @@ def merkle_tree_diff(mtree_task: MerkleTreeTask) -> None:
                 ace.write_diffs_csv(diff_dict)
         except Exception as e:
             context = {
-                "total_rows": "TBD",
+                "total_rows": total_rows,
                 "mismatch": mismatch,
                 "errors": [str(e)],
             }
@@ -1427,7 +1582,7 @@ def merkle_tree_diff(mtree_task: MerkleTreeTask) -> None:
         )
 
     util.message(
-        f"TOTAL ROWS CHECKED = TBD\nRUN TIME = {run_time_str} seconds",
+        f"TOTAL ROWS CHECKED = {total_rows}\nRUN TIME = {run_time_str} seconds",
         p_state="info",
         quiet_mode=mtree_task.quiet_mode,
     )
@@ -1436,13 +1591,10 @@ def merkle_tree_diff(mtree_task: MerkleTreeTask) -> None:
     mtree_task.scheduler.finished_at = datetime.now()
     mtree_task.scheduler.time_taken = run_time
     mtree_task.scheduler.task_context = {
-        "total_rows": "TBD",
+        "total_rows": total_rows,
         "mismatch": mismatch,
         "diffs_summary": mtree_task.diff_summary if mismatch else {},
         "errors": [],
     }
-
-    if not mtree_task.skip_db_update:
-        ace_db.update_ace_task(mtree_task)
 
     mtree_task.connection_pool.close_all()

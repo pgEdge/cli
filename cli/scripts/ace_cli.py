@@ -27,7 +27,9 @@ def merkle_tree_cli(
     rebalance=False,
     block_rows=config.MTREE_BLOCK_SIZE,
     max_cpu_ratio=config.MAX_CPU_RATIO,
+    batch_size=1,
     nodes="all",
+    output="json",
     quiet_mode=False,
 ):
     task_id = ace_db.generate_task_id()
@@ -42,6 +44,8 @@ def merkle_tree_cli(
             rebalance=rebalance,
             block_rows=block_rows,
             max_cpu_ratio=max_cpu_ratio,
+            batch_size=batch_size,
+            output=output,
             quiet_mode=quiet_mode,
             _nodes=nodes,
             invoke_method="cli",

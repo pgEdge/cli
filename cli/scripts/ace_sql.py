@@ -503,9 +503,16 @@ GET_NODE_CHILDREN = """
 """
 
 GET_LEAF_RANGES = """
-    SELECT node_position, range_start, range_end
+    SELECT range_start, range_end
     FROM ace_mtree_{schema}_{table}
     WHERE node_level = 0
     AND node_position = ANY(%(node_positions)s)
     ORDER BY node_position
+"""
+
+GET_ROW_COUNT_ESTIMATE = """
+    SELECT total_rows
+    FROM ace_mtree_metadata
+    WHERE schema_name = '{schema}'
+    AND table_name = '{table}'
 """

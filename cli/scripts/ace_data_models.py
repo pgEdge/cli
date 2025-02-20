@@ -264,14 +264,18 @@ class MerkleTreeTask:
     rebalance: bool
     block_rows: int
     max_cpu_ratio: float
+    batch_size: int
+    output: str
     quiet_mode: bool
 
+    row_estimate: int = 0
     invoke_method: str = "cli"
 
     # Client role from certificate CN when invoked via API
     client_role: str = None
 
     connection_pool: ConnectionPool = field(default_factory=ConnectionPool)
+    diff_summary: dict = field(default_factory=dict)
 
     scheduler: Task = field(default_factory=Task)
 
