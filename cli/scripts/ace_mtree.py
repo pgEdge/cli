@@ -27,6 +27,7 @@ from ace_sql import (
     CREATE_TRIGGER_FUNCTION,
     CREATE_TRIGGER,
     CREATE_XOR_FUNCTION,
+    ENABLE_ALWAYS,
     ESTIMATE_ROW_COUNT,
     GET_PKEY_TYPE,
     GET_ROW_COUNT_ESTIMATE,
@@ -193,6 +194,7 @@ def create_mtree_objects(conn, schema, table, key, total_rows, num_blocks):
             table=table,
         )
     )
+    cur.execute(ENABLE_ALWAYS.format(schema=schema, table=table))
 
     conn.commit()
 
@@ -977,6 +979,9 @@ def update_mtree(mtree_task: MerkleTreeTask, skip_all_checks=False) -> None:
     table = mtree_task.fields.l_table
     key = mtree_task.fields.key
 
+    SPLIT_THRESHOLD = config.MTREE_BLOCK_SIZE // 2
+    MERGE_THRESHOLD = config.MTREE_BLOCK_SIZE // 4
+
     for node in mtree_task.fields.cluster_nodes:
         print(f"\nUpdating Merkle tree on node: {node['name']}")
         _, conn = mtree_task.connection_pool.get_cluster_node_connection(node)
@@ -1000,24 +1005,60 @@ def update_mtree(mtree_task: MerkleTreeTask, skip_all_checks=False) -> None:
                     conn.commit()
                     continue
 
-                print(f"Found {len(blocks_to_update)} blocks to update")
-
-                split_blocks(
-                    conn,
-                    schema,
-                    table,
-                    key,
-                    blocks_to_update,
+                # First identify blocks that might need splitting based on insert count
+                cur.execute(
+                    """
+                    SELECT node_position, range_start, range_end
+                    FROM ace_mtree_{schema}_{table}
+                    WHERE node_level = 0
+                    AND inserts_since_tree_update >= %s
+                    AND node_position = ANY(%s)
+                    """.format(
+                        schema=schema, table=table
+                    ),
+                    [SPLIT_THRESHOLD, [b[0] for b in blocks_to_update]],
                 )
+                blocks_to_split = cur.fetchall()
 
-                if mtree_task.rebalance:
-                    merge_blocks(
+                if blocks_to_split:
+                    print(
+                        f"Found {len(blocks_to_split)} blocks that may need splitting"
+                    )
+                    split_blocks(
                         conn,
                         schema,
                         table,
                         key,
-                        blocks_to_update,
+                        blocks_to_split,
                     )
+
+                if mtree_task.rebalance:
+                    # Identify blocks that might need merging based on delete count
+                    cur.execute(
+                        """
+                        SELECT node_position, range_start, range_end
+                        FROM ace_mtree_{schema}_{table}
+                        WHERE node_level = 0
+                        AND deletes_since_tree_update >= %s
+                        AND node_position = ANY(%s)
+                        """.format(
+                            schema=schema, table=table
+                        ),
+                        [MERGE_THRESHOLD, [b[0] for b in blocks_to_update]],
+                    )
+                    blocks_to_merge = cur.fetchall()
+
+                    if blocks_to_merge:
+                        print(
+                            f"Found {len(blocks_to_merge)} blocks that may need merging"
+                        )
+                        merge_blocks(
+                            conn,
+                            schema,
+                            table,
+                            key,
+                            blocks_to_merge,
+                        )
 
                 # Get final list of blocks to update (including newly modified ones)
                 cur.execute(
@@ -1045,7 +1086,7 @@ def update_mtree(mtree_task: MerkleTreeTask, skip_all_checks=False) -> None:
                 column_expr = ",\n        ".join(column_list)
 
                 affected_positions = []
-                for block in blocks_to_update:
+                for block in tqdm(blocks_to_update, desc="Recomputing leaf hashes"):
                     params = {
                         "node_position": block[0],
                         "range_start": block[1],
@@ -1078,6 +1119,12 @@ def update_mtree(mtree_task: MerkleTreeTask, skip_all_checks=False) -> None:
 
                     level = 0
 
+                    pbar = tqdm(
+                        desc="Building parent nodes",
+                        total=len(affected_positions),
+                        leave=False,
+                    )
+
                     while True:
                         cur.execute(
                             BUILD_PARENT_NODES.format(
@@ -1091,6 +1138,7 @@ def update_mtree(mtree_task: MerkleTreeTask, skip_all_checks=False) -> None:
                         if count <= 1:
                             break
                         level += 1
+                        pbar.update(count)
 
                     cur.execute(
                         CLEAR_DIRTY_FLAGS.format(
@@ -1502,6 +1550,8 @@ def merkle_tree_diff(mtree_task: MerkleTreeTask) -> None:
         "diffs_summary": mtree_task.diff_summary if mismatch else {},
         "errors": [],
     }
+
+    print()
 
     if errors:
         context = {"total_rows": total_rows, "mismatch": mismatch, "errors": error_list}

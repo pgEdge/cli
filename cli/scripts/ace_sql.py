@@ -20,6 +20,8 @@ CREATE_MTREE_TABLE = """
         leaf_hash bytea,
         node_hash bytea,
         dirty boolean DEFAULT false,
+        inserts_since_tree_update bigint DEFAULT 0,
+        deletes_since_tree_update bigint DEFAULT 0,
         last_modified timestamptz DEFAULT current_timestamp,
         PRIMARY KEY (node_level, node_position)
     );
@@ -99,6 +101,7 @@ CREATE_TRIGGER_FUNCTION = """
                 UPDATE ace_mtree_{schema}_{table}
                 SET range_end = NULL,
                     dirty = true,
+                    inserts_since_tree_update = inserts_since_tree_update + 1,
                     last_modified = current_timestamp
                 WHERE node_level = 0
                 AND node_position = last_block_pos;
@@ -108,6 +111,7 @@ CREATE_TRIGGER_FUNCTION = """
 
             UPDATE ace_mtree_{schema}_{table}
             SET dirty = true,
+                inserts_since_tree_update = inserts_since_tree_update + 1,
                 last_modified = current_timestamp
             WHERE node_level = 0
             AND node_position = affected_pos;
@@ -117,6 +121,7 @@ CREATE_TRIGGER_FUNCTION = """
 
             UPDATE ace_mtree_{schema}_{table}
             SET dirty = true,
+                deletes_since_tree_update = deletes_since_tree_update + 1,
                 last_modified = current_timestamp
             WHERE node_level = 0
             AND node_position = affected_pos;
@@ -126,12 +131,18 @@ CREATE_TRIGGER_FUNCTION = """
                 -- Key changed - mark both blocks as dirty
                 UPDATE ace_mtree_{schema}_{table}
                 SET dirty = true,
+                    deletes_since_tree_update = deletes_since_tree_update + 1,
                     last_modified = current_timestamp
                 WHERE node_level = 0
-                AND node_position IN (
-                    get_block_id_{schema}_{table}(OLD.{pkey}),
-                    get_block_id_{schema}_{table}(NEW.{pkey})
-                );
+                AND node_position = get_block_id_{schema}_{table}(OLD.{pkey});
+
+                UPDATE ace_mtree_{schema}_{table}
+                SET dirty = true,
+                    inserts_since_tree_update = inserts_since_tree_update + 1,
+                    last_modified = current_timestamp
+                WHERE node_level = 0
+                AND node_position = get_block_id_{schema}_{table}(NEW.{pkey});
+
                 RETURN NULL;
             END IF;
 
@@ -154,6 +165,11 @@ CREATE_TRIGGER = """
     CREATE TRIGGER track_dirty_blocks_{schema}_{table}_trigger
     AFTER INSERT OR UPDATE OR DELETE ON {schema}.{table}
     FOR EACH ROW EXECUTE FUNCTION track_dirty_blocks_{schema}_{table}();
+"""
+
+ENABLE_ALWAYS = """
+    ALTER TABLE {schema}.{table}
+    ENABLE ALWAYS TRIGGER track_dirty_blocks_{schema}_{table}_trigger;
 """
 
 CREATE_XOR_FUNCTION = """
@@ -230,7 +246,6 @@ UPDATE_METADATA = """
         last_updated = EXCLUDED.last_updated;
 """
 
-# TODO: Use SYSTEM for larger tables and BERNOULLI for smaller tables
 CALCULATE_BLOCK_RANGES = """
     WITH sampled_data AS (
         SELECT
@@ -372,6 +387,8 @@ GET_DIRTY_AND_NEW_BLOCKS = """
 CLEAR_DIRTY_FLAGS = """
     UPDATE ace_mtree_{schema}_{table}
     SET dirty = false,
+        inserts_since_tree_update = 0,
+        deletes_since_tree_update = 0,
         last_modified = current_timestamp
     WHERE node_level = 0
     AND node_position = ANY(%(node_positions)s);
