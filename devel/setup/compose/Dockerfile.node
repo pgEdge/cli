@@ -3,7 +3,7 @@ RUN touch /etc/hostname
 RUN dnf -y update && dnf remove -y subscription-manager dnf-plugin-subscription-manager
 
 ENV install="dnf install -y --allowerasing"
-RUN $install python3 python3-pip git wget curl pigz which zip sqlite
+RUN $install python3 python3-pip git wget curl pigz which zip sqlite postgresql
 RUN $install openssh-server systemd sudo
 
 
@@ -27,11 +27,8 @@ RUN chmod 700 /home/pgedge/.ssh/
 
 RUN sudo chown pgedge:pgedge /home/pgedge/.ssh/id_rsa
 RUN sudo chmod 600 /home/pgedge/.ssh/id_rsa
-ENV REPO=https://pgedge-upstream.s3.amazonaws.com/REPO
-RUN wget $REPO/install.py
-RUN python3 install.py
-RUN rm install.py
 
+RUN sed -i '1iexport PGBACKREST_REPO1_CIPHER_PASS=Really_s3cure_password' ~/.bashrc
 
 USER root
 EXPOSE 22

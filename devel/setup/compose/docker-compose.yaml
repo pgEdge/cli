@@ -1,0 +1,41 @@
+name: pgedge
+services:
+  n1:
+    build:
+      context: .
+      dockerfile: Dockerfile.node
+    ports:
+      - "22:22"
+    networks:
+      - mynetwork
+    environment:
+      - REPO=http://repo:8000
+      - PGBACKREST_REPO1_CIPHER_PASS=supersecret
+    depends_on:
+      - repo
+
+  repo:
+    build:
+      context: .
+      dockerfile: Dockerfile.repo
+    ports:
+      - "8000:8000"
+    networks:
+      - mynetwork
+    volumes:
+      - ./repo:/usr/src/repo/
+
+  build:
+    build:
+      context: .
+      dockerfile: ../Dockerfile
+    networks:
+      - mynetwork
+    volumes:
+      - ./repo:/home/build/dev/out
+    stdin_open: true
+    tty: true
+
+networks:
+  mynetwork:
+    driver: bridge

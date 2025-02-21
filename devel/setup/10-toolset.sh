@@ -96,4 +96,6 @@ if [ $rc == "0" ]; then
 
   install-apt-toolset
 fi
+
+exit 0
  
