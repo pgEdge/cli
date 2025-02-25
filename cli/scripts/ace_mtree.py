@@ -1,5 +1,5 @@
 from concurrent.futures import ThreadPoolExecutor
-from itertools import combinations
+from itertools import combinations, zip_longest
 from multiprocessing import Manager
 from datetime import datetime
 import traceback
@@ -53,6 +53,26 @@ class BlockBoundary:
     block_id: int
     block_start: Tuple[Any, ...]
     block_end: Tuple[Any, ...]
+
+
+def safe_min(a, b):
+    if a is None and b is None:
+        return None
+    if a is None:
+        return b
+    if b is None:
+        return a
+    return min(a, b)
+
+
+def safe_max(a, b):
+    if a is None and b is None:
+        return None
+    if a is None:
+        return b
+    if b is None:
+        return a
+    return max(a, b)
 
 
 def init_hash_conn_pool(worker_id, shared_objects, worker_state):
@@ -1191,28 +1211,38 @@ def find_mismatched_leaves(
     cur2.execute(GET_NODE_CHILDREN.format(schema=schema, table=table), params)
     node2_children = cur2.fetchall()
 
-    # This shouldn't happen at all. Failsafe anyway.
-    if not node1_children or not node2_children:
-        return mismatched_leaves
-
-    # Update progress bar if provided
     if pbar is not None:
         pbar.update(len(node1_children))
 
     # Compare each child
-    for child1, child2 in zip(node1_children, node2_children):
-        level1, pos1, hash1 = child1
-        level2, pos2, hash2 = child2
+    for child1, child2 in zip_longest(node1_children, node2_children, fillvalue=None):
+        level1, pos1, hash1 = child1 if child1 else (None, None, None)
+        level2, pos2, hash2 = child2 if child2 else (None, None, None)
 
-        if hash1 != hash2:
+        if hash1 is None or hash2 is None:
+            if (level1 == 0) or (level2 == 0):
+                mismatched_leaves.append(pos1 if level1 is not None else pos2)
+            else:
+                # Recurse down this branch to find mismatched leaves
+                child_mismatches = find_mismatched_leaves(
+                    conn1,
+                    conn2,
+                    schema,
+                    table,
+                    level1 if level1 is not None else level2,
+                    pos1 if pos1 is not None else pos2,
+                    pbar,
+                )
+                mismatched_leaves.extend(child_mismatches)
+        elif hash1 != hash2:
             if level1 == 0:
                 mismatched_leaves.append(pos1)
             else:
                 # Recurse down this branch to find mismatched leaves
-                child_mismatches = find_mismatched_leaves(
+                child1_mismatches = find_mismatched_leaves(
                     conn1, conn2, schema, table, level1, pos1, pbar
                 )
-                mismatched_leaves.extend(child_mismatches)
+                mismatched_leaves.extend(child1_mismatches)
 
     return mismatched_leaves
 
@@ -1237,11 +1267,16 @@ def get_pkey_batches(node1_conn, node2_conn, schema, table, mismatched_positions
         leaf_ranges2 = cur2.fetchall()
 
     batches = []
-    for (node1_start, node1_end), (node2_start, node2_end) in zip(
-        leaf_ranges1, leaf_ranges2
+    for (node1_start, node1_end), (node2_start, node2_end) in zip_longest(
+        leaf_ranges1, leaf_ranges2, fillvalue=(None, None)
     ):
-        batch = ([min(node1_start, node2_start)], [max(node1_end, node2_end)])
+        batch = ([safe_min(node1_start, node2_start)], [safe_max(node1_end, node2_end)])
         batches.append(batch)
+    
+    # Because we do a pkey >= start and pkey < end, we need to add one more entry
+    # at the end.
+
+    batches.append(([safe_max(leaf_ranges1[-1][1], leaf_ranges2[-1][1])], [None]))
 
     return batches
 
@@ -1267,24 +1302,23 @@ def compare_ranges(shared_objects, worker_state, work_item):
     if len(batch) == 1:
         pkey1, pkey2 = batch[0]
 
-        # Build the WHERE clause
         where_clause_parts = []
 
         if simple_primary_key:
-            if pkey1 is not None:
+            if pkey1[0] is not None:
                 where_clause_parts.append(
                     sql.SQL("{p_key} >= {pkey1}").format(
                         p_key=sql.Identifier(p_key), pkey1=sql.Literal(pkey1[0])
                     )
                 )
-            if pkey2 is not None:
+            if pkey2[0] is not None:
                 where_clause_parts.append(
                     sql.SQL("{p_key} < {pkey2}").format(
                         p_key=sql.Identifier(p_key), pkey2=sql.Literal(pkey2[0])
                     )
                 )
         else:
-            if pkey1 is not None:
+            if pkey1[0] is not None:
                 where_clause_parts.append(
                     sql.SQL("({p_key}) >= ({pkey1})").format(
                         p_key=sql.SQL(", ").join(
@@ -1293,7 +1327,7 @@ def compare_ranges(shared_objects, worker_state, work_item):
                         pkey1=sql.SQL(", ").join([sql.Literal(val) for val in pkey1]),
                     )
                 )
-            if pkey2 is not None:
+            if pkey2[0] is not None:
                 where_clause_parts.append(
                     sql.SQL("({p_key}) < ({pkey2})").format(
                         p_key=sql.SQL(", ").join(
