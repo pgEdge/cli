@@ -10,7 +10,6 @@ import psycopg
 from multiprocessing import Manager, cpu_count
 from mpire import WorkerPool
 from mpire.utils import make_single_arguments
-from ordered_set import OrderedSet
 from psycopg import sql
 from psycopg.rows import dict_row, class_row
 from dateutil import parser
@@ -50,11 +49,12 @@ def init_conn_pool(shared_objects, worker_state):
 
     for node in task.fields.cluster_nodes:
         try:
-            _, conn = task.connection_pool.get_cluster_node_connection(
-                node,
+            _, conn = task.connection_pool.connect(node)
+            task.connection_pool.drop_privileges(
+                conn,
                 client_role=(
                     task.client_role
-                    if config.USE_CERT_AUTH and task.invoke_method == "api"
+                    if config.USE_CERT_AUTH or task.invoke_method == "api"
                     else None
                 ),
             )
@@ -128,36 +128,34 @@ def compare_checksums(shared_objects, worker_state, batches):
     worker_diffs = {}
     total_diffs = 0
 
-    for batch in batches:
-        if stop_event.is_set():
-            return
+    if stop_event.is_set():
+        return
 
-        where_clause = str()
-        where_clause_temp = list()
+    # Same approach as compare_ranges in ace_mtree.py
+    # Use lookup dictionaries for faster comparisons, and process all batches
+    # at once if possible
+    if mode == "diff":
+        if len(batches) == 1:
+            pkey1, pkey2 = batches[0]
 
-        if mode == "diff":
-            pkey1, pkey2 = batch
+            where_clause_parts = []
+
             if simple_primary_key:
                 if pkey1 is not None:
-                    where_clause_temp.append(
+                    where_clause_parts.append(
                         sql.SQL("{p_key} >= {pkey1}").format(
                             p_key=sql.Identifier(p_key), pkey1=sql.Literal(pkey1[0])
                         )
                     )
                 if pkey2 is not None:
-                    where_clause_temp.append(
+                    where_clause_parts.append(
                         sql.SQL("{p_key} < {pkey2}").format(
                             p_key=sql.Identifier(p_key), pkey2=sql.Literal(pkey2[0])
                         )
                     )
             else:
-                """
-                This is a slightly more complicated case since we have to split up
-                the primary key and compare them with split values of pkey1 and pkey2
-                """
-
                 if pkey1 is not None:
-                    where_clause_temp.append(
+                    where_clause_parts.append(
                         sql.SQL("({p_key}) >= ({pkey1})").format(
                             p_key=sql.SQL(", ").join(
                                 [
@@ -170,9 +168,8 @@ def compare_checksums(shared_objects, worker_state, batches):
                             ),
                         )
                     )
-
                 if pkey2 is not None:
-                    where_clause_temp.append(
+                    where_clause_parts.append(
                         sql.SQL("({p_key}) < ({pkey2})").format(
                             p_key=sql.SQL(", ").join(
                                 [
@@ -186,101 +183,212 @@ def compare_checksums(shared_objects, worker_state, batches):
                         )
                     )
 
-            where_clause = sql.SQL(" AND ").join(where_clause_temp)
-
-        elif mode == "rerun":
-            keys = p_key.split(",")
-            where_clause = sql.SQL(generate_where_clause(keys, batch))
+            where_clause = (
+                sql.SQL(" AND ").join(where_clause_parts)
+                if where_clause_parts
+                else sql.SQL("TRUE")
+            )
 
         else:
-            raise Exception(f"Mode {mode} not recognized in compare_checksums")
+            if simple_primary_key:
+                min_key = min(
+                    b[0][0] if b[0] is not None else None
+                    for b in batches
+                    if b[0] is not None
+                )
+                max_key = max(
+                    b[1][0] if b[1] is not None else None
+                    for b in batches
+                    if b[1] is not None
+                )
 
-        if simple_primary_key:
-            hash_sql = sql.SQL(
-                """
-                WITH block_rows AS (
+                where_clause_parts = []
+                if min_key is not None:
+                    where_clause_parts.append(
+                        sql.SQL("{p_key} >= {min_key}").format(
+                            p_key=sql.Identifier(p_key), min_key=sql.Literal(min_key)
+                        )
+                    )
+                if max_key is not None:
+                    where_clause_parts.append(
+                        sql.SQL("{p_key} < {max_key}").format(
+                            p_key=sql.Identifier(p_key), max_key=sql.Literal(max_key)
+                        )
+                    )
+
+                where_clause = (
+                    sql.SQL(" AND ").join(where_clause_parts)
+                    if where_clause_parts
+                    else sql.SQL("TRUE")
+                )
+            else:
+                or_clauses = []
+
+                for pkey1, pkey2 in batches:
+                    and_clauses = []
+
+                    if pkey1 is not None:
+                        and_clauses.append(
+                            sql.SQL("({p_key}) >= ({pkey1})").format(
+                                p_key=sql.SQL(", ").join(
+                                    [
+                                        sql.Identifier(col.strip())
+                                        for col in p_key.split(",")
+                                    ]
+                                ),
+                                pkey1=sql.SQL(", ").join(
+                                    [sql.Literal(val) for val in pkey1]
+                                ),
+                            )
+                        )
+
+                    if pkey2 is not None:
+                        and_clauses.append(
+                            sql.SQL("({p_key}) < ({pkey2})").format(
+                                p_key=sql.SQL(", ").join(
+                                    [
+                                        sql.Identifier(col.strip())
+                                        for col in p_key.split(",")
+                                    ]
+                                ),
+                                pkey2=sql.SQL(", ").join(
+                                    [sql.Literal(val) for val in pkey2]
+                                ),
+                            )
+                        )
+
+                    if and_clauses:
+                        or_clauses.append(
+                            sql.SQL("(")
+                            + sql.SQL(" AND ").join(and_clauses)
+                            + sql.SQL(")")
+                        )
+
+                where_clause = (
+                    sql.SQL(" OR ").join(or_clauses) if or_clauses else sql.SQL("TRUE")
+                )
+
+    elif mode == "rerun":
+        keys = p_key.split(",")
+        where_clause = sql.SQL(generate_where_clause(keys, batches))
+
+    else:
+        raise Exception(f"Mode {mode} not recognized in compare_checksums")
+
+    if simple_primary_key:
+        hash_sql = sql.SQL(
+            """
+            WITH block_rows AS (
+            SELECT *
+            FROM {schema}.{table}
+            WHERE {where_clause}
+            ),
+            block_hash AS (
+                SELECT
+                    digest(
+                        COALESCE(
+                            string_agg(
+                                concat_ws('|', {columns}),
+                                '|'
+                                ORDER BY {key}
+                            ),
+                            'EMPTY_BLOCK'
+                        ),
+                        'sha256'
+                    ) as leaf_hash
+                FROM block_rows
+            )
+            SELECT encode(leaf_hash, 'hex') as leaf_hash
+            FROM block_hash
+            """
+        ).format(
+            schema=sql.Identifier(schema_name),
+            table=sql.Identifier(table_name),
+            where_clause=where_clause,
+            key=sql.Identifier(p_key),
+            columns=sql.SQL(", ").join(sql.Identifier(col) for col in cols),
+        )
+    else:
+        hash_sql = sql.SQL(
+            """
+            WITH block_rows AS (
                 SELECT *
                 FROM {schema}.{table}
                 WHERE {where_clause}
-                ),
-                block_hash AS (
-                    SELECT
-                        digest(
-                            COALESCE(
-                                string_agg(
-                                    concat_ws('|', {columns}),
-                                    '|'
-                                    ORDER BY {key}
-                                ),
-                                'EMPTY_BLOCK'
-                            ),
-                            'sha256'
-                        ) as leaf_hash
-                    FROM block_rows
-                )
-                SELECT encode(leaf_hash, 'hex') as leaf_hash
-                FROM block_hash
-                """
-            ).format(
-                schema=sql.Identifier(schema_name),
-                table=sql.Identifier(table_name),
-                where_clause=where_clause,
-                key=sql.Identifier(p_key),
-                columns=sql.SQL(", ").join(sql.Identifier(col) for col in cols),
-            )
-        else:
-            hash_sql = sql.SQL(
-                """
-                WITH block_rows AS (
-                    SELECT *
-                    FROM {schema}.{table}
-                    WHERE {where_clause}
-                ),
-                block_hash AS (
-                    SELECT
-                        digest(
-                            COALESCE(
-                                string_agg(
-                                    concat_ws('|', {columns}),
-                                    '|'
-                                    ORDER BY {key}
-                                ),
-                                'EMPTY_BLOCK'
-                            ),
-                            'sha256'
-                        ) as leaf_hash
-                    FROM block_rows
-                )
-                SELECT encode(leaf_hash, 'hex') as leaf_hash
-                FROM block_hash
-                """
-            ).format(
-                schema=sql.Identifier(schema_name),
-                table=sql.Identifier(table_name),
-                where_clause=where_clause,
-                key=sql.SQL(", ").join(
-                    sql.Identifier(col.strip()) for col in p_key.split(",")
-                ),
-                columns=sql.SQL(", ").join(sql.Identifier(col) for col in cols),
-            )
-
-        block_sql = sql.SQL("SELECT * FROM {table_name} WHERE {where_clause}").format(
-            table_name=sql.SQL("{}.{}").format(
-                sql.Identifier(schema_name),
-                sql.Identifier(table_name),
             ),
+            block_hash AS (
+                SELECT
+                    digest(
+                        COALESCE(
+                            string_agg(
+                                concat_ws('|', {columns}),
+                                '|'
+                                ORDER BY {key}
+                            ),
+                            'EMPTY_BLOCK'
+                        ),
+                        'sha256'
+                    ) as leaf_hash
+                FROM block_rows
+            )
+            SELECT encode(leaf_hash, 'hex') as leaf_hash
+            FROM block_hash
+            """
+        ).format(
+            schema=sql.Identifier(schema_name),
+            table=sql.Identifier(table_name),
             where_clause=where_clause,
+            key=sql.SQL(", ").join(
+                sql.Identifier(col.strip()) for col in p_key.split(",")
+            ),
+            columns=sql.SQL(", ").join(sql.Identifier(col) for col in cols),
         )
 
-        for node_pair in combinations(node_list, 2):
-            host1 = node_pair[0]
-            host2 = node_pair[1]
+    block_sql = sql.SQL("SELECT * FROM {table_name} WHERE {where_clause}").format(
+        table_name=sql.SQL("{}.{}").format(
+            sql.Identifier(schema_name),
+            sql.Identifier(table_name),
+        ),
+        where_clause=where_clause,
+    )
 
-            # Run the checksum query on both nodes in parallel
+    for node_pair in combinations(node_list, 2):
+        host1 = node_pair[0]
+        host2 = node_pair[1]
+        node_pair_key = f"{host1}/{host2}"
+
+        with ThreadPoolExecutor(max_workers=2) as executor:
+            futures = [
+                executor.submit(run_query, worker_state, host1, hash_sql),
+                executor.submit(run_query, worker_state, host2, hash_sql),
+            ]
+            results = [f.result() for f in futures if not f.exception()]
+
+        errors = [f.exception() for f in futures if f.exception()]
+
+        if errors:
+            return {
+                "status": config.BLOCK_ERROR,
+                "errors": [str(error) for error in errors],
+                "batch": batches[0] if len(batches) == 1 else batches,
+                "node_pair": node_pair,
+            }
+
+        if len(results) < 2:
+            return {
+                "status": config.BLOCK_ERROR,
+                "errors": ["Failed to get results from both nodes"],
+                "batch": batches[0] if len(batches) == 1 else batches,
+                "node_pair": node_pair,
+            }
+
+        hash1, hash2 = results[0][0][0], results[1][0][0]
+
+        if hash1 != hash2:
             with ThreadPoolExecutor(max_workers=2) as executor:
                 futures = [
-                    executor.submit(run_query, worker_state, host1, hash_sql),
-                    executor.submit(run_query, worker_state, host2, hash_sql),
+                    executor.submit(run_query, worker_state, host1, block_sql),
+                    executor.submit(run_query, worker_state, host2, block_sql),
                 ]
                 results = [f.result() for f in futures if not f.exception()]
 
@@ -290,78 +398,64 @@ def compare_checksums(shared_objects, worker_state, batches):
                 return {
                     "status": config.BLOCK_ERROR,
                     "errors": [str(error) for error in errors],
-                    "batch": batch,
+                    "batch": batches[0] if len(batches) == 1 else batches,
                     "node_pair": node_pair,
                 }
 
-            hash1, hash2 = results[0][0][0], results[1][0][0]
+            if len(results) < 2:
+                return {
+                    "status": config.BLOCK_ERROR,
+                    "errors": ["Failed to get results from both nodes"],
+                    "batch": batches[0] if len(batches) == 1 else batches,
+                    "node_pair": node_pair,
+                }
 
-            if hash1 != hash2:
-                # Run the block query on both nodes in parallel
-                with ThreadPoolExecutor(max_workers=2) as executor:
-                    futures = [
-                        executor.submit(run_query, worker_state, host1, block_sql),
-                        executor.submit(run_query, worker_state, host2, block_sql),
-                    ]
-                    results = [f.result() for f in futures if not f.exception()]
+            t1_result, t2_result = results
 
-                errors = [f.exception() for f in futures if f.exception()]
+            t1_dict = {}
+            t2_dict = {}
 
-                if errors:
-                    return {
-                        "status": config.BLOCK_ERROR,
-                        "errors": [str(error) for error in errors],
-                        "batch": batch,
-                        "node_pair": node_pair,
-                    }
+            for row in t1_result:
+                row_key = tuple(x.hex() if isinstance(x, bytes) else x for x in row)
+                t1_dict[row_key] = row
 
-                t1_result, t2_result = results
+            t2_only = []
+            for row in t2_result:
+                row_key = tuple(x.hex() if isinstance(x, bytes) else x for x in row)
+                t2_dict[row_key] = row
 
-                # Transform all elements in t1_result and t2_result into strings before
-                # consolidating them into a set
-                # TODO: Test and add support for different datatypes here
-                t1_result = [
-                    tuple(x.hex() if isinstance(x, bytes) else str(x) for x in row)
-                    for row in t1_result
-                ]
-                t2_result = [
-                    tuple(x.hex() if isinstance(x, bytes) else str(x) for x in row)
-                    for row in t2_result
-                ]
+                if row_key not in t1_dict:
+                    t2_only.append(row_key)
 
-                # Collect results into OrderedSets for comparison
-                t1_set = OrderedSet(t1_result)
-                t2_set = OrderedSet(t2_result)
+            t1_only = [key for key in t1_dict.keys() if key not in t2_dict]
 
-                t1_diff = t1_set - t2_set
-                t2_diff = t2_set - t1_set
+            # It is possible that the hash mismatch is a false negative.
+            # E.g., if there are extraneous spaces in the JSONB column.
+            # In this case, we can still consider the block to be OK.
+            if not t1_only and not t2_only:
+                continue
 
-                # It is possible that the hash mismatch is a false negative.
-                # E.g., if there are extraneous spaces in the JSONB column.
-                # In this case, we can still consider the block to be OK.
-                if (not t1_diff and not t2_diff) or (
-                    len(t1_diff) == 0 and len(t2_diff) == 0
-                ):
-                    continue
+            if node_pair_key not in worker_diffs:
+                worker_diffs[node_pair_key] = {host1: [], host2: []}
 
-                node_pair_key = f"{host1}/{host2}"
+            for row_key in t1_only:
+                worker_diffs[node_pair_key][host1].append(
+                    dict(zip(cols, (str(x) for x in row_key)))
+                )
 
-                if node_pair_key not in worker_diffs:
-                    worker_diffs[node_pair_key] = {host1: [], host2: []}
+            for row_key in t2_only:
+                worker_diffs[node_pair_key][host2].append(
+                    dict(zip(cols, (str(x) for x in row_key)))
+                )
 
-                for row in t1_diff:
-                    worker_diffs[node_pair_key][host1].append(dict(zip(cols, row)))
-                for row in t2_diff:
-                    worker_diffs[node_pair_key][host2].append(dict(zip(cols, row)))
-                total_diffs += max(len(t1_diff), len(t2_diff))
+            total_diffs += max(len(t1_only), len(t2_only))
 
-    # Return all diffs found by this worker
     return {
         "status": config.BLOCK_OK if total_diffs == 0 else config.BLOCK_MISMATCH,
         "diffs": worker_diffs,
         "total_diffs": total_diffs,
-        "batch": batch,
-        "node_pair": node_pair,
+        "batch": batches[0] if len(batches) == 1 else batches,
+        "node_pair": node_pair_key if "node_pair_key" in locals() else None,
     }
 
 
@@ -2329,9 +2423,7 @@ def multi_table_diff(task: Union[RepsetDiffTask, SchemaDiffTask]) -> None:
                 fields=task.fields,
                 quiet_mode=task.quiet_mode,
                 block_rows=getattr(task, "block_rows", config.DIFF_BLOCK_SIZE),
-                max_cpu_ratio=getattr(
-                    task, "max_cpu_ratio", config.MAX_CPU_RATIO
-                ),
+                max_cpu_ratio=getattr(task, "max_cpu_ratio", config.MAX_CPU_RATIO),
                 output=getattr(task, "output", "json"),
                 _nodes=getattr(task, "_nodes", "all"),
                 batch_size=getattr(task, "batch_size", config.DIFF_BATCH_SIZE),
