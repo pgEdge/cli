@@ -713,20 +713,6 @@ def json_template(cluster_name, db, num_nodes, usr, passwd, pg, port):
     """
     json_create(cluster_name, num_nodes, db, usr, passwd, pg, port, True)
 
-
-
-import os
-import sys
-import json
-import datetime
-import getpass
-from ipaddress import ip_address
-
-# Assume meta module is available with the following functions:
-#   meta.get_default_pg()
-#   meta.get_default_spock(pg_ver)
-# These should return appropriate defaults and allowed versions.
-
 def json_create(
     cluster_name, num_nodes, db, usr, passwd, pg_ver=None, port=None, force=False
 ):
