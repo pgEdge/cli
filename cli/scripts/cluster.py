@@ -21,7 +21,6 @@ except Exception:
 BASE_DIR = "cluster"
 DEFAULT_REPO = "https://pgedge-download.s3.amazonaws.com/REPO"
 
-
 def run_cmd(
     cmd, node, message, verbose, capture_output=False, ignore=False, important=False
 ):
@@ -53,7 +52,6 @@ def run_cmd(
         ignore=ignore,
         important=important,
     )
-
 
 def ssh(cluster_name, node_name):
     """An SSH Terminal session into the specified node"""
@@ -1324,6 +1322,7 @@ def update_json(cluster_name, db_json):
 
 
 
+
 def init(cluster_name, install=True):
     """
     Initialize a cluster via Cluster Configuration JSON file.
@@ -1549,7 +1548,83 @@ def init(cluster_name, install=True):
                 message="Creating full BackRest backup",
                 verbose=verbose,
             )
-
+ # (A) ADD THIS PART: run `./pgedge set BACKUP stanza <stanza_name>`
+            cmd_set_backup_stanza = (
+                f"cd {node['path']}/pgedge && "
+                f"./pgedge set BACKUP stanza {stanza}"
+            )
+            run_cmd(
+                cmd_set_backup_stanza,
+                node=node,
+                message=f"Setting BACKUP stanza '{stanza}' on node '{node['name']}'",
+                verbose=verbose,
+            )
+            # END (A)
+               # (B) ADD THIS PART: Create restore directory and set BACKUP restore_path
+            cmd_create_restore_dir = "sudo mkdir -p /var/lib/pgbackrest_restore"
+            run_cmd(
+                cmd_create_restore_dir,
+                node=node,
+                message="Creating restore directory /var/lib/pgbackrest_restore",
+                verbose=verbose,
+            )
+            
+            cmd_set_restore_path = (
+                f"cd {node['path']}/pgedge && "
+                f"./pgedge set BACKUP restore_path /var/lib/pgbackrest_restore"
+            )
+            run_cmd(
+                cmd_set_restore_path,
+                node=node,
+                message="Setting BACKUP restore_path to /var/lib/pgbackrest_restore",
+                verbose=verbose,
+            )
+               # (C) ADD THIS PART: Set BACKUP repo1-host-user to OS user
+            os_user = node.get("os_user", "postgres")
+            cmd_set_repo1_host_user = (
+                f"cd {node['path']}/pgedge && "
+                f"./pgedge set BACKUP repo1-host-user {os_user}"
+            )
+            run_cmd(
+                cmd_set_repo1_host_user,
+                node=node,
+                message=f"Setting BACKUP repo1-host-user to {os_user} on node '{node['name']}'",
+                verbose=verbose,
+            )
+             # (d) ADD THIS PART: Set BACKUP pg1-path 
+            cmd_set_pg1_path = (
+            f"cd {node['path']}/pgedge && "
+            f"./pgedge set BACKUP pg1-path {node['path']}/pgedge/data/pg{pg_version}"
+            )
+            run_cmd(
+            cmd_set_pg1_path,
+            node=node,
+            message=f"Setting BACKUP pg1-path to  {node['path']}/pgedge/data/pg{pg_version} on node '{node['name']}'",
+            verbose=verbose,
+            )
+             # (e) ADD THIS PART: Set BACKUP pg1-user to OS user
+            os_user = node.get("os_user", "postgres")
+            cmd_set_repo1_host_user = (
+                f"cd {node['path']}/pgedge && "
+                f"./pgedge set BACKUP pg1-user {os_user}"
+            )
+            run_cmd(
+                cmd_set_repo1_host_user,
+                node=node,
+                message=f"Setting BACKUP pg1-user to {os_user} on node '{node['name']}'",
+                verbose=verbose,
+            )
+             # (f)./pgedge set BACKUP pg1-port
+            cmd_set_backup_stanza = (
+                f"cd {node['path']}/pgedge && "
+                f"./pgedge set BACKUP pg1-port {port}"
+            )
+            run_cmd(
+                cmd_set_backup_stanza,
+                node=node,
+                message=f"Setting BACKUP  pg1-port {port} on node '{node['name']}'",
+                verbose=verbose,
+            )
     # 7. If it's an HA cluster, handle Patroni/etcd, etc.
     if is_ha_cluster:
         pg_ver = db_settings["pg_version"]
