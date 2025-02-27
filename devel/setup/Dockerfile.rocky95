@@ -1,4 +1,4 @@
-FROM rockylinux/rockylinux:9
+FROM rockylinux/rockylinux:9.5
 RUN touch /etc/hostname
 
 SHELL ["/bin/bash", "-c"]

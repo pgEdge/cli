@@ -1,0 +1,29 @@
+FROM ubuntu:22.04
+
+ENV TZ=America/New_York
+ENV DEBIAN_FRONTEND=noninteractive
+RUN apt-get update && apt-get remove -y --purge snapd && apt-get -y upgrade
+
+SHELL ["/bin/bash", "-c"]
+
+USER root
+
+ENV install="apt-get install -y --no-install-recommends"
+RUN $install python3 python3-pip git wget curl pigz zip sqlite3 postgresql
+RUN $install openssh-server sudo systemd
+
+RUN useradd build -U -m -d /home/build \
+    && echo "build ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
+
+USER build
+WORKDIR /home/build/dev
+
+RUN git clone https://github.com/pgedge/cli
+# Temporary workaround for script behavior
+RUN cd cli/devel/setup && bash -x ./10-toolset.sh || true
+RUN cd cli/devel/setup && ./20-venv.sh
+RUN cd cli/devel/setup && ./30-bashrc.sh
+RUN source ~/.bashrc
+RUN cd cli/devel/setup && ./40-awscli.sh
+
+CMD /bin/bash

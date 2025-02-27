@@ -1,15 +1,16 @@
 name: pgedge
 services:
-  n1:
+  node:
     build:
       context: .
-      dockerfile: Dockerfile.node
+      dockerfile: Dockerfile.node.${OS_FLAVOR:-rocky95}
+    platform: ${OS_ARCH:-linux/arm64}
     ports:
       - "22:22"
     networks:
       - mynetwork
     environment:
-      - REPO=http://repo:8000
+      - REPO=http://repo:8000/download
       - PGBACKREST_REPO1_CIPHER_PASS=supersecret
     depends_on:
       - repo
@@ -28,7 +29,8 @@ services:
   build:
     build:
       context: .
-      dockerfile: ../Dockerfile
+      dockerfile: ../Dockerfile.${OS_FLAVOR:-rocky95}
+    platform: ${OS_ARCH:-linux/arm64}
     networks:
       - mynetwork
     volumes:

@@ -1,19 +1,20 @@
-FROM rockylinux/rockylinux:9
-RUN touch /etc/hostname
-RUN dnf -y update && dnf remove -y subscription-manager dnf-plugin-subscription-manager
+FROM ubuntu:22.04
 
-ENV install="dnf install -y --allowerasing"
-RUN $install python3 python3-pip git wget curl pigz which zip sqlite postgresql
-RUN $install openssh-server systemd sudo
+ENV TZ=America/New_York
+ENV DEBIAN_FRONTEND=noninteractive
+RUN apt-get update && apt-get remove -y --purge snapd && apt-get -y upgrade
 
+ENV install="apt-get install -y --no-install-recommends"
+RUN $install python3 python3-pip git wget curl pigz zip sqlite3 postgresql
+RUN $install openssh-server sudo systemd
 
-RUN adduser --home-dir /home/pgedge --shell /bin/bash  pgedge
+RUN adduser --home /home/pgedge --shell /bin/bash pgedge
 RUN echo '%pgedge ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
 RUN rm -f /var/run/nologin
 RUN sed -i 's/^#PubkeyAuthentication yes/PubkeyAuthentication yes/' /etc/ssh/sshd_config
-RUN sed -i 's/^PasswordAuthentication yes/PasswordAuthentication no/' /etc/ssh/sshd_config
+RUN sed -i 's/^#PasswordAuthentication yes/PasswordAuthentication no/' /etc/ssh/sshd_config
 RUN ssh-keygen -A
-RUN /usr/sbin/sshd
+RUN mkdir -p /run/sshd && /usr/sbin/sshd
 
 USER pgedge
 WORKDIR /home/pgedge
@@ -28,10 +29,9 @@ RUN chmod 700 /home/pgedge/.ssh/
 RUN sudo chown pgedge:pgedge /home/pgedge/.ssh/id_rsa
 RUN sudo chmod 600 /home/pgedge/.ssh/id_rsa
 
-RUN sed -i '1iexport PGBACKREST_REPO1_CIPHER_PASS=Really_s3cure_password' ~/.bashrc
+RUN echo 'export PGBACKREST_REPO1_CIPHER_PASS=Really_s3cure_password' >> ~/.bashrc
 
 USER root
 EXPOSE 22
 
 CMD ["/usr/sbin/sshd", "-D"]
-
