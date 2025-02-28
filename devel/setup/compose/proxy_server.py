@@ -6,8 +6,6 @@ import argparse
 
 
 class ProxyRequestHandler(http.server.SimpleHTTPRequestHandler):
-    def log_message(self, format, *args):
-        logging.info("%s - %s" % (self.client_address[0], format % args))
         
     def do_GET(self):
         """Serve file if it exists locally, otherwise proxy the request."""
