@@ -939,8 +939,6 @@ def json_create(
     else:
         backrest_json = None
 
-    # ... [previous code remains unchanged]
-
     node_groups = []
     os_user = getpass.getuser()
     default_ip = "127.0.0.1"
