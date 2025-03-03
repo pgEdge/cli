@@ -44,7 +44,7 @@ def configure_backup_settings():
         "stanza": stanza,
         "restore_path": "xx",
         "backup-type": "full",
-        "repo1-path": repo1_path,
+        "repo1-path": "xx",
         "repo1-host-user": "xx",
         "repo1-host": "xx",
         "repo1-type": "posix",
