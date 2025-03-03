@@ -118,14 +118,13 @@ def backup(stanza, type="full", verbose=True):
     # Check if backup type is valid
     if type not in valid_types:
         util.echo_message(
-            f"Error: '{type}' is not valid.\nAllowed types: "
-            f"{', '.join(valid_types)}.",
+            f"Error: '{type}' is not valid.\nAllowed types: {', '.join(valid_types)}.",
             level="error"
         )
         return
 
-    # Mandatory configuration keys
-    mandatory_keys = ['repo1-path', 'pg1-path']
+    # Mandatory configuration keys (added 'pg1-port')
+    mandatory_keys = ['repo1-path', 'pg1-path', 'pg1-port']
 
     # Check if mandatory keys are present in config
     for key in mandatory_keys:
@@ -145,16 +144,14 @@ def backup(stanza, type="full", verbose=True):
 
     if not stanza_check["success"]:
         util.message(
-            f"Stanza '{stanza}' does not exist or is not recognized. "
-            "Attempting stanza-create now..."
+            f"Stanza '{stanza}' does not exist or is not recognized. Attempting stanza-create now..."
         )
         created = create_stanza(stanza, verbose=verbose)
         if not created:
-            util.exit_message(
-                f"Could not create stanza '{stanza}', backup aborted."
-            )
+            util.exit_message(f"Could not create stanza '{stanza}', backup aborted.")
 
-    # Now we can run the backup safely
+    # Now we can run the backup safely.
+    # Note the addition of --pg1-port using config['pg1-port']
     command = [
         "pgbackrest",
         "--stanza", stanza,
@@ -163,6 +160,7 @@ def backup(stanza, type="full", verbose=True):
         "--pg1-path", config['pg1-path'],
         "--repo1-path", config['repo1-path'],
         "--db-socket-path", config['db-socket-path'],
+        "--pg1-port", config['pg1-port'],
         "backup"
     ]
 
@@ -177,7 +175,6 @@ def backup(stanza, type="full", verbose=True):
         if key in config and config[key]:
             command.extend([f"--{key.replace('_', '-')}", config[key]])
 
-    # Run the backup command
     result = util.run_command(command, capture_output=not verbose)
     if not result["success"]:
         util.echo_message(
@@ -185,10 +182,7 @@ def backup(stanza, type="full", verbose=True):
             level="error"
         )
     else:
-        util.message(
-            f"Successfully completed {type} backup for stanza '{stanza}'"
-            
-        )
+        util.message(f"Successfully completed {type} backup for stanza '{stanza}'")
 
 def restore(stanza, data_dir=None, backup_label=None, recovery_target_time=None, verbose=True):
     """Restore a database cluster to a specified state."""
