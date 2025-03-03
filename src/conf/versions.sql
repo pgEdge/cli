@@ -160,7 +160,7 @@ INSERT INTO versions VALUES ('pg15', '15.8-2',   'amd, arm', 0, '20240912','', '
 
 INSERT INTO releases VALUES ('pg16', 2, 'pg', '', '', 'prod', 
   '<font size=-1>New in <a href=https://www.postgresql.org/docs/16/release-16.html>2023!</a></font>', 1, 'POSTGRES', '', '');
-INSERT INTO versions VALUES ('pg16', '16.7-1',  'amd, arm', 1, '20250217','', '', '');
+INSERT INTO versions VALUES ('pg16', '16.8-1',  'amd, arm', 1, '20250217','', '', '');
 INSERT INTO versions VALUES ('pg16', '16.6-1',  'amd, arm', 0, '20241121','', '', '');
 INSERT INTO versions VALUES ('pg16', '16.4-2',  'amd, arm', 0, '20240912','', '', '');
 
