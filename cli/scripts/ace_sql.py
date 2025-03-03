@@ -30,43 +30,67 @@ CREATE_MTREE_TABLE = """
     WHERE node_level = 0;
 """
 
-CREATE_BLOCK_ID_FUNCTION = """
-    CREATE OR REPLACE FUNCTION get_block_id_{schema}_{table}({pkey_name} {pkey_type})
+CREATE_GENERIC_BLOCK_ID_FUNCTION = """
+    CREATE OR REPLACE FUNCTION get_block_id(
+        schema_name text,
+        table_name text,
+        pkey_value anyelement
+    )
     RETURNS bigint AS $$
     DECLARE
         pos bigint;
         last_pos bigint;
-        last_block_end {pkey_type};
+        last_block_end text;
+        mtree_table text;
+        pkey_type text;
+        boolean_result boolean;
     BEGIN
+        mtree_table := 'ace_mtree_' || schema_name || '_' || table_name;
+
+        pkey_type := pg_typeof(pkey_value)::text;
+
         -- First try to find the exact block this key belongs to
-        SELECT node_position INTO pos
-        FROM ace_mtree_{schema}_{table}
-        WHERE node_level = 0
-        AND range_start <= {pkey_name}
-        AND (range_end > {pkey_name} OR range_end IS NULL)
-        ORDER BY node_position
-        LIMIT 1;
+        EXECUTE format('
+            SELECT node_position
+            FROM %I
+            WHERE node_level = 0
+            AND range_start <= $1
+            AND (range_end > $1 OR range_end IS NULL)
+            ORDER BY node_position
+            LIMIT 1', mtree_table)
+        USING pkey_value INTO pos;
 
         -- If no block found, this key might be beyond the last block
         -- In this case, we should return the last block
         IF pos IS NULL THEN
-            SELECT node_position, range_end
-            INTO last_pos, last_block_end
-            FROM ace_mtree_{schema}_{table}
-            WHERE node_level = 0
-            ORDER BY node_position DESC
-            LIMIT 1;
+            EXECUTE format('
+                SELECT node_position, range_end::text
+                FROM %I
+                WHERE node_level = 0
+                ORDER BY node_position DESC
+                LIMIT 1', mtree_table)
+            INTO last_pos, last_block_end;
 
-            IF {pkey_name} >= last_block_end OR last_block_end IS NULL THEN
+            IF last_block_end IS NULL THEN
                 RETURN last_pos;
             ELSE
-                -- Otherwise return the first block
-                SELECT node_position INTO pos
-                FROM ace_mtree_{schema}_{table}
-                WHERE node_level = 0
-                ORDER BY node_position
-                LIMIT 1;
-                RETURN pos;
+                EXECUTE format('
+                    SELECT $1 >= $2::%s', pkey_type)
+                USING pkey_value, last_block_end INTO STRICT boolean_result;
+
+                IF boolean_result THEN
+                    RETURN last_pos;
+                ELSE
+                    -- Otherwise return the first block
+                    EXECUTE format('
+                        SELECT node_position
+                        FROM %I
+                        WHERE node_level = 0
+                        ORDER BY node_position
+                        LIMIT 1', mtree_table)
+                    INTO pos;
+                    RETURN pos;
+                END IF;
             END IF;
         END IF;
 
@@ -75,83 +99,134 @@ CREATE_BLOCK_ID_FUNCTION = """
     $$ LANGUAGE plpgsql STABLE;
 """
 
-CREATE_TRIGGER_FUNCTION = """
-    CREATE OR REPLACE FUNCTION track_dirty_blocks_{schema}_{table}()
+CREATE_GENERIC_TRIGGER_FUNCTION = """
+    CREATE OR REPLACE FUNCTION track_dirty_blocks()
     RETURNS trigger AS $$
     DECLARE
         affected_pos bigint;
         last_block_pos bigint;
-        last_block_end {pkey_type};
+        last_block_end text;
+        schema_name text;
+        table_name text;
+        pkey_name text;
+        mtree_table text;
+        pkey_type text;
+        boolean_result boolean;
     BEGIN
         IF TG_LEVEL = 'STATEMENT' THEN
             RETURN NULL;
         END IF;
 
+        schema_name := TG_TABLE_SCHEMA;
+        table_name := TG_TABLE_NAME;
+        pkey_name := TG_ARGV[0];
+        mtree_table := 'ace_mtree_' || schema_name || '_' || table_name;
+
         IF TG_OP = 'INSERT' THEN
             -- Get the last block's position and end value
-            SELECT node_position, range_end
-            INTO last_block_pos, last_block_end
-            FROM ace_mtree_{schema}_{table}
-            WHERE node_level = 0
-            ORDER BY node_position DESC
-            LIMIT 1;
+            EXECUTE format('
+                SELECT node_position, range_end::text
+                FROM %I
+                WHERE node_level = 0
+                ORDER BY node_position DESC
+                LIMIT 1', mtree_table)
+            INTO last_block_pos, last_block_end;
 
             -- If this key is beyond the last block's end, set its range_end to NULL
-            IF NEW.{pkey} > last_block_end AND last_block_end IS NOT NULL THEN
-                UPDATE ace_mtree_{schema}_{table}
-                SET range_end = NULL,
-                    dirty = true,
+            IF last_block_end IS NOT NULL THEN
+                -- TODO: Can we directly compare as text since we're just checking
+                -- if greater?
+                EXECUTE format('
+                    SELECT ($1.%I)::text > $2', pkey_name)
+                USING NEW, last_block_end INTO STRICT boolean_result;
+
+                IF boolean_result THEN
+                    EXECUTE format('
+                        UPDATE %I
+                        SET range_end = NULL,
+                            dirty = true,
+                            inserts_since_tree_update = inserts_since_tree_update + 1,
+                            last_modified = current_timestamp
+                        WHERE node_level = 0
+                        AND node_position = $1', mtree_table)
+                    USING last_block_pos;
+                END IF;
+            END IF;
+
+            EXECUTE format('
+                SELECT get_block_id($1, $2, $3.%I)', pkey_name)
+            USING schema_name, table_name, NEW INTO affected_pos;
+
+            EXECUTE format('
+                UPDATE %I
+                SET dirty = true,
                     inserts_since_tree_update = inserts_since_tree_update + 1,
                     last_modified = current_timestamp
                 WHERE node_level = 0
-                AND node_position = last_block_pos;
-            END IF;
-
-            affected_pos := get_block_id_{schema}_{table}(NEW.{pkey});
-
-            UPDATE ace_mtree_{schema}_{table}
-            SET dirty = true,
-                inserts_since_tree_update = inserts_since_tree_update + 1,
-                last_modified = current_timestamp
-            WHERE node_level = 0
-            AND node_position = affected_pos;
+                AND node_position = $1', mtree_table)
+            USING affected_pos;
 
         ELSIF TG_OP = 'DELETE' THEN
-            affected_pos := get_block_id_{schema}_{table}(OLD.{pkey});
+            EXECUTE format('
+                SELECT get_block_id($1, $2, $3.%I)', pkey_name)
+            USING schema_name, table_name, OLD INTO affected_pos;
 
-            UPDATE ace_mtree_{schema}_{table}
-            SET dirty = true,
-                deletes_since_tree_update = deletes_since_tree_update + 1,
-                last_modified = current_timestamp
-            WHERE node_level = 0
-            AND node_position = affected_pos;
-
-        ELSIF TG_OP = 'UPDATE' THEN
-            IF OLD.{pkey} IS DISTINCT FROM NEW.{pkey} THEN
-                -- Key changed - mark both blocks as dirty
-                UPDATE ace_mtree_{schema}_{table}
+            EXECUTE format('
+                UPDATE %I
                 SET dirty = true,
                     deletes_since_tree_update = deletes_since_tree_update + 1,
                     last_modified = current_timestamp
                 WHERE node_level = 0
-                AND node_position = get_block_id_{schema}_{table}(OLD.{pkey});
+                AND node_position = $1', mtree_table)
+            USING affected_pos;
 
-                UPDATE ace_mtree_{schema}_{table}
-                SET dirty = true,
-                    inserts_since_tree_update = inserts_since_tree_update + 1,
-                    last_modified = current_timestamp
-                WHERE node_level = 0
-                AND node_position = get_block_id_{schema}_{table}(NEW.{pkey});
+        ELSIF TG_OP = 'UPDATE' THEN
+            EXECUTE format('
+                SELECT $1.%I IS DISTINCT FROM $2.%I', pkey_name, pkey_name)
+            USING OLD, NEW INTO STRICT boolean_result;
+
+            IF boolean_result THEN
+                -- Mark both blocks as dirty
+                EXECUTE format('
+                    SELECT get_block_id($1, $2, $3.%I)', pkey_name)
+                USING schema_name, table_name, OLD INTO affected_pos;
+
+                EXECUTE format('
+                    UPDATE %I
+                    SET dirty = true,
+                        deletes_since_tree_update = deletes_since_tree_update + 1,
+                        last_modified = current_timestamp
+                    WHERE node_level = 0
+                    AND node_position = $1', mtree_table)
+                USING affected_pos;
+
+                EXECUTE format('
+                    SELECT get_block_id($1, $2, $3.%I)', pkey_name)
+                USING schema_name, table_name, NEW INTO affected_pos;
+
+                EXECUTE format('
+                    UPDATE %I
+                    SET dirty = true,
+                        inserts_since_tree_update = inserts_since_tree_update + 1,
+                        last_modified = current_timestamp
+                    WHERE node_level = 0
+                    AND node_position = $1', mtree_table)
+                USING affected_pos;
 
                 RETURN NULL;
             END IF;
 
-            affected_pos := get_block_id_{schema}_{table}(NEW.{pkey});
-            UPDATE ace_mtree_{schema}_{table}
-            SET dirty = true,
-                last_modified = current_timestamp
-            WHERE node_level = 0
-            AND node_position = affected_pos;
+            EXECUTE format('
+                SELECT get_block_id($1, $2, $3.%I)', pkey_name)
+            USING schema_name, table_name, NEW INTO affected_pos;
+
+            EXECUTE format('
+                UPDATE %I
+                SET dirty = true,
+                    last_modified = current_timestamp
+                WHERE node_level = 0
+                AND node_position = $1', mtree_table)
+            USING affected_pos;
         END IF;
 
         RETURN NULL;
@@ -159,12 +234,12 @@ CREATE_TRIGGER_FUNCTION = """
     $$ LANGUAGE plpgsql;
 """
 
-CREATE_TRIGGER = """
-    DROP TRIGGER IF EXISTS
-    track_dirty_blocks_{schema}_{table}_trigger ON {schema}.{table};
+CREATE_GENERIC_TRIGGER = """
+    DROP TRIGGER IF EXISTS track_dirty_blocks_{schema}_{table}_trigger
+    ON {schema}.{table};
     CREATE TRIGGER track_dirty_blocks_{schema}_{table}_trigger
     AFTER INSERT OR UPDATE OR DELETE ON {schema}.{table}
-    FOR EACH ROW EXECUTE FUNCTION track_dirty_blocks_{schema}_{table}();
+    FOR EACH ROW EXECUTE FUNCTION track_dirty_blocks('{key}');
 """
 
 ENABLE_ALWAYS = """

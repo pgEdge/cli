@@ -22,9 +22,6 @@ from ace_exceptions import AceException
 from ace_sql import (
     CREATE_METADATA_TABLE,
     CREATE_MTREE_TABLE,
-    CREATE_BLOCK_ID_FUNCTION,
-    CREATE_TRIGGER_FUNCTION,
-    CREATE_TRIGGER,
     CREATE_XOR_FUNCTION,
     ENABLE_ALWAYS,
     ESTIMATE_ROW_COUNT,
@@ -41,6 +38,9 @@ from ace_sql import (
     GET_NODE_CHILDREN,
     GET_ROOT_NODE,
     GET_LEAF_RANGES,
+    CREATE_GENERIC_BLOCK_ID_FUNCTION,
+    CREATE_GENERIC_TRIGGER_FUNCTION,
+    CREATE_GENERIC_TRIGGER,
 )
 
 BERNOULLI_THRESHOLD = 10_000_000
@@ -153,13 +153,8 @@ def compute_block_hashes(worker_id, shared_objects, worker_state, args):
 
 def create_mtree_objects(conn, schema, table, key, total_rows, num_blocks):
     cur = conn.cursor()
-    cur.execute("CREATE EXTENSION IF NOT EXISTS pgcrypto;")
 
-    # We're defining an XOR operator here for building parent hashes
-    # This is the optimisation Riak uses:
-    # See: https://www.youtube.com/watch?v=TCiHqF_XTmE
-    cur.execute(CREATE_XOR_FUNCTION)
-    cur.execute(CREATE_METADATA_TABLE)
+    mtree_init(conn)
 
     cur.execute(
         GET_PKEY_TYPE,
@@ -187,15 +182,6 @@ def create_mtree_objects(conn, schema, table, key, total_rows, num_blocks):
     )
 
     cur.execute(
-        CREATE_BLOCK_ID_FUNCTION.format(
-            schema=schema,
-            table=table,
-            pkey_name=key,
-            pkey_type=pkey_type,
-        )
-    )
-
-    cur.execute(
         UPDATE_METADATA,
         (
             schema,
@@ -205,19 +191,12 @@ def create_mtree_objects(conn, schema, table, key, total_rows, num_blocks):
         ),
     )
 
+    # Create trigger using the generic function
     cur.execute(
-        CREATE_TRIGGER_FUNCTION.format(
+        CREATE_GENERIC_TRIGGER.format(
             schema=schema,
             table=table,
-            pkey=key,
-            pkey_type=pkey_type,
-            block_size=config.MTREE_BLOCK_SIZE,
-        )
-    )
-    cur.execute(
-        CREATE_TRIGGER.format(
-            schema=schema,
-            table=table,
+            key=key,
         )
     )
     cur.execute(ENABLE_ALWAYS.format(schema=schema, table=table))
@@ -1214,7 +1193,34 @@ def find_mismatched_leaves(
     if pbar is not None:
         pbar.update(len(node1_children))
 
-    # Compare each child
+    #  This was a bit tricky to get right:
+    #  1. It's possible that the there is a mismatch in the tree size between the
+    #     two nides. This could happen if one of the nodes had a flurry of inserts
+    #     or deletes that did not get replicated.
+    #  2. In such cases, not only do we need to add mismatched leaves to the
+    #     mismatched set, but we need to add all leaves that don't have peers
+    #     on the other nodes.
+    #
+    #     E.g., consider t1 and t2:
+    #
+    #          p0                           p2
+    #          /\                          / \
+    #         /  \                        /   \
+    #        a    b                      /     \
+    #                                   p1      p0'
+    #                                  /       / \
+    #                                 /       /   \
+    #                                c       a'    b
+    #
+    #     --------------              ------------------
+    #          t1                            t2
+    #
+    #   Now, say that the leaf node 'a' is different between t1 and t2. While
+    #   recursing down the tree, if at any point, we find a leaf node that does not
+    #   have a peer on the other tree, we need to add it to the mismatched set.
+    #   In the above example, there is no peer for leaf node 'c'. Node 'a' will
+    #   anyway get added since its hashes don't match.
+
     for child1, child2 in zip_longest(node1_children, node2_children, fillvalue=None):
         level1, pos1, hash1 = child1 if child1 else (None, None, None)
         level2, pos2, hash2 = child2 if child2 else (None, None, None)
@@ -1272,7 +1278,7 @@ def get_pkey_batches(node1_conn, node2_conn, schema, table, mismatched_positions
     ):
         batch = ([safe_min(node1_start, node2_start)], [safe_max(node1_end, node2_end)])
         batches.append(batch)
-    
+
     # Because we do a pkey >= start and pkey < end, we need to add one more entry
     # at the end.
 
@@ -1823,3 +1829,33 @@ def merkle_tree_diff(mtree_task: MerkleTreeTask) -> None:
     }
 
     mtree_task.connection_pool.close_all()
+
+
+def mtree_init(conn) -> None:
+    """
+    Initialise the database with generic functions needed for Merkle trees.
+    This only needs to be run once per database.
+
+    Args:
+        conn: Database connection
+    """
+    cur = conn.cursor()
+
+    # We need pgcrypto for sha256
+    cur.execute("CREATE EXTENSION IF NOT EXISTS pgcrypto;")
+
+    # We're defining an XOR operator here for building parent hashes
+    # This is the optimisation Riak uses:
+    # See: https://www.youtube.com/watch?v=TCiHqF_XTmE
+    cur.execute(CREATE_XOR_FUNCTION)
+
+    # Metadata table where we keep track of tables, their approx. row counts,
+    # and when the tree was last updated.
+    cur.execute(CREATE_METADATA_TABLE)
+
+    # Create generic functions for block identification and tracking
+    cur.execute(CREATE_GENERIC_BLOCK_ID_FUNCTION)
+    cur.execute(CREATE_GENERIC_TRIGGER_FUNCTION)
+
+    conn.commit()
+    print("Merkle tree objects initialised successfully")
