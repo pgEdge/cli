@@ -1,4 +1,4 @@
-#  Copyright 2022-2025 PGEDGE  All rights reserved. #
+#  Copyright 2022-2024 PGEDGE  All rights reserved. #
 import json
 import datetime
 import os
@@ -713,6 +713,8 @@ def json_template(cluster_name, db, num_nodes, usr, passwd, pg, port):
     """
     json_create(cluster_name, num_nodes, db, usr, passwd, pg, port, True)
 
+
+
 def json_create(
     cluster_name, num_nodes, db, usr, passwd, pg_ver=None, port=None, force=False
 ):
@@ -730,10 +732,9 @@ def json_create(
         passwd (str): The password for the above user.
         pg_ver (str or int, optional): The PostgreSQL version of the database.
         port (str or int, optional): The port number for the primary nodes. Must be between 1 and 65535. Defaults to '5432'.
-        force (bool, optional): If True, bypass interactive prompts.
     """
 
-    # Utility class for messages and exiting
+    # Function to exit with a message
     class Util:
         @staticmethod
         def exit_message(message, code=1):
@@ -742,11 +743,9 @@ def json_create(
 
         @staticmethod
         def message(message, level="info"):
-            print(message)
+            print(f"{message}")
 
     util = Util()
-
-    # Get default PostgreSQL and Spock versions
     pg_default, pgs = meta.get_default_pg()
     if not pg_ver:
         spock_default, spocks = meta.get_default_spock(str(pg_default))
@@ -754,7 +753,7 @@ def json_create(
         spock_default, spocks = meta.get_default_spock(str(pg_ver))
         pg_default = pg_ver
 
-    # Display a warning if using the deprecated alias
+    # Check if 'json-template' alias was used and display a warning
     if "json-template" in sys.argv:
         util.message(
             "⚠️  Warning: The 'json-template' command will be deprecated in future releases. "
@@ -764,6 +763,7 @@ def json_create(
 
     # Validate and process parameters
     try:
+        # Ensure required parameters are provided
         if not cluster_name:
             raise ValueError("CLUSTER_NAME is required.")
         if not num_nodes:
@@ -775,6 +775,7 @@ def json_create(
         if not passwd:
             raise ValueError("PASSWD is required.")
 
+        # Convert num_nodes to int
         try:
             num_nodes = int(num_nodes)
             if num_nodes <= 0:
@@ -782,14 +783,18 @@ def json_create(
         except ValueError:
             raise ValueError("NUM_NODES must be a positive integer.")
 
+        # Handle PostgreSQL version
         if pg_ver is not None:
             pg_str = str(pg_ver).strip()
             if pg_str not in pgs:
-                raise ValueError(f"Invalid PostgreSQL version. Allowed versions are {pgs}.")
+                raise ValueError(
+                    f"Invalid PostgreSQL version. Allowed versions are {pgs}."
+                )
             pg_version_int = int(pg_str)
         else:
             pg_version_int = None  # Will prompt later if not provided
 
+        # Handle port number
         if port is not None:
             try:
                 port = int(port)
@@ -810,13 +815,15 @@ def json_create(
         print("    ./pgedge cluster json-create --help")
         sys.exit(1)
 
-    # Get cluster directory and file paths
+    # Function to get cluster directory and file paths
     def get_cluster_info(cluster_name):
         cluster_dir = os.path.join(os.getcwd(), "cluster", cluster_name)
         cluster_file = os.path.join(cluster_dir, f"{cluster_name}.json")
         return cluster_dir, cluster_file
 
+    # Get cluster directory and file paths
     cluster_dir, cluster_file = get_cluster_info(cluster_name)
+
     try:
         os.makedirs(cluster_dir, exist_ok=True)
     except OSError as e:
@@ -837,7 +844,11 @@ def json_create(
             if pg_version_int is not None:
                 pg_input = str(pg_version_int)
             else:
-                pg_input = input(f"PostgreSQL version {pgs} [default: {pg_default}]: ").strip() or pg_default
+                pg_input = (
+                    input(f"PostgreSQL version {pgs} [default: {pg_ver}]: ").strip()
+                    or pg_default
+                )
+
             if pg_input in pgs:
                 pg_version_int = int(pg_input)
                 break
@@ -851,7 +862,12 @@ def json_create(
         spock_version = spock_default
     else:
         while True:
-            spock_version = input(f"Spock version (e.g., {spocks}) or press Enter for default: ").strip() or spock_default
+            spock_version = (
+                input(
+                    f"Spock version (e.g., {spocks}) or press Enter for default: "
+                ).strip()
+                or spock_default
+            )
             if spock_version not in spocks:
                 print(f"Invalid spock version. Allowed versions are: {spocks}.")
             else:
@@ -862,25 +878,31 @@ def json_create(
 
     database_json = [{"db_name": db, "db_user": usr, "db_password": passwd}]
     pgedge_json["databases"] = database_json
+
     cluster_json["pgedge"] = pgedge_json
 
-    # Determine if this is an HA Cluster
-    # (Currently forced to False; adjust logic if HA support is needed)
+    # Ask if this is an HA Cluster
     if True:
         is_ha_cluster = False
     else:
         ha_cluster_input = input("Is this an HA Cluster? (Y/N): ").strip().lower()
         is_ha_cluster = ha_cluster_input in ["y", "yes"]
 
+    # Store 'is_ha_cluster' in the cluster JSON
     cluster_json["is_ha_cluster"] = is_ha_cluster
 
-    # Configure BackRest
+    # Ask if BackRest should be enabled
     if force:
         backrest_enabled = False
     else:
-        backrest_enabled_input = input("Do you want to enable BackRest for this cluster? (Y/N): ").strip().lower()
+        backrest_enabled_input = (
+            input("Do you want to enable BackRest for this cluster? (Y/N): ")
+            .strip()
+            .lower()
+        )
         backrest_enabled = backrest_enabled_input in ["y", "yes"]
 
+    # Initialize backrest_json based on user input
     if backrest_enabled:
         backrest_storage_path = (
             input("   pgBackRest storage path (default: /var/lib/pgbackrest): ").strip()
@@ -894,6 +916,7 @@ def json_create(
             util.exit_message(
                 "Invalid BackRest archive mode. Allowed values are 'on' or 'off'."
             )
+         # Optionally, ask for repo1_type or default to posix
         repo1_type = (
             input("   pgBackRest repository type (posix/s3) (default: posix): ")
             .strip()
@@ -906,7 +929,7 @@ def json_create(
             )
         backrest_json = {
             "stanza": "demo_stanza",
-            "repo1_path": backrest_storage_path,  # Base path; will be extended per node.
+            "repo1_path": backrest_storage_path,
             "repo1_retention_full": "7",
             "log_level_console": "info",
             "repo1_cipher-type": "aes-256-cbc",
@@ -920,6 +943,7 @@ def json_create(
     os_user = getpass.getuser()
     default_ip = "127.0.0.1"
     default_port = port if port is not None else 5432
+
     current_replica_port = 6432  # Starting port for replica nodes
 
     for n in range(1, num_nodes + 1):
@@ -934,17 +958,21 @@ def json_create(
             private_ip = default_ip
         else:
             public_ip = (
-                input(f"  Public IP address for Node {n} (leave blank for default '{default_ip}'): ").strip()
+                input(
+                    f"  Public IP address for Node {n} (leave blank for default '{default_ip}'): "
+                ).strip()
                 or default_ip
             )
             private_ip = (
-                input(f"  Private IP address for Node {n} (leave blank to use public IP '{public_ip}'): ").strip()
+                input(
+                    f"  Private IP address for Node {n} (leave blank to use public IP '{public_ip}'): "
+                ).strip()
                 or public_ip
             )
         node_json["public_ip"] = public_ip
         node_json["private_ip"] = private_ip
 
-        # Configure node port
+        # Set node_port based on the port flag or default
         if port is not None:
             node_port = port
             print(f"  Using port {node_port} for Node {n} ")
@@ -954,6 +982,7 @@ def json_create(
             default_port = default_port + 1
         else:
             node_default_port = default_port
+            ## + n - 1
             while True:
                 node_port_input = input(
                     f"  PostgreSQL port for Node {n} (leave blank for default '{node_default_port}'): "
@@ -965,21 +994,19 @@ def json_create(
                     try:
                         node_port = int(node_port_input)
                         if node_port < 1 or node_port > 65535:
-                            print("  Invalid port number. Please enter a number between 1 and 65535.")
+                            print(
+                                "  Invalid port number. Please enter a number between 1 and 65535."
+                            )
                             continue
                         break
                     except ValueError:
                         print("  Invalid port input. Please enter a valid integer.")
         node_json["port"] = str(node_port)
+
         node_json["path"] = f"/home/{os_user}/{cluster_name}/n{n}"
-
-        # Update BackRest configuration for this node (append node name)
         if backrest_enabled:
-            node_backrest = backrest_json.copy()
-            node_backrest["repo1_path"] = os.path.join(backrest_storage_path, node_json["name"])
-            node_json["backrest"] = node_backrest
+            node_json["backrest"] = backrest_json
 
-        # Configure replica nodes if HA is enabled (currently is_ha_cluster is False)
         if is_ha_cluster:
             while True:
                 replicas_for_node_input = input(
@@ -988,13 +1015,16 @@ def json_create(
                 try:
                     replicas_for_node = int(replicas_for_node_input)
                     if replicas_for_node < 0:
-                        print("  Number of replicas cannot be negative. Please enter 0 or a positive integer.")
+                        print(
+                            "  Number of replicas cannot be negative. Please enter 0 or a positive integer."
+                        )
                         continue
                     break
                 except ValueError:
                     print("  Invalid input. Please enter a numeric value.")
         else:
             replicas_for_node = 0
+
         node_json["replicas"] = replicas_for_node
 
         if replicas_for_node > 0:
@@ -1006,12 +1036,17 @@ def json_create(
                     "name": f"{node_json['name']}_ro_{i}",
                     "is_active": "off",
                 }
+
                 public_ip = (
-                    input(f"    Public IP address of replica Node {i} (leave blank for default '{default_ip}'): ").strip()
+                    input(
+                        f"    Public IP address of replica Node {i} (leave blank for default '{default_ip}'): "
+                    ).strip()
                     or default_ip
                 )
                 private_ip = (
-                    input(f"    Private IP address of replica Node {i} (leave blank to use public IP '{public_ip}'): ").strip()
+                    input(
+                        f"    Private IP address of replica Node {i} (leave blank to use public IP '{public_ip}'): "
+                    ).strip()
                     or public_ip
                 )
                 sub_node_json["public_ip"] = public_ip
@@ -1029,22 +1064,24 @@ def json_create(
                         try:
                             replica_port = int(replica_port_input)
                             if replica_port < 1 or replica_port > 65535:
-                                print("    Invalid port number. Please enter a number between 1 and 65535.")
+                                print(
+                                    "    Invalid port number. Please enter a number between 1 and 65535."
+                                )
                                 continue
                             current_replica_port = replica_port + 1
                             break
                         except ValueError:
-                            print("    Invalid port input. Please enter a valid integer.")
+                            print(
+                                "    Invalid port input. Please enter a valid integer."
+                            )
                 sub_node_json["port"] = str(replica_port)
-                sub_node_json["path"] = f"/home/{os_user}/{cluster_name}/{sub_node_json['name']}"
-
-                # Update BackRest configuration for replica node (append replica name)
+                sub_node_json["path"] = (
+                    f"/home/{os_user}/{cluster_name}/{sub_node_json['name']}"
+                )
                 if backrest_enabled:
-                    replica_backrest = backrest_json.copy()
-                    replica_backrest["repo1_path"] = os.path.join(backrest_storage_path, sub_node_json["name"])
-                    sub_node_json["backrest"] = replica_backrest
+                    sub_node_json["backrest"] = backrest_json
 
-                node_json.setdefault("sub_nodes", []).append(sub_node_json)
+                node_json["sub_nodes"].append(sub_node_json)
 
         node_groups.append(node_json)
 
@@ -1052,6 +1089,7 @@ def json_create(
 
     # Validate configuration
     validation_errors = []
+
     for node in node_groups:
         if not node.get("name"):
             validation_errors.append("Node name is missing.")
@@ -1061,68 +1099,104 @@ def json_create(
             try:
                 port_int = int(node["port"])
                 if port_int < 1 or port_int > 65535:
-                    validation_errors.append(f"Invalid port number {port_int} for node {node.get('name')}.")
+                    validation_errors.append(
+                        f"Invalid port number {port_int} for node {node.get('name')}."
+                    )
             except ValueError:
-                validation_errors.append(f"Port must be a valid number for node {node.get('name')}.")
+                validation_errors.append(
+                    f"Port must be a valid number for node {node.get('name')}."
+                )
+
         public_ip = node.get("public_ip", "")
         private_ip = node.get("private_ip", "")
         if not public_ip and not private_ip:
-            validation_errors.append(f"Either public_ip or private_ip must be provided for node {node.get('name')}.")
+            validation_errors.append(
+                f"Either public_ip or private_ip must be provided for node {node.get('name')}."
+            )
         try:
             if public_ip:
                 ip_address(public_ip)
             if private_ip:
                 ip_address(private_ip)
         except ValueError:
-            validation_errors.append(f"Invalid IP address provided for node {node.get('name')}.")
+            validation_errors.append(
+                f"Invalid IP address provided for node {node.get('name')}."
+            )
+
         for sub_node in node.get("sub_nodes", []):
             if not sub_node.get("name"):
                 validation_errors.append("Sub-node name is missing.")
             if not sub_node.get("port"):
-                validation_errors.append(f"Port is missing for sub-node {sub_node.get('name')}.")
+                validation_errors.append(
+                    f"Port is missing for sub-node {sub_node.get('name')}."
+                )
             else:
                 try:
                     port_int = int(sub_node["port"])
                     if port_int < 1 or port_int > 65535:
-                        validation_errors.append(f"Invalid port number {port_int} for sub-node {sub_node.get('name')}.")
+                        validation_errors.append(
+                            f"Invalid port number {port_int} for sub-node {sub_node.get('name')}."
+                        )
                 except ValueError:
-                    validation_errors.append(f"Port must be a valid number for sub-node {sub_node.get('name')}.")
+                    validation_errors.append(
+                        f"Port must be a valid number for sub-node {sub_node.get('name')}."
+                    )
+
             public_ip = sub_node.get("public_ip", "")
             private_ip = sub_node.get("private_ip", "")
             if not public_ip and not private_ip:
-                validation_errors.append(f"Either public_ip or private_ip must be provided for sub-node {sub_node.get('name')}.")
+                validation_errors.append(
+                    f"Either public_ip or private_ip must be provided for sub-node {sub_node.get('name')}."
+                )
             try:
                 if public_ip:
                     ip_address(public_ip)
                 if private_ip:
                     ip_address(private_ip)
             except ValueError:
-                validation_errors.append(f"Invalid IP address provided for sub-node {sub_node.get('name')}.")
+                validation_errors.append(
+                    f"Invalid IP address provided for sub-node {sub_node.get('name')}."
+                )
+
     if validation_errors:
         print("\nValidation Errors:")
         for error in validation_errors:
             print(f" - {error}")
-        util.exit_message("Configuration validation failed. Please correct the errors and try again.")
+        util.exit_message(
+            "Configuration validation failed. Please correct the errors and try again."
+        )
 
     bold_start = "\033[1m"
     bold_end = "\033[0m"
 
     print("\n" + "#" * 80)
-    print(f"#     {bold_start}Version{bold_end}        : pgEdge 24.10-5 (Constellation)")
+    print(
+        f"#     {bold_start}Version{bold_end}        : pgEdge 24.10-5 (Constellation)"
+    )
     print(f"# {bold_start}User & Host{bold_end}        : {os_user}    {os.getcwd()}")
-    print(f"#          {bold_start}OS{bold_end}        : Linux, Python {sys.version.split()[0]}")
+    print(
+        f"#          {bold_start}OS{bold_end}        : Linux, Python {sys.version.split()[0]}"
+    )
     print(f"#     {bold_start}Machine{bold_end}        : N/A")
     print(f"#    {bold_start}Repo URL{bold_end}        : N/A")
     print(f"# {bold_start}Last Update{bold_end}        : None")
     print(f"# {bold_start}Cluster Name{bold_end}       : {cluster_name}")
     print(f"# {bold_start}PostgreSQL Version{bold_end} : {pg_version_int}")
-    print(f"# {bold_start}Spock Version{bold_end}      : {spock_version if spock_version else 'Not specified'}")
-    print(f"# {bold_start}HA Cluster{bold_end}         : {'Yes' if is_ha_cluster else 'No'}")
-    print(f"# {bold_start}BackRest Enabled{bold_end}   : {'Yes' if backrest_enabled else 'No'}")
+    print(
+        f"# {bold_start}Spock Version{bold_end}      : {spock_version if spock_version else 'Not specified'}"
+    )
+    print(
+        f"# {bold_start}HA Cluster{bold_end}         : {'Yes' if is_ha_cluster else 'No'}"
+    )
+    print(
+        f"# {bold_start}BackRest Enabled{bold_end}   : {'Yes' if backrest_enabled else 'No'}"
+    )
     print("#" * 80)
 
     if not force:
-        confirm_save = input("Do you want to save this configuration? (Y/N): ").strip().lower()
+        confirm_save = (
+            input("Do you want to save this configuration? (Y/N): ").strip().lower()
+        )
         if confirm_save not in ["yes", "y"]:
             util.exit_message("Configuration not saved.")
 
@@ -1334,7 +1408,7 @@ def init(cluster_name, install=True):
 
     # 6. Integrate pgBackRest (if "backrest" block is present) on each node
     cluster_name_from_json = parsed_json["cluster_name"]
-     
+
     for idx, node in enumerate(all_nodes, start=1):
         backrest = node.get("backrest")
         if backrest:
