@@ -341,7 +341,7 @@ def build_mtree(mtree_task: MerkleTreeTask) -> None:
         try:
             with conn.cursor() as cur:
                 if node != ref_node:
-                    for block in leaf_blocks:
+                    for block in tqdm(leaf_blocks, desc="Inserting block ranges"):
                         cur.execute(
                             INSERT_BLOCK_RANGES.format(
                                 schema=schema,
@@ -1841,6 +1841,21 @@ def mtree_init(conn) -> None:
     """
     cur = conn.cursor()
 
+    cur.execute("""
+        SELECT 1 FROM pg_proc WHERE proname = 'bytea_xor' LIMIT 1
+    """)
+    xor_exists = cur.fetchone() is not None
+
+    cur.execute("""
+        SELECT 1 FROM pg_tables WHERE tablename = 'ace_mtree_metadata' LIMIT 1
+    """)
+    metadata_table_exists = cur.fetchone() is not None
+
+    # TODO: This assumption may work for now, but we need a better solution
+    # if we need to support 'upgrading' the merkle tree objects.
+    if xor_exists and metadata_table_exists:
+        return
+
     # We need pgcrypto for sha256
     cur.execute("CREATE EXTENSION IF NOT EXISTS pgcrypto;")
 
@@ -1858,4 +1873,4 @@ def mtree_init(conn) -> None:
     cur.execute(CREATE_GENERIC_TRIGGER_FUNCTION)
 
     conn.commit()
-    print("Merkle tree objects initialised successfully")
+    print(f"Merkle tree objects initialised successfully on {conn.info.host}")
