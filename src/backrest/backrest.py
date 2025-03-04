@@ -183,7 +183,6 @@ def backup(stanza, type="full", verbose=True):
         )
     else:
         util.message(f"Successfully completed {type} backup for stanza '{stanza}'")
-
 def restore(stanza, data_dir=None, backup_label=None, recovery_target_time=None, verbose=True):
     """Restore a database cluster to a specified state."""
     config = fetch_config()
@@ -215,10 +214,15 @@ def restore(stanza, data_dir=None, backup_label=None, recovery_target_time=None,
         util.message(status['message'])
         return
 
+    # Build the restore command
     command = [
         "pgbackrest", "--stanza", stanza, "restore",
         "--pg1-path", data_dir
     ]
+
+    # IMPORTANT: Add repo1-path from the config so pgBackRest can find the backup info file.
+    if 'repo1-path' in config and config['repo1-path']:
+        command.extend(["--repo1-path", config['repo1-path']])
 
     if status['exists']:
         command.append("--delta")
@@ -240,7 +244,7 @@ def restore(stanza, data_dir=None, backup_label=None, recovery_target_time=None,
 
     result = util.run_command(command, capture_output=not verbose)
     if not result["success"]:
-        util.echo_message(f"Error: failed to restore backup", level="error")
+        util.echo_message("Error: failed to restore backup", level="error")
         return False
 
     return True
