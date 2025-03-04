@@ -719,7 +719,7 @@ def json_create(
     cluster_name, num_nodes, db, usr, passwd, pg_ver=None, port=None, force=False
 ):
     """
-    Create a Cluster Configuration JSON file with options for HA, BackRest, and Spock.
+    Create a Cluster Configuration JSON file  BackRest, and Spock.
 
     Usage:
         ./pgedge cluster json-create CLUSTER_NAME NUM_NODES DB USR PASSWD [pg_ver=PG_VERSION] [--port PORT]
