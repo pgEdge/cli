@@ -262,6 +262,7 @@ class MerkleTreeTask:
 
     analyse: bool
     rebalance: bool
+    recreate_objects: bool
     block_rows: int
     max_cpu_ratio: float
     batch_size: int

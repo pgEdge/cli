@@ -75,8 +75,18 @@ def safe_max(a, b):
     return max(a, b)
 
 
-def init_hash_conn_pool(worker_id, shared_objects, worker_state):
-    """Initialize connection pool for hash computation workers"""
+def init_hash_conn_pool(shared_objects, worker_state):
+    """
+    Initialise connection pool for hash computation workers
+
+    Args:
+        shared_objects: The shared objects from the mpire worker pool manager.
+        contains the node and task objects, but might optimise this later.
+
+        worker_state: The empty worker state dictionary for initialisation.
+        This function is called once per worker, and populates the worker state
+        with the connection and cursor for the worker.
+    """
     node = shared_objects["node"]
     task = shared_objects["task"]
 
@@ -102,8 +112,17 @@ def init_hash_conn_pool(worker_id, shared_objects, worker_state):
         raise AceException(f"Error initializing worker connection: {str(e)}")
 
 
-def close_hash_conn_pool(worker_id, shared_objects, worker_state):
-    """Close connection pool for hash computation workers"""
+def close_hash_conn_pool(shared_objects, worker_state):
+    """
+    Close connection pool for hash computation workers
+
+    Args:
+        shared_objects: The shared objects from the mpire worker pool manager.
+        Not needed here, but retained because mpire requires it.
+
+        worker_state: The worker state after the worker initialisation. Contains
+        the connection and cursor for the worker.
+    """
     try:
         worker_state["conn"].commit()
         worker_state["cur"].close()
@@ -112,8 +131,20 @@ def close_hash_conn_pool(worker_id, shared_objects, worker_state):
         raise AceException(f"Error closing worker connection: {str(e)}")
 
 
-def compute_block_hashes(worker_id, shared_objects, worker_state, args):
-    """Worker function to compute hashes for a range of blocks"""
+def compute_block_hashes(shared_objects, worker_state, args):
+    """
+    Worker function that computes hashes for a block
+
+    Args:
+        shared_objects: The shared objects from the mpire worker pool manager.
+        contains the node and task objects.
+
+        worker_state: The worker state after the worker initialisation. Contains
+        the connection and cursor for the worker.
+
+        args: The arguments for the worker function. Contains the block boundary
+        and the SQL query to compute the hashes.
+    """
     block_boundary, sql = args
 
     try:
@@ -137,6 +168,8 @@ def compute_block_hashes(worker_id, shared_objects, worker_state, args):
             )
             raise AceException(msg)
 
+        # TODO: Can we delay committing here? Would it be better to commit
+        # after a batch of blocks have been processed?
         conn.commit()
         return results
 
@@ -151,10 +184,27 @@ def compute_block_hashes(worker_id, shared_objects, worker_state, args):
         raise AceException(msg)
 
 
-def create_mtree_objects(conn, schema, table, key, total_rows, num_blocks):
+def create_mtree_objects(
+    conn, schema, table, key, total_rows, num_blocks, recreate_objects=False
+):
+    """
+    Creates table-specific merkle tree objects -- i.e., the merkle tree table for the
+    target table, updating metadata, and creating the trigger.
+
+    Args:
+        conn: The database connection
+        schema: The schema of the target table
+        table: The target table
+        key: The primary key of the target table
+        total_rows: The total number of rows in the target table
+        num_blocks: The number of blocks in the target table
+        recreate_objects: Whether to recreate the objects
+    """
+
     cur = conn.cursor()
 
-    mtree_init(conn)
+    if recreate_objects:
+        mtree_init(conn)
 
     cur.execute(
         GET_PKEY_TYPE,
@@ -205,6 +255,22 @@ def create_mtree_objects(conn, schema, table, key, total_rows, num_blocks):
 
 
 def get_row_estimate(conn, schema, table, analyse=False):
+    """
+    We cannot use a naïve count(*) for merkle tree candidates because the
+    table is too large. Instead, we use a multi-step process to get an estimate:
+
+    1. We first check the live_tuples in pg_stat_user_tables.
+    2. If 1 is not available, we use the reltuples in pg_class.
+    3. If neither is available, we use the pg_relation_size / 8192 * 0.7.
+        8192 is the page size used by PostgreSQL in bytes, and 0.7 is the
+        approximate fill factor of the page.
+
+    Args:
+        conn: The database connection
+        schema: The schema of the target table
+        table: The target table
+        analyse: Whether to analyse the table
+    """
 
     cur = conn.cursor()
 
@@ -239,7 +305,8 @@ def build_mtree(mtree_task: MerkleTreeTask) -> None:
     Args:
         cluster_name (str): Name of the cluster
         table_name (str): Name of the table to build tree for
-        dbname (str, optional): Database name. Defaults to None.
+        dbname (str, optional): Database name. Defaults to the first entry
+        in the databases array of the cluster json file.
     """
 
     ace.merkle_tree_checks(mtree_task, skip_validation=True)
@@ -273,6 +340,7 @@ def build_mtree(mtree_task: MerkleTreeTask) -> None:
                 key,
                 total_rows,
                 num_blocks,
+                recreate_objects=mtree_task.recreate_objects,
             )
 
             if num_blocks > max_blocks:
@@ -396,7 +464,6 @@ def build_mtree(mtree_task: MerkleTreeTask) -> None:
                 n_jobs=n_jobs,
                 shared_objects=shared_objects,
                 use_worker_state=True,
-                pass_worker_id=True,
             ) as pool:
                 results = list(
                     pool.imap_unordered(
@@ -1527,7 +1594,7 @@ def merkle_tree_diff(mtree_task: MerkleTreeTask) -> None:
 
     # It is imperative that we call update_mtree before calling merkle_tree_diff.
     # Otherwise, we're comparing stale data.
-    update_mtree(mtree_task, skip_all_checks=True)
+    update_mtree(mtree_task, rebalance=mtree_task.rebalance, skip_all_checks=True)
 
     schema = mtree_task.fields.l_schema
     table = mtree_task.fields.l_table
@@ -1840,21 +1907,6 @@ def mtree_init(conn) -> None:
         conn: Database connection
     """
     cur = conn.cursor()
-
-    cur.execute("""
-        SELECT 1 FROM pg_proc WHERE proname = 'bytea_xor' LIMIT 1
-    """)
-    xor_exists = cur.fetchone() is not None
-
-    cur.execute("""
-        SELECT 1 FROM pg_tables WHERE tablename = 'ace_mtree_metadata' LIMIT 1
-    """)
-    metadata_table_exists = cur.fetchone() is not None
-
-    # TODO: This assumption may work for now, but we need a better solution
-    # if we need to support 'upgrading' the merkle tree objects.
-    if xor_exists and metadata_table_exists:
-        return
 
     # We need pgcrypto for sha256
     cur.execute("CREATE EXTENSION IF NOT EXISTS pgcrypto;")

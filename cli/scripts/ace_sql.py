@@ -426,14 +426,33 @@ COMPUTE_LEAF_HASHES = """
     RETURNING mt.node_position;
 """
 
+# NUMERIC_TO_BYTEA = """
+# CREATE OR REPLACE FUNCTION numeric_to_bytea(n numeric, byte_length int)
+# RETURNS bytea AS $$
+# DECLARE
+#   result bytea := '';
+#   i int;
+#   r int;
+# BEGIN
+#   -- Loop for each byte we want in the result.
+#   FOR i IN 1..byte_length LOOP
+#     r := mod(n, 256)::int;
+#     -- Convert the remainder (one byte) to a 2-digit hex string,
+#     -- decode it to a bytea, and prepend it.
+#     result := decode(lpad(to_hex(r), 2, '0'), 'hex') || result;
+#     n := trunc(n / 256);
+#   END LOOP;
+#   RETURN result;
+# END;
+# $$ LANGUAGE plpgsql IMMUTABLE;
+# """
+
 # COMPUTE_LEAF_HASHES = """
 #     with block_hash as (
-#         SELECT sum(
-#             ('x' || md5({table}::text))::bit(64)::bigint) %% 9223372036854775807
-#         as hash
-#         FROM {schema}.{table}
-#         WHERE {key} >= %(range_start)s
-#         AND ({key} < %(range_end)s OR %(range_end)s IS NULL)
+#         SELECT numeric_to_bytea(sum(hash_record_extended(t, 0)), 32) as hash
+#         FROM {schema}.{table} t
+#         WHERE t.{key} >= %(range_start)s
+#         AND (t.{key} < %(range_end)s OR %(range_end)s IS NULL)
 #     )
 #     UPDATE ace_mtree_{schema}_{table}
 #     SET leaf_hash = block_hash.hash,

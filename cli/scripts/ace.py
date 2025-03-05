@@ -71,9 +71,9 @@ def write_pg_dump(p_ip, p_db, p_port, p_prfx, p_schm, p_base_dir="/tmp"):
     return out_file
 
 
-def print_query(conn, query):
+def print_query(conn, query, params=None):
     client_cur = ClientCursor(conn)
-    print(client_cur.mogrify(query))
+    print(client_cur.mogrify(query, params))
 
 
 """
@@ -890,6 +890,11 @@ def validate_merkle_tree_inputs(mtree_task: MerkleTreeTask) -> None:
         raise AceException(
             "Invalid value range for ACE_MAX_CPU_RATIO or --max_cpu_ratio"
         )
+
+    mtree_task.rebalance = parse_bool_field("rebalance", mtree_task.rebalance)
+    mtree_task.recreate_objects = parse_bool_field(
+        "recreate_objects", mtree_task.recreate_objects
+    )
 
     node_list = []
     try:
