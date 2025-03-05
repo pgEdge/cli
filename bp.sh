@@ -22,8 +22,15 @@ if [ -d $outp ]; then
 fi
 
 ./devel/startHTTP.sh
-./build.sh -X posix -R
 
+echo "Waiting for Python HTTP server to start..."
+while ! nc -z localhost 8000; do
+  sleep 1  # Check every second
+done
+
+echo "HTTP server is up!"
+
+./build.sh -X posix -R
 cd $outp
 
 ./$api set GLOBAL REPO http://localhost:8000
