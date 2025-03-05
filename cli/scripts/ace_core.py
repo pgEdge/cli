@@ -32,8 +32,7 @@ from ace_data_models import (
     ExceptionLogEntry,
 )
 
-from ace_exceptions import AceException
-import ace_auth as auth
+from ace_exceptions import AceException, AuthenticationError
 
 
 def run_query(worker_state, host, query):
@@ -43,6 +42,8 @@ def run_query(worker_state, host, query):
     return results
 
 
+# FIXME: Replace with td_task.connection_pool.connect() after merkle trees
+# PR is merged
 def init_conn_pool(shared_objects, worker_state):
 
     task = shared_objects["task"]
@@ -59,7 +60,7 @@ def init_conn_pool(shared_objects, worker_state):
                 ),
             )
             worker_state[node["name"]] = conn.cursor()
-        except auth.AuthenticationError as e:
+        except AuthenticationError as e:
             raise AceException(str(e))
 
 
@@ -551,6 +552,10 @@ def table_diff(td_task: TableDiffTask, skip_all_checks: bool = False):
         }
         ace.handle_task_exception(td_task, context)
         raise e
+
+    # We're done with getting table metadata. Closing all connections.
+    for conn in conn_list:
+        conn.close()
 
     start_time = datetime.now()
 
@@ -2119,6 +2124,9 @@ def table_rerun_temptable(td_task: TableDiffTask) -> None:
             )
             cur = conn.cursor()
             cur.execute(clean_qry)
+            conn.commit()
+            cur.close()
+            conn.close()
     except Exception as e:
         context = {"errors": [f"Could not clean up temp table: {str(e)}"]}
         ace.handle_task_exception(td_task, context)

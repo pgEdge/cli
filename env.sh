@@ -1,5 +1,5 @@
 hubV=25.0.0
-hubVV=25.0-0
+hubVV=25.0.0
 
 aceV=$hubV
 kirkV=$hubV
@@ -10,20 +10,20 @@ ctlibsV=1.6
 
 spock41V=4.1devel-2
 
-spock40V=4.0.9-1
+spock40V=4.0.10-1
 
 spock33V=3.3.6-1
 
 lolorV=1.2-1
 snwflkV=2.2-1
 
-P17=17.2-1
+P17=17.4-1
 P171=17.0-1
 
-P16=16.6-1
+P16=16.8-1
 P161=16.4-2
 
-P15=15.10-1
+P15=15.12-1
 P151=15.8-2
 
 vectorV=0.8.0-1
@@ -56,7 +56,7 @@ audit15V=1.7.0-1
 audit16V=16.0-1
 audit17V=17.0-1
 
-postgisV=3.5.0-1
+postgisV=3.5.0-2
 
 debuggerV=1.8-1
 cronV=1.6.4-1

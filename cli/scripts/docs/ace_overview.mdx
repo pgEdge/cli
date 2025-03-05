@@ -1,0 +1,49 @@
+## ACE (the Anti-Chaos Engine)
+
+ACE is a powerful tool designed to ensure and maintain consistency across nodes in a replication cluster managed by the Spock extension. It helps identify and resolve data inconsistencies, schema differences, and replication configuration mismatches across nodes in a cluster.
+
+Key features of ACE include:
+
+- Table-level data comparison and repair
+- Replication set level verification
+- Automated repair capabilities
+- Schema comparison
+- Spock configuration validation
+
+
+### ACE Deployment Considerations
+
+ACE is very efficient when it comes to comparing tables, and uses a lot of optimisations to speed up the process. However, it is important to consider certain factors that can affect the runtime of a `table-diff` command.
+ACE first looks at table sizes, and then based on the specified runtime options, splits up the task into multiple processes and executes them in parallel. Each multiprocessing worker initially computes a hash of the data block, and if it finds there is a hash mismatch, attempts to fetch those records to generate a report.
+How fast it can execute a `table-diff` command depends on the:
+
+* Configuration of the machine you're running ACE on – how many cores, how much memory, etc.
+* The resources you allow ACE to use (`max_cpu_ratio`). This is a strong determinant of runtime performance, even in the absence of other tuning options.
+* Your runtime tuning options: `block-rows`, `batch-size`, `table-filter`, and `nodes`.
+* The size of your table, size of individual rows, and column datatypes. Sometimes performing a table-diff on tables with a very large number of records may take just a few minutes, while a smaller table with fewer rows, but with larger row sizes may take much longer. An example of the latter case is when embeddings or binary data is stored in the table.
+* Distribution of differences: Any differences in blocks of data identified by ACE require ACE to pull all those records together to generate a report. So, the smaller the data transfer between the database nodes and ACE, the faster it will run. If diffs are spread across numerous data blocks throughout the key space, it will take longer for ACE to be able to pull all the records. If you expect to see differences in certain blocks, using a table-filter and adjusting the block size can greatly speed up the process.
+* Network latency between the ACE node and your database nodes: The closer the ACE node is to the database nodes, the faster it can run.
+
+ACE uses the cluster definition JSON file to connect to nodes and execute SQL statements. It might even be desirable to set up a connection pooler like pgBouncer or pgCat separately and point to that in the cluster JSON file for faster runtime performance.
+
+
+### Improving ACE Performance when Invoking Diff Functions
+
+The following runtime options can impact ACE performance during a `table-diff`:
+
+* `--block-rows` specifies the number of tuples to be used at a time during table comparisons. ACE computes an MD5 sum on the full chunk of rows per block and compares it with the hash of the same chunk on the other nodes. If the hashes match up between nodes, then ACE moves on to the next block. Otherwise, the rows get pulled in and a set difference is computed. If `block_rows` is set to `1000`, then a thousand tuples are compared per job across tables. 
+It is worth noting here that while it may appear that larger block sizes yield faster results, it may not always be the case. Using a larger block size will result in a speed up, but only up to a threshold. If the block size is too large, the Postgres [array_agg()](https://www.postgresql.org/docs/16/functions-aggregate.html) function may run out of memory, or the hash might take longer to compute, thus annulling the benefit of using a larger block size. The sweet spot is a block size that is large enough to yield quicker runtimes, but still small enough to avoid the issues listed above. ACE enforces that block sizes are between 10^3 and 10^5 rows.
+* `batch_size`: Dictates how many sets of `block_rows` a single process should handle. By default, this is set to `1` to achieve the maximum possible parallelism – each process in the multiprocessing pool works on one block at a time. However, in some cases, you may want to limit process creation overheads and use a larger batch size. We recommend you leave this setting to its default value, unless there is a specific use-case that demands changing it.
+* `--max_cpu_ratio` specifies the percentage of CPU power you are allotting for use by ACE. A value of `1` instructs the server to use all available CPUs, while `.5` means use half of the available CPUs. The default is `.6` (or 60% of the CPUs). Setting it to its maximum (1.0) will result in faster execution times. This should be modified as needed.
+
+To evaluate and improve ACE performance:
+
+1. Experiment with different block sizes and CPU utilisation to find the best performance/resource-usage balance for your workload.
+2. Use `--table-filter` for large tables to reduce comparison scope.
+3. Generate HTML reports for easier analysis of differences.
+4. Ensure the diffs have not overrun the MAX_ALLOWED_DIFFS limit--otherwise, table-repair will only be able to partially repair the table.
+
+
+#### Known Limitations
+
+* ACE cannot be used on a table without a primary key, because primary keys are the basis for range partitioning, hash calculations, and other critical functions in ACE.

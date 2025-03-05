@@ -1,4 +1,4 @@
-#  Copyright 2022-2024 PGEDGE  All rights reserved. #
+#  Copyright 2022-2025 PGEDGE  All rights reserved. #
 
 
 """ACE is the place of the Anti Chaos Engine"""
@@ -471,7 +471,7 @@ def check_user_privileges(conn, username, schema, table, required_privileges=[])
 def check_column_size(conn_list: list, task: TableDiffTask) -> tuple[bool, str]:
     # Gets byte size from each bytea in each connection
     byte_sql = (
-        'SELECT AVG(pg_column_size("{c_name}")) AS avg_size_in_bytes '
+        'SELECT COALESCE(AVG(pg_column_size("{c_name}")), 0) AS avg_size_in_bytes '
         'FROM "{s_name}"."{t_name}";'
     )
 
