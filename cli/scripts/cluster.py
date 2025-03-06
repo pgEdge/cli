@@ -1543,7 +1543,37 @@ def init(cluster_name, install=True):
                     # (f) Set BACKUP pg1-port to the node's port value
             cmd_set_pg1_port = f"cd {node['path']}/pgedge && ./pgedge set BACKUP repo1-path {repo1_path}"
             run_cmd(cmd_set_pg1_port, node=node, message=f"Setting BACKUP repo1-path to {repo1_path} on node '{node['name']}'", verbose=verbose)
+                # -- Step 5: Fetch the BackRest configuration values
+            cmd_fetch_config = f"cd {node['path']}/pgedge && ./pgedge backrest show-config"
+            config_proc = run_cmd(
+                cmd=cmd_fetch_config,
+                node=node,
+                message="Fetching BackRest configuration",
+                verbose=verbose,
+                capture_output=True  # Ensure run_cmd returns a CompletedProcess object
+            )
+            # Access stdout from the CompletedProcess object
+            config_output = config_proc.stdout if hasattr(config_proc, 'stdout') else ""
     
+            # Parse the output: Expecting lines in the format: key = value.
+            config_dict = {}
+            for line in config_output.splitlines():
+                line = line.strip()
+                if not line or line.startswith("#"):
+                    continue
+                if "=" in line:
+                    key, value = line.split("=", 1)
+                    config_dict[key.strip()] = value.strip()
+    
+            # -- Step 6: Save the fetched configuration into a JSON file.
+            config_file = f"{node['path']}/pgedge/{node['name']}_backrest.json"
+            try:
+                with open(config_file, "w") as f:
+                    json.dump(config_dict, f, indent=2)
+                util.message(f"Saved BackRest configuration values to {config_file}", "info")
+            except Exception as e:
+                util.exit_message(f"Error writing BackRest configuration to file: {e}", 1)
+ 
     # 7. If it's an HA cluster, handle Patroni/etcd, etc.
     if is_ha_cluster:
         pg_ver = db_settings["pg_version"]

@@ -4310,27 +4310,6 @@ REPO = get_value("GLOBAL", "REPO")
 
 
 
-def check_directory_status(directory: str) -> str:
-    """
-    Checks the status of a directory.
-
-    :param directory: The path to the directory to check.
-    :return: A string describing the directory status:
-        - "missing": the path does not exist
-        - "empty": the path exists and is an empty directory
-        - "not-empty": the path exists and contains at least one file/subdirectory
-        - "not-a-directory": the path exists but is not a directory (e.g., a file)
-    """
-    if not os.path.exists(directory):
-        return "missing"
-    if not os.path.isdir(directory):
-        return "not-a-directory"
-
-    # Directory exists, check if empty
-    if not os.listdir(directory):
-        return "empty"
-    else:
-        return "not-empty"
 
 
 
