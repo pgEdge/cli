@@ -845,7 +845,7 @@ def json_create(
                 pg_input = str(pg_version_int)
             else:
                 pg_input = (
-                    input(f"PostgreSQL version {pgs} [default: {pg_default}]: ").strip()
+                    input(f"PostgreSQL version {pgs} (default: {pg_default}): ").strip()
                     or pg_default
                 )
 
@@ -864,7 +864,7 @@ def json_create(
         while True:
             spock_version = (
                 input(
-                    f"Spock version {spocks} [default: {spock_default}]: "
+                    f"Spock version {spocks} (default: {spock_default}): "
                 ).strip()
                 or spock_default
             )
@@ -959,13 +959,13 @@ def json_create(
         else:
             public_ip = (
                 input(
-                    f"  Public IP address for Node {n} (leave blank for default '{default_ip}'): "
+                    f"  Public IP address for Node {n} (default: '{default_ip}'): "
                 ).strip()
                 or default_ip
             )
             private_ip = (
                 input(
-                    f"  Private IP address for Node {n} (leave blank to use public IP '{public_ip}'): "
+                    f"  Private IP address for Node {n} (default: '{public_ip}'): "
                 ).strip()
                 or public_ip
             )
@@ -984,7 +984,7 @@ def json_create(
             node_default_port = default_port
             while True:
                 node_port_input = input(
-                    f"  PostgreSQL port for Node {n} (leave blank for default '{node_default_port}'): "
+                    f"  PostgreSQL port for Node {n} (default: '{node_default_port}'): "
                 ).strip()
                 if not node_port_input:
                     node_port = node_default_port
@@ -1040,13 +1040,13 @@ def json_create(
 
                 public_ip = (
                     input(
-                        f"    Public IP address of replica Node {i} (leave blank for default '{default_ip}'): "
+                        f"    Public IP address of replica Node {i} (default: '{default_ip}'): "
                     ).strip()
                     or default_ip
                 )
                 private_ip = (
                     input(
-                        f"    Private IP address of replica Node {i} (leave blank to use public IP '{public_ip}'): "
+                        f"    Private IP address of replica Node {i} (default: '{public_ip}'): "
                     ).strip()
                     or public_ip
                 )
@@ -1055,7 +1055,7 @@ def json_create(
 
                 while True:
                     replica_port_input = input(
-                        f"    PostgreSQL port of replica Node {i} (leave blank for default '{current_replica_port}'): "
+                        f"    PostgreSQL port of replica Node {i} (default: '{current_replica_port}'): "
                     ).strip()
                     if not replica_port_input:
                         replica_port = current_replica_port
