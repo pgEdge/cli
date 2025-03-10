@@ -845,7 +845,7 @@ def json_create(
                 pg_input = str(pg_version_int)
             else:
                 pg_input = (
-                    input(f"PostgreSQL version {pgs} [default: {pg_ver}]: ").strip()
+                    input(f"PostgreSQL version {pgs} [default: {pg_default}]: ").strip()
                     or pg_default
                 )
 
@@ -864,7 +864,7 @@ def json_create(
         while True:
             spock_version = (
                 input(
-                    f"Spock version (e.g., {spocks}) or press Enter for default: "
+                    f"Spock version {spocks} [default: {spock_default}]: "
                 ).strip()
                 or spock_default
             )
