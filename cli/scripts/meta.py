@@ -313,7 +313,7 @@ def get_default_spock(pgv):
         c.execute(sql)
         data = c.fetchall()
         for comp in data:
-            spock_ver_minor = comp[0][0:5]
+            spock_ver_minor = comp[0].split('-')[0]
             avail_spock.append(spock_ver_minor)
             if f"{default_spock[0]}.{default_spock[1]}" in spock_ver_minor:
                 default_spock = spock_ver_minor
