@@ -1180,9 +1180,9 @@ def json_create(
         f"# {bold_start}pgBackRest Enabled{bold_end} : {'Yes' if backrest_enabled else 'No'}"
     )
     if backrest_enabled:
-        print(f"# {bold_start}BackRest Storage Path{bold_end} : {backrest_storage_path}")
-        print(f"# {bold_start}BackRest Archive Mode{bold_end} : {backrest_archive_mode}")
-        print(f"# {bold_start}BackRest Repository Type{bold_end} : {repo1_type}")
+        print(f"#      {bold_start}Storage Path{bold_end} : {backrest_storage_path}")
+        print(f"#      {bold_start}Archive Mode{bold_end} : {backrest_archive_mode}")
+        print(f"#      {bold_start}Repository Type{bold_end} : {repo1_type}")
     print(f"# {bold_start}Number of Nodes{bold_end}    : {num_nodes}")
     print(f"# {bold_start}Database Name{bold_end}      : {db}")
     print(f"# {bold_start}User{bold_end}               : {usr}")
