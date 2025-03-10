@@ -1176,21 +1176,21 @@ def json_create(
     print(
         f"# {bold_start}Spock Version{bold_end}      : {spock_version if spock_version else 'Not specified'}"
     )
+    print(f"# {bold_start}Number of Nodes{bold_end}    : {num_nodes}")
+    print(f"# {bold_start}Database Name{bold_end}      : {db}")
+    print(f"# {bold_start}User{bold_end}               : {usr}")
     print(
         f"# {bold_start}pgBackRest Enabled{bold_end} : {'Yes' if backrest_enabled else 'No'}"
     )
     if backrest_enabled:
-        print(f"#      {bold_start}Storage Path{bold_end} : {backrest_storage_path}")
-        print(f"#      {bold_start}Archive Mode{bold_end} : {backrest_archive_mode}")
-        print(f"#      {bold_start}Repository Type{bold_end} : {repo1_type}")
-    print(f"# {bold_start}Number of Nodes{bold_end}    : {num_nodes}")
-    print(f"# {bold_start}Database Name{bold_end}      : {db}")
-    print(f"# {bold_start}User{bold_end}               : {usr}")
+        print(f"#    {bold_start}Storage Path{bold_end}    : {backrest_storage_path}")
+        print(f"#    {bold_start}Archive Mode{bold_end}    : {backrest_archive_mode}")
+        print(f"#    {bold_start}Repository Type{bold_end} : {repo1_type}")
     for idx, node in enumerate(node_groups, start=1):
         print(f"# {bold_start}Node {idx}{bold_end}")
-        print(f"#      {bold_start}Public IP{bold_end}     : {node['public_ip']}")
-        print(f"#      {bold_start}Private IP{bold_end}    : {node['private_ip']}")
-        print(f"#      {bold_start}Port{bold_end}          : {node['port']}")
+        print(f"#    {bold_start}Public IP{bold_end}       : {node['public_ip']}")
+        print(f"#    {bold_start}Private IP{bold_end}      : {node['private_ip']}")
+        print(f"#    {bold_start}Port{bold_end}            : {node['port']}")
     
     print("#" * 80)
 
