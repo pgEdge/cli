@@ -1171,27 +1171,27 @@ def json_create(
     bold_end = "\033[0m"
 
     print("\n" + "#" * 80)
-    print(
-        f"#     {bold_start}Version{bold_end}        : pgEdge 24.10-5 (Constellation)"
-    )
-    print(f"# {bold_start}User & Host{bold_end}        : {os_user}    {os.getcwd()}")
-    print(
-        f"#          {bold_start}OS{bold_end}        : Linux, Python {sys.version.split()[0]}"
-    )
-    print(f"#     {bold_start}Machine{bold_end}        : N/A")
-    print(f"#    {bold_start}Repo URL{bold_end}        : N/A")
-    print(f"# {bold_start}Last Update{bold_end}        : None")
     print(f"# {bold_start}Cluster Name{bold_end}       : {cluster_name}")
     print(f"# {bold_start}PostgreSQL Version{bold_end} : {pg_version_int}")
     print(
         f"# {bold_start}Spock Version{bold_end}      : {spock_version if spock_version else 'Not specified'}"
     )
-    # print(
-    #     f"# {bold_start}HA Cluster{bold_end}         : {'Yes' if is_ha_cluster else 'No'}"
-    # )
     print(
-        f"# {bold_start}pgBackRest Enabled{bold_end}   : {'Yes' if backrest_enabled else 'No'}"
+        f"# {bold_start}pgBackRest Enabled{bold_end} : {'Yes' if backrest_enabled else 'No'}"
     )
+    if backrest_enabled:
+        print(f"# {bold_start}BackRest Storage Path{bold_end} : {backrest_storage_path}")
+        print(f"# {bold_start}BackRest Archive Mode{bold_end} : {backrest_archive_mode}")
+        print(f"# {bold_start}BackRest Repository Type{bold_end} : {repo1_type}")
+    print(f"# {bold_start}Number of Nodes{bold_end}    : {num_nodes}")
+    print(f"# {bold_start}Database Name{bold_end}      : {db}")
+    print(f"# {bold_start}User{bold_end}               : {usr}")
+    for idx, node in enumerate(node_groups, start=1):
+        print(f"# {bold_start}Node {idx}{bold_end}")
+        print(f"#      {bold_start}Public IP{bold_end}     : {node['public_ip']}")
+        print(f"#      {bold_start}Private IP{bold_end}    : {node['private_ip']}")
+        print(f"#      {bold_start}Port{bold_end}          : {node['port']}")
+    
     print("#" * 80)
 
     if not force:
