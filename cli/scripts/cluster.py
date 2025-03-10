@@ -845,7 +845,7 @@ def json_create(
                 pg_input = str(pg_version_int)
             else:
                 pg_input = (
-                    input(f"PostgreSQL version {pgs} (default: {pg_default}): ").strip()
+                    input(f"PostgreSQL version {pgs} (default: '{pg_default}'): ").strip()
                     or pg_default
                 )
 
@@ -864,7 +864,7 @@ def json_create(
         while True:
             spock_version = (
                 input(
-                    f"Spock version {spocks} (default: {spock_default}): "
+                    f"Spock version {spocks} (default: '{spock_default}'): "
                 ).strip()
                 or spock_default
             )
@@ -905,11 +905,11 @@ def json_create(
     # Initialize backrest_json based on user input
     if backrest_enabled:
         backrest_storage_path = (
-            input("   pgBackRest storage path (default: /var/lib/pgbackrest): ").strip()
+            input("   pgBackRest storage path (default: '/var/lib/pgbackrest'): ").strip()
             or "/var/lib/pgbackrest"
         )
         backrest_archive_mode = (
-            input("   pgBackRest archive mode (on/off) (default: on): ").strip().lower()
+            input("   pgBackRest archive mode (on/off) (default: 'on'): ").strip().lower()
             or "on"
         )
         if backrest_archive_mode not in ["on", "off"]:
@@ -918,7 +918,7 @@ def json_create(
             )
          # Optionally, ask for repo1_type or default to posix
         repo1_type = (
-            input("   pgBackRest repository type (posix/s3) (default: posix): ")
+            input("   pgBackRest repository type (posix/s3) (default: 'posix'): ")
             .strip()
             .lower()
             or "posix"
