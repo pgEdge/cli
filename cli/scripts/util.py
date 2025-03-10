@@ -5,7 +5,7 @@ import os
 import time
 
 MY_VERSION = "25.0.0"
-MY_CODENAME = "Constellation"
+MY_CODENAME = ""
 
 DEFAULT_PG = "16"
 DEFAULT_SPOCK = "40"
@@ -254,7 +254,7 @@ def format_ver(p_ver):
         message(f"'{p_ver}' is not a valid three part version string", "warning")
         return(p_ver)
 
-    return(f"{v[0]}.{str(v[1]).rjust(2,'0')}-{v[2]}")
+    return(f"{v[0]}.{v[1]}-{v[2]}")
 
 
 def autostart_verify_prereqs():
