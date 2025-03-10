@@ -17,6 +17,7 @@ from psycopg import ClientCursor
 
 import ace_core
 import ace_daemon
+from ace_sql import ESTIMATE_ROW_COUNT
 import fire
 import psycopg
 from psycopg.rows import dict_row
@@ -133,12 +134,40 @@ def fix_schema(diff_file, sql1, sql2):
     return 1
 
 
-def get_row_count(p_con, p_schema, p_table):
-    sql = f'SELECT count(*) FROM {p_schema}."{p_table}"'
+def get_row_count_estimate(p_con, p_schema, p_table):
+    """
+    Returns an estimate of the number of rows in a table.
+    Note: This cannot be used for non-materialised views.
+    """
 
     try:
         cur = p_con.cursor()
-        cur.execute(sql)
+        cur.execute(ESTIMATE_ROW_COUNT, (p_schema, p_table))
+        r = cur.fetchone()
+        cur.close()
+    except Exception as e:
+        util.exit_message("Error in get_row_count_estimate():\n" + str(e), 1)
+
+    if not r:
+        return 0
+
+    rows = int(r[0])
+
+    return rows
+
+
+def get_row_count(p_con, p_schema, p_table):
+    """
+    Returns the actual number of rows in a table.
+    """
+
+    try:
+        cur = p_con.cursor()
+        cur.execute(
+            f"""
+            SELECT COUNT(*) FROM "{p_schema}"."{p_table}"
+            """
+        )
         r = cur.fetchone()
         cur.close()
     except Exception as e:
@@ -147,9 +176,7 @@ def get_row_count(p_con, p_schema, p_table):
     if not r:
         return 0
 
-    rows = int(r[0])
-
-    return rows
+    return int(r[0])
 
 
 def get_cols(p_con, p_schema, p_table):
@@ -1229,15 +1256,21 @@ def table_diff_checks(
                 conn.commit()
 
                 # Now, we need to check if the view actually has any rows
-                view_sql = sql.SQL("SELECT COUNT(*) FROM {view_name}").format(
+                view_sql = sql.SQL(
+                    """
+                    SELECT EXISTS (
+                        SELECT 1 FROM {view_name}
+                    ) AS has_rows
+                    """
+                ).format(
                     view_name=sql.Identifier(
                         f"{td_task.scheduler.task_id}_{l_table}_filtered"
                     ),
                 )
                 cur = conn.cursor()
                 cur.execute(view_sql)
-                row_count = cur.fetchone()[0]
-                if row_count == 0:
+                has_rows = cur.fetchone()[0]
+                if not has_rows:
                     raise AceException("Table filter produced no rows")
 
     except Exception as e:

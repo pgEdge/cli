@@ -1,7 +1,7 @@
 from collections import defaultdict
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Union
+from typing import Union, Any
 
 from ace_auth import ConnectionPool
 
@@ -51,6 +51,8 @@ class TableDiffTask:
     batch_size: int
     table_filter: str
     quiet_mode: bool
+
+    mode: str = "diff"
 
     # For table-diff, the diff_file_path is
     # obtained after the run of table-diff,

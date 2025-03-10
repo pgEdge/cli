@@ -450,9 +450,7 @@ def build_mtree(mtree_task: MerkleTreeTask) -> None:
                     )
                 )
 
-            print(f"Computing hashes for {len(leaf_blocks)} blocks...")
-            # TODO: Use MAX_CPU_RATIO here
-            max_workers = int(os.cpu_count())
+            max_workers = int(os.cpu_count() * mtree_task.max_cpu_ratio)
             n_jobs = min(len(work_items), max_workers)
 
             shared_objects = {
@@ -473,6 +471,7 @@ def build_mtree(mtree_task: MerkleTreeTask) -> None:
                         worker_init=init_hash_conn_pool,
                         worker_exit=close_hash_conn_pool,
                         progress_bar=True,
+                        progress_bar_options={"desc": "Computing hashes"},
                     )
                 )
 
@@ -1594,7 +1593,7 @@ def merkle_tree_diff(mtree_task: MerkleTreeTask) -> None:
 
     # It is imperative that we call update_mtree before calling merkle_tree_diff.
     # Otherwise, we're comparing stale data.
-    update_mtree(mtree_task, rebalance=mtree_task.rebalance, skip_all_checks=True)
+    update_mtree(mtree_task, skip_all_checks=True)
 
     schema = mtree_task.fields.l_schema
     table = mtree_task.fields.l_table

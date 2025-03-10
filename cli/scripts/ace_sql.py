@@ -531,7 +531,7 @@ GET_PKEY_OFFSETS = """
     WITH sampled_data AS (
         SELECT {key}
         FROM {schema}.{table}
-        TABLESAMPLE BERNOULLI(1)
+        TABLESAMPLE BERNOULLI({sample_percent})
         ORDER BY ROW({key})
     ),
     first_row AS (

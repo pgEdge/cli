@@ -1,3 +1,4 @@
+import itertools
 import json
 from math import ceil
 import os
@@ -79,17 +80,18 @@ def close_conn_pool(shared_objects, worker_state):
 # Accepts list of pkeys and values and generates a where clause that in the form
 # `(pkey1name, pkey2name ...) in ( (pkey1val1, pkey2val1 ...),
 #                                 (pkey1val2, pkey2val2 ...) ... )`
-def generate_where_clause(primary_keys, id_values):
+def generate_where_clause(primary_keys, batches):
     if len(primary_keys) == 1:
         # Single primary key
-        id_values_list = ", ".join(repr(val) for val in id_values)
+        id_values_list = ", ".join(repr(val) for val in itertools.chain(*batches))
         # Wrap column name in double quotes to preserve case
         query = f'"{primary_keys[0]}" IN ({id_values_list})'
 
     else:
         # Composite primary key
         conditions = ", ".join(
-            f"({', '.join(repr(val) for val in id_tuple)})" for id_tuple in id_values
+            f"({', '.join(repr(val) for val in id_tuple)})"
+            for id_tuple in itertools.chain(*batches)
         )
         # Wrap each column name in double quotes to preserve case
         key_columns = ", ".join(f'"{key}"' for key in primary_keys)
@@ -142,20 +144,20 @@ def compare_checksums(shared_objects, worker_state, batches):
             where_clause_parts = []
 
             if simple_primary_key:
-                if pkey1 is not None:
+                if pkey1 and pkey1[0] is not None:
                     where_clause_parts.append(
                         sql.SQL("{p_key} >= {pkey1}").format(
                             p_key=sql.Identifier(p_key), pkey1=sql.Literal(pkey1[0])
                         )
                     )
-                if pkey2 is not None:
+                if pkey2 and pkey2[0] is not None:
                     where_clause_parts.append(
                         sql.SQL("{p_key} < {pkey2}").format(
                             p_key=sql.Identifier(p_key), pkey2=sql.Literal(pkey2[0])
                         )
                     )
             else:
-                if pkey1 is not None:
+                if pkey1 and pkey1[0] is not None:
                     where_clause_parts.append(
                         sql.SQL("({p_key}) >= ({pkey1})").format(
                             p_key=sql.SQL(", ").join(
@@ -165,11 +167,11 @@ def compare_checksums(shared_objects, worker_state, batches):
                                 ]
                             ),
                             pkey1=sql.SQL(", ").join(
-                                [sql.Literal(val) for val in pkey1]
+                                [sql.Literal(val) for val in pkey1[0]]
                             ),
                         )
                     )
-                if pkey2 is not None:
+                if pkey2 and pkey2[0] is not None:
                     where_clause_parts.append(
                         sql.SQL("({p_key}) < ({pkey2})").format(
                             p_key=sql.SQL(", ").join(
@@ -179,7 +181,7 @@ def compare_checksums(shared_objects, worker_state, batches):
                                 ]
                             ),
                             pkey2=sql.SQL(", ").join(
-                                [sql.Literal(val) for val in pkey2]
+                                [sql.Literal(val) for val in pkey2[0]]
                             ),
                         )
                     )
@@ -228,7 +230,7 @@ def compare_checksums(shared_objects, worker_state, batches):
                 for pkey1, pkey2 in batches:
                     and_clauses = []
 
-                    if pkey1 is not None:
+                    if pkey1 and pkey1[0] is not None:
                         and_clauses.append(
                             sql.SQL("({p_key}) >= ({pkey1})").format(
                                 p_key=sql.SQL(", ").join(
@@ -238,12 +240,12 @@ def compare_checksums(shared_objects, worker_state, batches):
                                     ]
                                 ),
                                 pkey1=sql.SQL(", ").join(
-                                    [sql.Literal(val) for val in pkey1]
+                                    [sql.Literal(val) for val in pkey1[0]]
                                 ),
                             )
                         )
 
-                    if pkey2 is not None:
+                    if pkey2 and pkey2[0] is not None:
                         and_clauses.append(
                             sql.SQL("({p_key}) < ({pkey2})").format(
                                 p_key=sql.SQL(", ").join(
@@ -253,7 +255,7 @@ def compare_checksums(shared_objects, worker_state, batches):
                                     ]
                                 ),
                                 pkey2=sql.SQL(", ").join(
-                                    [sql.Literal(val) for val in pkey2]
+                                    [sql.Literal(val) for val in pkey2[0]]
                                 ),
                             )
                         )
@@ -417,12 +419,26 @@ def compare_checksums(shared_objects, worker_state, batches):
             t2_dict = {}
 
             for row in t1_result:
-                row_key = tuple(x.hex() if isinstance(x, bytes) else x for x in row)
+                row_key = tuple(
+                    (
+                        x.hex()
+                        if isinstance(x, bytes)
+                        else str(x) if isinstance(x, (dict, list, set)) else x
+                    )
+                    for x in row
+                )
                 t1_dict[row_key] = row
 
             t2_only = []
             for row in t2_result:
-                row_key = tuple(x.hex() if isinstance(x, bytes) else x for x in row)
+                row_key = tuple(
+                    (
+                        x.hex()
+                        if isinstance(x, bytes)
+                        else str(x) if isinstance(x, (dict, list, set)) else x
+                    )
+                    for x in row
+                )
                 t2_dict[row_key] = row
 
                 if row_key not in t1_dict:
@@ -488,14 +504,20 @@ def table_diff(td_task: TableDiffTask, skip_all_checks: bool = False):
                 node_info,
                 client_role=(
                     td_task.client_role
-                    if (config.USE_CERT_AUTH and td_task.invoke_method == "api")
+                    if (config.USE_CERT_AUTH or td_task.invoke_method == "api")
                     else None
                 ),
             )
 
-            rows = ace.get_row_count(
-                conn, td_task.fields.l_schema, td_task.fields.l_table
-            )
+            if td_task.table_filter:
+                rows = ace.get_row_count(
+                    conn, td_task.fields.l_schema, td_task.fields.l_table
+                )
+            else:
+                rows = ace.get_row_count_estimate(
+                    conn, td_task.fields.l_schema, td_task.fields.l_table
+                )
+
             total_rows += rows
             if rows > row_count:
                 row_count = rows
@@ -531,27 +553,91 @@ def table_diff(td_task: TableDiffTask, skip_all_checks: bool = False):
     # If we don't have enough blocks to keep all CPUs busy, use fewer processes
     procs = max_procs if total_blocks > max_procs else total_blocks
 
-    try:
-        ref_cur = conn_with_max_rows.cursor()
-        ref_cur.execute(
-            sql.SQL(GET_PKEY_OFFSETS).format(
-                schema=sql.Identifier(td_task.fields.l_schema),
-                table=sql.Identifier(td_task.fields.l_table),
-                key=sql.SQL(", ").join(
-                    [sql.Identifier(col) for col in td_task.fields.key.split(",")]
-                ),
-                num_blocks=total_blocks,
+    if (row_count > 10**4) and (not td_task.table_filter):
+        if row_count <= 10**5:
+            sample_percent = 10
+        elif row_count <= 10**6:
+            sample_percent = 1
+        elif row_count <= 10**8:
+            sample_percent = 0.1
+        else:
+            sample_percent = 0.01
+
+        try:
+            ref_cur = conn_with_max_rows.cursor()
+            ref_cur.execute(
+                sql.SQL(GET_PKEY_OFFSETS).format(
+                    schema=sql.Identifier(td_task.fields.l_schema),
+                    table=sql.Identifier(td_task.fields.l_table),
+                    key=sql.SQL(", ").join(
+                        [sql.Identifier(col) for col in td_task.fields.key.split(",")]
+                    ),
+                    num_blocks=total_blocks,
+                    sample_percent=sample_percent,
+                )
             )
+            pkey_offsets = ref_cur.fetchall()
+        except Exception as e:
+            context = {
+                "total_rows": total_rows,
+                "mismatch": False,
+                "errors": [str(e)],
+            }
+            ace.handle_task_exception(td_task, context)
+            raise e
+    else:
+        pkey_sql = sql.SQL("SELECT {key} FROM {table_name} ORDER BY {key}").format(
+            key=sql.SQL(", ").join(
+                [sql.Identifier(col) for col in td_task.fields.key.split(",")]
+            ),
+            table_name=sql.SQL("{}.{}").format(
+                sql.Identifier(td_task.fields.l_schema),
+                sql.Identifier(td_task.fields.l_table),
+            ),
         )
-        pkey_offsets = ref_cur.fetchall()
-    except Exception as e:
-        context = {
-            "total_rows": total_rows,
-            "mismatch": False,
-            "errors": [str(e)],
-        }
-        ace.handle_task_exception(td_task, context)
-        raise e
+
+        def get_pkey_offsets(conn, pkey_sql, block_rows):
+            pkey_offsets = []
+            cur = conn.cursor()
+            cur.execute(pkey_sql)
+            rows = cur.fetchmany(block_rows)
+
+            if simple_primary_key:
+                rows[:] = [str(x[0]) for x in rows]
+                pkey_offsets.append(([None], [str(rows[0])]))
+                prev_min_offset = str(rows[0])
+                prev_max_offset = str(rows[-1])
+            else:
+                rows[:] = [tuple(str(i) for i in x) for x in rows]
+                pkey_offsets.append(([None], [rows[0]]))
+                prev_min_offset = rows[0]
+                prev_max_offset = rows[-1]
+
+            while rows:
+                rows = cur.fetchmany(block_rows)
+                if simple_primary_key:
+                    rows[:] = [str(x[0]) for x in rows]
+                else:
+                    rows[:] = [tuple(str(i) for i in x) for x in rows]
+
+                if not rows:
+                    if prev_max_offset != prev_min_offset:
+                        pkey_offsets.append(([prev_min_offset], [prev_max_offset]))
+                    pkey_offsets.append(([prev_max_offset], [None]))
+                    break
+
+                curr_min_offset = rows[0]
+                pkey_offsets.append(([prev_min_offset], [curr_min_offset]))
+                prev_min_offset = curr_min_offset
+                prev_max_offset = rows[-1]
+
+            cur.close()
+            conn.close()
+            return pkey_offsets
+
+        pkey_offsets = get_pkey_offsets(
+            conn_with_max_rows, pkey_sql, td_task.block_rows
+        )
 
     # We're done with getting table metadata. Closing all connections.
     for conn in conn_list:
@@ -768,7 +854,7 @@ def table_diff(td_task: TableDiffTask, skip_all_checks: bool = False):
                 node_info,
                 client_role=(
                     td_task.client_role
-                    if config.USE_CERT_AUTH and td_task.invoke_method == "api"
+                    if (config.USE_CERT_AUTH or td_task.invoke_method == "api")
                     else None
                 ),
             )
@@ -825,7 +911,7 @@ def table_repair(tr_task: TableRepairTask):
                 node_info,
                 client_role=(
                     tr_task.client_role
-                    if config.USE_CERT_AUTH and tr_task.invoke_method == "api"
+                    if (config.USE_CERT_AUTH or tr_task.invoke_method == "api")
                     else None
                 ),
                 drop_privileges=False,
@@ -1121,7 +1207,7 @@ def table_repair(tr_task: TableRepairTask):
             conn,
             (
                 tr_task.client_role
-                if config.USE_CERT_AUTH and tr_task.invoke_method == "api"
+                if (config.USE_CERT_AUTH or tr_task.invoke_method == "api")
                 else None
             ),
         )
@@ -1214,7 +1300,7 @@ def table_repair(tr_task: TableRepairTask):
                         conn,
                         (
                             tr_task.client_role
-                            if config.USE_CERT_AUTH and tr_task.invoke_method == "api"
+                            if (config.USE_CERT_AUTH or tr_task.invoke_method == "api")
                             else None
                         ),
                     )
@@ -1398,7 +1484,7 @@ def table_repair_fix_nulls(tr_task: TableRepairTask) -> None:
                 node_info,
                 client_role=(
                     tr_task.client_role
-                    if config.USE_CERT_AUTH and tr_task.invoke_method == "api"
+                    if (config.USE_CERT_AUTH or tr_task.invoke_method == "api")
                     else None
                 ),
                 drop_privileges=False,
@@ -1503,7 +1589,7 @@ def table_repair_fix_nulls(tr_task: TableRepairTask) -> None:
                     conn,
                     client_role=(
                         tr_task.client_role
-                        if config.USE_CERT_AUTH and tr_task.invoke_method == "api"
+                        if (config.USE_CERT_AUTH or tr_task.invoke_method == "api")
                         else None
                     ),
                 )
@@ -1698,7 +1784,7 @@ def table_repair_fix_nulls(tr_task: TableRepairTask) -> None:
                     conn,
                     client_role=(
                         tr_task.client_role
-                        if config.USE_CERT_AUTH and tr_task.invoke_method == "api"
+                        if (config.USE_CERT_AUTH or tr_task.invoke_method == "api")
                         else None
                     ),
                 )
@@ -1774,11 +1860,9 @@ def table_repair_bidirectional(tr_task: TableRepairTask) -> None:
             node_hostname = tr_task.fields.host_map[hostname_key]
             _, conn = tr_task.connection_pool.get_cluster_node_connection(
                 node_info,
-                tr_task.cluster_name,
-                invoke_method=tr_task.invoke_method,
                 client_role=(
                     tr_task.client_role
-                    if config.USE_CERT_AUTH and tr_task.invoke_method == "api"
+                    if (config.USE_CERT_AUTH or tr_task.invoke_method == "api")
                     else None
                 ),
                 drop_privileges=False,
@@ -1892,7 +1976,7 @@ def table_repair_bidirectional(tr_task: TableRepairTask) -> None:
                     conn,
                     client_role=(
                         tr_task.client_role
-                        if config.USE_CERT_AUTH and tr_task.invoke_method == "api"
+                        if (config.USE_CERT_AUTH or tr_task.invoke_method == "api")
                         else None
                     ),
                 )
@@ -1933,7 +2017,7 @@ def table_repair_bidirectional(tr_task: TableRepairTask) -> None:
                     conn,
                     (
                         tr_task.client_role
-                        if config.USE_CERT_AUTH and tr_task.invoke_method == "api"
+                        if (config.USE_CERT_AUTH or tr_task.invoke_method == "api")
                         else None
                     ),
                 )
@@ -2028,7 +2112,7 @@ def table_rerun_temptable(td_task: TableDiffTask) -> None:
     table_qry = (
         f'CREATE TABLE {temp_table_name} AS SELECT * FROM "{schema}"."{table}" WHERE '
     )
-    table_qry += generate_where_clause(key, diff_keys)
+    table_qry += generate_where_clause(key, [diff_keys])
     clean_qry = f"DROP TABLE {temp_table_name}"
 
     if len(key) == 1:
@@ -2055,7 +2139,7 @@ def table_rerun_temptable(td_task: TableDiffTask) -> None:
                 node_info,
                 client_role=(
                     td_task.client_role
-                    if config.USE_CERT_AUTH and td_task.invoke_method == "api"
+                    if (config.USE_CERT_AUTH or td_task.invoke_method == "api")
                     else None
                 ),
             )
@@ -2118,7 +2202,7 @@ def table_rerun_temptable(td_task: TableDiffTask) -> None:
                 node_info,
                 client_role=(
                     td_task.client_role
-                    if config.USE_CERT_AUTH and td_task.invoke_method == "api"
+                    if (config.USE_CERT_AUTH or td_task.invoke_method == "api")
                     else None
                 ),
             )
@@ -2500,7 +2584,7 @@ def spock_diff(sd_task: SpockDiffTask) -> None:
                 node_info,
                 client_role=(
                     sd_task.client_role
-                    if config.USE_CERT_AUTH and sd_task.invoke_method == "api"
+                    if (config.USE_CERT_AUTH or sd_task.invoke_method == "api")
                     else None
                 ),
             )
@@ -2682,7 +2766,7 @@ def schema_diff_objects(sc_task: SchemaDiffTask) -> None:
                 node,
                 client_role=(
                     sc_task.client_role
-                    if config.USE_CERT_AUTH and sc_task.invoke_method == "api"
+                    if (config.USE_CERT_AUTH or sc_task.invoke_method == "api")
                     else None
                 ),
             )

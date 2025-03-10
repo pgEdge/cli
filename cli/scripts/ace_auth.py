@@ -120,9 +120,9 @@ class ConnectionPool:
                 params.update(
                     {
                         "sslmode": "verify-full",
-                        "sslcert": config.SSL_CERT_FILE,
-                        "sslkey": config.SSL_KEY_FILE,
-                        "sslrootcert": config.SSL_CA_FILE,
+                        "sslcert": config.ACE_USER_CERT_FILE,
+                        "sslkey": config.ACE_USER_KEY_FILE,
+                        "sslrootcert": config.CA_CERT_FILE,
                     }
                 )
             elif "db_password" in node_info:
