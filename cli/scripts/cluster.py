@@ -896,7 +896,7 @@ def json_create(
         backrest_enabled = False
     else:
         backrest_enabled_input = (
-            input("Do you want to enable BackRest for this cluster? (Y/N): ")
+            input("Enable pgBackRest? (Y/N) (default: 'N'): ")
             .strip()
             .lower()
         )
@@ -925,7 +925,7 @@ def json_create(
         )
         if repo1_type not in ["posix", "s3"]:
             util.exit_message(
-                "Invalid BackRest repository type. Allowed values are 'posix' or 's3'."
+                "Invalid pgBackRest repository type. Allowed values are 'posix' or 's3'."
             )
         backrest_json = {
             "stanza": "demo_stanza",
@@ -1186,11 +1186,11 @@ def json_create(
     print(
         f"# {bold_start}Spock Version{bold_end}      : {spock_version if spock_version else 'Not specified'}"
     )
+    # print(
+    #     f"# {bold_start}HA Cluster{bold_end}         : {'Yes' if is_ha_cluster else 'No'}"
+    # )
     print(
-        f"# {bold_start}HA Cluster{bold_end}         : {'Yes' if is_ha_cluster else 'No'}"
-    )
-    print(
-        f"# {bold_start}BackRest Enabled{bold_end}   : {'Yes' if backrest_enabled else 'No'}"
+        f"# {bold_start}pgBackRest Enabled{bold_end}   : {'Yes' if backrest_enabled else 'No'}"
     )
     print("#" * 80)
 
