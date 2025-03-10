@@ -5,15 +5,15 @@ services:
       context: .
       dockerfile: Dockerfile.node.${OS_FLAVOR:-rocky95}
     platform: ${OS_ARCH:-linux/arm64}
-    ports:
-      - "22:22"
     networks:
       - mynetwork
     environment:
-      - REPO=http://repo:8000/download
+      - REPO=${REPO:-http://repo:8000/download}
       - PGBACKREST_REPO1_CIPHER_PASS=supersecret
     depends_on:
       - repo
+    deploy:
+      replicas: ${NUM_NODES:-1}
 
   repo:
     build:

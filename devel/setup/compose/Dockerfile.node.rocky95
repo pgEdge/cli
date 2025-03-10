@@ -19,8 +19,7 @@ RUN /usr/sbin/sshd
 USER pgedge
 WORKDIR /home/pgedge
 RUN mkdir -p .ssh/
-ADD id_rsa.pub /home/pgedge/.ssh/id_rsa.pub
-ADD id_rsa /home/pgedge/.ssh/id_rsa
+RUN ssh-keygen -t rsa -b 4096 -N "" -f /home/pgedge/.ssh/id_rsa
 
 RUN cat /home/pgedge/.ssh/id_rsa.pub >> /home/pgedge/.ssh/authorized_keys
 RUN chmod 600 /home/pgedge/.ssh/authorized_keys
