@@ -77,16 +77,24 @@ def print_query(conn, query, params=None):
     print(client_cur.mogrify(query, params))
 
 
-"""
-Accepts a connection object and returns the version of spock installed
+def sanitise_input(input: str) -> str:
+    """
+    Sanitises input to ensure it is a valid identifier.
+    """
+    if not re.match(r"^[A-Za-z_][A-Za-z0-9_]*$", input):
+        raise ValueError(f"Invalid identifier: {input}")
 
-@param: conn - connection object
-@return: float - version of spock installed
-
-"""
+    return input
 
 
 def get_spock_version(conn):
+    """
+    Accepts a connection object and returns the version of spock installed
+
+    @param: conn - connection object
+    @return: float - version of spock installed
+
+    """
     data = []
     sql = "SELECT spock.spock_version();"
     try:
@@ -142,7 +150,11 @@ def get_row_count_estimate(p_con, p_schema, p_table):
 
     try:
         cur = p_con.cursor()
-        cur.execute(ESTIMATE_ROW_COUNT, (p_schema, p_table))
+        cur.execute(
+            sql.SQL(ESTIMATE_ROW_COUNT).format(
+                schema=sql.Literal(p_schema), table=sql.Literal(p_table)
+            )
+        )
         r = cur.fetchone()
         cur.close()
     except Exception as e:
@@ -955,8 +967,10 @@ def validate_merkle_tree_inputs(mtree_task: MerkleTreeTask) -> None:
         raise AceException(
             f"TableName {mtree_task._table_name} must be of form" " 'schema.table_name'"
         )
-    l_schema = nm_lst[0]
-    l_table = nm_lst[1]
+    l_schema, l_table = nm_lst
+
+    l_schema = sanitise_input(l_schema)
+    l_table = sanitise_input(l_table)
 
     db, pg, node_info = cluster.load_json(mtree_task.cluster_name)
 
@@ -1077,8 +1091,10 @@ def validate_table_diff_inputs(td_task: TableDiffTask) -> None:
         raise AceException(
             f"TableName {td_task._table_name} must be of form" " 'schema.table_name'"
         )
-    l_schema = nm_lst[0]
-    l_table = nm_lst[1]
+    l_schema, l_table = nm_lst
+
+    l_schema = sanitise_input(l_schema)
+    l_table = sanitise_input(l_table)
 
     db, pg, node_info = cluster.load_json(td_task.cluster_name)
 
@@ -1550,8 +1566,10 @@ def validate_table_repair_inputs(tr_task: TableRepairTask) -> None:
             f"TableName {tr_task._table_name} must be of form" "'schema.table_name'"
         )
 
-    l_schema = nm_lst[0]
-    l_table = nm_lst[1]
+    l_schema, l_table = nm_lst
+
+    l_schema = sanitise_input(l_schema)
+    l_table = sanitise_input(l_table)
 
     db, pg, node_info = cluster.load_json(tr_task.cluster_name)
 

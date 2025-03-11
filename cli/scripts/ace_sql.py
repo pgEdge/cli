@@ -12,7 +12,7 @@ CREATE_METADATA_TABLE = """
 """
 
 CREATE_MTREE_TABLE = """
-    CREATE TABLE ace_mtree_{schema}_{table} (
+    CREATE TABLE {mtree_table} (
         node_level integer NOT NULL,
         node_position bigint NOT NULL,
         range_start {pkey_type},
@@ -25,8 +25,8 @@ CREATE_MTREE_TABLE = """
         last_modified timestamptz DEFAULT current_timestamp,
         PRIMARY KEY (node_level, node_position)
     );
-    CREATE INDEX IF NOT EXISTS ace_mtree_{schema}_{table}_range_idx
-    ON ace_mtree_{schema}_{table} (range_start, range_end)
+    CREATE INDEX IF NOT EXISTS {range_idx}
+    ON {mtree_table} (range_start, range_end)
     WHERE node_level = 0;
 """
 
@@ -235,16 +235,16 @@ CREATE_GENERIC_TRIGGER_FUNCTION = """
 """
 
 CREATE_GENERIC_TRIGGER = """
-    DROP TRIGGER IF EXISTS track_dirty_blocks_{schema}_{table}_trigger
+    DROP TRIGGER IF EXISTS {trigger}
     ON {schema}.{table};
-    CREATE TRIGGER track_dirty_blocks_{schema}_{table}_trigger
+    CREATE TRIGGER {trigger}
     AFTER INSERT OR UPDATE OR DELETE ON {schema}.{table}
-    FOR EACH ROW EXECUTE FUNCTION track_dirty_blocks('{key}');
+    FOR EACH ROW EXECUTE FUNCTION track_dirty_blocks({key});
 """
 
 ENABLE_ALWAYS = """
     ALTER TABLE {schema}.{table}
-    ENABLE ALWAYS TRIGGER track_dirty_blocks_{schema}_{table}_trigger;
+    ENABLE ALWAYS TRIGGER {trigger};
 """
 
 CREATE_XOR_FUNCTION = """
@@ -297,8 +297,8 @@ ESTIMATE_ROW_COUNT = """
     LEFT JOIN pg_stat_user_tables s
         ON s.schemaname = n.nspname
         AND s.relname = c.relname
-    WHERE n.nspname = %s
-    AND c.relname = %s
+    WHERE n.nspname = {schema}
+    AND c.relname = {table}
 """
 
 GET_PKEY_TYPE = """
@@ -306,9 +306,9 @@ GET_PKEY_TYPE = """
     FROM pg_attribute a
     JOIN pg_class c ON c.oid = a.attrelid
     JOIN pg_namespace n ON n.oid = c.relnamespace
-    WHERE n.nspname = %s
-    AND c.relname = %s
-    AND a.attname = %s;
+    WHERE n.nspname = {schema}
+    AND c.relname = {table}
+    AND a.attname = {key}
 """
 
 UPDATE_METADATA = """
@@ -378,7 +378,7 @@ CALCULATE_BLOCK_RANGES = """
             seq
         FROM all_bounds
     )
-    INSERT INTO ace_mtree_{schema}_{table}
+    INSERT INTO {mtree_table} 
         (node_level, node_position, range_start, range_end, last_modified)
     SELECT
         0,
@@ -415,7 +415,7 @@ COMPUTE_LEAF_HASHES = """
             ) as leaf_hash
         FROM block_rows
     )
-    UPDATE ace_mtree_{schema}_{table} mt
+    UPDATE {mtree_table} mt
     SET
         leaf_hash = block_hash.leaf_hash,
         node_hash = block_hash.leaf_hash,
@@ -465,21 +465,21 @@ COMPUTE_LEAF_HASHES = """
 
 GET_BLOCK_RANGES = """
     SELECT node_position, range_start, range_end
-    FROM ace_mtree_{schema}_{table}
+    FROM {mtree_table}
     WHERE node_level = 0
     ORDER BY node_position;
 """
 
 GET_DIRTY_AND_NEW_BLOCKS = """
     SELECT node_position, range_start, range_end
-    FROM ace_mtree_{schema}_{table}
+    FROM {mtree_table}
     WHERE node_level = 0
     AND (dirty = true OR leaf_hash IS NULL)
     ORDER BY node_position;
 """
 
 CLEAR_DIRTY_FLAGS = """
-    UPDATE ace_mtree_{schema}_{table}
+    UPDATE {mtree_table}
     SET dirty = false,
         inserts_since_tree_update = 0,
         deletes_since_tree_update = 0,
@@ -494,12 +494,12 @@ BUILD_PARENT_NODES = """
             node_level,
             node_position / 2 as parent_position,
             array_agg(node_hash ORDER BY node_position) as child_hashes
-        FROM ace_mtree_{schema}_{table}
+        FROM {mtree_table}
         WHERE node_level = %(node_level)s
         GROUP BY node_level, node_position / 2
     ),
     inserted AS (
-        INSERT INTO ace_mtree_{schema}_{table}
+        INSERT INTO {mtree_table}
             (node_level, node_position, node_hash, last_modified)
         SELECT
             %(node_level)s + 1,
@@ -516,7 +516,7 @@ BUILD_PARENT_NODES = """
 """
 
 INSERT_BLOCK_RANGES = """
-    INSERT INTO ace_mtree_{schema}_{table}
+    INSERT INTO {mtree_table}
         (node_level, node_position, range_start, range_end, last_modified)
     VALUES
         (0, %s, %s, %s, current_timestamp);
@@ -598,16 +598,16 @@ GET_PKEY_OFFSETS = """
 
 GET_ROOT_NODE = """
     SELECT node_position, node_hash
-    FROM ace_mtree_{schema}_{table}
+    FROM {mtree_table}
     WHERE node_level = (
         SELECT MAX(node_level)
-        FROM ace_mtree_{schema}_{table}
+        FROM {mtree_table}
     )
 """
 
 GET_NODE_CHILDREN = """
     SELECT node_level, node_position, node_hash
-    FROM ace_mtree_{schema}_{table}
+    FROM {mtree_table}
     WHERE node_level = %(parent_level)s - 1
     AND node_position / 2 = %(parent_position)s
     ORDER BY node_position
@@ -615,7 +615,7 @@ GET_NODE_CHILDREN = """
 
 GET_LEAF_RANGES = """
     SELECT range_start, range_end
-    FROM ace_mtree_{schema}_{table}
+    FROM {mtree_table}
     WHERE node_level = 0
     AND node_position = ANY(%(node_positions)s)
     ORDER BY node_position
@@ -624,6 +624,6 @@ GET_LEAF_RANGES = """
 GET_ROW_COUNT_ESTIMATE = """
     SELECT total_rows
     FROM ace_mtree_metadata
-    WHERE schema_name = '{schema}'
-    AND table_name = '{table}'
+    WHERE schema_name = {schema}
+    AND table_name = {table}
 """

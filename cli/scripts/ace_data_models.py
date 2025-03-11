@@ -1,7 +1,7 @@
 from collections import defaultdict
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Union, Any
+from typing import Union
 
 from ace_auth import ConnectionPool
 
