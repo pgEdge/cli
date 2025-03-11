@@ -116,8 +116,10 @@ All containers in the compose setup are attached to the same docker bridge netwo
 You can customize the setup using the following arguments:
 
 - `NUM_NODES`: Number of node containers to deploy. Default is `2`.
-- `OS_ARCH`: The OS architecture for the containers. Default is `linux/$(uname -m)`.
+- `OS_ARCH`: The OS architecture for the node containers. Default is `linux/$(uname -m)`.
 - `OS_FLAVOR`: The OS flavor for the node containers. Supported values are `rocky95` and `ubuntu2204`. Default is `rocky95`.
+- `BUILD_OS_FLAVOR`: The OS architecture for the build container. Default is `linux/$(uname -m)`.
+- `BUILD_OS_ARCH`: The OS flavor for the build container. Supported values are `rocky95` and `rocky810`. Default is `rocky95`.
 - `REPO`: The repository URL for downloading dependencies. Default is `http://repo:8000/download`.
 
 ### Example

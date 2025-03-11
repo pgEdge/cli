@@ -29,8 +29,8 @@ services:
   build:
     build:
       context: .
-      dockerfile: ../Dockerfile.${OS_FLAVOR:-rocky95}
-    platform: ${OS_ARCH:-linux/arm64}
+      dockerfile: ../Dockerfile.${BUILD_OS_FLAVOR:-rocky95}
+    platform: ${BUILD_OS_ARCH:-linux/arm64}
     networks:
       - mynetwork
     volumes:

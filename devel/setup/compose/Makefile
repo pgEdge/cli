@@ -7,7 +7,11 @@ OS_ARCH ?= linux/$(shell uname -m)
 OS_FLAVOR ?= rocky95
 REPO ?= http://repo:8000/download
 
-COMPOSE_ARGS := NUM_NODES=$(NUM_NODES) OS_ARCH=$(OS_ARCH) OS_FLAVOR=$(OS_FLAVOR) REPO=$(REPO)
+BUILD_OS_ARCH ?= linux/$(shell uname -m)
+# Supports rocky95, rocky810
+BUILD_OS_FLAVOR ?= rocky95
+
+COMPOSE_ARGS := NUM_NODES=$(NUM_NODES) OS_ARCH=$(OS_ARCH) OS_FLAVOR=$(OS_FLAVOR) BUILD_OS_ARCH=$(BUILD_OS_ARCH) BUILD_OS_FLAVOR=$(BUILD_OS_FLAVOR) REPO=$(REPO)
 
 .PHONY: compose-up
 compose-up:
