@@ -28,9 +28,7 @@ from ace_sql import (
     GET_PKEY_TYPE,
     GET_ROW_COUNT_ESTIMATE,
     UPDATE_METADATA,
-    CALCULATE_BLOCK_RANGES,
     COMPUTE_LEAF_HASHES,
-    GET_BLOCK_RANGES,
     BUILD_PARENT_NODES,
     INSERT_BLOCK_RANGES,
     GET_DIRTY_AND_NEW_BLOCKS,
@@ -302,6 +300,19 @@ def get_row_estimate(conn, schema, table, analyse=False):
     return total_rows, num_blocks
 
 
+def process_block_ranges(offsets: list):
+
+    block_ranges = []
+
+    # We don't need the last range here. It's just needed for regular table-diff
+    del offsets[-1]
+
+    for i, offset in enumerate(offsets):
+        block_ranges.append((i, offset[0], offset[1]))
+
+    return block_ranges
+
+
 def build_mtree(mtree_task: MerkleTreeTask) -> None:
     """
     Build a Merkle tree for a table using parallel processing.
@@ -354,14 +365,16 @@ def build_mtree(mtree_task: MerkleTreeTask) -> None:
                 ref_node = node
         except Exception as e:
             conn.rollback()
+            traceback.print_exc()
             raise AceException(
                 f"Error creating mtree objects on {node['name']}: {str(e)}"
             )
 
     print(f"Using node {ref_node['name']} as the reference node")
 
+    block_ranges = []
+
     # Now let's compute the block ranges on the reference node
-    leaf_blocks = []
     msg = (
         f"Calculating block ranges for {max_blocks:,} blocks " f"(~{total_rows:,} rows)"
     )
@@ -384,24 +397,26 @@ def build_mtree(mtree_task: MerkleTreeTask) -> None:
 
     _, conn = mtree_task.connection_pool.get_cluster_node_connection(ref_node)
 
+    offsets_query = ace.generate_pkey_offsets_query(
+        schema=schema,
+        table=table,
+        key_columns=key.split(","),
+        table_sample_method=table_sample_method,
+        sample_percent=sample_percent,
+        ntile_count=max_blocks,
+    )
+
     with conn.cursor() as cur:
-        cur.execute(
-            sql.SQL(CALCULATE_BLOCK_RANGES).format(
-                schema=sql.Identifier(schema),
-                table=sql.Identifier(table),
-                key=sql.Identifier(key),
-                num_blocks=sql.SQL(str(max_blocks)),
-                table_sample_method=sql.SQL(table_sample_method),
-                sample_percent=sql.SQL(str(sample_percent)),
+        cur.execute(offsets_query)
+        offsets = cur.fetchall()
+        block_ranges = process_block_ranges(offsets)
+
+        cur.executemany(
+            sql.SQL(INSERT_BLOCK_RANGES).format(
                 mtree_table=sql.Identifier(f"ace_mtree_{schema}_{table}"),
-            )
+            ),
+            block_ranges,
         )
-        cur.execute(
-            sql.SQL(GET_BLOCK_RANGES).format(
-                mtree_table=sql.Identifier(f"ace_mtree_{schema}_{table}"),
-            )
-        )
-        leaf_blocks = cur.fetchall()
         conn.commit()
 
     # We're ready to build the merkle tree
@@ -415,22 +430,19 @@ def build_mtree(mtree_task: MerkleTreeTask) -> None:
         try:
             with conn.cursor() as cur:
                 if node != ref_node:
-                    for block in tqdm(leaf_blocks, desc="Inserting block ranges"):
-                        cur.execute(
-                            sql.SQL(INSERT_BLOCK_RANGES).format(
-                                mtree_table=sql.Identifier(
-                                    f"ace_mtree_{schema}_{table}"
-                                ),
-                            ),
-                            (block[0], block[1], block[2]),
-                        )
+                    cur.executemany(
+                        sql.SQL(INSERT_BLOCK_RANGES).format(
+                            mtree_table=sql.Identifier(f"ace_mtree_{schema}_{table}"),
+                        ),
+                        block_ranges,
+                    )
                 # Committing is necessary here since the workers use their own
                 # connections and cursors
                 conn.commit()
 
             # Now compute hashes
             work_items = []
-            for block in leaf_blocks:
+            for block in block_ranges:
                 column_list = []
                 for col in mtree_task.fields.cols.split(","):
                     column_list.append(
@@ -464,7 +476,7 @@ def build_mtree(mtree_task: MerkleTreeTask) -> None:
                     )
                 )
 
-            max_workers = int(os.cpu_count() * mtree_task.max_cpu_ratio)
+            max_workers = int(os.cpu_count() * mtree_task.max_cpu_ratio * 2)
             n_jobs = min(len(work_items), max_workers)
 
             shared_objects = {

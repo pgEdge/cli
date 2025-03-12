@@ -321,73 +321,75 @@ UPDATE_METADATA = """
         last_updated = EXCLUDED.last_updated;
 """
 
-CALCULATE_BLOCK_RANGES = """
+GET_PKEY_OFFSETS = """
     WITH sampled_data AS (
         SELECT
-            {key}
+            {key_columns_select}
         FROM {schema}.{table}
         TABLESAMPLE {table_sample_method}({sample_percent})
-        ORDER BY {key}
+        ORDER BY {key_columns_order}
     ),
     first_row AS (
         SELECT
-            {key}
+            {key_columns_select}
         FROM {schema}.{table}
-        ORDER BY {key}
+        ORDER BY {key_columns_order}
         LIMIT 1
     ),
     last_row AS (
         SELECT
-            {key}
+            {key_columns_select}
         FROM {schema}.{table}
-        ORDER BY {key} DESC
+        ORDER BY {key_columns_order_desc}
         LIMIT 1
     ),
     sample_boundaries AS (
         SELECT
-            {key},
-            ntile({num_blocks}) OVER (ORDER BY {key}) as bucket
+            {key_columns_select},
+            ntile({ntile_count}) OVER (ORDER BY {key_columns_order}) as bucket
         FROM sampled_data
     ),
     block_starts AS (
         SELECT DISTINCT ON (bucket)
-            {key}
+            {key_columns_select}
         FROM sample_boundaries
-        ORDER BY bucket, {key}
+        ORDER BY bucket, {key_columns_order}
     ),
     all_bounds AS (
         SELECT
-            (SELECT {key} FROM first_row) as {key},
+            {first_row_selects},
             0 as seq
         UNION ALL
         SELECT
-            {key},
+            {key_columns_select},
             1 as seq
         FROM block_starts
-        WHERE {key} > (SELECT {key} FROM first_row)
+        WHERE ({key_columns_select}) > (
+            {first_row_tuple_selects}
+        )
         UNION ALL
         SELECT
-            (SELECT {key} FROM last_row) as {key},
+            {last_row_selects},
             2 as seq
     ),
     ranges AS (
         SELECT
-            {key},
-            {key} as range_start,
-            LEAD({key}) OVER (ORDER BY seq, {key}) as range_end,
+            {key_columns_select},
+            {range_start_columns},
+            {range_end_columns},
             seq
         FROM all_bounds
     )
-    INSERT INTO {mtree_table} 
-        (node_level, node_position, range_start, range_end, last_modified)
-    SELECT
-        0,
-        row_number() OVER (ORDER BY seq, {key}) - 1 as node_position,
-        range_start,
-        range_end,
-        current_timestamp
+    SELECT {range_output_columns}
     FROM ranges
-    WHERE range_end IS NOT NULL;
+    ORDER BY seq;
+"""
+
+INSERT_BLOCK_RANGES = """
+    INSERT INTO {mtree_table}
+        (node_level, node_position, range_start, range_end, last_modified)
+    VALUES
+        (0, %s, %s, %s, current_timestamp);
 """
 
 COMPUTE_LEAF_HASHES = """
@@ -515,86 +517,6 @@ BUILD_PARENT_NODES = """
     SELECT count(*) FROM inserted;
 """
 
-INSERT_BLOCK_RANGES = """
-    INSERT INTO {mtree_table}
-        (node_level, node_position, range_start, range_end, last_modified)
-    VALUES
-        (0, %s, %s, %s, current_timestamp);
-"""
-
-# This is the optimised version of the former get_pkey_offsets() in table_diff
-# The Bernoulli sampling method is slow for larger tables and smaller sample sizes.
-# However, we're using it here since regular table-diff should not be used
-# for large tables anyway. Nevertheless, this should give us a significant
-# performance boost over the former get_pkey_offsets() function.
-GET_PKEY_OFFSETS = """
-    WITH sampled_data AS (
-        SELECT {key}
-        FROM {schema}.{table}
-        TABLESAMPLE BERNOULLI({sample_percent})
-        ORDER BY ROW({key})
-    ),
-    first_row AS (
-        SELECT {key}
-        FROM {schema}.{table}
-        ORDER BY ROW({key})
-        LIMIT 1
-    ),
-    last_row AS (
-        SELECT {key}
-        FROM {schema}.{table}
-        ORDER BY ROW({key}) DESC
-        LIMIT 1
-    ),
-    sample_boundaries AS (
-        SELECT {key},
-            ntile({num_blocks}) OVER (ORDER BY ROW({key})) as bucket
-        FROM sampled_data
-    ),
-    block_starts AS (
-        SELECT DISTINCT ON (bucket)
-            {key},
-            ROW({key})::text as row_text
-        FROM sample_boundaries
-        ORDER BY bucket, ROW({key})
-    ),
-    all_bounds AS (
-        SELECT NULL as range_start,
-               (SELECT string_to_array(TRIM(BOTH '()' FROM ROW({key})::text), ',')
-               FROM first_row) as range_end,
-               -1 as seq
-        UNION ALL
-        SELECT
-            (SELECT string_to_array(TRIM(BOTH '()' FROM ROW({key})::text), ',')
-            FROM first_row) as range_start,
-            (SELECT string_to_array(TRIM(BOTH '()' FROM ROW({key})::text), ',')
-            FROM block_starts ORDER BY ROW({key}) LIMIT 1) as range_end,
-            0 as seq
-        UNION ALL
-        SELECT
-            string_to_array(TRIM(BOTH '()' FROM row_text), ',') as range_start,
-            CASE
-                WHEN LEAD(row_text) OVER (ORDER BY ROW({key})) IS NULL THEN
-                    (SELECT string_to_array(TRIM(BOTH '()' FROM ROW({key})::text), ',')
-                    FROM last_row)
-                ELSE
-                    string_to_array(TRIM(BOTH '()' FROM LEAD(row_text)
-                    OVER (ORDER BY ROW({key}))), ',')
-            END as range_end,
-            1 as seq
-        FROM block_starts
-        UNION ALL
-        SELECT
-            (SELECT string_to_array(TRIM(BOTH '()' FROM ROW({key})::text), ',')
-            FROM last_row) as range_start,
-            NULL as range_end,
-            2 as seq
-    )
-    SELECT range_start,
-           range_end
-    FROM all_bounds
-    ORDER BY seq;
-"""
 
 GET_ROOT_NODE = """
     SELECT node_position, node_hash

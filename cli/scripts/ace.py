@@ -17,7 +17,7 @@ from psycopg import ClientCursor
 
 import ace_core
 import ace_daemon
-from ace_sql import ESTIMATE_ROW_COUNT
+from ace_sql import ESTIMATE_ROW_COUNT, GET_PKEY_OFFSETS
 import fire
 import psycopg
 from psycopg.rows import dict_row
@@ -390,6 +390,81 @@ def get_col_types(conn, table_name):
 def check_cluster_exists(cluster_name, base_dir="cluster"):
     cluster_dir = base_dir + "/" + str(cluster_name)
     return True if os.path.exists(cluster_dir) else False
+
+
+def generate_pkey_offsets_query(
+    schema, table, key_columns, table_sample_method, sample_percent, ntile_count
+):
+    key_columns_select = ",\n        ".join(key_columns)
+    key_columns_order = ", ".join(key_columns)
+    key_columns_order_desc = ", ".join(f"{col} DESC" for col in key_columns)
+
+    first_row_selects = ",\n        ".join(
+        f"(SELECT {col} FROM first_row) as {col}" for col in key_columns
+    )
+
+    last_row_selects = ",\n        ".join(
+        f"(SELECT {col} FROM last_row) as {col}" for col in key_columns
+    )
+
+    first_row_tuple_selects = ",\n        ".join(
+        f"(SELECT {col} FROM first_row)" for col in key_columns
+    )
+
+    range_start_columns = ",\n        ".join(
+        f"{col} as range_start_{col}" for col in key_columns
+    )
+
+    range_end_columns = ",\n        ".join(
+        f"LEAD({col}) OVER (ORDER BY seq, {key_columns_order}) as range_end_{col}"
+        for col in key_columns
+    )
+
+    range_output_columns = ",\n    ".join(
+        f"range_start_{col},\n    range_end_{col}" for col in key_columns
+    )
+
+    full_query = sql.SQL(GET_PKEY_OFFSETS).format(
+        key_columns_select=sql.SQL(key_columns_select),
+        schema=sql.Identifier(schema),
+        table=sql.Identifier(table),
+        table_sample_method=sql.SQL(table_sample_method),
+        sample_percent=sql.SQL(str(sample_percent)),
+        ntile_count=sql.Literal(ntile_count),
+        key_columns_order=sql.SQL(key_columns_order),
+        key_columns_order_desc=sql.SQL(key_columns_order_desc),
+        first_row_selects=sql.SQL(first_row_selects),
+        last_row_selects=sql.SQL(last_row_selects),
+        first_row_tuple_selects=sql.SQL(first_row_tuple_selects),
+        range_start_columns=sql.SQL(range_start_columns),
+        range_end_columns=sql.SQL(range_end_columns),
+        range_output_columns=sql.SQL(range_output_columns),
+    )
+
+    return full_query
+
+
+def process_pkey_offsets(offsets: list):
+
+    pkey_offsets = []
+    simple_primary_key = len(offsets[0]) == 2
+
+    if simple_primary_key:
+        pkey_offsets.append(([None], [offsets[0][0]]))
+    else:
+        starts = tuple(None for _ in range(len(offsets[0]) // 2))
+        ends = tuple(offsets[0][i] for i, _ in enumerate(offsets[0]) if i % 2 == 0)
+        pkey_offsets.append(([starts], [ends]))
+
+    for offset in offsets:
+        if simple_primary_key:
+            pkey_offsets.append(([offset[0]], [offset[1]]))
+        else:
+            starts = tuple(r for i, r in enumerate(offset) if i % 2 == 0)
+            ends = tuple(r for i, r in enumerate(offset) if i % 2 == 1)
+            pkey_offsets.append(([starts], [ends]))
+
+    return pkey_offsets
 
 
 def check_user_privileges(conn, username, schema, table, required_privileges=[]):

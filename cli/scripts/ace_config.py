@@ -9,12 +9,12 @@ from datetime import timedelta
 
 # ==============================================================================
 # Postgres options
-STATEMENT_TIMEOUT = 60_000  # in milliseconds
+STATEMENT_TIMEOUT = 0  # in milliseconds
 CONNECTION_TIMEOUT = 10  # in seconds
 
 
 #  Default values for ACE table-diff
-MAX_DIFF_ROWS = 10_000
+MAX_DIFF_ROWS = 100_000
 MIN_DIFF_BLOCK_SIZE = 1000
 MAX_DIFF_BLOCK_SIZE = 100_000
 DIFF_BLOCK_SIZE = os.environ.get("ACE_DIFF_BLOCK_SIZE", 10_000)

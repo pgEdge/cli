@@ -19,7 +19,6 @@ from tqdm import tqdm
 import ace
 import ace_db
 import ace_html_reporter
-from ace_sql import GET_PKEY_OFFSETS
 import cluster
 import util
 import ace_config as config
@@ -539,6 +538,8 @@ def table_diff(td_task: TableDiffTask, skip_all_checks: bool = False):
         )
         return
 
+    print("Estimated row count:", row_count)
+
     util.message(
         "Getting primary key offsets for table...",
         p_state="info",
@@ -553,30 +554,35 @@ def table_diff(td_task: TableDiffTask, skip_all_checks: bool = False):
     # If we don't have enough blocks to keep all CPUs busy, use fewer processes
     procs = max_procs if total_blocks > max_procs else total_blocks
 
+    sample_method = "BERNOULLI"
+
     if (row_count > 10**4) and (not td_task.table_filter):
         if row_count <= 10**5:
             sample_percent = 10
         elif row_count <= 10**6:
             sample_percent = 1
         elif row_count <= 10**8:
+            sample_method = "SYSTEM"
             sample_percent = 0.1
         else:
+            sample_method = "SYSTEM"
             sample_percent = 0.01
+
+        print(f"Using {sample_method} sampling with {sample_percent}% of rows")
 
         try:
             ref_cur = conn_with_max_rows.cursor()
-            ref_cur.execute(
-                sql.SQL(GET_PKEY_OFFSETS).format(
-                    schema=sql.Identifier(td_task.fields.l_schema),
-                    table=sql.Identifier(td_task.fields.l_table),
-                    key=sql.SQL(", ").join(
-                        [sql.Identifier(col) for col in td_task.fields.key.split(",")]
-                    ),
-                    num_blocks=total_blocks,
-                    sample_percent=sample_percent,
-                )
+            offsets_query = ace.generate_pkey_offsets_query(
+                schema=td_task.fields.l_schema,
+                table=td_task.fields.l_table,
+                key_columns=td_task.fields.key.split(","),
+                table_sample_method=sample_method,
+                sample_percent=sample_percent,
+                ntile_count=total_blocks,
             )
-            pkey_offsets = ref_cur.fetchall()
+            ref_cur.execute(offsets_query)
+            raw_offsets = ref_cur.fetchall()
+            pkey_offsets = ace.process_pkey_offsets(raw_offsets)
         except Exception as e:
             context = {
                 "total_rows": total_rows,
