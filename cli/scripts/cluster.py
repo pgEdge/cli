@@ -719,7 +719,7 @@ def json_create(
     cluster_name, num_nodes, db, usr, passwd, pg_ver=None, port=None, force=False
 ):
     """
-    Create a Cluster Configuration JSON file with options for HA, BackRest, and Spock.
+    Create a Cluster Configuration JSON file with options for pgBackRest and Spock.
 
     Usage:
         ./pgedge cluster json-create CLUSTER_NAME NUM_NODES DB USR PASSWD [pg_ver=PG_VERSION] [--port PORT]
@@ -845,7 +845,7 @@ def json_create(
                 pg_input = str(pg_version_int)
             else:
                 pg_input = (
-                    input(f"PostgreSQL version {pgs} [default: {pg_ver}]: ").strip()
+                    input(f"PostgreSQL version {pgs} (default: '{pg_default}'): ").strip()
                     or pg_default
                 )
 
@@ -864,7 +864,7 @@ def json_create(
         while True:
             spock_version = (
                 input(
-                    f"Spock version (e.g., {spocks}) or press Enter for default: "
+                    f"Spock version {spocks} (default: '{spock_default}'): "
                 ).strip()
                 or spock_default
             )
@@ -896,7 +896,7 @@ def json_create(
         backrest_enabled = False
     else:
         backrest_enabled_input = (
-            input("Do you want to enable BackRest for this cluster? (Y/N): ")
+            input("Enable pgBackRest? (Y/N) (default: 'N'): ")
             .strip()
             .lower()
         )
@@ -905,11 +905,11 @@ def json_create(
     # Initialize backrest_json based on user input
     if backrest_enabled:
         backrest_storage_path = (
-            input("   pgBackRest storage path (default: /var/lib/pgbackrest): ").strip()
+            input("   pgBackRest storage path (default: '/var/lib/pgbackrest'): ").strip()
             or "/var/lib/pgbackrest"
         )
         backrest_archive_mode = (
-            input("   pgBackRest archive mode (on/off) (default: on): ").strip().lower()
+            input("   pgBackRest archive mode (on/off) (default: 'on'): ").strip().lower()
             or "on"
         )
         if backrest_archive_mode not in ["on", "off"]:
@@ -918,14 +918,14 @@ def json_create(
             )
          # Optionally, ask for repo1_type or default to posix
         repo1_type = (
-            input("   pgBackRest repository type (posix/s3) (default: posix): ")
+            input("   pgBackRest repository type (posix/s3) (default: 'posix'): ")
             .strip()
             .lower()
             or "posix"
         )
         if repo1_type not in ["posix", "s3"]:
             util.exit_message(
-                "Invalid BackRest repository type. Allowed values are 'posix' or 's3'."
+                "Invalid pgBackRest repository type. Allowed values are 'posix' or 's3'."
             )
         backrest_json = {
             "stanza": "demo_stanza",
@@ -959,13 +959,13 @@ def json_create(
         else:
             public_ip = (
                 input(
-                    f"  Public IP address for Node {n} (leave blank for default '{default_ip}'): "
+                    f"  Public IP address for Node {n} (default: '{default_ip}'): "
                 ).strip()
                 or default_ip
             )
             private_ip = (
                 input(
-                    f"  Private IP address for Node {n} (leave blank to use public IP '{public_ip}'): "
+                    f"  Private IP address for Node {n} (default: '{public_ip}'): "
                 ).strip()
                 or public_ip
             )
@@ -984,7 +984,7 @@ def json_create(
             node_default_port = default_port
             while True:
                 node_port_input = input(
-                    f"  PostgreSQL port for Node {n} (leave blank for default '{node_default_port}'): "
+                    f"  PostgreSQL port for Node {n} (default: '{node_default_port}'): "
                 ).strip()
                 if not node_port_input:
                     node_port = node_default_port
@@ -1040,13 +1040,13 @@ def json_create(
 
                 public_ip = (
                     input(
-                        f"    Public IP address of replica Node {i} (leave blank for default '{default_ip}'): "
+                        f"    Public IP address of replica Node {i} (default: '{default_ip}'): "
                     ).strip()
                     or default_ip
                 )
                 private_ip = (
                     input(
-                        f"    Private IP address of replica Node {i} (leave blank to use public IP '{public_ip}'): "
+                        f"    Private IP address of replica Node {i} (default: '{public_ip}'): "
                     ).strip()
                     or public_ip
                 )
@@ -1055,7 +1055,7 @@ def json_create(
 
                 while True:
                     replica_port_input = input(
-                        f"    PostgreSQL port of replica Node {i} (leave blank for default '{current_replica_port}'): "
+                        f"    PostgreSQL port of replica Node {i} (default: '{current_replica_port}'): "
                     ).strip()
                     if not replica_port_input:
                         replica_port = current_replica_port
@@ -1171,27 +1171,27 @@ def json_create(
     bold_end = "\033[0m"
 
     print("\n" + "#" * 80)
-    print(
-        f"#     {bold_start}Version{bold_end}        : pgEdge 24.10-5 (Constellation)"
-    )
-    print(f"# {bold_start}User & Host{bold_end}        : {os_user}    {os.getcwd()}")
-    print(
-        f"#          {bold_start}OS{bold_end}        : Linux, Python {sys.version.split()[0]}"
-    )
-    print(f"#     {bold_start}Machine{bold_end}        : N/A")
-    print(f"#    {bold_start}Repo URL{bold_end}        : N/A")
-    print(f"# {bold_start}Last Update{bold_end}        : None")
     print(f"# {bold_start}Cluster Name{bold_end}       : {cluster_name}")
     print(f"# {bold_start}PostgreSQL Version{bold_end} : {pg_version_int}")
     print(
         f"# {bold_start}Spock Version{bold_end}      : {spock_version if spock_version else 'Not specified'}"
     )
+    print(f"# {bold_start}Number of Nodes{bold_end}    : {num_nodes}")
+    print(f"# {bold_start}Database Name{bold_end}      : {db}")
+    print(f"# {bold_start}User{bold_end}               : {usr}")
     print(
-        f"# {bold_start}HA Cluster{bold_end}         : {'Yes' if is_ha_cluster else 'No'}"
+        f"# {bold_start}pgBackRest Enabled{bold_end} : {'Yes' if backrest_enabled else 'No'}"
     )
-    print(
-        f"# {bold_start}BackRest Enabled{bold_end}   : {'Yes' if backrest_enabled else 'No'}"
-    )
+    if backrest_enabled:
+        print(f"#    {bold_start}Storage Path{bold_end}    : {backrest_storage_path}")
+        print(f"#    {bold_start}Archive Mode{bold_end}    : {backrest_archive_mode}")
+        print(f"#    {bold_start}Repository Type{bold_end} : {repo1_type}")
+    for idx, node in enumerate(node_groups, start=1):
+        print(f"# {bold_start}Node {idx}{bold_end}")
+        print(f"#    {bold_start}Public IP{bold_end}       : {node['public_ip']}")
+        print(f"#    {bold_start}Private IP{bold_end}      : {node['private_ip']}")
+        print(f"#    {bold_start}Port{bold_end}            : {node['port']}")
+    
     print("#" * 80)
 
     if not force:
