@@ -1,5 +1,6 @@
 from concurrent.futures import ThreadPoolExecutor
 from itertools import combinations, zip_longest
+import json
 from multiprocessing import Manager
 from datetime import datetime
 import traceback
@@ -27,6 +28,7 @@ from ace_sql import (
     ESTIMATE_ROW_COUNT,
     GET_PKEY_TYPE,
     GET_ROW_COUNT_ESTIMATE,
+    UPDATE_LEAF_HASHES,
     UPDATE_METADATA,
     COMPUTE_LEAF_HASHES,
     BUILD_PARENT_NODES,
@@ -147,18 +149,18 @@ def compute_block_hashes(shared_objects, worker_state, args):
 
     try:
         cur = worker_state["cur"]
-        conn = worker_state["conn"]
 
+        # TODO: It's redundant to first get the node_position, and then pass it back.
+        # I'll change it soon
         params = {
-            "node_position": block_boundary.block_id,
             "range_start": block_boundary.block_start,
             "range_end": block_boundary.block_end,
         }
 
         cur.execute(sql_query, params)
-        results = cur.fetchall()
+        leaf_hash = cur.fetchone()[0]
 
-        if not results:
+        if not leaf_hash:
             msg = (
                 f"No hash computed for block {block_boundary.block_id} "
                 f"(range: {block_boundary.block_start} "
@@ -166,14 +168,14 @@ def compute_block_hashes(shared_objects, worker_state, args):
             )
             raise AceException(msg)
 
-        # TODO: Can we delay committing here? Would it be better to commit
-        # after a batch of blocks have been processed?
-        conn.commit()
-        return results
+        result = {
+            "node_position": block_boundary.block_id,
+            "leaf_hash": leaf_hash,
+        }
+
+        return result
 
     except Exception as e:
-        conn.rollback()
-
         msg = (
             f"Error computing hash for block {block_boundary.block_id} "
             f"(start: {block_boundary.block_start}, "
@@ -342,82 +344,78 @@ def build_mtree(mtree_task: MerkleTreeTask) -> None:
     key = mtree_task.fields.key
     total_rows = 0
     num_blocks = 0
+    block_ranges = mtree_task.ranges
 
-    for node in mtree_task.fields.cluster_nodes:
-        _, conn = mtree_task.connection_pool.get_cluster_node_connection(node)
-        try:
-            total_rows, num_blocks = get_row_estimate(
-                conn, schema, table, analyse=mtree_task.analyse
-            )
+    if not block_ranges:
+        for node in mtree_task.fields.cluster_nodes:
+            _, conn = mtree_task.connection_pool.get_cluster_node_connection(node)
+            try:
+                total_rows, num_blocks = get_row_estimate(
+                    conn, schema, table, analyse=mtree_task.analyse
+                )
 
-            create_mtree_objects(
-                conn,
-                schema,
-                table,
-                key,
-                total_rows,
-                num_blocks,
-                recreate_objects=mtree_task.recreate_objects,
-            )
+                if num_blocks > max_blocks:
+                    max_blocks = num_blocks
+                    ref_node = node
+            except Exception as e:
+                conn.rollback()
+                traceback.print_exc()
+                raise AceException(
+                    f"Error creating mtree objects on {node['name']}: {str(e)}"
+                )
 
-            if num_blocks > max_blocks:
-                max_blocks = num_blocks
-                ref_node = node
-        except Exception as e:
-            conn.rollback()
-            traceback.print_exc()
-            raise AceException(
-                f"Error creating mtree objects on {node['name']}: {str(e)}"
-            )
+        print(f"Using node {ref_node['name']} as the reference node")
 
-    print(f"Using node {ref_node['name']} as the reference node")
+        block_ranges = []
 
-    block_ranges = []
-
-    # Now let's compute the block ranges on the reference node
-    msg = (
-        f"Calculating block ranges for {max_blocks:,} blocks " f"(~{total_rows:,} rows)"
-    )
-    print(msg)
-
-    # Calculate sample size based on total rows
-    # Tablesample may be an efficient workaround for getting the block ranges,
-    # but it is still very expensive for large tables.
-    # So, here's what we'll do:
-    # If total rows > 1B, we'll sample 0.01% of the rows
-    # If total rows > 100M, we'll sample 0.1% of the rows
-    # Otherwise, we'll sample 1% of the rows
-    sample_percent = (
-        0.01 if total_rows > 500_000_000 else 0.1 if total_rows > 50_000_000 else 1.0
-    )
-
-    table_sample_method = "BERNOULLI" if total_rows < BERNOULLI_THRESHOLD else "SYSTEM"
-
-    print(f"Using {table_sample_method} with sample percent {sample_percent}")
-
-    _, conn = mtree_task.connection_pool.get_cluster_node_connection(ref_node)
-
-    offsets_query = ace.generate_pkey_offsets_query(
-        schema=schema,
-        table=table,
-        key_columns=key.split(","),
-        table_sample_method=table_sample_method,
-        sample_percent=sample_percent,
-        ntile_count=max_blocks,
-    )
-
-    with conn.cursor() as cur:
-        cur.execute(offsets_query)
-        offsets = cur.fetchall()
-        block_ranges = process_block_ranges(offsets)
-
-        cur.executemany(
-            sql.SQL(INSERT_BLOCK_RANGES).format(
-                mtree_table=sql.Identifier(f"ace_mtree_{schema}_{table}"),
-            ),
-            block_ranges,
+        # Now let's compute the block ranges on the reference node
+        msg = (
+            f"Calculating block ranges for {max_blocks:,} blocks "
+            f"(~{total_rows:,} rows)"
         )
-        conn.commit()
+        print(msg)
+
+        # Calculate sample size based on total rows
+        # Tablesample may be an efficient workaround for getting the block ranges,
+        # but it is still very expensive for large tables.
+        # So, here's what we'll do:
+        # If total rows > 1B, we'll sample 0.01% of the rows
+        # If total rows > 100M, we'll sample 0.1% of the rows
+        # Otherwise, we'll sample 1% of the rows
+        sample_percent = (
+            0.01
+            if total_rows > 500_000_000
+            else 0.1 if total_rows > 50_000_000 else 1.0
+        )
+
+        table_sample_method = (
+            "BERNOULLI" if total_rows < BERNOULLI_THRESHOLD else "SYSTEM"
+        )
+
+        print(f"Using {table_sample_method} with sample percent {sample_percent}")
+
+        _, conn = mtree_task.connection_pool.get_cluster_node_connection(ref_node)
+
+        offsets_query = ace.generate_pkey_offsets_query(
+            schema=schema,
+            table=table,
+            key_columns=key.split(","),
+            table_sample_method=table_sample_method,
+            sample_percent=sample_percent,
+            ntile_count=max_blocks,
+        )
+
+        with conn.cursor() as cur:
+            cur.execute(offsets_query)
+            offsets = cur.fetchall()
+            block_ranges = process_block_ranges(offsets)
+
+    if mtree_task.write_ranges:
+        filename = f"ace_mtree_{schema}_{table}_ranges.json"
+        with open(filename, "w") as f:
+            json.dump(block_ranges, f)
+
+        print(f"\nBlock ranges written to {util.set_colour(filename, 'blue')}")
 
     # We're ready to build the merkle tree
     schema_table = f"{schema}.{table}"
@@ -427,15 +425,24 @@ def build_mtree(mtree_task: MerkleTreeTask) -> None:
         print(f"\nProcessing node: {node['name']}")
         _, conn = mtree_task.connection_pool.get_cluster_node_connection(node)
 
+        create_mtree_objects(
+            conn,
+            schema,
+            table,
+            key,
+            total_rows,
+            num_blocks,
+            recreate_objects=mtree_task.recreate_objects,
+        )
+
         try:
             with conn.cursor() as cur:
-                if node != ref_node:
-                    cur.executemany(
-                        sql.SQL(INSERT_BLOCK_RANGES).format(
-                            mtree_table=sql.Identifier(f"ace_mtree_{schema}_{table}"),
-                        ),
-                        block_ranges,
-                    )
+                cur.executemany(
+                    sql.SQL(INSERT_BLOCK_RANGES).format(
+                        mtree_table=sql.Identifier(f"ace_mtree_{schema}_{table}"),
+                    ),
+                    block_ranges,
+                )
                 # Committing is necessary here since the workers use their own
                 # connections and cursors
                 conn.commit()
@@ -484,6 +491,8 @@ def build_mtree(mtree_task: MerkleTreeTask) -> None:
                 "task": mtree_task,
             }
 
+            results = []
+
             with WorkerPool(
                 n_jobs=n_jobs,
                 shared_objects=shared_objects,
@@ -507,11 +516,20 @@ def build_mtree(mtree_task: MerkleTreeTask) -> None:
                         f"Failed to compute hashes for {len(failed)} blocks"
                     )
 
-            print("\nBuilding parent nodes...")
-
             # Let's just use a new conn here to be safe
             _, new_conn = mtree_task.connection_pool.get_cluster_node_connection(node)
             parent_cur = new_conn.cursor()
+
+            print("\nUpdating leaf nodes with computed hashes...")
+
+            parent_cur.executemany(
+                sql.SQL(UPDATE_LEAF_HASHES).format(
+                    mtree_table=sql.Identifier(f"ace_mtree_{schema}_{table}"),
+                ),
+                results,
+            )
+
+            print("\nBuilding parent nodes...")
 
             parent_cur.execute(
                 sql.SQL(

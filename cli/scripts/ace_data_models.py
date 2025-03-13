@@ -271,6 +271,9 @@ class MerkleTreeTask:
     output: str
     quiet_mode: bool
 
+    ranges: list = None
+    write_ranges: bool = False
+    ranges_file: str = None
     row_estimate: int = 0
     invoke_method: str = "cli"
 

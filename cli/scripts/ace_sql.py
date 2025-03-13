@@ -417,17 +417,48 @@ COMPUTE_LEAF_HASHES = """
             ) as leaf_hash
         FROM block_rows
     )
+    SELECT leaf_hash
+    FROM block_hash;
+"""
+
+UPDATE_LEAF_HASHES = """
     UPDATE {mtree_table} mt
     SET
-        leaf_hash = block_hash.leaf_hash,
-        node_hash = block_hash.leaf_hash,
+        leaf_hash = %(leaf_hash)s,
+        node_hash = %(leaf_hash)s,
         last_modified = current_timestamp
-    FROM block_hash
-    WHERE mt.node_position = %(node_position)s
+    WHERE node_position = %(node_position)s
     AND mt.node_level = 0
     RETURNING mt.node_position;
 """
 
+# COMPUTE_LEAF_HASHES = """
+#     WITH block_rows AS (
+#             SELECT *
+#             FROM {schema}.{table}
+#             WHERE {key} >= %(range_start)s
+#             AND ({key} < %(range_end)s OR %(range_end)s IS NULL)
+#         ),
+#     row_hashes AS (
+#         SELECT
+#             CAST(
+#                 CAST(
+#                     'x' || MD5(
+#                         {concat_columns}
+#                     ) AS BIT(64)
+#                 ) AS BIGINT
+#             ) AS row_hash
+#         FROM block_rows
+#         )
+#     SELECT
+#         COALESCE(
+#             CAST(
+#                 BIT_XOR(row_hash) AS VARCHAR
+#             ),
+#             'EMPTY_BLOCK'
+#         ) AS leaf_hash
+#     FROM row_hashes;
+# """
 # NUMERIC_TO_BYTEA = """
 # CREATE OR REPLACE FUNCTION numeric_to_bytea(n numeric, byte_length int)
 # RETURNS bytea AS $$

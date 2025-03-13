@@ -648,6 +648,8 @@ def table_diff(td_task: TableDiffTask, skip_all_checks: bool = False):
     # We're done with getting table metadata. Closing all connections.
     for conn in conn_list:
         conn.close()
+    
+    td_task.connection_pool.close_all()
 
     start_time = datetime.now()
 
@@ -702,6 +704,7 @@ def table_diff(td_task: TableDiffTask, skip_all_checks: bool = False):
             n_jobs=procs,
             shared_objects=shared_objects,
             use_worker_state=True,
+            start_method="spawn",
         ) as pool:
             for result in pool.imap_unordered(
                 compare_checksums,

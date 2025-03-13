@@ -29,6 +29,8 @@ def merkle_tree_cli(
     block_rows=config.MTREE_BLOCK_SIZE,
     max_cpu_ratio=config.MAX_CPU_RATIO,
     batch_size=1,
+    write_ranges=False,
+    ranges_file=None,
     nodes="all",
     output="json",
     quiet_mode=False,
@@ -49,6 +51,8 @@ def merkle_tree_cli(
             batch_size=batch_size,
             output=output,
             quiet_mode=quiet_mode,
+            write_ranges=write_ranges,
+            ranges_file=ranges_file,
             _nodes=nodes,
             invoke_method="cli",
         )

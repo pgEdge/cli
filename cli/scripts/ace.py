@@ -1009,6 +1009,28 @@ def validate_merkle_tree_inputs(mtree_task: MerkleTreeTask) -> None:
     mtree_task.recreate_objects = parse_bool_field(
         "recreate_objects", mtree_task.recreate_objects
     )
+    mtree_task.write_ranges = parse_bool_field("write_ranges", mtree_task.write_ranges)
+
+    if mtree_task.ranges_file:
+        if not os.path.exists(mtree_task.ranges_file):
+            raise AceException(f"File {mtree_task.ranges_file} does not exist")
+
+        try:
+            block_ranges = ast.literal_eval(open(mtree_task.ranges_file, "r").read())
+            if not block_ranges:
+                raise AceException(
+                    f"Ranges file {mtree_task.ranges_file} is empty or invalid"
+                )
+            for block_range in block_ranges:
+                if len(block_range) != 3:
+                    raise AceException(
+                        f"Range {block_range} must be of form (block_id, start, end)"
+                    )
+            mtree_task.ranges = block_ranges
+        except Exception as e:
+            raise AceException(
+                f"Error parsing ranges file {mtree_task.ranges_file}: {e}"
+            )
 
     node_list = []
     try:
