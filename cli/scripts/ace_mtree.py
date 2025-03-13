@@ -411,7 +411,9 @@ def build_mtree(mtree_task: MerkleTreeTask) -> None:
             block_ranges = process_block_ranges(offsets)
 
     if mtree_task.write_ranges:
-        filename = f"ace_mtree_{schema}_{table}_ranges.json"
+        filename = (
+            f"{datetime.now().strftime('%Y%m%d_%H%M%S')}_{schema}_{table}_ranges.json"
+        )
         with open(filename, "w") as f:
             json.dump(block_ranges, f)
 
@@ -1348,12 +1350,14 @@ def update_mtree(mtree_task: MerkleTreeTask, skip_all_checks=False) -> None:
 
                 affected_positions = []
                 for block in tqdm(blocks_to_update, desc="Recomputing leaf hashes"):
+                    node_position, range_start, range_end = block
                     params = {
-                        "node_position": block[0],
-                        "range_start": block[1],
-                        "range_end": block[2],
+                        "node_position": node_position,
+                        "range_start": range_start,
+                        "range_end": range_end,
                     }
 
+                    # TODO: Simplify both of these into a single query
                     cur.execute(
                         sql.SQL(COMPUTE_LEAF_HASHES).format(
                             schema=sql.Identifier(schema),
@@ -1364,9 +1368,20 @@ def update_mtree(mtree_task: MerkleTreeTask, skip_all_checks=False) -> None:
                         ),
                         params,
                     )
-                    result = cur.fetchone()
-                    if result:
-                        affected_positions.append(result[0])
+                    result = cur.fetchone()[0]
+                    args = {
+                        "leaf_hash": result,
+                        "node_position": node_position,
+                    }
+                    cur.execute(
+                        sql.SQL(UPDATE_LEAF_HASHES).format(
+                            mtree_table=sql.Identifier(
+                                f"ace_mtree_{schema}_{table}"
+                            ),
+                        ),
+                        args,
+                    )
+                    affected_positions.append(node_position)
 
                 if affected_positions:
                     cur.execute(
