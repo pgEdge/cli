@@ -24,9 +24,10 @@ fi
 ./devel/startHTTP.sh
 
 echo "Waiting for Python HTTP server to start..."
-while ! nc -z localhost 8000; do
-  sleep 1  # Check every second
+while ! ss -tln | grep -q ':8000'; do 
+ sleep 1; 
 done
+
 
 echo "HTTP server is up!"
 
