@@ -1043,11 +1043,8 @@ def validate_merkle_tree_inputs(mtree_task: MerkleTreeTask) -> None:
 
     if len(node_list) > 3:
         raise AceException(
-            "table-diff currently supports up to a three-way table comparison"
+            "mtree-diff currently supports up to a three-way table comparison"
         )
-
-    if mtree_task._nodes != "all" and len(node_list) == 1:
-        raise AceException("table-diff needs at least two nodes to compare")
 
     found = check_cluster_exists(mtree_task.cluster_name)
     if found:
