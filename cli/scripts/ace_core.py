@@ -44,7 +44,7 @@ def run_query(worker_state, host, query):
 
 # FIXME: Replace with td_task.connection_pool.connect() after merkle trees
 # PR is merged
-def init_conn_pool(shared_objects, worker_state):
+def init_conn_pool(worker_id, shared_objects, worker_state):
 
     task = shared_objects["task"]
 
@@ -66,7 +66,7 @@ def init_conn_pool(shared_objects, worker_state):
 
 # Ignore the type checker warning for shared_objects.
 # It is unused in this function, but is required by the mpire library.
-def close_conn_pool(shared_objects, worker_state):
+def close_conn_pool(worker_id, shared_objects, worker_state):
     try:
         for host, cur in worker_state.items():
             conn = cur.connection
@@ -117,7 +117,7 @@ def create_result_dict(
     }
 
 
-def compare_checksums(shared_objects, worker_state, batches):
+def compare_checksums(worker_id, shared_objects, worker_state, batches):
     p_key = shared_objects["p_key"]
     schema_name = shared_objects["schema_name"]
     table_name = shared_objects["table_name"]
@@ -705,6 +705,7 @@ def table_diff(td_task: TableDiffTask, skip_all_checks: bool = False):
             shared_objects=shared_objects,
             use_worker_state=True,
             start_method="spawn",
+            pass_worker_id=True,
         ) as pool:
             for result in pool.imap_unordered(
                 compare_checksums,

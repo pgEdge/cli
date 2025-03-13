@@ -3,6 +3,7 @@ from itertools import combinations, zip_longest
 import json
 from multiprocessing import Manager
 from datetime import datetime
+import pdb
 import traceback
 import os
 from typing import Tuple, Any
@@ -1643,12 +1644,13 @@ def get_pkey_batches(node1_conn, node2_conn, schema, table, mismatched_positions
         if interval_in_union(s, e, all_ranges):
             slices.append((s, e))
 
-    # We always need the last boundary to be (max_key, None), otherwise,
-    # we risk missing diffs.
-    last_boundary = boundaries[-1] if boundaries else None
+    # TODO: Fix this!
+    # # We always need the last boundary to be (max_key, None), otherwise,
+    # # we risk missing diffs.
+    # last_boundary = boundaries[-1] if boundaries else None
 
-    if last_boundary is not None:
-        slices.append((last_boundary, None))
+    # if last_boundary is not None:
+    #     slices.append((last_boundary, None))
 
     batches = []
     for start, end in slices:
@@ -1672,7 +1674,7 @@ def interval_in_union(s, e, intervals):
     return False
 
 
-def compare_ranges(shared_objects, worker_state, work_item):
+def compare_ranges(worker_id, shared_objects, worker_state, work_item):
     p_key = shared_objects["p_key"]
     schema_name = shared_objects["schema_name"]
     table_name = shared_objects["table_name"]
@@ -2059,6 +2061,8 @@ def merkle_tree_diff(mtree_task: MerkleTreeTask) -> None:
 
         print(f"\nProcessing {len(work_items)} batch chunks across all node pairs")
 
+        mtree_task.connection_pool.close_all()
+
         max_workers = int(os.cpu_count() * mtree_task.max_cpu_ratio)
         n_jobs = min(len(work_items), max_workers)
         stop_event = Manager().Event()
@@ -2077,6 +2081,7 @@ def merkle_tree_diff(mtree_task: MerkleTreeTask) -> None:
             n_jobs=n_jobs,
             shared_objects=shared_objects,
             use_worker_state=True,
+            pass_worker_id=True,
         ) as pool:
             for result in pool.imap_unordered(
                 compare_ranges,
