@@ -3,7 +3,6 @@ from itertools import combinations, zip_longest
 import json
 from multiprocessing import Manager
 from datetime import datetime
-import pdb
 import traceback
 import os
 from typing import Tuple, Any
@@ -1358,6 +1357,43 @@ def update_mtree(mtree_task: MerkleTreeTask, skip_all_checks=False) -> None:
                         "range_end": range_end,
                     }
 
+                    # Hitting this case would mean that the last block was updated,
+                    # but splitting wasn't necessary. In this case, we need to update
+                    # the range_end to the maximum value of the key.
+                    if range_end is None:
+                        cur.execute(
+                            sql.SQL(
+                                """
+                                SELECT max({key})
+                                FROM {schema}.{table}
+                                WHERE {key} >= %s
+                                """
+                            ).format(
+                                schema=sql.Identifier(schema),
+                                table=sql.Identifier(table),
+                                key=sql.Identifier(key),
+                            ),
+                            (range_start,),
+                        )
+                        max_val = cur.fetchone()[0]
+                        if max_val is not None:
+                            end = max_val
+                            cur.execute(
+                                sql.SQL(
+                                    """
+                                    UPDATE {mtree_table}
+                                    SET range_end = %s
+                                    WHERE node_level = 0
+                                    AND node_position = %s
+                                    """
+                                ).format(
+                                    mtree_table=sql.Identifier(
+                                        f"ace_mtree_{schema}_{table}"
+                                    ),
+                                ),
+                                (end, node_position),
+                            )
+
                     # TODO: Simplify both of these into a single query
                     cur.execute(
                         sql.SQL(COMPUTE_LEAF_HASHES).format(
@@ -1376,9 +1412,7 @@ def update_mtree(mtree_task: MerkleTreeTask, skip_all_checks=False) -> None:
                     }
                     cur.execute(
                         sql.SQL(UPDATE_LEAF_HASHES).format(
-                            mtree_table=sql.Identifier(
-                                f"ace_mtree_{schema}_{table}"
-                            ),
+                            mtree_table=sql.Identifier(f"ace_mtree_{schema}_{table}"),
                         ),
                         args,
                     )
@@ -1706,7 +1740,7 @@ def compare_ranges(worker_id, shared_objects, worker_state, work_item):
                 )
             if pkey2[0] is not None:
                 where_clause_parts.append(
-                    sql.SQL("{p_key} < {pkey2}").format(
+                    sql.SQL("{p_key} <= {pkey2}").format(
                         p_key=sql.Identifier(p_key), pkey2=sql.Literal(pkey2[0])
                     )
                 )
@@ -1722,7 +1756,7 @@ def compare_ranges(worker_id, shared_objects, worker_state, work_item):
                 )
             if pkey2[0] is not None:
                 where_clause_parts.append(
-                    sql.SQL("({p_key}) < ({pkey2})").format(
+                    sql.SQL("({p_key}) <= ({pkey2})").format(
                         p_key=sql.SQL(", ").join(
                             [sql.Identifier(col.strip()) for col in p_key.split(",")]
                         ),
@@ -1757,7 +1791,7 @@ def compare_ranges(worker_id, shared_objects, worker_state, work_item):
                 )
             if max_key is not None:
                 where_clause_parts.append(
-                    sql.SQL("{p_key} < {max_key}").format(
+                    sql.SQL("{p_key} <= {max_key}").format(
                         p_key=sql.Identifier(p_key), max_key=sql.Literal(max_key)
                     )
                 )
@@ -1792,7 +1826,7 @@ def compare_ranges(worker_id, shared_objects, worker_state, work_item):
 
                 if pkey2 is not None:
                     and_clauses.append(
-                        sql.SQL("({p_key}) < ({pkey2})").format(
+                        sql.SQL("({p_key}) <= ({pkey2})").format(
                             p_key=sql.SQL(", ").join(
                                 [
                                     sql.Identifier(col.strip())
@@ -1922,6 +1956,7 @@ def merkle_tree_diff(mtree_task: MerkleTreeTask) -> None:
     simple_primary_key = len(key.split(",")) == 1
 
     diff_dict = {}
+    lookup_dict = {}
     errors = False
     mismatch = False
     total_diffs = 0
@@ -2108,10 +2143,40 @@ def merkle_tree_diff(mtree_task: MerkleTreeTask) -> None:
                     for node_pair, node_diffs in result["diffs"].items():
                         if node_pair not in diff_dict:
                             diff_dict[node_pair] = {}
+
+                        if node_pair not in lookup_dict:
+                            lookup_dict[node_pair] = {}
+
                         for node, diffs in node_diffs.items():
                             if node not in diff_dict[node_pair]:
                                 diff_dict[node_pair][node] = []
-                            diff_dict[node_pair][node].extend(diffs)
+
+                            if node not in lookup_dict[node_pair]:
+                                lookup_dict[node_pair][node] = set()
+
+                            if simple_primary_key:
+                                diff_dict[node_pair][node].extend(
+                                    diff
+                                    for diff in diffs
+                                    if diff[key] not in lookup_dict[node_pair][node]
+                                )
+                            else:
+                                diff_dict[node_pair][node].extend(
+                                    diff
+                                    for diff in diffs
+                                    if tuple(diff[key] for key in key.split(","))
+                                    not in lookup_dict[node_pair][node]
+                                )
+
+                            if simple_primary_key:
+                                lookup_dict[node_pair][node].update(
+                                    diff[key] for diff in diffs
+                                )
+                            else:
+                                lookup_dict[node_pair][node].update(
+                                    tuple(diff[key] for key in key.split(","))
+                                    for diff in diffs
+                                )
 
                     total_diffs += result["total_diffs"]
                     if total_diffs >= config.MAX_DIFF_ROWS:
