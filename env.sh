@@ -1,5 +1,5 @@
-hubV=24.10.11
-hubVV=24.10-11
+hubV=24.10.12
+hubVV=24.10-12
 
 aceV=$hubV
 kirkV=$hubV
