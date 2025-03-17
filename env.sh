@@ -1,4 +1,4 @@
-hubV=25.0.0
+hubV=25.0.0-alpha1
 hubVV=25.0.0-alpha1
 
 aceV=$hubV
