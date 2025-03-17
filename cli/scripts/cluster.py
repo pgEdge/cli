@@ -1561,6 +1561,35 @@ def init(cluster_name, install=True):
                 etcd.configure_etcd(node, sub_nodes)
                 ha_patroni.configure_patroni(node, sub_nodes, db[0], db_settings)
 
+                
+def wait_for_db_ready(node, dbname, timeout=600, interval=2, verbose=False):
+    """
+    Wait until the database on the given node is ready to accept connections.
+    This helper repeatedly attempts a simple query until it succeeds.
+    
+    Args:
+        node (dict): The node information.
+        dbname (str): The database name.
+        timeout (int): Maximum time to wait in seconds.
+        interval (int): Time between retries in seconds.
+        verbose (bool): If True, print verbose output.
+    """
+    start_time = time.time()
+    while True:
+        # Use pgedge psql command (which expects two arguments: query and database)
+        cmd = f"{node['path']}/pgedge/pgedge psql 'select 1' {dbname}"
+        result = run_cmd(cmd, node=node, message="Waiting for DB readiness", verbose=verbose, capture_output=True)
+        if verbose:
+            print(result.stdout)
+        if "1" in result.stdout:
+            if verbose:
+                print("Database is ready!")
+            break
+        if time.time() - start_time > timeout:
+            util.exit_message("Timeout waiting for database to be ready.")
+        time.sleep(interval)
+
+        
 def add_node(
     cluster_name,
     source_node,
@@ -1572,58 +1601,53 @@ def add_node(
     install=True,
 ):
     """
-    Adds a new node to a cluster, copying configurations from a specified
-    source node.
-
+    Adds a new node to a cluster, copying configurations from a specified source node.
+    
+    This version performs full pgBackRest integration on both source and target nodes so that:
+      - Each node’s repo1 and restore paths end with its own node name.
+      - If no backup_id is provided, the target node restores from the latest backup on the source node.
+      - After restoration, the target node is reconfigured with its own BackRest settings.
+    
     Args:
-        cluster_name (str): The name of the cluster to which the node is being
-                            added.
-        source_node (str): The node from which configurations are copied.
-        target_node (str): The new node.
-        repo1_path (str): The repo1 path to use.
-        backup_id (str): Backup ID.
-        stanza (str): Stanza name.
-        script (str): Bash script.
+        cluster_name (str): The name of the cluster.
+        source_node (str): The name of the source (primary) node.
+        target_node (str): The name of the new (target) node.
+        repo1_path (str): Optional override for the repo1 path.
+        backup_id (str): Optional backup ID; if not provided, the latest source backup is used.
+        stanza (str): Optional stanza name. If blank, a unique one is generated per node.
+        script (str): Optional bash script to run.
+        install (bool): Whether to install pgEdge on the node.
     """
+    # Parameter check
     if (repo1_path and not backup_id) or (backup_id and not repo1_path):
         util.exit_message("Both repo1_path and backup_id must be supplied together.")
     json_validate(cluster_name)
     db, db_settings, nodes = load_json(cluster_name)
-
     cluster_data = get_cluster_json(cluster_name)
     if cluster_data is None:
         util.exit_message("Cluster data is missing.")
     pg = db_settings["pg_version"]
-    pgV = f"pg{pg}"
     verbose = cluster_data.get("log_level", "info")
-
-    # Load and validate the target node JSON
+    
+    # Load and validate target node JSON.
     target_node_file = f"{target_node}.json"
     if not os.path.isfile(target_node_file):
         util.exit_message(f"New node json file '{target_node_file}' not found")
-
     try:
         with open(target_node_file, "r") as f:
             target_node_data = json.load(f)
             json_validate_add_node(target_node_data)
     except Exception as e:
-        util.exit_message(
-            f"Unable to load new node json def file '{target_node_file}\n{e}"
-        )
-
-    # Retrieve source node data
-    source_node_data = next(
-        (node for node in nodes if node["name"] == source_node), None
-    )
+        util.exit_message(f"Unable to load new node json def file '{target_node_file}\n{e}")
+    
+    # Retrieve source node data.
+    source_node_data = next((node for node in nodes if node["name"] == source_node), None)
     if source_node_data is None:
         util.exit_message(f"Source node '{source_node}' not found in cluster data.")
-
+    
+    # Build new_node_data from target node JSON (assumes one node group).
     for group in target_node_data.get("node_groups", []):
         ssh_info = group.get("ssh")
-        backrest_info = group.get("backrest")
-        os_user = ssh_info.get("os_user", "")
-        ssh_key = ssh_info.get("private_key", "")
-
         new_node_data = {
             "ssh": ssh_info,
             "name": group.get("name", ""),
@@ -1632,37 +1656,20 @@ def add_node(
             "private_ip": group.get("private_ip", ""),
             "port": group.get("port", ""),
             "path": group.get("path", ""),
-            "os_user": os_user,
-            "ssh_key": ssh_key,
+            "os_user": ssh_info.get("os_user", ""),
+            "ssh_key": ssh_info.get("private_key", ""),
         }
-
+    # Preserve any BackRest settings defined in the target node JSON.
+    new_node_data["backrest"] = target_node_data.get("backrest", {})
+    
     if "public_ip" not in new_node_data and "private_ip" not in new_node_data:
-        util.exit_message(
-            "Both public_ip and private_ip are missing in target node data."
-        )
-
-    if "public_ip" in source_node_data and "private_ip" in source_node_data:
-        source_node_data["ip_address"] = source_node_data["public_ip"]
-    else:
-        source_node_data["ip_address"] = source_node_data.get(
-            "public_ip", source_node_data.get("private_ip")
-        )
-
-    if "public_ip" in new_node_data and "private_ip" in new_node_data:
-        new_node_data["ip_address"] = new_node_data["public_ip"]
-    else:
-        new_node_data["ip_address"] = new_node_data.get(
-            "public_ip", new_node_data.get("private_ip")
-        )
-
-    # Fetch backrest settings from cluster JSON
-    backrest_settings = source_node_data.get("backrest", {})
-
-    stanza = backrest_settings.get("stanza", f"pg{pg}")
-    repo1_retention_full = backrest_settings.get("repo1-retention-full", "7")
-    log_level_console = backrest_settings.get("log-level-console", "info")
-    repo1_cipher_type = backrest_settings.get("repo1-cipher-type", "aes-256-cbc")
-
+        util.exit_message("Both public_ip and private_ip are missing in target node data.")
+    
+    # Set ip_address fields.
+    source_node_data["ip_address"] = source_node_data.get("public_ip", source_node_data.get("private_ip"))
+    new_node_data["ip_address"] = new_node_data.get("public_ip", new_node_data.get("private_ip"))
+    
+    # (A) Install pgEdge on the target node.
     rc = ssh_install_pgedge(
         cluster_name,
         db[0]["db_name"],
@@ -1673,313 +1680,340 @@ def add_node(
         install,
         verbose,
     )
-
-    os_user = new_node_data["os_user"]
-    repo1_type = new_node_data.get("repo1_type", "posix")
-    port = source_node_data["port"]
-    pg1_path = f"{source_node_data['path']}/pgedge/data/pg{pg}"
-
-    if not repo1_path:
-        cmd = f"{source_node_data['path']}/pgedge/pgedge install backrest"
-        message = f"Installing backrest"
-        run_cmd(cmd, source_node_data, message=message, verbose=verbose)
-
-        repo1_path_default = f"/var/lib/pgbackrest/{source_node_data['name']}"
-
-        repo1_path = backrest_settings.get("repo1_path", f"{repo1_path_default}")
-
-        args = (
-            f"--repo1-path {repo1_path} --stanza {stanza} "
-            f"--pg1-path {pg1_path} --repo1-type {repo1_type} "
-            f"--log-level-console {log_level_console} --pg1-port {port} "
-            f"--db-socket-path /tmp --repo1-cipher-type {repo1_cipher_type}"
-        )
-
-        cmd = f"{source_node_data['path']}/pgedge/pgedge backrest command stanza-create '{args}'"
-        message = f"Creating stanza {stanza}"
-        run_cmd(cmd, source_node_data, message=message, verbose=verbose)
-
+    
+    # -----------------------------------------------------------------
+    # BackRest Integration Helper – sets BackRest configuration exactly like in init.
+    # This will be applied to both the source and target nodes.
+    # -----------------------------------------------------------------
+    def integrate_backrest(node, node_label):
+        # Determine a unique stanza name using the cluster name from JSON.
+        cluster_name_from_json = cluster_data.get("cluster_name", cluster_name)
+        local_stanza = stanza.strip()
+        if not local_stanza:
+            local_stanza = f"{cluster_name_from_json}_stanza_{node['name']}"
+        
+        # Load BackRest settings from node JSON with defaults.
+        backrest = node.get("backrest", {})
+        repo1_retention_full = backrest.get("repo1_retention_full", "7")
+        log_level_console = backrest.get("log_level_console", "info")
+        repo1_cipher_type = backrest.get("repo1_cipher-type", "aes-256-cbc")
+        repo1_type = backrest.get("repo1_type", "posix")
+    
+        # Determine repo1_path: use JSON value if provided, otherwise default.
+        json_repo1_path = backrest.get("repo1_path")
+        if json_repo1_path:
+            repo1_path_local = json_repo1_path.rstrip('/')
+            if not repo1_path_local.endswith(node["name"]):
+                repo1_path_local = repo1_path_local + f"/{node['name']}"
+        else:
+            repo1_path_local = f"/var/lib/pgbackrest/{node['name']}"
+    
+        # Determine restore_path and ensure it includes the node name.
+        restore_path = "/var/lib/pgbackrest_restore"
+        if not restore_path.rstrip('/').endswith(node["name"]):
+            restore_path = restore_path.rstrip('/') + f"/{node['name']}"
+    
+        pg_version = db_settings["pg_version"]
+        pg1_path = f"{node['path']}/pgedge/data/pg{pg_version}"
+        port = node["port"]
+        os_user = node.get("os_user", "postgres")
+    
+        util.message(f"## Integrating pgBackRest into node '{node['name']}' ({node_label})", "info")
+    
+        # -- Step 1: Install pgBackRest.
+        cmd = f"cd {node['path']}/pgedge && ./pgedge install backrest"
+        run_cmd(cmd, node=node, message="Installing pgBackRest", verbose=verbose)
+    
+        # -- Step 2: Configure postgresql.conf for BackRest (without --pg1-port).
         cmd = (
-            f"{source_node_data['path']}/pgedge/pgedge backrest set_postgresqlconf {stanza} "
-            f"{pg1_path} {repo1_path} {repo1_type}"
+            f"cd {node['path']}/pgedge && ./pgedge backrest set_postgresqlconf "
+            f"--stanza {local_stanza} "
+            f"--pg1-path {pg1_path} "
+            f"--repo1-path {repo1_path_local} "
+            f"--repo1-type {repo1_type}"
         )
-        message = f"Modifying postgresql.conf file"
-        run_cmd(cmd, source_node_data, message=message, verbose=verbose)
-
-        cmd = f"{source_node_data['path']}/pgedge/pgedge backrest set_hbaconf"
-        message = f"Modifying pg_hba.conf file"
-        run_cmd(cmd, source_node_data, message=message, verbose=verbose)
-
-        sql_cmd = "select pg_reload_conf()"
-        cmd = f"{source_node_data['path']}/pgedge/pgedge psql '{sql_cmd}' {db[0]['db_name']}"
-        message = f"Reload configuration pg_reload_conf()"
-        run_cmd(cmd, source_node_data, message=message, verbose=verbose)
-
-        args = args + f" --repo1-retention-full={repo1_retention_full} --type=full"
-        cmd = (
-            f"{source_node_data['path']}/pgedge/pgedge backrest command backup '{args}'"
-        )
-        message = f"Creating full backup"
-        run_cmd(cmd, source_node_data, message=message, verbose=verbose)
-    else:
-        cmd = (
-            f"{source_node_data['path']}/pgedge/pgedge backrest set_postgresqlconf {stanza} "
-            f"{pg1_path} {repo1_path} {repo1_type}"
-        )
-        message = f"Modifying postgresql.conf file"
-        run_cmd(cmd, source_node_data, message=message, verbose=verbose)
-
-        cmd = f"{source_node_data['path']}/pgedge/pgedge backrest set_hbaconf"
-        message = f"Modifying pg_hba.conf file"
-        run_cmd(cmd, source_node_data, message=message, verbose=verbose)
-
-        sql_cmd = "select pg_reload_conf()"
-        cmd = f"{source_node_data['path']}/pgedge/pgedge psql '{sql_cmd}' {db[0]['db_name']}"
-        message = f"Reload configuration pg_reload_conf()"
-        run_cmd(cmd, source_node_data, message=message, verbose=verbose)
-
-        repo1_type = new_node_data.get("repo1_type", "posix")
-        if repo1_type == "s3":
-            for env_var in [
+        run_cmd(cmd, node=node, message="Modifying postgresql.conf for BackRest", verbose=verbose)
+    
+        # -- Step 3: Configure pg_hba.conf for BackRest (without --pg1-port).
+        cmd = f"cd {node['path']}/pgedge && ./pgedge backrest set_hbaconf"
+        run_cmd(cmd, node=node, message="Modifying pg_hba.conf for BackRest", verbose=verbose)
+    
+        # -- Step 4: Reload PostgreSQL configuration.
+        sql_reload_conf = "select pg_reload_conf()"
+        cmd = f"cd {node['path']}/pgedge && ./pgedge psql '{sql_reload_conf}' {db[0]['db_name']}"
+        run_cmd(cmd, node=node, message="Reloading PostgreSQL configuration", verbose=verbose)
+    
+        # -- Step 5: If using S3 as repository, export necessary environment variables.
+        if repo1_type.lower() == "s3":
+            required_env_vars = [
                 "PGBACKREST_REPO1_S3_KEY",
                 "PGBACKREST_REPO1_S3_BUCKET",
                 "PGBACKREST_REPO1_S3_KEY_SECRET",
                 "PGBACKREST_REPO1_CIPHER_PASS",
-            ]:
-                if env_var not in os.environ:
-                    util.exit_message(f"Environment variable {env_var} not set.")
-            s3_export_cmds = [
-                f"export {env_var}={os.environ[env_var]}"
-                for env_var in [
-                    "PGBACKREST_REPO1_S3_KEY",
-                    "PGBACKREST_REPO1_S3_BUCKET",
-                    "PGBACKREST_REPO1_S3_KEY_SECRET",
-                    "PGBACKREST_REPO1_CIPHER_PASS",
-                ]
             ]
-            run_cmd(
-                " && ".join(s3_export_cmds),
-                source_node_data,
-                message="Setting S3 environment variables on source node",
-                verbose=verbose,
-            )
-            run_cmd(
-                " && ".join(s3_export_cmds),
-                new_node_data,
-                message="Setting S3 environment variables on target node",
-                verbose=verbose,
-            )
-
-    cmd = f"{new_node_data['path']}/pgedge/pgedge install backrest"
-    message = f"Installing backrest"
-    run_cmd(cmd, new_node_data, message=message, verbose=verbose)
-
-    manage_node(new_node_data, "stop", f"pg{pg}", verbose)
-    cmd = f'rm -rf {new_node_data["path"]}/pgedge/data/pg{pg}'
-    message = f"Removing old data directory"
-    run_cmd(cmd, new_node_data, message=message, verbose=verbose)
-
-    args = f"--repo1-path {repo1_path} --repo1-cipher-type {repo1_cipher_type} "
-
-    if backup_id:
-        args += f"--set={backup_id} "
-
-    cmd = (
-        f'{new_node_data["path"]}/pgedge/pgedge backrest command restore '
-        f"--repo1-type={repo1_type} --stanza={stanza} "
-        f'--pg1-path={new_node_data["path"]}/pgedge/data/pg{pg} {args}'
-    )
-
-    message = f"Restoring backup"
-    run_cmd(cmd, new_node_data, message=message, verbose=verbose)
-
-    pgd = f'{new_node_data["path"]}/pgedge/data/pg{pg}'
-    pgc = f"{pgd}/postgresql.conf"
-
-    cmd = f"echo \"ssl_cert_file='{pgd}/server.crt'\" >> {pgc}"
-    message = f"Setting ssl_cert_file"
-    run_cmd(cmd, new_node_data, message=message, verbose=verbose)
-
-    cmd = f"echo \"ssl_key_file='{pgd}/server.key'\" >> {pgc}"
-    message = f"Setting ssl_key_file"
-    run_cmd(cmd, new_node_data, message=message, verbose=verbose)
-
-    cmd = f"echo \"log_directory='{pgd}/log'\" >> {pgc}"
-    message = f"Setting log_directory"
-    run_cmd(cmd, new_node_data, message=message, verbose=verbose)
-
-    cmd = (
-        f'echo "shared_preload_libraries = '
-        f"'pg_stat_statements, snowflake, spock'\" >> {pgc}"
-    )
-    message = f"Setting shared_preload_libraries"
-    run_cmd(cmd, new_node_data, message=message, verbose=verbose)
-
-    cmd = (
-        f'{new_node_data["path"]}/pgedge/pgedge backrest configure_replica {stanza} '
-        f'{new_node_data["path"]}/pgedge/data/pg{pg} {source_node_data["ip_address"]} '
-        f'{source_node_data["port"]} {source_node_data["os_user"]}'
-    )
-    message = f"Configuring PITR on replica"
-    run_cmd(cmd, new_node_data, message=message, verbose=verbose)
-
-    if script.strip() and os.path.isfile(script):
-        util.echo_cmd(f"{script}")
-
-    terminate_cluster_transactions(nodes, db[0]["db_name"], f"pg{pg}", verbose)
-
-    spock = db_settings["spock_version"]
-    v4 = True
-    spock_maj = 4
-    if spock:
-        ver = [int(x) for x in spock.split(".")]
-        spock_maj = ver[0]
-        spock_min = ver[1]
-        if spock_maj >= 4:
-            v4 = True
-
-    set_cluster_readonly(nodes, True, db[0]["db_name"], f"pg{pg}", v4, verbose)
-    manage_node(new_node_data, "start", f"pg{pg}", verbose)
-    time.sleep(5)
-
-    check_cluster_lag(new_node_data, db[0]["db_name"], f"pg{pg}", verbose)
-
-    sql_cmd = "SELECT pg_promote()"
-    cmd = f"{new_node_data['path']}/pgedge/pgedge psql '{sql_cmd}' {db[0]['db_name']}"
-    message = f"Promoting standby to primary"
-    run_cmd(cmd, new_node_data, message=message, verbose=verbose)
-
-    for mdb in db:
-        # Fetch all subscription names directly
-        sql_cmd = "SELECT sub_name FROM spock.subscription"
-        cmd = f"{new_node_data['path']}/pgedge/pgedge psql '{sql_cmd}' {mdb['db_name']}"
-        message = "Fetch existing subscriptions"
-        result = run_cmd(
-            cmd, node=new_node_data, message=message, verbose=verbose, capture_output=True
+            missing = [var for var in required_env_vars if var not in os.environ]
+            if missing:
+                util.exit_message(f"Missing S3 env vars: {', '.join(missing)}", 1)
+            s3_exports = " && ".join([f"export {var}={os.environ[var]}" for var in required_env_vars])
+            cmd = f"cd {node['path']}/pgedge && {s3_exports}"
+            run_cmd(cmd, node=node, message="Setting S3 env vars for BackRest", verbose=verbose)
+    
+        # -- Step 6: Set all BackRest backup configuration values.
+        # (a) Set the backup stanza.
+        cmd = f"cd {node['path']}/pgedge && ./pgedge set BACKUP stanza {local_stanza}"
+        run_cmd(cmd, node=node, message=f"Setting BACKUP stanza '{local_stanza}' on node '{node['name']}'", verbose=verbose)
+        # (b) Create restore directory and set restore_path.
+        cmd = f"sudo mkdir -p {restore_path}"
+        run_cmd(cmd, node=node, message=f"Creating restore directory {restore_path}", verbose=verbose)
+        cmd = f"cd {node['path']}/pgedge && ./pgedge set BACKUP restore_path {restore_path}"
+        run_cmd(cmd, node=node, message=f"Setting BACKUP restore_path to {restore_path}", verbose=verbose)
+        # (c) Set BACKUP repo1-host-user to the OS user.
+        cmd = f"cd {node['path']}/pgedge && ./pgedge set BACKUP repo1-host-user {os_user}"
+        run_cmd(cmd, node=node, message=f"Setting BACKUP repo1-host-user to {os_user} on node '{node['name']}'", verbose=verbose)
+        # (d) Set BACKUP pg1-path to the PostgreSQL data directory.
+        cmd = f"cd {node['path']}/pgedge && ./pgedge set BACKUP pg1-path {pg1_path}"
+        run_cmd(cmd, node=node, message=f"Setting BACKUP pg1-path to {pg1_path} on node '{node['name']}'", verbose=verbose)
+        # (e) Set BACKUP pg1-user to the OS user.
+        cmd = f"cd {node['path']}/pgedge && ./pgedge set BACKUP pg1-user {os_user}"
+        run_cmd(cmd, node=node, message=f"Setting BACKUP pg1-user to {os_user} on node '{node['name']}'", verbose=verbose)
+        # (f) Set BACKUP pg1-port to the node's port value.
+        cmd = f"cd {node['path']}/pgedge && ./pgedge set BACKUP pg1-port {port}"
+        run_cmd(cmd, node=node, message=f"Setting BACKUP pg1-port to {port} on node '{node['name']}'", verbose=verbose)
+    
+        # -- Step 7: Create the BackRest stanza (this command uses --pg1-port).
+        cmd = (
+            f"cd {node['path']}/pgedge && ./pgedge backrest command stanza-create "
+            f"--stanza '{local_stanza}' "
+            f"--pg1-path '{pg1_path}' "
+            f"--repo1-cipher-type {repo1_cipher_type} "
+            f"--pg1-port {port} "
+            f"--repo1-path {repo1_path_local}"
         )
-
-        subscriptions = [
-            re.sub(r"\x1b\[[0-9;]*m", "", line.strip())  # Remove escape sequences
-            for line in result.stdout.splitlines()[2:]  # Skip header lines
-            if line.strip() and not line.strip().startswith("(")  # Exclude metadata lines
+        run_cmd(cmd, node=node, message=f"Creating BackRest stanza '{local_stanza}'", verbose=verbose)
+    
+        # -- Step 8: Initiate a full backup using pgBackRest.
+        backup_args = (
+            f"--repo1-path {repo1_path_local} "
+            f"--stanza {local_stanza} "
+            f"--pg1-path {pg1_path} "
+            f"--repo1-type {repo1_type} "
+            f"--log-level-console {log_level_console} "
+            f"--pg1-port {port} "
+            f"--db-socket-path /tmp "
+            f"--repo1-cipher-type {repo1_cipher_type} "
+            f"--repo1-retention-full {repo1_retention_full} "
+            f"--type=full"
+        )
+        cmd = f"cd {node['path']}/pgedge && ./pgedge backrest command backup '{backup_args}'"
+        run_cmd(cmd, node=node, message="Creating full BackRest backup", verbose=verbose)
+    
+        # (f) Finally, set BACKUP repo1-path to the node's repo1_path.
+        cmd = f"cd {node['path']}/pgedge && ./pgedge set BACKUP repo1-path {repo1_path_local}"
+        run_cmd(cmd, node=node, message=f"Setting BACKUP repo1-path to {repo1_path_local} on node '{node['name']}'", verbose=verbose)
+    
+    # -----------------------------------------------------------------
+    # End of BackRest integration helper.
+    # -----------------------------------------------------------------
+    
+    # Apply BackRest integration on both source and target nodes.
+    integrate_backrest(source_node_data, "source")
+    integrate_backrest(new_node_data, "target")
+    
+    # -----------------------------------------------------------------
+    # Backup Restoration: Retrieve latest backup from source if not provided,
+    # then restore that backup on target.
+    # -----------------------------------------------------------------
+    if not backup_id:
+        list_backup_cmd = f"cd {source_node_data['path']}/pgedge && ./pgedge backrest list-backups"
+        backup_result = run_cmd(
+            list_backup_cmd,
+            node=source_node_data,
+            capture_output=True,
+            message="Listing backups on source node",
+            verbose=verbose,
+        )
+        lines = backup_result.stdout.splitlines()
+        backup_lines = [
+            line for line in lines
+            if line.strip() and not line.strip().startswith("|") and "stanza" not in line.lower()
         ]
-
-        # Remove any remaining blank or invalid entries
+        if not backup_lines:
+            util.exit_message("No backups found on source node.")
+        latest_backup = backup_lines[-1].split()[0]
+        backup_id = latest_backup
+        util.message(f"Using latest backup from source: {backup_id}", "info")
+    
+    # For restoration, use the target node's BackRest settings.
+    target_backrest = new_node_data.get("backrest", {})
+    target_repo1_cipher_type = target_backrest.get("repo1_cipher-type", "aes-256-cbc")
+    target_repo1_path = target_backrest.get("repo1_path", f"/var/lib/pgbackrest/{new_node_data['name']}")
+    if not target_repo1_path.rstrip('/').endswith(new_node_data["name"]):
+        target_repo1_path = target_repo1_path.rstrip('/') + f"/{new_node_data['name']}"
+    target_repo1_type = new_node_data.get("repo1_type", "posix")
+    
+    # Compute the stanza value for restoration.
+    computed_stanza = stanza.strip()
+    if not computed_stanza:
+        computed_stanza = f"{cluster_data.get('cluster_name', cluster_name)}_stanza_{new_node_data['name']}"
+    
+    restore_args = (
+        f"--repo1-path {target_repo1_path} "
+        f"--repo1-cipher-type {target_repo1_cipher_type} "
+        f"--set={backup_id} "
+    )
+    cmd = (
+        f'cd {new_node_data["path"]}/pgedge && ./pgedge backrest command restore '
+        f"--repo1-type={target_repo1_type} --stanza={computed_stanza} "
+        f'--pg1-path={new_node_data["path"]}/pgedge/data/pg{pg} {restore_args}'
+    )
+    run_cmd(cmd, new_node_data, message="Restoring backup from source on target node", verbose=verbose)
+    
+    # After restoration, re-integrate BackRest on the target node so that its configuration
+    # uses its own settings.
+    integrate_backrest(new_node_data, "target")
+    
+    # -----------------------------------------------------------------
+    # Continue with the remainder of add_node.
+    # -----------------------------------------------------------------
+    
+    # Re-install pgBackRest on target node.
+    cmd = f"cd {new_node_data['path']}/pgedge && ./pgedge install backrest"
+    run_cmd(cmd, new_node_data, message="Re-installing pgBackRest on target node", verbose=verbose)
+    
+    # Restart target node's PostgreSQL instance.
+    manage_node(new_node_data, "stop", f"pg{pg}", verbose)
+    manage_node(new_node_data, "start", f"pg{pg}", verbose)
+    
+    # Wait until target node's DB is ready.
+    wait_for_db_ready(new_node_data, db[0]["db_name"], timeout=600, interval=2, verbose=verbose)
+    
+    # Promote standby if the node is in recovery.
+    recovery_check_cmd = f"cd {new_node_data['path']}/pgedge && ./pgedge psql 'select pg_is_in_recovery()' {db[0]['db_name']}"
+    recovery_result = run_cmd(
+        recovery_check_cmd,
+        node=new_node_data,
+        capture_output=True,
+        message="Checking if target node is in recovery",
+        verbose=verbose,
+    )
+    if "t" in recovery_result.stdout.lower() or "true" in recovery_result.stdout.lower():
+        sql_cmd = "SELECT pg_promote()"
+        cmd = f"cd {new_node_data['path']}/pgedge && ./pgedge psql '{sql_cmd}' {db[0]['db_name']}"
+        run_cmd(cmd, new_node_data, message="Promoting standby to primary on target node", verbose=verbose)
+    else:
+        util.message("Target node is not in recovery; skipping promotion.", "info")
+    
+    # Re-create subscriptions and node entries.
+    for mdb in db:
+        sql_cmd = "SELECT sub_name FROM spock.subscription"
+        cmd = f"cd {new_node_data['path']}/pgedge && ./pgedge psql '{sql_cmd}' {mdb['db_name']}"
+        result = run_cmd(
+            cmd,
+            node=new_node_data,
+            message="Fetching existing subscriptions",
+            verbose=verbose,
+            capture_output=True,
+        )
+        subscriptions = [
+            re.sub(r'\x1b\[[0-9;]*m', '', line.strip())
+            for line in result.stdout.splitlines()[2:]
+            if line.strip() and not line.strip().startswith("(")
+        ]
         subscriptions = [sub for sub in subscriptions if sub]
-
-        # Drop each subscription if any exist
         if subscriptions:
             for sub_name in subscriptions:
-                cmd = f"{new_node_data['path']}/pgedge/pgedge spock sub-drop {sub_name} {mdb['db_name']}"
-                message = f"Dropping old subscription {sub_name}"
-                run_cmd(cmd, node=new_node_data, message=message, verbose=verbose)
+                cmd = f"cd {new_node_data['path']}/pgedge && ./pgedge spock sub-drop {sub_name} {mdb['db_name']}"
+                run_cmd(cmd, node=new_node_data, message=f"Dropping old subscription {sub_name}", verbose=verbose)
         else:
             print("No subscriptions to drop.")
-
-        # Check the number of nodes
+    
         sql_cmd = "SELECT node_name FROM spock.node"
-        cmd = f"{new_node_data['path']}/pgedge/pgedge psql '{sql_cmd}' {mdb['db_name']}"
-        message = "Check if there are nodes"
+        cmd = f"cd {new_node_data['path']}/pgedge && ./pgedge psql '{sql_cmd}' {mdb['db_name']}"
         result = run_cmd(
-            cmd, node=new_node_data, message=message, verbose=verbose, capture_output=True
+            cmd,
+            node=new_node_data,
+            message="Checking nodes",
+            verbose=verbose,
+            capture_output=True,
         )
-
-        # Parse node names from the output
-        print(f"\nRaw output:\n{result.stdout}")
         nodes_list = [
-            re.sub(r"\x1b\[[0-9;]*m", "", line.strip())  # Remove escape sequences
-            for line in result.stdout.splitlines()[2:]  # Skip header lines
-            if line.strip() and not line.strip().startswith("(")  # Exclude metadata lines
+            re.sub(r'\x1b\[[0-9;]*m', '', line.strip())
+            for line in result.stdout.splitlines()[2:]
+            if line.strip() and not line.strip().startswith("(")
         ]
-
-        # Remove any remaining blank or invalid entries
-        nodes_list = [node for node in nodes_list if node]
-
-        # Drop each node if any exist
+        nodes_list = [n for n in nodes_list if n]
         if nodes_list:
             for node_name in nodes_list:
-                cmd = f"{new_node_data['path']}/pgedge/pgedge spock node-drop {node_name} {mdb['db_name']}"
-                message = f"Dropping node {node_name}"
-                run_cmd(cmd, node=new_node_data, message=message, verbose=verbose)
+                cmd = f"cd {new_node_data['path']}/pgedge && ./pgedge spock node-drop {node_name} {mdb['db_name']}"
+                run_cmd(cmd, node=new_node_data, message=f"Dropping node {node_name}", verbose=verbose)
         else:
             print("No nodes to drop.")
-
+    
         create_node(new_node_data, mdb["db_name"], verbose)
-
-        if not v4:
-            set_cluster_readonly(nodes, False, mdb["db_name"], f"pg{pg}", v4, verbose)
-
         create_sub(nodes, new_node_data, mdb["db_name"], verbose)
         create_sub_new(nodes, new_node_data, mdb["db_name"], verbose)
-
+    
         nc = os.path.join(new_node_data['path'], "pgedge", "pgedge ")
         cmd = f'{nc} spock repset-add-table default "*" {mdb["db_name"]}'
-
-        message = f"Adding all tables to repset"
-        run_cmd(cmd, new_node_data, message=message, verbose=verbose)
-
+        run_cmd(cmd, new_node_data, message="Adding all tables to repset", verbose=verbose)
         cmd = f'{nc} spock repset-add-table default_insert_only "*" {mdb["db_name"]}'
-        run_cmd(cmd, new_node_data, message=message, verbose=verbose)
-
-    if v4:
-        set_cluster_readonly(nodes, False, db[0]["db_name"], f"pg{pg}", v4, verbose)
-
-    cmd = f'cd {new_node_data["path"]}/pgedge/; ./pgedge spock node-list {db[0]["db_name"]}'
-    message = f"Listing spock nodes"
-    result = run_cmd(
-        cmd, node=new_node_data, message=message, verbose=verbose, capture_output=True
-    )
-    print(f"\n{result.stdout}")
-
-    sql_cmd = "select node_id,node_name from spock.node"
-    cmd = (
-        f"{source_node_data['path']}/pgedge/pgedge psql '{sql_cmd}' {db[0]['db_name']}"
-    )
-    message = f"List nodes"
+        run_cmd(cmd, new_node_data, message="Adding insert-only tables to repset", verbose=verbose)
+    
+    set_cluster_readonly(nodes, False, db[0]["db_name"], f"pg{pg}", True, verbose)
+    
+    # Verification: List nodes and subscriptions.
+    cmd = f"cd {new_node_data['path']}/pgedge && ./pgedge spock node-list {db[0]['db_name']}"
     result = run_cmd(
         cmd,
-        node=source_node_data,
-        message=message,
+        node=new_node_data,
+        message="Listing spock nodes",
         verbose=verbose,
         capture_output=True,
     )
     print(f"\n{result.stdout}")
-
-    for node in nodes:
-        sql_cmd = (
-            "select sub_id,sub_name,sub_enabled,sub_slot_name,"
-            "sub_replication_sets from spock.subscription"
-        )
-        cmd = f"{node['path']}/pgedge/pgedge psql '{sql_cmd}' {db[0]['db_name']}"
-        message = f"List subscriptions"
-        result = run_cmd(
-            cmd, node=node, message=message, verbose=verbose, capture_output=True
-        )
-        print(f"\n{result.stdout}")
-
-    sql_cmd = (
-        "select sub_id,sub_name,sub_enabled,sub_slot_name,"
-        "sub_replication_sets from spock.subscription"
-    )
-    cmd = f"{new_node_data['path']}/pgedge/pgedge psql '{sql_cmd}' {db[0]['db_name']}"
-    message = f"List subscriptions"
+    
+    sql_cmd = "select node_id,node_name from spock.node"
+    cmd = f"cd {source_node_data['path']}/pgedge && ./pgedge psql '{sql_cmd}' {db[0]['db_name']}"
     result = run_cmd(
-        cmd, node=new_node_data, message=message, verbose=verbose, capture_output=True
+        cmd,
+        node=source_node_data,
+        message="Listing nodes on source",
+        verbose=verbose,
+        capture_output=True,
     )
     print(f"\n{result.stdout}")
-
-    # Remove unnecessary keys before appending new node to the cluster data
+    
+    for node in nodes:
+        sql_cmd = "select sub_id,sub_name,sub_enabled,sub_slot_name,sub_replication_sets from spock.subscription"
+        cmd = f"cd {new_node_data['path']}/pgedge && ./pgedge psql '{sql_cmd}' {db[0]['db_name']}"
+        result = run_cmd(
+            cmd,
+            node=node,
+            message="Listing subscriptions",
+            verbose=verbose,
+            capture_output=True,
+        )
+        print(f"\n{result.stdout}")
+    
+    sql_cmd = "select sub_id,sub_name,sub_enabled,sub_slot_name,sub_replication_sets from spock.subscription"
+    cmd = f"cd {new_node_data['path']}/pgedge && ./pgedge psql '{sql_cmd}' {db[0]['db_name']}"
+    result = run_cmd(
+        cmd,
+        node=new_node_data,
+        message="Listing subscriptions",
+        verbose=verbose,
+        capture_output=True,
+    )
+    print(f"\n{result.stdout}")
+    
+    # Clean up sensitive keys before updating cluster JSON.
     new_node_data.pop("repo1_type", None)
     new_node_data.pop("os_user", None)
     new_node_data.pop("ssh_key", None)
-
-    # Append new node data to the cluster JSON
-    node_group = target_node_data.get
+    
     cluster_data["node_groups"].append(new_node_data)
     cluster_data["update_date"] = datetime.datetime.now().astimezone().isoformat()
-
     write_cluster_json(cluster_name, cluster_data)
-
 
 def json_validate_add_node(data):
     """Validate the structure of a node configuration JSON file."""
