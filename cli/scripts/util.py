@@ -4,7 +4,7 @@
 import os
 import time
 
-MY_VERSION = "25.0.0"
+MY_VERSION = "25.0.0-alpha1"
 MY_CODENAME = ""
 
 DEFAULT_PG = "16"
@@ -245,16 +245,6 @@ def gcc_ver():
 def which(p_exe):
     which_path = getoutput(f"which {p_exe}")
     return(which_path)
-
-
-def format_ver(p_ver):
-    # formats 3-part version number as xx.yy-z
-    v = str(p_ver).split(".")
-    if len(v) != 3:
-        message(f"'{p_ver}' is not a valid three part version string", "warning")
-        return(p_ver)
-
-    return(f"{v[0]}.{v[1]}-{v[2]}")
 
 
 def autostart_verify_prereqs():
