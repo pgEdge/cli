@@ -440,9 +440,9 @@ def info(p_json, p_home, p_repo, print_flag=True):
 
 
     if util.MY_CODENAME > " ":
-       ver_display = f"pgEdge {util.format_ver(ver)} ({util.MY_CODENAME})"
+       ver_display = f"pgEdge {ver} ({util.MY_CODENAME})"
     else:
-       ver_display = f"pgEdge {util.format_ver(ver)}"
+       ver_display = f"pgEdge {ver}"
    
     print("#" * INFO_WIDTH)
     print(f"#{bold_start}     Version:{bold_end} {ver_display}")
