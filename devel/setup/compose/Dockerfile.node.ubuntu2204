@@ -16,6 +16,9 @@ RUN sed -i 's/^#PasswordAuthentication yes/PasswordAuthentication no/' /etc/ssh/
 RUN ssh-keygen -A
 RUN mkdir -p /run/sshd && /usr/sbin/sshd
 
+RUN mkdir -p /backups
+RUN chown pgedge:pgedge /backups
+
 USER pgedge
 WORKDIR /home/pgedge
 RUN mkdir -p .ssh/

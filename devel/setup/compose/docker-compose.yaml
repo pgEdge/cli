@@ -14,7 +14,9 @@ services:
       - repo
     deploy:
       replicas: ${NUM_NODES:-1}
-
+    volumes:
+      - backups:/backups/
+    
   repo:
     build:
       context: .
@@ -37,6 +39,9 @@ services:
       - ./repo:/home/build/dev/out
     stdin_open: true
     tty: true
+
+volumes:
+  backups:
 
 networks:
   mynetwork:
