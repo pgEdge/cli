@@ -31,4 +31,8 @@ exec-n$(1):
 	@docker exec -u pgedge -it pgedge-node-$(1) bash
 endef
 
+.PHONY: node-ips
+node-ips:
+	@docker compose ps -q node | xargs docker inspect -f '{{.Name}} {{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}'
+
 $(foreach n,1 2 3 4 5 6 7 8 9 10,$(eval $(call EXEC_NODE,$n)))
