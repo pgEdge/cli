@@ -984,11 +984,16 @@ def validate_table_diff_inputs(td_task: TableDiffTask) -> None:
     elif type(td_task.block_rows) is not int:
         raise AceException("Invalid value type for ACE_BLOCK_ROWS")
 
-    # Capping max block size here to prevent the hash function from taking forever
-    if td_task.block_rows > config.MAX_DIFF_BLOCK_SIZE:
-        raise AceException(f"Block row size should be <= {config.MAX_DIFF_BLOCK_SIZE}")
-    if td_task.block_rows < config.MIN_DIFF_BLOCK_SIZE:
-        raise AceException(f"Block row size should be >= {config.MIN_DIFF_BLOCK_SIZE}")
+    if not td_task._override_block_size:
+        # Capping max block size here to prevent the hash function from taking forever
+        if td_task.block_rows > config.MAX_DIFF_BLOCK_SIZE:
+            raise AceException(
+                f"Block row size should be <= {config.MAX_DIFF_BLOCK_SIZE}"
+            )
+        if td_task.block_rows < config.MIN_DIFF_BLOCK_SIZE:
+            raise AceException(
+                f"Block row size should be >= {config.MIN_DIFF_BLOCK_SIZE}"
+            )
 
     if type(td_task.max_cpu_ratio) is int:
         td_task.max_cpu_ratio = float(td_task.max_cpu_ratio)

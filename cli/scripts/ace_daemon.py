@@ -237,9 +237,6 @@ This endpoint accepts a JSON request body with the following parameters:
     table_name (str): Name of the table to rerun the diff on (required)
     dbname (str): Name of the database (optional)
     quiet (bool): Whether to suppress output (optional, default: False)
-    behavior (str): The behavior to use for rerunning
-                    (optional, default: "multiprocessing")
-                    Supported values: "multiprocessing", "hostdb"
 
 Returns:
     JSON response with task_id and submitted_at timestamp on success,
@@ -260,7 +257,6 @@ def table_rerun_api():
     table_name = data.get("table_name")
     dbname = data.get("dbname")
     quiet = data.get("quiet", False)
-    behavior = data.get("behavior", "multiprocessing")
 
     if not cluster_name or not diff_file or not table_name:
         return (
@@ -302,26 +298,14 @@ def table_rerun_api():
         return jsonify({"error": str(e)}), 400
 
     try:
-        if behavior == "multiprocessing":
-            scheduler.add_job(ace_core.table_rerun_async, args=(raw_args,))
-            now = datetime.now()
-            return jsonify(
-                {
-                    "task_id": task_id,
-                    "submitted_at": now.isoformat(),
-                }
-            )
-        elif behavior == "hostdb":
-            scheduler.add_job(ace_core.table_rerun_temptable, args=(raw_args,))
-            now = datetime.now()
-            return jsonify(
-                {
-                    "task_id": task_id,
-                    "submitted_at": now.isoformat(),
-                }
-            )
-        else:
-            return jsonify({"error": f"Invalid behavior: {behavior}"}), 400
+        scheduler.add_job(ace_core.table_rerun_temptable, args=(raw_args,))
+        now = datetime.now()
+        return jsonify(
+            {
+                "task_id": task_id,
+                "submitted_at": now.isoformat(),
+            }
+        )
     except Exception as e:
         return jsonify({"error": str(e)}), 400
 

@@ -54,6 +54,7 @@ class TableDiffTask:
     quiet_mode: bool
 
     mode: str = "diff"
+    _override_block_size: bool = False
 
     # For table-diff, the diff_file_path is
     # obtained after the run of table-diff,

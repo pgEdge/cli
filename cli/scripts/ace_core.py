@@ -289,7 +289,7 @@ def create_result_dict(
     }
 
 
-def compare_checksums(worker_id, shared_objects, worker_state, batches):
+def compare_checksums(worker_id, shared_objects, worker_state, pkey1, pkey2):
     """
     Same approach as compare_ranges in ace_mtree.py
     Use lookup dictionaries for faster comparisons, and process all batches
@@ -314,205 +314,44 @@ def compare_checksums(worker_id, shared_objects, worker_state, batches):
         return
 
     # We can use prepared statements for diff mode with a single batch
-    use_prepared = mode == "diff" and len(batches) == 1
+    use_prepared = mode == "diff"
+    params = []
 
     if mode == "diff":
-        if len(batches) == 1:
-            pkey1, pkey2 = batches[0]
 
-            if simple_primary_key:
-                has_min = pkey1 and pkey1[0] is not None
-                min_key = pkey1[0] if has_min else None
+        if simple_primary_key:
+            has_min = pkey1 and pkey1[0] is not None
+            min_key = pkey1[0] if has_min else None
 
-                has_max = pkey2 and pkey2[0] is not None
-                max_key = pkey2[0] if has_max else None
+            has_max = pkey2 and pkey2[0] is not None
+            max_key = pkey2[0] if has_max else None
 
-                # [skip_min_check, min_value, skip_max_check, max_value]
-                # skip_min_check and skip_max_check work as follows:
-                # $1::boolean OR {p_key} >= <value>
-                # $2::boolean OR {p_key} < <value>
-                #
-                # For our first range, start is None, so we don't need to check
-                # for min.  For the last range, end is None, so we don't need
-                # to check for max.
-                params = [not has_min, not has_max, min_key, max_key]
-
-            else:
-                p_key_cols = [col.strip() for col in p_key.split(",")]
-                p_key_count = len(p_key_cols)
-
-                has_min = pkey1 and pkey1[0] is not None
-                min_values = list(pkey1[0]) if has_min else [None] * p_key_count
-
-                has_max = pkey2 and pkey2[0] is not None
-                max_values = list(pkey2[0]) if has_max else [None] * p_key_count
-
-                params = [not has_min, not has_max] + min_values + max_values
+            # [skip_min_check, min_value, skip_max_check, max_value]
+            # skip_min_check and skip_max_check work as follows:
+            # $1::boolean OR {p_key} >= <value>
+            # $2::boolean OR {p_key} < <value>
+            #
+            # For our first range, start is None, so we don't need to check
+            # for min.  For the last range, end is None, so we don't need
+            # to check for max.
+            params = [not has_min, not has_max, min_key, max_key]
 
         else:
-            # For multiple batches, we'll fall back to using the original approach
-            # with dynamically generated SQL
-            if simple_primary_key:
-                min_key = min(
-                    b[0][0] if b[0] is not None else None
-                    for b in batches
-                    if b[0] is not None
-                )
-                max_key = max(
-                    b[1][0] if b[1] is not None else None
-                    for b in batches
-                    if b[1] is not None
-                )
+            p_key_cols = [col.strip() for col in p_key.split(",")]
+            p_key_count = len(p_key_cols)
 
-                where_clause_parts = []
-                if min_key is not None:
-                    where_clause_parts.append(
-                        sql.SQL("{p_key} >= {min_key}").format(
-                            p_key=sql.Identifier(p_key), min_key=sql.Literal(min_key)
-                        )
-                    )
-                if max_key is not None:
-                    where_clause_parts.append(
-                        sql.SQL("{p_key} < {max_key}").format(
-                            p_key=sql.Identifier(p_key), max_key=sql.Literal(max_key)
-                        )
-                    )
+            has_min = pkey1 and pkey1[0] is not None
+            min_values = list(pkey1[0]) if has_min else [None] * p_key_count
 
-                where_clause = (
-                    sql.SQL(" AND ").join(where_clause_parts)
-                    if where_clause_parts
-                    else sql.SQL("TRUE")
-                )
-            else:
-                or_clauses = []
+            has_max = pkey2 and pkey2[0] is not None
+            max_values = list(pkey2[0]) if has_max else [None] * p_key_count
 
-                for pkey1, pkey2 in batches:
-                    and_clauses = []
-
-                    if pkey1 and pkey1[0] is not None:
-                        and_clauses.append(
-                            sql.SQL("({p_key}) >= ({pkey1})").format(
-                                p_key=sql.SQL(", ").join(
-                                    [
-                                        sql.Identifier(col.strip())
-                                        for col in p_key.split(",")
-                                    ]
-                                ),
-                                pkey1=sql.SQL(", ").join(
-                                    [sql.Literal(val) for val in pkey1[0]]
-                                ),
-                            )
-                        )
-
-                    if pkey2 and pkey2[0] is not None:
-                        and_clauses.append(
-                            sql.SQL("({p_key}) < ({pkey2})").format(
-                                p_key=sql.SQL(", ").join(
-                                    [
-                                        sql.Identifier(col.strip())
-                                        for col in p_key.split(",")
-                                    ]
-                                ),
-                                pkey2=sql.SQL(", ").join(
-                                    [sql.Literal(val) for val in pkey2[0]]
-                                ),
-                            )
-                        )
-
-                    if and_clauses:
-                        or_clauses.append(
-                            sql.SQL("(")
-                            + sql.SQL(" AND ").join(and_clauses)
-                            + sql.SQL(")")
-                        )
-
-                where_clause = (
-                    sql.SQL(" OR ").join(or_clauses) if or_clauses else sql.SQL("TRUE")
-                )
-
-            if simple_primary_key:
-                hash_sql = sql.SQL(
-                    """
-                    WITH block_rows AS (
-                    SELECT *
-                    FROM {schema}.{table}
-                    WHERE {where_clause}
-                    ),
-                    block_hash AS (
-                        SELECT
-                            digest(
-                                COALESCE(
-                                    string_agg(
-                                        concat_ws('|', {columns}),
-                                        '|'
-                                        ORDER BY {key}
-                                    ),
-                                    'EMPTY_BLOCK'
-                                ),
-                                'sha256'
-                            ) as leaf_hash
-                        FROM block_rows
-                    )
-                    SELECT encode(leaf_hash, 'hex') as leaf_hash
-                    FROM block_hash
-                    """
-                ).format(
-                    schema=sql.Identifier(schema_name),
-                    table=sql.Identifier(table_name),
-                    where_clause=where_clause,
-                    key=sql.Identifier(p_key),
-                    columns=sql.SQL(", ").join(sql.Identifier(col) for col in cols),
-                )
-            else:
-                hash_sql = sql.SQL(
-                    """
-                    WITH block_rows AS (
-                        SELECT *
-                        FROM {schema}.{table}
-                        WHERE {where_clause}
-                    ),
-                    block_hash AS (
-                        SELECT
-                            digest(
-                                COALESCE(
-                                    string_agg(
-                                        concat_ws('|', {columns}),
-                                        '|'
-                                        ORDER BY {key}
-                                    ),
-                                    'EMPTY_BLOCK'
-                                ),
-                                'sha256'
-                            ) as leaf_hash
-                        FROM block_rows
-                    )
-                    SELECT encode(leaf_hash, 'hex') as leaf_hash
-                    FROM block_hash
-                    """
-                ).format(
-                    schema=sql.Identifier(schema_name),
-                    table=sql.Identifier(table_name),
-                    where_clause=where_clause,
-                    key=sql.SQL(", ").join(
-                        sql.Identifier(col.strip()) for col in p_key.split(",")
-                    ),
-                    columns=sql.SQL(", ").join(sql.Identifier(col) for col in cols),
-                )
-
-            block_sql = sql.SQL(
-                "SELECT * FROM {table_name} WHERE {where_clause}"
-            ).format(
-                table_name=sql.SQL("{}.{}").format(
-                    sql.Identifier(schema_name),
-                    sql.Identifier(table_name),
-                ),
-                where_clause=where_clause,
-            )
+            params = [not has_min, not has_max] + min_values + max_values
 
     elif mode == "rerun":
         # Again, falling back to dynamically generated queries for rerun mode
         keys = p_key.split(",")
-        where_clause = sql.SQL(generate_where_clause(keys, batches))
+        where_clause = sql.SQL(generate_where_clause(keys, [pkey1, pkey2]))
 
         if simple_primary_key:
             hash_sql = sql.SQL(
@@ -636,7 +475,6 @@ def compare_checksums(worker_id, shared_objects, worker_state, batches):
             return {
                 "status": config.BLOCK_ERROR,
                 "errors": [str(error) for error in errors],
-                "batch": batches[0] if len(batches) == 1 else batches,
                 "node_pair": node_pair,
             }
 
@@ -644,7 +482,6 @@ def compare_checksums(worker_id, shared_objects, worker_state, batches):
             return {
                 "status": config.BLOCK_ERROR,
                 "errors": ["Failed to get results from both nodes"],
-                "batch": batches[0] if len(batches) == 1 else batches,
                 "node_pair": node_pair,
             }
 
@@ -688,7 +525,6 @@ def compare_checksums(worker_id, shared_objects, worker_state, batches):
                 return {
                     "status": config.BLOCK_ERROR,
                     "errors": [str(error) for error in errors],
-                    "batch": batches[0] if len(batches) == 1 else batches,
                     "node_pair": node_pair,
                 }
 
@@ -696,7 +532,6 @@ def compare_checksums(worker_id, shared_objects, worker_state, batches):
                 return {
                     "status": config.BLOCK_ERROR,
                     "errors": ["Failed to get results from both nodes"],
-                    "batch": batches[0] if len(batches) == 1 else batches,
                     "node_pair": node_pair,
                 }
 
@@ -758,7 +593,6 @@ def compare_checksums(worker_id, shared_objects, worker_state, batches):
         "status": config.BLOCK_OK if total_diffs == 0 else config.BLOCK_MISMATCH,
         "diffs": worker_diffs,
         "total_diffs": total_diffs,
-        "batch": batches[0] if len(batches) == 1 else batches,
         "node_pair": node_pair_key if "node_pair_key" in locals() else None,
     }
 
@@ -963,11 +797,6 @@ def table_diff(td_task: TableDiffTask, skip_all_checks: bool = False):
         quiet_mode=td_task.quiet_mode,
     )
 
-    batches = [
-        pkey_offsets[i : i + td_task.batch_size]
-        for i in range(0, len(pkey_offsets), td_task.batch_size)
-    ]
-
     mismatch = False
     diffs_exceeded = False
     errors = False
@@ -983,19 +812,18 @@ def table_diff(td_task: TableDiffTask, skip_all_checks: bool = False):
         ) as pool:
             for result in pool.imap_unordered(
                 compare_checksums,
-                make_single_arguments(batches),
+                pkey_offsets,
                 worker_init=init_conn_pool,
                 worker_exit=close_conn_pool,
                 progress_bar=True if not td_task.quiet_mode else False,
                 progress_bar_style="rich",
-                iterable_len=len(batches),
+                iterable_len=len(pkey_offsets),
             ):
                 if result["status"] == config.BLOCK_ERROR:
                     errors = True
                     error_list.append(
                         {
                             "node_pair": result["node_pair"],
-                            "batch": result["batch"],
                             "errors": result["errors"],
                         }
                     )

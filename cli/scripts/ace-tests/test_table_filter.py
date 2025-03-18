@@ -203,39 +203,28 @@ class TestTableFilter:
         assert match, "Diff file path not found in output"
         path = match.group(1)
 
-        # Test both rerun behaviors with filter
-        for behavior in ["hostdb", "multiprocessing"]:
-            cli.table_rerun_cli(
-                "eqn-t9da",
-                path,
-                table_name,
-                "demo",
-                False,
-                behavior,
-            )
-            captured = capsys.readouterr()
-            output = captured.out
-            clean_output = re.sub(r"\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])", "", output)
+        cli.table_rerun_cli(
+            "eqn-t9da",
+            path,
+            table_name,
+            "demo",
+            False,
+        )
+        captured = capsys.readouterr()
+        output = captured.out
+        clean_output = re.sub(r"\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])", "", output)
 
-            match = re.search(r"diffs written out to (.+\.json)", clean_output.lower())
-            assert match, "Diff file path not found in output"
-            diff_file_path.path = match.group(1)
+        match = re.search(r"diffs written out to (.+\.json)", clean_output.lower())
+        assert match, "Diff file path not found in output"
+        diff_file_path.path = match.group(1)
 
-            assert (
-                "written out to" in clean_output.lower()
-            ), f"Table rerun failed for {behavior}"
+        assert "written out to" in clean_output.lower(), "Table rerun failed"
 
-            # Verify diffs are correct
-            with open(diff_file_path.path, "r") as f:
-                diff_data = json.load(f)
+        # Verify diffs are correct
+        with open(diff_file_path.path, "r") as f:
+            diff_data = json.load(f)
 
-            assert (
-                len(diff_data["diffs"]["n1/n2"]["n2"]) == 49
-            ), f"Expected 49 differences for {behavior}"
-            for diff in diff_data["diffs"]["n1/n2"]["n2"]:
-                assert (
-                    diff["index"] < 100
-                ), f"Found diff outside filter range in {behavior}"
-                assert (
-                    diff["city"] == "FilterCity"
-                ), f"Unexpected city value in {behavior}"
+        assert len(diff_data["diffs"]["n1/n2"]["n2"]) == 49, "Expected 49 differences"
+        for diff in diff_data["diffs"]["n1/n2"]["n2"]:
+            assert diff["index"] < 100, "Found diff outside filter range"
+            assert diff["city"] == "FilterCity", "Unexpected city value"

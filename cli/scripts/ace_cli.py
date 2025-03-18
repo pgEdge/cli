@@ -118,6 +118,7 @@ def table_diff_cli(
     batch_size=config.DIFF_BATCH_SIZE,
     table_filter=None,
     quiet=False,
+    override_block_size=False,
 ):
 
     task_id = ace_db.generate_task_id()
@@ -135,6 +136,7 @@ def table_diff_cli(
             quiet_mode=quiet,
             table_filter=table_filter,
             invoke_method="cli",
+            _override_block_size=override_block_size,
         )
         td_task.scheduler.task_id = task_id
         td_task.scheduler.task_type = "table-diff"
@@ -252,8 +254,6 @@ Args:
     table_name (str): Name of the table to rerun the diff on.
     dbname (str, optional): Name of the database. Defaults to None.
     quiet (bool, optional): Whether to suppress output. Defaults to False.
-    behavior (str, optional): The rerun behavior, either "multiprocessing" or
-        "hostdb". Defaults to "multiprocessing".
 
 Raises:
     AceException: If there's an error specific to the ACE operation.
@@ -272,7 +272,6 @@ def table_rerun_cli(
     table_name,
     dbname=None,
     quiet=False,
-    behavior="multiprocessing",
     table_filter=None,
 ):
 
@@ -307,13 +306,7 @@ def table_rerun_cli(
         util.exit_message(f"Unexpected error while running table rerun: {e}")
 
     try:
-        if behavior == "multiprocessing":
-            ace_core.table_rerun_async(td_task)
-        elif behavior == "hostdb":
-            ace_core.table_rerun_temptable(td_task)
-        else:
-            util.exit_message(f"Invalid behavior: {behavior}")
-
+        ace_core.table_rerun_temptable(td_task)
         td_task.connection_pool.close_all()
     except AceException as e:
         util.exit_message(str(e))

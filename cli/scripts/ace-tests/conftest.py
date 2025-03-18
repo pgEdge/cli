@@ -226,12 +226,23 @@ def prepare_databases(nodes):
     sleep(5)
 
 
+def pytest_addoption(parser):
+    parser.addoption(
+        "--skip-cleanup", action="store_true", help="Skip DB cleanup fixture"
+    )
+
+
 @pytest.fixture(scope="session", autouse=True)
-def cleanup_databases(nodes):
+def cleanup_databases(request, nodes):
     """Cleanup all databases after running tests"""
 
     # Yield to let the tests run first
     yield
+
+    skip = request.config.getoption("--skip-cleanup")
+
+    if skip:
+        pytest.skip("Skipping DB cleanup")
 
     # Cleanup code that runs after all tests complete
     drop_customers_sql = "DROP TABLE IF EXISTS customers CASCADE;"
