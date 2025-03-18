@@ -397,7 +397,7 @@ COMPUTE_LEAF_HASHES = """
         SELECT *
         FROM {schema}.{table}
         WHERE {key} >= %(range_start)s
-        AND ({key} < %(range_end)s OR %(range_end)s IS NULL)
+        AND ({key} <= %(range_end)s OR %(range_end)s IS NULL)
     ),
     block_hash AS (
         SELECT

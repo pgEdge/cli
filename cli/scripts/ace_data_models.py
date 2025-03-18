@@ -34,6 +34,7 @@ class DerivedFields:
     host_map: dict = None
     table_list: list = None
     col_types: dict = None
+    simple_primary_key: bool = None
 
 
 @dataclass
@@ -287,4 +288,3 @@ class MerkleTreeTask:
 
     # Derived fields
     fields: DerivedFields = field(default_factory=DerivedFields)
-    

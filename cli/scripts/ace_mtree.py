@@ -145,7 +145,8 @@ def compute_block_hashes(shared_objects, worker_state, args):
         args: The arguments for the worker function. Contains the block boundary
         and the SQL query to compute the hashes.
     """
-    block_boundary, sql_query = args
+    block_boundary = args
+    sql_query = shared_objects["sql_query"]
 
     try:
         cur = worker_state["cur"]
@@ -306,7 +307,6 @@ def process_block_ranges(offsets: list):
 
     block_ranges = []
 
-    # We don't need the last range here. It's just needed for regular table-diff
     del offsets[-1]
 
     for i, offset in enumerate(offsets):
@@ -438,50 +438,51 @@ def build_mtree(mtree_task: MerkleTreeTask) -> None:
         )
 
         try:
-            with conn.cursor() as cur:
-                cur.executemany(
-                    sql.SQL(INSERT_BLOCK_RANGES).format(
-                        mtree_table=sql.Identifier(f"ace_mtree_{schema}_{table}"),
-                    ),
-                    block_ranges,
-                )
-                # Committing is necessary here since the workers use their own
-                # connections and cursors
-                conn.commit()
+            cur = conn.cursor()
+            cur.executemany(
+                sql.SQL(INSERT_BLOCK_RANGES).format(
+                    mtree_table=sql.Identifier(f"ace_mtree_{schema}_{table}"),
+                ),
+                block_ranges,
+            )
+            # Committing is necessary here since the workers use their own
+            # connections and cursors
+            conn.commit()
+
+            # column_list = []
+            # for col in mtree_task.fields.cols.split(","):
+            #     column_list.append(
+            #         sql.SQL(
+            #             "CASE WHEN {} IS NULL THEN 'NULL' "
+            #             "WHEN {}::text = '' THEN 'EMPTY' "
+            #             "ELSE {}::text END"
+            #         ).format(
+            #             sql.Identifier(col),
+            #             sql.Identifier(col),
+            #             sql.Identifier(col),
+            #         )
+            #     )
+            # column_expr = sql.SQL(", ").join(column_list)
+
+            sql_query = sql.SQL(COMPUTE_LEAF_HASHES).format(
+                schema=sql.Identifier(schema),
+                table=sql.Identifier(table),
+                key=sql.Identifier(key),
+                columns=sql.SQL(", ").join(
+                    sql.Identifier(col) for col in mtree_task.fields.cols.split(",")
+                ),
+            )
 
             # Now compute hashes
             work_items = []
             for block in block_ranges:
-                column_list = []
-                for col in mtree_task.fields.cols.split(","):
-                    column_list.append(
-                        sql.SQL(
-                            "CASE WHEN {} IS NULL THEN 'NULL' "
-                            "WHEN {}::text = '' THEN 'EMPTY' "
-                            "ELSE {}::text END"
-                        ).format(
-                            sql.Identifier(col),
-                            sql.Identifier(col),
-                            sql.Identifier(col),
-                        )
-                    )
-                column_expr = sql.SQL(", ").join(column_list)
-
-                sql_query = sql.SQL(COMPUTE_LEAF_HASHES).format(
-                    schema=sql.Identifier(schema),
-                    table=sql.Identifier(table),
-                    key=sql.Identifier(key),
-                    columns=column_expr,
-                    mtree_table=sql.Identifier(f"ace_mtree_{schema}_{table}"),
-                )
                 work_items.append(
                     (
                         BlockBoundary(
                             block_id=block[0],
                             block_start=block[1],
                             block_end=block[2],
-                        ),
-                        sql_query,
+                        )
                     )
                 )
 
@@ -490,10 +491,15 @@ def build_mtree(mtree_task: MerkleTreeTask) -> None:
 
             shared_objects = {
                 "node": node,
+                "sql_query": sql_query,
                 "task": mtree_task,
             }
 
             results = []
+
+            cur.close()
+            conn.close()
+            mtree_task.connection_pool.close_all()
 
             with WorkerPool(
                 n_jobs=n_jobs,
@@ -518,7 +524,6 @@ def build_mtree(mtree_task: MerkleTreeTask) -> None:
                         f"Failed to compute hashes for {len(failed)} blocks"
                     )
 
-            # Let's just use a new conn here to be safe
             _, new_conn = mtree_task.connection_pool.get_cluster_node_connection(node)
             parent_cur = new_conn.cursor()
 

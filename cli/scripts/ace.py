@@ -968,149 +968,6 @@ def write_diffs_csv(diff_dict):
         )
 
 
-def validate_merkle_tree_inputs(mtree_task: MerkleTreeTask) -> None:
-    """
-    Validates the basic inputs for a merkle tree task without establishing connections.
-    Raises AceException if validation fails.
-    """
-    if not mtree_task.cluster_name or not mtree_task._table_name:
-        raise AceException("cluster_name and table_name are required arguments")
-
-    if type(mtree_task.block_rows) is str:
-        try:
-            mtree_task.block_rows = int(mtree_task.block_rows)
-        except Exception:
-            raise AceException("Invalid values for ACE_BLOCK_ROWS")
-    elif type(mtree_task.block_rows) is not int:
-        raise AceException("Invalid value type for ACE_BLOCK_ROWS")
-
-    # Capping max block size here to prevent the hash function from taking forever
-    if mtree_task.block_rows > config.MAX_MTREE_BLOCK_SIZE:
-        raise AceException(f"Block row size should be <= {config.MAX_MTREE_BLOCK_SIZE}")
-    if mtree_task.block_rows < config.MIN_MTREE_BLOCK_SIZE:
-        raise AceException(f"Block row size should be >= {config.MIN_MTREE_BLOCK_SIZE}")
-
-    if type(mtree_task.max_cpu_ratio) is int:
-        mtree_task.max_cpu_ratio = float(mtree_task.max_cpu_ratio)
-    elif type(mtree_task.max_cpu_ratio) is str:
-        try:
-            mtree_task.max_cpu_ratio = float(mtree_task.max_cpu_ratio)
-        except Exception:
-            raise AceException("Invalid values for ACE_MAX_CPU_RATIO")
-    elif type(mtree_task.max_cpu_ratio) is not float:
-        raise AceException("Invalid value type for ACE_MAX_CPU_RATIO")
-
-    if mtree_task.max_cpu_ratio > 1.0 or mtree_task.max_cpu_ratio < 0.0:
-        raise AceException(
-            "Invalid value range for ACE_MAX_CPU_RATIO or --max_cpu_ratio"
-        )
-
-    mtree_task.rebalance = parse_bool_field("rebalance", mtree_task.rebalance)
-    mtree_task.recreate_objects = parse_bool_field(
-        "recreate_objects", mtree_task.recreate_objects
-    )
-    mtree_task.write_ranges = parse_bool_field("write_ranges", mtree_task.write_ranges)
-
-    if mtree_task.ranges_file:
-        if not os.path.exists(mtree_task.ranges_file):
-            raise AceException(f"File {mtree_task.ranges_file} does not exist")
-
-        try:
-            block_ranges = ast.literal_eval(open(mtree_task.ranges_file, "r").read())
-            if not block_ranges:
-                raise AceException(
-                    f"Ranges file {mtree_task.ranges_file} is empty or invalid"
-                )
-            for block_range in block_ranges:
-                if len(block_range) != 3:
-                    raise AceException(
-                        f"Range {block_range} must be of form (block_id, start, end)"
-                    )
-            mtree_task.ranges = block_ranges
-        except Exception as e:
-            raise AceException(
-                f"Error parsing ranges file {mtree_task.ranges_file}: {e}"
-            )
-
-    node_list = []
-    try:
-        node_list = parse_nodes(mtree_task._nodes)
-    except ValueError as e:
-        raise AceException(
-            "Nodes should be a comma-separated list of nodenames "
-            + f'\n\tE.g., --nodes="n1,n2". Error: {e}'
-        )
-
-    if len(node_list) > 3:
-        raise AceException(
-            "mtree-diff currently supports up to a three-way table comparison"
-        )
-
-    found = check_cluster_exists(mtree_task.cluster_name)
-    if found:
-        util.message(
-            f"Cluster {mtree_task.cluster_name} exists",
-            p_state="success",
-            quiet_mode=mtree_task.quiet_mode,
-        )
-    else:
-        raise AceException(f"Cluster {mtree_task.cluster_name} not found")
-
-    nm_lst = mtree_task._table_name.split(".")
-    if len(nm_lst) != 2:
-        raise AceException(
-            f"TableName {mtree_task._table_name} must be of form" " 'schema.table_name'"
-        )
-    l_schema, l_table = nm_lst
-
-    l_schema = sanitise_input(l_schema)
-    l_table = sanitise_input(l_table)
-
-    db, pg, node_info = cluster.load_json(mtree_task.cluster_name)
-
-    cluster_nodes = []
-    database = {}
-
-    if mtree_task._dbname:
-        for db_entry in db:
-            if db_entry["db_name"] == mtree_task._dbname:
-                database = db_entry
-                break
-    else:
-        database = db[0]
-
-    if not database:
-        raise AceException(
-            f"Database '{mtree_task._dbname}' "
-            + f"not found in cluster '{mtree_task.cluster_name}'"
-        )
-
-    # Combine db and cluster_nodes into a single json
-    for node in node_info:
-        if node_list and node["name"] not in node_list:
-            continue
-        combined_json = {**database, **node}
-        cluster_nodes.append(combined_json)
-
-    if not node_list:
-        node_list = [node["name"] for node in cluster_nodes]
-
-    if mtree_task._nodes == "all" and len(cluster_nodes) > 3:
-        raise AceException("Table-diff only supports up to three way comparison")
-
-    if mtree_task._nodes != "all" and len(node_list) > 1:
-        for n in node_list:
-            if not any(filter(lambda x: x["name"] == n, cluster_nodes)):
-                raise AceException("Specified nodenames not present in cluster")
-
-    # Store basic task information
-    mtree_task.fields.l_schema = l_schema
-    mtree_task.fields.l_table = l_table
-    mtree_task.fields.node_list = node_list
-    mtree_task.fields.database = database
-    mtree_task.fields.cluster_nodes = cluster_nodes
-
-
 def validate_table_diff_inputs(td_task: TableDiffTask) -> None:
     """
     Validates the basic inputs for a table diff task without establishing connections.
@@ -1398,6 +1255,7 @@ def table_diff_checks(
     td_task.fields.host_map = host_map
     td_task.fields.cols = cols
     td_task.fields.key = key
+    td_task.fields.simple_primary_key = len(key.split(",")) == 1
 
     if td_task.fields.col_types and len(td_task.fields.col_types) > 1:
         ref_node = list(td_task.fields.col_types.keys())[0]
@@ -1447,6 +1305,149 @@ def table_diff_checks(
         )
 
     return td_task
+
+
+def validate_merkle_tree_inputs(mtree_task: MerkleTreeTask) -> None:
+    """
+    Validates the basic inputs for a merkle tree task without establishing connections.
+    Raises AceException if validation fails.
+    """
+    if not mtree_task.cluster_name or not mtree_task._table_name:
+        raise AceException("cluster_name and table_name are required arguments")
+
+    if type(mtree_task.block_rows) is str:
+        try:
+            mtree_task.block_rows = int(mtree_task.block_rows)
+        except Exception:
+            raise AceException("Invalid values for ACE_BLOCK_ROWS")
+    elif type(mtree_task.block_rows) is not int:
+        raise AceException("Invalid value type for ACE_BLOCK_ROWS")
+
+    # Capping max block size here to prevent the hash function from taking forever
+    if mtree_task.block_rows > config.MAX_MTREE_BLOCK_SIZE:
+        raise AceException(f"Block row size should be <= {config.MAX_MTREE_BLOCK_SIZE}")
+    if mtree_task.block_rows < config.MIN_MTREE_BLOCK_SIZE:
+        raise AceException(f"Block row size should be >= {config.MIN_MTREE_BLOCK_SIZE}")
+
+    if type(mtree_task.max_cpu_ratio) is int:
+        mtree_task.max_cpu_ratio = float(mtree_task.max_cpu_ratio)
+    elif type(mtree_task.max_cpu_ratio) is str:
+        try:
+            mtree_task.max_cpu_ratio = float(mtree_task.max_cpu_ratio)
+        except Exception:
+            raise AceException("Invalid values for ACE_MAX_CPU_RATIO")
+    elif type(mtree_task.max_cpu_ratio) is not float:
+        raise AceException("Invalid value type for ACE_MAX_CPU_RATIO")
+
+    if mtree_task.max_cpu_ratio > 1.0 or mtree_task.max_cpu_ratio < 0.0:
+        raise AceException(
+            "Invalid value range for ACE_MAX_CPU_RATIO or --max_cpu_ratio"
+        )
+
+    mtree_task.rebalance = parse_bool_field("rebalance", mtree_task.rebalance)
+    mtree_task.recreate_objects = parse_bool_field(
+        "recreate_objects", mtree_task.recreate_objects
+    )
+    mtree_task.write_ranges = parse_bool_field("write_ranges", mtree_task.write_ranges)
+
+    if mtree_task.ranges_file:
+        if not os.path.exists(mtree_task.ranges_file):
+            raise AceException(f"File {mtree_task.ranges_file} does not exist")
+
+        try:
+            block_ranges = ast.literal_eval(open(mtree_task.ranges_file, "r").read())
+            if not block_ranges:
+                raise AceException(
+                    f"Ranges file {mtree_task.ranges_file} is empty or invalid"
+                )
+            for block_range in block_ranges:
+                if len(block_range) != 3:
+                    raise AceException(
+                        f"Range {block_range} must be of form (block_id, start, end)"
+                    )
+            mtree_task.ranges = block_ranges
+        except Exception as e:
+            raise AceException(
+                f"Error parsing ranges file {mtree_task.ranges_file}: {e}"
+            )
+
+    node_list = []
+    try:
+        node_list = parse_nodes(mtree_task._nodes)
+    except ValueError as e:
+        raise AceException(
+            "Nodes should be a comma-separated list of nodenames "
+            + f'\n\tE.g., --nodes="n1,n2". Error: {e}'
+        )
+
+    if len(node_list) > 3:
+        raise AceException(
+            "mtree-diff currently supports up to a three-way table comparison"
+        )
+
+    found = check_cluster_exists(mtree_task.cluster_name)
+    if found:
+        util.message(
+            f"Cluster {mtree_task.cluster_name} exists",
+            p_state="success",
+            quiet_mode=mtree_task.quiet_mode,
+        )
+    else:
+        raise AceException(f"Cluster {mtree_task.cluster_name} not found")
+
+    nm_lst = mtree_task._table_name.split(".")
+    if len(nm_lst) != 2:
+        raise AceException(
+            f"TableName {mtree_task._table_name} must be of form" " 'schema.table_name'"
+        )
+    l_schema, l_table = nm_lst
+
+    l_schema = sanitise_input(l_schema)
+    l_table = sanitise_input(l_table)
+
+    db, pg, node_info = cluster.load_json(mtree_task.cluster_name)
+
+    cluster_nodes = []
+    database = {}
+
+    if mtree_task._dbname:
+        for db_entry in db:
+            if db_entry["db_name"] == mtree_task._dbname:
+                database = db_entry
+                break
+    else:
+        database = db[0]
+
+    if not database:
+        raise AceException(
+            f"Database '{mtree_task._dbname}' "
+            + f"not found in cluster '{mtree_task.cluster_name}'"
+        )
+
+    # Combine db and cluster_nodes into a single json
+    for node in node_info:
+        if node_list and node["name"] not in node_list:
+            continue
+        combined_json = {**database, **node}
+        cluster_nodes.append(combined_json)
+
+    if not node_list:
+        node_list = [node["name"] for node in cluster_nodes]
+
+    if mtree_task._nodes == "all" and len(cluster_nodes) > 3:
+        raise AceException("Table-diff only supports up to three way comparison")
+
+    if mtree_task._nodes != "all" and len(node_list) > 1:
+        for n in node_list:
+            if not any(filter(lambda x: x["name"] == n, cluster_nodes)):
+                raise AceException("Specified nodenames not present in cluster")
+
+    # Store basic task information
+    mtree_task.fields.l_schema = l_schema
+    mtree_task.fields.l_table = l_table
+    mtree_task.fields.node_list = node_list
+    mtree_task.fields.database = database
+    mtree_task.fields.cluster_nodes = cluster_nodes
 
 
 def merkle_tree_checks(
@@ -1572,6 +1573,7 @@ def merkle_tree_checks(
     mtree_task.fields.host_map = host_map
     mtree_task.fields.cols = cols
     mtree_task.fields.key = key
+    mtree_task.fields.simple_primary_key = len(key.split(",")) == 1
 
 
 def check_repair_option_compatibility(tr_task: TableRepairTask) -> None:

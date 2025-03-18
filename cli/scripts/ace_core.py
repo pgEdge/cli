@@ -35,18 +35,35 @@ from ace_data_models import (
 from ace_exceptions import AceException, AuthenticationError
 
 
-def run_query(worker_state, host, query):
-    cur = worker_state[host]
+def run_query(worker_state, host, query, stmt_name=None, params=None):
+    if stmt_name:
+        cur = worker_state["cursors"][host]
+
+        prepared_sql = sql.SQL("EXECUTE {stmt_name} ({params})").format(
+            stmt_name=sql.Identifier(stmt_name),
+            params=sql.SQL(", ").join(sql.Literal(param) for param in params),
+        )
+        cur.execute(prepared_sql)
+        results = cur.fetchall()
+        return results
+
+    cur = worker_state["cursors"][host]
     cur.execute(query)
     results = cur.fetchall()
     return results
 
 
-# FIXME: Replace with td_task.connection_pool.connect() after merkle trees
-# PR is merged
 def init_conn_pool(worker_id, shared_objects, worker_state):
-
     task = shared_objects["task"]
+
+    worker_state["cursors"] = {}
+    worker_state["prepared_statements"] = {}
+
+    p_key = task.fields.key
+    schema_name = task.fields.l_schema
+    table_name = task.fields.l_table
+    cols = task.fields.cols.split(",")
+    simple_primary_key = task.fields.simple_primary_key
 
     for node in task.fields.cluster_nodes:
         try:
@@ -59,7 +76,155 @@ def init_conn_pool(worker_id, shared_objects, worker_state):
                     else None
                 ),
             )
-            worker_state[node["name"]] = conn.cursor()
+            cur = conn.cursor()
+            worker_state["cursors"][node["name"]] = cur
+
+            worker_state["prepared_statements"][node["name"]] = {}
+            host = node["name"]
+
+            if simple_primary_key:
+                cur.execute(
+                    sql.SQL(
+                        """
+                        PREPARE hash_simple AS
+                        WITH block_rows AS (
+                        SELECT *
+                        FROM {schema}.{table}
+                        WHERE
+                            ($1::boolean OR {p_key} >= $3) AND
+                            ($2::boolean OR {p_key} < $4)
+                        ),
+                        block_hash AS (
+                            SELECT
+                                digest(
+                                    COALESCE(
+                                        string_agg(
+                                            concat_ws('|', {columns}),
+                                            '|'
+                                            ORDER BY {key}
+                                        ),
+                                        'EMPTY_BLOCK'
+                                    ),
+                                    'sha256'
+                                ) as leaf_hash
+                            FROM block_rows
+                        )
+                        SELECT encode(leaf_hash, 'hex') as leaf_hash
+                        FROM block_hash
+                        """
+                    ).format(
+                        schema=sql.Identifier(schema_name),
+                        table=sql.Identifier(table_name),
+                        p_key=sql.Identifier(p_key),
+                        key=sql.Identifier(p_key),
+                        columns=sql.SQL(", ").join(sql.Identifier(col) for col in cols),
+                    )
+                )
+                worker_state["prepared_statements"][host]["hash_simple"] = "hash_simple"
+
+                cur.execute(
+                    sql.SQL(
+                        """
+                        PREPARE block_simple AS
+                        SELECT * FROM {schema}.{table}
+                        WHERE
+                        ($1::boolean OR {p_key} >= $3) AND
+                        ($2::boolean OR {p_key} < $4)
+                        """
+                    ).format(
+                        schema=sql.Identifier(schema_name),
+                        table=sql.Identifier(table_name),
+                        p_key=sql.Identifier(p_key),
+                    )
+                )
+                worker_state["prepared_statements"][host][
+                    "block_simple"
+                ] = "block_simple"
+
+            else:
+                p_key_cols = [col.strip() for col in p_key.split(",")]
+                p_key_count = len(p_key_cols)
+
+                pk_cols_sql = sql.SQL(", ").join(
+                    sql.Identifier(col) for col in p_key_cols
+                )
+
+                # $1 and $2 are for skip_min_check and skip_max_check,
+                # $3, $4, ... are for min pkey values
+                placeholders1 = sql.SQL(", ").join(
+                    sql.SQL("${i}").format(i=i) for i in range(3, p_key_count + 3)
+                )
+
+                placeholders2 = sql.SQL(", ").join(
+                    sql.SQL("${i}").format(i=i)
+                    for i in range(p_key_count + 3, 2 * p_key_count + 3)
+                )
+
+                cur.execute(
+                    sql.SQL(
+                        """
+                        PREPARE hash_composite_full AS
+                        WITH block_rows AS (
+                        SELECT *
+                        FROM {schema}.{table}
+                        WHERE
+                            ($1::boolean OR ({pk_cols}) >= ({placeholders1})) AND
+                            ($2::boolean OR
+                                ({pk_cols}) < ({placeholders2}))
+                        ),
+                        block_hash AS (
+                            SELECT
+                                digest(
+                                    COALESCE(
+                                        string_agg(
+                                            concat_ws('|', {columns}),
+                                            '|'
+                                            ORDER BY {order_by}
+                                        ),
+                                        'EMPTY_BLOCK'
+                                    ),
+                                    'sha256'
+                                ) as leaf_hash
+                            FROM block_rows
+                        )
+                        SELECT encode(leaf_hash, 'hex') as leaf_hash
+                        FROM block_hash
+                        """
+                    ).format(
+                        schema=sql.Identifier(schema_name),
+                        table=sql.Identifier(table_name),
+                        pk_cols=pk_cols_sql,
+                        placeholders1=placeholders1,
+                        placeholders2=placeholders2,
+                        columns=sql.SQL(", ").join(sql.Identifier(col) for col in cols),
+                        order_by=pk_cols_sql,
+                    )
+                )
+                worker_state["prepared_statements"][host][
+                    "hash_composite_full"
+                ] = "hash_composite_full"
+
+                cur.execute(
+                    sql.SQL(
+                        """
+                        PREPARE block_composite_full AS
+                        SELECT * FROM {schema}.{table}
+                        WHERE
+                            ($1::boolean OR ({pk_cols}) >= ({placeholders1})) AND
+                            ($2::boolean OR ({pk_cols}) < ({placeholders2}))
+                        """
+                    ).format(
+                        schema=sql.Identifier(schema_name),
+                        table=sql.Identifier(table_name),
+                        pk_cols=pk_cols_sql,
+                        placeholders1=placeholders1,
+                        placeholders2=placeholders2,
+                    )
+                )
+                worker_state["prepared_statements"][host][
+                    "block_composite_full"
+                ] = "block_composite_full"
+
         except AuthenticationError as e:
             raise AceException(str(e))
 
@@ -68,7 +233,14 @@ def init_conn_pool(worker_id, shared_objects, worker_state):
 # It is unused in this function, but is required by the mpire library.
 def close_conn_pool(worker_id, shared_objects, worker_state):
     try:
-        for host, cur in worker_state.items():
+        for host, statements in worker_state.get("prepared_statements", {}).items():
+            for name, stmt in statements.items():
+                try:
+                    stmt.close()
+                except Exception:
+                    pass
+
+        for host, cur in worker_state.get("cursors", {}).items():
             conn = cur.connection
             cur.close()
             conn.close()
@@ -118,14 +290,22 @@ def create_result_dict(
 
 
 def compare_checksums(worker_id, shared_objects, worker_state, batches):
-    p_key = shared_objects["p_key"]
-    schema_name = shared_objects["schema_name"]
-    table_name = shared_objects["table_name"]
-    node_list = shared_objects["node_list"]
-    cols = shared_objects["cols_list"]
-    simple_primary_key = shared_objects["simple_primary_key"]
+    """
+    Same approach as compare_ranges in ace_mtree.py
+    Use lookup dictionaries for faster comparisons, and process all batches
+    at once if possible
+    """
+
+    task = shared_objects["task"]
     mode = shared_objects["mode"]
     stop_event = shared_objects["stop_event"]
+
+    p_key = task.fields.key
+    schema_name = task.fields.l_schema
+    table_name = task.fields.l_table
+    node_list = task.fields.node_list
+    cols = task.fields.cols.split(",")
+    simple_primary_key = task.fields.simple_primary_key
 
     worker_diffs = {}
     total_diffs = 0
@@ -133,65 +313,45 @@ def compare_checksums(worker_id, shared_objects, worker_state, batches):
     if stop_event.is_set():
         return
 
-    # Same approach as compare_ranges in ace_mtree.py
-    # Use lookup dictionaries for faster comparisons, and process all batches
-    # at once if possible
+    # We can use prepared statements for diff mode with a single batch
+    use_prepared = mode == "diff" and len(batches) == 1
+
     if mode == "diff":
         if len(batches) == 1:
             pkey1, pkey2 = batches[0]
 
-            where_clause_parts = []
-
             if simple_primary_key:
-                if pkey1 and pkey1[0] is not None:
-                    where_clause_parts.append(
-                        sql.SQL("{p_key} >= {pkey1}").format(
-                            p_key=sql.Identifier(p_key), pkey1=sql.Literal(pkey1[0])
-                        )
-                    )
-                if pkey2 and pkey2[0] is not None:
-                    where_clause_parts.append(
-                        sql.SQL("{p_key} < {pkey2}").format(
-                            p_key=sql.Identifier(p_key), pkey2=sql.Literal(pkey2[0])
-                        )
-                    )
-            else:
-                if pkey1 and pkey1[0] is not None:
-                    where_clause_parts.append(
-                        sql.SQL("({p_key}) >= ({pkey1})").format(
-                            p_key=sql.SQL(", ").join(
-                                [
-                                    sql.Identifier(col.strip())
-                                    for col in p_key.split(",")
-                                ]
-                            ),
-                            pkey1=sql.SQL(", ").join(
-                                [sql.Literal(val) for val in pkey1[0]]
-                            ),
-                        )
-                    )
-                if pkey2 and pkey2[0] is not None:
-                    where_clause_parts.append(
-                        sql.SQL("({p_key}) < ({pkey2})").format(
-                            p_key=sql.SQL(", ").join(
-                                [
-                                    sql.Identifier(col.strip())
-                                    for col in p_key.split(",")
-                                ]
-                            ),
-                            pkey2=sql.SQL(", ").join(
-                                [sql.Literal(val) for val in pkey2[0]]
-                            ),
-                        )
-                    )
+                has_min = pkey1 and pkey1[0] is not None
+                min_key = pkey1[0] if has_min else None
 
-            where_clause = (
-                sql.SQL(" AND ").join(where_clause_parts)
-                if where_clause_parts
-                else sql.SQL("TRUE")
-            )
+                has_max = pkey2 and pkey2[0] is not None
+                max_key = pkey2[0] if has_max else None
+
+                # [skip_min_check, min_value, skip_max_check, max_value]
+                # skip_min_check and skip_max_check work as follows:
+                # $1::boolean OR {p_key} >= <value>
+                # $2::boolean OR {p_key} < <value>
+                #
+                # For our first range, start is None, so we don't need to check
+                # for min.  For the last range, end is None, so we don't need
+                # to check for max.
+                params = [not has_min, not has_max, min_key, max_key]
+
+            else:
+                p_key_cols = [col.strip() for col in p_key.split(",")]
+                p_key_count = len(p_key_cols)
+
+                has_min = pkey1 and pkey1[0] is not None
+                min_values = list(pkey1[0]) if has_min else [None] * p_key_count
+
+                has_max = pkey2 and pkey2[0] is not None
+                max_values = list(pkey2[0]) if has_max else [None] * p_key_count
+
+                params = [not has_min, not has_max] + min_values + max_values
 
         else:
+            # For multiple batches, we'll fall back to using the original approach
+            # with dynamically generated SQL
             if simple_primary_key:
                 min_key = min(
                     b[0][0] if b[0] is not None else None
@@ -270,89 +430,169 @@ def compare_checksums(worker_id, shared_objects, worker_state, batches):
                     sql.SQL(" OR ").join(or_clauses) if or_clauses else sql.SQL("TRUE")
                 )
 
+            if simple_primary_key:
+                hash_sql = sql.SQL(
+                    """
+                    WITH block_rows AS (
+                    SELECT *
+                    FROM {schema}.{table}
+                    WHERE {where_clause}
+                    ),
+                    block_hash AS (
+                        SELECT
+                            digest(
+                                COALESCE(
+                                    string_agg(
+                                        concat_ws('|', {columns}),
+                                        '|'
+                                        ORDER BY {key}
+                                    ),
+                                    'EMPTY_BLOCK'
+                                ),
+                                'sha256'
+                            ) as leaf_hash
+                        FROM block_rows
+                    )
+                    SELECT encode(leaf_hash, 'hex') as leaf_hash
+                    FROM block_hash
+                    """
+                ).format(
+                    schema=sql.Identifier(schema_name),
+                    table=sql.Identifier(table_name),
+                    where_clause=where_clause,
+                    key=sql.Identifier(p_key),
+                    columns=sql.SQL(", ").join(sql.Identifier(col) for col in cols),
+                )
+            else:
+                hash_sql = sql.SQL(
+                    """
+                    WITH block_rows AS (
+                        SELECT *
+                        FROM {schema}.{table}
+                        WHERE {where_clause}
+                    ),
+                    block_hash AS (
+                        SELECT
+                            digest(
+                                COALESCE(
+                                    string_agg(
+                                        concat_ws('|', {columns}),
+                                        '|'
+                                        ORDER BY {key}
+                                    ),
+                                    'EMPTY_BLOCK'
+                                ),
+                                'sha256'
+                            ) as leaf_hash
+                        FROM block_rows
+                    )
+                    SELECT encode(leaf_hash, 'hex') as leaf_hash
+                    FROM block_hash
+                    """
+                ).format(
+                    schema=sql.Identifier(schema_name),
+                    table=sql.Identifier(table_name),
+                    where_clause=where_clause,
+                    key=sql.SQL(", ").join(
+                        sql.Identifier(col.strip()) for col in p_key.split(",")
+                    ),
+                    columns=sql.SQL(", ").join(sql.Identifier(col) for col in cols),
+                )
+
+            block_sql = sql.SQL(
+                "SELECT * FROM {table_name} WHERE {where_clause}"
+            ).format(
+                table_name=sql.SQL("{}.{}").format(
+                    sql.Identifier(schema_name),
+                    sql.Identifier(table_name),
+                ),
+                where_clause=where_clause,
+            )
+
     elif mode == "rerun":
+        # Again, falling back to dynamically generated queries for rerun mode
         keys = p_key.split(",")
         where_clause = sql.SQL(generate_where_clause(keys, batches))
 
-    else:
-        raise Exception(f"Mode {mode} not recognized in compare_checksums")
-
-    if simple_primary_key:
-        hash_sql = sql.SQL(
-            """
-            WITH block_rows AS (
-            SELECT *
-            FROM {schema}.{table}
-            WHERE {where_clause}
-            ),
-            block_hash AS (
-                SELECT
-                    digest(
-                        COALESCE(
-                            string_agg(
-                                concat_ws('|', {columns}),
-                                '|'
-                                ORDER BY {key}
-                            ),
-                            'EMPTY_BLOCK'
-                        ),
-                        'sha256'
-                    ) as leaf_hash
-                FROM block_rows
-            )
-            SELECT encode(leaf_hash, 'hex') as leaf_hash
-            FROM block_hash
-            """
-        ).format(
-            schema=sql.Identifier(schema_name),
-            table=sql.Identifier(table_name),
-            where_clause=where_clause,
-            key=sql.Identifier(p_key),
-            columns=sql.SQL(", ").join(sql.Identifier(col) for col in cols),
-        )
-    else:
-        hash_sql = sql.SQL(
-            """
-            WITH block_rows AS (
+        if simple_primary_key:
+            hash_sql = sql.SQL(
+                """
+                WITH block_rows AS (
                 SELECT *
                 FROM {schema}.{table}
                 WHERE {where_clause}
-            ),
-            block_hash AS (
-                SELECT
-                    digest(
-                        COALESCE(
-                            string_agg(
-                                concat_ws('|', {columns}),
-                                '|'
-                                ORDER BY {key}
+                ),
+                block_hash AS (
+                    SELECT
+                        digest(
+                            COALESCE(
+                                string_agg(
+                                    concat_ws('|', {columns}),
+                                    '|'
+                                    ORDER BY {key}
+                                ),
+                                'EMPTY_BLOCK'
                             ),
-                            'EMPTY_BLOCK'
-                        ),
-                        'sha256'
-                    ) as leaf_hash
-                FROM block_rows
+                            'sha256'
+                        ) as leaf_hash
+                    FROM block_rows
+                )
+                SELECT encode(leaf_hash, 'hex') as leaf_hash
+                FROM block_hash
+                """
+            ).format(
+                schema=sql.Identifier(schema_name),
+                table=sql.Identifier(table_name),
+                where_clause=where_clause,
+                key=sql.Identifier(p_key),
+                columns=sql.SQL(", ").join(sql.Identifier(col) for col in cols),
             )
-            SELECT encode(leaf_hash, 'hex') as leaf_hash
-            FROM block_hash
-            """
-        ).format(
-            schema=sql.Identifier(schema_name),
-            table=sql.Identifier(table_name),
-            where_clause=where_clause,
-            key=sql.SQL(", ").join(
-                sql.Identifier(col.strip()) for col in p_key.split(",")
+        else:
+            hash_sql = sql.SQL(
+                """
+                WITH block_rows AS (
+                    SELECT *
+                    FROM {schema}.{table}
+                    WHERE {where_clause}
+                ),
+                block_hash AS (
+                    SELECT
+                        digest(
+                            COALESCE(
+                                string_agg(
+                                    concat_ws('|', {columns}),
+                                    '|'
+                                    ORDER BY {key}
+                                ),
+                                'EMPTY_BLOCK'
+                            ),
+                            'sha256'
+                        ) as leaf_hash
+                    FROM block_rows
+                )
+                SELECT encode(leaf_hash, 'hex') as leaf_hash
+                FROM block_hash
+                """
+            ).format(
+                schema=sql.Identifier(schema_name),
+                table=sql.Identifier(table_name),
+                where_clause=where_clause,
+                key=sql.SQL(", ").join(
+                    sql.Identifier(col.strip()) for col in p_key.split(",")
+                ),
+                columns=sql.SQL(", ").join(sql.Identifier(col) for col in cols),
+            )
+
+        block_sql = sql.SQL("SELECT * FROM {table_name} WHERE {where_clause}").format(
+            table_name=sql.SQL("{}.{}").format(
+                sql.Identifier(schema_name),
+                sql.Identifier(table_name),
             ),
-            columns=sql.SQL(", ").join(sql.Identifier(col) for col in cols),
+            where_clause=where_clause,
         )
 
-    block_sql = sql.SQL("SELECT * FROM {table_name} WHERE {where_clause}").format(
-        table_name=sql.SQL("{}.{}").format(
-            sql.Identifier(schema_name),
-            sql.Identifier(table_name),
-        ),
-        where_clause=where_clause,
-    )
+    else:
+        raise Exception(f"Mode {mode} not recognized in compare_checksums")
 
     for node_pair in combinations(node_list, 2):
         host1 = node_pair[0]
@@ -360,10 +600,34 @@ def compare_checksums(worker_id, shared_objects, worker_state, batches):
         node_pair_key = f"{host1}/{host2}"
 
         with ThreadPoolExecutor(max_workers=2) as executor:
-            futures = [
-                executor.submit(run_query, worker_state, host1, hash_sql),
-                executor.submit(run_query, worker_state, host2, hash_sql),
-            ]
+            if use_prepared:
+                stmt_name = (
+                    "hash_simple" if simple_primary_key else "hash_composite_full"
+                )
+                futures = [
+                    executor.submit(
+                        run_query,
+                        worker_state,
+                        host1,
+                        None,
+                        stmt_name=stmt_name,
+                        params=params,
+                    ),
+                    executor.submit(
+                        run_query,
+                        worker_state,
+                        host2,
+                        None,
+                        stmt_name=stmt_name,
+                        params=params,
+                    ),
+                ]
+            else:
+                futures = [
+                    executor.submit(run_query, worker_state, host1, hash_sql),
+                    executor.submit(run_query, worker_state, host2, hash_sql),
+                ]
+
             results = [f.result() for f in futures if not f.exception()]
 
         errors = [f.exception() for f in futures if f.exception()]
@@ -388,10 +652,34 @@ def compare_checksums(worker_id, shared_objects, worker_state, batches):
 
         if hash1 != hash2:
             with ThreadPoolExecutor(max_workers=2) as executor:
-                futures = [
-                    executor.submit(run_query, worker_state, host1, block_sql),
-                    executor.submit(run_query, worker_state, host2, block_sql),
-                ]
+                if use_prepared:
+                    stmt_name = (
+                        "block_simple" if simple_primary_key else "block_composite_full"
+                    )
+                    futures = [
+                        executor.submit(
+                            run_query,
+                            worker_state,
+                            host1,
+                            None,
+                            stmt_name=stmt_name,
+                            params=params,
+                        ),
+                        executor.submit(
+                            run_query,
+                            worker_state,
+                            host2,
+                            None,
+                            stmt_name=stmt_name,
+                            params=params,
+                        ),
+                    ]
+                else:
+                    futures = [
+                        executor.submit(run_query, worker_state, host1, block_sql),
+                        executor.submit(run_query, worker_state, host2, block_sql),
+                    ]
+
                 results = [f.result() for f in futures if not f.exception()]
 
             errors = [f.exception() for f in futures if f.exception()]
@@ -481,9 +769,7 @@ def table_diff(td_task: TableDiffTask, skip_all_checks: bool = False):
     if not skip_all_checks:
         td_task = ace.table_diff_checks(td_task, skip_validation=True)
 
-    simple_primary_key = True
-    if len(td_task.fields.key.split(",")) > 1:
-        simple_primary_key = False
+    simple_primary_key = td_task.fields.simple_primary_key
 
     row_count = 0
     total_rows = 0
@@ -648,7 +934,7 @@ def table_diff(td_task: TableDiffTask, skip_all_checks: bool = False):
     # We're done with getting table metadata. Closing all connections.
     for conn in conn_list:
         conn.close()
-    
+
     td_task.connection_pool.close_all()
 
     start_time = datetime.now()
@@ -659,8 +945,6 @@ def table_diff(td_task: TableDiffTask, skip_all_checks: bool = False):
     to capture diffs even if rows are absent in one node
     """
 
-    cols_list = td_task.fields.cols.split(",")
-
     diff_dict = {}
 
     stop_event = Manager().Event()
@@ -668,15 +952,6 @@ def table_diff(td_task: TableDiffTask, skip_all_checks: bool = False):
     # TODO: Clean this up
     # Shared variables needed by all workers
     shared_objects = {
-        "cluster_name": td_task.cluster_name,
-        "database": td_task.fields.database,
-        "node_list": td_task.fields.node_list,
-        "schema_name": td_task.fields.l_schema,
-        "table_name": td_task.fields.l_table,
-        "cols_list": cols_list,
-        "p_key": td_task.fields.key,
-        "block_rows": td_task.block_rows,
-        "simple_primary_key": simple_primary_key,
         "mode": "diff",
         "task": td_task,
         "stop_event": stop_event,
@@ -704,7 +979,6 @@ def table_diff(td_task: TableDiffTask, skip_all_checks: bool = False):
             n_jobs=procs,
             shared_objects=shared_objects,
             use_worker_state=True,
-            start_method="spawn",
             pass_worker_id=True,
         ) as pool:
             for result in pool.imap_unordered(
@@ -2312,15 +2586,6 @@ def table_rerun_async(td_task: TableDiffTask) -> None:
 
     # Shared variables needed by all workers
     shared_objects = {
-        "cluster_name": td_task.cluster_name,
-        "database": td_task.fields.database,
-        "node_list": td_task.fields.node_list,
-        "schema_name": td_task.fields.l_schema,
-        "table_name": td_task.fields.l_table,
-        "cols_list": cols_list,
-        "p_key": td_task.fields.key,
-        "block_rows": td_task.block_rows,
-        "simple_primary_key": simple_primary_key,
         "mode": "rerun",
         "stop_event": stop_event,
         "task": td_task,
@@ -2343,7 +2608,7 @@ def table_rerun_async(td_task: TableDiffTask) -> None:
             n_jobs=procs,
             shared_objects=shared_objects,
             use_worker_state=True,
-            use_dill=True,
+            pass_worker_id=True,
         ) as pool:
             for result in pool.imap_unordered(
                 compare_checksums,
