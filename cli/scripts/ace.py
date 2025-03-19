@@ -1933,6 +1933,7 @@ def validate_repset_diff_inputs(rd_task: RepsetDiffTask) -> None:
             if not any(filter(lambda x: x["name"] == n, cluster_nodes)):
                 raise AceException("Specified nodenames not present in cluster")
 
+    rd_task.repset_name = sanitise_input(rd_task.repset_name)
     rd_task.fields.cluster_nodes = cluster_nodes
     rd_task.fields.database = database
     rd_task.fields.node_list = node_list
@@ -2006,9 +2007,7 @@ def repset_diff_checks(
         )
 
     # Convert fetched rows into a list of strings
-    rd_task.table_list = [
-        table[0] for table in tables if table[0] not in rd_task.skip_tables
-    ]
+    rd_task.table_list = [table[0] for table in tables]
 
     return rd_task
 

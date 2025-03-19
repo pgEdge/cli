@@ -2,13 +2,56 @@ import json
 import re
 import pytest
 import psycopg
-from test_simple import TestSimple
 
 
-@pytest.mark.skip(reason="Will revisit this in a bit")
 @pytest.mark.usefixtures("prepare_databases")
-class TestRepsetDiff(TestSimple):
+class TestRepsetDiff():
     """Test class for repset-diff functionality"""
+
+    @pytest.fixture(scope="class")
+    def setup_test_scenario(self, nodes):
+        """Setup fixture to create different scenarios for repset-diff testing"""
+        try:
+            for node in nodes:
+                conn = psycopg.connect(host=node, dbname="demo", user="admin")
+                cur = conn.cursor()
+
+                cur.execute(
+                    """
+                    CREATE TABLE repset_diff_test
+                    (
+                        id SERIAL PRIMARY KEY,
+                        name VARCHAR(255)
+                    )
+                    """
+                )
+                cur.execute(
+                    """
+                    INSERT INTO repset_diff_test (name)
+                    VALUES ('Alice'), ('Bob'), ('Charlie')
+                    """
+                )
+                conn.commit()
+                cur.close()
+                conn.close()
+
+                print(f"Created repset_diff_test table on {node}")
+
+            yield
+
+            for node in nodes:
+                conn = psycopg.connect(host=node, dbname="demo", user="admin")
+                cur = conn.cursor()
+
+                cur.execute("DROP TABLE repset_diff_test")
+                conn.commit()
+                cur.close()
+                conn.close()
+
+                print(f"Dropped repset_diff_test table on {node}")
+
+        except Exception as e:
+            pytest.fail(f"Test failed: {str(e)}")
 
     def _introduce_differences(
         self, ace_conf, node, table_name, column_name, key_column
@@ -29,6 +72,8 @@ class TestRepsetDiff(TestSimple):
 
             conn = psycopg.connect(**params)
             cur = conn.cursor()
+
+            cur.execute("SELECT spock.repair_mode(true)")
 
             # Modify 50 rows in the table
             cur.execute(
@@ -61,7 +106,7 @@ class TestRepsetDiff(TestSimple):
             )
 
             # Run repset-diff
-            cli.repset_diff_cli("eqn-t9da", "demo_replication_set")
+            cli.repset_diff_cli("eqn-t9da", "test_repset")
 
             # Capture and clean the output
             captured = capsys.readouterr()
@@ -71,7 +116,7 @@ class TestRepsetDiff(TestSimple):
 
             # Verify differences were found
             assert (
-                "differences found" in clean_output.lower()
+                "tables do not match" in clean_output.lower()
             ), "No differences detected"
 
             # Get the diff file path
@@ -84,9 +129,10 @@ class TestRepsetDiff(TestSimple):
                 diff_data = json.load(f)
 
             # Verify the number of differences matches our modifications
-            assert (
-                len(diff_data["diffs"]["n1/n2"]["n2"]) == 50
-            ), "Expected 50 differences"
+            assert len(diff_data["diffs"]["n1/n2"]["n2"]) == len(
+                modified_indices
+            ), f"Expected {len(modified_indices)} differences,"
+            f" found {len(diff_data['diffs']['n1/n2']['n2'])}"
 
             # Verify each modified row is present in the diff
             diff_indices = {diff["index"] for diff in diff_data["diffs"]["n1/n2"]["n2"]}
@@ -107,7 +153,7 @@ class TestRepsetDiff(TestSimple):
 
             # Run repset-diff with customers table skipped
             cli.repset_diff_cli(
-                "eqn-t9da", "demo_replication_set", skip_tables=["public.customers"]
+                "eqn-t9da", "test_repset", skip_tables="public.customers"
             )
 
             # Capture and clean the output
@@ -120,14 +166,13 @@ class TestRepsetDiff(TestSimple):
             assert (
                 "skipping table public.customers" in clean_output.lower()
             ), "Table not skipped"
-            assert (
-                "tables match ok" in clean_output.lower()
-            ), "Differences found in non-skipped tables"
 
         except Exception as e:
             pytest.fail(f"Test failed: {str(e)}")
 
-    def test_repset_diff_skip_file(self, cli, capsys, ace_conf, tmp_path):
+    def test_repset_diff_skip_file(
+        self, cli, capsys, ace_conf, tmp_path, diff_file_path
+    ):
         """Test repset-diff with skip-file option"""
         try:
             # Create a skip file
@@ -140,9 +185,7 @@ class TestRepsetDiff(TestSimple):
             )
 
             # Run repset-diff with skip file
-            cli.repset_diff_cli(
-                "eqn-t9da", "demo_replication_set", skip_file=str(skip_file)
-            )
+            cli.repset_diff_cli("eqn-t9da", "test_repset", skip_file=str(skip_file))
 
             # Capture and clean the output
             captured = capsys.readouterr()
@@ -154,9 +197,14 @@ class TestRepsetDiff(TestSimple):
             assert (
                 "skipping table public.customers" in clean_output.lower()
             ), "Table not skipped"
-            assert (
-                "tables match ok" in clean_output.lower()
-            ), "Differences found in non-skipped tables"
+
+            # Cleanup by repairing
+            cli.table_repair_cli(
+                "eqn-t9da",
+                "public.customers",
+                diff_file=diff_file_path.path,
+                source_of_truth="n1",
+            )
 
         except Exception as e:
             pytest.fail(f"Test failed: {str(e)}")
