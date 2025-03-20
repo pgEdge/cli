@@ -1,0 +1,35 @@
+name: Daily Build Test
+
+on:
+  workflow_dispatch:  # Manual trigger 
+
+jobs:
+  build-test:
+    runs-on: [self-hosted, amd8]  # Uses our configured amd8 self hosted runner
+
+    steps:
+      - name: Confirm environment paths and contents
+        run: |
+          echo "Listing $PGE directory:"
+          ls -l $PGE
+          
+          echo "Listing $BLD directory:"
+          ls -l $BLD
+          
+          echo "OS details:"
+          cat /etc/os-release
+          
+          TIMESTAMP=$(date +%d%m%y-%H%M)
+          FILE=/tmp/$TIMESTAMP.txt
+          echo "Creating file: $FILE"
+          touch $FILE
+          echo "Created by daily-build workflow at $(date)" > $FILE
+          
+          echo "File created. Contents:"
+          cat $FILE
+
+      - name: Upload artifact (timestamp file)
+        uses: actions/upload-artifact@v3
+        with:
+          name: timestamp-file
+          path: /tmp/*.txt
