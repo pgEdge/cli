@@ -1,0 +1,39 @@
+FROM ubuntu:22.04
+
+ENV TZ=America/New_York
+ENV DEBIAN_FRONTEND=noninteractive
+RUN apt-get update && apt-get remove -y --purge snapd && apt-get -y upgrade
+
+ENV install="apt-get install -y --no-install-recommends"
+RUN $install python3 python3-pip git wget curl pigz zip sqlite3 postgresql
+RUN $install openssh-server sudo systemd
+
+RUN adduser --home /home/pgedge --shell /bin/bash pgedge
+RUN echo '%pgedge ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+RUN rm -f /var/run/nologin
+RUN sed -i 's/^#PubkeyAuthentication yes/PubkeyAuthentication yes/' /etc/ssh/sshd_config
+RUN sed -i 's/^#PasswordAuthentication yes/PasswordAuthentication no/' /etc/ssh/sshd_config
+RUN ssh-keygen -A
+RUN mkdir -p /run/sshd && /usr/sbin/sshd
+
+RUN mkdir -p /backups
+RUN chown pgedge:pgedge /backups
+
+USER pgedge
+WORKDIR /home/pgedge
+RUN mkdir -p .ssh/
+RUN ssh-keygen -t rsa -b 4096 -N "" -f /home/pgedge/.ssh/id_rsa
+
+RUN cat /home/pgedge/.ssh/id_rsa.pub >> /home/pgedge/.ssh/authorized_keys
+RUN chmod 600 /home/pgedge/.ssh/authorized_keys
+RUN chmod 700 /home/pgedge/.ssh/
+
+RUN sudo chown pgedge:pgedge /home/pgedge/.ssh/id_rsa
+RUN sudo chmod 600 /home/pgedge/.ssh/id_rsa
+
+RUN echo 'export PGBACKREST_REPO1_CIPHER_PASS=Really_s3cure_password' >> ~/.bashrc
+
+USER root
+EXPOSE 22
+
+CMD ["/usr/sbin/sshd", "-D"]
