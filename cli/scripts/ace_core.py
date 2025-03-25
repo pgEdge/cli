@@ -233,14 +233,7 @@ def init_conn_pool(worker_id, shared_objects, worker_state):
 # It is unused in this function, but is required by the mpire library.
 def close_conn_pool(worker_id, shared_objects, worker_state):
     try:
-        for host, statements in worker_state.get("prepared_statements", {}).items():
-            for name, stmt in statements.items():
-                try:
-                    stmt.close()
-                except Exception:
-                    pass
-
-        for host, cur in worker_state.get("cursors", {}).items():
+        for cur in worker_state.get("cursors", {}).items():
             conn = cur.connection
             cur.close()
             conn.close()
