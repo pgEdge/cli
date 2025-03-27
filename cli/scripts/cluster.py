@@ -3217,7 +3217,7 @@ def node_add(
       6. Sets up the target node directory and installs pgEdge/pgBackRest.
       7. **Before performing PITR, updates the target node's repo1-path to match the source node's.**
       8. Performs PITR on the target node using the backup ID from the source node.
-      9. Appends additional settings to postgresql.conf on the target node.
+      9. Appends additional settings (including log_directory and port) to postgresql.conf on the target node.
      10. **After PITR, reverts the target node's repo1-path back to its original state.**
      11. Optionally executes an extra script.
     
@@ -3408,7 +3408,7 @@ def node_add(
     # --- Set Up Target Node Directory and Install pgEdge/pgBackRest ---
     setup_target_node_dir_and_install(cluster_name, target_node, db_settings)
 
-    # --- Begin PITR Restoration on Target Node ---
+    # 7. **Before performing PITR, updates the target node's repo1-path to match the source node's.**
     try:
         with open(target_node_file, "r") as f:
             target_node_data = json.load(f)
@@ -3416,28 +3416,60 @@ def node_add(
         util.exit_message(f"Unable to load target node JSON file '{target_node_file}': {e}")
     # Assume a single node group for the target.
     new_node = target_node_data["node_groups"][0]
+    # Ensure os_user and ssh_key are present (use ssh subkey if missing)
+    if "os_user" not in new_node:
+        new_node["os_user"] = new_node.get("ssh", {}).get("os_user", "postgres")
+    if "ssh_key" not in new_node:
+        new_node["ssh_key"] = new_node.get("ssh", {}).get("private_key", "")
     # Save the target node's original repo1_path.
     if "backrest" in new_node and "repo1_path" in new_node["backrest"]:
         original_target_repo1_path = new_node["backrest"]["repo1_path"]
     else:
         original_target_repo1_path = f"/var/lib/pgbackrest/{new_node.get('name', 'unknown')}"
-    # BEFORE performing PITR, update target node's repo1_path to match the source node's.
     new_node.setdefault("backrest", {})["repo1_path"] = source_repo1_path
 
-    # Perform PITR restore using the source node's stanza and backup ID.
-    perform_pitr_on_node(new_node, stanza_source, pg, backup_id, verbose=verbose)
-    # --- End PITR Restoration on Target Node ---
+    # --------------------------------------------------------------------
+    # 8. Performs PITR on the target node using the backup ID from the source node.
+    #    (Copied from add_node and placed here, no other changes)
+    # --------------------------------------------------------------------
+    manage_node(new_node, "stop", f"pg{pg}", verbose)
 
-    # After PITR, append additional settings to postgresql.conf on the target node.
+    cmd = f'rm -rf {new_node["path"]}/pgedge/data/pg{pg}'
+    message = f"Removing old data directory"
+    run_cmd(cmd, new_node, message=message, verbose=verbose)
+
+    args = f"--repo1-path {source_repo1_path} --repo1-cipher-type {repo1_cipher_type} "
+    if backup_id:
+        args += f"--set={backup_id} "
+
+    cmd = (
+        f'{new_node["path"]}/pgedge/pgedge backrest command restore '
+        f'--repo1-type={repo1_type} --stanza={stanza_source} '
+        f'--pg1-path={new_node["path"]}/pgedge/data/pg{pg} {args}'
+    )
+    message = f"Restoring backup"
+    run_cmd(cmd, new_node, message=message, verbose=verbose)
+
+    # 9. Appends additional settings to postgresql.conf on the target node.
     settings = get_source_pg_settings(source_node_data, pg)
     append_cmd = f"echo \"{settings}\" >> {new_node['path']}/pgedge/data/pg{pg}/postgresql.conf"
     run_cmd(append_cmd, new_node, message="Appending settings to postgresql.conf on new node", verbose=verbose)
+    # Override log_directory to point to the target's own logs directory.
+    target_log_directory = f"{new_node['path']}/pgedge/data/logs/pg{pg}"
+    mkdir_cmd = f"mkdir -p {target_log_directory}"
+    run_cmd(mkdir_cmd, new_node, message=f"Creating target log directory {target_log_directory}", verbose=verbose)
+    append_log_cmd = f"echo \"log_directory = '{target_log_directory}'\" >> {new_node['path']}/pgedge/data/pg{pg}/postgresql.conf"
+    run_cmd(append_log_cmd, new_node, message="Appending log_directory setting to postgresql.conf on new node", verbose=verbose)
+    # Override port setting to use the target node's own port.
+    target_port = new_node.get("port", "5432")
+    append_port_cmd = f"echo \"port = {target_port}\" >> {new_node['path']}/pgedge/data/pg{pg}/postgresql.conf"
+    run_cmd(append_port_cmd, new_node, message="Appending port setting to postgresql.conf on new node", verbose=verbose)
 
-    # After PITR, revert the target node's repo1_path back to its original value.
+    # 10. **After PITR, reverts the target node's repo1-path back to its original state.**
     cmd_set_repo1_path = f"cd {new_node['path']}/pgedge && ./pgedge set BACKUP repo1-path {original_target_repo1_path}"
     run_cmd(cmd_set_repo1_path, new_node, message=f"Restoring target node repo1-path to original value {original_target_repo1_path}", verbose=verbose)
 
-    # Optionally execute an extra script if provided.
+    # 11. Optionally executes an extra script.
     if script.strip() and os.path.isfile(script):
         util.echo_cmd(f"{script}")
 
