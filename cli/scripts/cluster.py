@@ -3217,9 +3217,11 @@ def node_add(
       6. Sets up the target node directory and installs pgEdge/pgBackRest.
       7. **Before performing PITR, updates the target node's repo1-path to match the source node's.**
       8. Performs PITR on the target node using the backup ID from the source node.
-      9. Appends additional settings (including log_directory and port) to postgresql.conf on the target node.
-     10. **After PITR, reverts the target node's repo1-path back to its original state.**
-     11. Optionally executes an extra script.
+      9. Appends additional settings to postgresql.conf on the target node,
+         then sets the backup cipher key on the target and configures the replica.
+     10. Creates a recovery.signal file in the target data directory to trigger recovery.
+     11. **After PITR, reverts the target node's repo1-path back to its original state.**
+     12. Optionally executes an extra script.
     
     Args:
         cluster_name (str): The name of the cluster.
@@ -3306,7 +3308,6 @@ def node_add(
     # 5. Integrate BackRest on the source node.
     util.message("## Integrating pgBackRest on source node", "info")
     cluster_name_from_json = cluster_data["cluster_name"]
-    # Use the source node's stanza (no new stanza is created on target)
     stanza_source = f"{cluster_name_from_json}_stanza_{source_node_data['name']}"
     backrest_config = source_node_data.get("backrest", {})
     json_repo1_path = backrest_config.get("repo1_path")
@@ -3438,12 +3439,20 @@ def node_add(
     message = f"Removing old data directory"
     run_cmd(cmd, new_node, message=message, verbose=verbose)
 
+    # Retrieve the cipher key from the environment.
+    cipher_key = os.environ.get("PGBACKREST_REPO1_CIPHER_PASS")
+    if not cipher_key:
+        util.exit_message("Cipher key (PGBACKREST_REPO1_CIPHER_PASS) is not set in the environment.", 1)
+
     args = f"--repo1-path {source_repo1_path} --repo1-cipher-type {repo1_cipher_type} "
     if backup_id:
         args += f"--set={backup_id} "
 
+    # Prepend an export command to pass the cipher key into the environment.
     cmd = (
-        f'{new_node["path"]}/pgedge/pgedge backrest command restore '
+        f'cd {new_node["path"]}/pgedge && '
+        f'export PGBACKREST_REPO1_CIPHER_PASS={cipher_key} && '
+        f'./pgedge backrest command restore '
         f'--repo1-type={repo1_type} --stanza={stanza_source} '
         f'--pg1-path={new_node["path"]}/pgedge/data/pg{pg} {args}'
     )
@@ -3464,12 +3473,43 @@ def node_add(
     target_port = new_node.get("port", "5432")
     append_port_cmd = f"echo \"port = {target_port}\" >> {new_node['path']}/pgedge/data/pg{pg}/postgresql.conf"
     run_cmd(append_port_cmd, new_node, message="Appending port setting to postgresql.conf on new node", verbose=verbose)
-
-    # 10. **After PITR, reverts the target node's repo1-path back to its original state.**
+    
+    # --- Additional configuration from add-node for replica setup ---
+    pgd = f'{new_node["path"]}/pgedge/data/pg{pg}'
+    pgc = f"{pgd}/postgresql.conf"
+    cmd = f"echo \"ssl_cert_file='{pgd}/server.crt'\" >> {pgc}"
+    message = f"Setting ssl_cert_file"
+    run_cmd(cmd, new_node, message=message, verbose=verbose)
+    cmd = f"echo \"ssl_key_file='{pgd}/server.key'\" >> {pgc}"
+    message = f"Setting ssl_key_file"
+    run_cmd(cmd, new_node, message=message, verbose=verbose)
+    cmd = f"echo \"log_directory='{pgd}/log'\" >> {pgc}"
+    message = f"Setting log_directory for replica"
+    run_cmd(cmd, new_node, message=message, verbose=verbose)
+    cmd = (f'echo "shared_preload_libraries = '
+           f"'pg_stat_statements, snowflake, spock'\" >> {pgc}")
+    message = f"Setting shared_preload_libraries"
+    run_cmd(cmd, new_node, message=message, verbose=verbose)
+    # Fetch source IP using public_ip or private_ip.
+    source_ip = source_node_data.get("public_ip") or source_node_data.get("private_ip")
+    cmd = (
+        f'{new_node["path"]}/pgedge/pgedge backrest configure_replica {stanza_source} '
+        f'{new_node["path"]}/pgedge/data/pg{pg} {source_ip} '
+        f'{source_node_data["port"]} {source_node_data.get("os_user", "postgres")}'
+    )
+    message = f"Configuring PITR on replica"
+    run_cmd(cmd, new_node, message=message, verbose=verbose)
+    
+    # 10. --- Create recovery.signal file to trigger recovery on the target node ---
+    recovery_signal = f"{new_node['path']}/pgedge/data/pg{pg}/recovery.signal"
+    cmd_touch = f"touch {recovery_signal}"
+    run_cmd(cmd_touch, new_node, message=f"Creating recovery.signal file at {recovery_signal}", verbose=verbose)
+    
+    # 11. **After PITR, reverts the target node's repo1-path back to its original state.**
     cmd_set_repo1_path = f"cd {new_node['path']}/pgedge && ./pgedge set BACKUP repo1-path {original_target_repo1_path}"
     run_cmd(cmd_set_repo1_path, new_node, message=f"Restoring target node repo1-path to original value {original_target_repo1_path}", verbose=verbose)
 
-    # 11. Optionally executes an extra script.
+    # 12. Optionally executes an extra script.
     if script.strip() and os.path.isfile(script):
         util.echo_cmd(f"{script}")
 
