@@ -356,7 +356,7 @@ def list_backups():
 
     try:
         command_output = subprocess.check_output(
-            command, stderr=subprocess.STDOUT, text=True
+            command, stderr=subprocess.STDOUT, text=True,errors='replace'
         )
         backups_info = json.loads(command_output)
         backup_table = []
