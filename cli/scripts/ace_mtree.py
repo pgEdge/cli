@@ -11,6 +11,8 @@ from dataclasses import dataclass
 from mpire import WorkerPool
 from mpire.utils import make_single_arguments
 from psycopg import sql
+from psycopg import IsolationLevel
+from psycopg.types.composite import register_composite, CompositeInfo
 from tqdm import tqdm
 
 import ace_html_reporter
@@ -21,14 +23,23 @@ import ace_config as config
 from ace_data_models import MerkleTreeTask
 from ace_exceptions import AceException
 from ace_sql import (
+    CREATE_BULK_TRIGGER_FUNCTION,
     CREATE_METADATA_TABLE,
-    CREATE_MTREE_TABLE,
     CREATE_XOR_FUNCTION,
     ENABLE_ALWAYS,
     ESTIMATE_ROW_COUNT,
+    GET_BLOCK_COUNT_COMPOSITE,
+    GET_BLOCK_COUNT_SIMPLE,
+    GET_COUNT_COMPOSITE,
+    GET_COUNT_SIMPLE,
+    GET_MAX_VAL_SIMPLE,
     GET_PKEY_TYPE,
     GET_ROW_COUNT_ESTIMATE,
+    GET_MAX_VAL_COMPOSITE,
+    GET_SPLIT_POINT_COMPOSITE,
+    GET_SPLIT_POINT_SIMPLE,
     UPDATE_LEAF_HASHES,
+    UPDATE_MAX_VAL,
     UPDATE_METADATA,
     COMPUTE_LEAF_HASHES,
     BUILD_PARENT_NODES,
@@ -38,9 +49,21 @@ from ace_sql import (
     GET_NODE_CHILDREN,
     GET_ROOT_NODE,
     GET_LEAF_RANGES,
-    CREATE_GENERIC_BLOCK_ID_FUNCTION,
-    CREATE_GENERIC_TRIGGER_FUNCTION,
     CREATE_GENERIC_TRIGGER,
+    INSERT_COMPOSITE_BLOCK_RANGES,
+    CREATE_SIMPLE_MTREE_TABLE,
+    CREATE_COMPOSITE_MTREE_TABLE,
+    DELETE_PARENT_NODES,
+    GET_MAX_NODE_POSITION,
+    UPDATE_BLOCK_RANGE_END,
+    DELETE_BLOCK,
+    UPDATE_NODE_POSITIONS_SEQUENTIAL,
+    FIND_BLOCKS_TO_SPLIT,
+    FIND_BLOCKS_TO_MERGE_COMPOSITE,
+    FIND_BLOCKS_TO_MERGE_SIMPLE,
+    GET_MAX_NODE_LEVEL,
+    COMPARE_BLOCKS_SQL,
+    UPDATE_NODE_POSITIONS_TEMP,
 )
 
 BERNOULLI_THRESHOLD = 10_000_000
@@ -75,7 +98,7 @@ def safe_max(a, b):
     return max(a, b)
 
 
-def init_hash_conn_pool(shared_objects, worker_state):
+def init_hash_conn_pool(worker_id, shared_objects, worker_state):
     """
     Initialise connection pool for hash computation workers
 
@@ -112,7 +135,7 @@ def init_hash_conn_pool(shared_objects, worker_state):
         raise AceException(f"Error initializing worker connection: {str(e)}")
 
 
-def close_hash_conn_pool(shared_objects, worker_state):
+def close_hash_conn_pool(worker_id, shared_objects, worker_state):
     """
     Close connection pool for hash computation workers
 
@@ -131,7 +154,7 @@ def close_hash_conn_pool(shared_objects, worker_state):
         raise AceException(f"Error closing worker connection: {str(e)}")
 
 
-def compute_block_hashes(shared_objects, worker_state, args):
+def compute_block_hashes(worker_id, shared_objects, worker_state, args):
     """
     Worker function that computes hashes for a block
 
@@ -145,114 +168,180 @@ def compute_block_hashes(shared_objects, worker_state, args):
         args: The arguments for the worker function. Contains the block boundary
         and the SQL query to compute the hashes.
     """
-    block_boundary = args
-    sql_query = shared_objects["sql_query"]
+    block = args
+    task = shared_objects["task"]
 
     try:
-        cur = worker_state["cur"]
+        conn = worker_state.get("conn")
+        cur = conn.cursor()
 
-        # TODO: It's redundant to first get the node_position, and then pass it back.
-        # I'll change it soon
-        params = {
-            "range_start": block_boundary.block_start,
-            "range_end": block_boundary.block_end,
-        }
+        key_columns = task.fields.key.split(",")
+        is_composite = len(key_columns) > 1
 
-        cur.execute(sql_query, params)
+        if is_composite:
+            where_conditions = []
+
+            pkey_cols = sql.SQL(", ").join(sql.Identifier(col) for col in key_columns)
+            where_conditions.append(
+                sql.SQL("({pkey_cols}) >= ({pkey_values})").format(
+                    pkey_cols=pkey_cols,
+                    pkey_values=sql.SQL(", ").join(
+                        sql.Literal(val) for val in block.block_start
+                    ),
+                )
+            )
+            where_conditions.append(
+                sql.SQL("({pkey_cols}) <= ({pkey_values})").format(
+                    pkey_cols=pkey_cols,
+                    pkey_values=sql.SQL(", ").join(
+                        sql.Literal(val) for val in block.block_end
+                    ),
+                )
+            )
+
+            # TODO: Double check this
+            if not where_conditions:
+                where_clause = sql.SQL("TRUE")
+            else:
+                where_clause = sql.SQL(" AND ").join(where_conditions)
+
+        else:
+            where_conditions = []
+
+            where_conditions.append(
+                sql.SQL("{pkey_col} >= {pkey_value}").format(
+                    pkey_col=sql.Identifier(task.fields.key),
+                    pkey_value=sql.Literal(*block.block_start),
+                )
+            )
+
+            where_conditions.append(
+                sql.SQL("{pkey_col} <= {pkey_value}").format(
+                    pkey_col=sql.Identifier(task.fields.key),
+                    pkey_value=sql.Literal(*block.block_end),
+                )
+            )
+
+            if not where_conditions:
+                where_clause = sql.SQL("TRUE")
+            else:
+                where_clause = sql.SQL(" AND ").join(where_conditions)
+
+        sql_query = sql.SQL(COMPUTE_LEAF_HASHES).format(
+            schema=sql.Identifier(task.fields.l_schema),
+            table=sql.Identifier(task.fields.l_table),
+            key=sql.SQL(", ").join(sql.Identifier(col) for col in key_columns),
+            columns=sql.SQL(", ").join(
+                sql.Identifier(col) for col in task.fields.cols.split(",")
+            ),
+            where_clause=where_clause,
+        )
+
+        cur.execute(sql_query)
         leaf_hash = cur.fetchone()[0]
 
-        if not leaf_hash:
-            msg = (
-                f"No hash computed for block {block_boundary.block_id} "
-                f"(range: {block_boundary.block_start} "
-                f"to {block_boundary.block_end})"
-            )
-            raise AceException(msg)
-
-        result = {
-            "node_position": block_boundary.block_id,
-            "leaf_hash": leaf_hash,
-        }
-
-        return result
+        return {"node_position": block.block_id, "leaf_hash": leaf_hash}
 
     except Exception as e:
-        msg = (
-            f"Error computing hash for block {block_boundary.block_id} "
-            f"(start: {block_boundary.block_start}, "
-            f"end: {block_boundary.block_end}): {str(e)}"
-        )
-        raise AceException(msg)
+        print(f"Error computing hash for block {block.block_id}: {str(e)}")
+        traceback.print_exc()
+        return None
 
 
 def create_mtree_objects(
     conn, schema, table, key, total_rows, num_blocks, recreate_objects=False
 ):
     """
-    Creates table-specific merkle tree objects -- i.e., the merkle tree table for the
-    target table, updating metadata, and creating the trigger.
+    Creates the necessary database objects for Merkle tree implementation
 
     Args:
-        conn: The database connection
-        schema: The schema of the target table
-        table: The target table
-        key: The primary key of the target table
-        total_rows: The total number of rows in the target table
-        num_blocks: The number of blocks in the target table
-        recreate_objects: Whether to recreate the objects
+        conn: Database connection
+        schema: Schema name
+        table: Table name
+        key: Primary key column(s)
+        total_rows: Estimated total number of rows
+        num_blocks: Number of blocks to split the table into
+        recreate_objects: Whether to drop and recreate all objects
     """
+    key_columns = key.split(",")
+    is_composite = len(key_columns) > 1
 
-    cur = conn.cursor()
+    with conn.cursor() as cur:
+        if recreate_objects:
+            mtree_init(conn)
 
-    if recreate_objects:
-        mtree_init(conn)
-
-    cur.execute(
-        sql.SQL(GET_PKEY_TYPE).format(
-            schema=sql.Literal(schema),
-            table=sql.Literal(table),
-            key=sql.Literal(key),
-        ),
-    )
-    pkey_type = cur.fetchone()[0]
-
-    cur.execute(
-        sql.SQL("DROP TABLE IF EXISTS {mtree_table}").format(
-            mtree_table=sql.Identifier(f"ace_mtree_{schema}_{table}")
+        cur.execute(
+            sql.SQL("DROP TABLE IF EXISTS {mtree_table}").format(
+                mtree_table=sql.Identifier(f"ace_mtree_{schema}_{table}")
+            )
         )
-    )
 
-    cur.execute(
-        sql.SQL(CREATE_MTREE_TABLE).format(
-            mtree_table=sql.Identifier(f"ace_mtree_{schema}_{table}"),
-            range_idx=sql.Identifier(f"ace_mtree_{schema}_{table}_range_idx"),
-            pkey_type=sql.SQL(pkey_type),
+        if is_composite:
+            key_type_columns = []
+            for col in key_columns:
+                cur.execute(
+                    sql.SQL(GET_PKEY_TYPE).format(
+                        schema=sql.Literal(schema),
+                        table=sql.Literal(table),
+                        key=sql.Literal(col),
+                    )
+                )
+                col_type = cur.fetchone()[0]
+                key_type_columns.append(f"{col} {col_type}")
+
+            cur.execute(
+                sql.SQL(CREATE_COMPOSITE_MTREE_TABLE).format(
+                    mtree_table=sql.Identifier(f"ace_mtree_{schema}_{table}"),
+                    range_idx=sql.SQL(f"idx_range_{schema}_{table}"),
+                    schema=sql.SQL(schema),
+                    table=sql.SQL(table),
+                    key_type_columns=sql.SQL(", ").join(
+                        sql.SQL(col) for col in key_type_columns
+                    ),
+                )
+            )
+        else:
+            cur.execute(
+                sql.SQL(GET_PKEY_TYPE).format(
+                    schema=sql.Literal(schema),
+                    table=sql.Literal(table),
+                    key=sql.Literal(key),
+                )
+            )
+            pkey_type = cur.fetchone()[0]
+
+            cur.execute(
+                sql.SQL(CREATE_SIMPLE_MTREE_TABLE).format(
+                    mtree_table=sql.Identifier(f"ace_mtree_{schema}_{table}"),
+                    pkey_type=sql.SQL(pkey_type),
+                    range_idx=sql.Identifier(f"idx_range_{schema}_{table}"),
+                )
+            )
+
+        cur.execute(
+            sql.SQL(CREATE_GENERIC_TRIGGER).format(
+                trigger=sql.SQL(f"trg_mtree_{schema}_{table}"),
+                schema=sql.Identifier(schema),
+                table=sql.Identifier(table),
+                key=sql.Literal(key),
+            )
         )
-    )
 
-    cur.execute(
-        sql.SQL(UPDATE_METADATA),
-        (schema, table, total_rows, num_blocks),
-    )
-
-    # Create trigger using the generic function
-    cur.execute(
-        sql.SQL(CREATE_GENERIC_TRIGGER).format(
-            trigger=sql.Identifier(f"ace_mtree_{schema}_{table}_trigger"),
-            schema=sql.Identifier(schema),
-            table=sql.Identifier(table),
-            key=sql.Identifier(key),
+        cur.execute(
+            sql.SQL(ENABLE_ALWAYS).format(
+                schema=sql.Identifier(schema),
+                table=sql.Identifier(table),
+                insert_trigger=sql.SQL(f"trg_mtree_{schema}_{table}_insert_stmt"),
+                update_trigger=sql.SQL(f"trg_mtree_{schema}_{table}_update_stmt"),
+                delete_trigger=sql.SQL(f"trg_mtree_{schema}_{table}_delete_stmt"),
+            )
         )
-    )
-    cur.execute(
-        sql.SQL(ENABLE_ALWAYS).format(
-            schema=sql.Identifier(schema),
-            table=sql.Identifier(table),
-            trigger=sql.Identifier(f"ace_mtree_{schema}_{table}_trigger"),
-        )
-    )
 
-    conn.commit()
+        cur.execute(
+            UPDATE_METADATA, (schema, table, total_rows, num_blocks, is_composite)
+        )
+
+        conn.commit()
 
 
 def get_row_estimate(conn, schema, table, analyse=False):
@@ -309,8 +398,18 @@ def process_block_ranges(offsets: list):
 
     del offsets[-1]
 
-    for i, offset in enumerate(offsets):
-        block_ranges.append((i, offset[0], offset[1]))
+    if len(offsets) == 2:
+        for i, offset in enumerate(offsets):
+            block_ranges.append((i, offset[0], offset[1]))
+    else:
+        for i, offset in enumerate(offsets):
+            rng = (
+                i,
+                tuple([offset[k] for k in range(len(offset)) if k % 2 == 0]),
+                tuple([offset[k] for k in range(len(offset)) if k % 2 == 1]),
+            )
+
+            block_ranges.append(rng)
 
     return block_ranges
 
@@ -439,41 +538,38 @@ def build_mtree(mtree_task: MerkleTreeTask) -> None:
 
         try:
             cur = conn.cursor()
-            cur.executemany(
-                sql.SQL(INSERT_BLOCK_RANGES).format(
+
+            key_columns = key.split(",")
+            is_composite = len(key_columns) > 1
+
+            if is_composite:
+                insert_sql = sql.SQL(INSERT_COMPOSITE_BLOCK_RANGES).format(
                     mtree_table=sql.Identifier(f"ace_mtree_{schema}_{table}"),
-                ),
-                block_ranges,
-            )
-            # Committing is necessary here since the workers use their own
-            # connections and cursors
+                    start_tuple_values=sql.SQL(", ").join(
+                        [sql.Placeholder()] * len(key_columns)
+                    ),
+                    end_tuple_values=sql.SQL(", ").join(
+                        [sql.Placeholder()] * len(key_columns)
+                    ),
+                )
+
+                cur.executemany(
+                    insert_sql,
+                    [
+                        (id, *start_tuple, *end_tuple)
+                        for id, start_tuple, end_tuple in block_ranges
+                    ],
+                )
+            else:
+                insert_sql = sql.SQL(INSERT_BLOCK_RANGES).format(
+                    mtree_table=sql.Identifier(f"ace_mtree_{schema}_{table}")
+                )
+                cur.executemany(
+                    insert_sql, [(id, *start, *end) for id, start, end in block_ranges]
+                )
+
             conn.commit()
 
-            # column_list = []
-            # for col in mtree_task.fields.cols.split(","):
-            #     column_list.append(
-            #         sql.SQL(
-            #             "CASE WHEN {} IS NULL THEN 'NULL' "
-            #             "WHEN {}::text = '' THEN 'EMPTY' "
-            #             "ELSE {}::text END"
-            #         ).format(
-            #             sql.Identifier(col),
-            #             sql.Identifier(col),
-            #             sql.Identifier(col),
-            #         )
-            #     )
-            # column_expr = sql.SQL(", ").join(column_list)
-
-            sql_query = sql.SQL(COMPUTE_LEAF_HASHES).format(
-                schema=sql.Identifier(schema),
-                table=sql.Identifier(table),
-                key=sql.Identifier(key),
-                columns=sql.SQL(", ").join(
-                    sql.Identifier(col) for col in mtree_task.fields.cols.split(",")
-                ),
-            )
-
-            # Now compute hashes
             work_items = []
             for block in block_ranges:
                 work_items.append(
@@ -490,9 +586,8 @@ def build_mtree(mtree_task: MerkleTreeTask) -> None:
             n_jobs = min(len(work_items), max_workers)
 
             shared_objects = {
-                "node": node,
-                "sql_query": sql_query,
                 "task": mtree_task,
+                "node": node,
             }
 
             results = []
@@ -505,6 +600,7 @@ def build_mtree(mtree_task: MerkleTreeTask) -> None:
                 n_jobs=n_jobs,
                 shared_objects=shared_objects,
                 use_worker_state=True,
+                pass_worker_id=True,
             ) as pool:
                 results = list(
                     pool.imap_unordered(
@@ -539,12 +635,9 @@ def build_mtree(mtree_task: MerkleTreeTask) -> None:
             print("\nBuilding parent nodes...")
 
             parent_cur.execute(
-                sql.SQL(
-                    """
-                    DELETE FROM {mtree_table}
-                    WHERE node_level > 0
-                    """
-                ).format(mtree_table=sql.Identifier(f"ace_mtree_{schema}_{table}"))
+                sql.SQL(DELETE_PARENT_NODES).format(
+                    mtree_table=sql.Identifier(f"ace_mtree_{schema}_{table}")
+                )
             )
 
             level = 0
@@ -565,9 +658,10 @@ def build_mtree(mtree_task: MerkleTreeTask) -> None:
             print(f"Merkle tree built successfully with {level + 1} levels")
 
             conn.close()
+
         except Exception as e:
             conn.rollback()
-            new_conn.rollback()
+            traceback.print_exc()
             raise AceException(
                 f"Error building Merkle tree on {node['name']}: {str(e)}"
             )
@@ -597,14 +691,29 @@ def split_blocks(conn, schema, table, key, blocks):
             ).format(mtree_table=sql.Identifier(f"ace_mtree_{schema}_{table}"))
         )
 
-        cur.execute(
-            sql.SQL(GET_PKEY_TYPE).format(
-                schema=sql.Literal(schema),
-                table=sql.Literal(table),
-                key=sql.Literal(key),
+        key_columns = key.split(",")
+        is_composite = len(key_columns) > 1
+
+        if is_composite:
+            key_types = []
+            for col in key_columns:
+                cur.execute(
+                    sql.SQL(GET_PKEY_TYPE).format(
+                        schema=sql.Literal(schema),
+                        table=sql.Literal(table),
+                        key=sql.Literal(col),
+                    ),
+                )
+                key_types.append(cur.fetchone()[0])
+        else:
+            cur.execute(
+                sql.SQL(GET_PKEY_TYPE).format(
+                    schema=sql.Literal(schema),
+                    table=sql.Literal(table),
+                    key=sql.Literal(key),
+                )
             )
-        )
-        pkey_type = cur.fetchone()[0]
+            pkey_type = cur.fetchone()[0]
 
         blocks = sorted(blocks, key=lambda x: x[0])
         i = 0
@@ -622,77 +731,141 @@ def split_blocks(conn, schema, table, key, blocks):
         # block as dirty and set the range_end to null. So, if we're attempting
         # to add new blocks at the end, we need to find the actual max value.
         if i == len(blocks) - 1 and end is None:
-            cur.execute(
-                sql.SQL(
-                    """
-                    SELECT max({key})
-                    FROM {schema}.{table}
-                    WHERE {key} >= %s
-                    """
-                ).format(
-                    schema=sql.Identifier(schema),
-                    table=sql.Identifier(table),
-                    key=sql.Identifier(key),
-                ),
-                (start,),
-            )
-            max_val = cur.fetchone()[0]
-            if max_val is not None:
-                end = max_val
-                cur.execute(
-                    sql.SQL(
-                        """
-                        UPDATE {mtree_table}
-                        SET range_end = %s
-                        WHERE node_level = 0
-                        AND node_position = %s
-                    """
-                    ).format(
-                        mtree_table=sql.Identifier(f"ace_mtree_{schema}_{table}"),
-                    ),
-                    (end, pos),
+            if is_composite:
+                pkey_cols = sql.SQL(", ").join(
+                    sql.Identifier(col) for col in key_columns
                 )
+                pkey_values = sql.SQL(", ").join(sql.Literal(val) for val in start)
+
+                cur.execute(
+                    sql.SQL(GET_MAX_VAL_COMPOSITE).format(
+                        schema=sql.Identifier(schema),
+                        table=sql.Identifier(table),
+                        pkey_cols=pkey_cols,
+                        pkey_values=pkey_values,
+                    )
+                )
+                max_vals = cur.fetchone()
+                if max_vals is not None:
+                    end = max_vals
+                    cur.execute(
+                        sql.SQL(UPDATE_MAX_VAL).format(
+                            mtree_table=sql.Identifier(f"ace_mtree_{schema}_{table}"),
+                        ),
+                        (end, pos),
+                    )
+            else:
+                cur.execute(
+                    sql.SQL(GET_MAX_VAL_SIMPLE).format(
+                        schema=sql.Identifier(schema),
+                        table=sql.Identifier(table),
+                        key=sql.Identifier(key),
+                    ),
+                    (start,),
+                )
+                max_val = cur.fetchone()[0]
+                if max_val is not None:
+                    end = max_val
+                    cur.execute(
+                        sql.SQL(UPDATE_MAX_VAL).format(
+                            mtree_table=sql.Identifier(f"ace_mtree_{schema}_{table}"),
+                        ),
+                        (end, pos),
+                    )
 
         # Get actual row count for this block
-        cur.execute(
-            sql.SQL(
-                """
-                SELECT count(*)
-                FROM {schema}.{table}
-                WHERE {key} >= %s
-                AND ({key} < %s OR %s::{pkey_type} IS NULL)
-                """
-            ).format(
-                schema=sql.Identifier(schema),
-                table=sql.Identifier(table),
-                key=sql.Identifier(key),
-                pkey_type=sql.SQL(pkey_type),
-            ),
-            (start, end, end),
-        )
-        count = cur.fetchone()[0]
+        if is_composite:
+            where_conditions = []
+            pkey_cols = sql.SQL(", ").join(sql.Identifier(col) for col in key_columns)
 
-        if count > target_size * 2:
-            # The split point is simply the midpoint of the block
+            where_conditions.append(
+                sql.SQL("({pkey_cols}) >= ({pkey_values})").format(
+                    pkey_cols=pkey_cols,
+                    pkey_values=sql.SQL(", ").join(sql.Literal(val) for val in start),
+                )
+            )
+
+            if end is not None:
+                where_conditions.append(
+                    sql.SQL("({pkey_cols}) <= ({pkey_values})").format(
+                        pkey_cols=pkey_cols,
+                        pkey_values=sql.SQL(", ").join(sql.Literal(val) for val in end),
+                    )
+                )
+
+            where_clause = sql.SQL(" AND ").join(where_conditions)
+
             cur.execute(
-                sql.SQL(
-                    """
-                    SELECT {key}
-                    FROM {schema}.{table}
-                    WHERE {key} >= %s
-                    AND ({key} < %s OR %s::{pkey_type} IS NULL)
-                    ORDER BY {key}
-                    OFFSET %s
-                LIMIT 1
-                """
-                ).format(
+                sql.SQL(GET_COUNT_COMPOSITE).format(
+                    schema=sql.Identifier(schema),
+                    table=sql.Identifier(table),
+                    where_clause=where_clause,
+                )
+            )
+        else:
+            cur.execute(
+                sql.SQL(GET_COUNT_SIMPLE).format(
                     schema=sql.Identifier(schema),
                     table=sql.Identifier(table),
                     key=sql.Identifier(key),
                     pkey_type=sql.SQL(pkey_type),
                 ),
-                (start, end, end, count // 2),  # Split at midpoint
+                (start, end, end),
             )
+
+        count = cur.fetchone()[0]
+
+        if count > target_size * 2:
+            # Find the split point at the midpoint of the block
+            if is_composite:
+                pkey_cols = sql.SQL(", ").join(
+                    sql.Identifier(col) for col in key_columns
+                )
+                order_cols = sql.SQL("({pkey_cols})").format(pkey_cols=pkey_cols)
+                where_conditions = []
+
+                where_conditions.append(
+                    sql.SQL("({pkey_cols}) >= ({pkey_values})").format(
+                        pkey_cols=pkey_cols,
+                        pkey_values=sql.SQL(", ").join(
+                            sql.Literal(val) for val in start
+                        ),
+                    )
+                )
+
+                if end is not None:
+                    where_conditions.append(
+                        sql.SQL("({pkey_cols}) <= ({pkey_values})").format(
+                            pkey_cols=pkey_cols,
+                            pkey_values=sql.SQL(", ").join(
+                                sql.Literal(val) for val in end
+                            ),
+                        )
+                    )
+
+                where_clause = sql.SQL(" AND ").join(where_conditions)
+
+                cur.execute(
+                    sql.SQL(GET_SPLIT_POINT_COMPOSITE).format(
+                        schema=sql.Identifier(schema),
+                        table=sql.Identifier(table),
+                        pkey_cols=pkey_cols,
+                        where_clause=where_clause,
+                        order_cols=order_cols,
+                    ),
+                    (count // 2,),  # Split at midpoint
+                )
+            else:
+                cur.execute(
+                    sql.SQL(GET_SPLIT_POINT_SIMPLE).format(
+                        schema=sql.Identifier(schema),
+                        table=sql.Identifier(table),
+                        key=sql.Identifier(key),
+                        pkey_type=sql.SQL(pkey_type),
+                    ),
+                    (start, end, end, count // 2),  # Split at midpoint
+                )
+
             split_point = cur.fetchone()[0]
 
             """
@@ -786,36 +959,39 @@ def split_blocks(conn, schema, table, key, blocks):
 
             # Get the next available position at the end
             cur.execute(
-                sql.SQL(
-                    """
-                    SELECT MAX(node_position) + 1
-                    FROM {mtree_table}
-                    WHERE node_level = 0
-                    """
-                ).format(mtree_table=sql.Identifier(f"ace_mtree_{schema}_{table}"))
+                sql.SQL(GET_MAX_NODE_POSITION).format(
+                    mtree_table=sql.Identifier(f"ace_mtree_{schema}_{table}")
+                )
             )
             new_pos = cur.fetchone()[0]
 
             # Create new block at the end
-            cur.execute(
-                sql.SQL(INSERT_BLOCK_RANGES).format(
+            if is_composite:
+                insert_sql = sql.SQL(INSERT_COMPOSITE_BLOCK_RANGES).format(
                     mtree_table=sql.Identifier(f"ace_mtree_{schema}_{table}"),
-                ),
-                (new_pos, split_point, end),
-            )
+                    start_tuple_values=sql.SQL(", ").join(
+                        [sql.Placeholder()] * len(key_columns)
+                    ),
+                    end_tuple_values=sql.SQL(", ").join(
+                        [sql.Placeholder()] * len(key_columns)
+                    ),
+                )
+                cur.execute(
+                    insert_sql,
+                    (new_pos, *split_point, *end),
+                )
+            else:
+                cur.execute(
+                    sql.SQL(INSERT_BLOCK_RANGES).format(
+                        mtree_table=sql.Identifier(f"ace_mtree_{schema}_{table}"),
+                    ),
+                    (new_pos, split_point, end),
+                )
 
-            # Update original block
             cur.execute(
-                sql.SQL(
-                    """
-                    UPDATE {mtree_table}
-                    SET range_end = %s,
-                        dirty = true,
-                        last_modified = current_timestamp
-                    WHERE node_level = 0
-                    AND node_position = %s
-                    """
-                ).format(mtree_table=sql.Identifier(f"ace_mtree_{schema}_{table}")),
+                sql.SQL(UPDATE_BLOCK_RANGE_END).format(
+                    mtree_table=sql.Identifier(f"ace_mtree_{schema}_{table}")
+                ),
                 (split_point, pos),
             )
 
@@ -867,22 +1043,34 @@ def merge_blocks(conn, schema, table, key, blocks):
     # This is not expensive at all since computing parent hashes is significantly
     # cheaper than computing leaf hashes.
     cur.execute(
-        sql.SQL(
-            """
-            DELETE FROM {mtree_table}
-            WHERE node_level > 0
-            """
-        ).format(mtree_table=sql.Identifier(f"ace_mtree_{schema}_{table}"))
+        sql.SQL(DELETE_PARENT_NODES).format(
+            mtree_table=sql.Identifier(f"ace_mtree_{schema}_{table}")
+        )
     )
 
-    cur.execute(
-        sql.SQL(GET_PKEY_TYPE).format(
-            schema=sql.Literal(schema),
-            table=sql.Literal(table),
-            key=sql.Literal(key),
-        ),
-    )
-    pkey_type = cur.fetchone()[0]
+    key_columns = key.split(",")
+    is_composite = len(key_columns) > 1
+
+    if is_composite:
+        key_types = []
+        for col in key_columns:
+            cur.execute(
+                sql.SQL(GET_PKEY_TYPE).format(
+                    schema=sql.Literal(schema),
+                    table=sql.Literal(table),
+                    key=sql.Literal(col),
+                ),
+            )
+            key_types.append(cur.fetchone()[0])
+    else:
+        cur.execute(
+            sql.SQL(GET_PKEY_TYPE).format(
+                schema=sql.Literal(schema),
+                table=sql.Literal(table),
+                key=sql.Literal(key),
+            ),
+        )
+        pkey_type = cur.fetchone()[0]
 
     blocks = sorted(blocks, key=lambda x: x[0])
     i = 0
@@ -897,54 +1085,87 @@ def merge_blocks(conn, schema, table, key, blocks):
         # block as dirty and set the range_end to null. So, if we're attempting
         # to add new blocks at the end, we need to find the actual max value.
         if i == len(blocks) - 1 and end is None:
+            if is_composite:
+                pkey_cols = sql.SQL(", ").join(
+                    sql.Identifier(col) for col in key_columns
+                )
+                pkey_values = sql.SQL(", ").join(sql.Literal(val) for val in start)
+
+                cur.execute(
+                    sql.SQL(GET_MAX_VAL_COMPOSITE).format(
+                        schema=sql.Identifier(schema),
+                        table=sql.Identifier(table),
+                        pkey_cols=pkey_cols,
+                        pkey_values=pkey_values,
+                    )
+                )
+                max_vals = cur.fetchone()
+                if max_vals is not None:
+                    end = max_vals
+                    cur.execute(
+                        sql.SQL(UPDATE_MAX_VAL).format(
+                            mtree_table=sql.Identifier(f"ace_mtree_{schema}_{table}"),
+                        ),
+                        (end, pos),
+                    )
+            else:
+                cur.execute(
+                    sql.SQL(GET_MAX_VAL_SIMPLE).format(
+                        schema=sql.Identifier(schema),
+                        table=sql.Identifier(table),
+                        key=sql.Identifier(key),
+                    ),
+                    (start,),
+                )
+                max_val = cur.fetchone()[0]
+                if max_val is not None:
+                    end = max_val
+                    cur.execute(
+                        sql.SQL(UPDATE_MAX_VAL).format(
+                            mtree_table=sql.Identifier(f"ace_mtree_{schema}_{table}"),
+                        ),
+                        (end, pos),
+                    )
+
+        # Get actual row count for this block
+        if is_composite:
+            where_conditions = []
+            pkey_cols = sql.SQL(", ").join(sql.Identifier(col) for col in key_columns)
+
+            where_conditions.append(
+                sql.SQL("({pkey_cols}) >= ({pkey_values})").format(
+                    pkey_cols=pkey_cols,
+                    pkey_values=sql.SQL(", ").join(sql.Literal(val) for val in start),
+                )
+            )
+
+            if end is not None:
+                where_conditions.append(
+                    sql.SQL("({pkey_cols}) <= ({pkey_values})").format(
+                        pkey_cols=pkey_cols,
+                        pkey_values=sql.SQL(", ").join(sql.Literal(val) for val in end),
+                    )
+                )
+
+            where_clause = sql.SQL(" AND ").join(where_conditions)
+
             cur.execute(
-                sql.SQL(
-                    """
-                    SELECT max({key})
-                    FROM {schema}.{table}
-                    WHERE {key} >= %s
-                    """
-                ).format(
+                sql.SQL(GET_COUNT_COMPOSITE).format(
+                    schema=sql.Identifier(schema),
+                    table=sql.Identifier(table),
+                    where_clause=where_clause,
+                )
+            )
+        else:
+            cur.execute(
+                sql.SQL(GET_COUNT_SIMPLE).format(
                     schema=sql.Identifier(schema),
                     table=sql.Identifier(table),
                     key=sql.Identifier(key),
+                    pkey_type=sql.SQL(pkey_type),
                 ),
-                (start,),
+                (start, end, end),
             )
-            max_val = cur.fetchone()[0]
-            if max_val is not None:
-                end = max_val
-                cur.execute(
-                    sql.SQL(
-                        """
-                        UPDATE {mtree_table}
-                        SET range_end = %s
-                        WHERE node_level = 0
-                        AND node_position = %s
-                        """
-                    ).format(
-                        mtree_table=sql.Identifier(f"ace_mtree_{schema}_{table}"),
-                    ),
-                    (end, pos),
-                )
-
-        # Get actual row count for this block
-        cur.execute(
-            sql.SQL(
-                """
-                SELECT count(*)
-                FROM {schema}.{table}
-                WHERE {key} >= %s
-                AND ({key} < %s OR %s::{pkey_type} IS NULL)
-                """
-            ).format(
-                schema=sql.Identifier(schema),
-                table=sql.Identifier(table),
-                key=sql.Identifier(key),
-                pkey_type=sql.SQL(pkey_type),
-            ),
-            (start, end, end),
-        )
 
         count = cur.fetchone()[0]
 
@@ -952,40 +1173,34 @@ def merge_blocks(conn, schema, table, key, blocks):
         if count < target_size * MERGE_THRESHOLD:
             # First check if we can merge with previous block
             if pos > 0:
-                cur.execute(
-                    sql.SQL(
-                        """
-                        SELECT node_position, range_start, range_end, count(*)
-                        FROM {mtree_table} mt
-                        LEFT JOIN {schema}.{table} t
-                        ON t.{key} >= mt.range_start
-                        AND (t.{key} < mt.range_end OR mt.range_end IS NULL)
-                    WHERE mt.node_level = 0
-                        AND mt.node_position = %s
-                        GROUP BY mt.node_position, mt.range_start, mt.range_end
-                        """
-                    ).format(
+                if is_composite:
+                    m_sql = sql.SQL(GET_BLOCK_COUNT_COMPOSITE).format(
                         mtree_table=sql.Identifier(f"ace_mtree_{schema}_{table}"),
                         schema=sql.Identifier(schema),
                         table=sql.Identifier(table),
-                        key=sql.Identifier(key),
-                    ),
-                    (pos - 1,),
-                )
+                        pkey_cols=sql.SQL(", ").join(
+                            sql.Identifier(col) for col in key_columns
+                        ),
+                    )
+                    cur.execute(m_sql, (pos - 1,))
+                else:
+                    cur.execute(
+                        sql.SQL(GET_BLOCK_COUNT_SIMPLE).format(
+                            mtree_table=sql.Identifier(f"ace_mtree_{schema}_{table}"),
+                            schema=sql.Identifier(schema),
+                            table=sql.Identifier(table),
+                            key=sql.Identifier(key),
+                        ),
+                        (pos - 1,),
+                    )
+
                 prev_block = cur.fetchone()
                 if prev_block:
                     prev_pos, prev_start, prev_end, prev_count = prev_block
                     if (count + prev_count) <= target_size * 2:
                         # Move blocks to temp positions
                         cur.execute(
-                            sql.SQL(
-                                """
-                                UPDATE {mtree_table}
-                                SET node_position = node_position + %s
-                                WHERE node_level = 0
-                                AND node_position > %s
-                                """
-                            ).format(
+                            sql.SQL(UPDATE_NODE_POSITIONS_TEMP).format(
                                 mtree_table=sql.Identifier(
                                     f"ace_mtree_{schema}_{table}"
                                 ),
@@ -995,16 +1210,7 @@ def merge_blocks(conn, schema, table, key, blocks):
 
                         # Merge with previous block - keep full range
                         cur.execute(
-                            sql.SQL(
-                                """
-                                UPDATE {mtree_table}
-                                SET range_end = %s,
-                                    dirty = true,
-                                    last_modified = current_timestamp
-                                WHERE node_level = 0
-                                AND node_position = %s
-                                """
-                            ).format(
+                            sql.SQL(UPDATE_BLOCK_RANGE_END).format(
                                 mtree_table=sql.Identifier(
                                     f"ace_mtree_{schema}_{table}"
                                 ),
@@ -1014,13 +1220,7 @@ def merge_blocks(conn, schema, table, key, blocks):
 
                         # Delete current block at its temporary position
                         cur.execute(
-                            sql.SQL(
-                                """
-                                DELETE FROM {mtree_table}
-                                WHERE node_level = 0
-                                AND node_position = %s
-                                """
-                            ).format(
+                            sql.SQL(DELETE_BLOCK).format(
                                 mtree_table=sql.Identifier(
                                     f"ace_mtree_{schema}_{table}"
                                 ),
@@ -1030,24 +1230,7 @@ def merge_blocks(conn, schema, table, key, blocks):
 
                         # Move remaining blocks back in sequential order
                         cur.execute(
-                            sql.SQL(
-                                """
-                                UPDATE {mtree_table}
-                                SET node_position = pos_seq
-                                FROM (
-                                    SELECT node_position,
-                                           row_number() OVER (
-                                           ORDER BY node_position
-                                       ) + %s as pos_seq
-                                    FROM {mtree_table}
-                                    WHERE node_level = 0
-                                    AND node_position > %s
-                                ) as seq
-                            WHERE
-                            {mtree_table}.node_position = seq.node_position
-                            AND node_level = 0
-                            """
-                            ).format(
+                            sql.SQL(UPDATE_NODE_POSITIONS_SEQUENTIAL).format(
                                 mtree_table=sql.Identifier(
                                     f"ace_mtree_{schema}_{table}"
                                 ),
@@ -1071,40 +1254,36 @@ def merge_blocks(conn, schema, table, key, blocks):
                         continue
 
             # If we couldn't merge with the previous block, try the next block
-            cur.execute(
-                sql.SQL(
-                    """
-                    SELECT node_position, range_start, range_end, count(*)
-                    FROM {mtree_table} mt
-                    LEFT JOIN {schema}.{table} t
-                    ON t.{key} >= mt.range_start
-                    AND (t.{key} < mt.range_end OR mt.range_end IS NULL)
-                    WHERE mt.node_level = 0
-                AND mt.node_position = %s
-                GROUP BY mt.node_position, mt.range_start, mt.range_end
-                """
-                ).format(
-                    mtree_table=sql.Identifier(f"ace_mtree_{schema}_{table}"),
-                    schema=sql.Identifier(schema),
-                    table=sql.Identifier(table),
-                    key=sql.Identifier(key),
-                ),
-                (pos + 1,),
-            )
+            if is_composite:
+                cur.execute(
+                    sql.SQL(GET_BLOCK_COUNT_COMPOSITE).format(
+                        mtree_table=sql.Identifier(f"ace_mtree_{schema}_{table}"),
+                        schema=sql.Identifier(schema),
+                        table=sql.Identifier(table),
+                        pkey_cols=sql.SQL(", ").join(
+                            sql.Identifier(col) for col in key_columns
+                        ),
+                    ),
+                    (pos + 1,),
+                )
+            else:
+                cur.execute(
+                    sql.SQL(GET_BLOCK_COUNT_SIMPLE).format(
+                        mtree_table=sql.Identifier(f"ace_mtree_{schema}_{table}"),
+                        schema=sql.Identifier(schema),
+                        table=sql.Identifier(table),
+                        key=sql.Identifier(key),
+                    ),
+                    (pos + 1,),
+                )
+
             next_block = cur.fetchone()
             if next_block:
                 next_pos, next_start, next_end, next_count = next_block
                 if (count + next_count) <= target_size * 2:
                     # Move blocks to temp positions
                     cur.execute(
-                        sql.SQL(
-                            """
-                            UPDATE {mtree_table}
-                            SET node_position = node_position + %s
-                            WHERE node_level = 0
-                            AND node_position > %s
-                            """
-                        ).format(
+                        sql.SQL(UPDATE_NODE_POSITIONS_TEMP).format(
                             mtree_table=sql.Identifier(f"ace_mtree_{schema}_{table}"),
                         ),
                         (TEMP_OFFSET, pos),
@@ -1112,56 +1291,24 @@ def merge_blocks(conn, schema, table, key, blocks):
 
                     # Merge with next block - keep full range
                     cur.execute(
-                        sql.SQL(
-                            """
-                            UPDATE {mtree_table}
-                            SET range_end = %s,
-                                dirty = true,
-                            last_modified = current_timestamp
-                            WHERE node_level = 0
-                            AND node_position = %s
-                            """
-                        ).format(
-                            mtree_table=sql.Identifier(f"ace_mtree_{schema}_{table}"),
+                        sql.SQL(UPDATE_BLOCK_RANGE_END).format(
+                            mtree_table=sql.Identifier(f"ace_mtree_{schema}_{table}")
                         ),
                         (next_end, pos),
                     )
 
                     # Delete next block at its temporary position
                     cur.execute(
-                        sql.SQL(
-                            """
-                            DELETE FROM {mtree_table}
-                            WHERE node_level = 0
-                            AND node_position = %s
-                            """
-                        ).format(
-                            mtree_table=sql.Identifier(f"ace_mtree_{schema}_{table}"),
+                        sql.SQL(DELETE_BLOCK).format(
+                            mtree_table=sql.Identifier(f"ace_mtree_{schema}_{table}")
                         ),
                         (next_pos + TEMP_OFFSET,),
                     )
 
                     # Move remaining blocks back in sequential order
                     cur.execute(
-                        sql.SQL(
-                            """
-                            UPDATE {mtree_table}
-                            SET node_position = pos_seq
-                        FROM (
-                            SELECT node_position,
-                                   row_number() OVER (
-                                       ORDER BY node_position
-                                   ) + %s as pos_seq
-                            FROM {mtree_table}
-                            WHERE node_level = 0
-                            AND node_position > %s
-                            ) as seq
-                            WHERE
-                            {mtree_table}.node_position = seq.node_position
-                            AND node_level = 0
-                            """
-                        ).format(
-                            mtree_table=sql.Identifier(f"ace_mtree_{schema}_{table}"),
+                        sql.SQL(UPDATE_NODE_POSITIONS_SEQUENTIAL).format(
+                            mtree_table=sql.Identifier(f"ace_mtree_{schema}_{table}")
                         ),
                         (pos, pos + TEMP_OFFSET),
                     )
@@ -1207,6 +1354,8 @@ def update_mtree(mtree_task: MerkleTreeTask, skip_all_checks=False) -> None:
     schema = mtree_task.fields.l_schema
     table = mtree_task.fields.l_table
     key = mtree_task.fields.key
+    key_columns = key.split(",")
+    is_composite = len(key_columns) > 1
 
     SPLIT_THRESHOLD = config.MTREE_BLOCK_SIZE // 2
     # If the number of deletes in a block exceeds 75% of the block size, then we
@@ -1215,13 +1364,15 @@ def update_mtree(mtree_task: MerkleTreeTask, skip_all_checks=False) -> None:
 
     for node in mtree_task.fields.cluster_nodes:
         print(f"\nUpdating Merkle tree on node: {node['name']}")
-        _, conn = mtree_task.connection_pool.get_cluster_node_connection(node)
+        _, conn = mtree_task.connection_pool.connect(node)
+        conn.set_isolation_level(IsolationLevel.REPEATABLE_READ)
+
+        composite_info = CompositeInfo.fetch(conn, f"{schema}_{table}_key_type")
+        register_composite(composite_info, conn, factory=lambda *args: tuple(args))
 
         try:
             # Start transaction with repeatable read isolation
             with conn.cursor() as cur:
-                cur.execute("SET TRANSACTION ISOLATION LEVEL REPEATABLE READ")
-
                 # Get all dirty and new blocks that need updating
                 cur.execute(
                     sql.SQL(GET_DIRTY_AND_NEW_BLOCKS).format(
@@ -1237,16 +1388,8 @@ def update_mtree(mtree_task: MerkleTreeTask, skip_all_checks=False) -> None:
 
                 # First identify blocks that might need splitting based on insert count
                 cur.execute(
-                    sql.SQL(
-                        """
-                        SELECT node_position, range_start, range_end
-                        FROM {mtree_table}
-                        WHERE node_level = 0
-                        AND inserts_since_tree_update >= %s
-                        AND node_position = ANY(%s)
-                        """
-                    ).format(
-                        mtree_table=sql.Identifier(f"ace_mtree_{schema}_{table}"),
+                    sql.SQL(FIND_BLOCKS_TO_SPLIT).format(
+                        mtree_table=sql.Identifier(f"ace_mtree_{schema}_{table}")
                     ),
                     [SPLIT_THRESHOLD, [b[0] for b in blocks_to_update]],
                 )
@@ -1266,49 +1409,35 @@ def update_mtree(mtree_task: MerkleTreeTask, skip_all_checks=False) -> None:
 
                 if mtree_task.rebalance:
                     mtree_table_id = sql.Identifier(f"ace_mtree_{schema}_{table}")
-                    cur.execute(
-                        sql.SQL(
-                            """
-                            WITH range_sizes AS (
-                                SELECT
-                                    mt.node_position,
-                                    mt.range_start,
-                                    mt.range_end,
-                                    mt.deletes_since_tree_update,
-                                    COUNT(*) AS current_size
-                                FROM {mtree_table} mt
-                                LEFT JOIN {schema}.{table} t
-                                ON t.{key} >= mt.range_start
-                                AND (t.{key} < mt.range_end
-                                    OR mt.range_end IS NULL)
-                                WHERE mt.node_level = 0
-                                AND mt.node_position = ANY(%s)
-                                GROUP BY
-                                    mt.node_position,
-                                    mt.range_start,
-                                    mt.range_end,
-                                    mt.deletes_since_tree_update
-                            )
-                            SELECT
-                                node_position,
-                                range_start,
-                                range_end
-                            FROM range_sizes
-                            WHERE
-                                deletes_since_tree_update >=
-                                current_size * {merge_threshold}
-                            """
-                        ).format(
-                            mtree_table=mtree_table_id,
-                            schema=sql.Identifier(schema),
-                            table=sql.Identifier(table),
-                            key=sql.Identifier(key),
-                            merge_threshold=MERGE_THRESHOLD,
-                        ),
-                        [
-                            [b[0] for b in blocks_to_update],
-                        ],
-                    )
+
+                    if is_composite:
+                        cur.execute(
+                            sql.SQL(FIND_BLOCKS_TO_MERGE_COMPOSITE).format(
+                                mtree_table=mtree_table_id,
+                                schema=sql.Identifier(schema),
+                                table=sql.Identifier(table),
+                                key_columns=sql.SQL(", ").join(
+                                    [sql.Identifier(col) for col in key_columns]
+                                ),
+                                merge_threshold=MERGE_THRESHOLD,
+                            ),
+                            [
+                                [b[0] for b in blocks_to_update],
+                            ],
+                        )
+                    else:
+                        cur.execute(
+                            sql.SQL(FIND_BLOCKS_TO_MERGE_SIMPLE).format(
+                                mtree_table=mtree_table_id,
+                                schema=sql.Identifier(schema),
+                                table=sql.Identifier(table),
+                                key=sql.Identifier(key),
+                                merge_threshold=MERGE_THRESHOLD,
+                            ),
+                            [
+                                [b[0] for b in blocks_to_update],
+                            ],
+                        )
                     blocks_to_merge = cur.fetchall()
 
                     if blocks_to_merge:
@@ -1338,78 +1467,132 @@ def update_mtree(mtree_task: MerkleTreeTask, skip_all_checks=False) -> None:
 
                 print(f"Found {len(blocks_to_update)} blocks to update")
 
-                column_list = []
-                for col in mtree_task.fields.cols.split(","):
-                    column_list.append(
-                        sql.SQL(
-                            "CASE WHEN {} IS NULL THEN 'NULL' "
-                            "WHEN {}::text = '' THEN 'EMPTY' "
-                            "ELSE {}::text END"
-                        ).format(
-                            sql.Identifier(col),
-                            sql.Identifier(col),
-                            sql.Identifier(col),
-                        )
-                    )
-                column_expr = sql.SQL(", ").join(column_list)
-
                 affected_positions = []
                 for block in tqdm(blocks_to_update, desc="Recomputing leaf hashes"):
-                    node_position, range_start, range_end = block
-                    params = {
-                        "node_position": node_position,
-                        "range_start": range_start,
-                        "range_end": range_end,
-                    }
+                    node_position = block[0]
+                    range_start = block[1]
+                    range_end = block[2]
+
+                    if is_composite:
+                        where_conditions = []
+
+                        pkey_cols = sql.SQL(", ").join(
+                            sql.Identifier(col) for col in key_columns
+                        )
+                        where_conditions.append(
+                            sql.SQL("({pkey_cols}) >= ({pkey_values})").format(
+                                pkey_cols=pkey_cols,
+                                pkey_values=sql.SQL(", ").join(
+                                    sql.Literal(val) for val in range_start
+                                ),
+                            )
+                        )
+                        if range_end is not None:
+                            where_conditions.append(
+                                sql.SQL("({pkey_cols}) <= ({pkey_values})").format(
+                                    pkey_cols=pkey_cols,
+                                    pkey_values=sql.SQL(", ").join(
+                                        sql.Literal(val) for val in range_end
+                                    ),
+                                )
+                            )
+
+                        if not where_conditions:
+                            where_clause = sql.SQL("TRUE")
+                        else:
+                            where_clause = sql.SQL(" AND ").join(where_conditions)
+                    else:
+                        where_conditions = []
+
+                        if range_start is not None:
+                            where_conditions.append(
+                                sql.SQL("{pkey_col} >= {pkey_value}").format(
+                                    pkey_col=sql.Identifier(key),
+                                    pkey_value=sql.Literal(range_start),
+                                )
+                            )
+
+                        if range_end is not None:
+                            where_conditions.append(
+                                sql.SQL("{pkey_col} <= {pkey_value}").format(
+                                    pkey_col=sql.Identifier(key),
+                                    pkey_value=sql.Literal(range_end),
+                                )
+                            )
+
+                        if not where_conditions:
+                            where_clause = sql.SQL("TRUE")
+                        else:
+                            where_clause = sql.SQL(" AND ").join(where_conditions)
 
                     # Hitting this case would mean that the last block was updated,
                     # but splitting wasn't necessary. In this case, we need to update
                     # the range_end to the maximum value of the key.
-                    if range_end is None:
-                        cur.execute(
-                            sql.SQL(
-                                """
-                                SELECT max({key})
-                                FROM {schema}.{table}
-                                WHERE {key} >= %s
-                                """
-                            ).format(
-                                schema=sql.Identifier(schema),
-                                table=sql.Identifier(table),
-                                key=sql.Identifier(key),
-                            ),
-                            (range_start,),
-                        )
-                        max_val = cur.fetchone()[0]
-                        if max_val is not None:
-                            end = max_val
-                            cur.execute(
-                                sql.SQL(
-                                    """
-                                    UPDATE {mtree_table}
-                                    SET range_end = %s
-                                    WHERE node_level = 0
-                                    AND node_position = %s
-                                    """
-                                ).format(
-                                    mtree_table=sql.Identifier(
-                                        f"ace_mtree_{schema}_{table}"
-                                    ),
-                                ),
-                                (end, node_position),
+                    if range_end is None and range_start is not None:
+                        if is_composite:
+                            pkey_cols = sql.SQL(", ").join(
+                                sql.Identifier(col) for col in key_columns
+                            )
+                            pkey_values = sql.SQL(", ").join(
+                                sql.Literal(val) for val in range_start
                             )
 
-                    # TODO: Simplify both of these into a single query
-                    cur.execute(
-                        sql.SQL(COMPUTE_LEAF_HASHES).format(
-                            schema=sql.Identifier(schema),
-                            table=sql.Identifier(table),
-                            key=sql.Identifier(key),
-                            columns=column_expr,
-                            mtree_table=sql.Identifier(f"ace_mtree_{schema}_{table}"),
+                            cur.execute(
+                                sql.SQL(GET_MAX_VAL_COMPOSITE).format(
+                                    schema=sql.Identifier(schema),
+                                    table=sql.Identifier(table),
+                                    pkey_cols=pkey_cols,
+                                    pkey_values=pkey_values,
+                                )
+                            )
+                            max_vals = cur.fetchone()
+                            if max_vals is not None:
+                                end = max_vals
+                                cur.execute(
+                                    sql.SQL(UPDATE_MAX_VAL).format(
+                                        mtree_table=sql.Identifier(
+                                            f"ace_mtree_{schema}_{table}"
+                                        ),
+                                    ),
+                                    (end, node_position),
+                                )
+                        else:
+                            cur.execute(
+                                sql.SQL(GET_MAX_VAL_SIMPLE).format(
+                                    schema=sql.Identifier(schema),
+                                    table=sql.Identifier(table),
+                                    key=sql.Identifier(key),
+                                ),
+                                (range_start,),
+                            )
+                            max_val = cur.fetchone()[0]
+                            if max_val is not None:
+                                end = max_val
+                                cur.execute(
+                                    sql.SQL(UPDATE_MAX_VAL).format(
+                                        mtree_table=sql.Identifier(
+                                            f"ace_mtree_{schema}_{table}"
+                                        ),
+                                    ),
+                                    (end, node_position),
+                                )
+
+                    hash_sql = sql.SQL(COMPUTE_LEAF_HASHES).format(
+                        schema=sql.Identifier(schema),
+                        table=sql.Identifier(table),
+                        where_clause=where_clause,
+                        columns=sql.SQL(", ").join(
+                            [
+                                sql.Identifier(col)
+                                for col in mtree_task.fields.cols.split(",")
+                            ]
                         ),
-                        params,
+                        key=sql.SQL(", ").join(
+                            [sql.Identifier(col) for col in key_columns]
+                        ),
+                        mtree_table=sql.Identifier(f"ace_mtree_{schema}_{table}"),
                     )
+                    cur.execute(hash_sql)
                     result = cur.fetchone()[0]
                     args = {
                         "leaf_hash": result,
@@ -1425,13 +1608,8 @@ def update_mtree(mtree_task: MerkleTreeTask, skip_all_checks=False) -> None:
 
                 if affected_positions:
                     cur.execute(
-                        sql.SQL(
-                            """
-                            DELETE FROM {mtree_table}
-                            WHERE node_level > 0
-                            """
-                        ).format(
-                            mtree_table=sql.Identifier(f"ace_mtree_{schema}_{table}"),
+                        sql.SQL(DELETE_PARENT_NODES).format(
+                            mtree_table=sql.Identifier(f"ace_mtree_{schema}_{table}")
                         )
                     )
 
@@ -1645,6 +1823,16 @@ def get_pkey_batches(node1_conn, node2_conn, schema, table, mismatched_positions
     union of all ranges.
     """
 
+    node1_composite_info = CompositeInfo.fetch(node1_conn, f"{schema}_{table}_key_type")
+    node2_composite_info = CompositeInfo.fetch(node2_conn, f"{schema}_{table}_key_type")
+
+    register_composite(
+        node1_composite_info, node1_conn, factory=lambda *args: tuple(args)
+    )
+    register_composite(
+        node2_composite_info, node2_conn, factory=lambda *args: tuple(args)
+    )
+
     with node1_conn.cursor() as cur1, node2_conn.cursor() as cur2:
         cur1.execute(
             sql.SQL(GET_LEAF_RANGES).format(
@@ -1663,7 +1851,6 @@ def get_pkey_batches(node1_conn, node2_conn, schema, table, mismatched_positions
         leaf_ranges2 = cur2.fetchall()
 
     all_ranges = leaf_ranges1 + leaf_ranges2
-
     boundaries = []
     for start, end in all_ranges:
         if start is not None:
@@ -1756,7 +1943,9 @@ def compare_ranges(worker_id, shared_objects, worker_state, work_item):
                         p_key=sql.SQL(", ").join(
                             [sql.Identifier(col.strip()) for col in p_key.split(",")]
                         ),
-                        pkey1=sql.SQL(", ").join([sql.Literal(val) for val in pkey1]),
+                        pkey1=sql.SQL(", ").join(
+                            [sql.Literal(val) for val in pkey1[0]]
+                        ),
                     )
                 )
             if pkey2[0] is not None:
@@ -1765,7 +1954,9 @@ def compare_ranges(worker_id, shared_objects, worker_state, work_item):
                         p_key=sql.SQL(", ").join(
                             [sql.Identifier(col.strip()) for col in p_key.split(",")]
                         ),
-                        pkey2=sql.SQL(", ").join([sql.Literal(val) for val in pkey2]),
+                        pkey2=sql.SQL(", ").join(
+                            [sql.Literal(val) for val in pkey2[0]]
+                        ),
                     )
                 )
 
@@ -1853,7 +2044,7 @@ def compare_ranges(worker_id, shared_objects, worker_state, work_item):
                 sql.SQL(" OR ").join(or_clauses) if or_clauses else sql.SQL("TRUE")
             )
 
-    block_sql = sql.SQL("SELECT * FROM {table_name} WHERE {where_clause}").format(
+    block_sql = sql.SQL(COMPARE_BLOCKS_SQL).format(
         table_name=sql.SQL("{}.{}").format(
             sql.Identifier(schema_name),
             sql.Identifier(table_name),
@@ -2020,13 +2211,8 @@ def merkle_tree_diff(mtree_task: MerkleTreeTask) -> None:
 
             # Get the root level
             cur1.execute(
-                sql.SQL(
-                    """
-                    SELECT MAX(node_level)
-                    FROM {mtree_table}
-                    """
-                ).format(
-                    mtree_table=sql.Identifier(f"ace_mtree_{schema}_{table}"),
+                sql.SQL(GET_MAX_NODE_LEVEL).format(
+                    mtree_table=sql.Identifier(f"ace_mtree_{schema}_{table}")
                 )
             )
             root_level = cur1.fetchone()[0]
@@ -2328,11 +2514,11 @@ def mtree_init(conn) -> None:
 
     # Metadata table where we keep track of tables, their approx. row counts,
     # and when the tree was last updated.
+    cur.execute(sql.SQL("DROP TABLE ace_mtree_metadata"))
     cur.execute(sql.SQL(CREATE_METADATA_TABLE))
 
     # Create generic functions for block identification and tracking
-    cur.execute(sql.SQL(CREATE_GENERIC_BLOCK_ID_FUNCTION))
-    cur.execute(sql.SQL(CREATE_GENERIC_TRIGGER_FUNCTION))
+    cur.execute(sql.SQL(CREATE_BULK_TRIGGER_FUNCTION))
 
     conn.commit()
     print(f"Merkle tree objects initialised successfully on {conn.info.host}")

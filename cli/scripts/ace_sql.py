@@ -1,17 +1,20 @@
 # Various SQL statements for Merkle Tree operations
 
 CREATE_METADATA_TABLE = """
-    CREATE TABLE IF NOT EXISTS ace_mtree_metadata (
+    CREATE TABLE ace_mtree_metadata (
         schema_name text,
         table_name text,
         total_rows bigint,
         num_blocks int,
+        is_composite boolean NOT NULL DEFAULT false,
         last_updated timestamptz,
         PRIMARY KEY (schema_name, table_name)
     )
 """
 
-CREATE_MTREE_TABLE = """
+# Instead of having one create table and trying to handle cases, I'm just using
+# two variations here for simplicity.
+CREATE_SIMPLE_MTREE_TABLE = """
     CREATE TABLE {mtree_table} (
         node_level integer NOT NULL,
         node_position bigint NOT NULL,
@@ -25,226 +28,75 @@ CREATE_MTREE_TABLE = """
         last_modified timestamptz DEFAULT current_timestamp,
         PRIMARY KEY (node_level, node_position)
     );
+
     CREATE INDEX IF NOT EXISTS {range_idx}
     ON {mtree_table} (range_start, range_end)
     WHERE node_level = 0;
 """
 
-CREATE_GENERIC_BLOCK_ID_FUNCTION = """
-    CREATE OR REPLACE FUNCTION get_block_id(
-        schema_name text,
-        table_name text,
-        pkey_value anyelement
-    )
-    RETURNS bigint AS $$
-    DECLARE
-        pos bigint;
-        last_pos bigint;
-        last_block_end text;
-        mtree_table text;
-        pkey_type text;
-        boolean_result boolean;
-    BEGIN
-        mtree_table := 'ace_mtree_' || schema_name || '_' || table_name;
+CREATE_COMPOSITE_MTREE_TABLE = """
+    DROP TYPE IF EXISTS {schema}_{table}_key_type CASCADE;
 
-        pkey_type := pg_typeof(pkey_value)::text;
+    CREATE TYPE {schema}_{table}_key_type AS (
+        {key_type_columns}
+    );
 
-        -- First try to find the exact block this key belongs to
-        EXECUTE format('
-            SELECT node_position
-            FROM %I
-            WHERE node_level = 0
-            AND range_start <= $1
-            AND (range_end > $1 OR range_end IS NULL)
-            ORDER BY node_position
-            LIMIT 1', mtree_table)
-        USING pkey_value INTO pos;
+    CREATE TABLE {mtree_table} (
+        node_level integer NOT NULL,
+        node_position bigint NOT NULL,
+        range_start {schema}_{table}_key_type,
+        range_end {schema}_{table}_key_type,
+        leaf_hash bytea,
+        node_hash bytea,
+        dirty boolean DEFAULT false,
+        inserts_since_tree_update bigint DEFAULT 0,
+        deletes_since_tree_update bigint DEFAULT 0,
+        last_modified timestamptz DEFAULT current_timestamp,
+        PRIMARY KEY (node_level, node_position)
+    );
 
-        -- If no block found, this key might be beyond the last block
-        -- In this case, we should return the last block
-        IF pos IS NULL THEN
-            EXECUTE format('
-                SELECT node_position, range_end::text
-                FROM %I
-                WHERE node_level = 0
-                ORDER BY node_position DESC
-                LIMIT 1', mtree_table)
-            INTO last_pos, last_block_end;
-
-            IF last_block_end IS NULL THEN
-                RETURN last_pos;
-            ELSE
-                EXECUTE format('
-                    SELECT $1 >= $2::%s', pkey_type)
-                USING pkey_value, last_block_end INTO STRICT boolean_result;
-
-                IF boolean_result THEN
-                    RETURN last_pos;
-                ELSE
-                    -- Otherwise return the first block
-                    EXECUTE format('
-                        SELECT node_position
-                        FROM %I
-                        WHERE node_level = 0
-                        ORDER BY node_position
-                        LIMIT 1', mtree_table)
-                    INTO pos;
-                    RETURN pos;
-                END IF;
-            END IF;
-        END IF;
-
-        RETURN pos;
-    END;
-    $$ LANGUAGE plpgsql STABLE;
-"""
-
-CREATE_GENERIC_TRIGGER_FUNCTION = """
-    CREATE OR REPLACE FUNCTION track_dirty_blocks()
-    RETURNS trigger AS $$
-    DECLARE
-        affected_pos bigint;
-        last_block_pos bigint;
-        last_block_end text;
-        schema_name text;
-        table_name text;
-        pkey_name text;
-        mtree_table text;
-        pkey_type text;
-        boolean_result boolean;
-    BEGIN
-        IF TG_LEVEL = 'STATEMENT' THEN
-            RETURN NULL;
-        END IF;
-
-        schema_name := TG_TABLE_SCHEMA;
-        table_name := TG_TABLE_NAME;
-        pkey_name := TG_ARGV[0];
-        mtree_table := 'ace_mtree_' || schema_name || '_' || table_name;
-
-        IF TG_OP = 'INSERT' THEN
-            -- Get the last block's position and end value
-            EXECUTE format('
-                SELECT node_position, range_end::text
-                FROM %I
-                WHERE node_level = 0
-                ORDER BY node_position DESC
-                LIMIT 1', mtree_table)
-            INTO last_block_pos, last_block_end;
-
-            -- If this key is beyond the last block's end, set its range_end to NULL
-            IF last_block_end IS NOT NULL THEN
-                -- TODO: Can we directly compare as text since we're just checking
-                -- if greater?
-                EXECUTE format('
-                    SELECT ($1.%I)::text > $2', pkey_name)
-                USING NEW, last_block_end INTO STRICT boolean_result;
-
-                IF boolean_result THEN
-                    EXECUTE format('
-                        UPDATE %I
-                        SET range_end = NULL,
-                            dirty = true,
-                            inserts_since_tree_update = inserts_since_tree_update + 1,
-                            last_modified = current_timestamp
-                        WHERE node_level = 0
-                        AND node_position = $1', mtree_table)
-                    USING last_block_pos;
-                END IF;
-            END IF;
-
-            EXECUTE format('
-                SELECT get_block_id($1, $2, $3.%I)', pkey_name)
-            USING schema_name, table_name, NEW INTO affected_pos;
-
-            EXECUTE format('
-                UPDATE %I
-                SET dirty = true,
-                    inserts_since_tree_update = inserts_since_tree_update + 1,
-                    last_modified = current_timestamp
-                WHERE node_level = 0
-                AND node_position = $1', mtree_table)
-            USING affected_pos;
-
-        ELSIF TG_OP = 'DELETE' THEN
-            EXECUTE format('
-                SELECT get_block_id($1, $2, $3.%I)', pkey_name)
-            USING schema_name, table_name, OLD INTO affected_pos;
-
-            EXECUTE format('
-                UPDATE %I
-                SET dirty = true,
-                    deletes_since_tree_update = deletes_since_tree_update + 1,
-                    last_modified = current_timestamp
-                WHERE node_level = 0
-                AND node_position = $1', mtree_table)
-            USING affected_pos;
-
-        ELSIF TG_OP = 'UPDATE' THEN
-            EXECUTE format('
-                SELECT $1.%I IS DISTINCT FROM $2.%I', pkey_name, pkey_name)
-            USING OLD, NEW INTO STRICT boolean_result;
-
-            IF boolean_result THEN
-                -- Mark both blocks as dirty
-                EXECUTE format('
-                    SELECT get_block_id($1, $2, $3.%I)', pkey_name)
-                USING schema_name, table_name, OLD INTO affected_pos;
-
-                EXECUTE format('
-                    UPDATE %I
-                    SET dirty = true,
-                        deletes_since_tree_update = deletes_since_tree_update + 1,
-                        last_modified = current_timestamp
-                    WHERE node_level = 0
-                    AND node_position = $1', mtree_table)
-                USING affected_pos;
-
-                EXECUTE format('
-                    SELECT get_block_id($1, $2, $3.%I)', pkey_name)
-                USING schema_name, table_name, NEW INTO affected_pos;
-
-                EXECUTE format('
-                    UPDATE %I
-                    SET dirty = true,
-                        inserts_since_tree_update = inserts_since_tree_update + 1,
-                        last_modified = current_timestamp
-                    WHERE node_level = 0
-                    AND node_position = $1', mtree_table)
-                USING affected_pos;
-
-                RETURN NULL;
-            END IF;
-
-            EXECUTE format('
-                SELECT get_block_id($1, $2, $3.%I)', pkey_name)
-            USING schema_name, table_name, NEW INTO affected_pos;
-
-            EXECUTE format('
-                UPDATE %I
-                SET dirty = true,
-                    last_modified = current_timestamp
-                WHERE node_level = 0
-                AND node_position = $1', mtree_table)
-            USING affected_pos;
-        END IF;
-
-        RETURN NULL;
-    END;
-    $$ LANGUAGE plpgsql;
+    CREATE INDEX IF NOT EXISTS {range_idx}_tuple
+    ON {mtree_table} (range_start, range_end)
+    WHERE node_level = 0;
 """
 
 CREATE_GENERIC_TRIGGER = """
-    DROP TRIGGER IF EXISTS {trigger}
-    ON {schema}.{table};
-    CREATE TRIGGER {trigger}
-    AFTER INSERT OR UPDATE OR DELETE ON {schema}.{table}
-    FOR EACH ROW EXECUTE FUNCTION track_dirty_blocks({key});
+    DROP TRIGGER IF EXISTS {trigger} ON {schema}.{table};
+    DROP TRIGGER IF EXISTS {trigger}_insert_stmt ON {schema}.{table};
+    DROP TRIGGER IF EXISTS {trigger}_update_stmt ON {schema}.{table};
+    DROP TRIGGER IF EXISTS {trigger}_delete_stmt ON {schema}.{table};
+
+    CREATE TRIGGER {trigger}_insert_stmt
+    AFTER INSERT ON {schema}.{table}
+    REFERENCING NEW TABLE AS new_table
+    FOR EACH STATEMENT EXECUTE FUNCTION bulk_block_tracking_dispatcher({key});
+
+    CREATE TRIGGER {trigger}_update_stmt
+    AFTER UPDATE ON {schema}.{table}
+    REFERENCING OLD TABLE AS old_table NEW TABLE AS new_table
+    FOR EACH STATEMENT EXECUTE FUNCTION bulk_block_tracking_dispatcher({key});
+
+    CREATE TRIGGER {trigger}_delete_stmt
+    AFTER DELETE ON {schema}.{table}
+    REFERENCING OLD TABLE AS old_table
+    FOR EACH STATEMENT EXECUTE FUNCTION bulk_block_tracking_dispatcher({key});
+"""
+
+# SQL for inserting block ranges for composite keys
+INSERT_COMPOSITE_BLOCK_RANGES = """
+    INSERT INTO {mtree_table}
+        (node_level, node_position, range_start, range_end)
+    VALUES
+        (0, %s, ROW({start_tuple_values}), ROW({end_tuple_values}));
 """
 
 ENABLE_ALWAYS = """
     ALTER TABLE {schema}.{table}
-    ENABLE ALWAYS TRIGGER {trigger};
+    ENABLE ALWAYS TRIGGER {insert_trigger};
+    ALTER TABLE {schema}.{table}
+    ENABLE ALWAYS TRIGGER {update_trigger};
+    ALTER TABLE {schema}.{table}
+    ENABLE ALWAYS TRIGGER {delete_trigger};
 """
 
 CREATE_XOR_FUNCTION = """
@@ -313,11 +165,12 @@ GET_PKEY_TYPE = """
 
 UPDATE_METADATA = """
     INSERT INTO ace_mtree_metadata
-        (schema_name, table_name, total_rows, num_blocks, last_updated)
-    VALUES (%s, %s, %s, %s, current_timestamp)
+        (schema_name, table_name, total_rows, num_blocks, is_composite, last_updated)
+    VALUES (%s, %s, %s, %s, %s, current_timestamp)
     ON CONFLICT (schema_name, table_name) DO UPDATE
     SET total_rows = EXCLUDED.total_rows,
         num_blocks = EXCLUDED.num_blocks,
+        is_composite = EXCLUDED.is_composite,
         last_updated = EXCLUDED.last_updated;
 """
 
@@ -396,8 +249,7 @@ COMPUTE_LEAF_HASHES = """
     WITH block_rows AS (
         SELECT *
         FROM {schema}.{table}
-        WHERE {key} >= %(range_start)s
-        AND ({key} <= %(range_end)s OR %(range_end)s IS NULL)
+        WHERE {where_clause}
     ),
     block_hash AS (
         SELECT
@@ -579,4 +431,601 @@ GET_ROW_COUNT_ESTIMATE = """
     FROM ace_mtree_metadata
     WHERE schema_name = {schema}
     AND table_name = {table}
+"""
+
+GET_MAX_VAL_COMPOSITE = """
+    SELECT {pkey_cols}
+    FROM {schema}.{table}
+    WHERE ({pkey_cols}) >= ({pkey_values})
+    ORDER BY ({pkey_cols}) DESC
+    LIMIT 1
+"""
+
+UPDATE_MAX_VAL = """
+    UPDATE {mtree_table}
+    SET range_end = %s
+    WHERE node_level = 0
+    AND node_position = %s
+"""
+
+GET_MAX_VAL_SIMPLE = """
+    SELECT max({key})
+    FROM {schema}.{table}
+    WHERE {key} >= %s
+"""
+
+GET_COUNT_COMPOSITE = """
+    SELECT count(*)
+    FROM {schema}.{table}
+    WHERE {where_clause}
+"""
+
+GET_COUNT_SIMPLE = """
+    SELECT count(*)
+    FROM {schema}.{table}
+    WHERE {key} >= %s
+    AND ({key} < %s OR %s::{pkey_type} IS NULL)
+"""
+
+GET_SPLIT_POINT_COMPOSITE = """
+    SELECT ROW({pkey_cols})
+    FROM {schema}.{table}
+    WHERE {where_clause}
+    ORDER BY {order_cols}
+    OFFSET %s
+    LIMIT 1
+"""
+
+GET_SPLIT_POINT_SIMPLE = """
+    SELECT {key}
+    FROM {schema}.{table}
+    WHERE {key} >= %s
+    AND ({key} < %s OR %s::{pkey_type} IS NULL)
+    ORDER BY {key}
+    OFFSET %s
+    LIMIT 1
+"""
+
+DELETE_PARENT_NODES = """
+    DELETE FROM {mtree_table}
+    WHERE node_level > 0
+"""
+
+GET_MAX_NODE_POSITION = """
+    SELECT MAX(node_position) + 1
+    FROM {mtree_table}
+    WHERE node_level = 0
+"""
+
+UPDATE_BLOCK_RANGE_END = """
+    UPDATE {mtree_table}
+    SET range_end = %s,
+        dirty = true,
+        last_modified = current_timestamp
+    WHERE node_level = 0
+    AND node_position = %s
+"""
+
+UPDATE_NODE_POSITIONS_TEMP = """
+    UPDATE {mtree_table}
+    SET node_position = node_position + %s
+    WHERE node_level = 0
+    AND node_position > %s
+"""
+
+DELETE_BLOCK = """
+    DELETE FROM {mtree_table}
+    WHERE node_level = 0
+    AND node_position = %s
+"""
+
+UPDATE_NODE_POSITIONS_SEQUENTIAL = """
+    UPDATE {mtree_table}
+    SET node_position = pos_seq
+    FROM (
+        SELECT node_position,
+               row_number() OVER (
+               ORDER BY node_position
+           ) + %s as pos_seq
+        FROM {mtree_table}
+        WHERE node_level = 0
+        AND node_position > %s
+    ) as seq
+    WHERE
+    {mtree_table}.node_position = seq.node_position
+    AND node_level = 0
+"""
+
+FIND_BLOCKS_TO_SPLIT = """
+    SELECT node_position, range_start, range_end
+    FROM {mtree_table}
+    WHERE node_level = 0
+    AND inserts_since_tree_update >= %s
+    AND node_position = ANY(%s)
+"""
+
+FIND_BLOCKS_TO_MERGE_COMPOSITE = """
+    WITH range_sizes AS (
+        SELECT
+            mt.node_position,
+            mt.range_start,
+            mt.range_end,
+            mt.deletes_since_tree_update,
+            COUNT(*) AS current_size
+        FROM {mtree_table} mt
+        LEFT JOIN {schema}.{table} t
+        ON ROW({key_columns}) >= mt.range_start
+        AND (ROW({key_columns}) < mt.range_end
+            OR mt.range_end IS NULL)
+        WHERE mt.node_level = 0
+        AND mt.node_position = ANY(%s)
+        GROUP BY
+            mt.node_position,
+            mt.range_start,
+            mt.range_end,
+            mt.deletes_since_tree_update
+    )
+    SELECT
+        node_position,
+        range_start,
+        range_end
+    FROM range_sizes
+    WHERE
+        deletes_since_tree_update >=
+        current_size * {merge_threshold}
+"""
+
+FIND_BLOCKS_TO_MERGE_SIMPLE = """
+    WITH range_sizes AS (
+        SELECT
+            mt.node_position,
+            mt.range_start,
+            mt.range_end,
+            mt.deletes_since_tree_update,
+            COUNT(*) AS current_size
+        FROM {mtree_table} mt
+        LEFT JOIN {schema}.{table} t
+        ON t.{key} >= mt.range_start
+        AND (t.{key} < mt.range_end
+            OR mt.range_end IS NULL)
+        WHERE mt.node_level = 0
+        AND mt.node_position = ANY(%s)
+        GROUP BY
+            mt.node_position,
+            mt.range_start,
+            mt.range_end,
+            mt.deletes_since_tree_update
+    )
+    SELECT
+        node_position,
+        range_start,
+        range_end
+    FROM range_sizes
+    WHERE
+        deletes_since_tree_update >=
+        current_size * {merge_threshold}
+"""
+
+GET_BLOCK_COUNT_COMPOSITE = """
+    WITH block_data AS (
+        SELECT node_position, range_start, range_end
+        FROM {mtree_table}
+        WHERE node_level = 0
+        AND node_position = %s
+    ),
+    row_count AS (
+        SELECT count(*) as cnt
+        FROM {schema}.{table} t
+        JOIN block_data b ON true
+        WHERE ROW({pkey_cols}) >= b.range_start
+        AND (
+            ROW({pkey_cols}) <= b.range_end
+            OR b.range_end IS NULL
+        )
+    )
+    SELECT b.node_position, b.range_start, b.range_end, r.cnt
+    FROM block_data b, row_count r
+"""
+
+GET_BLOCK_COUNT_SIMPLE = """
+    SELECT node_position, range_start, range_end, count(*)
+    FROM {mtree_table} mt
+    LEFT JOIN {schema}.{table} t
+    ON t.{key} >= mt.range_start
+    AND (t.{key} < mt.range_end OR mt.range_end IS NULL)
+    WHERE mt.node_level = 0
+    AND mt.node_position = %s
+    GROUP BY mt.node_position, mt.range_start, mt.range_end
+"""
+
+GET_MAX_NODE_LEVEL = """
+    SELECT MAX(node_level)
+    FROM {mtree_table}
+"""
+
+COMPARE_BLOCKS_SQL = """
+    SELECT * FROM {table_name} WHERE {where_clause}
+"""
+
+CREATE_BULK_TRIGGER_FUNCTION = """
+CREATE OR REPLACE FUNCTION bulk_block_tracking_dispatcher()
+RETURNS trigger AS $$
+DECLARE
+    pkey_info      text := TG_ARGV[0];
+    is_composite   boolean;
+    t_schema       text := TG_TABLE_SCHEMA;
+    t_table        text := TG_TABLE_NAME;
+    mtree_table    text := 'ace_mtree_' || t_schema || '_' || t_table;
+    key_columns    text[];
+    composite_type text;
+    rec record;
+BEGIN
+    SELECT m.is_composite
+      INTO is_composite
+      FROM ace_mtree_metadata m
+     WHERE m.schema_name = t_schema
+       AND m.table_name = t_table;
+
+    IF TG_OP = 'INSERT' THEN
+        IF is_composite THEN
+            key_columns := string_to_array(pkey_info, ',');
+            composite_type := t_schema || '_' || t_table || '_key_type';
+            EXECUTE format($f$
+               WITH affected AS (
+                 SELECT count(*) AS cnt,
+                   (SELECT key_val FROM (
+                     SELECT ROW(%s)::%I AS key_val FROM new_table
+                   ) x ORDER BY key_val ASC LIMIT 1) AS min_key,
+                   (SELECT key_val FROM (
+                     SELECT ROW(%s)::%I AS key_val FROM new_table
+                   ) x ORDER BY key_val DESC LIMIT 1) AS max_key
+                 FROM new_table
+               )
+               UPDATE %I
+               SET dirty = true,
+                   inserts_since_tree_update = inserts_since_tree_update + affected.cnt,
+                   last_modified = current_timestamp
+               FROM affected
+               WHERE node_level = 0
+               AND
+               (
+                    (
+                        range_start <= affected.min_key AND
+                        (range_end > affected.min_key OR range_end IS NULL)
+                    )
+                    OR
+                    (
+                        range_start <= affected.max_key AND
+                        (range_end > affected.max_key OR range_end IS NULL)
+                    )
+                    OR
+                    (
+                        range_start >= affected.min_key AND
+                        range_start < affected.max_key
+                    )
+                )
+            $f$, array_to_string(key_columns, ', '), composite_type,
+                 array_to_string(key_columns, ', '), composite_type,
+                 mtree_table);
+
+            -- Is this even needed anymore?
+            EXECUTE format($f$
+               WITH affected AS (
+                 SELECT (SELECT key_val FROM (
+                   SELECT ROW(%s)::%I AS key_val FROM new_table
+                 ) x ORDER BY key_val DESC LIMIT 1) AS max_key
+               )
+               UPDATE %I
+               SET range_end = NULL,
+                   dirty = true,
+                   last_modified = current_timestamp
+               FROM affected
+               WHERE node_level = 0
+                 AND range_end IS NOT NULL
+                 AND affected.max_key > range_end
+                 AND node_position =
+                    (
+                        SELECT max(node_position)
+                        FROM %I
+                        WHERE node_level = 0
+                    )
+            $f$, array_to_string(key_columns, ', '), composite_type,
+                 mtree_table, mtree_table);
+
+        ELSE
+            EXECUTE format($f$
+               WITH affected AS (
+                 SELECT count(*) AS cnt, MIN(%I) AS min_key, MAX(%I) AS max_key
+                 FROM new_table
+               )
+               UPDATE %I
+               SET dirty = true,
+                   inserts_since_tree_update = inserts_since_tree_update + affected.cnt,
+                   last_modified = current_timestamp
+               FROM affected
+               WHERE node_level = 0
+               AND
+               (
+                    (
+                        range_start <= affected.min_key AND
+                        (range_end > affected.min_key OR range_end IS NULL)
+                    )
+                    OR
+                    (
+                        range_start <= affected.max_key AND
+                        (range_end > affected.max_key OR range_end IS NULL)
+                    )
+                    OR
+                    (
+                        range_start >= affected.min_key AND
+                        range_start < affected.max_key
+                    )
+                )
+            $f$, pkey_info, pkey_info, mtree_table);
+
+            EXECUTE format($f$
+               WITH affected AS (
+                 SELECT MAX(%I) AS max_key FROM new_table
+               )
+               UPDATE %I
+               SET range_end = NULL,
+                   dirty = true,
+                   last_modified = current_timestamp
+               FROM affected
+               WHERE node_level = 0
+               AND range_end IS NOT NULL
+               AND affected.max_key > range_end
+               AND node_position =
+               (
+                    SELECT
+                    max(node_position)
+                    FROM %I
+                    WHERE
+                    node_level = 0
+                )
+            $f$, pkey_info, mtree_table, mtree_table);
+        END IF;
+
+    ELSIF TG_OP = 'DELETE' THEN
+        IF is_composite THEN
+            key_columns := string_to_array(pkey_info, ',');
+            composite_type := t_schema || '_' || t_table || '_key_type';
+            EXECUTE format($f$
+               WITH affected AS (
+                 SELECT count(*) AS cnt,
+                   (SELECT key_val FROM (
+                     SELECT ROW(%s)::%I AS key_val FROM old_table
+                   ) x ORDER BY key_val ASC LIMIT 1) AS min_key,
+                   (SELECT key_val FROM (
+                     SELECT ROW(%s)::%I AS key_val FROM old_table
+                   ) x ORDER BY key_val DESC LIMIT 1) AS max_key
+                 FROM old_table
+               )
+               UPDATE %I
+               SET dirty = true,
+                   deletes_since_tree_update = deletes_since_tree_update + affected.cnt,
+                   last_modified = current_timestamp
+               FROM affected
+               WHERE node_level = 0
+               AND
+               (
+                    (
+                        range_start <= affected.min_key AND
+                        (range_end >= affected.max_key OR range_end IS NULL)
+                    )
+                    OR
+                    (
+                        range_start >= affected.min_key AND
+                        range_start <= affected.max_key AND
+                        (range_end <= affected.max_key OR range_end IS NULL)
+                    )
+                    OR
+                    (
+                        range_start <= affected.min_key AND
+                        (range_end >= affected.min_key OR range_end IS NULL)
+                    )
+                    OR
+                    (
+                        range_start <= affected.max_key AND
+                        (range_end >= affected.max_key OR range_end IS NULL)
+                    )
+                )
+            $f$, array_to_string(key_columns, ', '), composite_type,
+                 array_to_string(key_columns, ', '), composite_type,
+                 mtree_table);
+        ELSE
+            EXECUTE format($f$
+               WITH affected AS (
+                 SELECT count(*) AS cnt, MIN(%I) AS min_key, MAX(%I) AS max_key
+                 FROM old_table
+               )
+               UPDATE %I
+               SET dirty = true,
+                   deletes_since_tree_update = deletes_since_tree_update + affected.cnt,
+                   last_modified = current_timestamp
+               FROM affected
+               WHERE node_level = 0
+               AND
+               (
+                    (
+                        range_start <= affected.min_key AND
+                        (range_end >= affected.max_key OR range_end IS NULL)
+                    )
+                    OR
+                    (
+                        range_start >= affected.min_key AND
+                        range_start <= affected.max_key AND
+                        (range_end <= affected.max_key OR range_end IS NULL)
+                    )
+                    OR
+                    (
+                        range_start <= affected.min_key AND
+                        (range_end >= affected.min_key OR range_end IS NULL)
+                    )
+                    OR
+                    (
+                        range_start <= affected.max_key AND
+                        (range_end >= affected.max_key OR range_end IS NULL)
+                    )
+                 )
+            $f$, pkey_info, pkey_info, mtree_table);
+        END IF;
+
+    ELSIF TG_OP = 'UPDATE' THEN
+        IF is_composite THEN
+            key_columns := string_to_array(pkey_info, ',');
+            composite_type := t_schema || '_' || t_table || '_key_type';
+            EXECUTE format($f$
+               WITH affected AS (
+                 SELECT count(*) AS cnt,
+                   (SELECT key_val FROM (
+                     SELECT ROW(%s)::%I AS key_val FROM new_table
+                     UNION ALL
+                     SELECT ROW(%s)::%I AS key_val FROM old_table
+                   ) x ORDER BY key_val ASC LIMIT 1) AS min_key,
+                   (SELECT key_val FROM (
+                     SELECT ROW(%s)::%I AS key_val FROM new_table
+                     UNION ALL
+                     SELECT ROW(%s)::%I AS key_val FROM old_table
+                   ) x ORDER BY key_val DESC LIMIT 1) AS max_key
+                 FROM (SELECT 1 FROM new_table UNION ALL SELECT 1 FROM old_table) y
+               )
+               UPDATE %I
+               SET dirty = true,
+                   inserts_since_tree_update = inserts_since_tree_update + affected.cnt,
+                   last_modified = current_timestamp
+               FROM affected
+               WHERE node_level = 0
+               AND
+               (
+                    (
+                        range_start <= affected.min_key AND
+                        (range_end > affected.min_key OR range_end IS NULL)
+                    )
+                    OR
+                    (
+                        range_start <= affected.max_key AND
+                        (range_end > affected.max_key OR range_end IS NULL)
+                    )
+                    OR
+                    (
+                        range_start >= affected.min_key AND
+                        range_start <= affected.max_key
+                    )
+                    OR
+                    (
+                        (
+                            range_end >= affected.min_key AND
+                            range_end <= affected.max_key
+                        )
+                        OR
+                        range_end IS NULL
+                    )
+                 )
+            $f$, array_to_string(key_columns, ', '), composite_type,
+                 array_to_string(key_columns, ', '), composite_type,
+                 array_to_string(key_columns, ', '), composite_type,
+                 array_to_string(key_columns, ', '), composite_type,
+                 mtree_table);
+
+            EXECUTE format($f$
+               WITH affected AS (
+                 SELECT (SELECT key_val FROM (
+                   SELECT ROW(%s)::%I AS key_val FROM new_table
+                   UNION ALL
+                   SELECT ROW(%s)::%I AS key_val FROM old_table
+                 ) x ORDER BY key_val DESC LIMIT 1) AS max_key
+               )
+               UPDATE %I
+               SET range_end = NULL,
+                   dirty = true,
+                   last_modified = current_timestamp
+               FROM affected
+               WHERE node_level = 0
+               AND range_end IS NOT NULL
+               AND affected.max_key > range_end
+               AND node_position =
+                (
+                    SELECT
+                    max(node_position)
+                    FROM %I
+                    WHERE
+                    node_level = 0
+                )
+            $f$, array_to_string(key_columns, ', '), composite_type,
+                 array_to_string(key_columns, ', '), composite_type,
+                 mtree_table, mtree_table);
+        ELSE
+            EXECUTE format($f$
+               WITH affected AS (
+                 SELECT count(*) AS cnt, MIN(%I) AS min_key, MAX(%I) AS max_key
+                 FROM (
+                   SELECT %I FROM new_table
+                   UNION ALL
+                   SELECT %I FROM old_table
+                 ) t
+               )
+               UPDATE %I
+               SET dirty = true,
+                   inserts_since_tree_update = inserts_since_tree_update + affected.cnt,
+                   last_modified = current_timestamp
+               FROM affected
+               WHERE node_level = 0
+               AND
+               (
+                    (
+                        range_start <= affected.min_key AND
+                        (range_end > affected.min_key OR range_end IS NULL)
+                    )
+                    OR
+                    (
+                        range_start <= affected.max_key AND
+                        (range_end > affected.max_key OR range_end IS NULL)
+                    )
+                    OR
+                    (
+                        range_start >= affected.min_key AND
+                        range_start <= affected.max_key
+                    )
+                    OR
+                    (
+                        (
+                            range_end >= affected.min_key AND
+                            range_end <= affected.max_key
+                        )
+                        OR
+                        range_end IS NULL
+                    )
+                )
+            $f$, pkey_info, pkey_info, pkey_info, pkey_info, mtree_table);
+
+            EXECUTE format($f$
+               WITH affected AS (
+                 SELECT MAX(%I) AS max_key FROM new_table
+                 UNION ALL
+                 SELECT MAX(%I) AS max_key FROM old_table
+               )
+               UPDATE %I
+               SET range_end = NULL,
+                   dirty = true,
+                   last_modified = current_timestamp
+               FROM (SELECT max(max_key) AS max_key FROM affected) a
+               WHERE node_level = 0
+               AND range_end IS NOT NULL
+               AND a.max_key > range_end
+               AND node_position =
+                (
+                    SELECT
+                    max(node_position)
+                    FROM %I
+                    WHERE
+                    node_level = 0
+                )
+            $f$, pkey_info, pkey_info, mtree_table, mtree_table);
+        END IF;
+    END IF;
+
+    RETURN NULL;
+END;
+$$ LANGUAGE plpgsql;
 """
