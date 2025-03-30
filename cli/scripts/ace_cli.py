@@ -21,12 +21,12 @@ from ace_exceptions import AceException
 def merkle_tree_cli(
     mode,
     cluster_name,
-    table_name,
+    table_name=None,
     dbname=None,
     analyse=False,
     rebalance=False,
     recreate_objects=False,
-    block_rows=config.MTREE_BLOCK_SIZE,
+    block_size=config.MTREE_BLOCK_SIZE,
     max_cpu_ratio=config.MAX_CPU_RATIO,
     batch_size=1,
     write_ranges=False,
@@ -46,7 +46,7 @@ def merkle_tree_cli(
             analyse=analyse,
             rebalance=rebalance,
             recreate_objects=recreate_objects,
-            block_rows=block_rows,
+            block_size=block_size,
             max_cpu_ratio=max_cpu_ratio,
             batch_size=batch_size,
             output=output,
@@ -61,15 +61,23 @@ def merkle_tree_cli(
         mtree_task.scheduler.task_status = "RUNNING"
         mtree_task.scheduler.started_at = datetime.now()
 
-        ace.validate_merkle_tree_inputs(mtree_task)
+        if ((mode == "teardown") and (not table_name)) or (mode == "init"):
+            ace.validate_merkle_tree_inputs(mtree_task, skip_table_check=True)
+        else:
+            ace.validate_merkle_tree_inputs(mtree_task)
+
         ace_db.create_ace_task(task=mtree_task)
 
-        if mode == "build":
+        if mode == "init":
+            ace_mtree.mtree_init_helper(mtree_task)
+        elif mode == "build":
             ace_mtree.build_mtree(mtree_task)
         elif mode == "update":
             ace_mtree.update_mtree(mtree_task)
         elif mode == "diff":
             ace_mtree.merkle_tree_diff(mtree_task)
+        elif mode == "teardown":
+            ace_mtree.mtree_teardown_helper(mtree_task)
 
         mtree_task.connection_pool.close_all()
     except AceException as e:

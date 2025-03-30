@@ -26,10 +26,16 @@ from ace_sql import (
     CREATE_BULK_TRIGGER_FUNCTION,
     CREATE_METADATA_TABLE,
     CREATE_XOR_FUNCTION,
+    DROP_BULK_TRIGGER_FUNCTION,
+    DROP_METADATA_TABLE,
+    DROP_XOR_FUNCTION,
+    DROP_MTREE_TABLE,
+    DROP_MTREE_TRIGGERS,
     ENABLE_ALWAYS,
     ESTIMATE_ROW_COUNT,
     GET_BLOCK_COUNT_COMPOSITE,
     GET_BLOCK_COUNT_SIMPLE,
+    GET_BLOCK_SIZE_FROM_METADATA,
     GET_COUNT_COMPOSITE,
     GET_COUNT_SIMPLE,
     GET_MAX_VAL_SIMPLE,
@@ -250,7 +256,7 @@ def compute_block_hashes(worker_id, shared_objects, worker_state, args):
 
 
 def create_mtree_objects(
-    conn, schema, table, key, total_rows, num_blocks, recreate_objects=False
+    conn, schema, table, key, total_rows, block_size, num_blocks, recreate_objects=False
 ):
     """
     Creates the necessary database objects for Merkle tree implementation
@@ -269,7 +275,7 @@ def create_mtree_objects(
 
     with conn.cursor() as cur:
         if recreate_objects:
-            mtree_init(conn)
+            _mtree_init(conn)
 
         cur.execute(
             sql.SQL("DROP TABLE IF EXISTS {mtree_table}").format(
@@ -339,13 +345,14 @@ def create_mtree_objects(
         )
 
         cur.execute(
-            UPDATE_METADATA, (schema, table, total_rows, num_blocks, is_composite)
+            UPDATE_METADATA,
+            (schema, table, total_rows, block_size, num_blocks, is_composite),
         )
 
         conn.commit()
 
 
-def get_row_estimate(conn, schema, table, analyse=False):
+def get_row_estimate(conn, schema, table, block_size, analyse=False):
     """
     We cannot use a naïve count(*) for merkle tree candidates because the
     table is too large. Instead, we use a multi-step process to get an estimate:
@@ -370,7 +377,7 @@ def get_row_estimate(conn, schema, table, analyse=False):
         cur.execute("SET parallel_tuple_cost = 0")
         cur.execute("SET parallel_setup_cost = 0")
 
-        print(f"Analyzing {schema}.{table} on node {conn.info.host}")
+        print(f"Analysing {schema}.{table} on node {conn.info.host}")
         print("This might take a while...")
 
         # TODO: This might take a while so need a different strategy here
@@ -387,7 +394,7 @@ def get_row_estimate(conn, schema, table, analyse=False):
         ),
     )
     total_rows = cur.fetchone()[0]
-    num_blocks = (total_rows - 1) // config.MTREE_BLOCK_SIZE + 1
+    num_blocks = (total_rows - 1) // block_size + 1
 
     conn.commit()
     return total_rows, num_blocks
@@ -401,7 +408,8 @@ def process_block_ranges(offsets: list):
 
     if len(offsets) == 2:
         for i, offset in enumerate(offsets):
-            block_ranges.append((i, offset[0], offset[1]))
+            # Yes, this needs to be a tuple to maintain consistency
+            block_ranges.append((i, (offset[0],), (offset[1],)))
     else:
         for i, offset in enumerate(offsets):
             rng = (
@@ -451,7 +459,11 @@ def build_mtree(mtree_task: MerkleTreeTask) -> None:
             _, conn = mtree_task.connection_pool.get_cluster_node_connection(node)
             try:
                 total_rows, num_blocks = get_row_estimate(
-                    conn, schema, table, analyse=mtree_task.analyse
+                    conn,
+                    schema,
+                    table,
+                    mtree_task.block_size,
+                    analyse=mtree_task.analyse,
                 )
 
                 if num_blocks > max_blocks:
@@ -533,6 +545,7 @@ def build_mtree(mtree_task: MerkleTreeTask) -> None:
             table,
             key,
             total_rows,
+            mtree_task.block_size,
             num_blocks,
             recreate_objects=mtree_task.recreate_objects,
         )
@@ -656,7 +669,10 @@ def build_mtree(mtree_task: MerkleTreeTask) -> None:
                 level += 1
 
             new_conn.commit()
-            print(f"Merkle tree built successfully with {level + 1} levels")
+            print(
+                f"Merkle tree built successfully on {node['name']}"
+                f" with {level + 1} levels"
+            )
 
             conn.close()
 
@@ -670,7 +686,7 @@ def build_mtree(mtree_task: MerkleTreeTask) -> None:
     mtree_task.connection_pool.close_all()
 
 
-def split_blocks(conn, schema, table, key, blocks):
+def split_blocks(conn, schema, table, key, blocks, block_size):
     """
     Split blocks if they are too large.
     Returns a list of block positions that were modified.
@@ -678,7 +694,7 @@ def split_blocks(conn, schema, table, key, blocks):
     try:
         cur = conn.cursor()
         modified_positions = set()
-        target_size = config.MTREE_BLOCK_SIZE
+        target_size = block_size
 
         # First delete all parent nodes since we'll be modifying the tree structure
         # This is not expensive at all since computing parent hashes is significantly
@@ -1011,14 +1027,14 @@ def split_blocks(conn, schema, table, key, blocks):
     return list(modified_positions)
 
 
-def merge_blocks(conn, schema, table, key, blocks):
+def merge_blocks(conn, schema, table, key, blocks, block_size):
     """
     Merge blocks if they are too small.
     Returns a list of block positions that were modified.
     """
     cur = conn.cursor()
     modified_positions = set()
-    target_size = config.MTREE_BLOCK_SIZE
+    target_size = block_size
 
     # We will trigger a merge if the actual block size is less than 25% of the
     # target size
@@ -1360,15 +1376,39 @@ def update_mtree(mtree_task: MerkleTreeTask, skip_all_checks=False) -> None:
     key_columns = key.split(",")
     is_composite = len(key_columns) > 1
 
-    SPLIT_THRESHOLD = config.MTREE_BLOCK_SIZE // 2
+    # we need to first read the metadata to figure out what the
+    # block size the tree was built with
+    try:
+        _, conn = mtree_task.connection_pool.get_connection(
+            mtree_task.fields.cluster_nodes[0]
+        )
+        cur = conn.cursor()
+        cur.execute(
+            sql.SQL(GET_BLOCK_SIZE_FROM_METADATA).format(
+                schema=sql.Identifier(schema),
+                table=sql.Identifier(table),
+            )
+        )
+        block_size = cur.fetchone()[0]
+    except Exception as e:
+        raise AceException(f"Error getting block size from metadata: {str(e)}")
+
+    if not block_size:
+        raise AceException(f"Block size not found for {schema}.{table}")
+
+    mtree_task.block_size = block_size
+
+    SPLIT_THRESHOLD = block_size // 2
     # If the number of deletes in a block exceeds 75% of the block size, then we
     # merge it
     MERGE_THRESHOLD = 0.75
 
     for node in mtree_task.fields.cluster_nodes:
-        print(f"\nUpdating Merkle tree on node: {node['name']}")
+
         _, conn = mtree_task.connection_pool.connect(node)
         conn.set_isolation_level(IsolationLevel.REPEATABLE_READ)
+
+        print(f"\nUpdating Merkle tree on node: {node['name']}")
 
         composite_info = CompositeInfo.fetch(conn, f"{schema}_{table}_key_type")
         register_composite(composite_info, conn, factory=lambda *args: tuple(args))
@@ -1408,6 +1448,7 @@ def update_mtree(mtree_task: MerkleTreeTask, skip_all_checks=False) -> None:
                         table,
                         key,
                         blocks_to_split,
+                        block_size,
                     )
 
                 if mtree_task.rebalance:
@@ -1453,6 +1494,7 @@ def update_mtree(mtree_task: MerkleTreeTask, skip_all_checks=False) -> None:
                             table,
                             key,
                             blocks_to_merge,
+                            block_size,
                         )
 
                 # Get final list of blocks to update (including newly modified ones)
@@ -2498,7 +2540,7 @@ def merkle_tree_diff(mtree_task: MerkleTreeTask) -> None:
     mtree_task.connection_pool.close_all()
 
 
-def mtree_init(conn) -> None:
+def _mtree_init(conn) -> None:
     """
     Initialise the database with generic functions needed for Merkle trees.
     This only needs to be run once per database.
@@ -2518,7 +2560,7 @@ def mtree_init(conn) -> None:
 
     # Metadata table where we keep track of tables, their approx. row counts,
     # and when the tree was last updated.
-    cur.execute(sql.SQL("DROP TABLE ace_mtree_metadata"))
+    cur.execute(sql.SQL("DROP TABLE IF EXISTS ace_mtree_metadata"))
     cur.execute(sql.SQL(CREATE_METADATA_TABLE))
 
     # Create generic functions for block identification and tracking
@@ -2526,3 +2568,126 @@ def mtree_init(conn) -> None:
 
     conn.commit()
     print(f"Merkle tree objects initialised successfully on {conn.info.host}")
+
+
+def mtree_init_helper(mtree_task: MerkleTreeTask) -> None:
+    """
+    CLI helper function to initialise the database with Merkle tree objects
+    """
+
+    for node in mtree_task.fields.cluster_nodes:
+        try:
+            _, conn = mtree_task.connection_pool.get_cluster_node_connection(node)
+            _mtree_init(conn)
+            conn.close()
+        except Exception as e:
+            raise AceException(
+                f"Error initialising merkle tree objects on {node}: {str(e)}"
+            )
+
+
+def _mtree_table_teardown(conn, schema, table) -> None:
+    """
+    Teardown table-specific merkle tree objects
+    """
+
+    try:
+        cur = conn.cursor()
+        print(
+            f"Dropping trigger trg_mtree_{schema}_{table}_insert_stmt"
+            f" on {schema}.{table}"
+        )
+        print(
+            f"Dropping trigger trg_mtree_{schema}_{table}_update_stmt"
+            f" on {schema}.{table}"
+        )
+        print(
+            f"Dropping trigger trg_mtree_{schema}_{table}_delete_stmt"
+            f" on {schema}.{table}"
+        )
+        cur.execute(
+            sql.SQL(DROP_MTREE_TRIGGERS).format(
+                trigger=sql.SQL(f"trg_mtree_{schema}_{table}"),
+                schema=sql.Identifier(schema),
+                table=sql.Identifier(table),
+            )
+        )
+
+        print(f"Dropping table ace_mtree_{schema}_{table}")
+
+        cur.execute(
+            sql.SQL(DROP_MTREE_TABLE).format(
+                mtree_table=sql.Identifier(f"ace_mtree_{schema}_{table}")
+            )
+        )
+
+        conn.commit()
+        print(
+            f"Dropped table-specific merkle tree objects on {conn.info.host}"
+            f" for {schema}.{table}"
+        )
+
+    except Exception as e:
+        raise AceException(
+            f"Error tearing down table-specific merkle tree objects: {str(e)}"
+        )
+
+
+def _mtree_generic_teardown(conn) -> None:
+    """
+    Teardown generic merkle tree objects
+    """
+
+    try:
+        cur = conn.cursor()
+        print("Dropping XOR function")
+        cur.execute(sql.SQL(DROP_XOR_FUNCTION))
+
+        print("Dropping bulk trigger function")
+        cur.execute(sql.SQL(DROP_BULK_TRIGGER_FUNCTION))
+
+        print("Dropping metadata table")
+        cur.execute(sql.SQL(DROP_METADATA_TABLE))
+
+        conn.commit()
+        print(f"Dropped generic merkle tree objects on {conn.info.host}")
+    except Exception as e:
+        raise AceException(f"Error tearing down generic merkle tree objects: {str(e)}")
+
+
+def _mtree_teardown(conn, schema=None, table=None) -> None:
+    """
+    Core function to teardown generic merkle tree objects and/or table-specific objects
+    """
+
+    try:
+        if schema and table:
+            _mtree_table_teardown(conn, schema, table)
+        else:
+            _mtree_generic_teardown(conn)
+
+        conn.commit()
+    except Exception as e:
+        raise AceException(f"Error tearing down merkle tree objects: {str(e)}")
+
+
+def mtree_teardown_helper(mtree_task: MerkleTreeTask) -> None:
+    """
+    Teardown generic merkle tree objects and/or table-specific objects
+    """
+
+    for node in mtree_task.fields.cluster_nodes:
+        try:
+            _, conn = mtree_task.connection_pool.get_cluster_node_connection(node)
+            print("=" * 20, f"Node: {node['name']}", "=" * 20)
+            _mtree_teardown(
+                conn,
+                mtree_task.fields.l_schema if mtree_task.fields.l_schema else None,
+                mtree_task.fields.l_table if mtree_task.fields.l_table else None,
+            )
+            print()
+            conn.close()
+        except Exception as e:
+            raise AceException(
+                f"Error tearing down merkle tree objects on {node['name']}: {str(e)}"
+            )

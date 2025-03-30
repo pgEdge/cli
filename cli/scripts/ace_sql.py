@@ -5,6 +5,7 @@ CREATE_METADATA_TABLE = """
         schema_name text,
         table_name text,
         total_rows bigint,
+        block_size int,
         num_blocks int,
         is_composite boolean NOT NULL DEFAULT false,
         last_updated timestamptz,
@@ -61,7 +62,6 @@ CREATE_COMPOSITE_MTREE_TABLE = """
 """
 
 CREATE_GENERIC_TRIGGER = """
-    DROP TRIGGER IF EXISTS {trigger} ON {schema}.{table};
     DROP TRIGGER IF EXISTS {trigger}_insert_stmt ON {schema}.{table};
     DROP TRIGGER IF EXISTS {trigger}_update_stmt ON {schema}.{table};
     DROP TRIGGER IF EXISTS {trigger}_delete_stmt ON {schema}.{table};
@@ -165,10 +165,19 @@ GET_PKEY_TYPE = """
 
 UPDATE_METADATA = """
     INSERT INTO ace_mtree_metadata
-        (schema_name, table_name, total_rows, num_blocks, is_composite, last_updated)
-    VALUES (%s, %s, %s, %s, %s, current_timestamp)
+    (
+        schema_name,
+        table_name,
+        total_rows,
+        block_size,
+        num_blocks,
+        is_composite,
+        last_updated
+    )
+    VALUES (%s, %s, %s, %s, %s, %s, current_timestamp)
     ON CONFLICT (schema_name, table_name) DO UPDATE
     SET total_rows = EXCLUDED.total_rows,
+        block_size = EXCLUDED.block_size,
         num_blocks = EXCLUDED.num_blocks,
         is_composite = EXCLUDED.is_composite,
         last_updated = EXCLUDED.last_updated;
@@ -638,6 +647,13 @@ GET_BLOCK_COUNT_SIMPLE = """
     GROUP BY mt.node_position, mt.range_start, mt.range_end
 """
 
+GET_BLOCK_SIZE_FROM_METADATA = """
+    SELECT block_size
+    FROM ace_mtree_metadata
+    WHERE schema_name = {schema}
+    AND table_name = {table}
+"""
+
 GET_MAX_NODE_LEVEL = """
     SELECT MAX(node_level)
     FROM {mtree_table}
@@ -645,6 +661,28 @@ GET_MAX_NODE_LEVEL = """
 
 COMPARE_BLOCKS_SQL = """
     SELECT * FROM {table_name} WHERE {where_clause}
+"""
+
+DROP_XOR_FUNCTION = """
+    DROP FUNCTION IF EXISTS bytea_xor(bytea, bytea) CASCADE;
+"""
+
+DROP_METADATA_TABLE = """
+    DROP TABLE IF EXISTS ace_mtree_metadata CASCADE;
+"""
+
+DROP_BULK_TRIGGER_FUNCTION = """
+    DROP FUNCTION IF EXISTS bulk_block_tracking_dispatcher() CASCADE;
+"""
+
+DROP_MTREE_TABLE = """
+    DROP TABLE IF EXISTS {mtree_table} CASCADE;
+"""
+
+DROP_MTREE_TRIGGERS = """
+    DROP TRIGGER IF EXISTS {trigger}_insert_stmt ON {schema}.{table};
+    DROP TRIGGER IF EXISTS {trigger}_update_stmt ON {schema}.{table};
+    DROP TRIGGER IF EXISTS {trigger}_delete_stmt ON {schema}.{table};
 """
 
 CREATE_BULK_TRIGGER_FUNCTION = """

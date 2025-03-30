@@ -1312,27 +1312,32 @@ def table_diff_checks(
     return td_task
 
 
-def validate_merkle_tree_inputs(mtree_task: MerkleTreeTask) -> None:
+def validate_merkle_tree_inputs(
+    mtree_task: MerkleTreeTask,
+    skip_table_check: bool = False,
+    override_block_size: bool = False,
+) -> None:
     """
     Validates the basic inputs for a merkle tree task without establishing connections.
     Raises AceException if validation fails.
     """
-    if not mtree_task.cluster_name or not mtree_task._table_name:
-        raise AceException("cluster_name and table_name are required arguments")
+    if not mtree_task.cluster_name:
+        raise AceException("cluster_name is a required argument")
 
-    if type(mtree_task.block_rows) is str:
+    if type(mtree_task.block_size) is str:
         try:
-            mtree_task.block_rows = int(mtree_task.block_rows)
+            mtree_task.block_size = int(mtree_task.block_size)
         except Exception:
-            raise AceException("Invalid values for ACE_BLOCK_ROWS")
-    elif type(mtree_task.block_rows) is not int:
-        raise AceException("Invalid value type for ACE_BLOCK_ROWS")
+            raise AceException("Invalid values for ACE_MTREE_BLOCK_SIZE")
+    elif type(mtree_task.block_size) is not int:
+        raise AceException("Invalid value type for ACE_MTREE_BLOCK_SIZE")
 
-    # Capping max block size here to prevent the hash function from taking forever
-    if mtree_task.block_rows > config.MAX_MTREE_BLOCK_SIZE:
-        raise AceException(f"Block row size should be <= {config.MAX_MTREE_BLOCK_SIZE}")
-    if mtree_task.block_rows < config.MIN_MTREE_BLOCK_SIZE:
-        raise AceException(f"Block row size should be >= {config.MIN_MTREE_BLOCK_SIZE}")
+    if not override_block_size:
+        # Capping max block size here to prevent the hash function from taking forever
+        if mtree_task.block_size > config.MAX_MTREE_BLOCK_SIZE:
+            raise AceException(f"Block size should be <= {config.MAX_MTREE_BLOCK_SIZE}")
+        if mtree_task.block_size < config.MIN_MTREE_BLOCK_SIZE:
+            raise AceException(f"Block size should be >= {config.MIN_MTREE_BLOCK_SIZE}")
 
     if type(mtree_task.max_cpu_ratio) is int:
         mtree_task.max_cpu_ratio = float(mtree_task.max_cpu_ratio)
@@ -1400,15 +1405,17 @@ def validate_merkle_tree_inputs(mtree_task: MerkleTreeTask) -> None:
     else:
         raise AceException(f"Cluster {mtree_task.cluster_name} not found")
 
-    nm_lst = mtree_task._table_name.split(".")
-    if len(nm_lst) != 2:
-        raise AceException(
-            f"TableName {mtree_task._table_name} must be of form" " 'schema.table_name'"
-        )
-    l_schema, l_table = nm_lst
+    if not skip_table_check:
+        nm_lst = mtree_task._table_name.split(".")
+        if len(nm_lst) != 2:
+            raise AceException(
+                f"TableName {mtree_task._table_name} must be of form"
+                " 'schema.table_name'"
+            )
+        l_schema, l_table = nm_lst
 
-    l_schema = sanitise_input(l_schema)
-    l_table = sanitise_input(l_table)
+        l_schema = sanitise_input(l_schema)
+        l_table = sanitise_input(l_table)
 
     db, pg, node_info = cluster.load_json(mtree_task.cluster_name)
 
@@ -1440,7 +1447,7 @@ def validate_merkle_tree_inputs(mtree_task: MerkleTreeTask) -> None:
         node_list = [node["name"] for node in cluster_nodes]
 
     if mtree_task._nodes == "all" and len(cluster_nodes) > 3:
-        raise AceException("Table-diff only supports up to three way comparison")
+        raise AceException("Merkle tree diff only supports up to three way comparison")
 
     if mtree_task._nodes != "all" and len(node_list) > 1:
         for n in node_list:
@@ -1448,8 +1455,8 @@ def validate_merkle_tree_inputs(mtree_task: MerkleTreeTask) -> None:
                 raise AceException("Specified nodenames not present in cluster")
 
     # Store basic task information
-    mtree_task.fields.l_schema = l_schema
-    mtree_task.fields.l_table = l_table
+    mtree_task.fields.l_schema = l_schema if not skip_table_check else None
+    mtree_task.fields.l_table = l_table if not skip_table_check else None
     mtree_task.fields.node_list = node_list
     mtree_task.fields.database = database
     mtree_task.fields.cluster_nodes = cluster_nodes
