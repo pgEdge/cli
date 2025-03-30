@@ -227,17 +227,18 @@ def compute_block_hashes(worker_id, shared_objects, worker_state, args):
             else:
                 where_clause = sql.SQL(" AND ").join(where_conditions)
 
-        sql_query = sql.SQL(COMPUTE_LEAF_HASHES).format(
-            schema=sql.Identifier(task.fields.l_schema),
-            table=sql.Identifier(task.fields.l_table),
-            key=sql.SQL(", ").join(sql.Identifier(col) for col in key_columns),
-            columns=sql.SQL(", ").join(
-                sql.Identifier(col) for col in task.fields.cols.split(",")
-            ),
-            where_clause=where_clause,
+        cur.execute(
+            sql.SQL(COMPUTE_LEAF_HASHES).format(
+                schema=sql.Identifier(task.fields.l_schema),
+                table=sql.Identifier(task.fields.l_table),
+                key=sql.SQL(", ").join(sql.Identifier(col) for col in key_columns),
+                columns=sql.SQL(", ").join(
+                    sql.Identifier(col) for col in task.fields.cols.split(",")
+                ),
+                where_clause=where_clause,
+            )
         )
 
-        cur.execute(sql_query)
         leaf_hash = cur.fetchone()[0]
 
         return {"node_position": block.block_id, "leaf_hash": leaf_hash}
@@ -1169,20 +1170,22 @@ def merge_blocks(conn, schema, table, key, blocks):
 
         count = cur.fetchone()[0]
 
-        # If block is nearly empty, try to merge with either neighbor
+        # If block is nearly empty, try to merge with either neighbour
         if count < target_size * MERGE_THRESHOLD:
             # First check if we can merge with previous block
             if pos > 0:
                 if is_composite:
-                    m_sql = sql.SQL(GET_BLOCK_COUNT_COMPOSITE).format(
-                        mtree_table=sql.Identifier(f"ace_mtree_{schema}_{table}"),
-                        schema=sql.Identifier(schema),
-                        table=sql.Identifier(table),
-                        pkey_cols=sql.SQL(", ").join(
-                            sql.Identifier(col) for col in key_columns
+                    cur.execute(
+                        sql.SQL(GET_BLOCK_COUNT_COMPOSITE).format(
+                            mtree_table=sql.Identifier(f"ace_mtree_{schema}_{table}"),
+                            schema=sql.Identifier(schema),
+                            table=sql.Identifier(table),
+                            pkey_cols=sql.SQL(", ").join(
+                                sql.Identifier(col) for col in key_columns
+                            ),
                         ),
+                        (pos - 1,),
                     )
-                    cur.execute(m_sql, (pos - 1,))
                 else:
                     cur.execute(
                         sql.SQL(GET_BLOCK_COUNT_SIMPLE).format(
@@ -1577,22 +1580,23 @@ def update_mtree(mtree_task: MerkleTreeTask, skip_all_checks=False) -> None:
                                     (end, node_position),
                                 )
 
-                    hash_sql = sql.SQL(COMPUTE_LEAF_HASHES).format(
-                        schema=sql.Identifier(schema),
-                        table=sql.Identifier(table),
-                        where_clause=where_clause,
-                        columns=sql.SQL(", ").join(
-                            [
-                                sql.Identifier(col)
-                                for col in mtree_task.fields.cols.split(",")
-                            ]
-                        ),
-                        key=sql.SQL(", ").join(
-                            [sql.Identifier(col) for col in key_columns]
-                        ),
-                        mtree_table=sql.Identifier(f"ace_mtree_{schema}_{table}"),
+                    cur.execute(
+                        sql.SQL(COMPUTE_LEAF_HASHES).format(
+                            schema=sql.Identifier(schema),
+                            table=sql.Identifier(table),
+                            where_clause=where_clause,
+                            columns=sql.SQL(", ").join(
+                                [
+                                    sql.Identifier(col)
+                                    for col in mtree_task.fields.cols.split(",")
+                                ]
+                            ),
+                            key=sql.SQL(", ").join(
+                                [sql.Identifier(col) for col in key_columns]
+                            ),
+                            mtree_table=sql.Identifier(f"ace_mtree_{schema}_{table}"),
+                        )
                     )
-                    cur.execute(hash_sql)
                     result = cur.fetchone()[0]
                     args = {
                         "leaf_hash": result,
