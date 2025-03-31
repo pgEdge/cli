@@ -8,6 +8,7 @@ import threading
 from test_simple_base import TestSimpleBase
 
 
+# @pytest.mark.skip(reason="Skipping API tests")
 @pytest.mark.usefixtures("prepare_databases")
 class TestAPI(TestSimpleBase):
     @pytest.fixture(scope="class", autouse=True)
@@ -52,7 +53,7 @@ class TestAPI(TestSimpleBase):
                 "cluster_name": "eqn-t9da",
                 "table_name": table_name,
                 "dbname": "demo",
-                "block_rows": 10000,
+                "block_size": 10000,
                 "max_cpu_ratio": 0.6,
                 "output": "json",
                 "nodes": "all",
@@ -137,7 +138,7 @@ class TestAPI(TestSimpleBase):
                 "cluster_name": "eqn-t9da",
                 "table_name": table_name,
                 "dbname": "demo",
-                "block_rows": 10000,
+                "block_size": 10000,
                 "max_cpu_ratio": 0.6,
                 "output": "json",
                 "nodes": "all",
@@ -307,7 +308,7 @@ class TestAPI(TestSimpleBase):
                 "cluster_name": "eqn-t9da",
                 "table_name": table_name,
                 "dbname": "demo",
-                "block_rows": 10000,
+                "block_size": 10000,
                 "max_cpu_ratio": 0.6,
                 "output": "json",
                 "nodes": "all",

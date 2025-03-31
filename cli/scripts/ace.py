@@ -892,7 +892,7 @@ def write_diffs_json(td_task, diff_dict, col_types, quiet_mode=False):
         "schema_name": td_task._table_name.split(".")[0],
         "table_name": td_task._table_name.split(".")[1],
         "nodes": td_task._nodes,
-        "block_rows": td_task.block_rows,
+        "block_size": td_task.block_size,
         "max_cpu_ratio": td_task.max_cpu_ratio,
         "batch_size": td_task.batch_size,
         "start_time": td_task.scheduler.started_at,
@@ -976,21 +976,21 @@ def validate_table_diff_inputs(td_task: TableDiffTask) -> None:
     if not td_task.cluster_name or not td_task._table_name:
         raise AceException("cluster_name and table_name are required arguments")
 
-    if type(td_task.block_rows) is str:
+    if type(td_task.block_size) is str:
         try:
-            td_task.block_rows = int(td_task.block_rows)
+            td_task.block_size = int(td_task.block_size)
         except Exception:
-            raise AceException("Invalid values for ACE_BLOCK_ROWS")
-    elif type(td_task.block_rows) is not int:
-        raise AceException("Invalid value type for ACE_BLOCK_ROWS")
+            raise AceException("Invalid values for DIFF_BLOCK_SIZE")
+    elif type(td_task.block_size) is not int:
+        raise AceException("Invalid value type for DIFF_BLOCK_SIZE")
 
     if not td_task._override_block_size:
         # Capping max block size here to prevent the hash function from taking forever
-        if td_task.block_rows > config.MAX_DIFF_BLOCK_SIZE:
+        if td_task.block_size > config.MAX_DIFF_BLOCK_SIZE:
             raise AceException(
                 f"Block row size should be <= {config.MAX_DIFF_BLOCK_SIZE}"
             )
-        if td_task.block_rows < config.MIN_DIFF_BLOCK_SIZE:
+        if td_task.block_size < config.MIN_DIFF_BLOCK_SIZE:
             raise AceException(
                 f"Block row size should be >= {config.MIN_DIFF_BLOCK_SIZE}"
             )
@@ -1847,18 +1847,18 @@ def validate_repset_diff_inputs(rd_task: RepsetDiffTask) -> None:
     Validates the basic inputs for a repset diff task without establishing connections.
     Raises AceException if validation fails.
     """
-    if type(rd_task.block_rows) is str:
+    if type(rd_task.block_size) is str:
         try:
-            rd_task.block_rows = int(rd_task.block_rows)
+            rd_task.block_size = int(rd_task.block_size)
         except Exception:
-            raise AceException("Invalid values for ACE_BLOCK_ROWS or --block_rows")
-    elif type(rd_task.block_rows) is not int:
-        raise AceException("Invalid value type for ACE_BLOCK_ROWS or --block_rows")
+            raise AceException("Invalid values for DIFF_BLOCK_SIZE or --block_size")
+    elif type(rd_task.block_size) is not int:
+        raise AceException("Invalid value type for DIFF_BLOCK_SIZE or --block_size")
 
     # Capping max block size here to prevent the hash function from taking forever
-    if rd_task.block_rows > config.MAX_DIFF_BLOCK_SIZE:
+    if rd_task.block_size > config.MAX_DIFF_BLOCK_SIZE:
         raise AceException(f"Block row size should be <= {config.MAX_DIFF_BLOCK_SIZE}")
-    if rd_task.block_rows < config.MIN_DIFF_BLOCK_SIZE:
+    if rd_task.block_size < config.MIN_DIFF_BLOCK_SIZE:
         raise AceException(f"Block row size should be >= {config.MIN_DIFF_BLOCK_SIZE}")
 
     if type(rd_task.max_cpu_ratio) is int:

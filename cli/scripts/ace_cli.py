@@ -94,8 +94,8 @@ Args:
     cluster_name (str): Name of the cluster to perform the diff on.
     table_name (str): Name of the table to diff.
     dbname (str, optional): Name of the database. Defaults to None.
-    block_rows (int, optional): Number of rows per block. Defaults to
-        config.BLOCK_ROWS_DEFAULT.
+    block_size (int, optional): Number of rows per block. Defaults to
+        config.DIFF_BLOCK_SIZE.
     max_cpu_ratio (float, optional): Maximum CPU usage ratio. Defaults to
         config.MAX_CPU_RATIO_DEFAULT.
     output (str, optional): Output format. Defaults to "json".
@@ -119,7 +119,7 @@ def table_diff_cli(
     cluster_name,
     table_name,
     dbname=None,
-    block_rows=config.DIFF_BLOCK_SIZE,
+    block_size=config.DIFF_BLOCK_SIZE,
     max_cpu_ratio=config.MAX_CPU_RATIO,
     output="json",
     nodes="all",
@@ -136,7 +136,7 @@ def table_diff_cli(
             cluster_name=cluster_name,
             _table_name=table_name,
             _dbname=dbname,
-            block_rows=block_rows,
+            block_size=block_size,
             max_cpu_ratio=max_cpu_ratio,
             output=output,
             _nodes=nodes,
@@ -290,7 +290,7 @@ def table_rerun_cli(
             cluster_name=cluster_name,
             _table_name=table_name,
             _dbname=dbname,
-            block_rows=config.DIFF_BLOCK_SIZE,
+            block_size=config.DIFF_BLOCK_SIZE,
             max_cpu_ratio=config.MAX_CPU_RATIO,
             output="json",
             _nodes="all",
@@ -330,8 +330,8 @@ Args:
     cluster_name (str): Name of the cluster.
     repset_name (str): Name of the repset to diff.
     dbname (str, optional): Name of the database. Defaults to None.
-    block_rows (int, optional): Number of rows per block. Defaults to
-        config.BLOCK_ROWS_DEFAULT.
+    block_size (int, optional): Number of rows per block. Defaults to
+        config.BLOCK_SIZE_DEFAULT.
     max_cpu_ratio (float, optional): Maximum CPU usage ratio. Defaults to
         config.MAX_CPU_RATIO_DEFAULT.
     output (str, optional): Output format. Defaults to "json".
@@ -356,7 +356,7 @@ def repset_diff_cli(
     cluster_name,
     repset_name,
     dbname=None,
-    block_rows=config.DIFF_BLOCK_SIZE,
+    block_size=config.DIFF_BLOCK_SIZE,
     max_cpu_ratio=config.MAX_CPU_RATIO,
     output="json",
     nodes="all",
@@ -373,7 +373,7 @@ def repset_diff_cli(
             cluster_name=cluster_name,
             _dbname=dbname,
             repset_name=repset_name,
-            block_rows=block_rows,
+            block_size=block_size,
             max_cpu_ratio=max_cpu_ratio,
             output=output,
             _nodes=nodes,

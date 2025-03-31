@@ -9,6 +9,7 @@ import psycopg
 import test_config
 from test_simple_base import TestSimpleBase
 from test_simple import TestSimple
+from test_merkle_trees_simple import TestMerkleTreesSimple
 
 # Set up paths
 os.environ["PGEDGE_HOME"] = test_config.PGEDGE_HOME
@@ -346,22 +347,62 @@ def pytest_configure(config):
 
 
 def pytest_collection_modifyitems(items):
-    """Skip tests marked as abstract_base if they are in the base class."""
+    """
+    Skip parent class tests when running child class tests,
+    but run parent tests directly
+    """
+
+    test_classes = {}
     for item in items:
+        if item.cls:
+            class_name = item.cls.__name__
+            if class_name not in test_classes:
+                test_classes[class_name] = []
+            test_classes[class_name].append(item)
+
+    running_child_of_merkle_simple = any(
+        cls_name != "TestMerkleTreesSimple"
+        and any(
+            item.cls and issubclass(item.cls, TestMerkleTreesSimple)
+            for item in items_list
+        )
+        for cls_name, items_list in test_classes.items()
+    )
+
+    running_child_of_simple = any(
+        cls_name != "TestSimple"
+        and any(item.cls and issubclass(item.cls, TestSimple) for item in items_list)
+        for cls_name, items_list in test_classes.items()
+    )
+
+    for item in items:
+        # Always skip tests from TestSimpleBase
+        if (
+            item.cls
+            and issubclass(item.cls, TestSimpleBase)
+            and item.function.__qualname__.startswith("TestSimpleBase.")
+        ):
+            item.add_marker(pytest.mark.skip(reason="TestSimpleBase tests never run"))
+            continue
+
         if item.get_closest_marker("abstract_base"):
-            # Skip only if the test is in TestSimpleBase class directly
-            # or if the test method is not overridden in the child class
-            if item.cls and (
-                (
-                    item.cls.__name__ == "TestSimpleBase"
-                    and (
-                        issubclass(item.cls, TestSimpleBase)
-                        and item.function.__qualname__.startswith("TestSimpleBase.")
+            simple_prefix = "TestMerkleTreesSimple."
+            is_merkle_simple_test = (
+                item.cls
+                and issubclass(item.cls, TestMerkleTreesSimple)
+                and item.function.__qualname__.startswith(simple_prefix)
+            )
+            is_simple_test = (
+                item.cls
+                and issubclass(item.cls, TestSimple)
+                and item.function.__qualname__.startswith("TestSimple.")
+            )
+
+            if (is_merkle_simple_test and running_child_of_merkle_simple) or (
+                is_simple_test and running_child_of_simple
+            ):
+                item.add_marker(
+                    pytest.mark.skip(
+                        reason="Skipping parent class tests"
                     )
                 )
-                or (
-                    issubclass(item.cls, TestSimple)
-                    and item.function.__qualname__.startswith("TestSimple.")
-                )
-            ):
-                item.add_marker(pytest.mark.skip(reason="Abstract base class"))

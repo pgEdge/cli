@@ -171,7 +171,7 @@ class TestBlockBoundaries:
             cli.table_diff_cli(
                 "eqn-t9da",
                 f"public.{table}",
-                block_rows=block_size,
+                block_size=block_size,
                 override_block_size=True,
             )
 

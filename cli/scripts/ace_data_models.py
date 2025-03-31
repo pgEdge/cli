@@ -46,7 +46,7 @@ class TableDiffTask:
 
     # User-specified, validated fields
     cluster_name: str  # Required
-    block_rows: int
+    block_size: int
     max_cpu_ratio: float
     output: str
     batch_size: int
@@ -135,7 +135,7 @@ class RepsetDiffTask:
     # Optional fields
     # Non-default members since the handler method will fill in the
     # default values
-    block_rows: int
+    block_size: int
     max_cpu_ratio: float
     output: str
     batch_size: int

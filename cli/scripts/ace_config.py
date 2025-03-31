@@ -14,7 +14,7 @@ CONNECTION_TIMEOUT = 10  # in seconds
 
 
 #  Default values for ACE table-diff
-MAX_DIFF_ROWS = 100_000
+MAX_DIFF_ROWS = 1_000_000
 MIN_DIFF_BLOCK_SIZE = 1000
 MAX_DIFF_BLOCK_SIZE = 100_000
 DIFF_BLOCK_SIZE = os.environ.get("ACE_DIFF_BLOCK_SIZE", 10_000)
@@ -71,7 +71,7 @@ args currently supports the following fields:
   float between 0 and 1.
 - batch_size: The batch size to use for the job. How many blocks does a single
   job process at a time.
-- block_rows: The maximum number of rows per block. How many rows does a
+- block_size: The maximum number of rows per block. How many rows does a
   single block contain. Each multiprocessing worker running in parallel will
   process this many rows at a time.
 - nodes:  A list of node OIDs--if you'd like to run the job only on specific nodes.
@@ -100,7 +100,7 @@ schedule_jobs = [
         "args": {
             "max_cpu_ratio": 0.7,
             "batch_size": 1000,
-            "block_rows": 10000,
+            "block_size": 10000,
             "nodes": "all",
             "output": "json",
             "quiet": False,
@@ -114,7 +114,7 @@ schedule_jobs = [
         "args": {
             "max_cpu_ratio": 0.7,
             "batch_size": 1000,
-            "block_rows": 10000,
+            "block_size": 10000,
             "nodes": "all",
             "output": "json",
             "quiet": False,

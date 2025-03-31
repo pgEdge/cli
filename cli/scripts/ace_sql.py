@@ -616,32 +616,35 @@ FIND_BLOCKS_TO_MERGE_SIMPLE = """
 """
 
 GET_BLOCK_COUNT_COMPOSITE = """
-    WITH block_data AS (
+    WITH block_data AS
+    (
         SELECT node_position, range_start, range_end
         FROM {mtree_table}
         WHERE node_level = 0
         AND node_position = %s
-    ),
-    row_count AS (
-        SELECT count(*) as cnt
-        FROM {schema}.{table} t
-        JOIN block_data b ON true
-        WHERE ROW({pkey_cols}) >= b.range_start
-        AND (
-            ROW({pkey_cols}) <= b.range_end
-            OR b.range_end IS NULL
-        )
     )
-    SELECT b.node_position, b.range_start, b.range_end, r.cnt
-    FROM block_data b, row_count r
+    SELECT
+        b.node_position,
+        b.range_start,
+        b.range_end,
+        COUNT(t.*) AS cnt
+    FROM block_data b
+    LEFT JOIN {schema}.{table} t
+    ON ROW({pkey_cols}) >= b.range_start
+    AND (ROW({pkey_cols}) <= b.range_end OR b.range_end IS NULL)
+    GROUP BY
+        b.node_position,
+        b.range_start,
+        b.range_end
+    ORDER BY b.node_position;
 """
 
 GET_BLOCK_COUNT_SIMPLE = """
-    SELECT node_position, range_start, range_end, count(*)
+    SELECT node_position, range_start, range_end, count(t.{key})
     FROM {mtree_table} mt
     LEFT JOIN {schema}.{table} t
     ON t.{key} >= mt.range_start
-    AND (t.{key} < mt.range_end OR mt.range_end IS NULL)
+    AND (t.{key} <= mt.range_end OR mt.range_end IS NULL)
     WHERE mt.node_level = 0
     AND mt.node_position = %s
     GROUP BY mt.node_position, mt.range_start, mt.range_end
@@ -918,15 +921,15 @@ BEGIN
                  SELECT count(*) AS cnt,
                    (SELECT key_val FROM (
                      SELECT ROW(%s)::%I AS key_val FROM new_table
-                     UNION ALL
+                     UNION
                      SELECT ROW(%s)::%I AS key_val FROM old_table
                    ) x ORDER BY key_val ASC LIMIT 1) AS min_key,
                    (SELECT key_val FROM (
                      SELECT ROW(%s)::%I AS key_val FROM new_table
-                     UNION ALL
+                     UNION
                      SELECT ROW(%s)::%I AS key_val FROM old_table
                    ) x ORDER BY key_val DESC LIMIT 1) AS max_key
-                 FROM (SELECT 1 FROM new_table UNION ALL SELECT 1 FROM old_table) y
+                 FROM new_table
                )
                UPDATE %I
                SET dirty = true,
@@ -970,7 +973,7 @@ BEGIN
                WITH affected AS (
                  SELECT (SELECT key_val FROM (
                    SELECT ROW(%s)::%I AS key_val FROM new_table
-                   UNION ALL
+                   UNION
                    SELECT ROW(%s)::%I AS key_val FROM old_table
                  ) x ORDER BY key_val DESC LIMIT 1) AS max_key
                )
@@ -997,11 +1000,7 @@ BEGIN
             EXECUTE format($f$
                WITH affected AS (
                  SELECT count(*) AS cnt, MIN(%I) AS min_key, MAX(%I) AS max_key
-                 FROM (
-                   SELECT %I FROM new_table
-                   UNION ALL
-                   SELECT %I FROM old_table
-                 ) t
+                 FROM new_table
                )
                UPDATE %I
                SET dirty = true,
@@ -1035,22 +1034,20 @@ BEGIN
                         range_end IS NULL
                     )
                 )
-            $f$, pkey_info, pkey_info, pkey_info, pkey_info, mtree_table);
+            $f$, pkey_info, pkey_info, mtree_table);
 
             EXECUTE format($f$
                WITH affected AS (
                  SELECT MAX(%I) AS max_key FROM new_table
-                 UNION ALL
-                 SELECT MAX(%I) AS max_key FROM old_table
                )
                UPDATE %I
                SET range_end = NULL,
                    dirty = true,
                    last_modified = current_timestamp
-               FROM (SELECT max(max_key) AS max_key FROM affected) a
+               FROM affected
                WHERE node_level = 0
                AND range_end IS NOT NULL
-               AND a.max_key > range_end
+               AND affected.max_key > range_end
                AND node_position =
                 (
                     SELECT
@@ -1059,7 +1056,7 @@ BEGIN
                     WHERE
                     node_level = 0
                 )
-            $f$, pkey_info, pkey_info, mtree_table, mtree_table);
+            $f$, pkey_info, mtree_table, mtree_table);
         END IF;
     END IF;
 

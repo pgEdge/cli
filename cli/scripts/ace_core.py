@@ -659,7 +659,7 @@ def table_diff(td_task: TableDiffTask, skip_all_checks: bool = False):
         quiet_mode=td_task.quiet_mode,
     )
 
-    total_blocks = row_count // td_task.block_rows
+    total_blocks = row_count // td_task.block_size
     total_blocks = total_blocks if total_blocks > 0 else 1
     cpus = cpu_count()
     max_procs = int(cpus * td_task.max_cpu_ratio) if cpus > 1 else 1
@@ -755,7 +755,7 @@ def table_diff(td_task: TableDiffTask, skip_all_checks: bool = False):
             return pkey_offsets
 
         pkey_offsets = get_pkey_offsets(
-            conn_with_max_rows, pkey_sql, td_task.block_rows
+            conn_with_max_rows, pkey_sql, td_task.block_size
         )
 
     # We're done with getting table metadata. Closing all connections.
@@ -2610,7 +2610,7 @@ def multi_table_diff(task: Union[RepsetDiffTask, SchemaDiffTask]) -> None:
                 _dbname=task._dbname,
                 fields=task.fields,
                 quiet_mode=task.quiet_mode,
-                block_rows=getattr(task, "block_rows", config.DIFF_BLOCK_SIZE),
+                block_size=getattr(task, "block_size", config.DIFF_BLOCK_SIZE),
                 max_cpu_ratio=getattr(task, "max_cpu_ratio", config.MAX_CPU_RATIO),
                 output=getattr(task, "output", "json"),
                 _nodes=getattr(task, "_nodes", "all"),

@@ -1299,6 +1299,18 @@ def merge_blocks(conn, schema, table, key, blocks, block_size):
             next_block = cur.fetchone()
             if next_block:
                 next_pos, next_start, next_end, next_count = next_block
+                """
+                TODO: handle the case where merging leaves us with a block that
+                needs splitting. E.g.,
+                - we have, say, 1-1200, 1201-2400, 2401-3600, 3600-6200
+                - tablesample is a roll of dice, so this is very much possible
+                - delete keys 1-4000,
+                - after merge, we have 1-6200
+                - but! 1-6200 is too big.
+                - in this case, we need to merge and then slate a split for 1-6200
+
+                I have handled this case, but this needs extensive testing.
+                """
                 if (count + next_count) <= target_size * 2:
                     # Move blocks to temp positions
                     cur.execute(
@@ -1333,16 +1345,50 @@ def merge_blocks(conn, schema, table, key, blocks, block_size):
                     )
 
                     modified_positions.add(pos)
-                    blocks = [
+                    blocks = [(pos, start, next_end)] + [
                         (p - 1 if p > next_pos else p, s, e)
                         for p, s, e in blocks
-                        if p != next_pos
+                        if p != next_pos and p != pos
                     ]
+
+                    # check if the current block is empty after merge
+                    if is_composite:
+                        cur.execute(
+                            sql.SQL(GET_BLOCK_COUNT_COMPOSITE).format(
+                                mtree_table=sql.Identifier(
+                                    f"ace_mtree_{schema}_{table}"
+                                ),
+                                schema=sql.Identifier(schema),
+                                table=sql.Identifier(table),
+                                pkey_cols=sql.SQL(", ").join(
+                                    sql.Identifier(col) for col in key_columns
+                                ),
+                            ),
+                            (pos,),
+                        )
+                    else:
+                        cur.execute(
+                            sql.SQL(GET_BLOCK_COUNT_SIMPLE).format(
+                                mtree_table=sql.Identifier(
+                                    f"ace_mtree_{schema}_{table}"
+                                ),
+                                schema=sql.Identifier(schema),
+                                table=sql.Identifier(table),
+                                key=sql.Identifier(key),
+                            ),
+                            (pos,),
+                        )
+
+                    cur_block = cur.fetchone()
+                    if cur_block:
+                        cur_pos, cur_start, cur_end, cur_count = cur_block
+                    else:
+                        cur_count = 0
 
                     if not blocks:
                         break
 
-                    if i < len(blocks):
+                    if i < len(blocks) and cur_count != 0:
                         i += 1
                     continue
 
@@ -1379,14 +1425,14 @@ def update_mtree(mtree_task: MerkleTreeTask, skip_all_checks=False) -> None:
     # we need to first read the metadata to figure out what the
     # block size the tree was built with
     try:
-        _, conn = mtree_task.connection_pool.get_connection(
+        _, conn = mtree_task.connection_pool.get_cluster_node_connection(
             mtree_task.fields.cluster_nodes[0]
         )
         cur = conn.cursor()
         cur.execute(
             sql.SQL(GET_BLOCK_SIZE_FROM_METADATA).format(
-                schema=sql.Identifier(schema),
-                table=sql.Identifier(table),
+                schema=sql.Literal(schema),
+                table=sql.Literal(table),
             )
         )
         block_size = cur.fetchone()[0]
@@ -1410,8 +1456,9 @@ def update_mtree(mtree_task: MerkleTreeTask, skip_all_checks=False) -> None:
 
         print(f"\nUpdating Merkle tree on node: {node['name']}")
 
-        composite_info = CompositeInfo.fetch(conn, f"{schema}_{table}_key_type")
-        register_composite(composite_info, conn, factory=lambda *args: tuple(args))
+        if is_composite:
+            composite_info = CompositeInfo.fetch(conn, f"{schema}_{table}_key_type")
+            register_composite(composite_info, conn, factory=lambda *args: tuple(args))
 
         try:
             # Start transaction with repeatable read isolation
@@ -1800,7 +1847,9 @@ def find_mismatched_leaves(
     return mismatched_leaves
 
 
-def get_pkey_batches(node1_conn, node2_conn, schema, table, mismatched_positions):
+def get_pkey_batches(
+    node1_conn, node2_conn, schema, table, is_composite, mismatched_positions
+):
     """
     Get range_start and range_end values for mismatched leaf nodes
     and format them into batches for parallel processing.
@@ -1869,15 +1918,20 @@ def get_pkey_batches(node1_conn, node2_conn, schema, table, mismatched_positions
     union of all ranges.
     """
 
-    node1_composite_info = CompositeInfo.fetch(node1_conn, f"{schema}_{table}_key_type")
-    node2_composite_info = CompositeInfo.fetch(node2_conn, f"{schema}_{table}_key_type")
+    if is_composite:
+        node1_composite_info = CompositeInfo.fetch(
+            node1_conn, f"{schema}_{table}_key_type"
+        )
+        node2_composite_info = CompositeInfo.fetch(
+            node2_conn, f"{schema}_{table}_key_type"
+        )
 
-    register_composite(
-        node1_composite_info, node1_conn, factory=lambda *args: tuple(args)
-    )
-    register_composite(
-        node2_composite_info, node2_conn, factory=lambda *args: tuple(args)
-    )
+        register_composite(
+            node1_composite_info, node1_conn, factory=lambda *args: tuple(args)
+        )
+        register_composite(
+            node2_composite_info, node2_conn, factory=lambda *args: tuple(args)
+        )
 
     with node1_conn.cursor() as cur1, node2_conn.cursor() as cur2:
         cur1.execute(
@@ -2299,7 +2353,7 @@ def merkle_tree_diff(mtree_task: MerkleTreeTask) -> None:
                 continue
 
             pkey_batches = get_pkey_batches(
-                conn1, conn2, schema, table, mismatched_leaves
+                conn1, conn2, schema, table, not simple_primary_key, mismatched_leaves
             )
             print(f"Found {len(pkey_batches)} mismatched blocks")
 

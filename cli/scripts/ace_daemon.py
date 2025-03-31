@@ -43,7 +43,7 @@ This endpoint accepts a JSON request body with the following parameters:
 - cluster_name (required): Name of the cluster
 - table_name (required): Name of the table to diff
 - dbname (optional): Name of the database
-- block_rows (optional): Number of rows per block (default: config.BLOCK_ROWS_DEFAULT)
+- block_size (optional): Number of rows per block (default: config.DIFF_BLOCK_SIZE)
 - max_cpu_ratio (optional): Max CPU usage ratio (default: config.MAX_CPU_RATIO_DEFAULT)
 - output (optional): Output format, default is 'json'
 - nodes (optional): Nodes to include in diff, default is 'all'
@@ -67,7 +67,7 @@ def table_diff_api():
     cluster_name = data.get("cluster_name")
     table_name = data.get("table_name")
     dbname = data.get("dbname")
-    block_rows = data.get("block_rows", config.DIFF_BLOCK_SIZE)
+    block_size = data.get("block_size", config.DIFF_BLOCK_SIZE)
     max_cpu_ratio = data.get("max_cpu_ratio", config.MAX_CPU_RATIO)
     output = data.get("output", "json")
     nodes = data.get("nodes", "all")
@@ -88,7 +88,7 @@ def table_diff_api():
             cluster_name=cluster_name,
             _table_name=table_name,
             _dbname=dbname,
-            block_rows=block_rows,
+            block_size=block_size,
             max_cpu_ratio=max_cpu_ratio,
             output=output,
             _nodes=nodes,
@@ -276,7 +276,7 @@ def table_rerun_api():
             cluster_name=cluster_name,
             _table_name=table_name,
             _dbname=dbname,
-            block_rows=config.DIFF_BLOCK_SIZE,
+            block_size=config.DIFF_BLOCK_SIZE,
             max_cpu_ratio=config.MAX_CPU_RATIO,
             output="json",
             _nodes="all",
@@ -317,7 +317,7 @@ This endpoint accepts a JSON request body with the following parameters:
     cluster_name (str): Name of the cluster (required)
     repset_name (str): Name of the repset to diff (required)
     dbname (str): Name of the database (optional)
-    block_rows (int): Number of rows per block (default: config.BLOCK_ROWS_DEFAULT)
+    block_size (int): Number of rows per block (default: config.DIFF_BLOCK_SIZE)
     max_cpu_ratio (float): Maximum CPU usage ratio
                           (default: config.MAX_CPU_RATIO_DEFAULT)
     output (str): Output format (default: "json")
@@ -344,7 +344,7 @@ def repset_diff_api():
     cluster_name = data.get("cluster_name")
     repset_name = data.get("repset_name")
     dbname = data.get("dbname")
-    block_rows = data.get("block_rows", config.DIFF_BLOCK_SIZE)
+    block_size = data.get("block_size", config.DIFF_BLOCK_SIZE)
     max_cpu_ratio = data.get("max_cpu_ratio", config.MAX_CPU_RATIO)
     output = data.get("output", "json")
     nodes = data.get("nodes", "all")
@@ -366,7 +366,7 @@ def repset_diff_api():
             cluster_name=cluster_name,
             _dbname=dbname,
             repset_name=repset_name,
-            block_rows=block_rows,
+            block_size=block_size,
             max_cpu_ratio=max_cpu_ratio,
             output=output,
             _nodes=nodes,
@@ -936,7 +936,7 @@ def create_schedules():
     # Define valid parameters for each job type
     valid_table_diff_params = {
         "dbname",
-        "block_rows",
+        "block_size",
         "max_cpu_ratio",
         "output",
         "nodes",
