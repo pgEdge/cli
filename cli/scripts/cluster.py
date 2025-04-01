@@ -1585,8 +1585,6 @@ def add_node(
         install (bool): Whether to install pgEdge on the new node.
     """
     
-    if (repo1_path and not backup_id) or (backup_id and not repo1_path):
-        util.exit_message("Both repo1_path and backup_id must be supplied together.")
     
     json_validate(cluster_name)
     db, db_settings, nodes = load_json(cluster_name)
