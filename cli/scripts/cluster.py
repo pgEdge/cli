@@ -2099,6 +2099,42 @@ def cleanup_backrest_from_cluster(cluster_json, target_json):
         if not target_group or "backrest" not in target_group:
             if "backrest" in node:
                 del node["backrest"]
+def json_validate_add_node(data):
+    """Validate the structure of a node configuration JSON file."""
+    required_keys = ["json_version", "node_groups"]
+    node_group_keys = [
+        "ssh",
+        "name",
+        "is_active",
+        "public_ip",
+        "private_ip",
+        "port",
+        "path",
+    ]
+    ssh_keys = ["os_user", "private_key"]
+    if "json_version" not in data or data["json_version"] == "1.0":
+        util.exit_message("Invalid or missing JSON version.")
+
+    for key in required_keys:
+        if key not in data:
+            util.exit_message(f"Key '{key}' missing from JSON data.")
+
+    for group in data["node_groups"]:
+        for node_group_key in node_group_keys:
+            if node_group_key not in group:
+                util.exit_message(f"Key '{node_group_key}' missing from node group.")
+
+        ssh_info = group.get("ssh", {})
+        for ssh_key in ssh_keys:
+            if ssh_key not in ssh_info:
+                util.exit_message(f"Key '{ssh_key}' missing from ssh configuration.")
+
+        if "public_ip" not in group and "private_ip" not in group:
+            util.exit_message(
+                "Both 'public_ip' and 'private_ip' are missing from node group."
+            )
+
+    util.message(f"New node json file structure is valid.", "success")
 
 def remove_node(cluster_name, node_name):
     """Remove a node from the cluster configuration.
