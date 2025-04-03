@@ -54,7 +54,7 @@ def run_cmd(
     )
 
 def ssh(cluster_name, node_name):
-    """An SSH Terminal session into the specified node"""
+    """An SSH Terminal session into the specified node."""
     json_validate(cluster_name)
     db, db_settings, nodes = load_json(cluster_name)
 
@@ -255,7 +255,7 @@ def save_updated_json(cluster_name, updated_json):
 
 
 def json_validate(cluster_name):
-    """Validate and update a Cluster Configuration JSON file."""
+    """Validate and update a cluster configuration JSON file."""
 
     # Function to exit with a message
     class Util:
@@ -636,8 +636,9 @@ def ssh_cross_wire_pgedge(
 
 
 def remove(cluster_name, force=False):
-    """Remove a test cluster.
-    Remove a cluster. This will remove spock subscriptions and nodes, and
+    """Remove a cluster. 
+    
+    This will remove spock subscriptions and nodes, and
     then stop postgres on each node. If the flag force is set to true,
     then it will also remove the pgedge directory on each node.
     This command requires a JSON file with the same name as the cluster to
@@ -671,6 +672,7 @@ def remove(cluster_name, force=False):
 
 def add_db(cluster_name, database_name, username, password):
     """Add a database to an existing pgEdge cluster.
+
     Create the new database in the cluster, install spock, and create all spock nodes and subscriptions.
     This command requires a JSON file with the same name as the cluster to be in the cluster/<cluster_name>. \n
     Example: cluster add-db demo test admin password
@@ -699,7 +701,7 @@ def add_db(cluster_name, database_name, username, password):
 
 
 def json_template(cluster_name, db, num_nodes, usr, passwd, pg, port):
-    """Create a template for a Cluster Configuration JSON file.
+    """Create a template for a cluster configuration JSON file.
    
        Create a JSON configuration file template that can be modified to fully define a remote cluster. \n
        Example: cluster define-remote demo db 3 lcusr lcpasswd 16 5432
@@ -719,7 +721,7 @@ def json_create(
     cluster_name, num_nodes, db, usr, passwd, pg_ver=None, port=None, force=False
 ):
     """
-    Create a Cluster Configuration JSON file with options for pgBackRest and Spock.
+    Create a cluster configuration JSON file with options for spock and pgBackRest.
 
     Usage:
         ./pgedge cluster json-create CLUSTER_NAME NUM_NODES DB USR PASSWD [pg_ver=PG_VERSION] [--port PORT]
@@ -1325,7 +1327,7 @@ def update_json(cluster_name, db_json):
 
 def init(cluster_name, install=True):
     """
-    Initialize a cluster via Cluster Configuration JSON file.
+    Initialize a cluster via cluster configuration JSON file.
 
     This function performs the following steps:
     1. Loads the cluster configuration.
@@ -2021,6 +2023,7 @@ def json_validate_add_node(data):
 
 def remove_node(cluster_name, node_name):
     """Remove a node from the cluster configuration.
+
        Now also checks for multiple databases on the node, and drops all
        subscriptions/Spock extension across each database before removal.
     """
@@ -2364,7 +2367,7 @@ def check_wal_rec(n, dbname, stanza, verbose, timeout=600, interval=1):
 
 
 def replication_all_tables(cluster_name, database_name=None):
-    """Add all tables in the database to replication on every node"""
+    """Add all tables in the database to replication on every node."""
     db, db_settings, nodes = load_json(cluster_name)
     db_name = None
     if database_name is None:
@@ -2417,6 +2420,7 @@ def replication_check(cluster_name, show_spock_tables=False, database_name=None)
 
 def command(cluster_name, node, cmd, args=None):
     """Run './pgedge' commands on one or 'all' nodes.
+
     Run './pgedge' commands on one or all of the nodes in a cluster.
     This command requires a JSON file with the same name as the cluster to be in the cluster/<cluster_name>. \n
     Example: cluster command demo n1 "status"
@@ -2447,6 +2451,7 @@ def command(cluster_name, node, cmd, args=None):
 
 def app_install(cluster_name, app_name, database_name=None, factor=1):
     """Install test application [ pgbench | northwind ].
+
     Install a test application on all of the nodes in a cluster.
     This command requires a JSON file with the same name as the cluster to be in the cluster/<cluster_name>. \n
     Example: cluster app-install pgbench
@@ -2519,6 +2524,7 @@ def ssh_un_cross_wire(cluster_name, db, db_settings, db_user, db_passwd, nodes):
 
 def app_remove(cluster_name, app_name, database_name=None):
     """Remove test application from cluster.
+
     Remove a test application from all of the nodes in a cluster.
     This command requires a JSON file with the same name as the cluster to be in the cluster/<cluster_name>. \n
     Example: cluster app-remove pgbench
@@ -2671,7 +2677,7 @@ def print_install_hdr(
 
 
 def app_concurrent_index(cluster_name, db_name, index_name, table_name, col):
-    """Helper function for a Creating concurrent index when auto_ddl is on"""
+    """Helper function for a Creating concurrent index when auto_ddl is on."""
     db, db_settings, nodes = load_json(cluster_name)
     rc = 0
     found_db_name = None
@@ -2715,7 +2721,6 @@ if __name__ == "__main__":
             "add-db": add_db,
             "remove": remove,
             "command": command,
-            "set-firewalld": set_firewalld,
             "ssh": ssh,
             "app-install": app_install,
             "app-remove": app_remove,

@@ -1,7 +1,7 @@
 #  Copyright 2022-2025 PGEDGE  All rights reserved. #
 
 
-"""ACE is the place of the Anti Chaos Engine"""
+"""ACE is the place of the Active Consistency Engine"""
 
 import ast
 import json
@@ -2019,7 +2019,7 @@ if __name__ == "__main__":
             "schema-diff": ace_cli.schema_diff_cli,
             "spock-diff": ace_cli.spock_diff_cli,
             "spock-exception-update": ace_cli.update_spock_exception_cli,
-            "auto-repair": ace_core.auto_repair,
-            "start": ace_daemon.start_ace,
+            "auto-repair": ace_cli.auto_repair_cli,
+            "start": ace_cli.start_ace_cli,
         }
     )

@@ -11,7 +11,7 @@ SPOCK, ACE, DB, CLUSTER, VM, LOCALHOST, UM & SERVICE.
 
 spock - Logical and multi-Active PostgreSQL node configuration
 
-ace - The Anti-Chaos Engine to help prove your active-active nodes are in sync.
+ace - The Active Consistency Engine to help prove your active-active nodes are in sync.
 
 db - Configure and control Postgres Databases
 
