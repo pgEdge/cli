@@ -467,11 +467,3 @@ def update_spock_exception_cli(cluster_name, node_name, entry, dbname=None) -> N
         util.exit_message(f"Unexpected error while running exception status: {e}")
 
     util.message("Spock exception status updated successfully", p_state="success")
-
-def auto_repair_cli():
-    """Start the ACE auto-repair function."""
-    ace_core.auto_repair()  
-
-def start_ace_cli():
-    """Launch ACE as a daemon process"""
-    ace_daemon.start_ace()
