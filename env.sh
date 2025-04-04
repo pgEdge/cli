@@ -1,5 +1,5 @@
-hubV=25.0.0-alpha1
-hubVV=25.0.0-alpha1
+hubV=25.0.0-alpha2
+hubVV=25.0.0-alpha2
 
 aceV=$hubV
 kirkV=$hubV
@@ -56,7 +56,7 @@ audit15V=1.7.0-1
 audit16V=16.0-1
 audit17V=17.0-1
 
-postgisV=3.5.0-2
+postgisV=3.5.0-3
 
 debuggerV=1.8-1
 cronV=1.6.4-1

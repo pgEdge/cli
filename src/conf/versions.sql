@@ -1,7 +1,7 @@
 
 DROP TABLE IF EXISTS hub;
 CREATE TABLE hub(v TEXT NOT NULL PRIMARY KEY, c TEXT NOT NULL, d TEXT NOT NULL);
-INSERT INTO hub VALUES ('25.0.0-alpha1', 'Constellation',  '20250318');
+INSERT INTO hub VALUES ('25.0.0-alpha2', 'Constellation',  '20250404');
 
 DROP VIEW  IF EXISTS v_versions;
 DROP VIEW  IF EXISTS v_products;
@@ -396,9 +396,9 @@ INSERT INTO releases VALUES ('postgis-pg15', 3, 'postgis', 'PostGIS', '', 'prod'
 INSERT INTO releases VALUES ('postgis-pg16', 3, 'postgis', 'PostGIS', '', 'prod', '', 1, 'GPLv2', '', '');
 INSERT INTO releases VALUES ('postgis-pg17', 3, 'postgis', 'PostGIS', '', 'prod', '', 1, 'GPLv2', '', '');
 
-INSERT INTO versions VALUES ('postgis-pg15', '3.5.0-2', 'amd, arm', 1, '20241021', 'pg15', '', 'https://git.osgeo.org/gitea/postgis/postgis/raw/tag/3.5.0/NEWS');
-INSERT INTO versions VALUES ('postgis-pg16', '3.5.0-2', 'amd, arm', 1, '20241021', 'pg16', '', 'https://git.osgeo.org/gitea/postgis/postgis/raw/tag/3.5.0/NEWS');
-INSERT INTO versions VALUES ('postgis-pg17', '3.5.0-2', 'amd, arm', 1, '20241021', 'pg17', '', 'https://git.osgeo.org/gitea/postgis/postgis/raw/tag/3.5.0/NEWS');
+INSERT INTO versions VALUES ('postgis-pg15', '3.5.0-3', 'amd, arm', 1, '20250404', 'pg15', '', 'https://git.osgeo.org/gitea/postgis/postgis/raw/tag/3.5.0/NEWS');
+INSERT INTO versions VALUES ('postgis-pg16', '3.5.0-3', 'amd, arm', 1, '20250404', 'pg16', '', 'https://git.osgeo.org/gitea/postgis/postgis/raw/tag/3.5.0/NEWS');
+INSERT INTO versions VALUES ('postgis-pg17', '3.5.0-3', 'amd, arm', 1, '20250404', 'pg17', '', 'https://git.osgeo.org/gitea/postgis/postgis/raw/tag/3.5.0/NEWS');
 
 -- ## PARTMAN ###########################
 INSERT INTO projects VALUES ('partman', 'ext', 4, 0, '', 4, 'https://github.com/pgpartman/pg_partman/tags',
