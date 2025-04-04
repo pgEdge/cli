@@ -218,7 +218,7 @@ def clean():
 
 
 def verify_metadata(Project="", Stage="prod", IsCurrent=0):
-
+    """Display component metadata from the local store"""
     sql = f"""
 SELECT r.project, r.component, r.stage, v.version, v.platform, 
         v.is_current, v.release_date, p.port as default_port
