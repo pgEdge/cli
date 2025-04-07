@@ -1,4 +1,3 @@
-import pdb
 import random
 import pytest
 from psycopg import sql
@@ -320,7 +319,7 @@ class TestMerkleTreesComposite(TestMerkleTreesSimple):
 
         # FIXME! Repair for large diffs seems to be having issues with
         # the bulk dispatcher
-        # cli.table_repair_cli("eqn-t9da", table, diff_file, source_of_truth="n1")
+        cli.table_repair_cli("eqn-t9da", table, diff_file, source_of_truth="n1")
         cur.close()
         conn.close()
 

@@ -463,7 +463,7 @@ class TestMerkleTreesSimple(abc.ABC):
         cur.close()
         conn.close()
 
-        # cli.table_repair_cli("eqn-t9da", table, diff_file, source_of_truth="n1")
+        cli.table_repair_cli("eqn-t9da", table, diff_file, source_of_truth="n1")
 
     @pytest.mark.parametrize("table", ["public.customers", "public.customers2"])
     def test_mtree_table_cleanup(self, cli, capsys, table, nodes):

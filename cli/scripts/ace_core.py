@@ -12,6 +12,7 @@ from multiprocessing import Manager, cpu_count
 from mpire import WorkerPool
 from mpire.utils import make_single_arguments
 from psycopg import sql
+from psycopg import ClientCursor
 from psycopg.rows import dict_row, class_row
 from dateutil import parser
 
@@ -1278,6 +1279,9 @@ def table_repair(tr_task: TableRepairTask):
 
     for divergent_node in other_nodes:
 
+        total_upserted[divergent_node] = 0
+        total_deleted[divergent_node] = 0
+
         try:
             conn = conns[divergent_node]
             cur = conn.cursor()
@@ -1375,18 +1379,109 @@ def table_repair(tr_task: TableRepairTask):
         )
 
         try:
-            # Let's first delete rows to avoid secondary unique key violations
+            client_cur = ClientCursor(cur.connection)
             if delete_keys and not tr_task.upsert_only and not tr_task.insert_only:
-                # Performing the deletes
-                cur.executemany(delete_sql, delete_keys)
+                table_ident = sql.Identifier(
+                    tr_task.fields.l_schema, tr_task.fields.l_table
+                )
+
+                if simple_primary_key:
+                    pkey_ident = sql.Identifier(keys_list[0])
+                    values_sql = sql.SQL(", ").join(
+                        sql.Literal(k[0]) for k in delete_keys
+                    )
+                    where_clause = sql.SQL("{pkey} IN ({values})").format(
+                        pkey=pkey_ident, values=values_sql
+                    )
+                else:
+                    pkey_idents = sql.SQL(", ").join(
+                        sql.Identifier(k) for k in keys_list
+                    )
+                    values_sql = sql.SQL("({})").format(
+                        sql.SQL(", ").join(sql.Placeholder() * len(keys_list))
+                    )
+                    # pdb.set_trace()
+                    mogrified_values = ", ".join(
+                        client_cur.mogrify(values_sql, row) for row in delete_keys
+                    )
+
+                    where_clause = sql.SQL("({pkeys}) IN ({values})").format(
+                        pkeys=pkey_idents, values=sql.SQL(mogrified_values)
+                    )
+
+                delete_sql = sql.SQL("DELETE FROM {table} WHERE {where};").format(
+                    table=table_ident, where=where_clause
+                )
+                cur.execute(delete_sql)
+                total_deleted[divergent_node] = cur.rowcount if cur.rowcount else 0
+
                 if tr_task.generate_report:
+                    if divergent_node not in report["changes"]:
+                        report["changes"][divergent_node] = {}
                     report["changes"][divergent_node]["deleted_rows"] = delete_keys
+
             elif delete_keys and (tr_task.upsert_only or tr_task.insert_only):
                 deletes_skipped[divergent_node] = delete_keys
 
-            # Now perform the upsert
-            cur.executemany(update_sql, upsert_tuples)
+            upsert_tuples = ace.convert_json_to_pg_type(
+                rows_to_upsert_json, cols_list, col_types
+            )
+
+            if upsert_tuples:
+                table_ident = sql.Identifier(
+                    tr_task.fields.l_schema, tr_task.fields.l_table
+                )
+                cols_ident = sql.SQL(", ").join(sql.Identifier(c) for c in cols_list)
+
+                placeholders = sql.SQL("({})").format(
+                    sql.SQL(", ").join((sql.Placeholder() * len(cols_list)))
+                )
+
+                mogrified_values = ", ".join(
+                    client_cur.mogrify(placeholders, row) for row in upsert_tuples
+                )
+
+                insert_sql = sql.SQL(
+                    "INSERT INTO {table} ({cols}) VALUES {values}"
+                ).format(
+                    table=table_ident,
+                    cols=cols_ident,
+                    values=sql.SQL(mogrified_values),
+                )
+
+                if simple_primary_key:
+                    conflict_target = sql.SQL("({})").format(
+                        sql.Identifier(keys_list[0])
+                    )
+                else:
+                    conflict_target = sql.SQL("({})").format(
+                        sql.SQL(", ").join(sql.Identifier(k) for k in keys_list)
+                    )
+
+                if tr_task.insert_only:
+                    conflict_action = sql.SQL("DO NOTHING")
+                else:
+                    set_clause = sql.SQL(", ").join(
+                        sql.SQL("{col} = EXCLUDED.{col}").format(col=sql.Identifier(c))
+                        for c in cols_list
+                    )
+                    conflict_action = sql.SQL("DO UPDATE SET {}").format(set_clause)
+
+                full_upsert_sql = sql.SQL(
+                    "{insert} ON CONFLICT {target} {action};"
+                ).format(
+                    insert=insert_sql,
+                    target=conflict_target,
+                    action=conflict_action,
+                )
+
+                cur.execute(full_upsert_sql)
+                total_upserted[divergent_node] = cur.rowcount if cur.rowcount else 0
+
             if tr_task.generate_report:
+                # Ensure this key exists even if upserts were skipped
+                if divergent_node not in report["changes"]:
+                    report["changes"][divergent_node] = {}
                 report["changes"][divergent_node]["upserted_rows"] = [
                     dict(zip(cols_list, tup)) for tup in upsert_tuples
                 ]
@@ -1487,13 +1582,13 @@ def table_repair(tr_task: TableRepairTask):
     for node in other_nodes:
         if tr_task.insert_only:
             util.message(
-                f"{node} INSERTED = {len(full_rows_to_upsert[node])} rows",
+                f"{node} INSERTED = {total_upserted[node]} rows",
                 p_state="info",
                 quiet_mode=tr_task.quiet_mode,
             )
         else:
             util.message(
-                f"{node} UPSERTED = {len(full_rows_to_upsert[node])} rows",
+                f"{node} UPSERTED = {total_upserted[node]} rows",
                 p_state="info",
                 quiet_mode=tr_task.quiet_mode,
             )
@@ -1503,7 +1598,7 @@ def table_repair(tr_task: TableRepairTask):
     if not tr_task.upsert_only and not tr_task.insert_only:
         for node in other_nodes:
             util.message(
-                f"{node} DELETED = {len(full_rows_to_delete[node])} rows",
+                f"{node} DELETED = {total_deleted[node]} rows",
                 p_state="info",
                 quiet_mode=tr_task.quiet_mode,
             )
