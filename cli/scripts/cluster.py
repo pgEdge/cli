@@ -1739,28 +1739,28 @@ def add_node(
             run_cmd(cmd_export_s3_source, node=source_node_data, message="Setting S3 environment variables for BackRest", verbose=verbose)
 
         # Step 6: Set all BackRest backup configuration values for the source node.
-        # (a) Set the backup stanza
-        cmd_set_backup_stanza_source = f"cd {source_node_data['path']}/pgedge && ./pgedge set BACKUP stanza {stanza_source}"
-        run_cmd(cmd_set_backup_stanza_source, node=source_node_data, message=f"Setting BACKUP stanza '{stanza_source}' on node '{source_node_data['name']}'", verbose=verbose)
-        # (b) Create restore directory and set restore_path for backups.
-        cmd_create_restore_dir_source = f"sudo mkdir -p {restore_path_source}"
-        run_cmd(cmd_create_restore_dir_source, node=source_node_data, message=f"Creating restore directory {restore_path_source}", verbose=verbose)
-        cmd_set_restore_path_source = f"cd {source_node_data['path']}/pgedge && ./pgedge set BACKUP restore_path {restore_path_source}"
-        run_cmd(cmd_set_restore_path_source, node=source_node_data, message=f"Setting BACKUP restore_path to {restore_path_source}", verbose=verbose)
-        # (c) Set BACKUP repo1-host-user to the OS user (default: postgres)
-        os_user_source = source_node_data.get("os_user", "postgres")
-        cmd_set_repo1_host_user_source = f"cd {source_node_data['path']}/pgedge && ./pgedge set BACKUP repo1-host-user {os_user_source}"
-        run_cmd(cmd_set_repo1_host_user_source, node=source_node_data, message=f"Setting BACKUP repo1-host-user to {os_user_source} on node '{source_node_data['name']}'", verbose=verbose)
-        # (d) Set BACKUP pg1-path to the PostgreSQL data directory
-        cmd_set_pg1_path_source = f"cd {source_node_data['path']}/pgedge && ./pgedge set BACKUP pg1-path {pg1_path_source}"
-        run_cmd(cmd_set_pg1_path_source, node=source_node_data, message=f"Setting BACKUP pg1-path to {pg1_path_source} on node '{source_node_data['name']}'", verbose=verbose)
-        # (e) Set BACKUP pg1-user to the OS user
-        cmd_set_pg1_user_source = f"cd {source_node_data['path']}/pgedge && ./pgedge set BACKUP pg1-user {os_user_source}"
-        run_cmd(cmd_set_pg1_user_source, node=source_node_data, message=f"Setting BACKUP pg1-user to {os_user_source} on node '{source_node_data['name']}'", verbose=verbose)
-        # (f) Set BACKUP pg1-port to the node's port value
-        cmd_set_pg1_port_source = f"cd {source_node_data['path']}/pgedge && ./pgedge set BACKUP pg1-port {port_source}"
-        run_cmd(cmd_set_pg1_port_source, node=source_node_data, message=f"Setting BACKUP pg1-port to {port_source} on node '{source_node_data['name']}'", verbose=verbose)
-        # (g) Create the BackRest stanza (this command uses --pg1-port because it connects to the DB)
+        #
+        # Build one compound shell command
+        compound_cmd = " && ".join([
+        f"cd {source_node_data['path']}/pgedge",
+        f"./pgedge set BACKUP stanza {stanza_source}",
+        f"sudo mkdir -p {restore_path_source}",
+        f"./pgedge set BACKUP restore_path {restore_path_source}",
+        f"./pgedge set BACKUP repo1-host-user {source_node_data.get('os_user', 'postgres')}",
+        f"./pgedge set BACKUP pg1-path {pg1_path_source}",
+        f"./pgedge set BACKUP pg1-user {source_node_data.get('os_user', 'postgres')}",
+        f"./pgedge set BACKUP pg1-port {port_source}"
+            ])
+
+        # Execute once with verbose disabled
+        run_cmd(
+            compound_cmd,
+            node=source_node_data,
+             message=f"Configuring BACKUP settings on node '{source_node_data['name']}'",
+             verbose=False
+            )
+
+        # # (g) Create the BackRest stanza (this command uses --pg1-port because it connects to the DB)
         cmd_create_stanza_source = (
             f"cd {source_node_data['path']}/pgedge && "
             f"./pgedge backrest command stanza-create "
