@@ -2274,9 +2274,29 @@ def cleanup_backrest_from_cluster(cluster_json, target_json):
             if "backrest" in node:
                 del node["backrest"]
 def json_validate_add_node(data):
-    """Validate the structure of a node configuration JSON file."""
-    required_keys = ["json_version", "node_groups"]
-    node_group_keys = [
+    """
+    Validate the structure of a node‑definition JSON file that will be fed to
+    the add‑node command.
+
+    • The traditional checks (json_version, ssh, port, …) still apply.
+    • A node_group is not required to have a “backrest” block.
+    • If a “backrest” block is present, it must contain at least:
+         • stanza        – unique stanza name
+         • repo1_path    – absolute path to the repo directory
+         • repo1_type    – 'posix' or 's3'
+       and the values must be non‑empty and valid.
+    """
+
+    # ---------- top‑level keys ------------------------------------------------
+    required_top = {"json_version", "node_groups"}
+    if not required_top.issubset(data):
+        util.exit_message("Invalid add‑node JSON: missing json_version or node_groups.")
+
+    if str(data.get("json_version")) != "1.0":
+        util.exit_message("Invalid or unsupported json_version (must be '1.0').")
+
+    # ---------- per‑node_group validation ------------------------------------
+    node_group_required = {
         "ssh",
         "name",
         "is_active",
@@ -2284,31 +2304,56 @@ def json_validate_add_node(data):
         "private_ip",
         "port",
         "path",
-    ]
-    ssh_keys = ["os_user", "private_key"]
-    if "json_version" not in data or data["json_version"] == "1.0":
-        util.exit_message("Invalid or missing JSON version.")
+    }
+    ssh_required = {"os_user", "private_key"}
 
-    for key in required_keys:
-        if key not in data:
-            util.exit_message(f"Key '{key}' missing from JSON data.")
+    backrest_required = {"stanza", "repo1_path", "repo1_type"}
+    valid_repo1_types = {"posix", "s3"}
 
     for group in data["node_groups"]:
-        for node_group_key in node_group_keys:
-            if node_group_key not in group:
-                util.exit_message(f"Key '{node_group_key}' missing from node group.")
+        gname = group.get("name", "?")
 
-        ssh_info = group.get("ssh", {})
-        for ssh_key in ssh_keys:
-            if ssh_key not in ssh_info:
-                util.exit_message(f"Key '{ssh_key}' missing from ssh configuration.")
-
-        if "public_ip" not in group and "private_ip" not in group:
+        # --- basic mandatory keys
+        missing_basic = node_group_required - set(group.keys())
+        if missing_basic:
             util.exit_message(
-                "Both 'public_ip' and 'private_ip' are missing from node group."
+                f"Node‑group '{gname}' missing keys: {', '.join(missing_basic)}"
             )
 
-    util.message(f"New node json file structure is valid.", "success")
+        # --- ssh block
+        ssh_info = group["ssh"]
+        missing_ssh = ssh_required - set(ssh_info.keys())
+        if missing_ssh:
+            util.exit_message(
+                f"SSH block in node‑group '{gname}' missing: {', '.join(missing_ssh)}"
+            )
+
+        # --- backrest (optional but validated if present)
+        if "backrest" in group and group["backrest"] is not None:
+            br = group["backrest"]
+
+            # ensure required keys are present
+            missing_br = backrest_required - set(br.keys())
+            if missing_br:
+                util.exit_message(
+                    f"BackRest block in node‑group '{gname}' missing: {', '.join(missing_br)}"
+                )
+
+            # ensure values are non‑empty
+            for k in backrest_required:
+                if not str(br[k]).strip():
+                    util.exit_message(
+                        f"BackRest key '{k}' in node‑group '{gname}' cannot be empty."
+                    )
+
+            # verify repo1_type is valid
+            if br["repo1_type"] not in valid_repo1_types:
+                util.exit_message(
+                    f"Invalid repo1_type '{br['repo1_type']}' in node‑group '{gname}'. "
+                    f"Allowed: {', '.join(valid_repo1_types)}"
+                )
+
+    util.message("✔ add‑node JSON structure is valid.", "success")
 
 def remove_node(cluster_name, node_name):
     """Remove a node from the cluster configuration.
