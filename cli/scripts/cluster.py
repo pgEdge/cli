@@ -1578,13 +1578,7 @@ def check_source_backrest_config(source_node_data):
             "info"
         )
     else:
-        util.message(
-            f"Source node '{source_node_data['name']}' does not have a BackRest configuration.",
-            "info"
-        )
-        # Print the source node's path for debugging purposes
-        util.message(f"Source node path: {source_node_data['path']}", "info")
-        # Remove any leftover BackRest configuration
+ 
         cmd = f"cd {source_node_data['path']}/pgedge && ./pgedge remove backrest"
         run_cmd(cmd, node=source_node_data, message="Removing BackRest configuration from source node", verbose=True)
             
@@ -1665,7 +1659,9 @@ def add_node(
             "os_user": os_user,
             "ssh_key": ssh_key,
         }
-
+        # If backrest settings are provided in the JSON, add them to new_node_data.
+    if backrest_info:
+        new_node_data["backrest"] = backrest_info
     if "public_ip" not in new_node_data and "private_ip" not in new_node_data:
         util.exit_message(
             "Both public_ip and private_ip are missing in target node data."
@@ -2041,6 +2037,52 @@ def add_node(
     if v4:
         set_cluster_readonly(nodes, False, db[0]["db_name"], f"pg{pg}", v4, verbose)
 
+    cmd = f'cd {new_node_data["path"]}/pgedge/; ./pgedge spock node-list {db[0]["db_name"]}'
+    message = f"Listing spock nodes"
+    result = run_cmd(
+        cmd, node=new_node_data, message=message, verbose=verbose, capture_output=True
+    )
+    print(f"\n{result.stdout}")
+
+    sql_cmd = "select node_id,node_name from spock.node"
+    cmd = (
+        f"{source_node_data['path']}/pgedge/pgedge psql '{sql_cmd}' {db[0]['db_name']}"
+    )
+    message = f"List nodes"
+    result = run_cmd(
+        cmd,
+        node=source_node_data,
+        message=message,
+        verbose=verbose,
+        capture_output=True,
+    )
+    print(f"\n{result.stdout}")
+
+    for node in nodes:
+        sql_cmd = (
+            "select sub_id,sub_name,sub_enabled,sub_slot_name,"
+            "sub_replication_sets from spock.subscription"
+        )
+        cmd = f"{node['path']}/pgedge/pgedge psql '{sql_cmd}' {db[0]['db_name']}"
+        message = f"List subscriptions"
+        result = run_cmd(
+            cmd, node=node, message=message, verbose=verbose, capture_output=True
+        )
+        print(f"\n{result.stdout}")
+
+    sql_cmd = (
+        "select sub_id,sub_name,sub_enabled,sub_slot_name,"
+        "sub_replication_sets from spock.subscription"
+    )
+    cmd = f"{new_node_data['path']}/pgedge/pgedge psql '{sql_cmd}' {db[0]['db_name']}"
+    message = f"List subscriptions"
+    result = run_cmd(
+        cmd, node=new_node_data, message=message, verbose=verbose, capture_output=True
+    )
+    print(f"\n{result.stdout}")
+
+
+
     # DEBUG: Reload the complete target JSON file and fetch repo1_path and stanza from its backrest settings.
     try:
         with open(target_node_file, "r") as f:
@@ -2181,7 +2223,20 @@ def add_node(
     except Exception as e:
         print(f"Error fetching values from target JSON file: {e}")
         # NEW: Check and display BackRest configuration status in the source node
+        # Remove unnecessary keys before appending new node to the cluster data
+    new_node_data.pop("ip_address", None)
+    new_node_data.pop("os_user", None)
+    new_node_data.pop("ssh_key", None)
+
+    # Append new node data to the cluster JSON
+    node_group = target_node_data.get
+    cluster_data["node_groups"].append(new_node_data)
+    cluster_data["update_date"] = datetime.datetime.now().astimezone().isoformat()
+
+    write_cluster_json(cluster_name, cluster_data)
+    
     check_source_backrest_config(source_node_data)
+    
 def capture_backrest_config(cluster_name, verbose=False):
     """
     Capture and clean BackRest configuration for all nodes (and sub-nodes) in the cluster
