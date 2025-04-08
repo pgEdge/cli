@@ -1565,8 +1565,29 @@ def init(cluster_name, install=True):
                 # Configure etcd and Patroni
                 etcd.configure_etcd(node, sub_nodes)
                 ha_patroni.configure_patroni(node, sub_nodes, db[0], db_settings)
-
-                
+def check_source_backrest_config(source_node_data):
+    """
+    Check the source node's JSON data for a BackRest configuration.
+    If a non‑empty 'backrest' block is found, display its configuration.
+    Otherwise, display a message that no BackRest configuration exists,
+    and remove any leftover BackRest configuration.
+    """
+    if "backrest" in source_node_data and source_node_data["backrest"]:
+        util.message(
+            f"Source node '{source_node_data['name']}' already has BackRest configuration: {source_node_data['backrest']}",
+            "info"
+        )
+    else:
+        util.message(
+            f"Source node '{source_node_data['name']}' does not have a BackRest configuration.",
+            "info"
+        )
+        # Print the source node's path for debugging purposes
+        util.message(f"Source node path: {source_node_data['path']}", "info")
+        # Remove any leftover BackRest configuration
+        cmd = f"cd {source_node_data['path']}/pgedge && ./pgedge remove backrest"
+        run_cmd(cmd, node=source_node_data, message="Removing BackRest configuration from source node", verbose=True)
+            
 def add_node(
     cluster_name,
     source_node,
@@ -2156,10 +2177,11 @@ def add_node(
                 message="Removing backrest",
                 verbose=verbose
             )
-
+    
     except Exception as e:
         print(f"Error fetching values from target JSON file: {e}")
-
+        # NEW: Check and display BackRest configuration status in the source node
+    check_source_backrest_config(source_node_data)
 def capture_backrest_config(cluster_name, verbose=False):
     """
     Capture and clean BackRest configuration for all nodes (and sub-nodes) in the cluster
