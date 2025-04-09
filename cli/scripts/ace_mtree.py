@@ -527,7 +527,7 @@ def build_mtree(mtree_task: MerkleTreeTask) -> None:
             f"{datetime.now().strftime('%Y%m%d_%H%M%S')}_{schema}_{table}_ranges.json"
         )
         with open(filename, "w") as f:
-            json.dump(block_ranges, f)
+            json.dump(block_ranges, f, default=str)
 
         print(f"\nBlock ranges written to {util.set_colour(filename, 'blue')}")
 
