@@ -1707,13 +1707,18 @@ def add_node(
         log_level_console = "info"
         repo1_cipher_type = "aes-256-cbc"
         repo1_type = "posix"  # Could also be "s3"
-        # Get repo1_path from JSON if provided; otherwise, use default
-        json_repo1_path = backrest_settings.get("repo1_path")
-        if json_repo1_path:
+# Determine the repository path for the source node.
+        if repo1_path:
+    # Use the provided flag value as-is (trimmed of any trailing slash).
+         repo1_path_source = repo1_path.rstrip('/')
+        else:
+    # No repo1_path flag provided: check the JSON configuration or default.
+         json_repo1_path = backrest_settings.get("repo1_path")
+         if json_repo1_path:
             repo1_path_source = json_repo1_path.rstrip('/')
             if not repo1_path_source.endswith(source_node_data["name"]):
                 repo1_path_source = repo1_path_source + f"/{source_node_data['name']}"
-        else:
+         else:
             repo1_path_source = f"/var/lib/pgbackrest/{source_node_data['name']}"
 
         # Similarly, set restore_path to include node name
