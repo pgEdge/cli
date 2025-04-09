@@ -1606,10 +1606,7 @@ def add_node(
         backup_id (str): Backup ID.
         stanza (str): Stanza name.
         script (str): Bash script.
-    """
-    if (repo1_path and not backup_id) or (backup_id and not repo1_path):
-        util.exit_message("Both repo1_path and backup_id must be supplied together.")
-    json_validate(cluster_name)
+    """                             
     db, db_settings, nodes = load_json(cluster_name)
 
     cluster_data = get_cluster_json(cluster_name)
@@ -1635,13 +1632,23 @@ def add_node(
 
     # NEW: Check if target JSON has backrest configuration
     target_backrest_settings = target_node_data.get("backrest", {})
-
     # Retrieve source node data
     source_node_data = next(
-        (node for node in nodes if node["name"] == source_node), None
-    )
+    (node for node in nodes if node["name"] == source_node), None
+)
     if source_node_data is None:
-        util.exit_message(f"Source node '{source_node}' not found in cluster data.")
+     util.exit_message(f"Source node '{source_node}' not found in cluster data.")
+
+# Extract backrest settings from source node (before using repo1_path flag)
+    backrest_settings = source_node_data.get("backrest", {})
+    source_repo1_path = backrest_settings.get("repo1_path")
+
+# Check: if source node JSON already provides repo1_path and the flag is given then exit
+    if repo1_path and source_repo1_path:
+     util.exit_message(
+        "Error: The source node JSON already contains a repo1_path. "
+        "Do not provide the repo1_path flag when the source node has it configured."
+    )
 
     for group in target_node_data.get("node_groups", []):
         ssh_info = group.get("ssh")
