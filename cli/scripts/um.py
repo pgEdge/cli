@@ -142,7 +142,7 @@ def remove(component):
 
 
 def upgrade(component):
-    """Perform an upgrade  to a newer version of a component"""
+    """Perform an upgrade to a newer version of a component"""
 
     run_cmd("upgrade", component)
 
