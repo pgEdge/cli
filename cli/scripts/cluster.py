@@ -825,10 +825,7 @@ def json_create(
     # Get cluster directory and file paths
     cluster_dir, cluster_file = get_cluster_info(cluster_name)
 
-    try:
-        os.makedirs(cluster_dir, exist_ok=True)
-    except OSError as e:
-        util.exit_message(f"Error creating directory '{cluster_dir}': {e}")
+
 
     cluster_json = {
         "json_version": "1.0",
@@ -1199,11 +1196,16 @@ def json_create(
 
     if not force:
         confirm_save = (
-            input("Do you want to save this configuration? (Y/N): ").strip().lower()
+            input("Do you want to save this configuration? (Y/N) (default: 'Y'): ").strip().lower()
         )
-        if confirm_save not in ["yes", "y"]:
+        if confirm_save in ["no", "n"]:
             util.exit_message("Configuration not saved.")
 
+    try:
+        os.makedirs(cluster_dir, exist_ok=True)
+    except OSError as e:
+        util.exit_message(f"Error creating directory '{cluster_dir}': {e}")
+        
     try:
         with open(cluster_file, "w") as text_file:
             text_file.write(json.dumps(cluster_json, indent=2))
