@@ -724,8 +724,8 @@ def json_create(
         ./pgedge cluster json-create CLUSTER_NAME NUM_NODES DB USR PASSWD [pg_ver=PG_VERSION] [--port PORT]
 
     Args:
-        cluster_name (str): The name of the cluster.
-        num_nodes (int): The number of main nodes in the cluster.
+        cluster_name (str): The name of the cluster. A directory with this same name will be created in the cluster directory, and the JSON file will have the same name.
+        num_nodes (int): The number of nodes in the cluster.
         db (str): The database name.
         usr (str): The username of the superuser created for this database.
         passwd (str): The password for the above user.
