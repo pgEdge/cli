@@ -1818,7 +1818,7 @@ def add_node(
         # (i) (Optional) Reset BACKUP repo1-path if needed
         cmd_set_repo1_path_source = f"cd {source_node_data['path']}/pgedge && ./pgedge set BACKUP repo1-path {repo1_path_source}"
         run_cmd(cmd_set_repo1_path_source, node=source_node_data, message=f"Setting BACKUP repo1-path to {repo1_path_source} on node '{source_node_data['name']}'", verbose=verbose)
-        
+
         # Update backrest_settings for further use downstream.
         backrest_settings = {
             "stanza": stanza_source,
@@ -2246,7 +2246,7 @@ def add_node(
     cluster_data["update_date"] = datetime.datetime.now().astimezone().isoformat()
 
     write_cluster_json(cluster_name, cluster_data)
-    capture_backrest_config(cluster_name, verbose=True)
+    
     check_source_backrest_config(source_node_data)
     
 def capture_backrest_config(cluster_name, verbose=False):
@@ -2327,7 +2327,7 @@ def capture_backrest_config(cluster_name, verbose=False):
                 with open(file_path, "w") as yaml_file:
                     yaml.dump(config_dict, yaml_file, default_flow_style=False)
                 util.message(
-                    f" BackRest configuration for node '{node['name']}' written to {file_path}",
+                    f"Cleaned BackRest configuration for node '{node['name']}' written to {file_path}",
                     "info"
                 )
             except Exception as e:
@@ -2341,7 +2341,27 @@ def capture_backrest_config(cluster_name, verbose=False):
             )
             
             
-
+def cleanup_backrest_from_cluster(cluster_json, target_json):
+    """
+    Compare the node groups in the target JSON with the cluster JSON.
+    For each node in cluster_json["node_groups"], if the corresponding node (by name)
+    is not present in target_json's node groups or does not contain a "backrest" key,
+    then remove the "backrest" key from that node in cluster_json.
+    
+    Args:
+        cluster_json (dict): The main cluster configuration.
+        target_json (dict): The target node configuration JSON.
+    """
+    # Create a mapping of node names to their configuration from the target JSON.
+    target_nodes = {group.get("name"): group for group in target_json.get("node_groups", [])}
+    
+    for node in cluster_json.get("node_groups", []):
+        node_name = node.get("name")
+        target_group = target_nodes.get(node_name)
+        # If the target group does not exist or does not contain a backrest key, delete backrest in the main config.
+        if not target_group or "backrest" not in target_group:
+            if "backrest" in node:
+                del node["backrest"]
 def json_validate_add_node(data):
     """
     Validate the structure of a node‑definition JSON file that will be fed to
