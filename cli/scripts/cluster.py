@@ -362,7 +362,6 @@ def json_validate(cluster_name):
             "port": node.get("port", 5432),
             "is_active": node.get("is_active", "off"),
             "path": node.get("path", "/var/lib/postgresql"),
-            "replicas": node.get("replicas", 0),  # Default to 0 if not present
         }
 
         # Validate subnodes
@@ -411,7 +410,7 @@ def json_validate(cluster_name):
         lines.append(
             f"  Node {node['node_index']}: Public IP={node['public_ip']}, "
             f"Private IP={node['private_ip']}, Port={node['port']}, "
-            f"Active={node['is_active']}, Path={node['path']}, Replicas={node['replicas']}"
+            f"Active={node['is_active']}, Path={node['path']}"
         )
     lines.append("Subnodes Info:")
     for subnode in summary["subnodes_info"]:
@@ -488,7 +487,6 @@ def json_validate(cluster_name):
         print(f"#      {bold_start}Public IP{bold_end}     : {node['public_ip']}")
         print(f"#      {bold_start}Private IP{bold_end}    : {node['private_ip']}")
         print(f"#      {bold_start}Port{bold_end}          : {node['port']}")
-        print(f"#      {bold_start}Replicas{bold_end}      : {node['replicas']}")
     print(border)
 
 def ssh_install_pgedge(
