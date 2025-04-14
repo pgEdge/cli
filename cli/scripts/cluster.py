@@ -825,8 +825,6 @@ def json_create(
     # Get cluster directory and file paths
     cluster_dir, cluster_file = get_cluster_info(cluster_name)
 
-
-
     cluster_json = {
         "json_version": "1.0",
         "cluster_name": cluster_name,
@@ -943,8 +941,6 @@ def json_create(
     default_ip = "127.0.0.1"
     default_port = port if port is not None else 5432
 
-    current_replica_port = 6432  # Starting port for replica nodes
-
     for n in range(1, num_nodes + 1):
         print(f"\nConfiguring Node {n}")
         node_json = {
@@ -1010,79 +1006,6 @@ def json_create(
             # Update the stanza value to include the node name.
             node_backrest["stanza"] = f"{cluster_name}_stanza_{node_json['name']}"
             node_json["backrest"] = node_backrest
-
-        if is_ha_cluster:
-            while True:
-                replicas_for_node_input = input(
-                    f"  Number of replica nodes for Node {n}: "
-                ).strip()
-                try:
-                    replicas_for_node = int(replicas_for_node_input)
-                    if replicas_for_node < 0:
-                        print("  Number of replicas cannot be negative. Please enter 0 or a positive integer.")
-                        continue
-                    break
-                except ValueError:
-                    print("  Invalid input. Please enter a numeric value.")
-        else:
-            replicas_for_node = 0
-
-        node_json["replicas"] = replicas_for_node
-
-        if replicas_for_node > 0:
-            node_json["sub_nodes"] = []
-            for i in range(1, replicas_for_node + 1):
-                print(f"\n  Configuring Replica Node {i} for Node {n}:")
-                sub_node_json = {
-                    "ssh": {"os_user": os_user, "private_key": ""},
-                    "name": f"{node_json['name']}_ro_{i}",
-                    "is_active": "off",
-                }
-
-                public_ip = (
-                    input(
-                        f"    Public IP address of replica Node {i} (default: '{default_ip}'): "
-                    ).strip()
-                    or default_ip
-                )
-                private_ip = (
-                    input(
-                        f"    Private IP address of replica Node {i} (default: '{public_ip}'): "
-                    ).strip()
-                    or public_ip
-                )
-                sub_node_json["public_ip"] = public_ip
-                sub_node_json["private_ip"] = private_ip
-
-                while True:
-                    replica_port_input = input(
-                        f"    PostgreSQL port of replica Node {i} (default: '{current_replica_port}'): "
-                    ).strip()
-                    if not replica_port_input:
-                        replica_port = current_replica_port
-                        current_replica_port += 1
-                        break
-                    else:
-                        try:
-                            replica_port = int(replica_port_input)
-                            if replica_port < 1 or replica_port > 65535:
-                                print("    Invalid port number. Please enter a number between 1 and 65535.")
-                                continue
-                            current_replica_port = replica_port + 1
-                            break
-                        except ValueError:
-                            print("    Invalid port input. Please enter a valid integer.")
-                sub_node_json["port"] = str(replica_port)
-                sub_node_json["path"] = f"/home/{os_user}/{cluster_name}/{sub_node_json['name']}"
-                
-                # Update backrest configuration for replica nodes similarly.
-                if backrest_enabled:
-                    sub_node_backrest = backrest_json.copy()
-                    sub_node_backrest["repo1_path"] = f"{sub_node_backrest['repo1_path'].rstrip('/')}/{sub_node_json['name']}"
-                    sub_node_backrest["stanza"] = f"{cluster_name}_stanza_{sub_node_json['name']}"
-                    sub_node_json["backrest"] = sub_node_backrest
-
-                node_json.setdefault("sub_nodes", []).append(sub_node_json)
 
         node_groups.append(node_json)
 
@@ -1642,7 +1565,7 @@ def add_node(
     backrest_settings = source_node_data.get("backrest", {})
     source_repo1_path = backrest_settings.get("repo1_path")
 
-    # Check: if source node JSON already provides repo1_path and the flag is given then exit
+# Check: if source node JSON already provides repo1_path and the flag is given then exit
     if repo1_path and source_repo1_path:
         util.exit_message(
             "Error: The source node JSON already contains a repo1_path. "
