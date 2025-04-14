@@ -827,7 +827,7 @@ def json_create(
         "json_version": "1.0",
         "cluster_name": cluster_name,
         "log_level": "debug",
-        "update_date": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S GMT"),
+        "update_date": datetime.datetime.now().astimezone().isoformat(),
     }
 
     # Handle PostgreSQL version
@@ -1563,7 +1563,7 @@ def add_node(
     backrest_settings = source_node_data.get("backrest", {})
     source_repo1_path = backrest_settings.get("repo1_path")
 
-# Check: if source node JSON already provides repo1_path and the flag is given then exit
+    # Check: if source node JSON already provides repo1_path and the flag is given then exit
     if repo1_path and source_repo1_path:
         util.exit_message(
             "Error: The source node JSON already contains a repo1_path. "
