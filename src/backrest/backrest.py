@@ -7,11 +7,6 @@ import json
 import sys
 from datetime import datetime
 from tabulate import tabulate
-import yaml
-import glob
-import io
-import contextlib
-
 
 def pgV():
     """Return the first found PostgreSQL version (v14 thru v17)."""
@@ -437,97 +432,6 @@ def run_external_command(command, **kwargs):
     except Exception as e:
         util.exit_message(f"Failed:{str(e)}")
 
-def update_config(verbose=False):
-    """
-    Update the BACKUP configuration using a node-specific YAML file.
-
-    ./pgedge backrest update-config <flag>
-    In non-verbose mode (default), all intermediate output is suppressed.
-    With verbose mode enabled, detailed logs and error messages are displayed.
-
-    Parameters:
-      verbose (bool): Set to True to display detailed logs (default is False).
-    """
-
-
-    # Internal function that runs the update and prints messages if local_verbose is True.
-    def run_update_config(local_verbose):
-        overall_success = True
-
-        script_dir = os.path.dirname(os.path.realpath(__file__))
-        pgedge_dir = os.path.dirname(script_dir)
-        node_name = os.path.basename(os.path.dirname(pgedge_dir))
-
-        # Construct the path to the YAML configuration file.
-        yaml_file = os.path.join(pgedge_dir, "backrest", f"backrest_{node_name}.yaml")
-        if not os.path.isfile(yaml_file):
-            if local_verbose:
-                print(f"Error: YAML file '{yaml_file}' does not exist.")
-            return False
-
-        # Read the YAML file.
-        try:
-            with open(yaml_file, 'r') as f:
-                yaml_content = f.read()
-        except Exception as e:
-            if local_verbose:
-                print(f"Error reading {yaml_file}: {e}")
-            return False
-
-        # Parse the YAML content into a dictionary.
-        try:
-            config_data = yaml.safe_load(yaml_content)
-            if not isinstance(config_data, dict):
-                if local_verbose:
-                    print("Error: YAML file must contain a key-value mapping.")
-                return False
-        except Exception as e:
-            if local_verbose:
-                print(f"Error parsing YAML file: {e}")
-            return False
-
-        if local_verbose:
-            print("==============================================")
-            print(" Executing Backrest Configuration Update")
-            print("==============================================")
-
-        # Execute the update command for each configuration key-value pair.
-        for key, value in config_data.items():
-            command = ["./pgedge", "set", "BACKUP", str(key), str(value)]
-            if local_verbose:
-                print(f"\n-> Executing command: {' '.join(command)}")
-            try:
-                result = subprocess.run(command, cwd=pgedge_dir, capture_output=True, text=True)
-                if result.returncode != 0:
-                    overall_success = False
-                    if local_verbose:
-                        print(f"   Error for key '{key}': {result.stderr.strip()}")
-                else:
-                    if local_verbose:
-                        out = result.stdout.strip()
-                        if out:
-                            print(f"   Output: {out}")
-                        else:
-                            print("   Command executed successfully.")
-            except Exception as e:
-                overall_success = False
-                if local_verbose:
-                    print(f"   Exception for key '{key}': {str(e)}")
-        return overall_success
-
-    # In non-verbose mode, redirect all output to devnull.
-    if not verbose:
-        dummy = io.StringIO()
-        with contextlib.redirect_stdout(dummy):
-            success = run_update_config(False)
-        # Do not print any final message in non-verbose mode.
-    else:
-        # Verbose mode: show detailed logs.
-        success = run_update_config(True)
-        if success:
-            print("\n==============================================")
-            print(" Backrest configuration updated successfully.")
-            print("==============================================")
 if __name__ == "__main__":
     fire.Fire({
         "backup": backup,
@@ -541,5 +445,4 @@ if __name__ == "__main__":
         "set_hbaconf": modify_hba_conf,
         "set_postgresqlconf": modify_postgresql_conf,
         "command": run_external_command,
-        "update-config": update_config,
     })
