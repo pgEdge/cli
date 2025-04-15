@@ -37,6 +37,7 @@ services:
       - mynetwork
     volumes:
       - ./repo:/home/build/dev/out
+      - ${GITHUB_REPO_ROOT:-../../../}:/home/build/dev/cli
     stdin_open: true
     tty: true
 
