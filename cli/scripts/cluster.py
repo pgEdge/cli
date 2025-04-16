@@ -1339,13 +1339,8 @@ def capture_backrest_config(cluster_name, verbose=False):
          write the resulting text to a file named "backrest_{node_name}.yaml" (or any desired extension)
          in the node's "pgedge/backrest" directory.
     """
-    import os
-    import re
-    import yaml  # Only needed if load_json or other parts are using YAML
-    # Assume util, run_cmd, load_json are already imported or defined
-
-    # Load the cluster configuration
-    db, db_settings, nodes = load_json(cluster_name)
+ 
+    nodes = load_json(cluster_name)
 
     # Create a combined list of all nodes (including sub-nodes)
     all_nodes = []
