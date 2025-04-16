@@ -875,16 +875,6 @@ def json_create(
 
     cluster_json["pgedge"] = pgedge_json
 
-    # Ask if this is an HA Cluster
-    if True:
-        is_ha_cluster = False
-    else:
-        ha_cluster_input = input("Is this an HA Cluster? (Y/N): ").strip().lower()
-        is_ha_cluster = ha_cluster_input in ["y", "yes"]
-
-    # Store 'is_ha_cluster' in the cluster JSON
-    cluster_json["is_ha_cluster"] = is_ha_cluster
-
     # Ask if pgBackRest should be enabled
     if force:
         backrest_enabled = False
