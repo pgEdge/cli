@@ -11,9 +11,9 @@ import getpass
 import re
 from tabulate import tabulate # type: ignore
 from ipaddress import ip_address
-
+import yaml
 try:
-    import etcd
+    import etcd 
     import ha_patroni
 except Exception:
     pass
@@ -1324,6 +1324,162 @@ def update_json(cluster_name, db_json):
     except Exception:
         util.exit_message("Unable to update JSON file", 1)
 
+def capture_backrest_config(cluster_name, verbose=False):
+    """
+    Capture and clean BackRest configuration for all nodes (and sub-nodes) in the cluster
+    that have BackRest enabled, and save the configuration in INI-style format.
+
+    For each node with a non-empty 'backrest' configuration in the cluster JSON,
+    this function will:
+      1. Change directory to the node's pgedge directory.
+      2. Run "./pgedge backrest show-config" and capture the output.
+      3. Clean the output by removing extraneous lines, ANSI escape codes, and literal "^[[0m" strings,
+         then parse it into a dictionary.
+      4. Reformat the configuration into two sections ([global] and [default_<stanza>]) and
+         write the resulting text to a file named "backrest_{node_name}.yaml" (or any desired extension)
+         in the node's "pgedge/backrest" directory.
+    """
+    import os
+    import re
+    import yaml  # Only needed if load_json or other parts are using YAML
+    # Assume util, run_cmd, load_json are already imported or defined
+
+    # Load the cluster configuration
+    db, db_settings, nodes = load_json(cluster_name)
+
+    # Create a combined list of all nodes (including sub-nodes)
+    all_nodes = []
+    for node in nodes:
+        all_nodes.append(node)
+        if "sub_nodes" in node and isinstance(node["sub_nodes"], list):
+            all_nodes.extend(node["sub_nodes"])
+
+    # Regex to remove ANSI escape sequences
+    ansi_escape = re.compile(r'\x1B[@-_][0-?]*[ -/]*[@-~]')
+
+    for node in all_nodes:
+        if node.get("backrest"):
+            cmd = f"cd {node['path']}/pgedge && ./pgedge backrest show-config"
+            result = run_cmd(
+                cmd,
+                node,
+                message=f"Capturing BackRest configuration for node {node['name']}",
+                verbose=verbose,
+                capture_output=True
+            )
+            # Debug: Check raw command output
+            util.message(f"[DEBUG] Raw output for node {node['name']}:\n{result.stdout}", "debug")
+            
+            # Remove ANSI escape sequences and literal "^[[0m"
+            output = ansi_escape.sub('', result.stdout)
+            output = output.replace("^[[0m", "")
+            
+            # Debug: Print cleaned output
+            util.message(f"[DEBUG] Cleaned output for node {node['name']}:\n{output}", "debug")
+            
+            # Parse the cleaned output into a dictionary
+            config_dict = {}
+            for line in output.splitlines():
+                line = line.strip()
+                # Skip empty lines, header/footer lines, or lines without '='
+                if not line or line.startswith('#') or ('=' not in line):
+                    continue
+                parts = line.split('=', 1)
+                if len(parts) != 2:
+                    continue
+                key = parts[0].strip()
+                value = parts[1].strip()
+                if value.isdigit():
+                    value = int(value)
+                config_dict[key] = value
+
+            # Debug: Check the resulting dictionary
+            util.message(f"[DEBUG] Parsed config for node {node['name']}: {config_dict}", "debug")
+            
+            if not config_dict:
+                util.message(f"[WARNING] No configuration parsed for node {node['name']}.", "warning")
+                continue  # Skip writing file if nothing parsed
+
+            # Define the keys for the [global] section based on your desired format.
+            # For repo1-cipher-pass, use a default value if not set.
+            global_keys = [
+                "repo1-path",
+                "repo1-retention-full",
+                "repo1-retention-full-type",
+                "repo1-type",
+                "repo1-cipher-type",
+                "repo1-cipher-pass",  # May not be present; we can provide a default.
+                "repo1-host-user",
+                "log-level-console",
+                "process-max",
+                "compress-level"
+            ]
+            global_config = {}
+            for key in global_keys:
+                # If the key is missing, set repo1-cipher-pass to a default if needed
+                if key not in config_dict:
+                    if key == "repo1-cipher-pass":
+                        global_config[key] = "Really_s3cure_password"
+                    else:
+                        continue
+                else:
+                    global_config[key] = config_dict[key]
+
+            # Define the keys for the stanza section.
+            stanza_keys = ["pg1-path", "pg1-user", "pg1-port", "db-socket-path"]
+            stanza_config = {}
+            for key in stanza_keys:
+                if key in config_dict:
+                    stanza_config[key] = config_dict[key]
+
+            # Build the stanza header: transform the stanza value.
+            # For example, if the stanza is "demo_stanza_n2", change it to "default_stanza_n2".
+            stanza_value = config_dict.get("stanza", "stanza_default")
+            if stanza_value.startswith("demo_"):
+                stanza_header = "default_" + stanza_value[len("demo_"):]
+            else:
+                stanza_header = "default_" + stanza_value
+
+            # Build the output content in INI format.
+            output_lines = []
+            output_lines.append("[global]")
+            for key in global_keys:
+                if key in global_config:
+                    output_lines.append(f"{key}={global_config[key]}")
+            output_lines.append("")  # Blank line separator
+            output_lines.append(f"[{stanza_header}]")
+            for key in stanza_keys:
+                if key in stanza_config:
+                    output_lines.append(f"{key}={stanza_config[key]}")
+
+            final_output = "\n".join(output_lines)
+
+            # Debug: Print the final formatted output
+            util.message(f"[DEBUG] Final formatted output for node {node['name']}:\n{final_output}", "debug")
+            
+            # Ensure the "pgedge/backrest" directory exists on the node
+            backrest_dir = os.path.join(node["path"], "pgedge", "backrest")
+            os.makedirs(backrest_dir, exist_ok=True)
+            file_path = os.path.join(backrest_dir, f"backrest_{node['name']}.yaml")
+            
+            try:
+                with open(file_path, "w") as conf_file:
+                    conf_file.write(final_output)
+                util.message(
+                    f"Cleaned BackRest configuration for node '{node['name']}' written to {file_path}",
+                    "info"
+                )
+            except Exception as e:
+                util.exit_message(
+                    f"Failed to write cleaned BackRest configuration for node '{node['name']}': {e}"
+                )
+        else:
+            util.message(
+                f"Node '{node['name']}' does not have BackRest enabled; skipping.",
+                "info"
+            )
+
+
 
 def init(cluster_name, install=True):
     """
@@ -1545,7 +1701,8 @@ def init(cluster_name, install=True):
                     # (f) Set BACKUP pg1-port to the node's port value
             cmd_set_pg1_port = f"cd {node['path']}/pgedge && ./pgedge set BACKUP repo1-path {repo1_path}"
             run_cmd(cmd_set_pg1_port, node=node, message=f"Setting BACKUP repo1-path to {repo1_path} on node '{node['name']}'", verbose=verbose)
-    
+            
+    capture_backrest_config(cluster_name, verbose=True)
     # 7. If it's an HA cluster, handle Patroni/etcd, etc.
     if is_ha_cluster:
         pg_ver = db_settings["pg_version"]
@@ -2298,6 +2455,7 @@ def add_node(
                     message="Creating full pgBackRest backup",
                     verbose=verbose,
                 )
+            
         else:
             # If no node_groups exist at all, remove pgbackrest
             repo1_path_target_file = None
@@ -2326,7 +2484,7 @@ def add_node(
     cluster_data["update_date"] = datetime.datetime.now().astimezone().isoformat()
 
     write_cluster_json(cluster_name, cluster_data)
-
+    capture_backrest_config(cluster_name, verbose=True)
     check_source_backrest_config(source_node_data)
 
 
