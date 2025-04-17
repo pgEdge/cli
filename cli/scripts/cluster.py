@@ -649,14 +649,14 @@ def remove(cluster_name, force=False):
     """
     Remove a cluster.
 
-    Remove a cluster.
-
-    This command removes Spock subscriptions and nodes, and stops PostgreSQL on each node.
-    If the `force` flag is set to `True`, it will also remove the `pgedge` directory on each node.
+    This command removes spock subscriptions and nodes, and stops PostgreSQL on each node.
+    If the `force` flag is set to `True`, it will also remove the `pgedge` directory on 
+    each node, including the PostgreSQL data directory.
 
     Args:
         cluster_name (str): The name of the cluster to remove.
-        force (bool, optional): If `True`, removes the `pgedge` directory on each node. Defaults to `False`.
+        force (bool, optional): If `True`, removes the `pgedge` directory on each node. 
+                                Defaults to `False`.
     """
     db, db_settings, nodes = load_json(cluster_name)
 
