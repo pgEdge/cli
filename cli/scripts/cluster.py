@@ -650,8 +650,8 @@ def remove(cluster_name, force=False):
     Remove a cluster.
 
     This command removes spock subscriptions and nodes, and stops PostgreSQL on each node.
-    If the `force` flag is set to `True`, it will also remove the `pgedge` directory on 
-    each node, including the PostgreSQL data directory.
+        If the `force` flag is set to `True`, it will also remove the `pgedge` directory on 
+        each node, including the PostgreSQL data directory.
 
     Args:
         cluster_name (str): The name of the cluster to remove.
@@ -2736,9 +2736,9 @@ def replication_all_tables(cluster_name, database_name=None):
     Add all tables to the default replication set on every node.
 
     Adds all tables in the given database to the default replication set on every node
-    in the specified cluster. If no database name is provided, the first database in the cluster
-    configuration is used. The function ensures that replication is not configured if auto DDL
-    is enabled for the database.
+        in the specified cluster. If no database name is provided, the first database in the cluster
+        configuration is used. The function ensures that replication is not configured if auto DDL
+        is enabled for the database.
 
     Args:
         cluster_name (str): The name of the cluster where the database is located.
@@ -2776,7 +2776,7 @@ def replication_check(cluster_name, show_spock_tables=False, database_name=None)
     Check and display the replication status for a given cluster.
 
     Retrieves the replication status for all nodes in the specified cluster.
-    Optionally, it can also display the tables associated with Spock replication sets.
+        Optionally, it can also display the tables associated with Spock replication sets.
 
     Args:
         cluster_name (str): The name of the cluster to check replication status for.
