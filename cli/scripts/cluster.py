@@ -1269,7 +1269,7 @@ def init(cluster_name, install=True):
         2. Checks SSH connectivity for all nodes.
         3. Installs pgEdge on all nodes.
         4. Configures Spock for replication for all configured databases across all nodes.
-        5. Integrates pgBackRest on nodes, if configured
+        5. Integrates pgBackRest on nodes, if configured.
 
     Args:
         cluster_name (str): The name of the cluster to initialize.
