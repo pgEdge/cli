@@ -54,7 +54,17 @@ def run_cmd(
     )
 
 def ssh(cluster_name, node_name):
-    """An SSH Terminal session into the specified node."""
+    """
+    Establish an SSH session into the specified node of a cluster.
+
+    This command connects to a node within a cluster using SSH. It validates 
+    the cluster configuration, retrieves the node's IP address, and executes 
+    the SSH command with the appropriate credentials.
+
+    Args:
+        cluster_name (str): The name of the cluster containing the node.
+        node_name (str): The name of the node to connect to.
+    """
     json_validate(cluster_name)
     db, db_settings, nodes = load_json(cluster_name)
 
@@ -255,7 +265,11 @@ def save_updated_json(cluster_name, updated_json):
 
 
 def json_validate(cluster_name):
-    """Validate and update a cluster configuration JSON file."""
+    """Validate and update a cluster configuration JSON file.
+
+    Args:
+        cluster_name (str): The name of the cluster to validate.
+    """
 
     # Function to exit with a message
     class Util:
@@ -632,15 +646,17 @@ def ssh_cross_wire_pgedge(
 
 
 def remove(cluster_name, force=False):
-    """Remove a cluster. 
-    
-    This will remove spock subscriptions and nodes, and
-    then stop postgres on each node. If the flag force is set to true,
-    then it will also remove the pgedge directory on each node.
-    This command requires a JSON file with the same name as the cluster to
-    be in the cluster/<cluster_name>.
-    Example: cluster remove demo
-    :param cluster_name: The name of the cluster.
+    """
+    Remove a cluster.
+
+    This command removes spock subscriptions and nodes, and stops PostgreSQL on each node.
+        If the `force` flag is set to `True`, it will also remove the `pgedge` directory on 
+        each node, including the PostgreSQL data directory.
+
+    Args:
+        cluster_name (str): The name of the cluster to remove.
+        force (bool, optional): If `True`, removes the `pgedge` directory on each node. 
+                                Defaults to `False`.
     """
     db, db_settings, nodes = load_json(cluster_name)
 
@@ -667,15 +683,16 @@ def remove(cluster_name, force=False):
 
 
 def add_db(cluster_name, database_name, username, password):
-    """Add a database to an existing pgEdge cluster.
+    """
+    Add a database to an existing pgEdge cluster.
+    
+    This command creates a new database in the cluster, installs spock, and sets up all spock nodes and subscriptions.
 
-    Create the new database in the cluster, install spock, and create all spock nodes and subscriptions.
-    This command requires a JSON file with the same name as the cluster to be in the cluster/<cluster_name>. \n
-    Example: cluster add-db demo test admin password
-    :param cluster_name: The name of the existing cluster.
-    :param database_name: The name of the new database.
-    :param username: The name of the user that will be created and own the db.
-    :param password: The password for the new user.
+    Args:
+        cluster_name (str): The name of the cluster where the database should be added.
+        database_name (str): The name of the new database.
+        username (str): The name of the user that will be created and own the database.
+        password (str): The password for the new user.
     """
     util.message(f"## Loading cluster '{cluster_name}' json definition file")
     db, db_settings, nodes = load_json(cluster_name)
@@ -697,17 +714,19 @@ def add_db(cluster_name, database_name, username, password):
 
 
 def json_template(cluster_name, db, num_nodes, usr, passwd, pg, port):
-    """Create a template for a cluster configuration JSON file.
-   
-       Create a JSON configuration file template that can be modified to fully define a remote cluster. \n
-       Example: cluster define-remote demo db 3 lcusr lcpasswd 16 5432
-       :param cluster_name: The name of the cluster. A directory with this same name will be created in the cluster directory, and the JSON file will have the same name.
-       :param db: The database name.
-       :param num_nodes: The number of nodes in the cluster.
-       :param usr: The username of the superuser created for this database.
-       :param passwd: The password for the above user.
-       :param pg: The postgres version of the database.
-       :param port1: The port number for the database.
+    """
+    Create a template for a cluster configuration JSON file.
+
+    Args:
+        cluster_name (str): The name of the cluster. A directory with this name will 
+                            be created in the cluster directory, and the JSON file 
+                            will have the same name.
+        db (str): The database name.
+        num_nodes (int): The number of nodes in the cluster.
+        usr (str): The username of the superuser created for this database.
+        passwd (str): The password for the above user.
+        pg (str): The PostgreSQL version of the database.
+        port (int): The port number for the database.
     """
     json_create(cluster_name, num_nodes, db, usr, passwd, pg, port, True)
 
@@ -716,19 +735,21 @@ def json_create(
     cluster_name, num_nodes, db, usr, passwd, pg_ver=None, port=None, force=False
 ):
     """
-    Create a cluster configuration JSON file with options for spock and pgBackRest.
-
-    Usage:
-        ./pgedge cluster json-create CLUSTER_NAME NUM_NODES DB USR PASSWD [pg_ver=PG_VERSION] [--port PORT]
+    Create a cluster configuration JSON file based on user input.
 
     Args:
-        cluster_name (str): The name of the cluster. A directory with this same name will be created in the cluster directory, and the JSON file will have the same name.
+        cluster_name (str): The name of the cluster. A directory with this 
+            same name will be created in the cluster directory, and the JSON 
+            file will have the same name.
         num_nodes (int): The number of nodes in the cluster.
         db (str): The database name.
         usr (str): The username of the superuser created for this database.
-        passwd (str): The password for the above user.
+        passwd (str): The password for the superuser.
         pg_ver (str or int, optional): The PostgreSQL version of the database.
-        port (str or int, optional): The port number for the primary nodes. Must be between 1 and 65535. Defaults to '5432'.
+        port (str or int, optional): The port number for the primary nodes. 
+            Must be between 1 and 65535. Defaults to '5432'.
+        force (bool, optional): If True, forces the creation of the JSON file 
+            without prompting for user input.
     """
 
     # Function to exit with a message
@@ -1242,22 +1263,16 @@ def init(cluster_name, install=True):
     """
     Initialize a cluster via cluster configuration JSON file.
 
-    This function performs the following steps:
-    1. Loads the cluster configuration.
-    2. Checks SSH connectivity for all nodes.
-    3. Installs pgEdge on all nodes.
-    4. Configures Spock for replication.
-    5. Integrates pgBackRest on nodes where it is enabled.
-       - Creates unique stanza names: {cluster_name}_stanza_{node_name}
-       - Removes --pg1-port from set_postgresqlconf / set_hbaconf to avoid errors.
-       - Ensures that every pgBackRest configuration value is set before creating the stanza.
-       - Appends the node name to both the repo1-path and restore_path.
-    6. Creates an initial full backup using pgBackRest.
-    7. Performs HA-specific configurations if enabled.
-    8. Finalizes and saves the cluster configuration.
+    Initialize a cluster via cluster configuration JSON file by performing the following steps:
+    
+        1. Loads the cluster configuration.
+        2. Checks SSH connectivity for all nodes.
+        3. Installs pgEdge on all nodes.
+        4. Configures Spock for replication for all configured databases across all nodes.
+        5. Integrates pgBackRest on nodes, if configured.
 
     Args:
-        cluster_name (str): The name of the cluster.
+        cluster_name (str): The name of the cluster to initialize.
         install (bool): Whether to install pgEdge on nodes. Defaults to True.
     """
     # 1. Load cluster configuration
@@ -1269,19 +1284,18 @@ def init(cluster_name, install=True):
     is_ha_cluster = parsed_json.get("is_ha_cluster", False)
     verbose = parsed_json.get("log_level", "info")
     
-    # 2. Combine all nodes and sub-nodes into a single list
     all_nodes = nodes.copy()
     for node in nodes:
         if "sub_nodes" in node and node["sub_nodes"]:
             all_nodes.extend(node["sub_nodes"])
     
-    # 3. Check SSH connectivity for all nodes
+    # 2. Check SSH connectivity for all nodes
     util.message("## Checking SSH connectivity for all nodes", "info")
     for nd in all_nodes:
         message = f"Checking SSH connectivity on {nd['public_ip']}"
         run_cmd(cmd="hostname", node=nd, message=message, verbose=verbose)
     
-    # 4. Install pgEdge on all nodes
+    # 3. Install pgEdge on all nodes
     util.message("## Installing pgEdge on all nodes", "info")
     ssh_install_pgedge(
         cluster_name,
@@ -1294,7 +1308,7 @@ def init(cluster_name, install=True):
         verbose,
     )
     
-    # 5. Configure Spock replication on all nodes (for the first DB)
+    # 4. Configure Spock replication on all nodes (for the first DB)
     util.message("## Configuring Spock replication on all nodes", "info")
     ssh_cross_wire_pgedge(
         cluster_name,
@@ -1321,7 +1335,7 @@ def init(cluster_name, install=True):
                 verbose,
             )
     
-    # 6. Integrate pgBackRest (if a "backrest" block is present) on each node
+    # 5. Integrate pgBackRest (if a "backrest" block is present) on each node
     cluster_name_from_json = parsed_json["cluster_name"]
     
     for idx, node in enumerate(all_nodes, start=1):
@@ -1459,7 +1473,7 @@ def init(cluster_name, install=True):
             cmd_set_pg1_port = f"cd {node['path']}/pgedge && ./pgedge set BACKUP repo1-path {repo1_path}"
             run_cmd(cmd_set_pg1_port, node=node, message=f"Setting BACKUP repo1-path to {repo1_path} on node '{node['name']}'", verbose=verbose)
     
-    # 7. If it's an HA cluster, handle Patroni/etcd, etc.
+    # 6. If it's an HA cluster, handle Patroni/etcd, etc.
     if is_ha_cluster:
         pg_ver = db_settings["pg_version"]
         for node in nodes:
@@ -1505,17 +1519,32 @@ def add_node(
     install=True,
 ):
     """
-    Adds a new node to a cluster, copying configurations from a specified
-    source node.
+    Add a new node to a cluster
+
+    Add a new node to a cluster by performing the following steps:
+
+        1. Validate the cluster and target node JSON configurations.
+        2. Install pgEdge on the target node, if required.
+        3. Configure pgBackRest on the source node, if not already configured.
+        4. Restore the target node from a backup of the source node using pgBackRest.
+        5. Configure the target node as a standby replica of the source node.
+        6. Promote the target node to a primary once it catches up to the source node.
+        7. Configure replication and subscriptions for the new node across the cluster.
+        8. Update the cluster JSON configuration with the new node.
+
+        A target node JSON configuration file must be provided in the same directory from which
+        this command is invoked, named '<node_name>.json'.
 
     Args:
-        cluster_name (str): The name of the cluster to which the node is being
-                            added.
-        source_node (str): The node from which configurations are copied.
-        target_node (str): The new node.
-        repo1_path (str): The repo1 path to use.
-        backup_id (str): Backup ID.
-        script (str): Bash script.
+        cluster_name (str): The name of the cluster to which the node is being added.
+        source_node (str): The name of the source node from which configurations and data are copied.
+        target_node (str): The name of the new node being added.
+        repo1_path (str, optional): The repository path for pgBackRest. If not provided, 
+            the source node's configuration is used.
+        backup_id (str, optional): The ID of the backup to restore from. If not provided, 
+            the latest backup is used.
+        script (str, optional): A bash script to execute after the target node is added.
+        install (bool, optional): Whether to install pgEdge on the target node. Defaults to True.
     """
     db, db_settings, nodes = load_json(cluster_name)
 
@@ -2346,10 +2375,22 @@ def json_validate_add_node(data):
     util.message("✔ add‑node JSON structure is valid.", "success")
 
 def remove_node(cluster_name, node_name):
-    """Remove a node from the cluster configuration.
+    """
+    Remove a node from a cluster
 
-       Now also checks for multiple databases on the node, and drops all
-       subscriptions/Spock extension across each database before removal.
+    Remove a node from a cluster by performing the following steps:
+
+        1. Load and validate the cluster JSON configuration.
+        2. Verify SSH connectivity for all nodes in the cluster.
+        3. On other nodes (not being removed), drop any subscriptions that point to the node being removed.
+        4. On the node being removed, drop all subscriptions to other nodes and remove spock configuration. 
+        5. Stop the node being removed and list the Spock nodes for each database on other nodes.
+        6. Remove the node from the cluster configuration JSON file.
+        7. Save the updated cluster configuration back to the cluster configuration JSON file.
+
+    Args:
+        cluster_name (str): The name of the cluster from which the node should be removed.
+        node_name (str): The name of the node to remove.
     """
     json_validate(cluster_name)
     db, db_settings, nodes = load_json(cluster_name)
@@ -2691,7 +2732,20 @@ def check_wal_rec(n, dbname, stanza, verbose, timeout=600, interval=1):
 
 
 def replication_all_tables(cluster_name, database_name=None):
-    """Add all tables in the database to replication on every node."""
+    """
+    Add all tables to the default replication set on every node.
+
+    Adds all tables in the given database to the default replication set on every node
+        in the specified cluster. If no database name is provided, the first database in the cluster
+        configuration is used. The function ensures that replication is not configured if auto DDL
+        is enabled for the database.
+
+    Args:
+        cluster_name (str): The name of the cluster where the database is located.
+        database_name (str, optional): The name of the database to replicate. Defaults to None.
+
+    """
+
     db, db_settings, nodes = load_json(cluster_name)
     db_name = None
     if database_name is None:
@@ -2718,7 +2772,18 @@ def replication_all_tables(cluster_name, database_name=None):
 
 
 def replication_check(cluster_name, show_spock_tables=False, database_name=None):
-    """Print replication status on every node"""
+    """
+    Check and display the replication status for a given cluster.
+
+    Retrieves the replication status for all nodes in the specified cluster.
+        Optionally, it can also display the tables associated with Spock replication sets.
+
+    Args:
+        cluster_name (str): The name of the cluster to check replication status for.
+        show_spock_tables (bool, optional): If True, displays the tables in Spock replication sets. Defaults to False.
+        database_name (str, optional): The name of the specific database to check. If not provided, the first database
+                                        in the cluster configuration will be used.
+    """
     db, db_settings, nodes = load_json(cluster_name)
     db_name = None
     if database_name is None:
@@ -2742,16 +2807,16 @@ def replication_check(cluster_name, show_spock_tables=False, database_name=None)
         util.echo_cmd(cmd, host=ndip, usr=os_user, key=ssh_key)
 
 
-def command(cluster_name, node, cmd, args=None):
-    """Run './pgedge' commands on one or 'all' nodes.
+def command(cluster_name, node, cmd):
+    """
+    Run './pgedge' commands on one or all nodes in a cluster.
 
-    Run './pgedge' commands on one or all of the nodes in a cluster.
-    This command requires a JSON file with the same name as the cluster to be in the cluster/<cluster_name>. \n
-    Example: cluster command demo n1 "status"
-    Example: cluster command demo all "spock repset-add-table default '*' db[0]["name"]"
-    :param cluster_name: The name of the cluster.
-    :param node: The node to run the command on. Can be the node name or all.
-    :param cmd: The command to run on every node, excluding the beginning './pgedge'
+    This command executes './pgedge' commands on a specified node or all nodes in the cluster.
+
+    Args:
+        cluster_name (str): The name of the cluster.
+        node (str): The node to run the command on. Can be the node name or 'all'.
+        cmd (str): The command to run on every node, excluding the beginning './pgedge'.
     """
 
     db, db_settings, nodes = load_json(cluster_name)
@@ -2774,14 +2839,16 @@ def command(cluster_name, node, cmd, args=None):
 
 
 def app_install(cluster_name, app_name, database_name=None, factor=1):
-    """Install test application [ pgbench | northwind ].
+    """
+    Install a test application on all nodes in the cluster.
 
-    Install a test application on all of the nodes in a cluster.
-    This command requires a JSON file with the same name as the cluster to be in the cluster/<cluster_name>. \n
-    Example: cluster app-install pgbench
-    :param cluster_name: The name of the cluster.
-    :param node: The application name, pgbench or northwind.
-    :param factor: The scale flag for pgbench.
+    Install a test application on all nodes in the cluster. Supported applications include 'pgbench' and 'northwind'. 
+
+    Args:
+        cluster_name (str): The name of the cluster.
+        app_name (str): The name of the application to install ('pgbench' or 'northwind').
+        database_name (str, optional): The name of the database to install the application on. Defaults to the first database in the cluster configuration.
+        factor (int, optional): The scale factor for 'pgbench'. Defaults to 1.
     """
     db, db_settings, nodes = load_json(cluster_name)
     db_name = None
@@ -2847,13 +2914,14 @@ def ssh_un_cross_wire(cluster_name, db, db_settings, db_user, db_passwd, nodes):
 
 
 def app_remove(cluster_name, app_name, database_name=None):
-    """Remove test application from cluster.
+    """
+    Remove a test application from all nodes in the cluster.
 
-    Remove a test application from all of the nodes in a cluster.
-    This command requires a JSON file with the same name as the cluster to be in the cluster/<cluster_name>. \n
-    Example: cluster app-remove pgbench
-    :param cluster_name: The name of the cluster.
-    :param node: The application name, pgbench or northwind.
+    Args:
+        cluster_name (str): The name of the cluster.
+        app_name (str): The name of the application to remove ('pgbench' or 'northwind').
+        database_name (str, optional): The name of the database to remove the application from. 
+                                        Defaults to the first database in the cluster configuration.
     """
     db, db_settings, nodes = load_json(cluster_name)
     db_name = None
@@ -2891,7 +2959,12 @@ def app_remove(cluster_name, app_name, database_name=None):
 
 
 def list_nodes(cluster_name):
-    """List all nodes in the cluster."""
+    """
+    List all nodes in the cluster.
+    
+    Args:
+        cluster_name (str): The name of the cluster.
+    """
     db, db_settings, nodes = load_json(cluster_name)
 
     nodes_list = []
@@ -3001,7 +3074,20 @@ def print_install_hdr(
 
 
 def app_concurrent_index(cluster_name, db_name, index_name, table_name, col):
-    """Helper function for a Creating concurrent index when auto_ddl is on."""
+    """
+    Create a concurrent index on a table column in a database.
+
+    Creates a concurrent index on a specified column of a table in a database 
+    when `auto_ddl` is enabled. It ensures the index is created across all
+    nodes in the cluster.
+
+    Args:
+        cluster_name (str): The name of the cluster where the database resides.
+        db_name (str): The name of the database where the index will be created.
+        index_name (str): The name of the index to be created.
+        table_name (str): The name of the table on which the index will be created.
+        col (str): The column of the table to be indexed.
+    """
     db, db_settings, nodes = load_json(cluster_name)
     rc = 0
     found_db_name = None
