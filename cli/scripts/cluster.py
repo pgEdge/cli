@@ -1,23 +1,22 @@
 #  Copyright 2022-2025 PGEDGE  All rights reserved. #
 import json
 import datetime
-import os
 import util
 import fire
 import meta
 import time
 import sys
 import getpass
-import re
 from tabulate import tabulate # type: ignore
 from ipaddress import ip_address
-import yaml
 try:
     import etcd 
     import ha_patroni
 except Exception:
     pass
-
+import os
+import re
+import yaml  
 BASE_DIR = "cluster"
 DEFAULT_REPO = "https://pgedge-download.s3.amazonaws.com/REPO"
 
@@ -1326,155 +1325,90 @@ def update_json(cluster_name, db_json):
 
 def capture_backrest_config(cluster_name, verbose=False):
     """
-    Capture and clean BackRest configuration for all nodes (and sub-nodes) in the cluster
-    that have BackRest enabled, and save the configuration in INI-style format.
+    write  pgBackRest config for every node that owns a
+    non‑empty 'backrest' block in the cluster JSON.
 
-    For each node with a non-empty 'backrest' configuration in the cluster JSON,
-    this function will:
-      1. Change directory to the node's pgedge directory.
-      2. Run "./pgedge backrest show-config" and capture the output.
-      3. Clean the output by removing extraneous lines, ANSI escape codes, and literal "^[[0m" strings,
-         then parse it into a dictionary.
-      4. Reformat the configuration into two sections ([global] and [default_<stanza>]) and
-         write the resulting text to a file named "backrest_{node_name}.yaml" (or any desired extension)
-         in the node's "pgedge/backrest" directory.
+    • “Static” keys come from the JSON.
+    • The remaining keys are fetched on‑node with
+         ./pgedge get BACKUP <param>
+    • The file is written to
+         <node.path>/pgedge/backrest/backrest_<node>.yaml.
     """
- 
-    nodes = load_json(cluster_name)
 
-    # Create a combined list of all nodes (including sub-nodes)
-    all_nodes = []
-    for node in nodes:
-        all_nodes.append(node)
-        if "sub_nodes" in node and isinstance(node["sub_nodes"], list):
-            all_nodes.extend(node["sub_nodes"])
+    def get_backup(node, param):
+        """Return `./pgedge get BACKUP <param>` stripped of ANSI codes."""
+        cli = os.path.join(node["path"], "pgedge", "pgedge")
+        res = run_cmd(
+            cmd=f"{cli} get BACKUP {param}",
+            node=node,
+            message=f"BACKUP get {param}",
+            verbose=verbose,
+            capture_output=True,
+            ignore=True,
+        )
+        raw = getattr(res, "stdout", "")
+        return re.sub(r"\x1B[@-_][0-?]*[ -/]*[@-~]", "", raw).strip() or "<unset>"
 
-    # Regex to remove ANSI escape sequences
-    ansi_escape = re.compile(r'\x1B[@-_][0-?]*[ -/]*[@-~]')
+    _, _, top_nodes = load_json(cluster_name)
+    nodes = [n for nd in top_nodes for n in (nd, *nd.get("sub_nodes", []))]
 
-    for node in all_nodes:
-        if node.get("backrest"):
-            cmd = f"cd {node['path']}/pgedge && ./pgedge backrest show-config"
-            result = run_cmd(
-                cmd,
-                node,
-                message=f"Capturing BackRest configuration for node {node['name']}",
-                verbose=verbose,
-                capture_output=True
-            )
-            # Debug: Check raw command output
-            util.message(f"[DEBUG] Raw output for node {node['name']}:\n{result.stdout}", "debug")
-            
-            # Remove ANSI escape sequences and literal "^[[0m"
-            output = ansi_escape.sub('', result.stdout)
-            output = output.replace("^[[0m", "")
-            
-            # Debug: Print cleaned output
-            util.message(f"[DEBUG] Cleaned output for node {node['name']}:\n{output}", "debug")
-            
-            # Parse the cleaned output into a dictionary
-            config_dict = {}
-            for line in output.splitlines():
-                line = line.strip()
-                # Skip empty lines, header/footer lines, or lines without '='
-                if not line or line.startswith('#') or ('=' not in line):
-                    continue
-                parts = line.split('=', 1)
-                if len(parts) != 2:
-                    continue
-                key = parts[0].strip()
-                value = parts[1].strip()
-                if value.isdigit():
-                    value = int(value)
-                config_dict[key] = value
+    live_global_keys  = [
+        "repo1-host-user",
+        "repo1-retention-full",
+        "repo1-retention-full-type",
+        "process-max",
+        "compress-level",
+    ]
+    live_stanza_keys = ["pg1-path", "pg1-user", "pg1-port", "db-socket-path"]
 
-            # Debug: Check the resulting dictionary
-            util.message(f"[DEBUG] Parsed config for node {node['name']}: {config_dict}", "debug")
-            
-            if not config_dict:
-                util.message(f"[WARNING] No configuration parsed for node {node['name']}.", "warning")
-                continue  # Skip writing file if nothing parsed
-
-            # Define the keys for the [global] section based on your desired format.
-            # For repo1-cipher-pass, use a default value if not set.
-            global_keys = [
-                "repo1-path",
-                "repo1-retention-full",
-                "repo1-retention-full-type",
-                "repo1-type",
-                "repo1-cipher-type",
-                "repo1-cipher-pass",  # May not be present; we can provide a default.
-                "repo1-host-user",
-                "log-level-console",
-                "process-max",
-                "compress-level"
-            ]
-            global_config = {}
-            for key in global_keys:
-                # If the key is missing, set repo1-cipher-pass to a default if needed
-                if key not in config_dict:
-                    if key == "repo1-cipher-pass":
-                        global_config[key] = "Really_s3cure_password"
-                    else:
-                        continue
-                else:
-                    global_config[key] = config_dict[key]
-
-            # Define the keys for the stanza section.
-            stanza_keys = ["pg1-path", "pg1-user", "pg1-port", "db-socket-path"]
-            stanza_config = {}
-            for key in stanza_keys:
-                if key in config_dict:
-                    stanza_config[key] = config_dict[key]
-
-            # Build the stanza header: transform the stanza value.
-            # For example, if the stanza is "demo_stanza_n2", change it to "default_stanza_n2".
-            stanza_value = config_dict.get("stanza", "stanza_default")
-            if stanza_value.startswith("demo_"):
-                stanza_header = "default_" + stanza_value[len("demo_"):]
-            else:
-                stanza_header = "default_" + stanza_value
-
-            # Build the output content in INI format.
-            output_lines = []
-            output_lines.append("[global]")
-            for key in global_keys:
-                if key in global_config:
-                    output_lines.append(f"{key}={global_config[key]}")
-            output_lines.append("")  # Blank line separator
-            output_lines.append(f"[{stanza_header}]")
-            for key in stanza_keys:
-                if key in stanza_config:
-                    output_lines.append(f"{key}={stanza_config[key]}")
-
-            final_output = "\n".join(output_lines)
-
-            # Debug: Print the final formatted output
-            util.message(f"[DEBUG] Final formatted output for node {node['name']}:\n{final_output}", "debug")
-            
-            # Ensure the "pgedge/backrest" directory exists on the node
-            backrest_dir = os.path.join(node["path"], "pgedge", "backrest")
-            os.makedirs(backrest_dir, exist_ok=True)
-            file_path = os.path.join(backrest_dir, f"backrest_{node['name']}.yaml")
-            
-            try:
-                with open(file_path, "w") as conf_file:
-                    conf_file.write(final_output)
-                util.message(
-                    f"Cleaned BackRest configuration for node '{node['name']}' written to {file_path}",
-                    "info"
-                )
-            except Exception as e:
-                util.exit_message(
-                    f"Failed to write cleaned BackRest configuration for node '{node['name']}': {e}"
-                )
-        else:
-            util.message(
-                f"Node '{node['name']}' does not have BackRest enabled; skipping.",
-                "info"
-            )
+    for nd in nodes:
+        br = nd.get("backrest")
+        if not br:
+            util.message(f"Node '{nd['name']}' has no backrest block – skipping.")
+            continue
 
 
+        g = {
+            "repo1-path":            br["repo1_path"],
+            "repo1-retention-full":  br.get("repo1_retention_full", ""),
+            "repo1-retention-full-type": br.get("repo1_retention_full_type", ""),
+            "repo1-type":            br.get("repo1_type", "posix"),
+            "repo1-cipher-type":     br.get("repo1_cipher-type", "aes-256-cbc"),
+            "log-level-console":     br.get("log_level_console", "info"),
+        }
+        for k in live_global_keys:
+            g[k] = get_backup(nd, k)
+
+        
+        ordered = [
+            "repo1-path",
+            "repo1-retention-full",
+            "repo1-retention-full-type",
+            "repo1-type",
+            "repo1-cipher-type",
+            "repo1-host-user",     
+            "log-level-console",    
+            "process-max",
+            "compress-level",
+        ]
+        global_lines = ["[global]"] + [f"{k}={g[k]}" for k in ordered if k in g] + [""]
+
+        stanza_name  = br["stanza"]
+        stanza_label = re.sub(r"^demo_", "default_", stanza_name)
+
+        live_vals = {k: get_backup(nd, k) for k in live_stanza_keys}
+        stanza_lines = [f"[{stanza_label}]"] + [f"{k}={live_vals[k]}" for k in live_stanza_keys]
+
+        backrest_dir = os.path.join(nd["path"], "pgedge", "backrest")
+        os.makedirs(backrest_dir, exist_ok=True)
+
+        out_file = os.path.join(backrest_dir, f"backrest_{nd['name']}.yaml")
+        try:
+            with open(out_file, "w") as fh:
+                fh.write("\n".join(global_lines + stanza_lines) + "\n")
+            util.message(f"✓ wrote {out_file}", "info")
+        except Exception as e:
+            util.exit_message(f"Could not write {out_file}: {e}")
 
 def init(cluster_name, install=True):
     """

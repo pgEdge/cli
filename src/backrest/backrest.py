@@ -431,6 +431,7 @@ def run_external_command(command, **kwargs):
         util.exit_message(f"Failed: {e.stderr}'")
     except Exception as e:
         util.exit_message(f"Failed:{str(e)}")
+        
 
 if __name__ == "__main__":
     fire.Fire({
