@@ -1325,90 +1325,23 @@ def update_json(cluster_name, db_json):
 
 def capture_backrest_config(cluster_name, verbose=False):
     """
-    write  pgBackRest config for every node that owns a
-    non‑empty 'backrest' block in the cluster JSON.
+    Generate pgBackRest YAML on each node by delegating to
+    `./pgedge backrest write-config` (implemented in backrest.py).
 
-    • “Static” keys come from the JSON.
-    • The remaining keys are fetched on‑node with
-         ./pgedge get BACKUP <param>
-    • The file is written to
-         <node.path>/pgedge/backrest/backrest_<node>.yaml.
+    The command is executed inside each node’s pgedge directory.
     """
-
-    def get_backup(node, param):
-        """Return `./pgedge get BACKUP <param>` stripped of ANSI codes."""
-        cli = os.path.join(node["path"], "pgedge", "pgedge")
-        res = run_cmd(
-            cmd=f"{cli} get BACKUP {param}",
-            node=node,
-            message=f"BACKUP get {param}",
-            verbose=verbose,
-            capture_output=True,
-            ignore=True,
-        )
-        raw = getattr(res, "stdout", "")
-        return re.sub(r"\x1B[@-_][0-?]*[ -/]*[@-~]", "", raw).strip() or "<unset>"
-
+    # Grab every node + its sub‑nodes from the cluster JSON
     _, _, top_nodes = load_json(cluster_name)
     nodes = [n for nd in top_nodes for n in (nd, *nd.get("sub_nodes", []))]
 
-    live_global_keys  = [
-        "repo1-host-user",
-        "repo1-retention-full",
-        "repo1-retention-full-type",
-        "process-max",
-        "compress-level",
-    ]
-    live_stanza_keys = ["pg1-path", "pg1-user", "pg1-port", "db-socket-path"]
-
     for nd in nodes:
-        br = nd.get("backrest")
-        if not br:
-            util.message(f"Node '{nd['name']}' has no backrest block – skipping.")
-            continue
-
-
-        g = {
-            "repo1-path":            br["repo1_path"],
-            "repo1-retention-full":  br.get("repo1_retention_full", ""),
-            "repo1-retention-full-type": br.get("repo1_retention_full_type", ""),
-            "repo1-type":            br.get("repo1_type", "posix"),
-            "repo1-cipher-type":     br.get("repo1_cipher-type", "aes-256-cbc"),
-            "log-level-console":     br.get("log_level_console", "info"),
-        }
-        for k in live_global_keys:
-            g[k] = get_backup(nd, k)
-
-        
-        ordered = [
-            "repo1-path",
-            "repo1-retention-full",
-            "repo1-retention-full-type",
-            "repo1-type",
-            "repo1-cipher-type",
-            "repo1-host-user",     
-            "log-level-console",    
-            "process-max",
-            "compress-level",
-        ]
-        global_lines = ["[global]"] + [f"{k}={g[k]}" for k in ordered if k in g] + [""]
-
-        stanza_name  = br["stanza"]
-        stanza_label = re.sub(r"^demo_", "default_", stanza_name)
-
-        live_vals = {k: get_backup(nd, k) for k in live_stanza_keys}
-        stanza_lines = [f"[{stanza_label}]"] + [f"{k}={live_vals[k]}" for k in live_stanza_keys]
-
-        backrest_dir = os.path.join(nd["path"], "pgedge", "backrest")
-        os.makedirs(backrest_dir, exist_ok=True)
-
-        out_file = os.path.join(backrest_dir, f"backrest_{nd['name']}.yaml")
-        try:
-            with open(out_file, "w") as fh:
-                fh.write("\n".join(global_lines + stanza_lines) + "\n")
-            util.message(f"✓ wrote {out_file}", "info")
-        except Exception as e:
-            util.exit_message(f"Could not write {out_file}: {e}")
+        cmd = f"cd {nd['path']}/pgedge && ./pgedge backrest write-config"
+        run_cmd(
+            cmd=cmd,
+            node=nd,
+            message="Generating Backrest YAML",
+            verbose=verbose,
+        )
 
 def init(cluster_name, install=True):
     """
@@ -1630,8 +1563,8 @@ def init(cluster_name, install=True):
                     # (f) Set BACKUP pg1-port to the node's port value
             cmd_set_pg1_port = f"cd {node['path']}/pgedge && ./pgedge set BACKUP repo1-path {repo1_path}"
             run_cmd(cmd_set_pg1_port, node=node, message=f"Setting BACKUP repo1-path to {repo1_path} on node '{node['name']}'", verbose=verbose)
-            
-    capture_backrest_config(cluster_name, verbose=True)
+            capture_backrest_config(cluster_name, verbose=True)
+    
     # 7. If it's an HA cluster, handle Patroni/etcd, etc.
     if is_ha_cluster:
         pg_ver = db_settings["pg_version"]

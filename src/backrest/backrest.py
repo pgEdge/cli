@@ -7,6 +7,8 @@ import json
 import sys
 from datetime import datetime
 from tabulate import tabulate
+import yaml
+from typing import Optional
 
 def pgV():
     """Return the first found PostgreSQL version (v14 thru v17)."""
@@ -433,6 +435,56 @@ def run_external_command(command, **kwargs):
         util.exit_message(f"Failed:{str(e)}")
         
 
+
+
+
+
+
+def write_config():
+    """
+    Generate a Backrest config file in the default path (<cwd>/backrest)
+    with filename format <node_name>_<stanza>.yaml. No flags are used.
+    """
+    # Fetch configuration dict
+    cfg = fetch_config()
+    stanza = cfg.get("stanza", "stanza")
+    node_name = cfg.get("node_name", cfg.get("node", "node"))
+
+    # Default output directory
+    output_dir = os.path.join(os.getcwd(), "backrest")
+    os.makedirs(output_dir, exist_ok=True)
+
+    # Default filename
+    filename = f"{node_name}_{stanza}.yaml"
+    output_path = os.path.join(output_dir, filename)
+
+    # Split keys into global and stanza sections
+    global_keys = {}
+    stanza_keys = {}
+    for k, v in cfg.items():
+        if k in {"repo1-host", "stanza", "node_name"} or not v:
+            continue
+        if k.startswith("pg1-") or k == "db-socket-path":
+            stanza_keys[k] = v
+        else:
+            global_keys[k] = v
+
+    # Write out config
+    try:
+        with open(output_path, "w") as f:
+            f.write("[global]\n")
+            for key in sorted(global_keys):
+                f.write(f"{key}={global_keys[key]}\n")
+            f.write(f"\n[default_{stanza}]\n")
+            for key in sorted(stanza_keys):
+                f.write(f"{key}={stanza_keys[key]}\n")
+
+        util.echo_message(f"✓ Backrest configuration written to: {output_path}", level="ok")
+    except Exception as exc:
+        util.echo_message(f"Error writing config: {exc}", level="error")
+
+
+
 if __name__ == "__main__":
     fire.Fire({
         "backup": backup,
@@ -443,6 +495,7 @@ if __name__ == "__main__":
         "configure_replica": configure_replica,
         "list-backups": list_backups,
         "show-config": show_config,
+        "write-config"      : write_config,
         "set_hbaconf": modify_hba_conf,
         "set_postgresqlconf": modify_postgresql_conf,
         "command": run_external_command,
