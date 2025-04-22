@@ -432,8 +432,7 @@ def run_external_command(command, **kwargs):
     except subprocess.CalledProcessError as e:
         util.exit_message(f"Failed: {e.stderr}'")
     except Exception as e:
-        util.exit_message(f"Failed:{str(e)}")
-        
+        util.exit_message(f"Failed:{str(e)}")        
 
 
 
