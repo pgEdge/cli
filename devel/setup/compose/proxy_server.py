@@ -21,14 +21,14 @@ class ProxyRequestHandler(http.server.SimpleHTTPRequestHandler):
             self.send_error(400, "Bad Request: Invalid repository")
             return
 
-        local_path = os.path.join(os.getcwd(), *path_parts[1:])
+        local_path = os.path.join(os.getcwd(), path_parts[-1])
         if os.path.exists(local_path) and os.path.isfile(local_path):
-            self.log_message("Fatching local file: %s", local_path)
-            self.path = "/" + "/".join(path_parts[1:])
+            self.log_message("Fetching local file: %s", local_path)
+            self.path = "/" + path_parts[-1]
             return super().do_GET()
         else:
             remote_path = "/".join(path_parts[1:])
-            self.log_message("Fatching remote file: %s", remote_path)
+            self.log_message("Fetching remote file: %s", remote_path)
             self.proxy_request(repo, remote_path)
 
     def proxy_request(self, repo, path):
