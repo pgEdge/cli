@@ -476,7 +476,7 @@ def write_config():
 
         util.echo_message(f"✓ Backrest configuration written to: {output_path}", level="ok")
     except Exception as exc:
-        util.echo_message(f"Error writing config: {exc}", level="error")
+        util.echo_message(f"Error writing config: {exc}")
 
 
 
