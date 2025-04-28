@@ -7,6 +7,8 @@ import json
 import sys
 from datetime import datetime
 from tabulate import tabulate
+import yaml
+from typing import Optional
 
 def pgV():
     """Return the first found PostgreSQL version (v14 thru v17)."""
@@ -49,8 +51,6 @@ def show_config():
 def create_stanza(stanza, verbose=True):
     """
     Create the required stanza for pgBackRest.
-    This is identical to the older version but repeated here 
-    so we can call it from 'backup()' when needed.
     """
     config = fetch_config()
 
@@ -431,6 +431,85 @@ def run_external_command(command, **kwargs):
         util.exit_message(f"Failed: {e.stderr}'")
     except Exception as e:
         util.exit_message(f"Failed:{str(e)}")
+        
+def write_config():
+    """
+   Generate a pgBackRest config file from the current configuration.
+    """
+    # Fetch configuration dict
+    cfg = fetch_config()
+    stanza = cfg.get("stanza", "stanza")
+
+    # Default output directory
+    output_dir = os.path.join(os.getcwd(), "backrest")
+    os.makedirs(output_dir, exist_ok=True)
+
+    # Filename now: <stanza>.yaml
+    filename = f"{stanza}.yaml"
+    output_path = os.path.join(output_dir, filename)
+
+    # Keys to skip entirely
+    skip_keys = {"repo1-host", "stanza", "node_name", "backup-type", "restore_path"}
+
+    # Split keys into global and stanza sections
+    global_keys = {}
+    stanza_keys = {}
+    for k, v in cfg.items():
+        if k in skip_keys or not v:
+            continue
+        if k.startswith("pg1-") or k == "db-socket-path":
+            stanza_keys[k] = v
+        else:
+            global_keys[k] = v
+
+    # Write out config
+    try:
+        with open(output_path, "w") as f:
+            f.write("[global]\n")
+            for key in sorted(global_keys):
+                f.write(f"{key}={global_keys[key]}\n")
+            f.write(f"\n[{stanza}]\n")
+            for key in sorted(stanza_keys):
+                f.write(f"{key}={stanza_keys[key]}\n")
+
+        util.echo_message(f"✓ pgBackRest configuration written to: {output_path}", level="ok")
+    except Exception as exc:
+        util.echo_message(f"Error writing config: {exc}")
+
+def update_config(verbose=True):
+    """
+    Update the current configuration from the pgBackRest config file.
+    """
+    # find the YAML we wrote
+    cfg       = fetch_config()
+    stanza    = cfg.get("stanza", "stanza")
+    yaml_file = os.path.join(os.getcwd(), "backrest", f"{stanza}.yaml")
+
+    if not os.path.isfile(yaml_file):
+        util.exit_message(f"Config file not found: {yaml_file}")
+
+    # parse key=value lines
+    entries = []
+    with open(yaml_file, "r") as f:
+        for line in f:
+            line = line.strip()
+            if not line or line.startswith("["):
+                continue
+            if "=" in line:
+                key, val = line.split("=", 1)
+                entries.append((key.strip(), val.strip()))
+
+    # write each back into your BACKUP config
+    for key, val in entries:
+        if verbose:
+            util.message(f"Setting BACKUP {key} → {val}")
+        try:
+            util.set_value("BACKUP", key, val)
+        except AttributeError:
+            util.exit_message("util.set_value(section, key, value) is not implemented!")
+
+
+
 
 if __name__ == "__main__":
     fire.Fire({
@@ -442,6 +521,8 @@ if __name__ == "__main__":
         "configure_replica": configure_replica,
         "list-backups": list_backups,
         "show-config": show_config,
+        "write-config": write_config,
+        "update-config": update_config, 
         "set_hbaconf": modify_hba_conf,
         "set_postgresqlconf": modify_postgresql_conf,
         "command": run_external_command,

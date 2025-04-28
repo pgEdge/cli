@@ -1,23 +1,22 @@
 #  Copyright 2022-2025 PGEDGE  All rights reserved. #
 import json
 import datetime
-import os
 import util
 import fire
 import meta
 import time
 import sys
 import getpass
-import re
 from tabulate import tabulate # type: ignore
 from ipaddress import ip_address
-
 try:
-    import etcd
+    import etcd 
     import ha_patroni
 except Exception:
     pass
-
+import os
+import re
+import yaml  
 BASE_DIR = "cluster"
 DEFAULT_REPO = "https://pgedge-download.s3.amazonaws.com/REPO"
 
@@ -1258,6 +1257,25 @@ def update_json(cluster_name, db_json):
     except Exception:
         util.exit_message("Unable to update JSON file", 1)
 
+def capture_backrest_config(cluster_name, verbose=False):
+    """
+    Generate pgBackRest YAML on each node by delegating to
+    `./pgedge backrest write-config` (implemented in backrest.py).
+
+    The command is executed inside each node’s pgedge directory.
+    """
+    # Grab every node + its sub‑nodes from the cluster JSON
+    _, _, top_nodes = load_json(cluster_name)
+    nodes = [n for nd in top_nodes for n in (nd, *nd.get("sub_nodes", []))]
+
+    for nd in nodes:
+        cmd = f"cd {nd['path']}/pgedge && ./pgedge backrest write-config"
+        run_cmd(
+            cmd=cmd,
+            node=nd,
+            message="Generating pgBackrest YAML",
+            verbose=verbose,
+        )
 
 def init(cluster_name, install=True):
     """
@@ -1472,6 +1490,7 @@ def init(cluster_name, install=True):
                     # (f) Set BACKUP pg1-port to the node's port value
             cmd_set_pg1_port = f"cd {node['path']}/pgedge && ./pgedge set BACKUP repo1-path {repo1_path}"
             run_cmd(cmd_set_pg1_port, node=node, message=f"Setting BACKUP repo1-path to {repo1_path} on node '{node['name']}'", verbose=verbose)
+            capture_backrest_config(cluster_name, verbose=True)
     
     # 6. If it's an HA cluster, handle Patroni/etcd, etc.
     if is_ha_cluster:
@@ -2240,6 +2259,7 @@ def add_node(
                     message="Creating full pgBackRest backup",
                     verbose=verbose,
                 )
+            
         else:
             # If no node_groups exist at all, remove pgbackrest
             repo1_path_target_file = None
@@ -2268,7 +2288,7 @@ def add_node(
     cluster_data["update_date"] = datetime.datetime.now().astimezone().isoformat()
 
     write_cluster_json(cluster_name, cluster_data)
-
+    capture_backrest_config(cluster_name, verbose=True)
     check_source_backrest_config(source_node_data)
 
 
