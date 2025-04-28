@@ -51,8 +51,6 @@ def show_config():
 def create_stanza(stanza, verbose=True):
     """
     Create the required stanza for pgBackRest.
-    This is identical to the older version but repeated here 
-    so we can call it from 'backup()' when needed.
     """
     config = fetch_config()
 
