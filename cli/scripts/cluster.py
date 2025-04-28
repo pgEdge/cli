@@ -1339,7 +1339,7 @@ def capture_backrest_config(cluster_name, verbose=False):
         run_cmd(
             cmd=cmd,
             node=nd,
-            message="Generating Backrest YAML",
+            message="Generating pgBackrest YAML",
             verbose=verbose,
         )
 
