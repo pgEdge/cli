@@ -7,8 +7,6 @@ import json
 import sys
 from datetime import datetime
 from tabulate import tabulate
-import yaml
-from typing import Optional
 
 def pgV():
     """Return the first found PostgreSQL version (v14 thru v17)."""
@@ -183,6 +181,7 @@ def backup(stanza, type="full", verbose=True):
         )
     else:
         util.message(f"Successfully completed {type} backup for stanza '{stanza}'")
+
 def restore(stanza, data_dir=None, backup_label=None, recovery_target_time=None, verbose=True):
     """Restore a database cluster to a specified state."""
     config = fetch_config()
@@ -254,6 +253,19 @@ def pitr(stanza, data_dir=None, recovery_target_time=None, verbose=True):
     if restore(stanza, data_dir, None, recovery_target_time, verbose):
         _configure_pitr(stanza, data_dir, recovery_target_time)
 
+def cleanup_replica(pg1_path):
+    """Cleanup the replica configuration and restore remnants."""
+    conf_file = os.path.join(pg1_path, "postgresql.conf")
+    changes = {
+        "hot_standby": "off",
+        "primary_conninfo": "",
+        "archive_command": "",
+        "archive_mode": "off"
+    }
+    for key, value in changes.items():
+        change_pgconf_keyval(conf_file, key, value)
+
+
 def _configure_pitr(stanza, pg_data_dir=None, recovery_target_time=None):
     """Configure PostgreSQL for point-in-time recovery."""
     config = fetch_config()
@@ -264,7 +276,6 @@ def _configure_pitr(stanza, pg_data_dir=None, recovery_target_time=None):
     config_file = os.path.join(pg_data_dir, "postgresql.conf")
     changes = {
         "port": "5433",
-        "log_directory": os.path.join(pg_data_dir, "log"),
         "archive_command": "",
         "archive_mode": "off",
         "hot_standby": "on",
@@ -288,6 +299,7 @@ def change_pgconf_keyval(config_path, key, value):
                 file.write(line)
         if not key_found:
             file.write(f"{key} = '{value}'\n")
+
 def create_replica(stanza, data_dir=None, backup_label=None, verbose=True):
     """Create a replica by restoring from a backup."""
     if restore(stanza, data_dir, backup_label, verbose=verbose):
@@ -303,7 +315,6 @@ def configure_replica(stanza, pg1_path, pg1_host, pg1_port, pg1_user):
         "hot_standby": "on",
         "primary_conninfo": primary_conninfo,
         "port": pg1_port,
-        "log_directory": os.path.join(pg1_path, "log"),
         "archive_command": "cd .",
         "archive_mode": "on"
     }
@@ -518,12 +529,13 @@ if __name__ == "__main__":
         "pitr": pitr,
         "create-stanza": create_stanza,
         "create-replica": create_replica,
-        "configure_replica": configure_replica,
+        "configure-replica": configure_replica,
         "list-backups": list_backups,
         "show-config": show_config,
         "write-config": write_config,
         "update-config": update_config, 
-        "set_hbaconf": modify_hba_conf,
-        "set_postgresqlconf": modify_postgresql_conf,
+        "set-hbaconf": modify_hba_conf,
+        "set-postgresqlconf": modify_postgresql_conf,
+        "cleanup-replica": cleanup_replica,
         "command": run_external_command,
     })

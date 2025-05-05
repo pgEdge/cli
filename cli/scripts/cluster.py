@@ -1257,25 +1257,21 @@ def update_json(cluster_name, db_json):
     except Exception:
         util.exit_message("Unable to update JSON file", 1)
 
-def capture_backrest_config(cluster_name, verbose=False):
+def capture_backrest_config(node, verbose=False):
     """
-    Generate pgBackRest YAML on each node by delegating to
+    Generate pgBackRest YAML on a node by delegating to
     `./pgedge backrest write-config` (implemented in backrest.py).
 
-    The command is executed inside each node’s pgedge directory.
+    The command is executed inside the node’s pgedge directory.
     """
-    # Grab every node + its sub‑nodes from the cluster JSON
-    _, _, top_nodes = load_json(cluster_name)
-    nodes = [n for nd in top_nodes for n in (nd, *nd.get("sub_nodes", []))]
 
-    for nd in nodes:
-        cmd = f"cd {nd['path']}/pgedge && ./pgedge backrest write-config"
-        run_cmd(
-            cmd=cmd,
-            node=nd,
-            message="Generating pgBackrest YAML",
-            verbose=verbose,
-        )
+    cmd = f"cd {node['path']}/pgedge && ./pgedge backrest write-config"
+    run_cmd(
+        cmd=cmd,
+        node=node,
+        message="Generating pgBackrest YAML",
+        verbose=verbose,
+    )
 
 def init(cluster_name, install=True):
     """
@@ -1357,7 +1353,7 @@ def init(cluster_name, install=True):
     cluster_name_from_json = parsed_json["cluster_name"]
     
     for idx, node in enumerate(all_nodes, start=1):
-        backrest = node.get("backrest")
+        backrest = node.get("backrest", {})
         if backrest:
             util.message("## Integrating pgBackRest into the cluster", "info")
             util.message(f"### Configuring pgBackRest for node '{node['name']}'", "info")
@@ -1396,7 +1392,7 @@ def init(cluster_name, install=True):
             # -- Step 2: Configure postgresql.conf for pgBackRest (without --pg1-port)
             cmd_set_postgresqlconf = (
                 f"cd {node['path']}/pgedge && "
-                f"./pgedge backrest set_postgresqlconf "
+                f"./pgedge backrest set-postgresqlconf "
                 f"--stanza {stanza} "
                 f"--pg1-path {pg1_path} "
                 f"--repo1-path {repo1_path} "
@@ -1405,7 +1401,7 @@ def init(cluster_name, install=True):
             run_cmd(cmd_set_postgresqlconf, node=node, message="Modifying postgresql.conf for pgBackRest", verbose=verbose)
     
             # -- Step 3: Configure pg_hba.conf for pgBackRest (without --pg1-port)
-            cmd_set_hbaconf = f"cd {node['path']}/pgedge && ./pgedge backrest set_hbaconf"
+            cmd_set_hbaconf = f"cd {node['path']}/pgedge && ./pgedge backrest set-hbaconf"
             run_cmd(cmd_set_hbaconf, node=node, message="Modifying pg_hba.conf for pgBackRest", verbose=verbose)
     
             # -- Step 4: Reload PostgreSQL configuration to apply changes
@@ -1490,7 +1486,10 @@ def init(cluster_name, install=True):
                     # (f) Set BACKUP pg1-port to the node's port value
             cmd_set_pg1_port = f"cd {node['path']}/pgedge && ./pgedge set BACKUP repo1-path {repo1_path}"
             run_cmd(cmd_set_pg1_port, node=node, message=f"Setting BACKUP repo1-path to {repo1_path} on node '{node['name']}'", verbose=verbose)
-            capture_backrest_config(cluster_name, verbose=True)
+
+            for node in all_nodes:
+                if node.get("backrest", {}):
+                    capture_backrest_config(node, verbose=True)
     
     # 6. If it's an HA cluster, handle Patroni/etcd, etc.
     if is_ha_cluster:
@@ -1523,7 +1522,6 @@ def check_source_backrest_config(source_node_data):
             "info"
         )
     else:
-
         cmd = f"cd {source_node_data['path']}/pgedge && ./pgedge remove backrest"
         run_cmd(cmd, node=source_node_data, message="Removing pgBackRest configuration from source node", verbose=True)
 
@@ -1573,7 +1571,7 @@ def add_node(
     pg = db_settings["pg_version"]
     pgV = f"pg{pg}"
     verbose = cluster_data.get("log_level", "info")
-
+    
     # Load and validate the target node JSON
     target_node_file = f"{target_node}.json"
     if not os.path.isfile(target_node_file):
@@ -1589,7 +1587,7 @@ def add_node(
         )
 
     # NEW: Check if target JSON has backrest configuration
-    target_backrest_settings = target_node_data.get("backrest", {})
+    target_backrest_cfg = target_node_data.get("backrest", {})
     # Retrieve source node data
     source_node_data = next(
         (node for node in nodes if node["name"] == source_node), None
@@ -1598,8 +1596,8 @@ def add_node(
         util.exit_message(f"Source node '{source_node}' not found in cluster data.")
 
     # Extract backrest settings from source node (before using repo1_path flag)
-    backrest_settings = source_node_data.get("backrest", {})
-    source_repo1_path = backrest_settings.get("repo1_path")
+    source_backrest_cfg = source_node_data.get("backrest", {})
+    source_repo1_path = source_backrest_cfg.get("repo1_path")
 
     # Check: if source node JSON already provides repo1_path and the flag is given then exit
     if repo1_path and source_repo1_path:
@@ -1610,7 +1608,6 @@ def add_node(
 
     for group in target_node_data.get("node_groups", []):
         ssh_info = group.get("ssh")
-        backrest_info = group.get("backrest")
         os_user = ssh_info.get("os_user", "")
         ssh_key = ssh_info.get("private_key", "")
 
@@ -1626,9 +1623,8 @@ def add_node(
             "ssh_key": ssh_key,
         }
 
-    # If backrest settings are provided in the JSON, add them to new_node_data.
-    if backrest_info:
-        new_node_data["backrest"] = backrest_info
+
+
     if "public_ip" not in new_node_data and "private_ip" not in new_node_data:
         util.exit_message(
             "Both public_ip and private_ip are missing in target node data."
@@ -1648,10 +1644,11 @@ def add_node(
             "public_ip", new_node_data.get("private_ip")
         )
 
-    # Fetch backrest settings from the source node directory
-    backrest_settings = source_node_data.get("backrest", {})
-    # New check: if pgBackRest is not configured on the source node
-    if not backrest_settings:
+    # If backrest settings are provided in the JSON, add them to new_node_data.
+    if source_backrest_cfg:
+        new_node_data["backrest"] = source_backrest_cfg
+    else:
+        # Otherwise, we assume pgBackRest is not configured and should be installed.
         # Step 1: Install pgBackRest on the source node
         cmd_install_backrest = (
             f"cd {source_node_data['path']}/pgedge && ./pgedge install backrest"
@@ -1674,22 +1671,14 @@ def add_node(
         repo1_retention_full = "7"
         log_level_console = "info"
         repo1_cipher_type = "aes-256-cbc"
-        repo1_type = "posix"  # Could also be "s3"
+        repo1_type = "posix" 
+
         # Determine the repository path for the source node.
         if repo1_path:
             # Use the provided flag value as-is (trimmed of any trailing slash).
             repo1_path_source = repo1_path.rstrip("/")
         else:
-            # No repo1_path flag provided: check the JSON configuration or default.
-            json_repo1_path = backrest_settings.get("repo1_path")
-            if json_repo1_path:
-                repo1_path_source = json_repo1_path.rstrip("/")
-                if not repo1_path_source.endswith(source_node_data["name"]):
-                    repo1_path_source = (
-                        repo1_path_source + f"/{source_node_data['name']}"
-                    )
-            else:
-                repo1_path_source = f"/var/lib/pgbackrest/{source_node_data['name']}"
+            repo1_path_source = f"/var/lib/pgbackrest/{source_node_data['name']}"
 
         # Similarly, set restore_path to include node name
         restore_path_source = "/var/lib/pgbackrest_restore"
@@ -1705,7 +1694,7 @@ def add_node(
         # Step 2: Configure postgresql.conf for pgBackRest (without --pg1-port)
         cmd_set_postgresqlconf_source = (
             f"cd {source_node_data['path']}/pgedge && "
-            f"./pgedge backrest set_postgresqlconf "
+            f"./pgedge backrest set-postgresqlconf "
             f"--stanza {stanza_source} "
             f"--pg1-path {pg1_path_source} "
             f"--repo1-path {repo1_path_source} "
@@ -1720,7 +1709,7 @@ def add_node(
 
         # Step 3: Configure pg_hba.conf for pgBackRest (without --pg1-port)
         cmd_set_hbaconf_source = (
-            f"cd {source_node_data['path']}/pgedge && ./pgedge backrest set_hbaconf"
+            f"cd {source_node_data['path']}/pgedge && ./pgedge backrest set-hbaconf"
         )
         run_cmd(
             cmd_set_hbaconf_source,
@@ -1769,8 +1758,6 @@ def add_node(
             )
 
         # Step 6: Set all pgBackRest backup configuration values for the source node.
-        #
-        # Build one compound shell command
         compound_cmd = " && ".join(
             [
                 f"cd {source_node_data['path']}/pgedge",
@@ -1792,7 +1779,7 @@ def add_node(
             verbose=False,
         )
 
-        # Step 7:Create the pgBackRest stanza (this command uses --pg1-port because it connects to the DB)
+        # Step 7: Create the pgBackRest stanza (this command uses --pg1-port because it connects to the DB)
         cmd_create_stanza_source = (
             f"cd {source_node_data['path']}/pgedge && "
             f"./pgedge backrest command stanza-create "
@@ -1837,8 +1824,8 @@ def add_node(
             verbose=verbose,
         )
 
-        # Update pgbackrest_settings for further use downstream.
-        backrest_settings = {
+        # Update source backrest config for further use downstream.
+        source_backrest_cfg = {
             "stanza": stanza_source,
             "repo1_path": repo1_path_source,
             "repo1-retention-full": repo1_retention_full,
@@ -1847,16 +1834,12 @@ def add_node(
             "repo1_type": repo1_type,
         }
 
-    # NEW: Override pgbackrest settings with target JSON settings if present
-    if target_backrest_settings:
-        backrest_settings = target_backrest_settings
-
-    # For subsequent steps we extract settings from pgbackrest_settings.
-    stanza = backrest_settings.get("stanza", f"pg{pg}")
-    repo1_retention_full = backrest_settings.get("repo1-retention-full", "7")
-    log_level_console = backrest_settings.get("log-level-console", "info")
-    repo1_cipher_type = backrest_settings.get("repo1-cipher-type", "aes-256-cbc")
-    repo1_type = backrest_settings.get("repo1_type", "posix")
+    # For subsequent steps we extract pgbackrest settings from the source node configuration.
+    stanza = source_backrest_cfg.get("stanza", f"pg{pg}")
+    repo1_retention_full = source_backrest_cfg.get("repo1-retention-full", "7")
+    log_level_console = source_backrest_cfg.get("log-level-console", "info")
+    repo1_cipher_type = source_backrest_cfg.get("repo1-cipher-type", "aes-256-cbc")
+    repo1_type = source_backrest_cfg.get("repo1_type", "posix")
 
     rc = ssh_install_pgedge(
         cluster_name,
@@ -1876,16 +1859,16 @@ def add_node(
     if not repo1_path:
         # Do not install pgbackrest on source node; simply fetch the repo1_path from source's settings.
         repo1_path_default = f"/var/lib/pgbackrest/{source_node_data['name']}"
-        repo1_path = backrest_settings.get("repo1_path", f"{repo1_path_default}")
+        repo1_path = source_backrest_cfg.get("repo1_path", f"{repo1_path_default}")
     else:
         cmd = (
-            f"{source_node_data['path']}/pgedge/pgedge backrest set_postgresqlconf {stanza} "
+            f"{source_node_data['path']}/pgedge/pgedge backrest set-postgresqlconf {stanza} "
             f"{pg1_path} {repo1_path} {repo1_type}"
         )
         message = f"Modifying postgresql.conf file"
         run_cmd(cmd, source_node_data, message=message, verbose=verbose)
 
-        cmd = f"{source_node_data['path']}/pgedge/pgedge backrest set_hbaconf"
+        cmd = f"{source_node_data['path']}/pgedge/pgedge backrest set-hbaconf"
         message = f"Modifying pg_hba.conf file"
         run_cmd(cmd, source_node_data, message=message, verbose=verbose)
 
@@ -1940,7 +1923,7 @@ def add_node(
 
     cmd = (
         f'{new_node_data["path"]}/pgedge/pgedge backrest command restore '
-        f"--repo1-type={repo1_type} --stanza={stanza} "
+        f"--repo1-type={repo1_type} --stanza={stanza} --no-archive "
         f'--pg1-path={new_node_data["path"]}/pgedge/data/pg{pg} {args}'
     )
     message = f"Restoring backup"
@@ -1948,6 +1931,7 @@ def add_node(
 
     pgd = f'{new_node_data["path"]}/pgedge/data/pg{pg}'
     pgc = f"{pgd}/postgresql.conf"
+    log_directory = f'{new_node_data["path"]}/pgedge/data/logs/pg{pg}'
 
     cmd = f"echo \"ssl_cert_file='{pgd}/server.crt'\" >> {pgc}"
     message = f"Setting ssl_cert_file"
@@ -1957,19 +1941,12 @@ def add_node(
     message = f"Setting ssl_key_file"
     run_cmd(cmd, new_node_data, message=message, verbose=verbose)
 
-    cmd = f"echo \"log_directory='{pgd}/log'\" >> {pgc}"
+    cmd = f"echo \"log_directory='{log_directory}'\" >> {pgc}"
     message = f"Setting log_directory"
     run_cmd(cmd, new_node_data, message=message, verbose=verbose)
 
     cmd = (
-        f'echo "shared_preload_libraries = '
-        f"'pg_stat_statements, snowflake, spock'\" >> {pgc}"
-    )
-    message = f"Setting shared_preload_libraries"
-    run_cmd(cmd, new_node_data, message=message, verbose=verbose)
-
-    cmd = (
-        f'{new_node_data["path"]}/pgedge/pgedge backrest configure_replica {stanza} '
+        f'{new_node_data["path"]}/pgedge/pgedge backrest configure-replica {stanza} '
         f'{new_node_data["path"]}/pgedge/data/pg{pg} {source_node_data["ip_address"]} '
         f'{source_node_data["port"]} {source_node_data["os_user"]}'
     )
@@ -2001,7 +1978,7 @@ def add_node(
     cmd = f"{new_node_data['path']}/pgedge/pgedge psql '{sql_cmd}' {db[0]['db_name']}"
     message = f"Promoting standby to primary"
     run_cmd(cmd, new_node_data, message=message, verbose=verbose)
-
+    
     for mdb in db:
         sql_cmd = "SELECT sub_name FROM spock.subscription"
         cmd = f"{new_node_data['path']}/pgedge/pgedge psql '{sql_cmd}' {mdb['db_name']}"
@@ -2118,166 +2095,149 @@ def add_node(
         cmd, node=new_node_data, message=message, verbose=verbose, capture_output=True
     )
     print(f"\n{result.stdout}")
+    
+    # A subsequent restart will be needed to apply the changes
+    # This will occur in the next section when pgBackrest is configured or removed
+    # Cleanup restore remnants by unsetting restore_command on target node
+    sql_cmd = (
+        'ALTER SYSTEM RESET restore_command'
+    )
+    cmd = f"{new_node_data['path']}/pgedge/pgedge psql '{sql_cmd}' {db[0]['db_name']}"
+    message = "Unsetting restore_command on target node"
+    run_cmd(cmd, node=new_node_data, message=message, verbose=verbose)
 
-    # Reload the complete target JSON file and fetch repo1_path and stanza from its pgbackrest settings.
-    try:
-        with open(target_node_file, "r") as f:
-            complete_target_json = json.load(f)
+    # Cleanup replica configuration
+    cmd = (
+        f"cd {new_node_data['path']}/pgedge && "
+        f"./pgedge backrest cleanup-replica "
+        f"--pg1-path {new_node_data['path']}/pgedge/data/pg{pg} "
+    )
+    run_cmd(cmd, node=new_node_data, message="Cleaning up replica configuration on target node", verbose=verbose)
 
-        # Since pgbackrest settings are stored inside each node group, fetch from the first node group.
-        if (
-            "node_groups" in complete_target_json
-            and complete_target_json["node_groups"]
-        ):
-            repo1_path_target_file = (
-                complete_target_json["node_groups"][0]
-                .get("backrest", {})
-                .get("repo1_path")
-            )
-            target_stanza_target_file = (
-                complete_target_json["node_groups"][0].get("backrest", {}).get("stanza")
-            )
+    if target_backrest_cfg:
+        repo1_path_target_file = (
+            target_node_data["node_groups"][0]
+            .get("backrest", {})
+            .get("repo1_path")
+        )
+        target_stanza_target_file = (
+            target_node_data["node_groups"][0].get("backrest", {}).get("stanza")
+        )
 
-            pgedge_dir = f"{new_node_data['path']}/pgedge"
-            restore_path = backrest_settings.get(
-                "restore_path", f"/var/lib/pgbackrest_restore/{new_node_data['name']}"
-            )
-            target_repo1_host_user = backrest_settings.get(
-                "repo1_host_user", new_node_data.get("os_user", "postgres")
-            )
-            target_pg1_path = backrest_settings.get(
-                "pg1_path", f"{pgedge_dir}/data/pg{pg}"
-            )
-            target_pg1_user = backrest_settings.get(
-                "pg1_user", new_node_data.get("os_user", "postgres")
-            )
-            target_pg1_port = backrest_settings.get(
-                "pg1_port", new_node_data.get("port", "6435")
-            )
+        pgedge_dir = f"{new_node_data['path']}/pgedge"
+        restore_path = target_backrest_cfg.get(
+            "restore_path", f"/var/lib/pgbackrest_restore/{new_node_data['name']}"
+        )
+        target_repo1_host_user = target_backrest_cfg.get(
+            "repo1_host_user", new_node_data.get("os_user", "postgres")
+        )
+        target_pg1_path = target_backrest_cfg.get(
+            "pg1_path", f"{pgedge_dir}/data/pg{pg}"
+        )
+        target_pg1_user = target_backrest_cfg.get(
+            "pg1_user", new_node_data.get("os_user", "postgres")
+        )
+        target_pg1_port = target_backrest_cfg.get(
+            "pg1_port", new_node_data.get("port", "6435")
+        )
 
-            # ---------------------------------------------------------------
-            # If the repo1_path or stanza is missing, remove backrest instead
-            # ---------------------------------------------------------------
-            if not repo1_path_target_file or not target_stanza_target_file:
-                # No valid repo1_path or stanza -> remove backrest
-                repo1_path_target_file = None
-                target_stanza_target_file = None
+        # Both repo1_path_target_file and target_stanza_target_file exist
+        target_repo1_path = repo1_path_target_file
+        target_stanza = target_stanza_target_file
 
-                cmd_remove_backrest_target = (
-                    f"cd {pgedge_dir} && ./pgedge remove backrest"
-                )
-                run_cmd(
-                    cmd=cmd_remove_backrest_target,
-                    node=new_node_data,
-                    message="Removing backrest",
-                    verbose=verbose,
-                )
-            else:
-                # Both repo1_path_target_file and target_stanza_target_file exist
-                target_repo1_path = repo1_path_target_file
-                target_stanza = target_stanza_target_file
+        # Combined target node BACKUP configuration commands
+        combined_target_cmd = (
+            f"sudo mkdir -p {restore_path} && "
+            f"sudo chown -R {target_repo1_host_user}:{target_repo1_host_user} {restore_path} && "
+            f"cd {pgedge_dir} && ./pgedge set BACKUP restore_path {restore_path} && "
+            f"sudo mkdir -p {target_repo1_path} && "
+            f"sudo chown -R {target_repo1_host_user}:{target_repo1_host_user} {target_repo1_path} && "
+            f"cd {pgedge_dir} && ./pgedge set BACKUP repo1-path {target_repo1_path} && "
+            f"cd {pgedge_dir} && ./pgedge set BACKUP repo1-host-user {target_repo1_host_user} && "
+            f"cd {pgedge_dir} && ./pgedge set BACKUP pg1-path {target_pg1_path} && "
+            f"cd {pgedge_dir} && ./pgedge set BACKUP pg1-user {target_pg1_user} && "
+            f"cd {pgedge_dir} && ./pgedge set BACKUP pg1-port {target_pg1_port} && "
+            f"cd {pgedge_dir} && ./pgedge set BACKUP stanza {target_stanza}"
+        )
+        run_cmd(
+            cmd=combined_target_cmd,
+            node=new_node_data,
+            message="Setting all target node BACKUP configuration",
+            verbose=False,
+        )
 
-                # Combined target node BACKUP configuration commands
-                combined_target_cmd = (
-                    f"sudo mkdir -p {restore_path} && "
-                    f"sudo chown -R {target_repo1_host_user}:{target_repo1_host_user} {restore_path} && "
-                    f"cd {pgedge_dir} && ./pgedge set BACKUP restore_path {restore_path} && "
-                    f"sudo mkdir -p {target_repo1_path} && "
-                    f"sudo chown -R {target_repo1_host_user}:{target_repo1_host_user} {target_repo1_path} && "
-                    f"cd {pgedge_dir} && ./pgedge set BACKUP repo1-path {target_repo1_path} && "
-                    f"cd {pgedge_dir} && ./pgedge set BACKUP repo1-host-user {target_repo1_host_user} && "
-                    f"cd {pgedge_dir} && ./pgedge set BACKUP pg1-path {target_pg1_path} && "
-                    f"cd {pgedge_dir} && ./pgedge set BACKUP pg1-user {target_pg1_user} && "
-                    f"cd {pgedge_dir} && ./pgedge set BACKUP pg1-port {target_pg1_port} && "
-                    f"cd {pgedge_dir} && ./pgedge set BACKUP stanza {target_stanza}"
-                )
-                run_cmd(
-                    cmd=combined_target_cmd,
-                    node=new_node_data,
-                    message="Setting all target node BACKUP configuration",
-                    verbose=False,
-                )
+        # Append the BACKUP settings to the target's PostgreSQL configuration
+        cmd_set_postgresqlconf_target = (
+            f"cd {pgedge_dir} && ./pgedge backrest set-postgresqlconf "
+            f"{target_stanza} {target_pg1_path} {target_repo1_path} {repo1_type}"
+        )
+        run_cmd(
+            cmd=cmd_set_postgresqlconf_target,
+            node=new_node_data,
+            message="Appending BACKUP settings to postgresql.conf for target node",
+            verbose=verbose,
+        )
 
-                # Append the BACKUP settings to the target's PostgreSQL configuration
-                cmd_set_postgresqlconf_target = (
-                    f"cd {pgedge_dir} && ./pgedge backrest set_postgresqlconf "
-                    f"{target_stanza} {target_pg1_path} {target_repo1_path} {repo1_type}"
-                )
-                run_cmd(
-                    cmd=cmd_set_postgresqlconf_target,
-                    node=new_node_data,
-                    message="Appending BACKUP settings to postgresql.conf for target node",
-                    verbose=verbose,
-                )
+        # Restart PostgreSQL to apply the new configuration
+        cmd_restart_postgres = f"cd {pgedge_dir} && ./pgedge restart"
+        run_cmd(
+            cmd=cmd_restart_postgres,
+            node=new_node_data,
+            message="Restarting PostgreSQL service",
+            verbose=verbose,
+        )
 
-                # Restart PostgreSQL to apply the new configuration
-                cmd_restart_postgres = f"cd {pgedge_dir} && ./pgedge restart"
-                run_cmd(
-                    cmd=cmd_restart_postgres,
-                    node=new_node_data,
-                    message="Restarting PostgreSQL service",
-                    verbose=verbose,
-                )
+        # Now create the pgBackRest stanza on the target node
+        cmd_create_stanza_target = (
+            f"cd {pgedge_dir} && "
+            f"./pgedge backrest command stanza-create "
+            f"--stanza '{target_stanza}' "
+            f"--pg1-path '{target_pg1_path}' "
+            f"--repo1-cipher-type {repo1_cipher_type} "
+            f"--pg1-port {target_pg1_port} "
+            f"--repo1-path {target_repo1_path}"
+        )
+        run_cmd(
+            cmd=cmd_create_stanza_target,
+            node=new_node_data,
+            message=f"Creating pgBackRest stanza '{target_stanza}'",
+            verbose=verbose,
+        )
 
-                # Now create the pgBackRest stanza on the target node
-                cmd_create_stanza_target = (
-                    f"cd {pgedge_dir} && "
-                    f"./pgedge backrest command stanza-create "
-                    f"--stanza '{target_stanza}' "
-                    f"--pg1-path '{target_pg1_path}' "
-                    f"--repo1-cipher-type {repo1_cipher_type} "
-                    f"--pg1-port {target_pg1_port} "
-                    f"--repo1-path {target_repo1_path}"
-                )
-                run_cmd(
-                    cmd=cmd_create_stanza_target,
-                    node=new_node_data,
-                    message=f"Creating pgBackRest stanza '{target_stanza}'",
-                    verbose=verbose,
-                )
+        # Create a full backup using pgBackRest
+        backrest_backup_args_target = (
+            f"--repo1-path {target_repo1_path} "
+            f"--stanza {target_stanza} "
+            f"--pg1-path {target_pg1_path} "
+            f"--repo1-type {repo1_type} "
+            f"--log-level-console {log_level_console} "
+            f"--pg1-port {target_pg1_port} "
+            f"--db-socket-path /tmp "
+            f"--repo1-cipher-type {repo1_cipher_type} "
+            f"--repo1-retention-full {repo1_retention_full} "
+            f"--type=full"
+        )
+        cmd_create_backup_target = (
+            f"cd {pgedge_dir} && ./pgedge backrest command backup "
+            f"'{backrest_backup_args_target}'"
+        )
+        run_cmd(
+            cmd=cmd_create_backup_target,
+            node=new_node_data,
+            message="Creating full pgBackRest backup",
+            verbose=verbose,
+        )
+    # else:
+    #     pgedge_dir = f"{new_node_data['path']}/pgedge"
+    #     cmd_remove_backrest_target = f"cd {pgedge_dir} && ./pgedge remove backrest"
+    #     run_cmd(
+    #         cmd=cmd_remove_backrest_target,
+    #         node=new_node_data,
+    #         message="Removing backrest from target node",
+    #         verbose=verbose,
+    #     )
 
-                # Create a full backup using pgBackRest
-                backrest_backup_args_target = (
-                    f"--repo1-path {target_repo1_path} "
-                    f"--stanza {target_stanza} "
-                    f"--pg1-path {target_pg1_path} "
-                    f"--repo1-type {repo1_type} "
-                    f"--log-level-console {log_level_console} "
-                    f"--pg1-port {target_pg1_port} "
-                    f"--db-socket-path /tmp "
-                    f"--repo1-cipher-type {repo1_cipher_type} "
-                    f"--repo1-retention-full {repo1_retention_full} "
-                    f"--type=full"
-                )
-                cmd_create_backup_target = (
-                    f"cd {pgedge_dir} && ./pgedge backrest command backup "
-                    f"'{backrest_backup_args_target}'"
-                )
-                run_cmd(
-                    cmd=cmd_create_backup_target,
-                    node=new_node_data,
-                    message="Creating full pgBackRest backup",
-                    verbose=verbose,
-                )
-            
-        else:
-            # If no node_groups exist at all, remove pgbackrest
-            repo1_path_target_file = None
-            target_stanza_target_file = None
-
-            pgedge_dir = f"{new_node_data['path']}/pgedge"
-            cmd_remove_backrest_target = f"cd {pgedge_dir} && ./pgedge remove backrest"
-            run_cmd(
-                cmd=cmd_remove_backrest_target,
-                node=new_node_data,
-                message="Removing backrest",
-                verbose=verbose,
-            )
-
-    except Exception as e:
-        print(f"Error fetching values from target JSON file: {e}")
-
-    # NEW: Check and display pgBackRest configuration status in the source node
+    # Check and display pgBackRest configuration status in the source node
     # Remove unnecessary keys before appending new node to the cluster data
     new_node_data.pop("ip_address", None)
     new_node_data.pop("os_user", None)
@@ -2288,31 +2248,9 @@ def add_node(
     cluster_data["update_date"] = datetime.datetime.now().astimezone().isoformat()
 
     write_cluster_json(cluster_name, cluster_data)
-    capture_backrest_config(cluster_name, verbose=True)
+    if target_backrest_cfg:
+        capture_backrest_config(new_node_data, verbose=True)
     check_source_backrest_config(source_node_data)
-
-
-def cleanup_backrest_from_cluster(cluster_json, target_json):
-    """
-    Compare the node groups in the target JSON with the cluster JSON.
-    For each node in cluster_json["node_groups"], if the corresponding node (by name)
-    is not present in target_json's node groups or does not contain a "backrest" key,
-    then remove the "backrest" key from that node in cluster_json.
-    
-    Args:
-        cluster_json (dict): The main cluster configuration.
-        target_json (dict): The target node configuration JSON.
-    """
-    # Create a mapping of node names to their configuration from the target JSON.
-    target_nodes = {group.get("name"): group for group in target_json.get("node_groups", [])}
-    
-    for node in cluster_json.get("node_groups", []):
-        node_name = node.get("name")
-        target_group = target_nodes.get(node_name)
-        # If the target group does not exist or does not contain a backrest key, delete backrest in the main config.
-        if not target_group or "backrest" not in target_group:
-            if "backrest" in node:
-                del node["backrest"]
 
 def json_validate_add_node(data):
     """
