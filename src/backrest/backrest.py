@@ -92,7 +92,7 @@ def create_stanza(stanza, verbose=True):
 
     # Modify postgresql.conf to ensure archiving is on
     modify_postgresql_conf(
-        stanza, config['pg1-path'], config['repo1-path'], config['repo1-type']
+        stanza, config['pg1-path'], config['repo1-path'], config['repo1-type'], config['repo1-cipher-type']
     )
     # Modify pg_hba.conf for replication, if needed
     modify_hba_conf()
@@ -407,12 +407,12 @@ def modify_hba_conf():
     }]
     util.update_pg_hba_conf(pgV(), new_rules)
 
-def modify_postgresql_conf(stanza, pg1_path, repo1_path, repo1_type):
+def modify_postgresql_conf(stanza, pg1_path, repo1_path, repo1_type, repo1_cipher_type="aes-256-cbc"):
     """Modify 'postgresql.conf' to integrate with pgbackrest."""
     aCmd = (
         f"pgbackrest --stanza={stanza} --pg1-path={pg1_path} "
         f"--repo1-type={repo1_type} --repo1-path={repo1_path} "
-        f"--repo1-cipher-type=aes-256-cbc archive-push %p"
+        f"--repo1-cipher-type={repo1_cipher_type} archive-push %p"
     )
     util.change_pgconf_keyval(pgV(), "archive_command", aCmd, p_replace=True)
     util.change_pgconf_keyval(pgV(), "archive_mode", "on", p_replace=True)

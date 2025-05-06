@@ -937,7 +937,7 @@ def json_create(
             "repo1_path": backrest_storage_path,
             "repo1_retention_full": "7",
             "log_level_console": "info",
-            "repo1_cipher-type": "aes-256-cbc",
+            "repo1_cipher_type": "aes-256-cbc",
             "archive_mode": backrest_archive_mode,
             "repo1_type": repo1_type,
         }
@@ -1364,7 +1364,7 @@ def init(cluster_name, install=True):
             # Load additional pgBackRest settings from JSON with defaults.
             repo1_retention_full = backrest.get("repo1_retention_full", "7")
             log_level_console = backrest.get("log_level_console", "info")
-            repo1_cipher_type = backrest.get("repo1_cipher-type", "aes-256-cbc")
+            repo1_cipher_type = backrest.get("repo1_cipher_type", "aes-256-cbc")
             repo1_type = backrest.get("repo1_type", "posix")  # Could also be "s3", etc.
     
             # Get repo1_path from JSON; if not provided, default to /var/lib/pgbackrest/{node_name}
@@ -1396,7 +1396,8 @@ def init(cluster_name, install=True):
                 f"--stanza {stanza} "
                 f"--pg1-path {pg1_path} "
                 f"--repo1-path {repo1_path} "
-                f"--repo1-type {repo1_type}"
+                f"--repo1-type {repo1_type} "
+                f"--repo1-cipher-type {repo1_cipher_type} "
             )
             run_cmd(cmd_set_postgresqlconf, node=node, message="Modifying postgresql.conf for pgBackRest", verbose=verbose)
     
@@ -1409,25 +1410,7 @@ def init(cluster_name, install=True):
             cmd_reload_conf = f"cd {node['path']}/pgedge && ./pgedge psql '{sql_reload_conf}' {db[0]['db_name']}"
             run_cmd(cmd_reload_conf, node=node, message="Reloading PostgreSQL configuration", verbose=verbose)
     
-            # -- Step 5: If using S3 as repository, export necessary environment variables
-            if repo1_type.lower() == "s3":
-                required_env_vars = [
-                    "PGBACKREST_REPO1_S3_KEY",
-                    "PGBACKREST_REPO1_S3_BUCKET",
-                    "PGBACKREST_REPO1_S3_KEY_SECRET",
-                    "PGBACKREST_REPO1_CIPHER_PASS",
-                ]
-                missing_env_vars = [var for var in required_env_vars if var not in os.environ]
-                if missing_env_vars:
-                    util.exit_message(
-                        f"Environment variables {', '.join(missing_env_vars)} must be set for S3 pgBackRest configuration.",
-                        1,
-                    )
-                s3_exports = " && ".join([f"export {var}={os.environ[var]}" for var in required_env_vars])
-                cmd_export_s3 = f"cd {node['path']}/pgedge && {s3_exports}"
-                run_cmd(cmd_export_s3, node=node, message="Setting S3 environment variables for pgBackRest", verbose=verbose)
-    
-            # -- Step 6: Set all pgBackRest backup configuration values
+            # -- Step 5: Set all pgBackRest backup configuration values
     
             # (a) Set the backup stanza
             cmd_set_backup_stanza = f"cd {node['path']}/pgedge && ./pgedge set BACKUP stanza {stanza}"
@@ -1456,7 +1439,7 @@ def init(cluster_name, install=True):
             cmd_set_pg1_port = f"cd {node['path']}/pgedge && ./pgedge set BACKUP pg1-port {port}"
             run_cmd(cmd_set_pg1_port, node=node, message=f"Setting BACKUP pg1-port to {port} on node '{node['name']}'", verbose=verbose)
     
-            # -- Step 7: Create the pgBackRest stanza (this command uses --pg1-port because it connects to the DB)
+            # -- Step 6: Create the pgBackRest stanza (this command uses --pg1-port because it connects to the DB)
             cmd_create_stanza = (
                 f"cd {node['path']}/pgedge && "
                 f"./pgedge backrest command stanza-create "
@@ -1468,7 +1451,7 @@ def init(cluster_name, install=True):
             )
             run_cmd(cmd_create_stanza, node=node, message=f"Creating pgBackRest stanza '{stanza}'", verbose=verbose)
     
-            # -- Step 8: Initiate a full backup using pgBackRest (again, passing the port)
+            # -- Step 7: Initiate a full backup using pgBackRest (again, passing the port)
             backrest_backup_args = (
                 f"--repo1-path {repo1_path} "
                 f"--stanza {stanza} "
@@ -1698,7 +1681,8 @@ def add_node(
             f"--stanza {stanza_source} "
             f"--pg1-path {pg1_path_source} "
             f"--repo1-path {repo1_path_source} "
-            f"--repo1-type {repo1_type}"
+            f"--repo1-type {repo1_type} "
+            f"--repo1-cipher-type {repo1_cipher_type} "
         )
         run_cmd(
             cmd_set_postgresqlconf_source,
@@ -1728,36 +1712,7 @@ def add_node(
             verbose=verbose,
         )
 
-        # Step 5: If using S3 as repository, export necessary environment variables
-        if repo1_type.lower() == "s3":
-            required_env_vars = [
-                "PGBACKREST_REPO1_S3_KEY",
-                "PGBACKREST_REPO1_S3_BUCKET",
-                "PGBACKREST_REPO1_S3_KEY_SECRET",
-                "PGBACKREST_REPO1_CIPHER_PASS",
-            ]
-            missing_env_vars = [
-                var for var in required_env_vars if var not in os.environ
-            ]
-            if missing_env_vars:
-                util.exit_message(
-                    f"Environment variables {', '.join(missing_env_vars)} must be set for S3 pgBackRest configuration.",
-                    1,
-                )
-            s3_exports = " && ".join(
-                [f"export {var}={os.environ[var]}" for var in required_env_vars]
-            )
-            cmd_export_s3_source = (
-                f"cd {source_node_data['path']}/pgedge && {s3_exports}"
-            )
-            run_cmd(
-                cmd_export_s3_source,
-                node=source_node_data,
-                message="Setting S3 environment variables for pgBackRest",
-                verbose=verbose,
-            )
-
-        # Step 6: Set all pgBackRest backup configuration values for the source node.
+        # Step 5: Set all pgBackRest backup configuration values for the source node.
         compound_cmd = " && ".join(
             [
                 f"cd {source_node_data['path']}/pgedge",
@@ -1779,7 +1734,7 @@ def add_node(
             verbose=False,
         )
 
-        # Step 7: Create the pgBackRest stanza (this command uses --pg1-port because it connects to the DB)
+        # Step 6: Create the pgBackRest stanza (this command uses --pg1-port because it connects to the DB)
         cmd_create_stanza_source = (
             f"cd {source_node_data['path']}/pgedge && "
             f"./pgedge backrest command stanza-create "
@@ -1795,7 +1750,7 @@ def add_node(
             message=f"Creating pgBackRest stanza '{stanza_source}'",
             verbose=verbose,
         )
-        # Step 8: Initiate a full backup using pgBackRest (again, passing the port)
+        # Step 7: Initiate a full backup using pgBackRest (again, passing the port)
         backrest_backup_args_source = (
             f"--repo1-path {repo1_path_source} "
             f"--stanza {stanza_source} "
@@ -1828,17 +1783,17 @@ def add_node(
         source_backrest_cfg = {
             "stanza": stanza_source,
             "repo1_path": repo1_path_source,
-            "repo1-retention-full": repo1_retention_full,
-            "log-level-console": log_level_console,
-            "repo1-cipher-type": repo1_cipher_type,
+            "repo1_retention_full": repo1_retention_full,
+            "log_level_console": log_level_console,
+            "repo1_cipher_type": repo1_cipher_type,
             "repo1_type": repo1_type,
         }
 
     # For subsequent steps we extract pgbackrest settings from the source node configuration.
     stanza = source_backrest_cfg.get("stanza", f"pg{pg}")
-    repo1_retention_full = source_backrest_cfg.get("repo1-retention-full", "7")
-    log_level_console = source_backrest_cfg.get("log-level-console", "info")
-    repo1_cipher_type = source_backrest_cfg.get("repo1-cipher-type", "aes-256-cbc")
+    repo1_retention_full = source_backrest_cfg.get("repo1_retention_full", "7")
+    log_level_console = source_backrest_cfg.get("log_level_console", "info")
+    repo1_cipher_type = source_backrest_cfg.get("repo1_cipher_type", "aes-256-cbc")
     repo1_type = source_backrest_cfg.get("repo1_type", "posix")
 
     rc = ssh_install_pgedge(
@@ -1863,7 +1818,7 @@ def add_node(
     else:
         cmd = (
             f"{source_node_data['path']}/pgedge/pgedge backrest set-postgresqlconf {stanza} "
-            f"{pg1_path} {repo1_path} {repo1_type}"
+            f"{pg1_path} {repo1_path} {repo1_type} {repo1_cipher_type} "
         )
         message = f"Modifying postgresql.conf file"
         run_cmd(cmd, source_node_data, message=message, verbose=verbose)
@@ -1876,37 +1831,6 @@ def add_node(
         cmd = f"{source_node_data['path']}/pgedge/pgedge psql '{sql_cmd}' {db[0]['db_name']}"
         message = f"Reload configuration pg_reload_conf()"
         run_cmd(cmd, source_node_data, message=message, verbose=verbose)
-
-        if repo1_type == "s3":
-            for env_var in [
-                "PGBACKREST_REPO1_S3_KEY",
-                "PGBACKREST_REPO1_S3_BUCKET",
-                "PGBACKREST_REPO1_S3_KEY_SECRET",
-                "PGBACKREST_REPO1_CIPHER_PASS",
-            ]:
-                if env_var not in os.environ:
-                    util.exit_message(f"Environment variable {env_var} not set.")
-            s3_export_cmds = [
-                f"export {env_var}={os.environ[env_var]}"
-                for env_var in [
-                    "PGBACKREST_REPO1_S3_KEY",
-                    "PGBACKREST_REPO1_S3_BUCKET",
-                    "PGBACKREST_REPO1_S3_KEY_SECRET",
-                    "PGBACKREST_REPO1_CIPHER_PASS",
-                ]
-            ]
-            run_cmd(
-                " && ".join(s3_export_cmds),
-                source_node_data,
-                message="Setting S3 environment variables on source node",
-                verbose=verbose,
-            )
-            run_cmd(
-                " && ".join(s3_export_cmds),
-                new_node_data,
-                message="Setting S3 environment variables on target node",
-                verbose=verbose,
-            )
 
     cmd = f"{new_node_data['path']}/pgedge/pgedge install backrest"
     message = f"Installing pgbackrest"
@@ -2169,7 +2093,7 @@ def add_node(
         # Append the BACKUP settings to the target's PostgreSQL configuration
         cmd_set_postgresqlconf_target = (
             f"cd {pgedge_dir} && ./pgedge backrest set-postgresqlconf "
-            f"{target_stanza} {target_pg1_path} {target_repo1_path} {repo1_type}"
+            f"{target_stanza} {target_pg1_path} {target_repo1_path} {repo1_type} {repo1_cipher_type} "
         )
         run_cmd(
             cmd=cmd_set_postgresqlconf_target,
@@ -2227,15 +2151,15 @@ def add_node(
             message="Creating full pgBackRest backup",
             verbose=verbose,
         )
-    # else:
-    #     pgedge_dir = f"{new_node_data['path']}/pgedge"
-    #     cmd_remove_backrest_target = f"cd {pgedge_dir} && ./pgedge remove backrest"
-    #     run_cmd(
-    #         cmd=cmd_remove_backrest_target,
-    #         node=new_node_data,
-    #         message="Removing backrest from target node",
-    #         verbose=verbose,
-    #     )
+    else:
+        pgedge_dir = f"{new_node_data['path']}/pgedge"
+        cmd_remove_backrest_target = f"cd {pgedge_dir} && ./pgedge remove backrest"
+        run_cmd(
+            cmd=cmd_remove_backrest_target,
+            node=new_node_data,
+            message="Removing backrest from target node",
+            verbose=verbose,
+        )
 
     # Check and display pgBackRest configuration status in the source node
     # Remove unnecessary keys before appending new node to the cluster data
