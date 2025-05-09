@@ -314,7 +314,6 @@ def configure_replica(stanza, pg1_path, pg1_host, pg1_port, pg1_user):
     changes = {
         "hot_standby": "on",
         "primary_conninfo": primary_conninfo,
-        "port": pg1_port,
         "archive_command": "cd .",
         "archive_mode": "on"
     }
