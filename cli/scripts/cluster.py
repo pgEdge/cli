@@ -1844,13 +1844,13 @@ def add_node(
     message = f"Removing old data directory"
     run_cmd(cmd, target_node_data, message=message, verbose=verbose)
 
-    args = f"--repo1-path {repo1_path} --repo1-cipher-type {source_repo1_cipher_type} "
+    args = f"--repo1-path {repo1_path} --repo1-cipher-type {source_repo1_cipher_type} --type standby "
     if backup_id:
         args += f"--set={backup_id} "
 
     cmd = (
         f'{target_node_data["path"]}/pgedge/pgedge backrest command restore '
-        f"--repo1-type={source_repo1_type} --stanza={source_stanza} --no-archive "
+        f"--repo1-type={source_repo1_type} --stanza={source_stanza} "
         f'--pg1-path={target_node_data["path"]}/pgedge/data/{pgV} {args}'
     )
     message = f"Restoring backup"
