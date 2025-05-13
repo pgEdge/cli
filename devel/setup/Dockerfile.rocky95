@@ -8,7 +8,7 @@ USER root
 ENV install="dnf install -y --allowerasing"
 RUN $install dnf-plugins-core
 RUN $install python3 python3-pip git wget curl pigz which zip sqlite
-RUN $install openssh-server systemd sudo
+RUN $install openssh-server systemd sudo inotify-tools lsof
 
 RUN useradd build  -U -m -d /home/build  \
     && echo "build  ALL=(ALL)  NOPASSWD: ALL" >> /etc/sudoers
