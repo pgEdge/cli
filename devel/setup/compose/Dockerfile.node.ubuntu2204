@@ -31,7 +31,7 @@ RUN chmod 700 /home/pgedge/.ssh/
 RUN sudo chown pgedge:pgedge /home/pgedge/.ssh/id_rsa
 RUN sudo chmod 600 /home/pgedge/.ssh/id_rsa
 
-RUN echo 'export PGBACKREST_REPO1_CIPHER_PASS=Really_s3cure_password' >> ~/.bashrc
+RUN echo 'export PGBACKREST_REPO1_CIPHER_PASS=supersecret' >> ~/.bashrc
 
 USER root
 EXPOSE 22
