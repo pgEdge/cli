@@ -1621,14 +1621,6 @@ def add_node(
             "public_ip", target_node_data.get("private_ip")
         )
 
-    # Log source and target node data
-    util.message(
-        f"Source node data: {json.dumps(source_node_data, indent=2)}", "info"
-    )
-    util.message(
-        f"Target node data: {json.dumps(target_node_data, indent=2)}", "info"
-    )
-
     # If backrest is not configured on the source node, install it
     if not source_backrest_cfg:
         # Step 1: Install pgBackRest on the source node
