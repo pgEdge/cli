@@ -2187,21 +2187,21 @@ def add_node(
 
 def json_validate_add_node(data):
     """
-    Validate the structure of a node‑definition JSON file that will be fed to
-    the add‑node command.
+    Validate the structure of a node-definition JSON file that will be fed to
+    the add-node command.
 
     • The traditional checks (json_version, ssh, port, …) still apply.
     • A node_group is not required to have a “backrest” block.
     • If a “backrest” block is present, it must contain at least:
-         • stanza        – unique stanza name
-         • repo1_path    – absolute path to the repo directory
-         • repo1_type    – 'posix' or 's3'
-       and the values must be non‑empty and valid.
+         • stanza        - unique stanza name
+         • repo1_path    - absolute path to the repo directory
+         • repo1_type    - 'posix' or 's3'
+       and the values must be non-empty and valid.
     """
 
     required_top = {"json_version", "node_groups"}
     if not required_top.issubset(data):
-        util.exit_message("Invalid add‑node JSON: missing json_version or node_groups.")
+        util.exit_message("Invalid add-node JSON: missing json_version or node_groups.")
 
     if str(data.get("json_version")) != "1.0":
         util.exit_message("Invalid or unsupported json_version (must be '1.0').")
@@ -2227,7 +2227,7 @@ def json_validate_add_node(data):
         missing_basic = node_group_required - set(group.keys())
         if missing_basic:
             util.exit_message(
-                f"Node‑group '{gname}' missing keys: {', '.join(missing_basic)}"
+                f"Node-group '{gname}' missing keys: {', '.join(missing_basic)}"
             )
 
         # ssh block
@@ -2235,7 +2235,7 @@ def json_validate_add_node(data):
         missing_ssh = ssh_required - set(ssh_info.keys())
         if missing_ssh:
             util.exit_message(
-                f"SSH block in node‑group '{gname}' missing: {', '.join(missing_ssh)}"
+                f"SSH block in node-group '{gname}' missing: {', '.join(missing_ssh)}"
             )
 
         # backrest (optional but validated if present)
@@ -2246,24 +2246,24 @@ def json_validate_add_node(data):
             missing_br = backrest_required - set(br.keys())
             if missing_br:
                 util.exit_message(
-                    f"pgBackRest block in node‑group '{gname}' missing: {', '.join(missing_br)}"
+                    f"pgBackRest block in node-group '{gname}' missing: {', '.join(missing_br)}"
                 )
 
-            # ensure values are non‑empty
+            # ensure values are non-empty
             for k in backrest_required:
                 if not str(br[k]).strip():
                     util.exit_message(
-                        f"pgBackRest key '{k}' in node‑group '{gname}' cannot be empty."
+                        f"pgBackRest key '{k}' in node-group '{gname}' cannot be empty."
                     )
 
             # verify repo1_type is valid
             if br["repo1_type"] not in valid_repo1_types:
                 util.exit_message(
-                    f"Invalid repo1_type '{br['repo1_type']}' in node‑group '{gname}'. "
+                    f"Invalid repo1_type '{br['repo1_type']}' in node-group '{gname}'. "
                     f"Allowed: {', '.join(valid_repo1_types)}"
                 )
 
-    util.message("✔ add‑node JSON structure is valid.", "success")
+    util.message("✔ add-node JSON structure is valid.", "success")
 
 def remove_node(cluster_name, node_name):
     """
