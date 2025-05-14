@@ -1509,6 +1509,18 @@ def init(cluster_name, install=True):
                 verbose=verbose,
             )
 
+            # (g) Set BACKUP repo1-type to the node's repo1-type value
+            cmd_set_pg1_port = (
+                f"cd {node['path']}/pgedge && ./pgedge set BACKUP repo1-type {repo1_type}"
+            )
+            run_cmd(
+                cmd_set_pg1_port,
+                node=node,
+                message=f"Setting BACKUP repo1-type to {repo1_type} on node '{node['name']}'",
+                verbose=verbose,
+            )
+
+
             # -- Step 6: Create the pgBackRest stanza (this command uses --pg1-port because it connects to the DB)
             cmd_create_stanza = (
                 f"cd {node['path']}/pgedge && "
@@ -1517,7 +1529,8 @@ def init(cluster_name, install=True):
                 f"--pg1-path='{pg1_path}' "
                 f"--repo1-cipher-type={repo1_cipher_type} "
                 f"--pg1-port={port} "
-                f"--repo1-path={repo1_path}"
+                f"--repo1-path={repo1_path} "
+                f"--repo1-type={repo1_type}"
             )
             run_cmd(
                 cmd_create_stanza,
@@ -1795,6 +1808,7 @@ def add_node(
                 f"sudo mkdir -p {source_restore_path}",
                 f"./pgedge set BACKUP restore_path {source_restore_path}",
                 f"./pgedge set BACKUP repo1-host-user {source_node_data.get('os_user', 'postgres')}",
+                f"./pgedge set BACKUP repo1-type {source_repo1_type}",
                 f"./pgedge set BACKUP pg1-path {source_pg1_path}",
                 f"./pgedge set BACKUP pg1-user {source_node_data.get('os_user', 'postgres')}",
                 f"./pgedge set BACKUP pg1-port {source_port}",
@@ -1817,7 +1831,8 @@ def add_node(
             f"--pg1-path='{source_pg1_path}' "
             f"--repo1-cipher-type={source_repo1_cipher_type} "
             f"--pg1-port={source_port} "
-            f"--repo1-path={source_repo1_path}"
+            f"--repo1-path={source_repo1_path} "
+            f"--repo1-type={source_repo1_type}"
         )
         run_cmd(
             cmd_create_stanza_source,
@@ -2171,6 +2186,7 @@ def add_node(
             f"sudo chown -R {target_repo1_host_user}:{target_repo1_host_user} {target_repo1_path} && "
             f"cd {target_pgedge_dir} && ./pgedge set BACKUP repo1-path {target_repo1_path} && "
             f"cd {target_pgedge_dir} && ./pgedge set BACKUP repo1-host-user {target_repo1_host_user} && "
+            f"cd {target_pgedge_dir} && ./pgedge set BACKUP repo1-type {target_repo1_type} && "
             f"cd {target_pgedge_dir} && ./pgedge set BACKUP pg1-path {target_pg1_path} && "
             f"cd {target_pgedge_dir} && ./pgedge set BACKUP pg1-user {target_pg1_user} && "
             f"cd {target_pgedge_dir} && ./pgedge set BACKUP pg1-port {target_pg1_port} && "
@@ -2212,7 +2228,8 @@ def add_node(
             f"--pg1-path='{target_pg1_path}' "
             f"--repo1-cipher-type={target_repo1_cipher_type} "
             f"--pg1-port={target_pg1_port} "
-            f"--repo1-path={target_repo1_path}"
+            f"--repo1-path={target_repo1_path} "
+            f"--repo1-type={target_repo1_type}"
         )
         run_cmd(
             cmd=cmd_create_stanza_target,
