@@ -1,5 +1,8 @@
 name: Stable Daily Build Devel - amd8
 
+env:
+  DEFAULT_CLI_BRANCH: "REL25_01"
+
 on:
   workflow_dispatch:
     inputs:
@@ -57,7 +60,7 @@ jobs:
           if [[ "${{ github.event_name }}" == "schedule" ]]; then
             PREFIX="$TODAY"
             CLEAN_FLAG=""
-            SELECTED_CLI_BRANCH="${{ inputs.cli_branch }}"
+            SELECTED_CLI_BRANCH="${DEFAULT_CLI_BRANCH}"
             echo "Scheduled run: Prefix=$PREFIX, Clean flag not set, Branch=$SELECTED_CLI_BRANCH"
           else
             # Manually triggered workflow
