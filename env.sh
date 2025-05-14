@@ -1,5 +1,5 @@
-hubV=25.0.0-alpha3
-hubVV=25.0.0-alpha3
+hubV=25.0.0-alpha4
+hubVV=25.0.0-alpha4
 
 aceV=$hubV
 kirkV=$hubV
