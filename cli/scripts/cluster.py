@@ -1443,25 +1443,25 @@ def init(cluster_name, install=True):
             cmd_create_stanza = (
                 f"cd {node['path']}/pgedge && "
                 f"./pgedge backrest command stanza-create "
-                f"--stanza '{stanza}' "
-                f"--pg1-path '{pg1_path}' "
-                f"--repo1-cipher-type {repo1_cipher_type} "
-                f"--pg1-port {port} "
-                f"--repo1-path {repo1_path}"
+                f"--stanza='{stanza}' "
+                f"--pg1-path='{pg1_path}' "
+                f"--repo1-cipher-type={repo1_cipher_type} "
+                f"--pg1-port={port} "
+                f"--repo1-path={repo1_path}"
             )
             run_cmd(cmd_create_stanza, node=node, message=f"Creating pgBackRest stanza '{stanza}'", verbose=verbose)
     
             # -- Step 7: Initiate a full backup using pgBackRest (again, passing the port)
             backrest_backup_args = (
-                f"--repo1-path {repo1_path} "
-                f"--stanza {stanza} "
-                f"--pg1-path {pg1_path} "
-                f"--repo1-type {repo1_type} "
-                f"--log-level-console {log_level_console} "
-                f"--pg1-port {port} "
-                f"--db-socket-path /tmp "
-                f"--repo1-cipher-type {repo1_cipher_type} "
-                f"--repo1-retention-full {repo1_retention_full} "
+                f"--repo1-path={repo1_path} "
+                f"--stanza={stanza} "
+                f"--pg1-path={pg1_path} "
+                f"--repo1-type={repo1_type} "
+                f"--log-level-console={log_level_console} "
+                f"--pg1-port={port} "
+                f"--db-socket-path=/tmp "
+                f"--repo1-cipher-type={repo1_cipher_type} "
+                f"--repo1-retention-full={repo1_retention_full} "
                 f"--type=full"
             )
             cmd_create_backup = f"cd {node['path']}/pgedge && ./pgedge backrest command backup '{backrest_backup_args}'"
@@ -1550,7 +1550,7 @@ def add_node(
     pg = db_settings["pg_version"]
     pgV = f"pg{pg}"
     verbose = cluster_data.get("log_level", "info")
-    
+
     # Load and validate the target node JSON
     target_node_file = f"{target_node}.json"
     if not os.path.isfile(target_node_file):
@@ -1600,7 +1600,6 @@ def add_node(
             "os_user": os_user,
             "ssh_key": ssh_key,
         }
-
 
     if "public_ip" not in target_node_data and "private_ip" not in target_node_data:
         util.exit_message(
@@ -1729,11 +1728,11 @@ def add_node(
         cmd_create_stanza_source = (
             f"cd {source_node_data['path']}/pgedge && "
             f"./pgedge backrest command stanza-create "
-            f"--stanza '{source_stanza}' "
-            f"--pg1-path '{source_pg1_path}' "
-            f"--repo1-cipher-type {source_repo1_cipher_type} "
-            f"--pg1-port {source_port} "
-            f"--repo1-path {source_repo1_path}"
+            f"--stanza='{source_stanza}' "
+            f"--pg1-path='{source_pg1_path}' "
+            f"--repo1-cipher-type={source_repo1_cipher_type} "
+            f"--pg1-port={source_port} "
+            f"--repo1-path={source_repo1_path}"
         )
         run_cmd(
             cmd_create_stanza_source,
@@ -1743,15 +1742,15 @@ def add_node(
         )
         # Step 7: Initiate a full backup using pgBackRest (again, passing the port)
         backrest_backup_args_source = (
-            f"--repo1-path {source_repo1_path} "
-            f"--stanza {source_stanza} "
-            f"--pg1-path {source_pg1_path} "
-            f"--repo1-type {source_repo1_type} "
-            f"--log-level-console {source_log_level_console} "
-            f"--pg1-port {source_port} "
-            f"--db-socket-path /tmp "
-            f"--repo1-cipher-type {source_repo1_cipher_type} "
-            f"--repo1-retention-full {source_repo1_retention_full} "
+            f"--repo1-path={source_repo1_path} "
+            f"--stanza={source_stanza} "
+            f"--pg1-path={source_pg1_path} "
+            f"--repo1-type={source_repo1_type} "
+            f"--log-level-console={source_log_level_console} "
+            f"--pg1-port={source_port} "
+            f"--db-socket-path=/tmp "
+            f"--repo1-cipher-type={source_repo1_cipher_type} "
+            f"--repo1-retention-full={source_repo1_retention_full} "
             f"--type=full"
         )
         cmd_create_backup_source = f"cd {source_node_data['path']}/pgedge && ./pgedge backrest command backup '{backrest_backup_args_source}'"
@@ -1830,15 +1829,24 @@ def add_node(
     message = f"Removing old data directory"
     run_cmd(cmd, target_node_data, message=message, verbose=verbose)
 
-    args = f"--repo1-path {repo1_path} --repo1-cipher-type {source_repo1_cipher_type} --type standby "
+    restore_args = (
+        f'--cmd="pgbackrest --repo1-cipher-type={source_repo1_cipher_type}" '
+        f"--stanza={source_stanza} "
+        f"--pg1-path={target_node_data['path']}/pgedge/data/{pgV} "
+        f"--repo1-path={repo1_path} "
+        f"--repo1-cipher-type={source_repo1_cipher_type} "
+        f"--repo1-type={source_repo1_type} "
+        "--type=standby "
+    )
+
     if backup_id:
-        args += f"--set={backup_id} "
+        restore_args.append(f"--set={backup_id}")
 
     cmd = (
         f'{target_node_data["path"]}/pgedge/pgedge backrest command restore '
-        f"--repo1-type={source_repo1_type} --stanza={source_stanza} "
-        f'--pg1-path={target_node_data["path"]}/pgedge/data/{pgV} {args}'
+        f"'{restore_args}'"
     )
+
     message = f"Restoring backup"
     run_cmd(cmd, target_node_data, message=message, verbose=verbose)
 
@@ -1846,15 +1854,15 @@ def add_node(
     pgc = f"{pgd}/postgresql.conf"
     log_directory = f'{target_node_data["path"]}/pgedge/data/logs/{pgV}'
 
-    cmd = f"echo \"ssl_cert_file='{pgd}/server.crt'\" >> {pgc}"
+    cmd = f"sed -i \"/^ssl_cert_file/d\" {pgc} && echo \"ssl_cert_file = '{pgd}/server.crt'\" >> {pgc}"
     message = f"Setting ssl_cert_file"
     run_cmd(cmd, target_node_data, message=message, verbose=verbose)
 
-    cmd = f"echo \"ssl_key_file='{pgd}/server.key'\" >> {pgc}"
+    cmd = f"sed -i \"/^ssl_key_file/d\" {pgc} && echo \"ssl_key_file = '{pgd}/server.key'\" >> {pgc}"
     message = f"Setting ssl_key_file"
     run_cmd(cmd, target_node_data, message=message, verbose=verbose)
 
-    cmd = f"echo \"log_directory='{log_directory}'\" >> {pgc}"
+    cmd = f"sed -i \"/^log_directory/d\" {pgc} && echo \"log_directory = '{log_directory}'\" >> {pgc}"
     message = f"Setting log_directory"
     run_cmd(cmd, target_node_data, message=message, verbose=verbose)
 
@@ -1890,7 +1898,7 @@ def add_node(
     cmd = f"{target_node_data['path']}/pgedge/pgedge psql '{sql_cmd}' {db_name}"
     message = f"Promoting standby to primary"
     run_cmd(cmd, target_node_data, message=message, verbose=verbose)
-    
+
     for mdb in db:
         sql_cmd = "SELECT sub_name FROM spock.subscription"
         cmd = f"{target_node_data['path']}/pgedge/pgedge psql '{sql_cmd}' {mdb['db_name']}"
@@ -2007,7 +2015,7 @@ def add_node(
         cmd, node=target_node_data, message=message, verbose=verbose, capture_output=True
     )
     print(f"\n{result.stdout}")
-    
+
     # A subsequent restart will be needed to apply the changes
     # This will occur in the next section when pgBackrest is configured or removed
     # Cleanup restore remnants by unsetting restore_command on target node
@@ -2015,7 +2023,7 @@ def add_node(
         'ALTER SYSTEM RESET restore_command'
     )
     cmd = f"{target_node_data['path']}/pgedge/pgedge psql '{sql_cmd}' {db_name}"
-    message = "Unsetting restore_command on target node"
+    message = "Unsetting restore_command"
     run_cmd(cmd, node=target_node_data, message=message, verbose=verbose)
 
     # Cleanup replica configuration
@@ -2024,7 +2032,7 @@ def add_node(
         f"./pgedge backrest cleanup-replica "
         f"--pg1-path {target_node_data['path']}/pgedge/data/{pgV} "
     )
-    run_cmd(cmd, node=target_node_data, message="Cleaning up replica configuration on target node", verbose=verbose)
+    run_cmd(cmd, node=target_node_data, message="Cleaning up replica configuration", verbose=verbose)
 
     target_backrest_cfg = target_node_data.get("backrest", {})
     if target_backrest_cfg:
@@ -2112,11 +2120,11 @@ def add_node(
         cmd_create_stanza_target = (
             f"cd {target_pgedge_dir} && "
             f"./pgedge backrest command stanza-create "
-            f"--stanza '{target_stanza}' "
-            f"--pg1-path '{target_pg1_path}' "
-            f"--repo1-cipher-type {target_repo1_cipher_type} "
-            f"--pg1-port {target_pg1_port} "
-            f"--repo1-path {target_repo1_path}"
+            f"--stanza='{target_stanza}' "
+            f"--pg1-path='{target_pg1_path}' "
+            f"--repo1-cipher-type={target_repo1_cipher_type} "
+            f"--pg1-port={target_pg1_port} "
+            f"--repo1-path={target_repo1_path}"
         )
         run_cmd(
             cmd=cmd_create_stanza_target,
@@ -2127,15 +2135,15 @@ def add_node(
 
         # Create a full backup using pgBackRest
         backrest_backup_args_target = (
-            f"--repo1-path {target_repo1_path} "
-            f"--stanza {target_stanza} "
-            f"--pg1-path {target_pg1_path} "
-            f"--repo1-type {target_repo1_type} "
-            f"--log-level-console {target_log_level_console} "
-            f"--pg1-port {target_pg1_port} "
-            f"--db-socket-path /tmp "
-            f"--repo1-cipher-type {target_repo1_cipher_type} "
-            f"--repo1-retention-full {target_repo1_retention_full} "
+            f"--repo1-path={target_repo1_path} "
+            f"--stanza={target_stanza} "
+            f"--pg1-path={target_pg1_path} "
+            f"--repo1-type={target_repo1_type} "
+            f"--log-level-console={target_log_level_console} "
+            f"--pg1-port={target_pg1_port} "
+            f"--db-socket-path=/tmp "
+            f"--repo1-cipher-type={target_repo1_cipher_type} "
+            f"--repo1-retention-full={target_repo1_retention_full} "
             f"--type=full"
         )
         cmd_create_backup_target = (
@@ -2175,7 +2183,7 @@ def add_node(
     cluster_data["update_date"] = datetime.datetime.now().astimezone().isoformat()
 
     write_cluster_json(cluster_name, cluster_data)
-    
+
 
 def json_validate_add_node(data):
     """
