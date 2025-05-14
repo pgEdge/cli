@@ -1917,6 +1917,8 @@ def add_node(
     run_cmd(cmd, target_node_data, message=message, verbose=verbose)
 
     restore_args = (
+        # This line is required because pgbackrest will not include repo1-cipher-type
+        # by default when generating the restore_command
         f'--cmd="pgbackrest --repo1-cipher-type={source_repo1_cipher_type}" '
         f"--stanza={source_stanza} "
         f"--pg1-path={target_node_data['path']}/pgedge/data/{pgV} "
