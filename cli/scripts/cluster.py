@@ -9,14 +9,9 @@ import sys
 import getpass
 from tabulate import tabulate # type: ignore
 from ipaddress import ip_address
-try:
-    import etcd 
-    import ha_patroni
-except Exception:
-    pass
 import os
 import re
-import yaml  
+
 BASE_DIR = "cluster"
 DEFAULT_REPO = "https://pgedge-download.s3.amazonaws.com/REPO"
 
@@ -1290,13 +1285,13 @@ def init(cluster_name, install=True):
         cluster_name (str): The name of the cluster to initialize.
         install (bool): Whether to install pgEdge on nodes. Defaults to True.
     """
-    # 1. Load cluster configuration
+    # Step 1. Load cluster configuration
     util.message(f"## Loading cluster '{cluster_name}' JSON definition file", "info")
     db, db_settings, nodes = load_json(cluster_name)
     parsed_json = get_cluster_json(cluster_name)
     if parsed_json is None:
         util.exit_message("Unable to load cluster JSON", 1)
-    is_ha_cluster = parsed_json.get("is_ha_cluster", False)
+
     verbose = parsed_json.get("log_level", "info")
 
     all_nodes = nodes.copy()
@@ -1304,13 +1299,13 @@ def init(cluster_name, install=True):
         if "sub_nodes" in node and node["sub_nodes"]:
             all_nodes.extend(node["sub_nodes"])
 
-    # 2. Check SSH connectivity for all nodes
+    # Step 2. Check SSH connectivity for all nodes
     util.message("## Checking SSH connectivity for all nodes", "info")
     for nd in all_nodes:
         message = f"Checking SSH connectivity on {nd['public_ip']}"
         run_cmd(cmd="hostname", node=nd, message=message, verbose=verbose)
 
-    # 3. Install pgEdge on all nodes
+    # Step 3. Install pgEdge on all nodes
     util.message("## Installing pgEdge on all nodes", "info")
     ssh_install_pgedge(
         cluster_name,
@@ -1323,7 +1318,7 @@ def init(cluster_name, install=True):
         verbose,
     )
 
-    # 4. Configure Spock replication on all nodes (for the first DB)
+    # Step 4. Configure Spock replication on all nodes (for the first DB)
     util.message("## Configuring Spock replication on all nodes", "info")
     ssh_cross_wire_pgedge(
         cluster_name,
@@ -1350,7 +1345,7 @@ def init(cluster_name, install=True):
                 verbose,
             )
 
-    # 5. Integrate pgBackRest (if a "backrest" block is present) on each node
+    # Step 5. Integrate pgBackRest (if a "backrest" block is present) on each node
     cluster_name_from_json = parsed_json["cluster_name"]
 
     for idx, node in enumerate(all_nodes, start=1):
@@ -1399,7 +1394,7 @@ def init(cluster_name, install=True):
                 verbose=verbose,
             )
 
-            # -- Step 2: Configure postgresql.conf for pgBackRest (without --pg1-port)
+            # Configure postgresql.conf for pgBackRest (without --pg1-port)
             cmd_set_postgresqlconf = (
                 f"cd {node['path']}/pgedge && "
                 f"./pgedge backrest set-postgresqlconf "
@@ -1416,7 +1411,7 @@ def init(cluster_name, install=True):
                 verbose=verbose,
             )
 
-            # -- Step 3: Configure pg_hba.conf for pgBackRest (without --pg1-port)
+            # Configure pg_hba.conf for pgBackRest (without --pg1-port)
             cmd_set_hbaconf = (
                 f"cd {node['path']}/pgedge && ./pgedge backrest set-hbaconf"
             )
@@ -1427,7 +1422,7 @@ def init(cluster_name, install=True):
                 verbose=verbose,
             )
 
-            # -- Step 4: Reload PostgreSQL configuration to apply changes
+            # Reload PostgreSQL configuration to apply changes
             sql_reload_conf = "select pg_reload_conf()"
             cmd_reload_conf = f"cd {node['path']}/pgedge && ./pgedge psql '{sql_reload_conf}' {db[0]['db_name']}"
             run_cmd(
@@ -1437,9 +1432,9 @@ def init(cluster_name, install=True):
                 verbose=verbose,
             )
 
-            # -- Step 5: Set all pgBackRest backup configuration values
+            # Set all pgBackRest backup configuration values
 
-            # (a) Set the backup stanza
+            # Set the backup stanza
             cmd_set_backup_stanza = (
                 f"cd {node['path']}/pgedge && ./pgedge set BACKUP stanza {stanza}"
             )
@@ -1450,7 +1445,7 @@ def init(cluster_name, install=True):
                 verbose=verbose,
             )
 
-            # (b) Create restore directory and set restore_path for backups.
+            # Create restore directory and set restore_path for backups.
             cmd_create_restore_dir = f"sudo mkdir -p {restore_path}"
             run_cmd(
                 cmd_create_restore_dir,
@@ -1466,7 +1461,7 @@ def init(cluster_name, install=True):
                 verbose=verbose,
             )
 
-            # (c) Set BACKUP repo1-host-user to the OS user (default: postgres)
+            # Set BACKUP repo1-host-user to the OS user (default: postgres)
             os_user = node.get("os_user", "postgres")
             cmd_set_repo1_host_user = f"cd {node['path']}/pgedge && ./pgedge set BACKUP repo1-host-user {os_user}"
             run_cmd(
@@ -1476,7 +1471,7 @@ def init(cluster_name, install=True):
                 verbose=verbose,
             )
 
-            # (d) Set BACKUP pg1-path to the PostgreSQL data directory
+            # Set BACKUP pg1-path to the PostgreSQL data directory
             cmd_set_pg1_path = (
                 f"cd {node['path']}/pgedge && ./pgedge set BACKUP pg1-path {pg1_path}"
             )
@@ -1487,7 +1482,7 @@ def init(cluster_name, install=True):
                 verbose=verbose,
             )
 
-            # (e) Set BACKUP pg1-user to the OS user
+            # Set BACKUP pg1-user to the OS user
             cmd_set_pg1_user = (
                 f"cd {node['path']}/pgedge && ./pgedge set BACKUP pg1-user {os_user}"
             )
@@ -1498,7 +1493,7 @@ def init(cluster_name, install=True):
                 verbose=verbose,
             )
 
-            # (f) Set BACKUP pg1-port to the node's port value
+            # Set BACKUP pg1-port to the node's port value
             cmd_set_pg1_port = (
                 f"cd {node['path']}/pgedge && ./pgedge set BACKUP pg1-port {port}"
             )
@@ -1509,7 +1504,7 @@ def init(cluster_name, install=True):
                 verbose=verbose,
             )
 
-            # (g) Set BACKUP repo1-type to the node's repo1-type value
+            # Set BACKUP repo1-type to the node's repo1-type value
             cmd_set_pg1_port = (
                 f"cd {node['path']}/pgedge && ./pgedge set BACKUP repo1-type {repo1_type}"
             )
@@ -1521,7 +1516,7 @@ def init(cluster_name, install=True):
             )
 
 
-            # -- Step 6: Create the pgBackRest stanza (this command uses --pg1-port because it connects to the DB)
+            # Create the pgBackRest stanza (this command uses --pg1-port because it connects to the DB)
             cmd_create_stanza = (
                 f"cd {node['path']}/pgedge && "
                 f"./pgedge backrest command stanza-create "
@@ -1539,7 +1534,7 @@ def init(cluster_name, install=True):
                 verbose=verbose,
             )
 
-            # -- Step 7: Initiate a full backup using pgBackRest (again, passing the port)
+            # Initiate a full backup using pgBackRest (again, passing the port)
             backrest_backup_args = (
                 f"--repo1-path={repo1_path} "
                 f"--stanza={stanza} "
@@ -1559,7 +1554,7 @@ def init(cluster_name, install=True):
                 message="Creating full pgBackRest backup",
                 verbose=verbose,
             )
-            # (f) Set BACKUP pg1-port to the node's port value
+            # Set BACKUP pg1-port to the node's port value
             cmd_set_pg1_port = f"cd {node['path']}/pgedge && ./pgedge set BACKUP repo1-path {repo1_path}"
             run_cmd(
                 cmd_set_pg1_port,
@@ -1570,23 +1565,6 @@ def init(cluster_name, install=True):
 
             if node.get("backrest", {}):
                 capture_backrest_config(node, verbose=True)
-
-    # 6. If it's an HA cluster, handle Patroni/etcd, etc.
-    if is_ha_cluster:
-        pg_ver = db_settings["pg_version"]
-        for node in nodes:
-            if "sub_nodes" in node and node["sub_nodes"]:
-                sub_nodes = node["sub_nodes"]
-                # Stop and clean sub-nodes
-                for n in sub_nodes:
-                    manage_node(n, "stop", f"pg{pg_ver}", verbose)
-                    pgdata = f"{n['path']}/pgedge/data/pg{pg_ver}"
-                    cmd = f"rm -rf {pgdata}"
-                    message = f"Removing old data directory on {n['name']}"
-                    run_cmd(cmd, n, message=message, verbose=verbose)
-                # Configure etcd and Patroni
-                etcd.configure_etcd(node, sub_nodes)
-                ha_patroni.configure_patroni(node, sub_nodes, db[0], db_settings)
 
 
 def remove_backrest(node_data):
@@ -1615,13 +1593,14 @@ def add_node(
     Add a new node to a cluster by performing the following steps:
 
         1. Validate the cluster and target node JSON configurations.
-        2. Install pgEdge on the target node, if required.
-        3. Configure pgBackRest on the source node, if not already configured.
+        2. Configure pgBackRest on the source node, if not already configured.
+        3. Install pgEdge on the target node, if required.
         4. Restore the target node from a backup of the source node using pgBackRest.
         5. Configure the target node as a standby replica of the source node.
         6. Promote the target node to a primary once it catches up to the source node.
         7. Configure replication and subscriptions for the new node across the cluster.
-        8. Update the cluster JSON configuration with the new node.
+        8. Reconfigure pgBackrest on the source and target nodes, if required.
+        9. Update the cluster JSON configuration with the new node.
 
         A target node JSON configuration file must be provided in the same directory from which
         this command is invoked, named '<node_name>.json'.
@@ -1637,6 +1616,7 @@ def add_node(
         script (str, optional): A bash script to execute after the target node is added.
         install (bool, optional): Whether to install pgEdge on the target node. Defaults to True.
     """
+    # Step 1. Validate the cluster and target node JSON configurations.
     db, db_settings, nodes = load_json(cluster_name)
     db_name = db[0]["db_name"]
     db_user = db[0]["db_user"]
@@ -1718,9 +1698,9 @@ def add_node(
             "public_ip", target_node_data.get("private_ip")
         )
 
-    # If backrest is not configured on the source node, install it
+    # Step 2. Configure pgBackRest on the source node, if not already configured.
     if not source_backrest_cfg:
-        # Step 1: Install pgBackRest on the source node
+        # Install pgBackRest on the source node
         cmd_install_backrest = (
             f"cd {source_node_data['path']}/pgedge && ./pgedge install backrest"
         )
@@ -1762,7 +1742,7 @@ def add_node(
         source_pg1_path = f"{source_node_data['path']}/pgedge/data/pg{pg_version}"
         source_port = source_node_data["port"]
 
-        # Step 2: Configure postgresql.conf for pgBackRest (without --pg1-port)
+        # Configure postgresql.conf for pgBackRest (without --pg1-port)
         cmd_set_postgresqlconf_source = (
             f"cd {source_node_data['path']}/pgedge && "
             f"./pgedge backrest set-postgresqlconf "
@@ -1779,7 +1759,7 @@ def add_node(
             verbose=verbose,
         )
 
-        # Step 3: Configure pg_hba.conf for pgBackRest (without --pg1-port)
+        # Configure pg_hba.conf for pgBackRest (without --pg1-port)
         cmd_set_hbaconf_source = (
             f"cd {source_node_data['path']}/pgedge && ./pgedge backrest set-hbaconf"
         )
@@ -1790,7 +1770,7 @@ def add_node(
             verbose=verbose,
         )
 
-        # Step 4: Reload PostgreSQL configuration to apply changes
+        # Reload PostgreSQL configuration to apply changes
         sql_reload_conf = "select pg_reload_conf()"
         cmd_reload_conf_source = f"cd {source_node_data['path']}/pgedge && ./pgedge psql '{sql_reload_conf}' {db_name}"
         run_cmd(
@@ -1800,7 +1780,7 @@ def add_node(
             verbose=verbose,
         )
 
-        # Step 5: Set all pgBackRest backup configuration values for the source node.
+        # Set all pgBackRest backup configuration values for the source node.
         compound_cmd = " && ".join(
             [
                 f"cd {source_node_data['path']}/pgedge",
@@ -1823,7 +1803,7 @@ def add_node(
             verbose=False,
         )
 
-        # Step 6: Create the pgBackRest stanza (this command uses --pg1-port because it connects to the DB)
+        # Create the pgBackRest stanza (this command uses --pg1-port because it connects to the DB)
         cmd_create_stanza_source = (
             f"cd {source_node_data['path']}/pgedge && "
             f"./pgedge backrest command stanza-create "
@@ -1840,7 +1820,7 @@ def add_node(
             message=f"Creating pgBackRest stanza '{source_stanza}'",
             verbose=verbose,
         )
-        # Step 7: Initiate a full backup using pgBackRest (again, passing the port)
+        # Initiate a full backup using pgBackRest (again, passing the port)
         backrest_backup_args_source = (
             f"--repo1-path={source_repo1_path} "
             f"--stanza={source_stanza} "
@@ -1860,7 +1840,7 @@ def add_node(
             message="Creating full pgBackRest backup",
             verbose=verbose,
         )
-        # (i) (Optional) Reset BACKUP repo1-path if needed
+        # Reset BACKUP repo1-path if needed
         cmd_set_repo1_path_source = f"cd {source_node_data['path']}/pgedge && ./pgedge set BACKUP repo1-path {source_repo1_path}"
         run_cmd(
             cmd_set_repo1_path_source,
@@ -1888,6 +1868,7 @@ def add_node(
     )
     source_repo1_type = source_backrest_cfg.get("repo1_type", "posix")
 
+    # Step 3. Install pgEdge on the target node, if required.
     rc = ssh_install_pgedge(
         cluster_name,
         db_name,
@@ -1899,6 +1880,7 @@ def add_node(
         verbose,
     )
 
+    # Step 4. Restore the target node from a backup of the source node using pgBackRest.
     if not repo1_path:
         # Do not install pgbackrest on source node; simply fetch the repo1_path from source's settings.
         repo1_path_default = f"/var/lib/pgbackrest/{source_node_data['name']}"
@@ -1970,6 +1952,7 @@ def add_node(
     message = f"Setting log_directory"
     run_cmd(cmd, target_node_data, message=message, verbose=verbose)
 
+    # Step 5. Configure the target node as a standby replica of the source node.
     cmd = (
         f'{target_node_data["path"]}/pgedge/pgedge backrest configure-replica {source_stanza} '
         f'{target_node_data["path"]}/pgedge/data/{pgV} {source_node_data["ip_address"]} '
@@ -1992,17 +1975,21 @@ def add_node(
         if spock_maj >= 4:
             v4 = True
 
+    
     set_cluster_readonly(nodes, True, db_name, f"{pgV}", v4, verbose)
     manage_node(target_node_data, "start", f"{pgV}", verbose)
     time.sleep(5)
 
-    check_cluster_lag(target_node_data, db_name, f"{pgV}", verbose)
+    # Step 6. Promote the target node to a primary once it catches up to the source node.
 
+    check_cluster_lag(target_node_data, db_name, f"{pgV}", verbose)
+    
     sql_cmd = "SELECT pg_promote()"
     cmd = f"{target_node_data['path']}/pgedge/pgedge psql '{sql_cmd}' {db_name}"
     message = f"Promoting standby to primary"
     run_cmd(cmd, target_node_data, message=message, verbose=verbose)
 
+    # Step 7. Configure replication and subscriptions for the new node across the cluster.
     for mdb in db:
         sql_cmd = "SELECT sub_name FROM spock.subscription"
         cmd = f"{target_node_data['path']}/pgedge/pgedge psql '{sql_cmd}' {mdb['db_name']}"
@@ -2125,6 +2112,8 @@ def add_node(
         capture_output=True,
     )
     print(f"\n{result.stdout}")
+
+    # Step 8. Reconfigure pgBackrest on the source and target nodes, if required.
 
     # A subsequent restart will be needed to apply the changes
     # This will occur in the next section when pgBackrest is configured or removed
@@ -2279,6 +2268,7 @@ def add_node(
     if not source_backrest_cfg:
         remove_backrest(source_node_data)
 
+    # Step 9. Update the cluster JSON configuration with the new node.
     # Check and display pgBackRest configuration status in the source node
     # Remove unnecessary keys before appending new node to the cluster data
     target_node_data.pop("ip_address", None)
