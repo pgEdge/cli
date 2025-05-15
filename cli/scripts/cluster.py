@@ -1383,7 +1383,7 @@ def init(cluster_name, install=True):
             pg1_path = f"{node['path']}/pgedge/data/pg{pg_version}"
             port = node["port"]  # Custom port from JSON
 
-            # -- Step 1: Install pgBackRest
+            # Install pgBackRest
             cmd_install_backrest = (
                 f"cd {node['path']}/pgedge && ./pgedge install backrest"
             )
