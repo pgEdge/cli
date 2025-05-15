@@ -1684,20 +1684,6 @@ def add_node(
             "Both public_ip and private_ip are missing in target node data."
         )
 
-    if "public_ip" in source_node_data and "private_ip" in source_node_data:
-        source_node_data["ip_address"] = source_node_data["public_ip"]
-    else:
-        source_node_data["ip_address"] = source_node_data.get(
-            "public_ip", source_node_data.get("private_ip")
-        )
-
-    if "public_ip" in target_node_data and "private_ip" in target_node_data:
-        target_node_data["ip_address"] = target_node_data["public_ip"]
-    else:
-        target_node_data["ip_address"] = target_node_data.get(
-            "public_ip", target_node_data.get("private_ip")
-        )
-
     # Step 2. Configure pgBackRest on the source node, if not already configured.
     if not source_backrest_cfg:
         # Install pgBackRest on the source node
@@ -1955,7 +1941,7 @@ def add_node(
     # Step 5. Configure the target node as a standby replica of the source node.
     cmd = (
         f'{target_node_data["path"]}/pgedge/pgedge backrest configure-replica {source_stanza} '
-        f'{target_node_data["path"]}/pgedge/data/{pgV} {source_node_data["ip_address"]} '
+        f'{target_node_data["path"]}/pgedge/data/{pgV} {source_node_data.get("private_ip", source_node_data.get("public_ip"))} '
         f'{source_node_data["port"]} {source_node_data["os_user"]}'
     )
     message = f"Configuring PITR on replica"
@@ -1975,7 +1961,6 @@ def add_node(
         if spock_maj >= 4:
             v4 = True
 
-    
     set_cluster_readonly(nodes, True, db_name, f"{pgV}", v4, verbose)
 
     manage_node(target_node_data, "start", f"{pgV}", verbose)
@@ -1983,7 +1968,7 @@ def add_node(
 
     # Wait until the target node is in sync with the source node
     check_cluster_lag(target_node_data, db_name, verbose)
-    
+
     # Promote the target node to primary
     sql_cmd = "SELECT pg_promote()"
     cmd = f"{target_node_data['path']}/pgedge/pgedge psql '{sql_cmd}' {db_name}"
@@ -2276,7 +2261,6 @@ def add_node(
     # Step 9. Update the cluster JSON configuration with the new node.
     # Check and display pgBackRest configuration status in the source node
     # Remove unnecessary keys before appending new node to the cluster data
-    target_node_data.pop("ip_address", None)
     target_node_data.pop("os_user", None)
     target_node_data.pop("ssh_key", None)
 
@@ -2539,7 +2523,7 @@ def create_node(node, dbname, verbose):
     """
     Creates a new node in the database cluster.
     """
-    ip = node["public_ip"] if "public_ip" in node else node["private_ip"]
+    ip = node["private_ip"] if node["private_ip"] else node["public_ip"]
     if not ip:
         util.exit_message(f"Node '{node['name']}' does not have a valid IP address.")
 
@@ -2559,7 +2543,7 @@ def create_sub_new(nodes, n, dbname, verbose):
     """
     for node in nodes:
         sub_name = f"sub_{n['name']}{node['name']}"
-        ip = node["public_ip"] if "public_ip" in node else node["private_ip"]
+        ip = node["private_ip"] if node["private_ip"] else node["public_ip"]
         if not ip:
             util.exit_message(
                 f"Node '{node['name']}' does not have a valid IP address."
@@ -2580,9 +2564,7 @@ def create_sub(nodes, new_node, dbname, verbose):
     """
     for n in nodes:
         sub_name = f"sub_{n['name']}{new_node['name']}"
-        ip = (
-            new_node["public_ip"] if "public_ip" in new_node else new_node["private_ip"]
-        )
+        ip = new_node["private_ip"] if new_node["private_ip"] else new_node["public_ip"]
         if not ip:
             util.exit_message(
                 f"Node '{new_node['name']}' does not have a valid IP address."
