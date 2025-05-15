@@ -1977,17 +1977,22 @@ def add_node(
 
     
     set_cluster_readonly(nodes, True, db_name, f"{pgV}", v4, verbose)
+
     manage_node(target_node_data, "start", f"{pgV}", verbose)
     time.sleep(5)
 
-    # Step 6. Promote the target node to a primary once it catches up to the source node.
-
-    check_cluster_lag(target_node_data, db_name, f"{pgV}", verbose)
+    # Wait until the target node is in sync with the source node
+    check_cluster_lag(target_node_data, db_name, verbose)
     
+    # Promote the target node to primary
     sql_cmd = "SELECT pg_promote()"
     cmd = f"{target_node_data['path']}/pgedge/pgedge psql '{sql_cmd}' {db_name}"
     message = f"Promoting standby to primary"
     run_cmd(cmd, target_node_data, message=message, verbose=verbose)
+
+    # Wait for the target node to finish recovery
+    # This ensures we can start writes on the new node
+    check_recovery(target_node_data, db_name, verbose)
 
     # Step 7. Configure replication and subscriptions for the new node across the cluster.
     for mdb in db:
@@ -2663,7 +2668,7 @@ def set_cluster_readonly(nodes, readonly, dbname, stanza, v4, verbose):
             run_cmd(cmd, node=node, message=message, verbose=verbose, important=True)
 
 
-def check_cluster_lag(n, dbname, stanza, verbose, timeout=600, interval=1):
+def check_cluster_lag(n, dbname, verbose, timeout=600, interval=2):
     sql_cmd = """
     SELECT COALESCE(
     (SELECT pg_wal_lsn_diff(pg_last_wal_receive_lsn(), pg_last_wal_replay_lsn())),
@@ -2678,7 +2683,7 @@ def check_cluster_lag(n, dbname, stanza, verbose, timeout=600, interval=1):
         if time.time() - start_time > timeout:
             return
 
-        time.sleep(2)
+        time.sleep(interval)
         cmd = f"{n['path']}/pgedge/pgedge psql '{sql_cmd}' {dbname}"
         message = f"Checking lag time of new cluster"
         result = run_cmd(
@@ -2686,6 +2691,27 @@ def check_cluster_lag(n, dbname, stanza, verbose, timeout=600, interval=1):
         )
         print(result.stdout)
         lag_bytes = int(extract_psql_value(result.stdout, "lag_bytes"))
+
+def check_recovery(n, dbname, verbose, timeout=600, interval=5):
+    sql_cmd = """
+    SELECT pg_is_in_recovery() AS in_recovery
+    """
+
+    start_time = time.time()
+    in_recovery = True
+
+    while in_recovery:
+        if time.time() - start_time > timeout:
+            return
+
+        time.sleep(interval)
+        cmd = f"{n['path']}/pgedge/pgedge psql '{sql_cmd}' {dbname}"
+        message = f"Checking status of recovery"
+        result = run_cmd(
+            cmd=cmd, node=n, message=message, verbose=verbose, capture_output=True
+        )
+        print(result.stdout)
+        in_recovery = extract_psql_value(result.stdout, "in_recovery") == "t"
 
 
 def check_wal_rec(n, dbname, stanza, verbose, timeout=600, interval=1):
