@@ -12,18 +12,18 @@ import util
 import fire
 
 
-def create(db=None, User=None, Passwd=None, pg=None, spock=None):
+def create(db=None, user=None, Passwd=None, pg=None, spock=None):
     """
     Create a pg db with spock components installed into it.
 
 
      Usage:
          To create a database owned by a specific user
-            db create -d <db> -U <usr> -P <passwd>
+            db create -d <db> -u <usr> -P <passwd>
 
     """
 
-    util.message(f"db.create(db={db}, User={User}, Passwd={Passwd}, pg={pg}, spock={spock})", "debug")
+    util.message(f"db.create(db={db}, user={user}, Passwd={Passwd}, pg={pg}, spock={spock})", "debug")
 
     # one way or another, the user that creates the db will have a password
     if Passwd is None:
@@ -37,12 +37,12 @@ def create(db=None, User=None, Passwd=None, pg=None, spock=None):
     ncb = nc + "pgbin " + str(pg) + " "
 
     privs = ""
-    if User and db:
+    if user and db:
         privs = "SUPERUSER CREATEDB CREATEROLE INHERIT LOGIN"
     else:
-        util.exit_message("db.create() must have parms of -User & -db")
+        util.exit_message("db.create() must have parms of -user & -db")
 
-    cmd = "CREATE ROLE " + User + " PASSWORD '" + Passwd + "' " + privs
+    cmd = "CREATE ROLE " + user + " PASSWORD '" + Passwd + "' " + privs
     util.echo_cmd(ncb + '"psql -q -c \\"' + cmd + '\\" postgres"')
     cmd = (
         "CREATE ROLE replicator PASSWORD '"
@@ -52,7 +52,7 @@ def create(db=None, User=None, Passwd=None, pg=None, spock=None):
     )
     util.echo_cmd(ncb + '"psql -q -c \\"' + cmd + '\\" postgres"')
 
-    cmd = "createdb '" + db + "' --owner='" + User + "'"
+    cmd = "createdb '" + db + "' --owner='" + user + "'"
     rc1 = util.echo_cmd(ncb + '"' + cmd + '"')
 
     util.echo_cmd(f"{nc} tune pg{pg}")
