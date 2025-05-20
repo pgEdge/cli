@@ -8,7 +8,7 @@ bundle=pgedge
 api=pgedge
 ctlibsV=1.6
 
-spock41V=4.1devel-2
+spock50V=5.0.0-devel1-1
 
 spock40V=4.0.10-1
 

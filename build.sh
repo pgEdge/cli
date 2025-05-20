@@ -357,18 +357,19 @@ initPG () {
   if [ "$pgM" == "17" ]; then
     initC "audit-pg$pgM"      "audit"      "$audit17V"   "$outPlat" "postgres/audit"     "" "" "nil"
     initC "hintplan-pg$pgM"   "hintplan"   "$hint17V"    "$outPlat" "postgres/hintplan"  "" "" "nil"
-    initC "spock41-pg$pgM"    "spock41"    "$spock41V"   "$outPlat" "postgres/spock41"   "" "" "nil"
+    initC "spock50-pg$pgM"    "spock50"    "$spock50V"   "$outPlat" "postgres/spock50"   "" "" "nil"
   fi
 
   if [ "$pgM" == "16" ]; then
     initC "audit-pg$pgM"      "audit"      "$audit16V"   "$outPlat" "postgres/audit"     "" "" "nil"
     initC "hintplan-pg$pgM"   "hintplan"   "$hint16V"    "$outPlat" "postgres/hintplan"  "" "" "nil"
-    initC "spock41-pg$pgM"    "spock41"    "$spock41V"   "$outPlat" "postgres/spock41"   "" "" "nil"
+    initC "spock50-pg$pgM"    "spock50"    "$spock50V"   "$outPlat" "postgres/spock50"   "" "" "nil"
   fi
 
   if [ "$pgM" == "15" ]; then
     initC "audit-pg$pgM"      "audit"      "$audit15V"   "$outPlat" "postgres/audit"     "" "" "nil"
     initC "hintplan-pg$pgM"   "hintplan"   "$hint15V"    "$outPlat" "postgres/hintplan"  "" "" "nil"
+    initC "spock50-pg$pgM"    "spock50"    "$spock50V"   "$outPlat" "postgres/spock50"   "" "" "nil"
   fi
 
   if [ "$pgM" == "15" ] || [ "$pgM" == "16" ] || [ "$pgM" == "17" ]; then
