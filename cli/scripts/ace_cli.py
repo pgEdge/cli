@@ -528,12 +528,6 @@ def update_spock_exception_cli(cluster_name, node_name, entry, dbname=None) -> N
 
     util.message("Spock exception status updated successfully", p_state="success")
 
-def auto_repair_cli() -> None:
-    """
-    Invoke the automatic repair process.
-    """
-    ace_core.auto_repair()
-
 def start_cli() -> None:
     """
     Start the ACE background scheduler and API
