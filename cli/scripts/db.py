@@ -39,7 +39,7 @@ def create(db=None, User=None, Passwd=None, pg=None, spock=None):
             new_argv.append(arg)
     sys.argv[:] = new_argv
 
-    # ——— Honor the same ENV overrides you have in setup_pgedge ———
+
     pgeUser = os.getenv("pgeUser", "")
     if pgeUser and User is None:
         util.message(f"over-riding 'User' with ENV pgeUser={pgeUser}", "debug")
