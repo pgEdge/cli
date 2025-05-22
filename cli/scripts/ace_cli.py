@@ -43,8 +43,8 @@ def table_diff_cli(
             Defaults to config.BLOCK_ROWS_DEFAULT.
         max_cpu_ratio (float, optional): Maximum CPU utilisation. The accepted
             range is 0.0-1.0. Defaults to config.MAX_CPU_RATIO_DEFAULT.
-        output (str, optional): Output format. Acceptable values are "json" or
-            "csv". Defaults to "json".
+        output (str, optional): Output format. Acceptable values are "json",
+            "csv", and "html". Defaults to "json".
         nodes (str, optional): Comma-delimited subset of nodes on which the
             command will be executed. Defaults to "all".
         batch_size (int, optional): Size of each batch. Defaults to
@@ -206,7 +206,6 @@ def table_rerun_cli(
     dbname=None,
     quiet=False,
     behavior="multiprocessing",
-    table_filter=None,
 ):
     """
     Reruns a table diff operation based on a previous diff file.
@@ -223,8 +222,6 @@ def table_rerun_cli(
             or "hostdb". "multiprocessing" uses parallel processing for faster
             execution. "hostdb" uses the host database to create temporary
             tables for faster comparisons. Defaults to "multiprocessing".
-        table_filter (str, optional): A SQL WHERE clause that allows you to
-            filter rows for comparison.
         quiet (bool, optional): Whether to suppress output in stdout. Defaults
             to False.
 
@@ -249,7 +246,7 @@ def table_rerun_cli(
             output="json",
             _nodes="all",
             batch_size=config.BATCH_SIZE_DEFAULT,
-            table_filter=table_filter,
+            table_filter=None,
             quiet_mode=quiet,
             diff_file_path=diff_file,
             invoke_method="cli",
@@ -502,7 +499,25 @@ def update_spock_exception_cli(cluster_name, node_name, entry, dbname=None) -> N
             be performed.
         node_name (str): The name of the node within the cluster where the
             update should be performed.
-        entry (str): The exception entry in JSON format.
+        entry (str): A JSON string representing the exception entry. The JSON object
+            parsed from this string should contain the following keys:
+            - "remote_origin" (str): Identifier of the origin node of the
+              transaction that caused the exception. (Required)
+            - "remote_commit_ts" (str): Commit timestamp of the
+              transaction on the remote origin. (Required)
+            - "remote_xid" (str): Transaction ID on the remote origin.
+              (Required)
+            - "status" (str): The new status to set for the exception (e.g.,
+              "RESOLVED", "IGNORED"). (Required)
+            - "resolution_details" (dict, optional): A JSON serialisable dictionary
+              containing details about the resolution.
+            - "command_counter" (int, optional): If specified, only the specific
+              exception detail (matching this command_counter along with
+              remote_origin, remote_commit_ts, remote_xid) in the
+              `spock.exception_status_detail` table is updated. If omitted,
+              the main entry in `spock.exception_status` and all related
+              detail entries for the (remote_origin, remote_commit_ts,
+              remote_xid) trio in `spock.exception_status_detail` are updated.
         dbname (str, optional): Name of the database. Defaults to the name of
             the first database in the cluster configuration.
 
