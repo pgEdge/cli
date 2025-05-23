@@ -1,27 +1,48 @@
 
 #  Copyright 2022-2025 PGEDGE  All rights reserved. #
 
-
 import os
 import sys
 import platform
 import subprocess
 import json
-
 import util
 import fire
 
+def create(db=None, User=None, Passwd=None, pg=None, spock=None, help=False):
+    """
+     Create a database owned by a specific user
+    """
 
-def create(db=None, User=None, Passwd=None, pg=None, spock=None):
+    if help:
+        print(
     """
     Create a pg db with spock components installed into it.
 
+    Usage:
+        ./pgedge db create --db <db> --User <usr> --Passwd <passwd> --pg=<pg> --spock <spock>
 
-     Usage:
-         To create a database owned by a specific user
-            db create -d <db> -U <usr> -P <passwd>
+    Flags:
+    -d, --db        Name of the database to create
+    -U, --User      Owner user of the new database
+    -P, --Passwd    Password for the new user 
+        --pg        Postgres version to use
+    -s, --spock     Spock version to install
 
     """
+        )
+        return
+
+    
+    pgeUser = os.getenv("pgeUser", "")
+    if pgeUser and User is None:
+        util.message(f"over-riding 'User' with ENV pgeUser={pgeUser}", "debug")
+        User = pgeUser
+
+    pgePasswd = os.getenv("pgePasswd", "")
+    if pgePasswd and Passwd is None:
+        util.message(f"over-riding 'Passwd' with ENV pgePasswd={pgePasswd}", "debug")
+        Passwd = pgePasswd
 
     util.message(f"db.create(db={db}, User={User}, Passwd={Passwd}, pg={pg}, spock={spock})", "debug")
 
