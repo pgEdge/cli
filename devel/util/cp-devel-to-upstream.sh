@@ -37,14 +37,15 @@ job_count=0
 
 # Copy between buckets in the background &
 for key in $object_keys; do
-  echo "Copying: s3://$from_bucket/$key -> s3://$to_bucket/$key"
-  
+
+  # strip off everything up to the last slash, then prefix with REPO/
+  echo "Copying: s3://$from_bucket/$key -> s3://$to_bucket/REPO/${key##*/}"
   aws s3api copy-object \
     --copy-source "${from_bucket}/${key}" \
     --bucket "$to_bucket" \
-    --key "$key" \
+    --key "REPO/${key##*/}" \
     $flags > /dev/null 2>>"$log_file" &
-  
+
   job_count=$((job_count + 1))
   
   # When max_jobs are running, wait for them to finish before launching more
