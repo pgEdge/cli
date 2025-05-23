@@ -16,38 +16,23 @@ def create(db=None, User=None, Passwd=None, pg=None, spock=None, help=False):
 
     if help:
         print(
-"""
-Create a pg db with spock components installed into it.
+    """
+    Create a pg db with spock components installed into it.
 
-Usage:
-    db create --db <db> --User <usr> --Passwd <passwd> --pg=<pg> --spock <spock>
+    Usage:
+        ./pgedge db create --db <db> --User <usr> --Passwd <passwd> --pg=<pg> --spock <spock>
 
-Flags:
-  -d, --db        Name of the database to create
-  -U, --User      Owner user of the new database
-  -P, --Passwd    Password for the new user 
-      --pg        Postgres version to use
-  -s, --spock     Spock version to install
+    Flags:
+    -d, --db        Name of the database to create
+    -U, --User      Owner user of the new database
+    -P, --Passwd    Password for the new user 
+        --pg        Postgres version to use
+    -s, --spock     Spock version to install
 
-"""
+    """
         )
         return
 
-    new_argv = []
-    for arg in sys.argv:
-
-        if arg == '-U':
-            new_argv.append('--User')
-        elif arg.startswith('-U') and not arg.startswith('-User'):
-            new_argv.append('--User=' + arg[2:])
-
-        elif arg == '-P':
-            new_argv.append('--Passwd')
-        elif arg.startswith('-P') and not arg.startswith('-Passwd'):
-            new_argv.append('--Passwd=' + arg[2:])
-        else:
-            new_argv.append(arg)
-    sys.argv[:] = new_argv
     
     pgeUser = os.getenv("pgeUser", "")
     if pgeUser and User is None:
