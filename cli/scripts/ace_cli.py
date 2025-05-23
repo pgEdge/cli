@@ -306,8 +306,8 @@ def repset_diff_cli(
             Defaults to config.BLOCK_ROWS_DEFAULT.
         max_cpu_ratio (float, optional): Maximum CPU utilisation. The accepted
             range is 0.0-1.0. Defaults to config.MAX_CPU_RATIO_DEFAULT.
-        output (str, optional): Output format. Acceptable values are "json" or
-            "csv". Defaults to "json".
+        output (str, optional): Output format. Acceptable values are "json",
+            "csv", and "html". Defaults to "json".
         nodes (str, optional): Comma-delimited subset of nodes on which the
             command will be executed. Defaults to "all".
         batch_size (int, optional): Size of each batch. Defaults to
