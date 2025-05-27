@@ -11,7 +11,7 @@ import fire, util, db, setup_core
 CTL="./pgedge"
 
 
-def setup_pgedge(User=None, Passwd=None, dbName=None, port=None, pg_ver=None, spock_ver=None, autostart=False, interactive=False, yes=False):
+def setup_pgedge(User=None, Passwd=None, dbName=None, port=None, Datadir=None, pg_ver=None, spock_ver=None, autostart=False, interactive=False, yes=False):
     """Install pgEdge node (including postgres, spock, and snowflake-sequences)
 
        Install pgEdge node (including postgres, spock, and snowflake-sequences)
@@ -21,6 +21,7 @@ def setup_pgedge(User=None, Passwd=None, dbName=None, port=None, pg_ver=None, sp
        :param Passwd: The password for the newly created db user (required)
        :param dbName: The database name (required)
        :param port: Defaults to 5432 if not specified
+       :param Datadir: The database data directory (absolute path)
        :param pg_ver: Defaults to latest prod version of pg, such as 16.  May be pinned to a specific pg version such as 16.4
        :param spock_ver: Defaults to latest prod version of spock, such as 4.0.  May be pinned to a specific spock version such as 4.0.1
        :param autostart: Defaults to False
@@ -54,7 +55,7 @@ def setup_pgedge(User=None, Passwd=None, dbName=None, port=None, pg_ver=None, sp
         port = pgePort
 
     util.message(f"""
-setup.pgedge(User={User}, Passwd={Passwd}, dbName={dbName}, port={port}, pg_ver={pg_ver},
+setup.pgedge(User={User}, Passwd={Passwd}, dbName={dbName}, port={port}, Datadir={Datadir}, pg_ver={pg_ver},
   spock_ver={spock_ver}, autostart={autostart}, interactive={interactive}, yes={yes})
 """, "debug")
 
@@ -95,8 +96,12 @@ setup.pgedge(User={User}, Passwd={Passwd}, dbName={dbName}, port={port}, pg_ver=
 
     pg_major, pg_minor = setup_core.parse_pg(pg_ver)
 
+    pg_init_options = ""
+    if Datadir is not None:
+        pg_init_options = f"--datadir={Datadir}"
+
     setup_core.check_pre_reqs(
-        User, Passwd, dbName, port, pg_major, pg_minor, spock_ver, autostart)
+        User, Passwd, dbName, port, Datadir, pg_major, pg_minor, spock_ver, autostart)
 
     if interactive and yes is False:
         y_or_n = input("Do you want to continue? [Y/n] ")
@@ -119,7 +124,7 @@ setup.pgedge(User={User}, Passwd={Passwd}, dbName={dbName}, port={port}, pg_ver=
         if autostart is True:
             util.autostart_config(pg_maj)
         else:
-            setup_core.osSys(f"{CTL} init {pg_maj}")
+            setup_core.osSys(f"{CTL} init {pg_maj} {pg_init_options}")
 
         setup_core.osSys(f"{CTL} config {pg_maj} --port={port}")
 
@@ -131,4 +136,11 @@ setup.pgedge(User={User}, Passwd={Passwd}, dbName={dbName}, port={port}, pg_ver=
 
 
 if __name__ == "__main__":
+    # confirm if data directory option used correctly
+    for i in range(1, len(sys.argv)):
+        if sys.argv[i].lower().startswith("--datadir"):
+            datadir_opt = str(sys.argv[i].split('=')[0])
+            if(datadir_opt.casefold() == "--Datadir".casefold() and
+               datadir_opt != "--Datadir"):
+                util.exit_message("To specify the database data directory, please use case sensitive option -D or --Datadir=DATADIR", 1)
     fire.Fire(setup_pgedge)
