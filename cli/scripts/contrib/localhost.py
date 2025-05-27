@@ -236,7 +236,7 @@ def cluster_create(
     db, db_settings, nodes = cluster.load_json(cluster_name)
     verbose = db_settings.get("log_level", "info")
 
-    cluster.ssh_install_pgedge(cluster_name, db[0]["db_name"], db_settings, db[0]["db_user"], db[0]["db_password"], nodes, True, True, " ", verbose=verbose)
+    cluster.ssh_install_pgedge(cluster_name, db[0]["db_name"], db_settings, db[0]["db_user"], db[0]["db_password"], nodes, True, verbose=verbose)
     cluster.ssh_cross_wire_pgedge(cluster_name, db[0]["db_name"], db_settings, db[0]["db_user"], db[0]["db_password"], nodes, verbose=verbose)
     if len(db) > 1:
         for database in db[1:]:
