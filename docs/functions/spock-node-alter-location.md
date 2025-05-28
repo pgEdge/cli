@@ -1,10 +1,11 @@
-## SYNOPSIS
+
+SYNOPSIS
     ./pgedge spock node-alter-location NODE_NAME LOCATION DB
- 
-## DESCRIPTION
+
+DESCRIPTION
     Set location details for spock node.
- 
-## POSITIONAL ARGUMENTS
+
+POSITIONAL ARGUMENTS
     NODE_NAME
     LOCATION
     DB

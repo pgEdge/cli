@@ -1,13 +1,14 @@
-## SYNOPSIS
+
+SYNOPSIS
     ./pgedge um install COMPONENT <flags>
- 
-## DESCRIPTION
+
+DESCRIPTION
     Install a component
- 
-## POSITIONAL ARGUMENTS
+
+POSITIONAL ARGUMENTS
     COMPONENT
- 
-## FLAGS
+
+FLAGS
     -a, --active=ACTIVE
     
     

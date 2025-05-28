@@ -1,7 +1,8 @@
-## SYNOPSIS
+
+SYNOPSIS
     ./pgedge spock COMMAND
- 
-## COMMANDS
+
+COMMANDS
     COMMAND is one of the following:
      node-create         # Define a node for spock.
      node-drop           # Remove a spock node.
@@ -14,8 +15,6 @@
      repset-drop         # Remove a replication set.
      repset-add-table    # Add table(s) to a replication set.
      repset-remove-table # Remove table from replication set.
-     repset-add-seq      # Add a sequence to a replication set.
-     repset-remove-seq   # Remove a sequence from a replication set.
      repset-add-partition# Add a partition to a replication set.
      repset-remove-partition# Remove a partition from a replication set.
      repset-list-tables  # List tables in replication sets.
@@ -23,7 +22,7 @@
      sub-drop            # Delete a subscription.
      sub-alter-interface # Modify an interface to a subscription.
      sub-enable          # Make a subscription live.
-     sub-disable         # Put a subscription on hold and disconnect from provider.
+     sub-disable         # Put sub on hold & disconnect from provider.
      sub-add-repset      # Add a replication set to a subscription.
      sub-remove-repset   # Drop a replication set from a subscription.
      sub-show-status     # Display the status of the subscription.
@@ -35,4 +34,4 @@
      sequence-convert    # Convert sequence to snowflake sequence.
      health-check        # Check if PG instance is accepting connections.
      metrics-check       # Retrieve advanced DB & OS metrics.
-     set-readonly        # Turn PG read-only mode on or off.
+     set-readonly        # DEPRECATED: use db.set_readonly() instead

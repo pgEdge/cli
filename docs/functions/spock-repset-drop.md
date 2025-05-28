@@ -1,12 +1,13 @@
-## SYNOPSIS
+
+SYNOPSIS
     ./pgedge spock repset-drop SET_NAME DB
- 
-## DESCRIPTION
+
+DESCRIPTION
     Drop a replication set. 
 
 Example: spock repset-drop demo_repset demo
- 
-## POSITIONAL ARGUMENTS
+
+POSITIONAL ARGUMENTS
     SET_NAME
         The name of the replication set. Example: demo_repset
     DB

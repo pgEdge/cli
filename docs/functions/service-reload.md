@@ -1,8 +1,9 @@
-## SYNOPSIS
+
+SYNOPSIS
     ./pgedge service reload COMPONENT
- 
-## DESCRIPTION
+
+DESCRIPTION
     Reload server configuration files (without a restart)
- 
-## POSITIONAL ARGUMENTS
+
+POSITIONAL ARGUMENTS
     COMPONENT

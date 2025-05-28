@@ -1,10 +1,11 @@
-## SYNOPSIS
+
+SYNOPSIS
     ./pgedge spock set-readonly <flags>
- 
-## DESCRIPTION
+
+DESCRIPTION
     DEPRECATED: use db.set_readonly() instead
- 
-## FLAGS
+
+FLAGS
     -r, --readonly=READONLY
     
     

@@ -1,8 +1,9 @@
-## SYNOPSIS
+
+SYNOPSIS
     ./pgedge service init COMPONENT
- 
-## DESCRIPTION
+
+DESCRIPTION
     Initialize a component
- 
-## POSITIONAL ARGUMENTS
+
+POSITIONAL ARGUMENTS
     COMPONENT

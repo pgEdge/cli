@@ -1,8 +1,9 @@
-## SYNOPSIS
+
+SYNOPSIS
     ./pgedge spock metrics-check DB
- 
-## DESCRIPTION
+
+DESCRIPTION
     Retrieve advanced DB & OS metrics.
- 
-## POSITIONAL ARGUMENTS
+
+POSITIONAL ARGUMENTS
     DB

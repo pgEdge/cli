@@ -1,5 +1,6 @@
-## SYNOPSIS
+
+SYNOPSIS
     ./pgedge um update -
- 
-## DESCRIPTION
+
+DESCRIPTION
     Update with a new list of available components

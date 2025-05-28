@@ -1,5 +1,6 @@
-## SYNOPSIS
+
+SYNOPSIS
     ./pgedge um clean -
- 
-## DESCRIPTION
+
+DESCRIPTION
     Delete downloaded component files from local cache

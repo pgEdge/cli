@@ -1,18 +1,19 @@
-## SYNOPSIS
+
+SYNOPSIS
     ./pgedge localhost cluster-create CLUSTER_NAME NUM_NODES <flags>
- 
-## DESCRIPTION
+
+DESCRIPTION
     Create a localhost cluster. Each node will be located in the cluster/<cluster_name>/<node_name> directory. Each database will have a different port. 
 
 Example: localhost cluster-create demo 3 -U lcusr -P lcpasswd -d lcdb
- 
-## POSITIONAL ARGUMENTS
+
+POSITIONAL ARGUMENTS
     CLUSTER_NAME
         The name of the cluster.
     NUM_NODES
         The number of nodes in the cluster.
- 
-## FLAGS
+
+FLAGS
     --pg=PG
         The PostgreSQL version of the database.
     

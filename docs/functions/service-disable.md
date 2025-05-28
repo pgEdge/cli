@@ -1,10 +1,11 @@
-## SYNOPSIS
+
+SYNOPSIS
     ./pgedge service disable <flags>
- 
-## DESCRIPTION
+
+DESCRIPTION
     Disable a server component from starting automatically
- 
-## FLAGS
+
+FLAGS
     -c, --component=COMPONENT
     
     

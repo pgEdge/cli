@@ -1,10 +1,11 @@
-## SYNOPSIS
+
+SYNOPSIS
     ./pgedge service stop <flags>
- 
-## DESCRIPTION
+
+DESCRIPTION
     Stop server components
- 
-## FLAGS
+
+FLAGS
     -c, --component=COMPONENT
     
     

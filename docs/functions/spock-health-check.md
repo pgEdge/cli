@@ -1,5 +1,6 @@
-## SYNOPSIS
+
+SYNOPSIS
     ./pgedge spock health-check -
- 
-## DESCRIPTION
+
+DESCRIPTION
     Check if PG instance is accepting connections.
