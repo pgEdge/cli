@@ -1,8 +1,8 @@
 
-SYNOPSIS
+## SYNOPSIS
     ./pgedge um COMMAND
 
-COMMANDS
+## COMMANDS
     COMMAND is one of the following:
      list                # Display available/installed components
      update              # Update with a new list of available components

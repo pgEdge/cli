@@ -1,11 +1,11 @@
 
-SYNOPSIS
+## SYNOPSIS
     ./pgedge cluster add-db CLUSTER_NAME DATABASE_NAME USERNAME PASSWORD
 
-DESCRIPTION
+## DESCRIPTION
     This command creates a new database in the cluster, installs spock, and sets up all spock nodes and subscriptions.
 
-POSITIONAL ARGUMENTS
+## POSITIONAL ARGUMENTS
     CLUSTER_NAME
         The name of the cluster where the database should be added.
     DATABASE_NAME

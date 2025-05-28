@@ -1,8 +1,8 @@
 
-SYNOPSIS
+## SYNOPSIS
     ./pgedge spock COMMAND
 
-COMMANDS
+## COMMANDS
     COMMAND is one of the following:
      node-create         # Define a node for spock.
      node-drop           # Remove a spock node.

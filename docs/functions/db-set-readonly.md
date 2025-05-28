@@ -1,11 +1,11 @@
 
-SYNOPSIS
+## SYNOPSIS
     ./pgedge db set-readonly <flags>
 
-DESCRIPTION
+## DESCRIPTION
     Turn PG read-only mode 'on' or 'off'.
 
-FLAGS
+## FLAGS
     -r, --readonly=READONLY
     
     

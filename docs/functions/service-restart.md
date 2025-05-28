@@ -1,11 +1,11 @@
 
-SYNOPSIS
+## SYNOPSIS
     ./pgedge service restart <flags>
 
-DESCRIPTION
+## DESCRIPTION
     Stop & then start server components
 
-FLAGS
+## FLAGS
     -c, --component=COMPONENT
     
     

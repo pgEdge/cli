@@ -1,8 +1,8 @@
 
-SYNOPSIS
+## SYNOPSIS
     ./pgedge db COMMAND
 
-COMMANDS
+## COMMANDS
     COMMAND is one of the following:
      create              # Create a database owned by a specific user
      guc-set             # Set GUC

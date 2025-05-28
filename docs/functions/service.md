@@ -1,8 +1,8 @@
 
-SYNOPSIS
+## SYNOPSIS
     ./pgedge service COMMAND
 
-COMMANDS
+## COMMANDS
     COMMAND is one of the following:
      start               # Start server components
      stop                # Stop server components

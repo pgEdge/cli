@@ -1,11 +1,11 @@
 
-SYNOPSIS
+## SYNOPSIS
     ./pgedge service enable <flags>
 
-DESCRIPTION
+## DESCRIPTION
     Enable a server component to start automatically
 
-FLAGS
+## FLAGS
     -c, --component=COMPONENT
     
     

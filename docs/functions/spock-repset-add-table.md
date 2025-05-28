@@ -1,13 +1,13 @@
 
-SYNOPSIS
+## SYNOPSIS
     ./pgedge spock repset-add-table REPLICATION_SET TABLE DB <flags>
 
-DESCRIPTION
+## DESCRIPTION
     Add a table or tables to a replication set. 
 
 Example: spock repset-add-table demo_repset 'public.*' demo
 
-POSITIONAL ARGUMENTS
+## POSITIONAL ARGUMENTS
     REPLICATION_SET
         The replication set name. Example: demo_repset
     TABLE
@@ -15,7 +15,7 @@ POSITIONAL ARGUMENTS
     DB
         The name of the database. Example: demo
 
-FLAGS
+## FLAGS
     -s, --synchronize_data=SYNCHRONIZE_DATA
         Synchronized table data on all related subscribers.
     

@@ -1,13 +1,13 @@
 
-SYNOPSIS
+## SYNOPSIS
     ./pgedge spock sub-create SUBSCRIPTION_NAME PROVIDER_DSN DB <flags>
 
-DESCRIPTION
+## DESCRIPTION
     Create a subscription. 
 
 Example: spock sub-create sub_n2n1 'host=10.1.2.5 port=5432 user=pgedge dbname=demo' demo
 
-POSITIONAL ARGUMENTS
+## POSITIONAL ARGUMENTS
     SUBSCRIPTION_NAME
         The name of the subscription. Each subscription in a cluster must have a unique name. Example: sub_n2n1
     PROVIDER_DSN
@@ -15,7 +15,7 @@ POSITIONAL ARGUMENTS
     DB
         The name of the database. Example: demo
 
-FLAGS
+## FLAGS
     -r, --replication_sets=REPLICATION_SETS
         An array of replication sets to automatically include in this subscription. Example: 'demo_repset,default,default_insert_only,ddl_sql'
     

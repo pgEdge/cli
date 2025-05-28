@@ -1,8 +1,8 @@
 
-SYNOPSIS
+## SYNOPSIS
     ./pgedge cluster COMMAND
 
-COMMANDS
+## COMMANDS
     COMMAND is one of the following:
      json-validate       # Validate and update a cluster configuration JSON file.
      json-create         # Create a cluster configuration JSON file based on user input.

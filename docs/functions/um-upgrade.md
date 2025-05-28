@@ -1,9 +1,9 @@
 
-SYNOPSIS
+## SYNOPSIS
     ./pgedge um upgrade COMPONENT
 
-DESCRIPTION
+## DESCRIPTION
     Perform an upgrade to a newer version of a component
 
-POSITIONAL ARGUMENTS
+## POSITIONAL ARGUMENTS
     COMPONENT

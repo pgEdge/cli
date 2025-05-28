@@ -1,10 +1,8 @@
-sh: -c: line 1: unexpected EOF while looking for matching `''
-sh: -c: line 2: syntax error: unexpected end of file
 
-SYNOPSIS
+## SYNOPSIS
     ./pgedge cluster add-node CLUSTER_NAME SOURCE_NODE TARGET_NODE <flags>
 
-DESCRIPTION
+## DESCRIPTION
     Add a new node to a cluster by performing the following steps:
 
     1. Validate the cluster and target node JSON configurations.
@@ -20,7 +18,7 @@ DESCRIPTION
     A target node JSON configuration file must be provided in the same directory from which
     this command is invoked, named '<node_name>.json'.
 
-POSITIONAL ARGUMENTS
+## POSITIONAL ARGUMENTS
     CLUSTER_NAME
         The name of the cluster to which the node is being added.
     SOURCE_NODE
@@ -28,7 +26,7 @@ POSITIONAL ARGUMENTS
     TARGET_NODE
         The name of the new node being added.
 
-FLAGS
+## FLAGS
     -r, --repo1_path=REPO1_PATH
         The repository path for pgBackRest. If not provided, the source node's configuration is used.
     

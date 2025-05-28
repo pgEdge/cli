@@ -1,11 +1,11 @@
 
-SYNOPSIS
+## SYNOPSIS
     ./pgedge um verify-metadata <flags>
 
-DESCRIPTION
+## DESCRIPTION
     Display component metadata from the local store
 
-FLAGS
+## FLAGS
     -P, --Project=PROJECT
     
     

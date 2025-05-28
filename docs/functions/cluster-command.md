@@ -1,11 +1,11 @@
 
-SYNOPSIS
+## SYNOPSIS
     ./pgedge cluster command CLUSTER_NAME NODE CMD
 
-DESCRIPTION
+## DESCRIPTION
     This command executes './pgedge' commands on a specified node or all nodes in the cluster.
 
-POSITIONAL ARGUMENTS
+## POSITIONAL ARGUMENTS
     CLUSTER_NAME
         The name of the cluster.
     NODE

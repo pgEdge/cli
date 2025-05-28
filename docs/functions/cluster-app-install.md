@@ -1,17 +1,17 @@
 
-SYNOPSIS
+## SYNOPSIS
     ./pgedge cluster app-install CLUSTER_NAME APP_NAME <flags>
 
-DESCRIPTION
+## DESCRIPTION
     Install a test application on all nodes in the cluster. Supported applications include 'pgbench' and 'northwind'. 
 
-POSITIONAL ARGUMENTS
+## POSITIONAL ARGUMENTS
     CLUSTER_NAME
         The name of the cluster.
     APP_NAME
         The name of the application to install ('pgbench' or 'northwind').
 
-FLAGS
+## FLAGS
     -d, --database_name=DATABASE_NAME
         The name of the database to install the application on. Defaults to the first database in the cluster configuration.
     

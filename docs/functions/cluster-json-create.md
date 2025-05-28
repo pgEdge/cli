@@ -1,11 +1,11 @@
 
-SYNOPSIS
+## SYNOPSIS
     ./pgedge cluster json-create CLUSTER_NAME NUM_NODES DB USR PASSWD <flags>
 
-DESCRIPTION
+## DESCRIPTION
     Create a cluster configuration JSON file based on user input.
 
-POSITIONAL ARGUMENTS
+## POSITIONAL ARGUMENTS
     CLUSTER_NAME
         The name of the cluster. A directory with this same name will be created in the cluster directory, and the JSON file will have the same name.
     NUM_NODES
@@ -17,7 +17,7 @@ POSITIONAL ARGUMENTS
     PASSWD
         The password for the superuser.
 
-FLAGS
+## FLAGS
     --pg_ver=PG_VER
         The PostgreSQL version of the database.
     

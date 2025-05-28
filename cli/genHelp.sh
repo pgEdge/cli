@@ -10,7 +10,7 @@ mkdir -p "$output_dir"
 write_help() {
   # Generate help for a specific module and its commands
   local module="$1"
-  $nc $module --help | sed -r "s/\x1B\[[0-9;]*[mGKH]//g" > "$output_dir/functions/$module.md";
+  $nc $module --help | sed -r 's/\x1B\[[0-9;]*[mGKH]//g; /^(SYNOPSIS|POSITIONAL ARGUMENTS|DESCRIPTION|FLAGS|COMMANDS)/s/^/## /' > "$output_dir/functions/$module.md";
   
   local commands=()
   # Parse the generated module help file to extract commands
@@ -26,8 +26,8 @@ write_help() {
       if [[ $in_commands -eq 1 ]]; then
         # Stop if we hit an empty line or a line that doesn't look like a command
         [[ -z "$line" ]] && break
-        # Match lines that start with whitespace, then a command, then whitespace, then #
-        if [[ "$line" =~ ^[[:space:]]*([a-zA-Z0-9_-]+)[[:space:]]+# ]]; then
+        # Match lines that start with whitespace, then a command, then optional whitespace, then #
+          if [[ "$line" =~ ^[[:space:]]*([a-zA-Z0-9_-]+)[[:space:]]*# ]]; then
           cmd="${BASH_REMATCH[1]}"
           commands+=("$cmd")
         fi
@@ -41,7 +41,7 @@ write_help() {
     local fname="${module}-$(echo "$cmd" | tr ' ' '-').md"
     echo "Generating help for module '$module', command '$cmd' -> $fname"
 
-    if ! $nc $module $cmd --help 2>&1 | sed -r "s/\x1B\[[0-9;]*[mGKH]//g" > "$output_dir/functions/$fname"; then
+    if ! $nc $module $cmd --help | sed -r 's/\x1B\[[0-9;]*[mGKH]//g; /^(SYNOPSIS|POSITIONAL ARGUMENTS|DESCRIPTION|FLAGS|COMMANDS)/s/^/## /' > "$output_dir/functions/$fname"; then
       echo "ERROR: Failed to generate help for module '$module', command '$cmd'" >&2
     fi
   done

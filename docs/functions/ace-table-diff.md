@@ -1,17 +1,17 @@
 
-SYNOPSIS
+## SYNOPSIS
     ./pgedge ace table-diff CLUSTER_NAME TABLE_NAME <flags>
 
-DESCRIPTION
+## DESCRIPTION
     Compare a table across a cluster and produce a report showing any differences.
 
-POSITIONAL ARGUMENTS
+## POSITIONAL ARGUMENTS
     CLUSTER_NAME
         Name of the cluster where the operation should be performed.
     TABLE_NAME
         Schema-qualified name of the table that you are comparing across cluster nodes.
 
-FLAGS
+## FLAGS
     -d, --dbname=DBNAME
         Name of the database. Defaults to the name of the first database in the cluster configuration.
     

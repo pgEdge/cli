@@ -1,11 +1,11 @@
 
-SYNOPSIS
+## SYNOPSIS
     ./pgedge ace table-rerun CLUSTER_NAME DIFF_FILE TABLE_NAME <flags>
 
-DESCRIPTION
+## DESCRIPTION
     Reruns a table diff operation based on a previous diff file.
 
-POSITIONAL ARGUMENTS
+## POSITIONAL ARGUMENTS
     CLUSTER_NAME
         Name of the cluster where the operation should be performed.
     DIFF_FILE
@@ -13,7 +13,7 @@ POSITIONAL ARGUMENTS
     TABLE_NAME
         Schema-qualified name of the table that you are comparing across cluster nodes.
 
-FLAGS
+## FLAGS
     -d, --dbname=DBNAME
         Name of the database. Defaults to the name of the first database in the cluster configuration.
     

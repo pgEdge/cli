@@ -1,6 +1,6 @@
 
-SYNOPSIS
+## SYNOPSIS
     ./pgedge db test-io -
 
-DESCRIPTION
+## DESCRIPTION
     Use the 'fio' Flexible IO Tester on pg data directory

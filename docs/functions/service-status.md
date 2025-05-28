@@ -1,11 +1,11 @@
 
-SYNOPSIS
+## SYNOPSIS
     ./pgedge service status <flags>
 
-DESCRIPTION
+## DESCRIPTION
     Display running status of server components
 
-FLAGS
+## FLAGS
     -c, --component=COMPONENT
     
     

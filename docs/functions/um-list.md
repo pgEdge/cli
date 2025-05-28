@@ -1,11 +1,11 @@
 
-SYNOPSIS
+## SYNOPSIS
     ./pgedge um list <flags>
 
-DESCRIPTION
+## DESCRIPTION
     Display available/installed components
 
-FLAGS
+## FLAGS
     -c, --components=COMPONENTS
     
     

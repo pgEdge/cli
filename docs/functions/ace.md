@@ -1,8 +1,8 @@
 
-SYNOPSIS
+## SYNOPSIS
     ./pgedge ace COMMAND
 
-COMMANDS
+## COMMANDS
     COMMAND is one of the following:
      table-diff          # Compare a table across a cluster and produce a report showing any differences.
      table-repair        # Repair a table across a cluster by fixing data inconsistencies identified in a table-diff operation.

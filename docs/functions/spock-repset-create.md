@@ -1,19 +1,19 @@
 
-SYNOPSIS
+## SYNOPSIS
     ./pgedge spock repset-create SET_NAME DB <flags>
 
-DESCRIPTION
+## DESCRIPTION
     Create a replication set. 
 
 Example: spock repset-create demo_repset demo
 
-POSITIONAL ARGUMENTS
+## POSITIONAL ARGUMENTS
     SET_NAME
         The name of the replication set. Example: demo_repset
     DB
         The name of the database. Example: demo
 
-FLAGS
+## FLAGS
     --replicate_insert=REPLICATE_INSERT
         For tables in this replication set, replicate inserts.
     

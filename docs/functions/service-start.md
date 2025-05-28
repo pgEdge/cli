@@ -1,11 +1,11 @@
 
-SYNOPSIS
+## SYNOPSIS
     ./pgedge service start <flags>
 
-DESCRIPTION
+## DESCRIPTION
     Start server components
 
-FLAGS
+## FLAGS
     -c, --component=COMPONENT
     
     

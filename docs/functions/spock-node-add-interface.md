@@ -1,13 +1,13 @@
 
-SYNOPSIS
+## SYNOPSIS
     ./pgedge spock node-add-interface NODE_NAME INTERFACE_NAME DSN DB
 
-DESCRIPTION
+## DESCRIPTION
     Add an additional interface to a spock node. 
 
 Example: spock node-add-interface n1 n1_2 'host=10.1.2.5 user=pgedge dbname=demo' demo
 
-POSITIONAL ARGUMENTS
+## POSITIONAL ARGUMENTS
     NODE_NAME
         The name of the node. Should reference the node already created in this database. Example: n1
     INTERFACE_NAME

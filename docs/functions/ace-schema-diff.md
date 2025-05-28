@@ -1,17 +1,17 @@
 
-SYNOPSIS
+## SYNOPSIS
     ./pgedge ace schema-diff CLUSTER_NAME SCHEMA_NAME <flags>
 
-DESCRIPTION
+## DESCRIPTION
     Compare a schema across a cluster and produce a report showing any differences.
 
-POSITIONAL ARGUMENTS
+## POSITIONAL ARGUMENTS
     CLUSTER_NAME
         Name of the cluster where the operation should be performed.
     SCHEMA_NAME
         Name of the schema that you are comparing across cluster nodes.
 
-FLAGS
+## FLAGS
     -n, --nodes=NODES
         Comma-delimited subset of nodes on which the command will be executed. Defaults to "all".
     

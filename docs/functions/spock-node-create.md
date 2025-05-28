@@ -1,13 +1,13 @@
 
-SYNOPSIS
+## SYNOPSIS
     ./pgedge spock node-create NODE_NAME DSN DB
 
-DESCRIPTION
+## DESCRIPTION
     Create a spock node. 
 
 Example: spock node-create n1 'host=10.1.2.5 user=pgedge dbname=demo' demo
 
-POSITIONAL ARGUMENTS
+## POSITIONAL ARGUMENTS
     NODE_NAME
         The name of the node. Only one node is allowed per database, and each node in a cluster must have a unique name. To use snowflake, use the convention n1,n2, etc. Example: n1
     DSN

@@ -1,17 +1,17 @@
 
-SYNOPSIS
+## SYNOPSIS
     ./pgedge ace repset-diff CLUSTER_NAME REPSET_NAME <flags>
 
-DESCRIPTION
+## DESCRIPTION
     Compare a repset across a cluster and produce a report showing any differences.
 
-POSITIONAL ARGUMENTS
+## POSITIONAL ARGUMENTS
     CLUSTER_NAME
         Name of the cluster where the operation should be performed.
     REPSET_NAME
         Name of the repset to compare across cluster nodes.
 
-FLAGS
+## FLAGS
     -d, --dbname=DBNAME
         Name of the database. Defaults to the name of the first database in the cluster configuration.
     

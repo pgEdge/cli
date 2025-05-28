@@ -1,8 +1,8 @@
 
-SYNOPSIS
+## SYNOPSIS
     ./pgedge cluster remove-node CLUSTER_NAME NODE_NAME
 
-DESCRIPTION
+## DESCRIPTION
     Remove a node from a cluster by performing the following steps:
 
     1. Load and validate the cluster JSON configuration.
@@ -13,7 +13,7 @@ DESCRIPTION
     6. Remove the node from the cluster configuration JSON file.
     7. Save the updated cluster configuration back to the cluster configuration JSON file.
 
-POSITIONAL ARGUMENTS
+## POSITIONAL ARGUMENTS
     CLUSTER_NAME
         The name of the cluster from which the node should be removed.
     NODE_NAME

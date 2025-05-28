@@ -1,11 +1,11 @@
 
-SYNOPSIS
+## SYNOPSIS
     ./pgedge cluster json-template CLUSTER_NAME DB NUM_NODES USR PASSWD PG PORT
 
-DESCRIPTION
+## DESCRIPTION
     Create a template for a cluster configuration JSON file.
 
-POSITIONAL ARGUMENTS
+## POSITIONAL ARGUMENTS
     CLUSTER_NAME
         The name of the cluster. A directory with this name will be created in the cluster directory, and the JSON file will have the same name.
     DB

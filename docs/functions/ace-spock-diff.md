@@ -1,15 +1,15 @@
 
-SYNOPSIS
+## SYNOPSIS
     ./pgedge ace spock-diff CLUSTER_NAME <flags>
 
-DESCRIPTION
+## DESCRIPTION
     Compare the spock metadata across a cluster and produce a report showing any differences.
 
-POSITIONAL ARGUMENTS
+## POSITIONAL ARGUMENTS
     CLUSTER_NAME
         Name of the cluster where the operation should be performed.
 
-FLAGS
+## FLAGS
     -d, --dbname=DBNAME
         Name of the database. Defaults to the name of the first database in the cluster configuration.
     

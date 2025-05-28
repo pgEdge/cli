@@ -1,9 +1,9 @@
 
-SYNOPSIS
+## SYNOPSIS
     ./pgedge um download COMPONENT
 
-DESCRIPTION
+## DESCRIPTION
     Download a component into local cache (without installing it)
 
-POSITIONAL ARGUMENTS
+## POSITIONAL ARGUMENTS
     COMPONENT
