@@ -4,6 +4,7 @@ export nc=../out/posix/pgedge
 export output_dir=../docs
 
 modules=(ace cluster db localhost service spock um)
+commands=(setup)
 
 mkdir -p "$output_dir"
 
@@ -52,6 +53,7 @@ index() {
   echo "# CLI Functions" > "$index_file"
   echo "" >> "$index_file"
 
+    
   for module in "${modules[@]}"; do
     echo "## $module module commands" >> "$index_file"
     echo "" >> "$index_file"
@@ -95,6 +97,13 @@ if [ "$m" == "all" ]; then
   for module in "${modules[@]}"; do
     write_help "$module"
   done
+
+  # Loop through all stand-alone commands and generate help
+  echo "Generating help for all standalone commands..."
+  for command in "${commands[@]}"; do
+    write_help "$command"
+  done
+
 
 elif [ "$m" == "index" ]; then
   index
