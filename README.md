@@ -1,12 +1,12 @@
-# The Command Line Interface (CLI)
+# pgEdge Command Line Interface (CLI)
 
-This is the Command Line Interface (CLI) for managing components. 
+The pgEdge Command Line Interface (CLI) for managing pgEdge Platform components. 
+
+[Release notes](https://docs.pgedge.com/platform/pgedge_rel_notes) and further documentation are available on [docs.pgedge.com](https://docs.pgedge.com)
 
 ## Table of Contents
 - [Creating a Development Environment](README.md#creating-a-development-environment)
 - [CLI Functions](docs/cli_functions.md)
-- [Tutorials](docs/tutorials.md)
-- [Release Notes](docs/cli_release_notes.md)
 
 ### Prerequisites
 
@@ -18,6 +18,7 @@ On each machine that will host a replication node, you must:
 * Configure [passwordless ssh](#configuring-passwordless-ssh) access for the same non-root OS user on each host.
 
 ### Creating a Development Environment
+
 After meeting the prerequisites:
 
 1.) Clone this repository.
@@ -33,6 +34,8 @@ After meeting the prerequisites:
 6.) Configure your `~/.aws/config` credentials.
 
 7.) Run `50-pull-IN.sh` to retrieve the REPO files.
+
+A [Docker Compose](devel/setup/compose/README.md) setup is also available for development and testing.
 
 ### Using the CLI
 
