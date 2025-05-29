@@ -4,7 +4,7 @@
 
 ## DESCRIPTION
     Creates a concurrent index on a specified column of a table in a database 
-when auto_ddl is enabled. It ensures the index is created across all
+when `auto_ddl` is enabled. It ensures the index is created across all
 nodes in the cluster.
 
 ## POSITIONAL ARGUMENTS

@@ -1,5 +1,12 @@
 # CLI Functions
 
+## standalone commands
+
+| Command | Description |
+|---------|-------------|
+| [`setup`](functions/setup.md) | Install a pgEdge node (including PostgreSQL, spock, and snowflake-sequences) |
+| [`upgrade-cli`](functions/upgrade-cli.md) | Upgrade pgEdge CLI to latest stable version |
+
 ## ace module commands
 
 | Command | Description |

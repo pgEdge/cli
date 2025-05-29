@@ -4,7 +4,7 @@
 
 ## DESCRIPTION
     This command removes spock subscriptions and nodes, and stops PostgreSQL on each node.
-    If the force flag is set to True, it will also remove the pgedge directory on 
+    If the `force` flag is set to `True`, it will also remove the `pgedge` directory on 
     each node, including the PostgreSQL data directory.
 
 ## POSITIONAL ARGUMENTS
@@ -13,5 +13,5 @@
 
 ## FLAGS
     -f, --force=FORCE
-        If True, removes the pgedge directory on each node. Defaults to False.
+        If `True`, removes the `pgedge` directory on each node. Defaults to `False`.
     

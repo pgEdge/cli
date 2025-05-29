@@ -3,7 +3,7 @@
     ./pgedge setup <flags>
 
 ## DESCRIPTION
-    Install pgEdge node (including postgres, spock, and snowflake-sequences)
+    Install a pgEdge node (including PostgreSQL, spock, and snowflake-sequences)
 
 Example: ./pgedge setup -U user -P passwd -d test --pg_ver 16
 
