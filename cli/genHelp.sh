@@ -35,6 +35,24 @@ get_module_commands() {
   echo "${cmds[@]}"
 }
 
+module_summary() {
+  local module="$1"
+  if [[ "$module" == "cluster" ]]; then
+    echo "Use commands in the cluster module to create and modify a cluster; commands in the cluster module include:"
+  elif [[ "$module" == "um" ]]; then
+    echo "Use commands in the um module to install, remove, and update installed components; commands in the um module include:"
+  elif [[ "$module" == "service" ]]; then
+    echo "Use commands in the service module to control CLI installed services; commands in the service module include:"
+  elif [[ "$module" == "spock" ]]; then
+    echo "Use commands in this section to invoke spock extension functionality with the CLI; commands in this module include:"
+  elif [[ "$module" == "ace" ]]; then
+    echo "Use commands in this section to invoke the Active Consistency Engine (ace); commands in this module include:"
+  elif [[ "$module" == "localhost" ]]; then
+    echo "Use commands in this section to easily configure localhost test clusters; commands in this module include:"
+  elif [[ "$module" == "db" ]]; then
+    echo "Use commands in this section to configure and control PostgreSQL Databases; commands in this module include:"
+  fi
+}
 
 write_help() {
   # Generate help for a command or module (and its subcommands)
@@ -63,6 +81,7 @@ write_help() {
 index() {
   local index_file="$output_dir/cli_functions.md"
   echo "# CLI Functions" > "$index_file"
+  echo "You can use CLI functions to create and manage PostgreSQL instances that implement logical replication scenarios and use the Spock and Snowflake extensions." >> "$index_file"
   echo "" >> "$index_file"
 
   # Loop through all stand-alone commands and generate index entries
@@ -81,7 +100,7 @@ index() {
           found && /^[[:space:]]*[^[:space:]]/ { gsub(/^[ \t]+|[ \t]+$/, "", $0); print $0; exit }
         ' "$command_file")
         
-        echo "| [\`$command\`](functions/$command.md) | $desc |" >> "$index_file"
+        echo "| [$command](functions/$command.md) | $desc |" >> "$index_file"
       fi
   done
 
@@ -89,6 +108,7 @@ index() {
 
   for module in "${modules[@]}"; do
     echo "## $module module commands" >> "$index_file"
+    module_summary "$module" >> "$index_file"
     echo "" >> "$index_file"
     echo "| Command | Description |" >> "$index_file"
     echo "|---------|-------------|" >> "$index_file"
@@ -106,7 +126,7 @@ index() {
       desc=parts[2]
       gsub(/^[ \t]+|[ \t]+$/, "", desc)
       if (cmd != "") {
-        printf "| [`%s %s`](functions/%s-%s.md) | %s |\n", module, cmd, module, cmd, desc
+        printf "| [%s %s](functions/%s-%s.md) | %s |\n", module, cmd, module, cmd, desc
       }
       }
     ' "$module_file" >> "$index_file"
