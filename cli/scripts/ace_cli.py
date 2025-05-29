@@ -547,6 +547,6 @@ def update_spock_exception_cli(cluster_name, node_name, entry, dbname=None) -> N
 
 def start_cli() -> None:
     """
-    Start the ACE background scheduler and API
+    Start the ACE background scheduler and API.
     """
     ace_daemon.start_ace()

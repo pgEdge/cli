@@ -1588,7 +1588,7 @@ def add_node(
     install=True,
 ):
     """
-    Add a new node to a cluster
+    Add a new node to a cluster.
 
     Add a new node to a cluster by performing the following steps:
 
@@ -2353,7 +2353,7 @@ def json_validate_add_node(data):
 
 def remove_node(cluster_name, node_name):
     """
-    Remove a node from a cluster
+    Remove a node from a cluster.
 
     Remove a node from a cluster by performing the following steps:
 

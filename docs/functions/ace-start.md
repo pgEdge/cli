@@ -3,4 +3,4 @@
     ./pgedge ace start -
 
 ## DESCRIPTION
-    Start the ACE background scheduler and API
+    Start the ACE background scheduler and API.

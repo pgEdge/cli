@@ -11,4 +11,4 @@
      schema-diff         # Compare a schema across a cluster and produce a report showing any differences.
      spock-diff          # Compare the spock metadata across a cluster and produce a report showing any differences.
      spock-exception-update# Updates the Spock exception status for a specified cluster and node.
-     start               # Start the ACE background scheduler and API
+     start               # Start the ACE background scheduler and API.

@@ -10,7 +10,7 @@ import fire, util, db
 def upgrade_cli(dryrun=False):
     """Upgrade pgEdge CLI to latest stable
 
-       Upgrade pgEdge CLI to latest stable version
+       Upgrade pgEdge CLI to latest stable version.
 
        Example: ./pgedge upgrade-cli --dryrun
        :param dryrun: See what version of the CLI you'd be upgrading too

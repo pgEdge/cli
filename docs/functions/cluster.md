@@ -9,8 +9,8 @@
      json-template       # Create a template for a cluster configuration JSON file.
      init                # Initialize a cluster via cluster configuration JSON file.
      list-nodes          # List all nodes in the cluster.
-     add-node            # Add a new node to a cluster
-     remove-node         # Remove a node from a cluster
+     add-node            # Add a new node to a cluster.
+     remove-node         # Remove a node from a cluster.
      replication-begin   # Add all tables to the default replication set on every node.
      replication-check   # Check and display the replication status for a given cluster.
      add-db              # Add a database to an existing pgEdge cluster.

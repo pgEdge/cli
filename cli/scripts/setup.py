@@ -12,9 +12,9 @@ CTL="./pgedge"
 
 
 def setup_pgedge(User=None, Passwd=None, dbName=None, port=None, pg_ver=None, spock_ver=None, autostart=False, interactive=False, yes=False):
-    """Install a pgEdge node (including PostgreSQL, spock, and snowflake-sequences)
+    """Install a pgEdge node (including PostgreSQL, spock, and snowflake-sequences).
 
-       Install a pgEdge node (including PostgreSQL, spock, and snowflake-sequences)
+       Install a pgEdge node (including PostgreSQL, spock, and snowflake-sequences).
 
        Example: ./pgedge setup -U user -P passwd -d test --pg_ver 16
        :param User: The database user that will own the db (required)

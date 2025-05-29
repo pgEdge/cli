@@ -3,7 +3,7 @@
     ./pgedge um install COMPONENT <flags>
 
 ## DESCRIPTION
-    Install a component
+    Install a component.
 
 ## POSITIONAL ARGUMENTS
     COMPONENT

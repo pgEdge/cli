@@ -3,7 +3,7 @@
     ./pgedge um remove COMPONENT
 
 ## DESCRIPTION
-    Uninstall a component
+    Uninstall a component.
 
 ## POSITIONAL ARGUMENTS
     COMPONENT

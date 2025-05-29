@@ -3,7 +3,7 @@
     ./pgedge upgrade-cli <flags>
 
 ## DESCRIPTION
-    Upgrade pgEdge CLI to latest stable version
+    Upgrade pgEdge CLI to latest stable version.
 
 Example: ./pgedge upgrade-cli --dryrun
 

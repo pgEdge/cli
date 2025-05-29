@@ -5,8 +5,8 @@ You can use CLI functions to create and manage PostgreSQL instances that impleme
 
 | Command | Description |
 |---------|-------------|
-| [setup](functions/setup.md) | Install a pgEdge node (including PostgreSQL, spock, and snowflake-sequences) |
-| [upgrade-cli](functions/upgrade-cli.md) | Upgrade pgEdge CLI to latest stable version |
+| [setup](functions/setup.md) | Install a pgEdge node (including PostgreSQL, spock, and snowflake-sequences). |
+| [upgrade-cli](functions/upgrade-cli.md) | Upgrade pgEdge CLI to latest stable version. |
 
 ## ace module commands
 Use commands in this section to invoke the Active Consistency Engine (ace); commands in this module include:
@@ -20,7 +20,7 @@ Use commands in this section to invoke the Active Consistency Engine (ace); comm
 | [ace schema-diff](functions/ace-schema-diff.md) | Compare a schema across a cluster and produce a report showing any differences. |
 | [ace spock-diff](functions/ace-spock-diff.md) | Compare the spock metadata across a cluster and produce a report showing any differences. |
 | [ace spock-exception-update](functions/ace-spock-exception-update.md) | Updates the Spock exception status for a specified cluster and node. |
-| [ace start](functions/ace-start.md) | Start the ACE background scheduler and API |
+| [ace start](functions/ace-start.md) | Start the ACE background scheduler and API. |
 
 ## cluster module commands
 Use commands in the cluster module to create and modify a cluster; commands in the cluster module include:
@@ -32,8 +32,8 @@ Use commands in the cluster module to create and modify a cluster; commands in t
 | [cluster json-template](functions/cluster-json-template.md) | Create a template for a cluster configuration JSON file. |
 | [cluster init](functions/cluster-init.md) | Initialize a cluster via cluster configuration JSON file. |
 | [cluster list-nodes](functions/cluster-list-nodes.md) | List all nodes in the cluster. |
-| [cluster add-node](functions/cluster-add-node.md) | Add a new node to a cluster |
-| [cluster remove-node](functions/cluster-remove-node.md) | Remove a node from a cluster |
+| [cluster add-node](functions/cluster-add-node.md) | Add a new node to a cluster. |
+| [cluster remove-node](functions/cluster-remove-node.md) | Remove a node from a cluster. |
 | [cluster replication-begin](functions/cluster-replication-begin.md) | Add all tables to the default replication set on every node. |
 | [cluster replication-check](functions/cluster-replication-check.md) | Check and display the replication status for a given cluster. |
 | [cluster add-db](functions/cluster-add-db.md) | Add a database to an existing pgEdge cluster. |
@@ -49,11 +49,11 @@ Use commands in this section to configure and control PostgreSQL Databases; comm
 
 | Command | Description |
 |---------|-------------|
-| [db create](functions/db-create.md) | Create a database owned by a specific user |
-| [db guc-set](functions/db-guc-set.md) | Set GUC |
-| [db guc-show](functions/db-guc-show.md) | Show GUC |
+| [db create](functions/db-create.md) | Create a database owned by a specific user. |
+| [db guc-set](functions/db-guc-set.md) | Set GUC. |
+| [db guc-show](functions/db-guc-show.md) | Show GUC. |
 | [db set-readonly](functions/db-set-readonly.md) | Turn PG read-only mode 'on' or 'off'. |
-| [db test-io](functions/db-test-io.md) | Use the 'fio' Flexible IO Tester on pg data directory |
+| [db test-io](functions/db-test-io.md) | Use the 'fio' Flexible IO Tester on pg data directory. |
 
 ## localhost module commands
 Use commands in this section to easily configure localhost test clusters; commands in this module include:
@@ -68,15 +68,15 @@ Use commands in the service module to control CLI installed services; commands i
 
 | Command | Description |
 |---------|-------------|
-| [service start](functions/service-start.md) | Start server components |
-| [service stop](functions/service-stop.md) | Stop server components |
-| [service status](functions/service-status.md) | Display running status of server components |
-| [service restart](functions/service-restart.md) | Stop & then start server components |
+| [service start](functions/service-start.md) | Start server components. |
+| [service stop](functions/service-stop.md) | Stop server components. |
+| [service status](functions/service-status.md) | Display running status of server components. |
+| [service restart](functions/service-restart.md) | Stop & then start server components. |
 | [service reload](functions/service-reload.md) | Reload server configuration files (without a restart) |
-| [service enable](functions/service-enable.md) | Enable a server component to start automatically |
-| [service disable](functions/service-disable.md) | Disable a server component from starting automatically |
-| [service config](functions/service-config.md) | Configure a component |
-| [service init](functions/service-init.md) | Initialize a component |
+| [service enable](functions/service-enable.md) | Enable a server component to start automatically. |
+| [service disable](functions/service-disable.md) | Disable a server component from starting automatically. |
+| [service config](functions/service-config.md) | Configure a component. |
+| [service init](functions/service-init.md) | Initialize a component. |
 
 ## spock module commands
 Use commands in this section to invoke spock extension functionality with the CLI; commands in this module include:
@@ -120,12 +120,12 @@ Use commands in the um module to install, remove, and update installed component
 
 | Command | Description |
 |---------|-------------|
-| [um list](functions/um-list.md) | Display available/installed components |
-| [um update](functions/um-update.md) | Update with a new list of available components |
-| [um install](functions/um-install.md) | Install a component |
-| [um remove](functions/um-remove.md) | Uninstall a component |
-| [um upgrade](functions/um-upgrade.md) | Perform an upgrade to a newer version of a component |
+| [um list](functions/um-list.md) | Display available/installed components. |
+| [um update](functions/um-update.md) | Update with a new list of available components. |
+| [um install](functions/um-install.md) | Install a component. |
+| [um remove](functions/um-remove.md) | Uninstall a component. |
+| [um upgrade](functions/um-upgrade.md) | Perform an upgrade to a newer version of a component. |
 | [um clean](functions/um-clean.md) | Delete downloaded component files from local cache |
 | [um verify-metadata](functions/um-verify-metadata.md) | Display component metadata from the local store |
-| [um download](functions/um-download.md) | Download a component into local cache (without installing it) |
+| [um download](functions/um-download.md) | Download a component into local cache (without installing it). |
 

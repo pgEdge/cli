@@ -3,7 +3,7 @@
     ./pgedge service config COMPONENT
 
 ## DESCRIPTION
-    Configure a component
+    Configure a component.
 
 ## POSITIONAL ARGUMENTS
     COMPONENT

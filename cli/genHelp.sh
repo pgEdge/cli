@@ -57,7 +57,7 @@ module_summary() {
 write_help() {
   # Generate help for a command or module (and its subcommands)
   local module="$1"
-  $nc $module --help | parse_to_markdown > "$output_dir/functions/$module.md";
+  $nc $module --help 2>/dev/null | parse_to_markdown > "$output_dir/functions/$module.md";
   
   # Parse the generated module help file to extract subcommands (if they exist)
   module_commands=($(get_module_commands "$module"))
@@ -72,7 +72,7 @@ write_help() {
     local fname="${module}-$(echo "$cmd" | tr ' ' '-').md"
     echo "Generating help for module '$module', command '$cmd' -> $fname"
 
-    if ! $nc $module $cmd --help | parse_to_markdown > "$output_dir/functions/$fname"; then
+    if ! $nc $module $cmd --help 2>/dev/null | parse_to_markdown > "$output_dir/functions/$fname"; then
       echo "ERROR: Failed to generate help for module '$module', command '$cmd'" >&2
     fi
   done

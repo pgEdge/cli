@@ -3,7 +3,7 @@
     ./pgedge db guc-show GUC_NAME
 
 ## DESCRIPTION
-    Show GUC
+    Show GUC.
 
 ## POSITIONAL ARGUMENTS
     GUC_NAME
