@@ -1,11 +1,12 @@
+
 ## SYNOPSIS
     ./pgedge setup <flags>
- 
+
 ## DESCRIPTION
-    Install pgEdge node (including postgres, spock, and snowflake-sequences)
+    Install a pgEdge node (including PostgreSQL, spock, and snowflake-sequences).
 
 Example: ./pgedge setup -U user -P passwd -d test --pg_ver 16
- 
+
 ## FLAGS
     -U, --User=USER
         The database user that will own the db (required)
@@ -20,11 +21,17 @@ Example: ./pgedge setup -U user -P passwd -d test --pg_ver 16
         Defaults to 5432 if not specified
     
     --pg_ver=PG_VER
-        Defaults to latest prod version of pg, such as 16.  May be pinned to a specific pg version such as 16.1
+        Defaults to latest prod version of pg, such as 16.  May be pinned to a specific pg version such as 16.4
     
     -s, --spock_ver=SPOCK_VER
-        Defaults to latest prod version of spock, such as 3.2.  May be pinned to a specific spock version such as 3.2.4
+        Defaults to latest prod version of spock, such as 4.0.  May be pinned to a specific spock version such as 4.0.1
     
     -a, --autostart=AUTOSTART
         Defaults to False
+    
+    -i, --interactive=INTERACTIVE
+        Defaults to False
+    
+    -y, --yes=YES
+        Accept input parms without prompting to confirm (always set to True when interactive is false)
     

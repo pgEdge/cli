@@ -75,7 +75,7 @@ def run_cmd(p_cmd, p_comp):
 
 
 def start(component=None):
-    """Start server components"""
+    """Start server components."""
     util.message(f"service.start({component})", "debug")
 
     util.check_server(component, "start")
@@ -89,7 +89,7 @@ def start(component=None):
 
 
 def stop(component=None):
-    """Stop server components"""
+    """Stop server components."""
     util.message(f"service.stop({component})", "debug")
 
     util.check_server(component, "stop")
@@ -100,7 +100,7 @@ def stop(component=None):
 
 
 def status(component=None):
-    """Display running status of server components"""
+    """Display running status of server components."""
     util.message(f"service.status({component})", "debug")
 
     util.check_server(component, "status")
@@ -111,7 +111,7 @@ def status(component=None):
 
 
 def restart(component=None):
-    """Stop & then start server components"""
+    """Stop & then start server components."""
     util.message(f"service.restart({component})", "debug")
 
     util.check_server(component, "restart")
@@ -132,7 +132,7 @@ def reload(component):
 
 
 def enable(component=None):
-    """Enable a server component to start automatically"""
+    """Enable a server component to start automatically."""
     util.message(f"service.enable({component})", "debug")
 
     if component is None: 
@@ -145,7 +145,7 @@ def enable(component=None):
 
 
 def disable(component=None):
-    """Disable a server component from starting automatically"""
+    """Disable a server component from starting automatically."""
     util.message(f"service.disable({component})", "debug")
 
     if component is None: 
@@ -159,7 +159,7 @@ def disable(component=None):
 
 
 def config(component):
-    """Configure a component"""
+    """Configure a component."""
     util.message(f"service.config({component})", "debug")
 
     util.check_server(component, "config")
@@ -168,7 +168,7 @@ def config(component):
 
 
 def init(component):
-    """Initialize a component"""
+    """Initialize a component."""
     util.message(f"service.init({component})", "debug")
 
     util.check_server(component, "init")

@@ -1,8 +1,9 @@
+
 ## SYNOPSIS
     ./pgedge service config COMPONENT
- 
+
 ## DESCRIPTION
-    Config a component
- 
+    Configure a component.
+
 ## POSITIONAL ARGUMENTS
     COMPONENT

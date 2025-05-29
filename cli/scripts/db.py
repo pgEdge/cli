@@ -11,7 +11,7 @@ import fire
 
 def create(db=None, User=None, Passwd=None, pg=None, spock=None, help=False):
     """
-     Create a database owned by a specific user
+     Create a database owned by a specific user.
     """
 
     if help:
@@ -108,7 +108,7 @@ def create(db=None, User=None, Passwd=None, pg=None, spock=None, help=False):
 
 
 def guc_set(guc_name, guc_value):
-    """Set GUC"""
+    """Set GUC."""
 
     pg_v, spock_v = util.get_pg_v()
     pg = pg_v[2:]
@@ -128,7 +128,7 @@ def guc_set(guc_name, guc_value):
 
 
 def guc_show(guc_name):
-    """Show GUC"""
+    """Show GUC."""
     pg_v, spock_v = util.get_pg_v()
     if guc_name == "all" or guc_name == "*":
         guc_name = "%"
@@ -141,7 +141,7 @@ def guc_show(guc_name):
 
 
 def test_io():
-    """ Use the 'fio' Flexible IO Tester on pg data directory """
+    """ Use the 'fio' Flexible IO Tester on pg data directory. """
 
     if platform.system() != "Linux":
         util.exit_message("Must run on Linux w 'fio' package installed")

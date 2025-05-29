@@ -1,132 +1,139 @@
+
 export pgeMdDir=~/dev/pgedge/cli/help
 export nc=../out/posix/pgedge
+export output_dir=../docs
 
-um () {
-#$nc um --help
-$nc um list                 --help
-$nc um update               --help
-$nc um install              --help
-$nc um remove               --help
-$nc um upgrade              --help
-$nc um clean                --help
+modules=(ace cluster db localhost service spock um)
+commands=(setup upgrade-cli)
+
+mkdir -p "$output_dir"
+
+parse_to_markdown(){
+   sed -r 's/\x1B\[[0-9;]*[mGKH]//g; /^(SYNOPSIS|POSITIONAL ARGUMENTS|DESCRIPTION|FLAGS|COMMANDS)/s/^/## /'
 }
 
-service () {
-#$nc service --help
-$nc service start           --help
-$nc service stop            --help
-$nc service status          --help
-$nc service reload          --help
-$nc service restart         --help
-$nc service enable          --help
-$nc service disable         --help
-$nc service config          --help
-$nc service init            --help
+get_module_commands() {
+  local module="$1"
+  local module_file="$output_dir/functions/$module.md"
+  local cmds=()
+  if [[ -f "$module_file" ]]; then
+    local in_commands=0
+    while IFS= read -r line; do
+      if [[ "$line" =~ COMMAND\ is\ one\ of\ the\ following: ]]; then
+        in_commands=1
+        continue
+      fi
+      if [[ $in_commands -eq 1 ]]; then
+        [[ -z "$line" ]] && break
+        if [[ "$line" =~ ^[[:space:]]*([a-zA-Z0-9_-]+)[[:space:]]*# ]]; then
+          cmd="${BASH_REMATCH[1]}"
+          cmds+=("$cmd")
+        fi
+      fi
+    done < "$module_file"
+  fi
+  echo "${cmds[@]}"
 }
 
-spock () {
-#$nc spock --help
-$nc spock node-create       --help
-$nc spock node-drop         --help
-$nc spock node-alter-location --help
-$nc spock node-list           --help
-$nc spock node-add-interface  --help
-$nc spock node-drop-interface --help
-$nc spock repset-create     --help
-$nc spock repset-alter      --help
-$nc spock repset-drop       --help
-$nc spock repset-add-table  --help
-$nc spock repset-remove-table --help
-$nc spock repset-list-tables  --help
-$nc spock repset-add-partition --help
-$nc spock repset-remove-partition --help
-$nc spock replicate-ddl     --help
-$nc spock sequence-convert  --help
-$nc spock sub-create        --help
-$nc spock sub-drop          --help
-$nc spock sub-alter-interface --help
-$nc spock sub-enable        --help
-$nc spock sub-disable       --help
-$nc spock sub-add-repset    --help
-$nc spock sub-remove-repset --help
-$nc spock sub-show-status   --help
-$nc spock sub-show-table    --help
-$nc spock sub-resync-table  --help
-$nc spock sub-wait-for-sync --help
-$nc spock table-wait-for-sync --help
-$nc spock health-check      --help
-$nc spock metrics-check     --help
-$nc spock set-readonly      --help
+module_summary() {
+  local module="$1"
+  if [[ "$module" == "cluster" ]]; then
+    echo "Use commands in the cluster module to create and modify a cluster; commands in the cluster module include:"
+  elif [[ "$module" == "um" ]]; then
+    echo "Use commands in the um module to install, remove, and update installed components; commands in the um module include:"
+  elif [[ "$module" == "service" ]]; then
+    echo "Use commands in the service module to control CLI installed services; commands in the service module include:"
+  elif [[ "$module" == "spock" ]]; then
+    echo "Use commands in this section to invoke spock extension functionality with the CLI; commands in this module include:"
+  elif [[ "$module" == "ace" ]]; then
+    echo "Use commands in this section to invoke the Active Consistency Engine (ace); commands in this module include:"
+  elif [[ "$module" == "localhost" ]]; then
+    echo "Use commands in this section to easily configure localhost test clusters; commands in this module include:"
+  elif [[ "$module" == "db" ]]; then
+    echo "Use commands in this section to configure and control PostgreSQL Databases; commands in this module include:"
+  fi
 }
 
-db () {
-#$nc db --help
-$nc db create               --help
-$nc db guc-set              --help
-$nc db guc-show             --help
+write_help() {
+  # Generate help for a command or module (and its subcommands)
+  local module="$1"
+  $nc $module --help 2>/dev/null | parse_to_markdown > "$output_dir/functions/$module.md";
+  
+  # Parse the generated module help file to extract subcommands (if they exist)
+  module_commands=($(get_module_commands "$module"))
+  if [ ${#module_commands[@]} -gt 0 ]; then
+    echo "Found sub commands for module '$module': ${module_commands[*]}"
+  else
+    return
+  fi
+  
+  # Generate help for each command in the module
+  for cmd in "${module_commands[@]}"; do
+    local fname="${module}-$(echo "$cmd" | tr ' ' '-').md"
+    echo "Generating help for module '$module', command '$cmd' -> $fname"
+
+    if ! $nc $module $cmd --help 2>/dev/null | parse_to_markdown > "$output_dir/functions/$fname"; then
+      echo "ERROR: Failed to generate help for module '$module', command '$cmd'" >&2
+    fi
+  done
 }
 
-cluster () {
-#$nc cluster --help
-$nc cluster json-template     --help
-$nc cluster json-validate     --help
-$nc cluster init              --help
-$nc cluster replication-begin --help
-$nc cluster replication-check --help
-$nc cluster remove            --help
-$nc cluster add-db            --help
-$nc cluster command           --help
-$nc cluster app-install       --help
-$nc cluster app-remove        --help
+index() {
+  local index_file="$output_dir/cli_functions.md"
+  echo "# CLI Functions" > "$index_file"
+  echo "You can use CLI functions to create and manage PostgreSQL instances that implement logical replication scenarios and use the Spock and Snowflake extensions." >> "$index_file"
+  echo "" >> "$index_file"
+
+  # Loop through all stand-alone commands and generate index entries
+  echo "## standalone commands" >> "$index_file"
+  echo "" >> "$index_file"
+  echo "| Command | Description |" >> "$index_file"
+  echo "|---------|-------------|" >> "$index_file"
+  
+
+  for command in "${commands[@]}"; do
+      command_file="$output_dir/functions/${command}.md"
+      if [[ -f "$command_file" ]]; then
+        desc=$(awk '
+          BEGIN { found=0 }
+          /^## DESCRIPTION/ { found=1; next }
+          found && /^[[:space:]]*[^[:space:]]/ { gsub(/^[ \t]+|[ \t]+$/, "", $0); print $0; exit }
+        ' "$command_file")
+        
+        echo "| [$command](functions/$command.md) | $desc |" >> "$index_file"
+      fi
+  done
+
+  echo "" >> "$index_file"
+
+  for module in "${modules[@]}"; do
+    echo "## $module module commands" >> "$index_file"
+    module_summary "$module" >> "$index_file"
+    echo "" >> "$index_file"
+    echo "| Command | Description |" >> "$index_file"
+    echo "|---------|-------------|" >> "$index_file"
+    # Parse the -module.md file to extract commands and descriptions
+    module_file="$output_dir/functions/${module}.md"
+    awk -v module="$module" '
+      BEGIN { in_commands=0 }
+      /COMMAND is one of the following:/ { in_commands=1; next }
+      in_commands && /^[[:space:]]*$/ { exit }
+      in_commands && /^[[:space:]]*[^[:space:]]/ {
+      # Match: <cmd>   # <desc>
+      split($0, parts, "#")
+      cmd=parts[1]
+      gsub(/^[ \t]+|[ \t]+$/, "", cmd)
+      desc=parts[2]
+      gsub(/^[ \t]+|[ \t]+$/, "", desc)
+      if (cmd != "") {
+        printf "| [%s %s](functions/%s-%s.md) | %s |\n", module, cmd, module, cmd, desc
+      }
+      }
+    ' "$module_file" >> "$index_file"
+    echo "" >> "$index_file"
+
+  done
 }
-
-localhost () {
-#$nc localhost --help
-$nc localhost cluster-create  --help
-$nc localhost cluster-destroy --help
-}
-
-cloud () {
-#$nc cloud --help
-$nc cloud config             --help
-$nc cloud list-linked-accts  --help
-$nc cloud list-clusters      --help
-$nc cloud cluster-status     --help
-$nc cloud list-nodes         --help
-$nc cloud import-cluster-def --help
-$nc cloud get-cluster-id     --help
-$nc cloud get-node-id        --help
-$nc cloud push-metrics       --help
-$nc cloud create-cluster     --help
-$nc cloud destroy-cluster    --help
-}
-
-ace () {
-#$nc ace --help
-$nc ace table-diff          --help
-$nc ace schema-diff         --help
-$nc ace spock-diff          --help
-$nc ace table-repair        --help
-$nc ace table-rerun         --help
-$nc ace repset-diff         --help
-}
-
-vm () {
-#$nc vm --help
-$nc vm list-providers       --help
-$nc vm list-airports        --help
-$nc vm list-sizes           --help
-
-$nc vm list                 --help
-$nc vm create               --help
-$nc vm start                --help
-$nc vm stop                 --help
-$nc vm reboot               --help
-$nc vm destroy              --help
-
-$nc vm cluster-define       --help
-}
-
 
 ############## MAINLINE ############################
 if [ $# -ne 1 ]; then
@@ -135,33 +142,32 @@ if [ $# -ne 1 ]; then
 fi
 
 m=$1
-if [ $m == "all" ]; then
-  um
-  service
-  spock
-  db
-  cluster
-  ace
-  vm
-  localhost
-elif [ $m == "um" ]; then
-  um
-elif [ $m == "service" ]; then
-  service
-elif [ $m == "spock" ]; then
-  spock
-elif [ $m == "db" ]; then
-  db
-elif [ $m == "cluster" ]; then
-  cluster
-elif [ $m == "ace" ]; then
-  ace
-elif [ $m == "vm" ]; then
-  vm
-elif [ $m == "localhost" ]; then
-  localhost
-else
-  echo "ERROR: $m is not a valid module"
-  exit 1
-fi
+if [ "$m" == "all" ]; then
+  echo "Generating help for all modules..."
+  echo "Removing existing help files..."
+  rm -f $output_dir/functions/*
 
+  # Loop through all modules and generate help
+  for module in "${modules[@]}"; do
+    write_help "$module"
+  done
+
+  # Loop through all stand-alone commands and generate help
+  echo "Generating help for all standalone commands..."
+  for command in "${commands[@]}"; do
+    write_help "$command"
+  done
+
+  index
+elif [ "$m" == "index" ]; then
+  index
+else
+  echo "Generating help for module '$m'..."
+
+  # Check if the module or command is valid
+  if [[ ! " ${modules[@]} " =~ " ${m} " && ! " ${commands[@]} " =~ " ${m} " ]]; then
+    echo "ERROR: '$m' is not a valid module or command. Valid modules are: ${modules[*]}. Valid commands are: ${commands[*]}"
+    exit 1
+  fi
+  write_help "$m"
+fi

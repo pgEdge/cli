@@ -1,9 +1,10 @@
+
 ## SYNOPSIS
     ./pgedge db guc-set GUC_NAME GUC_VALUE
- 
+
 ## DESCRIPTION
-    Set GUC
- 
+    Set GUC.
+
 ## POSITIONAL ARGUMENTS
     GUC_NAME
     GUC_VALUE
