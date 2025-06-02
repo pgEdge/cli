@@ -2,6 +2,7 @@ import pytest
 import psycopg
 import json
 import re
+from unittest.mock import patch
 
 
 @pytest.mark.usefixtures("prepare_databases")
@@ -239,3 +240,42 @@ class TestTableFilter:
                 assert (
                     diff["city"] == "FilterCity"
                 ), f"Unexpected city value in {behavior}"
+
+    @pytest.mark.parametrize("table_name", ["public.customers"])
+    @pytest.mark.parametrize("table_filter", ["index < 100"])
+    def test_table_diff_with_filter_cleanup_on_worker_failure(
+        self, cli, table_name, table_filter
+    ):
+        """Test that filter views are cleaned up when multiprocessing worker fails"""
+
+        with patch("ace_core.compare_checksums") as mock_compare:
+            mock_compare.side_effect = Exception("Simulated worker failure")
+
+            with pytest.raises(SystemExit):
+                cli.table_diff_cli("eqn-t9da", table_name, table_filter=table_filter)
+
+        for host in ["n1", "n2", "n3"]:
+            try:
+                conn = psycopg.connect(host=host, dbname="demo", user="admin")
+                cur = conn.cursor()
+
+                cur.execute(
+                    """
+                    SELECT schemaname, viewname
+                    FROM pg_views
+                    WHERE viewname LIKE '%_customers_filtered'
+                    AND schemaname = 'public'
+                """
+                )
+
+                filter_views = cur.fetchall()
+                cur.close()
+                conn.close()
+
+                assert len(filter_views) == 0, (
+                    f"Found {len(filter_views)} filter views on {host} after "
+                    f"failure: {filter_views}. Views should have been cleaned up."
+                )
+
+            except Exception as e:
+                pytest.fail(f"Failed to check view cleanup on {host}: {str(e)}")
