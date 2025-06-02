@@ -2013,14 +2013,13 @@ def handle_task_exception(task, task_context):
                 )
 
                 if conn:
-                    drop_view_sql = sql.SQL(
-                        "DROP VIEW IF EXISTS {schema}.{view}"
-                    ).format(
-                        schema=sql.Identifier(view_schema),
-                        view=sql.Identifier(view_name_to_drop),
-                    )
                     with conn.cursor() as cur:
-                        cur.execute(drop_view_sql)
+                        cur.execute(
+                            sql.SQL("DROP VIEW IF EXISTS {schema}.{view}").format(
+                                schema=sql.Identifier(view_schema),
+                                view=sql.Identifier(view_name_to_drop),
+                            )
+                        )
                     conn.commit()
                     msg = (
                         "Successfully dropped view "
