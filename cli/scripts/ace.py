@@ -1083,7 +1083,7 @@ def table_diff_checks(
                 # to prevent SQL injections.
                 view_sql = sql.SQL(
                     """
-                    CREATE VIEW {view_name} AS
+                    CREATE OR REPLACE VIEW {view_name} AS
                     SELECT * FROM {l_schema}.{l_table}
                     WHERE {where_clause}
                 """
@@ -1974,6 +1974,74 @@ def handle_task_exception(task, task_context):
         datetime.now() - task.scheduler.started_at
     ).total_seconds()
     task.scheduler.task_context = task_context
+
+    if (
+        isinstance(task, TableDiffTask)
+        and getattr(task, "table_filter", False)
+        and task.table_filter != ""
+    ):
+        view_schema = task.fields.l_schema
+        view_name_to_drop = task.fields.l_table
+        quiet_mode = getattr(task, "quiet_mode", False)
+
+        util.message(
+            f"Attempting to clean up view {view_schema}.{view_name_to_drop}",
+            p_state="warning",
+            quiet_mode=quiet_mode,
+        )
+
+        for params in task.fields.conn_params:
+            conn = None
+            try:
+                node_info = {
+                    "public_ip": params["host"],
+                    "port": params["port"],
+                    "db_name": params["dbname"],
+                    "db_user": params["user"],
+                    "db_password": params.get("password", None),
+                }
+                _, conn = task.connection_pool.get_cluster_node_connection(
+                    node_info,
+                    task.cluster_name,
+                    invoke_method=getattr(task, "invoke_method", "cli"),
+                    client_role=(
+                        getattr(task, "client_role", None)
+                        if (
+                            hasattr(config, "USE_CERT_AUTH")
+                            and config.USE_CERT_AUTH
+                            and getattr(task, "invoke_method", None) == "api"
+                        )
+                        else None
+                    ),
+                )
+
+                if conn:
+                    drop_view_sql = sql.SQL(
+                        "DROP VIEW IF EXISTS {schema}.{view}"
+                    ).format(
+                        schema=sql.Identifier(view_schema),
+                        view=sql.Identifier(view_name_to_drop),
+                    )
+                    with conn.cursor() as cur:
+                        cur.execute(drop_view_sql)
+                    conn.commit()
+                    msg = (
+                        "Successfully dropped view "
+                        f"{view_schema}.{view_name_to_drop} "
+                        f"on node {params['host']}:{params['port']}."
+                    )
+                    util.message(msg, p_state="info", quiet_mode=quiet_mode)
+            except Exception as e_cleanup:
+                node_host = params.get("host", "unknown")
+                node_port = params.get("port", "unknown")
+                error_msg = (
+                    f"Failed to drop view {view_schema}.{view_name_to_drop} "
+                    f"on node {node_host}:{node_port}: {str(e_cleanup)}"
+                )
+                util.message(error_msg, p_state="error", quiet_mode=quiet_mode)
+            finally:
+                if conn:
+                    conn.close()
 
     skip_update = getattr(task, "skip_db_update", False)
 
