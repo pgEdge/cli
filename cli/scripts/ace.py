@@ -1978,6 +1978,7 @@ def handle_task_exception(task, task_context):
     if (
         isinstance(task, TableDiffTask)
         and getattr(task, "table_filter", False)
+        and task.table_filter is not None
         and task.table_filter != ""
     ):
         view_schema = task.fields.l_schema
@@ -2003,14 +2004,10 @@ def handle_task_exception(task, task_context):
                 _, conn = task.connection_pool.get_cluster_node_connection(
                     node_info,
                     task.cluster_name,
-                    invoke_method=getattr(task, "invoke_method", "cli"),
+                    invoke_method=task.invoke_method,
                     client_role=(
-                        getattr(task, "client_role", None)
-                        if (
-                            hasattr(config, "USE_CERT_AUTH")
-                            and config.USE_CERT_AUTH
-                            and getattr(task, "invoke_method", None) == "api"
-                        )
+                        task.client_role
+                        if config.USE_CERT_AUTH and task.invoke_method == "api"
                         else None
                     ),
                 )
