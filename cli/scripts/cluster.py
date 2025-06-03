@@ -202,6 +202,7 @@ def load_json(cluster_name):
             "private_ip": group.get("private_ip", ""),
             "port": group.get("port", ""),
             "path": group.get("path", ""),
+            "data_directory": group.get("data_directory", ""),
             "os_user": os_user,
             "ssh_key": ssh_key,
             "backrest": group.get("backrest", {}),
@@ -221,6 +222,7 @@ def load_json(cluster_name):
                 "private_ip": sub_node.get("private_ip", ""),
                 "port": sub_node.get("port", ""),
                 "path": sub_node.get("path", ""),
+                "data_directory": sub_node.get("data_directory", ""),
                 "os_user": os_user,
                 "ssh_key": ssh_key,
             }
@@ -527,6 +529,7 @@ def ssh_install_pgedge(
 
         ndnm = n["name"]
         ndpath = n["path"]
+        nddatadir = n["data_directory"]
         ndip = n["public_ip"] or n["private_ip"]
         ndport = str(n.get("port", "5432"))
         pg = db_settings["pg_version"]
@@ -563,6 +566,8 @@ def ssh_install_pgedge(
             setup_parms += f" --spock_ver {spock}"
         if db_settings.get("auto_start") == "on":
             setup_parms += " --autostart"
+        if nddatadir:
+            setup_parms += f" -D {nddatadir}"
 
         cmd_setup = f"{nc} setup {setup_parms}"
         message = f"Setting up pgEdge on {ndnm}"
@@ -999,6 +1004,7 @@ def json_create(
         node_json["port"] = str(node_port)
 
         node_json["path"] = f"/home/{os_user}/{cluster_name}/n{n}"
+        node_json["data_directory"] = f"{node_json['path']}/pgedge/data/pg{pg_version_int}"
         
         # Update backrest configuration to always append the node name to the repo1_path.
         if backrest_enabled:
@@ -1380,7 +1386,7 @@ def init(cluster_name, install=True):
                 restore_path = restore_path.rstrip("/") + f"/{node['name']}"
 
             pg_version = db_settings["pg_version"]
-            pg1_path = f"{node['path']}/pgedge/data/pg{pg_version}"
+            pg1_path = node['data_directory']
             port = node["port"]  # Custom port from JSON
 
             # Install pgBackRest
@@ -1725,7 +1731,7 @@ def add_node(
             )
 
         pg_version = db_settings["pg_version"]
-        source_pg1_path = f"{source_node_data['path']}/pgedge/data/pg{pg_version}"
+        source_pg1_path = source_node_data["data_directory"]
         source_port = source_node_data["port"]
 
         # Configure postgresql.conf for pgBackRest (without --pg1-port)
@@ -1895,7 +1901,7 @@ def add_node(
     run_cmd(cmd, target_node_data, message=message, verbose=verbose)
 
     manage_node(target_node_data, "stop", f"{pgV}", verbose)
-    cmd = f'rm -rf {target_node_data["path"]}/pgedge/data/{pgV}'
+    cmd = f'rm -rf {target_node_data["data_directory"]}'
     message = f"Removing old data directory"
     run_cmd(cmd, target_node_data, message=message, verbose=verbose)
 
@@ -1904,7 +1910,7 @@ def add_node(
         # by default when generating the restore_command
         f'--cmd="pgbackrest --repo1-cipher-type={source_repo1_cipher_type}" '
         f"--stanza={source_stanza} "
-        f"--pg1-path={target_node_data['path']}/pgedge/data/{pgV} "
+        f"--pg1-path={target_node_data['data_directory']} "
         f"--repo1-path={repo1_path} "
         f"--repo1-cipher-type={source_repo1_cipher_type} "
         f"--repo1-type={source_repo1_type} "
@@ -1922,7 +1928,7 @@ def add_node(
     message = f"Restoring backup"
     run_cmd(cmd, target_node_data, message=message, verbose=verbose)
 
-    pgd = f'{target_node_data["path"]}/pgedge/data/{pgV}'
+    pgd = target_node_data["data_directory"]
     pgc = f"{pgd}/postgresql.conf"
     log_directory = f'{target_node_data["path"]}/pgedge/data/logs/{pgV}'
 
@@ -1941,7 +1947,7 @@ def add_node(
     # Step 5. Configure the target node as a standby replica of the source node.
     cmd = (
         f'{target_node_data["path"]}/pgedge/pgedge backrest configure-replica {source_stanza} '
-        f'{target_node_data["path"]}/pgedge/data/{pgV} {source_node_data.get("private_ip", source_node_data.get("public_ip"))} '
+        f'{target_node_data["data_directory"]} {source_node_data.get("private_ip", source_node_data.get("public_ip"))} '
         f'{source_node_data["port"]} {source_node_data["os_user"]}'
     )
     message = f"Configuring PITR on replica"
