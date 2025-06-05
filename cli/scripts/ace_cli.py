@@ -11,23 +11,95 @@ from ace_data_models import (
     SpockDiffTask,
     TableDiffTask,
     TableRepairTask,
+    MerkleTreeTask,
 )
 import ace
+import ace_mtree
 import util
 from ace_exceptions import AceException
+
+
+def merkle_tree_cli(
+    mode,
+    cluster_name,
+    table_name=None,
+    dbname=None,
+    analyse=False,
+    rebalance=False,
+    recreate_objects=False,
+    block_size=config.MTREE_BLOCK_SIZE,
+    max_cpu_ratio=config.MAX_CPU_RATIO,
+    batch_size=1,
+    write_ranges=False,
+    ranges_file=None,
+    nodes="all",
+    output="json",
+    quiet_mode=False,
+):
+    task_id = ace_db.generate_task_id()
+
+    try:
+        mtree_task = MerkleTreeTask(
+            mode=mode,
+            cluster_name=cluster_name,
+            _table_name=table_name,
+            _dbname=dbname,
+            analyse=analyse,
+            rebalance=rebalance,
+            recreate_objects=recreate_objects,
+            block_size=block_size,
+            max_cpu_ratio=max_cpu_ratio,
+            batch_size=batch_size,
+            output=output,
+            quiet_mode=quiet_mode,
+            write_ranges=write_ranges,
+            ranges_file=ranges_file,
+            _nodes=nodes,
+            invoke_method="cli",
+        )
+        mtree_task.scheduler.task_id = task_id
+        mtree_task.scheduler.task_type = "build-merkle-tree"
+        mtree_task.scheduler.task_status = "RUNNING"
+        mtree_task.scheduler.started_at = datetime.now()
+
+        if ((mode == "teardown") and (not table_name)) or (mode == "init"):
+            ace.validate_merkle_tree_inputs(mtree_task, skip_table_check=True)
+        else:
+            ace.validate_merkle_tree_inputs(mtree_task)
+
+        ace_db.create_ace_task(task=mtree_task)
+
+        if mode == "init":
+            ace_mtree.mtree_init_helper(mtree_task)
+        elif mode == "build":
+            ace_mtree.build_mtree(mtree_task)
+        elif mode == "update":
+            ace_mtree.update_mtree(mtree_task)
+        elif mode == "diff":
+            ace_mtree.merkle_tree_diff(mtree_task)
+        elif mode == "teardown":
+            ace_mtree.mtree_teardown_helper(mtree_task)
+
+        mtree_task.connection_pool.close_all()
+    except AceException as e:
+        util.exit_message(str(e))
+    except Exception as e:
+        traceback.print_exc()
+        util.exit_message(f"Unexpected error while running merkle tree: {e}")
 
 
 def table_diff_cli(
     cluster_name,
     table_name,
     dbname=None,
-    block_rows=config.BLOCK_ROWS_DEFAULT,
-    max_cpu_ratio=config.MAX_CPU_RATIO_DEFAULT,
+    block_size=config.DIFF_BLOCK_SIZE,
+    max_cpu_ratio=config.MAX_CPU_RATIO,
     output="json",
     nodes="all",
-    batch_size=config.BATCH_SIZE_DEFAULT,
+    batch_size=config.DIFF_BATCH_SIZE,
     table_filter=None,
     quiet=False,
+    override_block_size=False,
 ):
     """
     Compare a table across a cluster and produce a report showing
@@ -37,20 +109,22 @@ def table_diff_cli(
         cluster_name (str): Name of the cluster where the operation should be performed.
         table_name (str): Schema-qualified name of the table that you are
             comparing across cluster nodes.
-        dbname (str, optional): Name of the database. Defaults to the name of
-            the first database in the cluster configuration.
-        block_rows (int, optional): Number of rows to process per block.
-            Defaults to config.BLOCK_ROWS_DEFAULT.
+        dbname (str, optional): Name of the database to use. If omitted,
+            defaults to the first database in the cluster configuration file.
+        block_size (int, optional): Number of rows to process per block.
+            Defaults to config.DIFF_BLOCK_SIZE.
         max_cpu_ratio (float, optional): Maximum CPU utilisation. The accepted
             range is 0.0-1.0. Defaults to config.MAX_CPU_RATIO_DEFAULT.
         output (str, optional): Output format. Acceptable values are "json",
             "csv", and "html". Defaults to "json".
-        nodes (str, optional): Comma-delimited subset of nodes on which the
+        nodes (str, optional): Comma-separated subset of nodes on which the
             command will be executed. Defaults to "all".
-        batch_size (int, optional): Size of each batch. Defaults to
-            config.BATCH_SIZE_DEFAULT.
-        table_filter (str, optional): A SQL WHERE clause that allows you to
-            filter rows for comparison.
+        batch_size (int, optional): Size of each batch, i.e., number of blocks
+            each worker should process. Defaults to config.DIFF_BATCH_SIZE.
+        table_filter (str, optional): Used to compare a subset of rows in the table.
+            Specified as a WHERE clause of a SQL query. E.g.,
+            --table-filter="customer_id < 100" will compare only rows with
+            customer_id less than 100.  If omitted, the entire table is compared.
         quiet (bool, optional): Whether to suppress output in stdout. Defaults
             to False.
 
@@ -70,7 +144,7 @@ def table_diff_cli(
             cluster_name=cluster_name,
             _table_name=table_name,
             _dbname=dbname,
-            block_rows=block_rows,
+            block_size=block_size,
             max_cpu_ratio=max_cpu_ratio,
             output=output,
             _nodes=nodes,
@@ -78,6 +152,7 @@ def table_diff_cli(
             quiet_mode=quiet,
             table_filter=table_filter,
             invoke_method="cli",
+            _override_block_size=override_block_size,
         )
         td_task.scheduler.task_id = task_id
         td_task.scheduler.task_type = "table-diff"
@@ -205,7 +280,6 @@ def table_rerun_cli(
     table_name,
     dbname=None,
     quiet=False,
-    behavior="multiprocessing",
 ):
     """
     Reruns a table diff operation based on a previous diff file.
@@ -216,12 +290,8 @@ def table_rerun_cli(
             operation.
         table_name (str): Schema-qualified name of the table that you are
             comparing across cluster nodes.
-        dbname (str, optional): Name of the database. Defaults to the name of
-            the first database in the cluster configuration.
-        behavior (str, optional): The rerun behavior, either "multiprocessing"
-            or "hostdb". "multiprocessing" uses parallel processing for faster
-            execution. "hostdb" uses the host database to create temporary
-            tables for faster comparisons. Defaults to "multiprocessing".
+        dbname (str, optional): Name of the database to use. If omitted,
+            defaults to the first database in the cluster configuration.
         quiet (bool, optional): Whether to suppress output in stdout. Defaults
             to False.
 
@@ -241,11 +311,11 @@ def table_rerun_cli(
             cluster_name=cluster_name,
             _table_name=table_name,
             _dbname=dbname,
-            block_rows=config.BLOCK_ROWS_DEFAULT,
-            max_cpu_ratio=config.MAX_CPU_RATIO_DEFAULT,
+            block_size=config.DIFF_BLOCK_SIZE,
+            max_cpu_ratio=config.MAX_CPU_RATIO,
             output="json",
             _nodes="all",
-            batch_size=config.BATCH_SIZE_DEFAULT,
+            batch_size=config.DIFF_BATCH_SIZE,
             table_filter=None,
             quiet_mode=quiet,
             diff_file_path=diff_file,
@@ -265,13 +335,7 @@ def table_rerun_cli(
         util.exit_message(f"Unexpected error while running table rerun: {e}")
 
     try:
-        if behavior == "multiprocessing":
-            ace_core.table_rerun_async(td_task)
-        elif behavior == "hostdb":
-            ace_core.table_rerun_temptable(td_task)
-        else:
-            util.exit_message(f"Invalid behavior: {behavior}")
-
+        ace_core.table_rerun_temptable(td_task)
         td_task.connection_pool.close_all()
     except AceException as e:
         util.exit_message(str(e))
@@ -284,11 +348,11 @@ def repset_diff_cli(
     cluster_name,
     repset_name,
     dbname=None,
-    block_rows=config.BLOCK_ROWS_DEFAULT,
-    max_cpu_ratio=config.MAX_CPU_RATIO_DEFAULT,
+    block_size=config.DIFF_BLOCK_SIZE,
+    max_cpu_ratio=config.MAX_CPU_RATIO,
     output="json",
     nodes="all",
-    batch_size=config.BATCH_SIZE_DEFAULT,
+    batch_size=config.DIFF_BATCH_SIZE,
     quiet=False,
     skip_tables=None,
     skip_file=None,
@@ -300,22 +364,24 @@ def repset_diff_cli(
     Args:
         cluster_name (str): Name of the cluster where the operation should be performed.
         repset_name (str): Name of the repset to compare across cluster nodes.
-        dbname (str, optional): Name of the database. Defaults to the name of
-            the first database in the cluster configuration.
-        block_rows (int, optional): Number of rows to process per block.
-            Defaults to config.BLOCK_ROWS_DEFAULT.
+        dbname (str, optional): Name of the database to use. If omitted,
+            defaults to the first database in the cluster configuration.
+        block_size (int, optional): Number of rows to process per block.
+            Defaults to config.DIFF_BLOCK_SIZE.
         max_cpu_ratio (float, optional): Maximum CPU utilisation. The accepted
             range is 0.0-1.0. Defaults to config.MAX_CPU_RATIO_DEFAULT.
         output (str, optional): Output format. Acceptable values are "json",
             "csv", and "html". Defaults to "json".
-        nodes (str, optional): Comma-delimited subset of nodes on which the
+        nodes (str, optional): Comma-separated subset of nodes on which the
             command will be executed. Defaults to "all".
-        batch_size (int, optional): Size of each batch. Defaults to
-            config.BATCH_SIZE_DEFAULT.
+        batch_size (int, optional): Size of each batch, i.e., number of blocks
+            each worker should process. Defaults to config.DIFF_BATCH_SIZE.
         quiet (bool, optional): Whether to suppress output in stdout. Defaults
             to False.
-        skip_tables (list, optional): Comma-deliminated list of tables to skip.
-        skip_file (str, optional): Path to a file containing a list of tables to skip.
+        skip_tables (list, optional): Comma-separated list of tables to skip.
+            If omitted, no tables are skipped.
+        skip_file (str, optional): Path to a file containing a list of tables to
+            skip. If omitted, no tables are skipped.
 
     Raises:
         AceException: If there's an error specific to the ACE operation.
@@ -333,7 +399,7 @@ def repset_diff_cli(
             cluster_name=cluster_name,
             _dbname=dbname,
             repset_name=repset_name,
-            block_rows=block_rows,
+            block_size=block_size,
             max_cpu_ratio=max_cpu_ratio,
             output=output,
             _nodes=nodes,

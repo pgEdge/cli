@@ -123,10 +123,3 @@ class TestSimpleBase(abc.ABC):
     ):
         """Test table rerun temptable on cluster eqn-t9da for specified table"""
         pass
-
-    @abc.abstractmethod
-    @pytest.mark.skip(reason="Abstract base class method")
-    @pytest.mark.parametrize("table_name", ["public.customers"])
-    def test_table_rerun_multiprocessing(self, cli, capsys, table_name, diff_file_path):
-        """Test table rerun multiprocessing on cluster eqn-t9da"""
-        pass
