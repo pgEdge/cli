@@ -1,0 +1,25 @@
+FROM rockylinux/rockylinux:9-ubi
+RUN touch /etc/hostname
+
+# Set the working directory
+WORKDIR /usr/src/
+
+# Ensure /usr/src/repo is readable by the HTTP server
+RUN mkdir -p /usr/src/repo
+RUN chmod 755 /usr/src/repo
+
+ADD proxy_server.py /usr/src/proxy_server.py
+
+# Install required packages
+RUN dnf update -y && dnf install -y \
+    python3-pip \
+    && dnf clean all
+
+# Install the HTTP server package
+RUN pip3 install httpserver
+
+# Expose the port the server will run on
+EXPOSE 8000
+
+# Command to run the HTTP server
+CMD ["python3", "-m", "proxy_server", "--port", "8000", "--directory", "/usr/src/repo"]

@@ -5,7 +5,7 @@ import os
 import time
 
 MY_VERSION = "25.0.0"
-MY_CODENAME = "Constellation"
+MY_CODENAME = ""
 
 DEFAULT_PG = "16"
 DEFAULT_SPOCK = "40"
@@ -37,7 +37,6 @@ import platform
 import subprocess
 import getpass
 import filecmp
-
 from subprocess import Popen, PIPE, STDOUT
 from datetime import datetime, timedelta
 from urllib import request as urllib2
@@ -246,16 +245,6 @@ def gcc_ver():
 def which(p_exe):
     which_path = getoutput(f"which {p_exe}")
     return(which_path)
-
-
-def format_ver(p_ver):
-    # formats 3-part version number as xx.yy-z
-    v = str(p_ver).split(".")
-    if len(v) != 3:
-        message(f"'{p_ver}' is not a valid three part version string", "warning")
-        return(p_ver)
-
-    return(f"{v[0]}.{str(v[1]).rjust(2,'0')}-{v[2]}")
 
 
 def autostart_verify_prereqs():
@@ -3796,6 +3785,35 @@ def get_readable_time_diff(amount, units="seconds", precision=0):
     return buf
 
 
+# recursively check and restore all env / extension files during upgrade
+def recursively_copy_old_files(dcmp, diff_files=[], ignore=None):
+    for name in dcmp.left_only:
+        if ignore and name in ignore:
+            continue
+        try:
+            source_file = os.path.join(dcmp.left, name)
+            shutil.move(source_file, dcmp.right)
+        except Exception as e:
+            my_logger.error(
+                "Failed to restore the file %s due to %s"
+                % (os.path.join(dcmp.right, name), str(e))
+            )
+            my_logger.error(traceback.format_exc())
+            diff_files.append([name, dcmp.left, dcmp.right])
+    for sub_dcmp in dcmp.subdirs.values():
+        allfiles = diff_files
+        recursively_copy_old_files(sub_dcmp, allfiles)
+    return diff_files
+
+
+# restore any extensions or env/conf files during upgrade
+def restore_conf_ext_files(src, dst, ignore=None):
+    if os.path.isdir(dst):
+        diff = filecmp.dircmp(src, dst)
+        extension_files_list = recursively_copy_old_files(diff, ignore=ignore)
+    return True
+
+
 def exit_cleanly(p_rc, conn=None):
     if conn:
         try:
@@ -4154,36 +4172,59 @@ def echo_node(node):
 
     print(bold_hashes)
 
-def run_command(command_args, max_attempts=1, timeout=None, capture_output=True, env=None, cwd=None, verbose=False):
+
+def run_command(command_args, max_attempts=1, timeout=None, capture_output=True,
+                env=None, cwd=None, verbose=False):
     attempts = 0
     output, error = "", ""
 
-    
     while attempts < max_attempts:
         try:
             attempts += 1
-            result = subprocess.run(command_args, check=True, text=True,
-                                    capture_output=capture_output, timeout=timeout,
-                                    env=env, cwd=cwd)
+            result = subprocess.run(
+                command_args,
+                check=True,
+                text=True,
+                capture_output=capture_output,
+                timeout=timeout,
+                env=env,
+                cwd=cwd,
+                # Added lines to handle invalid UTF-8 gracefully:
+                encoding="utf-8",
+                errors="replace"   # or "ignore" if you prefer
+            )
             if capture_output:
                 output = result.stdout
                 error = result.stderr
+
             if verbose:
                 print(f"Command executed successfully.")
-            return {"success": True, "output": output, "error": error, "attempts": attempts}
+
+            return {
+                "success": True,
+                "output": output,
+                "error": error,
+                "attempts": attempts
+            }
 
         except subprocess.CalledProcessError as e:
             error = e.stderr if capture_output else str(e)
             if verbose:
                 print(f"Error executing command: {error}")
-            time.sleep(1)  # Simple backoff strategy
+            time.sleep(1)  # Simple backoff before retry
+
         except subprocess.TimeoutExpired as e:
             error = f"Command timed out after {timeout} seconds."
             if verbose:
                 print(f"Attempt {attempts}: {error}")
             break  # No retry after timeout
 
-    return {"success": False, "output": output, "error": error, "attempts": attempts}
+    return {
+        "success": False,
+        "output": output,
+        "error": error,
+        "attempts": attempts
+    }
 
 
 def get_cluster_info(cluster_name):
@@ -4281,9 +4322,27 @@ def load_json(cluster_name):
         node
     )
 
+def check_directory_status(directory):
+    """
+    Check if the directory exists and is writable.
+
+    Returns a dictionary with:
+      - 'exists': True if the directory exists, otherwise False.
+      - 'writable': True if the directory exists and is writable, otherwise False.
+      - 'message': A string describing the status.
+    """
+    if os.path.isdir(directory):
+        writable = os.access(directory, os.W_OK)
+        message = f"Directory {directory} exists and is {'writable' if writable else 'not writable'}."
+        return {"exists": True, "writable": writable, "message": message}
+    else:
+        message = f"Directory {directory} does not exist."
+        return {"exists": False, "writable": False, "message": message}
+
 BASE_DIR = "cluster"
 # MAINLINE ################################################################
 cL = sqlite3.connect(MY_LITE, check_same_thread=False)
 REPO = get_value("GLOBAL", "REPO")
+
 
 

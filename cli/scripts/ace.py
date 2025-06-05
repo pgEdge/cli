@@ -1,7 +1,7 @@
 #  Copyright 2022-2025 PGEDGE  All rights reserved. #
 
 
-"""ACE is the place of the Anti Chaos Engine"""
+"""ACE is the place of the Active Consistency Engine"""
 
 import ast
 import json
@@ -12,11 +12,8 @@ import subprocess
 from datetime import datetime
 import logging
 from itertools import chain
-
 from psycopg import ClientCursor
 
-import ace_core
-import ace_daemon
 from ace_sql import ESTIMATE_ROW_COUNT, GET_PKEY_OFFSETS
 import fire
 import psycopg
@@ -1211,7 +1208,7 @@ def table_diff_checks(
                 # to prevent SQL injections.
                 view_sql = sql.SQL(
                     """
-                    CREATE VIEW {view_name} AS
+                    CREATE OR REPLACE VIEW {view_name} AS
                     SELECT * FROM {l_schema}.{l_table}
                     WHERE {where_clause}
                 """
@@ -2375,6 +2372,70 @@ def handle_task_exception(task, task_context):
     ).total_seconds()
     task.scheduler.task_context = task_context
 
+    if (
+        isinstance(task, TableDiffTask)
+        and getattr(task, "table_filter", False)
+        and task.table_filter is not None
+        and task.table_filter != ""
+    ):
+        view_schema = task.fields.l_schema
+        view_name_to_drop = task.fields.l_table
+        quiet_mode = getattr(task, "quiet_mode", False)
+
+        util.message(
+            f"Attempting to clean up view {view_schema}.{view_name_to_drop}",
+            p_state="warning",
+            quiet_mode=quiet_mode,
+        )
+
+        for params in task.fields.conn_params:
+            conn = None
+            try:
+                node_info = {
+                    "public_ip": params["host"],
+                    "port": params["port"],
+                    "db_name": params["dbname"],
+                    "db_user": params["user"],
+                    "db_password": params.get("password", None),
+                }
+                _, conn = task.connection_pool.get_cluster_node_connection(
+                    node_info,
+                    task.cluster_name,
+                    invoke_method=task.invoke_method,
+                    client_role=(
+                        task.client_role
+                        if config.USE_CERT_AUTH and task.invoke_method == "api"
+                        else None
+                    ),
+                )
+
+                if conn:
+                    with conn.cursor() as cur:
+                        cur.execute(
+                            sql.SQL("DROP VIEW IF EXISTS {schema}.{view}").format(
+                                schema=sql.Identifier(view_schema),
+                                view=sql.Identifier(view_name_to_drop),
+                            )
+                        )
+                    conn.commit()
+                    msg = (
+                        "Successfully dropped view "
+                        f"{view_schema}.{view_name_to_drop} "
+                        f"on node {params['host']}:{params['port']}."
+                    )
+                    util.message(msg, p_state="info", quiet_mode=quiet_mode)
+            except Exception as e_cleanup:
+                node_host = params.get("host", "unknown")
+                node_port = params.get("port", "unknown")
+                error_msg = (
+                    f"Failed to drop view {view_schema}.{view_name_to_drop} "
+                    f"on node {node_host}:{node_port}: {str(e_cleanup)}"
+                )
+                util.message(error_msg, p_state="error", quiet_mode=quiet_mode)
+            finally:
+                if conn:
+                    conn.close()
+
     skip_update = getattr(task, "skip_db_update", False)
 
     if not skip_update:
@@ -2417,8 +2478,7 @@ if __name__ == "__main__":
             "schema-diff": ace_cli.schema_diff_cli,
             "spock-diff": ace_cli.spock_diff_cli,
             "spock-exception-update": ace_cli.update_spock_exception_cli,
-            "auto-repair": ace_core.auto_repair,
-            "start": ace_daemon.start_ace,
+            "start": ace_cli.start_cli,
             "mtree": ace_cli.merkle_tree_cli,
         }
     )

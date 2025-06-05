@@ -595,7 +595,18 @@ def table_diff(td_task: TableDiffTask, skip_all_checks: bool = False):
     """Efficiently compare tables across cluster using checksums and blocks of rows"""
 
     if not skip_all_checks:
-        td_task = ace.table_diff_checks(td_task, skip_validation=True)
+        try:
+            td_task = ace.table_diff_checks(td_task, skip_validation=True)
+        except Exception as e_checks:
+            context = {
+                "total_rows": 0,
+                "mismatch": False,
+                "errors": [
+                    f"Error during pre-flight checks for table_diff: {str(e_checks)}"
+                ]
+            }
+            ace.handle_task_exception(td_task, context)
+            raise
 
     simple_primary_key = td_task.fields.simple_primary_key
 
@@ -965,8 +976,9 @@ def table_diff(td_task: TableDiffTask, skip_all_checks: bool = False):
                 ),
             )
             conn.execute(
-                sql.SQL("DROP VIEW IF EXISTS {view_name}").format(
-                    view_name=sql.Identifier(f"{td_task.scheduler.task_id}_view"),
+                sql.SQL("DROP VIEW IF EXISTS {schema}.{view_name}").format(
+                    schema=sql.Identifier(td_task.fields.l_schema),
+                    view_name=sql.Identifier(td_task.fields.l_table),
                 )
             )
             conn.commit()

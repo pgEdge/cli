@@ -1,7 +1,7 @@
 
 DROP TABLE IF EXISTS hub;
 CREATE TABLE hub(v TEXT NOT NULL PRIMARY KEY, c TEXT NOT NULL, d TEXT NOT NULL);
-INSERT INTO hub VALUES ('25.0.0', 'Constellation',  '20250227');
+INSERT INTO hub VALUES ('25.0.0', 'Constellation',  '20250603');
 
 DROP VIEW  IF EXISTS v_versions;
 DROP VIEW  IF EXISTS v_products;
@@ -84,7 +84,7 @@ INSERT INTO extensions VALUES ('spock40', 'spock', 1, 'spock',
    max_wal_senders=16 | hot_standby_feedback=on | wal_sender_timeout=5s |
    track_commit_timestamp=on | spock.conflict_resolution=last_update_wins | 
    spock.save_resolutions=on | spock.conflict_log_level=DEBUG');
-INSERT INTO extensions VALUES ('spock41', 'spock', 1, 'spock',
+INSERT INTO extensions VALUES ('spock50', 'spock', 1, 'spock',
   'wal_level=logical | max_worker_processes=12 | max_replication_slots=16 |
    max_wal_senders=16 | hot_standby_feedback=on | wal_sender_timeout=5s |
    track_commit_timestamp=on | spock.conflict_resolution=last_update_wins | 
@@ -139,6 +139,7 @@ INSERT INTO projects VALUES ('hub', 'app', 0, 0, 'hub', 0, 'https://github.com/p
 INSERT INTO releases VALUES ('hub', 1, 'hub',  '', '', 'hidden', '', 1, '', '', '');
 
 INSERT INTO versions VALUES ('hub', (select v from hub), '',  1, (select d from hub), '', '', '');
+INSERT INTO versions VALUES ('hub', '24.10.13',  '',  0, '20250509', '', '', '');
 INSERT INTO versions VALUES ('hub', '24.10.11',  '',  0, '20250224', '', '', '');
 INSERT INTO versions VALUES ('hub', '24.10.10',  '',  0, '20250123', '', '', '');
 INSERT INTO versions VALUES ('hub', '24.10.9',   '',  0, '20241206', '', '', '');
@@ -148,10 +149,6 @@ INSERT INTO versions VALUES ('hub', '24.10.5',   '',  0, '20241107', '', '', '')
 INSERT INTO versions VALUES ('hub', '24.10.4',   '',  0, '20241105', '', '', '');
 INSERT INTO versions VALUES ('hub', '24.10.3',   '',  0, '20241104', '', '', '');
 INSERT INTO versions VALUES ('hub', '24.10.2',   '',  0, '20241002', '', '', '');
-INSERT INTO versions VALUES ('hub', '24.9.6',    '',  0, '20240919', '', '', '');
-INSERT INTO versions VALUES ('hub', '24.7.7',    '',  0, '20240820', '', '', '');
-INSERT INTO versions VALUES ('hub', '24.7.6',    '',  0, '20240731', '', '', '');
-INSERT INTO versions VALUES ('hub', '24.7.4',    '',  0, '20240710', '', '', '');
 
 -- ## PG #################################
 INSERT INTO projects VALUES ('pg', 'pge', 1, 5432, '', 1, 'https://github.com/postgres/postgres/tags',
@@ -159,18 +156,18 @@ INSERT INTO projects VALUES ('pg', 'pge', 1, 5432, '', 1, 'https://github.com/po
 
 INSERT INTO releases VALUES ('pg15', 2, 'pg', '', '', 'prod', 
   '<font size=-1>New in <a href=https://www.postgresql.org/docs/15/release-15.html>2022</a></font>', 1, 'POSTGRES', '', '');
-INSERT INTO versions VALUES ('pg15', '15.12-1',  'amd, arm', 1, '20250224','', '', '');
-INSERT INTO versions VALUES ('pg15', '15.10-1',  'amd, arm', 0, '20241121','', '', '');
+INSERT INTO versions VALUES ('pg15', '15.13-1',  'amd, arm', 1, '20250508','', '', '');
+INSERT INTO versions VALUES ('pg15', '15.12-1',  'amd, arm', 0, '20250224','', '', '');
 
 INSERT INTO releases VALUES ('pg16', 2, 'pg', '', '', 'prod', 
   '<font size=-1>New in <a href=https://www.postgresql.org/docs/16/release-16.html>2023!</a></font>', 1, 'POSTGRES', '', '');
-INSERT INTO versions VALUES ('pg16', '16.8-1',  'amd, arm', 1, '20250224','', '', '');
-INSERT INTO versions VALUES ('pg16', '16.6-1',  'amd, arm', 0, '20241121','', '', '');
+INSERT INTO versions VALUES ('pg16', '16.9-1',  'amd, arm', 1, '20250508','', '', '');
+INSERT INTO versions VALUES ('pg16', '16.8-1',  'amd, arm', 0, '20250224','', '', '');
 
 INSERT INTO releases VALUES ('pg17', 2, 'pg', '', '', 'prod', 
   '<font size=-1>New in <a href=https://www.postgresql.org/docs/17/release-17.html>2024!</a></font>', 1, 'POSTGRES', '', '');
-INSERT INTO versions VALUES ('pg17', '17.4-1',    'amd, arm', 1, '20250224','', '', '');
-INSERT INTO versions VALUES ('pg17', '17.2-1',    'amd, arm', 0, '20241121','', '', '');
+INSERT INTO versions VALUES ('pg17', '17.5-1',    'amd, arm', 1, '20250508','', '', '');
+INSERT INTO versions VALUES ('pg17', '17.4-1',    'amd, arm', 0, '20250224','', '', '');
 
 -- ## ORAFCE #############################
 INSERT INTO projects VALUES ('orafce', 'ext', 4, 0, '', 0, 'https://github.com/orafce/orafce/releases',
@@ -351,12 +348,14 @@ INSERT INTO versions VALUES ('spock40-pg16', '4.0.8-1', 'amd, arm', 0, '20241218
 INSERT INTO versions VALUES ('spock40-pg17', '4.0.8-1', 'amd, arm', 0, '20241218', 'pg17', '', '');
 
 
--- ## SPOCK41 ###########################
-INSERT INTO releases VALUES ('spock41-pg16', 4, 'spock', 'Spock', '', 'test', '', 1, 'pgEdge Community', '', '');
-INSERT INTO releases VALUES ('spock41-pg17', 4, 'spock', 'Spock', '', 'test', '', 1, 'pgEdge Community', '', '');
+-- ## spock50 ###########################
+INSERT INTO releases VALUES ('spock50-pg15', 4, 'spock', 'Spock', '', 'test', '', 1, 'pgEdge Community', '', '');
+INSERT INTO releases VALUES ('spock50-pg16', 4, 'spock', 'Spock', '', 'test', '', 1, 'pgEdge Community', '', '');
+INSERT INTO releases VALUES ('spock50-pg17', 4, 'spock', 'Spock', '', 'test', '', 1, 'pgEdge Community', '', '');
 
-INSERT INTO versions VALUES ('spock41-pg16', '4.1devel-2',   'amd, arm', 1, '20241107', 'pg16', '', '');
-INSERT INTO versions VALUES ('spock41-pg17', '4.1devel-2',   'amd, arm', 1, '20241107', 'pg17', '', '');
+INSERT INTO versions VALUES ('spock50-pg15', '5.0.0-devel1-1',   'amd, arm', 1, '20250521', 'pg16', '', '');
+INSERT INTO versions VALUES ('spock50-pg16', '5.0.0-devel1-1',   'amd, arm', 1, '20250521', 'pg16', '', '');
+INSERT INTO versions VALUES ('spock50-pg17', '5.0.0-devel1-1',   'amd, arm', 1, '20250521', 'pg17', '', '');
 
 -- ## LOLOR #############################
 INSERT INTO projects VALUES ('lolor', 'pge', 4, 0, '', 1, 'https://github.com/pgedge/lolor/tags',
@@ -396,9 +395,9 @@ INSERT INTO releases VALUES ('postgis-pg15', 3, 'postgis', 'PostGIS', '', 'prod'
 INSERT INTO releases VALUES ('postgis-pg16', 3, 'postgis', 'PostGIS', '', 'prod', '', 1, 'GPLv2', '', '');
 INSERT INTO releases VALUES ('postgis-pg17', 3, 'postgis', 'PostGIS', '', 'prod', '', 1, 'GPLv2', '', '');
 
-INSERT INTO versions VALUES ('postgis-pg15', '3.5.0-2', 'amd, arm', 1, '20241021', 'pg15', '', 'https://git.osgeo.org/gitea/postgis/postgis/raw/tag/3.5.0/NEWS');
-INSERT INTO versions VALUES ('postgis-pg16', '3.5.0-2', 'amd, arm', 1, '20241021', 'pg16', '', 'https://git.osgeo.org/gitea/postgis/postgis/raw/tag/3.5.0/NEWS');
-INSERT INTO versions VALUES ('postgis-pg17', '3.5.0-2', 'amd, arm', 1, '20241021', 'pg17', '', 'https://git.osgeo.org/gitea/postgis/postgis/raw/tag/3.5.0/NEWS');
+INSERT INTO versions VALUES ('postgis-pg15', '3.5.0-3', 'amd, arm', 1, '20250404', 'pg15', '', 'https://git.osgeo.org/gitea/postgis/postgis/raw/tag/3.5.0/NEWS');
+INSERT INTO versions VALUES ('postgis-pg16', '3.5.0-3', 'amd, arm', 1, '20250404', 'pg16', '', 'https://git.osgeo.org/gitea/postgis/postgis/raw/tag/3.5.0/NEWS');
+INSERT INTO versions VALUES ('postgis-pg17', '3.5.0-3', 'amd, arm', 1, '20250404', 'pg17', '', 'https://git.osgeo.org/gitea/postgis/postgis/raw/tag/3.5.0/NEWS');
 
 -- ## PARTMAN ###########################
 INSERT INTO projects VALUES ('partman', 'ext', 4, 0, '', 4, 'https://github.com/pgpartman/pg_partman/tags',
@@ -463,7 +462,7 @@ INSERT INTO versions VALUES ('kirk', (select v from hub), '',  1, (select d from
 
 -- ## ACE ##########################
 INSERT INTO projects VALUES ('ace', 'pge', 11, 5000, '', 3, 'http://github.com/pgedge/cli/cli/scripts/ace.py',
-  'ace',  0, '', 'Anti Chaos Engine for pgEdge', 'https://github.com/pgedge/cli/cli/scripts/ace.py', 'ace');
+  'ace',  0, '', 'Active Consistency Engine for pgEdge', 'https://github.com/pgedge/cli/cli/scripts/ace.py', 'ace');
 INSERT INTO releases VALUES ('ace', 2, 'ace',  'ACE', '', 'test', '', 1, 'PGEDGE', '', '');
 INSERT INTO versions VALUES ('ace', (select v from hub), '',  1, (select d from hub), '', '', '');
 

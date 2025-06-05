@@ -54,7 +54,7 @@ def run_cmd(p_cmd, p_comp=None):
 
 
 def list(components=False, aliases=False):
-    """Display available/installed components"""
+    """Display available/installed components."""
 
     util.message(f"um.list({components})", "debug")
 
@@ -79,12 +79,12 @@ def list_aliases():
 
 
 def update():
-    """Update with a new list of available components"""
+    """Update with a new list of available components."""
     run_cmd("update")
 
 
 def install(component, active=True):
-    """Install a component"""
+    """Install a component."""
 
     if active not in (True, False):
         util.exit_message("'active' parm must be True or False")
@@ -98,7 +98,7 @@ def install(component, active=True):
 
 
 def remove(component):
-    """Uninstall a component"""
+    """Uninstall a component."""
     installed_comp_list = meta.get_component_list()
     init_comp_list=[]
     p_comp=component
@@ -142,20 +142,20 @@ def remove(component):
 
 
 def upgrade(component):
-    """Perform an upgrade  to a newer version of a component"""
+    """Perform an upgrade to a newer version of a component."""
 
     run_cmd("upgrade", component)
 
 
 def download(component):
-    """Download a component into local cache (without installing it)"""
+    """Download a component into local cache (without installing it)."""
 
     util.download_component(component)
     return
 
 
 def download_all():
-    """Download pg15 & pg16 components into local cache"""
+    """Download pg15 & pg16 components into local cache."""
 
     comp_l = [
         "pg16", "spock40-pg16", "spock33-pg16", "lolor-pg16",
@@ -173,7 +173,7 @@ def download_all():
 
 
 def make_bundle():
-    """Make a tarball of pg15 & pg16 components"""
+    """Make a tarball of pg15 & pg16 components."""
 
     bundle = f"pgedge-{util.MY_VERSION}-{util.get_ctlib_dir()}.tgz"
     print(f"make_bundle() - {bundle}")
@@ -218,7 +218,7 @@ def clean():
 
 
 def verify_metadata(Project="", Stage="prod", IsCurrent=0):
-
+    """Display component metadata from the local store"""
     sql = f"""
 SELECT r.project, r.component, r.stage, v.version, v.platform, 
         v.is_current, v.release_date, p.port as default_port

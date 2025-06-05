@@ -1,5 +1,5 @@
 
-# ACE (Anti-Chaos Engine)
+# ACE (Active Consistency Engine)
 
 ACE is a powerful tool designed to ensure and maintain consistency across nodes in a replication cluster managed by the [Spock extension](https://github.com/pgEdge/spock). It helps identify and resolve data inconsistencies, schema differences, and replication configuration mismatches across nodes in a cluster.
 

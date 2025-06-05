@@ -1,13 +1,21 @@
+
 ## SYNOPSIS
-    ./pgedge cluster init CLUSTER_NAME
- 
+    ./pgedge cluster init CLUSTER_NAME <flags>
+
 ## DESCRIPTION
-    Install pgEdge on each node, create the initial database, install Spock,
-and create all Spock nodes and subscriptions. Additional databases will
-be created with all Spock nodes and subscriptions if defined in the JSON
-file. This command requires a JSON file with the same name as the cluster
-to be in the cluster/<cluster_name>.
- 
+    Initialize a cluster via cluster configuration JSON file by performing the following steps:
+
+    1. Loads the cluster configuration.
+    2. Checks SSH connectivity for all nodes.
+    3. Installs pgEdge on all nodes.
+    4. Configures Spock for replication for all configured databases across all nodes.
+    5. Integrates pgBackRest on nodes, if configured.
+
 ## POSITIONAL ARGUMENTS
     CLUSTER_NAME
-        The name of the cluster.
+        The name of the cluster to initialize.
+
+## FLAGS
+    -i, --install=INSTALL
+        Whether to install pgEdge on nodes. Defaults to True.
+    

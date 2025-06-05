@@ -1,11 +1,12 @@
+
 ## SYNOPSIS
     ./pgedge spock sub-remove-repset SUBSCRIPTION_NAME REPLICATION_SET DB
- 
+
 ## DESCRIPTION
     Remove a replication set from a subscription. 
 
 Example: spock sub-remove-repset sub_n2n1 demo_repset demo
- 
+
 ## POSITIONAL ARGUMENTS
     SUBSCRIPTION_NAME
         The name of the subscription. Example: sub_n2n1

@@ -1,11 +1,12 @@
+
 ## SYNOPSIS
     ./pgedge spock repset-remove-table REPLICATION_SET TABLE DB
- 
+
 ## DESCRIPTION
     Remove a table from a replication set. 
 
 Example: spock repset-remove-table demo_repset public.mytable demo
- 
+
 ## POSITIONAL ARGUMENTS
     REPLICATION_SET
         The replication set name. Example: demo_repset

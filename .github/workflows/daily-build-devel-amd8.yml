@@ -1,0 +1,185 @@
+name: Stable Daily Build Devel - amd8
+
+env:
+  DEFAULT_CLI_BRANCH: "REL25_01"
+
+on:
+  workflow_dispatch:
+    inputs:
+      cli_branch:
+        description: "Select the CLI branch to build from"
+        required: true
+        default: REL25_01
+        type: choice
+        options:
+          - REL25_01
+          - REL24_10
+
+      prefix_selector:
+        description: "Choose target pgedge-devel repo sub-directory (default = MMDD, custom = your input). Packages will be at: https://pgedge-devel.s3.amazonaws.com/REPO/stable/<sub-dir>"
+        required: true
+        default: "default"
+        type: choice
+        options:
+          - default
+          - custom
+
+      custom_prefix:
+        description: "If 'custom' selected above, provide sub-directory name"
+        required: false
+
+      clean_prefix:
+        description: "Clean the repo sub-directory before copying packages"
+        required: false
+        type: choice
+        options:
+          - "false"
+          - "true"
+        default: "false"
+
+  schedule:
+    - cron: "0 23 * * *"  # 11PM UTC = 7PM EST
+
+jobs:
+  build-stable-amd8:
+    runs-on: [self-hosted, amd8]
+
+    steps:
+      - name: Set build parameters and logfile
+        id: vars
+        run: |
+          source ~/.bashrc
+
+          echo "Resolving build parameters..."
+
+          TODAY=$(date +%m%d)
+          RUNNER_NAME="${{ runner.name }}"
+
+          # Determine s3 prefix (sub-directory)
+          # If the run is automated, set prefix to MMDD and no clean flag
+          if [[ "${{ github.event_name }}" == "schedule" ]]; then
+            PREFIX="$TODAY"
+            CLEAN_FLAG=""
+            SELECTED_CLI_BRANCH="${DEFAULT_CLI_BRANCH}"
+            echo "Scheduled run: Prefix=$PREFIX, Clean flag not set, Branch=$SELECTED_CLI_BRANCH"
+          else
+            # Manually triggered workflow
+            # If sub-directory prefix chosen is default, set prefix to MMDD 
+            if [[ "${{ inputs.prefix_selector }}" == "default" ]]; then
+              PREFIX="$TODAY"
+              echo "Manual run: Using default prefix: $PREFIX"
+            else
+              # If sub-directory prefix chosen is custom, check a custom value is input or exit
+              if [[ -z "${{ inputs.custom_prefix }}" ]]; then
+                echo "Error: Custom prefix selected but no input provided."
+                exit 1
+              fi
+              # Set prefix to user specified value
+              PREFIX="${{ inputs.custom_prefix }}"
+              echo "Manual run: Using custom prefix: $PREFIX"
+            fi
+
+            # Clean flag handling
+            # If true is chosen in the clean dropdown, set the --clean flag
+            if [[ "${{ inputs.clean_prefix }}" == "true" ]]; then
+              CLEAN_FLAG="--clean"
+              echo "Clean flag is enabled"
+            else
+              CLEAN_FLAG=""
+              echo "Clean flag is disabled"
+            fi
+
+            # Branch input
+            SELECTED_CLI_BRANCH="${{ inputs.cli_branch }}"
+            echo "Manual run: Selected CLI branch: $SELECTED_CLI_BRANCH"
+          fi
+
+          # Set timestamped log file
+          TIMESTAMP=$(date +%m%d%y-%H%M)
+          LOGFILE_NAME="build_to_devel-${RUNNER_NAME}-${TIMESTAMP}.log"
+          LOGFILE_PATH="/tmp/${LOGFILE_NAME}"
+
+          # Export environment variables that will be referred in subsequent steps
+          echo "RUNNER_NAME=$RUNNER_NAME" >> $GITHUB_ENV
+          echo "PREFIX=$PREFIX" >> $GITHUB_ENV
+          echo "CLEAN_FLAG=$CLEAN_FLAG" >> $GITHUB_ENV
+          echo "LOGFILE_PATH=$LOGFILE_PATH" >> $GITHUB_ENV
+          echo "CLI_BRANCH=$SELECTED_CLI_BRANCH" >> $GITHUB_ENV
+
+          echo "Log file will be created at: $LOGFILE_PATH"
+
+      - name: Show effective configuration
+        run: |
+          echo "Runner: $RUNNER_NAME"
+          echo "Prefix: $PREFIX"
+          echo "Clean flag: $CLEAN_FLAG"
+          echo "Log file path: $LOGFILE_PATH"
+          echo "CLI branch: $CLI_BRANCH"
+
+      - name: Confirm environment and switching to required cli branch
+        id: cli_branch_checkout
+        run: |
+          source ~/.bashrc
+          echo "OS info:"
+          cat /etc/os-release
+          echo "Architecture:"
+          arch
+
+          echo "Navigating to CLI and safely checking out specified branch..."
+          cd $PGE
+
+          echo "Current branch and status:"
+          git branch
+          git status
+
+          echo "Stashing changes (if any)..."
+          git stash push -u -m "Temp stash for branch switch" || true
+
+          echo "Checking out branch: $CLI_BRANCH"
+          git checkout "$CLI_BRANCH" || true
+
+      - name: Run build and push to devel repo
+        id: build_to_devel
+        run: |
+          source ~/.bashrc
+
+          echo "Launching daily build script..."
+          cd $DEV
+
+          echo "Executing: ./build_to_devel.sh $PREFIX $CLEAN_FLAG"
+          ./build_to_devel.sh "$PREFIX" $CLEAN_FLAG > "$LOGFILE_PATH" 2>&1
+          EXIT_CODE=$?
+          
+          echo "Build finished with exit code: $EXIT_CODE"
+
+          if [[ $EXIT_CODE -ne 0 ]]; then
+            echo "Build failed. Check the log for details."
+            exit $EXIT_CODE
+          fi
+
+      - name: Upload build log artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-log
+          path: ${{ env.LOGFILE_PATH }}
+          if-no-files-found: warn
+
+      - name: Cleanup build artifacts
+        if: steps.build_to_devel.outcome == 'success'
+        continue-on-error: true
+        run: |
+          source ~/.bashrc
+          # ensuring an unsuccessful deletion of this dir doesn't cause the entire job to fail
+          run_day=$(date +%j)
+          TARGET="$HIST/devel-$run_day"
+          echo "Attempting to remove: $TARGET"
+      
+          if [ -d "$TARGET" ]; then
+            rm -rf "$TARGET"
+            echo "Successfully removed $TARGET"
+          else
+            echo "Directory $TARGET does not exist. Nothing to clean."
+          fi
+
+

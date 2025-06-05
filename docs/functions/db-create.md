@@ -1,24 +1,14 @@
-## SYNOPSIS
-    ./pgedge db create <flags>
- 
-## DESCRIPTION
+
+    Create a pg db with spock components installed into it.
+
     Usage:
-    To create a database owned by a specific user
-       db create -d <db> -U <usr> -P <passwd>
- 
-## FLAGS
-    -d, --db=DB
-    
-    
-    -U, --User=USER
-    
-    
-    -P, --Passwd=PASSWD
-    
-    
-    -p, --pg=PG
-    
-    
-    -s, --spock=SPOCK
-    
+        ./pgedge db create --db <db> --User <usr> --Passwd <passwd> --pg=<pg> --spock <spock>
+
+    Flags:
+    -d, --db        Name of the database to create
+    -U, --User      Owner user of the new database
+    -P, --Passwd    Password for the new user 
+        --pg        Postgres version to use
+    -s, --spock     Spock version to install
+
     

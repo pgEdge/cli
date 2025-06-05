@@ -1,0 +1,49 @@
+name: pgedge
+services:
+  node:
+    build:
+      context: .
+      dockerfile: Dockerfile.node.${OS_FLAVOR:-rocky95}
+    platform: ${OS_ARCH:-linux/arm64}
+    networks:
+      - mynetwork
+    environment:
+      - REPO=${REPO:-http://repo:8000/download}
+      - PGBACKREST_REPO1_CIPHER_PASS=supersecret
+    depends_on:
+      - repo
+    deploy:
+      replicas: ${NUM_NODES:-1}
+    volumes:
+      - backups:/backups/
+    
+  repo:
+    build:
+      context: .
+      dockerfile: Dockerfile.repo
+    ports:
+      - "8000:8000"
+    networks:
+      - mynetwork
+    volumes:
+      - ./repo:/usr/src/repo/
+
+  build:
+    build:
+      context: .
+      dockerfile: ../Dockerfile.${BUILD_OS_FLAVOR:-rocky95}
+    platform: ${BUILD_OS_ARCH:-linux/arm64}
+    networks:
+      - mynetwork
+    volumes:
+      - ./repo:/home/build/dev/out
+      - ${GITHUB_REPO_ROOT:-../../../}:/home/build/dev/cli
+    stdin_open: true
+    tty: true
+
+volumes:
+  backups:
+
+networks:
+  mynetwork:
+    driver: bridge
