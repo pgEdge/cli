@@ -4,6 +4,7 @@ from psycopg import sql
 import psycopg
 import re
 import json
+from faker import Faker
 from test_merkle_trees_simple import TestMerkleTreesSimple
 
 from psycopg.types.composite import register_composite, CompositeInfo
@@ -249,7 +250,7 @@ class TestMerkleTreesComposite(TestMerkleTreesSimple):
         cur.close()
         conn.close()
 
-    @pytest.mark.parametrize("table", [("public.customers2")])
+    @pytest.mark.parametrize("table", ["public.customers2"])
     def test_merges(self, cli, capsys, table):
         """Test merges"""
 
@@ -317,11 +318,281 @@ class TestMerkleTreesComposite(TestMerkleTreesSimple):
         counts = cur.fetchall()
         assert all(count[0] > 0 for count in counts)
 
-        # FIXME! Repair for large diffs seems to be having issues with
-        # the bulk dispatcher
         cli.table_repair_cli("eqn-t9da", table, diff_file, source_of_truth="n1")
         cur.close()
         conn.close()
+
+    @pytest.mark.parametrize("table", ["public.customers"])
+    def test_non_contiguous_delete(self, cli, capsys, table):
+        """Test non-contiguous deletes on composite keys"""
+        l_schema, l_table = table.split(".")
+        conn = psycopg.connect(host="n1", dbname="demo", user="admin")
+        cur = conn.cursor()
+        cur.execute("SELECT spock.repair_mode(true)")
+
+        # Ideally, random ranges should be used here, but the sampling might
+        # unnecessarily add complexity (uniform sampling within a skewed distribution).
+        # So, we'll just use hardcoded ranges for now.
+        cur.execute(
+            sql.SQL(
+                """
+                DELETE FROM {schema}.{table}
+                WHERE (index between 10 and 100)
+                OR (index between 2200 and 2700)
+                OR (index between 3000 and 3500)
+                OR (index between 6800 and 7200)
+                OR (index between 9900 and 10000)
+            """
+            ).format(schema=sql.Identifier(l_schema), table=sql.Identifier(l_table))
+        )
+        conn.commit()
+        rows_to_delete = cur.rowcount
+        cur.close()
+        conn.close()
+
+        cli.merkle_tree_cli("diff", "eqn-t9da", table_name=table)
+        captured = capsys.readouterr()
+        clean_output = re.sub(
+            r"\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])", "", captured.out
+        )
+        match = re.search(r"diffs written out to (.+\.json)", clean_output.lower())
+        assert match, "Diff file path not found in output"
+        diff_file = match.group(1)
+
+        with open(diff_file, "r") as f:
+            diff_data = json.load(f)
+
+        assert len(diff_data["diffs"]["n1/n2"]["n2"]) == rows_to_delete
+
+        cli.table_repair_cli("eqn-t9da", table, diff_file, source_of_truth="n2")
+
+    @pytest.mark.parametrize("table", ["public.customers"])
+    def test_non_contiguous_update(self, cli, capsys, table):
+        """Test non-contiguous updates on composite keys"""
+        l_schema, l_table = table.split(".")
+        conn = psycopg.connect(host="n1", dbname="demo", user="admin")
+        cur = conn.cursor()
+        cur.execute("SELECT spock.repair_mode(true)")
+
+        cur.execute(
+            sql.SQL(
+                """
+                UPDATE {schema}.{table}
+                SET first_name = 'NonContiguousUpdate'
+                WHERE (index between 20 and 150)
+                OR (index between 3500 and 4800)
+                OR (index between 9500 and 10000)
+                """
+            ).format(schema=sql.Identifier(l_schema), table=sql.Identifier(l_table))
+        )
+
+        conn.commit()
+        rows_to_update = cur.rowcount
+        cur.close()
+        conn.close()
+
+        cli.merkle_tree_cli("diff", "eqn-t9da", table_name=table)
+        captured = capsys.readouterr()
+        clean_output = re.sub(
+            r"\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])", "", captured.out
+        )
+        match = re.search(r"diffs written out to (.+\.json)", clean_output.lower())
+        assert match, "Diff file path not found in output"
+        diff_file = match.group(1)
+
+        with open(diff_file, "r") as f:
+            diff_data = json.load(f)
+
+        assert len(diff_data["diffs"]["n1/n2"]["n1"]) == rows_to_update
+        for diff in diff_data["diffs"]["n1/n2"]["n1"]:
+            assert diff["first_name"] == "NonContiguousUpdate"
+
+        cli.table_repair_cli("eqn-t9da", table, diff_file, source_of_truth="n2")
+
+    def test_various_datatype_pkey(self, cli, capsys, nodes):
+        """Tests a composite key with different data types (TIMESTAMP, TEXT)"""
+        table_name = "public.datatype_test"
+        cluster_name = "eqn-t9da"
+
+        fake = Faker()
+        insert_data = []
+        for _ in range(100):
+            insert_data.append((fake.date_time_this_year(), fake.email(), fake.word()))
+
+        try:
+            for node in nodes:
+                conn = psycopg.connect(host=node, dbname="demo", user="admin")
+                cur = conn.cursor()
+                cur.execute(
+                    f"""
+                    CREATE TABLE IF NOT EXISTS {table_name} (
+                        sub_time TIMESTAMP,
+                        email TEXT,
+                        data TEXT,
+                        PRIMARY KEY (sub_time, email)
+                    );
+                """
+                )
+
+                cur.executemany(
+                    f"""
+                    INSERT INTO {table_name} (sub_time, email, data)
+                    VALUES (%s, %s, %s)
+                        ON CONFLICT (sub_time, email) DO NOTHING
+                    """,
+                    insert_data,
+                )
+
+                cur.execute(
+                    f"SELECT spock.repset_add_table('test_repset', '{table_name}')"
+                )
+
+                conn.commit()
+                cur.close()
+                conn.close()
+
+            cli.merkle_tree_cli(
+                "build",
+                cluster_name,
+                table_name=table_name,
+                block_size=20,
+                override_block_size=True,
+            )
+
+            conn = psycopg.connect(host="n1", dbname="demo", user="admin")
+            cur = conn.cursor()
+            cur.execute("SELECT spock.repair_mode(true)")
+
+            cur.execute(
+                f"SELECT sub_time, email FROM {table_name} ORDER BY random() LIMIT 5"
+            )
+            rows_to_update = cur.fetchall()
+
+            for sub_time, email in rows_to_update:
+                cur.execute(
+                    f"UPDATE {table_name} "
+                    "SET data = 'DataTypeTest' "
+                    "WHERE sub_time = %s AND email = %s",
+                    (sub_time, email),
+                )
+            conn.commit()
+            cur.close()
+            conn.close()
+
+            cli.merkle_tree_cli("diff", cluster_name, table_name=table_name)
+            captured = capsys.readouterr()
+            clean_output = re.sub(
+                r"\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])", "", captured.out
+            )
+            match = re.search(r"diffs written out to (.+\.json)", clean_output.lower())
+            assert match, "Diff file path not found in output"
+            diff_file = match.group(1)
+
+            with open(diff_file, "r") as f:
+                diff_data = json.load(f)
+
+            assert len(diff_data["diffs"]["n1/n2"]["n1"]) == len(rows_to_update)
+            for diff in diff_data["diffs"]["n1/n2"]["n1"]:
+                assert diff["data"] == "DataTypeTest"
+
+        finally:
+            pass
+            for node in nodes:
+                try:
+                    conn = psycopg.connect(host=node, dbname="demo", user="admin")
+                    cur = conn.cursor()
+                    cur.execute(f"DROP TABLE IF EXISTS {table_name} CASCADE")
+                    conn.commit()
+                    cur.close()
+                    conn.close()
+                except Exception as e:
+                    print(f"Cleanup failed for {table_name} on {node}: {e}")
+
+    def test_uuid_pkey_support(self, cli, capsys, nodes):
+        """Test composite key with UUID and TEXT columns"""
+        table_name = "public.uuid_composite_test"
+        cluster_name = "eqn-t9da"
+
+        fake = Faker()
+        insert_data = []
+        for _ in range(100):
+            insert_data.append((fake.uuid4(), fake.email(), fake.word()))
+
+        try:
+            for node in nodes:
+                conn = psycopg.connect(host=node, dbname="demo", user="admin")
+                cur = conn.cursor()
+                cur.execute(
+                    f"""
+                    CREATE TABLE IF NOT EXISTS {table_name} (
+                        id UUID,
+                        email TEXT,
+                        data TEXT,
+                        PRIMARY KEY (id, email)
+                    );
+                """
+                )
+                cur.execute(
+                    f"SELECT spock.repset_add_table('test_repset', '{table_name}')"
+                )
+
+                cur.executemany(
+                    f"""
+                    INSERT INTO {table_name} (id, email, data)
+                    VALUES (%s, %s, %s)
+                        ON CONFLICT (id, email) DO NOTHING
+                    """,
+                    insert_data,
+                )
+                conn.commit()
+                cur.close()
+                conn.close()
+
+            cli.merkle_tree_cli(
+                "build",
+                cluster_name,
+                table_name=table_name,
+                block_size=20,
+                override_block_size=True,
+            )
+
+            conn = psycopg.connect(host="n1", dbname="demo", user="admin")
+            cur = conn.cursor()
+            cur.execute("SELECT spock.repair_mode(true)")
+            new_max_uuid = "f" * 32
+            new_email = "zzzz@zzzz.com"
+            cur.execute(
+                f"INSERT INTO {table_name} (id, email, data) VALUES (%s, %s, %s)",
+                (new_max_uuid, new_email, "new max value"),
+            )
+            conn.commit()
+            cur.close()
+            conn.close()
+
+            cli.merkle_tree_cli(
+                "update", cluster_name, table_name=table_name, nodes="n1"
+            )
+            captured = capsys.readouterr()
+            assert "successfully updated" in captured.out.lower()
+
+            cli.merkle_tree_cli("diff", cluster_name, table_name=table_name)
+            captured = capsys.readouterr()
+            clean_output = re.sub(
+                r"\\x1B(?:[@-Z\\-_]|\\[[0-?]*[ -/]*[@-~])", "", captured.out
+            )
+            assert "found 1 diffs" in clean_output.lower()
+
+        finally:
+            for node in nodes:
+                try:
+                    conn = psycopg.connect(host=node, dbname="demo", user="admin")
+                    cur = conn.cursor()
+                    cur.execute(f"DROP TABLE IF EXISTS {table_name} CASCADE")
+                    conn.commit()
+                    cur.close()
+                    conn.close()
+                except Exception as e:
+                    print(f"Cleanup failed for {table_name} on {node}: {e}")
 
     @pytest.mark.parametrize("table", ["public.customers", "public.customers2"])
     def test_mtree_table_cleanup(self, cli, capsys, table, nodes):

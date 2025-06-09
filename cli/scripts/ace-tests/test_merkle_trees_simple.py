@@ -1,12 +1,12 @@
 import random
 import pytest
-from psycopg import sql
-import psycopg
 import re
 import json
 import abc
 
+import psycopg
 from faker import Faker
+from psycopg import sql
 
 import test_config
 
@@ -464,6 +464,172 @@ class TestMerkleTreesSimple(abc.ABC):
         conn.close()
 
         cli.table_repair_cli("eqn-t9da", table, diff_file, source_of_truth="n1")
+
+    @pytest.mark.parametrize("table", ["public.customers"])
+    def test_non_contiguous_delete(self, cli, capsys, table):
+        """Test non-contiguous deletes only mark affected blocks as dirty"""
+
+        l_schema, l_table = table.split(".")
+        conn = psycopg.connect(host="n1", dbname="demo", user="admin")
+        cur = conn.cursor()
+        cur.execute("SELECT spock.repair_mode(true)")
+
+        ids_to_delete = [10, 5000, 9900]
+        cur.execute(
+            sql.SQL(
+                """
+                DELETE FROM {schema}.{table}
+                WHERE index = ANY(%s)
+                """
+            ).format(
+                schema=sql.Identifier(l_schema),
+                table=sql.Identifier(l_table),
+            ),
+            (ids_to_delete,),
+        )
+
+        conn.commit()
+        cur.close()
+        conn.close()
+
+        cli.merkle_tree_cli("diff", "eqn-t9da", table_name=table)
+        captured = capsys.readouterr()
+        clean_output = re.sub(
+            r"\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])", "", captured.out
+        )
+        match = re.search(r"diffs written out to (.+\.json)", clean_output.lower())
+        assert match, "Diff file path not found in output"
+        diff_file = match.group(1)
+
+        with open(diff_file, "r") as f:
+            diff_data = json.load(f)
+
+        assert len(diff_data["diffs"]["n1/n2"]["n2"]) == len(ids_to_delete)
+
+        cli.table_repair_cli("eqn-t9da", table, diff_file, source_of_truth="n2")
+
+    @pytest.mark.parametrize("table", ["public.customers"])
+    def test_non_contiguous_update(self, cli, capsys, table):
+        """Test non-contiguous updates only mark affected blocks as dirty"""
+
+        l_schema, l_table = table.split(".")
+        conn = psycopg.connect(host="n1", dbname="demo", user="admin")
+        cur = conn.cursor()
+        cur.execute("SELECT spock.repair_mode(true)")
+
+        ids_to_update = [20, 6000, 9800]
+        cur.execute(
+            sql.SQL(
+                """
+                UPDATE {schema}.{table}
+                SET first_name = 'NonContiguous'
+                WHERE index = ANY(%s)
+                """
+            ).format(
+                schema=sql.Identifier(l_schema),
+                table=sql.Identifier(l_table),
+            ),
+            (ids_to_update,),
+        )
+
+        conn.commit()
+        cur.close()
+        conn.close()
+
+        cli.merkle_tree_cli("diff", "eqn-t9da", table_name=table)
+        captured = capsys.readouterr()
+        clean_output = re.sub(
+            r"\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])", "", captured.out
+        )
+        match = re.search(r"diffs written out to (.+\.json)", clean_output.lower())
+        assert match, "Diff file path not found in output"
+        diff_file = match.group(1)
+
+        with open(diff_file, "r") as f:
+            diff_data = json.load(f)
+
+        assert len(diff_data["diffs"]["n1/n2"]["n1"]) == len(ids_to_update)
+        assert len(diff_data["diffs"]["n1/n2"]["n2"]) == len(ids_to_update)
+
+        for diff in diff_data["diffs"]["n1/n2"]["n1"]:
+            assert diff["first_name"] == "NonContiguous"
+
+        cli.table_repair_cli("eqn-t9da", table, diff_file, source_of_truth="n2")
+
+    def test_uuid_pkey_support(self, cli, capsys, nodes):
+        """Test that the trigger function works with UUID primary keys"""
+        table_name = "public.uuid_test"
+        cluster_name = "eqn-t9da"
+
+        try:
+            for node in nodes:
+                conn = psycopg.connect(host=node, dbname="demo", user="admin")
+                cur = conn.cursor()
+                cur.execute(
+                    """
+                    CREATE TABLE IF NOT EXISTS public.uuid_test (
+                        id UUID PRIMARY KEY,
+                        data TEXT
+                    );
+                """
+                )
+                cur.execute(
+                    "SELECT spock.repset_add_table('test_repset', "
+                    "'public.uuid_test')"
+                )
+                conn.commit()
+
+                if node == "n1":
+                    fake = Faker()
+                    for _ in range(10):
+                        cur.execute(
+                            "INSERT INTO public.uuid_test (id, data) VALUES (%s, %s)",
+                            (fake.uuid4(), fake.word()),
+                        )
+                    conn.commit()
+
+                cur.close()
+                conn.close()
+
+            cli.merkle_tree_cli(
+                "build",
+                cluster_name,
+                table_name=table_name,
+                block_size=5,
+                override_block_size=True,
+            )
+
+            conn = psycopg.connect(host="n1", dbname="demo", user="admin")
+            cur = conn.cursor()
+            cur.execute("SELECT spock.repair_mode(true)")
+            fake = Faker()
+            new_max_uuid = "f" * 32
+            cur.execute(
+                "INSERT INTO public.uuid_test (id, data) VALUES (%s, %s)",
+                (new_max_uuid, "new max value"),
+            )
+            conn.commit()
+            cur.close()
+            conn.close()
+
+            cli.merkle_tree_cli(
+                "update", cluster_name, table_name=table_name, nodes="n1"
+            )
+            captured = capsys.readouterr()
+            assert "successfully updated" in captured.out.lower()
+
+        finally:
+            # 5. Cleanup
+            for node in nodes:
+                try:
+                    conn = psycopg.connect(host=node, dbname="demo", user="admin")
+                    cur = conn.cursor()
+                    cur.execute("DROP TABLE public.uuid_test CASCADE")
+                    conn.commit()
+                    cur.close()
+                    conn.close()
+                except Exception as e:
+                    print(f"Cleanup failed for {table_name} on {node}: {e}")
 
     @pytest.mark.parametrize("table", ["public.customers", "public.customers2"])
     def test_mtree_table_cleanup(self, cli, capsys, table, nodes):

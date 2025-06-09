@@ -464,6 +464,43 @@ def process_pkey_offsets(offsets: list):
     return pkey_offsets
 
 
+def compute_sampling_parameters(row_count):
+    """
+    Calculate sampling parameters (sample_method and sample_percent) based on total
+    rows.
+
+    Previously, we used to get all primary keys in a sorted order and then compute
+    the block ranges (or offsets) for the table. However, this method turned out
+    to be very expensive. Therefore, we now use the tablesample method to sample the
+    primary keys and then compute the block ranges.
+
+    However, even with sampling, we need to carefully choose the sample method and
+    percent to ensure that the block ranges are computed correctly, i.e., the
+    sampled offsets are somewhat uniformly distributed across the keyspace of the
+    table. The bernoulli method is a good choice for tables with a small number of
+    rows, while the system method is good for other cases.
+    """
+
+    sample_method = "BERNOULLI"
+    sample_percent = 100
+
+    if row_count <= 10**4:
+        return sample_method, sample_percent
+
+    if row_count <= 10**5:
+        sample_percent = 10
+    elif row_count <= 10**6:
+        sample_percent = 1
+    elif row_count <= 10**8:
+        sample_method = "SYSTEM"
+        sample_percent = 0.1
+    else:
+        sample_method = "SYSTEM"
+        sample_percent = 0.01
+
+    return sample_method, sample_percent
+
+
 def check_user_privileges(conn, username, schema, table, required_privileges=[]):
     """
     In most cases, the ace user provisioned in production will have limited access

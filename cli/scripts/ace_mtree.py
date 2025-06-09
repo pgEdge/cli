@@ -487,24 +487,9 @@ def build_mtree(mtree_task: MerkleTreeTask) -> None:
         )
         print(msg)
 
-        # Calculate sample size based on total rows
-        # Tablesample may be an efficient workaround for getting the block ranges,
-        # but it is still very expensive for large tables.
-        # So, here's what we'll do:
-        # If total rows > 1B, we'll sample 0.01% of the rows
-        # If total rows > 100M, we'll sample 0.1% of the rows
-        # Otherwise, we'll sample 1% of the rows
-        sample_percent = (
-            0.01
-            if total_rows > 500_000_000
-            else 0.1 if total_rows > 50_000_000 else 1.0
-        )
+        sample_method, sample_percent = ace.compute_sampling_parameters(total_rows)
 
-        table_sample_method = (
-            "BERNOULLI" if total_rows < BERNOULLI_THRESHOLD else "SYSTEM"
-        )
-
-        print(f"Using {table_sample_method} with sample percent {sample_percent}")
+        print(f"Using {sample_method} with sample percent {sample_percent}")
 
         _, conn = mtree_task.connection_pool.get_cluster_node_connection(ref_node)
 
@@ -512,7 +497,7 @@ def build_mtree(mtree_task: MerkleTreeTask) -> None:
             schema=schema,
             table=table,
             key_columns=key.split(","),
-            table_sample_method=table_sample_method,
+            table_sample_method=sample_method,
             sample_percent=sample_percent,
             ntile_count=max_blocks,
         )
@@ -832,7 +817,7 @@ def split_blocks(conn, schema, table, key, blocks, block_size):
 
         count = cur.fetchone()[0]
 
-        if count > target_size * 2:
+        if count >= target_size * 2:
             # Find the split point at the midpoint of the block
             if is_composite:
                 pkey_cols = sql.SQL(", ").join(
@@ -2068,44 +2053,34 @@ def compare_ranges(worker_id, shared_objects, worker_state, work_item):
 
     else:
         # Multiple batches - use IN or BETWEEN for better performance
+        or_clauses = []
         if simple_primary_key:
-            # For simple keys, we can use a more efficient approach
-            # with a single query. Find the min and max values across all batches
-            min_key = min(
-                b[0][0] if b[0] is not None else None for b in batch if b[0] is not None
-            )
-            max_key = max(
-                b[1][0] if b[1] is not None else None for b in batch if b[1] is not None
-            )
-
-            where_clause_parts = []
-            if min_key is not None:
-                where_clause_parts.append(
-                    sql.SQL("{p_key} >= {min_key}").format(
-                        p_key=sql.Identifier(p_key), min_key=sql.Literal(min_key)
-                    )
-                )
-            if max_key is not None:
-                where_clause_parts.append(
-                    sql.SQL("{p_key} <= {max_key}").format(
-                        p_key=sql.Identifier(p_key), max_key=sql.Literal(max_key)
-                    )
-                )
-
-            where_clause = (
-                sql.SQL(" AND ").join(where_clause_parts)
-                if where_clause_parts
-                else sql.SQL("TRUE")
-            )
-        else:
-            # For composite keys, we need to handle each batch separately
-            # But we can still combine them with OR for a single query
-            or_clauses = []
-
             for pkey1, pkey2 in batch:
                 and_clauses = []
 
-                if pkey1 is not None:
+                if pkey1 and pkey1[0] is not None:
+                    and_clauses.append(
+                        sql.SQL("{p_key} >= {pkey1}").format(
+                            p_key=sql.Identifier(p_key), pkey1=sql.Literal(pkey1[0])
+                        )
+                    )
+                if pkey2 and pkey2[0] is not None:
+                    and_clauses.append(
+                        sql.SQL("{p_key} <= {pkey2}").format(
+                            p_key=sql.Identifier(p_key), pkey2=sql.Literal(pkey2[0])
+                        )
+                    )
+                if and_clauses:
+                    or_clauses.append(
+                        sql.SQL("(") + sql.SQL(" AND ").join(and_clauses) + sql.SQL(")")
+                    )
+        else:
+            # For composite keys, we need to handle each batch separately
+            # But we can still combine them with OR for a single query
+            for pkey1, pkey2 in batch:
+                and_clauses = []
+
+                if pkey1 and pkey1[0] is not None:
                     and_clauses.append(
                         sql.SQL("({p_key}) >= ({pkey1})").format(
                             p_key=sql.SQL(", ").join(
@@ -2115,12 +2090,12 @@ def compare_ranges(worker_id, shared_objects, worker_state, work_item):
                                 ]
                             ),
                             pkey1=sql.SQL(", ").join(
-                                [sql.Literal(val) for val in pkey1]
+                                [sql.Literal(val) for val in pkey1[0]]
                             ),
                         )
                     )
 
-                if pkey2 is not None:
+                if pkey2 and pkey2[0] is not None:
                     and_clauses.append(
                         sql.SQL("({p_key}) <= ({pkey2})").format(
                             p_key=sql.SQL(", ").join(
@@ -2130,7 +2105,7 @@ def compare_ranges(worker_id, shared_objects, worker_state, work_item):
                                 ]
                             ),
                             pkey2=sql.SQL(", ").join(
-                                [sql.Literal(val) for val in pkey2]
+                                [sql.Literal(val) for val in pkey2[0]]
                             ),
                         )
                     )
@@ -2140,9 +2115,9 @@ def compare_ranges(worker_id, shared_objects, worker_state, work_item):
                         sql.SQL("(") + sql.SQL(" AND ").join(and_clauses) + sql.SQL(")")
                     )
 
-            where_clause = (
-                sql.SQL(" OR ").join(or_clauses) if or_clauses else sql.SQL("TRUE")
-            )
+        where_clause = (
+            sql.SQL(" OR ").join(or_clauses) if or_clauses else sql.SQL("TRUE")
+        )
 
     block_sql = sql.SQL(COMPARE_BLOCKS_SQL).format(
         table_name=sql.SQL("{}.{}").format(

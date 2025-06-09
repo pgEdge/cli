@@ -35,6 +35,7 @@ def merkle_tree_cli(
     nodes="all",
     output="json",
     quiet_mode=False,
+    override_block_size=False,
 ):
     task_id = ace_db.generate_task_id()
 
@@ -63,9 +64,15 @@ def merkle_tree_cli(
         mtree_task.scheduler.started_at = datetime.now()
 
         if ((mode == "teardown") and (not table_name)) or (mode == "init"):
-            ace.validate_merkle_tree_inputs(mtree_task, skip_table_check=True)
+            ace.validate_merkle_tree_inputs(
+                mtree_task,
+                skip_table_check=True,
+                override_block_size=override_block_size,
+            )
         else:
-            ace.validate_merkle_tree_inputs(mtree_task)
+            ace.validate_merkle_tree_inputs(
+                mtree_task, override_block_size=override_block_size
+            )
 
         ace_db.create_ace_task(task=mtree_task)
 

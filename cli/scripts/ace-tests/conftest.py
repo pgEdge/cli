@@ -348,61 +348,42 @@ def pytest_configure(config):
 
 def pytest_collection_modifyitems(items):
     """
-    Skip parent class tests when running child class tests,
-    but run parent tests directly
+    Skips tests from TestSimpleBase as they should not be run directly.
     """
-
-    test_classes = {}
     for item in items:
-        if item.cls:
-            class_name = item.cls.__name__
-            if class_name not in test_classes:
-                test_classes[class_name] = []
-            test_classes[class_name].append(item)
-
-    running_child_of_merkle_simple = any(
-        cls_name != "TestMerkleTreesSimple"
-        and any(
-            item.cls and issubclass(item.cls, TestMerkleTreesSimple)
-            for item in items_list
-        )
-        for cls_name, items_list in test_classes.items()
-    )
-
-    running_child_of_simple = any(
-        cls_name != "TestSimple"
-        and any(item.cls and issubclass(item.cls, TestSimple) for item in items_list)
-        for cls_name, items_list in test_classes.items()
-    )
-
-    for item in items:
-        # Always skip tests from TestSimpleBase
         if (
             item.cls
             and issubclass(item.cls, TestSimpleBase)
             and item.function.__qualname__.startswith("TestSimpleBase.")
         ):
-            item.add_marker(pytest.mark.skip(reason="TestSimpleBase tests never run"))
-            continue
-
-        if item.get_closest_marker("abstract_base"):
-            simple_prefix = "TestMerkleTreesSimple."
-            is_merkle_simple_test = (
-                item.cls
-                and issubclass(item.cls, TestMerkleTreesSimple)
-                and item.function.__qualname__.startswith(simple_prefix)
-            )
-            is_simple_test = (
-                item.cls
-                and issubclass(item.cls, TestSimple)
-                and item.function.__qualname__.startswith("TestSimple.")
-            )
-
-            if (is_merkle_simple_test and running_child_of_merkle_simple) or (
-                is_simple_test and running_child_of_simple
-            ):
-                item.add_marker(
-                    pytest.mark.skip(
-                        reason="Skipping parent class tests"
-                    )
+            item.add_marker(
+                pytest.mark.skip(
+                    reason="TestSimpleBase tests are not meant to be run directly"
                 )
+            )
+
+
+def pytest_runtest_setup(item):
+    """
+    Skip parent class tests if a child class test is also in the run.
+    """
+    if not item.get_closest_marker("abstract_base"):
+        return
+
+    if item.cls is TestMerkleTreesSimple:
+        is_child_running = any(
+            i.cls
+            and issubclass(i.cls, TestMerkleTreesSimple)
+            and i.cls is not TestMerkleTreesSimple
+            for i in item.session.items
+        )
+        if is_child_running:
+            pytest.skip("Skipping parent class")
+
+    if item.cls is TestSimple:
+        is_child_running = any(
+            i.cls and issubclass(i.cls, TestSimple) and i.cls is not TestSimple
+            for i in item.session.items
+        )
+        if is_child_running:
+            pytest.skip("Skipping parent class")

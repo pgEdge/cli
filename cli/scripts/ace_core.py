@@ -679,19 +679,8 @@ def table_diff(td_task: TableDiffTask, skip_all_checks: bool = False):
     # If we don't have enough blocks to keep all CPUs busy, use fewer processes
     procs = max_procs if total_blocks > max_procs else total_blocks
 
-    sample_method = "BERNOULLI"
-
     if (row_count > 10**4) and (not td_task.table_filter):
-        if row_count <= 10**5:
-            sample_percent = 10
-        elif row_count <= 10**6:
-            sample_percent = 1
-        elif row_count <= 10**8:
-            sample_method = "SYSTEM"
-            sample_percent = 0.1
-        else:
-            sample_method = "SYSTEM"
-            sample_percent = 0.01
+        sample_method, sample_percent = ace.compute_sampling_parameters(row_count)
 
         print(f"Using {sample_method} sampling with {sample_percent}% of rows")
 
