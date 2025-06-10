@@ -84,6 +84,7 @@ class TestMerkleTreesComposite(TestMerkleTreesSimple):
         """Test block boundaries"""
 
         l_schema, l_table = table.split(".")
+        mtree_table = f"ace_mtree_{l_schema}_{l_table}"
 
         conn = psycopg.connect(host="n2", dbname="demo", user="admin")
         info = CompositeInfo.fetch(conn, f"{l_schema}_{l_table}_key_type")
@@ -96,12 +97,13 @@ class TestMerkleTreesComposite(TestMerkleTreesSimple):
             sql.SQL(
                 """
                 SELECT range_start, range_end
-                FROM {mtree_table}
+                FROM {schema}.{mtree_table}
                 where node_level = 0
                 order by node_position
                 """
             ).format(
-                mtree_table=sql.Identifier(f"ace_mtree_{l_schema}_{l_table}"),
+                mtree_table=sql.Identifier(mtree_table),
+                schema=sql.Identifier(l_schema),
             )
         )
 
@@ -168,6 +170,7 @@ class TestMerkleTreesComposite(TestMerkleTreesSimple):
         """
 
         l_schema, l_table = table.split(".")
+        mtree_table = f"ace_mtree_{l_schema}_{l_table}"
 
         # We'll first delete keys en masse. Then get the new ranges, and finally
         # insert records to trigger the split.
@@ -209,7 +212,7 @@ class TestMerkleTreesComposite(TestMerkleTreesSimple):
                 limit 1
                 """
             ).format(
-                mtree_table=sql.Identifier(f"ace_mtree_{l_schema}_{l_table}"),
+                mtree_table=sql.Identifier(mtree_table),
             )
         )
 
@@ -234,13 +237,14 @@ class TestMerkleTreesComposite(TestMerkleTreesSimple):
             sql.SQL(
                 """
                 SELECT range_end
-                FROM {mtree_table}
+                FROM {schema}.{mtree_table}
                 where node_level = 0
                 order by node_position
                 limit 1
                 """
             ).format(
-                mtree_table=sql.Identifier(f"ace_mtree_{l_schema}_{l_table}"),
+                schema=sql.Identifier(l_schema),
+                mtree_table=sql.Identifier(mtree_table),
             )
         )
 
@@ -265,6 +269,7 @@ class TestMerkleTreesComposite(TestMerkleTreesSimple):
         """Test merges"""
 
         l_schema, l_table = table.split(".")
+        mtree_table = f"ace_mtree_{l_schema}_{l_table}"
 
         conn = psycopg.connect(host="n2", dbname="demo", user="admin")
         info = CompositeInfo.fetch(conn, f"{l_schema}_{l_table}_key_type")
@@ -300,7 +305,7 @@ class TestMerkleTreesComposite(TestMerkleTreesSimple):
                 WITH block_data AS
                 (
                     SELECT node_position, range_start, range_end
-                    FROM {mtree_table}
+                    FROM {schema}.{mtree_table}
                     WHERE node_level = 0
                 )
                 SELECT
@@ -318,7 +323,7 @@ class TestMerkleTreesComposite(TestMerkleTreesSimple):
             ).format(
                 schema=sql.Identifier(l_schema),
                 table=sql.Identifier(l_table),
-                mtree_table=sql.Identifier(f"ace_mtree_{l_schema}_{l_table}"),
+                mtree_table=sql.Identifier(mtree_table),
                 pkey_cols=sql.SQL(",").join(
                     [sql.Identifier(col) for col in ["index", "customer_id"]]
                 ),

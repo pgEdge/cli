@@ -2,6 +2,7 @@ import logging
 import random
 import pytest
 import psycopg
+from psycopg import sql
 import re
 import json
 
@@ -130,7 +131,7 @@ class TestBlockBoundaries:
             rand_boundaries = list(
                 set(
                     [
-                        block_size * random.randint(1, multiplier)
+                        block_size * random.randint(1, multiplier)  # nosec: B311
                         for _ in range(1, multiplier + 1)
                     ]
                 )
@@ -156,11 +157,17 @@ class TestBlockBoundaries:
 
             for boundary in block_boundaries:
                 cur.execute(
-                    f"""
-                    UPDATE {table}
-                    SET first_name = 'Modified'
-                    WHERE index = {boundary}
-                    """
+                    sql.SQL(
+                        """
+                        UPDATE {schema}.{table}
+                        SET first_name = 'Modified'
+                        WHERE index = {boundary}
+                        """
+                    ).format(
+                        schema=sql.Identifier("public"),
+                        table=sql.Identifier(table),
+                        boundary=boundary,
+                    )
                 )
 
             conn.commit()
