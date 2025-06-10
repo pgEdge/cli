@@ -104,7 +104,7 @@ class TestMerkleTreesComposite(TestMerkleTreesSimple):
         ORDER BY node_position
         """
 
-        # Let's first read the ranges and then pick a random set.
+        # nosemgrep
         cur.execute(
             sql.SQL(select_sql).format(
                 mtree_table=sql.Identifier(mtree_table),

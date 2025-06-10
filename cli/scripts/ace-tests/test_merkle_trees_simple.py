@@ -199,6 +199,7 @@ class TestMerkleTreesSimple(abc.ABC):
         (SELECT index from {schema}.{table} order by random() limit %s)
         """
 
+        # nosemgrep
         cur.execute(
             sql.SQL(update_sql).format(
                 schema=sql.Identifier(l_schema),
