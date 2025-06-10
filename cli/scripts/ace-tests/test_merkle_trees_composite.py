@@ -130,6 +130,7 @@ class TestMerkleTreesComposite(TestMerkleTreesSimple):
 
         cur.execute("SELECT spock.repair_mode(true)")
         for range in ranges_to_modify:
+            # nosemgrep
             cur.execute(
                 sql.SQL(
                     """
@@ -185,6 +186,7 @@ class TestMerkleTreesComposite(TestMerkleTreesSimple):
         cur = conn.cursor()
 
         cur.execute(sql.SQL("SELECT spock.repair_mode(true)"))
+        # nosemgrep
         cur.execute(
             sql.SQL("DELETE FROM {schema}.{table} WHERE index <= 4000").format(
                 schema=sql.Identifier(l_schema), table=sql.Identifier(l_table)
@@ -207,6 +209,7 @@ class TestMerkleTreesComposite(TestMerkleTreesSimple):
 
         # check if the merge from the rebalance has happened
 
+        # nosemgrep
         cur.execute(
             sql.SQL(
                 """
@@ -239,6 +242,7 @@ class TestMerkleTreesComposite(TestMerkleTreesSimple):
         assert "successfully updated" in clean_output.lower()
 
         # check if the split has happened
+        # nosemgrep
         cur.execute(
             sql.SQL(
                 """
@@ -284,6 +288,7 @@ class TestMerkleTreesComposite(TestMerkleTreesSimple):
         cur.execute(sql.SQL("SELECT spock.repair_mode(true)"))
 
         # delete 100k-200k and >=900k
+        # nosemgrep
         cur.execute(
             sql.SQL(
                 """
@@ -305,6 +310,7 @@ class TestMerkleTreesComposite(TestMerkleTreesSimple):
 
         diff_file = diff_file.group(1)
 
+        # nosemgrep
         cur.execute(
             sql.SQL(
                 """
@@ -354,6 +360,7 @@ class TestMerkleTreesComposite(TestMerkleTreesSimple):
         # Ideally, random ranges should be used here, but the sampling might
         # unnecessarily add complexity (uniform sampling within a skewed distribution).
         # So, we'll just use hardcoded ranges for now.
+        # nosemgrep
         cur.execute(
             sql.SQL(
                 """
@@ -395,6 +402,7 @@ class TestMerkleTreesComposite(TestMerkleTreesSimple):
         cur = conn.cursor()
         cur.execute("SELECT spock.repair_mode(true)")
 
+        # nosemgrep
         cur.execute(
             sql.SQL(
                 """
@@ -493,6 +501,7 @@ class TestMerkleTreesComposite(TestMerkleTreesSimple):
             cur = conn.cursor()
             cur.execute("SELECT spock.repair_mode(true)")
 
+            # nosemgrep
             cur.execute(
                 sql.SQL(
                     """
@@ -506,6 +515,7 @@ class TestMerkleTreesComposite(TestMerkleTreesSimple):
             rows_to_update = cur.fetchall()
 
             for sub_time, email in rows_to_update:
+                # nosemgrep
                 cur.execute(
                     sql.SQL(
                         "UPDATE public.datatype_test "
@@ -614,6 +624,7 @@ class TestMerkleTreesComposite(TestMerkleTreesSimple):
             cur.execute("SELECT spock.repair_mode(true)")
             new_max_uuid = "f" * 32
             new_email = "zzzz@zzzz.com"
+            # nosemgrep
             cur.execute(
                 sql.SQL(
                     """

@@ -56,6 +56,7 @@ class TestMerkleTreesSimple(abc.ABC):
                 )
             )
 
+        # nosemgrep
         cur.executemany(
             sql.SQL(
                 """
@@ -244,7 +245,7 @@ class TestMerkleTreesSimple(abc.ABC):
         conn = psycopg.connect(host="n2", dbname="demo", user="admin")
         cur = conn.cursor()
 
-        # Let's first read the ranges and then pick a random set.
+        # nosemgrep
         cur.execute(
             sql.SQL(
                 """
@@ -277,6 +278,7 @@ class TestMerkleTreesSimple(abc.ABC):
 
         cur.execute("SELECT spock.repair_mode(true)")
         for range in ranges_to_modify:
+            # nosemgrep
             cur.execute(
                 sql.SQL(
                     """
@@ -328,6 +330,7 @@ class TestMerkleTreesSimple(abc.ABC):
         cur = conn.cursor()
 
         cur.execute(sql.SQL("SELECT spock.repair_mode(true)"))
+        # nosemgrep
         cur.execute(
             sql.SQL("DELETE FROM {schema}.{table} WHERE index <= 4000").format(
                 schema=sql.Identifier(l_schema), table=sql.Identifier(l_table)
@@ -353,8 +356,7 @@ class TestMerkleTreesSimple(abc.ABC):
         conn = psycopg.connect(host="n2", dbname="demo", user="admin")
         cur = conn.cursor()
 
-        # check if the merge from the rebalance has happened
-
+        # nosemgrep
         cur.execute(
             sql.SQL(
                 """
@@ -386,6 +388,7 @@ class TestMerkleTreesSimple(abc.ABC):
         assert "successfully updated" in clean_output.lower()
 
         # check if the split has happened
+        # nosemgrep
         cur.execute(
             sql.SQL(
                 """
@@ -425,6 +428,7 @@ class TestMerkleTreesSimple(abc.ABC):
         cur.execute(sql.SQL("SELECT spock.repair_mode(true)"))
 
         # delete 100k-200k and >=900k
+        # nosemgrep
         cur.execute(
             sql.SQL(
                 """
@@ -450,6 +454,7 @@ class TestMerkleTreesSimple(abc.ABC):
         conn = psycopg.connect(host="n2", dbname="demo", user="admin")
         cur = conn.cursor()
 
+        # nosemgrep
         cur.execute(
             sql.SQL(
                 """
@@ -486,6 +491,7 @@ class TestMerkleTreesSimple(abc.ABC):
         cur.execute("SELECT spock.repair_mode(true)")
 
         ids_to_delete = [10, 5000, 9900]
+        # nosemgrep
         cur.execute(
             sql.SQL(
                 """
@@ -529,6 +535,7 @@ class TestMerkleTreesSimple(abc.ABC):
         cur.execute("SELECT spock.repair_mode(true)")
 
         ids_to_update = [20, 6000, 9800]
+        # nosemgrep
         cur.execute(
             sql.SQL(
                 """
@@ -622,6 +629,7 @@ class TestMerkleTreesSimple(abc.ABC):
             cur.execute("SELECT spock.repair_mode(true)")
             fake = Faker()
             new_max_uuid = "f" * 32
+            # nosemgrep
             cur.execute(
                 sql.SQL("INSERT INTO public.uuid_test (id, data) VALUES (%s, %s)"),
                 (new_max_uuid, "new max value"),
