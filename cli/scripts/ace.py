@@ -2437,8 +2437,6 @@ def handle_task_exception(task, task_context):
                 }
                 _, conn = task.connection_pool.get_cluster_node_connection(
                     node_info,
-                    task.cluster_name,
-                    invoke_method=task.invoke_method,
                     client_role=(
                         task.client_role
                         if config.USE_CERT_AUTH and task.invoke_method == "api"
