@@ -95,12 +95,9 @@ class TestMerkleTreesComposite(TestMerkleTreesSimple):
         # Let's first read the ranges and then pick a random set.
         cur.execute(
             sql.SQL(
-                """
-                SELECT range_start, range_end
-                FROM {schema}.{mtree_table}
-                where node_level = 0
-                order by node_position
-                """
+                "SELECT range_start, range_end"
+                " FROM {schema}.{mtree_table} WHERE node_level = 0"
+                " ORDER BY node_position"
             ).format(
                 mtree_table=sql.Identifier(mtree_table),
                 schema=sql.Identifier(l_schema),
@@ -630,7 +627,7 @@ class TestMerkleTreesComposite(TestMerkleTreesSimple):
             cli.merkle_tree_cli("diff", cluster_name, table_name=table_name)
             captured = capsys.readouterr()
             clean_output = re.sub(
-                r"\\x1B(?:[@-Z\\-_]|\\[[0-?]*[ -/]*[@-~])", "", captured.out
+                r"\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])", "", captured.out
             )
             assert "found 1 diffs" in clean_output.lower()
 
