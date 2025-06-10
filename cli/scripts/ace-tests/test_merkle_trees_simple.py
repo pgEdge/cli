@@ -248,12 +248,14 @@ class TestMerkleTreesSimple(abc.ABC):
         # Let's first read the ranges and then pick a random set.
         cur.execute(
             sql.SQL(
-                f"""
+                """
                 SELECT range_start, range_end
-                FROM ace_mtree_{l_schema}_{l_table}
+                FROM {mtree_table}
                 where node_level = 0
                 order by node_position
                 """
+            ).format(
+                mtree_table=sql.Identifier(f"ace_mtree_{l_schema}_{l_table}"),
             )
         )
 
@@ -262,7 +264,10 @@ class TestMerkleTreesSimple(abc.ABC):
 
         ranges_to_modify = (
             [ranges[0][0]]
-            + [random.choice(r) for r in random.sample(ranges, int(0.5 * len(ranges)))]
+            + [
+                random.choice(r)  # nosec: B311
+                for r in random.sample(ranges, k=int(0.5 * len(ranges)))  # nosec: B311
+            ]
             + [ranges[-1][0]]
         )
 
@@ -275,11 +280,14 @@ class TestMerkleTreesSimple(abc.ABC):
         for range in ranges_to_modify:
             cur.execute(
                 sql.SQL(
-                    f"""
-                UPDATE {table}
-                SET first_name = 'Modified'
-                WHERE index = {range}
-                """
+                    """
+                    UPDATE {table}
+                    SET first_name = 'Modified'
+                    WHERE index = {range}
+                    """
+                ).format(
+                    table=sql.Identifier(l_table),
+                    range=sql.SQL(str(range)),
                 )
             )
 
@@ -350,13 +358,15 @@ class TestMerkleTreesSimple(abc.ABC):
 
         cur.execute(
             sql.SQL(
-                f"""
-            SELECT range_end
-            FROM ace_mtree_{l_schema}_{l_table}
-            where node_level = 0
-            order by node_position
-            limit 1
-            """
+                """
+                SELECT range_end
+                FROM {mtree_table}
+                where node_level = 0
+                order by node_position
+                limit 1
+                """
+            ).format(
+                mtree_table=sql.Identifier(f"ace_mtree_{l_schema}_{l_table}"),
             )
         )
 
@@ -379,13 +389,15 @@ class TestMerkleTreesSimple(abc.ABC):
         # check if the split has happened
         cur.execute(
             sql.SQL(
-                f"""
-            SELECT range_end
-            FROM ace_mtree_{l_schema}_{l_table}
-            where node_level = 0
-            order by node_position
-            limit 1
-            """
+                """
+                SELECT range_end
+                FROM {mtree_table}
+                where node_level = 0
+                order by node_position
+                limit 1
+                """
+            ).format(
+                mtree_table=sql.Identifier(f"ace_mtree_{l_schema}_{l_table}"),
             )
         )
 
@@ -442,14 +454,14 @@ class TestMerkleTreesSimple(abc.ABC):
         cur.execute(
             sql.SQL(
                 """
-            SELECT count(t.index)
-            FROM {mtree_table} mt
-            LEFT JOIN {schema}.{table} t
-            ON t.index >= mt.range_start
-            AND (t.index <= mt.range_end OR mt.range_end IS NULL)
-            WHERE mt.node_level = 0
-            GROUP BY mt.range_start, mt.range_end
-            """
+                SELECT count(t.index)
+                FROM {mtree_table} mt
+                LEFT JOIN {schema}.{table} t
+                ON t.index >= mt.range_start
+                AND (t.index <= mt.range_end OR mt.range_end IS NULL)
+                WHERE mt.node_level = 0
+                GROUP BY mt.range_start, mt.range_end
+                """
             ).format(
                 schema=sql.Identifier(l_schema),
                 table=sql.Identifier(l_table),
@@ -571,11 +583,13 @@ class TestMerkleTreesSimple(abc.ABC):
                         id UUID PRIMARY KEY,
                         data TEXT
                     );
-                """
+                    """
                 )
                 cur.execute(
-                    "SELECT spock.repset_add_table('test_repset', "
-                    "'public.uuid_test')"
+                    sql.SQL(
+                        "SELECT spock.repset_add_table('test_repset', "
+                        "'public.uuid_test')"
+                    )
                 )
                 conn.commit()
 
@@ -583,7 +597,12 @@ class TestMerkleTreesSimple(abc.ABC):
                     fake = Faker()
                     for _ in range(10):
                         cur.execute(
-                            "INSERT INTO public.uuid_test (id, data) VALUES (%s, %s)",
+                            sql.SQL(
+                                """
+                                INSERT INTO public.uuid_test (id, data)
+                                VALUES (%s, %s)
+                                """
+                            ),
                             (fake.uuid4(), fake.word()),
                         )
                     conn.commit()
@@ -605,7 +624,7 @@ class TestMerkleTreesSimple(abc.ABC):
             fake = Faker()
             new_max_uuid = "f" * 32
             cur.execute(
-                "INSERT INTO public.uuid_test (id, data) VALUES (%s, %s)",
+                sql.SQL("INSERT INTO public.uuid_test (id, data) VALUES (%s, %s)"),
                 (new_max_uuid, "new max value"),
             )
             conn.commit()
@@ -624,7 +643,7 @@ class TestMerkleTreesSimple(abc.ABC):
                 try:
                     conn = psycopg.connect(host=node, dbname="demo", user="admin")
                     cur = conn.cursor()
-                    cur.execute("DROP TABLE public.uuid_test CASCADE")
+                    cur.execute(sql.SQL("DROP TABLE public.uuid_test CASCADE"))
                     conn.commit()
                     cur.close()
                     conn.close()

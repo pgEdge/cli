@@ -94,12 +94,14 @@ class TestMerkleTreesComposite(TestMerkleTreesSimple):
         # Let's first read the ranges and then pick a random set.
         cur.execute(
             sql.SQL(
-                f"""
+                """
                 SELECT range_start, range_end
-                FROM ace_mtree_{l_schema}_{l_table}
+                FROM {mtree_table}
                 where node_level = 0
                 order by node_position
                 """
+            ).format(
+                mtree_table=sql.Identifier(f"ace_mtree_{l_schema}_{l_table}"),
             )
         )
 
@@ -108,8 +110,8 @@ class TestMerkleTreesComposite(TestMerkleTreesSimple):
         ranges_to_modify = (
             [ranges[0][0][0]]
             + [
-                random.choice(r)[0]
-                for r in random.sample(ranges, int(0.5 * len(ranges)))
+                random.choice(r)[0]  # nosec: B311
+                for r in random.sample(ranges, k=int(0.5 * len(ranges)))  # nosec: B311
             ]
             + [ranges[-1][1][0]]
         )
@@ -123,11 +125,15 @@ class TestMerkleTreesComposite(TestMerkleTreesSimple):
         for range in ranges_to_modify:
             cur.execute(
                 sql.SQL(
-                    f"""
-                UPDATE {table}
-                SET first_name = 'Modified'
-                WHERE index = {range}
-                """
+                    """
+                    UPDATE {schema}.{table}
+                    SET first_name = 'Modified'
+                    WHERE index = {range}
+                    """
+                ).format(
+                    schema=sql.Identifier(l_schema),
+                    table=sql.Identifier(l_table),
+                    range=range,
                 )
             )
 
@@ -195,13 +201,15 @@ class TestMerkleTreesComposite(TestMerkleTreesSimple):
 
         cur.execute(
             sql.SQL(
-                f"""
-            SELECT range_end
-            FROM ace_mtree_{l_schema}_{l_table}
-            where node_level = 0
-            order by node_position
-            limit 1
-            """
+                """
+                SELECT range_end
+                FROM {mtree_table}
+                where node_level = 0
+                order by node_position
+                limit 1
+                """
+            ).format(
+                mtree_table=sql.Identifier(f"ace_mtree_{l_schema}_{l_table}"),
             )
         )
 
@@ -224,13 +232,15 @@ class TestMerkleTreesComposite(TestMerkleTreesSimple):
         # check if the split has happened
         cur.execute(
             sql.SQL(
-                f"""
-            SELECT range_end
-            FROM ace_mtree_{l_schema}_{l_table}
-            where node_level = 0
-            order by node_position
-            limit 1
-            """
+                """
+                SELECT range_end
+                FROM {mtree_table}
+                where node_level = 0
+                order by node_position
+                limit 1
+                """
+            ).format(
+                mtree_table=sql.Identifier(f"ace_mtree_{l_schema}_{l_table}"),
             )
         )
 
@@ -424,27 +434,36 @@ class TestMerkleTreesComposite(TestMerkleTreesSimple):
                 conn = psycopg.connect(host=node, dbname="demo", user="admin")
                 cur = conn.cursor()
                 cur.execute(
-                    f"""
-                    CREATE TABLE IF NOT EXISTS {table_name} (
-                        sub_time TIMESTAMP,
-                        email TEXT,
-                        data TEXT,
-                        PRIMARY KEY (sub_time, email)
-                    );
-                """
+                    sql.SQL(
+                        """
+                        CREATE TABLE IF NOT EXISTS public.datatype_test (
+                            sub_time TIMESTAMP,
+                            email TEXT,
+                            data TEXT,
+                            PRIMARY KEY (sub_time, email)
+                        );
+                        """
+                    )
                 )
 
                 cur.executemany(
-                    f"""
-                    INSERT INTO {table_name} (sub_time, email, data)
-                    VALUES (%s, %s, %s)
+                    sql.SQL(
+                        """
+                        INSERT INTO public.datatype_test (sub_time, email, data)
+                        VALUES (%s, %s, %s)
                         ON CONFLICT (sub_time, email) DO NOTHING
-                    """,
+                        """
+                    ),
                     insert_data,
                 )
 
                 cur.execute(
-                    f"SELECT spock.repset_add_table('test_repset', '{table_name}')"
+                    sql.SQL(
+                        """
+                        SELECT
+                        spock.repset_add_table('test_repset', 'public.datatype_test')
+                        """
+                    )
                 )
 
                 conn.commit()
@@ -464,15 +483,24 @@ class TestMerkleTreesComposite(TestMerkleTreesSimple):
             cur.execute("SELECT spock.repair_mode(true)")
 
             cur.execute(
-                f"SELECT sub_time, email FROM {table_name} ORDER BY random() LIMIT 5"
+                sql.SQL(
+                    """
+                    SELECT sub_time, email
+                    FROM public.datatype_test
+                    ORDER BY random()
+                    LIMIT 5
+                    """
+                )
             )
             rows_to_update = cur.fetchall()
 
             for sub_time, email in rows_to_update:
                 cur.execute(
-                    f"UPDATE {table_name} "
-                    "SET data = 'DataTypeTest' "
-                    "WHERE sub_time = %s AND email = %s",
+                    sql.SQL(
+                        "UPDATE public.datatype_test "
+                        "SET data = 'DataTypeTest' "
+                        "WHERE sub_time = %s AND email = %s"
+                    ),
                     (sub_time, email),
                 )
             conn.commit()
@@ -501,7 +529,9 @@ class TestMerkleTreesComposite(TestMerkleTreesSimple):
                 try:
                     conn = psycopg.connect(host=node, dbname="demo", user="admin")
                     cur = conn.cursor()
-                    cur.execute(f"DROP TABLE IF EXISTS {table_name} CASCADE")
+                    cur.execute(
+                        sql.SQL("DROP TABLE IF EXISTS public.datatype_test CASCADE")
+                    )
                     conn.commit()
                     cur.close()
                     conn.close()
@@ -523,25 +553,37 @@ class TestMerkleTreesComposite(TestMerkleTreesSimple):
                 conn = psycopg.connect(host=node, dbname="demo", user="admin")
                 cur = conn.cursor()
                 cur.execute(
-                    f"""
-                    CREATE TABLE IF NOT EXISTS {table_name} (
-                        id UUID,
-                        email TEXT,
-                        data TEXT,
-                        PRIMARY KEY (id, email)
-                    );
-                """
+                    sql.SQL(
+                        """
+                        CREATE TABLE IF NOT EXISTS public.uuid_composite_test (
+                            id UUID,
+                            email TEXT,
+                            data TEXT,
+                            PRIMARY KEY (id, email)
+                        );
+                        """
+                    )
                 )
                 cur.execute(
-                    f"SELECT spock.repset_add_table('test_repset', '{table_name}')"
+                    sql.SQL(
+                        """
+                        SELECT
+                            spock.repset_add_table(
+                                'test_repset',
+                                'public.uuid_composite_test'
+                            )
+                        """
+                    )
                 )
 
                 cur.executemany(
-                    f"""
-                    INSERT INTO {table_name} (id, email, data)
-                    VALUES (%s, %s, %s)
+                    sql.SQL(
+                        """
+                        INSERT INTO public.uuid_composite_test (id, email, data)
+                        VALUES (%s, %s, %s)
                         ON CONFLICT (id, email) DO NOTHING
-                    """,
+                        """
+                    ),
                     insert_data,
                 )
                 conn.commit()
@@ -562,7 +604,12 @@ class TestMerkleTreesComposite(TestMerkleTreesSimple):
             new_max_uuid = "f" * 32
             new_email = "zzzz@zzzz.com"
             cur.execute(
-                f"INSERT INTO {table_name} (id, email, data) VALUES (%s, %s, %s)",
+                sql.SQL(
+                    """
+                    INSERT INTO public.uuid_composite_test (id, email, data)
+                    VALUES (%s, %s, %s)
+                    """
+                ),
                 (new_max_uuid, new_email, "new max value"),
             )
             conn.commit()
@@ -587,7 +634,11 @@ class TestMerkleTreesComposite(TestMerkleTreesSimple):
                 try:
                     conn = psycopg.connect(host=node, dbname="demo", user="admin")
                     cur = conn.cursor()
-                    cur.execute(f"DROP TABLE IF EXISTS {table_name} CASCADE")
+                    cur.execute(
+                        sql.SQL(
+                            "DROP TABLE IF EXISTS public.uuid_composite_test CASCADE"
+                        )
+                    )
                     conn.commit()
                     cur.close()
                     conn.close()
