@@ -192,17 +192,19 @@ class TestMerkleTreesSimple(abc.ABC):
         cur = conn.cursor()
         cur.execute("SELECT spock.repair_mode(true)")
 
+        update_sql = """
+        UPDATE {schema}.{table}
+        SET first_name = 'Modified'
+        WHERE index in
+        (SELECT index from {table} order by random() limit {diff_count})
+        """
+
         cur.execute(
-            sql.SQL(
-                "UPDATE {schema}.{table}"
-                " SET first_name = 'Modified'"
-                " WHERE index in"
-                " (SELECT index from {table} order by random() limit {diff_count})"
+            sql.SQL(update_sql).format(
+                schema=sql.Identifier(l_schema),
+                table=sql.Identifier(l_table),
+                diff_count=sql.SQL(str(diff_count)),
             )
-        ).format(
-            schema=sql.Identifier(l_schema),
-            table=sql.Identifier(l_table),
-            diff_count=sql.SQL(str(diff_count)),
         )
 
         conn.commit()

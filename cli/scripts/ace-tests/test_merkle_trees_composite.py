@@ -92,13 +92,15 @@ class TestMerkleTreesComposite(TestMerkleTreesSimple):
 
         cur = conn.cursor()
 
+        select_sql = """
+        SELECT range_start, range_end
+        FROM {schema}.{mtree_table} WHERE node_level = 0
+        ORDER BY node_position
+        """
+
         # Let's first read the ranges and then pick a random set.
         cur.execute(
-            sql.SQL(
-                "SELECT range_start, range_end"
-                " FROM {schema}.{mtree_table} WHERE node_level = 0"
-                " ORDER BY node_position"
-            ).format(
+            sql.SQL(select_sql).format(
                 mtree_table=sql.Identifier(mtree_table),
                 schema=sql.Identifier(l_schema),
             )
