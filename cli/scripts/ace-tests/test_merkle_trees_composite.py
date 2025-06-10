@@ -84,7 +84,13 @@ class TestMerkleTreesComposite(TestMerkleTreesSimple):
         """Test block boundaries"""
 
         l_schema, l_table = table.split(".")
-        mtree_table = f"ace_mtree_{l_schema}_{l_table}"
+
+        mtree_table = ""
+
+        if table == "public.customers":
+            mtree_table = "ace_mtree_public_customers"
+        else:
+            mtree_table = "ace_mtree_public_customers2"
 
         conn = psycopg.connect(host="n2", dbname="demo", user="admin")
         info = CompositeInfo.fetch(conn, f"{l_schema}_{l_table}_key_type")
@@ -169,7 +175,7 @@ class TestMerkleTreesComposite(TestMerkleTreesSimple):
         """
 
         l_schema, l_table = table.split(".")
-        mtree_table = f"ace_mtree_{l_schema}_{l_table}"
+        mtree_table = "ace_mtree_public_customers"
 
         # We'll first delete keys en masse. Then get the new ranges, and finally
         # insert records to trigger the split.
@@ -205,13 +211,14 @@ class TestMerkleTreesComposite(TestMerkleTreesSimple):
             sql.SQL(
                 """
                 SELECT range_end
-                FROM {mtree_table}
+                FROM {schema}.{mtree_table}
                 where node_level = 0
                 order by node_position
                 limit 1
                 """
             ).format(
                 mtree_table=sql.Identifier(mtree_table),
+                schema=sql.Identifier(l_schema),
             )
         )
 

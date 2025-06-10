@@ -196,15 +196,15 @@ class TestMerkleTreesSimple(abc.ABC):
         UPDATE {schema}.{table}
         SET first_name = 'Modified'
         WHERE index in
-        (SELECT index from {table} order by random() limit {diff_count})
+        (SELECT index from {schema}.{table} order by random() limit %s)
         """
 
         cur.execute(
             sql.SQL(update_sql).format(
                 schema=sql.Identifier(l_schema),
                 table=sql.Identifier(l_table),
-                diff_count=sql.SQL(str(diff_count)),
-            )
+            ),
+            (diff_count,),
         )
 
         conn.commit()
