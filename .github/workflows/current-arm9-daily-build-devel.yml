@@ -1,0 +1,271 @@
+name: Current Daily Build Devel - arm9
+
+# Define default environment variables for carrying defaults at the top for easy modification
+env:
+  DEFAULT_CLI_BRANCH: "REL25_01"      # Default CLI branch for scheduled runs
+  DEFAULT_MODE: "current"             # Always "current" for this workflow
+  DEFAULT_COMPONENT: "spock50"        # Default spock component name
+  DEFAULT_BRANCH: "main"              # Default branch for the spock component
+  DEFAULT_CLEAN_FLAG: "false"         # Default clean flag for scheduled runs
+
+# Triggers: Scheduled at 12:30 AM UTC and manual workflow dispatch
+on:
+  workflow_dispatch:
+    inputs:
+      cli_branch:
+        description: "Select the CLI branch to build from (e.g. REL25_01)"
+        required: true
+        default: "REL25_01"
+        type: choice
+        options:
+          - REL25_01
+          - REL24_10
+
+      component:
+        description: "Spock in-dev component to additionally build (e.g. spock50)"
+        required: true
+        default: "spock50"
+        type: string
+
+      branch:
+        description: "Branch to use for spock component (e.g. main)"
+        required: true
+        default: "main"
+        type: string
+
+      prefix_selector:
+        description: "Choose S3 subdirectory strategy (default: MMDD, or custom)"
+        required: true
+        default: "default"
+        type: choice
+        options:
+          - default
+          - custom
+
+      custom_prefix:
+        description: "If 'custom' selected above, provide sub-directory name"
+        required: false
+        type: string
+
+      clean_prefix:
+        description: "Clean the repo sub-directory before copying packages"
+        required: false
+        type: choice
+        options:
+          - "false"
+          - "true"
+        default: "false"
+
+  schedule:
+    - cron: "30 0 * * *"  # 12:30 AM UTC, 8:30pm EST.. 1 hour after stable build at 11:30 PM UTC
+
+jobs:
+  build-current-arm9:
+    runs-on: [self-hosted, arm9]
+
+    steps:
+      # Resolve parameters (scheduled vs manual) and set up timestamped log directory
+      - name: Set build parameters and logfile
+        id: vars
+        run: |
+          source ~/.bashrc
+
+          echo "Resolving build parameters for CURRENT mode workflow..."
+
+          TODAY=$(date +%m%d)
+          RUNNER_NAME="${{ runner.name }}"
+
+          # Create timestamped log directory with mmddhhmmss format
+          TIMESTAMP=$(date +%m%d%H%M%S)
+          LOG_DIR="/tmp/current-build-$TIMESTAMP"
+          mkdir -p "$LOG_DIR"
+          echo "Created log directory: $LOG_DIR"
+
+          # Determine parameters based on trigger type
+          if [[ "${{ github.event_name }}" == "schedule" ]]; then
+            # Scheduled run: use defaults
+            PREFIX="$TODAY"
+            CLEAN_FLAG=""
+            SELECTED_CLI_BRANCH="${DEFAULT_CLI_BRANCH}"
+            COMPONENT="${DEFAULT_COMPONENT}"
+            BRANCH="${DEFAULT_BRANCH}"
+            echo "Scheduled run: Prefix=$PREFIX, Component=$COMPONENT, Branch=$BRANCH, Clean flag not set, CLI Branch=$SELECTED_CLI_BRANCH"
+          
+          else
+            # Manual run: process inputs
+            if [[ "${{ inputs.prefix_selector }}" == "default" ]]; then
+              PREFIX="$TODAY"
+              echo "Manual run: Using default prefix: $PREFIX"
+            else
+              # Custom prefix validation
+              if [[ "${{ inputs.prefix_selector }}" == "custom" && -z "${{ inputs.custom_prefix }}" ]]; then
+                echo "Error: Custom prefix selected but no input provided."
+                exit 1
+              fi
+              PREFIX="${{ inputs.custom_prefix }}"
+              echo "Manual run: Using custom prefix: $PREFIX"
+            fi
+
+            # Clean flag handling
+            if [[ "${{ inputs.clean_prefix }}" == "true" ]]; then
+              CLEAN_FLAG="-x"
+              echo "Clean flag is enabled"
+            else
+              CLEAN_FLAG=""
+              echo "Clean flag is disabled"
+            fi
+
+            SELECTED_CLI_BRANCH="${{ inputs.cli_branch }}"
+            COMPONENT="${{ inputs.component }}"
+            BRANCH="${{ inputs.branch }}"
+            echo "Manual run: Component=$COMPONENT, Branch=$BRANCH, CLI Branch=$SELECTED_CLI_BRANCH"
+          fi
+
+          # Set logfile path, matching stable workflow with "current" label
+          LOGFILE_NAME="build_to_devel_current-${RUNNER_NAME}-${TIMESTAMP}.log"
+          LOGFILE_PATH="$LOG_DIR/$LOGFILE_NAME"
+
+          # Export variables
+          echo "RUNNER_NAME=$RUNNER_NAME" >> $GITHUB_ENV
+          echo "MODE=${DEFAULT_MODE}" >> $GITHUB_ENV
+          echo "COMPONENT=$COMPONENT" >> $GITHUB_ENV
+          echo "BRANCH=$BRANCH" >> $GITHUB_ENV
+          echo "PREFIX=$PREFIX" >> $GITHUB_ENV
+          echo "CLEAN_FLAG=$CLEAN_FLAG" >> $GITHUB_ENV
+          echo "LOG_DIR=$LOG_DIR" >> $GITHUB_ENV
+          echo "LOGFILE_PATH=$LOGFILE_PATH" >> $GITHUB_ENV
+          echo "CLI_BRANCH=$SELECTED_CLI_BRANCH" >> $GITHUB_ENV
+
+          echo "Log file will be created at: $LOGFILE_PATH"
+
+      # Display the resolved configuration for debugging
+      - name: Show effective configuration
+        run: |
+          echo "=== CURRENT BUILD WORKFLOW CONFIGURATION ==="
+          echo "Runner: $RUNNER_NAME"
+          echo "Mode: $MODE"
+          echo "Component: $COMPONENT"
+          echo "Branch: $BRANCH"
+          echo "S3 Prefix: $PREFIX"
+          echo "Clean flag: $CLEAN_FLAG"
+          echo "Log directory: $LOG_DIR"
+          echo "Log file path: $LOGFILE_PATH"
+          echo "CLI branch: $CLI_BRANCH"
+          echo "=============================================="
+
+      # Verify environment details and switch to the specified CLI branch
+      - name: Confirm environment and switch CLI branch
+        id: cli_branch_checkout
+        run: |
+          source ~/.bashrc
+          echo "OS info:"
+          cat /etc/os-release
+          echo "Architecture:"
+          arch
+
+          echo "Navigating to CLI directory: $PGE"
+          cd $PGE
+
+          echo "Current branch and status:"
+          git branch
+          git status
+
+          echo "Stashing changes if any..."
+          git stash push -u -m "Temp stash for current build" || true
+
+          echo "Switching to branch: $CLI_BRANCH"
+          git checkout "$CLI_BRANCH" || true
+          echo "Branch checkout completed"
+
+      # Execute the build script and collect artifacts into src/ and bin/
+      - name: Run build and push to devel repo
+        id: build_to_devel
+        run: |
+          source ~/.bashrc
+
+          echo "Launching build script in CURRENT mode..."
+          cd $DEV
+
+          # Construct and run the build command
+          BUILD_CMD="./build_to_devel_2.sh -m $MODE -c $COMPONENT -b $BRANCH -d $PREFIX"
+          if [[ -n "$CLEAN_FLAG" ]]; then
+            BUILD_CMD="$BUILD_CMD $CLEAN_FLAG"
+          fi
+
+          echo "Executing: $BUILD_CMD"
+          $BUILD_CMD > "$LOGFILE_PATH" 2>&1
+          EXIT_CODE=$?
+
+          echo "Build finished with exit code: $EXIT_CODE"
+
+          # Collect artifacts into src/ and bin/
+          echo "Collecting source and binary artifacts..."
+          mkdir -p "$LOG_DIR/src" "$LOG_DIR/bin"
+
+          echo "Copying source files from $SOURCE/${COMPONENT}*"
+          if ls "$SOURCE/${COMPONENT}"* 1> /dev/null 2>&1; then
+            cp "$SOURCE/${COMPONENT}"* "$LOG_DIR/src/" 2>/dev/null || true
+            echo "Source files copied"
+          else
+            echo "No source files found"
+          fi
+
+          echo "Copying binaries from $IN/postgres/$COMPONENT/${COMPONENT}*"
+          if ls "$IN/postgres/$COMPONENT/${COMPONENT}"* 1> /dev/null 2>&1; then
+            cp "$IN/postgres/$COMPONENT/${COMPONENT}"* "$LOG_DIR/bin/" 2>/dev/null || true
+            echo "Binary files copied"
+          else
+            echo "No binary files found"
+          fi
+
+          # List collected artifacts
+          echo "=== COLLECTED ARTIFACTS ==="
+          ls -la "$LOG_DIR/"
+          ls -la "$LOG_DIR/src/" || echo "No source files"
+          ls -la "$LOG_DIR/bin/" || echo "No binary files"
+          echo "=========================="
+
+          if [[ $EXIT_CODE -ne 0 ]]; then
+            echo "Build failed. Artifacts collected for debugging."
+            exit $EXIT_CODE
+          fi
+
+      # Compress the log directory for artifact upload
+      - name: Compress log directory
+        if: always()
+        run: |
+          echo "Compressing log directory: $LOG_DIR"
+          cd "$(dirname "$LOG_DIR")"
+          tar -czf "${LOG_DIR}.tar.gz" "$(basename "$LOG_DIR")"
+          echo "Compressed archive created: ${LOG_DIR}.tar.gz"
+
+      # Upload the compressed log archive as an artifact
+      - name: Upload build log artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: current-build-log
+          path: ${{ env.LOG_DIR }}.tar.gz
+          if-no-files-found: warn
+
+      # Clean up historical build artifacts and temporary files
+      - name: Cleanup build artifacts
+        if: steps.build_to_devel.outcome == 'success'
+        continue-on-error: true
+        run: |
+          source ~/.bashrc
+
+          run_day=$(date +%j)
+          TARGET="$HIST/devel-$run_day"
+          echo "Cleaning up historical build directory: $TARGET"
+          if [ -d "$TARGET" ]; then
+            rm -rf "$TARGET"
+            echo "Removed $TARGET"
+          else
+            echo "No directory to clean"
+          fi
+
+          echo "Removing temporary log files..."
+          rm -rf "$LOG_DIR"
+          #rm -f "${LOG_DIR}.tar.gz" || true
+          echo "Cleanup completed"
