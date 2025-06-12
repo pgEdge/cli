@@ -1,6 +1,79 @@
 #!/bin/bash
 cd "$(dirname "$0")"
 
+# Enhanced build script with support for 'stable' and 'current' build modes.
+# - 'stable' mode: Builds packages with all stable components + the latest CLI + offline bundle
+#                  suitable for reliable, production-ready releases.
+#                  Stable builds are pushed to pgedge-devel repo into the REPO/stable/<build-suffix>
+#
+# - 'current' mode: Extends 'stable' mode by including the latest (in-development/unstable) spock 
+#         (e.g. spock50) which will be extended in future to contain more of the in dev/unstable components
+#         Current builds are pushed to pgedge-devel repo into the REPO/current/<build-suffix>
+#
+# This script is now the primary build tool, replacing the older build_to_devel.sh,
+# and is called by corresponding workflows in pgedge/cli for stable (amd8 and arm9) and current (amd8 and arm9)
+# builds. It supports both automated daily runs and manual triggers with customizable options via switches.
+# 
+# New switches introduced:
+# - -m MODE: Specifies the build mode ('stable' or 'current', defaults to 'stable').
+# - -c COMPONENT: Required for 'current' mode, specifies the Spock component (e.g., spock50).
+# - -b BRANCH: For 'current' mode, sets the branch for the Spock component (defaults to 'main').
+# - -p PGVERS: For 'current' mode, comma-separated PG versions to build (defaults to '15,16,17').
+# - -d S3SUBDIR: Sets the S3 subdirectory for uploads (defaults to MMDD, e.g., 0612).
+# - -x: Enables cleaning the S3 subdirectory before upload.
+# 
+# The script handles S3 uploads, lifecycle policies, and build artifacts, adapting behavior
+# based on the selected mode. 
+# 
+#
+# Note :  'stable' mode relies solely on -d and -x 
+# while  additional inputs -c, -b  -p are associated with 'current' mode only 
+
+#Argument parsing using getopts for stable/current modes and options
+MODE="stable"
+COMPONENTNAME=""
+BRANCH="main"
+PGVERS="15,16,17"
+subdir=$(date +%m%d)
+cleaner=""
+
+show_help() {
+  cat << EOF
+Usage: $0 [OPTIONS]
+  -m MODE         Build mode: 'stable' (default) or 'current' (includes in-dev spock)
+  -c COMPONENT    Spock component to build (required in current mode, e.g. spock50)
+  -b BRANCH       Branch to use for spock component (default: main, current mode only)
+  -p PGVERS       Comma-separated PG versions (default: 15,16,17, current mode only)
+  -d S3SUBDIR     S3 subdirectory (default: MMDD)
+  -x              Clean S3 subdir before upload, optional
+  -h              Show help
+
+Examples:
+  $0 -d 0522 -x
+  $0 -m stable -d 0522
+  $0 -m current -c spock50 -b main -p 15,16,17 -d 0522
+EOF
+}
+
+while getopts "m:c:b:p:d:xh" opt; do
+  case $opt in
+    m) MODE="$OPTARG" ;;
+    c) COMPONENTNAME="$OPTARG" ;;
+    b) BRANCH="$OPTARG" ;;
+    p) PGVERS="$OPTARG" ;;
+    d) subdir="$OPTARG" ;;
+    x) cleaner="--clean" ;;
+    h) show_help; exit 0 ;;
+    \?) show_help; exit 1 ;;
+  esac
+done
+
+if [[ "$MODE" == "current" && -z "$COMPONENTNAME" ]]; then
+  echo "[ERROR] -c COMPONENT is required in current mode"
+  show_help
+  exit 1
+fi
+
 source $PGE/env.sh
 
 # Show progress updates if stdout is a terminal;
@@ -77,41 +150,27 @@ check_s3_access() {
 }
 
 # --- Pre-checks (Step -1) ---
-step -1 "Pre-checks: Environment, Disk Space & S3 Access"
+step -2 "Pre-checks: Environment, Disk Space & S3 Access"
 
 check_env_vars
 check_disk_space
 check_s3_access
 
-# -------------------------------
-# New Argument Parsing for Subdirectory and Clean Flag
-# Usage: ./build_to_devel.sh [subdirectory] [--clean]
-# If no custom subdirectory is provided then MMDD is used and --clean is not set.
-subdir=$(date +%m%d)
-cleaner=""
-
-# Parse input arguments
-if [ "$1" == "--clean" ]; then
-  cleaner="--clean"
-  shift
-fi
-
-if [ -n "$1" ]; then
-  subdir="$1"
-  if [ "$2" == "--clean" ]; then
-    cleaner="--clean"
+# Step -1: If mode is current, set the s3 prefix and execute get-and-build-spock.sh that fetches latest source from spock
+#           branch and builds its binaries using the pgbin-build project.
+#           Else, in stable mode, only set the s3 prefix.
+if [[ "$MODE" == "current" ]]; then
+  step -1 "set current S3 prefix, run get-and-build-spock.sh to build latest spock #####################"
+  prefix="REPO/current/$subdir"
+  if ! "$BLD/get-and-build-spock.sh" -b "$BRANCH" -c "$COMPONENTNAME" -p "$PGVERS"; then
+    echo "[ERROR] get-and-build-spock.sh failed!"
+    exit 1
   fi
+else
+  step -1 "set stable S3 prefix #########################"
+  prefix="REPO/stable/$subdir"
 fi
-
-echo "# Using subdirectory: $subdir"
-if [ "$cleaner" == "--clean" ]; then
-  echo "# Clean flag is set"
-fi
-
-# Calculate S3 path prefix (REPO/stable/<subdir>)
-prefix="REPO/stable/$subdir"
 echo "# Using S3 prefix: $prefix"
-# -------------------------------
 
 step 0 "## initialization  #######################"
 echo "#  BUCKET = $BUCKET"
@@ -143,7 +202,8 @@ cmd "git pull"
 
 step 3a "building tgz bundle ####################"
 echo "Building tgz bundle : $offline_tgz_bndl"
-./make_tgz.sh
+# call make_tgz.sh which also now takes the mode (stable/current)
+./make_tgz.sh -m "$MODE"
 sleep 9
 # Verify that the offline tarball was created
 if [ ! -f "$OUT/$offline_tgz_bndl" ]; then
@@ -172,13 +232,16 @@ cmd "aws --region $REGION s3 cp . $BUCKET/$prefix $flags $PROGRESS_FLAG"
 step 6a "recopy offline repo tgz to S3 with headers ############################"
 cmd "aws --region $REGION s3 cp $offline_tgz_bndl $BUCKET/$prefix/ --acl public-read --content-disposition \"attachment; filename=$offline_tgz_bndl\" $PROGRESS_FLAG"
 
-# Define a lifecycle policy JSON for all objects under the REPO/stable to auto expire after 7 days
-step 6b "Set lifecycle policy for the objects under REPO/stable to auto expire/delete after 7 days"
+# Compute the base prefix (e.g., REPO/stable/ or REPO/current/)
+base_prefix="${prefix%/*}/"
+
+# Define a lifecycle policy JSON dynamically for all objects under the base prefix
+step 6b "Set lifecycle policy for objects under $base_prefix to auto expire/delete after 7 days"
 policy='{
   "Rules": [
     {
-      "ID": "ExpireStableBuilds",
-      "Filter": { "Prefix": "REPO/stable/" },
+      "ID": "ExpireBuilds_'"$MODE"'",
+      "Filter": { "Prefix": "'"$base_prefix"'" },
       "Status": "Enabled",
       "Expiration": { "Days": 7 }
     }
@@ -188,6 +251,5 @@ cmd "aws --region $REGION s3api put-bucket-lifecycle-configuration --bucket $BUC
 
 step 7 "Goodbye! ##############################"
 echo "Script completed successfully"
+
 exit 0
-
-
