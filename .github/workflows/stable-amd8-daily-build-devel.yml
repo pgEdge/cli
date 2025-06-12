@@ -1,4 +1,4 @@
-name: Stable Daily Build Devel - arm9
+name: Stable Daily Build Devel - amd8
 
 env:
   DEFAULT_CLI_BRANCH: "REL25_01"
@@ -38,11 +38,11 @@ on:
         default: "false"
 
   schedule:
-    - cron: "30 23 * * *"  # 11:30PM UTC = 7:30PM EST
+    - cron: "0 23 * * *"  # 11PM UTC = 7PM EST
 
 jobs:
-  build-stable-arm9:
-    runs-on: [self-hosted, arm9]
+  build-stable-amd8:
+    runs-on: [self-hosted, amd8]
 
     steps:
       - name: Set build parameters and logfile
@@ -82,7 +82,7 @@ jobs:
             # Clean flag handling
             # If true is chosen in the clean dropdown, set the --clean flag
             if [[ "${{ inputs.clean_prefix }}" == "true" ]]; then
-              CLEAN_FLAG="--clean"
+              CLEAN_FLAG="-x"
               echo "Clean flag is enabled"
             else
               CLEAN_FLAG=""
@@ -146,10 +146,10 @@ jobs:
           echo "Launching daily build script..."
           cd $DEV
 
-          echo "Executing: ./build_to_devel.sh $PREFIX $CLEAN_FLAG"
-          ./build_to_devel.sh "$PREFIX" $CLEAN_FLAG > "$LOGFILE_PATH" 2>&1
+          echo "Executing: ./build_to_devel.sh -m stable -d $PREFIX $CLEAN_FLAG"
+          ./build_to_devel.sh -m stable -d "$PREFIX" $CLEAN_FLAG > "$LOGFILE_PATH" 2>&1
           EXIT_CODE=$?
-
+          
           echo "Build finished with exit code: $EXIT_CODE"
 
           if [[ $EXIT_CODE -ne 0 ]]; then
@@ -181,3 +181,5 @@ jobs:
           else
             echo "Directory $TARGET does not exist. Nothing to clean."
           fi
+
+
