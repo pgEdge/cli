@@ -1,7 +1,7 @@
 name: Stable Daily Build Devel - amd8
 
 env:
-  DEFAULT_CLI_BRANCH: "REL25_01"
+  DEFAULT_CLI_BRANCH: "v25_STABLE"
 
 on:
   workflow_dispatch:
@@ -9,10 +9,11 @@ on:
       cli_branch:
         description: "Select the CLI branch to build from"
         required: true
-        default: REL25_01
+        default: v25_STABLE
         type: choice
         options:
-          - REL25_01
+          - v25_STABLE
+          - main
           - REL24_10
 
       prefix_selector:
