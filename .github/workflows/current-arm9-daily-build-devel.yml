@@ -188,7 +188,7 @@ jobs:
           cd $DEV
 
           # Construct and run the build command
-          BUILD_CMD="./build_to_devel_2.sh -m $MODE -c $COMPONENT -b $BRANCH -d $PREFIX"
+          BUILD_CMD="./build_to_devel.sh -m $MODE -c $COMPONENT -b $BRANCH -d $PREFIX"
           if [[ -n "$CLEAN_FLAG" ]]; then
             BUILD_CMD="$BUILD_CMD $CLEAN_FLAG"
           fi
