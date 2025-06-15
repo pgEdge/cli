@@ -37,5 +37,5 @@ urllib3==2.2.2
 PyYAML==6.0.1
 python-etcd==0.4.5
 python-dateutil==2.9.0
-cryptography==44.0.0
+cryptography==44.0.1
 ydiff==1.3
