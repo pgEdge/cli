@@ -37,6 +37,70 @@ def merkle_tree_cli(
     quiet_mode=False,
     override_block_size=False,
 ):
+    """
+    Description:
+
+    Manages Merkle trees for large tables to enable efficient table diffs.
+    Supports several modes of operation:
+        * 'init': Initialises the database with necessary objects for Merkle trees.
+        This is a one-time setup per database.
+        * 'build': Builds a new Merkle tree for a specified table.
+        * 'update': Updates an existing Merkle tree with changes since the last build
+        or update.
+        * 'diff': Compares the Merkle trees of a table across cluster nodes and
+        reports any inconsistencies.
+        * 'teardown': Removes Merkle tree objects. Can be for a specific table or
+        for the entire database if table_name is omitted.
+
+    Args:
+        mode (str): The operation to perform. One of 'init', 'build', 'update',
+            'diff', 'teardown'.
+        cluster_name (str): Name of the cluster where the operation should be performed.
+        table_name (str, optional): Schema-qualified name of the table for the
+            Merkle tree operation. Required for 'build', 'update', and 'diff' modes.
+            Optional for 'teardown'.
+        dbname (str, optional): Name of the database to use. If omitted,
+            defaults to the first database in the cluster configuration file.
+        analyse (bool, optional): If True during 'build' mode, runs ANALYZE on the
+            table to get a more accurate row count for building the tree. This may
+            be time-consuming depending on the size of the table. Defaults to False.
+        rebalance (bool, optional): If True during 'update' mode, triggers rebalancing
+            of the tree by merging smaller blocks. This can be a disruptive operation
+            and is best run during maintenance windows. Defaults to False.
+        recreate_objects (bool, optional): If True during 'build' mode, drops and
+            recreates all Merkle tree objects before building. Defaults to False.
+        block_size (int, optional): The number of rows per leaf block in the Merkle
+            tree. Used in 'build' mode. Defaults to config.MTREE_BLOCK_SIZE.
+        max_cpu_ratio (float, optional): Maximum CPU utilisation for parallel
+            operations. The accepted range is 0.0-1.0. Defaults to
+            config.MAX_CPU_RATIO.
+        batch_size (int, optional): For 'diff' mode, the number of blocks each worker
+            should process in a batch. Defaults to 1.
+        write_ranges (bool, optional): If True during 'build' mode, writes the
+            calculated block ranges to a JSON file. Can be useful to build the tree
+            for large tables in parallel on each node. Defaults to False.
+        ranges_file (str, optional): Path to a JSON file containing pre-computed
+            block ranges to be used in 'build' mode. If specified, this skips
+            the range calculation in 'build' mode and treats the 'build' as an
+            isolated, node-specific operation.  Defaults to None.
+        nodes (str, optional): Comma-separated subset of nodes on which the
+            command will be executed. Defaults to "all".
+        output (str, optional): Output format for the 'diff' operation.
+            Acceptable values are "json", "csv", and "html". Defaults to "json".
+        quiet_mode (bool, optional): Whether to suppress output in stdout.
+            Defaults to False.
+        override_block_size (bool, optional): If True, allows using a block size
+            that might otherwise be considered unsafe or suboptimal. Defaults to False.
+
+    Raises:
+        AceException: If there's an error specific to the ACE operation.
+        Exception: For any unexpected errors during the Merkle tree operation.
+
+    Returns:
+        None. The function performs the Merkle tree operation and handles any
+        exceptions. All output messages are printed to stdout since it's a CLI
+        function.
+    """
     task_id = ace_db.generate_task_id()
 
     try:
@@ -59,7 +123,6 @@ def merkle_tree_cli(
             invoke_method="cli",
         )
         mtree_task.scheduler.task_id = task_id
-        mtree_task.scheduler.task_type = "build-merkle-tree"
         mtree_task.scheduler.task_status = "RUNNING"
         mtree_task.scheduler.started_at = datetime.now()
 
@@ -77,14 +140,19 @@ def merkle_tree_cli(
         ace_db.create_ace_task(task=mtree_task)
 
         if mode == "init":
+            mtree_task.scheduler.task_type = "init-mtree-objects"
             ace_mtree.mtree_init_helper(mtree_task)
         elif mode == "build":
+            mtree_task.scheduler.task_type = "build-mtree"
             ace_mtree.build_mtree(mtree_task)
         elif mode == "update":
+            mtree_task.scheduler.task_type = "update-mtree"
             ace_mtree.update_mtree(mtree_task)
-        elif mode == "diff":
+        elif mode == "table-diff":
+            mtree_task.scheduler.task_type = "mtree-table-diff"
             ace_mtree.merkle_tree_diff(mtree_task)
         elif mode == "teardown":
+            mtree_task.scheduler.task_type = "teardown-mtree-objects"
             ace_mtree.mtree_teardown_helper(mtree_task)
 
         mtree_task.connection_pool.close_all()

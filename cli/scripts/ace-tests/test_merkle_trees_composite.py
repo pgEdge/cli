@@ -149,7 +149,7 @@ class TestMerkleTreesComposite(TestMerkleTreesSimple):
         cur.close()
         conn.close()
 
-        cli.merkle_tree_cli("diff", "eqn-t9da", table_name=table)
+        cli.merkle_tree_cli("table-diff", "eqn-t9da", table_name=table)
         captured = capsys.readouterr()
         clean_output = re.sub(
             r"\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])", "", captured.out
@@ -261,7 +261,7 @@ class TestMerkleTreesComposite(TestMerkleTreesSimple):
         range_end = cur.fetchone()[0][0]
         assert range_end <= 2000
 
-        cli.merkle_tree_cli("diff", "eqn-t9da", table_name=table)
+        cli.merkle_tree_cli("table-diff", "eqn-t9da", table_name=table)
         captured = capsys.readouterr()
         clean_output = re.sub(
             r"\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])", "", captured.out
@@ -300,7 +300,7 @@ class TestMerkleTreesComposite(TestMerkleTreesSimple):
 
         conn.commit()
 
-        cli.merkle_tree_cli("diff", "eqn-t9da", table_name=table, rebalance=True)
+        cli.merkle_tree_cli("table-diff", "eqn-t9da", table_name=table, rebalance=True)
         captured = capsys.readouterr()
         clean_output = re.sub(
             r"\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])", "", captured.out
@@ -378,7 +378,7 @@ class TestMerkleTreesComposite(TestMerkleTreesSimple):
         cur.close()
         conn.close()
 
-        cli.merkle_tree_cli("diff", "eqn-t9da", table_name=table)
+        cli.merkle_tree_cli("table-diff", "eqn-t9da", table_name=table)
         captured = capsys.readouterr()
         clean_output = re.sub(
             r"\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])", "", captured.out
@@ -420,7 +420,7 @@ class TestMerkleTreesComposite(TestMerkleTreesSimple):
         cur.close()
         conn.close()
 
-        cli.merkle_tree_cli("diff", "eqn-t9da", table_name=table)
+        cli.merkle_tree_cli("table-diff", "eqn-t9da", table_name=table)
         captured = capsys.readouterr()
         clean_output = re.sub(
             r"\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])", "", captured.out
@@ -528,7 +528,7 @@ class TestMerkleTreesComposite(TestMerkleTreesSimple):
             cur.close()
             conn.close()
 
-            cli.merkle_tree_cli("diff", cluster_name, table_name=table_name)
+            cli.merkle_tree_cli("table-diff", cluster_name, table_name=table_name)
             captured = capsys.readouterr()
             clean_output = re.sub(
                 r"\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])", "", captured.out
@@ -644,7 +644,7 @@ class TestMerkleTreesComposite(TestMerkleTreesSimple):
             captured = capsys.readouterr()
             assert "successfully updated" in captured.out.lower()
 
-            cli.merkle_tree_cli("diff", cluster_name, table_name=table_name)
+            cli.merkle_tree_cli("table-diff", cluster_name, table_name=table_name)
             captured = capsys.readouterr()
             clean_output = re.sub(
                 r"\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])", "", captured.out
