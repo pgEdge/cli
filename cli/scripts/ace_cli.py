@@ -123,6 +123,7 @@ def merkle_tree_cli(
             invoke_method="cli",
         )
         mtree_task.scheduler.task_id = task_id
+        mtree_task.scheduler.task_type = f"mtree-{mode}"
         mtree_task.scheduler.task_status = "RUNNING"
         mtree_task.scheduler.started_at = datetime.now()
 
@@ -140,19 +141,14 @@ def merkle_tree_cli(
         ace_db.create_ace_task(task=mtree_task)
 
         if mode == "init":
-            mtree_task.scheduler.task_type = "init-mtree-objects"
             ace_mtree.mtree_init_helper(mtree_task)
         elif mode == "build":
-            mtree_task.scheduler.task_type = "build-mtree"
             ace_mtree.build_mtree(mtree_task)
         elif mode == "update":
-            mtree_task.scheduler.task_type = "update-mtree"
             ace_mtree.update_mtree(mtree_task)
         elif mode == "table-diff":
-            mtree_task.scheduler.task_type = "mtree-table-diff"
             ace_mtree.merkle_tree_diff(mtree_task)
         elif mode == "teardown":
-            mtree_task.scheduler.task_type = "teardown-mtree-objects"
             ace_mtree.mtree_teardown_helper(mtree_task)
 
         mtree_task.connection_pool.close_all()
