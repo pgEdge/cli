@@ -34,13 +34,7 @@ from ace_data_models import (
 )
 
 from ace_exceptions import AceException, AuthenticationError
-
-
-# Return codes for compare_checksums
-BLOCK_OK = 0
-MAX_DIFFS_EXCEEDED = 1
-BLOCK_MISMATCH = 2
-BLOCK_ERROR = 3
+from ace_constants import BLOCK_OK, BLOCK_MISMATCH, BLOCK_ERROR
 
 
 def run_query(worker_state, host, query, stmt_name=None, params=None):

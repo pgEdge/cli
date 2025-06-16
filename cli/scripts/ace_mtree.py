@@ -23,6 +23,7 @@ import ace_db
 import ace_config as config
 from ace_data_models import MerkleTreeTask
 from ace_exceptions import AceException
+from ace_constants import BLOCK_OK, BLOCK_MISMATCH, BLOCK_ERROR
 from ace_sql import (
     CREATE_BULK_TRIGGER_FUNCTION,
     CREATE_METADATA_TABLE,
@@ -72,8 +73,6 @@ from ace_sql import (
     COMPARE_BLOCKS_SQL,
     UPDATE_NODE_POSITIONS_TEMP,
 )
-
-BERNOULLI_THRESHOLD = 10_000_000
 
 
 @dataclass
@@ -510,9 +509,7 @@ def build_mtree(mtree_task: MerkleTreeTask) -> None:
 
         if mtree_task.write_ranges:
             now = datetime.now().strftime("%Y%m%d_%H%M%S")
-            filename = (
-                f"{now}_{schema}_{table}_ranges.json"
-            )
+            filename = f"{now}_{schema}_{table}_ranges.json"
             with open(filename, "w") as f:
                 json.dump(block_ranges, f, default=str)
 
@@ -2161,7 +2158,7 @@ def compare_ranges(worker_id, shared_objects, worker_state, work_item):
 
     if errors:
         return {
-            "status": config.BLOCK_ERROR,
+            "status": BLOCK_ERROR,
             "errors": [str(error) for error in errors],
             "batch": batch,
             "node_pair": node_pair_key,
@@ -2169,7 +2166,7 @@ def compare_ranges(worker_id, shared_objects, worker_state, work_item):
 
     if len(results) < 2:
         return {
-            "status": config.BLOCK_ERROR,
+            "status": BLOCK_ERROR,
             "errors": ["Failed to get results from both nodes"],
             "batch": batch,
             "node_pair": node_pair_key,
@@ -2203,7 +2200,7 @@ def compare_ranges(worker_id, shared_objects, worker_state, work_item):
     # In this case, we can still consider the block to be OK.
     if not t1_only and not t2_only:
         return {
-            "status": config.BLOCK_OK,
+            "status": BLOCK_OK,
             "diffs": {},
             "total_diffs": 0,
             "batch": batch,
@@ -2226,7 +2223,7 @@ def compare_ranges(worker_id, shared_objects, worker_state, work_item):
     total_diffs = max(len(t1_only), len(t2_only))
 
     return {
-        "status": config.BLOCK_MISMATCH,
+        "status": BLOCK_MISMATCH,
         "diffs": worker_diffs,
         "total_diffs": total_diffs,
         "batch": batch,
@@ -2415,7 +2412,7 @@ def merkle_tree_diff(mtree_task: MerkleTreeTask) -> None:
                 worker_exit=ace_core.close_conn_pool,
                 progress_bar=True,
             ):
-                if result["status"] == config.BLOCK_ERROR:
+                if result["status"] == BLOCK_ERROR:
                     errors = True
                     error_list.append(
                         {
@@ -2427,7 +2424,7 @@ def merkle_tree_diff(mtree_task: MerkleTreeTask) -> None:
                     stop_event.set()
                     break
 
-                if result["status"] == config.BLOCK_MISMATCH:
+                if result["status"] == BLOCK_MISMATCH:
                     mismatch = True
                     for node_pair, node_diffs in result["diffs"].items():
                         if node_pair not in diff_dict:
