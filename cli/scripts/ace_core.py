@@ -36,6 +36,13 @@ from ace_data_models import (
 from ace_exceptions import AceException, AuthenticationError
 
 
+# Return codes for compare_checksums
+BLOCK_OK = 0
+MAX_DIFFS_EXCEEDED = 1
+BLOCK_MISMATCH = 2
+BLOCK_ERROR = 3
+
+
 def run_query(worker_state, host, query, stmt_name=None, params=None):
     if stmt_name:
         cur = worker_state["cursors"][host]
@@ -467,14 +474,14 @@ def compare_checksums(worker_id, shared_objects, worker_state, pkey1, pkey2):
 
         if errors:
             return {
-                "status": config.BLOCK_ERROR,
+                "status": BLOCK_ERROR,
                 "errors": [str(error) for error in errors],
                 "node_pair": node_pair,
             }
 
         if len(results) < 2:
             return {
-                "status": config.BLOCK_ERROR,
+                "status": BLOCK_ERROR,
                 "errors": ["Failed to get results from both nodes"],
                 "node_pair": node_pair,
             }
@@ -517,14 +524,14 @@ def compare_checksums(worker_id, shared_objects, worker_state, pkey1, pkey2):
 
             if errors:
                 return {
-                    "status": config.BLOCK_ERROR,
+                    "status": BLOCK_ERROR,
                     "errors": [str(error) for error in errors],
                     "node_pair": node_pair,
                 }
 
             if len(results) < 2:
                 return {
-                    "status": config.BLOCK_ERROR,
+                    "status": BLOCK_ERROR,
                     "errors": ["Failed to get results from both nodes"],
                     "node_pair": node_pair,
                 }
@@ -584,7 +591,7 @@ def compare_checksums(worker_id, shared_objects, worker_state, pkey1, pkey2):
             total_diffs += max(len(t1_only), len(t2_only))
 
     return {
-        "status": config.BLOCK_OK if total_diffs == 0 else config.BLOCK_MISMATCH,
+        "status": BLOCK_OK if total_diffs == 0 else BLOCK_MISMATCH,
         "diffs": worker_diffs,
         "total_diffs": total_diffs,
         "node_pair": node_pair_key if "node_pair_key" in locals() else None,
@@ -813,7 +820,7 @@ def table_diff(td_task: TableDiffTask, skip_all_checks: bool = False):
                 progress_bar_style="rich",
                 iterable_len=len(pkey_offsets),
             ):
-                if result["status"] == config.BLOCK_ERROR:
+                if result["status"] == BLOCK_ERROR:
                     errors = True
                     error_list.append(
                         {
@@ -824,7 +831,7 @@ def table_diff(td_task: TableDiffTask, skip_all_checks: bool = False):
                     stop_event.set()
                     break
 
-                if result["status"] == config.BLOCK_MISMATCH:
+                if result["status"] == BLOCK_MISMATCH:
                     mismatch = True
                     for node_pair, node_diffs in result["diffs"].items():
                         if node_pair not in diff_dict:
@@ -1413,6 +1420,7 @@ def table_repair(tr_task: TableRepairTask):
                 delete_sql = sql.SQL("DELETE FROM {table} WHERE {where};").format(
                     table=table_ident, where=where_clause
                 )
+                # nosemgrep
                 cur.execute(delete_sql)
                 total_deleted[divergent_node] = cur.rowcount if cur.rowcount else 0
 
@@ -1476,6 +1484,7 @@ def table_repair(tr_task: TableRepairTask):
                     action=conflict_action,
                 )
 
+                # nosemgrep
                 cur.execute(full_upsert_sql)
                 total_upserted[divergent_node] = cur.rowcount if cur.rowcount else 0
 
@@ -2536,7 +2545,7 @@ def table_rerun_async(td_task: TableDiffTask) -> None:
                 iterable_len=len(blocks),
                 progress_bar_style="rich",
             ):
-                if result["status"] == config.BLOCK_ERROR:
+                if result["status"] == BLOCK_ERROR:
                     errors = True
                     errors_list.append(
                         {
@@ -2548,7 +2557,7 @@ def table_rerun_async(td_task: TableDiffTask) -> None:
                     pool.terminate()  # Stop all workers on error
                     break
 
-                if result["status"] == config.BLOCK_MISMATCH:
+                if result["status"] == BLOCK_MISMATCH:
                     mismatch = True
                     # Update the diff dictionary with this worker's results
                     for node_pair, node_diffs in result["diffs"].items():

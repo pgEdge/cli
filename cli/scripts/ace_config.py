@@ -12,7 +12,6 @@ from datetime import timedelta
 STATEMENT_TIMEOUT = 0  # in milliseconds
 CONNECTION_TIMEOUT = 10  # in seconds
 
-
 #  Default values for ACE table-diff
 MAX_DIFF_ROWS = 1_000_000
 MIN_DIFF_BLOCK_SIZE = 1000
@@ -22,16 +21,8 @@ MAX_CPU_RATIO = os.environ.get("ACE_MAX_CPU_RATIO", 0.6)
 DIFF_BATCH_SIZE = os.environ.get("ACE_BATCH_SIZE", 1)
 MAX_DIFF_BATCH_SIZE = 1000
 
-
-# Return codes for compare_checksums
-BLOCK_OK = 0
-MAX_DIFFS_EXCEEDED = 1
-BLOCK_MISMATCH = 2
-BLOCK_ERROR = 3
-
 # The minimum version of Spock that supports the repair mode
 SPOCK_REPAIR_MODE_MIN_VERSION = 4.0
-
 
 # ACE Merkle Tree options
 MTREE_BLOCK_SIZE = os.environ.get("ACE_MTREE_BLOCK_SIZE", 100_000)
