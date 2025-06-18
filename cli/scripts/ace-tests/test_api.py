@@ -418,10 +418,10 @@ class TestAPI(TestSimpleBase):
                 ), f"Modified row {diff[key_column]} doesn't have expected suffix"
 
             # Repair to restore state
-            cli.table_repair_cli(
-                "eqn-t9da",
-                table_name,
-                diff_file_path.path,
+            cli.table_repair(
+                cluster_name="eqn-t9da",
+                diff_file=diff_file_path.path,
+                table_name=table_name,
                 source_of_truth="n1",
             )
 

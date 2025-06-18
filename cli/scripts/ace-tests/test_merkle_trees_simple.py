@@ -148,9 +148,9 @@ class TestMerkleTreesSimple(abc.ABC):
             pytest.fail(f"Test failed: {str(e)}")
 
     @pytest.mark.parametrize("cluster_name", ["eqn-t9da"])
-    def test_merkle_tree_init(self, cli, capsys, cluster_name, nodes):
+    def test_merkle_tree_init(self, mtree_cli, capsys, cluster_name, nodes):
         """Test merkle tree init"""
-        cli.merkle_tree_cli("init", cluster_name)
+        mtree_cli.init(cluster_name)
 
         captured = capsys.readouterr()
 
@@ -163,16 +163,14 @@ class TestMerkleTreesSimple(abc.ABC):
             )
 
     @pytest.mark.parametrize("table", ["public.customers", "public.customers2"])
-    def test_merkle_tree_setup(self, cli, capsys, table, nodes):
+    def test_merkle_tree_setup(self, mtree_cli, capsys, table, nodes):
         """
         Test merkle tree setup for tables
         """
 
         block_size = 50000 if table == "public.customers2" else 1000
 
-        cli.merkle_tree_cli(
-            "build", "eqn-t9da", table_name=table, block_size=block_size
-        )
+        mtree_cli.build("eqn-t9da", table_name=table, block_size=block_size)
 
         captured = capsys.readouterr()
         clean_output = re.sub(
@@ -185,7 +183,7 @@ class TestMerkleTreesSimple(abc.ABC):
     @pytest.mark.parametrize(
         "table, diff_count", [("public.customers", 75), ("public.customers2", 1000)]
     )
-    def test_simple_diff(self, cli, capsys, table, diff_count):
+    def test_simple_diff(self, cli, mtree_cli, capsys, table, diff_count):
         """Test simple diff cases"""
 
         l_schema, l_table = table.split(".")
@@ -213,7 +211,7 @@ class TestMerkleTreesSimple(abc.ABC):
         cur.close()
         conn.close()
 
-        cli.merkle_tree_cli("table-diff", "eqn-t9da", table_name=table)
+        mtree_cli.table_diff("eqn-t9da", table_name=table)
         captured = capsys.readouterr()
         clean_output = re.sub(
             r"\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])", "", captured.out
@@ -234,11 +232,16 @@ class TestMerkleTreesSimple(abc.ABC):
             assert diff["first_name"] == "Modified"
 
         # We're done. Repair it back.
-        cli.table_repair_cli("eqn-t9da", table, diff_file, source_of_truth="n2")
+        cli.table_repair(
+            cluster_name="eqn-t9da",
+            table_name=table,
+            diff_file=diff_file,
+            source_of_truth="n2",
+        )
 
     @pytest.mark.parametrize("table", ["public.customers", "public.customers2"])
-    def test_boundaries(self, cli, capsys, table):
-        """Test block boundaries"""
+    def test_boundaries(self, cli, mtree_cli, capsys, table):
+        """Test simple diff cases where boundaries are modified"""
 
         l_schema, l_table = table.split(".")
 
@@ -260,7 +263,6 @@ class TestMerkleTreesSimple(abc.ABC):
         )
 
         ranges = cur.fetchall()
-        print(ranges)
 
         ranges_to_modify = (
             [ranges[0][0]]
@@ -296,7 +298,7 @@ class TestMerkleTreesSimple(abc.ABC):
         cur.close()
         conn.close()
 
-        cli.merkle_tree_cli("table-diff", "eqn-t9da", table_name=table)
+        mtree_cli.table_diff("eqn-t9da", table_name=table)
         captured = capsys.readouterr()
         clean_output = re.sub(
             r"\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])", "", captured.out
@@ -314,10 +316,15 @@ class TestMerkleTreesSimple(abc.ABC):
             assert diff["first_name"] == "Modified"
 
         # Repair everything now
-        cli.table_repair_cli("eqn-t9da", table, diff_file, source_of_truth="n1")
+        cli.table_repair(
+            cluster_name="eqn-t9da",
+            table_name=table,
+            diff_file=diff_file,
+            source_of_truth="n1",
+        )
 
     @pytest.mark.parametrize("table", ["public.customers"])
-    def test_split_ranges(self, cli, capsys, table):
+    def test_split_ranges(self, cli, mtree_cli, capsys, table):
         """
         Testing range splits automatically tests merges as well.
         """
@@ -342,9 +349,7 @@ class TestMerkleTreesSimple(abc.ABC):
         conn.close()
 
         # We're going to deliberately rebalance the tree to make way for the splits.
-        cli.merkle_tree_cli(
-            "update", "eqn-t9da", table_name=table, nodes="n2", rebalance=True
-        )
+        mtree_cli.update("eqn-t9da", table_name=table, nodes="n2", rebalance=True)
         captured = capsys.readouterr()
         clean_output = re.sub(
             r"\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])", "", captured.out
@@ -377,9 +382,7 @@ class TestMerkleTreesSimple(abc.ABC):
         # Now we'll insert records to trigger the split.
         self.insert_records(conn, l_schema, l_table, ["index"], 2000)
 
-        cli.merkle_tree_cli(
-            "update", "eqn-t9da", table_name=table, nodes="n2", rebalance=True
-        )
+        mtree_cli.update("eqn-t9da", table_name=table, nodes="n2", rebalance=True)
         captured = capsys.readouterr()
         clean_output = re.sub(
             r"\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])", "", captured.out
@@ -406,7 +409,7 @@ class TestMerkleTreesSimple(abc.ABC):
         range_end = cur.fetchone()[0]
         assert range_end <= 2000
 
-        cli.merkle_tree_cli("table-diff", "eqn-t9da", table_name=table)
+        mtree_cli.table_diff("eqn-t9da", table_name=table)
         captured = capsys.readouterr()
         clean_output = re.sub(
             r"\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])", "", captured.out
@@ -415,11 +418,16 @@ class TestMerkleTreesSimple(abc.ABC):
         assert diff_file, "Diff file path not found in output"
         diff_file = diff_file.group(1)
 
-        cli.table_repair_cli("eqn-t9da", table, diff_file, source_of_truth="n1")
+        cli.table_repair(
+            cluster_name="eqn-t9da",
+            table_name=table,
+            diff_file=diff_file,
+            source_of_truth="n1",
+        )
 
     @pytest.mark.parametrize("table, block_size", [("public.customers2", 50000)])
-    def test_merges(self, cli, capsys, table, block_size):
-        """Test merges"""
+    def test_merges(self, cli, mtree_cli, capsys, table, block_size):
+        """Test merging smaller blocks"""
 
         l_schema, l_table = table.split(".")
 
@@ -441,7 +449,8 @@ class TestMerkleTreesSimple(abc.ABC):
         conn.commit()
         cur.close()
 
-        cli.merkle_tree_cli("table-diff", "eqn-t9da", table_name=table, rebalance=True)
+        mtree_cli.table_diff("eqn-t9da", table_name=table, rebalance=True)
+
         captured = capsys.readouterr()
         clean_output = re.sub(
             r"\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])", "", captured.out
@@ -479,10 +488,15 @@ class TestMerkleTreesSimple(abc.ABC):
         cur.close()
         conn.close()
 
-        cli.table_repair_cli("eqn-t9da", table, diff_file, source_of_truth="n1")
+        cli.table_repair(
+            cluster_name="eqn-t9da",
+            table_name=table,
+            diff_file=diff_file,
+            source_of_truth="n1",
+        )
 
     @pytest.mark.parametrize("table", ["public.customers"])
-    def test_non_contiguous_delete(self, cli, capsys, table):
+    def test_non_contiguous_delete(self, cli, mtree_cli, capsys, table):
         """Test non-contiguous deletes only mark affected blocks as dirty"""
 
         l_schema, l_table = table.split(".")
@@ -509,7 +523,7 @@ class TestMerkleTreesSimple(abc.ABC):
         cur.close()
         conn.close()
 
-        cli.merkle_tree_cli("table-diff", "eqn-t9da", table_name=table)
+        mtree_cli.table_diff("eqn-t9da", table_name=table)
         captured = capsys.readouterr()
         clean_output = re.sub(
             r"\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])", "", captured.out
@@ -523,12 +537,16 @@ class TestMerkleTreesSimple(abc.ABC):
 
         assert len(diff_data["diffs"]["n1/n2"]["n2"]) == len(ids_to_delete)
 
-        cli.table_repair_cli("eqn-t9da", table, diff_file, source_of_truth="n2")
+        cli.table_repair(
+            cluster_name="eqn-t9da",
+            table_name=table,
+            diff_file=diff_file,
+            source_of_truth="n2",
+        )
 
     @pytest.mark.parametrize("table", ["public.customers"])
-    def test_non_contiguous_update(self, cli, capsys, table):
-        """Test non-contiguous updates only mark affected blocks as dirty"""
-
+    def test_non_contiguous_update(self, cli, mtree_cli, capsys, table):
+        """Test non-contiguous updates"""
         l_schema, l_table = table.split(".")
         conn = psycopg.connect(host="n1", dbname="demo", user="admin")
         cur = conn.cursor()
@@ -554,7 +572,7 @@ class TestMerkleTreesSimple(abc.ABC):
         cur.close()
         conn.close()
 
-        cli.merkle_tree_cli("table-diff", "eqn-t9da", table_name=table)
+        mtree_cli.table_diff("eqn-t9da", table_name=table)
         captured = capsys.readouterr()
         clean_output = re.sub(
             r"\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])", "", captured.out
@@ -572,9 +590,14 @@ class TestMerkleTreesSimple(abc.ABC):
         for diff in diff_data["diffs"]["n1/n2"]["n1"]:
             assert diff["first_name"] == "NonContiguous"
 
-        cli.table_repair_cli("eqn-t9da", table, diff_file, source_of_truth="n2")
+        cli.table_repair(
+            cluster_name="eqn-t9da",
+            table_name=table,
+            diff_file=diff_file,
+            source_of_truth="n2",
+        )
 
-    def test_uuid_pkey_support(self, cli, capsys, nodes):
+    def test_uuid_pkey_support(self, cli, mtree_cli, capsys, nodes):
         """Test that the trigger function works with UUID primary keys"""
         table_name = "public.uuid_test"
         cluster_name = "eqn-t9da"
@@ -616,8 +639,7 @@ class TestMerkleTreesSimple(abc.ABC):
                 cur.close()
                 conn.close()
 
-            cli.merkle_tree_cli(
-                "build",
+            mtree_cli.build(
                 cluster_name,
                 table_name=table_name,
                 block_size=5,
@@ -638,9 +660,7 @@ class TestMerkleTreesSimple(abc.ABC):
             cur.close()
             conn.close()
 
-            cli.merkle_tree_cli(
-                "update", cluster_name, table_name=table_name, nodes="n1"
-            )
+            mtree_cli.update(cluster_name, table_name=table_name, nodes="n1")
             captured = capsys.readouterr()
             assert "successfully updated" in captured.out.lower()
 
@@ -658,9 +678,9 @@ class TestMerkleTreesSimple(abc.ABC):
                     print(f"Cleanup failed for {table_name} on {node}: {e}")
 
     @pytest.mark.parametrize("table", ["public.customers", "public.customers2"])
-    def test_mtree_table_cleanup(self, cli, capsys, table, nodes):
-        cli.merkle_tree_cli("teardown", "eqn-t9da", table_name=table)
-
+    def test_mtree_table_cleanup(self, mtree_cli, capsys, table, nodes):
+        """Test merkle tree table cleanup"""
+        mtree_cli.teardown("eqn-t9da", table_name=table)
         captured = capsys.readouterr()
 
         for node in nodes:
@@ -670,8 +690,8 @@ class TestMerkleTreesSimple(abc.ABC):
                 f"Dropped table-specific merkle tree objects on {node}" in captured.out
             )
 
-    def test_mtree_cleanup(self, cli, capsys, nodes):
-        cli.merkle_tree_cli("teardown", "eqn-t9da")
+    def test_mtree_cleanup(self, mtree_cli, capsys, nodes):
+        mtree_cli.teardown("eqn-t9da")
 
         captured = capsys.readouterr()
 

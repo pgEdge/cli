@@ -175,7 +175,7 @@ class TestBlockBoundaries:
             conn.close()
 
             # Run table-diff with block size of 1000
-            cli.table_diff_cli(
+            cli.table_diff(
                 "eqn-t9da",
                 f"public.{table}",
                 block_size=block_size,
@@ -204,7 +204,7 @@ class TestBlockBoundaries:
                 ), "Expected first_name to be Modified"
 
             # Repair everything now
-            cli.table_repair_cli(
+            cli.table_repair(
                 "eqn-t9da", f"public.{table}", diff_file, source_of_truth="n1"
             )
 

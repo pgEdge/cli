@@ -164,7 +164,10 @@ class TestDataTypes(TestSimple):
             conn.close()
 
             # Execute table diff and verify results
-            cli.table_diff_cli("eqn-t9da", table_name)
+            cli.table_diff(
+                cluster_name="eqn-t9da",
+                table_name=table_name,
+            )
 
             # Capture and verify output
             captured = capsys.readouterr()
@@ -287,7 +290,10 @@ class TestDataTypes(TestSimple):
             pytest.fail(f"Failed to introduce diffs on n2: {str(e)}")
 
         # Run table-diff to get the diff file
-        cli.table_diff_cli("eqn-t9da", table_name)
+        cli.table_diff(
+            cluster_name="eqn-t9da",
+            table_name=table_name,
+        )
         captured = capsys.readouterr()
         clean_output = re.sub(
             r"\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])", "", captured.out
@@ -297,7 +303,12 @@ class TestDataTypes(TestSimple):
         path = match.group(1)
 
         # Run table-rerun with hostdb behavior
-        cli.table_rerun_cli("eqn-t9da", path, table_name, "demo", False)
+        cli.table_rerun(
+            cluster_name="eqn-t9da",
+            diff_file=path,
+            table_name=table_name,
+            dbname="demo",
+        )
 
         captured = capsys.readouterr()
         clean_output = re.sub(
@@ -398,7 +409,10 @@ class TestDataTypes(TestSimple):
             conn.close()
 
             # Run table-diff to get the diff file
-            cli.table_diff_cli("eqn-t9da", table_name)
+            cli.table_diff(
+                cluster_name="eqn-t9da",
+                table_name=table_name,
+            )
             captured = capsys.readouterr()
             clean_output = re.sub(
                 r"\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])", "", captured.out
@@ -408,8 +422,11 @@ class TestDataTypes(TestSimple):
             diff_file_path.path = match.group(1)
 
             # Run table-repair using n2 as source of truth
-            cli.table_repair_cli(
-                "eqn-t9da", table_name, diff_file_path.path, source_of_truth="n2"
+            cli.table_repair(
+                cluster_name="eqn-t9da",
+                table_name=table_name,
+                diff_file=diff_file_path.path,
+                source_of_truth="n2",
             )
 
             # Verify the repair worked by checking values on n1

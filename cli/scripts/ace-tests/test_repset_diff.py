@@ -106,7 +106,10 @@ class TestRepsetDiff():
             )
 
             # Run repset-diff
-            cli.repset_diff_cli("eqn-t9da", "test_repset")
+            cli.repset_diff(
+                cluster_name="eqn-t9da",
+                repset_name="test_repset",
+            )
 
             # Capture and clean the output
             captured = capsys.readouterr()
@@ -152,8 +155,10 @@ class TestRepsetDiff():
             )
 
             # Run repset-diff with customers table skipped
-            cli.repset_diff_cli(
-                "eqn-t9da", "test_repset", skip_tables="public.customers"
+            cli.repset_diff(
+                cluster_name="eqn-t9da",
+                repset_name="test_repset",
+                skip_tables="public.customers",
             )
 
             # Capture and clean the output
@@ -185,7 +190,11 @@ class TestRepsetDiff():
             )
 
             # Run repset-diff with skip file
-            cli.repset_diff_cli("eqn-t9da", "test_repset", skip_file=str(skip_file))
+            cli.repset_diff(
+                cluster_name="eqn-t9da",
+                repset_name="test_repset",
+                skip_file=str(skip_file),
+            )
 
             # Capture and clean the output
             captured = capsys.readouterr()
@@ -199,9 +208,9 @@ class TestRepsetDiff():
             ), "Table not skipped"
 
             # Cleanup by repairing
-            cli.table_repair_cli(
-                "eqn-t9da",
-                "public.customers",
+            cli.table_repair(
+                cluster_name="eqn-t9da",
+                table_name="public.customers",
                 diff_file=diff_file_path.path,
                 source_of_truth="n1",
             )

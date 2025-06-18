@@ -50,7 +50,12 @@ def set_run_dir():
 
 @pytest.fixture(scope="session")
 def cli():
-    return load_mod("ace_cli")
+    return load_mod("ace_cli").AceCLI()
+
+
+@pytest.fixture(scope="session")
+def mtree_cli(cli):
+    return cli.mtree
 
 
 @pytest.fixture(scope="session")

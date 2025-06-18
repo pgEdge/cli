@@ -15,7 +15,11 @@ class TestTableFilter:
         """Test table diff with filter when no differences exist"""
 
         expected_total_rows_checked = 297
-        cli.table_diff_cli("eqn-t9da", table_name, table_filter=table_filter)
+        cli.table_diff(
+            cluster_name="eqn-t9da",
+            table_name=table_name,
+            table_filter=table_filter,
+        )
         captured = capsys.readouterr()
         output = captured.out
 
@@ -69,7 +73,11 @@ class TestTableFilter:
             expected_total_rows_checked = 297
 
             # Run table-diff with filter
-            cli.table_diff_cli("eqn-t9da", table_name, table_filter=table_filter)
+            cli.table_diff(
+                cluster_name="eqn-t9da",
+                table_name=table_name,
+                table_filter=table_filter,
+            )
             captured = capsys.readouterr()
             output = captured.out
 
@@ -116,7 +124,11 @@ class TestTableFilter:
         try:
             # Differences from previous test should still exist in index < 100
             # Run table-diff with filter that excludes those rows
-            cli.table_diff_cli("eqn-t9da", table_name, table_filter=table_filter)
+            cli.table_diff(
+                cluster_name="eqn-t9da",
+                table_name=table_name,
+                table_filter=table_filter,
+            )
             captured = capsys.readouterr()
             output = captured.out
             expected_total_rows_checked = 29703  # 9901 x 3
@@ -146,10 +158,10 @@ class TestTableFilter:
     ):
         """Test table repair with filter"""
         # Run repair with the same filter
-        cli.table_repair_cli(
-            "eqn-t9da",
-            table_name,
-            diff_file_path.path,
+        cli.table_repair(
+            cluster_name="eqn-t9da",
+            table_name=table_name,
+            diff_file=diff_file_path.path,
             source_of_truth="n1",
         )
 
@@ -163,7 +175,11 @@ class TestTableFilter:
         ), f"Table repair failed. Output: {output}"
 
         # Verify repair worked within filter range
-        cli.table_diff_cli("eqn-t9da", table_name, table_filter=table_filter)
+        cli.table_diff(
+            cluster_name="eqn-t9da",
+            table_name=table_name,
+            table_filter=table_filter,
+        )
         captured = capsys.readouterr()
         output = captured.out
         assert (
@@ -195,7 +211,11 @@ class TestTableFilter:
             pytest.fail(f"Failed to introduce diffs for rerun test: {str(e)}")
 
         # Get diff file with filter
-        cli.table_diff_cli("eqn-t9da", table_name, table_filter=table_filter)
+        cli.table_diff(
+            cluster_name="eqn-t9da",
+            table_name=table_name,
+            table_filter=table_filter,
+        )
         captured = capsys.readouterr()
         clean_output = re.sub(
             r"\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])", "", captured.out
@@ -204,12 +224,11 @@ class TestTableFilter:
         assert match, "Diff file path not found in output"
         path = match.group(1)
 
-        cli.table_rerun_cli(
-            "eqn-t9da",
-            path,
-            table_name,
-            "demo",
-            False,
+        cli.table_rerun(
+            cluster_name="eqn-t9da",
+            diff_file=path,
+            table_name=table_name,
+            dbname="demo",
         )
         captured = capsys.readouterr()
         output = captured.out
@@ -241,7 +260,11 @@ class TestTableFilter:
             mock_compare.side_effect = Exception("Simulated worker failure")
 
             with pytest.raises(SystemExit):
-                cli.table_diff_cli("eqn-t9da", table_name, table_filter=table_filter)
+                cli.table_diff(
+                    cluster_name="eqn-t9da",
+                    table_name=table_name,
+                    table_filter=table_filter,
+                )
 
         for host in ["n1", "n2", "n3"]:
             try:
