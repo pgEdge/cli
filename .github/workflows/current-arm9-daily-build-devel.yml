@@ -2,7 +2,7 @@ name: Current Daily Build Devel - arm9
 
 # Define default environment variables for carrying defaults at the top for easy modification
 env:
-  DEFAULT_CLI_BRANCH: "v25_STABLE"      # Default CLI branch for scheduled runs
+  DEFAULT_CLI_BRANCH: "main"          # Default CLI branch for scheduled runs
   DEFAULT_MODE: "current"             # Always "current" for this workflow
   DEFAULT_COMPONENT: "spock50"        # Default spock component name
   DEFAULT_BRANCH: "main"              # Default branch for the spock component
@@ -15,11 +15,11 @@ on:
       cli_branch:
         description: "Select the CLI branch to build from (e.g. v25_STABLE)"
         required: true
-        default: "v25_STABLE"
+        default: "main"
         type: choice
         options:
-          - v25_STABLE
           - main
+          - v25_STABLE
           - REL24_10
 
       component:
@@ -58,7 +58,7 @@ on:
         default: "false"
 
   schedule:
-    - cron: "30 0 * * *"  # 12:30 AM UTC, 8:30pm EST.. 1 hour after stable build at 11:30 PM UTC
+    - cron: "50 23 * * *"  # 11:50 PM UTC
 
 jobs:
   build-current-arm9:
