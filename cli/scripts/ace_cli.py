@@ -19,162 +19,237 @@ import util
 from ace_exceptions import AceException
 
 
-def merkle_tree_cli(
-    mode,
-    cluster_name,
-    table_name=None,
-    dbname=None,
-    analyse=False,
-    rebalance=False,
-    recreate_objects=False,
-    block_size=config.MTREE_BLOCK_SIZE,
-    max_cpu_ratio=config.MAX_CPU_RATIO,
-    batch_size=1,
-    write_ranges=False,
-    ranges_file=None,
-    nodes="all",
-    output="json",
-    quiet_mode=False,
-    override_block_size=False,
-):
+class MerkleTreeCLI(object):
     """
-    Description:
-
-    Manages Merkle trees for large tables to enable efficient table diffs.
-    Supports several modes of operation:
-        * 'init': Initialises the database with necessary objects for Merkle trees.
-        This is a one-time setup per database.
-        * 'build': Builds a new Merkle tree for a specified table.
-        * 'update': Updates an existing Merkle tree with changes since the last build
-        or update.
-        * 'diff': Compares the Merkle trees of a table across cluster nodes and
-        reports any inconsistencies.
-        * 'teardown': Removes Merkle tree objects. Can be for a specific table or
-        for the entire database if table_name is omitted.
-
-    Args:
-        mode (str): The operation to perform. One of 'init', 'build', 'update',
-            'diff', 'teardown'.
-        cluster_name (str): Name of the cluster where the operation should be performed.
-        table_name (str, optional): Schema-qualified name of the table for the
-            Merkle tree operation. Required for 'build', 'update', and 'diff' modes.
-            Optional for 'teardown'.
-        dbname (str, optional): Name of the database to use. If omitted,
-            defaults to the first database in the cluster configuration file.
-        analyse (bool, optional): If True during 'build' mode, runs ANALYZE on the
-            table to get a more accurate row count for building the tree. This may
-            be time-consuming depending on the size of the table. Defaults to False.
-        rebalance (bool, optional): If True during 'update' mode, triggers rebalancing
-            of the tree by merging smaller blocks. This can be a disruptive operation
-            and is best run during maintenance windows. Defaults to False.
-        recreate_objects (bool, optional): If True during 'build' mode, drops and
-            recreates all Merkle tree objects before building. Defaults to False.
-        block_size (int, optional): The number of rows per leaf block in the Merkle
-            tree. Used in 'build' mode. Defaults to config.MTREE_BLOCK_SIZE.
-        max_cpu_ratio (float, optional): Maximum CPU utilisation for parallel
-            operations. The accepted range is 0.0-1.0. Defaults to
-            config.MAX_CPU_RATIO.
-        batch_size (int, optional): For 'diff' mode, the number of blocks each worker
-            should process in a batch. Defaults to 1.
-        write_ranges (bool, optional): If True during 'build' mode, writes the
-            calculated block ranges to a JSON file. Can be useful to build the tree
-            for large tables in parallel on each node. Defaults to False.
-        ranges_file (str, optional): Path to a JSON file containing pre-computed
-            block ranges to be used in 'build' mode. If specified, this skips
-            the range calculation in 'build' mode and treats the 'build' as an
-            isolated, node-specific operation.  Defaults to None.
-        nodes (str, optional): Comma-separated subset of nodes on which the
-            command will be executed. Defaults to "all".
-        output (str, optional): Output format for the 'diff' operation.
-            Acceptable values are "json", "csv", and "html". Defaults to "json".
-        quiet_mode (bool, optional): Whether to suppress output in stdout.
-            Defaults to False.
-        override_block_size (bool, optional): If True, allows using a block size
-            that might otherwise be considered unsafe or suboptimal. Defaults to False.
-
-    Raises:
-        AceException: If there's an error specific to the ACE operation.
-        Exception: For any unexpected errors during the Merkle tree operation.
-
-    Returns:
-        None. The function performs the Merkle tree operation and handles any
-        exceptions. All output messages are printed to stdout since it's a CLI
-        function.
+    Use Merkle Trees for efficient table diffs.
     """
-    task_id = ace_db.generate_task_id()
 
-    try:
-        mtree_task = MerkleTreeTask(
-            mode=mode,
+    def _execute_task(self, mode, **kwargs):
+        """Helper to run merkle tree tasks."""
+        task_id = ace_db.generate_task_id()
+
+        try:
+            mtree_task = MerkleTreeTask(
+                mode=mode,
+                cluster_name=kwargs.get("cluster_name"),
+                _table_name=kwargs.get("table_name"),
+                _dbname=kwargs.get("dbname"),
+                analyse=kwargs.get("analyse", False),
+                rebalance=kwargs.get("rebalance", False),
+                recreate_objects=kwargs.get("recreate_objects", False),
+                block_size=kwargs.get("block_size", config.MTREE_BLOCK_SIZE),
+                max_cpu_ratio=kwargs.get("max_cpu_ratio", config.MAX_CPU_RATIO),
+                batch_size=kwargs.get("batch_size", 1),
+                output=kwargs.get("output", "json"),
+                quiet_mode=kwargs.get("quiet_mode", False),
+                write_ranges=kwargs.get("write_ranges", False),
+                ranges_file=kwargs.get("ranges_file"),
+                _nodes=kwargs.get("nodes", "all"),
+                invoke_method="cli",
+            )
+            mtree_task.scheduler.task_id = task_id
+            mtree_task.scheduler.task_type = f"mtree-{mode}"
+            mtree_task.scheduler.task_status = "RUNNING"
+            mtree_task.scheduler.started_at = datetime.now()
+
+            override_block_size = kwargs.get("override_block_size", False)
+
+            if ((mode == "teardown") and (not kwargs.get("table_name"))) or (
+                mode == "init"
+            ):
+                ace.validate_merkle_tree_inputs(
+                    mtree_task,
+                    skip_table_check=True,
+                    override_block_size=override_block_size,
+                )
+            else:
+                ace.validate_merkle_tree_inputs(
+                    mtree_task, override_block_size=override_block_size
+                )
+
+            ace_db.create_ace_task(task=mtree_task)
+
+            if mode == "init":
+                ace_mtree.mtree_init_helper(mtree_task)
+            elif mode == "build":
+                ace_mtree.build_mtree(mtree_task)
+            elif mode == "update":
+                ace_mtree.update_mtree(mtree_task)
+            elif mode == "table-diff":
+                ace_mtree.merkle_tree_diff(mtree_task)
+            elif mode == "teardown":
+                ace_mtree.mtree_teardown_helper(mtree_task)
+
+            mtree_task.connection_pool.close_all()
+        except AceException as e:
+            util.exit_message(str(e))
+        except Exception as e:
+            traceback.print_exc()
+            util.exit_message(f"Unexpected error while running merkle tree: {e}")
+
+    def init(self, cluster_name, dbname=None, nodes="all", quiet_mode=False):
+        """
+        Initialises the database with necessary objects for Merkle trees.
+
+        Args:
+            cluster_name (str): Name of the cluster.
+            dbname (str, optional): Name of the database.
+            nodes (str, optional): Comma-separated subset of nodes.
+            quiet_mode (bool, optional): Suppress output.
+        """
+        self._execute_task(
+            "init",
             cluster_name=cluster_name,
-            _table_name=table_name,
-            _dbname=dbname,
+            dbname=dbname,
+            nodes=nodes,
+            quiet_mode=quiet_mode,
+        )
+
+    def build(
+        self,
+        cluster_name,
+        table_name,
+        dbname=None,
+        analyse=False,
+        recreate_objects=False,
+        block_size=config.MTREE_BLOCK_SIZE,
+        max_cpu_ratio=config.MAX_CPU_RATIO,
+        write_ranges=False,
+        ranges_file=None,
+        nodes="all",
+        quiet_mode=False,
+        override_block_size=False,
+    ):
+        """
+        Builds a new Merkle tree for a table.
+
+        Args:
+            cluster_name (str): Name of the cluster.
+            table_name (str): Schema-qualified table name.
+            dbname (str, optional): Name of the database.
+            analyse (bool, optional): Run ANALYZE on the table.
+            recreate_objects (bool, optional): Drop and recreate Merkle tree objects.
+            block_size (int, optional): Rows per leaf block.
+            max_cpu_ratio (float, optional): Max CPU for parallel operations.
+            write_ranges (bool, optional): Write block ranges to a JSON file.
+            ranges_file (str, optional): Path to a file with pre-computed ranges.
+            nodes (str, optional): Comma-separated subset of nodes.
+            quiet_mode (bool, optional): Suppress output.
+            override_block_size (bool, optional): Allow unsafe block size.
+        """
+        self._execute_task(
+            "build",
+            cluster_name=cluster_name,
+            table_name=table_name,
+            dbname=dbname,
             analyse=analyse,
-            rebalance=rebalance,
             recreate_objects=recreate_objects,
             block_size=block_size,
             max_cpu_ratio=max_cpu_ratio,
-            batch_size=batch_size,
-            output=output,
-            quiet_mode=quiet_mode,
             write_ranges=write_ranges,
             ranges_file=ranges_file,
-            _nodes=nodes,
-            invoke_method="cli",
+            nodes=nodes,
+            quiet_mode=quiet_mode,
+            override_block_size=override_block_size,
         )
-        mtree_task.scheduler.task_id = task_id
-        mtree_task.scheduler.task_type = f"mtree-{mode}"
-        mtree_task.scheduler.task_status = "RUNNING"
-        mtree_task.scheduler.started_at = datetime.now()
 
-        if ((mode == "teardown") and (not table_name)) or (mode == "init"):
-            ace.validate_merkle_tree_inputs(
-                mtree_task,
-                skip_table_check=True,
-                override_block_size=override_block_size,
-            )
-        else:
-            ace.validate_merkle_tree_inputs(
-                mtree_task, override_block_size=override_block_size
-            )
+    def update(
+        self,
+        cluster_name,
+        table_name,
+        dbname=None,
+        rebalance=False,
+        max_cpu_ratio=config.MAX_CPU_RATIO,
+        nodes="all",
+        quiet_mode=False,
+    ):
+        """
+        Updates an existing Merkle tree.
 
-        ace_db.create_ace_task(task=mtree_task)
+        Args:
+            cluster_name (str): Name of the cluster.
+            table_name (str): Schema-qualified table name.
+            dbname (str, optional): Name of the database.
+            rebalance (bool, optional): Trigger rebalancing of the tree.
+            max_cpu_ratio (float, optional): Max CPU for parallel operations.
+            nodes (str, optional): Comma-separated subset of nodes.
+            quiet_mode (bool, optional): Suppress output.
+        """
+        self._execute_task(
+            "update",
+            cluster_name=cluster_name,
+            table_name=table_name,
+            dbname=dbname,
+            rebalance=rebalance,
+            max_cpu_ratio=max_cpu_ratio,
+            nodes=nodes,
+            quiet_mode=quiet_mode,
+        )
 
-        if mode == "init":
-            ace_mtree.mtree_init_helper(mtree_task)
-        elif mode == "build":
-            ace_mtree.build_mtree(mtree_task)
-        elif mode == "update":
-            ace_mtree.update_mtree(mtree_task)
-        elif mode == "table-diff":
-            ace_mtree.merkle_tree_diff(mtree_task)
-        elif mode == "teardown":
-            ace_mtree.mtree_teardown_helper(mtree_task)
+    def table_diff(
+        self,
+        cluster_name,
+        table_name,
+        dbname=None,
+        max_cpu_ratio=config.MAX_CPU_RATIO,
+        batch_size=1,
+        nodes="all",
+        output="json",
+        quiet_mode=False,
+    ):
+        """
+        Compares Merkle trees of a table across cluster nodes.
 
-        mtree_task.connection_pool.close_all()
-    except AceException as e:
-        util.exit_message(str(e))
-    except Exception as e:
-        traceback.print_exc()
-        util.exit_message(f"Unexpected error while running merkle tree: {e}")
+        Args:
+            cluster_name (str): Name of the cluster.
+            table_name (str): Schema-qualified table name.
+            dbname (str, optional): Name of the database.
+            max_cpu_ratio (float, optional): Max CPU for parallel operations.
+            batch_size (int, optional): Number of blocks per worker batch.
+            nodes (str, optional): Comma-separated subset of nodes.
+            output (str, optional): Output format (json, csv, html).
+            quiet_mode (bool, optional): Suppress output.
+        """
+        self._execute_task(
+            "table-diff",
+            cluster_name=cluster_name,
+            table_name=table_name,
+            dbname=dbname,
+            max_cpu_ratio=max_cpu_ratio,
+            batch_size=batch_size,
+            nodes=nodes,
+            output=output,
+            quiet_mode=quiet_mode,
+        )
+
+    def teardown(
+        self, cluster_name, table_name=None, dbname=None, nodes="all", quiet_mode=False
+    ):
+        """
+        Removes Merkle tree objects.
+
+        Args:
+            cluster_name (str): Name of the cluster.
+            table_name (str, optional): Schema-qualified table name. If omitted,
+                removes objects for the entire database.
+            dbname (str, optional): Name of the database.
+            nodes (str, optional): Comma-separated subset of nodes.
+            quiet_mode (bool, optional): Suppress output.
+        """
+        self._execute_task(
+            "teardown",
+            cluster_name=cluster_name,
+            table_name=table_name,
+            dbname=dbname,
+            nodes=nodes,
+            quiet_mode=quiet_mode,
+        )
 
 
-def table_diff_cli(
-    cluster_name,
-    table_name,
-    dbname=None,
-    block_size=config.DIFF_BLOCK_SIZE,
-    max_cpu_ratio=config.MAX_CPU_RATIO,
-    output="json",
-    nodes="all",
-    batch_size=config.DIFF_BATCH_SIZE,
-    table_filter=None,
-    quiet=False,
-    override_block_size=False,
-):
+class TableDiffCLI(object):
     """
     Compare a table across a cluster and produce a report showing
-    any differences.
+    differences, if any.
 
     Args:
         cluster_name (str): Name of the cluster where the operation should be performed.
@@ -198,6 +273,8 @@ def table_diff_cli(
             customer_id less than 100.  If omitted, the entire table is compared.
         quiet (bool, optional): Whether to suppress output in stdout. Defaults
             to False.
+        override_block_size (bool, optional): Allow unsafe block size. Defaults
+            to False.
 
     Raises:
         AceException: If there's an error specific to the ACE operation.
@@ -208,54 +285,58 @@ def table_diff_cli(
         exceptions. All output messages are printed to stdout since it's a CLI
         function.
     """
-    task_id = ace_db.generate_task_id()
 
-    try:
-        td_task = TableDiffTask(
-            cluster_name=cluster_name,
-            _table_name=table_name,
-            _dbname=dbname,
-            block_size=block_size,
-            max_cpu_ratio=max_cpu_ratio,
-            output=output,
-            _nodes=nodes,
-            batch_size=batch_size,
-            quiet_mode=quiet,
-            table_filter=table_filter,
-            invoke_method="cli",
-            _override_block_size=override_block_size,
-        )
-        td_task.scheduler.task_id = task_id
-        td_task.scheduler.task_type = "table-diff"
-        td_task.scheduler.task_status = "RUNNING"
-        td_task.scheduler.started_at = datetime.now()
+    def __init__(self):
+        pass
 
-        ace.validate_table_diff_inputs(td_task)
-        ace_db.create_ace_task(task=td_task)
-        ace_core.table_diff(td_task)
-        td_task.connection_pool.close_all()
-    except AceException as e:
-        util.exit_message(str(e))
-    except Exception as e:
-        traceback.print_exc()
-        util.exit_message(f"Unexpected error while running table diff: {e}")
+    def __call__(
+        self,
+        cluster_name,
+        table_name,
+        dbname=None,
+        block_size=config.DIFF_BLOCK_SIZE,
+        max_cpu_ratio=config.MAX_CPU_RATIO,
+        output="json",
+        nodes="all",
+        batch_size=config.DIFF_BATCH_SIZE,
+        table_filter=None,
+        quiet=False,
+        override_block_size=False,
+    ):
+        task_id = ace_db.generate_task_id()
+
+        try:
+            td_task = TableDiffTask(
+                cluster_name=cluster_name,
+                _table_name=table_name,
+                _dbname=dbname,
+                block_size=block_size,
+                max_cpu_ratio=max_cpu_ratio,
+                output=output,
+                _nodes=nodes,
+                batch_size=batch_size,
+                quiet_mode=quiet,
+                table_filter=table_filter,
+                invoke_method="cli",
+                _override_block_size=override_block_size,
+            )
+            td_task.scheduler.task_id = task_id
+            td_task.scheduler.task_type = "table-diff"
+            td_task.scheduler.task_status = "RUNNING"
+            td_task.scheduler.started_at = datetime.now()
+
+            ace.validate_table_diff_inputs(td_task)
+            ace_db.create_ace_task(task=td_task)
+            ace_core.table_diff(td_task)
+            td_task.connection_pool.close_all()
+        except AceException as e:
+            util.exit_message(str(e))
+        except Exception as e:
+            traceback.print_exc()
+            util.exit_message(f"Unexpected error while running table diff: {e}")
 
 
-def table_repair_cli(
-    cluster_name,
-    table_name,
-    diff_file,
-    source_of_truth=None,
-    dbname=None,
-    dry_run=False,
-    quiet=False,
-    generate_report=False,
-    insert_only=False,
-    upsert_only=False,
-    fix_nulls=False,
-    fire_triggers=False,
-    bidirectional=False,
-):
+class TableRepairCLI(object):
     """
     Repair a table across a cluster by fixing data inconsistencies identified
     in a table-diff operation.
@@ -282,9 +363,9 @@ def table_repair_cli(
             Does not need the source of truth to be specified. Must be used
             only in special cases. This is not a recommended option for
             repairing divergence. Defaults to False.
-        fire_triggers (bool, optional): If True, instructs triggers to fire
-            when a repair is performed; note that ENABLE ALWAYS triggers will
-            fire regardless of the value.
+        fire_triggers (bool, optional): If True, fires triggers on a table, if any,
+            during the repair process. Note that ENABLE ALWAYS triggers will fire
+            regardless of the value.
         bidirectional (bool, optional): If True, performs a bidirectional
             repair, applies differences found between nodes to create a
             distinct union of the content. In a distinct union, each row that
@@ -303,57 +384,72 @@ def table_repair_cli(
         exceptions. All output messages are printed to stdout since it's a CLI
         function.
     """
-    task_id = ace_db.generate_task_id()
 
-    try:
-        tr_task = TableRepairTask(
-            cluster_name=cluster_name,
-            diff_file_path=diff_file,
-            source_of_truth=source_of_truth,
-            _table_name=table_name,
-            _dbname=dbname,
-            dry_run=dry_run,
-            quiet_mode=quiet,
-            generate_report=generate_report,
-            insert_only=insert_only,
-            upsert_only=upsert_only,
-            fix_nulls=fix_nulls,
-            fire_triggers=fire_triggers,
-            bidirectional=bidirectional,
-            invoke_method="cli",
-        )
-        tr_task.scheduler.task_id = task_id
-        tr_task.scheduler.task_type = "table-repair"
-        tr_task.scheduler.task_status = "RUNNING"
-        tr_task.scheduler.started_at = datetime.now()
+    def __init__(self):
+        pass
 
-        ace.validate_table_repair_inputs(tr_task)
-        ace_db.create_ace_task(task=tr_task)
+    def __call__(
+        self,
+        cluster_name,
+        table_name,
+        diff_file,
+        source_of_truth=None,
+        dbname=None,
+        dry_run=False,
+        quiet=False,
+        generate_report=False,
+        insert_only=False,
+        upsert_only=False,
+        fix_nulls=False,
+        fire_triggers=False,
+        bidirectional=False,
+    ):
 
-        if fix_nulls:
-            ace_core.table_repair_fix_nulls(tr_task)
-        elif bidirectional:
-            ace_core.table_repair_bidirectional(tr_task)
-        else:
-            ace_core.table_repair(tr_task)
+        task_id = ace_db.generate_task_id()
 
-        tr_task.connection_pool.close_all()
-    except AceException as e:
-        util.exit_message(str(e))
-    except Exception as e:
-        traceback.print_exc()
-        util.exit_message(f"Unexpected error while running table repair: {e}")
+        try:
+            tr_task = TableRepairTask(
+                cluster_name=cluster_name,
+                diff_file_path=diff_file,
+                source_of_truth=source_of_truth,
+                _table_name=table_name,
+                _dbname=dbname,
+                dry_run=dry_run,
+                quiet_mode=quiet,
+                generate_report=generate_report,
+                insert_only=insert_only,
+                upsert_only=upsert_only,
+                fix_nulls=fix_nulls,
+                fire_triggers=fire_triggers,
+                bidirectional=bidirectional,
+                invoke_method="cli",
+            )
+            tr_task.scheduler.task_id = task_id
+            tr_task.scheduler.task_type = "table-repair"
+            tr_task.scheduler.task_status = "RUNNING"
+            tr_task.scheduler.started_at = datetime.now()
+
+            ace.validate_table_repair_inputs(tr_task)
+            ace_db.create_ace_task(task=tr_task)
+
+            if fix_nulls:
+                ace_core.table_repair_fix_nulls(tr_task)
+            elif bidirectional:
+                ace_core.table_repair_bidirectional(tr_task)
+            else:
+                ace_core.table_repair(tr_task)
+
+            tr_task.connection_pool.close_all()
+        except AceException as e:
+            util.exit_message(str(e))
+        except Exception as e:
+            traceback.print_exc()
+            util.exit_message(f"Unexpected error while running table repair: {e}")
 
 
-def table_rerun_cli(
-    cluster_name,
-    diff_file,
-    table_name,
-    dbname=None,
-    quiet=False,
-):
+class TableRerunCLI(object):
     """
-    Reruns a table diff operation based on a previous diff file.
+    Rerun a table diff operation based on a previous diff file.
 
     Args:
         cluster_name (str): Name of the cluster where the operation should be performed.
@@ -375,59 +471,59 @@ def table_rerun_cli(
         exceptions. All output messages are printed to stdout since it's a CLI
         function.
     """
-    task_id = ace_db.generate_task_id()
 
-    try:
-        td_task = TableDiffTask(
-            cluster_name=cluster_name,
-            _table_name=table_name,
-            _dbname=dbname,
-            block_size=config.DIFF_BLOCK_SIZE,
-            max_cpu_ratio=config.MAX_CPU_RATIO,
-            output="json",
-            _nodes="all",
-            batch_size=config.DIFF_BATCH_SIZE,
-            table_filter=None,
-            quiet_mode=quiet,
-            diff_file_path=diff_file,
-            invoke_method="cli",
-        )
-        td_task.scheduler.task_id = task_id
-        td_task.scheduler.task_type = "table-rerun"
-        td_task.scheduler.task_status = "RUNNING"
-        td_task.scheduler.started_at = datetime.now()
+    def __init__(self):
+        pass
 
-        ace.validate_table_diff_inputs(td_task)
-        ace_db.create_ace_task(task=td_task)
-    except AceException as e:
-        util.exit_message(str(e))
-    except Exception as e:
-        traceback.print_exc()
-        util.exit_message(f"Unexpected error while running table rerun: {e}")
+    def __call__(
+        self,
+        cluster_name,
+        diff_file,
+        table_name,
+        dbname=None,
+        quiet=False,
+    ):
+        task_id = ace_db.generate_task_id()
 
-    try:
-        ace_core.table_rerun_temptable(td_task)
-        td_task.connection_pool.close_all()
-    except AceException as e:
-        util.exit_message(str(e))
-    except Exception as e:
-        traceback.print_exc()
-        util.exit_message(f"Unexpected error while running table rerun: {e}")
+        try:
+            td_task = TableDiffTask(
+                cluster_name=cluster_name,
+                _table_name=table_name,
+                _dbname=dbname,
+                block_size=config.DIFF_BLOCK_SIZE,
+                max_cpu_ratio=config.MAX_CPU_RATIO,
+                output="json",
+                _nodes="all",
+                batch_size=config.DIFF_BATCH_SIZE,
+                table_filter=None,
+                quiet_mode=quiet,
+                diff_file_path=diff_file,
+                invoke_method="cli",
+            )
+            td_task.scheduler.task_id = task_id
+            td_task.scheduler.task_type = "table-rerun"
+            td_task.scheduler.task_status = "RUNNING"
+            td_task.scheduler.started_at = datetime.now()
+
+            ace.validate_table_diff_inputs(td_task)
+            ace_db.create_ace_task(task=td_task)
+        except AceException as e:
+            util.exit_message(str(e))
+        except Exception as e:
+            traceback.print_exc()
+            util.exit_message(f"Unexpected error while running table rerun: {e}")
+
+        try:
+            ace_core.table_rerun_temptable(td_task)
+            td_task.connection_pool.close_all()
+        except AceException as e:
+            util.exit_message(str(e))
+        except Exception as e:
+            traceback.print_exc()
+            util.exit_message(f"Unexpected error while running table rerun: {e}")
 
 
-def repset_diff_cli(
-    cluster_name,
-    repset_name,
-    dbname=None,
-    block_size=config.DIFF_BLOCK_SIZE,
-    max_cpu_ratio=config.MAX_CPU_RATIO,
-    output="json",
-    nodes="all",
-    batch_size=config.DIFF_BATCH_SIZE,
-    quiet=False,
-    skip_tables=None,
-    skip_file=None,
-):
+class RepsetDiffCLI(object):
     """
     Compare a repset across a cluster and produce a report showing
     any differences.
@@ -463,107 +559,61 @@ def repset_diff_cli(
         exceptions. All output messages are printed to stdout since it's a CLI
         function.
     """
-    task_id = ace_db.generate_task_id()
 
-    try:
-        rd_task = RepsetDiffTask(
-            cluster_name=cluster_name,
-            _dbname=dbname,
-            repset_name=repset_name,
-            block_size=block_size,
-            max_cpu_ratio=max_cpu_ratio,
-            output=output,
-            _nodes=nodes,
-            batch_size=batch_size,
-            quiet_mode=quiet,
-            invoke_method="cli",
-            skip_tables=skip_tables,
-            skip_file=skip_file,
-        )
-        rd_task.scheduler.task_id = task_id
-        rd_task.scheduler.task_type = "repset-diff"
-        rd_task.scheduler.task_status = "RUNNING"
-        rd_task.scheduler.started_at = datetime.now()
+    def __init__(self):
+        pass
 
-        ace.validate_repset_diff_inputs(rd_task)
-        ace_db.create_ace_task(task=rd_task)
-        ace_core.multi_table_diff(rd_task)
+    def __call__(
+        self,
+        cluster_name,
+        repset_name,
+        dbname=None,
+        block_size=config.DIFF_BLOCK_SIZE,
+        max_cpu_ratio=config.MAX_CPU_RATIO,
+        output="json",
+        nodes="all",
+        batch_size=config.DIFF_BATCH_SIZE,
+        quiet=False,
+        skip_tables=None,
+        skip_file=None,
+    ):
+        task_id = ace_db.generate_task_id()
 
-        # TODO: Figure out a way to handle repset-level connection pooling
-        # This close_all() is redundant currently
-        rd_task.connection_pool.close_all()
-    except AceException as e:
-        util.exit_message(str(e))
-    except Exception as e:
-        traceback.print_exc()
-        util.exit_message(f"Unexpected error while running repset diff: {e}")
+        try:
+            rd_task = RepsetDiffTask(
+                cluster_name=cluster_name,
+                _dbname=dbname,
+                repset_name=repset_name,
+                block_size=block_size,
+                max_cpu_ratio=max_cpu_ratio,
+                output=output,
+                _nodes=nodes,
+                batch_size=batch_size,
+                quiet_mode=quiet,
+                invoke_method="cli",
+                skip_tables=skip_tables,
+                skip_file=skip_file,
+            )
+            rd_task.scheduler.task_id = task_id
+            rd_task.scheduler.task_type = "repset-diff"
+            rd_task.scheduler.task_status = "RUNNING"
+            rd_task.scheduler.started_at = datetime.now()
 
+            ace.validate_repset_diff_inputs(rd_task)
+            ace_db.create_ace_task(task=rd_task)
+            ace_core.multi_table_diff(rd_task)
 
-def spock_diff_cli(
-    cluster_name,
-    dbname=None,
-    nodes="all",
-    quiet=False,
-):
-    """
-    Compare the spock metadata across a cluster and produce a report showing
-    any differences.
-
-    Args:
-        cluster_name (str): Name of the cluster where the operation should be
-            performed.
-        dbname (str, optional): Name of the database. Defaults to the name of
-            the first database in the cluster configuration.
-        nodes (str, optional): Comma-delimited subset of nodes on which the
-            command will be executed. Defaults to "all".
-        quiet (bool, optional): Whether to suppress output in stdout. Defaults
-            to False.
-
-    Raises:
-        AceException: If there's an error specific to the ACE operation.
-        Exception: For any unexpected errors during the spock diff operation.
-
-    Returns:
-        None. The function performs the spock diff operation and handles any
-        exceptions. All output messages are printed to stdout since it's a CLI
-        function.
-    """
-    task_id = ace_db.generate_task_id()
-
-    try:
-        sd_task = SpockDiffTask(
-            cluster_name=cluster_name,
-            _dbname=dbname,
-            _nodes=nodes,
-            quiet_mode=quiet,
-            invoke_method="cli",
-        )
-        sd_task.scheduler.task_id = task_id
-        sd_task.scheduler.task_type = "spock-diff"
-        sd_task.scheduler.task_status = "RUNNING"
-        sd_task.scheduler.started_at = datetime.now()
-
-        ace.validate_spock_diff_inputs(sd_task)
-        ace_db.create_ace_task(task=sd_task)
-        ace_core.spock_diff(sd_task)
-        sd_task.connection_pool.close_all()
-    except AceException as e:
-        util.exit_message(str(e))
-    except Exception as e:
-        traceback.print_exc()
-        util.exit_message(f"Unexpected error while running spock diff: {e}")
+            # TODO: Figure out a way to handle repset-level connection pooling
+            # This close_all() is redundant currently
+            rd_task.connection_pool.close_all()
+        except AceException as e:
+            util.exit_message(str(e))
+        except Exception as e:
+            traceback.print_exc()
+            util.exit_message(f"Unexpected error while running repset diff: {e}")
 
 
-def schema_diff_cli(
-    cluster_name,
-    schema_name,
-    nodes="all",
-    dbname=None,
-    ddl_only=True,
-    skip_tables=None,
-    skip_file=None,
-    quiet=False,
-):
+class SchemaDiffCLI(object):
     """
     Compare a schema across a cluster and produce a report showing
     any differences.
@@ -594,67 +644,149 @@ def schema_diff_cli(
         exceptions. All output messages are printed to stdout since it's a CLI
         function.
     """
-    task_id = ace_db.generate_task_id()
 
-    try:
-        sc_task = SchemaDiffTask(
-            cluster_name=cluster_name,
-            schema_name=schema_name,
-            _dbname=dbname,
-            _nodes=nodes,
-            ddl_only=ddl_only,
-            skip_tables=skip_tables,
-            skip_file=skip_file,
-            quiet_mode=quiet,
-            invoke_method="cli",
-        )
-        sc_task.scheduler.task_id = task_id
-        sc_task.scheduler.task_type = "schema-diff"
-        sc_task.scheduler.task_status = "RUNNING"
-        sc_task.scheduler.started_at = datetime.now()
+    def __init__(self):
+        pass
 
-        ace.schema_diff_checks(sc_task)
-        ace_db.create_ace_task(task=sc_task)
-        if ddl_only:
-            ace_core.schema_diff_objects(sc_task)
-        else:
-            ace_core.multi_table_diff(sc_task)
-        sc_task.connection_pool.close_all()
-    except AceException as e:
-        util.exit_message(str(e))
-    except Exception as e:
-        traceback.print_exc()
-        util.exit_message(f"Unexpected error while running schema diff: {e}")
+    def __call__(
+        self,
+        cluster_name,
+        schema_name,
+        nodes="all",
+        dbname=None,
+        ddl_only=True,
+        skip_tables=None,
+        skip_file=None,
+        quiet=False,
+    ):
+        task_id = ace_db.generate_task_id()
+
+        try:
+            sc_task = SchemaDiffTask(
+                cluster_name=cluster_name,
+                schema_name=schema_name,
+                _dbname=dbname,
+                _nodes=nodes,
+                ddl_only=ddl_only,
+                skip_tables=skip_tables,
+                skip_file=skip_file,
+                quiet_mode=quiet,
+                invoke_method="cli",
+            )
+            sc_task.scheduler.task_id = task_id
+            sc_task.scheduler.task_type = "schema-diff"
+            sc_task.scheduler.task_status = "RUNNING"
+            sc_task.scheduler.started_at = datetime.now()
+
+            ace.schema_diff_checks(sc_task)
+            ace_db.create_ace_task(task=sc_task)
+            if ddl_only:
+                ace_core.schema_diff_objects(sc_task)
+            else:
+                ace_core.multi_table_diff(sc_task)
+            sc_task.connection_pool.close_all()
+        except AceException as e:
+            util.exit_message(str(e))
+        except Exception as e:
+            traceback.print_exc()
+            util.exit_message(f"Unexpected error while running schema diff: {e}")
 
 
-def update_spock_exception_cli(cluster_name, node_name, entry, dbname=None) -> None:
+class SpockDiffCLI(object):
     """
-    Updates the Spock exception status for a specified cluster and node.
+    Compare the spock metadata across a cluster and produce a report showing
+    any differences.
+
+    Args:
+        cluster_name (str): Name of the cluster where the operation should be
+            performed.
+        dbname (str, optional): Name of the database. Defaults to the name of
+            the first database in the cluster configuration.
+        nodes (str, optional): Comma-delimited subset of nodes on which the
+            command will be executed. Defaults to "all".
+        quiet (bool, optional): Whether to suppress output in stdout. Defaults
+            to False.
+
+    Raises:
+        AceException: If there's an error specific to the ACE operation.
+        Exception: For any unexpected errors during the spock diff operation.
+
+    Returns:
+        None. The function performs the spock diff operation and handles any
+        exceptions. All output messages are printed to stdout since it's a CLI
+        function.
+    """
+
+    def __init__(self):
+        pass
+
+    def __call__(
+        self,
+        cluster_name,
+        dbname=None,
+        nodes="all",
+        quiet=False,
+    ):
+        task_id = ace_db.generate_task_id()
+
+        try:
+            sd_task = SpockDiffTask(
+                cluster_name=cluster_name,
+                _dbname=dbname,
+                _nodes=nodes,
+                quiet_mode=quiet,
+                invoke_method="cli",
+            )
+            sd_task.scheduler.task_id = task_id
+            sd_task.scheduler.task_type = "spock-diff"
+            sd_task.scheduler.task_status = "RUNNING"
+            sd_task.scheduler.started_at = datetime.now()
+
+            ace.validate_spock_diff_inputs(sd_task)
+            ace_db.create_ace_task(task=sd_task)
+            ace_core.spock_diff(sd_task)
+            sd_task.connection_pool.close_all()
+        except AceException as e:
+            util.exit_message(str(e))
+        except Exception as e:
+            traceback.print_exc()
+            util.exit_message(f"Unexpected error while running spock diff: {e}")
+
+
+class SpockExceptionUpdateCLI(object):
+    """
+    Update the Spock exception status for a specified cluster and node.
 
     Args:
         cluster_name (str): Name of the cluster where the operation should
             be performed.
         node_name (str): The name of the node within the cluster where the
             update should be performed.
-        entry (str): A JSON string representing the exception entry. The JSON object
-            parsed from this string should contain the following keys:
-            - "remote_origin" (str): Identifier of the origin node of the
-              transaction that caused the exception. (Required)
-            - "remote_commit_ts" (str): Commit timestamp of the
-              transaction on the remote origin. (Required)
-            - "remote_xid" (str): Transaction ID on the remote origin.
-              (Required)
-            - "status" (str): The new status to set for the exception (e.g.,
-              "RESOLVED", "IGNORED"). (Required)
-            - "resolution_details" (dict, optional): A JSON serialisable dictionary
-              containing details about the resolution.
-            - "command_counter" (int, optional): If specified, only the specific
-              exception detail (matching this command_counter along with
-              remote_origin, remote_commit_ts, remote_xid) in the
-              `spock.exception_status_detail` table is updated. If omitted,
-              the main entry in `spock.exception_status` and all related
-              detail entries for the (remote_origin, remote_commit_ts,
-              remote_xid) trio in `spock.exception_status_detail` are updated.
+        entry (str): A JSON string representing the exception entry. Should contain
+            the following keys.
+
+                - "remote_origin" (str): Identifier of the origin node of the
+                    transaction that caused the exception. (Required)
+
+                - "remote_commit_ts" (str): Commit timestamp of the
+                    transaction on the remote origin. (Required)
+
+                - "remote_xid" (str): Transaction ID on the remote origin.
+                    (Required)
+
+                - "status" (str): The new status to set for the exception (e.g.,
+                    "RESOLVED", "IGNORED"). (Required)
+
+                - "resolution_details" (dict, optional): A JSON serialisable dictionary
+                    containing details about the resolution.
+
+                - "command_counter" (int, optional): If specified, only the specific
+                    exception detail (matching this command_counter along with
+                    remote_origin, remote_commit_ts, remote_xid) in the
+                    `spock.exception_status_detail` table is updated. If omitted,
+                    the main entry in `spock.exception_status` and all related
+                    detail entries for the (remote_origin, remote_commit_ts,
+                    remote_xid) trio in `spock.exception_status_detail` are updated.
         dbname (str, optional): Name of the database. Defaults to the name of
             the first database in the cluster configuration.
 
@@ -668,22 +800,54 @@ def update_spock_exception_cli(cluster_name, node_name, entry, dbname=None) -> N
         None
     """
 
-    try:
-        conn = ace.update_spock_exception_checks(cluster_name, node_name, entry, dbname)
-        ace_core.update_spock_exception(entry, conn)
-    except AceException as e:
-        util.exit_message(str(e))
-    except json.JSONDecodeError:
-        util.exit_message("Exception entry is not a valid JSON")
-    except Exception as e:
-        traceback.print_exc()
-        util.exit_message(f"Unexpected error while running exception status: {e}")
+    def __init__(self):
+        pass
 
-    util.message("Spock exception status updated successfully", p_state="success")
+    def __call__(self, cluster_name, node_name, entry, dbname=None) -> None:
+
+        try:
+            conn = ace.update_spock_exception_checks(
+                cluster_name, node_name, entry, dbname
+            )
+            ace_core.update_spock_exception(entry, conn)
+        except AceException as e:
+            util.exit_message(str(e))
+        except json.JSONDecodeError:
+            util.exit_message("Exception entry is not a valid JSON")
+        except Exception as e:
+            traceback.print_exc()
+            util.exit_message(f"Unexpected error while running exception status: {e}")
+
+        util.message("Spock exception status updated successfully", p_state="success")
 
 
-def start_cli() -> None:
+class StartCLI(object):
     """
     Start the ACE background scheduler and API.
     """
-    ace_daemon.start_ace()
+
+    def __init__(self):
+        pass
+
+    def __call__(self):
+        ace_daemon.start_ace()
+
+
+class AceCLI(object):
+    """
+    The Active Consistency Engine of pgEdge.
+    """
+
+    def __init__(self):
+        """
+        Initialises the AceCLI and sets up command groups.
+        """
+        self.mtree = MerkleTreeCLI()
+        self.table_diff = TableDiffCLI()
+        self.table_repair = TableRepairCLI()
+        self.table_rerun = TableRerunCLI()
+        self.repset_diff = RepsetDiffCLI()
+        self.schema_diff = SchemaDiffCLI()
+        self.spock_diff = SpockDiffCLI()
+        self.spock_exception_update = SpockExceptionUpdateCLI()
+        self.start = StartCLI()

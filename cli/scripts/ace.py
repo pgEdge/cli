@@ -2503,17 +2503,4 @@ if __name__ == "__main__":
     apscheduler_logger.addHandler(stream_handler)
 
     ace_db.create_ace_tables()
-
-    fire.Fire(
-        {
-            "table-diff": ace_cli.table_diff_cli,
-            "table-repair": ace_cli.table_repair_cli,
-            "table-rerun": ace_cli.table_rerun_cli,
-            "repset-diff": ace_cli.repset_diff_cli,
-            "schema-diff": ace_cli.schema_diff_cli,
-            "spock-diff": ace_cli.spock_diff_cli,
-            "spock-exception-update": ace_cli.update_spock_exception_cli,
-            "start": ace_cli.start_cli,
-            "mtree": ace_cli.merkle_tree_cli,
-        }
-    )
+    fire.Fire(ace_cli.AceCLI())
