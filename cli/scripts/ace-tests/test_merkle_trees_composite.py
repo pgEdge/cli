@@ -466,7 +466,7 @@ class TestMerkleTreesComposite(TestMerkleTreesSimple):
 
     def test_various_datatype_pkey(self, mtree_cli, capsys, nodes):
         """Test that the trigger function works with various datatypes"""
-        table_name = "public.various_types"
+        table_name = "public.datatype_test"
         cluster_name = "eqn-t9da"
 
         fake = Faker()
@@ -586,7 +586,7 @@ class TestMerkleTreesComposite(TestMerkleTreesSimple):
 
     def test_uuid_pkey_support(self, mtree_cli, capsys, nodes):
         """Test that the trigger function works with UUID primary keys"""
-        table_name = "public.uuid_test"
+        table_name = "public.uuid_composite_test"
         cluster_name = "eqn-t9da"
 
         fake = Faker()
