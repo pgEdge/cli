@@ -523,6 +523,10 @@ def build_mtree(mtree_task: MerkleTreeTask) -> None:
             print(f"\nProcessing node: {node['name']}")
             _, conn = mtree_task.connection_pool.get_cluster_node_connection(node)
 
+            recreate_objects = check_if_init_needed(
+                conn, schema, "bulk_block_tracking_dispatcher"
+            )
+
             create_mtree_objects(
                 conn,
                 schema,
@@ -531,7 +535,7 @@ def build_mtree(mtree_task: MerkleTreeTask) -> None:
                 total_rows,
                 mtree_task.block_size,
                 num_blocks,
-                recreate_objects=mtree_task.recreate_objects,
+                recreate_objects=recreate_objects,
             )
 
             try:
@@ -2771,3 +2775,31 @@ def mtree_teardown_helper(mtree_task: MerkleTreeTask) -> None:
         mtree_task.scheduler.finished_at - mtree_task.scheduler.started_at
     ).total_seconds()
     ace_db.update_ace_task(mtree_task)
+
+
+def check_if_init_needed(conn, schema, funcname):
+    try:
+        with conn.cursor() as cur:
+            cur.execute(
+                sql.SQL(
+                    """
+                SELECT EXISTS (
+                    SELECT 1
+                    FROM pg_proc p
+                    JOIN pg_namespace n ON n.oid = p.pronamespace
+                    WHERE p.proname = %s
+                    AND n.nspname = %s
+                )
+                """
+                ),
+                (funcname, schema),
+            )
+            res = cur.fetchone()
+
+            if res and res[0]:
+                # Not a bug; function exists, so we return False
+                return False
+
+            return True
+    except Exception as e:
+        raise AceException(f"Error checking if function exists: {str(e)}")

@@ -1007,8 +1007,11 @@ def validate_table_diff_inputs(td_task: TableDiffTask) -> None:
     Validates the basic inputs for a table diff task without establishing connections.
     Raises AceException if validation fails.
     """
-    if not td_task.cluster_name or not td_task._table_name:
+    if not td_task.cluster_name or td_task.cluster_name == "":
         raise AceException("cluster_name and table_name are required arguments")
+
+    if not td_task._table_name or td_task._table_name == "":
+        raise AceException("table_name is a required argument")
 
     if type(td_task.block_size) is str:
         try:
@@ -1355,7 +1358,7 @@ def validate_merkle_tree_inputs(
     Validates the basic inputs for a merkle tree task without establishing connections.
     Raises AceException if validation fails.
     """
-    if not mtree_task.cluster_name:
+    if not mtree_task.cluster_name or mtree_task.cluster_name == "":
         raise AceException("cluster_name is a required argument")
 
     if type(mtree_task.block_size) is str:
@@ -1440,6 +1443,12 @@ def validate_merkle_tree_inputs(
         raise AceException(f"Cluster {mtree_task.cluster_name} not found")
 
     if not skip_table_check:
+        if (
+            type(mtree_task._table_name) is not str
+            or mtree_task._table_name.strip() == ""
+        ):
+            raise AceException("table_name is a required argument")
+
         nm_lst = mtree_task._table_name.split(".")
         if len(nm_lst) != 2:
             raise AceException(
@@ -1662,10 +1671,10 @@ def validate_table_repair_inputs(tr_task: TableRepairTask) -> None:
     Validates the basic inputs for a table repair task without establishing connections.
     Raises AceException if validation fails.
     """
-    if not tr_task.cluster_name:
+    if type(tr_task.cluster_name) is not str or tr_task.cluster_name.strip() == "":
         raise AceException("cluster_name is a required argument")
 
-    if not tr_task.diff_file_path:
+    if type(tr_task.diff_file_path) is not str or tr_task.diff_file_path.strip() == "":
         raise AceException("diff_file is a required argument")
 
     tr_task.fix_nulls = parse_bool_field("fix_nulls", tr_task.fix_nulls)
@@ -1881,6 +1890,12 @@ def validate_repset_diff_inputs(rd_task: RepsetDiffTask) -> None:
     Validates the basic inputs for a repset diff task without establishing connections.
     Raises AceException if validation fails.
     """
+    if type(rd_task.cluster_name) is not str or rd_task.cluster_name.strip() == "":
+        raise AceException("cluster_name is a required argument")
+
+    if type(rd_task.repset_name) is not str or rd_task.repset_name.strip() == "":
+        raise AceException("repset_name is a required argument")
+
     if type(rd_task.block_size) is str:
         try:
             rd_task.block_size = int(rd_task.block_size)
@@ -2161,6 +2176,12 @@ def spock_diff_checks(
 
 
 def validate_schema_diff_inputs(sc_task: SchemaDiffTask) -> SchemaDiffTask:
+
+    if type(sc_task.cluster_name) is not str or sc_task.cluster_name.strip() == "":
+        raise AceException("cluster_name is a required argument")
+
+    if type(sc_task.schema_name) is not str or sc_task.schema_name.strip() == "":
+        raise AceException("schema_name is a required argument")
 
     node_list = []
     try:

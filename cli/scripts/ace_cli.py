@@ -291,7 +291,7 @@ class TableDiffCLI(object):
     def __init__(self):
         pass
 
-    def __call__(
+    def run(
         self,
         cluster_name,
         table_name,
@@ -390,7 +390,7 @@ class TableRepairCLI(object):
     def __init__(self):
         pass
 
-    def __call__(
+    def run(
         self,
         cluster_name,
         table_name,
@@ -406,7 +406,6 @@ class TableRepairCLI(object):
         fire_triggers=False,
         bidirectional=False,
     ):
-
         task_id = ace_db.generate_task_id()
 
         try:
@@ -477,7 +476,7 @@ class TableRerunCLI(object):
     def __init__(self):
         pass
 
-    def __call__(
+    def run(
         self,
         cluster_name,
         diff_file,
@@ -565,7 +564,7 @@ class RepsetDiffCLI(object):
     def __init__(self):
         pass
 
-    def __call__(
+    def run(
         self,
         cluster_name,
         repset_name,
@@ -650,7 +649,7 @@ class SchemaDiffCLI(object):
     def __init__(self):
         pass
 
-    def __call__(
+    def run(
         self,
         cluster_name,
         schema_name,
@@ -722,7 +721,7 @@ class SpockDiffCLI(object):
     def __init__(self):
         pass
 
-    def __call__(
+    def run(
         self,
         cluster_name,
         dbname=None,
@@ -805,8 +804,7 @@ class SpockExceptionUpdateCLI(object):
     def __init__(self):
         pass
 
-    def __call__(self, cluster_name, node_name, entry, dbname=None) -> None:
-
+    def run(self, cluster_name, node_name, entry, dbname=None) -> None:
         try:
             conn = ace.update_spock_exception_checks(
                 cluster_name, node_name, entry, dbname
@@ -831,7 +829,7 @@ class StartCLI(object):
     def __init__(self):
         pass
 
-    def __call__(self):
+    def run(self):
         ace_daemon.start_ace()
 
 
@@ -845,11 +843,11 @@ class AceCLI(object):
         Initialises the AceCLI and sets up command groups.
         """
         self.mtree = MerkleTreeCLI()
-        self.table_diff = TableDiffCLI()
-        self.table_repair = TableRepairCLI()
-        self.table_rerun = TableRerunCLI()
-        self.repset_diff = RepsetDiffCLI()
-        self.schema_diff = SchemaDiffCLI()
-        self.spock_diff = SpockDiffCLI()
-        self.spock_exception_update = SpockExceptionUpdateCLI()
-        self.start = StartCLI()
+        self.table_diff = TableDiffCLI().run
+        self.table_repair = TableRepairCLI().run
+        self.table_rerun = TableRerunCLI().run
+        self.repset_diff = RepsetDiffCLI().run
+        self.schema_diff = SchemaDiffCLI().run
+        self.spock_diff = SpockDiffCLI().run
+        self.spock_exception_update = SpockExceptionUpdateCLI().run
+        self.start = StartCLI().run
