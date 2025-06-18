@@ -22,6 +22,13 @@ from ace_exceptions import AceException
 class MerkleTreeCLI(object):
     """
     Use Merkle Trees for efficient table diffs.
+
+    Commands:
+        * init: Initialises the database with necessary objects for Merkle trees.
+        * build: Builds a new Merkle tree for a table.
+        * update: Updates an existing Merkle tree.
+        * table-diff: Compares Merkle trees of a table across cluster nodes.
+        * teardown: Removes Merkle tree objects.
     """
 
     def _execute_task(self, mode, **kwargs):
@@ -249,44 +256,6 @@ class MerkleTreeCLI(object):
 
 
 class TableDiffCLI(object):
-    """
-    Compare a table across a cluster and produce a report showing
-    differences, if any.
-
-    Args:
-        cluster_name (str): Name of the cluster where the operation should be performed.
-        table_name (str): Schema-qualified name of the table that you are
-            comparing across cluster nodes.
-        dbname (str, optional): Name of the database to use. If omitted,
-            defaults to the first database in the cluster configuration file.
-        block_size (int, optional): Number of rows to process per block.
-            Defaults to config.DIFF_BLOCK_SIZE.
-        max_cpu_ratio (float, optional): Maximum CPU utilisation. The accepted
-            range is 0.0-1.0. Defaults to config.MAX_CPU_RATIO_DEFAULT.
-        output (str, optional): Output format. Acceptable values are "json",
-            "csv", and "html". Defaults to "json".
-        nodes (str, optional): Comma-separated subset of nodes on which the
-            command will be executed. Defaults to "all".
-        batch_size (int, optional): Size of each batch, i.e., number of blocks
-            each worker should process. Defaults to config.DIFF_BATCH_SIZE.
-        table_filter (str, optional): Used to compare a subset of rows in the table.
-            Specified as a WHERE clause of a SQL query. E.g.,
-            --table-filter="customer_id < 100" will compare only rows with
-            customer_id less than 100.  If omitted, the entire table is compared.
-        quiet (bool, optional): Whether to suppress output in stdout. Defaults
-            to False.
-        override_block_size (bool, optional): Allow unsafe block size. Defaults
-            to False.
-
-    Raises:
-        AceException: If there's an error specific to the ACE operation.
-        Exception: For any unexpected errors during the table diff operation.
-
-    Returns:
-        None. The function performs the table diff operation and handles any
-        exceptions. All output messages are printed to stdout since it's a CLI
-        function.
-    """
 
     def __init__(self):
         pass
@@ -305,6 +274,45 @@ class TableDiffCLI(object):
         quiet=False,
         override_block_size=False,
     ):
+        """
+        Compare a table across a cluster and produce a report showing
+        differences, if any.
+
+        Args:
+            cluster_name (str): Name of the cluster where the operation should be
+                performed.
+            table_name (str): Schema-qualified name of the table that you are
+                comparing across cluster nodes.
+            dbname (str, optional): Name of the database to use. If omitted,
+                defaults to the first database in the cluster configuration file.
+            block_size (int, optional): Number of rows to process per block.
+                Defaults to config.DIFF_BLOCK_SIZE.
+            max_cpu_ratio (float, optional): Maximum CPU utilisation. The accepted
+                range is 0.0-1.0. Defaults to config.MAX_CPU_RATIO_DEFAULT.
+            output (str, optional): Output format. Acceptable values are "json",
+                "csv", and "html". Defaults to "json".
+            nodes (str, optional): Comma-separated subset of nodes on which the
+                command will be executed. Defaults to "all".
+            batch_size (int, optional): Size of each batch, i.e., number of blocks
+                each worker should process. Defaults to config.DIFF_BATCH_SIZE.
+            table_filter (str, optional): Used to compare a subset of rows in the table.
+                Specified as a WHERE clause of a SQL query. E.g.,
+                --table-filter="customer_id < 100" will compare only rows with
+                customer_id less than 100.  If omitted, the entire table is compared.
+            quiet (bool, optional): Whether to suppress output in stdout. Defaults
+                to False.
+            override_block_size (bool, optional): Allow unsafe block size. Defaults
+                to False.
+
+        Raises:
+            AceException: If there's an error specific to the ACE operation.
+            Exception: For any unexpected errors during the table diff operation.
+
+        Returns:
+            None. The function performs the table diff operation and handles any
+            exceptions. All output messages are printed to stdout since it's a CLI
+            function.
+        """
         task_id = ace_db.generate_task_id()
 
         try:
@@ -339,53 +347,6 @@ class TableDiffCLI(object):
 
 
 class TableRepairCLI(object):
-    """
-    Repair a table across a cluster by fixing data inconsistencies identified
-    in a table-diff operation.
-
-    Args:
-        cluster_name (str): Name of the cluster where the operation should be performed.
-        diff_file (str): Path to the diff file generated by a previous table diff.
-        source_of_truth (str): Node name to be used as the source of truth for
-            the repair.
-        table_name (str): Schema-qualified name of the table that you are
-            comparing across cluster nodes.
-        dbname (str, optional): Name of the database. Defaults to the name of
-            the first database in the cluster configuration.
-        dry_run (bool, optional): If True, simulates the repair without making
-            changes. Defaults to False.
-        generate_report (bool, optional): If True, generates a detailed report
-            of the repair. Defaults to False.
-        upsert_only (bool, optional): If True, only performs upsert operations,
-            skipping deletions. Defaults to False.
-        insert_only (bool, optional): If True, only performs insert operations,
-            skipping updates and deletions.
-        fix_nulls (bool, optional): If True, fixes null values in the table
-            columns by looking at the corresponding column in the other nodes.
-            Does not need the source of truth to be specified. Must be used
-            only in special cases. This is not a recommended option for
-            repairing divergence. Defaults to False.
-        fire_triggers (bool, optional): If True, fires triggers on a table, if any,
-            during the repair process. Note that ENABLE ALWAYS triggers will fire
-            regardless of the value.
-        bidirectional (bool, optional): If True, performs a bidirectional
-            repair, applies differences found between nodes to create a
-            distinct union of the content. In a distinct union, each row that
-            is missing is recreated on the node from which it is missing,
-            eventually leading to a data set (on all nodes) in which all rows
-            are represented exactly once.
-        quiet (bool, optional): Whether to suppress output in stdout. Defaults
-            to False.
-
-    Raises:
-        AceException: If there's an error specific to the ACE operation.
-        Exception: For any unexpected errors during the table repair operation.
-
-    Returns:
-        None. The function performs the table repair operation and handles any
-        exceptions. All output messages are printed to stdout since it's a CLI
-        function.
-    """
 
     def __init__(self):
         pass
@@ -406,6 +367,54 @@ class TableRepairCLI(object):
         fire_triggers=False,
         bidirectional=False,
     ):
+        """
+        Repair a table across a cluster by fixing data inconsistencies identified
+        in a table-diff operation.
+
+        Args:
+            cluster_name (str): Name of the cluster where the operation should be
+                performed.
+            diff_file (str): Path to the diff file generated by a previous table diff.
+            source_of_truth (str): Node name to be used as the source of truth for
+                the repair.
+            table_name (str): Schema-qualified name of the table that you are
+                comparing across cluster nodes.
+            dbname (str, optional): Name of the database. Defaults to the name of
+                the first database in the cluster configuration.
+            dry_run (bool, optional): If True, simulates the repair without making
+                changes. Defaults to False.
+            generate_report (bool, optional): If True, generates a detailed report
+                of the repair. Defaults to False.
+            upsert_only (bool, optional): If True, only performs upsert operations,
+                skipping deletions. Defaults to False.
+            insert_only (bool, optional): If True, only performs insert operations,
+                skipping updates and deletions.
+            fix_nulls (bool, optional): If True, fixes null values in the table
+                columns by looking at the corresponding column in the other nodes.
+                Does not need the source of truth to be specified. Must be used
+                only in special cases. This is not a recommended option for
+                repairing divergence. Defaults to False.
+            fire_triggers (bool, optional): If True, fires triggers on a table, if any,
+                during the repair process. Note that ENABLE ALWAYS triggers will fire
+                regardless of the value.
+            bidirectional (bool, optional): If True, performs a bidirectional
+                repair, applies differences found between nodes to create a
+                distinct union of the content. In a distinct union, each row that
+                is missing is recreated on the node from which it is missing,
+                eventually leading to a data set (on all nodes) in which all rows
+                are represented exactly once.
+            quiet (bool, optional): Whether to suppress output in stdout. Defaults
+                to False.
+
+        Raises:
+            AceException: If there's an error specific to the ACE operation.
+            Exception: For any unexpected errors during the table repair operation.
+
+        Returns:
+            None. The function performs the table repair operation and handles any
+            exceptions. All output messages are printed to stdout since it's a CLI
+            function.
+        """
         task_id = ace_db.generate_task_id()
 
         try:
@@ -449,29 +458,6 @@ class TableRepairCLI(object):
 
 
 class TableRerunCLI(object):
-    """
-    Rerun a table diff operation based on a previous diff file.
-
-    Args:
-        cluster_name (str): Name of the cluster where the operation should be performed.
-        diff_file (str): Path to the diff file from a previous table diff
-            operation.
-        table_name (str): Schema-qualified name of the table that you are
-            comparing across cluster nodes.
-        dbname (str, optional): Name of the database to use. If omitted,
-            defaults to the first database in the cluster configuration.
-        quiet (bool, optional): Whether to suppress output in stdout. Defaults
-            to False.
-
-    Raises:
-        AceException: If there's an error specific to the ACE operation.
-        Exception: For any unexpected errors during the table rerun operation.
-
-    Returns:
-        None. The function performs the table rerun operation and handles any
-        exceptions. All output messages are printed to stdout since it's a CLI
-        function.
-    """
 
     def __init__(self):
         pass
@@ -484,6 +470,30 @@ class TableRerunCLI(object):
         dbname=None,
         quiet=False,
     ):
+        """
+        Rerun a table diff operation based on a previous diff file.
+
+        Args:
+            cluster_name (str): Name of the cluster where the operation should be
+                performed.
+            diff_file (str): Path to the diff file from a previous table diff
+                operation.
+            table_name (str): Schema-qualified name of the table that you are
+                comparing across cluster nodes.
+            dbname (str, optional): Name of the database to use. If omitted,
+                defaults to the first database in the cluster configuration.
+            quiet (bool, optional): Whether to suppress output in stdout. Defaults
+                to False.
+
+        Raises:
+            AceException: If there's an error specific to the ACE operation.
+            Exception: For any unexpected errors during the table rerun operation.
+
+        Returns:
+            None. The function performs the table rerun operation and handles any
+            exceptions. All output messages are printed to stdout since it's a CLI
+            function.
+        """
         task_id = ace_db.generate_task_id()
 
         try:
@@ -525,41 +535,6 @@ class TableRerunCLI(object):
 
 
 class RepsetDiffCLI(object):
-    """
-    Compare a repset across a cluster and produce a report showing
-    any differences.
-
-    Args:
-        cluster_name (str): Name of the cluster where the operation should be performed.
-        repset_name (str): Name of the repset to compare across cluster nodes.
-        dbname (str, optional): Name of the database to use. If omitted,
-            defaults to the first database in the cluster configuration.
-        block_size (int, optional): Number of rows to process per block.
-            Defaults to config.DIFF_BLOCK_SIZE.
-        max_cpu_ratio (float, optional): Maximum CPU utilisation. The accepted
-            range is 0.0-1.0. Defaults to config.MAX_CPU_RATIO_DEFAULT.
-        output (str, optional): Output format. Acceptable values are "json",
-            "csv", and "html". Defaults to "json".
-        nodes (str, optional): Comma-separated subset of nodes on which the
-            command will be executed. Defaults to "all".
-        batch_size (int, optional): Size of each batch, i.e., number of blocks
-            each worker should process. Defaults to config.DIFF_BATCH_SIZE.
-        quiet (bool, optional): Whether to suppress output in stdout. Defaults
-            to False.
-        skip_tables (list, optional): Comma-separated list of tables to skip.
-            If omitted, no tables are skipped.
-        skip_file (str, optional): Path to a file containing a list of tables to
-            skip. If omitted, no tables are skipped.
-
-    Raises:
-        AceException: If there's an error specific to the ACE operation.
-        Exception: For any unexpected errors during the repset diff operation.
-
-    Returns:
-        None. The function performs the repset diff operation and handles any
-        exceptions. All output messages are printed to stdout since it's a CLI
-        function.
-    """
 
     def __init__(self):
         pass
@@ -578,6 +553,42 @@ class RepsetDiffCLI(object):
         skip_tables=None,
         skip_file=None,
     ):
+        """
+        Compare a repset across a cluster and produce a report showing
+        any differences.
+
+        Args:
+            cluster_name (str): Name of the cluster where the operation should be
+                performed.
+            repset_name (str): Name of the repset to compare across cluster nodes.
+            dbname (str, optional): Name of the database to use. If omitted,
+                defaults to the first database in the cluster configuration.
+            block_size (int, optional): Number of rows to process per block.
+                Defaults to config.DIFF_BLOCK_SIZE.
+            max_cpu_ratio (float, optional): Maximum CPU utilisation. The accepted
+                range is 0.0-1.0. Defaults to config.MAX_CPU_RATIO_DEFAULT.
+            output (str, optional): Output format. Acceptable values are "json",
+                "csv", and "html". Defaults to "json".
+            nodes (str, optional): Comma-separated subset of nodes on which the
+                command will be executed. Defaults to "all".
+            batch_size (int, optional): Size of each batch, i.e., number of blocks
+                each worker should process. Defaults to config.DIFF_BATCH_SIZE.
+            quiet (bool, optional): Whether to suppress output in stdout. Defaults
+                to False.
+            skip_tables (list, optional): Comma-separated list of tables to skip.
+                If omitted, no tables are skipped.
+            skip_file (str, optional): Path to a file containing a list of tables to
+                skip. If omitted, no tables are skipped.
+
+        Raises:
+            AceException: If there's an error specific to the ACE operation.
+            Exception: For any unexpected errors during the repset diff operation.
+
+        Returns:
+            None. The function performs the repset diff operation and handles any
+            exceptions. All output messages are printed to stdout since it's a CLI
+            function.
+        """
         task_id = ace_db.generate_task_id()
 
         try:
@@ -615,36 +626,6 @@ class RepsetDiffCLI(object):
 
 
 class SchemaDiffCLI(object):
-    """
-    Compare a schema across a cluster and produce a report showing
-    any differences.
-
-    Args:
-        cluster_name (str): Name of the cluster where the operation should
-            be performed.
-        schema_name (str): Name of the schema that you are comparing across
-            cluster nodes.
-        nodes (str, optional): Comma-delimited subset of nodes on which the
-            command will be executed. Defaults to "all".
-        dbname (str, optional): Name of the database. Defaults to the name of
-            the first database in the cluster configuration.
-        ddl_only (bool, optional): If True, only compares DDL differences
-            across nodes.
-        skip_tables (list, optional): Comma-delimited list of tables to skip.
-        skip_file (str, optional): Path to a file containing a list of tables
-            to skip.
-        quiet (bool, optional): Whether to suppress output in stdout. Defaults
-            to False.
-
-    Raises:
-        AceException: If there's an error specific to the ACE operation.
-        Exception: For any unexpected errors during the schema diff operation.
-
-    Returns:
-        None. The function performs the schema diff operation and handles any
-        exceptions. All output messages are printed to stdout since it's a CLI
-        function.
-    """
 
     def __init__(self):
         pass
@@ -660,6 +641,36 @@ class SchemaDiffCLI(object):
         skip_file=None,
         quiet=False,
     ):
+        """
+        Compare a schema across a cluster and produce a report showing
+        any differences.
+
+        Args:
+            cluster_name (str): Name of the cluster where the operation should
+                be performed.
+            schema_name (str): Name of the schema that you are comparing across
+                cluster nodes.
+            nodes (str, optional): Comma-delimited subset of nodes on which the
+                command will be executed. Defaults to "all".
+            dbname (str, optional): Name of the database. Defaults to the name of
+                the first database in the cluster configuration.
+            ddl_only (bool, optional): If True, only compares DDL differences
+                across nodes.
+            skip_tables (list, optional): Comma-delimited list of tables to skip.
+            skip_file (str, optional): Path to a file containing a list of tables
+                to skip.
+            quiet (bool, optional): Whether to suppress output in stdout. Defaults
+                to False.
+
+        Raises:
+            AceException: If there's an error specific to the ACE operation.
+            Exception: For any unexpected errors during the schema diff operation.
+
+        Returns:
+            None. The function performs the schema diff operation and handles any
+            exceptions. All output messages are printed to stdout since it's a CLI
+            function.
+        """
         task_id = ace_db.generate_task_id()
 
         try:
@@ -694,29 +705,6 @@ class SchemaDiffCLI(object):
 
 
 class SpockDiffCLI(object):
-    """
-    Compare the spock metadata across a cluster and produce a report showing
-    any differences.
-
-    Args:
-        cluster_name (str): Name of the cluster where the operation should be
-            performed.
-        dbname (str, optional): Name of the database. Defaults to the name of
-            the first database in the cluster configuration.
-        nodes (str, optional): Comma-delimited subset of nodes on which the
-            command will be executed. Defaults to "all".
-        quiet (bool, optional): Whether to suppress output in stdout. Defaults
-            to False.
-
-    Raises:
-        AceException: If there's an error specific to the ACE operation.
-        Exception: For any unexpected errors during the spock diff operation.
-
-    Returns:
-        None. The function performs the spock diff operation and handles any
-        exceptions. All output messages are printed to stdout since it's a CLI
-        function.
-    """
 
     def __init__(self):
         pass
@@ -728,6 +716,29 @@ class SpockDiffCLI(object):
         nodes="all",
         quiet=False,
     ):
+        """
+        Compare the spock metadata across a cluster and produce a report showing
+        any differences.
+
+        Args:
+            cluster_name (str): Name of the cluster where the operation should be
+                performed.
+            dbname (str, optional): Name of the database. Defaults to the name of
+                the first database in the cluster configuration.
+            nodes (str, optional): Comma-delimited subset of nodes on which the
+                command will be executed. Defaults to "all".
+            quiet (bool, optional): Whether to suppress output in stdout. Defaults
+                to False.
+
+        Raises:
+            AceException: If there's an error specific to the ACE operation.
+            Exception: For any unexpected errors during the spock diff operation.
+
+        Returns:
+            None. The function performs the spock diff operation and handles any
+            exceptions. All output messages are printed to stdout since it's a CLI
+            function.
+        """
         task_id = ace_db.generate_task_id()
 
         try:
@@ -755,56 +766,56 @@ class SpockDiffCLI(object):
 
 
 class SpockExceptionUpdateCLI(object):
-    """
-    Update the Spock exception status for a specified cluster and node.
-
-    Args:
-        cluster_name (str): Name of the cluster where the operation should
-            be performed.
-        node_name (str): The name of the node within the cluster where the
-            update should be performed.
-        entry (str): A JSON string representing the exception entry. Should contain
-            the following keys.
-
-                - "remote_origin" (str): Identifier of the origin node of the
-                    transaction that caused the exception. (Required)
-
-                - "remote_commit_ts" (str): Commit timestamp of the
-                    transaction on the remote origin. (Required)
-
-                - "remote_xid" (str): Transaction ID on the remote origin.
-                    (Required)
-
-                - "status" (str): The new status to set for the exception (e.g.,
-                    "RESOLVED", "IGNORED"). (Required)
-
-                - "resolution_details" (dict, optional): A JSON serialisable dictionary
-                    containing details about the resolution.
-
-                - "command_counter" (int, optional): If specified, only the specific
-                    exception detail (matching this command_counter along with
-                    remote_origin, remote_commit_ts, remote_xid) in the
-                    `spock.exception_status_detail` table is updated. If omitted,
-                    the main entry in `spock.exception_status` and all related
-                    detail entries for the (remote_origin, remote_commit_ts,
-                    remote_xid) trio in `spock.exception_status_detail` are updated.
-        dbname (str, optional): Name of the database. Defaults to the name of
-            the first database in the cluster configuration.
-
-    Raises:
-        AceException: If an error specific to the ACE system occurs.
-        json.JSONDecodeError: If the provided exception entry is not valid
-            JSON.
-        Exception: For any other unexpected errors.
-
-    Returns:
-        None
-    """
 
     def __init__(self):
         pass
 
     def run(self, cluster_name, node_name, entry, dbname=None) -> None:
+        """
+        Update the Spock exception status for a specified cluster and node.
+
+        Args:
+            cluster_name (str): Name of the cluster where the operation should
+                be performed.
+            node_name (str): The name of the node within the cluster where the
+                update should be performed.
+            entry (str): A JSON string representing the exception entry. Should contain
+                the following keys.
+
+                    - "remote_origin" (str): Identifier of the origin node of the
+                        transaction that caused the exception. (Required)
+
+                    - "remote_commit_ts" (str): Commit timestamp of the
+                        transaction on the remote origin. (Required)
+
+                    - "remote_xid" (str): Transaction ID on the remote origin.
+                        (Required)
+
+                    - "status" (str): The new status to set for the exception (e.g.,
+                        "RESOLVED", "IGNORED"). (Required)
+
+                    - "resolution_details" (dict, optional): A JSON serialisable
+                        dictionary containing details about the resolution.
+
+                    - "command_counter" (int, optional): If specified, only the specific
+                        exception detail (matching this command_counter along with
+                        remote_origin, remote_commit_ts, remote_xid) in the
+                        `spock.exception_status_detail` table is updated. If omitted,
+                        the main entry in `spock.exception_status` and all related
+                        detail entries for the (remote_origin, remote_commit_ts,
+                        remote_xid) trio in `spock.exception_status_detail` are updated.
+            dbname (str, optional): Name of the database. Defaults to the name of
+                the first database in the cluster configuration.
+
+        Raises:
+            AceException: If an error specific to the ACE system occurs.
+            json.JSONDecodeError: If the provided exception entry is not valid
+                JSON.
+            Exception: For any other unexpected errors.
+
+        Returns:
+            None
+        """
         try:
             conn = ace.update_spock_exception_checks(
                 cluster_name, node_name, entry, dbname
@@ -822,14 +833,13 @@ class SpockExceptionUpdateCLI(object):
 
 
 class StartCLI(object):
-    """
-    Start the ACE background scheduler and API.
-    """
-
     def __init__(self):
         pass
 
     def run(self):
+        """
+        Start the ACE background scheduler and API.
+        """
         ace_daemon.start_ace()
 
 
@@ -842,7 +852,7 @@ class AceCLI(object):
         """
         Initialises the AceCLI and sets up command groups.
         """
-        self.mtree = MerkleTreeCLI()
+        self.mtree = MerkleTreeCLI
         self.table_diff = TableDiffCLI().run
         self.table_repair = TableRepairCLI().run
         self.table_rerun = TableRerunCLI().run
