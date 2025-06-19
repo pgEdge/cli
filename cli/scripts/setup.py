@@ -21,7 +21,7 @@ def setup_pgedge(User=None, Passwd=None, dbName=None, port=None, Datadir=None, p
        :param Passwd: The password for the newly created db user (required)
        :param dbName: The database name (required)
        :param port: Defaults to 5432 if not specified
-       :param Datadir: The database data directory (absolute path)
+       :param Datadir: The data directory to use for PostgreSQL. Must be an absolute path. Defaults to data/pgV.
        :param pg_ver: Defaults to latest prod version of pg, such as 16.  May be pinned to a specific pg version such as 16.4
        :param spock_ver: Defaults to latest prod version of spock, such as 4.0.  May be pinned to a specific spock version such as 4.0.1
        :param autostart: Defaults to False
@@ -98,6 +98,10 @@ setup.pgedge(User={User}, Passwd={Passwd}, dbName={dbName}, port={port}, Datadir
 
     pg_init_options = ""
     if Datadir is not None:
+        if not os.path.isabs(Datadir):
+            util.exit_message(
+                "Datadir cannot be set as relative path. Please specify absolute path instead"
+            )
         pg_init_options = f"--datadir={Datadir}"
 
     setup_core.check_pre_reqs(
@@ -136,11 +140,4 @@ setup.pgedge(User={User}, Passwd={Passwd}, dbName={dbName}, port={port}, Datadir
 
 
 if __name__ == "__main__":
-    # confirm if data directory option used correctly
-    for i in range(1, len(sys.argv)):
-        if sys.argv[i].lower().startswith("--datadir"):
-            datadir_opt = str(sys.argv[i].split('=')[0])
-            if(datadir_opt.casefold() == "--Datadir".casefold() and
-               datadir_opt != "--Datadir"):
-                util.exit_message("To specify the database data directory, please use case sensitive option -D or --Datadir=DATADIR", 1)
     fire.Fire(setup_pgedge)
