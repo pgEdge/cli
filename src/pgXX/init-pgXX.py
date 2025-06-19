@@ -65,7 +65,7 @@ else:
     pg_data = args.datadir
 
 if not os.path.isdir(pg_data):
-    os.mkdir(pg_data)
+    os.makedirs(pg_data)
 
 ## SVCUSER ###########################################
 svcuser = ""
