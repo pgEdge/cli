@@ -74,7 +74,10 @@ class TestReplication:
             time.sleep(2)
 
             # Execute table diff and verify results
-            cli.table_diff_cli("eqn-t9da", table_name)
+            cli.table_diff(
+                cluster_name="eqn-t9da",
+                table_name=table_name,
+            )
 
             # Capture and verify output
             captured = capsys.readouterr()

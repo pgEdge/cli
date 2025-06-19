@@ -9,28 +9,25 @@ from datetime import timedelta
 
 # ==============================================================================
 # Postgres options
-STATEMENT_TIMEOUT = 60000  # in milliseconds
+STATEMENT_TIMEOUT = 0  # in milliseconds
 CONNECTION_TIMEOUT = 10  # in seconds
 
-
 #  Default values for ACE table-diff
-MAX_DIFF_ROWS = 10000
-MIN_ALLOWED_BLOCK_SIZE = 1000
-MAX_ALLOWED_BLOCK_SIZE = 100000
-BLOCK_ROWS_DEFAULT = os.environ.get("ACE_BLOCK_ROWS", 10000)
-MAX_CPU_RATIO_DEFAULT = os.environ.get("ACE_MAX_CPU_RATIO", 0.6)
-BATCH_SIZE_DEFAULT = os.environ.get("ACE_BATCH_SIZE", 1)
-MAX_BATCH_SIZE = 1000
-
-
-# Return codes for compare_checksums
-BLOCK_OK = 0
-MAX_DIFFS_EXCEEDED = 1
-BLOCK_MISMATCH = 2
-BLOCK_ERROR = 3
+MAX_DIFF_ROWS = 1_000_000
+MIN_DIFF_BLOCK_SIZE = 1000
+MAX_DIFF_BLOCK_SIZE = 100_000
+DIFF_BLOCK_SIZE = os.environ.get("ACE_DIFF_BLOCK_SIZE", 10_000)
+MAX_CPU_RATIO = os.environ.get("ACE_MAX_CPU_RATIO", 0.6)
+DIFF_BATCH_SIZE = os.environ.get("ACE_BATCH_SIZE", 1)
+MAX_DIFF_BATCH_SIZE = 1000
 
 # The minimum version of Spock that supports the repair mode
 SPOCK_REPAIR_MODE_MIN_VERSION = 4.0
+
+# ACE Merkle Tree options
+MTREE_BLOCK_SIZE = os.environ.get("ACE_MTREE_BLOCK_SIZE", 100_000)
+MIN_MTREE_BLOCK_SIZE = 1000
+MAX_MTREE_BLOCK_SIZE = 1_000_000
 
 # ==============================================================================
 
@@ -65,7 +62,7 @@ args currently supports the following fields:
   float between 0 and 1.
 - batch_size: The batch size to use for the job. How many blocks does a single
   job process at a time.
-- block_rows: The maximum number of rows per block. How many rows does a
+- block_size: The maximum number of rows per block. How many rows does a
   single block contain. Each multiprocessing worker running in parallel will
   process this many rows at a time.
 - nodes:  A list of node OIDs--if you'd like to run the job only on specific nodes.
@@ -94,7 +91,7 @@ schedule_jobs = [
         "args": {
             "max_cpu_ratio": 0.7,
             "batch_size": 1000,
-            "block_rows": 10000,
+            "block_size": 10000,
             "nodes": "all",
             "output": "json",
             "quiet": False,
@@ -108,7 +105,7 @@ schedule_jobs = [
         "args": {
             "max_cpu_ratio": 0.7,
             "batch_size": 1000,
-            "block_rows": 10000,
+            "block_size": 10000,
             "nodes": "all",
             "output": "json",
             "quiet": False,

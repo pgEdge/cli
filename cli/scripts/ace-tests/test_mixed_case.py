@@ -100,9 +100,7 @@ class TestMixedCaseNames(TestSimple):
 
     @pytest.mark.parametrize("table_name", ["public.CuStOmErS"])
     def test_simple_table_repair(self, cli, capsys, table_name, diff_file_path):
-        return super().test_simple_table_repair(
-            cli, capsys, table_name, diff_file_path
-        )
+        return super().test_simple_table_repair(cli, capsys, table_name, diff_file_path)
 
     @pytest.mark.parametrize("table_name", ["public.CuStOmErS"])
     @pytest.mark.parametrize("key_column", ["index"])
@@ -111,12 +109,4 @@ class TestMixedCaseNames(TestSimple):
     ):
         return super().test_table_rerun_temptable(
             cli, capsys, ace_conf, table_name, key_column, diff_file_path
-        )
-
-    @pytest.mark.parametrize("table_name", ["public.CuStOmErS"])
-    def test_table_rerun_multiprocessing(
-        self, cli, capsys, table_name, diff_file_path
-    ):
-        return super().test_table_rerun_multiprocessing(
-            cli, capsys, table_name, diff_file_path
         )

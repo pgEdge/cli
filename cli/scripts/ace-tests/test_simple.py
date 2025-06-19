@@ -41,7 +41,10 @@ class TestSimple(TestSimpleBase):
     @pytest.mark.parametrize("table_name", ["public.customers"])
     def test_simple_table_diff(self, cli, capsys, table_name):
         """Test table diff on cluster eqn-t9da for specified table"""
-        cli.table_diff_cli("eqn-t9da", table_name)
+        cli.table_diff(
+            cluster_name="eqn-t9da",
+            table_name=table_name,
+        )
         captured = capsys.readouterr()
         output = captured.out
         assert (
@@ -69,7 +72,10 @@ class TestSimple(TestSimpleBase):
             )
 
             # Execute table diff and verify results
-            cli.table_diff_cli("eqn-t9da", table_name)
+            cli.table_diff(
+                cluster_name="eqn-t9da",
+                table_name=table_name,
+            )
 
             # Capture the output
             captured = capsys.readouterr()
@@ -119,10 +125,10 @@ class TestSimple(TestSimpleBase):
     @pytest.mark.parametrize("table_name", ["public.customers"])
     def test_simple_table_repair(self, cli, capsys, table_name, diff_file_path):
         """Test table repair on cluster eqn-t9da for specified table"""
-        cli.table_repair_cli(
-            "eqn-t9da",
-            table_name,
-            diff_file_path.path,
+        cli.table_repair(
+            cluster_name="eqn-t9da",
+            table_name=table_name,
+            diff_file=diff_file_path.path,
             source_of_truth="n1",
         )
 
@@ -133,7 +139,10 @@ class TestSimple(TestSimpleBase):
         ), f"Table repair failed. Output: {output}"
 
         # Verify the table is repaired
-        cli.table_diff_cli("eqn-t9da", table_name)
+        cli.table_diff(
+            cluster_name="eqn-t9da",
+            table_name=table_name,
+        )
 
         captured = capsys.readouterr()
         output = captured.out
@@ -186,7 +195,10 @@ class TestSimple(TestSimpleBase):
             pytest.fail(f"Failed to introduce diffs on n2: {str(e)}")
 
         # Running the table-diff to get the diff file
-        cli.table_diff_cli("eqn-t9da", table_name)
+        cli.table_diff(
+            cluster_name="eqn-t9da",
+            table_name=table_name,
+        )
 
         # Capture the output
         captured = capsys.readouterr()
@@ -199,13 +211,11 @@ class TestSimple(TestSimpleBase):
         assert match, "Diff file path not found in output"
         path = match.group(1)
 
-        cli.table_rerun_cli(
-            "eqn-t9da",
-            path,
-            table_name,
-            "demo",  # dbname
-            False,  # quiet
-            "hostdb",  # behaviour
+        cli.table_rerun(
+            cluster_name="eqn-t9da",
+            diff_file=path,
+            table_name=table_name,
+            dbname="demo",
         )
 
         rerun_captured = capsys.readouterr()
@@ -232,49 +242,12 @@ class TestSimple(TestSimpleBase):
         for diff in diff_data["diffs"]["n1/n2"]["n2"]:
             assert diff["city"] == "Casablanca", "Expected city to be 'Casablanca'"
 
-    @pytest.mark.parametrize("table_name", ["public.customers"])
-    def test_table_rerun_multiprocessing(self, cli, capsys, table_name, diff_file_path):
-        """Test table rerun multiprocessing on cluster eqn-t9da"""
-
-        # We have already introduced diffs in the previous test.
-        # We will now rerun the diffs using multiprocessing
-
-        cli.table_rerun_cli(
-            "eqn-t9da",
-            diff_file_path.path,
-            table_name,
-            "demo",  # dbname
-            False,  # quiet
-            "multiprocessing",  # behaviour
-        )
-
-        captured = capsys.readouterr()
-        output = captured.out
-
-        clean_output = re.sub(r"\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])", "", output)
-
-        match = re.search(r"diffs written out to (.+\.json)", clean_output.lower())
-
-        assert match, "Diff file path not found in output"
-        diff_file_path.path = match.group(1)
-
-        # Read the diff file into a dictionary
-        with open(diff_file_path.path, "r") as f:
-            diff_data = json.load(f)
-
-        # Verify we still have 100 diffs
-        assert len(diff_data["diffs"]["n1/n2"]["n2"]) == 100, "Expected 100 differences"
-
-        # Verify the diffs are correct
-        for diff in diff_data["diffs"]["n1/n2"]["n2"]:
-            assert diff["city"] == "Casablanca", "Expected city to be 'Casablanca'"
-
         # Now that we have verified diffs through both methods, we can use repair
         # to restore the state of the table
-        cli.table_repair_cli(
-            "eqn-t9da",
-            table_name,
-            diff_file_path.path,
+        cli.table_repair(
+            cluster_name="eqn-t9da",
+            table_name=table_name,
+            diff_file=diff_file_path.path,
             source_of_truth="n1",
         )
 

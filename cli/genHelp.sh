@@ -4,17 +4,26 @@ export nc=../out/posix/pgedge
 export output_dir=../docs
 
 modules=(ace cluster db localhost service spock um)
+
 commands=(setup upgrade-cli)
 
 mkdir -p "$output_dir"
 
+
+get_submodules(){
+  local module="$1"
+
+  if [[ "$module" == "ace" ]]; then
+      echo "mtree"
+  fi
+}
 parse_to_markdown(){
    sed -r 's/\x1B\[[0-9;]*[mGKH]//g; /^(SYNOPSIS|POSITIONAL ARGUMENTS|DESCRIPTION|FLAGS|COMMANDS)/s/^/## /'
 }
 
 get_module_commands() {
   local module="$1"
-  local module_file="$output_dir/functions/$module.md"
+  local module_file="$output_dir/functions/${module// /-}.md"
   local cmds=()
   if [[ -f "$module_file" ]]; then
     local in_commands=0
@@ -57,7 +66,7 @@ module_summary() {
 write_help() {
   # Generate help for a command or module (and its subcommands)
   local module="$1"
-  $nc $module --help 2>/dev/null | parse_to_markdown > "$output_dir/functions/$module.md";
+  $nc $module --help 2>/dev/null | parse_to_markdown > "$output_dir/functions/${module// /-}.md";
   
   # Parse the generated module help file to extract subcommands (if they exist)
   module_commands=($(get_module_commands "$module"))
@@ -69,13 +78,25 @@ write_help() {
   
   # Generate help for each command in the module
   for cmd in "${module_commands[@]}"; do
-    local fname="${module}-$(echo "$cmd" | tr ' ' '-').md"
+    local fname="${module// /-}-${cmd// /-}.md"
     echo "Generating help for module '$module', command '$cmd' -> $fname"
 
     if ! $nc $module $cmd --help 2>/dev/null | parse_to_markdown > "$output_dir/functions/$fname"; then
       echo "ERROR: Failed to generate help for module '$module', command '$cmd'" >&2
     fi
   done
+
+  # If the module has submodules, recursively generate help for them
+  local submodules=($(get_submodules "$module"))
+  if [ ${#submodules[@]} -gt 0 ]; then
+    echo "Found submodules for module '$module': ${submodules[*]}"
+    for submodule in "${submodules[@]}"; do
+      echo "Generating help for submodule '$submodule' in module '$module'"
+      write_help "$module $submodule"     
+  done
+  else
+    echo "No submodules found for module '$module'"
+  fi
 }
 
 index() {
@@ -132,6 +153,32 @@ index() {
     ' "$module_file" >> "$index_file"
     echo "" >> "$index_file"
 
+    for submodule in $(get_submodules "$module"); do
+      echo "### $module $submodule submodule commands" >> "$index_file"
+      echo "" >> "$index_file"
+      echo "| Command | Description |" >> "$index_file"
+      echo "|---------|-------------|" >> "$index_file"
+      
+      # Parse the -submodule.md file to extract commands and descriptions
+      submodule_file="$output_dir/functions/${module// /-}-${submodule// /-}.md"
+      awk -v module="$module" -v submodule="$submodule" '
+        BEGIN { in_commands=0 }
+        /COMMAND is one of the following:/ { in_commands=1; next }
+        in_commands && /^[[:space:]]*$/ { exit }
+        in_commands && /^[[:space:]]*[^[:space:]]/ {
+          split($0, parts, "#")
+          cmd=parts[1]
+          gsub(/^[ \t]+|[ \t]+$/, "", cmd)
+          desc=parts[2]
+          gsub(/^[ \t]+|[ \t]+$/, "", desc)
+          if (cmd != "") {
+            printf "| [%s %s](functions/%s-%s-%s.md) | %s |\n", module, submodule, module, submodule, cmd, desc
+          }
+        }
+      ' "$submodule_file" >> "$index_file"
+      echo "" >> "$index_file"
+    done
+
   done
 }
 
@@ -146,7 +193,7 @@ if [ "$m" == "all" ]; then
   echo "Generating help for all modules..."
   echo "Removing existing help files..."
   rm -f $output_dir/functions/*
-
+  
   # Loop through all modules and generate help
   for module in "${modules[@]}"; do
     write_help "$module"

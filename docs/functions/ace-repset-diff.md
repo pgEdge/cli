@@ -13,10 +13,10 @@
 
 ## FLAGS
     -d, --dbname=DBNAME
-        Name of the database. Defaults to the name of the first database in the cluster configuration.
+        Name of the database to use. If omitted, defaults to the first database in the cluster configuration.
     
-    --block_rows=BLOCK_ROWS
-        Number of rows to process per block. Defaults to config.BLOCK_ROWS_DEFAULT.
+    --block_size=BLOCK_SIZE
+        Number of rows to process per block. Defaults to config.DIFF_BLOCK_SIZE.
     
     -m, --max_cpu_ratio=MAX_CPU_RATIO
         Maximum CPU utilisation. The accepted range is 0.0-1.0. Defaults to config.MAX_CPU_RATIO_DEFAULT.
@@ -25,17 +25,17 @@
         Output format. Acceptable values are "json", "csv", and "html". Defaults to "json".
     
     -n, --nodes=NODES
-        Comma-delimited subset of nodes on which the command will be executed. Defaults to "all".
+        Comma-separated subset of nodes on which the command will be executed. Defaults to "all".
     
     --batch_size=BATCH_SIZE
-        Size of each batch. Defaults to config.BATCH_SIZE_DEFAULT.
+        Size of each batch, i.e., number of blocks each worker should process. Defaults to config.DIFF_BATCH_SIZE.
     
     -q, --quiet=QUIET
         Whether to suppress output in stdout. Defaults to False.
     
     --skip_tables=SKIP_TABLES
-        Comma-deliminated list of tables to skip.
+        Comma-separated list of tables to skip. If omitted, no tables are skipped.
     
     --skip_file=SKIP_FILE
-        Path to a file containing a list of tables to skip.
+        Path to a file containing a list of tables to skip. If omitted, no tables are skipped.
     
