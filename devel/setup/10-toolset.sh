@@ -65,7 +65,7 @@ if [ $el_supported == "yes" ]; then
   sudo dnf -y --nobest install zlib-devel bzip2-devel lbzip2 \
       openssl-devel libxslt-devel libevent-devel c-ares-devel \
       perl-ExtUtils-Embed pam-devel openldap-devel boost-devel
-  $yum curl-devel 
+  $yum curl-devel jansson-devel
   $yum chrpath clang-devel llvm-devel cmake libxml2-devel 
   $yum libedit-devel
   $yum *ossp-uuid*
