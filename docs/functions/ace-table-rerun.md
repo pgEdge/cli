@@ -3,7 +3,7 @@
     ./pgedge ace table-rerun CLUSTER_NAME DIFF_FILE TABLE_NAME <flags>
 
 ## DESCRIPTION
-    Reruns a table diff operation based on a previous diff file.
+    Rerun a table diff operation based on a previous diff file.
 
 ## POSITIONAL ARGUMENTS
     CLUSTER_NAME
@@ -15,11 +15,8 @@
 
 ## FLAGS
     -d, --dbname=DBNAME
-        Name of the database. Defaults to the name of the first database in the cluster configuration.
+        Name of the database to use. If omitted, defaults to the first database in the cluster configuration.
     
     -q, --quiet=QUIET
         Whether to suppress output in stdout. Defaults to False.
-    
-    -b, --behavior=BEHAVIOR
-        The rerun behavior, either "multiprocessing" or "hostdb". "multiprocessing" uses parallel processing for faster execution. "hostdb" uses the host database to create temporary tables for faster comparisons. Defaults to "multiprocessing".
     
