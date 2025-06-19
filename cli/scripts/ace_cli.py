@@ -23,14 +23,32 @@ class MerkleTreeCLI(object):
     """
     Use Merkle Trees for efficient table diffs.
 
-    Commands:
-        * init: Initialises the database with necessary objects for Merkle trees.
-        * build: Builds a new Merkle tree for a table.
-        * update: Updates an existing Merkle tree.
-        * table-diff: Compares Merkle trees of a table across cluster nodes.
-        * teardown: Removes Merkle tree objects.
+    Use Merkle Trees for efficient table diffs.
     """
 
+    """
+    Initialises the MarkleTreeCLI and sets up command groups.
+    This allows it to behave like another module under ace
+    """
+    def __init__(self):
+        self._commands = {
+            "init": self.init,
+            "build": self.build,
+            "update": self.update,
+            "table-diff": self.table_diff,
+            "teardown": self.teardown,
+        }
+    
+    def __getattr__(self, name):
+        try:
+            return self._commands[name]
+        except KeyError:
+            raise AttributeError(f"No such command: {name}")
+
+    def __dir__(self):
+        # Allows Fire to generate proper helptext using dash-case commands
+        return list(self._commands.keys())
+        
     def _execute_task(self, mode, **kwargs):
         """Helper to run merkle tree tasks."""
         task_id = ace_db.generate_task_id()
@@ -852,12 +870,24 @@ class AceCLI(object):
         """
         Initialises the AceCLI and sets up command groups.
         """
-        self.mtree = MerkleTreeCLI
-        self.table_diff = TableDiffCLI().run
-        self.table_repair = TableRepairCLI().run
-        self.table_rerun = TableRerunCLI().run
-        self.repset_diff = RepsetDiffCLI().run
-        self.schema_diff = SchemaDiffCLI().run
-        self.spock_diff = SpockDiffCLI().run
-        self.spock_exception_update = SpockExceptionUpdateCLI().run
-        self.start = StartCLI().run
+        self._commands = {
+            "mtree": MerkleTreeCLI,
+            "table-diff": TableDiffCLI().run,
+            "table-repair": TableRepairCLI().run,
+            "table-rerun": TableRerunCLI().run,
+            "repset-diff": RepsetDiffCLI().run,
+            "schema-diff": SchemaDiffCLI().run,
+            "spock-diff": SpockDiffCLI().run,
+            "spock-exception-update": SpockExceptionUpdateCLI().run,
+            "start": StartCLI().run,
+        }
+
+    def __getattr__(self, name):
+        try:
+            return self._commands[name]
+        except KeyError:
+            raise AttributeError(f"No such command: {name}")
+
+    def __dir__(self):
+        # Allows Fire to generate proper helptext using dash-case commands
+        return list(self._commands.keys())

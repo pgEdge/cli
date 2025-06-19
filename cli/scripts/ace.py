@@ -2524,4 +2524,14 @@ if __name__ == "__main__":
     apscheduler_logger.addHandler(stream_handler)
 
     ace_db.create_ace_tables()
+
+    # Check if the last argument is --help or -h for mtree command
+    # If it is, we remove it to prevent fire.Fire from interpreting it
+    # This ensures that the mtree command properly renders help for
+    # ./pgedge ace mtree or ./pgedge ace mtree --help|-h
+    if sys.argv[-1] in ('--help', '-h') and 'mtree' in sys.argv:
+        mtree_index = sys.argv.index('mtree')
+        if sys.argv[mtree_index + 1:] == ['--help'] or sys.argv[mtree_index + 1:] == ['-h']:
+            sys.argv = sys.argv[:-1]
+
     fire.Fire(ace_cli.AceCLI())
