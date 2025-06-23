@@ -11,7 +11,7 @@ import fire, util, db, setup_core
 CTL="./pgedge"
 
 
-def setup_pgedge(User=None, Passwd=None, dbName=None, port=None, Datadir=None, pg_ver=None, spock_ver=None, autostart=False, interactive=False, yes=False):
+def setup_pgedge(User=None, Passwd=None, dbName=None, port=None, pg_data=None, pg_ver=None, spock_ver=None, autostart=False, interactive=False, yes=False):
     """Install a pgEdge node (including PostgreSQL, spock, and snowflake-sequences).
 
        Install a pgEdge node (including PostgreSQL, spock, and snowflake-sequences).
@@ -21,7 +21,7 @@ def setup_pgedge(User=None, Passwd=None, dbName=None, port=None, Datadir=None, p
        :param Passwd: The password for the newly created db user (required)
        :param dbName: The database name (required)
        :param port: Defaults to 5432 if not specified
-       :param Datadir: The data directory to use for PostgreSQL. Must be an absolute path. Defaults to data/pgV.
+       :param pg_data: The data directory to use for PostgreSQL. Must be an absolute path. Defaults to data/pgV.
        :param pg_ver: Defaults to latest prod version of pg, such as 16.  May be pinned to a specific pg version such as 16.4
        :param spock_ver: Defaults to latest prod version of spock, such as 4.0.  May be pinned to a specific spock version such as 4.0.1
        :param autostart: Defaults to False
@@ -55,7 +55,7 @@ def setup_pgedge(User=None, Passwd=None, dbName=None, port=None, Datadir=None, p
         port = pgePort
 
     util.message(f"""
-setup.pgedge(User={User}, Passwd={Passwd}, dbName={dbName}, port={port}, Datadir={Datadir}, pg_ver={pg_ver},
+setup.pgedge(User={User}, Passwd={Passwd}, dbName={dbName}, port={port}, pg_data={pg_data}, pg_ver={pg_ver},
   spock_ver={spock_ver}, autostart={autostart}, interactive={interactive}, yes={yes})
 """, "debug")
 
@@ -97,15 +97,15 @@ setup.pgedge(User={User}, Passwd={Passwd}, dbName={dbName}, port={port}, Datadir
     pg_major, pg_minor = setup_core.parse_pg(pg_ver)
 
     pg_init_options = ""
-    if Datadir is not None:
-        if not os.path.isabs(Datadir):
+    if pg_data is not None:
+        if not os.path.isabs(pg_data):
             util.exit_message(
-                "Datadir cannot be set as relative path. Please specify absolute path instead"
+                "pg_data cannot be set as relative path. Please specify absolute path instead"
             )
-        pg_init_options = f"--datadir={Datadir}"
+        pg_init_options = f"--datadir={pg_data}"
 
     setup_core.check_pre_reqs(
-        User, Passwd, dbName, port, Datadir, pg_major, pg_minor, spock_ver, autostart)
+        User, Passwd, dbName, port, pg_data, pg_major, pg_minor, spock_ver, autostart)
 
     if interactive and yes is False:
         y_or_n = input("Do you want to continue? [Y/n] ")

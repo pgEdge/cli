@@ -20,7 +20,7 @@ Example: ./pgedge setup -U user -P passwd -d test --pg_ver 16
     --port=PORT
         Defaults to 5432 if not specified
     
-    -D, --Datadir=DATADIR
+    --pg_data=PG_DATA
         The data directory to use for PostgreSQL. Must be an absolute path. Defaults to data/pgV.
     
     --pg_ver=PG_VER

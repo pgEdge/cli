@@ -574,7 +574,7 @@ def ssh_install_pgedge(
         if db_settings.get("auto_start") == "on":
             setup_parms += " --autostart"
         if nddatadir:
-            setup_parms += f" -D {nddatadir}"
+            setup_parms += f" --pg_data {nddatadir}"
 
         cmd_setup = f"{nc} setup {setup_parms}"
         message = f"Setting up pgEdge on {ndnm}"
