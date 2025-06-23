@@ -77,7 +77,7 @@ class MerkleTreeCLI(object):
             mtree_task.scheduler.task_status = "RUNNING"
             mtree_task.scheduler.started_at = datetime.now()
 
-            override_block_size = kwargs.get("skip_block_size_check", False)
+            override_block_size = kwargs.get("override_block_size", False)
 
             if ((mode == "teardown") and (not kwargs.get("table_name"))) or (
                 mode == "init"
@@ -898,6 +898,10 @@ class AceCLI(object):
 
     def __getattr__(self, name):
         try:
+            # The tests have a convoluted way of invoking the CLI currently, so
+            # if there is an underscore in the name,  we replace it with a dash.
+            if "_" in name:
+                name = name.replace("_", "-")
             return self._commands[name]
         except KeyError:
             raise AttributeError(f"No such command: {name}")

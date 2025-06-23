@@ -179,7 +179,7 @@ class TestBlockBoundaries:
                 "eqn-t9da",
                 f"public.{table}",
                 block_size=block_size,
-                override_block_size=True,
+                skip_block_size_check=True,
             )
 
             captured = capsys.readouterr()

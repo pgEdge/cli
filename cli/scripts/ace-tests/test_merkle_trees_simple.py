@@ -643,7 +643,7 @@ class TestMerkleTreesSimple(abc.ABC):
                 cluster_name,
                 table_name=table_name,
                 block_size=5,
-                override_block_size=True,
+                skip_block_size_check=True,
             )
 
             conn = psycopg.connect(host="n1", dbname="demo", user="admin")

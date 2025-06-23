@@ -55,7 +55,7 @@ def cli():
 
 @pytest.fixture(scope="session")
 def mtree_cli(cli):
-    return cli.mtree
+    return cli.mtree()
 
 
 @pytest.fixture(scope="session")
