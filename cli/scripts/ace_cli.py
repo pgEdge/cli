@@ -21,15 +21,15 @@ from ace_exceptions import AceException
 
 class MerkleTreeCLI(object):
     """
-    Use Merkle Trees for efficient table diffs.
-
-    Use Merkle Trees for efficient table diffs.
+    Use pre-computed table hashes, maintained as Merkle Trees, to achieve a
+    significant speed up over normal-mode table-diff.
     """
 
     """
-    Initialises the MarkleTreeCLI and sets up command groups.
+    Initialises the MerkleTreeCLI and sets up command groups.
     This allows it to behave like another module under ace
     """
+
     def __init__(self):
         self._commands = {
             "init": self.init,
@@ -38,7 +38,7 @@ class MerkleTreeCLI(object):
             "table-diff": self.table_diff,
             "teardown": self.teardown,
         }
-    
+
     def __getattr__(self, name):
         try:
             return self._commands[name]
@@ -48,7 +48,7 @@ class MerkleTreeCLI(object):
     def __dir__(self):
         # Allows Fire to generate proper helptext using dash-case commands
         return list(self._commands.keys())
-        
+
     def _execute_task(self, mode, **kwargs):
         """Helper to run merkle tree tasks."""
         task_id = ace_db.generate_task_id()
@@ -77,7 +77,7 @@ class MerkleTreeCLI(object):
             mtree_task.scheduler.task_status = "RUNNING"
             mtree_task.scheduler.started_at = datetime.now()
 
-            override_block_size = kwargs.get("override_block_size", False)
+            override_block_size = kwargs.get("skip_block_size_check", False)
 
             if ((mode == "teardown") and (not kwargs.get("table_name"))) or (
                 mode == "init"
@@ -143,7 +143,7 @@ class MerkleTreeCLI(object):
         ranges_file=None,
         nodes="all",
         quiet_mode=False,
-        override_block_size=False,
+        skip_block_size_check=False,
     ):
         """
         Builds a new Merkle tree for a table.
@@ -160,7 +160,8 @@ class MerkleTreeCLI(object):
             ranges_file (str, optional): Path to a file with pre-computed ranges.
             nodes (str, optional): Comma-separated subset of nodes.
             quiet_mode (bool, optional): Suppress output.
-            override_block_size (bool, optional): Allow unsafe block size.
+            skip_block_size_check (bool, optional): Skip block size check, and
+                potentially tolerate unsafe block sizes. Defaults to False.
         """
         self._execute_task(
             "build",
@@ -175,7 +176,7 @@ class MerkleTreeCLI(object):
             ranges_file=ranges_file,
             nodes=nodes,
             quiet_mode=quiet_mode,
-            override_block_size=override_block_size,
+            override_block_size=skip_block_size_check,
         )
 
     def update(
@@ -230,6 +231,7 @@ class MerkleTreeCLI(object):
             cluster_name (str): Name of the cluster.
             table_name (str): Schema-qualified table name.
             dbname (str, optional): Name of the database.
+            rebalance (bool, optional): Trigger rebalancing of the tree.
             max_cpu_ratio (float, optional): Max CPU for parallel operations.
             batch_size (int, optional): Number of blocks per worker batch.
             nodes (str, optional): Comma-separated subset of nodes.
@@ -283,14 +285,15 @@ class TableDiffCLI(object):
         cluster_name,
         table_name,
         dbname=None,
-        block_size=config.DIFF_BLOCK_SIZE,
+        block_rows=None,
         max_cpu_ratio=config.MAX_CPU_RATIO,
         output="json",
         nodes="all",
         batch_size=config.DIFF_BATCH_SIZE,
         table_filter=None,
         quiet=False,
-        override_block_size=False,
+        skip_block_size_check=False,
+        **kwargs,
     ):
         """
         Compare a table across a cluster and produce a report showing
@@ -303,7 +306,7 @@ class TableDiffCLI(object):
                 comparing across cluster nodes.
             dbname (str, optional): Name of the database to use. If omitted,
                 defaults to the first database in the cluster configuration file.
-            block_size (int, optional): Number of rows to process per block.
+            block_rows (int, optional): Number of rows to process per block.
                 Defaults to config.DIFF_BLOCK_SIZE.
             max_cpu_ratio (float, optional): Maximum CPU utilisation. The accepted
                 range is 0.0-1.0. Defaults to config.MAX_CPU_RATIO_DEFAULT.
@@ -319,8 +322,8 @@ class TableDiffCLI(object):
                 customer_id less than 100.  If omitted, the entire table is compared.
             quiet (bool, optional): Whether to suppress output in stdout. Defaults
                 to False.
-            override_block_size (bool, optional): Allow unsafe block size. Defaults
-                to False.
+            skip_block_size_check (bool, optional): Skip block size check, and
+                potentially tolerate unsafe block sizes. Defaults to False.
 
         Raises:
             AceException: If there's an error specific to the ACE operation.
@@ -334,6 +337,14 @@ class TableDiffCLI(object):
         task_id = ace_db.generate_task_id()
 
         try:
+            block_size = (
+                kwargs.get(
+                    "block_rows", kwargs.get("block_size", config.DIFF_BLOCK_SIZE)
+                )
+                if not block_rows
+                else block_rows
+            )
+
             td_task = TableDiffTask(
                 cluster_name=cluster_name,
                 _table_name=table_name,
@@ -346,7 +357,7 @@ class TableDiffCLI(object):
                 quiet_mode=quiet,
                 table_filter=table_filter,
                 invoke_method="cli",
-                _override_block_size=override_block_size,
+                _override_block_size=skip_block_size_check,
             )
             td_task.scheduler.task_id = task_id
             td_task.scheduler.task_type = "table-diff"
@@ -486,6 +497,7 @@ class TableRerunCLI(object):
         diff_file,
         table_name,
         dbname=None,
+        behavior="rerun",
         quiet=False,
     ):
         """
@@ -500,6 +512,8 @@ class TableRerunCLI(object):
                 comparing across cluster nodes.
             dbname (str, optional): Name of the database to use. If omitted,
                 defaults to the first database in the cluster configuration.
+            behavior (str, optional, deprecated): Deprecated. Formerly used to
+            specify the behavior of the rerun. Now, it always defaults to "hostdb".
             quiet (bool, optional): Whether to suppress output in stdout. Defaults
                 to False.
 

@@ -2529,9 +2529,10 @@ if __name__ == "__main__":
     # If it is, we remove it to prevent fire.Fire from interpreting it
     # This ensures that the mtree command properly renders help for
     # ./pgedge ace mtree or ./pgedge ace mtree --help|-h
-    if sys.argv[-1] in ('--help', '-h') and 'mtree' in sys.argv:
-        mtree_index = sys.argv.index('mtree')
-        if sys.argv[mtree_index + 1:] == ['--help'] or sys.argv[mtree_index + 1:] == ['-h']:
+    if sys.argv[-1] in ("--help", "-h") and "mtree" in sys.argv:
+        mtree_index = sys.argv.index("mtree")
+        received_args = sys.argv[mtree_index + 1 :]
+        if received_args == ["--help"] or received_args == ["-h"]:
             sys.argv = sys.argv[:-1]
 
     fire.Fire(ace_cli.AceCLI())
