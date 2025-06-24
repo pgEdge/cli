@@ -13,7 +13,7 @@ Use commands in this section to invoke the Active Consistency Engine (ace); comm
 
 | Command | Description |
 |---------|-------------|
-| [ace mtree](functions/ace-mtree.md) | Use Merkle Trees for efficient table diffs. |
+| [ace mtree](functions/ace-mtree.md) | Use pre-computed table hashes, maintained as Merkle Trees, to achieve a significant speed up over normal-mode table-diff. |
 | [ace repset-diff](functions/ace-repset-diff.md) | Compare a repset across a cluster and produce a report showing any differences. |
 | [ace schema-diff](functions/ace-schema-diff.md) | Compare a schema across a cluster and produce a report showing any differences. |
 | [ace spock-diff](functions/ace-spock-diff.md) | Compare the spock metadata across a cluster and produce a report showing any differences. |

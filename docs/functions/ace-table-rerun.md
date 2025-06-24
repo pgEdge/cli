@@ -17,6 +17,9 @@
     -d, --dbname=DBNAME
         Name of the database to use. If omitted, defaults to the first database in the cluster configuration.
     
+    -b, --behavior=BEHAVIOR
+        Deprecated. Formerly used to specify the behavior of the rerun. Now, it always defaults to "hostdb".
+    
     -q, --quiet=QUIET
         Whether to suppress output in stdout. Defaults to False.
     

@@ -15,13 +15,13 @@
     -d, --dbname=DBNAME
         Name of the database to use. If omitted, defaults to the first database in the cluster configuration file.
     
-    --block_size=BLOCK_SIZE
+    --block_rows=BLOCK_ROWS
         Number of rows to process per block. Defaults to config.DIFF_BLOCK_SIZE.
     
     -m, --max_cpu_ratio=MAX_CPU_RATIO
         Maximum CPU utilisation. The accepted range is 0.0-1.0. Defaults to config.MAX_CPU_RATIO_DEFAULT.
     
-    --output=OUTPUT
+    -o, --output=OUTPUT
         Output format. Acceptable values are "json", "csv", and "html". Defaults to "json".
     
     -n, --nodes=NODES
@@ -36,6 +36,7 @@
     -q, --quiet=QUIET
         Whether to suppress output in stdout. Defaults to False.
     
-    --override_block_size=OVERRIDE_BLOCK_SIZE
-        Allow unsafe block size. Defaults to False.
+    -s, --skip_block_size_check=SKIP_BLOCK_SIZE_CHECK
+        Skip block size check, and potentially tolerate unsafe block sizes. Defaults to False.
     
+    Additional flags are accepted.

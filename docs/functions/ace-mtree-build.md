@@ -39,6 +39,6 @@
     -q, --quiet_mode=QUIET_MODE
         Suppress output.
     
-    -o, --override_block_size=OVERRIDE_BLOCK_SIZE
-        Allow unsafe block size.
+    -s, --skip_block_size_check=SKIP_BLOCK_SIZE_CHECK
+        Skip block size check, and potentially tolerate unsafe block sizes. Defaults to False.
     

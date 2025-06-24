@@ -16,7 +16,7 @@
         Name of the database.
     
     -r, --rebalance=REBALANCE
-    
+        Trigger rebalancing of the tree.
     
     -m, --max_cpu_ratio=MAX_CPU_RATIO
         Max CPU for parallel operations.

@@ -7,7 +7,7 @@
 
 ## COMMANDS
     COMMAND is one of the following:
-     mtree               # Use Merkle Trees for efficient table diffs.
+     mtree               # Use pre-computed table hashes, maintained as Merkle Trees, to achieve a significant speed up over normal-mode table-diff.
      repset-diff         # Compare a repset across a cluster and produce a report showing any differences.
      schema-diff         # Compare a schema across a cluster and produce a report showing any differences.
      spock-diff          # Compare the spock metadata across a cluster and produce a report showing any differences.

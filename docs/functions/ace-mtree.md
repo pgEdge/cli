@@ -3,7 +3,7 @@
     ./pgedge ace mtree COMMAND
 
 ## DESCRIPTION
-    Use Merkle Trees for efficient table diffs.
+    Use pre-computed table hashes, maintained as Merkle Trees, to achieve a significant speed up over normal-mode table-diff.
 
 ## COMMANDS
     COMMAND is one of the following:
