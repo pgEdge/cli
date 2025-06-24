@@ -63,7 +63,7 @@ f"""setup_core.check_pre_reqs(User={User}, Passwd={Passwd}, db={db}, port={port}
                f"{num_pg_mins} versions available matching '{pg_minor}*'")
 
     if data_dir is None:
-        data_dir = f"data/pg{pg_major}"
+        data_dir = f"{os.getcwd()}/data/pg{pg_major}"
 
     if os.path.exists(data_dir):
         dir = os.listdir(data_dir)

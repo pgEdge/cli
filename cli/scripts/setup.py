@@ -21,7 +21,7 @@ def setup_pgedge(User=None, Passwd=None, dbName=None, port=None, pg_data=None, p
        :param Passwd: The password for the newly created db user (required)
        :param dbName: The database name (required)
        :param port: Defaults to 5432 if not specified
-       :param pg_data: The data directory to use for PostgreSQL. Must be an absolute path. Defaults to data/pgV.
+       :param pg_data: The data directory to use for PostgreSQL. Must be an absolute path. Defaults to data/pgV, relative to where the CLI is installed
        :param pg_ver: Defaults to latest prod version of pg, such as 16.  May be pinned to a specific pg version such as 16.4
        :param spock_ver: Defaults to latest prod version of spock, such as 4.0.  May be pinned to a specific spock version such as 4.0.1
        :param autostart: Defaults to False
@@ -98,6 +98,7 @@ setup.pgedge(User={User}, Passwd={Passwd}, dbName={dbName}, port={port}, pg_data
 
     pg_init_options = ""
     if pg_data is not None:
+        pg_data = pg_data.rstrip("/")
         if not os.path.isabs(pg_data):
             util.exit_message(
                 "pg_data cannot be set as relative path. Please specify absolute path instead"

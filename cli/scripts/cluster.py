@@ -367,7 +367,7 @@ def json_validate(cluster_name):
         summary["total_nodes"] += 1  # Increment total node count
         path = node.get("path", "/var/lib/postgresql")
         pg_data = node.get("pg_data", f"{path}/pgedge/data/pg{pg_version}")
-        if not path.isabs(pg_data):
+        if not os.path.isabs(pg_data):
             util.exit_message(
                 "pg_data cannot be set as relative path. Please specify absolute path or leave it blank."
             )
@@ -522,7 +522,7 @@ def ssh_install_pgedge(
         install (bool): Whether or not to perform 'pgedge install'.
         verbose (bool): Whether to produce verbose output.
     """
-
+    print (nodes)
     if install is None:
         install = True
 
@@ -1688,9 +1688,12 @@ def add_node(
             "private_ip": group.get("private_ip", ""),
             "port": group.get("port", ""),
             "path": group.get("path", ""),
+            "pg_data": group.get("pg_data", ""),
             "os_user": os_user,
             "ssh_key": ssh_key,
         }
+        print ("initial group")
+        print (group)
 
     if "public_ip" not in target_node_data and "private_ip" not in target_node_data:
         util.exit_message(

@@ -21,7 +21,7 @@ Example: ./pgedge setup -U user -P passwd -d test --pg_ver 16
         Defaults to 5432 if not specified
     
     --pg_data=PG_DATA
-        The data directory to use for PostgreSQL. Must be an absolute path. Defaults to data/pgV.
+        The data directory to use for PostgreSQL. Must be an absolute path. Defaults to data/pgV, relative to where the CLI is installed
     
     --pg_ver=PG_VER
         Defaults to latest prod version of pg, such as 16.  May be pinned to a specific pg version such as 16.4
