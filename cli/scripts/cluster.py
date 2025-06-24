@@ -522,7 +522,6 @@ def ssh_install_pgedge(
         install (bool): Whether or not to perform 'pgedge install'.
         verbose (bool): Whether to produce verbose output.
     """
-    print (nodes)
     if install is None:
         install = True
 
@@ -1692,8 +1691,6 @@ def add_node(
             "os_user": os_user,
             "ssh_key": ssh_key,
         }
-        print ("initial group")
-        print (group)
 
     if "public_ip" not in target_node_data and "private_ip" not in target_node_data:
         util.exit_message(
