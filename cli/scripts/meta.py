@@ -306,7 +306,6 @@ def get_default_spock(pgv):
         + pgv
         + "' \n"
         + "   AND component LIKE 'spock%'"
-        + "   AND version not LIKE '%devel%'"
     )
     try:
         c = con.cursor()
