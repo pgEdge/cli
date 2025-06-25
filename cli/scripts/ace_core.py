@@ -604,7 +604,7 @@ def table_diff(td_task: TableDiffTask, skip_all_checks: bool = False):
                 "mismatch": False,
                 "errors": [
                     f"Error during pre-flight checks for table_diff: {str(e_checks)}"
-                ]
+                ],
             }
             ace.handle_task_exception(td_task, context)
             raise
@@ -2791,7 +2791,7 @@ def spock_diff(sd_task: SpockDiffTask) -> None:
 
     try:
         for cluster_node in sd_task.fields.cluster_nodes:
-            cur = conns[cluster_node["name"]].cursor()
+            cur = conns[cluster_node["name"]].cursor(row_factory=dict_row)
 
             if (
                 sd_task.fields.node_list
@@ -2880,17 +2880,19 @@ def spock_diff(sd_task: SpockDiffTask) -> None:
             if table_info == []:
                 hints.append("Hint: No tables in database")
             for table in table_info:
-                if table["set_name"] is None:
+                if table.get("set_name") is None:
                     print(" - Not in a replication set")
                     hints.append(
                         "Hint: Tables not in replication set might not have"
                         " primary keys, or you need to run repset-add-table"
                     )
                 else:
-                    print(" - " + table["set_name"])
+                    print(" - " + table.get("set_name"))
 
-                diff_spock["rep_set_info"].append({table["set_name"]: table["relname"]})
-                print("   - ", table["relname"])
+                diff_spock["rep_set_info"].append(
+                    {table.get("set_name"): table.get("relname")}
+                )
+                print("   - ", table.get("relname"))
 
             diff_spock["hints"] = hints
             compare_spock.append(diff_spock)
@@ -2911,6 +2913,10 @@ def spock_diff(sd_task: SpockDiffTask) -> None:
     print("~~~~~~~~~~~~~~~~~~~~~~~~~")
 
     for n in range(1, len(compare_spock)):
+
+        if compare_spock[n].get("node") is None:
+            continue
+
         diff_key = compare_spock[0]["node"] + "/" + compare_spock[n]["node"]
         if compare_spock[0]["rep_set_info"] == compare_spock[n]["rep_set_info"]:
             task_context["diffs"][diff_key] = {

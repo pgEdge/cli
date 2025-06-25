@@ -724,7 +724,7 @@ class SchemaDiffCLI(object):
 
             ace.schema_diff_checks(sc_task)
             ace_db.create_ace_task(task=sc_task)
-            if ddl_only:
+            if sc_task.ddl_only:
                 ace_core.schema_diff_objects(sc_task)
             else:
                 ace_core.multi_table_diff(sc_task)
