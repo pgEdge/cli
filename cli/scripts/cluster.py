@@ -195,6 +195,10 @@ def load_json(cluster_name):
         os_user = ssh_info.get("os_user", "")
         ssh_key = ssh_info.get("private_key", "")
 
+        pg_data = group.get("pg_data", "")
+        if not pg_data:
+            pg_data = group.get("path") + "/pgedge/data/pg" + db_settings["pg_version"]
+
         node_info = {
             "name": group.get("name", ""),
             "is_active": group.get("is_active", ""),
@@ -202,6 +206,7 @@ def load_json(cluster_name):
             "private_ip": group.get("private_ip", ""),
             "port": group.get("port", ""),
             "path": group.get("path", ""),
+            "pg_data": pg_data,
             "os_user": os_user,
             "ssh_key": ssh_key,
             "backrest": group.get("backrest", {}),
@@ -214,6 +219,11 @@ def load_json(cluster_name):
         # Process sub_nodes
         sub_node_list = []
         for sub_node in group.get("sub_nodes", []):
+
+            sub_pg_data = sub_node.get("pg_data", "")
+            if not sub_pg_data:
+                sub_pg_data = sub_node.get("path") + "/pgedge/data/pg" + db_settings["pg_version"]
+
             sub_node_info = {
                 "name": sub_node.get("name", ""),
                 "is_active": sub_node.get("is_active", ""),
@@ -221,6 +231,7 @@ def load_json(cluster_name):
                 "private_ip": sub_node.get("private_ip", ""),
                 "port": sub_node.get("port", ""),
                 "path": sub_node.get("path", ""),
+                "pg_data": sub_pg_data,
                 "os_user": os_user,
                 "ssh_key": ssh_key,
             }
@@ -363,13 +374,20 @@ def json_validate(cluster_name):
     # Validate and update node_groups
     for idx, node in enumerate(parsed_json.get("node_groups", [])):
         summary["total_nodes"] += 1  # Increment total node count
+        path = node.get("path", "/var/lib/postgresql")
+        pg_data = node.get("pg_data", "")
+        if pg_data and not os.path.isabs(pg_data):
+            util.exit_message(
+                "pg_data cannot be set as relative path. Please specify absolute path or leave it blank."
+            )
         node_info = {
             "node_index": idx + 1,  # Start numbering nodes from 1
             "public_ip": node.get("public_ip", ""),
             "private_ip": node.get("private_ip", ""),
             "port": node.get("port", 5432),
             "is_active": node.get("is_active", "off"),
-            "path": node.get("path", "/var/lib/postgresql"),
+            "path": path,
+            "pg_data": pg_data,
         }
 
         # Validate subnodes
@@ -513,7 +531,6 @@ def ssh_install_pgedge(
         install (bool): Whether or not to perform 'pgedge install'.
         verbose (bool): Whether to produce verbose output.
     """
-
     if install is None:
         install = True
 
@@ -527,6 +544,7 @@ def ssh_install_pgedge(
 
         ndnm = n["name"]
         ndpath = n["path"]
+        nddatadir = n["pg_data"]
         ndip = n["public_ip"] or n["private_ip"]
         ndport = str(n.get("port", "5432"))
         pg = db_settings["pg_version"]
@@ -563,6 +581,8 @@ def ssh_install_pgedge(
             setup_parms += f" --spock_ver {spock}"
         if db_settings.get("auto_start") == "on":
             setup_parms += " --autostart"
+        if nddatadir:
+            setup_parms += f" --pg_data {nddatadir}"
 
         cmd_setup = f"{nc} setup {setup_parms}"
         message = f"Setting up pgEdge on {ndnm}"
@@ -999,6 +1019,7 @@ def json_create(
         node_json["port"] = str(node_port)
 
         node_json["path"] = f"/home/{os_user}/{cluster_name}/n{n}"
+        node_json["pg_data"] = f"{node_json['path']}/pgedge/data/pg{pg_version_int}"
         
         # Update backrest configuration to always append the node name to the repo1_path.
         if backrest_enabled:
@@ -1379,8 +1400,7 @@ def init(cluster_name, install=True):
             if not restore_path.rstrip("/").endswith(node["name"]):
                 restore_path = restore_path.rstrip("/") + f"/{node['name']}"
 
-            pg_version = db_settings["pg_version"]
-            pg1_path = f"{node['path']}/pgedge/data/pg{pg_version}"
+            pg1_path = node.get("pg_data")
             port = node["port"]  # Custom port from JSON
 
             # Install pgBackRest
@@ -1666,6 +1686,11 @@ def add_node(
         os_user = ssh_info.get("os_user", "")
         ssh_key = ssh_info.get("private_key", "")
 
+        # Fallback to <path>/pgedge/data/pgV if pg_data is missing or empty
+        pg_data = group.get("pg_data", "")
+        if not pg_data:
+            pg_data = f"{group.get('path', '')}/pgedge/data/{pgV}"
+
         target_node_data = {
             "ssh": ssh_info,
             "backrest": group.get("backrest", {}),
@@ -1675,6 +1700,7 @@ def add_node(
             "private_ip": group.get("private_ip", ""),
             "port": group.get("port", ""),
             "path": group.get("path", ""),
+            "pg_data": pg_data,
             "os_user": os_user,
             "ssh_key": ssh_key,
         }
@@ -1725,7 +1751,7 @@ def add_node(
             )
 
         pg_version = db_settings["pg_version"]
-        source_pg1_path = f"{source_node_data['path']}/pgedge/data/pg{pg_version}"
+        source_pg1_path = source_node_data["pg_data"]
         source_port = source_node_data["port"]
 
         # Configure postgresql.conf for pgBackRest (without --pg1-port)
@@ -1872,7 +1898,7 @@ def add_node(
         repo1_path_default = f"/var/lib/pgbackrest/{source_node_data['name']}"
         repo1_path = source_backrest_cfg.get("repo1_path", f"{repo1_path_default}")
     else:
-        pg1_path = f"{source_node_data['path']}/pgedge/data/{pgV}"
+        pg1_path = source_node_data['pg_data']
 
         cmd = (
             f"{source_node_data['path']}/pgedge/pgedge backrest set-postgresqlconf {source_stanza} "
@@ -1895,7 +1921,7 @@ def add_node(
     run_cmd(cmd, target_node_data, message=message, verbose=verbose)
 
     manage_node(target_node_data, "stop", f"{pgV}", verbose)
-    cmd = f'rm -rf {target_node_data["path"]}/pgedge/data/{pgV}'
+    cmd = f'rm -rf {target_node_data["pg_data"]}'
     message = f"Removing old data directory"
     run_cmd(cmd, target_node_data, message=message, verbose=verbose)
 
@@ -1904,7 +1930,7 @@ def add_node(
         # by default when generating the restore_command
         f'--cmd="pgbackrest --repo1-cipher-type={source_repo1_cipher_type}" '
         f"--stanza={source_stanza} "
-        f"--pg1-path={target_node_data['path']}/pgedge/data/{pgV} "
+        f"--pg1-path={target_node_data['pg_data']} "
         f"--repo1-path={repo1_path} "
         f"--repo1-cipher-type={source_repo1_cipher_type} "
         f"--repo1-type={source_repo1_type} "
@@ -1922,7 +1948,7 @@ def add_node(
     message = f"Restoring backup"
     run_cmd(cmd, target_node_data, message=message, verbose=verbose)
 
-    pgd = f'{target_node_data["path"]}/pgedge/data/{pgV}'
+    pgd = target_node_data["pg_data"]
     pgc = f"{pgd}/postgresql.conf"
     log_directory = f'{target_node_data["path"]}/pgedge/data/logs/{pgV}'
 
@@ -1941,7 +1967,7 @@ def add_node(
     # Step 5. Configure the target node as a standby replica of the source node.
     cmd = (
         f'{target_node_data["path"]}/pgedge/pgedge backrest configure-replica {source_stanza} '
-        f'{target_node_data["path"]}/pgedge/data/{pgV} {source_node_data.get("private_ip", source_node_data.get("public_ip"))} '
+        f'{target_node_data["pg_data"]} {source_node_data.get("private_ip", source_node_data.get("public_ip"))} '
         f'{source_node_data["port"]} {source_node_data["os_user"]}'
     )
     message = f"Configuring PITR on replica"
@@ -2117,7 +2143,7 @@ def add_node(
     cmd = (
         f"cd {target_node_data['path']}/pgedge && "
         f"./pgedge backrest cleanup-replica "
-        f"--pg1-path {target_node_data['path']}/pgedge/data/{pgV} "
+        f"--pg1-path {target_node_data['pg_data']} "
     )
     run_cmd(
         cmd,
@@ -2146,7 +2172,7 @@ def add_node(
             "repo1_host_user", target_node_data.get("os_user", "postgres")
         )
         target_pg1_path = target_backrest_cfg.get(
-            "pg1_path", f"{target_pgedge_dir}/data/{pgV}"
+            "pg1_path", target_node_data['pg_data']
         )
         target_pg1_user = target_backrest_cfg.get(
             "pg1_user", target_node_data.get("os_user", "postgres")
