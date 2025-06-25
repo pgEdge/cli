@@ -195,6 +195,10 @@ def load_json(cluster_name):
         os_user = ssh_info.get("os_user", "")
         ssh_key = ssh_info.get("private_key", "")
 
+        pg_data = group.get("pg_data", "")
+        if not pg_data:
+            pg_data = group.get("path") + "/pgedge/data/pg" + db_settings["pg_version"]
+
         node_info = {
             "name": group.get("name", ""),
             "is_active": group.get("is_active", ""),
@@ -202,7 +206,7 @@ def load_json(cluster_name):
             "private_ip": group.get("private_ip", ""),
             "port": group.get("port", ""),
             "path": group.get("path", ""),
-            "pg_data": group.get("pg_data", ""),
+            "pg_data": pg_data,
             "os_user": os_user,
             "ssh_key": ssh_key,
             "backrest": group.get("backrest", {}),
@@ -215,6 +219,11 @@ def load_json(cluster_name):
         # Process sub_nodes
         sub_node_list = []
         for sub_node in group.get("sub_nodes", []):
+
+            sub_pg_data = sub_node.get("pg_data", "")
+            if not sub_pg_data:
+                sub_pg_data = sub_node.get("path") + "/pgedge/data/pg" + db_settings["pg_version"]
+
             sub_node_info = {
                 "name": sub_node.get("name", ""),
                 "is_active": sub_node.get("is_active", ""),
@@ -222,7 +231,7 @@ def load_json(cluster_name):
                 "private_ip": sub_node.get("private_ip", ""),
                 "port": sub_node.get("port", ""),
                 "path": sub_node.get("path", ""),
-                "pg_data": sub_node.get("pg_data", ""),
+                "pg_data": sub_pg_data,
                 "os_user": os_user,
                 "ssh_key": ssh_key,
             }
@@ -366,8 +375,8 @@ def json_validate(cluster_name):
     for idx, node in enumerate(parsed_json.get("node_groups", [])):
         summary["total_nodes"] += 1  # Increment total node count
         path = node.get("path", "/var/lib/postgresql")
-        pg_data = node.get("pg_data", f"{path}/pgedge/data/pg{pg_version}")
-        if not os.path.isabs(pg_data):
+        pg_data = node.get("pg_data", "")
+        if pg_data and not os.path.isabs(pg_data):
             util.exit_message(
                 "pg_data cannot be set as relative path. Please specify absolute path or leave it blank."
             )
@@ -1391,8 +1400,7 @@ def init(cluster_name, install=True):
             if not restore_path.rstrip("/").endswith(node["name"]):
                 restore_path = restore_path.rstrip("/") + f"/{node['name']}"
 
-            pg_version = db_settings["pg_version"]
-            pg1_path = node['pg_data']
+            pg1_path = node.get("pg_data")
             port = node["port"]  # Custom port from JSON
 
             # Install pgBackRest
@@ -1678,6 +1686,11 @@ def add_node(
         os_user = ssh_info.get("os_user", "")
         ssh_key = ssh_info.get("private_key", "")
 
+        # Fallback to <path>/pgedge/data/pgV if pg_data is missing or empty
+        pg_data = group.get("pg_data", "")
+        if not pg_data:
+            pg_data = f"{group.get('path', '')}/pgedge/data/{pgV}"
+
         target_node_data = {
             "ssh": ssh_info,
             "backrest": group.get("backrest", {}),
@@ -1687,7 +1700,7 @@ def add_node(
             "private_ip": group.get("private_ip", ""),
             "port": group.get("port", ""),
             "path": group.get("path", ""),
-            "pg_data": group.get("pg_data", ""),
+            "pg_data": pg_data,
             "os_user": os_user,
             "ssh_key": ssh_key,
         }
