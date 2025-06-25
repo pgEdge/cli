@@ -389,6 +389,17 @@ def check_cluster_exists(cluster_name, base_dir="cluster"):
     return True if os.path.exists(cluster_dir) else False
 
 
+def ensure_pgcrypto_installed(conn: psycopg.Connection):
+    """
+    Ensure that the pgcrypto extension is installed on the database.
+    ACE needs the digest() function for computing row checksums.
+    """
+
+    with conn.cursor() as cur:
+        cur.execute("CREATE EXTENSION IF NOT EXISTS pgcrypto;")
+        conn.commit()
+
+
 def generate_pkey_offsets_query(
     schema, table, key_columns, table_sample_method, sample_percent, ntile_count
 ):
@@ -1174,6 +1185,7 @@ def table_diff_checks(
                         td_task.client_role if td_task.invoke_method == "api" else None
                     ),
                 )
+                ensure_pgcrypto_installed(conn)
             else:
                 continue
 
@@ -1548,6 +1560,7 @@ def merkle_tree_checks(
                         else None
                     ),
                 )
+                ensure_pgcrypto_installed(conn)
             else:
                 continue
 
@@ -2026,6 +2039,7 @@ def repset_diff_checks(
                     nd,
                     client_role=(rd_task.client_role if config.USE_CERT_AUTH else None),
                 )
+                ensure_pgcrypto_installed(conn)
                 conn_list.append(conn)
 
     except Exception as e:
@@ -2183,6 +2197,8 @@ def validate_schema_diff_inputs(sc_task: SchemaDiffTask) -> SchemaDiffTask:
     if type(sc_task.schema_name) is not str or sc_task.schema_name.strip() == "":
         raise AceException("schema_name is a required argument")
 
+    sc_task.ddl_only = parse_bool_field("ddl_only", sc_task.ddl_only)
+
     node_list = []
     try:
         node_list = parse_nodes(sc_task._nodes)
@@ -2278,6 +2294,10 @@ def schema_diff_checks(
                     nd,
                     client_role=(sc_task.client_role if config.USE_CERT_AUTH else None),
                 )
+
+                if not sc_task.ddl_only:
+                    ensure_pgcrypto_installed(conn)
+
                 conn_list.append(conn)
 
     except Exception as e:
