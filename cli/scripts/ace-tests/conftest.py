@@ -9,6 +9,7 @@ import psycopg
 import test_config
 from test_simple_base import TestSimpleBase
 from test_simple import TestSimple
+from test_merkle_trees_simple import TestMerkleTreesSimple
 
 # Set up paths
 os.environ["PGEDGE_HOME"] = test_config.PGEDGE_HOME
@@ -49,7 +50,12 @@ def set_run_dir():
 
 @pytest.fixture(scope="session")
 def cli():
-    return load_mod("ace_cli")
+    return load_mod("ace_cli").AceCLI()
+
+
+@pytest.fixture(scope="session")
+def mtree_cli(cli):
+    return cli.mtree()
 
 
 @pytest.fixture(scope="session")
@@ -226,12 +232,23 @@ def prepare_databases(nodes):
     sleep(5)
 
 
+def pytest_addoption(parser):
+    parser.addoption(
+        "--skip-cleanup", action="store_true", help="Skip DB cleanup fixture"
+    )
+
+
 @pytest.fixture(scope="session", autouse=True)
-def cleanup_databases(nodes):
+def cleanup_databases(request, nodes):
     """Cleanup all databases after running tests"""
 
     # Yield to let the tests run first
     yield
+
+    skip = request.config.getoption("--skip-cleanup")
+
+    if skip:
+        pytest.skip("Skipping DB cleanup")
 
     # Cleanup code that runs after all tests complete
     drop_customers_sql = "DROP TABLE IF EXISTS customers CASCADE;"
@@ -335,22 +352,43 @@ def pytest_configure(config):
 
 
 def pytest_collection_modifyitems(items):
-    """Skip tests marked as abstract_base if they are in the base class."""
+    """
+    Skips tests from TestSimpleBase as they should not be run directly.
+    """
     for item in items:
-        if item.get_closest_marker("abstract_base"):
-            # Skip only if the test is in TestSimpleBase class directly
-            # or if the test method is not overridden in the child class
-            if item.cls and (
-                (
-                    item.cls.__name__ == "TestSimpleBase"
-                    and (
-                        issubclass(item.cls, TestSimpleBase)
-                        and item.function.__qualname__.startswith("TestSimpleBase.")
-                    )
+        if (
+            item.cls
+            and issubclass(item.cls, TestSimpleBase)
+            and item.function.__qualname__.startswith("TestSimpleBase.")
+        ):
+            item.add_marker(
+                pytest.mark.skip(
+                    reason="TestSimpleBase tests are not meant to be run directly"
                 )
-                or (
-                    issubclass(item.cls, TestSimple)
-                    and item.function.__qualname__.startswith("TestSimple.")
-                )
-            ):
-                item.add_marker(pytest.mark.skip(reason="Abstract base class"))
+            )
+
+
+def pytest_runtest_setup(item):
+    """
+    Skip parent class tests if a child class test is also in the run.
+    """
+    if not item.get_closest_marker("abstract_base"):
+        return
+
+    if item.cls is TestMerkleTreesSimple:
+        is_child_running = any(
+            i.cls
+            and issubclass(i.cls, TestMerkleTreesSimple)
+            and i.cls is not TestMerkleTreesSimple
+            for i in item.session.items
+        )
+        if is_child_running:
+            pytest.skip("Skipping parent class")
+
+    if item.cls is TestSimple:
+        is_child_running = any(
+            i.cls and issubclass(i.cls, TestSimple) and i.cls is not TestSimple
+            for i in item.session.items
+        )
+        if is_child_running:
+            pytest.skip("Skipping parent class")

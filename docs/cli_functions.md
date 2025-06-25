@@ -13,14 +13,25 @@ Use commands in this section to invoke the Active Consistency Engine (ace); comm
 
 | Command | Description |
 |---------|-------------|
-| [ace table-diff](functions/ace-table-diff.md) | Compare a table across a cluster and produce a report showing any differences. |
-| [ace table-repair](functions/ace-table-repair.md) | Repair a table across a cluster by fixing data inconsistencies identified in a table-diff operation. |
-| [ace table-rerun](functions/ace-table-rerun.md) | Reruns a table diff operation based on a previous diff file. |
+| [ace mtree](functions/ace-mtree.md) | Use pre-computed table hashes, maintained as Merkle Trees, to achieve a significant speed up over normal-mode table-diff. |
 | [ace repset-diff](functions/ace-repset-diff.md) | Compare a repset across a cluster and produce a report showing any differences. |
 | [ace schema-diff](functions/ace-schema-diff.md) | Compare a schema across a cluster and produce a report showing any differences. |
 | [ace spock-diff](functions/ace-spock-diff.md) | Compare the spock metadata across a cluster and produce a report showing any differences. |
-| [ace spock-exception-update](functions/ace-spock-exception-update.md) | Updates the Spock exception status for a specified cluster and node. |
+| [ace spock-exception-update](functions/ace-spock-exception-update.md) | Update the Spock exception status for a specified cluster and node. |
 | [ace start](functions/ace-start.md) | Start the ACE background scheduler and API. |
+| [ace table-diff](functions/ace-table-diff.md) | Compare a table across a cluster and produce a report showing differences, if any. |
+| [ace table-repair](functions/ace-table-repair.md) | Repair a table across a cluster by fixing data inconsistencies identified in a table-diff operation. |
+| [ace table-rerun](functions/ace-table-rerun.md) | Rerun a table diff operation based on a previous diff file. |
+
+### ace mtree submodule commands
+
+| Command | Description |
+|---------|-------------|
+| [ace mtree](functions/ace-mtree-build.md) | Builds a new Merkle tree for a table. |
+| [ace mtree](functions/ace-mtree-init.md) | Initialises the database with necessary objects for Merkle trees. |
+| [ace mtree](functions/ace-mtree-table-diff.md) | Compares Merkle trees of a table across cluster nodes. |
+| [ace mtree](functions/ace-mtree-teardown.md) | Removes Merkle tree objects. |
+| [ace mtree](functions/ace-mtree-update.md) | Updates an existing Merkle tree. |
 
 ## cluster module commands
 Use commands in the cluster module to create and modify a cluster; commands in the cluster module include:

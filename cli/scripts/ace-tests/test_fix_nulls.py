@@ -307,7 +307,10 @@ class TestTableRepairFixNulls:
     def test_simple_nulls(self, cli, capsys):
         """Test fix-nulls with simple primary key"""
         # First run table-diff to get the diff file
-        cli.table_diff_cli("eqn-t9da", "public.simple_nulls")
+        cli.table_diff(
+            cluster_name="eqn-t9da",
+            table_name="public.simple_nulls",
+        )
         captured = capsys.readouterr()
         output = captured.out
 
@@ -318,10 +321,10 @@ class TestTableRepairFixNulls:
         diff_file_path = match.group(1)
 
         # Run table-repair with fix-nulls
-        cli.table_repair_cli(
-            "eqn-t9da",
-            "public.simple_nulls",
-            diff_file_path,
+        cli.table_repair(
+            cluster_name="eqn-t9da",
+            table_name="public.simple_nulls",
+            diff_file=diff_file_path,
             fix_nulls=True,
         )
 
@@ -344,7 +347,10 @@ class TestTableRepairFixNulls:
     def test_composite_nulls(self, cli, capsys):
         """Test fix-nulls with composite primary key"""
         # First run table-diff to get the diff file
-        cli.table_diff_cli("eqn-t9da", "public.composite_nulls")
+        cli.table_diff(
+            cluster_name="eqn-t9da",
+            table_name="public.composite_nulls",
+        )
         captured = capsys.readouterr()
         output = captured.out
 
@@ -355,10 +361,10 @@ class TestTableRepairFixNulls:
         diff_file_path = match.group(1)
 
         # Run table-repair with fix-nulls
-        cli.table_repair_cli(
-            "eqn-t9da",
-            "public.composite_nulls",
-            diff_file_path,
+        cli.table_repair(
+            cluster_name="eqn-t9da",
+            table_name="public.composite_nulls",
+            diff_file=diff_file_path,
             fix_nulls=True,
         )
 
@@ -379,7 +385,10 @@ class TestTableRepairFixNulls:
     def test_mixed_case_nulls(self, cli, capsys):
         """Test fix-nulls with mixed case table and column names"""
         # First run table-diff to get the diff file
-        cli.table_diff_cli("eqn-t9da", "public.MixedCaseNulls")
+        cli.table_diff(
+            cluster_name="eqn-t9da",
+            table_name="public.MixedCaseNulls",
+        )
         captured = capsys.readouterr()
         output = captured.out
 
@@ -390,10 +399,10 @@ class TestTableRepairFixNulls:
         diff_file_path = match.group(1)
 
         # Run table-repair with fix-nulls
-        cli.table_repair_cli(
-            "eqn-t9da",
-            "public.MixedCaseNulls",
-            diff_file_path,
+        cli.table_repair(
+            cluster_name="eqn-t9da",
+            table_name="public.MixedCaseNulls",
+            diff_file=diff_file_path,
             fix_nulls=True,
         )
 
@@ -414,7 +423,10 @@ class TestTableRepairFixNulls:
     def test_datatype_nulls(self, cli, capsys):
         """Test fix-nulls with various datatypes"""
         # First run table-diff to get the diff file
-        cli.table_diff_cli("eqn-t9da", "public.datatype_nulls")
+        cli.table_diff(
+            cluster_name="eqn-t9da",
+            table_name="public.datatype_nulls",
+        )
         captured = capsys.readouterr()
         output = captured.out
 
@@ -425,10 +437,10 @@ class TestTableRepairFixNulls:
         diff_file_path = match.group(1)
 
         # Run table-repair with fix-nulls
-        cli.table_repair_cli(
-            "eqn-t9da",
-            "public.datatype_nulls",
-            diff_file_path,
+        cli.table_repair(
+            cluster_name="eqn-t9da",
+            table_name="public.datatype_nulls",
+            diff_file=diff_file_path,
             fix_nulls=True,
         )
 

@@ -34,6 +34,7 @@ class DerivedFields:
     host_map: dict = None
     table_list: list = None
     col_types: dict = None
+    simple_primary_key: bool = None
 
 
 @dataclass
@@ -45,12 +46,15 @@ class TableDiffTask:
 
     # User-specified, validated fields
     cluster_name: str  # Required
-    block_rows: int
+    block_size: int
     max_cpu_ratio: float
     output: str
     batch_size: int
     table_filter: str
     quiet_mode: bool
+
+    mode: str = "diff"
+    _override_block_size: bool = False
 
     # For table-diff, the diff_file_path is
     # obtained after the run of table-diff,
@@ -131,7 +135,7 @@ class RepsetDiffTask:
     # Optional fields
     # Non-default members since the handler method will fill in the
     # default values
-    block_rows: int
+    block_size: int
     max_cpu_ratio: float
     output: str
     batch_size: int
@@ -249,3 +253,39 @@ class AutoRepairTask:
 
     # Task-specific parameters
     scheduler: Task = field(default_factory=Task)
+
+
+@dataclass
+class MerkleTreeTask:
+    # Can be one of : build, update, rebalance
+    mode: str
+    cluster_name: str
+    _table_name: str
+    _dbname: str
+    _nodes: str
+
+    analyse: bool
+    rebalance: bool
+    recreate_objects: bool
+    block_size: int
+    max_cpu_ratio: float
+    batch_size: int
+    output: str
+    quiet_mode: bool
+
+    ranges: list = None
+    write_ranges: bool = False
+    ranges_file: str = None
+    row_estimate: int = 0
+    invoke_method: str = "cli"
+
+    # Client role from certificate CN when invoked via API
+    client_role: str = None
+
+    connection_pool: ConnectionPool = field(default_factory=ConnectionPool)
+    diff_summary: dict = field(default_factory=dict)
+
+    scheduler: Task = field(default_factory=Task)
+
+    # Derived fields
+    fields: DerivedFields = field(default_factory=DerivedFields)
