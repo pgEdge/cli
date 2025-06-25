@@ -16,7 +16,7 @@ def setup_pgedge(User=None, Passwd=None, dbName=None, port=None, pg_data=None, p
 
        Install a pgEdge node (including PostgreSQL, spock, and snowflake-sequences).
 
-       Example: ./pgedge setup -U user -P passwd -d test --pg_ver 16
+       Example: ./pgedge setup -U admin -P passwd -d defaultdb --pg_ver 16
        :param User: The database user that will own the db (required)
        :param Passwd: The password for the newly created db user (required)
        :param dbName: The database name (required)
