@@ -19,7 +19,7 @@ def osSys(cmd, fatal_exit=True, is_silent=False):
 
 
 def check_pre_reqs(
-    User, Passwd, db, port, pg_major, pg_minor, spock, autostart):
+    User, Passwd, db, port, data_dir, pg_major, pg_minor, spock, autostart):
 
     util.message(
 f"""setup_core.check_pre_reqs(User={User}, Passwd={Passwd}, db={db}, port={port},
@@ -62,7 +62,9 @@ f"""setup_core.check_pre_reqs(User={User}, Passwd={Passwd}, db={db}, port={port}
            util.exit_message(
                f"{num_pg_mins} versions available matching '{pg_minor}*'")
 
-    data_dir = f"data/pg{pg_major}"
+    if data_dir is None:
+        data_dir = f"{os.getcwd()}/data/pg{pg_major}"
+
     if os.path.exists(data_dir):
         dir = os.listdir(data_dir)
         if len(dir) != 0:
@@ -104,12 +106,13 @@ f"""setup_core.check_pre_reqs(User={User}, Passwd={Passwd}, db={db}, port={port}
 
     setup_info = f"""
 ######### pgEdge Setup Info ###########
-#      User: {User}
-#  Database: {db}:{port}
-#  Postgres: {pg_display}
-#     Spock: {spock_display}
-# Autostart: {autostart}
-#  Platform: {util.get_ctlib_dir()}
+#           User: {User}
+#       Database: {db}:{port}
+#       Postgres: {pg_display}
+# Data directory: {data_dir}
+#          Spock: {spock_display}
+#      Autostart: {autostart}
+#       Platform: {util.get_ctlib_dir()}
 #######################################
 """
     util.message(setup_info, "info")
