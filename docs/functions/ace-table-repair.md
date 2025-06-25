@@ -39,7 +39,7 @@
         If True, fixes null values in the table columns by looking at the corresponding column in the other nodes. Does not need the source of truth to be specified. Must be used only in special cases. This is not a recommended option for repairing divergence. Defaults to False.
     
     --fire_triggers=FIRE_TRIGGERS
-        If True, instructs triggers to fire when a repair is performed; note that ENABLE ALWAYS triggers will fire regardless of the value.
+        If True, fires triggers on a table, if any, during the repair process. Note that ENABLE ALWAYS triggers will fire regardless of the value.
     
     -b, --bidirectional=BIDIRECTIONAL
         If True, performs a bidirectional repair, applies differences found between nodes to create a distinct union of the content. In a distinct union, each row that is missing is recreated on the node from which it is missing, eventually leading to a data set (on all nodes) in which all rows are represented exactly once.

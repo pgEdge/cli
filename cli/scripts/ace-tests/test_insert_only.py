@@ -88,7 +88,10 @@ class TestInsertOnly:
         modifying existing ones
         """
         try:
-            cli.table_diff_cli("eqn-t9da", "public.insert_only_test")
+            cli.table_diff(
+                cluster_name="eqn-t9da",
+                table_name="public.insert_only_test",
+            )
             captured = capsys.readouterr()
             clean_output = re.sub(
                 r"\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])", "", captured.out
@@ -97,10 +100,10 @@ class TestInsertOnly:
             assert match, "Diff file path not found in output"
             diff_file = match.group(1)
 
-            cli.table_repair_cli(
-                "eqn-t9da",
-                "public.insert_only_test",
-                diff_file,
+            cli.table_repair(
+                cluster_name="eqn-t9da",
+                table_name="public.insert_only_test",
+                diff_file=diff_file,
                 source_of_truth="n1",
                 insert_only=True,
             )
@@ -168,7 +171,10 @@ class TestInsertOnly:
             cur.close()
             conn.close()
 
-            cli.table_diff_cli("eqn-t9da", "public.insert_only_test")
+            cli.table_diff(
+                cluster_name="eqn-t9da",
+                table_name="public.insert_only_test",
+            )
             captured = capsys.readouterr()
             clean_output = re.sub(
                 r"\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])", "", captured.out
@@ -177,10 +183,10 @@ class TestInsertOnly:
             assert match, "Diff file path not found in output"
             diff_file = match.group(1)
 
-            cli.table_repair_cli(
-                "eqn-t9da",
-                "public.insert_only_test",
-                diff_file,
+            cli.table_repair(
+                cluster_name="eqn-t9da",
+                table_name="public.insert_only_test",
+                diff_file=diff_file,
                 source_of_truth="n1",
                 insert_only=True,
             )
@@ -296,7 +302,10 @@ class TestInsertOnly:
         """Test that bidirectional insert propagates missing rows in both directions"""
         try:
             print("Running table-diff on bidirectional_test")
-            cli.table_diff_cli("eqn-t9da", "public.bidirectional_test")
+            cli.table_diff(
+                cluster_name="eqn-t9da",
+                table_name="public.bidirectional_test",
+            )
             captured = capsys.readouterr()
             clean_output = re.sub(
                 r"\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])", "", captured.out
@@ -306,10 +315,10 @@ class TestInsertOnly:
             diff_file = match.group(1)
 
             print("Running table-repair on bidirectional_test")
-            cli.table_repair_cli(
-                "eqn-t9da",
-                "public.bidirectional_test",
-                diff_file,
+            cli.table_repair(
+                cluster_name="eqn-t9da",
+                table_name="public.bidirectional_test",
+                diff_file=diff_file,
                 insert_only=True,
                 bidirectional=True,
             )
@@ -434,7 +443,10 @@ class TestInsertOnly:
                 cur.close()
                 conn.close()
 
-            cli.table_diff_cli("eqn-t9da", "public.bidirectional_test")
+            cli.table_diff(
+                cluster_name="eqn-t9da",
+                table_name="public.bidirectional_test",
+            )
             captured = capsys.readouterr()
             clean_output = re.sub(
                 r"\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])", "", captured.out
@@ -443,10 +455,10 @@ class TestInsertOnly:
             assert match, "Diff file path not found in output"
             diff_file = match.group(1)
 
-            cli.table_repair_cli(
-                "eqn-t9da",
-                "public.bidirectional_test",
-                diff_file,
+            cli.table_repair(
+                cluster_name="eqn-t9da",
+                table_name="public.bidirectional_test",
+                diff_file=diff_file,
                 insert_only=True,
                 bidirectional=True,
             )

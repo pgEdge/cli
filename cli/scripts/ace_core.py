@@ -1,3 +1,4 @@
+import itertools
 import json
 from math import ceil
 import os
@@ -10,8 +11,8 @@ import psycopg
 from multiprocessing import Manager, cpu_count
 from mpire import WorkerPool
 from mpire.utils import make_single_arguments
-from ordered_set import OrderedSet
 from psycopg import sql
+from psycopg import ClientCursor
 from psycopg.rows import dict_row, class_row
 from dateutil import parser
 
@@ -19,7 +20,6 @@ from tqdm import tqdm
 import ace
 import ace_db
 import ace_html_reporter
-import pgpasslib
 import cluster
 import util
 import ace_config as config
@@ -34,89 +34,208 @@ from ace_data_models import (
 )
 
 from ace_exceptions import AceException, AuthenticationError
+from ace_constants import BLOCK_OK, BLOCK_MISMATCH, BLOCK_ERROR
 
 
-def run_query(worker_state, host, query):
-    cur = worker_state[host]
+def run_query(worker_state, host, query, stmt_name=None, params=None):
+    if stmt_name:
+        cur = worker_state["cursors"][host]
+
+        prepared_sql = sql.SQL("EXECUTE {stmt_name} ({params})").format(
+            stmt_name=sql.Identifier(stmt_name),
+            params=sql.SQL(", ").join(sql.Literal(param) for param in params),
+        )
+        cur.execute(prepared_sql)
+        results = cur.fetchall()
+        return results
+
+    cur = worker_state["cursors"][host]
     cur.execute(query)
     results = cur.fetchall()
     return results
 
 
-# FIXME: Replace with td_task.connection_pool.connect() after merkle trees
-# PR is merged
-def init_conn_pool(shared_objects, worker_state):
+def init_conn_pool(worker_id, shared_objects, worker_state):
+    task = shared_objects["task"]
 
-    td_task = shared_objects["td_task"]
+    worker_state["cursors"] = {}
+    worker_state["prepared_statements"] = {}
 
-    for node in td_task.fields.cluster_nodes:
+    p_key = task.fields.key
+    schema_name = task.fields.l_schema
+    table_name = task.fields.l_table
+    cols = task.fields.cols.split(",")
+    simple_primary_key = task.fields.simple_primary_key
+
+    for node in task.fields.cluster_nodes:
         try:
-            host = node["public_ip"]
-            port = node.get("port", 5432)
-            db_user = node["db_user"]
-            dbname = node["db_name"]
+            _, conn = task.connection_pool.connect(node)
+            task.connection_pool.drop_privileges(
+                conn,
+                client_role=(
+                    task.client_role
+                    if config.USE_CERT_AUTH or task.invoke_method == "api"
+                    else None
+                ),
+            )
+            cur = conn.cursor()
+            worker_state["cursors"][node["name"]] = cur
 
-            params = {
-                "dbname": dbname,
-                "user": db_user,
-                "host": host,
-                "port": port,
-                "options": f"-c statement_timeout={config.STATEMENT_TIMEOUT}",
-                "application_name": "ACE",
-                "keepalives": 1,
-                "keepalives_idle": 30,
-                "keepalives_interval": 10,
-                "keepalives_count": 5,
-                "connect_timeout": config.CONNECTION_TIMEOUT,
-            }
+            worker_state["prepared_statements"][node["name"]] = {}
+            host = node["name"]
 
-            if config.USE_CERT_AUTH:
-                if config.ACE_USER_CERT_FILE and config.ACE_USER_KEY_FILE:
-                    params.update(
-                        {
-                            "sslmode": "verify-full",
-                            "sslcert": config.ACE_USER_CERT_FILE,
-                            "sslkey": config.ACE_USER_KEY_FILE,
-                            "sslrootcert": config.CA_CERT_FILE,
-                        }
+            if simple_primary_key:
+                cur.execute(
+                    sql.SQL(
+                        """
+                        PREPARE hash_simple AS
+                        WITH block_rows AS (
+                        SELECT *
+                        FROM {schema}.{table}
+                        WHERE
+                            ($1::boolean OR {p_key} >= $3) AND
+                            ($2::boolean OR {p_key} < $4)
+                        ),
+                        block_hash AS (
+                            SELECT
+                                digest(
+                                    COALESCE(
+                                        string_agg(
+                                            concat_ws('|', {columns}),
+                                            '|'
+                                            ORDER BY {key}
+                                        ),
+                                        'EMPTY_BLOCK'
+                                    ),
+                                    'sha256'
+                                ) as leaf_hash
+                            FROM block_rows
+                        )
+                        SELECT encode(leaf_hash, 'hex') as leaf_hash
+                        FROM block_hash
+                        """
+                    ).format(
+                        schema=sql.Identifier(schema_name),
+                        table=sql.Identifier(table_name),
+                        p_key=sql.Identifier(p_key),
+                        key=sql.Identifier(p_key),
+                        columns=sql.SQL(", ").join(sql.Identifier(col) for col in cols),
                     )
-                else:
-                    raise AuthenticationError(
-                        "Client certificate authentication is enabled but no"
-                        "certificate files are provided"
+                )
+                worker_state["prepared_statements"][host]["hash_simple"] = "hash_simple"
+
+                cur.execute(
+                    sql.SQL(
+                        """
+                        PREPARE block_simple AS
+                        SELECT * FROM {schema}.{table}
+                        WHERE
+                        ($1::boolean OR {p_key} >= $3) AND
+                        ($2::boolean OR {p_key} < $4)
+                        """
+                    ).format(
+                        schema=sql.Identifier(schema_name),
+                        table=sql.Identifier(table_name),
+                        p_key=sql.Identifier(p_key),
                     )
+                )
+                worker_state["prepared_statements"][host][
+                    "block_simple"
+                ] = "block_simple"
+
             else:
-                if td_task.client_role is not None:
-                    raise AuthenticationError(
-                        "Client certificate authentication needs to be enabled"
-                        "for API usage"
-                    )
-                # Handle password authentication
-                if node["db_password"]:
-                    params["password"] = node["db_password"]
-                else:
-                    pgpass = pgpasslib.getpass(
-                        host=node["name"],
-                        user=db_user,
-                        dbname=dbname,
-                        port=port,
-                    )
-                    if not pgpass:
-                        msg = f"No password found for {node['name']}"
-                        raise AuthenticationError(msg)
-                    params["password"] = pgpass
+                p_key_cols = [col.strip() for col in p_key.split(",")]
+                p_key_count = len(p_key_cols)
 
-            conn = psycopg.connect(**params)
-            worker_state[node["name"]] = conn.cursor()
+                pk_cols_sql = sql.SQL(", ").join(
+                    sql.Identifier(col) for col in p_key_cols
+                )
+
+                # $1 and $2 are for skip_min_check and skip_max_check,
+                # $3, $4, ... are for min pkey values
+                placeholders1 = sql.SQL(", ").join(
+                    sql.SQL("${i}").format(i=i) for i in range(3, p_key_count + 3)
+                )
+
+                placeholders2 = sql.SQL(", ").join(
+                    sql.SQL("${i}").format(i=i)
+                    for i in range(p_key_count + 3, 2 * p_key_count + 3)
+                )
+
+                cur.execute(
+                    sql.SQL(
+                        """
+                        PREPARE hash_composite_full AS
+                        WITH block_rows AS (
+                        SELECT *
+                        FROM {schema}.{table}
+                        WHERE
+                            ($1::boolean OR ({pk_cols}) >= ({placeholders1})) AND
+                            ($2::boolean OR
+                                ({pk_cols}) < ({placeholders2}))
+                        ),
+                        block_hash AS (
+                            SELECT
+                                digest(
+                                    COALESCE(
+                                        string_agg(
+                                            concat_ws('|', {columns}),
+                                            '|'
+                                            ORDER BY {order_by}
+                                        ),
+                                        'EMPTY_BLOCK'
+                                    ),
+                                    'sha256'
+                                ) as leaf_hash
+                            FROM block_rows
+                        )
+                        SELECT encode(leaf_hash, 'hex') as leaf_hash
+                        FROM block_hash
+                        """
+                    ).format(
+                        schema=sql.Identifier(schema_name),
+                        table=sql.Identifier(table_name),
+                        pk_cols=pk_cols_sql,
+                        placeholders1=placeholders1,
+                        placeholders2=placeholders2,
+                        columns=sql.SQL(", ").join(sql.Identifier(col) for col in cols),
+                        order_by=pk_cols_sql,
+                    )
+                )
+                worker_state["prepared_statements"][host][
+                    "hash_composite_full"
+                ] = "hash_composite_full"
+
+                cur.execute(
+                    sql.SQL(
+                        """
+                        PREPARE block_composite_full AS
+                        SELECT * FROM {schema}.{table}
+                        WHERE
+                            ($1::boolean OR ({pk_cols}) >= ({placeholders1})) AND
+                            ($2::boolean OR ({pk_cols}) < ({placeholders2}))
+                        """
+                    ).format(
+                        schema=sql.Identifier(schema_name),
+                        table=sql.Identifier(table_name),
+                        pk_cols=pk_cols_sql,
+                        placeholders1=placeholders1,
+                        placeholders2=placeholders2,
+                    )
+                )
+                worker_state["prepared_statements"][host][
+                    "block_composite_full"
+                ] = "block_composite_full"
+
         except AuthenticationError as e:
             raise AceException(str(e))
 
 
 # Ignore the type checker warning for shared_objects.
 # It is unused in this function, but is required by the mpire library.
-def close_conn_pool(shared_objects, worker_state):
+def close_conn_pool(worker_id, shared_objects, worker_state):
     try:
-        for host, cur in worker_state.items():
+        for _, cur in worker_state.get("cursors", {}).items():
             conn = cur.connection
             cur.close()
             conn.close()
@@ -127,17 +246,18 @@ def close_conn_pool(shared_objects, worker_state):
 # Accepts list of pkeys and values and generates a where clause that in the form
 # `(pkey1name, pkey2name ...) in ( (pkey1val1, pkey2val1 ...),
 #                                 (pkey1val2, pkey2val2 ...) ... )`
-def generate_where_clause(primary_keys, id_values):
+def generate_where_clause(primary_keys, batches):
     if len(primary_keys) == 1:
         # Single primary key
-        id_values_list = ", ".join(repr(val) for val in id_values)
+        id_values_list = ", ".join(repr(val) for val in itertools.chain(*batches))
         # Wrap column name in double quotes to preserve case
         query = f'"{primary_keys[0]}" IN ({id_values_list})'
 
     else:
         # Composite primary key
         conditions = ", ".join(
-            f"({', '.join(repr(val) for val in id_tuple)})" for id_tuple in id_values
+            f"({', '.join(repr(val) for val in id_tuple)})"
+            for id_tuple in itertools.chain(*batches)
         )
         # Wrap each column name in double quotes to preserve case
         key_columns = ", ".join(f'"{key}"' for key in primary_keys)
@@ -164,113 +284,137 @@ def create_result_dict(
     }
 
 
-def compare_checksums(shared_objects, worker_state, batches):
+def compare_checksums(worker_id, shared_objects, worker_state, pkey1, pkey2):
+    """
+    Same approach as compare_ranges in ace_mtree.py
+    Use lookup dictionaries for faster comparisons, and process all batches
+    at once if possible
+    """
 
-    result_queue = shared_objects["result_queue"]
-    diff_dict = shared_objects["diff_dict"]
-    row_diff_count = shared_objects["row_diff_count"]
-    lock = shared_objects["lock"]
+    task = shared_objects["task"]
+    mode = shared_objects["mode"]
+    stop_event = shared_objects["stop_event"]
 
-    if row_diff_count.value >= config.MAX_DIFF_ROWS:
+    p_key = task.fields.key
+    schema_name = task.fields.l_schema
+    table_name = task.fields.l_table
+    node_list = task.fields.node_list
+    cols = task.fields.cols.split(",")
+    simple_primary_key = task.fields.simple_primary_key
+
+    worker_diffs = {}
+    total_diffs = 0
+
+    if stop_event.is_set():
         return
 
-    p_key = shared_objects["p_key"]
-    schema_name = shared_objects["schema_name"]
-    table_name = shared_objects["table_name"]
-    node_list = shared_objects["node_list"]
-    cols = shared_objects["cols_list"]
-    simple_primary_key = shared_objects["simple_primary_key"]
-    mode = shared_objects["mode"]
+    # We can use prepared statements for diff mode with a single batch
+    use_prepared = mode == "diff"
+    params = []
 
-    for batch in batches:
-        where_clause = str()
-        where_clause_temp = list()
+    if mode == "diff":
 
-        if mode == "diff":
-            pkey1, pkey2 = batch
-            if simple_primary_key:
-                if pkey1 is not None:
-                    where_clause_temp.append(
-                        sql.SQL("{p_key} >= {pkey1}").format(
-                            p_key=sql.Identifier(p_key), pkey1=sql.Literal(pkey1)
-                        )
-                    )
-                if pkey2 is not None:
-                    where_clause_temp.append(
-                        sql.SQL("{p_key} < {pkey2}").format(
-                            p_key=sql.Identifier(p_key), pkey2=sql.Literal(pkey2)
-                        )
-                    )
-            else:
-                """
-                This is a slightly more complicated case since we have to split up
-                the primary key and compare them with split values of pkey1 and pkey2
-                """
+        if simple_primary_key:
+            has_min = pkey1 and pkey1[0] is not None
+            min_key = pkey1[0] if has_min else None
 
-                if pkey1 is not None:
-                    where_clause_temp.append(
-                        sql.SQL("({p_key}) >= ({pkey1})").format(
-                            p_key=sql.SQL(", ").join(
-                                [
-                                    sql.Identifier(col.strip())
-                                    for col in p_key.split(",")
-                                ]
-                            ),
-                            pkey1=sql.SQL(", ").join(
-                                [sql.Literal(val) for val in pkey1]
-                            ),
-                        )
-                    )
+            has_max = pkey2 and pkey2[0] is not None
+            max_key = pkey2[0] if has_max else None
 
-                if pkey2 is not None:
-                    where_clause_temp.append(
-                        sql.SQL("({p_key}) < ({pkey2})").format(
-                            p_key=sql.SQL(", ").join(
-                                [
-                                    sql.Identifier(col.strip())
-                                    for col in p_key.split(",")
-                                ]
-                            ),
-                            pkey2=sql.SQL(", ").join(
-                                [sql.Literal(val) for val in pkey2]
-                            ),
-                        )
-                    )
-
-            where_clause = sql.SQL(" AND ").join(where_clause_temp)
-
-        elif mode == "rerun":
-            keys = p_key.split(",")
-            where_clause = sql.SQL(generate_where_clause(keys, batch))
+            # [skip_min_check, min_value, skip_max_check, max_value]
+            # skip_min_check and skip_max_check work as follows:
+            # $1::boolean OR {p_key} >= <value>
+            # $2::boolean OR {p_key} < <value>
+            #
+            # For our first range, start is None, so we don't need to check
+            # for min.  For the last range, end is None, so we don't need
+            # to check for max.
+            params = [not has_min, not has_max, min_key, max_key]
 
         else:
-            raise Exception(f"Mode {mode} not recognized in compare_checksums")
+            p_key_cols = [col.strip() for col in p_key.split(",")]
+            p_key_count = len(p_key_cols)
+
+            has_min = pkey1 and pkey1[0] is not None
+            min_values = list(pkey1[0]) if has_min else [None] * p_key_count
+
+            has_max = pkey2 and pkey2[0] is not None
+            max_values = list(pkey2[0]) if has_max else [None] * p_key_count
+
+            params = [not has_min, not has_max] + min_values + max_values
+
+    elif mode == "rerun":
+        # Again, falling back to dynamically generated queries for rerun mode
+        keys = p_key.split(",")
+        where_clause = sql.SQL(generate_where_clause(keys, [pkey1, pkey2]))
 
         if simple_primary_key:
             hash_sql = sql.SQL(
-                "SELECT md5(cast(array_agg(t.* ORDER BY {p_key}) AS text)) FROM"
-                "(SELECT * FROM {table_name} WHERE {where_clause}) t"
-            ).format(
-                p_key=sql.Identifier(p_key),
-                table_name=sql.SQL("{}.{}").format(
-                    sql.Identifier(schema_name),
-                    sql.Identifier(table_name),
+                """
+                WITH block_rows AS (
+                SELECT *
+                FROM {schema}.{table}
+                WHERE {where_clause}
                 ),
+                block_hash AS (
+                    SELECT
+                        digest(
+                            COALESCE(
+                                string_agg(
+                                    concat_ws('|', {columns}),
+                                    '|'
+                                    ORDER BY {key}
+                                ),
+                                'EMPTY_BLOCK'
+                            ),
+                            'sha256'
+                        ) as leaf_hash
+                    FROM block_rows
+                )
+                SELECT encode(leaf_hash, 'hex') as leaf_hash
+                FROM block_hash
+                """
+            ).format(
+                schema=sql.Identifier(schema_name),
+                table=sql.Identifier(table_name),
                 where_clause=where_clause,
+                key=sql.Identifier(p_key),
+                columns=sql.SQL(", ").join(sql.Identifier(col) for col in cols),
             )
         else:
             hash_sql = sql.SQL(
-                "SELECT md5(cast(array_agg(t.* ORDER BY {p_key}) AS text)) FROM"
-                "(SELECT * FROM {table_name} WHERE {where_clause}) t"
+                """
+                WITH block_rows AS (
+                    SELECT *
+                    FROM {schema}.{table}
+                    WHERE {where_clause}
+                ),
+                block_hash AS (
+                    SELECT
+                        digest(
+                            COALESCE(
+                                string_agg(
+                                    concat_ws('|', {columns}),
+                                    '|'
+                                    ORDER BY {key}
+                                ),
+                                'EMPTY_BLOCK'
+                            ),
+                            'sha256'
+                        ) as leaf_hash
+                    FROM block_rows
+                )
+                SELECT encode(leaf_hash, 'hex') as leaf_hash
+                FROM block_hash
+                """
             ).format(
-                p_key=sql.SQL(", ").join(
-                    [sql.Identifier(col.strip()) for col in p_key.split(",")]
-                ),
-                table_name=sql.SQL("{}.{}").format(
-                    sql.Identifier(schema_name),
-                    sql.Identifier(table_name),
-                ),
+                schema=sql.Identifier(schema_name),
+                table=sql.Identifier(table_name),
                 where_clause=where_clause,
+                key=sql.SQL(", ").join(
+                    sql.Identifier(col.strip()) for col in p_key.split(",")
+                ),
+                columns=sql.SQL(", ").join(sql.Identifier(col) for col in cols),
             )
 
         block_sql = sql.SQL("SELECT * FROM {table_name} WHERE {where_clause}").format(
@@ -281,156 +425,171 @@ def compare_checksums(shared_objects, worker_state, batches):
             where_clause=where_clause,
         )
 
-        for node_pair in combinations(node_list, 2):
-            host1 = node_pair[0]
-            host2 = node_pair[1]
+    else:
+        raise Exception(f"Mode {mode} not recognized in compare_checksums")
 
-            # Return early if we have already exceeded the max number of diffs
-            if row_diff_count.value >= config.MAX_DIFF_ROWS:
-                result_dict = create_result_dict(
-                    node_pair,
-                    batch,
-                    config.MAX_DIFFS_EXCEEDED,
-                    "MAX_DIFFS_EXCEEDED",
-                    errors=True,
-                    error_messages=[
-                        f"Diffs have exceeded the maximum allowed number of diffs:"
-                        f"{config.MAX_DIFF_ROWS}"
-                    ],
+    for node_pair in combinations(node_list, 2):
+        host1 = node_pair[0]
+        host2 = node_pair[1]
+        node_pair_key = f"{host1}/{host2}"
+
+        with ThreadPoolExecutor(max_workers=2) as executor:
+            if use_prepared:
+                stmt_name = (
+                    "hash_simple" if simple_primary_key else "hash_composite_full"
                 )
-                result_queue.append(result_dict)
-                return config.MAX_DIFFS_EXCEEDED
-
-            # Run the checksum query on both nodes in parallel
-            with ThreadPoolExecutor(max_workers=2) as executor:
+                futures = [
+                    executor.submit(
+                        run_query,
+                        worker_state,
+                        host1,
+                        None,
+                        stmt_name=stmt_name,
+                        params=params,
+                    ),
+                    executor.submit(
+                        run_query,
+                        worker_state,
+                        host2,
+                        None,
+                        stmt_name=stmt_name,
+                        params=params,
+                    ),
+                ]
+            else:
                 futures = [
                     executor.submit(run_query, worker_state, host1, hash_sql),
                     executor.submit(run_query, worker_state, host2, hash_sql),
                 ]
+
+            results = [f.result() for f in futures if not f.exception()]
+
+        errors = [f.exception() for f in futures if f.exception()]
+
+        if errors:
+            return {
+                "status": BLOCK_ERROR,
+                "errors": [str(error) for error in errors],
+                "node_pair": node_pair,
+            }
+
+        if len(results) < 2:
+            return {
+                "status": BLOCK_ERROR,
+                "errors": ["Failed to get results from both nodes"],
+                "node_pair": node_pair,
+            }
+
+        hash1, hash2 = results[0][0][0], results[1][0][0]
+
+        if hash1 != hash2:
+            with ThreadPoolExecutor(max_workers=2) as executor:
+                if use_prepared:
+                    stmt_name = (
+                        "block_simple" if simple_primary_key else "block_composite_full"
+                    )
+                    futures = [
+                        executor.submit(
+                            run_query,
+                            worker_state,
+                            host1,
+                            None,
+                            stmt_name=stmt_name,
+                            params=params,
+                        ),
+                        executor.submit(
+                            run_query,
+                            worker_state,
+                            host2,
+                            None,
+                            stmt_name=stmt_name,
+                            params=params,
+                        ),
+                    ]
+                else:
+                    futures = [
+                        executor.submit(run_query, worker_state, host1, block_sql),
+                        executor.submit(run_query, worker_state, host2, block_sql),
+                    ]
+
                 results = [f.result() for f in futures if not f.exception()]
 
             errors = [f.exception() for f in futures if f.exception()]
 
             if errors:
-                result_dict = create_result_dict(
-                    node_pair,
-                    batch,
-                    config.BLOCK_ERROR,
-                    "BLOCK_ERROR",
-                    errors=True,
-                    error_messages=[str(error) for error in errors],
+                return {
+                    "status": BLOCK_ERROR,
+                    "errors": [str(error) for error in errors],
+                    "node_pair": node_pair,
+                }
+
+            if len(results) < 2:
+                return {
+                    "status": BLOCK_ERROR,
+                    "errors": ["Failed to get results from both nodes"],
+                    "node_pair": node_pair,
+                }
+
+            t1_result, t2_result = results
+
+            t1_dict = {}
+            t2_dict = {}
+
+            for row in t1_result:
+                row_key = tuple(
+                    (
+                        x.hex()
+                        if isinstance(x, bytes)
+                        else str(x) if isinstance(x, (dict, list, set)) else x
+                    )
+                    for x in row
                 )
-                result_queue.append(result_dict)
-                return config.BLOCK_ERROR
+                t1_dict[row_key] = row
 
-            hash1, hash2 = results[0][0][0], results[1][0][0]
-
-            if hash1 != hash2:
-                # Run the block query on both nodes in parallel
-                with ThreadPoolExecutor(max_workers=2) as executor:
-                    futures = [
-                        executor.submit(run_query, worker_state, host1, block_sql),
-                        executor.submit(run_query, worker_state, host2, block_sql),
-                    ]
-                    results = [f.result() for f in futures if not f.exception()]
-
-                errors = [f.exception() for f in futures if f.exception()]
-
-                if errors:
-                    result_dict = create_result_dict(
-                        node_pair,
-                        batch,
-                        config.BLOCK_ERROR,
-                        "BLOCK_ERROR",
-                        errors=True,
-                        error_messages=[str(error) for error in errors],
+            t2_only = []
+            for row in t2_result:
+                row_key = tuple(
+                    (
+                        x.hex()
+                        if isinstance(x, bytes)
+                        else str(x) if isinstance(x, (dict, list, set)) else x
                     )
-                    result_queue.append(result_dict)
-                    return config.BLOCK_ERROR
-
-                t1_result, t2_result = results
-
-                # Transform all elements in t1_result and t2_result into strings before
-                # consolidating them into a set
-                # TODO: Test and add support for different datatypes here
-                t1_result = [
-                    tuple(x.hex() if isinstance(x, bytes) else str(x) for x in row)
-                    for row in t1_result
-                ]
-                t2_result = [
-                    tuple(x.hex() if isinstance(x, bytes) else str(x) for x in row)
-                    for row in t2_result
-                ]
-
-                # Collect results into OrderedSets for comparison
-                t1_set = OrderedSet(t1_result)
-                t2_set = OrderedSet(t2_result)
-
-                t1_diff = t1_set - t2_set
-                t2_diff = t2_set - t1_set
-
-                # It is possible that the hash mismatch is a false negative.
-                # E.g., if there are extraneous spaces in the JSONB column.
-                # In this case, we can still consider the block to be OK.
-                if (not t1_diff and not t2_diff) or (
-                    len(t1_diff) == 0 and len(t2_diff) == 0
-                ):
-                    result_dict = create_result_dict(
-                        node_pair, batch, config.BLOCK_OK, "BLOCK_OK"
-                    )
-                    result_queue.append(result_dict)
-                    continue
-
-                node_pair_key = f"{host1}/{host2}"
-
-                if node_pair_key not in diff_dict:
-                    diff_dict[node_pair_key] = {}
-
-                with lock:
-                    # Update diff_dict with the results of the diff
-                    if len(t1_diff) > 0 or len(t2_diff) > 0:
-                        temp_dict = {}
-                        if host1 in diff_dict[node_pair_key]:
-                            temp_dict[host1] = diff_dict[node_pair_key][host1]
-                        else:
-                            temp_dict[host1] = []
-                        if host2 in diff_dict[node_pair_key]:
-                            temp_dict[host2] = diff_dict[node_pair_key][host2]
-                        else:
-                            temp_dict[host2] = []
-
-                        temp_dict[host1] += [dict(zip(cols, row)) for row in t1_diff]
-                        temp_dict[host2] += [dict(zip(cols, row)) for row in t2_diff]
-
-                        diff_dict[node_pair_key] = temp_dict
-
-                    # Update row_diff_count with the number of diffs
-                    row_diff_count.value += max(len(t1_diff), len(t2_diff))
-
-                if row_diff_count.value >= config.MAX_DIFF_ROWS:
-                    result_dict = create_result_dict(
-                        node_pair,
-                        batch,
-                        config.MAX_DIFFS_EXCEEDED,
-                        "MAX_DIFFS_EXCEEDED",
-                        errors=True,
-                        error_messages=[
-                            f"Diffs have exceeded the maximum allowed number of diffs:"
-                            f"{config.MAX_DIFF_ROWS}"
-                        ],
-                    )
-                    result_queue.append(result_dict)
-                    return config.MAX_DIFFS_EXCEEDED
-                else:
-                    result_dict = create_result_dict(
-                        node_pair, batch, config.BLOCK_MISMATCH, "BLOCK_MISMATCH"
-                    )
-                    result_queue.append(result_dict)
-            else:
-                result_dict = create_result_dict(
-                    node_pair, batch, config.BLOCK_OK, "BLOCK_OK"
+                    for x in row
                 )
-                result_queue.append(result_dict)
+                t2_dict[row_key] = row
+
+                if row_key not in t1_dict:
+                    t2_only.append(row_key)
+
+            t1_only = [key for key in t1_dict.keys() if key not in t2_dict]
+
+            # It is possible that the hash mismatch is a false negative.
+            # E.g., if there are extraneous spaces in the JSONB column.
+            # In this case, we can still consider the block to be OK.
+            if not t1_only and not t2_only:
+                continue
+
+            if node_pair_key not in worker_diffs:
+                worker_diffs[node_pair_key] = {host1: [], host2: []}
+
+            for row_key in t1_only:
+                worker_diffs[node_pair_key][host1].append(
+                    dict(zip(cols, (str(x) for x in row_key)))
+                )
+
+            for row_key in t2_only:
+                worker_diffs[node_pair_key][host2].append(
+                    dict(zip(cols, (str(x) for x in row_key)))
+                )
+
+            total_diffs += max(len(t1_only), len(t2_only))
+
+    return {
+        "status": BLOCK_OK if total_diffs == 0 else BLOCK_MISMATCH,
+        "diffs": worker_diffs,
+        "total_diffs": total_diffs,
+        "node_pair": node_pair_key if "node_pair_key" in locals() else None,
+    }
 
 
 def table_diff(td_task: TableDiffTask, skip_all_checks: bool = False):
@@ -445,14 +604,12 @@ def table_diff(td_task: TableDiffTask, skip_all_checks: bool = False):
                 "mismatch": False,
                 "errors": [
                     f"Error during pre-flight checks for table_diff: {str(e_checks)}"
-                ]
+                ],
             }
             ace.handle_task_exception(td_task, context)
             raise
 
-    simple_primary_key = True
-    if len(td_task.fields.key.split(",")) > 1:
-        simple_primary_key = False
+    simple_primary_key = td_task.fields.simple_primary_key
 
     row_count = 0
     total_rows = 0
@@ -470,18 +627,22 @@ def table_diff(td_task: TableDiffTask, skip_all_checks: bool = False):
             }
             _, conn = td_task.connection_pool.get_cluster_node_connection(
                 node_info,
-                td_task.cluster_name,
-                invoke_method=td_task.invoke_method,
                 client_role=(
                     td_task.client_role
-                    if (config.USE_CERT_AUTH and td_task.invoke_method == "api")
+                    if (config.USE_CERT_AUTH or td_task.invoke_method == "api")
                     else None
                 ),
             )
 
-            rows = ace.get_row_count(
-                conn, td_task.fields.l_schema, td_task.fields.l_table
-            )
+            if td_task.table_filter:
+                rows = ace.get_row_count(
+                    conn, td_task.fields.l_schema, td_task.fields.l_table
+                )
+            else:
+                rows = ace.get_row_count_estimate(
+                    conn, td_task.fields.l_schema, td_task.fields.l_table
+                )
+
             total_rows += rows
             if rows > row_count:
                 row_count = rows
@@ -503,18 +664,48 @@ def table_diff(td_task: TableDiffTask, skip_all_checks: bool = False):
         )
         return
 
-    # Use conn_with_max_rows to get the first and last primary key values
-    # of every block row. Repeat until we no longer have any more rows.
-    # Store results in pkey_offsets.
+    print("Estimated row count:", row_count)
 
-    if simple_primary_key:
-        pkey_sql = sql.SQL("SELECT {key} FROM {table_name} ORDER BY {key}").format(
-            key=sql.Identifier(td_task.fields.key),
-            table_name=sql.SQL("{}.{}").format(
-                sql.Identifier(td_task.fields.l_schema),
-                sql.Identifier(td_task.fields.l_table),
-            ),
-        )
+    util.message(
+        "Getting primary key offsets for table...",
+        p_state="info",
+        quiet_mode=td_task.quiet_mode,
+    )
+
+    total_blocks = row_count // td_task.block_size
+    total_blocks = total_blocks if total_blocks > 0 else 1
+    cpus = cpu_count()
+    max_procs = int(cpus * td_task.max_cpu_ratio) if cpus > 1 else 1
+
+    # If we don't have enough blocks to keep all CPUs busy, use fewer processes
+    procs = max_procs if total_blocks > max_procs else total_blocks
+
+    if (row_count > 10**4) and (not td_task.table_filter):
+        sample_method, sample_percent = ace.compute_sampling_parameters(row_count)
+
+        print(f"Using {sample_method} sampling with {sample_percent}% of rows")
+
+        try:
+            ref_cur = conn_with_max_rows.cursor()
+            offsets_query = ace.generate_pkey_offsets_query(
+                schema=td_task.fields.l_schema,
+                table=td_task.fields.l_table,
+                key_columns=td_task.fields.key.split(","),
+                table_sample_method=sample_method,
+                sample_percent=sample_percent,
+                ntile_count=total_blocks,
+            )
+            ref_cur.execute(offsets_query)
+            raw_offsets = ref_cur.fetchall()
+            pkey_offsets = ace.process_pkey_offsets(raw_offsets)
+        except Exception as e:
+            context = {
+                "total_rows": total_rows,
+                "mismatch": False,
+                "errors": [str(e)],
+            }
+            ace.handle_task_exception(td_task, context)
+            raise e
     else:
         pkey_sql = sql.SQL("SELECT {key} FROM {table_name} ORDER BY {key}").format(
             key=sql.SQL(", ").join(
@@ -526,75 +717,54 @@ def table_diff(td_task: TableDiffTask, skip_all_checks: bool = False):
             ),
         )
 
-    def get_pkey_offsets(conn, pkey_sql, block_rows):
-        pkey_offsets = []
-        cur = conn.cursor()
-        cur.execute(pkey_sql)
-        rows = cur.fetchmany(block_rows)
-
-        if simple_primary_key:
-            rows[:] = [str(x[0]) for x in rows]
-            pkey_offsets.append((None, str(rows[0])))
-            prev_min_offset = str(rows[0])
-            prev_max_offset = str(rows[-1])
-        else:
-            rows[:] = [tuple(str(i) for i in x) for x in rows]
-            pkey_offsets.append((None, rows[0]))
-            prev_min_offset = rows[0]
-            prev_max_offset = rows[-1]
-
-        while rows:
+        def get_pkey_offsets(conn, pkey_sql, block_rows):
+            pkey_offsets = []
+            cur = conn.cursor()
+            cur.execute(pkey_sql)
             rows = cur.fetchmany(block_rows)
+
             if simple_primary_key:
                 rows[:] = [str(x[0]) for x in rows]
+                pkey_offsets.append(([None], [str(rows[0])]))
+                prev_min_offset = str(rows[0])
+                prev_max_offset = str(rows[-1])
             else:
                 rows[:] = [tuple(str(i) for i in x) for x in rows]
+                pkey_offsets.append(([None], [rows[0]]))
+                prev_min_offset = rows[0]
+                prev_max_offset = rows[-1]
 
-            if not rows:
-                if prev_max_offset != prev_min_offset:
-                    pkey_offsets.append((prev_min_offset, prev_max_offset))
-                pkey_offsets.append((prev_max_offset, None))
-                break
+            while rows:
+                rows = cur.fetchmany(block_rows)
+                if simple_primary_key:
+                    rows[:] = [str(x[0]) for x in rows]
+                else:
+                    rows[:] = [tuple(str(i) for i in x) for x in rows]
 
-            curr_min_offset = rows[0]
-            pkey_offsets.append((prev_min_offset, curr_min_offset))
-            prev_min_offset = curr_min_offset
-            prev_max_offset = rows[-1]
+                if not rows:
+                    if prev_max_offset != prev_min_offset:
+                        pkey_offsets.append(([prev_min_offset], [prev_max_offset]))
+                    pkey_offsets.append(([prev_max_offset], [None]))
+                    break
 
-        cur.close()
-        conn.close()
-        return pkey_offsets
+                curr_min_offset = rows[0]
+                pkey_offsets.append(([prev_min_offset], [curr_min_offset]))
+                prev_min_offset = curr_min_offset
+                prev_max_offset = rows[-1]
 
-    util.message(
-        "Getting primary key offsets for table...",
-        p_state="info",
-        quiet_mode=td_task.quiet_mode,
-    )
+            cur.close()
+            conn.close()
+            return pkey_offsets
 
-    future = ThreadPoolExecutor().submit(
-        get_pkey_offsets, conn_with_max_rows, pkey_sql, td_task.block_rows
-    )
-    pkey_offsets = future.result() if not future.exception() else []
-    if future.exception():
-        context = {
-            "total_rows": total_rows,
-            "mismatch": False,
-            "errors": [str(future.exception())],
-        }
-        ace.handle_task_exception(td_task, context)
-        raise future.exception()
+        pkey_offsets = get_pkey_offsets(
+            conn_with_max_rows, pkey_sql, td_task.block_size
+        )
 
     # We're done with getting table metadata. Closing all connections.
     for conn in conn_list:
         conn.close()
 
-    total_blocks = row_count // td_task.block_rows
-    total_blocks = total_blocks if total_blocks > 0 else 1
-    cpus = cpu_count()
-    max_procs = int(cpus * td_task.max_cpu_ratio) if cpus > 1 else 1
-
-    # If we don't have enough blocks to keep all CPUs busy, use fewer processes
-    procs = max_procs if total_blocks > max_procs else total_blocks
+    td_task.connection_pool.close_all()
 
     start_time = datetime.now()
 
@@ -604,33 +774,16 @@ def table_diff(td_task: TableDiffTask, skip_all_checks: bool = False):
     to capture diffs even if rows are absent in one node
     """
 
-    cols_list = td_task.fields.cols.split(",")
-    cols_list = [col for col in cols_list if not col.startswith("_Spock_")]
+    diff_dict = {}
 
-    # Shared multiprocessing data structures
-    result_queue = Manager().list()
-    diff_dict = Manager().dict()
-    row_diff_count = Manager().Value("I", 0)
-    lock = Manager().Lock()
+    stop_event = Manager().Event()
 
     # TODO: Clean this up
     # Shared variables needed by all workers
     shared_objects = {
-        "cluster_name": td_task.cluster_name,
-        "database": td_task.fields.database,
-        "node_list": td_task.fields.node_list,
-        "schema_name": td_task.fields.l_schema,
-        "table_name": td_task.fields.l_table,
-        "cols_list": cols_list,
-        "p_key": td_task.fields.key,
-        "block_rows": td_task.block_rows,
-        "simple_primary_key": simple_primary_key,
         "mode": "diff",
-        "result_queue": result_queue,
-        "diff_dict": diff_dict,
-        "row_diff_count": row_diff_count,
-        "lock": lock,
-        "td_task": td_task,
+        "task": td_task,
+        "stop_event": stop_event,
     }
 
     util.message(
@@ -639,38 +792,54 @@ def table_diff(td_task: TableDiffTask, skip_all_checks: bool = False):
         quiet_mode=td_task.quiet_mode,
     )
 
-    batches = [
-        pkey_offsets[i : i + td_task.batch_size]
-        for i in range(0, len(pkey_offsets), td_task.batch_size)
-    ]
-
     mismatch = False
     diffs_exceeded = False
     errors = False
     error_list = []
+    total_diffs = 0
 
     try:
         with WorkerPool(
             n_jobs=procs,
             shared_objects=shared_objects,
             use_worker_state=True,
+            pass_worker_id=True,
         ) as pool:
             for result in pool.imap_unordered(
                 compare_checksums,
-                make_single_arguments(batches),
+                pkey_offsets,
                 worker_init=init_conn_pool,
                 worker_exit=close_conn_pool,
                 progress_bar=True if not td_task.quiet_mode else False,
-                iterable_len=len(batches),
                 progress_bar_style="rich",
+                iterable_len=len(pkey_offsets),
             ):
-                if result == config.MAX_DIFFS_EXCEEDED:
-                    diffs_exceeded = True
-                    mismatch = True
-                    break
-                elif result == config.BLOCK_ERROR:
+                if result["status"] == BLOCK_ERROR:
                     errors = True
+                    error_list.append(
+                        {
+                            "node_pair": result["node_pair"],
+                            "errors": result["errors"],
+                        }
+                    )
+                    stop_event.set()
                     break
+
+                if result["status"] == BLOCK_MISMATCH:
+                    mismatch = True
+                    for node_pair, node_diffs in result["diffs"].items():
+                        if node_pair not in diff_dict:
+                            diff_dict[node_pair] = {}
+                        for node, diffs in node_diffs.items():
+                            if node not in diff_dict[node_pair]:
+                                diff_dict[node_pair][node] = []
+                            diff_dict[node_pair][node].extend(diffs)
+
+                    total_diffs += result["total_diffs"]
+                    if total_diffs >= config.MAX_DIFF_ROWS:
+                        diffs_exceeded = True
+                        stop_event.set()
+                        break
 
             if diffs_exceeded:
                 util.message(
@@ -696,13 +865,6 @@ def table_diff(td_task: TableDiffTask, skip_all_checks: bool = False):
         "diffs_summary": td_task.diff_summary if mismatch else {},
         "errors": [],
     }
-
-    for result in result_queue:
-        if result["status_code"] == config.BLOCK_MISMATCH:
-            mismatch = True
-        elif result["status_code"] == config.BLOCK_ERROR:
-            errors = True
-            error_list.append(result)
 
     if errors:
         context = {"total_rows": total_rows, "mismatch": mismatch, "errors": error_list}
@@ -797,11 +959,9 @@ def table_diff(td_task: TableDiffTask, skip_all_checks: bool = False):
             }
             _, conn = td_task.connection_pool.get_cluster_node_connection(
                 node_info,
-                td_task.cluster_name,
-                invoke_method=td_task.invoke_method,
                 client_role=(
                     td_task.client_role
-                    if config.USE_CERT_AUTH and td_task.invoke_method == "api"
+                    if (config.USE_CERT_AUTH or td_task.invoke_method == "api")
                     else None
                 ),
             )
@@ -857,11 +1017,9 @@ def table_repair(tr_task: TableRepairTask):
             # spock.repair_mode(true) and session_replication_role
             _, conn = tr_task.connection_pool.get_cluster_node_connection(
                 node_info,
-                tr_task.cluster_name,
-                invoke_method=tr_task.invoke_method,
                 client_role=(
                     tr_task.client_role
-                    if config.USE_CERT_AUTH and tr_task.invoke_method == "api"
+                    if (config.USE_CERT_AUTH or tr_task.invoke_method == "api")
                     else None
                 ),
                 drop_privileges=False,
@@ -1123,6 +1281,9 @@ def table_repair(tr_task: TableRepairTask):
 
     for divergent_node in other_nodes:
 
+        total_upserted[divergent_node] = 0
+        total_deleted[divergent_node] = 0
+
         try:
             conn = conns[divergent_node]
             cur = conn.cursor()
@@ -1157,7 +1318,7 @@ def table_repair(tr_task: TableRepairTask):
             conn,
             (
                 tr_task.client_role
-                if config.USE_CERT_AUTH and tr_task.invoke_method == "api"
+                if (config.USE_CERT_AUTH or tr_task.invoke_method == "api")
                 else None
             ),
         )
@@ -1220,18 +1381,111 @@ def table_repair(tr_task: TableRepairTask):
         )
 
         try:
-            # Let's first delete rows to avoid secondary unique key violations
+            client_cur = ClientCursor(cur.connection)
             if delete_keys and not tr_task.upsert_only and not tr_task.insert_only:
-                # Performing the deletes
-                cur.executemany(delete_sql, delete_keys)
+                table_ident = sql.Identifier(
+                    tr_task.fields.l_schema, tr_task.fields.l_table
+                )
+
+                if simple_primary_key:
+                    pkey_ident = sql.Identifier(keys_list[0])
+                    values_sql = sql.SQL(", ").join(
+                        sql.Literal(k[0]) for k in delete_keys
+                    )
+                    where_clause = sql.SQL("{pkey} IN ({values})").format(
+                        pkey=pkey_ident, values=values_sql
+                    )
+                else:
+                    pkey_idents = sql.SQL(", ").join(
+                        sql.Identifier(k) for k in keys_list
+                    )
+                    values_sql = sql.SQL("({})").format(
+                        sql.SQL(", ").join(sql.Placeholder() * len(keys_list))
+                    )
+                    # pdb.set_trace()
+                    mogrified_values = ", ".join(
+                        client_cur.mogrify(values_sql, row) for row in delete_keys
+                    )
+
+                    where_clause = sql.SQL("({pkeys}) IN ({values})").format(
+                        pkeys=pkey_idents, values=sql.SQL(mogrified_values)
+                    )
+
+                delete_sql = sql.SQL("DELETE FROM {table} WHERE {where};").format(
+                    table=table_ident, where=where_clause
+                )
+                # nosemgrep
+                cur.execute(delete_sql)
+                total_deleted[divergent_node] = cur.rowcount if cur.rowcount else 0
+
                 if tr_task.generate_report:
+                    if divergent_node not in report["changes"]:
+                        report["changes"][divergent_node] = {}
                     report["changes"][divergent_node]["deleted_rows"] = delete_keys
+
             elif delete_keys and (tr_task.upsert_only or tr_task.insert_only):
                 deletes_skipped[divergent_node] = delete_keys
 
-            # Now perform the upsert
-            cur.executemany(update_sql, upsert_tuples)
+            upsert_tuples = ace.convert_json_to_pg_type(
+                rows_to_upsert_json, cols_list, col_types
+            )
+
+            if upsert_tuples:
+                table_ident = sql.Identifier(
+                    tr_task.fields.l_schema, tr_task.fields.l_table
+                )
+                cols_ident = sql.SQL(", ").join(sql.Identifier(c) for c in cols_list)
+
+                placeholders = sql.SQL("({})").format(
+                    sql.SQL(", ").join((sql.Placeholder() * len(cols_list)))
+                )
+
+                mogrified_values = ", ".join(
+                    client_cur.mogrify(placeholders, row) for row in upsert_tuples
+                )
+
+                insert_sql = sql.SQL(
+                    "INSERT INTO {table} ({cols}) VALUES {values}"
+                ).format(
+                    table=table_ident,
+                    cols=cols_ident,
+                    values=sql.SQL(mogrified_values),
+                )
+
+                if simple_primary_key:
+                    conflict_target = sql.SQL("({})").format(
+                        sql.Identifier(keys_list[0])
+                    )
+                else:
+                    conflict_target = sql.SQL("({})").format(
+                        sql.SQL(", ").join(sql.Identifier(k) for k in keys_list)
+                    )
+
+                if tr_task.insert_only:
+                    conflict_action = sql.SQL("DO NOTHING")
+                else:
+                    set_clause = sql.SQL(", ").join(
+                        sql.SQL("{col} = EXCLUDED.{col}").format(col=sql.Identifier(c))
+                        for c in cols_list
+                    )
+                    conflict_action = sql.SQL("DO UPDATE SET {}").format(set_clause)
+
+                full_upsert_sql = sql.SQL(
+                    "{insert} ON CONFLICT {target} {action};"
+                ).format(
+                    insert=insert_sql,
+                    target=conflict_target,
+                    action=conflict_action,
+                )
+
+                # nosemgrep
+                cur.execute(full_upsert_sql)
+                total_upserted[divergent_node] = cur.rowcount if cur.rowcount else 0
+
             if tr_task.generate_report:
+                # Ensure this key exists even if upserts were skipped
+                if divergent_node not in report["changes"]:
+                    report["changes"][divergent_node] = {}
                 report["changes"][divergent_node]["upserted_rows"] = [
                     dict(zip(cols_list, tup)) for tup in upsert_tuples
                 ]
@@ -1250,7 +1504,7 @@ def table_repair(tr_task: TableRepairTask):
                         conn,
                         (
                             tr_task.client_role
-                            if config.USE_CERT_AUTH and tr_task.invoke_method == "api"
+                            if (config.USE_CERT_AUTH or tr_task.invoke_method == "api")
                             else None
                         ),
                     )
@@ -1332,13 +1586,13 @@ def table_repair(tr_task: TableRepairTask):
     for node in other_nodes:
         if tr_task.insert_only:
             util.message(
-                f"{node} INSERTED = {len(full_rows_to_upsert[node])} rows",
+                f"{node} INSERTED = {total_upserted[node]} rows",
                 p_state="info",
                 quiet_mode=tr_task.quiet_mode,
             )
         else:
             util.message(
-                f"{node} UPSERTED = {len(full_rows_to_upsert[node])} rows",
+                f"{node} UPSERTED = {total_upserted[node]} rows",
                 p_state="info",
                 quiet_mode=tr_task.quiet_mode,
             )
@@ -1348,7 +1602,7 @@ def table_repair(tr_task: TableRepairTask):
     if not tr_task.upsert_only and not tr_task.insert_only:
         for node in other_nodes:
             util.message(
-                f"{node} DELETED = {len(full_rows_to_delete[node])} rows",
+                f"{node} DELETED = {total_deleted[node]} rows",
                 p_state="info",
                 quiet_mode=tr_task.quiet_mode,
             )
@@ -1432,11 +1686,9 @@ def table_repair_fix_nulls(tr_task: TableRepairTask) -> None:
             node_hostname = tr_task.fields.host_map[hostname_key]
             _, conn = tr_task.connection_pool.get_cluster_node_connection(
                 node_info,
-                tr_task.cluster_name,
-                invoke_method=tr_task.invoke_method,
                 client_role=(
                     tr_task.client_role
-                    if config.USE_CERT_AUTH and tr_task.invoke_method == "api"
+                    if (config.USE_CERT_AUTH or tr_task.invoke_method == "api")
                     else None
                 ),
                 drop_privileges=False,
@@ -1541,7 +1793,7 @@ def table_repair_fix_nulls(tr_task: TableRepairTask) -> None:
                     conn,
                     client_role=(
                         tr_task.client_role
-                        if config.USE_CERT_AUTH and tr_task.invoke_method == "api"
+                        if (config.USE_CERT_AUTH or tr_task.invoke_method == "api")
                         else None
                     ),
                 )
@@ -1736,7 +1988,7 @@ def table_repair_fix_nulls(tr_task: TableRepairTask) -> None:
                     conn,
                     client_role=(
                         tr_task.client_role
-                        if config.USE_CERT_AUTH and tr_task.invoke_method == "api"
+                        if (config.USE_CERT_AUTH or tr_task.invoke_method == "api")
                         else None
                     ),
                 )
@@ -1812,11 +2064,9 @@ def table_repair_bidirectional(tr_task: TableRepairTask) -> None:
             node_hostname = tr_task.fields.host_map[hostname_key]
             _, conn = tr_task.connection_pool.get_cluster_node_connection(
                 node_info,
-                tr_task.cluster_name,
-                invoke_method=tr_task.invoke_method,
                 client_role=(
                     tr_task.client_role
-                    if config.USE_CERT_AUTH and tr_task.invoke_method == "api"
+                    if (config.USE_CERT_AUTH or tr_task.invoke_method == "api")
                     else None
                 ),
                 drop_privileges=False,
@@ -1930,7 +2180,7 @@ def table_repair_bidirectional(tr_task: TableRepairTask) -> None:
                     conn,
                     client_role=(
                         tr_task.client_role
-                        if config.USE_CERT_AUTH and tr_task.invoke_method == "api"
+                        if (config.USE_CERT_AUTH or tr_task.invoke_method == "api")
                         else None
                     ),
                 )
@@ -1971,7 +2221,7 @@ def table_repair_bidirectional(tr_task: TableRepairTask) -> None:
                     conn,
                     (
                         tr_task.client_role
-                        if config.USE_CERT_AUTH and tr_task.invoke_method == "api"
+                        if (config.USE_CERT_AUTH or tr_task.invoke_method == "api")
                         else None
                     ),
                 )
@@ -2066,7 +2316,7 @@ def table_rerun_temptable(td_task: TableDiffTask) -> None:
     table_qry = (
         f'CREATE TABLE {temp_table_name} AS SELECT * FROM "{schema}"."{table}" WHERE '
     )
-    table_qry += generate_where_clause(key, diff_keys)
+    table_qry += generate_where_clause(key, [diff_keys])
     clean_qry = f"DROP TABLE {temp_table_name}"
 
     if len(key) == 1:
@@ -2091,11 +2341,9 @@ def table_rerun_temptable(td_task: TableDiffTask) -> None:
             }
             _, conn = td_task.connection_pool.get_cluster_node_connection(
                 node_info,
-                td_task.cluster_name,
-                invoke_method=td_task.invoke_method,
                 client_role=(
                     td_task.client_role
-                    if config.USE_CERT_AUTH and td_task.invoke_method == "api"
+                    if (config.USE_CERT_AUTH or td_task.invoke_method == "api")
                     else None
                 ),
             )
@@ -2156,11 +2404,9 @@ def table_rerun_temptable(td_task: TableDiffTask) -> None:
 
             _, conn = td_task.connection_pool.get_cluster_node_connection(
                 node_info,
-                td_task.cluster_name,
-                invoke_method=td_task.invoke_method,
                 client_role=(
                     td_task.client_role
-                    if config.USE_CERT_AUTH and td_task.invoke_method == "api"
+                    if (config.USE_CERT_AUTH or td_task.invoke_method == "api")
                     else None
                 ),
             )
@@ -2255,28 +2501,14 @@ def table_rerun_async(td_task: TableDiffTask) -> None:
     cols_list = td_task.fields.cols.split(",")
     cols_list = [col for col in cols_list if not col.startswith("_Spock_")]
 
-    result_queue = Manager().list()
-    diff_dict = Manager().dict()
-    row_diff_count = Manager().Value("I", 0)
-    lock = Manager().Lock()
+    diff_dict = {}
+    stop_event = Manager().Event()
 
     # Shared variables needed by all workers
     shared_objects = {
-        "cluster_name": td_task.cluster_name,
-        "database": td_task.fields.database,
-        "node_list": td_task.fields.node_list,
-        "schema_name": td_task.fields.l_schema,
-        "table_name": td_task.fields.l_table,
-        "cols_list": cols_list,
-        "p_key": td_task.fields.key,
-        "block_rows": td_task.block_rows,
-        "simple_primary_key": simple_primary_key,
         "mode": "rerun",
-        "result_queue": result_queue,
-        "diff_dict": diff_dict,
-        "row_diff_count": row_diff_count,
-        "lock": lock,
-        "td_task": td_task,
+        "stop_event": stop_event,
+        "task": td_task,
     }
 
     util.message(
@@ -2289,13 +2521,14 @@ def table_rerun_async(td_task: TableDiffTask) -> None:
     diffs_exceeded = False
     errors = False
     errors_list = []
+    total_diffs = 0
 
     try:
         with WorkerPool(
             n_jobs=procs,
             shared_objects=shared_objects,
             use_worker_state=True,
-            use_dill=True,
+            pass_worker_id=True,
         ) as pool:
             for result in pool.imap_unordered(
                 compare_checksums,
@@ -2306,14 +2539,35 @@ def table_rerun_async(td_task: TableDiffTask) -> None:
                 iterable_len=len(blocks),
                 progress_bar_style="rich",
             ):
-                if result == config.MAX_DIFFS_EXCEEDED:
-                    diffs_exceeded = True
-                    mismatch = True
-                    break
-                elif result == config.BLOCK_ERROR:
+                if result["status"] == BLOCK_ERROR:
                     errors = True
-                    errors_list.append(result)
+                    errors_list.append(
+                        {
+                            "node_pair": result["node_pair"],
+                            "batch": result["batch"],
+                            "errors": result["errors"],
+                        }
+                    )
+                    pool.terminate()  # Stop all workers on error
                     break
+
+                if result["status"] == BLOCK_MISMATCH:
+                    mismatch = True
+                    # Update the diff dictionary with this worker's results
+                    for node_pair, node_diffs in result["diffs"].items():
+                        if node_pair not in diff_dict:
+                            diff_dict[node_pair] = {}
+                        for node, diffs in node_diffs.items():
+                            if node not in diff_dict[node_pair]:
+                                diff_dict[node_pair][node] = []
+                            diff_dict[node_pair][node].extend(diffs)
+
+                    # Update total diffs and check if exceeded
+                    total_diffs += result["total_diffs"]
+                    if total_diffs >= config.MAX_DIFF_ROWS:
+                        diffs_exceeded = True
+                        stop_event.set()  # Signal workers to stop
+                        break
 
             if diffs_exceeded:
                 util.message(
@@ -2326,10 +2580,6 @@ def table_rerun_async(td_task: TableDiffTask) -> None:
         context = {"errors": [f"Could not spawn multiprocessing workers: {str(e)}"]}
         ace.handle_task_exception(td_task, context)
         raise e
-
-    for result in result_queue:
-        if result["status_code"] == config.BLOCK_MISMATCH:
-            mismatch = True
 
     if errors:
         context = {
@@ -2417,7 +2667,6 @@ def table_rerun_async(td_task: TableDiffTask) -> None:
         p_state="info",
         quiet_mode=td_task.quiet_mode,
     )
-
     ace_db.update_ace_task(td_task)
 
 
@@ -2460,13 +2709,11 @@ def multi_table_diff(task: Union[RepsetDiffTask, SchemaDiffTask]) -> None:
                 _dbname=task._dbname,
                 fields=task.fields,
                 quiet_mode=task.quiet_mode,
-                block_rows=getattr(task, "block_rows", config.BLOCK_ROWS_DEFAULT),
-                max_cpu_ratio=getattr(
-                    task, "max_cpu_ratio", config.MAX_CPU_RATIO_DEFAULT
-                ),
+                block_size=getattr(task, "block_size", config.DIFF_BLOCK_SIZE),
+                max_cpu_ratio=getattr(task, "max_cpu_ratio", config.MAX_CPU_RATIO),
                 output=getattr(task, "output", "json"),
                 _nodes=getattr(task, "_nodes", "all"),
-                batch_size=getattr(task, "batch_size", config.BATCH_SIZE_DEFAULT),
+                batch_size=getattr(task, "batch_size", config.DIFF_BATCH_SIZE),
                 skip_db_update=True,
                 table_filter=None,
             )
@@ -2530,11 +2777,9 @@ def spock_diff(sd_task: SpockDiffTask) -> None:
             }
             _, conn = sd_task.connection_pool.get_cluster_node_connection(
                 node_info,
-                sd_task.cluster_name,
-                invoke_method=sd_task.invoke_method,
                 client_role=(
                     sd_task.client_role
-                    if config.USE_CERT_AUTH and sd_task.invoke_method == "api"
+                    if (config.USE_CERT_AUTH or sd_task.invoke_method == "api")
                     else None
                 ),
             )
@@ -2546,7 +2791,7 @@ def spock_diff(sd_task: SpockDiffTask) -> None:
 
     try:
         for cluster_node in sd_task.fields.cluster_nodes:
-            cur = conns[cluster_node["name"]].cursor()
+            cur = conns[cluster_node["name"]].cursor(row_factory=dict_row)
 
             if (
                 sd_task.fields.node_list
@@ -2635,17 +2880,19 @@ def spock_diff(sd_task: SpockDiffTask) -> None:
             if table_info == []:
                 hints.append("Hint: No tables in database")
             for table in table_info:
-                if table["set_name"] is None:
+                if table.get("set_name") is None:
                     print(" - Not in a replication set")
                     hints.append(
                         "Hint: Tables not in replication set might not have"
                         " primary keys, or you need to run repset-add-table"
                     )
                 else:
-                    print(" - " + table["set_name"])
+                    print(" - " + table.get("set_name"))
 
-                diff_spock["rep_set_info"].append({table["set_name"]: table["relname"]})
-                print("   - ", table["relname"])
+                diff_spock["rep_set_info"].append(
+                    {table.get("set_name"): table.get("relname")}
+                )
+                print("   - ", table.get("relname"))
 
             diff_spock["hints"] = hints
             compare_spock.append(diff_spock)
@@ -2666,6 +2913,10 @@ def spock_diff(sd_task: SpockDiffTask) -> None:
     print("~~~~~~~~~~~~~~~~~~~~~~~~~")
 
     for n in range(1, len(compare_spock)):
+
+        if compare_spock[n].get("node") is None:
+            continue
+
         diff_key = compare_spock[0]["node"] + "/" + compare_spock[n]["node"]
         if compare_spock[0]["rep_set_info"] == compare_spock[n]["rep_set_info"]:
             task_context["diffs"][diff_key] = {
@@ -2714,11 +2965,9 @@ def schema_diff_objects(sc_task: SchemaDiffTask) -> None:
         for node in sc_task.fields.cluster_nodes:
             _, conn = sc_task.connection_pool.get_cluster_node_connection(
                 node,
-                sc_task.cluster_name,
-                invoke_method=sc_task.invoke_method,
                 client_role=(
                     sc_task.client_role
-                    if config.USE_CERT_AUTH and sc_task.invoke_method == "api"
+                    if (config.USE_CERT_AUTH or sc_task.invoke_method == "api")
                     else None
                 ),
             )
@@ -3296,9 +3545,7 @@ def auto_repair():
 
     for node in cluster_nodes:
         try:
-            _, conn = ar_task.connection_pool.get_cluster_node_connection(
-                node, ar_task.cluster_name
-            )
+            _, conn = ar_task.connection_pool.get_cluster_node_connection(node)
             conn_map[node["name"]] = conn
             cur = conn_map[node["name"]].cursor(row_factory=dict_row)
             cur.execute(oid_sql)
