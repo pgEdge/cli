@@ -12,7 +12,9 @@ import subprocess
 from datetime import datetime
 import logging
 from itertools import chain
+from psycopg import ClientCursor
 
+from ace_sql import ESTIMATE_ROW_COUNT, GET_PKEY_OFFSETS
 import fire
 import psycopg
 from psycopg.rows import dict_row
@@ -23,6 +25,7 @@ import util
 import ace_db
 import ace_config as config
 from ace_data_models import (
+    MerkleTreeTask,
     RepsetDiffTask,
     SchemaDiffTask,
     SpockDiffTask,
@@ -66,16 +69,29 @@ def write_pg_dump(p_ip, p_db, p_port, p_prfx, p_schm, p_base_dir="/tmp"):
     return out_file
 
 
-"""
-Accepts a connection object and returns the version of spock installed
+def print_query(conn, query, params=None):
+    client_cur = ClientCursor(conn)
+    print(client_cur.mogrify(query, params))
 
-@param: conn - connection object
-@return: float - version of spock installed
 
-"""
+def sanitise_input(input: str) -> str:
+    """
+    Sanitises input to ensure it is a valid identifier.
+    """
+    if not re.match(r"^[A-Za-z_][A-Za-z0-9_]*$", input):
+        raise ValueError(f"Invalid identifier: {input}")
+
+    return input
 
 
 def get_spock_version(conn):
+    """
+    Accepts a connection object and returns the version of spock installed
+
+    @param: conn - connection object
+    @return: float - version of spock installed
+
+    """
     data = []
     sql = "SELECT spock.spock_version();"
     try:
@@ -123,12 +139,44 @@ def fix_schema(diff_file, sql1, sql2):
     return 1
 
 
-def get_row_count(p_con, p_schema, p_table):
-    sql = f'SELECT count(*) FROM {p_schema}."{p_table}"'
+def get_row_count_estimate(p_con, p_schema, p_table):
+    """
+    Returns an estimate of the number of rows in a table.
+    Note: This cannot be used for non-materialised views.
+    """
 
     try:
         cur = p_con.cursor()
-        cur.execute(sql)
+        cur.execute(
+            sql.SQL(ESTIMATE_ROW_COUNT).format(
+                schema=sql.Literal(p_schema), table=sql.Literal(p_table)
+            )
+        )
+        r = cur.fetchone()
+        cur.close()
+    except Exception as e:
+        util.exit_message("Error in get_row_count_estimate():\n" + str(e), 1)
+
+    if not r:
+        return 0
+
+    rows = int(r[0])
+
+    return rows
+
+
+def get_row_count(p_con, p_schema, p_table):
+    """
+    Returns the actual number of rows in a table.
+    """
+
+    try:
+        cur = p_con.cursor()
+        cur.execute(
+            f"""
+            SELECT COUNT(*) FROM "{p_schema}"."{p_table}"
+            """
+        )
         r = cur.fetchone()
         cur.close()
     except Exception as e:
@@ -137,9 +185,7 @@ def get_row_count(p_con, p_schema, p_table):
     if not r:
         return 0
 
-    rows = int(r[0])
-
-    return rows
+    return int(r[0])
 
 
 def get_cols(p_con, p_schema, p_table):
@@ -341,6 +387,129 @@ def get_col_types(conn, table_name):
 def check_cluster_exists(cluster_name, base_dir="cluster"):
     cluster_dir = base_dir + "/" + str(cluster_name)
     return True if os.path.exists(cluster_dir) else False
+
+
+def ensure_pgcrypto_installed(conn: psycopg.Connection):
+    """
+    Ensure that the pgcrypto extension is installed on the database.
+    ACE needs the digest() function for computing row checksums.
+    """
+
+    with conn.cursor() as cur:
+        cur.execute("CREATE EXTENSION IF NOT EXISTS pgcrypto;")
+        conn.commit()
+
+
+def generate_pkey_offsets_query(
+    schema, table, key_columns, table_sample_method, sample_percent, ntile_count
+):
+    key_columns_select = ",\n        ".join(key_columns)
+    key_columns_order = ", ".join(key_columns)
+    key_columns_order_desc = ", ".join(f"{col} DESC" for col in key_columns)
+
+    first_row_selects = ",\n        ".join(
+        f"(SELECT {col} FROM first_row) as {col}" for col in key_columns
+    )
+
+    last_row_selects = ",\n        ".join(
+        f"(SELECT {col} FROM last_row) as {col}" for col in key_columns
+    )
+
+    first_row_tuple_selects = ",\n        ".join(
+        f"(SELECT {col} FROM first_row)" for col in key_columns
+    )
+
+    range_start_columns = ",\n        ".join(
+        f"{col} as range_start_{col}" for col in key_columns
+    )
+
+    range_end_columns = ",\n        ".join(
+        f"LEAD({col}) OVER (ORDER BY seq, {key_columns_order}) as range_end_{col}"
+        for col in key_columns
+    )
+
+    range_output_columns = ",\n    ".join(
+        f"range_start_{col},\n    range_end_{col}" for col in key_columns
+    )
+
+    full_query = sql.SQL(GET_PKEY_OFFSETS).format(
+        key_columns_select=sql.SQL(key_columns_select),
+        schema=sql.Identifier(schema),
+        table=sql.Identifier(table),
+        table_sample_method=sql.SQL(table_sample_method),
+        sample_percent=sql.SQL(str(sample_percent)),
+        ntile_count=sql.Literal(ntile_count),
+        key_columns_order=sql.SQL(key_columns_order),
+        key_columns_order_desc=sql.SQL(key_columns_order_desc),
+        first_row_selects=sql.SQL(first_row_selects),
+        last_row_selects=sql.SQL(last_row_selects),
+        first_row_tuple_selects=sql.SQL(first_row_tuple_selects),
+        range_start_columns=sql.SQL(range_start_columns),
+        range_end_columns=sql.SQL(range_end_columns),
+        range_output_columns=sql.SQL(range_output_columns),
+    )
+
+    return full_query
+
+
+def process_pkey_offsets(offsets: list):
+
+    pkey_offsets = []
+    simple_primary_key = len(offsets[0]) == 2
+
+    if simple_primary_key:
+        pkey_offsets.append(([None], [offsets[0][0]]))
+    else:
+        starts = tuple(None for _ in range(len(offsets[0]) // 2))
+        ends = tuple(offsets[0][i] for i, _ in enumerate(offsets[0]) if i % 2 == 0)
+        pkey_offsets.append(([starts], [ends]))
+
+    for offset in offsets:
+        if simple_primary_key:
+            pkey_offsets.append(([offset[0]], [offset[1]]))
+        else:
+            starts = tuple(r for i, r in enumerate(offset) if i % 2 == 0)
+            ends = tuple(r for i, r in enumerate(offset) if i % 2 == 1)
+            pkey_offsets.append(([starts], [ends]))
+
+    return pkey_offsets
+
+
+def compute_sampling_parameters(row_count):
+    """
+    Calculate sampling parameters (sample_method and sample_percent) based on total
+    rows.
+
+    Previously, we used to get all primary keys in a sorted order and then compute
+    the block ranges (or offsets) for the table. However, this method turned out
+    to be very expensive. Therefore, we now use the tablesample method to sample the
+    primary keys and then compute the block ranges.
+
+    However, even with sampling, we need to carefully choose the sample method and
+    percent to ensure that the block ranges are computed correctly, i.e., the
+    sampled offsets are somewhat uniformly distributed across the keyspace of the
+    table. The bernoulli method is a good choice for tables with a small number of
+    rows, while the system method is good for other cases.
+    """
+
+    sample_method = "BERNOULLI"
+    sample_percent = 100
+
+    if row_count <= 10**4:
+        return sample_method, sample_percent
+
+    if row_count <= 10**5:
+        sample_percent = 10
+    elif row_count <= 10**6:
+        sample_percent = 1
+    elif row_count <= 10**8:
+        sample_method = "SYSTEM"
+        sample_percent = 0.1
+    else:
+        sample_method = "SYSTEM"
+        sample_percent = 0.01
+
+    return sample_method, sample_percent
 
 
 def check_user_privileges(conn, username, schema, table, required_privileges=[]):
@@ -768,7 +937,7 @@ def write_diffs_json(td_task, diff_dict, col_types, quiet_mode=False):
         "schema_name": td_task._table_name.split(".")[0],
         "table_name": td_task._table_name.split(".")[1],
         "nodes": td_task._nodes,
-        "block_rows": td_task.block_rows,
+        "block_size": td_task.block_size,
         "max_cpu_ratio": td_task.max_cpu_ratio,
         "batch_size": td_task.batch_size,
         "start_time": td_task.scheduler.started_at,
@@ -849,26 +1018,30 @@ def validate_table_diff_inputs(td_task: TableDiffTask) -> None:
     Validates the basic inputs for a table diff task without establishing connections.
     Raises AceException if validation fails.
     """
-    if not td_task.cluster_name or not td_task._table_name:
+    if not td_task.cluster_name or td_task.cluster_name == "":
         raise AceException("cluster_name and table_name are required arguments")
 
-    if type(td_task.block_rows) is str:
-        try:
-            td_task.block_rows = int(td_task.block_rows)
-        except Exception:
-            raise AceException("Invalid values for ACE_BLOCK_ROWS")
-    elif type(td_task.block_rows) is not int:
-        raise AceException("Invalid value type for ACE_BLOCK_ROWS")
+    if not td_task._table_name or td_task._table_name == "":
+        raise AceException("table_name is a required argument")
 
-    # Capping max block size here to prevent the hash function from taking forever
-    if td_task.block_rows > config.MAX_ALLOWED_BLOCK_SIZE:
-        raise AceException(
-            f"Block row size should be <= {config.MAX_ALLOWED_BLOCK_SIZE}"
-        )
-    if td_task.block_rows < config.MIN_ALLOWED_BLOCK_SIZE:
-        raise AceException(
-            f"Block row size should be >= {config.MIN_ALLOWED_BLOCK_SIZE}"
-        )
+    if type(td_task.block_size) is str:
+        try:
+            td_task.block_size = int(td_task.block_size)
+        except Exception:
+            raise AceException("Invalid values for DIFF_BLOCK_SIZE")
+    elif type(td_task.block_size) is not int:
+        raise AceException("Invalid value type for DIFF_BLOCK_SIZE")
+
+    if not td_task._override_block_size:
+        # Capping max block size here to prevent the hash function from taking forever
+        if td_task.block_size > config.MAX_DIFF_BLOCK_SIZE:
+            raise AceException(
+                f"Block row size should be <= {config.MAX_DIFF_BLOCK_SIZE}"
+            )
+        if td_task.block_size < config.MIN_DIFF_BLOCK_SIZE:
+            raise AceException(
+                f"Block row size should be >= {config.MIN_DIFF_BLOCK_SIZE}"
+            )
 
     if type(td_task.max_cpu_ratio) is int:
         td_task.max_cpu_ratio = float(td_task.max_cpu_ratio)
@@ -922,8 +1095,10 @@ def validate_table_diff_inputs(td_task: TableDiffTask) -> None:
         raise AceException(
             f"TableName {td_task._table_name} must be of form" " 'schema.table_name'"
         )
-    l_schema = nm_lst[0]
-    l_table = nm_lst[1]
+    l_schema, l_table = nm_lst
+
+    l_schema = sanitise_input(l_schema)
+    l_table = sanitise_input(l_table)
 
     db, pg, node_info = cluster.load_json(td_task.cluster_name)
 
@@ -1003,14 +1178,16 @@ def table_diff_checks(
             user = node_info["db_user"]
             port = node_info.get("port", 5432)
 
-            params, conn = td_task.connection_pool.get_cluster_node_connection(
-                node_info,
-                td_task.cluster_name,
-                invoke_method=td_task.invoke_method,
-                client_role=(
-                    td_task.client_role if td_task.invoke_method == "api" else None
-                ),
-            )
+            if node_info["name"] in td_task.fields.node_list:
+                params, conn = td_task.connection_pool.get_cluster_node_connection(
+                    node_info,
+                    client_role=(
+                        td_task.client_role if td_task.invoke_method == "api" else None
+                    ),
+                )
+                ensure_pgcrypto_installed(conn)
+            else:
+                continue
 
             curr_cols = get_cols(conn, l_schema, l_table)
             curr_key = get_key(conn, l_schema, l_table)
@@ -1100,15 +1277,21 @@ def table_diff_checks(
                 conn.commit()
 
                 # Now, we need to check if the view actually has any rows
-                view_sql = sql.SQL("SELECT COUNT(*) FROM {view_name}").format(
+                view_sql = sql.SQL(
+                    """
+                    SELECT EXISTS (
+                        SELECT 1 FROM {view_name}
+                    ) AS has_rows
+                    """
+                ).format(
                     view_name=sql.Identifier(
                         f"{td_task.scheduler.task_id}_{l_table}_filtered"
                     ),
                 )
                 cur = conn.cursor()
                 cur.execute(view_sql)
-                row_count = cur.fetchone()[0]
-                if row_count == 0:
+                has_rows = cur.fetchone()[0]
+                if not has_rows:
                     raise AceException("Table filter produced no rows")
 
     except Exception as e:
@@ -1126,6 +1309,7 @@ def table_diff_checks(
     td_task.fields.host_map = host_map
     td_task.fields.cols = cols
     td_task.fields.key = key
+    td_task.fields.simple_primary_key = len(key.split(",")) == 1
 
     if td_task.fields.col_types and len(td_task.fields.col_types) > 1:
         ref_node = list(td_task.fields.col_types.keys())[0]
@@ -1177,6 +1361,289 @@ def table_diff_checks(
     return td_task
 
 
+def validate_merkle_tree_inputs(
+    mtree_task: MerkleTreeTask,
+    skip_table_check: bool = False,
+    override_block_size: bool = False,
+) -> None:
+    """
+    Validates the basic inputs for a merkle tree task without establishing connections.
+    Raises AceException if validation fails.
+    """
+    if not mtree_task.cluster_name or mtree_task.cluster_name == "":
+        raise AceException("cluster_name is a required argument")
+
+    if type(mtree_task.block_size) is str:
+        try:
+            mtree_task.block_size = int(mtree_task.block_size)
+        except Exception:
+            raise AceException("Invalid values for ACE_MTREE_BLOCK_SIZE")
+    elif type(mtree_task.block_size) is not int:
+        raise AceException("Invalid value type for ACE_MTREE_BLOCK_SIZE")
+
+    if not override_block_size:
+        # Capping max block size here to prevent the hash function from taking forever
+        if mtree_task.block_size > config.MAX_MTREE_BLOCK_SIZE:
+            raise AceException(f"Block size should be <= {config.MAX_MTREE_BLOCK_SIZE}")
+        if mtree_task.block_size < config.MIN_MTREE_BLOCK_SIZE:
+            raise AceException(f"Block size should be >= {config.MIN_MTREE_BLOCK_SIZE}")
+
+    if type(mtree_task.max_cpu_ratio) is int:
+        mtree_task.max_cpu_ratio = float(mtree_task.max_cpu_ratio)
+    elif type(mtree_task.max_cpu_ratio) is str:
+        try:
+            mtree_task.max_cpu_ratio = float(mtree_task.max_cpu_ratio)
+        except Exception:
+            raise AceException("Invalid values for ACE_MAX_CPU_RATIO")
+    elif type(mtree_task.max_cpu_ratio) is not float:
+        raise AceException("Invalid value type for ACE_MAX_CPU_RATIO")
+
+    if mtree_task.max_cpu_ratio > 1.0 or mtree_task.max_cpu_ratio < 0.0:
+        raise AceException(
+            "Invalid value range for ACE_MAX_CPU_RATIO or --max_cpu_ratio"
+        )
+
+    mtree_task.rebalance = parse_bool_field("rebalance", mtree_task.rebalance)
+    mtree_task.recreate_objects = parse_bool_field(
+        "recreate_objects", mtree_task.recreate_objects
+    )
+    mtree_task.write_ranges = parse_bool_field("write_ranges", mtree_task.write_ranges)
+
+    if mtree_task.ranges_file:
+        if not os.path.exists(mtree_task.ranges_file):
+            raise AceException(f"File {mtree_task.ranges_file} does not exist")
+
+        try:
+            block_ranges = ast.literal_eval(open(mtree_task.ranges_file, "r").read())
+            if not block_ranges:
+                raise AceException(
+                    f"Ranges file {mtree_task.ranges_file} is empty or invalid"
+                )
+            for block_range in block_ranges:
+                if len(block_range) != 3:
+                    raise AceException(
+                        f"Range {block_range} must be of form (block_id, start, end)"
+                    )
+            mtree_task.ranges = block_ranges
+        except Exception as e:
+            raise AceException(
+                f"Error parsing ranges file {mtree_task.ranges_file}: {e}"
+            )
+
+    node_list = []
+    try:
+        node_list = parse_nodes(mtree_task._nodes)
+    except ValueError as e:
+        raise AceException(
+            "Nodes should be a comma-separated list of nodenames "
+            + f'\n\tE.g., --nodes="n1,n2". Error: {e}'
+        )
+
+    if len(node_list) > 3:
+        raise AceException(
+            "mtree-diff currently supports up to a three-way table comparison"
+        )
+
+    found = check_cluster_exists(mtree_task.cluster_name)
+    if found:
+        util.message(
+            f"Cluster {mtree_task.cluster_name} exists",
+            p_state="success",
+            quiet_mode=mtree_task.quiet_mode,
+        )
+    else:
+        raise AceException(f"Cluster {mtree_task.cluster_name} not found")
+
+    if not skip_table_check:
+        if (
+            type(mtree_task._table_name) is not str
+            or mtree_task._table_name.strip() == ""
+        ):
+            raise AceException("table_name is a required argument")
+
+        nm_lst = mtree_task._table_name.split(".")
+        if len(nm_lst) != 2:
+            raise AceException(
+                f"TableName {mtree_task._table_name} must be of form"
+                " 'schema.table_name'"
+            )
+        l_schema, l_table = nm_lst
+
+        l_schema = sanitise_input(l_schema)
+        l_table = sanitise_input(l_table)
+
+    db, pg, node_info = cluster.load_json(mtree_task.cluster_name)
+
+    cluster_nodes = []
+    database = {}
+
+    if mtree_task._dbname:
+        for db_entry in db:
+            if db_entry["db_name"] == mtree_task._dbname:
+                database = db_entry
+                break
+    else:
+        database = db[0]
+
+    if not database:
+        raise AceException(
+            f"Database '{mtree_task._dbname}' "
+            + f"not found in cluster '{mtree_task.cluster_name}'"
+        )
+
+    # Combine db and cluster_nodes into a single json
+    for node in node_info:
+        if node_list and node["name"] not in node_list:
+            continue
+        combined_json = {**database, **node}
+        cluster_nodes.append(combined_json)
+
+    if not node_list:
+        node_list = [node["name"] for node in cluster_nodes]
+
+    if mtree_task._nodes == "all" and len(cluster_nodes) > 3:
+        raise AceException("Merkle tree diff only supports up to three way comparison")
+
+    if mtree_task._nodes != "all" and len(node_list) > 1:
+        for n in node_list:
+            if not any(filter(lambda x: x["name"] == n, cluster_nodes)):
+                raise AceException("Specified nodenames not present in cluster")
+
+    # Store basic task information
+    mtree_task.fields.l_schema = l_schema if not skip_table_check else None
+    mtree_task.fields.l_table = l_table if not skip_table_check else None
+    mtree_task.fields.node_list = node_list
+    mtree_task.fields.database = database
+    mtree_task.fields.cluster_nodes = cluster_nodes
+
+
+def merkle_tree_checks(
+    mtree_task: MerkleTreeTask, skip_validation: bool = False
+) -> None:
+    """
+    Checks if a table is 'diffable' for a merkle tree.
+
+    TODO: This is a temporary function since all these checks are already a part
+    of the table-diff checks. Will clean this up eventually.
+
+    Returns:
+        The validated and prepared task
+    """
+
+    # First do basic validation
+    if not skip_validation:
+        validate_merkle_tree_inputs(mtree_task)
+
+    # Now do connection-specific validation
+    cols = None
+    key = None
+    conn_params = []
+    conn_list = []
+    host_map = {}
+    required_privileges = ["SELECT"]
+    l_schema = mtree_task.fields.l_schema
+    l_table = mtree_task.fields.l_table
+
+    try:
+        for node_info in mtree_task.fields.cluster_nodes:
+            hostname = node_info["name"]
+            host_ip = node_info["public_ip"]
+            user = node_info["db_user"]
+            port = node_info.get("port", 5432)
+
+            if node_info["name"] in mtree_task.fields.node_list:
+                params, conn = mtree_task.connection_pool.get_cluster_node_connection(
+                    node_info,
+                    client_role=(
+                        mtree_task.client_role
+                        if mtree_task.invoke_method == "api"
+                        else None
+                    ),
+                )
+                ensure_pgcrypto_installed(conn)
+            else:
+                continue
+
+            curr_cols = get_cols(conn, l_schema, l_table)
+            curr_key = get_key(conn, l_schema, l_table)
+
+            if not curr_cols:
+                raise AceException(
+                    f"Table '{mtree_task._table_name}' not found on {hostname}"
+                    ", or the current user does not have adequate privileges"
+                )
+            if not curr_key:
+                raise AceException(
+                    f"No primary key found for '{mtree_task._table_name}'"
+                )
+
+            if (not cols) and (not key):
+                cols = curr_cols
+                key = curr_key
+
+            if (curr_cols != cols) or (curr_key != key):
+                raise AceException("Table schemas don't match")
+
+            cols = curr_cols
+            key = curr_key
+
+            col_types = get_col_types(conn, l_table)
+            col_types_key = f"{host_ip}:{port}"
+
+            if not mtree_task.fields.col_types:
+                mtree_task.fields.col_types = {}
+
+            mtree_task.fields.col_types[col_types_key] = col_types
+
+            authorised, missing_privileges = check_user_privileges(
+                conn,
+                user,
+                l_schema,
+                l_table,
+                required_privileges,
+            )
+
+            # Missing privileges come back as table_<privilege>, but we use
+            # "CREATE/SELECT/INSERT/UPDATE/DELETE" in the required_privileges list
+            # So, we're simply formatting it correctly here for the exception
+            # message
+            missing_privs = [
+                m.split("_")[1].upper()
+                for m in missing_privileges
+                if m.split("_")[1].upper() in required_privileges
+            ]
+            exception_msg = (
+                f'User "{user}" does not have the necessary privileges'
+                f" to run {', '.join(missing_privs)} "
+                f'on table "{l_schema}.{l_table}" '
+                f'on node "{hostname}"'
+            )
+
+            if not authorised:
+                raise AceException(exception_msg)
+
+            conn_list.append(conn)
+            conn_params.append(params)
+            host_map[host_ip + ":" + str(port)] = hostname
+
+    except Exception as e:
+        raise e
+
+    util.message(
+        "Connections successful to nodes in cluster",
+        p_state="success",
+        quiet_mode=mtree_task.quiet_mode,
+    )
+
+    # Psycopg connection objects cannot be pickled easily,
+    # so, we send the connection parameters instead
+    mtree_task.fields.conn_params = conn_params
+    mtree_task.fields.host_map = host_map
+    mtree_task.fields.cols = cols
+    mtree_task.fields.key = key
+    mtree_task.fields.simple_primary_key = len(key.split(",")) == 1
+
+
 def check_repair_option_compatibility(tr_task: TableRepairTask) -> None:
     """
     Checks if the repair options specified are compatible.
@@ -1217,10 +1684,10 @@ def validate_table_repair_inputs(tr_task: TableRepairTask) -> None:
     Validates the basic inputs for a table repair task without establishing connections.
     Raises AceException if validation fails.
     """
-    if not tr_task.cluster_name:
+    if type(tr_task.cluster_name) is not str or tr_task.cluster_name.strip() == "":
         raise AceException("cluster_name is a required argument")
 
-    if not tr_task.diff_file_path:
+    if type(tr_task.diff_file_path) is not str or tr_task.diff_file_path.strip() == "":
         raise AceException("diff_file is a required argument")
 
     tr_task.fix_nulls = parse_bool_field("fix_nulls", tr_task.fix_nulls)
@@ -1263,8 +1730,10 @@ def validate_table_repair_inputs(tr_task: TableRepairTask) -> None:
             f"TableName {tr_task._table_name} must be of form" "'schema.table_name'"
         )
 
-    l_schema = nm_lst[0]
-    l_table = nm_lst[1]
+    l_schema, l_table = nm_lst
+
+    l_schema = sanitise_input(l_schema)
+    l_table = sanitise_input(l_table)
 
     db, pg, node_info = cluster.load_json(tr_task.cluster_name)
 
@@ -1355,8 +1824,6 @@ def table_repair_checks(
 
             params, conn = tr_task.connection_pool.get_cluster_node_connection(
                 nd,
-                tr_task.cluster_name,
-                invoke_method=tr_task.invoke_method,
                 client_role=(tr_task.client_role if config.USE_CERT_AUTH else None),
             )
 
@@ -1436,23 +1903,25 @@ def validate_repset_diff_inputs(rd_task: RepsetDiffTask) -> None:
     Validates the basic inputs for a repset diff task without establishing connections.
     Raises AceException if validation fails.
     """
-    if type(rd_task.block_rows) is str:
+    if type(rd_task.cluster_name) is not str or rd_task.cluster_name.strip() == "":
+        raise AceException("cluster_name is a required argument")
+
+    if type(rd_task.repset_name) is not str or rd_task.repset_name.strip() == "":
+        raise AceException("repset_name is a required argument")
+
+    if type(rd_task.block_size) is str:
         try:
-            rd_task.block_rows = int(rd_task.block_rows)
+            rd_task.block_size = int(rd_task.block_size)
         except Exception:
-            raise AceException("Invalid values for ACE_BLOCK_ROWS or --block_rows")
-    elif type(rd_task.block_rows) is not int:
-        raise AceException("Invalid value type for ACE_BLOCK_ROWS or --block_rows")
+            raise AceException("Invalid values for DIFF_BLOCK_SIZE or --block_size")
+    elif type(rd_task.block_size) is not int:
+        raise AceException("Invalid value type for DIFF_BLOCK_SIZE or --block_size")
 
     # Capping max block size here to prevent the hash function from taking forever
-    if rd_task.block_rows > config.MAX_ALLOWED_BLOCK_SIZE:
-        raise AceException(
-            f"Block row size should be <= {config.MAX_ALLOWED_BLOCK_SIZE}"
-        )
-    if rd_task.block_rows < config.MIN_ALLOWED_BLOCK_SIZE:
-        raise AceException(
-            f"Block row size should be >= {config.MIN_ALLOWED_BLOCK_SIZE}"
-        )
+    if rd_task.block_size > config.MAX_DIFF_BLOCK_SIZE:
+        raise AceException(f"Block row size should be <= {config.MAX_DIFF_BLOCK_SIZE}")
+    if rd_task.block_size < config.MIN_DIFF_BLOCK_SIZE:
+        raise AceException(f"Block row size should be >= {config.MIN_DIFF_BLOCK_SIZE}")
 
     if type(rd_task.max_cpu_ratio) is int:
         rd_task.max_cpu_ratio = float(rd_task.max_cpu_ratio)
@@ -1533,6 +2002,7 @@ def validate_repset_diff_inputs(rd_task: RepsetDiffTask) -> None:
             if not any(filter(lambda x: x["name"] == n, cluster_nodes)):
                 raise AceException("Specified nodenames not present in cluster")
 
+    rd_task.repset_name = sanitise_input(rd_task.repset_name)
     rd_task.fields.cluster_nodes = cluster_nodes
     rd_task.fields.database = database
     rd_task.fields.node_list = node_list
@@ -1567,10 +2037,9 @@ def repset_diff_checks(
             ) or (not rd_task.fields.node_list):
                 _, conn = rd_task.connection_pool.get_cluster_node_connection(
                     nd,
-                    rd_task.cluster_name,
-                    invoke_method=rd_task.invoke_method,
                     client_role=(rd_task.client_role if config.USE_CERT_AUTH else None),
                 )
+                ensure_pgcrypto_installed(conn)
                 conn_list.append(conn)
 
     except Exception as e:
@@ -1608,9 +2077,7 @@ def repset_diff_checks(
         )
 
     # Convert fetched rows into a list of strings
-    rd_task.table_list = [
-        table[0] for table in tables if table[0] not in rd_task.skip_tables
-    ]
+    rd_task.table_list = [table[0] for table in tables]
 
     return rd_task
 
@@ -1708,8 +2175,6 @@ def spock_diff_checks(
             ) or (not sd_task.fields.node_list):
                 params, conn = sd_task.connection_pool.get_cluster_node_connection(
                     nd,
-                    sd_task.cluster_name,
-                    invoke_method=sd_task.invoke_method,
                     client_role=(sd_task.client_role if config.USE_CERT_AUTH else None),
                 )
                 conn_params.append(params)
@@ -1725,6 +2190,14 @@ def spock_diff_checks(
 
 
 def validate_schema_diff_inputs(sc_task: SchemaDiffTask) -> SchemaDiffTask:
+
+    if type(sc_task.cluster_name) is not str or sc_task.cluster_name.strip() == "":
+        raise AceException("cluster_name is a required argument")
+
+    if type(sc_task.schema_name) is not str or sc_task.schema_name.strip() == "":
+        raise AceException("schema_name is a required argument")
+
+    sc_task.ddl_only = parse_bool_field("ddl_only", sc_task.ddl_only)
 
     node_list = []
     try:
@@ -1819,10 +2292,12 @@ def schema_diff_checks(
             ) or (not sc_task.fields.node_list):
                 _, conn = sc_task.connection_pool.get_cluster_node_connection(
                     nd,
-                    sc_task.cluster_name,
-                    invoke_method=sc_task.invoke_method,
                     client_role=(sc_task.client_role if config.USE_CERT_AUTH else None),
                 )
+
+                if not sc_task.ddl_only:
+                    ensure_pgcrypto_installed(conn)
+
                 conn_list.append(conn)
 
     except Exception as e:
@@ -1955,7 +2430,7 @@ def update_spock_exception_checks(
         for node in cluster_nodes:
             if node["name"] == node_name:
                 # FIXME: Figure out connection handling here
-                _, conn = conn_pool.get_cluster_node_connection(node, cluster_name)
+                _, conn = conn_pool.get_cluster_node_connection(node)
                 conn.autocommit = False
 
     except Exception as e:
@@ -2003,8 +2478,6 @@ def handle_task_exception(task, task_context):
                 }
                 _, conn = task.connection_pool.get_cluster_node_connection(
                     node_info,
-                    task.cluster_name,
-                    invoke_method=task.invoke_method,
                     client_role=(
                         task.client_role
                         if config.USE_CERT_AUTH and task.invoke_method == "api"
@@ -2072,15 +2545,14 @@ if __name__ == "__main__":
 
     ace_db.create_ace_tables()
 
-    fire.Fire(
-        {
-            "table-diff": ace_cli.table_diff_cli,
-            "table-repair": ace_cli.table_repair_cli,
-            "table-rerun": ace_cli.table_rerun_cli,
-            "repset-diff": ace_cli.repset_diff_cli,
-            "schema-diff": ace_cli.schema_diff_cli,
-            "spock-diff": ace_cli.spock_diff_cli,
-            "spock-exception-update": ace_cli.update_spock_exception_cli,
-            "start": ace_cli.start_cli,
-        }
-    )
+    # Check if the last argument is --help or -h for mtree command
+    # If it is, we remove it to prevent fire.Fire from interpreting it
+    # This ensures that the mtree command properly renders help for
+    # ./pgedge ace mtree or ./pgedge ace mtree --help|-h
+    if sys.argv[-1] in ("--help", "-h") and "mtree" in sys.argv:
+        mtree_index = sys.argv.index("mtree")
+        received_args = sys.argv[mtree_index + 1 :]
+        if received_args == ["--help"] or received_args == ["-h"]:
+            sys.argv = sys.argv[:-1]
+
+    fire.Fire(ace_cli.AceCLI())
