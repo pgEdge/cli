@@ -1,7 +1,7 @@
 
 DROP TABLE IF EXISTS hub;
 CREATE TABLE hub(v TEXT NOT NULL PRIMARY KEY, c TEXT NOT NULL, d TEXT NOT NULL);
-INSERT INTO hub VALUES ('25.0.0', 'Constellation',  '20250603');
+INSERT INTO hub VALUES ('25.1.0', '',  '20250626');
 
 DROP VIEW  IF EXISTS v_versions;
 DROP VIEW  IF EXISTS v_products;
@@ -139,6 +139,7 @@ INSERT INTO projects VALUES ('hub', 'app', 0, 0, 'hub', 0, 'https://github.com/p
 INSERT INTO releases VALUES ('hub', 1, 'hub',  '', '', 'hidden', '', 1, '', '', '');
 
 INSERT INTO versions VALUES ('hub', (select v from hub), '',  1, (select d from hub), '', '', '');
+INSERT INTO versions VALUES ('hub', '25.0.0',  '',  0, '20250603', '', '', '');
 INSERT INTO versions VALUES ('hub', '24.10.13',  '',  0, '20250509', '', '', '');
 INSERT INTO versions VALUES ('hub', '24.10.11',  '',  0, '20250224', '', '', '');
 INSERT INTO versions VALUES ('hub', '24.10.10',  '',  0, '20250123', '', '', '');
