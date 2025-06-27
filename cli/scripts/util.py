@@ -124,6 +124,8 @@ def get_default_spock(pgv):
 
     return(DEFAULT_SPOCK)
 
+
+
 def validate_spock_pg_compat(spock_ver: str = None, pg_ver: str = None) -> None:
     """
     Compatibility rules:
@@ -158,6 +160,25 @@ def validate_spock_pg_compat(spock_ver: str = None, pg_ver: str = None) -> None:
     if spv.major < 5:
         return
 
+    # — New block: handle pg_ver with “-1” or “-2” suffix
+    rev = None
+    rev_match = re.fullmatch(r'(\d+)\.(\d+)-(1|2)$', pg_ver)
+    if rev_match:
+        pg_major = int(rev_match.group(1))
+        pg_patch = int(rev_match.group(2))
+        rev = int(rev_match.group(3))
+
+        # reject revision “-1” on Spock ≥5
+        if rev == 1:
+            exit_message(
+                f"Error: PostgreSQL {pg_major}.{pg_patch}-1 is not supported with Spock {spv}; "
+                "please use the “-2” revision instead.",
+                1,
+                isJSON
+            )
+        # for “-2”, we strip suffix and proceed with pg_major/pg_patch below
+    # end new block
+
     # 3) Spock ≥ 5 ⇒ enforce minimum‐patch for each PG major
     minimum_patches = {
         15: 13,
@@ -165,8 +186,11 @@ def validate_spock_pg_compat(spock_ver: str = None, pg_ver: str = None) -> None:
         17: 5,
     }
 
-    # 4) Extract PG major and patch
-    if "." not in pg_ver:
+    # 4) Extract PG major and patch (if not already set by rev_match)
+    if rev_match:
+        # pg_major, pg_patch are already set
+        pass
+    elif "." not in pg_ver:
         # bare-major → use its minimum patch
         try:
             pg_major = int(pg_ver)
