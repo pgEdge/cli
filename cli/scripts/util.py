@@ -33,6 +33,7 @@ import tempfile
 import shutil
 import traceback
 import time
+import re
 import platform
 import subprocess
 import getpass
@@ -122,10 +123,6 @@ def get_default_spock(pgv):
        return(DEFAULT_SPOCK_17)
 
     return(DEFAULT_SPOCK)
-
-import re
-from semantic_version import Version
-from util import DEFAULT_PG, DEFAULT_SPOCK, DEFAULT_SPOCK_17
 
 def validate_spock_pg_compat(spock_ver: str = None, pg_ver: str = None) -> None:
     """
