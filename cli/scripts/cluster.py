@@ -11,7 +11,7 @@ from tabulate import tabulate # type: ignore
 from ipaddress import ip_address
 import os
 import re
-
+import setup_core
 BASE_DIR = "cluster"
 DEFAULT_REPO = "https://pgedge-download.s3.amazonaws.com/REPO"
 
@@ -1289,39 +1289,13 @@ def init(cluster_name, install=True):
     util.message(f"## Loading cluster '{cluster_name}' JSON definition file", "info")
     db, db_settings, nodes = load_json(cluster_name)
     parsed_json = get_cluster_json(cluster_name)
-    if parsed_json is None:
-        util.exit_message("Unable to load cluster JSON", 1)
 
-
-    latest = {"15": "15.13", "16": "16.9", "17": "17.5"}
-
-    # grab whatever the user put
-    requested = str(db_settings.get("pg_version", "")).strip()
-    if not requested:
-        util.exit_message("No pg_version specified in your JSON", 1)
-
-    # if they specified a minor version…
-    if "." in requested:
-
-        if requested not in latest.values():
-            util.exit_message(
-                "Spock 5.0 only supports PostgreSQL 15.13, 16.9 or 17.5 (got %s)" % requested,
-                1,
-            )
-        pg_version = requested
-    else:
-
-        if requested not in latest:
-            util.exit_message(
-                "Unsupported PostgreSQL major version '%s'. Spock 5.0 supports only %s"
-                % (requested, ", ".join(latest.keys())),
-                1,
-            )
-        pg_version = latest[requested]
-        db_settings["pg_version"] = pg_version
-    util.message(f"Using PostgreSQL version {pg_version} for Spock 5.0", "info")
-
-
+    # ──────────────────────────────────────────────────────────────────────────────
+    # Validate Spock 5 ↔ PostgreSQL compatibility before proceeding
+    pg_version = db_settings["pg_version"]
+    spock_ver  = db_settings.get("spock_version", util.get_default_spock(pg_version))
+    util.validate_spock_pg_compat(spock_ver, pg_version)
+    # ──────────────────────────────────────────────────────────────────────────────
     verbose = parsed_json.get("log_level", "info")
 
     all_nodes = nodes.copy()

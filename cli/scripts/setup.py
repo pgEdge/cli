@@ -87,16 +87,20 @@ setup.pgedge(User={User}, Passwd={Passwd}, dbName={dbName}, port={port}, pg_ver=
         dbName = setup_core.inputDbname()
 
     if pg_ver is None:
-       df_pg = util.get_default_pg()
-       if interactive:
-          pg_ver = setup_core.inputPgVer(df_pg)
-       else:
-          pg_ver = df_pg
+           df_pg = util.get_default_pg()
+           if interactive:
+            pg_ver = setup_core.inputPgVer(df_pg)
+           else:
+            pg_ver = df_pg
 
     pg_major, pg_minor = setup_core.parse_pg(pg_ver)
 
+    # Validate that if Spock ≥5 we're using PG 15.13+, 16.9+ or 17.5+
+    util.validate_spock_pg_compat(spock_ver, pg_ver)
+
     setup_core.check_pre_reqs(
         User, Passwd, dbName, port, pg_major, pg_minor, spock_ver, autostart)
+
 
     if interactive and yes is False:
         y_or_n = input("Do you want to continue? [Y/n] ")

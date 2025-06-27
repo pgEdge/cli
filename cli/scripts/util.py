@@ -123,6 +123,97 @@ def get_default_spock(pgv):
 
     return(DEFAULT_SPOCK)
 
+import re
+from semantic_version import Version
+from util import DEFAULT_PG, DEFAULT_SPOCK, DEFAULT_SPOCK_17
+
+def validate_spock_pg_compat(spock_ver: str = None, pg_ver: str = None) -> None:
+    """
+    Compatibility rules:
+      • If Spock < 5.0.0 ⇒ works with any supported PostgreSQL major.
+      • If Spock ≥ 5.0.0 ⇒
+          – PG15 must be ≥ 15.13
+          – PG16 must be ≥ 16.9
+          – PG17 must be ≥ 17.5
+
+    Also supports shorthand Spock strings:
+      – "50" → "5.0.0", "40" → "4.0.0", etc.
+    """
+    # 0) Fill in defaults if user didn’t pass anything
+    if not pg_ver:
+        pg_ver = DEFAULT_PG
+    if not spock_ver:
+        maj = int(pg_ver.split(".", 1)[0])
+        spock_ver = DEFAULT_SPOCK_17 if maj == 17 else DEFAULT_SPOCK
+
+    # 0.5) Normalize two-digit shorthand (e.g. "50" → "5.0.0")
+    m = re.fullmatch(r'(\d)(\d)$', spock_ver)
+    if m:
+        spock_ver = f"{int(m.group(1))}.{int(m.group(2))}.0"
+
+    # 1) Parse Spock version (abort on bad format)
+    try:
+        spv = Version(spock_ver)
+    except ValueError:
+        exit_message(f"Invalid Spock version '{spock_ver}'. Aborting.", 1, isJSON)
+
+    # 2) If Spock < 5 ⇒ compatible with any PG
+    if spv.major < 5:
+        return
+
+    # 3) Spock ≥ 5 ⇒ enforce minimum‐patch for each PG major
+    minimum_patches = {
+        15: 13,
+        16: 9,
+        17: 5,
+    }
+
+    # 4) Extract PG major and patch
+    if "." not in pg_ver:
+        # bare-major → use its minimum patch
+        try:
+            pg_major = int(pg_ver)
+        except ValueError:
+            exit_message(f"Invalid PostgreSQL version '{pg_ver}'. Aborting.", 1, isJSON)
+        if pg_major not in minimum_patches:
+            allowed = ", ".join(str(m) for m in minimum_patches)
+            exit_message(
+                f"Error: Spock {spv} supports only PostgreSQL majors {allowed}; "
+                f"you have {pg_major}. Aborting.",
+                1,
+                isJSON
+            )
+        pg_patch = minimum_patches[pg_major]
+    else:
+        parts = pg_ver.split(".", 2)
+        if len(parts) < 2:
+            exit_message(f"Invalid PostgreSQL version '{pg_ver}'. Aborting.", 1, isJSON)
+        try:
+            pg_major = int(parts[0])
+            pg_patch = int(parts[1])
+        except ValueError:
+            exit_message(f"Invalid PostgreSQL version '{pg_ver}'. Aborting.", 1, isJSON)
+
+    # 5) Major must be supported
+    if pg_major not in minimum_patches:
+        allowed = ", ".join(str(m) for m in minimum_patches)
+        exit_message(
+            f"Error: Spock {spv} supports only PostgreSQL majors {allowed}; "
+            f"you have {pg_major}. Aborting.",
+            1,
+            isJSON
+        )
+
+    # 6) Enforce minimum‐patch
+    required = minimum_patches[pg_major]
+    if pg_patch < required:
+        exit_message(
+            f"Error: Spock {spv} requires PostgreSQL {pg_major}.{required} or newer; "
+            f"you have {pg_major}.{pg_patch}. Aborting.",
+            1,
+            isJSON
+        )
+    # Otherwise defaults or explicit versions are compatible.
 
 def get_cpu_info():
     try:
