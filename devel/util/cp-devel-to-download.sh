@@ -13,6 +13,9 @@ devel_input_subdir="$1"
 # Source and destination s3 buckets, and the prefix
 from_bucket="pgedge-devel"
 to_bucket="pgedge-download"
+to_backup_bucket="pge-downloads-bo35eb85"
+backup_bucket_region="us-east-1"
+
 # Construct final source prefix using the provided sub-directory (s3 prefix)
 prefix="REPO/stable/$devel_input_subdir"
 
@@ -46,6 +49,14 @@ for key in $object_keys; do
     --key "REPO/${key##*/}" \
     $flags > /dev/null 2>>"$log_file" &
 
+  echo "Copying: s3://$from_bucket/$key -> s3://$to_backup_bucket/REPO/${key##*/}"
+  aws s3api copy-object \
+    --region ${backup_bucket_region} \
+    --copy-source "${from_bucket}/${key}" \
+    --bucket "$to_backup_bucket" \
+    --key "REPO/${key##*/}" \
+    $flags > /dev/null 2>>"$log_file" &
+
   job_count=$((job_count + 1))
   
   # When max_jobs are running, wait for them to finish before launching more
@@ -56,7 +67,7 @@ done
 
 # Wait for any remaining background jobs to finish
 wait
-echo "s3 copy operation completed $from_bucket -> $to_bucket"
+echo "s3 copy operation completed $from_bucket -> $to_bucket and $from_bucket -> $to_backup_bucket"
 
 # Check if the log file is not empty, indicating errors were encountered during copying
 if [ -s "$log_file" ]; then
