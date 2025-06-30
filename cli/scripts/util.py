@@ -124,12 +124,6 @@ def get_default_spock(pgv):
 
     return(DEFAULT_SPOCK)
 
-def get_default_spock(pgv):
-    if pgv == "17":
-       return(DEFAULT_SPOCK_17)
-
-    return(DEFAULT_SPOCK)
-
 
 
 def validate_spock_pg_compat(spock_ver: str = None, pg_ver: str = None) -> None:
