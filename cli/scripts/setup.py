@@ -95,7 +95,8 @@ setup.pgedge(User={User}, Passwd={Passwd}, dbName={dbName}, port={port}, pg_data
           pg_ver = df_pg
 
     pg_major, pg_minor = setup_core.parse_pg(pg_ver)
-
+    # Validate that if Spock ≥5 we're using PG 15.13+, 16.9+ or 17.5+Add commentMore actions
+    util.validate_spock_pg_compat(spock_ver, pg_ver)
     pg_init_options = ""
     if pg_data is not None:
         pg_data = pg_data.rstrip("/")
