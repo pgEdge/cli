@@ -6,6 +6,7 @@ import fire
 import meta
 import time
 import sys
+import setup_core
 import getpass
 from tabulate import tabulate # type: ignore
 from ipaddress import ip_address
@@ -1312,7 +1313,9 @@ def init(cluster_name, install=True):
     parsed_json = get_cluster_json(cluster_name)
     if parsed_json is None:
         util.exit_message("Unable to load cluster JSON", 1)
-
+    pg_version = db_settings["pg_version"]
+    spock_ver  = db_settings.get("spock_version", util.get_default_spock(pg_version))
+    util.validate_spock_pg_compat(spock_ver, pg_version)
     verbose = parsed_json.get("log_level", "info")
 
     all_nodes = nodes.copy()
