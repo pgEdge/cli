@@ -109,18 +109,20 @@ def create(db=None, User=None, Passwd=None, pg=None, spock=None, help=False):
 
 def guc_set(guc_name, guc_value):
     """Set GUC."""
-
     pg_v, spock_v = util.get_pg_v()
     pg = pg_v[2:]
 
     nc = "./pgedge "
     ncb = nc + "pgbin " + str(pg) + " "
 
-    cmd = f"ALTER SYSTEM SET {guc_name} = {guc_value}"
+    cmd = f"ALTER SYSTEM SET {guc_name} = '{guc_value}'"
+
     rc1 = util.echo_cmd(ncb + '"psql -q -c \\"' + cmd + '\\" postgres"',False)    
     cmd = f"SELECT pg_reload_conf()"
     rc2 = util.echo_cmd(ncb + '"psql -q -c \\"' + cmd + '\\" postgres"',False)
+    
     rcs = rc1 + rc2
+
     if rcs == 0:
         util.message(f"Set GUC {guc_name} to {guc_value}","info")
     else:
