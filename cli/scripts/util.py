@@ -7,7 +7,7 @@ import time
 MY_VERSION = "25.1.0"
 MY_CODENAME = ""
 
-DEFAULT_PG = "16"
+DEFAULT_PG = "17"
 DEFAULT_SPOCK = "40"
 DEFAULT_SPOCK_17 = "40"
 MY_CMD = os.getenv("MY_CMD", None)
