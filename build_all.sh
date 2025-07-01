@@ -13,7 +13,7 @@ if [ ! $num_p == "0" ] && [ ! $num_p == "1"  ]; then
 fi
 
 if [ "$1" == "" ]; then
-  majorV=16
+  majorV=17
   echo ""
   echo "### Defaulting to pg $majorV ###"
 else
