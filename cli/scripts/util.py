@@ -7,7 +7,7 @@ import time
 MY_VERSION = "25.1.0"
 MY_CODENAME = ""
 
-DEFAULT_PG = "16"
+DEFAULT_PG = "17"
 DEFAULT_SPOCK = "50"
 DEFAULT_SPOCK_17 = "50"
 MY_CMD = os.getenv("MY_CMD", None)
@@ -138,12 +138,18 @@ def validate_spock_pg_compat(spock_ver: str = None, pg_ver: str = None) -> None:
     Also supports shorthand Spock strings:
       – "50" → "5.0.0", "40" → "4.0.0", etc.
     """
-    # 0) Fill in defaults if user didn’t pass anything
+      # 0) Fill in defaults if user didn’t pass anything
     if not pg_ver:
         pg_ver = DEFAULT_PG
+    else:
+        pg_ver = str(pg_ver)           # ← force to string
+
     if not spock_ver:
         maj = int(pg_ver.split(".", 1)[0])
         spock_ver = DEFAULT_SPOCK_17 if maj == 17 else DEFAULT_SPOCK
+    else:
+        spock_ver = str(spock_ver)     # ← force to string
+
 
     # 0.5) Normalize two-digit shorthand (e.g. "50" → "5.0.0")
     m = re.fullmatch(r'(\d)(\d)$', spock_ver)
