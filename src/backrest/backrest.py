@@ -30,8 +30,7 @@ def fetch_config():
         "repo1-retention-full-type", "repo1-path", "repo1-host-user",
         "repo1-host", "repo1-cipher-type", "log-level-console",
         "repo1-type", "process-max", "compress-level", "pg1-path",
-        "pg1-user", "pg1-database", "db-socket-path", "pg1-port",
-        "pg1-host"
+        "pg1-user", "pg1-database", "db-socket-path", "pg1-port"
     ]
     for param in params:
         config[param] = util.get_value("BACKUP", param)
