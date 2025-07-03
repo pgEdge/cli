@@ -8,6 +8,7 @@ import subprocess
 import json
 import util
 import fire
+import re
 
 def create(db=None, User=None, Passwd=None, pg=None, spock=None, help=False):
     """
@@ -109,12 +110,14 @@ def create(db=None, User=None, Passwd=None, pg=None, spock=None, help=False):
 
 def guc_set(guc_name, guc_value):
     """Set GUC."""
+
     pg_v, spock_v = util.get_pg_v()
     pg = pg_v[2:]
 
     nc = "./pgedge "
     ncb = nc + "pgbin " + str(pg) + " "
 
+    guc_value = re.sub(r'([\'\\])', r'\1\1', str(guc_value))
     cmd = f"ALTER SYSTEM SET {guc_name} = '{guc_value}'"
 
     rc1 = util.echo_cmd(ncb + '"psql -q -c \\"' + cmd + '\\" postgres"',False)    
