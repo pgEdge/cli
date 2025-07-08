@@ -3,7 +3,8 @@
 
 import os, sys, glob, sqlite3, time
 import fire, meta, util
-
+from cluster import load_json, get_cluster_json   # helper functions for reading cluster JSON
+import subprocess
 isJSON = util.isJSON
 
 MY_HOME = util.MY_HOME
@@ -235,6 +236,156 @@ ORDER BY 1, 2, 3, 7"""
     meta.pretty_sql(sql)
 
 
+
+import os
+import subprocess
+
+def upgrade_spock(cluster_name: str, new_spock_ver: str):
+    """
+    Upgrade the Spock extension cluster-wide.
+
+    ./pgedge um upgrade-spock <cluster_name> <new_spock_ver>
+    """
+    # 1. Warn that downgrades (or same‐version/minor upgrades) aren’t supported
+    util.message(
+        "WARNING: Downgrading to a previous Spock version—or upgrading within the same major version—is not supported; "
+        "only upgrades to a newer major version are allowed.",
+        "warn",
+        isJSON,
+    )
+
+    # 2. Load cluster JSON
+    util.message(f"## Loading cluster '{cluster_name}' JSON definition file", "info", isJSON)
+    try:
+        db, db_settings, nodes = load_json(cluster_name)
+    except Exception as e:
+        util.exit_message(f"Unable to load cluster JSON: {e}", 1, isJSON)
+
+    if not nodes:
+        parsed = get_cluster_json(cluster_name)
+        if not parsed or not parsed.get("nodes"):
+            util.exit_message("Unable to load cluster JSON", 1, isJSON)
+        nodes = parsed["nodes"]
+
+    # 3. Extract node directories
+    node_dirs = []
+    for n in nodes:
+        dir_ = n.get("node_dir") or n.get("dir") or n.get("path")
+        if dir_:
+            node_dirs.append(dir_)
+    if not node_dirs:
+        util.exit_message("No node_dir entries found in cluster JSON.", 1, isJSON)
+    util.message(f"Discovered node directories: {', '.join(node_dirs)}", "info", isJSON)
+
+    # 4. Auto-detect current Spock version from JSON
+    current_spock_ver = db_settings.get("spock_version")
+    if not current_spock_ver:
+        util.exit_message(
+            "Current Spock version not found in cluster JSON (expected db_settings['spock_version']).",
+            1,
+            isJSON
+        )
+    util.message(
+        f"Detected current Spock version from JSON: {current_spock_ver}",
+        "info",
+        isJSON
+    )
+
+    # 5. Refuse no-ops
+    if new_spock_ver == current_spock_ver:
+        util.exit_message(
+            f"New Spock version {new_spock_ver} is the same as the current version.",
+            1,
+            isJSON
+        )
+
+    # 5.1 Compare major versions as strings
+    try:
+        current_major = current_spock_ver.split(".")[0]
+        new_major = new_spock_ver.split(".")[0]
+    except IndexError:
+        util.exit_message(
+            f"Invalid Spock version format. Got current='{current_spock_ver}', requested='{new_spock_ver}'.",
+            1,
+            isJSON
+        )
+
+    if new_major <= current_major:
+        util.exit_message(
+            f"Invalid upgrade: new Spock major version {new_major} must be greater than current major version {current_major}.",
+            1,
+            isJSON
+        )
+
+    # 6. If upgrading to Spock 5, install Spock5 on each node
+    if new_major == "5":
+        for dir_ in node_dirs:
+            pgedge_dir = os.path.join(dir_, "pgedge")
+            util.message(
+                f"Installing Spock5 on node at '{pgedge_dir}'",
+                "info",
+                isJSON
+            )
+            try:
+                subprocess.run(["./pgedge", "um", "install", "spock5"], cwd=pgedge_dir, check=True)
+            except subprocess.CalledProcessError as e:
+                util.exit_message(
+                    f"Spock5 installation failed in '{pgedge_dir}': {e}",
+                    1,
+                    isJSON
+                )
+
+    # 7. Warn about downtime
+    util.message(
+        f"WARNING: Upgrading Spock on cluster '{cluster_name}' "
+        f"from {current_spock_ver} to {new_spock_ver} will cause downtime; "
+        "all nodes will be restarted.",
+        "warn",
+        isJSON,
+    )
+
+    # 8. Check for Backrest configuration and run pgBackRest backups
+    for n in nodes:
+        br = n.get("backrest")
+        if br:
+            stanza = br.get("stanza")
+            node_name = n.get("name") or n.get("node_dir") or "unknown"
+            node_dir = n.get("node_dir") or n.get("dir") or n.get("path")
+            pgedge_dir = os.path.join(node_dir, "pgedge")
+
+            util.message(
+                f"Running pgBackRest backup for stanza '{stanza}' on node '{node_name}'",
+                "info",
+                isJSON
+            )
+            try:
+                subprocess.run(["./pgedge", "backrest", "backup", stanza], cwd=pgedge_dir, check=True)
+            except subprocess.CalledProcessError as e:
+                util.exit_message(
+                    f"pgBackRest backup failed on node '{node_name}': {e}",
+                    1,
+                    isJSON
+                )
+
+    # 9. Determine the running PostgreSQL version
+    try:
+        pg_version = db_settings.get("pg_version") or util.fetch_pg_version(node_dirs[0])
+        util.message(f"Detected PostgreSQL version: {pg_version}", "info", isJSON)
+    except Exception as e:
+        util.exit_message(f"Unable to determine PostgreSQL version: {e}", 1, isJSON)
+
+    # 10. Validate compatibility
+    util.validate_spock_pg_compat(current_spock_ver, pg_version)
+
+    # 11. Success
+    util.exit_message(
+        f"Successfully upgraded Spock to {new_spock_ver} on cluster '{cluster_name}'.",
+        0,
+        isJSON
+    )
+
+
+
 if __name__ == "__main__":
     fire.Fire(
         {
@@ -245,6 +396,7 @@ if __name__ == "__main__":
             "upgrade": upgrade,
             "clean": clean,
             "verify-metadata": verify_metadata,
-            "download": download,
+            "download": download, 
+            "upgrade-spock": upgrade_spock, 
         }
     )
