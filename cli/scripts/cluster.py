@@ -9,9 +9,10 @@ import sys
 import setup_core
 import getpass
 from tabulate import tabulate # type: ignore
-from ipaddress import ip_address
+import socket
 import os
 import re
+
 
 BASE_DIR = "cluster"
 DEFAULT_REPO = "https://pgedge-download.s3.amazonaws.com/REPO"
@@ -1064,12 +1065,14 @@ def json_create(
             )
         try:
             if public_ip:
-                ip_address(public_ip)
+                socket.gethostbyname(public_ip)
+
             if private_ip:
-                ip_address(private_ip)
-        except ValueError:
+                socket.gethostbyname(private_ip)
+
+        except socket.gaierror as e:
             validation_errors.append(
-                f"Invalid IP address provided for node {node.get('name')}."
+                f"Error resolving hostname or ip adress for node {node.get('name')} : {e}."
             )
 
         for sub_node in node.get("sub_nodes", []):
@@ -1099,12 +1102,12 @@ def json_create(
                 )
             try:
                 if public_ip:
-                    ip_address(public_ip)
+                    socket.gethostbyname(public_ip)
                 if private_ip:
-                    ip_address(private_ip)
-            except ValueError:
+                    socket.gethostbyname(private_ip)
+            except socket.gaierror as e:
                 validation_errors.append(
-                    f"Invalid IP address provided for sub-node {sub_node.get('name')}."
+                    f"Error resolving hostname or ip adress for sub-node {sub_node.get('name')}: {e}."
                 )
 
     if validation_errors:
