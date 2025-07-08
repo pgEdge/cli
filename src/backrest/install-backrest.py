@@ -58,7 +58,6 @@ def configure_backup_settings():
         "pg1-path": "xx",
         "pg1-user": "xx",
         "pg1-port": "5432",
-        "pg1-host": "127.0.0.1",
         "db-socket-path": "/tmp",
         "global:archive-push": {
             "compress-level": "3"
