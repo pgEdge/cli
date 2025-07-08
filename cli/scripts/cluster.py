@@ -1070,9 +1070,9 @@ def json_create(
             if private_ip:
                 socket.gethostbyname(private_ip)
 
-        except ValueError:
+        except socket.gaierror as e:
             validation_errors.append(
-                f"Invalid IP address provided for node {node.get('name')}."
+                f"Error resolving hostname or ip adress for node {node.get('name')} : {e}."
             )
 
         for sub_node in node.get("sub_nodes", []):
@@ -1105,9 +1105,9 @@ def json_create(
                     socket.gethostbyname(public_ip)
                 if private_ip:
                     socket.gethostbyname(private_ip)
-            except ValueError:
+            except socket.gaierror as e:
                 validation_errors.append(
-                    f"Invalid IP address provided for sub-node {sub_node.get('name')}."
+                    f"Error resolving hostname or ip adress for sub-node {sub_node.get('name')}: {e}."
                 )
 
     if validation_errors:
