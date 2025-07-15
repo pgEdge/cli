@@ -21,13 +21,34 @@ if [ ! -d $outDir ]; then
   exit 1
 fi
 
+# Check if $2 is empty
+if [[ -z "$2" ]]; then
+  echo "Error: Second argument (mode) is required and must be either 'stable' or 'current'."
+  exit 1
+fi
+
+# Validate allowed values
+if [[ "$2" != "stable" && "$2" != "current" ]]; then
+  echo "Error: Second argument must be either 'stable' or 'current'."
+  exit 1
+fi
+
+# Check if $3 is empty
+if [[ -z "$3" ]]; then
+  echo "Error: Third argument (subdir) is required and it is a subdirectory inside 'stable' or 'current'."
+  exit 1
+fi
+
+MODE=$2
+SUBDIR=$3
+
 sleep 2
 cd $outDir
 ls
 sleep 2
 
 flags="--acl public-read --storage-class STANDARD --recursive"
-BR=$BUCKET/REPO
+BR=$BUCKET/REPO/$MODE/$SUBDIR
 set -x
 
 aws --region $REGION s3 cp . $BR $flags
@@ -38,7 +59,7 @@ sleep 2
 # content disposition header
 if [ $rc -eq 0 ] && [ -f "$offline_tgz_bndl" ]; then
     echo "Uploading offline bundle with content-disposition header"
-    aws --region $REGION s3 cp "$offline_tgz_bndl" "$BUCKET/REPO/" \
+    aws --region $REGION s3 cp "$offline_tgz_bndl" "$BUCKET/REPO/$MODE/$SUBDIR/" \
         --acl public-read \
         --content-disposition "attachment; filename=$offline_tgz_bndl"
     rc=$?  # Capture exit code from second upload
