@@ -8,7 +8,7 @@ bundle=pgedge
 api=pgedge
 ctlibsV=1.6
 
-spock50V=5.0.0-devel1-1
+spock50V=5.0.0-1
 
 spock40V=4.0.10-1
 
@@ -16,7 +16,7 @@ spock33V=3.3.6-1
 
 # removeComponentFromOut: Specifies the Spock component (e.g., spock50) to exclude from stable mode builds in make_tgz.sh.
 # This variable is ignored in current mode builds, which include all components.
-removeComponentFromOut=spock50
+removeComponentFromOut=
 
 lolorV=1.2-1
 snwflkV=2.2-1

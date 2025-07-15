@@ -152,17 +152,17 @@ INSERT INTO projects VALUES ('pg', 'pge', 1, 5432, '', 1, 'https://github.com/po
 
 INSERT INTO releases VALUES ('pg15', 2, 'pg', '', '', 'prod', 
   '<font size=-1>New in <a href=https://www.postgresql.org/docs/15/release-15.html>2022</a></font>', 1, 'POSTGRES', '', '');
-INSERT INTO versions VALUES ('pg15', '15.13-2',  'amd, arm', 1, '20250619','', '', '');
+INSERT INTO versions VALUES ('pg15', '15.13-2',  'amd, arm', 1, '20250715','', '', '');
 INSERT INTO versions VALUES ('pg15', '15.12-1',  'amd, arm', 0, '20250224','', '', '');
 
 INSERT INTO releases VALUES ('pg16', 2, 'pg', '', '', 'prod', 
   '<font size=-1>New in <a href=https://www.postgresql.org/docs/16/release-16.html>2023!</a></font>', 1, 'POSTGRES', '', '');
-INSERT INTO versions VALUES ('pg16', '16.9-2',  'amd, arm', 1, '20250619','', '', '');
+INSERT INTO versions VALUES ('pg16', '16.9-2',  'amd, arm', 1, '20250715','', '', '');
 INSERT INTO versions VALUES ('pg16', '16.8-1',  'amd, arm', 0, '20250224','', '', '');
 
 INSERT INTO releases VALUES ('pg17', 2, 'pg', '', '', 'prod', 
   '<font size=-1>New in <a href=https://www.postgresql.org/docs/17/release-17.html>2024!</a></font>', 1, 'POSTGRES', '', '');
-INSERT INTO versions VALUES ('pg17', '17.5-2',    'amd, arm', 1, '20250619','', '', '');
+INSERT INTO versions VALUES ('pg17', '17.5-2',    'amd, arm', 1, '20250715','', '', '');
 INSERT INTO versions VALUES ('pg17', '17.4-1',    'amd, arm', 0, '20250224','', '', '');
 
 -- ## ORAFCE #############################
@@ -338,9 +338,9 @@ INSERT INTO releases VALUES ('spock50-pg15', 4, 'spock', 'Spock', '', 'prod', ''
 INSERT INTO releases VALUES ('spock50-pg16', 4, 'spock', 'Spock', '', 'prod', '', 1, 'pgEdge Community', '', '');
 INSERT INTO releases VALUES ('spock50-pg17', 4, 'spock', 'Spock', '', 'prod', '', 1, 'pgEdge Community', '', '');
 
-INSERT INTO versions VALUES ('spock50-pg15', '5.0.0-devel1-1',   'amd, arm', 1, '20250521', 'pg15', '', '');
-INSERT INTO versions VALUES ('spock50-pg16', '5.0.0-devel1-1',   'amd, arm', 1, '20250521', 'pg16', '', '');
-INSERT INTO versions VALUES ('spock50-pg17', '5.0.0-devel1-1',   'amd, arm', 1, '20250521', 'pg17', '', '');
+INSERT INTO versions VALUES ('spock50-pg15', '5.0.0-1',   'amd, arm', 1, '20250715', 'pg15', '', '');
+INSERT INTO versions VALUES ('spock50-pg16', '5.0.0-1',   'amd, arm', 1, '20250715', 'pg16', '', '');
+INSERT INTO versions VALUES ('spock50-pg17', '5.0.0-1',   'amd, arm', 1, '20250715', 'pg17', '', '');
 
 -- ## LOLOR #############################
 INSERT INTO projects VALUES ('lolor', 'pge', 4, 0, '', 1, 'https://github.com/pgedge/lolor/tags',
