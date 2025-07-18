@@ -6,7 +6,6 @@
     COMMAND is one of the following:
      node-create         # Define a node for spock.
      node-drop           # Remove a spock node.
-     node-alter-location # Set location details for spock node.
      node-list           # Display node table.
      node-add-interface  # Add a new node interface.
      node-drop-interface # Delete a node interface.
