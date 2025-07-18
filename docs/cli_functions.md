@@ -96,7 +96,6 @@ Use commands in this section to invoke spock extension functionality with the CL
 |---------|-------------|
 | [spock node-create](functions/spock-node-create.md) | Define a node for spock. |
 | [spock node-drop](functions/spock-node-drop.md) | Remove a spock node. |
-| [spock node-alter-location](functions/spock-node-alter-location.md) | Set location details for spock node. |
 | [spock node-list](functions/spock-node-list.md) | Display node table. |
 | [spock node-add-interface](functions/spock-node-add-interface.md) | Add a new node interface. |
 | [spock node-drop-interface](functions/spock-node-drop-interface.md) | Delete a node interface. |

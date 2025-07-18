@@ -198,36 +198,6 @@ def node_drop(node_name, db):
     sys.exit(0)
 
 
-def node_alter_location(node_name, location, db):
-    """Set location details for spock node."""
-    pg_v,spock_v = get_spock_ver()
-
-    [location_nm, country, state, lattitude, longitude] = util.get_location_dtls(
-        location
-    )
-
-    sql = """
-UPDATE spock.node
-   SET location_nm = ?, country = ?, state = ?, lattitude = ?, longitude = ?
- WHERE location = ?
-"""
-
-    con = util.get_pg_connection(pg_v, db, util.get_user())
-
-    rc = 0
-    try:
-        con = util.get_pg_connection(pg_v, "postgres", util.get_user())
-        cur = con.cursor(row_factory=psycopg.rows.dict_row)
-        cur.execute(sql, [location_nm, country, state, lattitude, longitude])
-        con.commit()
-    except Exception as e:
-        util.print_exception(e)
-        con.rollback()
-        rc = 1
-
-    sys.exit(rc)
-
-
 def node_list(db):
     """Display node table. 
         
@@ -1017,7 +987,6 @@ if __name__ == "__main__":
         {
             "node-create": node_create,
             "node-drop": node_drop,
-            "node-alter-location": node_alter_location,
             "node-list": node_list,
             "node-add-interface": node_add_interface,
             "node-drop-interface": node_drop_interface,
