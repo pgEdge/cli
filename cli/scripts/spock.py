@@ -726,7 +726,7 @@ def set_readonly(readonly="off"):
 
     util.message("spock.set_readonly() deprecated, use db.set_readonly() instead", "warning")
 
-    return(db.set_readonly(readonly, pg))
+    return(db.set_readonly(readonly))
 
 
 def get_pii_cols(db, schema=None):
