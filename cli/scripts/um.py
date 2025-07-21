@@ -6,6 +6,8 @@ import fire, meta, util
 from cluster import load_json, get_cluster_json   # helper functions for reading cluster JSON
 import subprocess
 isJSON = util.isJSON
+import re
+import sqlite3 as _sqlite3
 
 MY_HOME = util.MY_HOME
 
@@ -84,16 +86,23 @@ def update():
     run_cmd("update")
 
 
+
 def install(component, active=True):
-    """Install a component."""
+    """Install a component or trigger Spock upgrade for spock50-pg<major>."""
+    # Only invoke upgrade_spock when installing spock50-pg*
+    if component.startswith("spock50-pg"):
+        print(f"Detected Spock upgrade target '{component}', invoking upgrade_spock()...\n")
+        upgrade_spock()
+        # After successful compatibility, proceed with install
+        util.message(f"um.install(install {component})", "debug")
+        run_cmd("install", component)
+        return
 
     if active not in (True, False):
         util.exit_message("'active' parm must be True or False")
-    
     cmd = "install"
-    if active is False:
+    if not active:
         cmd = "install --no-preload"
-
     util.message(f"um.install({cmd} {component})", "debug")
     run_cmd(cmd, component)
 
@@ -237,163 +246,63 @@ ORDER BY 1, 2, 3, 7"""
 
 
 
-def upgrade_spock(cluster_name: str, new_spock_ver: str):
+
+# Regex that matches typical Spock‑5 version strings or component names
+_SPOCK5_RE = re.compile(r"^(?:spock)?5[0-9\.]*$", re.IGNORECASE)
+
+
+def upgrade_spock():
     """
-    Upgrade the Spock extension cluster-wide.
+    Validate Spock ↔ PostgreSQL compatibility **unless Spock 5 is already installed**.
 
-    ./pgedge um upgrade-spock <cluster_name> <new_spock_ver>
+    Behaviour
+    ---------
+    • If any installed Spock component matches `_SPOCK5_RE`, print a notice and EXIT 0.  
+    • Otherwise, warn about downtime, read PG/Spock versions from SQLite,
+      do util.validate_spock_pg_compat(), and exit(1) on any error.
     """
-    # 1. Warn that downgrades/same‐version upgrades aren’t supported
-    util.message(
-        "WARNING: Downgrading to a previous Spock version—or upgrading within the same major version—is not supported; "
-        "only upgrades to a newer major version are allowed.",
-        "warn",
-        isJSON,
-    )
+    DB_PATH = "data/conf/db_local.db"
+    VERSION_SQL = """
+        SELECT pg.version      AS pg_ver,
+               sp.version      AS spock_ver,
+               sp.component    AS spock_comp
+          FROM components AS pg
+          LEFT JOIN components AS sp
+                 ON sp.component LIKE 'spock%' || pg.component
+         WHERE pg.component IN ('pg11','pg12','pg13','pg14','pg15','pg16','pg17')
+         LIMIT 1;
+    """
 
-    # 2. Load cluster JSON (db list, settings, and node definitions)
-    util.message(f"## Loading cluster '{cluster_name}' JSON definition", "info", isJSON)
+    # ── fetch versions ────────────────────────────────────────────────────────────
     try:
-        db_list, db_settings, nodes = load_json(cluster_name)
-    except Exception as e:
-        util.exit_message(f"Unable to load cluster JSON: {e}", 1, isJSON)
-    if not nodes:
-        util.exit_message("No 'nodes' found in cluster JSON.", 1, isJSON)
-    if not db_list:
-        util.exit_message("No 'databases' defined in cluster JSON.", 1, isJSON)
+        with _sqlite3.connect(DB_PATH) as conn:
+            row = conn.execute(VERSION_SQL).fetchone()
+    except _sqlite3.Error as err:
+        sys.exit(f"ERROR: SQLite query failed: {err}")
 
-    # 3. Extract current Spock version
-    current_spock_ver = db_settings.get("spock_version")
-    if not current_spock_ver:
-        util.exit_message(
-            "Current Spock version not found in cluster JSON.",
-            1,
-            isJSON
-        )
-    util.message(f"Detected current Spock version from JSON: {current_spock_ver}", "info", isJSON)
+    if not row:
+        sys.exit("ERROR: No PostgreSQL/Spock version row found.")
 
-    # 4. Validate requested upgrade
-    if new_spock_ver == current_spock_ver:
-        util.exit_message(
-            f"New Spock version {new_spock_ver} is the same as the current version.",
-            1,
-            isJSON
-        )
+    pg_ver, spock_ver, spock_comp = row
+
+    # ── early‑exit if Spock 5 already installed ──────────────────────────────────
+    if any(_SPOCK5_RE.match(x or "") for x in (spock_ver, spock_comp)):
+        print(f"Spock 5 already installed (component='{spock_comp}', version='{spock_ver}').")
+        print("Nothing to do — skipping upgrade/installation.\n")
+        sys.exit(0)          # treat as successful no‑op
+
+    # ── standard downtime banner ─────────────────────────────────────────────────
+    banner = "=" * 80
+    print(f"\n{banner}\n*** WARNING: This operation will cause downtime! ***\n{banner}\n")
+    print(f"Detected Spock version {spock_ver} on PostgreSQL {pg_ver}")
+
+    # ── compatibility check ──────────────────────────────────────────────────────
     try:
-        current_major = int(current_spock_ver.split('.')[0])
-        new_major = int(new_spock_ver.split('.')[0])
-    except (IndexError, ValueError):
-        util.exit_message(
-            f"Invalid version format: current='{current_spock_ver}', requested='{new_spock_ver}'.",
-            1,
-            isJSON
-        )
-    if new_major <= current_major:
-        util.exit_message(
-            f"Invalid upgrade: new Spock major version {new_major} must be greater than current {current_major}.",
-            1,
-            isJSON
-        )
+        util.validate_spock_pg_compat(spock_ver, pg_ver)
+    except Exception as exc:
+        sys.exit(f"ERROR: Compatibility check failed: {exc}")
 
-    # 5. Gather node directories
-    node_dirs = []
-    for n in nodes:
-        dir_ = n.get('path')
-        if dir_:
-            node_dirs.append(dir_)
-    if not node_dirs:
-        util.exit_message("Node directories not defined in JSON.", 1, isJSON)
-    util.message(f"Discovered node directories: {', '.join(node_dirs)}", "info", isJSON)
-
-    # 6. Install new Spock major if needed
-    if new_major > current_major:
-        for base in node_dirs:
-            pgedge_dir = os.path.join(base, 'pgedge')
-            util.message(
-                f"Installing Spock{new_major} on node '{pgedge_dir}'", "info", isJSON
-            )
-            try:
-                subprocess.run(['./pgedge', 'um', 'install', f'spock{new_major}'], cwd=pgedge_dir, check=True)
-            except subprocess.CalledProcessError as e:
-                util.exit_message(f"Spock install failed: {e}", 1, isJSON)
-
-    # 7. Downtime warning
-    util.message(
-        f"WARNING: Upgrading Spock on '{cluster_name}' from {current_spock_ver} to {new_spock_ver} will cause downtime.",
-        "warn",
-        isJSON
-    )
-
-    # 8. Backup with pgBackRest if configured
-    for n in nodes:
-        br = n.get('backrest')
-        if br:
-            stanza = br.get('stanza')
-            node_dir = n['path']
-            pgedge_dir = os.path.join(node_dir, 'pgedge')
-            util.message(f"Running backup stanza '{stanza}'", "info", isJSON)
-            try:
-                subprocess.run(['./pgedge', 'backrest', 'backup', stanza], cwd=pgedge_dir, check=True)
-            except subprocess.CalledProcessError as e:
-                util.exit_message(f"Backup failed on node {n.get('name')}: {e}", 1, isJSON)
-
-    # 9. Detect PostgreSQL version
-    try:
-        pg_version = db_settings.get('pg_version') or util.fetch_pg_version(node_dirs[0])
-        util.message(f"Detected PostgreSQL version: {pg_version}", "info", isJSON)
-    except Exception as e:
-        util.exit_message(f"Could not detect PostgreSQL version: {e}", 1, isJSON)
-
-    # 10. Compatibility check
-    util.validate_spock_pg_compat(new_spock_ver, pg_version)
-
-    # 11. Perform ALTER EXTENSION for each db on each node
-    for n in nodes:
-        node_name = n.get('name') or n['path']
-        node_dir = n['path']
-        port = n.get('port') or db_settings.get('port')
-        if not port:
-            util.exit_message(f"Port missing for node '{node_name}'", 1, isJSON)
-
-        # Build path to psql
-        pg_bin = f"pg{pg_version}"
-        psql_exec = os.path.join(node_dir, 'pgedge', pg_bin, 'bin', 'psql')
-
-
-        for db in db_list:
-            db_name = db.get('db_name')
-            db_user = db.get('db_user')
-            if not db_name or not db_user:
-                util.exit_message(
-                    f"Database entry incomplete in JSON for node '{node_name}'", 1, isJSON
-                )
-            util.message(
-                f"Altering Spock in {db_name}@{node_name} as {db_user}",
-                "info",
-                isJSON
-            )
-            try:
-                subprocess.run(
-                    [
-                        psql_exec,
-                        '-p', str(port),
-                        '-U', db_user,
-                        '-d', db_name,
-                        '-c', f"ALTER EXTENSION spock UPDATE TO \"{new_spock_ver}\";"
-                    ],
-                    check=True
-                )
-            except subprocess.CalledProcessError as e:
-                util.exit_message(f"ALTER EXTENSION failed: {e}", 1, isJSON)
-
-    # 12. Complete
-    util.exit_message(
-        f"Successfully upgraded Spock to {new_spock_ver} on cluster '{cluster_name}'.",
-        0,
-        isJSON
-    )
-
-
+    print("Compatibility check passed. Proceed with upgrade.")
 
 if __name__ == "__main__":
     fire.Fire(
