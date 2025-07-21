@@ -3,8 +3,6 @@
 
 import os, sys, glob, sqlite3, time
 import fire, meta, util
-from cluster import load_json, get_cluster_json   # helper functions for reading cluster JSON
-import subprocess
 isJSON = util.isJSON
 import re
 import sqlite3 as _sqlite3
@@ -315,6 +313,5 @@ if __name__ == "__main__":
             "clean": clean,
             "verify-metadata": verify_metadata,
             "download": download, 
-            "upgrade-spock": upgrade_spock, 
         }
     )
