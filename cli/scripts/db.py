@@ -9,6 +9,7 @@ import json
 import util
 import fire
 import re
+import psycopg
 
 def create(db=None, User=None, Passwd=None, pg=None, spock=None, help=False):
     """
