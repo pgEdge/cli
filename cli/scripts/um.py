@@ -85,24 +85,27 @@ def update():
 
 
 
-def install(component, active=True):
-    """Install a component or trigger Spock upgrade for spock50-pg<major>."""
-    # Only invoke upgrade_spock when installing spock50-pg*
-    if component.startswith("spock50-pg"):
-        print(f"Detected Spock upgrade target '{component}', invoking upgrade_spock()...\n")
-        upgrade_spock()
-        # After successful compatibility, proceed with install
-        util.message(f"um.install(install {component})", "debug")
-        run_cmd("install", component)
-        return
+# Match both "spock50" and "spock50-pg17" (and variants like spock5, spock5-pg16)
+_SPOCK5_NAME_RE = re.compile(r"^spock5(?:0)?(?:-pg\d+)?$", re.IGNORECASE)
+_SPOCK5_VER_RE  = re.compile(r"^5\.", re.IGNORECASE)
+_SPOCK50_RE = re.compile(r"^spock50(?:-pg\d+)?$", re.IGNORECASE)
 
+def install(component, active=True):
+    """Install a component."""
+
+    # Trigger pre-check ONLY for Spock 5.0 artifacts
+    if _SPOCK50_RE.match(component):
+        print(f"Detected Spock 5 target '{component}', running upgrade_spock()...\n")
+        validate_spock_upgrade()   # should sys.exit(1) on failure; otherwise just returns
+
+    # Common path (no duplication)
     if active not in (True, False):
         util.exit_message("'active' parm must be True or False")
-    cmd = "install"
-    if not active:
-        cmd = "install --no-preload"
+
+    cmd = "install" if active else "install --no-preload"
     util.message(f"um.install({cmd} {component})", "debug")
     run_cmd(cmd, component)
+
 
 
 def remove(component):
@@ -242,36 +245,27 @@ ORDER BY 1, 2, 3, 7"""
 
     meta.pretty_sql(sql)
 
-
-
-
-# Regex that matches typical Spock‑5 version strings or component names
-_SPOCK5_RE = re.compile(r"^(?:spock)?5[0-9\.]*$", re.IGNORECASE)
-
-
-def upgrade_spock():
+def validate_spock_upgrade():
     """
-    Validate Spock ↔ PostgreSQL compatibility **unless Spock 5 is already installed**.
+    Validate Spock↔PostgreSQL compatibility for an upcoming Spock 5 install.
 
-    Behaviour
-    ---------
-    • If any installed Spock component matches `_SPOCK5_RE`, print a notice and EXIT 0.  
-    • Otherwise, warn about downtime, read PG/Spock versions from SQLite,
-      do util.validate_spock_pg_compat(), and exit(1) on any error.
+    • If Spock 5 already installed (name or version), print notice and return 0.
+    • Else: warn about downtime, load versions from SQLite, call util.validate_spock_pg_compat().
+      Exit(1) on failure, return 0 on success.
     """
     DB_PATH = "data/conf/db_local.db"
     VERSION_SQL = """
-        SELECT pg.version      AS pg_ver,
-               sp.version      AS spock_ver,
-               sp.component    AS spock_comp
-          FROM components AS pg
-          LEFT JOIN components AS sp
-                 ON sp.component LIKE 'spock%' || pg.component
-         WHERE pg.component IN ('pg11','pg12','pg13','pg14','pg15','pg16','pg17')
+         SELECT pg.version AS pg_ver,
+         sp.version AS spock_ver,
+         sp.component AS spock_comp
+         FROM components AS pg
+         LEFT JOIN components AS sp
+         ON sp.component LIKE 'spock%' || pg.component
+         WHERE pg.component LIKE 'pg__'
+         ORDER BY CAST(substr(pg.component, 3) AS INTEGER) DESC
          LIMIT 1;
-    """
+         """
 
-    # ── fetch versions ────────────────────────────────────────────────────────────
     try:
         with _sqlite3.connect(DB_PATH) as conn:
             row = conn.execute(VERSION_SQL).fetchone()
@@ -283,24 +277,27 @@ def upgrade_spock():
 
     pg_ver, spock_ver, spock_comp = row
 
-    # ── early‑exit if Spock 5 already installed ──────────────────────────────────
-    if any(_SPOCK5_RE.match(x or "") for x in (spock_ver, spock_comp)):
-        print(f"Spock 5 already installed (component='{spock_comp}', version='{spock_ver}').")
-        print("Nothing to do — skipping upgrade/installation.\n")
-        sys.exit(0)          # treat as successful no‑op
+    # Already on Spock 5? No-op.
+    if _SPOCK5_NAME_RE.match(spock_comp or "") or _SPOCK5_VER_RE.match(spock_ver or ""):
+        print(f"Spock 5 already installed (component='{spock_comp}', version='{spock_ver}').")
+        print("Skipping upgrade_spock checks.\n")
+        return 0
 
-    # ── standard downtime banner ─────────────────────────────────────────────────
+    # Downtime warning
     banner = "=" * 80
-    print(f"\n{banner}\n*** WARNING: This operation will cause downtime! ***\n{banner}\n")
-    print(f"Detected Spock version {spock_ver} on PostgreSQL {pg_ver}")
+    print(f"\n{banner}")
+    print("*** WARNING: This operation will cause downtime! ***")
+    print(f"{banner}\n")
+    print(f"Detected Spock version {spock_ver or 'N/A'} on PostgreSQL {pg_ver}")
 
-    # ── compatibility check ──────────────────────────────────────────────────────
+    # Compatibility check
     try:
         util.validate_spock_pg_compat(spock_ver, pg_ver)
     except Exception as exc:
         sys.exit(f"ERROR: Compatibility check failed: {exc}")
 
-    print("Compatibility check passed. Proceed with upgrade.")
+    print("Compatibility check passed.")
+    return 0
 
 if __name__ == "__main__":
     fire.Fire(
@@ -312,6 +309,6 @@ if __name__ == "__main__":
             "upgrade": upgrade,
             "clean": clean,
             "verify-metadata": verify_metadata,
-            "download": download, 
+            "download": download,
         }
     )
