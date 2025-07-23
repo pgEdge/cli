@@ -95,7 +95,7 @@ def install(component, active=True):
 
     # Trigger pre-check ONLY for Spock 5.0 artifacts
     if _SPOCK50_RE.match(component):
-        print(f"Detected Spock 5 target '{component}', running upgrade_spock()...\n")
+        print(f"Detected Spock 5 target '{component}'")
         validate_spock_upgrade()   # should sys.exit(1) on failure; otherwise just returns
 
     # Common path (no duplication)
@@ -291,7 +291,6 @@ def validate_spock_upgrade():
         _SPOCK5_NAME_RE.match(spock_comp) or _SPOCK5_VER_RE.match(spock_ver)
     ):
         print(f"Spock 5 already installed (component='{spock_comp}', version='{spock_ver}').")
-        print("Skipping upgrade_spock checks.\n")
         return 0
 
     # Downtime warning
@@ -303,7 +302,7 @@ def validate_spock_upgrade():
     # --- Three cases ---
     if not spock_ver:
         # Case 1: no Spock installed
-        print(f"Detected PostgreSQL version {pg_ver} (no Spock version found)")
+        print(f"Detected PostgreSQL version {pg_ver} ")
         try:
             util.validate_spock_pg_compat('50', pg_ver)
         except Exception as exc:
