@@ -294,19 +294,15 @@ def validate_spock_upgrade():
     # Downtime warning
     banner = "=" * 80
 
-    # --- Three cases ---
     if not spock_ver:
-        # Case 1: no Spock installed
-        print(f"\n{banner}")
-        print("*** WARNING: This operation will cause downtime! ***")
-        print(f"{banner}\n")
+        # Case 1: no existing Spock installed, run validation but don't print banner
         try:
             util.validate_spock_pg_compat('50', pg_ver)
         except Exception as exc:
             sys.exit(f"ERROR: Compatibility check failed: {exc}")
 
     elif spock_ver.startswith('4'):
-        # Case 2: Spock 4.x installed
+        # Case 2: Spock 4.x installed, this is a major upgrade
         print(f"\n{banner}")
         print("*** WARNING: This operation will cause downtime! ***")
         print(f"{banner}\n")
@@ -316,12 +312,7 @@ def validate_spock_upgrade():
         except Exception as exc:
             sys.exit(f"ERROR: Compatibility check failed: {exc}")
 
-    else:
-        # Case 3: Spock 5.x installed
-        print(f"Spock version {spock_ver} detected; skipping compatibility check.")
-        return 0
-
-    print("Compatibility check passed.")
+        print("Compatibility check passed.")
     return 0
 
 if __name__ == "__main__":
