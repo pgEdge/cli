@@ -248,37 +248,48 @@ ORDER BY 1, 2, 3, 7"""
 def validate_spock_upgrade():
     """
     Validate Spock↔PostgreSQL compatibility for an upcoming Spock 5 install.
-
-    • If Spock 5 already installed (name or version), print notice and return 0.
-    • Else: warn about downtime, load versions from SQLite, call util.validate_spock_pg_compat().
-      Exit(1) on failure, return 0 on success.
     """
+
     DB_PATH = "data/conf/db_local.db"
-    VERSION_SQL = """
-         SELECT pg.version AS pg_ver,
-         sp.version AS spock_ver,
-         sp.component AS spock_comp
-         FROM components AS pg
-         LEFT JOIN components AS sp
-         ON sp.component LIKE 'spock%' || pg.component
-         WHERE pg.component LIKE 'pg__'
-         ORDER BY CAST(substr(pg.component, 3) AS INTEGER) DESC
-         LIMIT 1;
-         """
+
+    SPOCK_SQL = """
+    SELECT version AS spock_ver, component AS spock_comp
+    FROM components
+    WHERE component LIKE 'spock%'
+    ORDER BY CASE
+               WHEN version LIKE '5.%' THEN 5
+               WHEN version LIKE '4.%' THEN 4
+               ELSE 0
+             END DESC,
+             version DESC
+    LIMIT 1;
+    """
+
+    PG_SQL = """
+    SELECT version AS pg_ver
+    FROM components
+    WHERE component LIKE 'pg__'
+    ORDER BY CAST(substr(component, 3) AS INTEGER) DESC
+    LIMIT 1;
+    """
 
     try:
         with _sqlite3.connect(DB_PATH) as conn:
-            row = conn.execute(VERSION_SQL).fetchone()
+            sp_row = conn.execute(SPOCK_SQL).fetchone()
+            pg_row = conn.execute(PG_SQL).fetchone()
     except _sqlite3.Error as err:
         sys.exit(f"ERROR: SQLite query failed: {err}")
 
-    if not row:
-        sys.exit("ERROR: No PostgreSQL/Spock version row found.")
+    if not pg_row:
+        sys.exit("ERROR: No PostgreSQL version row found.")
 
-    pg_ver, spock_ver, spock_comp = row
+    pg_ver = pg_row[0]
+    spock_ver, spock_comp = (sp_row or (None, None))
 
     # Already on Spock 5? No-op.
-    if _SPOCK5_NAME_RE.match(spock_comp or "") or _SPOCK5_VER_RE.match(spock_ver or ""):
+    if spock_ver and (
+        _SPOCK5_NAME_RE.match(spock_comp) or _SPOCK5_VER_RE.match(spock_ver)
+    ):
         print(f"Spock 5 already installed (component='{spock_comp}', version='{spock_ver}').")
         print("Skipping upgrade_spock checks.\n")
         return 0
@@ -288,13 +299,28 @@ def validate_spock_upgrade():
     print(f"\n{banner}")
     print("*** WARNING: This operation will cause downtime! ***")
     print(f"{banner}\n")
-    print(f"Detected Spock version {spock_ver or 'N/A'} on PostgreSQL {pg_ver}")
 
-    # Compatibility check
-    try:
-        util.validate_spock_pg_compat(spock_ver, pg_ver)
-    except Exception as exc:
-        sys.exit(f"ERROR: Compatibility check failed: {exc}")
+    # --- Three cases ---
+    if not spock_ver:
+        # Case 1: no Spock installed
+        print(f"Detected PostgreSQL version {pg_ver} (no Spock version found)")
+        try:
+            util.validate_spock_pg_compat('50', pg_ver)
+        except Exception as exc:
+            sys.exit(f"ERROR: Compatibility check failed: {exc}")
+
+    elif spock_ver.startswith('4'):
+        # Case 2: Spock 4.x installed
+        print(f"Detected Spock version {spock_ver} on PostgreSQL {pg_ver}")
+        try:
+            util.validate_spock_pg_compat(spock_ver, pg_ver)
+        except Exception as exc:
+            sys.exit(f"ERROR: Compatibility check failed: {exc}")
+
+    else:
+        # Case 3: Spock 5.x installed
+        print(f"Spock version {spock_ver} detected; skipping compatibility check.")
+        return 0
 
     print("Compatibility check passed.")
     return 0
