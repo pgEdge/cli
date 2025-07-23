@@ -293,14 +293,13 @@ def validate_spock_upgrade():
 
     # Downtime warning
     banner = "=" * 80
-    print(f"\n{banner}")
-    print("*** WARNING: This operation will cause downtime! ***")
-    print(f"{banner}\n")
 
     # --- Three cases ---
     if not spock_ver:
         # Case 1: no Spock installed
-       
+        print(f"\n{banner}")
+        print("*** WARNING: This operation will cause downtime! ***")
+        print(f"{banner}\n")
         try:
             util.validate_spock_pg_compat('50', pg_ver)
         except Exception as exc:
@@ -308,6 +307,9 @@ def validate_spock_upgrade():
 
     elif spock_ver.startswith('4'):
         # Case 2: Spock 4.x installed
+        print(f"\n{banner}")
+        print("*** WARNING: This operation will cause downtime! ***")
+        print(f"{banner}\n")
         print(f"Detected Spock version {spock_ver} on PostgreSQL {pg_ver}")
         try:
             util.validate_spock_pg_compat(spock_ver, pg_ver)
