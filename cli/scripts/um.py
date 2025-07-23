@@ -3,8 +3,9 @@
 
 import os, sys, glob, sqlite3, time
 import fire, meta, util
-
 isJSON = util.isJSON
+import re
+import sqlite3 as _sqlite3
 
 MY_HOME = util.MY_HOME
 
@@ -83,18 +84,27 @@ def update():
     run_cmd("update")
 
 
+
+# Match both "spock50" and "spock50-pg17" (and variants like spock5, spock5-pg16)
+_SPOCK5_NAME_RE = re.compile(r"^spock5(?:0)?(?:-pg\d+)?$", re.IGNORECASE)
+_SPOCK5_VER_RE  = re.compile(r"^5\.", re.IGNORECASE)
+_SPOCK50_RE = re.compile(r"^spock50(?:-pg\d+)?$", re.IGNORECASE)
+
 def install(component, active=True):
     """Install a component."""
 
+    # Trigger pre-check ONLY for Spock 5.0 artifacts
+    if _SPOCK50_RE.match(component):
+        validate_spock_upgrade()   # should sys.exit(1) on failure; otherwise just returns
+
+    # Common path (no duplication)
     if active not in (True, False):
         util.exit_message("'active' parm must be True or False")
-    
-    cmd = "install"
-    if active is False:
-        cmd = "install --no-preload"
 
+    cmd = "install" if active else "install --no-preload"
     util.message(f"um.install({cmd} {component})", "debug")
     run_cmd(cmd, component)
+
 
 
 def remove(component):
@@ -234,6 +244,76 @@ ORDER BY 1, 2, 3, 7"""
 
     meta.pretty_sql(sql)
 
+def validate_spock_upgrade():
+    """
+    Validate Spock↔PostgreSQL compatibility for an upcoming Spock 5 install.
+    """
+
+    DB_PATH = "data/conf/db_local.db"
+
+    SPOCK_SQL = """
+    SELECT version AS spock_ver, component AS spock_comp
+    FROM components
+    WHERE component LIKE 'spock%'
+    ORDER BY CASE
+               WHEN version LIKE '5.%' THEN 5
+               WHEN version LIKE '4.%' THEN 4
+               ELSE 0
+             END DESC,
+             version DESC
+    LIMIT 1;
+    """
+
+    PG_SQL = """
+    SELECT version AS pg_ver
+    FROM components
+    WHERE component LIKE 'pg__'
+    ORDER BY CAST(substr(component, 3) AS INTEGER) DESC
+    LIMIT 1;
+    """
+
+    try:
+        with _sqlite3.connect(DB_PATH) as conn:
+            sp_row = conn.execute(SPOCK_SQL).fetchone()
+            pg_row = conn.execute(PG_SQL).fetchone()
+    except _sqlite3.Error as err:
+        sys.exit(f"ERROR: SQLite query failed: {err}")
+
+    if not pg_row:
+        sys.exit("ERROR: No PostgreSQL version row found.")
+
+    pg_ver = pg_row[0]
+    spock_ver, spock_comp = (sp_row or (None, None))
+
+    # Already on Spock 5? No-op.
+    if spock_ver and (
+        _SPOCK5_NAME_RE.match(spock_comp) or _SPOCK5_VER_RE.match(spock_ver)
+    ):
+                return 0
+
+    # Downtime warning
+    banner = "=" * 80
+
+    if not spock_ver:
+        # Case 1: no existing Spock installed, run validation but don't print banner
+        try:
+            util.validate_spock_pg_compat('50', pg_ver)
+        except Exception as exc:
+            sys.exit(f"ERROR: Compatibility check failed: {exc}")
+
+    elif spock_ver.startswith('4'):
+        # Case 2: Spock 4.x installed, this is a major upgrade
+        print(f"\n{banner}")
+        print("*** WARNING: This operation will cause downtime! ***")
+        print(f"{banner}\n")
+        print(f"Detected Spock version {spock_ver} on PostgreSQL {pg_ver}")
+        try:
+            util.validate_spock_pg_compat(spock_ver, pg_ver)
+        except Exception as exc:
+            sys.exit(f"ERROR: Compatibility check failed: {exc}")
+
+        print("Compatibility check passed.")
+    return 0
 
 if __name__ == "__main__":
     fire.Fire(
