@@ -62,7 +62,6 @@ if not os.path.isdir(data_root):
 if args.datadir == "":
     pg_data = os.path.join(data_root, pgver)
 else:
-
     pg_data = args.datadir.replace(r'\ ', ' ')
 
 if not os.path.isdir(pg_data):
