@@ -6,7 +6,7 @@ kirkV=$hubV
 
 bundle=pgedge
 api=pgedge
-ctlibsV=1.6
+ctlibsV=1.7
 
 spock50V=5.0.0-1
 
