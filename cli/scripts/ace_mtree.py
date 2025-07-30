@@ -1025,7 +1025,6 @@ def split_blocks(conn, schema, table, key, blocks, block_size):
 
         i += 1
 
-    conn.commit()
     pbar.close()
     return list(modified_positions)
 
@@ -1399,7 +1398,6 @@ def merge_blocks(conn, schema, table, key, blocks, block_size):
         if i >= len(blocks):
             break
 
-    conn.commit()
     pbar.close()
     return list(modified_positions)
 
@@ -1408,7 +1406,7 @@ def update_mtree(mtree_task: MerkleTreeTask, skip_all_checks=False) -> None:
     """
     Update a Merkle tree by recomputing hashes for dirty leaf nodes and new blocks.
     Also processes any pending block rebalancing operations.
-    Uses repeatable read isolation to ensure consistency during the update.
+    Uses repeatable read isolation if config.USE_REPEATABLE_READ is True.
 
     Args:
         cluster_name (str): Name of the cluster
@@ -1455,7 +1453,8 @@ def update_mtree(mtree_task: MerkleTreeTask, skip_all_checks=False) -> None:
     for node in mtree_task.fields.cluster_nodes:
 
         _, conn = mtree_task.connection_pool.connect(node)
-        conn.set_isolation_level(IsolationLevel.REPEATABLE_READ)
+        if config.USE_REPEATABLE_READ:
+            conn.set_isolation_level(IsolationLevel.REPEATABLE_READ)
 
         print(f"\nUpdating Merkle tree on node: {node['name']}")
 
@@ -1476,7 +1475,6 @@ def update_mtree(mtree_task: MerkleTreeTask, skip_all_checks=False) -> None:
 
                 if not blocks_to_update:
                     print(f"No updates needed for {node['name']}")
-                    conn.commit()
                     continue
 
                 # First identify blocks that might need splitting based on insert count
@@ -1557,7 +1555,6 @@ def update_mtree(mtree_task: MerkleTreeTask, skip_all_checks=False) -> None:
 
                 if not blocks_to_update:
                     print(f"No updates needed for {node['name']}")
-                    conn.commit()
                     continue
 
                 print(f"Found {len(blocks_to_update)} blocks to update")
