@@ -10,7 +10,6 @@ semantic_version==2.10.0
 six==1.17.0
 termcolor==2.5.0
 typing_extensions==4.14.1
-click==8.2.1
 tabulate==0.9.0
 python-crontab==3.3.0
 certifi==2024.12.14
