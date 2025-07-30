@@ -62,7 +62,8 @@ if not os.path.isdir(data_root):
 if args.datadir == "":
     pg_data = os.path.join(data_root, pgver)
 else:
-    pg_data = args.datadir
+
+    pg_data = args.datadir.replace(r'\ ', ' ')
 
 if not os.path.isdir(pg_data):
     os.makedirs(pg_data)
@@ -195,12 +196,24 @@ util.set_column("logdir", pgver, pg_log)
 
 util.update_postgresql_conf(pgver, i_port)
 
+# ——— NEW: force Postgres to look in the right place for the certs ———
+conf_file = os.path.join(pg_data, "postgresql.conf")
+ssl_block = """
+# — added by init script to enable SSL in data dir (quoting handles spaces) —
+ssl = on
+ssl_cert_file = '{0}/server.crt'
+ssl_key_file  = '{0}/server.key'
+""".format(pg_data)
+
+with open(conf_file, "a") as cf:
+    cf.write(ssl_block)
+
+# now generate your cert and copy pg_hba
 if util.get_platform() == "Linux":
-    os.system("cp " + pgver + "/genSelfCert.sh " + pg_data + "/.")
-    os.system(pg_data + "/genSelfCert.sh")
+    os.system(f'cp "{pgver}/genSelfCert.sh" "{pg_data}/."')
+    os.system(f'sh "{pg_data}/genSelfCert.sh"')
 
-os.system("cp " + pgver + "/pg_hba.conf.nix " + pg_data + "/pg_hba.conf")
-
+os.system(f'cp "{pgver}/pg_hba.conf.nix" "{pg_data}/pg_hba.conf"')
 if is_password:
     pg_pass_file = util.remember_pgpassword(pg_password, "*", "*", "*", os_user)
 else:
