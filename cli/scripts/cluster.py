@@ -15,7 +15,7 @@ import re
 
 
 BASE_DIR = "cluster"
-DEFAULT_REPO = "https://pgedge-download.s3.amazonaws.com/REPO"
+DEFAULT_REPO = "https://downloads.pgedge.com/platform/repos/download"
 
 def run_cmd(
     cmd, node, message, verbose, capture_output=False, ignore=False, important=False
