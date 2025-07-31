@@ -33,7 +33,7 @@ class ProxyRequestHandler(http.server.SimpleHTTPRequestHandler):
 
     def proxy_request(self, repo, path):
         """Fetch content from the upstream server and send it to the client."""
-        upstream_url = f"https://pgedge-{repo}.s3.amazonaws.com/REPO/{path}"
+        upstream_url = f"https://downloads.pgedge.com/platform/repos/{repo}/{path}"
         self.log_message("Proxying request to %s", upstream_url)
         try:
             with urllib.request.urlopen(upstream_url) as response:
