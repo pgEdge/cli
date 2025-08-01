@@ -84,6 +84,11 @@ INSERT INTO extensions VALUES ('spock50', 'spock', 1, 'spock',
    max_wal_senders=16 | hot_standby_feedback=on | wal_sender_timeout=5s |
    track_commit_timestamp=on | spock.conflict_resolution=last_update_wins | 
    spock.save_resolutions=on | spock.conflict_log_level=DEBUG');
+INSERT INTO extensions VALUES ('spock60', 'spock', 1, 'spock',
+  'wal_level=logical | max_worker_processes=12 | max_replication_slots=16 |
+   max_wal_senders=16 | hot_standby_feedback=on | wal_sender_timeout=5s |
+   track_commit_timestamp=on | spock.conflict_resolution=last_update_wins | 
+   spock.save_resolutions=on | spock.conflict_log_level=DEBUG');
 INSERT INTO extensions VALUES ('lolor',     'lolor',     0, '',          '');
 INSERT INTO extensions VALUES ('postgis',   'postgis',   1, 'postgis-3', '');
 INSERT INTO extensions VALUES ('setuser',   'set_user',  1, 'set_user',  '');
@@ -341,6 +346,15 @@ INSERT INTO releases VALUES ('spock50-pg17', 4, 'spock', 'Spock', '', 'prod', ''
 INSERT INTO versions VALUES ('spock50-pg15', '5.0.0-1',   'amd, arm', 1, '20250715', 'pg15', '', '');
 INSERT INTO versions VALUES ('spock50-pg16', '5.0.0-1',   'amd, arm', 1, '20250715', 'pg16', '', '');
 INSERT INTO versions VALUES ('spock50-pg17', '5.0.0-1',   'amd, arm', 1, '20250715', 'pg17', '', '');
+
+-- ## spock60 ###########################
+INSERT INTO releases VALUES ('spock60-pg15', 4, 'spock', 'Spock', '', 'test', '', 1, 'pgEdge Community', '', '');
+INSERT INTO releases VALUES ('spock60-pg16', 4, 'spock', 'Spock', '', 'test', '', 1, 'pgEdge Community', '', '');
+INSERT INTO releases VALUES ('spock60-pg17', 4, 'spock', 'Spock', '', 'test', '', 1, 'pgEdge Community', '', '');
+
+INSERT INTO versions VALUES ('spock60-pg15', '6.0.0-devel-1',   'amd, arm', 1, '20250801', 'pg15', '', '');
+INSERT INTO versions VALUES ('spock60-pg16', '6.0.0-devel-1',   'amd, arm', 1, '20250801', 'pg16', '', '');
+INSERT INTO versions VALUES ('spock60-pg17', '6.0.0-devel-1',   'amd, arm', 1, '20250801', 'pg17', '', '');
 
 -- ## LOLOR #############################
 INSERT INTO projects VALUES ('lolor', 'pge', 4, 0, '', 1, 'https://github.com/pgedge/lolor/tags',
