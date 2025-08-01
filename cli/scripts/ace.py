@@ -727,63 +727,47 @@ def check_diff_file_format(diff_file_path: str, task) -> dict:
     return diff_json
 
 
-def convert_pg_type_to_json(item: str, type: str):
+def convert_pg_type_to_json(item, type):
     """
     Converts a value from a postgres column to a json-compatible type.
     """
     # TODO: Need to revisit this.
+    type_lower = type.lower()
+
+    # Types that should be parsed into native JSON types (not strings)
+    json_compatible_types = [
+        "json",
+        "jsonb",
+        "boolean",
+        "integer",
+        "bigint",
+        "smallint",
+        "numeric",
+        "real",
+        "double precision",
+    ]
+
+    is_parsable = (
+        any(s in type_lower for s in json_compatible_types) or "[]" in type_lower
+    )
+
+    if not is_parsable:
+        # For string-like types (text, varchar, etc.), we return the value
+        # directly. This correctly preserves string literals like 'None' or
+        # 'null'. A database NULL would arrive here as item=None from the driver.
+        return item
+
+    # For parsable types (numeric, boolean, json, array), we can interpret
+    # 'null' and 'none'.
+    if item is None or str(item).lower() in ("", "null", "none"):
+        return None
+
     try:
-        # List of types that should be treated as strings
-        string_types = [
-            "char",
-            "text",
-            "time",
-            "bytea",
-            "uuid",
-            "date",
-            "timestamp",
-            "interval",
-            "inet",
-            "macaddr",
-            "xml",
-            "money",
-            "point",
-            "line",
-            "polygon",
-        ]
-
-        # Types that can be directly represented in JSON
-        json_compatible_types = [
-            "json",
-            "jsonb",
-            "boolean",
-            "integer",
-            "bigint",
-            "smallint",
-            "numeric",
-            "real",
-            "double precision",
-        ]
-
-        type_lower = type.lower()
-
-        if not item or item == "" or item.lower() == "null" or item.lower() == "none":
-            return None
-        elif "[]" in type_lower:
-            return ast.literal_eval(item)
-        elif any(s in type_lower for s in json_compatible_types):
-            # For JSON-compatible types, parse them using AST
-            return ast.literal_eval(item)
-        elif any(s in type_lower for s in string_types):
-            return item
-        else:
-            # Default to treating as string if type is unknown
-            return item
-
-    except Exception as e:
-        raise AceException(
-            f"Could not convert value {item} to {type} while writing to json: {e}"
-        )
+        # For JSON-compatible types, parse them using AST
+        return ast.literal_eval(str(item))
+    except (ValueError, SyntaxError):
+        # If conversion fails, treat as a string
+        return str(item)
 
 
 def convert_json_to_pg_type(rows, cols_list, col_types) -> list[tuple]:
@@ -841,31 +825,40 @@ def convert_json_to_pg_type(rows, cols_list, col_types) -> list[tuple]:
         modified_row = tuple()
         for col_name in cols_list:
             col_type = col_types[col_name]
-            elem = str(row[col_name])
+            elem = row[col_name]
+            type_lower = col_type.lower()
 
             try:
-                type_lower = col_type.lower()
-
-                if (
-                    not elem
-                    or elem == ""
-                    or elem.lower() == "null"
-                    or elem.lower() == "none"
-                ):
-                    modified_row += (None,)
-                elif "[]" in type_lower:
-                    modified_row += (ast.literal_eval(elem),)
-                elif any(s in type_lower for s in string_types):
+                # If the column type is a string type, we don't need to do anything
+                # special. A value of None will be converted to NULL by psycopg.
+                if any(s in type_lower for s in string_types):
                     if type_lower == "bytea":
-                        modified_row += (bytes.fromhex(elem),)
+                        # We stored bytea as hex, so we need to convert it back
+                        if elem is not None:
+                            modified_row += (bytes.fromhex(elem),)
+                        else:
+                            modified_row += (None,)
                     else:
                         modified_row += (elem,)
+                    continue
+
+                # For non-string types, if the value is None, or looks like null,
+                # it should be treated as such.
+                if elem is None or str(elem).lower() in ("null", "none", ""):
+                    modified_row += (None,)
+                    continue
+
+                elem_str = str(elem)
+
+                if "[]" in type_lower:
+                    modified_row += (ast.literal_eval(elem_str),)
                 elif any(s in type_lower for s in json_compatible_types):
-                    item = ast.literal_eval(elem)
-                    if type_lower == "jsonb" or type_lower == "json":
+                    item = ast.literal_eval(elem_str)
+                    if type_lower in ("jsonb", "json"):
                         item = json.dumps(item)
                     modified_row += (item,)
                 else:
+                    # Fallback for any other types
                     modified_row += (elem,)
 
             except (ValueError, SyntaxError):
