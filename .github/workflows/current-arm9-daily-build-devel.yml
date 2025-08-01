@@ -4,7 +4,7 @@ name: Current Daily Build Devel - arm9
 env:
   DEFAULT_CLI_BRANCH: "main"          # Default CLI branch for scheduled runs
   DEFAULT_MODE: "current"             # Always "current" for this workflow
-  DEFAULT_COMPONENT: "spock50"        # Default spock component name
+  DEFAULT_COMPONENT: "spock60"        # Default spock component name
   DEFAULT_BRANCH: "main"              # Default branch for the spock component
   DEFAULT_CLEAN_FLAG: "false"         # Default clean flag for scheduled runs
 
@@ -13,7 +13,7 @@ on:
   workflow_dispatch:
     inputs:
       cli_branch:
-        description: "Select the CLI branch to build from (e.g. v25_STABLE)"
+        description: "Select the CLI branch to build from (e.g. main)"
         required: true
         default: "main"
         type: choice
@@ -23,9 +23,9 @@ on:
           - REL24_10
 
       component:
-        description: "Spock in-dev component to additionally build (e.g. spock50)"
+        description: "Spock in-dev component to additionally build (e.g. spock60)"
         required: true
-        default: "spock50"
+        default: "spock60"
         type: string
 
       branch:
