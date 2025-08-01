@@ -574,12 +574,16 @@ def compare_checksums(worker_id, shared_objects, worker_state, pkey1, pkey2):
 
             for row_key in t1_only:
                 worker_diffs[node_pair_key][host1].append(
-                    dict(zip(cols, (str(x) for x in row_key)))
+                    dict(
+                        zip(cols, (str(x) if x is not None else None for x in row_key))
+                    )
                 )
 
             for row_key in t2_only:
                 worker_diffs[node_pair_key][host2].append(
-                    dict(zip(cols, (str(x) for x in row_key)))
+                    dict(
+                        zip(cols, (str(x) if x is not None else None for x in row_key))
+                    )
                 )
 
             total_diffs += max(len(t1_only), len(t2_only))
