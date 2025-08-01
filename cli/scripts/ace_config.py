@@ -12,6 +12,9 @@ from datetime import timedelta
 STATEMENT_TIMEOUT = 0  # in milliseconds
 CONNECTION_TIMEOUT = 10  # in seconds
 
+# Whether to use repeatable read isolation for Merkle tree updates
+USE_REPEATABLE_READ = False
+
 #  Default values for ACE table-diff
 MAX_DIFF_ROWS = 1_000_000
 MIN_DIFF_BLOCK_SIZE = 1000
