@@ -63,9 +63,9 @@ If a local package does not exist, it will fallback to a package available in th
 
 The chosen repo corresponds to the URL that you choose to configure:
 
-- http://repo:8000/download corresponds with https://pgedge-download.s3.amazonaws.com/REPO
-- http://repo:8000/upstream corresponds with https://pgedge-upstream.s3.amazonaws.com/REPO
-- http://repo:8000/devel corresponds with https://pgedge-devel.s3.amazonaws.com/REPO
+- http://repo:8000/download corresponds with https://downloads.pgedge.com/platform/repos/download
+- http://repo:8000/upstream corresponds with https://downloads.pgedge.com/platform/repos/upstream
+- http://repo:8000/devel corresponds with https://downloads.pgedge.com/platform/repos/devel
 
 The `out` directory within the build container is mounted in the repo container to enable this setup.
 
