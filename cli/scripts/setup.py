@@ -104,7 +104,7 @@ setup.pgedge(User={User}, Passwd={Passwd}, dbName={dbName}, port={port}, pg_data
             util.exit_message(
                 "pg_data cannot be set as relative path. Please specify absolute path instead"
             )
-        pg_init_options = f"--datadir={pg_data}"
+        pg_init_options = f'--datadir="{pg_data}"'
 
     setup_core.check_pre_reqs(
         User, Passwd, dbName, port, pg_data, pg_major, pg_minor, spock_ver, autostart)
