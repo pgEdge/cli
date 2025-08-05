@@ -37,7 +37,7 @@ vectorV=0.8.0-1
 bouncerV=1.23.1-1
 catV=1.2.0
 prompgexpV=0.15.0
-backrestV=2.53.1-1
+backrestV=2.56.0-1
 wal2jV=2.6.0-1
 
 citusV=12.1.5-1
