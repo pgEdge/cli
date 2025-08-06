@@ -5,6 +5,7 @@
 
 import util, startup
 import argparse, os, sys, shutil, subprocess, getpass, json
+import shlex
 
 MY_HOME = os.getenv("MY_HOME", "")
 
@@ -196,10 +197,14 @@ util.set_column("logdir", pgver, pg_log)
 util.update_postgresql_conf(pgver, i_port)
 
 if util.get_platform() == "Linux":
-    os.system("cp " + pgver + "/genSelfCert.sh " + pg_data + "/.")
-    os.system(pg_data + "/genSelfCert.sh")
+    gen_cert_src = os.path.join(pgver, "genSelfCert.sh")
+    gen_cert_dst = os.path.join(pg_data, "genSelfCert.sh")
+    os.system(f'cp {shlex.quote(gen_cert_src)} {shlex.quote(gen_cert_dst)}')
+    os.system(f'{shlex.quote(gen_cert_dst)}')
 
-os.system("cp " + pgver + "/pg_hba.conf.nix " + pg_data + "/pg_hba.conf")
+pg_hba_src = os.path.join(pgver, "pg_hba.conf.nix")
+pg_hba_dst = os.path.join(pg_data, "pg_hba.conf")
+os.system(f'cp {shlex.quote(pg_hba_src)} {shlex.quote(pg_hba_dst)}')
 
 if is_password:
     pg_pass_file = util.remember_pgpassword(pg_password, "*", "*", "*", os_user)
