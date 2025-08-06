@@ -37,8 +37,7 @@ cmd = sys.executable + " " + homedir + os.sep + "run-pgctl.py"
 if autostart == "on":
     startup.start_linux("pg" + pgver[2:4])
 else:
-    startCmd = cmd + " &"
-    subprocess.Popen(startCmd, preexec_fn=os.setpgrp(), close_fds=True, shell=True)
+    subprocess.run(cmd, preexec_fn=os.setpgrp(), close_fds=True, shell=True)
 
 isYes = os.getenv("isYes", "False")
 pgName = os.getenv("pgName", "")
