@@ -124,122 +124,57 @@ def get_default_spock(pgv):
 
     return(DEFAULT_SPOCK)
 
-
-
 def validate_spock_pg_compat(spock_ver: str = None, pg_ver: str = None) -> None:
-    """
-    Compatibility rules:
-      • If Spock < 5.0.0 ⇒ works with any supported PostgreSQL major.
-      • If Spock ≥ 5.0.0 ⇒
-          – PG15 must be ≥ 15.13
-          – PG16 must be ≥ 16.9
-          – PG17 must be ≥ 17.5
-
-    Also supports shorthand Spock strings:
-      – "50" → "5.0.0", "40" → "4.0.0", etc.
-    """
-      # 0) Fill in defaults if user didn’t pass anything
-    if not pg_ver:
-        pg_ver = DEFAULT_PG
-    else:
-        pg_ver = str(pg_ver)           # ← force to string
-
+    # --- defaults (keep yours as-is) ---
+    pg_ver = str(pg_ver) if pg_ver else str(DEFAULT_PG)
     if not spock_ver:
-        maj = int(pg_ver.split(".", 1)[0])
+        try:
+            maj = int(pg_ver.split(".", 1)[0])
+        except Exception:
+            maj = 17
         spock_ver = DEFAULT_SPOCK_17 if maj == 17 else DEFAULT_SPOCK
-    else:
-        spock_ver = str(spock_ver)     # ← force to string
+    spock_ver = str(spock_ver)
 
-
-    # 0.5) Normalize two-digit shorthand (e.g. "50" → "5.0.0")
-    m = re.fullmatch(r'(\d)(\d)$', spock_ver)
-    if m:
-        spock_ver = f"{int(m.group(1))}.{int(m.group(2))}.0"
-
-    # 1) Parse Spock version (abort on bad format)
-    try:
-        spv = Version(spock_ver)
-    except ValueError:
-        exit_message(f"Invalid Spock version '{spock_ver}'. Aborting.", 1, isJSON)
-
-    # 2) If Spock < 5 ⇒ compatible with any PG
-    if spv.major < 5:
+    # --- parse Spock major w/o 'packaging' dependency ---
+    m_sp = re.fullmatch(r'(\d)(\d)$', spock_ver)   # "50" -> "5.0.0"
+    if m_sp:
+        spock_ver = f"{int(m_sp.group(1))}.{int(m_sp.group(2))}.0"
+    spock_major = int(spock_ver.split('.', 1)[0])
+    if spock_major < 5:
         return
 
-    # — New block: handle pg_ver with “-1” or “-2” suffix
-    rev = None
-    rev_match = re.fullmatch(r'(\d+)\.(\d+)-(1|2)$', pg_ver)
-    if rev_match:
-        pg_major = int(rev_match.group(1))
-        pg_patch = int(rev_match.group(2))
-        rev = int(rev_match.group(3))
+    # --- parse PG "MAJOR.MINOR-BUILD" (build 1 or 2 only) ---
+    m = re.fullmatch(r'(\d+)\.(\d+)-(1|2)$', pg_ver)
+    if not m:
+        exit_message(f"Invalid PostgreSQL version '{pg_ver}'. Use 'MAJOR.MINOR-BUILD' (e.g., 17.6-1).", 1, isJSON)
+    pg_major, pg_minor, pg_build = int(m.group(1)), int(m.group(2)), int(m.group(3))
 
-        # reject revision “-1” on Spock ≥5
-        if rev == 1:
+    # --- thresholds for 15/16/17: require -2 exactly at the min minor ---
+    thresholds = {15: (13, 2), 16: (9, 2), 17: (5, 2)}
+
+    if pg_major in thresholds:
+        min_minor, min_build = thresholds[pg_major]
+        if pg_minor < min_minor:
             exit_message(
-                f"Error: PostgreSQL {pg_major}.{pg_patch}-1 is not supported with Spock {spv}; "
-                "please use the “-2” revision instead.",
-                1,
-                isJSON
+                f"Error: Spock {spock_ver} requires PostgreSQL {pg_major}.{min_minor}-{min_build} or newer; "
+                f"you have {pg_major}.{pg_minor}-{pg_build}.", 1, isJSON
             )
-        # for “-2”, we strip suffix and proceed with pg_major/pg_patch below
-    # end new block
-
-    # 3) Spock ≥ 5 ⇒ enforce minimum‐patch for each PG major
-    minimum_patches = {
-        15: 13,
-        16: 9,
-        17: 5,
-    }
-
-    # 4) Extract PG major and patch (if not already set by rev_match)
-    if rev_match:
-        # pg_major, pg_patch are already set
-        pass
-    elif "." not in pg_ver:
-        # bare-major → use its minimum patch
-        try:
-            pg_major = int(pg_ver)
-        except ValueError:
-            exit_message(f"Invalid PostgreSQL version '{pg_ver}'. Aborting.", 1, isJSON)
-        if pg_major not in minimum_patches:
-            allowed = ", ".join(str(m) for m in minimum_patches)
+        if pg_minor == min_minor and pg_build < min_build:
+            # At threshold minor, only -2 allowed
             exit_message(
-                f"Error: Spock {spv} supports only PostgreSQL majors {allowed}; "
-                f"you have {pg_major}. Aborting.",
-                1,
-                isJSON
+                f"Error: Spock {spock_ver} requires PostgreSQL {pg_major}.{min_minor}-2 at the minimum; "
+                f"you have {pg_major}.{pg_minor}-{pg_build}.", 1, isJSON
             )
-        pg_patch = minimum_patches[pg_major]
-    else:
-        parts = pg_ver.split(".", 2)
-        if len(parts) < 2:
-            exit_message(f"Invalid PostgreSQL version '{pg_ver}'. Aborting.", 1, isJSON)
-        try:
-            pg_major = int(parts[0])
-            pg_patch = int(parts[1])
-        except ValueError:
-            exit_message(f"Invalid PostgreSQL version '{pg_ver}'. Aborting.", 1, isJSON)
+        # pg_minor > min_minor → allow -1 or -2
+        return
 
-    # 5) Major must be supported
-    if pg_major not in minimum_patches:
-        allowed = ", ".join(str(m) for m in minimum_patches)
-        exit_message(
-            f"Error: Spock {spv} supports only PostgreSQL majors {allowed}; "
-            f"you have {pg_major}. Aborting.",
-            1,
-            isJSON
-        )
+    # --- future majors (≥18): allow -1 or -2, any minor ---
+    if pg_major >= 18:
+        return
 
-    # 6) Enforce minimum‐patch
-    required = minimum_patches[pg_major]
-    if pg_patch < required:
-        exit_message(
-            f"Error: Spock {spv} requires PostgreSQL {pg_major}.{required} or newer; "
-            f"you have {pg_major}.{pg_patch}. Aborting.",
-            1,
-            isJSON
-        )
+    # --- unsupported majors (<15) ---
+    exit_message("Error: Supported PG majors are 15, 16, 17, and 18+.", 1, isJSON)
+
 def get_cpu_info():
     try:
         import cpuinfo
