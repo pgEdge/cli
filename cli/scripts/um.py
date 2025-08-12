@@ -95,7 +95,7 @@ def install(component, active=True):
 
     # Trigger pre-check ONLY for Spock 5.0 artifacts
     if _SPOCK50_RE.match(component):
-        validate_spock_upgrade()   # should sys.exit(1) on failure; otherwise just returns
+        validate_spock_upgrade(component)   # should sys.exit(1) on failure; otherwise just returns
 
     # Common path (no duplication)
     if active not in (True, False):
@@ -244,7 +244,7 @@ ORDER BY 1, 2, 3, 7"""
 
     meta.pretty_sql(sql)
 
-def validate_spock_upgrade():
+def validate_spock_upgrade(spock_component):
     """
     Validate Spock↔PostgreSQL compatibility for an upcoming Spock 5 install.
     """
@@ -282,37 +282,38 @@ def validate_spock_upgrade():
     if not pg_row:
         sys.exit("ERROR: No PostgreSQL version row found.")
 
-    pg_ver = pg_row[0]
-    spock_ver, spock_comp = (sp_row or (None, None))
+    existing_pg_ver = pg_row[0]
+    existing_spock_ver, existing_spock_comp = (sp_row or (None, None))
 
     # Already on Spock 5? No-op.
-    if spock_ver and (
-        _SPOCK5_NAME_RE.match(spock_comp) or _SPOCK5_VER_RE.match(spock_ver)
+    if existing_spock_ver and (
+        _SPOCK5_NAME_RE.match(existing_spock_comp) or _SPOCK5_VER_RE.match(existing_spock_ver)
     ):
                 return 0
-
+    
+    # Trim "spock" off the front to get the version (e.g., "spock50" -> "50")
+    requested_spock_ver = spock_component
+    if requested_spock_ver and requested_spock_ver.lower().startswith("spock"):
+        requested_spock_ver = requested_spock_ver[5:]
+        
     # Downtime warning
     banner = "=" * 80
 
-    if not spock_ver:
-        # Case 1: no existing Spock installed, run validation but don't print banner
-        try:
-            util.validate_spock_pg_compat('50', pg_ver)
-        except Exception as exc:
-            sys.exit(f"ERROR: Compatibility check failed: {exc}")
-
-    elif spock_ver.startswith('4'):
+    if existing_spock_ver:
         # Case 2: Spock 4.x installed, this is a major upgrade
         print(f"\n{banner}")
         print("*** WARNING: This operation will cause downtime! ***")
         print(f"{banner}\n")
-        print(f"Detected Spock version {spock_ver} on PostgreSQL {pg_ver}")
-        try:
-            util.validate_spock_pg_compat(spock_ver, pg_ver)
-        except Exception as exc:
-            sys.exit(f"ERROR: Compatibility check failed: {exc}")
+        print(f"Detected existing Spock version {existing_spock_ver} on PostgreSQL {existing_pg_ver}")
 
+    try:
+        util.validate_spock_pg_compat(requested_spock_ver, existing_pg_ver)
+    except Exception as exc:
+        sys.exit(f"ERROR: Compatibility check failed: {exc}")
+
+    if existing_spock_ver:
         print("Compatibility check passed.")
+
     return 0
 
 if __name__ == "__main__":
