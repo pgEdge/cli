@@ -140,13 +140,19 @@ def validate_spock_pg_compat(spock_ver: str = None, pg_ver: str = None) -> None:
     if m_sp:
         spock_ver = f"{int(m_sp.group(1))}.{int(m_sp.group(2))}.0"
 
-    spock_version_obj = Version.coerce(spock_ver)
+    try:
+        spock_version_obj = Version.coerce(spock_ver)
+    except Exception as e:
+        exit_message(f"Invalid Spock version '{spock_ver}'.", 1, isJSON)
 
     if spock_version_obj.major < 5:
         return
     
-    pg_version_obj = Version.coerce(pg_ver)
-    
+    try:
+        pg_version_obj = Version.coerce(pg_ver)
+    except Exception as e:
+        exit_message(f"Invalid PostgreSQL version '{pg_ver}'.", 1, isJSON)
+
     if not pg_version_obj.minor:
         return
     
