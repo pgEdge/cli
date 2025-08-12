@@ -18,7 +18,7 @@ spock40V=4.0.10-2
 
 # removeComponentFromOut: Specifies the Spock component (e.g., spock50) to exclude from stable mode builds in make_tgz.sh.
 # This variable is ignored in current mode builds, which include all components.
-removeComponentFromOut=
+removeComponentFromOut=spock60
 
 lolorV=1.2-2
 snwflkV=2.2-2
