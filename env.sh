@@ -10,62 +10,62 @@ ctlibsV=1.7
 
 spock60V=6.0.0-devel-1
 
-spock50V=5.0.0-1
+spock50V=5.0.0-2
 
-spock40V=4.0.10-1
+spock40V=4.0.10-2
 
-spock33V=3.3.6-1
+#spock33V=3.3.6-1
 
 # removeComponentFromOut: Specifies the Spock component (e.g., spock50) to exclude from stable mode builds in make_tgz.sh.
 # This variable is ignored in current mode builds, which include all components.
 removeComponentFromOut=
 
-lolorV=1.2-1
-snwflkV=2.2-1
+lolorV=1.2-2
+snwflkV=2.2-2
 
-P17=17.5-2
+P17=17.6-1
 P171=17.0-1
 
-P16=16.9-2
+P16=16.10-1
 P161=16.4-2
 
-P15=15.13-2
+P15=15.14-1
 P151=15.8-2
 
-vectorV=0.8.0-1
+vectorV=0.8.0-2
 
-bouncerV=1.23.1-1
+bouncerV=1.24.1-1
 catV=1.2.0
 prompgexpV=0.15.0
 backrestV=2.56.0-1
-wal2jV=2.6.0-1
+wal2jV=2.6.0-2
 
-citusV=12.1.5-1
-orafceV=4.13.4-1
-v8V=3.2.3-1
-setuserV=4.1.0-1
-permissionsV=1.3-1
+citusV=13.1.0-1
+orafceV=4.14.4-1
+v8V=3.2.3-2
+setuserV=4.1.0-2
+permissionsV=1.3-2
 
-hypoV=1.4.1-1
-timescaleV=2.17.0-1
-profV=4.2.5-1
-partmanV=5.0.1-1
+hypoV=1.4.1-2
+timescaleV=2.17.0-2
+profV=4.2.5-2
+partmanV=5.0.1-2
 
-hint15V=1.5.2-1
-hint16V=1.6.1-1
-hint17V=1.7.0-1
+hint15V=1.5.2-2
+hint16V=1.6.1-2
+hint17V=1.7.0-2
 
 patroniV=3.2.2.2-1
 etcdV=3.5.12-2
 
-audit15V=1.7.0-1
-audit16V=16.0-1
-audit17V=17.0-1
+audit15V=1.7.1-1
+audit16V=16.1-1
+audit17V=17.1-1
 
-postgisV=3.5.0-3
+postgisV=3.5.3-1
 
-debuggerV=1.8-1
-cronV=1.6.4-1
+debuggerV=1.8-2
+cronV=1.6.4-2
 
 HUB="$PWD"
 SRC="$HUB/src"
