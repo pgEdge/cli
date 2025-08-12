@@ -139,41 +139,28 @@ def validate_spock_pg_compat(spock_ver: str = None, pg_ver: str = None) -> None:
     m_sp = re.fullmatch(r'(\d)(\d)$', spock_ver)   # "50" -> "5.0.0"
     if m_sp:
         spock_ver = f"{int(m_sp.group(1))}.{int(m_sp.group(2))}.0"
-    spock_major = int(spock_ver.split('.', 1)[0])
-    if spock_major < 5:
+
+    spock_version_obj = Version.coerce(spock_ver)
+
+    if spock_version_obj.major < 5:
         return
-
-    # --- parse PG "MAJOR.MINOR-BUILD" (build 1 or 2 only) ---
-    m = re.fullmatch(r'(\d+)\.(\d+)-(1|2)$', pg_ver)
-    if not m:
-        exit_message(f"Invalid PostgreSQL version '{pg_ver}'. Use 'MAJOR.MINOR-BUILD' (e.g., 17.6-1).", 1, isJSON)
-    pg_major, pg_minor, pg_build = int(m.group(1)), int(m.group(2)), int(m.group(3))
-
-    # --- thresholds for 15/16/17: require -2 exactly at the min minor ---
-    thresholds = {15: (13, 2), 16: (9, 2), 17: (5, 2)}
-
-    if pg_major in thresholds:
-        min_minor, min_build = thresholds[pg_major]
-        if pg_minor < min_minor:
-            exit_message(
-                f"Error: Spock {spock_ver} requires PostgreSQL {pg_major}.{min_minor}-{min_build} or newer; "
-                f"you have {pg_major}.{pg_minor}-{pg_build}.", 1, isJSON
-            )
-        if pg_minor == min_minor and pg_build < min_build:
-            # At threshold minor, only -2 allowed
-            exit_message(
-                f"Error: Spock {spock_ver} requires PostgreSQL {pg_major}.{min_minor}-2 at the minimum; "
-                f"you have {pg_major}.{pg_minor}-{pg_build}.", 1, isJSON
-            )
-        # pg_minor > min_minor → allow -1 or -2
+    
+    pg_version_obj = Version.coerce(pg_ver)
+    
+    if not pg_version_obj.minor:
         return
-
-    # --- future majors (≥18): allow -1 or -2, any minor ---
-    if pg_major >= 18:
-        return
-
-    # --- unsupported majors (<15) ---
-    exit_message("Error: Supported PG majors are 15, 16, 17, and 18+.", 1, isJSON)
+    
+    min_version_thresholds = {15:  Version.coerce("15.13-2"), 16: Version.coerce("16.9-2"), 17: Version.coerce("17.5-2")}
+    
+    if pg_version_obj.major in min_version_thresholds:
+        min_version_obj = min_version_thresholds[pg_version_obj.major]
+        min_version_build = min_version_obj.prerelease[0] if min_version_obj.prerelease else "0"
+        if pg_version_obj < min_version_obj:
+                exit_message(
+                    f"Spock {spock_ver} requires PostgreSQL {pg_version_obj.major} >= {min_version_obj.major}.{min_version_obj.minor}-{min_version_build}. You provided {pg_ver}.",
+                    1,
+                    isJSON,
+                )
 
 def get_cpu_info():
     try:
