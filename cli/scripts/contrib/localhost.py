@@ -145,7 +145,7 @@ def cluster_create(
     """
 
     util.message(f"localhost.cluster_create({cluster_name}, {num_nodes}, {pg}, {port1}, {User}, {Passwd}, {db})", "debug")
-
+    pg = str(pg)
     util.message("# verifying passwordless ssh...")
     if util.is_password_less_ssh():
         pass
