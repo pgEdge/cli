@@ -237,10 +237,8 @@ INSERT INTO projects VALUES ('wal2json', 'ext', 4, 0, '', 0, 'https://github.com
   'wal2json', 1, 'wal2json.png', 'WAL to JSON for CDC', 'https://github.com/eulerto/wal2json', 'wal2_json, wal_2_json');
 INSERT INTO releases VALUES ('wal2json-pg15', 10, 'wal2json', 'wal2json', '', 'test', '', 1, 'POSTGRES', '', '');
 INSERT INTO releases VALUES ('wal2json-pg16', 10, 'wal2json', 'wal2json', '', 'test', '', 1, 'POSTGRES', '', '');
-INSERT INTO releases VALUES ('wal2json-pg17', 10, 'wal2json', 'wal2json', '', 'test', '', 1, 'POSTGRES', '', '');
 INSERT INTO versions VALUES ('wal2json-pg15', '2.6.0-2', 'amd, arm', 1, '20250815', 'pg15', '', 'https://github.com/eulerto/wal2json/tags');
 INSERT INTO versions VALUES ('wal2json-pg16', '2.6.0-2', 'amd, arm', 1, '20250815', 'pg16', '', 'https://github.com/eulerto/wal2json/tags');
-INSERT INTO versions VALUES ('wal2json-pg17', '2.6.0-2', 'amd, arm', 1, '20250815', 'pg17', '', 'https://github.com/eulerto/wal2json/tags');
 
 -- ## HINTPLAN ###########################
 INSERT INTO projects VALUES ('hintplan', 'ext', 4, 0, '', 0, 'https://github.com/ossc-db/pg_hint_plan/tags',
@@ -277,11 +275,9 @@ INSERT INTO projects VALUES ('citus', 'pge', 4, 0, '',0, 'https://github.com/cit
   'citus', 1, 'citus.png', 'Sharded Postgres', 'https://github.com/citusdata/citus', 'citusdata, citus_data');
 INSERT INTO releases VALUES ('citus-pg15', 10, 'citus', 'Citus', '', 'test', '', 1, 'AGPLv3', '', '');
 INSERT INTO releases VALUES ('citus-pg16', 10, 'citus', 'Citus', '', 'test', '', 1, 'AGPLv3', '', '');
-INSERT INTO releases VALUES ('citus-pg17', 10, 'citus', 'Citus', '', 'test', '', 1, 'AGPLv3', '', '');
 
 INSERT INTO versions VALUES ('citus-pg15', '13.1.0-1', 'amd, arm', 1, '20250815', 'pg15', '', '');
 INSERT INTO versions VALUES ('citus-pg16', '13.1.0-1', 'amd, arm', 1, '20250815', 'pg16', '', '');
-INSERT INTO versions VALUES ('citus-pg17', '13.1.0-1', 'amd, arm', 1, '20250815', 'pg17', '', '');
 
 -- ## CRON ##############################
 INSERT INTO projects VALUES ('cron', 'ext', 4, 0, '',0, 'https://github.com/citusdata/pg_cron/releases',
@@ -382,11 +378,9 @@ INSERT INTO projects VALUES ('permissions', 'ext', 4, 1, '', 3, 'https://github.
   'permissions', 1, 'permissions.png', 'Improved permissions views', 'https://github.com/cybertec-postgresql/permissions', 'set_user');
 INSERT INTO releases VALUES ('permissions-pg15', 3, 'permissions', 'Permissions', '', 'prod', '', 1, 'POSTGRES', '', '');
 INSERT INTO releases VALUES ('permissions-pg16', 3, 'permissions', 'Permissions', '', 'prod', '', 1, 'POSTGRES', '', '');
-INSERT INTO releases VALUES ('permissions-pg17', 3, 'permissions', 'Permissions', '', 'prod', '', 1, 'POSTGRES', '', '');
 
 INSERT INTO versions VALUES ('permissions-pg15', '1.3-2', 'amd, arm', 1, '20250815', 'pg15', '', '');
 INSERT INTO versions VALUES ('permissions-pg16', '1.3-2', 'amd, arm', 1, '20250815', 'pg16', '', '');
-INSERT INTO versions VALUES ('permissions-pg17', '1.3-2', 'amd, arm', 1, '20250815', 'pg17', '', '');
 
 -- ## SETUSER ###########################
 INSERT INTO projects VALUES ('setuser', 'ext', 4, 1, '', 3, 'https://github.com/pgaudit/set_user',
@@ -415,21 +409,18 @@ INSERT INTO projects VALUES ('partman', 'ext', 4, 0, '', 4, 'https://github.com/
   'partman', 1, 'partman.png', 'Partition Management', 'https://github.com/pgpartman/pg_partman#pg-partition-manager', 'pg_partman, partition_manager');
 INSERT INTO releases VALUES ('partman-pg15', 6, 'partman', 'pgPartman',   '', 'prod', '', 1, 'POSTGRES', '', '');
 INSERT INTO releases VALUES ('partman-pg16', 6, 'partman', 'pgPartman',   '', 'prod', '', 1, 'POSTGRES', '', '');
-INSERT INTO releases VALUES ('partman-pg17', 6, 'partman', 'pgPartman',   '', 'prod', '', 1, 'POSTGRES', '', '');
+
 INSERT INTO versions VALUES ('partman-pg15', '5.0.1-2',  'amd, arm', 1, '20250815', 'pg15', '', '');
 INSERT INTO versions VALUES ('partman-pg16', '5.0.1-2',  'amd, arm', 1, '20250815', 'pg16', '', '');
-INSERT INTO versions VALUES ('partman-pg17', '5.0.1-2',  'amd, arm', 1, '20250815', 'pg17', '', '');
 
 -- ## HYPOPG ############################
 INSERT INTO projects VALUES ('hypopg', 'ext', 4, 0, '', 8, 'https://github.com/HypoPG/hypopg/releases',
   'hypopg', 1, 'whatif.png', 'Hypothetical Indexes', 'https://hypopg.readthedocs.io/en/latest/', 'pg_hypo, pghypo');
 INSERT INTO releases VALUES ('hypopg-pg15', 99, 'hypopg', 'HypoPG', '', 'prod','',  1, 'POSTGRES', '', '');
 INSERT INTO releases VALUES ('hypopg-pg16', 99, 'hypopg', 'HypoPG', '', 'prod','',  1, 'POSTGRES', '', '');
-INSERT INTO releases VALUES ('hypopg-pg17', 99, 'hypopg', 'HypoPG', '', 'prod','',  1, 'POSTGRES', '', '');
 
 INSERT INTO versions VALUES ('hypopg-pg15', '1.4.1-2',  'amd, arm', 1, '20250815', 'pg15', '', '');
 INSERT INTO versions VALUES ('hypopg-pg16', '1.4.1-2',  'amd, arm', 1, '20250815', 'pg16', '', '');
-INSERT INTO versions VALUES ('hypopg-pg17', '1.4.1-2',  'amd, arm', 1, '20250815', 'pg17', '', '');
 
 -- ## CTLIBS ############################
 INSERT INTO projects VALUES ('ctlibs', 'pge', 0, 0, '', 3, 'https://github.com/pgedge/cli',
