@@ -328,10 +328,6 @@ INSERT INTO releases VALUES ('spock40-pg15', 4, 'spock', 'Spock', '', 'prod', ''
 INSERT INTO releases VALUES ('spock40-pg16', 4, 'spock', 'Spock', '', 'prod', '', 1, 'pgEdge Community', '', '');
 INSERT INTO releases VALUES ('spock40-pg17', 4, 'spock', 'Spock', '', 'prod', '', 1, 'pgEdge Community', '', '');
 
-INSERT INTO versions VALUES ('spock40-pg15', '4.0.10-2', 'amd, arm', 1, '20250815', 'pg15', '', '');
-INSERT INTO versions VALUES ('spock40-pg16', '4.0.10-2', 'amd, arm', 1, '20250815', 'pg16', '', '');
-INSERT INTO versions VALUES ('spock40-pg17', '4.0.10-2', 'amd, arm', 1, '20250815', 'pg17', '', '');
-
 INSERT INTO versions VALUES ('spock40-pg15', '4.0.10-1', 'amd, arm', 0, '20250224', 'pg15', '', '');
 INSERT INTO versions VALUES ('spock40-pg16', '4.0.10-1', 'amd, arm', 0, '20250224', 'pg16', '', '');
 INSERT INTO versions VALUES ('spock40-pg17', '4.0.10-1', 'amd, arm', 0, '20250224', 'pg17', '', '');
