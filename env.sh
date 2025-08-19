@@ -10,7 +10,7 @@ ctlibsV=1.7
 
 spock60V=6.0.0-devel-1
 
-spock50V=5.0.0-2
+spock50V=5.0.0-1
 
 spock40V=4.0.10-2
 
