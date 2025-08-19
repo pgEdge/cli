@@ -345,15 +345,6 @@ INSERT INTO versions VALUES ('spock50-pg15', '5.0.0-1',   'amd, arm', 1, '202507
 INSERT INTO versions VALUES ('spock50-pg16', '5.0.0-1',   'amd, arm', 1, '20250715', 'pg16', '', '');
 INSERT INTO versions VALUES ('spock50-pg17', '5.0.0-1',   'amd, arm', 1, '20250715', 'pg17', '', '');
 
--- ## spock60 ###########################
-INSERT INTO releases VALUES ('spock60-pg15', 4, 'spock', 'Spock', '', 'test', '', 1, 'pgEdge Community', '', '');
-INSERT INTO releases VALUES ('spock60-pg16', 4, 'spock', 'Spock', '', 'test', '', 1, 'pgEdge Community', '', '');
-INSERT INTO releases VALUES ('spock60-pg17', 4, 'spock', 'Spock', '', 'test', '', 1, 'pgEdge Community', '', '');
-
-INSERT INTO versions VALUES ('spock60-pg15', '6.0.0-devel-1',   'amd, arm', 1, '20250801', 'pg15', '', '');
-INSERT INTO versions VALUES ('spock60-pg16', '6.0.0-devel-1',   'amd, arm', 1, '20250801', 'pg16', '', '');
-INSERT INTO versions VALUES ('spock60-pg17', '6.0.0-devel-1',   'amd, arm', 1, '20250801', 'pg17', '', '');
-
 -- ## LOLOR #############################
 INSERT INTO projects VALUES ('lolor', 'pge', 4, 0, '', 1, 'https://github.com/pgedge/lolor/tags',
   'spock', 1, 'spock.png', 'Logical Replication of Large Objects', 'https://github.com/pgedge/lolor/#spock', 'lola, lolah, kinks');
