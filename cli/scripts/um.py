@@ -247,14 +247,12 @@ ORDER BY 1, 2, 3, 7"""
 def get_guc_value(pg_comp, guc_name):
     """
     Look up the value of a GUC from postgresql.auto.conf (preferred) or
-    postgresql.conf in data/<pg_comp>/.
+    postgresql.conf
     Returns 'on' / 'off' / <string> if set, or None if not found.
     """
-    base_dir = os.path.join("data", pg_comp)
 
-    # Prefer auto.conf, fallback to postgresql.conf
-    for fname in ["postgresql.auto.conf", "postgresql.conf"]:
-        conf_path = os.path.join(base_dir, fname)
+    # Prefer postgresql.auto.conf, fallback to postgresql.conf
+    for conf_path in [util.get_pgconf_filename_auto(pg_comp), util.get_pgconf_filename(pg_comp)]:
         if not os.path.isfile(conf_path):
             continue
 
@@ -273,6 +271,7 @@ def get_guc_value(pg_comp, guc_name):
             return None
 
     return None
+
 def validate_spock_upgrade(spock_component):
     """
     Validate Spock↔PostgreSQL compatibility for an upcoming Spock 5 install.
@@ -324,9 +323,7 @@ def validate_spock_upgrade(spock_component):
         return 0
 
 
-    # EARLY EXIT: Check auto.conf (preferred) or postgresql.conf for DDL GUCs
-
-    offending = []
+    # EARLY EXIT: Check postgresql.auto.conf (preferred) or postgresql.conf for DDL GUCs
     for guc in [
         "spock.enable_ddl_replication",
         "spock.include_ddl_repset",
@@ -334,16 +331,12 @@ def validate_spock_upgrade(spock_component):
     ]:
         val = get_guc_value(existing_pg_comp, guc)
         if val == "on":
-            offending.append(guc)
-
-    if offending:
-        print(
-            f"ERROR: Disabled autoddl is required before upgrading to Spock 5.0. "
-        )
-        sys.exit(1)
+            print(
+                f"ERROR: {guc} must be set to off before upgrading to Spock 5.0."
+            )
+            sys.exit(1)
 
     # Continue with version compatibility checks
-
     requested_spock_ver = spock_component
     if requested_spock_ver and requested_spock_ver.lower().startswith("spock"):
         requested_spock_ver = requested_spock_ver[5:]
