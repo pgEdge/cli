@@ -1452,7 +1452,11 @@ def update_mtree(mtree_task: MerkleTreeTask, skip_all_checks=False) -> None:
             block_size = result[0]
 
     except Exception as e:
-        raise AceException(f"Error getting block size from metadata: {str(e)}")
+        raise AceException(
+            f"Error getting block size from metadata: {str(e)}\n"
+            "Please initialise the Merkle tree objects first with\n"
+            f"./pgedge ace mtree init {mtree_task.cluster_name}"
+        )
 
     if not block_size:
         raise AceException(
