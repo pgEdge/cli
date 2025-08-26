@@ -1984,15 +1984,22 @@ def get_pkey_batches(
 
     boundaries = sorted(set(boundaries))
 
-    slices = []
-    for i in range(len(boundaries) - 1):
-        s = boundaries[i]
-        e = boundaries[i + 1]
+    if not boundaries:
+        return []
 
-        # We'll form the half-open interval [s, e)
-        # but only keep it if it intersects any mismatch.
-        if interval_in_union(s, e, all_ranges):
-            slices.append((s, e))
+    slices = []
+    if len(boundaries) == 1:
+        s = boundaries[0]
+        slices.append((s, s))
+    else:
+        for i in range(len(boundaries) - 1):
+            s = boundaries[i]
+            e = boundaries[i + 1]
+
+            # We'll form the half-open interval [s, e)
+            # but only keep it if it intersects any mismatch.
+            if interval_in_union(s, e, all_ranges):
+                slices.append((s, e))
 
     # TODO: Fix this!
     # # We always need the last boundary to be (max_key, None), otherwise,
