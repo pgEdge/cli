@@ -476,6 +476,9 @@ def build_mtree(mtree_task: MerkleTreeTask) -> None:
                         f"Error creating mtree objects on {node['name']}: {str(e)}"
                     )
 
+            if not ref_node:
+                raise AceException(f"Table {schema}.{table} is empty on all nodes.")
+
             print(f"Using node {ref_node['name']} as the reference node")
 
             block_ranges = []
@@ -505,6 +508,12 @@ def build_mtree(mtree_task: MerkleTreeTask) -> None:
             with conn.cursor() as cur:
                 cur.execute(offsets_query)
                 offsets = cur.fetchall()
+
+                if all(
+                    pkey_range is None for offset in offsets for pkey_range in offset
+                ):
+                    raise AceException(f"Table {schema}.{table} is empty on all nodes.")
+
                 block_ranges = process_block_ranges(offsets)
 
         if mtree_task.write_ranges:
@@ -1422,6 +1431,7 @@ def update_mtree(mtree_task: MerkleTreeTask, skip_all_checks=False) -> None:
     key = mtree_task.fields.key
     key_columns = key.split(",")
     is_composite = len(key_columns) > 1
+    block_size = None
 
     # we need to first read the metadata to figure out what the
     # block size the tree was built with
@@ -1436,12 +1446,24 @@ def update_mtree(mtree_task: MerkleTreeTask, skip_all_checks=False) -> None:
                 table=sql.Literal(table),
             )
         )
-        block_size = cur.fetchone()[0]
+        result = cur.fetchone()
+
+        if result is not None:
+            block_size = result[0]
+
     except Exception as e:
-        raise AceException(f"Error getting block size from metadata: {str(e)}")
+        raise AceException(
+            f"Error getting block size from metadata: {str(e)}\n"
+            "Please initialise the Merkle tree objects first with\n"
+            f"./pgedge ace mtree init {mtree_task.cluster_name}"
+        )
 
     if not block_size:
-        raise AceException(f"Block size not found for {schema}.{table}")
+        raise AceException(
+            f"Missing metadata for {schema}.{table}.\nPlease build the tree first "
+            f"with ./pgedge ace mtree build {mtree_task.cluster_name} "
+            f"{schema}.{table}"
+        )
 
     mtree_task.block_size = block_size
 
@@ -1966,15 +1988,22 @@ def get_pkey_batches(
 
     boundaries = sorted(set(boundaries))
 
-    slices = []
-    for i in range(len(boundaries) - 1):
-        s = boundaries[i]
-        e = boundaries[i + 1]
+    if not boundaries:
+        return []
 
-        # We'll form the half-open interval [s, e)
-        # but only keep it if it intersects any mismatch.
-        if interval_in_union(s, e, all_ranges):
-            slices.append((s, e))
+    slices = []
+    if len(boundaries) == 1:
+        s = boundaries[0]
+        slices.append((s, s))
+    else:
+        for i in range(len(boundaries) - 1):
+            s = boundaries[i]
+            e = boundaries[i + 1]
+
+            # We'll form the half-open interval [s, e)
+            # but only keep it if it intersects any mismatch.
+            if interval_in_union(s, e, all_ranges):
+                slices.append((s, e))
 
     # TODO: Fix this!
     # # We always need the last boundary to be (max_key, None), otherwise,

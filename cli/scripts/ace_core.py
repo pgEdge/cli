@@ -701,7 +701,14 @@ def table_diff(td_task: TableDiffTask, skip_all_checks: bool = False):
             )
             ref_cur.execute(offsets_query)
             raw_offsets = ref_cur.fetchall()
-            pkey_offsets = ace.process_pkey_offsets(raw_offsets)
+
+            if all(
+                pkey_range is None for offset in raw_offsets for pkey_range in offset
+            ):
+                pkey_offsets = []
+            else:
+                pkey_offsets = ace.process_pkey_offsets(raw_offsets)
+
         except Exception as e:
             context = {
                 "total_rows": total_rows,
@@ -726,6 +733,11 @@ def table_diff(td_task: TableDiffTask, skip_all_checks: bool = False):
             cur = conn.cursor()
             cur.execute(pkey_sql)
             rows = cur.fetchmany(block_rows)
+
+            if not rows:
+                cur.close()
+                conn.close()
+                return pkey_offsets
 
             if simple_primary_key:
                 rows[:] = [str(x[0]) for x in rows]
@@ -762,6 +774,12 @@ def table_diff(td_task: TableDiffTask, skip_all_checks: bool = False):
 
         pkey_offsets = get_pkey_offsets(
             conn_with_max_rows, pkey_sql, td_task.block_size
+        )
+
+    if not pkey_offsets:
+        raise AceException(
+            f"Table {td_task.fields.l_schema}.{td_task.fields.l_table} is empty "
+            "on all nodes."
         )
 
     # We're done with getting table metadata. Closing all connections.
