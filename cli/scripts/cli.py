@@ -322,6 +322,8 @@ class ProgressTarExtract(io.FileIO):
         return io.FileIO.read(self, size)
 
 
+_SPOCK50_RE = re.compile(r"^spock50(?:-pg\d+)?$", re.IGNORECASE)
+
 # Install Component ######################################################
 def install_comp(p_app, p_ver=0, p_rver=None, p_re_install=False):
     util.message(f"cli.install_comp(p_app={p_app}, p_ver={p_ver}, p_rver={p_rver}, p_re_install={p_re_install})", "debug")
@@ -345,6 +347,10 @@ def install_comp(p_app, p_ver=0, p_rver=None, p_re_install=False):
                 errmsg = json.dumps([json_dict])
             print(errmsg)
             exit_cleanly(1)
+
+    # Trigger pre-check ONLY for Spock 5.0 artifacts
+    if _SPOCK50_RE.match(p_app):
+        util.validate_spock_upgrade(p_app)   # should sys.exit(1) on failure; otherwise just returns
 
     state = util.get_comp_state(p_app)
     
