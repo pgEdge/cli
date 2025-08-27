@@ -168,6 +168,126 @@ def validate_spock_pg_compat(spock_ver: str = None, pg_ver: str = None) -> None:
                     isJSON,
                 )
 
+def get_guc_value(pg_comp, guc_name):
+    """
+    Look up the value of a GUC from postgresql.auto.conf (preferred) or
+    postgresql.conf
+    Returns 'on' / 'off' / <string> if set, or None if not found.
+    """
+
+    # Prefer postgresql.auto.conf, fallback to postgresql.conf
+    for conf_path in [get_pgconf_filename_auto(pg_comp), get_pgconf_filename(pg_comp)]:
+        if not os.path.isfile(conf_path):
+            continue
+
+        try:
+            with open(conf_path, "r", encoding="utf-8", errors="ignore") as fh:
+                for raw in fh:
+                    line = raw.strip()
+                    if not line or line.startswith("#"):
+                        continue
+                    if line.lower().startswith(guc_name.lower()):
+                        parts = line.split("=", 1)
+                        if len(parts) == 2:
+                            val = parts[1].strip().strip("'\"").lower()
+                            return val
+        except Exception:
+            return None
+
+    return None
+    
+# Match both "spock50" and "spock50-pg17" (and variants like spock5, spock5-pg16)
+_SPOCK5_NAME_RE = re.compile(r"^spock5(?:0)?(?:-pg\d+)?$", re.IGNORECASE)
+_SPOCK5_VER_RE  = re.compile(r"^5\.", re.IGNORECASE)
+
+def validate_spock_upgrade(spock_component):
+    """
+    Validate Spock↔PostgreSQL compatibility for an upcoming Spock 5 install.
+    Enforces that Spock DDL-related settings are OFF before proceeding.
+    """
+
+    DB_PATH = "data/conf/db_local.db"
+
+
+    SPOCK_SQL = """
+    SELECT version AS spock_ver, component AS spock_comp
+    FROM components
+    WHERE component LIKE 'spock%'
+    ORDER BY CASE
+               WHEN version LIKE '5.%' THEN 5
+               WHEN version LIKE '4.%' THEN 4
+               ELSE 0
+             END DESC,
+             version DESC
+    LIMIT 1;
+    """
+    PG_SQL = """
+    SELECT component AS pg_comp, version AS pg_ver
+    FROM components
+    WHERE component LIKE 'pg__'
+    ORDER BY CAST(substr(component, 3) AS INTEGER) DESC
+    LIMIT 1;
+    """
+
+    # --- Read currently installed PG/Spock from local metadata ---------------
+    try:
+        with sqlite3.connect(DB_PATH) as conn:
+            sp_row = conn.execute(SPOCK_SQL).fetchone()
+            pg_row = conn.execute(PG_SQL).fetchone()
+    except sqlite3.Error as err:
+        sys.exit(f"ERROR: SQLite query failed: {err}")
+
+    if not pg_row:
+        sys.exit("ERROR: No PostgreSQL version row found.")
+
+    existing_pg_comp, existing_pg_ver = pg_row[0], pg_row[1]
+    existing_spock_ver, existing_spock_comp = (sp_row or (None, None))
+
+    # If already on Spock 5, nothing to do (no gate, no compat check).
+    if existing_spock_ver and (
+        _SPOCK5_NAME_RE.match(existing_spock_comp or "")
+        or _SPOCK5_VER_RE.match(existing_spock_ver or "")
+    ):
+        return 0
+
+
+    # EARLY EXIT: Check postgresql.auto.conf (preferred) or postgresql.conf for DDL GUCs
+    for guc in [
+        "spock.enable_ddl_replication",
+    ]:
+        val = get_guc_value(existing_pg_comp, guc)
+        if val == "on":
+            print(
+                f"ERROR: {guc} must be set to off before upgrading to Spock 5.0."
+            )
+            sys.exit(1)
+
+    # Continue with version compatibility checks
+    requested_spock_ver = spock_component
+    if requested_spock_ver and requested_spock_ver.lower().startswith("spock"):
+        requested_spock_ver = requested_spock_ver[5:]
+
+    # Friendly downtime banner if upgrading from existing Spock
+    if existing_spock_ver:
+        banner = "=" * 80
+        print(f"\n{banner}")
+        print("*** WARNING: This operation will cause downtime! ***")
+        print(f"{banner}\n")
+        print(
+            f"Detected existing Spock version {existing_spock_ver} "
+            f"on PostgreSQL {existing_pg_ver}"
+        )
+
+    try:
+        validate_spock_pg_compat(requested_spock_ver, existing_pg_ver)
+    except Exception as exc:
+        sys.exit(f"ERROR: Compatibility check failed: {exc}")
+
+    if existing_spock_ver:
+        print("Compatibility check passed.")
+
+    return 0
+
 def get_cpu_info():
     try:
         import cpuinfo
@@ -227,7 +347,7 @@ def download_component(p_comp):
 
     comp = meta.wildcard_component(p_comp)
     if not meta.is_component(comp):
-        util.message(f"{p_comp} not a valid component", "error")
+        message(f"{p_comp} not a valid component", "error")
         return False
 
     ver_plat = meta.get_latest_ver_plat(comp)
