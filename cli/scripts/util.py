@@ -195,7 +195,13 @@ def get_guc_value(pg_comp, guc_name):
             return None
 
     return None
-    
+
+def guc_value_as_bool(guc_value):
+    # https://www.postgresql.org/docs/current/datatype-boolean.html
+    if guc_value is not None and guc_value.strip().lower() in ("on","true", "yes", "y", "1", "t", "tr", "tru", "ye"):
+        return True
+    return False
+
 # Match both "spock50" and "spock50-pg17" (and variants like spock5, spock5-pg16)
 _SPOCK5_NAME_RE = re.compile(r"^spock5(?:0)?(?:-pg\d+)?$", re.IGNORECASE)
 _SPOCK5_VER_RE  = re.compile(r"^5\.", re.IGNORECASE)
@@ -256,7 +262,7 @@ def validate_spock_upgrade(spock_component):
         "spock.enable_ddl_replication",
     ]:
         val = get_guc_value(existing_pg_comp, guc)
-        if val == "on":
+        if guc_value_as_bool(val):
             print(
                 f"ERROR: {guc} must be set to off before upgrading to Spock 5.0."
             )
