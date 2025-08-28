@@ -149,6 +149,47 @@ check_s3_access() {
   fi
 }
 
+update_lifecycle_rule() {
+  local bucket="$1"
+  local region="$2"
+  local prefix="$3"     # e.g., REPO/stable/ or REPO/current/
+  local rule_id="$4"    # e.g., ExpireBuilds_stable or ExpireBuilds_current
+  local expire_days="$5"
+
+  # Fetch existing lifecycle config, or default to empty
+  existing_rules=$(aws --region "$region" s3api get-bucket-lifecycle-configuration \
+    --bucket "$bucket" 2>/dev/null || echo '{"Rules": []}')
+
+  # New rule to insert
+  new_rule=$(jq -n \
+    --arg id "$rule_id" \
+    --arg prefix "$prefix" \
+    --argjson days "$expire_days" \
+    '{
+      ID: $id,
+      Filter: { Prefix: $prefix },
+      Status: "Enabled",
+      Expiration: { Days: $days }
+    }')
+
+  # Merge new rule, replacing old one with same ID
+  updated_config=$(echo "$existing_rules" | jq \
+    --argjson new_rule "$new_rule" \
+    '{
+      Rules: (
+        (.Rules // [])
+        | map(select(.ID != $new_rule.ID))
+        + [$new_rule]
+      )
+    }')
+
+  # Apply updated config
+  echo "Updating lifecycle rule '$rule_id' for prefix '$prefix'..."
+  aws --region "$region" s3api put-bucket-lifecycle-configuration \
+    --bucket "$bucket" \
+    --lifecycle-configuration "$updated_config"
+}
+
 # --- Pre-checks (Step -1) ---
 step -2 "Pre-checks: Environment, Disk Space & S3 Access"
 
@@ -237,17 +278,12 @@ base_prefix="${prefix%/*}/"
 
 # Define a lifecycle policy JSON dynamically for all objects under the base prefix
 step 6b "Set lifecycle policy for objects under $base_prefix to auto expire/delete after 7 days"
-policy='{
-  "Rules": [
-    {
-      "ID": "ExpireBuilds_'"$MODE"'",
-      "Filter": { "Prefix": "'"$base_prefix"'" },
-      "Status": "Enabled",
-      "Expiration": { "Days": 7 }
-    }
-  ]
-}'
-cmd "aws --region $REGION s3api put-bucket-lifecycle-configuration --bucket $BUCKET_NAME --lifecycle-configuration '$policy'"
+
+# Rule ID based on mode (e.g., stable, current)
+rule_id="ExpireBuilds_${MODE}"
+
+# Call function with relevant vars
+update_lifecycle_rule "$BUCKET_NAME" "$REGION" "$base_prefix" "$rule_id" 7
 
 step 7 "Goodbye! ##############################"
 echo "Script completed successfully"
