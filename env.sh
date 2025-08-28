@@ -12,7 +12,7 @@ spock60V=6.0.0-devel-1
 
 spock50V=5.0.1-1
 
-spock40V=4.0.11-1
+spock40V=4.0.10-1
 
 spock33V=3.3.6-1
 
