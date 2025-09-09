@@ -28,6 +28,7 @@ from ace_sql import (
     CREATE_BULK_TRIGGER_FUNCTION,
     CREATE_METADATA_TABLE,
     CREATE_XOR_FUNCTION,
+    DISABLE_DDL_GUCS,
     DROP_BULK_TRIGGER_FUNCTION,
     DROP_METADATA_TABLE,
     DROP_XOR_FUNCTION,
@@ -276,6 +277,8 @@ def create_mtree_objects(
     with conn.cursor() as cur:
         if recreate_objects:
             _mtree_init(conn)
+
+        cur.execute(sql.SQL(DISABLE_DDL_GUCS))
 
         cur.execute(
             sql.SQL("DROP TABLE IF EXISTS {mtree_table}").format(
