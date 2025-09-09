@@ -28,7 +28,20 @@ def setup_pgedge(User=None, Passwd=None, dbName=None, port=None, pg_data=None, p
        :param interactive: Defaults to False
        :param yes: Accept input parms without prompting to confirm (always set to True when interactive is false)
     """
-
+    try:
+        argv = sys.argv or []
+        raw_pg_arg = None
+        for i, a in enumerate(argv):
+            if a == "--pg_ver" and i + 1 < len(argv):
+                raw_pg_arg = argv[i + 1]
+                break
+            if a.startswith("--pg_ver="):
+                raw_pg_arg = a.split("=", 1)[1]
+                break
+        if raw_pg_arg is not None:
+            pg_ver = str(raw_pg_arg).strip().strip("'\"")
+    except Exception:
+        pass
     pgN = os.getenv("pgN", "")
     if (pgN > "" ) and (pg_ver is None):
         util.message(f"over-riding 'pg_ver' with ENV pgN={pgN}", "debug")

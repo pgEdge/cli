@@ -125,8 +125,29 @@ def get_default_spock(pgv):
     return(DEFAULT_SPOCK)
 
 def validate_spock_pg_compat(spock_ver: str = None, pg_ver: str = None) -> None:
-    # --- defaults (keep yours as-is) ---
+
+    raw_pg_arg = None
+    try:
+        argv = sys.argv or []
+        for i, a in enumerate(argv):
+            if a == "--pg_ver" and i + 1 < len(argv):
+                raw_pg_arg = argv[i + 1]
+                break
+            if a.startswith("--pg_ver="):
+                raw_pg_arg = a.split("=", 1)[1]
+                break
+    except Exception:
+        raw_pg_arg = None
+
+    if raw_pg_arg:
+        # strip surrounding quotes if present
+        raw_pg_arg = raw_pg_arg.strip().strip("'\"")
+
+    # prefer the raw CLI token if we found one; otherwise use the passed value/default
+    if raw_pg_arg:
+        pg_ver = raw_pg_arg
     pg_ver = str(pg_ver) if pg_ver else str(DEFAULT_PG)
+
     if not spock_ver:
         try:
             maj = int(pg_ver.split(".", 1)[0])
@@ -135,38 +156,49 @@ def validate_spock_pg_compat(spock_ver: str = None, pg_ver: str = None) -> None:
         spock_ver = DEFAULT_SPOCK_17 if maj == 17 else DEFAULT_SPOCK
     spock_ver = str(spock_ver)
 
-    # --- parse Spock major w/o 'packaging' dependency ---
-    m_sp = re.fullmatch(r'(\d)(\d)$', spock_ver)   # "50" -> "5.0.0"
+  
+    # Accept exactly two digits like "50" -> "5.0.0" (no change for normal semver).
+    m_sp = re.fullmatch(r"\d{2}", spock_ver)
     if m_sp:
-        spock_ver = f"{int(m_sp.group(1))}.{int(m_sp.group(2))}.0"
+        spock_ver = f"{int(spock_ver[0])}.{int(spock_ver[1])}.0"
 
     try:
         spock_version_obj = Version.coerce(spock_ver)
-    except Exception as e:
+    except Exception:
         exit_message(f"Invalid Spock version '{spock_ver}'.", 1, isJSON)
 
     if spock_version_obj.major < 5:
         return
-    
+
+
+    pg_for_compare = pg_ver  # e.g., "16.10" if recovered from argv
+
     try:
-        pg_version_obj = Version.coerce(pg_ver)
-    except Exception as e:
+        pg_version_obj = Version.coerce(pg_for_compare)
+    except Exception:
         exit_message(f"Invalid PostgreSQL version '{pg_ver}'.", 1, isJSON)
 
+    # If user gave only a major (e.g., "16"), skip strict thresholding (matches prior behavior).
     if not pg_version_obj.minor:
         return
-    
-    min_version_thresholds = {15:  Version.coerce("15.13-2"), 16: Version.coerce("16.9-2"), 17: Version.coerce("17.5-2")}
-    
+
+    min_version_thresholds = {
+        15: Version.coerce("15.13-2"),
+        16: Version.coerce("16.9-2"),
+        17: Version.coerce("17.5-2"),
+    }
+
     if pg_version_obj.major in min_version_thresholds:
         min_version_obj = min_version_thresholds[pg_version_obj.major]
         min_version_build = min_version_obj.prerelease[0] if min_version_obj.prerelease else "0"
         if pg_version_obj < min_version_obj:
-                exit_message(
-                    f"Spock {spock_ver} requires PostgreSQL {pg_version_obj.major} >= {min_version_obj.major}.{min_version_obj.minor}-{min_version_build}. You provided {pg_ver}.",
-                    1,
-                    isJSON,
-                )
+            exit_message(
+                f"Spock {spock_ver} requires PostgreSQL {pg_version_obj.major} >= "
+                f"{min_version_obj.major}.{min_version_obj.minor}-{min_version_build}. "
+                f"You provided {pg_ver}.",
+                1,
+                isJSON,
+            )
 
 def get_guc_value(pg_comp, guc_name):
     """
