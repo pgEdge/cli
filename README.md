@@ -1,6 +1,6 @@
-# pgEdge Command Line Interface (CLI)
+# pgEdge Distributed Postgres CLI
 
-The pgEdge Command Line Interface (CLI) for managing pgEdge Platform components. 
+The pgEdge Distributed Postgres Command Line Interface (CLI) for managing Postgres and supported components.
 
 [Release notes](https://docs.pgedge.com/platform/pgedge_rel_notes) and further documentation are available on [docs.pgedge.com](https://docs.pgedge.com)
 
