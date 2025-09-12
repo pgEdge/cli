@@ -197,6 +197,8 @@ def get_cols(p_con, p_schema, p_table):
     WHERE
         table_schema = %s
         AND table_name = %s
+    ORDER BY
+        ordinal_position;
     """
 
     try:

@@ -61,6 +61,12 @@ CREATE_COMPOSITE_MTREE_TABLE = """
     WHERE node_level = 0;
 """
 
+DISABLE_DDL_GUCS = """
+    SET spock.enable_ddl_replication = off;
+    SET spock.include_ddl_repset = off;
+    SET spock.allow_ddl_from_functions = off;
+"""
+
 CREATE_GENERIC_TRIGGER = """
     DROP TRIGGER IF EXISTS {trigger}_insert_stmt ON {schema}.{table};
     DROP TRIGGER IF EXISTS {trigger}_update_stmt ON {schema}.{table};

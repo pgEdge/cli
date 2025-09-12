@@ -28,6 +28,7 @@ from ace_sql import (
     CREATE_BULK_TRIGGER_FUNCTION,
     CREATE_METADATA_TABLE,
     CREATE_XOR_FUNCTION,
+    DISABLE_DDL_GUCS,
     DROP_BULK_TRIGGER_FUNCTION,
     DROP_METADATA_TABLE,
     DROP_XOR_FUNCTION,
@@ -276,6 +277,8 @@ def create_mtree_objects(
     with conn.cursor() as cur:
         if recreate_objects:
             _mtree_init(conn)
+
+        cur.execute(sql.SQL(DISABLE_DDL_GUCS))
 
         cur.execute(
             sql.SQL("DROP TABLE IF EXISTS {mtree_table}").format(
@@ -2630,6 +2633,10 @@ def _mtree_init(conn) -> None:
     """
     cur = conn.cursor()
 
+    # We need to disable DDL GUCs here as well since we're creating the
+    # metadata table
+    cur.execute(sql.SQL(DISABLE_DDL_GUCS))
+
     # We need pgcrypto for sha256
     cur.execute(sql.SQL("CREATE EXTENSION IF NOT EXISTS pgcrypto;"))
 
@@ -2639,7 +2646,7 @@ def _mtree_init(conn) -> None:
     cur.execute(sql.SQL(CREATE_XOR_FUNCTION))
 
     # Metadata table where we keep track of tables, their approx. row counts,
-    # and when the tree was last updated.
+    # and when the merkle trees were last updated.
     cur.execute(sql.SQL("DROP TABLE IF EXISTS ace_mtree_metadata"))
     cur.execute(sql.SQL(CREATE_METADATA_TABLE))
 
