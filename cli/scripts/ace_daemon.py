@@ -989,10 +989,10 @@ def create_schedules():
         cron_schedule = schedule.get("crontab_schedule", None)
 
         if not repset_diff:
-            job = ace_cli.table_diff_cli
+            job = ace_cli.TableDiffCLI().run
             args = [cluster_name, table_name]
         else:
-            job = ace_cli.repset_diff_cli
+            job = ace_cli.RepsetDiffCLI().run
             args = [cluster_name, repset_name]
 
         if cron_schedule:
