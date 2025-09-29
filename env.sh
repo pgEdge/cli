@@ -23,6 +23,8 @@ removeComponentFromOut=
 lolorV=1.2-2
 snwflkV=2.2-2
 
+P18=18.0-1
+
 P17=17.6-1
 P171=17.0-1
 
@@ -145,6 +147,8 @@ setPGV () {
     pgV=$P16
   elif [ "$1" == "17" ]; then
     pgV=$P17
+  elif [ "$1" == "18" ]; then
+    pgV=$P18
   else
     fatalError "Invalid PG version ($1)"
   fi

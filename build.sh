@@ -19,9 +19,9 @@ fi
 
 printUsageMessage () {
   echo "#-------------------------------------------------------------------#"
-  echo "#                Copyright (c) 2022-2024 PGEDGE                     #"
+  echo "#                Copyright (c) 2022-2025 PGEDGE                     #"
   echo "#-------------------------------------------------------------------#"
-  echo "# -p $P17 $P16 $P15"
+  echo "# -p $P18 $P17 $P16 $P15"
   echo "# -b hub-$hubV"
   echo "#-------------------------------------------------------------------#"
 }
@@ -352,6 +352,14 @@ initPG () {
     initC "etcd"         "etcd"         "$etcdV"     "$outPlat" "etcd"              "" "" "nil"
     initC "pgcat"        "pgcat"        "$catV"      "$outPlat" "postgres/pgcat"    "" "" "nil"
     initC "patroni"      "patroni"      "$patroniV"  ""         "patroni"           "" "" "nil"
+  fi
+
+  if [ "$pgM" == "18" ]; then
+    # limited set for 18
+    initC "lolor-pg$pgM"      "lolor"      "$lolorV"     "$outPlat" "postgres/lolor"     "" "" "nil"
+    initC "snowflake-pg$pgM"  "snowflake"  "$snwflkV"    "$outPlat" "postgres/snowflake" "" "" "nil"
+    #initC "spock50-pg$pgM"    "spock50"    "$spock50V"   "$outPlat" "postgres/spock50"   "" "" "nil"
+    initC "spock60-pg$pgM"    "spock60"    "$spock60V"   "$outPlat" "postgres/spock60"   "" "" "nil"
   fi
 
   if [ "$pgM" == "17" ]; then

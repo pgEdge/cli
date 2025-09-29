@@ -53,6 +53,11 @@ fi
 ## MAINLINE ###################################
 
 vers="15 16 17"
+# keeping 18 for current mode only, append 18 to the above vers variable when 18 is added 
+# to pgedge platform stable supported version
+if [[ "$MODE" == "current" ]]; then
+  vers="$vers 18"
+fi
 cmd "rm -f $OUT/*"
 for ver in ${vers}; do
   echo ""

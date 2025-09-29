@@ -182,6 +182,11 @@ run_day=`date +%j`
 echo "# run_day = $run_day"
 
 vers="15 16 17"
+# keeping the pg18 builds for current only, remove check when stable and add 18 to above vers and PGVERS on top
+if [[ "$MODE" == "current" ]]; then
+  vers="$vers 18"
+  PGVERS="$PGVERS 18"
+fi
 echo "#     vers = \"$vers\""
 
 if [ "$vers" == "" ]; then

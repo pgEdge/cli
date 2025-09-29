@@ -165,6 +165,10 @@ INSERT INTO releases VALUES ('pg17', 2, 'pg', '', '', 'prod',
 INSERT INTO versions VALUES ('pg17', '17.6-1',    'amd, arm', 1, '20250815','', '', '');
 INSERT INTO versions VALUES ('pg17', '17.5-2',    'amd, arm', 0, '20250715','', '', '');
 
+INSERT INTO releases VALUES ('pg18', 2, 'pg', '', '', 'prod', 
+  '<font size=-1>New in <a href=https://www.postgresql.org/docs/18/release-18.html>2025!</a></font>', 1, 'POSTGRES', '', '');
+INSERT INTO versions VALUES ('pg18', '18.0-1',    'amd, arm', 1, '20251002','', '', '');
+
 -- ## ORAFCE #############################
 INSERT INTO projects VALUES ('orafce', 'ext', 4, 0, '', 0, 'https://github.com/orafce/orafce/releases',
   'orafce', 1, 'larry.png', 'Ora Built-in Packages', 'https://github.com/orafce/orafce#orafce---oracles-compatibility-functions-and-packages', 'orafice, oraface');
@@ -309,11 +313,12 @@ INSERT INTO projects VALUES ('snowflake', 'pge', 4, 0, '', 1, 'https://github.co
 INSERT INTO releases VALUES ('snowflake-pg15', 4, 'snowflake', 'Snowflake', '', 'prod', '', 1, 'POSTGRES', '', '');
 INSERT INTO releases VALUES ('snowflake-pg16', 4, 'snowflake', 'Snowflake', '', 'prod', '', 1, 'POSTGRES', '', '');
 INSERT INTO releases VALUES ('snowflake-pg17', 4, 'snowflake', 'Snowflake', '', 'prod', '', 1, 'POSTGRES', '', '');
+INSERT INTO releases VALUES ('snowflake-pg18', 4, 'snowflake', 'Snowflake', '', 'prod', '', 1, 'POSTGRES', '', '');
 
 INSERT INTO versions VALUES ('snowflake-pg15', '2.2-2', 'amd, arm', 1, '20250815', 'pg15', '', '');
 INSERT INTO versions VALUES ('snowflake-pg16', '2.2-2', 'amd, arm', 1, '20250815', 'pg16', '', '');
 INSERT INTO versions VALUES ('snowflake-pg17', '2.2-2', 'amd, arm', 1, '20250815', 'pg17', '', '');
-
+INSERT INTO versions VALUES ('snowflake-pg18', '2.2-2', 'amd, arm', 1, '20251002', 'pg18', '', '');
 
 -- ## SPOCK (parent project) ############
 INSERT INTO projects VALUES ('spock', 'pge', 4, 0, '', 1, 'https://github.com/pgedge/spock/tags',
@@ -335,27 +340,31 @@ INSERT INTO versions VALUES ('spock40-pg17', '4.0.9-1', 'amd, arm', 0, '20241226
 INSERT INTO releases VALUES ('spock50-pg15', 4, 'spock', 'Spock', '', 'prod', '', 1, 'POSTGRES', '', '');
 INSERT INTO releases VALUES ('spock50-pg16', 4, 'spock', 'Spock', '', 'prod', '', 1, 'POSTGRES', '', '');
 INSERT INTO releases VALUES ('spock50-pg17', 4, 'spock', 'Spock', '', 'prod', '', 1, 'POSTGRES', '', '');
+INSERT INTO releases VALUES ('spock50-pg18', 4, 'spock', 'Spock', '', 'prod', '', 1, 'POSTGRES', '', '');
 
-INSERT INTO versions VALUES ('spock50-pg15', '5.0.2-1',   'amd, arm', 1, '20250918', 'pg15', '', '');
-INSERT INTO versions VALUES ('spock50-pg16', '5.0.2-1',   'amd, arm', 1, '20250918', 'pg16', '', '');
-INSERT INTO versions VALUES ('spock50-pg17', '5.0.2-1',   'amd, arm', 1, '20250918', 'pg17', '', '');
+INSERT INTO versions VALUES ('spock50-pg15', '5.0.3-1',   'amd, arm', 1, '20251002', 'pg15', '', '');
+INSERT INTO versions VALUES ('spock50-pg16', '5.0.3-1',   'amd, arm', 1, '20251002', 'pg16', '', '');
+INSERT INTO versions VALUES ('spock50-pg17', '5.0.3-1',   'amd, arm', 1, '20251002', 'pg17', '', '');
+INSERT INTO versions VALUES ('spock50-pg18', '5.0.3-1',   'amd, arm', 1, '20251002', 'pg18', '', '');
+
+INSERT INTO versions VALUES ('spock50-pg15', '5.0.2-1',   'amd, arm', 0, '20250918', 'pg15', '', '');
+INSERT INTO versions VALUES ('spock50-pg16', '5.0.2-1',   'amd, arm', 0, '20250918', 'pg16', '', '');
+INSERT INTO versions VALUES ('spock50-pg17', '5.0.2-1',   'amd, arm', 0, '20250918', 'pg17', '', '');
 
 INSERT INTO versions VALUES ('spock50-pg15', '5.0.1-1',   'amd, arm', 0, '20250827', 'pg15', '', '');
 INSERT INTO versions VALUES ('spock50-pg16', '5.0.1-1',   'amd, arm', 0, '20250827', 'pg16', '', '');
 INSERT INTO versions VALUES ('spock50-pg17', '5.0.1-1',   'amd, arm', 0, '20250827', 'pg17', '', '');
 
-INSERT INTO versions VALUES ('spock50-pg15', '5.0.0-1',   'amd, arm', 0, '20250715', 'pg15', '', '');
-INSERT INTO versions VALUES ('spock50-pg16', '5.0.0-1',   'amd, arm', 0, '20250715', 'pg16', '', '');
-INSERT INTO versions VALUES ('spock50-pg17', '5.0.0-1',   'amd, arm', 0, '20250715', 'pg17', '', '');
-
 -- ## spock60 ###########################
 INSERT INTO releases VALUES ('spock60-pg15', 4, 'spock', 'Spock', '', 'test', '', 1, 'POSTGRES', '', '');
 INSERT INTO releases VALUES ('spock60-pg16', 4, 'spock', 'Spock', '', 'test', '', 1, 'POSTGRES', '', '');
 INSERT INTO releases VALUES ('spock60-pg17', 4, 'spock', 'Spock', '', 'test', '', 1, 'POSTGRES', '', '');
+INSERT INTO releases VALUES ('spock60-pg18', 4, 'spock', 'Spock', '', 'test', '', 1, 'POSTGRES', '', '');
 
 INSERT INTO versions VALUES ('spock60-pg15', '6.0.0-devel-1',   'amd, arm', 1, '20250801', 'pg15', '', '');
 INSERT INTO versions VALUES ('spock60-pg16', '6.0.0-devel-1',   'amd, arm', 1, '20250801', 'pg16', '', '');
 INSERT INTO versions VALUES ('spock60-pg17', '6.0.0-devel-1',   'amd, arm', 1, '20250801', 'pg17', '', '');
+INSERT INTO versions VALUES ('spock60-pg18', '6.0.0-devel-1',   'amd, arm', 1, '20251002', 'pg18', '', '');
 
 -- ## LOLOR #############################
 INSERT INTO projects VALUES ('lolor', 'pge', 4, 0, '', 1, 'https://github.com/pgedge/lolor/tags',
@@ -363,10 +372,16 @@ INSERT INTO projects VALUES ('lolor', 'pge', 4, 0, '', 1, 'https://github.com/pg
 INSERT INTO releases VALUES ('lolor-pg15', 4, 'lolor', 'LgObjLOgicalRep', '', 'prod', '', 1, 'POSTGRES', '', '');
 INSERT INTO releases VALUES ('lolor-pg16', 4, 'lolor', 'LgObjLOgicalRep', '', 'prod', '', 1, 'POSTGRES', '', '');
 INSERT INTO releases VALUES ('lolor-pg17', 4, 'lolor', 'LgObjLOgicalRep', '', 'prod', '', 1, 'POSTGRES', '', '');
+INSERT INTO releases VALUES ('lolor-pg18', 4, 'lolor', 'LgObjLOgicalRep', '', 'prod', '', 1, 'POSTGRES', '', '');
 
-INSERT INTO versions VALUES ('lolor-pg15', '1.2-2', 'amd, arm', 1, '20250815', 'pg15', '', '');
-INSERT INTO versions VALUES ('lolor-pg16', '1.2-2', 'amd, arm', 1, '20250815', 'pg16', '', '');
-INSERT INTO versions VALUES ('lolor-pg17', '1.2-2', 'amd, arm', 1, '20250815', 'pg17', '', '');
+INSERT INTO versions VALUES ('lolor-pg15', '1.2.1-1', 'amd, arm', 1, '20251002', 'pg15', '', '');
+INSERT INTO versions VALUES ('lolor-pg16', '1.2.1-1', 'amd, arm', 1, '20251002', 'pg16', '', '');
+INSERT INTO versions VALUES ('lolor-pg17', '1.2.1-1', 'amd, arm', 1, '20251002', 'pg17', '', '');
+INSERT INTO versions VALUES ('lolor-pg18', '1.2.1-1', 'amd, arm', 1, '20251002', 'pg18', '', '');
+
+INSERT INTO versions VALUES ('lolor-pg15', '1.2-2', 'amd, arm', 0, '20250815', 'pg15', '', '');
+INSERT INTO versions VALUES ('lolor-pg16', '1.2-2', 'amd, arm', 0, '20250815', 'pg16', '', '');
+INSERT INTO versions VALUES ('lolor-pg17', '1.2-2', 'amd, arm', 0, '20250815', 'pg17', '', '');
 
 -- ## PERMISSIONS #######################
 INSERT INTO projects VALUES ('permissions', 'ext', 4, 1, '', 3, 'https://github.com/cybertec-postgresql/permissions',
