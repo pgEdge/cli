@@ -358,7 +358,7 @@ initPG () {
     # limited set for 18
     initC "lolor-pg$pgM"      "lolor"      "$lolorV"     "$outPlat" "postgres/lolor"     "" "" "nil"
     initC "snowflake-pg$pgM"  "snowflake"  "$snwflkV"    "$outPlat" "postgres/snowflake" "" "" "nil"
-    #initC "spock50-pg$pgM"    "spock50"    "$spock50V"   "$outPlat" "postgres/spock50"   "" "" "nil"
+    initC "spock50-pg$pgM"    "spock50"    "$spock50V"   "$outPlat" "postgres/spock50"   "" "" "nil"
     initC "spock60-pg$pgM"    "spock60"    "$spock60V"   "$outPlat" "postgres/spock60"   "" "" "nil"
   fi
 

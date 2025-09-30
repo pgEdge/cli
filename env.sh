@@ -10,7 +10,7 @@ ctlibsV=1.7
 
 spock60V=6.0.0-devel-1
 
-spock50V=5.0.2-1
+spock50V=5.0.3-1
 
 spock40V=4.0.10-1
 
@@ -20,7 +20,7 @@ spock33V=3.3.6-1
 # This variable is ignored in current mode builds, which include all components.
 removeComponentFromOut=
 
-lolorV=1.2-2
+lolorV=1.2.1-1
 snwflkV=2.2-2
 
 P18=18.0-1
