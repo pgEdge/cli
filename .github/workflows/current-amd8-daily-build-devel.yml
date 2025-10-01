@@ -21,6 +21,12 @@ on:
           - main
           - v25_STABLE
           - REL24_10
+          - custom
+      
+      custom_cli_branch:
+        description: "If 'custom' selected above, provide cli branch name"
+        required: false
+        type: string
 
       component:
         description: "Spock in-dev component to additionally build (e.g. spock60)"
@@ -116,7 +122,20 @@ jobs:
               echo "Clean flag is disabled"
             fi
 
-            SELECTED_CLI_BRANCH="${{ inputs.cli_branch }}"
+            # If custom cli branch is chosen, set the branch provided in text field (cannot be empty)
+            # otherwise set it to selection from the drop down.
+            if [[ "${{ inputs.cli_branch }}" == "custom" ]]; then
+              if [[ -z "${{ inputs.custom_cli_branch }}" ]]; then
+                echo "Error: custom CLI branch selected but no branch name provided."
+                exit 1
+              fi
+              SELECTED_CLI_BRANCH="${{ inputs.custom_cli_branch }}"
+              echo "Manual run: Using custom CLI branch: $SELECTED_CLI_BRANCH"
+            else
+              SELECTED_CLI_BRANCH="${{ inputs.cli_branch }}"
+              echo "Manual run: Using CLI branch: $SELECTED_CLI_BRANCH"
+            fi
+
             COMPONENT="${{ inputs.component }}"
             BRANCH="${{ inputs.branch }}"
             echo "Manual run: Component=$COMPONENT, Branch=$BRANCH, CLI Branch=$SELECTED_CLI_BRANCH"
@@ -175,7 +194,10 @@ jobs:
           git stash push -u -m "Temp stash for current build" || true
 
           echo "Switching to branch: $CLI_BRANCH"
-          git checkout "$CLI_BRANCH" || true
+          if ! git checkout "$CLI_BRANCH"; then
+            echo "Error: Invalid CLI branch name provided: $CLI_BRANCH"
+            exit 1
+          fi
           echo "Branch checkout completed"
 
       # Execute the build script and collect artifacts into src/ and bin/
