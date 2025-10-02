@@ -18,7 +18,7 @@ def exit_rm_backrest(msg):
 
 
 def pgV():
-    pg_versions = ["pg14", "pg15", "pg16", "pg17"]
+    pg_versions = ["pg14", "pg15", "pg16", "pg17","pg18"]
     os.chdir(f"{thisDir}/../")
     for pg_version in pg_versions:
         if os.path.isdir(pg_version):

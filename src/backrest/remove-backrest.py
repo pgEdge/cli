@@ -12,6 +12,9 @@ elif os.path.isdir("pg16"):
     pgV = "pg16"
 elif os.path.isdir("pg17"):
     pgV = "pg17"
+elif os.path.isdir("pg18"):
+    pgV = "pg18"
+    
 
 autostart = util.get_column("autostart", "backrest")
 if autostart == "on":

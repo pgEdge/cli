@@ -1066,7 +1066,7 @@ if "--pause" in args and not_fire:
 
 if "--pg" in args:
     pgn = str(get_next_arg("--pg"))
-    if pgn >= "14" and pgn <= "17":
+    if pgn >= "14" and pgn <= "18":
         util.setenv("pgeN", pgn)
         args.remove("--pg")
         args.remove(pgn)

@@ -10,7 +10,7 @@ from tabulate import tabulate
 
 def pgV():
     """Return the first found PostgreSQL version (v14 thru v17)."""
-    pg_versions = ["pg14", "pg15", "pg16", "pg17"]
+    pg_versions = ["pg14", "pg15", "pg16", "pg17","pg18"]
     for pg_version in pg_versions:
         if os.path.isdir(pg_version):
             return pg_version

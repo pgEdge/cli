@@ -253,7 +253,7 @@ def wildcard_component(p_component):
     data = []
     sql = (
         "SELECT component FROM components"
-        + " WHERE component in ('pg11', 'pg12', 'pg13', 'pg14', 'pg15', 'pg16', 'pg17')"
+        + " WHERE component in ('pg11', 'pg12', 'pg13', 'pg14', 'pg15', 'pg16', 'pg17','pg18')"
     )
     try:
         c = con.cursor()

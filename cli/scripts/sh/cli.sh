@@ -76,7 +76,7 @@ do
   fi
 done
 
-set_libpath "14 15 16 17"
+set_libpath "14 15 16 17 18"
 
 python3 --version > /dev/null 2>&1
 rc=$?

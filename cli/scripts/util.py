@@ -16,7 +16,7 @@ MY_LIBS = f"{MY_HOME}/hub/scripts/lib"
 MY_LITE = os.getenv("MY_LITE", None)
 BACKUP_DIR = os.path.join(MY_HOME, "data", "conf", "backup")
 BACKUP_TARGET_DIR = os.path.join(BACKUP_DIR, time.strftime("%Y%m%d%H%M"))
-VALID_PG = ["15", "16", "17"]
+VALID_PG = ["15", "16", "17","18"]
 
 import sys
 import socket
