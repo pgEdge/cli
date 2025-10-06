@@ -15,6 +15,12 @@ on:
           - v25_STABLE
           - main
           - REL24_10
+          - custom
+
+      custom_cli_branch:
+        description: "If 'custom' selected above, provide cli branch name"
+        required: false
+        type: string
 
       prefix_selector:
         description: "Choose target pgedge-devel repo sub-directory (default = MMDD, custom = your input). Packages will be at: https://pgedge-devel.s3.amazonaws.com/REPO/stable/<sub-dir>"
@@ -91,8 +97,17 @@ jobs:
             fi
 
             # Branch input
-            SELECTED_CLI_BRANCH="${{ inputs.cli_branch }}"
-            echo "Manual run: Selected CLI branch: $SELECTED_CLI_BRANCH"
+            if [[ "${{ inputs.cli_branch }}" == "custom" ]]; then
+              if [[ -z "${{ inputs.custom_cli_branch }}" ]]; then
+                echo "Error: 'custom' CLI branch selected but no branch name provided."
+                exit 1
+              fi
+              SELECTED_CLI_BRANCH="${{ inputs.custom_cli_branch }}"
+              echo "Manual run: Using custom CLI branch: $SELECTED_CLI_BRANCH"
+            else
+              SELECTED_CLI_BRANCH="${{ inputs.cli_branch }}"
+              echo "Manual run: Using predefined CLI branch: $SELECTED_CLI_BRANCH"
+            fi
           fi
 
           # Set timestamped log file
@@ -136,8 +151,12 @@ jobs:
           echo "Stashing changes (if any)..."
           git stash push -u -m "Temp stash for branch switch" || true
 
-          echo "Checking out branch: $CLI_BRANCH"
-          git checkout "$CLI_BRANCH" || true
+          echo "Switching to branch: $CLI_BRANCH"
+          if ! git checkout "$CLI_BRANCH"; then
+            echo "Error: Invalid CLI branch name provided: $CLI_BRANCH"
+            exit 1
+          fi
+          echo "Branch checkout completed"
 
       - name: Run build and push to devel repo
         id: build_to_devel
