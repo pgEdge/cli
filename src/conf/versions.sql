@@ -1,7 +1,7 @@
 
 DROP TABLE IF EXISTS hub;
 CREATE TABLE hub(v TEXT NOT NULL PRIMARY KEY, c TEXT NOT NULL, d TEXT NOT NULL);
-INSERT INTO hub VALUES ('25.2.2', '',  '20250918');
+INSERT INTO hub VALUES ('25.3.0', '',  '20251020');
 
 DROP VIEW  IF EXISTS v_versions;
 DROP VIEW  IF EXISTS v_products;
@@ -336,17 +336,17 @@ INSERT INTO releases VALUES ('spock50-pg15', 4, 'spock', 'Spock', '', 'prod', ''
 INSERT INTO releases VALUES ('spock50-pg16', 4, 'spock', 'Spock', '', 'prod', '', 1, 'POSTGRES', '', '');
 INSERT INTO releases VALUES ('spock50-pg17', 4, 'spock', 'Spock', '', 'prod', '', 1, 'POSTGRES', '', '');
 
-INSERT INTO versions VALUES ('spock50-pg15', '5.0.2-1',   'amd, arm', 1, '20250918', 'pg15', '', '');
-INSERT INTO versions VALUES ('spock50-pg16', '5.0.2-1',   'amd, arm', 1, '20250918', 'pg16', '', '');
-INSERT INTO versions VALUES ('spock50-pg17', '5.0.2-1',   'amd, arm', 1, '20250918', 'pg17', '', '');
+INSERT INTO versions VALUES ('spock50-pg15', '5.0.4-1',   'amd, arm', 1, '20251020', 'pg15', '', '');
+INSERT INTO versions VALUES ('spock50-pg16', '5.0.4-1',   'amd, arm', 1, '20251020', 'pg16', '', '');
+INSERT INTO versions VALUES ('spock50-pg17', '5.0.4-1',   'amd, arm', 1, '20251020', 'pg17', '', '');
+
+INSERT INTO versions VALUES ('spock50-pg15', '5.0.2-1',   'amd, arm', 0, '20250918', 'pg15', '', '');
+INSERT INTO versions VALUES ('spock50-pg16', '5.0.2-1',   'amd, arm', 0, '20250918', 'pg16', '', '');
+INSERT INTO versions VALUES ('spock50-pg17', '5.0.2-1',   'amd, arm', 0, '20250918', 'pg17', '', '');
 
 INSERT INTO versions VALUES ('spock50-pg15', '5.0.1-1',   'amd, arm', 0, '20250827', 'pg15', '', '');
 INSERT INTO versions VALUES ('spock50-pg16', '5.0.1-1',   'amd, arm', 0, '20250827', 'pg16', '', '');
 INSERT INTO versions VALUES ('spock50-pg17', '5.0.1-1',   'amd, arm', 0, '20250827', 'pg17', '', '');
-
-INSERT INTO versions VALUES ('spock50-pg15', '5.0.0-1',   'amd, arm', 0, '20250715', 'pg15', '', '');
-INSERT INTO versions VALUES ('spock50-pg16', '5.0.0-1',   'amd, arm', 0, '20250715', 'pg16', '', '');
-INSERT INTO versions VALUES ('spock50-pg17', '5.0.0-1',   'amd, arm', 0, '20250715', 'pg17', '', '');
 
 -- ## spock60 ###########################
 INSERT INTO releases VALUES ('spock60-pg15', 4, 'spock', 'Spock', '', 'test', '', 1, 'POSTGRES', '', '');
@@ -364,9 +364,13 @@ INSERT INTO releases VALUES ('lolor-pg15', 4, 'lolor', 'LgObjLOgicalRep', '', 'p
 INSERT INTO releases VALUES ('lolor-pg16', 4, 'lolor', 'LgObjLOgicalRep', '', 'prod', '', 1, 'POSTGRES', '', '');
 INSERT INTO releases VALUES ('lolor-pg17', 4, 'lolor', 'LgObjLOgicalRep', '', 'prod', '', 1, 'POSTGRES', '', '');
 
-INSERT INTO versions VALUES ('lolor-pg15', '1.2-2', 'amd, arm', 1, '20250815', 'pg15', '', '');
-INSERT INTO versions VALUES ('lolor-pg16', '1.2-2', 'amd, arm', 1, '20250815', 'pg16', '', '');
-INSERT INTO versions VALUES ('lolor-pg17', '1.2-2', 'amd, arm', 1, '20250815', 'pg17', '', '');
+INSERT INTO versions VALUES ('lolor-pg15', '1.2.1-1', 'amd, arm', 1, '20251020', 'pg15', '', '');
+INSERT INTO versions VALUES ('lolor-pg16', '1.2.1-1', 'amd, arm', 1, '20251020', 'pg16', '', '');
+INSERT INTO versions VALUES ('lolor-pg17', '1.2.1-1', 'amd, arm', 1, '20251020', 'pg17', '', '');
+
+INSERT INTO versions VALUES ('lolor-pg15', '1.2-2', 'amd, arm', 0, '20250815', 'pg15', '', '');
+INSERT INTO versions VALUES ('lolor-pg16', '1.2-2', 'amd, arm', 0, '20250815', 'pg16', '', '');
+INSERT INTO versions VALUES ('lolor-pg17', '1.2-2', 'amd, arm', 0, '20250815', 'pg17', '', '');
 
 -- ## PERMISSIONS #######################
 INSERT INTO projects VALUES ('permissions', 'ext', 4, 1, '', 3, 'https://github.com/cybertec-postgresql/permissions',
