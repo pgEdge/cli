@@ -4,7 +4,7 @@
 import os
 import time
 
-MY_VERSION = "25.3.0"
+MY_VERSION = "25.4.0"
 MY_CODENAME = ""
 
 DEFAULT_PG = "17"
