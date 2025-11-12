@@ -1,5 +1,5 @@
-hubV=25.3.0
-hubVV=25.3.0
+hubV=25.4.0
+hubVV=25.4.0
 
 aceV=$hubV
 kirkV=$hubV
@@ -23,13 +23,13 @@ removeComponentFromOut=spock60
 lolorV=1.2.1-1
 snwflkV=2.2-2
 
-P17=17.6-1
+P17=17.7-1
 P171=17.0-1
 
-P16=16.10-1
+P16=16.11-1
 P161=16.4-2
 
-P15=15.14-1
+P15=15.15-1
 P151=15.8-2
 
 vectorV=0.8.0-2
