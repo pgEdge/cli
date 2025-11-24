@@ -1,7 +1,7 @@
 
 DROP TABLE IF EXISTS hub;
 CREATE TABLE hub(v TEXT NOT NULL PRIMARY KEY, c TEXT NOT NULL, d TEXT NOT NULL);
-INSERT INTO hub VALUES ('25.4.0', '',  '20251113');
+INSERT INTO hub VALUES ('25.4.1', '',  '20251124');
 
 DROP VIEW  IF EXISTS v_versions;
 DROP VIEW  IF EXISTS v_products;
@@ -313,9 +313,13 @@ INSERT INTO releases VALUES ('snowflake-pg15', 4, 'snowflake', 'Snowflake', '', 
 INSERT INTO releases VALUES ('snowflake-pg16', 4, 'snowflake', 'Snowflake', '', 'prod', '', 1, 'POSTGRES', '', '');
 INSERT INTO releases VALUES ('snowflake-pg17', 4, 'snowflake', 'Snowflake', '', 'prod', '', 1, 'POSTGRES', '', '');
 
-INSERT INTO versions VALUES ('snowflake-pg15', '2.2-2', 'amd, arm', 1, '20250815', 'pg15', '', '');
-INSERT INTO versions VALUES ('snowflake-pg16', '2.2-2', 'amd, arm', 1, '20250815', 'pg16', '', '');
-INSERT INTO versions VALUES ('snowflake-pg17', '2.2-2', 'amd, arm', 1, '20250815', 'pg17', '', '');
+INSERT INTO versions VALUES ('snowflake-pg15', '2.4-1', 'amd, arm', 1, '20251124', 'pg15', '', '');
+INSERT INTO versions VALUES ('snowflake-pg16', '2.4-1', 'amd, arm', 1, '20251124', 'pg16', '', '');
+INSERT INTO versions VALUES ('snowflake-pg17', '2.4-1', 'amd, arm', 1, '20251124', 'pg17', '', '');
+
+INSERT INTO versions VALUES ('snowflake-pg15', '2.2-2', 'amd, arm', 0, '20250815', 'pg15', '', '');
+INSERT INTO versions VALUES ('snowflake-pg16', '2.2-2', 'amd, arm', 0, '20250815', 'pg16', '', '');
+INSERT INTO versions VALUES ('snowflake-pg17', '2.2-2', 'amd, arm', 0, '20250815', 'pg17', '', '');
 
 
 -- ## SPOCK (parent project) ############
