@@ -1,4 +1,4 @@
-Copyright(c) 2023 - 2025, pgEdge, Inc.
+Copyright(c) 2023 - 2026, pgEdge, Inc.
 
 Permission to use, copy, modify, and distribute this software and its
 documentation for any purpose, without fee, and without a written agreement is
