@@ -1,7 +1,7 @@
 
 DROP TABLE IF EXISTS hub;
 CREATE TABLE hub(v TEXT NOT NULL PRIMARY KEY, c TEXT NOT NULL, d TEXT NOT NULL);
-INSERT INTO hub VALUES ('25.4.1', '',  '20251124');
+INSERT INTO hub VALUES ('25.5.0', '',  '20260211');
 
 DROP VIEW  IF EXISTS v_versions;
 DROP VIEW  IF EXISTS v_products;
@@ -152,21 +152,21 @@ INSERT INTO projects VALUES ('pg', 'pge', 1, 5432, '', 1, 'https://github.com/po
 
 INSERT INTO releases VALUES ('pg15', 2, 'pg', '', '', 'prod', 
   '<font size=-1>New in <a href=https://www.postgresql.org/docs/15/release-15.html>2022</a></font>', 1, 'POSTGRES', '', '');
-INSERT INTO versions VALUES ('pg15', '15.15-1',  'amd, arm', 1, '20251113','', '', '');
+INSERT INTO versions VALUES ('pg15', '15.16-1',  'amd, arm', 1, '20260211','', '', '');
+INSERT INTO versions VALUES ('pg15', '15.15-1',  'amd, arm', 0, '20251113','', '', '');
 INSERT INTO versions VALUES ('pg15', '15.14-1',  'amd, arm', 0, '20250815','', '', '');
-INSERT INTO versions VALUES ('pg15', '15.13-2',  'amd, arm', 0, '20250715','', '', '');
 
 INSERT INTO releases VALUES ('pg16', 2, 'pg', '', '', 'prod', 
   '<font size=-1>New in <a href=https://www.postgresql.org/docs/16/release-16.html>2023!</a></font>', 1, 'POSTGRES', '', '');
-INSERT INTO versions VALUES ('pg16', '16.11-1',  'amd, arm', 1, '20251113','', '', '');
+INSERT INTO versions VALUES ('pg16', '16.12-1',  'amd, arm', 1, '20260211','', '', '');
+INSERT INTO versions VALUES ('pg16', '16.11-1',  'amd, arm', 0, '20251113','', '', '');
 INSERT INTO versions VALUES ('pg16', '16.10-1',  'amd, arm', 0, '20250815','', '', '');
-INSERT INTO versions VALUES ('pg16', '16.9-2',  'amd, arm', 0, '20250715','', '', '');
 
 INSERT INTO releases VALUES ('pg17', 2, 'pg', '', '', 'prod', 
   '<font size=-1>New in <a href=https://www.postgresql.org/docs/17/release-17.html>2024!</a></font>', 1, 'POSTGRES', '', '');
-INSERT INTO versions VALUES ('pg17', '17.7-1',    'amd, arm', 1, '20251113','', '', '');
+INSERT INTO versions VALUES ('pg17', '17.8-1',    'amd, arm', 1, '20260211','', '', '');
+INSERT INTO versions VALUES ('pg17', '17.7-1',    'amd, arm', 0, '20251113','', '', '');
 INSERT INTO versions VALUES ('pg17', '17.6-1',    'amd, arm', 0, '20250815','', '', '');
-INSERT INTO versions VALUES ('pg17', '17.5-2',    'amd, arm', 0, '20250715','', '', '');
 
 -- ## ORAFCE #############################
 INSERT INTO projects VALUES ('orafce', 'ext', 4, 0, '', 0, 'https://github.com/orafce/orafce/releases',
@@ -295,9 +295,13 @@ INSERT INTO releases VALUES ('vector-pg15', 4, 'vector', 'pgVector', '', 'prod',
 INSERT INTO releases VALUES ('vector-pg16', 4, 'vector', 'pgVector', '', 'prod', '', 1, 'POSTGRES', '', '');
 INSERT INTO releases VALUES ('vector-pg17', 4, 'vector', 'pgVector', '', 'prod', '', 1, 'POSTGRES', '', '');
 
-INSERT INTO versions VALUES ('vector-pg15', '0.8.0-2', 'amd, arm', 1, '20250815', 'pg15', '', '');
-INSERT INTO versions VALUES ('vector-pg16', '0.8.0-2', 'amd, arm', 1, '20250815', 'pg16', '', '');
-INSERT INTO versions VALUES ('vector-pg17', '0.8.0-2', 'amd, arm', 1, '20250815', 'pg17', '', '');
+INSERT INTO versions VALUES ('vector-pg15', '0.8.1-1', 'amd, arm', 1, '20260211', 'pg15', '', '');
+INSERT INTO versions VALUES ('vector-pg16', '0.8.1-1', 'amd, arm', 1, '20260211', 'pg16', '', '');
+INSERT INTO versions VALUES ('vector-pg17', '0.8.1-1', 'amd, arm', 1, '20260211', 'pg17', '', '');
+
+INSERT INTO versions VALUES ('vector-pg15', '0.8.0-2', 'amd, arm', 0, '20250815', 'pg15', '', '');
+INSERT INTO versions VALUES ('vector-pg16', '0.8.0-2', 'amd, arm', 0, '20250815', 'pg16', '', '');
+INSERT INTO versions VALUES ('vector-pg17', '0.8.0-2', 'amd, arm', 0, '20250815', 'pg17', '', '');
 
 INSERT INTO versions VALUES ('vector-pg15', '0.8.0-1', 'amd, arm', 0, '20241101', 'pg15', '', '');
 INSERT INTO versions VALUES ('vector-pg16', '0.8.0-1', 'amd, arm', 0, '20241101', 'pg16', '', '');
@@ -342,17 +346,17 @@ INSERT INTO releases VALUES ('spock50-pg15', 4, 'spock', 'Spock', '', 'prod', ''
 INSERT INTO releases VALUES ('spock50-pg16', 4, 'spock', 'Spock', '', 'prod', '', 1, 'POSTGRES', '', '');
 INSERT INTO releases VALUES ('spock50-pg17', 4, 'spock', 'Spock', '', 'prod', '', 1, 'POSTGRES', '', '');
 
-INSERT INTO versions VALUES ('spock50-pg15', '5.0.4-1',   'amd, arm', 1, '20251020', 'pg15', '', '');
-INSERT INTO versions VALUES ('spock50-pg16', '5.0.4-1',   'amd, arm', 1, '20251020', 'pg16', '', '');
-INSERT INTO versions VALUES ('spock50-pg17', '5.0.4-1',   'amd, arm', 1, '20251020', 'pg17', '', '');
+INSERT INTO versions VALUES ('spock50-pg15', '5.0.5-1',   'amd, arm', 1, '20260211', 'pg15', '', '');
+INSERT INTO versions VALUES ('spock50-pg16', '5.0.5-1',   'amd, arm', 1, '20260211', 'pg16', '', '');
+INSERT INTO versions VALUES ('spock50-pg17', '5.0.5-1',   'amd, arm', 1, '20260211', 'pg17', '', '');
+
+INSERT INTO versions VALUES ('spock50-pg15', '5.0.4-1',   'amd, arm', 0, '20251020', 'pg15', '', '');
+INSERT INTO versions VALUES ('spock50-pg16', '5.0.4-1',   'amd, arm', 0, '20251020', 'pg16', '', '');
+INSERT INTO versions VALUES ('spock50-pg17', '5.0.4-1',   'amd, arm', 0, '20251020', 'pg17', '', '');
 
 INSERT INTO versions VALUES ('spock50-pg15', '5.0.2-1',   'amd, arm', 0, '20250918', 'pg15', '', '');
 INSERT INTO versions VALUES ('spock50-pg16', '5.0.2-1',   'amd, arm', 0, '20250918', 'pg16', '', '');
 INSERT INTO versions VALUES ('spock50-pg17', '5.0.2-1',   'amd, arm', 0, '20250918', 'pg17', '', '');
-
-INSERT INTO versions VALUES ('spock50-pg15', '5.0.1-1',   'amd, arm', 0, '20250827', 'pg15', '', '');
-INSERT INTO versions VALUES ('spock50-pg16', '5.0.1-1',   'amd, arm', 0, '20250827', 'pg16', '', '');
-INSERT INTO versions VALUES ('spock50-pg17', '5.0.1-1',   'amd, arm', 0, '20250827', 'pg17', '', '');
 
 -- ## LOLOR #############################
 INSERT INTO projects VALUES ('lolor', 'pge', 4, 0, '', 1, 'https://github.com/pgedge/lolor/tags',
@@ -361,9 +365,13 @@ INSERT INTO releases VALUES ('lolor-pg15', 4, 'lolor', 'LgObjLOgicalRep', '', 'p
 INSERT INTO releases VALUES ('lolor-pg16', 4, 'lolor', 'LgObjLOgicalRep', '', 'prod', '', 1, 'POSTGRES', '', '');
 INSERT INTO releases VALUES ('lolor-pg17', 4, 'lolor', 'LgObjLOgicalRep', '', 'prod', '', 1, 'POSTGRES', '', '');
 
-INSERT INTO versions VALUES ('lolor-pg15', '1.2.1-1', 'amd, arm', 1, '20251020', 'pg15', '', '');
-INSERT INTO versions VALUES ('lolor-pg16', '1.2.1-1', 'amd, arm', 1, '20251020', 'pg16', '', '');
-INSERT INTO versions VALUES ('lolor-pg17', '1.2.1-1', 'amd, arm', 1, '20251020', 'pg17', '', '');
+INSERT INTO versions VALUES ('lolor-pg15', '1.2.2-1', 'amd, arm', 1, '20260211', 'pg15', '', '');
+INSERT INTO versions VALUES ('lolor-pg16', '1.2.2-1', 'amd, arm', 1, '20260211', 'pg16', '', '');
+INSERT INTO versions VALUES ('lolor-pg17', '1.2.2-1', 'amd, arm', 1, '20260211', 'pg17', '', '');
+
+INSERT INTO versions VALUES ('lolor-pg15', '1.2.1-1', 'amd, arm', 0, '20251020', 'pg15', '', '');
+INSERT INTO versions VALUES ('lolor-pg16', '1.2.1-1', 'amd, arm', 0, '20251020', 'pg16', '', '');
+INSERT INTO versions VALUES ('lolor-pg17', '1.2.1-1', 'amd, arm', 0, '20251020', 'pg17', '', '');
 
 INSERT INTO versions VALUES ('lolor-pg15', '1.2-2', 'amd, arm', 0, '20250815', 'pg15', '', '');
 INSERT INTO versions VALUES ('lolor-pg16', '1.2-2', 'amd, arm', 0, '20250815', 'pg16', '', '');
@@ -396,9 +404,13 @@ INSERT INTO releases VALUES ('postgis-pg15', 3, 'postgis', 'PostGIS', '', 'prod'
 INSERT INTO releases VALUES ('postgis-pg16', 3, 'postgis', 'PostGIS', '', 'prod', '', 1, 'GPLv2', '', '');
 INSERT INTO releases VALUES ('postgis-pg17', 3, 'postgis', 'PostGIS', '', 'prod', '', 1, 'GPLv2', '', '');
 
-INSERT INTO versions VALUES ('postgis-pg15', '3.5.3-1', 'amd, arm', 1, '20250815', 'pg15', '', 'https://git.osgeo.org/gitea/postgis/postgis/raw/tag/3.5.3/NEWS');
-INSERT INTO versions VALUES ('postgis-pg16', '3.5.3-1', 'amd, arm', 1, '20250815', 'pg16', '', 'https://git.osgeo.org/gitea/postgis/postgis/raw/tag/3.5.3/NEWS');
-INSERT INTO versions VALUES ('postgis-pg17', '3.5.3-1', 'amd, arm', 1, '20250815', 'pg17', '', 'https://git.osgeo.org/gitea/postgis/postgis/raw/tag/3.5.3/NEWS');
+INSERT INTO versions VALUES ('postgis-pg15', '3.5.4-1', 'amd, arm', 1, '20260211', 'pg15', '', '');
+INSERT INTO versions VALUES ('postgis-pg16', '3.5.4-1', 'amd, arm', 1, '20260211', 'pg16', '', '');
+INSERT INTO versions VALUES ('postgis-pg17', '3.5.4-1', 'amd, arm', 1, '20260211', 'pg17', '', '');
+
+INSERT INTO versions VALUES ('postgis-pg15', '3.5.3-1', 'amd, arm', 0, '20250815', 'pg15', '', 'https://git.osgeo.org/gitea/postgis/postgis/raw/tag/3.5.3/NEWS');
+INSERT INTO versions VALUES ('postgis-pg16', '3.5.3-1', 'amd, arm', 0, '20250815', 'pg16', '', 'https://git.osgeo.org/gitea/postgis/postgis/raw/tag/3.5.3/NEWS');
+INSERT INTO versions VALUES ('postgis-pg17', '3.5.3-1', 'amd, arm', 0, '20250815', 'pg17', '', 'https://git.osgeo.org/gitea/postgis/postgis/raw/tag/3.5.3/NEWS');
 
 -- ## PARTMAN ###########################
 INSERT INTO projects VALUES ('partman', 'ext', 4, 0, '', 4, 'https://github.com/pgpartman/pg_partman/tags',
@@ -434,14 +446,16 @@ INSERT INTO versions VALUES ('pgcat', '1.2.0', 'amd, arm', 1, '20240905', '', 'E
 INSERT INTO projects VALUES ('bouncer', 'pge', 11, 5433, '', 3, 'http://pgbouncer.org',
   'bouncer',  0, 'bouncer.png', 'Lightweight Connnection Pooler', 'http://pgbouncer.org', 'pg_bouncer, pgbouncer');
 INSERT INTO releases VALUES ('bouncer', 2, 'bouncer',  'pgBouncer', '', 'test', '', 1, 'POSTGRES', '', '');
-INSERT INTO versions VALUES ('bouncer', '1.24.1-1', 'amd, arm', 1, '20250815', '', 'EL', '');
+INSERT INTO versions VALUES ('bouncer', '1.25.1-1', 'amd, arm', 1, '20260211', '', 'EL', '');
+INSERT INTO versions VALUES ('bouncer', '1.24.1-1', 'amd, arm', 0, '20250815', '', 'EL', '');
 
 -- ## BACKREST ##########################
 INSERT INTO projects VALUES ('backrest', 'pge', 11, 0, '', 3, 'http://pgbackrest.org',
   'backrest',  0, 'backrest.png', 'Backup & Restore', 'http://pgbackrest.org', 'pg_backrest, pgbackrest');
 INSERT INTO releases VALUES ('backrest', 2, 'backrest',  'pgBackRest', '', 'test', '', 1, 'MIT', 'EL', '');
 
-INSERT INTO versions VALUES ('backrest', '2.56.0-1', 'amd, arm', 1, '20250815', '', '', '');
+INSERT INTO versions VALUES ('backrest', '2.58.0-1', 'amd, arm', 1, '20260211', '', '', '');
+INSERT INTO versions VALUES ('backrest', '2.56.0-1', 'amd, arm', 0, '20250815', '', '', '');
 INSERT INTO versions VALUES ('backrest', '2.53.1-1', 'amd, arm', 0, '20240912', '', '', '');
 
 -- ## PATRONI ###########################

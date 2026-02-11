@@ -1,5 +1,5 @@
-hubV=25.4.1
-hubVV=25.4.1
+hubV=25.5.0
+hubVV=25.5.0
 
 aceV=$hubV
 kirkV=$hubV
@@ -10,7 +10,7 @@ ctlibsV=1.7
 
 spock60V=6.0.0-devel-1
 
-spock50V=5.0.4-1
+spock50V=5.0.5-1
 
 spock40V=4.0.10-1
 
@@ -20,24 +20,24 @@ spock33V=3.3.6-1
 # This variable is ignored in current mode builds, which include all components.
 removeComponentFromOut=spock60
 
-lolorV=1.2.1-1
+lolorV=1.2.2-1
 snwflkV=2.4-1
 
-P17=17.7-1
+P17=17.8-1
 P171=17.0-1
 
-P16=16.11-1
+P16=16.12-1
 P161=16.4-2
 
-P15=15.15-1
+P15=15.16-1
 P151=15.8-2
 
-vectorV=0.8.0-2
+vectorV=0.8.1-1
 
-bouncerV=1.24.1-1
+bouncerV=1.25.1-1
 catV=1.2.0
 prompgexpV=0.15.0
-backrestV=2.56.0-1
+backrestV=2.58.0-1
 wal2jV=2.6.0-2
 
 citusV=13.1.0-1
@@ -62,7 +62,7 @@ audit15V=1.7.1-1
 audit16V=16.1-1
 audit17V=17.1-1
 
-postgisV=3.5.3-1
+postgisV=3.5.4-1
 
 debuggerV=1.8-2
 cronV=1.6.4-2
