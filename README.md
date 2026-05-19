@@ -1,5 +1,16 @@
 # pgEdge Distributed Postgres CLI
 
+> [!IMPORTANT]
+> This project is deprecated and no longer actively developed. ARM support
+> has been discontinued. We will continue to produce maintenance releases
+> for x86 only.
+>
+> We recommend migrating to one of the following alternatives:
+>
+> - [**pgEdge Control Plane**](https://docs.pgedge.com/control-plane) - Declarative API for deploying and managing Postgres clusters on VMs and bare metal.
+> - [**pgEdge Ansible**](https://docs.pgedge.com/ansible) - Automated Postgres cluster deployment and configuration management with Ansible playbooks.
+> - [**pgEdge Enterprise Packages**](https://docs.pgedge.com/enterprise) - FIPS-enabled, hardened Postgres packages for Enterprise Linux, Debian, and Ubuntu.
+
 The pgEdge Distributed Postgres Command Line Interface (CLI) for managing Postgres and supported components.
 
 [Release notes](https://docs.pgedge.com/platform/pgedge_rel_notes) and further documentation are available on [docs.pgedge.com](https://docs.pgedge.com)
