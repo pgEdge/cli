@@ -349,13 +349,13 @@ INSERT INTO releases VALUES ('spock50-pg15', 4, 'spock', 'Spock', '', 'prod', ''
 INSERT INTO releases VALUES ('spock50-pg16', 4, 'spock', 'Spock', '', 'prod', '', 1, 'POSTGRES', '', '');
 INSERT INTO releases VALUES ('spock50-pg17', 4, 'spock', 'Spock', '', 'prod', '', 1, 'POSTGRES', '', '');
 
-INSERT INTO versions VALUES ('spock50-pg15', '5.0.9-rc.1-1',   'amd', 0, '20260527', 'pg15', '', '');
-INSERT INTO versions VALUES ('spock50-pg16', '5.0.9-rc.1-1',   'amd', 0, '20260527', 'pg16', '', '');
-INSERT INTO versions VALUES ('spock50-pg17', '5.0.9-rc.1-1',   'amd', 0, '20260527', 'pg17', '', '');
+INSERT INTO versions VALUES ('spock50-pg15', '5.0.9-rc.1-1',   'amd', 1, '20260527', 'pg15', '', '');
+INSERT INTO versions VALUES ('spock50-pg16', '5.0.9-rc.1-1',   'amd', 1, '20260527', 'pg16', '', '');
+INSERT INTO versions VALUES ('spock50-pg17', '5.0.9-rc.1-1',   'amd', 1, '20260527', 'pg17', '', '');
 
-INSERT INTO versions VALUES ('spock50-pg15', '5.0.8-1',   'amd', 1, '20260514', 'pg15', '', '');
-INSERT INTO versions VALUES ('spock50-pg16', '5.0.8-1',   'amd', 1, '20260514', 'pg16', '', '');
-INSERT INTO versions VALUES ('spock50-pg17', '5.0.8-1',   'amd', 1, '20260514', 'pg17', '', '');
+INSERT INTO versions VALUES ('spock50-pg15', '5.0.8-1',   'amd', 0, '20260514', 'pg15', '', '');
+INSERT INTO versions VALUES ('spock50-pg16', '5.0.8-1',   'amd', 0, '20260514', 'pg16', '', '');
+INSERT INTO versions VALUES ('spock50-pg17', '5.0.8-1',   'amd', 0, '20260514', 'pg17', '', '');
 
 INSERT INTO versions VALUES ('spock50-pg15', '5.0.7-1',   'amd, arm', 0, '20260504', 'pg15', '', '');
 INSERT INTO versions VALUES ('spock50-pg16', '5.0.7-1',   'amd, arm', 0, '20260504', 'pg16', '', '');
