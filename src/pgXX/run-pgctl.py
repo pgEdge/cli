@@ -28,5 +28,6 @@ logfile = util.get_column("logdir", pgver) + os.sep + "postgres.log"
 
 util.read_env_file(pgver)
 
-cmd = pg_ctl + ' start -s -w -D "' + datadir + '" ' + '-l "' + logfile + '"'
+# Wait enough before exit
+cmd = pg_ctl + ' start -s -w -t 600 -D "' + datadir + '" ' + '-l "' + logfile + '"'
 util.system(cmd)
