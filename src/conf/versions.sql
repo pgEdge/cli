@@ -1,7 +1,7 @@
 
 DROP TABLE IF EXISTS hub;
 CREATE TABLE hub(v TEXT NOT NULL PRIMARY KEY, c TEXT NOT NULL, d TEXT NOT NULL);
-INSERT INTO hub VALUES ('25.3.0', '',  '20251020');
+INSERT INTO hub VALUES ('25.4.1', '',  '20251124');
 
 DROP VIEW  IF EXISTS v_versions;
 DROP VIEW  IF EXISTS v_products;
@@ -152,17 +152,20 @@ INSERT INTO projects VALUES ('pg', 'pge', 1, 5432, '', 1, 'https://github.com/po
 
 INSERT INTO releases VALUES ('pg15', 2, 'pg', '', '', 'prod', 
   '<font size=-1>New in <a href=https://www.postgresql.org/docs/15/release-15.html>2022</a></font>', 1, 'POSTGRES', '', '');
-INSERT INTO versions VALUES ('pg15', '15.14-1',  'amd, arm', 1, '20250815','', '', '');
+INSERT INTO versions VALUES ('pg15', '15.15-1',  'amd, arm', 1, '20251113','', '', '');
+INSERT INTO versions VALUES ('pg15', '15.14-1',  'amd, arm', 0, '20250815','', '', '');
 INSERT INTO versions VALUES ('pg15', '15.13-2',  'amd, arm', 0, '20250715','', '', '');
 
 INSERT INTO releases VALUES ('pg16', 2, 'pg', '', '', 'prod', 
   '<font size=-1>New in <a href=https://www.postgresql.org/docs/16/release-16.html>2023!</a></font>', 1, 'POSTGRES', '', '');
-INSERT INTO versions VALUES ('pg16', '16.10-1',  'amd, arm', 1, '20250815','', '', '');
+INSERT INTO versions VALUES ('pg16', '16.11-1',  'amd, arm', 1, '20251113','', '', '');
+INSERT INTO versions VALUES ('pg16', '16.10-1',  'amd, arm', 0, '20250815','', '', '');
 INSERT INTO versions VALUES ('pg16', '16.9-2',  'amd, arm', 0, '20250715','', '', '');
 
 INSERT INTO releases VALUES ('pg17', 2, 'pg', '', '', 'prod', 
   '<font size=-1>New in <a href=https://www.postgresql.org/docs/17/release-17.html>2024!</a></font>', 1, 'POSTGRES', '', '');
-INSERT INTO versions VALUES ('pg17', '17.6-1',    'amd, arm', 1, '20250815','', '', '');
+INSERT INTO versions VALUES ('pg17', '17.7-1',    'amd, arm', 1, '20251113','', '', '');
+INSERT INTO versions VALUES ('pg17', '17.6-1',    'amd, arm', 0, '20250815','', '', '');
 INSERT INTO versions VALUES ('pg17', '17.5-2',    'amd, arm', 0, '20250715','', '', '');
 
 -- ## ORAFCE #############################
@@ -310,9 +313,13 @@ INSERT INTO releases VALUES ('snowflake-pg15', 4, 'snowflake', 'Snowflake', '', 
 INSERT INTO releases VALUES ('snowflake-pg16', 4, 'snowflake', 'Snowflake', '', 'prod', '', 1, 'POSTGRES', '', '');
 INSERT INTO releases VALUES ('snowflake-pg17', 4, 'snowflake', 'Snowflake', '', 'prod', '', 1, 'POSTGRES', '', '');
 
-INSERT INTO versions VALUES ('snowflake-pg15', '2.2-2', 'amd, arm', 1, '20250815', 'pg15', '', '');
-INSERT INTO versions VALUES ('snowflake-pg16', '2.2-2', 'amd, arm', 1, '20250815', 'pg16', '', '');
-INSERT INTO versions VALUES ('snowflake-pg17', '2.2-2', 'amd, arm', 1, '20250815', 'pg17', '', '');
+INSERT INTO versions VALUES ('snowflake-pg15', '2.4-1', 'amd, arm', 1, '20251124', 'pg15', '', '');
+INSERT INTO versions VALUES ('snowflake-pg16', '2.4-1', 'amd, arm', 1, '20251124', 'pg16', '', '');
+INSERT INTO versions VALUES ('snowflake-pg17', '2.4-1', 'amd, arm', 1, '20251124', 'pg17', '', '');
+
+INSERT INTO versions VALUES ('snowflake-pg15', '2.2-2', 'amd, arm', 0, '20250815', 'pg15', '', '');
+INSERT INTO versions VALUES ('snowflake-pg16', '2.2-2', 'amd, arm', 0, '20250815', 'pg16', '', '');
+INSERT INTO versions VALUES ('snowflake-pg17', '2.2-2', 'amd, arm', 0, '20250815', 'pg17', '', '');
 
 
 -- ## SPOCK (parent project) ############
