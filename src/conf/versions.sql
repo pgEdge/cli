@@ -1,7 +1,7 @@
 
 DROP TABLE IF EXISTS hub;
 CREATE TABLE hub(v TEXT NOT NULL PRIMARY KEY, c TEXT NOT NULL, d TEXT NOT NULL);
-INSERT INTO hub VALUES ('25.6.1', '',  '20260609');
+INSERT INTO hub VALUES ('25.6.1', '',  '20260624');
 
 DROP VIEW  IF EXISTS v_versions;
 DROP VIEW  IF EXISTS v_products;
@@ -349,17 +349,17 @@ INSERT INTO releases VALUES ('spock50-pg15', 4, 'spock', 'Spock', '', 'prod', ''
 INSERT INTO releases VALUES ('spock50-pg16', 4, 'spock', 'Spock', '', 'prod', '', 1, 'POSTGRES', '', '');
 INSERT INTO releases VALUES ('spock50-pg17', 4, 'spock', 'Spock', '', 'prod', '', 1, 'POSTGRES', '', '');
 
-INSERT INTO versions VALUES ('spock50-pg15', '5.0.9-1',   'amd', 1, '20260609', 'pg15', '', '');
-INSERT INTO versions VALUES ('spock50-pg16', '5.0.9-1',   'amd', 1, '20260609', 'pg16', '', '');
-INSERT INTO versions VALUES ('spock50-pg17', '5.0.9-1',   'amd', 1, '20260609', 'pg17', '', '');
+INSERT INTO versions VALUES ('spock50-pg15', '5.0.10-rc.1-1',   'amd', 1, '20260624', 'pg15', '', '');
+INSERT INTO versions VALUES ('spock50-pg16', '5.0.10-rc.1-1',   'amd', 1, '20260624', 'pg16', '', '');
+INSERT INTO versions VALUES ('spock50-pg17', '5.0.10-rc.1-1',   'amd', 1, '20260624', 'pg17', '', '');
+
+INSERT INTO versions VALUES ('spock50-pg15', '5.0.9-1',   'amd', 0, '20260609', 'pg15', '', '');
+INSERT INTO versions VALUES ('spock50-pg16', '5.0.9-1',   'amd', 0, '20260609', 'pg16', '', '');
+INSERT INTO versions VALUES ('spock50-pg17', '5.0.9-1',   'amd', 0, '20260609', 'pg17', '', '');
 
 INSERT INTO versions VALUES ('spock50-pg15', '5.0.8-1',   'amd', 0, '20260514', 'pg15', '', '');
 INSERT INTO versions VALUES ('spock50-pg16', '5.0.8-1',   'amd', 0, '20260514', 'pg16', '', '');
 INSERT INTO versions VALUES ('spock50-pg17', '5.0.8-1',   'amd', 0, '20260514', 'pg17', '', '');
-
-INSERT INTO versions VALUES ('spock50-pg15', '5.0.7-1',   'amd, arm', 0, '20260504', 'pg15', '', '');
-INSERT INTO versions VALUES ('spock50-pg16', '5.0.7-1',   'amd, arm', 0, '20260504', 'pg16', '', '');
-INSERT INTO versions VALUES ('spock50-pg17', '5.0.7-1',   'amd, arm', 0, '20260504', 'pg17', '', '');
 
 INSERT INTO versions VALUES ('spock50-pg15', '5.0.6-1',   'amd, arm', 0, '20260305', 'pg15', '', '');
 INSERT INTO versions VALUES ('spock50-pg16', '5.0.6-1',   'amd, arm', 0, '20260305', 'pg16', '', '');
