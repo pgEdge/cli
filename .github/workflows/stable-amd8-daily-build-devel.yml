@@ -9,9 +9,12 @@ on:
       cli_branch:
         description: "Select the CLI branch to build from"
         required: true
-        default: v25_STABLE
+        # Temporary: default to the feature branch for output_plugin_libraries
+        # test builds. Do not merge this branch to v25_STABLE.
+        default: feature/output-plugin-libraries-spock-output
         type: choice
         options:
+          - feature/output-plugin-libraries-spock-output
           - v25_STABLE
           - main
           - REL24_10
