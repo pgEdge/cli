@@ -206,6 +206,89 @@ def guc_value_as_bool(guc_value):
 _SPOCK5_NAME_RE = re.compile(r"^spock5(?:0)?(?:-pg\d+)?$", re.IGNORECASE)
 _SPOCK5_VER_RE  = re.compile(r"^5\.", re.IGNORECASE)
 
+# PG's Nov-2025 security releases added the output_plugin_libraries allow-list
+# (default 'pgoutput, test_decoding'). spock_output has to be permitted or Spock
+# can't create its replication slot. Minimum affected minor per major:
+_OUTPUT_PLUGIN_MIN_MINOR = {15: 19, 16: 15, 17: 11}
+_SPOCK_OUTPUT_PLUGIN     = "spock_output"
+# Stock plugins seeded when the GUC isn't configured at all, so we never drop
+# them while adding spock_output.
+_DEFAULT_OUTPUT_PLUGINS  = "pgoutput, test_decoding"
+
+
+def pg_minor_needs_output_plugin(pg_comp):
+    """
+    True when pg_comp's installed minor is at/above the release that introduced
+    the output_plugin_libraries allow-list (PG 15.19 / 16.15 / 17.11+).
+    """
+    ver = meta.get_version(pg_comp)
+    if not ver:
+        return False
+    try:
+        v = Version.coerce(str(ver))
+    except Exception:
+        return False
+    min_minor = _OUTPUT_PLUGIN_MIN_MINOR.get(v.major)
+    if min_minor is None:
+        return False
+    return v.minor >= min_minor
+
+
+def spock5_installed_for_pg(pg_comp):
+    """
+    True when a Spock 5.x extension is installed for this specific PG major
+    (e.g. spock50-pg17 for pg17). Scoped by the -pgNN suffix so side-by-side
+    PG installs don't cross-trigger.
+    """
+    try:
+        c = cL.cursor()
+        c.execute(
+            "SELECT 1 FROM components "
+            "WHERE component LIKE ? AND version LIKE '5.%' LIMIT 1",
+            ["spock5%-" + str(pg_comp)],
+        )
+        return c.fetchone() is not None
+    except Exception:
+        return False
+
+
+def ensure_spock_output_plugin(pg_comp):
+    """
+    Make sure output_plugin_libraries permits spock_output on pg_comp, preserving
+    anything already configured. No-op when spock_output is already present; when
+    the parameter isn't set at all (e.g. an upgraded conf that predates it) the
+    stock plugins are seeded alongside spock_output. Writes postgresql.conf only;
+    the new value is picked up by the restart the caller already performs.
+    """
+    current = get_guc_value(pg_comp, "output_plugin_libraries")
+
+    if current:
+        if _SPOCK_OUTPUT_PLUGIN in current.replace(",", " ").split():
+            return
+        new_val = current.strip() + ", " + _SPOCK_OUTPUT_PLUGIN
+    else:
+        new_val = _DEFAULT_OUTPUT_PLUGINS + ", " + _SPOCK_OUTPUT_PLUGIN
+
+    message("Allow-listing " + _SPOCK_OUTPUT_PLUGIN + " in output_plugin_libraries for " + str(pg_comp))
+    # new_val already carries every existing entry, so replace the line wholesale.
+    change_pgconf_keyval(pg_comp, "output_plugin_libraries", new_val, True)
+
+
+def maybe_enable_spock_output(pg_comp, require_spock_installed=False):
+    """
+    Single gate for the spock_output / output_plugin_libraries handling. Only
+    acts when pg_comp is on an affected PG minor; when require_spock_installed is
+    set (the PG-upgrade path) it also confirms Spock 5.x is installed for this
+    same PG major first. Everything is scoped to pg_comp, so side-by-side PG
+    majors are handled independently.
+    """
+    if not pg_minor_needs_output_plugin(pg_comp):
+        return
+    if require_spock_installed and not spock5_installed_for_pg(pg_comp):
+        return
+    ensure_spock_output_plugin(pg_comp)
+
+
 def validate_spock_upgrade(spock_component):
     """
     Validate Spock↔PostgreSQL compatibility for an upcoming Spock 5 install.
@@ -1276,6 +1359,11 @@ def config_extension(p_pg=None, p_comp=None):
                 message(f"skipping bad extension metadata \n  '{df_l}'")
             else:
                 change_pgconf_keyval(p_pg, str(df_l[0]), str(df_l[1]), True)
+
+    # Installing/upgrading Spock 5.x on an affected PG minor: allow-list
+    # spock_output before create_extension() drives the restart below.
+    if _SPOCK5_NAME_RE.match(str(p_comp)):
+        maybe_enable_spock_output(pgV)
 
     rc = create_extension(p_pg, p_ext=preload_name, p_extension=extension_name, p_enable=True)
     if rc is True:

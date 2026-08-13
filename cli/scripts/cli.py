@@ -542,6 +542,10 @@ def upgrade_component(p_comp):
     os.environ[p_comp + "_update_version"] = update_version
     if rc == 0:
         meta.update_component_version(p_comp, update_version)
+        # Upgrading base Postgres to an affected minor: if Spock 5.x is already
+        # installed for this PG, allow-list spock_output before the restart below.
+        if re.match(r"^pg\d+$", p_comp):
+            util.maybe_enable_spock_output(p_comp, require_spock_installed=True)
         util.run_script(p_comp, "update-" + p_comp, "update")
         if isJSON:
             msg = (
