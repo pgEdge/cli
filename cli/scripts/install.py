@@ -3,7 +3,7 @@
 
 import sys, os, tarfile, platform
 
-VER = "25.6.3"
+VER = "25.7.0"
 REPO = os.getenv("REPO", "https://downloads.pgedge.com/platform/repos/download")
 
 if sys.version_info < (3, 9):
