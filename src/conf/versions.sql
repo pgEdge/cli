@@ -1,7 +1,7 @@
 
 DROP TABLE IF EXISTS hub;
 CREATE TABLE hub(v TEXT NOT NULL PRIMARY KEY, c TEXT NOT NULL, d TEXT NOT NULL);
-INSERT INTO hub VALUES ('25.6.1', '',  '20260624');
+INSERT INTO hub VALUES ('25.7.0', '',  '20260624');
 
 DROP VIEW  IF EXISTS v_versions;
 DROP VIEW  IF EXISTS v_products;
@@ -152,21 +152,24 @@ INSERT INTO projects VALUES ('pg', 'pge', 1, 5432, '', 1, 'https://github.com/po
 
 INSERT INTO releases VALUES ('pg15', 2, 'pg', '', '', 'prod', 
   '<font size=-1>New in <a href=https://www.postgresql.org/docs/15/release-15.html>2022</a></font>', 1, 'POSTGRES', '', '');
-INSERT INTO versions VALUES ('pg15', '15.18-1',  'amd', 1, '20260514','', '', '');
+INSERT INTO versions VALUES ('pg15', '15.19-1',  'amd', 1, '20260714','', '', '');
+INSERT INTO versions VALUES ('pg15', '15.18-1',  'amd', 0, '20260514','', '', '');
 INSERT INTO versions VALUES ('pg15', '15.17-1',  'amd, arm', 0, '20260226','', '', '');
 INSERT INTO versions VALUES ('pg15', '15.16-1',  'amd, arm', 0, '20260211','', '', '');
 INSERT INTO versions VALUES ('pg15', '15.15-1',  'amd, arm', 0, '20251113','', '', '');
 
 INSERT INTO releases VALUES ('pg16', 2, 'pg', '', '', 'prod', 
   '<font size=-1>New in <a href=https://www.postgresql.org/docs/16/release-16.html>2023!</a></font>', 1, 'POSTGRES', '', '');
-INSERT INTO versions VALUES ('pg16', '16.14-1',  'amd', 1, '20260514','', '', '');
+INSERT INTO versions VALUES ('pg16', '16.15-1',  'amd', 1, '20260714','', '', '');
+INSERT INTO versions VALUES ('pg16', '16.14-1',  'amd', 0, '20260514','', '', '');
 INSERT INTO versions VALUES ('pg16', '16.13-1',  'amd, arm', 0, '20260226','', '', '');
 INSERT INTO versions VALUES ('pg16', '16.12-1',  'amd, arm', 0, '20260211','', '', '');
 INSERT INTO versions VALUES ('pg16', '16.11-1',  'amd, arm', 0, '20251113','', '', '');
 
 INSERT INTO releases VALUES ('pg17', 2, 'pg', '', '', 'prod', 
   '<font size=-1>New in <a href=https://www.postgresql.org/docs/17/release-17.html>2024!</a></font>', 1, 'POSTGRES', '', '');
-INSERT INTO versions VALUES ('pg17', '17.10-1',    'amd', 1, '20260514','', '', '');
+INSERT INTO versions VALUES ('pg17', '17.11-1',    'amd', 1, '20260714','', '', '');
+INSERT INTO versions VALUES ('pg17', '17.10-1',    'amd', 0, '20260514','', '', '');
 INSERT INTO versions VALUES ('pg17', '17.9-1',    'amd, arm', 0, '20260226','', '', '');
 INSERT INTO versions VALUES ('pg17', '17.8-1',    'amd, arm', 0, '20260211','', '', '');
 INSERT INTO versions VALUES ('pg17', '17.7-1',    'amd, arm', 0, '20251113','', '', '');
