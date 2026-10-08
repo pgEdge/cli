@@ -1,7 +1,7 @@
 
 DROP TABLE IF EXISTS hub;
 CREATE TABLE hub(v TEXT NOT NULL PRIMARY KEY, c TEXT NOT NULL, d TEXT NOT NULL);
-INSERT INTO hub VALUES ('25.7.1', '',  '20261001');
+INSERT INTO hub VALUES ('25.7.2', '',  '20261009');
 
 DROP VIEW  IF EXISTS v_versions;
 DROP VIEW  IF EXISTS v_products;
@@ -352,9 +352,13 @@ INSERT INTO releases VALUES ('spock50-pg15', 4, 'spock', 'Spock', '', 'prod', ''
 INSERT INTO releases VALUES ('spock50-pg16', 4, 'spock', 'Spock', '', 'prod', '', 1, 'POSTGRES', '', '');
 INSERT INTO releases VALUES ('spock50-pg17', 4, 'spock', 'Spock', '', 'prod', '', 1, 'POSTGRES', '', '');
 
-INSERT INTO versions VALUES ('spock50-pg15', '5.0.12-1',   'amd', 1, '20261001', 'pg15', '', '');
-INSERT INTO versions VALUES ('spock50-pg16', '5.0.12-1',   'amd', 1, '20261001', 'pg16', '', '');
-INSERT INTO versions VALUES ('spock50-pg17', '5.0.12-1',   'amd', 1, '20261001', 'pg17', '', '');
+INSERT INTO versions VALUES ('spock50-pg15', '5.0.13-1',   'amd', 1, '20261009', 'pg15', '', '');
+INSERT INTO versions VALUES ('spock50-pg16', '5.0.13-1',   'amd', 1, '20261009', 'pg16', '', '');
+INSERT INTO versions VALUES ('spock50-pg17', '5.0.13-1',   'amd', 1, '20261009', 'pg17', '', '');
+
+INSERT INTO versions VALUES ('spock50-pg15', '5.0.12-1',   'amd', 0, '20261001', 'pg15', '', '');
+INSERT INTO versions VALUES ('spock50-pg16', '5.0.12-1',   'amd', 0, '20261001', 'pg16', '', '');
+INSERT INTO versions VALUES ('spock50-pg17', '5.0.12-1',   'amd', 0, '20261001', 'pg17', '', '');
 
 INSERT INTO versions VALUES ('spock50-pg15', '5.0.11-1',   'amd', 0, '20260731', 'pg15', '', '');
 INSERT INTO versions VALUES ('spock50-pg16', '5.0.11-1',   'amd', 0, '20260731', 'pg16', '', '');
@@ -379,9 +383,13 @@ INSERT INTO releases VALUES ('lolor-pg15', 4, 'lolor', 'LgObjLOgicalRep', '', 'p
 INSERT INTO releases VALUES ('lolor-pg16', 4, 'lolor', 'LgObjLOgicalRep', '', 'prod', '', 1, 'POSTGRES', '', '');
 INSERT INTO releases VALUES ('lolor-pg17', 4, 'lolor', 'LgObjLOgicalRep', '', 'prod', '', 1, 'POSTGRES', '', '');
 
-INSERT INTO versions VALUES ('lolor-pg15', '1.2.2-1', 'amd, arm', 1, '20260211', 'pg15', '', '');
-INSERT INTO versions VALUES ('lolor-pg16', '1.2.2-1', 'amd, arm', 1, '20260211', 'pg16', '', '');
-INSERT INTO versions VALUES ('lolor-pg17', '1.2.2-1', 'amd, arm', 1, '20260211', 'pg17', '', '');
+INSERT INTO versions VALUES ('lolor-pg15', '1.2.3-1', 'amd', 1, '20261009', 'pg15', '', '');
+INSERT INTO versions VALUES ('lolor-pg16', '1.2.3-1', 'amd', 1, '20261009', 'pg16', '', '');
+INSERT INTO versions VALUES ('lolor-pg17', '1.2.3-1', 'amd', 1, '20261009', 'pg17', '', '');
+
+INSERT INTO versions VALUES ('lolor-pg15', '1.2.2-1', 'amd, arm', 0, '20260211', 'pg15', '', '');
+INSERT INTO versions VALUES ('lolor-pg16', '1.2.2-1', 'amd, arm', 0, '20260211', 'pg16', '', '');
+INSERT INTO versions VALUES ('lolor-pg17', '1.2.2-1', 'amd, arm', 0, '20260211', 'pg17', '', '');
 
 INSERT INTO versions VALUES ('lolor-pg15', '1.2.1-1', 'amd, arm', 0, '20251020', 'pg15', '', '');
 INSERT INTO versions VALUES ('lolor-pg16', '1.2.1-1', 'amd, arm', 0, '20251020', 'pg16', '', '');
