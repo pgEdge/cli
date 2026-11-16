@@ -1,0 +1,25 @@
+# Code owners under the Code Review and Commit Policy v2.0.
+# cli is Tier 2. The last matching line wins.
+
+# Workflows, release, packaging and signing: a code owner or build-packaging.
+/.github/workflows/  @hayee-bhatti @pgEdge/build-packaging
+/.github/actions/  @hayee-bhatti @pgEdge/build-packaging
+action.yml  @hayee-bhatti @pgEdge/build-packaging
+action.yaml  @hayee-bhatti @pgEdge/build-packaging
+.goreleaser*.yml  @hayee-bhatti @pgEdge/build-packaging
+.goreleaser*.yaml  @hayee-bhatti @pgEdge/build-packaging
+*.spec  @hayee-bhatti @pgEdge/build-packaging
+debian/  @hayee-bhatti @pgEdge/build-packaging
+rpm/  @hayee-bhatti @pgEdge/build-packaging
+packaging/  @hayee-bhatti @pgEdge/build-packaging
+release*.sh  @hayee-bhatti @pgEdge/build-packaging
+sign*.sh  @hayee-bhatti @pgEdge/build-packaging
+sign*.py  @hayee-bhatti @pgEdge/build-packaging
+Dockerfile*  @hayee-bhatti @pgEdge/build-packaging
+
+# Ownership and AI review configuration: code owners only.
+/CODEOWNERS  @hayee-bhatti
+/.github/CODEOWNERS  @hayee-bhatti
+/docs/CODEOWNERS  @hayee-bhatti
+/REVIEW.md  @hayee-bhatti
+/.coderabbit.yaml  @hayee-bhatti
