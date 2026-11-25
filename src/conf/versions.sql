@@ -1,7 +1,7 @@
 
 DROP TABLE IF EXISTS hub;
 CREATE TABLE hub(v TEXT NOT NULL PRIMARY KEY, c TEXT NOT NULL, d TEXT NOT NULL);
-INSERT INTO hub VALUES ('25.8.0', '',  '20261113');
+INSERT INTO hub VALUES ('25.8.1', '',  '20261125');
 
 DROP VIEW  IF EXISTS v_versions;
 DROP VIEW  IF EXISTS v_products;
@@ -359,9 +359,13 @@ INSERT INTO releases VALUES ('spock50-pg15', 4, 'spock', 'Spock', '', 'prod', ''
 INSERT INTO releases VALUES ('spock50-pg16', 4, 'spock', 'Spock', '', 'prod', '', 1, 'POSTGRES', '', '');
 INSERT INTO releases VALUES ('spock50-pg17', 4, 'spock', 'Spock', '', 'prod', '', 1, 'POSTGRES', '', '');
 
-INSERT INTO versions VALUES ('spock50-pg15', '5.0.14-1',   'amd', 1, '20261113', 'pg15', '', '');
-INSERT INTO versions VALUES ('spock50-pg16', '5.0.14-1',   'amd', 1, '20261113', 'pg16', '', '');
-INSERT INTO versions VALUES ('spock50-pg17', '5.0.14-1',   'amd', 1, '20261113', 'pg17', '', '');
+INSERT INTO versions VALUES ('spock50-pg15', '5.0.15-1',   'amd', 1, '20261125', 'pg15', '', '');
+INSERT INTO versions VALUES ('spock50-pg16', '5.0.15-1',   'amd', 1, '20261125', 'pg16', '', '');
+INSERT INTO versions VALUES ('spock50-pg17', '5.0.15-1',   'amd', 1, '20261125', 'pg17', '', '');
+
+INSERT INTO versions VALUES ('spock50-pg15', '5.0.14-1',   'amd', 0, '20261113', 'pg15', '', '');
+INSERT INTO versions VALUES ('spock50-pg16', '5.0.14-1',   'amd', 0, '20261113', 'pg16', '', '');
+INSERT INTO versions VALUES ('spock50-pg17', '5.0.14-1',   'amd', 0, '20261113', 'pg17', '', '');
 
 INSERT INTO versions VALUES ('spock50-pg15', '5.0.13-1',   'amd', 0, '20261009', 'pg15', '', '');
 INSERT INTO versions VALUES ('spock50-pg16', '5.0.13-1',   'amd', 0, '20261009', 'pg16', '', '');
