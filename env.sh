@@ -1,5 +1,5 @@
-hubV=25.8.0
-hubVV=25.8.0
+hubV=25.8.1
+hubVV=25.8.1
 
 aceV=$hubV
 kirkV=$hubV
